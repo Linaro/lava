@@ -300,45 +300,39 @@ class TestHealthCheckScheduling(TestCase):
         self.device03.health = Device.HEALTH_GOOD
         self.device03.save()
 
-        # Create a job that should be scheduled now
-        j01 = TestJob.objects.create(
-            requested_device_type=self.device_type01,
-            submitter=self.user,
-            definition=_minimal_valid_job(None),
-        )
-        j02 = TestJob.objects.create(
-            requested_device_type=self.device_type01,
-            submitter=self.user,
-            definition=_minimal_valid_job(None),
-        )
-        j03 = TestJob.objects.create(
-            requested_device_type=self.device_type01,
-            submitter=self.user,
-            definition=_minimal_valid_job(None),
-        )
+        # Create three jobs that should be scheduled with a healthcheck preceding the
+        # last one
+        for i in range(0, 3):
+            TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                submitter=self.user,
+                definition=_minimal_valid_job(None),
+            )
 
         schedule(logging.getLogger())
         self.device03.refresh_from_db()
-        j01.refresh_from_db()
-        self.assertEqual(j01.state, TestJob.STATE_SCHEDULED)
-        self.assertEqual(j01.actual_device, self.device03)
-        j01.go_state_finished(TestJob.HEALTH_COMPLETE)
-        j01.start_time = timezone.now() - timedelta(hours=1)
-        j01.save()
+        jobs = TestJob.objects.filter(state=TestJob.STATE_SCHEDULED)
+        self.assertEqual(jobs.count(), 1)
+        j = jobs[0]
+        self.assertEqual(j.actual_device, self.device03)
+        j.go_state_finished(TestJob.HEALTH_COMPLETE)
+        j.start_time = timezone.now() - timedelta(hours=1)
+        j.save()
 
         schedule(logging.getLogger())
         self.device03.refresh_from_db()
-        j02.refresh_from_db()
-        self.assertEqual(j02.state, TestJob.STATE_SCHEDULED)
-        self.assertEqual(j02.actual_device, self.device03)
-        j02.go_state_finished(TestJob.HEALTH_COMPLETE)
-        j02.start_time = timezone.now() - timedelta(hours=1)
-        j02.save()
+        jobs = TestJob.objects.filter(state=TestJob.STATE_SCHEDULED)
+        self.assertEqual(jobs.count(), 1)
+        j = jobs[0]
+        self.assertEqual(j.actual_device, self.device03)
+        j.go_state_finished(TestJob.HEALTH_COMPLETE)
+        j.start_time = timezone.now() - timedelta(hours=1)
+        j.save()
 
         schedule(logging.getLogger())
         self.device03.refresh_from_db()
-        j03.refresh_from_db()
-        self.assertEqual(j03.state, TestJob.STATE_SUBMITTED)
+        jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+        self.assertEqual(jobs.count(), 1)
         current_hc = self.device03.current_job()
         self.assertTrue(current_hc.health_check)
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
@@ -481,15 +475,36 @@ class TestPriorities(TestCase):
     def tearDown(self):
         Device.get_health_check = self.original_health_check
 
-    def _check_job(self, job, state, actual_device=None):
+    def _check_job(
+        self, job, priorities, state=TestJob.STATE_SUBMITTED, actual_device=None
+    ):
         job.refresh_from_db()
+        self.assertIn(job.priority, priorities)
         self.assertEqual(job.state, state)
         self.assertEqual(job.actual_device, actual_device)
+
+    def _check_scheduling(self, logger, device, current_priority, remaining_priorities):
+        schedule(logger)
+        device.refresh_from_db()
+        self.assertEqual(device.state, Device.STATE_RESERVED)
+
+        scheduled = TestJob.objects.filter(state=TestJob.STATE_SCHEDULED)
+        self.assertEqual(scheduled.count(), 1)
+
+        current = TestJob.objects.get(id=scheduled[0].id)
+        self._check_job(current, (current_priority,), TestJob.STATE_SCHEDULED, device)
+
+        submitted = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+        for j in submitted:
+            self._check_job(j, remaining_priorities)
+
+        current.go_state_finished(TestJob.HEALTH_COMPLETE)
+        current.save()
+        self._check_job(current, (current_priority,), TestJob.STATE_FINISHED, device)
 
     def test_low_medium_high_without_hc(self):
         # Disable health checks
         Device.get_health_check = lambda cls: None
-        jobs = []
         for p in [
             TestJob.LOW,
             TestJob.MEDIUM,
@@ -498,94 +513,32 @@ class TestPriorities(TestCase):
             TestJob.LOW,
             40,
         ]:
-            j = TestJob.objects.create(
+            TestJob.objects.create(
                 requested_device_type=self.device_type01,
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
                 priority=p,
             )
-            jobs.append(j)
 
         log = logging.getLogger()
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[2], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
 
-        jobs[2].go_state_finished(TestJob.HEALTH_COMPLETE)
-        jobs[2].save()
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
+        # High priority job
+        self._check_scheduling(
+            log, self.device01, TestJob.HIGH, (TestJob.MEDIUM, TestJob.LOW, 40)
+        )
 
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
+        # Medium priority jobs
+        self._check_scheduling(
+            log, self.device01, TestJob.MEDIUM, (TestJob.MEDIUM, TestJob.LOW, 40)
+        )
+        self._check_scheduling(log, self.device01, TestJob.MEDIUM, (TestJob.LOW, 40))
 
-        jobs[1].go_state_finished(TestJob.HEALTH_COMPLETE)
-        jobs[1].save()
-        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
+        # Custom priority job
+        self._check_scheduling(log, self.device01, 40, (TestJob.LOW,))
 
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[5], TestJob.STATE_SUBMITTED)
-
-        jobs[3].go_state_finished(TestJob.HEALTH_COMPLETE)
-        jobs[3].save()
-        self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
-
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[5], TestJob.STATE_SCHEDULED, self.device01)
-
-        jobs[5].go_state_finished(TestJob.HEALTH_COMPLETE)
-        jobs[5].save()
-        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
-
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
-
-        jobs[0].go_state_finished(TestJob.HEALTH_COMPLETE)
-        jobs[0].save()
-        self._check_job(jobs[0], TestJob.STATE_FINISHED, self.device01)
-
-        schedule(log)
-        self.device01.refresh_from_db()
-        self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[1], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[2], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_FINISHED, self.device01)
-        self._check_job(jobs[4], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[5], TestJob.STATE_FINISHED, self.device01)
+        # Low priority jobs
+        self._check_scheduling(log, self.device01, TestJob.LOW, (TestJob.LOW,))
+        self._check_scheduling(log, self.device01, TestJob.LOW, ())
 
     def test_low_medium_high_with_hc(self):
         # Enable health checks
@@ -616,11 +569,8 @@ class TestPriorities(TestCase):
         schedule(log)
         self.device01.refresh_from_db()
         self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[2], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        submitted = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+        self.assertEqual(submitted.count(), len(jobs))
 
         current_hc = self.device01.current_job()
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
@@ -631,11 +581,11 @@ class TestPriorities(TestCase):
         schedule(log)
         self.device01.refresh_from_db()
         self.assertEqual(self.device01.state, Device.STATE_RESERVED)
-        self._check_job(jobs[0], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[1], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[2], TestJob.STATE_SCHEDULED, self.device01)
-        self._check_job(jobs[3], TestJob.STATE_SUBMITTED)
-        self._check_job(jobs[4], TestJob.STATE_SUBMITTED)
+        scheduled = TestJob.objects.filter(state=TestJob.STATE_SCHEDULED)
+        self.assertEqual(scheduled.count(), 1)
+        self._check_job(
+            scheduled[0], (TestJob.HIGH,), TestJob.STATE_SCHEDULED, self.device01
+        )
 
 
 # test joblimit with HealthChecks with a joblimit of 1
