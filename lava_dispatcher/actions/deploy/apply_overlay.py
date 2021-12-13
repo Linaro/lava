@@ -910,7 +910,7 @@ class AppendOverlays(Action):
             raise LAVABug("Unknown format %r" % self.params["format"])
         return connection
 
-    def update_cpio(self):
+    def _update(self, f_uncompress, f_compress):
         image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
@@ -928,7 +928,7 @@ class AppendOverlays(Action):
             image = decompress_file(image, compression)
         # extract the archive
         self.logger.debug("* extracting %r", image)
-        uncpio(image, tempdir)
+        f_uncompress(image, tempdir)
         os.unlink(image)
 
         # Add overlays
@@ -964,10 +964,16 @@ class AppendOverlays(Action):
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
-        cpio(tempdir, image)
+        f_compress(tempdir, image)
         if compression and not decompressed:
             self.logger.debug("* compressing (%s)", compression)
             image = compress_file(image, compression)
+
+    def update_cpio(self):
+        self._update(uncpio, cpio)
+
+    def update_tar(self):
+        self._update(untar_file, create_tarfile)
 
     def update_guestfs(self):
         image = self.get_namespace_data(
@@ -1019,61 +1025,3 @@ class AppendOverlays(Action):
                 self.logger.warning("- %s: <MISSING> to %r", label, path)
         guest.umount(device)
         guest.shutdown()
-
-    def update_tar(self):
-        image = self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        )
-        compression = self.get_namespace_data(
-            action="download-action", label=self.key, key="compression"
-        )
-        decompressed = self.get_namespace_data(
-            action="download-action", label=self.key, key="decompressed"
-        )
-        self.logger.info("Modifying %r", image)
-        tempdir = self.mkdtemp()
-        # Some images are kept compressed. We should decompress first
-        if compression and not decompressed:
-            self.logger.debug("* decompressing (%s)", compression)
-            image = decompress_file(image, compression)
-        # extract the archive
-        self.logger.debug("* extracting %r", image)
-        untar_file(image, tempdir)
-
-        # Add overlays
-        self.logger.debug("Overlays:")
-        for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
-            overlay_image = None
-            path = None
-            if overlay == "lava":
-                overlay_image = self.get_namespace_data(
-                    action="compress-overlay", label="output", key="file"
-                )
-                path = "/"
-            else:
-                overlay_image = self.get_namespace_data(
-                    action="download-action", label=label, key="file"
-                )
-                path = self.params["overlays"][overlay]["path"]
-            # Take off initial "/" from path, extract relative to this directory
-            extract_path = os.path.join(tempdir, path[1:])
-            if overlay == "lava" or self.params["overlays"][overlay]["format"] == "tar":
-                self.logger.debug(
-                    "- %s: untar %r to %r", label, overlay_image, extract_path
-                )
-                # In the "validate" function, we check that path startswith '/'
-                # and does not contains '..'
-                untar_file(overlay_image, extract_path)
-            else:
-                self.logger.debug(
-                    "- %s: cp %r to %r", label, overlay_image, extract_path
-                )
-                shutil.copy(overlay_image, extract_path)
-
-        # Recreating the archive
-        self.logger.debug("* archiving %r", image)
-        create_tarfile(tempdir, image)
-        if compression and not decompressed:
-            self.logger.debug("* compressing (%s)", compression)
-            image = compress_file(image, compression)
