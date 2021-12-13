@@ -48,6 +48,9 @@ def setup(tmpdir):
     # Create a Git repository with two commits
     subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
     os.chdir("git")
+    subprocess.check_output(
+        ["git", "checkout", "-b", "master"]
+    )  # nosec - unit test support.
     with open("test.txt", "w") as testfile:
         testfile.write("Some data")
     subprocess.check_output(["git", "add", "test.txt"])  # nosec - unit test support.
