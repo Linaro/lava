@@ -89,6 +89,14 @@ def decompress_file(infile, compression):
             )
 
 
+def create_tarfile(indir, outfile):
+    try:
+        with tarfile.open(outfile, "w") as tar:
+            tar.add(indir)
+    except tarfile.TarError as exc:
+        raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
+
+
 def untar_file(infile, outdir):
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:

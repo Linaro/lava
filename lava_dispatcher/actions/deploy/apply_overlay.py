@@ -39,6 +39,7 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.compression import (
     compress_file,
     cpio,
+    create_tarfile,
     decompress_file,
     untar_file,
     uncpio,
@@ -857,7 +858,7 @@ class AppendOverlays(Action):
     summary = "append overlays to an image"
 
     # TODO: list libguestfs supported formats
-    IMAGE_FORMATS = ["cpio.newc", "ext4"]
+    IMAGE_FORMATS = ["cpio.newc", "ext4", "tar"]
     OVERLAY_FORMATS = ["file", "tar"]
 
     def __init__(self, key, params):
@@ -903,11 +904,13 @@ class AppendOverlays(Action):
             except RuntimeError as exc:
                 self.logger.exception(str(exc))
                 raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+        elif self.params["format"] == "tar":
+            self.update_tar()
         else:
             raise LAVABug("Unknown format %r" % self.params["format"])
         return connection
 
-    def update_cpio(self):
+    def _update(self, f_uncompress, f_compress):
         image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
@@ -925,7 +928,7 @@ class AppendOverlays(Action):
             image = decompress_file(image, compression)
         # extract the archive
         self.logger.debug("* extracting %r", image)
-        uncpio(image, tempdir)
+        f_uncompress(image, tempdir)
         os.unlink(image)
 
         # Add overlays
@@ -961,10 +964,16 @@ class AppendOverlays(Action):
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
-        cpio(tempdir, image)
+        f_compress(tempdir, image)
         if compression and not decompressed:
             self.logger.debug("* compressing (%s)", compression)
             image = compress_file(image, compression)
+
+    def update_cpio(self):
+        self._update(uncpio, cpio)
+
+    def update_tar(self):
+        self._update(untar_file, create_tarfile)
 
     def update_guestfs(self):
         image = self.get_namespace_data(

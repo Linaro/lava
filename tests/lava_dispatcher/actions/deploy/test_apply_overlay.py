@@ -69,6 +69,7 @@ def test_append_overlays_run(mocker):
     action = AppendOverlays("rootfs", params)
     action.update_cpio = mocker.stub()
     action.update_guestfs = mocker.stub()
+    action.update_tar = mocker.stub()
     assert action.run(None, 0) is None
     action.update_cpio.assert_called_once_with()
 
@@ -77,8 +78,8 @@ def test_append_overlays_run(mocker):
     action.update_guestfs.assert_called_once_with()
 
     params["format"] = "tar"
-    with pytest.raises(LAVABug):
-        action.run(None, 0)
+    assert action.run(None, 0) is None
+    action.update_tar.assert_called_once_with()
 
 
 def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
@@ -202,6 +203,78 @@ def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
         ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
         ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
+    ]
+
+
+def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {
+        "format": "tar",
+        "overlays": {
+            "modules": {
+                "url": "http://example.com/modules.tar.xz",
+                "compression": "xz",
+                "format": "tar",
+                "path": "/",
+            }
+        },
+    }
+
+    action = AppendOverlays("nfsrootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "nfsrootfs": {"url": "http://example.com/rootfs.tar.gz", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "download-action": {
+                "nfsrootfs": {
+                    "file": str(tmpdir / "rootfs.tar.gz"),
+                    "compression": "gz",
+                    "decompressed": False,
+                },
+                "nfsrootfs.modules": {"file": str(tmpdir / "modules.tar")},
+            },
+        }
+    }
+    action.mkdtemp = lambda: str(tmpdir)
+    decompress_file = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+    )
+    untar_file = mocker.patch("lava_dispatcher.actions.deploy.apply_overlay.untar_file")
+    unlink = mocker.patch("os.unlink")
+    create_tarfile = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
+    )
+    compress_file = mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+    )
+
+    action.update_tar()
+
+    decompress_file.assert_called_once_with(str(tmpdir / "rootfs.tar.gz"), "gz")
+    assert untar_file.mock_calls == [
+        mocker.call(decompress_file(), str(tmpdir)),
+        mocker.call(str(tmpdir / "modules.tar"), str(tmpdir) + "/"),
+    ]
+    unlink.assert_called_once_with(decompress_file())
+
+    create_tarfile.assert_called_once_with(str(tmpdir), decompress_file())
+    compress_file.assert_called_once_with(decompress_file(), "gz")
+
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.tar.gz'"),
+        ("dispatcher", 10, "* decompressing (gz)"),
+        ("dispatcher", 10, f"* extracting {decompress_file()}"),
+        ("dispatcher", 10, "Overlays:"),
+        (
+            "dispatcher",
+            10,
+            f"- nfsrootfs.modules: untar '{tmpdir}/modules.tar' to '{tmpdir}/'",
+        ),
+        ("dispatcher", 10, f"* archiving {decompress_file()}"),
+        ("dispatcher", 10, "* compressing (gz)"),
     ]
 
 
