@@ -149,6 +149,51 @@ class SchedulerWorkersAPI(ExposedV2API):
         except OSError as exc:
             raise xmlrpc.client.Fault(400, "Unable to read env file: %s" % exc.strerror)
 
+    def get_env_dut(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.workers.get_env_dut` (`hostname`)
+
+        Description
+        -----------
+        Return the worker DUT environment
+        The server will first try
+        /etc/lava-server/dispatcher.d/<hostname>/env-dut.yaml and fallback to
+        /etc/lava-server/env-dut.yaml
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+
+        Return value
+        ------------
+        This function returns the worker environment
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        # Find the worker in the database
+        try:
+            Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        try:
+            return xmlrpc.client.Binary(
+                File("env-dut", hostname).read().encode("utf-8")
+            )
+        except FileNotFoundError:
+            raise xmlrpc.client.Fault(
+                404, "Worker '%s' does not have an env-dut file" % hostname
+            )
+        except OSError as exc:
+            raise xmlrpc.client.Fault(
+                400, "Unable to read env-dut file: %s" % exc.strerror
+            )
+
     @check_perm("lava_scheduler_app.change_worker")
     def set_config(self, hostname, config):
         """
@@ -219,6 +264,43 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         with contextlib.suppress(OSError):
             File("env", hostname).write(env)
+            return True
+
+        return False
+
+    @check_perm("lava_scheduler_app.change_worker")
+    def set_env_dut(self, hostname, env):
+        """
+        Name
+        ----
+        `scheduler.workers.set_env_dut` (`hostname`, `env`)
+
+        Description
+        -----------
+        Set the worker environment for DUT
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+        `env`: string
+          The worker environment as a yaml file
+
+        Return value
+        ------------
+        True if the environment was saved to file, False otherwise.
+        """
+        # Sanitize hostname as we will use it in a path
+        if len(pathlib.Path(hostname).parts) != 1:
+            raise xmlrpc.client.Fault(400, "Invalid worker name")
+
+        try:
+            Worker.objects.get(hostname=hostname)
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        with contextlib.suppress(OSError):
+            File("env-dut", hostname).write(env)
             return True
 
         return False

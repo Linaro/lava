@@ -311,7 +311,7 @@ instance:
 
 * ``/etc/lava-server/env.yaml``
 
-* ``/etc/lava-server/env.dut.yaml``
+* ``/etc/lava-server/env-dut.yaml``
 
 .. note:: when using dispatcher specific environment, it can be useful
     (but not mandatory) to move the dispatcher configuration from

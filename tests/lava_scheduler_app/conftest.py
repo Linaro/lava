@@ -30,7 +30,7 @@ def update_settings(settings, mocker, tmpdir):
             ],
             "env-dut": [
                 "/etc/lava-server/dispatcher.d/{name}/env-dut.yaml",
-                "/etc/lava-server/env.dut.yaml",
+                "/etc/lava-server/env-dut.yaml",
             ],
             "health-check": ([settings.HEALTH_CHECKS_PATH], "{name}.yaml"),
         },
