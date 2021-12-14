@@ -87,6 +87,7 @@ CONTEXT_VARIABLES = [
     "tftp_mac_address",
     "uboot_extra_error_message",
     "uboot_needs_interrupt",
+    "uboot_altbank",
 ]
 
 

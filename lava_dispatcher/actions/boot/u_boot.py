@@ -28,6 +28,7 @@ from lava_dispatcher.actions.boot import (
     AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
+    BootloaderCommandsActionAltBank,
     BootloaderSecondaryMedia,
     BootHasMixin,
     OverlayUnpack,
@@ -122,6 +123,12 @@ class UBootCommandsAction(BootHasMixin, Action):
             self.pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
             self.pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
             self.pipeline.add_action(ResetDevice())
+        elif self.method_params.get("uboot_altbank", False):
+            self.pipeline.add_action(
+                BootloaderCommandsActionAltBank(expect_final=False)
+            )
+            self.pipeline.add_action(BootloaderInterruptAction())
+            self.pipeline.add_action(BootloaderCommandsAction())
         else:
             self.pipeline.add_action(BootloaderCommandsAction())
         if self.has_prompts(parameters):

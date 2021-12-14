@@ -1143,6 +1143,20 @@ commands.
 Certain elements of the command line are available for modification using the
 :term:`job context`. The available values vary by :term:`device type`.
 
+Example
+-------------
+
+NXP Layerscape platforms supports booting from Alternate Bank, keeping Main
+Bank safe.
+If you want to boot the board from Alternate Bank, you can do it by adding
+context variable "uboot_altbank: true".
+By default its value is set to "false"
+
+.. code-block:: yaml
+
+ context:
+   uboot_altbank: true
+
 .. _boot_method_uefi_menu:
 
 uefi-menu

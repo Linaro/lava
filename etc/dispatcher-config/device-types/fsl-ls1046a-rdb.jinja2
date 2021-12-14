@@ -1,2 +1,3 @@
 {# set device_type = "fsl-ls1046a-rdb" #}
-{% extends 'fsl-ls1043a-rdb.jinja2' %}
+{% extends 'fsl-ls-common.jinja2' %}
+{% set uboot_altbank_cmd = uboot_altbank_cmd|default('cpld reset altbank') %}
