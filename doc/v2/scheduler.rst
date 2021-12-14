@@ -30,10 +30,9 @@ not) pings from each worker.
 .. caution:: When a worker is in *Offline*, none of the attached devices
    will be used to schedule new jobs.
 
-``health`` can be used by admins to control the ``health`` of all attached
-devices. For instance, when set to *Maintenance*, all attached devices will be
-automatically put into maintenance mode so that no jobs will be scheduled on
-those devices.
+``health`` can be used by admins to prevent jobs to run on attached devices.
+For instance, when set to *Maintenance*, no jobs will be scheduled on attached
+devices.
 
 Devices
 *******

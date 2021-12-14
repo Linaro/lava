@@ -829,7 +829,7 @@ class TestWorkerStateMachine(TestCase):
             self.device.health = health
             self.device.save()
             self.worker.go_health_active(self.user)
-            if health == Device.HEALTH_MAINTENANCE:
+            if health == Device.HEALTH_GOOD:
                 self.check_device(Device.STATE_IDLE, Device.HEALTH_UNKNOWN)
             else:
                 self.check_device(Device.STATE_IDLE, health)
@@ -852,12 +852,7 @@ class TestWorkerStateMachine(TestCase):
             self.device.health = health
             self.device.save()
             self.worker.go_health_maintenance(self.user)
-            if health == Device.HEALTH_RETIRED:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_RETIRED)
-            elif health == Device.HEALTH_BAD:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
-            else:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_MAINTENANCE)
+            self.check_device(Device.STATE_IDLE, health)
 
         # 1.2/ from RETIRED
         for (health, _) in Device.HEALTH_CHOICES:
@@ -866,12 +861,7 @@ class TestWorkerStateMachine(TestCase):
             self.device.health = health
             self.device.save()
             self.worker.go_health_maintenance(self.user)
-            if health == Device.HEALTH_RETIRED:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_RETIRED)
-            elif health == Device.HEALTH_BAD:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_BAD)
-            else:
-                self.check_device(Device.STATE_IDLE, Device.HEALTH_MAINTENANCE)
+            self.check_device(Device.STATE_IDLE, health)
 
     def test_worker_go_health_retired(self):
         # 1/ Normal transitions

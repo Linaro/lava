@@ -192,6 +192,27 @@ class TestHealthCheckScheduling(TestCase):
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
 
+    def test_device_health_good_worker_maintenance(self):
+        # Make sure that get_health_check does return something
+        Device.get_health_check = _minimal_valid_job
+        self.assertNotEqual(self.device01.get_health_check(), None)
+        self.assertNotEqual(self.device02.get_health_check(), None)
+        self.assertNotEqual(self.device03.get_health_check(), None)
+
+        self.worker01.health = Worker.HEALTH_MAINTENANCE
+        self.worker01.save()
+        self.device01.health = Device.HEALTH_GOOD
+        self.device01.save()
+        self.device02.health = Device.HEALTH_GOOD
+        self.device02.save()
+        self.device03.health = Device.HEALTH_GOOD
+        self.device03.save()
+        available_devices = schedule_health_checks(logging.getLogger())
+        self.assertEqual(available_devices, {"panda": ["panda03"]})
+        self._check_hc_not_scheduled(self.device01)
+        self._check_hc_not_scheduled(self.device02)
+        self._check_hc_not_scheduled(self.device03)
+
     def test_device_health_looping(self):
         # Make sure that get_health_check does return something
         Device.get_health_check = _minimal_valid_job
