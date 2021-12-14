@@ -167,39 +167,12 @@ def handle_publish(options):
         wait_pipeline(options, commit)
     print("done\n")
 
-    for name in ["buster"]:
-        print("%s# sign %s .deb%s" % (COLORS["purple"], name, COLORS["reset"]))
-        connection_string = "lavasoftware.org"
-        if options.lavasoftware_username:
-            connection_string = "%s@%s" % (
-                options.lavasoftware_username,
-                connection_string,
-            )
-        run(
-            "scp %s:/home/gitlab-runner/repository/current-release/dists/%s/Release Release"
-            % (connection_string, name),
-            options,
+    connection_string = "lavasoftware.org"
+    if options.lavasoftware_username:
+        connection_string = "%s@%s" % (
+            options.lavasoftware_username,
+            connection_string,
         )
-        run(
-            "gpg -u C87D63FD935535CFB0CAF5C2A791358F2E49B100 -a --detach-sign Release",
-            options,
-        )
-        run("scp Release.asc %s:~/Release.gpg" % connection_string, options)
-        run(
-            "ssh -t %s sudo mv ~/Release.gpg /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
-            % (connection_string, name),
-            options,
-        )
-        run(
-            "ssh -t %s sudo chown gitlab-runner:gitlab-runner /home/gitlab-runner/repository/current-release/dists/%s/Release.gpg"
-            % (connection_string, name),
-            options,
-        )
-        if not options.dry_run and not options.skip >= options.count:
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink("Release")
-            with contextlib.suppress(FileNotFoundError):
-                os.unlink("Release.asc")
 
     print("%s# publish the new repository%s" % (COLORS["purple"], COLORS["reset"]))
     # TODO: move the old-release directory
