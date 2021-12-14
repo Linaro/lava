@@ -175,7 +175,6 @@ def handle_publish(options):
         )
 
     print("%s# publish the new repository%s" % (COLORS["purple"], COLORS["reset"]))
-    # TODO: move the old-release directory
     run(
         "ssh -t %s 'cd /home/gitlab-runner/repository && sudo ln -snf current-release release'"
         % connection_string,
