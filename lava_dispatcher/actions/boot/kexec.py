@@ -19,11 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline, Action
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.utils.network import dispatcher_ip
 
 
 class BootKExec(Boot):
@@ -82,11 +85,37 @@ class KexecAction(Action):
         super().__init__()
         self.command = ""
         self.load_command = ""
+        self.deploy_commands = []
+
+    def append_deploy_cmd(self, key, ip_addr):
+        if key not in self.parameters:
+            return
+
+        path = self.get_namespace_data(action="download-action", label=key, key="file")
+        if path is None:
+            raise JobError(f"Missing '{key}' in deploy stage")
+
+        path = path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+        cmd = f"wget http://{ip_addr}/tmp/{path} -O {self.parameters[key]}"
+        self.deploy_commands.append(cmd)
 
     def validate(self):
         super().validate()
         self.command = self.parameters.get("command", "/sbin/kexec")
         self.load_command = self.command[:]  # local copy for idempotency
+
+        if self.parameters.get("deploy", False):
+            initrd_path = self.get_namespace_data(
+                action="download-action", label="initrd", key="file"
+            )
+            ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
+
+            self.append_deploy_cmd("kernel", ip_addr)
+            self.append_deploy_cmd("initrd", ip_addr)
+            self.append_deploy_cmd("dtb", ip_addr)
+            self.logger.debug("deploy commands:")
+            for cmd in self.deploy_commands:
+                self.logger.info("- %s", cmd)
 
         # If on_panic is set, crash the kernel instead of calling "kexec -e"
         if self.parameters.get("on_panic", False):
@@ -117,6 +146,13 @@ class KexecAction(Action):
         Get the output prior to the call, in case this helps after the job fails.
         """
         connection = super().run(connection, max_end_time)
+
+        if self.deploy_commands:
+            self.logger.debug("Running deploy commands")
+        for cmd in self.deploy_commands:
+            connection.sendline(cmd, delay=self.character_delay)
+            self.wait(connection)
+
         if "kernel-config" in self.parameters:
             cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters["kernel-config"]
             self.logger.debug("Checking for kexec: %s", cmd)

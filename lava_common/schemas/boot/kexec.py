@@ -33,6 +33,7 @@ def schema():
         Optional(
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
+        Optional("deploy"): bool,
         Optional("command"): str,
         Optional("kernel"): str,
         Optional("dtb"): str,
