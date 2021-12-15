@@ -208,6 +208,7 @@ def test_run_script(monkeypatch):
             ("info", "Sending 'dhcp'"),
             ("debug", "Waiting for '=> ', '/ # ', 'DHCP client bound to address'"),
             ("info", "Matched a success: 'DHCP client bound to address'"),
+            ("debug", "Matched a prompt: '=> '"),
             (
                 "results",
                 {
@@ -226,6 +227,7 @@ def test_run_script(monkeypatch):
                 "error",
                 "Matched a failure: 'Host lavasoftware.org not found: 3(NXDOMAIN)'",
             ),
+            ("debug", "Matched a prompt: '=> '"),
             (
                 "results",
                 {
@@ -416,6 +418,7 @@ def test_run_script_capture(monkeypatch):
             ("info", "Sending nothing, waiting"),
             ("debug", "Waiting for '=> ', '/ # ', 'foo(?P<val>.+)'"),
             ("info", "Matched a success: 'foo(?P<val>.+)' (groups: {'val': 'bar'})"),
+            ("debug", "Matched a prompt: '=> '"),
             (
                 "results",
                 {
@@ -628,6 +631,7 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
             ("debug", "Ignoring echo: \"echo 'hello'\""),
             ("debug", "Waiting for '=> ', '/ # ', 'world'"),
             ("error", "Matched a failure: 'world'"),
+            ("debug", "Matched a prompt: '=> '"),
         ]
     )
     action.validate()
