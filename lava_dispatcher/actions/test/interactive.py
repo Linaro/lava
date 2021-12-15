@@ -275,9 +275,6 @@ class TestInteractiveAction(Action):
                             self.raise_exception(
                                 failure["exception"], failure.get("error", match)
                             )
-                        # Wait for the prompt to send the next command
-                        if wait_for_prompt:
-                            self.expect_and_feedbacks(test_connection, prompts)
                     else:
                         groups = test_connection.match.groupdict()
                         if groups:
@@ -288,10 +285,12 @@ class TestInteractiveAction(Action):
                             self.logger.info("Matched a success: '%s'", match)
                         for k, v in groups.items():
                             substitutions["{%s}" % k] = v
-                        # Wait for the prompt to send the next command
-                        if wait_for_prompt:
-                            self.expect_and_feedbacks(test_connection, prompts)
                         result["result"] = "pass"
+
+                    # Wait for the prompt to send the next command
+                    if wait_for_prompt:
+                        ret = self.expect_and_feedbacks(test_connection, prompts)
+                        self.logger.debug("Matched a prompt: '%s'", prompts[ret])
 
                 # If the command is not named, a failure is fatal
                 if "name" not in cmd and result["result"] == "fail":
