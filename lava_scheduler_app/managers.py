@@ -249,10 +249,10 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             # public and if yes, we check for accessibility of either
             # actual_device or requested_device_type (depending on whether the
             # job is scheduled or not.
-            non_vg_ids = TestJob.objects.filter(viewing_groups=None)
+            vg_ids = TestJob.objects.filter(viewing_groups__isnull=False)
             filters |= (
                 Q(is_public=True)
-                & Q(id__in=non_vg_ids)
+                & ~Q(id__in=vg_ids)
                 & (
                     (
                         Q(actual_device__isnull=False)
@@ -276,7 +276,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                 # NOTE: Only the last two conditions will be ANDed. Keep in mind if
                 # another filter needs to be added in between this one and the one
                 # before.
-                filters |= ~Q(id__in=non_vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
+                filters |= Q(id__in=vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
 
             return self.filter(filters)
 
