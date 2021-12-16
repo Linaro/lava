@@ -22,6 +22,8 @@
 # imported by the parser to populate the list of subclasses.
 
 import os
+
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.action import Action, Pipeline, JobError, Timeout
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -200,18 +202,13 @@ class DDAction(Action):
                 "Unable to find disk by id %s"
                 % self.boot_params[self.parameters["device"]]["uuid"]
             )
-        storage_suffix = self.get_namespace_data(
-            action="storage-deploy", label="storage", key="suffix"
-        )
-        if not storage_suffix:
-            storage_suffix = ""
-        suffix = "%s/%s" % ("tmp", storage_suffix)
 
         # As the test writer can use any tool we cannot predict where the
         # download URL will be positioned in the download command.
         # Providing the download URL as a substitution option gets round this
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
-        download_url = "http://%s/%s/%s" % (ip_addr, suffix, decompressed_image)
+        path = d_file[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+        download_url = "http://%s/tmp/%s" % (ip_addr, path)
         substitutions = {"{DOWNLOAD_URL}": download_url, "{DEVICE}": device_path}
 
         download_cmd = None
@@ -287,10 +284,6 @@ class MassStorage(Action):
             label="u-boot",
             key="device",
             value=self.parameters["device"],
-        )
-        suffix = os.path.join(*self.image_path.split("/")[-2:])
-        self.set_namespace_data(
-            action=self.name, label="storage", key="suffix", value=suffix
         )
 
     def populate(self, parameters):
