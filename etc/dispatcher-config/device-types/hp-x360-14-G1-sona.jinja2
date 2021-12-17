@@ -5,4 +5,3 @@
 {% set bootloader_prompt = bootloader_prompt | default('sona:') %}
 {% set boot_message = boot_message | default('Starting kernel ...') %}
 {% set console_device = console_device | default('ttyS0') %}
-{% set base_kernel_args = base_kernel_args | default('earlyprintk=uart8250,mmio32,0xde000000,115200n8') %}
