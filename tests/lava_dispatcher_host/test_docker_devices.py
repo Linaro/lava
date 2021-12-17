@@ -54,6 +54,35 @@ def os_open(mocker, fd):
     return mocker.patch("os.open", return_value=fd)
 
 
+class TestDeviceFilterCGroupsV1:
+    @pytest.fixture
+    def devices_allow(self, mocker, tmp_path):
+        f = tmp_path / "devices.allow"
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV1.__get_devices_allow_file__",
+            return_value=str(f),
+        )
+        return f
+
+    @pytest.fixture(autouse=True)
+    def cgroupsv1(self, mocker):
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV1.detect",
+            return_value=True,
+        )
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.detect",
+            return_value=False,
+        )
+        mocker.patch
+
+    def test_share_device(self, devices_allow):
+        f = DeviceFilter("foo")
+        f.add(Device(10, 232))
+        f.apply()
+        assert "a 10:232 rwm\n" in devices_allow.read_text()
+
+
 class TestDeviceFilterCGroupsV2:
     @pytest.fixture(autouse=True)
     def cgroupsv2(self, mocker):

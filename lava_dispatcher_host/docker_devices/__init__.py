@@ -79,6 +79,10 @@ class DeviceFilterCommon:
             ["docker", "inspect", "--format={{.Id}}", container], text=True
         ).strip()
 
+    @property
+    def devices(self):
+        return list(self.__devices__)
+
     def load(self, state: Path):
         pass
 
@@ -108,14 +112,15 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
                 return True
         return False
 
-    def apply(self):
+    def __get_devices_allow_file__(self):
         devices_allow_file = (
             f"/sys/fs/cgroup/devices/docker/{self.container_id}/devices.allow"
         )
         if not os.path.exists(devices_allow_file):
             devices_allow_file = "/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
 
-        with open(devices_allow_file, "w") as allow:
+    def apply(self):
+        with open(self.__get_devices_allow_file__(), "w") as allow:
             for device in self.devices:
                 allow.write("a %d:%d rwm\n" % (device.major, device.minor))
 
