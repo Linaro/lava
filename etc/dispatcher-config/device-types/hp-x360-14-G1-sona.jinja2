@@ -5,3 +5,11 @@
 {% set bootloader_prompt = bootloader_prompt | default('sona:') %}
 {% set boot_message = boot_message | default('Starting kernel ...') %}
 {% set console_device = console_device | default('ttyS0') %}
+{% set boot_retry = 3 %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    depthcharge-start:
+      minutes: 1
+{% endblock timeouts %}
