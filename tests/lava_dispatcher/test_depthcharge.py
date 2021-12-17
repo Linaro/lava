@@ -116,7 +116,7 @@ class TestDepthchargeAction(StdoutTestCase):
         ][0]
         self.assertEqual(
             [action.name for action in depthcharge.pipeline.actions],
-            ["depthcharge-overlay", "connect-device", "depthcharge-retry"],
+            ["depthcharge-overlay", "depthcharge-retry"],
         )
 
         retry = [
@@ -126,5 +126,10 @@ class TestDepthchargeAction(StdoutTestCase):
         ][0]
         self.assertEqual(
             [action.name for action in retry.pipeline.actions],
-            ["reset-device", "depthcharge-start", "bootloader-commands"],
+            [
+                "reset-connection",
+                "reset-device",
+                "depthcharge-start",
+                "bootloader-commands",
+            ],
         )

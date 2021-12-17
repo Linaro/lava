@@ -1,5 +1,6 @@
 {# device_type: 'mps' #}
 {% extends 'base.jinja2' %}
+{% set must_use_connection = True %}
 {% block body %}
 usb_filesystem_label: '{{ usb_filesystem_label|default('V2M_MPS') }}'
 

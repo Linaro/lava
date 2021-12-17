@@ -211,16 +211,13 @@ class ShellSession(Connection):
         self.__runner__ = None
         self.timeout = shell_command.lava_timeout
         self.__logger__ = None
+        self.tags = ["shell"]
 
     @property
     def logger(self):
         if not self.__logger__:
             self.__logger__ = logging.getLogger("dispatcher")
         return self.__logger__
-
-    def disconnect(self, reason=""):
-        self.logger.debug("Disconnecting %s", self.name)
-        super().disconnect(reason)
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property

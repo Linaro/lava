@@ -33,7 +33,7 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.connections.serial import ResetConnection
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
@@ -177,7 +177,6 @@ class DepthchargeAction(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DepthchargeCommandOverlay())
-        self.pipeline.add_action(ConnectDevice())
         self.pipeline.add_action(DepthchargeRetry())
 
 
@@ -189,6 +188,7 @@ class DepthchargeRetry(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(ResetConnection())
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(DepthchargeStart())
         self.pipeline.add_action(BootloaderCommandsAction())

@@ -28,10 +28,14 @@
   name: depthcharge-action
   pipeline:
   - {class: actions.boot.depthcharge.DepthchargeCommandOverlay, name: depthcharge-overlay}
-  - {class: connections.serial.ConnectDevice, name: connect-device}
   - class: actions.boot.depthcharge.DepthchargeRetry
     name: depthcharge-retry
     pipeline:
+    - class: connections.serial.ResetConnection
+      name: reset-connection
+      pipeline:
+      - {class: connections.serial.DisconnectDevice, name: disconnect-device}
+      - {class: connections.serial.ConnectDevice, name: connect-device}
     - class: power.ResetDevice
       name: reset-device
       pipeline:

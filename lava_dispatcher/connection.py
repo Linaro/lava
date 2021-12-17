@@ -27,7 +27,7 @@ from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
 
 
-RECOGNIZED_TAGS = ("telnet", "ssh")
+RECOGNIZED_TAGS = ("telnet", "ssh", "shell")
 
 
 class SignalMatch(InternalObject):
@@ -106,7 +106,7 @@ class Connection:
         self.connected = True
         self.check_char = "#"
         self.tags = []
-        self.recognized_names = ["LxcSession", "QemuSession"]
+        self.recognized_names = ["LxcSession", "QemuSession", "ShellSession"]
 
     def corruption_check(self):
         self.sendline(self.check_char)
@@ -159,6 +159,8 @@ class Connection:
                     self.sendline("exit", disconnecting=True)
                 elif self.name == "QemuSession":
                     logger.info("Disconnecting from qemu: %s", reason)
+                elif self.name == "ShellSession":
+                    logger.info("Disconnecting from shell: %s", reason)
                 else:
                     raise LAVABug("'disconnect' not supported for %s" % self.tags)
             except ValueError:  # protection against file descriptor == -1
