@@ -4,6 +4,7 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set interrupt_ctrl_list = ['c'] %}
+{% set action_timeout_bootloader_interrupt = '60' %}
 
 {% set booti_kernel_addr = '0x00080000' %}
 {% set booti_ramdisk_addr = '0x02700000' %}
