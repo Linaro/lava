@@ -19,6 +19,7 @@
 
 import os
 
+from django.conf import settings
 from django.core.wsgi import get_wsgi_application
 from django.db.backends.signals import connection_created
 
@@ -35,7 +36,7 @@ def setup_postgres(connection, **kwargs):
         return
 
     with connection.cursor() as cursor:
-        cursor.execute("SET statement_timeout TO 30000")
+        cursor.execute("SET statement_timeout TO %s", (settings.STATEMENT_TIMEOUT,))
 
 
 connection_created.connect(setup_postgres, dispatch_uid="setup_postgres")
