@@ -1,13 +1,16 @@
 {# device_type = "lenovo-hr330a-7x33cto1ww-emag" #}
-{% extends 'd03.jinja2' %}
+{% extends 'base-grub.jinja2' %}
 
-{% block grub_ramdisk %}
+{% set action_timeout_bootloader_interrupt = 300 %}
+{% set action_timeout_power_off = 15 %}
+
+{% block ramdisk_commands %}
           - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf acpi=force root=/dev/ram0 {{ base_ip_args }}'
           - initrd (tftp,{SERVER_IP})/{RAMDISK}
           - boot
-{% endblock grub_ramdisk %}
+{% endblock ramdisk_commands %}
 
-{% block grub_nfs %}
+{% block nfs_commands %}
           - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf acpi=force root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}'
           - boot
-{% endblock grub_nfs %}
+{% endblock nfs_commands %}
