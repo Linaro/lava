@@ -158,6 +158,9 @@ class TestJobViewSet(viewsets.ModelViewSet):
     @detail_route(methods=["get"], suffix="junit")
     def junit(self, request, **kwargs):
         suites = []
+        classname_prefix = request.query_params.get("classname_prefix", "")
+        if classname_prefix != "":
+            classname_prefix = str(classname_prefix) + "_"
         for suite in self.get_object().testsuite_set.all().order_by("id"):
             cases = []
             for case in suite.testcase_set.all().order_by("id"):
@@ -173,7 +176,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 tc = junit_xml.TestCase(
                     case.name,
                     elapsed_sec=duration,
-                    classname=case.suite.name,
+                    classname="%s%s" % (classname_prefix, case.suite.name),
                     timestamp=case.logged,
                 )
                 if case.result == TestCase.RESULT_FAIL:

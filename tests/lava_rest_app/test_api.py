@@ -533,6 +533,15 @@ class TestRestApi:
         assert "timestamp" in tree[0][0].attrib
         assert len(tree[0][1]) == 0
 
+    def test_testjob_junit_classname_prefix(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/junit/?classname_prefix=unique_id" % self.public_testjob1.id,
+        )
+        tree = ET.fromstring(data)
+        assert tree[0][0].attrib["classname"] == "unique_id_lava"
+
     def test_testjob_tap13(self):
         data = self.hit(
             self.userclient,
