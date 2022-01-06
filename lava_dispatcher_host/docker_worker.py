@@ -20,6 +20,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pathlib
+import platform
 import re
 import socket
 import signal
@@ -96,7 +97,13 @@ class Terminate(RuntimeError):
 def run(version, options):
     if len(version.split(".")) == 4:
         # development
-        image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
+        if platform.machine() == "x86_64":
+            image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
+        elif platform.machine() == "aarch64":
+            image = f"hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:{version}"
+        else:
+            print("ERROR: unsupported architecture '{platform.machine()}'")
+            sys.exit(1)
     else:
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"
