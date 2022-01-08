@@ -45,6 +45,7 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 self.__driver__ = DockerDriver(self, params)
                 self.__driver__.docker_options = shlex.split(remote_options)
                 self.__driver__.docker_run_options = [
+                    "-t",
                     "--privileged",
                     "--volume=/dev:/dev",
                     "--net=host",
