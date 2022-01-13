@@ -239,6 +239,9 @@ ALLOW_ADMIN_DELETE = True
 # Default callback http timeout in seconds
 CALLBACK_TIMEOUT = 5
 
+# Default statement timeout in milliseconds
+STATEMENT_TIMEOUT = 30000
+
 # Default length value for all tables
 DEFAULT_TABLE_LENGTH = 25
 
@@ -341,6 +344,7 @@ def update(values):
     MIDDLEWARE = values.get("MIDDLEWARE")
     MOUNT_POINT = values.get("MOUNT_POINT")
     SENTRY_DSN = values.get("SENTRY_DSN")
+    STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
     USE_DEBUG_TOOLBAR = values.get("USE_DEBUG_TOOLBAR")
 
     # Fix mount point
