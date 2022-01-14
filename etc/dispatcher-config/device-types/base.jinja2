@@ -138,7 +138,8 @@ constants:
     error-messages:
       - 'No configuration methods succeeded'
       - 'Connection timed out'
-
+  depthcharge:
+    final-message: '{{ depthcharge_final_message | default("Starting kernel") }}'
   # OS shutdown message
   # Override: set as the shutdown-message parameter of an Action.
   # SHUTDOWN_MESSAGE
