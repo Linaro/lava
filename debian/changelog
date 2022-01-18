@@ -1,5 +1,12 @@
 lava (2022.01-1) unstable; urgency=medium
 
+  [ remi.duraffort@linaro.org ]
+  * UNRELEASED
+
+ --  <remi.duraffort@linaro.org>  Tue, 18 Jan 2022 16:18:36 +0100
+
+lava (2022.01-1) unstable; urgency=medium
+
   * LAVA Software 2022.01 release
 
   [ Antonio Terceiro ]
