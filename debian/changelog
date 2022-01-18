@@ -1,3 +1,14 @@
+lava (2022.01-1) unstable; urgency=medium
+
+  * LAVA Software 2022.01 release
+
+  [ Antonio Terceiro ]
+  * [b3ef53b98] ci: debian: check dependencies for lava-dispatcher-hosts as well
+  * [180cb3c14] lava_dispatcher_host: add support for docker device sharing under cgroups v2
+  * [c3cbe547a] lava-dispatcher-host: move device sharing to a daemon
+
+ --  <remi.duraffort@linaro.org>  Tue, 18 Jan 2022 15:10:15 +0100
+
 lava (2021.11-1) unstable; urgency=medium
 
   * LAVA Software 2021.11 release
