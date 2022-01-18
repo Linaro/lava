@@ -258,7 +258,7 @@ class QemuSession(ShellSession):
         self.sendline("poweroff", disconnecting=True)
         self.listen_feedback(5)
         self.connected = False
-        super().disconnect()
+        super().disconnect(reason)
 
 
 class DisconnectDevice(ConnectDevice):
