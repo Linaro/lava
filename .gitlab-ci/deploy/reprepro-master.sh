@@ -51,5 +51,7 @@ else
             echo ${VERSION} > ${BASEDIR}/latest
         fi
     done
+    # cleanup 6 month old snapshots
+    find ${SNAPSHOT} -mtime +180 -delete
 
 fi
