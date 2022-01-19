@@ -22,18 +22,7 @@ import datetime
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import (
-    Case,
-    When,
-    IntegerField,
-    FloatField,
-    Func,
-    Sum,
-    Count,
-    OuterRef,
-    Subquery,
-)
-from django.db.models.functions import Coalesce
+from django.db.models import Case, When, IntegerField, Sum
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load, yaml_safe_dump
@@ -54,13 +43,6 @@ class WorkerSummary:
 
     def overused(self):
         return self.limit > 0 and self.busy >= self.limit
-
-
-class Random(Func):
-    function = "RANDOM"
-
-    def __init__(self):
-        super(Random, self).__init__(output_field=FloatField())
 
 
 def filter_devices(q):
@@ -334,32 +316,11 @@ def schedule_jobs_for_device_type(logger, dt, available_devices):
 
 
 def schedule_jobs_for_device(logger, device, print_header):
-    # Add running jobs metric: if jobs have the same priority and a single submitter
-    # sends a large batch of jobs, subsequent jobs will be stuck waiting for an
-    # available device. To ensure fairness on a single device of given device type jobs
-    # are sorted randomly.
-    running = TestJob.objects.filter(state=TestJob.STATE_RUNNING)
-    running = running.filter(actual_device__isnull=False)
-    running = running.filter(requested_device_type__pk=device.device_type.pk)
-
-    subq = running.values("submitter")
-    subq = subq.annotate(running_by_submitter=Count("pk", distinct=True))
-    subq = subq.filter(submitter=OuterRef("submitter"))
-
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(actual_device__isnull=True)
     jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
-    jobs = jobs.annotate(
-        running_by_submitter=Coalesce(
-            Subquery(subq.values("running_by_submitter"), output_field=IntegerField()),
-            0,
-        ),
-        raffle=Random(),
-    )
     jobs = jobs.select_related("submitter")
-    jobs = jobs.order_by(
-        "-priority", "running_by_submitter", "raffle", "submit_time", "sub_id", "id"
-    )
+    jobs = jobs.order_by("-priority", "submit_time", "sub_id", "id")
 
     device_tags = set(device.tags.all())
     for job in jobs:
