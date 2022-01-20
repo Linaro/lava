@@ -38,9 +38,12 @@ else
     # Copy current repo to old-release, and update the release symlink
     # to point there atomically
     cd ${HOME}/repository
-    rm -rf old-release
-    cp -a current-release old-release
-    ln -snfv old-release release
+    dist=$(echo "${DISTS}" | awk '{print($1)}') # any dist is good enough
+    OLDVERSION=`reprepro -b current-release -A source list ${dist} lava | awk '{print($3)}' | sed -e 's/+.*//'`
+    mkdir -p archive
+    mkdir archive/${OLDVERSION}
+    cp -a current-release archive/${OLDVERSION}
+    ln -snfv archive/${OLDVERSION} release
 
     # Now work in the (not linked) current-release directory, leaving
     # the existing working config in old-release
