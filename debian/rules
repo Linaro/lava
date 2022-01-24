@@ -94,6 +94,11 @@ override_dh_installinit:
 
 override_dh_installsystemd:
 	dh_installsystemd -Xlava-celery-worker.service -Xlava-docker-worker.service -Xlava-dispatcher-host.service
+	# optional (not enabled or started by default):
+	dh_installsystemd --name=lava-celery-worker --no-enable --no-start
+	dh_installsystemd --name=lava-docker-worker --no-enable --no-start
+	# started via socket activation:
+	dh_installsystemd --name=lava-dispatcher-host --no-start
 
 override_dh_compress:
 	dh_compress -X.yaml
