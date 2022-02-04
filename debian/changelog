@@ -1,3 +1,9 @@
+lava (2022.01.3-2) unstable; urgency=medium
+
+  * autopkgtest: testsuite: add dependency on lava-dispatcher-host
+
+ -- Antonio Terceiro <terceiro@debian.org>  Fri, 04 Feb 2022 14:46:39 -0300
+
 lava (2022.01.3-1) unstable; urgency=medium
 
   [ Remi Duraffort ]
