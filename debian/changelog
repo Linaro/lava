@@ -1,3 +1,10 @@
+lava (2022.01.3-3) unstable; urgency=medium
+
+  * Skip BPF test when running testsuite on containers. This fixes the
+    autopkgtest failures on Debian CI.
+
+ -- Antonio Terceiro <terceiro@debian.org>  Mon, 07 Feb 2022 11:08:02 -0300
+
 lava (2022.01.3-2) unstable; urgency=medium
 
   * autopkgtest: testsuite: add dependency on lava-dispatcher-host
