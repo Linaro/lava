@@ -106,15 +106,24 @@ class DockerRun:
 
     def cmdline(self, *args):
         cmd = (
-            ["docker"]
-            + self.__docker_options__
-            + ["run", "--rm", "--init"]
-            + self.__docker_run_options__
+            ["docker"] + self.__docker_options__ + ["run"] + self.__docker_run_options__
         )
+        cmd += self.interaction_options()
+        cmd += self.start_options()
+        cmd.append(self.image)
+        cmd += args
+        return cmd
+
+    def interaction_options(self):
+        cmd = []
         if self.__interactive__:
             cmd.append("--interactive")
         if self.__tty__:
             cmd.append("--tty")
+        return cmd
+
+    def start_options(self):
+        cmd = ["--rm", "--init"]
         if self.__name__:
             cmd.append(f"--name={self.__name__}")
         if self.__network__:
@@ -132,8 +141,6 @@ class DockerRun:
             cmd.append(opt)
         for variable, value in self.__environment__:
             cmd.append(f"--env={variable}={value}")
-        cmd.append(self.image)
-        cmd += args
         return cmd
 
     def run(self, *args, action=None):
