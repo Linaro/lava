@@ -52,10 +52,9 @@ def dump(data: Dict) -> str:
     return data_str
 
 
-def sender(conn, url: str, token: str) -> None:
+def sender(conn, url: str, token: str, max_time: int) -> None:
     HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
     MAX_RECORDS = 1000
-    MAX_TIME = 1
 
     def post(session, records: List[str], index: int) -> Tuple[List[str], int]:
         # limit the number of records to send in one call
@@ -87,7 +86,7 @@ def sender(conn, url: str, token: str) -> None:
         while not leaving:
             # Listen for new messages if we don't have  message yet or some
             # messages are already in the socket.
-            if len(records) == 0 or conn.poll(MAX_TIME):
+            if len(records) == 0 or conn.poll(max_time):
                 data = conn.recv_bytes()
                 if data == b"":
                     leaving = True
@@ -95,7 +94,7 @@ def sender(conn, url: str, token: str) -> None:
                     records.append(data.decode("utf-8", errors="replace"))
 
             records_limit = len(records) >= MAX_RECORDS
-            time_limit = (time.time() - last_call) >= MAX_TIME
+            time_limit = (time.time() - last_call) >= max_time
             if records and (records_limit or time_limit):
                 last_call = time.time()
                 # Send the data
@@ -107,7 +106,7 @@ def sender(conn, url: str, token: str) -> None:
 
 
 class HTTPHandler(logging.Handler):
-    def __init__(self, url, token):
+    def __init__(self, url, token, interval):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
@@ -116,7 +115,9 @@ class HTTPHandler(logging.Handler):
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
-        self.proc = multiprocessing.Process(target=sender, args=(reader, url, token))
+        self.proc = multiprocessing.Process(
+            target=sender, args=(reader, url, token, interval)
+        )
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
 
@@ -143,8 +144,8 @@ class YAMLLogger(logging.Logger):
         self.markers = {}
         self.line = 0
 
-    def addHTTPHandler(self, url, token):
-        self.handler = HTTPHandler(url, token)
+    def addHTTPHandler(self, url, token, interval):
+        self.handler = HTTPHandler(url, token, interval)
         self.addHandler(self.handler)
         return self.handler
 

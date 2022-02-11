@@ -74,6 +74,12 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
         default=20,
         help="Time between two ping to the server",
     )
+    net.add_argument(
+        "--job-log-interval",
+        type=int,
+        default=1,
+        help="Time between two job log submissions to the server",
+    )
 
     token = net.add_mutually_exclusive_group()
     token.add_argument(

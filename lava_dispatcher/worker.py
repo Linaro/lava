@@ -157,6 +157,7 @@ def start_job(
     dispatcher: str,
     env_str: str,
     env_dut: str,
+    job_log_interval: int,
 ) -> Optional[int]:
     """
     Start the lava-run process and return the pid
@@ -193,6 +194,7 @@ def start_job(
             f"--job-id={job_id}",
             f"--url={url}",
             f"--token={token}",
+            f"--job-log-interval={job_log_interval}",
         ]
         if debug:
             args.append("--debug")
@@ -543,13 +545,17 @@ def register(url: str, name: str, username: str = None, password: str = None) ->
         time.sleep(5)
 
 
-def running(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
+def running(
+    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+) -> None:
     job = jobs.get(job_id)
     if job is None:
-        start(url, jobs, job_id, token)
+        start(url, jobs, job_id, token, job_log_interval)
 
 
-def start(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
+def start(
+    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+) -> None:
     LOG.info("[%d] server => START", job_id)
     # Was the job already started?
     job = jobs.get(job_id)
@@ -582,7 +588,15 @@ def start(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
 
         # Start the job, grab the pid and create it in the dabatase
         pid = start_job(
-            url, token, job_id, definition, device, dispatcher, env, env_dut
+            url,
+            token,
+            job_id,
+            definition,
+            device,
+            dispatcher,
+            env,
+            env_dut,
+            job_log_interval,
         )
         job = jobs.create(
             job_id,
@@ -611,6 +625,7 @@ def handle(options, jobs: JobsDB) -> float:
     name: str = options.name
     token: str = options.token
     url: str = options.url
+    job_log_interval: int = options.job_log_interval
 
     try:
         data = ping(url, token, name)
@@ -624,7 +639,7 @@ def handle(options, jobs: JobsDB) -> float:
 
     # running jobs
     for job in data.get("running", []):
-        running(url, jobs, job["id"], job["token"])
+        running(url, jobs, job["id"], job["token"], job_log_interval)
 
     # cancel jobs
     for job in data.get("cancel", []):
@@ -632,7 +647,7 @@ def handle(options, jobs: JobsDB) -> float:
 
     # start jobs
     for job in data.get("start", []):
-        start(url, jobs, job["id"], job["token"])
+        start(url, jobs, job["id"], job["token"], job_log_interval)
 
     # Check job status
     # TODO: store the token and reuse it

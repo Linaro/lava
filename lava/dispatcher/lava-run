@@ -68,6 +68,13 @@ def parser():
     group.add_argument(
         "--token", default=None, metavar="token", help="token for server authentication"
     )
+    group.add_argument(
+        "--job-log-interval",
+        metavar="SECONDS",
+        type=int,
+        default=1,
+        help="Time between two job log submissions to the server",
+    )
 
     group = p_obj.add_argument_group("configuration files")
     group.add_argument(
@@ -115,6 +122,7 @@ def setup_logger(options):
         logger.addHTTPHandler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
             options.token,
+            options.job_log_interval,
         )
     else:
         logger.addHandler(logging.StreamHandler())
