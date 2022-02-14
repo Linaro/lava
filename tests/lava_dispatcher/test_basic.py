@@ -224,7 +224,7 @@ class Factory:
         device = NewDevice(yaml_safe_load(data))
         try:
             parser = JobParser()
-            job = parser.parse(yaml_safe_dump(job_data), device, 4999, None, "")
+            job = parser.parse(yaml_safe_dump(job_data), device, "4999", None, "")
         except (ConfigurationError, TypeError) as exc:
             print("####### Parser exception ########")
             print(device)
