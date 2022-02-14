@@ -19,15 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import os
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, InternalObject
 from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.docker import DockerContainer
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.utils.udev import get_udev_devices
+from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
-class OptionalContainerAction(Action):
+class OptionalContainerAction(Action, DeviceContainerMappingMixin):
     command_exception = InfrastructureError
 
     def validate(self):
@@ -63,6 +66,12 @@ class OptionalContainerAction(Action):
     def is_container(self):
         return self.driver.is_container
 
+    def run_maybe_in_container(self, cmd):
+        self.driver.run(cmd)
+
+    def get_output_maybe_in_container(self, cmd, **kwargs):
+        return self.driver.get_output(cmd)
+
 
 class NullDriver(InternalObject):
     is_container = False
@@ -79,6 +88,12 @@ class NullDriver(InternalObject):
 
     def validate(self):
         pass
+
+    def run(self, cmd):
+        self.action.run_cmd(self.get_command_prefix() + cmd)
+
+    def get_output(self, cmd):
+        return self.action.parsed_command(self.get_command_prefix() + cmd)
 
 
 class LxcDriver(NullDriver):
@@ -106,25 +121,56 @@ class DockerDriver(NullDriver):
         self.docker_run_options = []
         self.copied_files = []
 
-    def get_command_prefix(self):
-        docker = DockerRun.from_parameters(self.params, self.action.job)
+    @property
+    def container_name(self):
+        return "lava-" + str(self.action.job.job_id) + "-" + self.action.level
 
+    def build(self, cls):
+        docker = cls.from_parameters(self.params, self.action.job)
         docker.add_docker_options(*self.docker_options)
         docker.add_docker_run_options(*self.docker_run_options)
-
-        for device in self.__get_device_nodes__():
-            docker.add_device(device)
 
         if not self.docker_options:
             for f in self.copied_files:
                 docker.bind_mount(f)
+        return docker
 
+    def get_command_prefix(self):
+        docker = self.build(DockerRun)
         return docker.cmdline()
+
+    def run(self, cmd):
+        docker = self.build(DockerContainer)
+        docker.name(self.container_name)
+        docker.start(self.action)
+        try:
+            self.__map_devices__()
+            docker.run(cmd, self.action)
+        finally:
+            docker.stop()
+
+    def get_output(self, cmd):
+        # FIXME duplicates most of run()
+        docker = self.build(DockerContainer)
+        docker.name(self.container_name)
+        docker.start(self.action)
+        try:
+            self.__map_devices__()
+            return docker.get_output(cmd, self.action)
+        finally:
+            docker.stop()
 
     def maybe_copy_to_container(self, src):
         if src not in self.copied_files:
             self.copied_files.append(src)
         return src
+
+    def __map_devices__(self):
+        action = self.action
+        action.add_device_container_mappings(self.container_name, "docker")
+        for dev in self.__get_device_nodes__():
+            if not os.path.islink(dev):
+                action.trigger_share_device_with_container(dev)
 
     def __get_device_nodes__(self):
         device_info = self.action.job.device.get("device_info", {})
