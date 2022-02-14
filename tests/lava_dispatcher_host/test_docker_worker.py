@@ -79,16 +79,30 @@ class TestRun:
     def test_get_image_released(self, get_image, Popen, options):
         lava_dispatcher_host.docker_worker.run("2020.07", options)
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07")
+        lava_dispatcher_host.docker_worker.run("2020.07.1", options)
+        get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07.1")
 
     def test_get_image_development(self, get_image, Popen, options):
-        lava_dispatcher_host.docker_worker.run("2020.07.10.g12371263", options)
+        lava_dispatcher_host.docker_worker.run("2020.07.0010.g12371263", options)
         if platform.machine() == "x86_64":
             get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.10.g12371263"
+                "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.0010.g12371263"
             )
         elif platform.machine() == "aarch64":
             get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2020.07.10.g12371263"
+                "hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2020.07.0010.g12371263"
+            )
+        else:
+            raise NotImplemented()
+
+        lava_dispatcher_host.docker_worker.run("2020.07.2.0010.g12371263", options)
+        if platform.machine() == "x86_64":
+            get_image.assert_called_with(
+                "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.2.0010.g12371263"
+            )
+        elif platform.machine() == "aarch64":
+            get_image.assert_called_with(
+                "hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2020.07.2.0010.g12371263"
             )
         else:
             raise NotImplemented()

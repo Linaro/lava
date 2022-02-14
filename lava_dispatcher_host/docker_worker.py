@@ -34,6 +34,8 @@ from requests.packages.urllib3.util.retry import Retry
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.worker import get_parser
 
+PAT = re.compile(r"\d+\.\d+\.(\d+\.){0,1}\d{4}\.g[\d\w]+")
+
 
 def has_image(image):
     try:
@@ -95,7 +97,7 @@ class Terminate(RuntimeError):
 
 
 def run(version, options):
-    if len(version.split(".")) == 4:
+    if PAT.match(version):
         # development
         if platform.machine() == "x86_64":
             image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
