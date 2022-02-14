@@ -25,10 +25,13 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="environ")
 
+import base64
 import contextlib
-import environ
-import os
+import json
 from pathlib import Path
+import os
+
+import environ
 import yaml
 
 from lava_server.settings.common import *
@@ -51,7 +54,7 @@ environ.Env.read_env()
 
 if os.environ.get("DATABASE_URL"):
     DATABASES = {"default": env.db()}
-    INSTANCE_NAME = os.environ["INSTANCE_NAME"]
+    INSTANCE_NAME = os.environ.get("INSTANCE_NAME", INSTANCE_NAME)
 else:
     with contextlib.suppress(FileNotFoundError):
         config = ConfigFile.load("/etc/lava-server/instance.conf")
@@ -92,6 +95,22 @@ for filename in FILES:
         print(f"[INIT] Unable to load {filename.name}: invalid yaml")
         print(exc)
         raise Exception(f"Unable to load {filename.name}") from exc
+
+for k in os.environ:
+    if k.startswith("LAVA_SETTINGS_"):
+        value = env(k)
+        globals()[k[len("LAVA_SETTINGS_") :]] = value
+
+if "LAVA_JSON_SETTINGS" in os.environ:
+    try:
+        for k, v in json.loads(
+            base64.b64decode(os.environ["LAVA_JSON_SETTINGS"])
+        ).items():
+            globals()[k] = v
+    except Exception as exc:
+        print(f"[INIT] Unable to load LAVA_JSON_SETTINGS: invalid string")
+        print(exc)
+        raise Exception(f"Unable to load LAVA_JSON_SETTINGS") from exc
 
 # Update settings with custom values
 for (k, v) in update(globals()).items():
