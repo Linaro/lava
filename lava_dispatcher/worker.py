@@ -654,7 +654,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
     while True:
         with contextlib.suppress(aiohttp.ClientError):
             async with aiohttp.ClientSession(headers=HEADERS) as session:
-                async with session.ws_connect(f"{options.ws_url}") as ws:
+                async with session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
                     async for msg in ws:
                         if msg.type != aiohttp.WSMsgType.TEXT:
                             continue
