@@ -31,6 +31,9 @@ markdown_extensions:
 - pymdownx.superfences
 - pymdownx.snippets:
     base_path: doc/content/_snippets/
+    check_paths: True
+- pymdownx.tabbed:
+    alternate_style: true
 
 # Debugging ?
 # Job errors ?

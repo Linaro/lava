@@ -42,13 +42,15 @@ created:
 
 A management command is used to perform a sync to the database:
 
-```shell tab="debian"
-lava-server manage sync
-```
+=== "Debian"
+    ```shell
+    lava-server manage sync
+    ```
 
-```shell tab="docker-compose"
-docker-compose exec lava-server lava-server manage maintenance
-```
+=== "docker-compose"
+    ```shell
+    docker-compose exec lava-server lava-server manage maintenance
+    ```
 
 You can for example set this to run when the contents of the device dictionary
 folder change using a watch utility.
