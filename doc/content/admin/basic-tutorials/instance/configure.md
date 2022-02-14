@@ -4,13 +4,14 @@
 
 Admins can create superuser accounts from the command line:
 
-!!! example ""
+=== "Docker"
 
-    ```shell tab="Docker"
+    ```shell
     docker-compose exec lava-server lava-server manage createsuperuser
     ```
 
-    ```shell tab="Debian"
+=== "Debian"
+    ```shell
     lava-server manage createsuperuser
     ```
 
