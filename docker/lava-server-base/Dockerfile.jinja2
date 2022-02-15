@@ -4,6 +4,7 @@
 
 {% set dependencies = [
     {"pkgs": "apache2 gunicorn3 postgresql postgresql-client postgresql-common python3-setuptools" },
+    {"pkgs": "libldap-common libsasl2-modules" },
     {"pkgs": requires("debian", "bullseye", "lava-common") },
     {"pkgs": requires("debian", "bullseye", "lava-server") },
 ] %}
