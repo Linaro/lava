@@ -47,4 +47,8 @@ actions:
           cmdline: {{ kernel_args }} console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_ip_args }}
           commands:
 {{ base_depthcharge_commands }}
+        emmc:
+          cmdline: console={{ console_device }},{{ baud_rate }}n8 {{ base_ip_args }} {{ kernel_args }}
+          commands:
+{{ base_depthcharge_commands }}
 {% endblock body %}
