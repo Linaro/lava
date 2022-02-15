@@ -90,11 +90,11 @@ start_apache2() {
 start_lava_celery_worker() {
     USER="lavaserver"
     GROUP="lavaserver"
-    LOGLEVEL=${LOGLEVEL:-INFO}
+    LOGLEVEL=${CELERY_LOGLEVEL:-INFO}
     LOGFILE="/var/log/lava-server/lava-celery-worker.log"
-    CONCURRENCY=""
-    AUTOSCALE=""
-    ARGS=""
+    CONCURRENCY=${CELERY_CONCURRENCY:-}
+    AUTOSCALE=${CELERY_AUTOSCALE:-}
+    ARGS=${CELERY_ARGS:-}
     [ -e /etc/default/lava-celery-worker ] && . /etc/default/lava-celery-worker
     [ -e /etc/lava-server/lava-celery-worker ] && . /etc/lava-server/lava-celery-worker
     if [ "$CAN_EXEC" = "1" ]; then
@@ -106,7 +106,7 @@ start_lava_celery_worker() {
 }
 
 start_lava_coordinator() {
-    LOGLEVEL=${LOGLEVEL:-DEBUG}
+    LOGLEVEL=${COORDINATOR_LOGLEVEL:-DEBUG}
     LOGFILE="/var/log/lava-coordinator.log"
     [ -e /etc/default/lava-coordinator ] && . /etc/default/lava-coordinator
     [ -e /etc/lava-coordinator/lava-coordinator ] && . /etc/lava-coordinator/lava-coordinator
@@ -120,9 +120,10 @@ start_lava_coordinator() {
 
 
 start_lava_publisher() {
-    LOGLEVEL=${LOGLEVEL:-DEBUG}
-    HOST="*"
-    PORT=8001
+    LOGLEVEL=${PUBLISHER_LOGLEVEL:-DEBUG}
+    HOST=${PUBLISHER_HOST:-*}
+    PORT=${PUBLISHER_PORT:-8001}
+
     [ -e /etc/default/lava-publisher ] && . /etc/default/lava-publisher
     [ -e /etc/lava-server/lava-publisher ] && . /etc/lava-server/lava-publisher
     if [ "$CAN_EXEC" = "1" ]; then
@@ -135,7 +136,10 @@ start_lava_publisher() {
 
 
 start_lava_scheduler() {
-    LOGLEVEL=${LOGLEVEL:-DEBUG}
+    LOGLEVEL=${SCHEDULER_LOGLEVEL:-DEBUG}
+    EVENT_URL=${SCHEDULER_EVENT_URL:-}
+    IPV6=${SCHEDULER_IPV6:-}
+
     [ -e /etc/default/lava-scheduler ] && . /etc/default/lava-scheduler
     [ -e /etc/lava-server/lava-scheduler ] && . /etc/lava-server/lava-scheduler
     if [ "$CAN_EXEC" = "1" ]; then
@@ -148,11 +152,13 @@ start_lava_scheduler() {
 
 
 start_lava_server_gunicorn() {
-    LOGLEVEL=${LOGLEVEL:-DEBUG}
-    TIMEOUT=""
-    WORKER_CLASS="eventlet"
-    WORKERS="4"
+    BIND=${GUNICORN_BIND:-}
+    LOGLEVEL=${GUNICORN_LOGLEVEL:-DEBUG}
+    TIMEOUT=${GUNICORN_TIMEOUT:-}
+    WORKER_CLASS=${GUNICORN_WORKER_CLASS:-eventlet}
+    WORKERS=${GUNICORN_WORKERS:-4}
     LOGFILE="/var/log/lava-server/gunicorn.log"
+
     [ -e /etc/default/lava-server-gunicorn ] && . /etc/default/lava-server-gunicorn
     [ -e /etc/lava-server/lava-server-gunicorn ] && . /etc/lava-server/lava-server-gunicorn
     if [ "$CAN_EXEC" = "1" ]; then
