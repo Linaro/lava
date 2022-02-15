@@ -34,4 +34,4 @@ class DeviceContainerMappingMixin:
         Trigger udev to let lava-dispatcher-host into sharing the device with
         container.
         """
-        self.run_cmd(["udevadm", "trigger", "--action=add", device])
+        self.run_cmd(["udevadm", "trigger", "--action=add", device], allow_fail=True)
