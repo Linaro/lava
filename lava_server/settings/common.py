@@ -337,6 +337,7 @@ def update(values):
     AUTHENTICATION_BACKENDS = values.get("AUTHENTICATION_BACKENDS")
     DISALLOWED_USER_AGENTS = values.get("DISALLOWED_USER_AGENTS")
     DJANGO_LOGFILE = values.get("DJANGO_LOGFILE")
+    EVENT_NOTIFICATION = values.get("EVENT_NOTIFICATION")
     INSTALLED_APPS = values.get("INSTALLED_APPS")
     INTERNAL_IPS = values.get("INTERNAL_IPS")
     LOGGING = values.get("LOGGING")
@@ -363,6 +364,9 @@ def update(values):
     # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
     ADMINS = [tuple(v) for v in ADMINS]
     MANAGERS = [tuple(v) for v in MANAGERS]
+
+    # EVENT_NOTIFICATION is a boolean
+    EVENT_NOTIFICATION = bool(EVENT_NOTIFICATION)
 
     # Social accounts authentication config
     if AUTH_SOCIALACCOUNT or AUTH_GITLAB_URL:
