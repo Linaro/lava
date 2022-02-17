@@ -158,13 +158,14 @@ start_lava_server_gunicorn() {
     WORKER_CLASS=${GUNICORN_WORKER_CLASS:-eventlet}
     WORKERS=${GUNICORN_WORKERS:-4}
     LOGFILE="/var/log/lava-server/gunicorn.log"
+    EXTRA_ARGS=${GUNICORN_EXTRA_ARGS:-}
 
     [ -e /etc/default/lava-server-gunicorn ] && . /etc/default/lava-server-gunicorn
     [ -e /etc/lava-server/lava-server-gunicorn ] && . /etc/lava-server/lava-server-gunicorn
     if [ "$CAN_EXEC" = "1" ]; then
-        exec /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file - -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT
+        exec /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file - -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT $EXTRA_ARGS
     else
-        setsid /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT &
+        setsid /usr/bin/gunicorn3 lava_server.wsgi --log-level "$LOGLEVEL" --log-file "$LOGFILE" -u lavaserver -g lavaserver --worker-class "$WORKER_CLASS" --workers "$WORKERS" --worker-tmp-dir /dev/shm $RELOAD $BIND $TIMEOUT $EXTRA_ARGS &
         GUNICORN_PID=$!
     fi
 }

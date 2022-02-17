@@ -19,3 +19,6 @@
 
 # Worker timeout
 # TIMEOUT="--timeout 30"
+
+# Extra arguments
+# EXTRA_ARGS=""
