@@ -443,7 +443,7 @@ def testcase(request, case_id, job=None, pk=None):
                 for key, value in items.items():
                     extra_source.setdefault(extra_case.id, "")
                     extra_source[extra_case.id] += "%s: %s\n" % (key, value)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, yaml.YAMLError):
             # In some old version of LAVA, extra_data is not a string but an OrderedDict
             # In this case, just skip it.
             pass
