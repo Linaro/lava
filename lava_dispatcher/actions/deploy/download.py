@@ -758,7 +758,7 @@ class PreDownloadedAction(Action):
         super().validate()
         if self.url.scheme != "downloads":
             self.errors = "downloads:// url scheme is invalid"
-        if not self.url.path and not self.url.hostname:
+        if not self.url.path and not self.url.netloc:
             self.errors = "Invalid path in downloads:// url"
 
         image_arg = self.params.get("image_arg")
@@ -771,11 +771,11 @@ class PreDownloadedAction(Action):
             )
 
     def run(self, connection, max_end_time):
-        # In downloads://foo/bar.ext, "foo" is the "hostname", "/bar.ext" is
-        # the path. But in downloads://foo.ext, "foo.ext" is the hostnane, and
+        # In downloads://foo/bar.ext, "foo" is the "netloc", "/bar.ext" is
+        # the path. But in downloads://foo.ext, "foo.ext" is the netloc, and
         # the path is empty.
-        # In downloads:///foo/bar.ext, hostname is None while path is /foo/bar.ext.
-        filename = self.url.hostname if self.url.hostname else ""
+        # In downloads:///foo/bar.ext, netloc is None while path is /foo/bar.ext.
+        filename = self.url.netloc if self.url.netloc else ""
         if self.url.path:
             filename += self.url.path
 
