@@ -106,15 +106,24 @@ class DockerRun:
 
     def cmdline(self, *args):
         cmd = (
-            ["docker"]
-            + self.__docker_options__
-            + ["run", "--rm", "--init"]
-            + self.__docker_run_options__
+            ["docker"] + self.__docker_options__ + ["run"] + self.__docker_run_options__
         )
+        cmd += self.interaction_options()
+        cmd += self.start_options()
+        cmd.append(self.image)
+        cmd += args
+        return cmd
+
+    def interaction_options(self):
+        cmd = []
         if self.__interactive__:
             cmd.append("--interactive")
         if self.__tty__:
             cmd.append("--tty")
+        return cmd
+
+    def start_options(self):
+        cmd = ["--rm", "--init"]
         if self.__name__:
             cmd.append(f"--name={self.__name__}")
         if self.__network__:
@@ -132,8 +141,6 @@ class DockerRun:
             cmd.append(opt)
         for variable, value in self.__environment__:
             cmd.append(f"--env={variable}={value}")
-        cmd.append(self.image)
-        cmd += args
         return cmd
 
     def run(self, *args, action=None):
@@ -216,3 +223,50 @@ class DockerRun:
             logger.warning(
                 f"Architecture mismatch: host is {host}, container is {container}. This *might* work, but if it does, will probably be a lot slower than if the container image architecture matches the host."
             )
+
+
+class DockerContainer(DockerRun):
+    __started__ = False
+
+    def run(self, args, action=None):
+        self.start(action)
+        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd += self.interaction_options()
+        cmd.append(self.__name__)
+        cmd += args
+        self.run_cmd(cmd, action)
+
+    def get_output(self, args, action=None):
+        if action:
+            runner = action.parsed_command
+        else:
+            runner = self.check_output
+        self.start(action)
+        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd += self.interaction_options()
+        cmd.append(self.__name__)
+        cmd += args
+        return runner(cmd)
+
+    def check_output(self, cmd):
+        return subprocess.check_output(cmd).decode("utf-8")
+
+    def start(self, action=None):
+        if self.__started__:
+            return
+
+        cmd = ["docker", "run", "--detach"]
+        cmd += self.start_options()
+        cmd.append(self.image)
+        cmd += ["sleep", "infinity"]
+        self.run_cmd(cmd, action)
+        self.wait()
+        self.__started__ = True
+
+    def stop(self, action=None):
+        # Not calling run_cmd on purpose, to hide this from the logs
+        subprocess.check_call(
+            ["docker", "stop", self.__name__],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )

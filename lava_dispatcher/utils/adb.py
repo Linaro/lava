@@ -25,10 +25,10 @@ from lava_dispatcher.utils.containers import OptionalContainerAction
 class OptionalContainerAdbAction(OptionalContainerAction):
     def get_adb_cmd(self, cmd):
         serial_number = self.job.device["adb_serial_number"]
-        return self.driver.get_command_prefix() + ["adb", "-s", serial_number] + cmd
+        return ["adb", "-s", serial_number] + cmd
 
     def run_adb(self, cmd):
-        self.run_cmd(self.get_adb_cmd(cmd))
+        self.run_maybe_in_container(self.get_adb_cmd(cmd))
 
     def get_adb_output(self, cmd, **kwargs):
-        return self.parsed_command(self.get_adb_cmd(cmd), **kwargs)
+        return self.get_output_maybe_in_container(self.get_adb_cmd(cmd), **kwargs)
