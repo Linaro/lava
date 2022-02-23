@@ -1,0 +1,56 @@
+{# device_type: seco-b68 #}
+{% extends 'base.jinja2' %}
+
+# in milliseconds
+{% set boot_character_delay = boot_character_delay | default(500) %}
+{% set boot_interface = boot_interface | default('net0') %}
+{% block body %}
+
+{% set console_device = console_device | default('ttyS0') %}
+{% set baud_rate = baud_rate | default(115200) %}
+
+{# allow job context override - use a different variable name, undefined if not in job context #}
+{% set base_kernel_args = extra_kernel_args | default(base_kernel_args) %}
+
+actions:
+  deploy:
+    methods:
+      tftp:
+      nbd:
+      ssh:
+        options:
+{{ ssh_options }}
+        host: '{{ ssh_host|default('') }}'
+        user: {{ ssh_user|default('root') }}
+        port: {{ ssh_port|default(22) }}
+        identity_file: {{ ssh_identity_file }}
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
+  boot:
+    connections:
+      serial:
+    methods:
+      ssh:
+      minimal:
+      uuu:
+{% endblock body %}
+
+{% block timeouts %}
+timeouts:
+  actions:
+    bootloader-retry:
+      minutes: 2
+    bootloader-interrupt:
+      minutes: 5
+    bootloader-commands:
+      minutes: 5
+  connections:
+    bootloader-retry:
+      minutes: 2
+    bootloader-interrupt:
+      minutes: 5
+    bootloader-commands:
+      minutes: 5
+{% endblock timeouts %}
