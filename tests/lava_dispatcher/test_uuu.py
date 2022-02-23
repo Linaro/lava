@@ -23,6 +23,7 @@ from unittest.mock import patch, MagicMock
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 from lava_dispatcher.utils.containers import NullDriver, DockerDriver
+from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -34,6 +35,9 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_imx8mq_job(self, device_template, filename):
         return self.create_job(device_template, filename)
+
+    def create_imx8mq_job_uuu_path_from_command(self, filename):
+        return self.create_job("imx8mq-evk-03.jinja2", filename)
 
 
 class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -74,6 +78,35 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(description_ref, job.pipeline.describe(False))
 
         self.assertIsNone(job.validate())
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    def test_pipeline_uuu_only_uboot_uuu_path_from_command(self, which_mock):
+        job = self.factory.create_imx8mq_job_uuu_path_from_command(
+            "sample_jobs/uuu-bootimage-only.yaml"
+        )
+        self.assertIsNotNone(job)
+
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        self.assertIsNone(job.validate())
+
+        # Test if uuu_otg_path have been updated before populating tasks
+        uuu_boot_actions = list(
+            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+        )
+
+        for uuu_boot_action in uuu_boot_actions:
+            self.assertEqual(
+                "12:1234",
+                uuu_boot_action.job.device["actions"]["boot"]["methods"]["uuu"][
+                    "options"
+                ]["usb_otg_path"],
+            )
 
 
 class TestUUUActionDriver(unittest.TestCase):
