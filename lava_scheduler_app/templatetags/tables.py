@@ -17,6 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
+
 from django import template
 from django.utils.safestring import mark_safe
 
@@ -69,10 +71,11 @@ def get_length_select(table, string):
     select = ""
     val = [10, 25, 50, 100]
     name = "%s%s" % (table.prefix, "length")
+    num = table.length
     if name in string:
-        num = int(string[name])
-    else:
-        num = table.length
+        with contextlib.suppress(ValueError):
+            num = int(string[name])
+
     if num and num not in val:
         val.append(num)
         val.sort()
