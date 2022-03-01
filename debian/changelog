@@ -1,3 +1,14 @@
+lava (2022.02-1) unstable; urgency=medium
+
+  * LAVA Software 2022.02 release
+
+  [ Antonio Terceiro ]
+  * [12bf01a17] debian/rules: ensure services are restarted on upgrades
+  * [5cfda2e7a] autopkgtest: install qemu-system-arm
+  * [7bd2397bc] autopkgtest: testsuite: add dependency on lava-dispatcher-host
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 01 Mar 2022 10:55:30 +0100
+
 lava (2022.01.3-1) unstable; urgency=medium
 
   * LAVA Software 2022.01.3 release
