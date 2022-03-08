@@ -38,7 +38,7 @@ from lava_dispatcher.parser import JobParser
 
 
 def parser():
-    """ Configure the parser """
+    """Configure the parser"""
     p_obj = argparse.ArgumentParser()
 
     p_obj.add_argument(
@@ -246,6 +246,11 @@ def main():
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
+
+        # Add secrets to the environment
+        for k, v in job.parameters.get("secrets", {}).items():
+            os.environ[k] = v
+
         # Generate the description
         description = dump_as_safe_yaml(job.describe())
         (options.output_dir / "description.yaml").write_text(
