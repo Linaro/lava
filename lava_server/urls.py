@@ -166,6 +166,14 @@ urlpatterns = [
     ),
 ]
 
+if settings.OIDC_ENABLED:
+    urlpatterns.append(
+        url(
+            r"^{mount_point}oidc/".format(mount_point=settings.MOUNT_POINT),
+            include("mozilla_django_oidc.urls"),
+        )
+    )
+
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
 

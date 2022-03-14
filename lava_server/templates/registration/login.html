@@ -52,7 +52,13 @@
     </form>
   </div>
   {% endif %}
-
+  {% if oidc_enabled %}
+  <div class="col-md-4">
+    <h4>{{ oidc_account_name }}</h4>
+    <hr/>
+    <a href="{% url 'oidc_authentication_init' %}">Login</a>
+  </div>
+  {% endif %}
   <div class="col-md-4">
     <h4>Local account</h4>
     <hr/>
