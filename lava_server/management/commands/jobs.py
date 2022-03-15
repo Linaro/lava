@@ -214,7 +214,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *_, **options):
-        """ forward to the right sub-handler """
+        """forward to the right sub-handler"""
         if options["sub_command"] == "list":
             self.handle_list(
                 options["lxc"],
@@ -335,6 +335,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
 
+        media_root = pathlib.Path(settings.MEDIA_ROOT)
         while True:
             count = 0
             for job in jobs[0:100]:
@@ -345,6 +346,14 @@ class Command(BaseCommand):
                 try:
                     if not simulate:
                         rmtree(job.output_dir)
+                        # delete parents directories (if empty)
+                        with contextlib.suppress(OSError, ValueError):
+                            for parent in pathlib.Path(job.output_dir).parents:
+                                parent.relative_to(media_root)
+                                if parent == media_root:
+                                    break
+                                parent.rmdir()
+                                self.stdout.write("  -> rmdir %s" % (parent))
                 except OSError as exc:
                     self.stderr.write(
                         "  -> Unable to remove the directory: %s" % str(exc)
