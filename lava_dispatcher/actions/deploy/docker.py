@@ -22,6 +22,7 @@ import re
 import subprocess  # nosec - internal
 
 from lava_common.exceptions import InfrastructureError
+from lava_common.schemas import docker_image_format_pattern
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -75,12 +76,7 @@ class DockerAction(Action):
 
         # check docker image name
         # The string should be safe for command line inclusion
-        if (
-            re.compile(
-                "^[a-z0-9]+[a-z0-9._/-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$"
-            ).match(self.image_name)
-            is None
-        ):
+        if re.compile(docker_image_format_pattern).match(self.image_name) is None:
             self.errors = "image name '%s' is invalid" % self.image_name
         self.set_namespace_data(
             action=self.name, label="image", key="name", value=self.image_name
