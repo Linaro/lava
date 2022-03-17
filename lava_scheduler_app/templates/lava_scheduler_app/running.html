@@ -1,5 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
+{% load static %}
 
 {% block content %}
 <h2>Running jobs and active devices <a
@@ -29,4 +30,8 @@ title="Longest Running Jobs"><span class="glyphicon glyphicon-time"></span> long
     and which jobs are active.</p>
 {% render_table running_table %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
 {% endblock %}
