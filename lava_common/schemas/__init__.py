@@ -375,9 +375,11 @@ def job(extra_context_variables=[]):
     )
 
 
+docker_image_format_pattern = (
+    "^[a-z0-9]+[a-z0-9._/:-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$"
+)
 docker_image_format = Match(
-    "^[a-z0-9]+[a-z0-9._/:-]*[a-z0-9]+(:[a-zA-Z0-9_]+[a-zA-Z0-9._-]*)?$",
-    msg="Invalid docker image name",
+    docker_image_format_pattern, msg="Invalid docker image name"
 )
 
 
