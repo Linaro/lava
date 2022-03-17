@@ -1,5 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
+{% load static %}
 
 {% block styles %}
   <style>
@@ -97,4 +98,8 @@
 <h3>Transitions</h3>
 {% render_table worker_log_table %}
 
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
 {% endblock %}
