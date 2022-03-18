@@ -22,6 +22,7 @@ from lava_common.exceptions import InfrastructureError
 import lava_dispatcher_host
 from lava_dispatcher_host import add_device_container_mapping
 from lava_dispatcher_host import share_device_with_container
+from lava_dispatcher_host import load_mapping_data
 
 
 @pytest.fixture(autouse=True)
@@ -254,3 +255,19 @@ def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
     data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))
     assert len(data) == 1
     assert data[0]["container"] == "mycontainer2"
+
+
+class TestLoadMapping:
+    @pytest.fixture
+    def mapping(self, tmp_path):
+        return tmp_path / "usbmap.yaml"
+
+    def test_empty(self, mapping):
+        mapping.write_text("")
+        data = load_mapping_data(mapping)
+        assert type(data) is list
+
+    def test_missing(self, mapping):
+        assert not mapping.exists()
+        data = load_mapping_data(mapping)
+        assert type(data) is list
