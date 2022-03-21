@@ -87,7 +87,7 @@ class ResultsView(LavaView):
                 "job__actual_device__device_type",
                 "job__submitter",
             )
-            .order_by("-job__id", "name")
+            .prefetch_related("job__viewing_groups")
         )
 
 

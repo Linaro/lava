@@ -40,6 +40,18 @@ class GroupPermissionBackend(ModelBackend):
         return None
 
     def has_perm(self, user, perm, obj=None):
+        if hasattr(user, "_cached_has_perm"):
+            ret = user._cached_has_perm.get(perm, {}).get(obj)
+            if ret is not None:
+                return ret
+        else:
+            user._cached_has_perm = {}
+
+        ret = self._has_perm(user, perm, obj)
+        user._cached_has_perm.setdefault(perm, {})[obj] = ret
+        return ret
+
+    def _has_perm(self, user, perm, obj=None):
         """
         Returns True if given user has particular permission for the object.
         If no object is given, False is returned.

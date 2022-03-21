@@ -101,6 +101,8 @@ class TestLavaServerApi:
             self.device_type1.name,
             self.group.name,
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
             == True
@@ -146,6 +148,8 @@ class TestLavaServerApi:
             self.device_type1.name,
             self.group.name,
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
             == False
@@ -180,6 +184,8 @@ class TestLavaServerApi:
         server.system.assign_perm_device(
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == True
         )
@@ -215,6 +221,8 @@ class TestLavaServerApi:
         server.system.revoke_perm_device(
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == False
         )

@@ -158,6 +158,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device_type.can_view(self.user1))
         self.assertFalse(self.qemu_device_type.can_view(self.user2))
 
@@ -189,6 +191,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.VIEW_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device1.can_view(self.user1))
         self.assertFalse(self.qemu_device1.can_view(self.user2))
 
@@ -200,6 +204,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device1.can_view(self.user1))
         self.assertTrue(self.qemu_device2.can_view(self.user1))
         self.assertFalse(self.qemu_device1.can_view(self.user2))
@@ -213,6 +219,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.CHANGE_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device1.can_change(self.user1))
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
@@ -224,6 +232,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device1.can_change(self.user1))
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
@@ -236,6 +246,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.SUBMIT_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_device1.can_submit(self.user1))
         self.assertFalse(self.qemu_device1.can_submit(self.user2))
 
@@ -333,6 +345,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertTrue(self.qemu_job2.can_view(self.user1))
         self.assertFalse(self.qemu_job1.can_view(self.user2))
@@ -348,6 +362,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.VIEW_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertFalse(self.qemu_job1.can_view(self.user2))
 
@@ -365,6 +381,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_change(self.user1))
         self.assertFalse(self.qemu_job1.can_change(self.user2))
 
@@ -378,6 +396,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.CHANGE_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_change(self.user1))
         self.assertFalse(self.qemu_job1.can_change(self.user2))
 
@@ -392,6 +412,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDevicePermission.objects.assign_perm(
             Device.SUBMIT_PERMISSION, self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
         self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
 
@@ -403,6 +425,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.SUBMIT_PERMISSION, self.group1, self.qemu_device_type
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
         self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
 
@@ -450,5 +474,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         GroupWorkerPermission.objects.assign_perm(
             Worker.CHANGE_PERMISSION, self.group1, self.worker1
         )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.worker1.can_change(self.user1))
         self.assertFalse(self.worker1.can_change(self.user2))

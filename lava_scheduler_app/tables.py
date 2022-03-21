@@ -134,6 +134,10 @@ class JobErrorsTable(LavaTable):
     error_msg = tables.Column(empty_values=[""])
     error_msg.orderable = False
 
+    def __init__(self, *args, **kwargs):
+        kwargs["template_name"] = "lazytables.html"
+        super().__init__(*args, **kwargs)
+
     def render_end_time(self, record):
         if record.suite.job is None:
             return ""
@@ -196,6 +200,10 @@ class JobTable(LavaTable):
     end_time = tables.DateColumn(format="Nd, g:ia")
     state = tables.Column()
     state.orderable = False
+
+    def __init__(self, *args, **kwargs):
+        kwargs["template_name"] = "lazytables.html"
+        super().__init__(*args, **kwargs)
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
