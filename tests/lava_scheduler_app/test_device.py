@@ -75,20 +75,28 @@ class DeviceTest(TestCaseWithFactory):
         self.assertEqual(device.can_submit(user2), False)
         self.assertEqual(device.can_submit(user1), True)
         GroupDevicePermission.objects.remove_perm("submit_to_device", group, device)
+        delattr(user1, "_cached_has_perm")
+        delattr(user2, "_cached_has_perm")
 
         self.assertEqual(device.can_view(user2), True)
         self.assertEqual(device.can_view(user1), True)
 
         GroupDeviceTypePermission.objects.assign_perm("view_devicetype", group, dt)
+        delattr(user1, "_cached_has_perm")
+        delattr(user2, "_cached_has_perm")
         self.assertEqual(device.can_view(user2), False)
         self.assertEqual(device.can_view(user1), True)
 
         GroupDeviceTypePermission.objects.remove_perm("view_devicetype", group, dt)
         GroupDevicePermission.objects.assign_perm("view_device", group, device)
+        delattr(user1, "_cached_has_perm")
+        delattr(user2, "_cached_has_perm")
         self.assertEqual(device.can_view(user2), False)
         self.assertEqual(device.can_view(user1), True)
 
         GroupDevicePermission.objects.assign_perm("view_device", group2, device)
+        delattr(user1, "_cached_has_perm")
+        delattr(user2, "_cached_has_perm")
         self.assertEqual(device.can_view(user2), True)
         self.assertEqual(device.can_view(user1), True)
 

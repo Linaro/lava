@@ -155,6 +155,7 @@ class ManagersTest(TestCaseWithFactory):
         GroupDevicePermission.objects.remove_perm(
             "change_device", self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
         self.assertFalse(
             self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
         )
