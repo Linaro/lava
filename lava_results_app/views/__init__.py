@@ -42,6 +42,7 @@ from django.views.decorators.http import require_POST
 from django.shortcuts import render, loader
 
 from lava_common.compat import yaml_dump, yaml_load
+from lava_server.compat import djt2_paginator_class
 from lava_server.views import index as lava_index
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from django.shortcuts import get_object_or_404
@@ -103,10 +104,10 @@ class SuiteView(LavaView):
 @BreadCrumb("Results", parent=lava_index)
 def index(request):
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    result_table = ResultsIndexTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": result_table.length}).configure(
-        result_table
-    )
+    result_table = ResultsIndexTable(data.get_table_data())
+    RequestConfig(
+        request, paginate={"per_page": result_table.length, **djt2_paginator_class()}
+    ).configure(result_table)
     template = loader.get_template("lava_results_app/index.html")
     return HttpResponse(
         template.render(
