@@ -31,6 +31,7 @@ from django.contrib.auth.models import User
 from django.core.mail import mail_admins
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_load
@@ -121,19 +122,6 @@ class Command(BaseCommand):
             help="Remove jobs older than this. The time is of the "
             "form: 1h (one hour) or 2d (two days). "
             "By default, all jobs will be removed.",
-        )
-        rm.add_argument(
-            "--state",
-            default=None,
-            choices=[
-                "SUBMITTED",
-                "SCHEDULING",
-                "SCHEDULED",
-                "RUNNING",
-                "CANCELING",
-                "FINISHED",
-            ],
-            help="Filter by job state",
         )
         rm.add_argument(
             "--submitter", default=None, type=str, help="Filter jobs by submitter"
@@ -227,7 +215,6 @@ class Command(BaseCommand):
             self.handle_rm(
                 options["older_than"],
                 options["submitter"],
-                options["state"],
                 options["dry_run"],
                 options["slow"],
             )
@@ -303,14 +290,16 @@ class Command(BaseCommand):
                     f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
                 )
 
-    def handle_rm(self, older_than, submitter, state, simulate, slow):
-        if not older_than and not submitter and not state:
+    def handle_rm(self, older_than, submitter, simulate, slow):
+        if not older_than and not submitter:
             raise CommandError("You should specify at least one filtering option")
 
         if simulate:
             transaction.set_autocommit(False)
 
         jobs = TestJob.objects.all().order_by("id")
+        jobs = jobs.filter(state=TestJob.STATE_FINISHED)
+
         if older_than is not None:
             pattern = re.compile(r"^(?P<time>\d+)(?P<unit>(h|d))$")
             match = pattern.match(older_than)
@@ -321,7 +310,10 @@ class Command(BaseCommand):
                 delta = datetime.timedelta(days=int(match.groupdict()["time"]))
             else:
                 delta = datetime.timedelta(hours=int(match.groupdict()["time"]))
-            jobs = jobs.filter(end_time__lt=(timezone.now() - delta))
+            jobs = jobs.filter(
+                Q(end_time__lt=(timezone.now() - delta))
+                | Q(end_time__isnull=True, submit_time__lt=(timezone.now() - delta))
+            )
 
         if submitter is not None:
             try:
@@ -329,9 +321,6 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
-
-        if state is not None:
-            jobs = jobs.filter(state=self.job_state[state])
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
 
