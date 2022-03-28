@@ -208,6 +208,32 @@ colon. In the YAML, all values containing a colon **must** be quoted:
       persistent_nfs:
         address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
 
+directory *
+-----------
+
+Specifies the directory to use for the persistent filesystem.
+
+The ``directory`` **must** include the full path to the directory which contains
+the root filesystem.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: tftp
+      kernel:
+        url: http://example.com/vmlinuz-4.9.0-4-armmp
+        type: zimage
+      persistent_nfs:
+        directory: /var/lib/lava/dispatcher/tmp/armhf/stretch
+
+.. note:: The IP address of the NFS server is defined in device dictionary.
+   LAVA will use ``persistent_nfs_ip:directory`` to form the full nfs address.
+
+  .. code-block:: jinja
+
+    {% extends 'base-uboot.jinja2' %}
+    {% set persistent_nfs_ip = '10.192.225.100' %}
+
 .. index:: deploy to tmpfs
 
 .. _deploy_to_tmpfs:
