@@ -727,16 +727,28 @@ class PersistentNFSOverlay(Action):
         persist = self.parameters.get("persistent_nfs")
         if not persist:
             return
-        if "address" not in persist:
-            self.errors = "Missing address for persistent NFS"
+        if "address" in persist and "directory" in persist:
+            self.errors = "Only one of address or directory can be specified"
             return
-        if ":" not in persist["address"]:
-            self.errors = (
-                "Unrecognised NFS URL: '%s'"
-                % self.parameters["persistent_nfs"]["address"]
-            )
+        if "address" not in persist and "directory" not in persist:
+            self.errors = "Missing address or directory for persistent NFS"
             return
-        nfs_server, dirname = persist["address"].split(":")
+
+        if "address" in persist:
+            if ":" not in persist["address"]:
+                self.errors = (
+                    "Unrecognised NFS URL: '%s'"
+                    % self.parameters["persistent_nfs"]["address"]
+                )
+                return
+            nfs_server, dirname = persist["address"].split(":")
+        else:
+            nfs_server = self.job.device.get("persistent_nfs_ip", None)
+            if not nfs_server:
+                self.errors = "Missing persistent_nfs_ip in device"
+                return
+            dirname = persist["directory"]
+
         which("rpcinfo")
         self.errors = rpcinfo_nfs(nfs_server)
         self.set_namespace_data(

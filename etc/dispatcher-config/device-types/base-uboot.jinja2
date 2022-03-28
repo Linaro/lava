@@ -127,6 +127,11 @@ fastboot_options: {{ fastboot_options|default([]) }}
 fastboot_via_uboot: True
 {% endif %}
 
+{% if persistent_nfs_ip %}
+{# Considering the affinities of persistent nfs location, admins could specify a ip near the device if multiple devices meet the scheduler criterion. #}
+persistent_nfs_ip: {{ persistent_nfs_ip }}
+{% endif %}
+
 actions:
   deploy:
     parameters:

@@ -284,8 +284,8 @@ class ApplyOverlayTftp(Action):
         if persist:
             if not isinstance(persist, dict):
                 self.errors = "Invalid persistent_nfs parameter."
-            if "address" not in persist:
-                self.errors = "Missing address for persistent NFS"
+            if "address" not in persist and "directory" not in persist:
+                self.errors = "Missing address or directory for persistent NFS"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -326,7 +326,14 @@ class ApplyOverlayTftp(Action):
             overlay_file = self.get_namespace_data(
                 action="compress-overlay", label="output", key="file"
             )
-            nfs_address = self.parameters["persistent_nfs"].get("address")
+
+            nfs_address = self.parameters["persistent_nfs"].get("address", None)
+            if not nfs_address:
+                nfs_server = self.job.device["persistent_nfs_ip"]
+                nfs_address = (
+                    nfs_server + ":" + self.parameters["persistent_nfs"]["directory"]
+                )
+
             if overlay_file:
                 self.logger.info(
                     "[%s] Applying overlay to persistent NFS address %s",

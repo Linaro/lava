@@ -631,3 +631,13 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "commands"
         ]
         self.assertTrue(isinstance(commands, list))
+
+    def test_persistent_nfs_affinities_template(self):
+        data = """
+{% extends 'base-uboot.jinja2' %}
+{% set persistent_nfs_ip = '10.192.225.100' %}
+        """
+        self.assertTrue(self.validate_data("device-01", data))
+        template_dict = prepare_jinja_template("device-01", data, raw=False)
+        persistent_nfs_ip = template_dict.get("persistent_nfs_ip", None)
+        self.assertEqual("10.192.225.100", persistent_nfs_ip)
