@@ -160,7 +160,7 @@ def handle_publish(options):
         wait_pipeline(options, commit)
     print("done\n")
 
-    connection_string = "lavasoftware.org"
+    connection_string = "git.lavasoftware.org"
     if options.lavasoftware_username:
         connection_string = "%s@%s" % (
             options.lavasoftware_username,
