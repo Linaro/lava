@@ -42,7 +42,8 @@ from lava_server.compat import get_sub_parser_class
 
 def _create_output_size(base, size):
     (base / "output.yaml.size").write_text(str(size), encoding="utf-8")
-    chown(str(base / "output.yaml.size"), "lavaserver", "lavaserver")
+    with contextlib.suppress(PermissionError):
+        chown(str(base / "output.yaml.size"), "lavaserver", "lavaserver")
 
 
 class Command(BaseCommand):
@@ -479,7 +480,8 @@ class Command(BaseCommand):
                     # Compresse the logs
                     with lzma.open(str(base / "output.yaml.xz"), "wb") as f_out:
                         f_out.write(data)
-                    chown(str(base / "output.yaml.xz"), "lavaserver", "lavaserver")
+                    with contextlib.suppress(PermissionError):
+                        chown(str(base / "output.yaml.xz"), "lavaserver", "lavaserver")
                     # Remove the original file
                     (base / "output.yaml").unlink()
             except OSError as exc:
