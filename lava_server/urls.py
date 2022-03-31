@@ -80,12 +80,11 @@ if (
     "allauth.account.auth_backends.AuthenticationBackend"
     in settings.AUTHENTICATION_BACKENDS
 ):
-    auth_urls.insert(
-        0,
+    auth_urls.append(
         url(
             r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
             include("allauth.urls"),
-        ),
+        )
     )
 
 # Root URL patterns
