@@ -77,7 +77,7 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
     net.add_argument(
         "--job-log-interval",
         type=int,
-        default=1,
+        default=5,
         help="Time between two job log submissions to the server",
     )
 

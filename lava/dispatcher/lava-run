@@ -72,7 +72,7 @@ def parser():
         "--job-log-interval",
         metavar="SECONDS",
         type=int,
-        default=1,
+        default=5,
         help="Time between two job log submissions to the server",
     )
 
