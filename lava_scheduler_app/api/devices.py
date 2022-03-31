@@ -317,6 +317,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         public=True,
         health=None,
         description=None,
+        device_type=None,
     ):
         """
         Name
@@ -324,7 +325,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         `scheduler.devices.update` (`hostname`, `worker_hostname=None`,
                                     `user_name=None`, `group_name=None`,
                                     `public=True`,  `health=None`,
-                                    `description=None`)
+                                    `description=None`, `device_type=None`)
 
         Description
         -----------
@@ -348,6 +349,8 @@ class SchedulerDevicesAPI(ExposedV2API):
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
         `description`: string
           Device description
+        `device_type`: string
+          Device type
 
         Return value
         ------------
@@ -389,6 +392,13 @@ class SchedulerDevicesAPI(ExposedV2API):
                 if description is not None:
                     device.description = description
 
+                if device_type is not None:
+                    try:
+                        device.device_type = DeviceType.objects.get(name=device_type)
+                    except DeviceType.DoesNotExist:
+                        raise xmlrpc.client.Fault(
+                            404, "Unable to find device-type '%s'" % device_type
+                        )
                 device.save()
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
