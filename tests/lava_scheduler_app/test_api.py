@@ -1078,6 +1078,8 @@ def test_device_types_show(setup):
         "description": None,
         "display": True,
         "health_disabled": False,
+        "health_denominator": 0,
+        "health_frequency": 24,
         "aliases": [],
         "devices": [],
     }
@@ -1091,6 +1093,8 @@ def test_device_types_show(setup):
         "description": None,
         "display": True,
         "health_disabled": False,
+        "health_denominator": 0,
+        "health_frequency": 24,
         "aliases": [],
         "devices": ["device01"],
     }
