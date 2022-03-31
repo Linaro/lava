@@ -361,7 +361,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             "description": dt.description,
             "display": dt.display,
             "health_disabled": dt.disable_health_check,
-            "health_denominator": dt.health_denominator,
+            "health_denominator": dt.get_health_denominator_display(),
             "health_frequency": dt.health_frequency,
             "aliases": aliases,
             "devices": devices,
