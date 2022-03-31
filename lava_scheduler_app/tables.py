@@ -19,6 +19,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+from datetime import datetime, timedelta
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.utils.html import escape, format_html
@@ -690,6 +691,49 @@ class DeviceTable(LavaTable):
                 '<span class="text-muted">Retired</span>'
             )
 
+    def render_reliability(self, record):
+        DAYS_CHECK = 7
+        starting_datetime = datetime.now() - timedelta(days=DAYS_CHECK)
+        health_history = LogEntry.objects.filter(
+            object_id=record.hostname, action_time__gt=starting_datetime
+        ).order_by("action_time")
+
+        reliability = 0
+        if health_history:
+            time_down_minutes = 0
+            is_bad = False
+            bad_start_action_time = None
+            # first cycle here to determine if the device was already not in
+            # good health before we started counting
+            for log in health_history:
+                if "→ Good" in log.get_change_message():
+                    is_bad = True
+                    bad_start_action_time = starting_datetime
+                    break
+                if "Good →" in log.get_change_message():
+                    break
+
+            for log in health_history:
+                if is_bad and "→ Good" in log.get_change_message():
+                    time_down_minutes += (
+                        log.action_time - bad_start_action_time
+                    ).total_seconds() // 60
+                    is_bad = False
+                if "Good →" in log.get_change_message():
+                    is_bad = True
+                    bad_start_action_time = log.action_time
+
+            reliability = (time_down_minutes / (DAYS_CHECK * 1440)) * 100
+
+        # Either no logs or device never went to/from Good state
+        if not health_history or not bad_start_action_time:
+            if record.health == Device.HEALTH_GOOD:
+                reliability = 100
+            else:  # picking up 0 reliability from declaration
+                pass
+
+        return "%s %%" % reliability
+
     hostname = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
@@ -703,6 +747,7 @@ class DeviceTable(LavaTable):
     device_type = tables.Column()
     state = ExpandedStatusColumn("state")
     health = tables.Column(verbose_name="Health")
+    reliability = tables.Column(verbose_name="Reliability (7 days)", empty_values=())
     tags = TagsColumn()
 
     class Meta(LavaTable.Meta):
@@ -715,7 +760,14 @@ class DeviceTable(LavaTable):
             "current_job",
             "last_health_report_job",
         ]
-        sequence = ["hostname", "worker_host", "device_type", "state", "health"]
+        sequence = [
+            "hostname",
+            "worker_host",
+            "device_type",
+            "state",
+            "health",
+            "reliability",
+        ]
         searches = {"hostname": "contains"}
         queries = {
             "device_type_query": "device_type",
