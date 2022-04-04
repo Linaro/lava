@@ -1,5 +1,7 @@
 {% extends "layouts/content.html" %}
 {% load i18n %}
+{% load static %}
+{% load account socialaccount %}
 
 {% block title %}{% trans "Sign in" %}{% endblock %}
 
@@ -11,18 +13,43 @@
 <h2>{% trans "Sign in" %}</h2>
 {% endif %}
 
+{% get_static_prefix as static_prefix %}
+{% get_providers as socialaccount_providers %}
 
 <div class="row">
+
+  {% if socialaccount_providers %}
+  <div class="col-md-4">
+    <h4>Social account Login</h4>
+    <hr/>
+    {% for provider in socialaccount_providers %}
+      <p>
+        <form method="post" action="/accounts/{{provider.id}}/login/">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{next}}"/>
+          <button type="submit"
+                  title="{{provider.name}}"
+                  style="width: 132px"
+                  class="btn btn-default socialaccount_provider {{provider.id}}">
+              <img src='{{static_prefix}}/lava_server/images/auth/{{provider.id}}.png'/> {{provider.name}}
+          </button>
+        </form>
+      </p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
   {% if ldap_available %}
-  <div class="col-md-6">
-    <h4 class="modal-header">LDAP Login</h4>
+  <div class="col-md-4">
+    <h4>LDAP Login</h4>
+    <hr/>
     <form class="form-horizontal" method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.GET.next }}" />
       <div class="form-group{% if form.errors %} has-error{% endif %}">
         <p class="help-block">{{ login_message_ldap }}</p>
-        <label class="col-md-2 control-label" for="id_username">{% trans "Username" %}</label>
-        <div class="col-md-4">
+        <label class="col-md-3 control-label" for="id_username">{% trans "Username" %}</label>
+        <div class="col-md-3">
           {{ form.username }}
           {% for error in form.username.errors %}
           <p class="help-block">{{ error }}</p>
@@ -30,8 +57,8 @@
         </div>
       </div>
       <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-2 control-label" for="id_password">{% trans "Password" %}</label>
-        <div class="col-md-4">
+        <label class="col-md-3 control-label" for="id_password">{% trans "Password" %}</label>
+        <div class="col-md-3">
           {{ form.password }}
           {% for error in form.password.errors %}
           <p class="help-block">{{ error }}</p>
@@ -39,21 +66,23 @@
         </div>
       </div>
       <div class="form-group">
-        <div class="col-md-6 col-md-offset-2">
+        <div class="col-md-4 col-md-offset-3">
           <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
         </div>
       </div>
     </form>
   </div>
   {% endif %}
-  <div class="col-md-6">
-    <h4 class="modal-header">Local account</h4>
+
+  <div class="col-md-4">
+    <h4>Local account</h4>
+    <hr/>
     <form class="form-horizontal" method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.GET.next }}" />
       <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-2 control-label" for="id_username">{% trans "Username" %}</label>
-        <div class="col-md-4">
+        <label class="col-md-3 control-label" for="id_username">{% trans "Username" %}</label>
+        <div class="col-md-3">
           {{ form.username }}
           {% for error in form.username.errors %}
           <p class="help-block">{{ error }}</p>
@@ -61,8 +90,8 @@
         </div>
       </div>
       <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-2 control-label" for="id_password">{% trans "Password" %}</label>
-        <div class="col-md-4">
+        <label class="col-md-3 control-label" for="id_password">{% trans "Password" %}</label>
+        <div class="col-md-3">
           {{ form.password }}
           {% for error in form.password.errors %}
           <p class="help-block">{{ error }}</p>
@@ -70,7 +99,7 @@
         </div>
       </div>
       <div class="form-group">
-        <div class="col-md-6 col-md-offset-2">
+        <div class="col-md-4 col-md-offset-3">
           <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
           <a href="{% url 'password_reset' %}">{% trans "Reset password" %}</a>
         </div>
