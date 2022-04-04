@@ -1,0 +1,26 @@
+{% load static %}
+{% load account socialaccount %}
+
+{% get_static_prefix as static_prefix %}
+{% get_providers as socialaccount_providers %}
+
+{% if socialaccount_providers %}
+<div class="col-md-4">
+  <h4>Social account Login</h4>
+  <hr/>
+  {% for provider in socialaccount_providers %}
+    <p>
+      <form method="post" action="/accounts/{{provider.id}}/login/">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{next}}"/>
+        <button type="submit"
+                title="{{provider.name}}"
+                style="width: 132px"
+                class="btn btn-default socialaccount_provider {{provider.id}}">
+            <img src='{{static_prefix}}/lava_server/images/auth/{{provider.id}}.png'/> {{provider.name}}
+        </button>
+      </form>
+    </p>
+  {% endfor %}
+</div>
+{% endif %}

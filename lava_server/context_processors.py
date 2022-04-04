@@ -46,3 +46,9 @@ def ldap_available(request):
     )
     login_message_ldap = getattr(settings, "LOGIN_MESSAGE_LDAP", "")
     return {"ldap_available": ldap_enabled, "login_message_ldap": login_message_ldap}
+
+
+def socialaccount(request):
+    return {
+        "socialaccount_enabled": settings.AUTH_SOCIALACCOUNT is not None,
+    }
