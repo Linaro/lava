@@ -53,15 +53,16 @@ class GitHelper(VCSHelper):
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
         logger = logging.getLogger("dispatcher")
         try:
+            cmd_args = [self.binary, "clone"]
             if branch is not None:
-                cmd_args = [self.binary, "clone", "-b", branch, self.url, dest_path]
-            else:
-                cmd_args = [self.binary, "clone", self.url, dest_path]
-
+                cmd_args.extend(["-b", branch])
             if shallow:
                 cmd_args.append("--depth=1")
+            cmd_args.extend([self.url, dest_path])
 
             logger.debug("Running '%s'", " ".join(cmd_args))
+            # Replace shell variables by the corresponding environment variable
+            cmd_args[-2] = os.path.expandvars(cmd_args[-2])
             subprocess.check_output(  # nosec - internal use.
                 cmd_args, stderr=subprocess.STDOUT
             )
