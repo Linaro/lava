@@ -112,6 +112,7 @@ TEMPLATES = [
                 # LAVA context processors
                 "lava_server.context_processors.lava",
                 "lava_server.context_processors.ldap_available",
+                "lava_server.context_processors.socialaccount",
             ]
         },
     }
