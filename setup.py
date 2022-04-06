@@ -156,6 +156,7 @@ SERVER = {
         + modules("lava_scheduler_app")
         + modules("lava_server")
         + modules("linaro_django_xmlrpc")
+        + modules("lava_db_generator")
     ),
     "scripts": ["manage.py"],
     "data_files": [
