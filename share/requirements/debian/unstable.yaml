@@ -34,6 +34,8 @@ lava-server:
     name: python3-docutils
   eventlet:
     name: python3-eventlet
+  factory-boy:
+    name: python3-factory-boy
   jinja2:
     name: python3-jinja2
   psycopg2:
