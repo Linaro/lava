@@ -121,17 +121,15 @@ class DockerDriver(NullDriver):
         self.docker_options = []
         self.docker_run_options = []
         self.copied_files = []
-        self.uuid = uuid.uuid4()
 
-    @property
-    def container_name(self):
+    def get_container_name(self):
         return (
             "lava-"
             + str(self.action.job.job_id)
             + "-"
             + self.action.level
             + "-"
-            + str(self.uuid)
+            + str(uuid.uuid4())
         )
 
     def build(self, cls):
@@ -150,10 +148,11 @@ class DockerDriver(NullDriver):
 
     def run(self, cmd):
         docker = self.build(DockerContainer)
-        docker.name(self.container_name)
+        name = self.get_container_name()
+        docker.name(name)
         docker.start(self.action)
         try:
-            self.__map_devices__()
+            self.__map_devices__(name)
             docker.run(cmd, self.action)
         finally:
             docker.stop()
@@ -161,10 +160,11 @@ class DockerDriver(NullDriver):
     def get_output(self, cmd):
         # FIXME duplicates most of run()
         docker = self.build(DockerContainer)
-        docker.name(self.container_name)
+        name = self.get_container_name()
+        docker.name(name)
         docker.start(self.action)
         try:
-            self.__map_devices__()
+            self.__map_devices__(name)
             return docker.get_output(cmd, self.action)
         finally:
             docker.stop()
@@ -174,9 +174,9 @@ class DockerDriver(NullDriver):
             self.copied_files.append(src)
         return src
 
-    def __map_devices__(self):
+    def __map_devices__(self, container_name):
         action = self.action
-        action.add_device_container_mappings(self.container_name, "docker")
+        action.add_device_container_mappings(container_name, "docker")
         for dev in self.__get_device_nodes__():
             if not os.path.islink(dev):
                 action.trigger_share_device_with_container(dev)
