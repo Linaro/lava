@@ -123,10 +123,14 @@ def build_customized_image(image, build_dir):
 
     tag = f"{image}.customized"
     try:
-        subprocess.check_output(
+        p = subprocess.Popen(
             ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
+        for line in p.stdout:
+            log_output(line)
         return tag
     except subprocess.CalledProcessError:
         sys.exit(1)
