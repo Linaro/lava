@@ -17,31 +17,84 @@ class Command(BaseCommand):
     help = "Generates dummy database"
 
     def add_arguments(self, parser):
-        parser.add_argument("--device_type", metavar="SIZE", type=int)
-        parser.add_argument("--device", metavar="SIZE", type=int)
-        parser.add_argument("--auth_user", metavar="SIZE", type=int)
-        parser.add_argument("--auth_group", metavar="SIZE", type=int)
-        parser.add_argument("--project_group", metavar="SIZE", type=int)
-        parser.add_argument("--project_group_ratio", metavar="SIZE", type=float)
-        parser.add_argument("--project_ratios", metavar="SIZE", type=int, nargs="*")
-        parser.add_argument("--scheduled_ratio", metavar="SIZE", type=float)
-        parser.add_argument("--testjob", metavar="SIZE", type=int)
+        parser.add_argument(
+            "--number-of-generated-device-types",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-generated-devices",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-generated-users",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-generated-groups",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-generated-project-groups",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
+        parser.add_argument(
+            "--ratio-of-jobs-beloning-to-projects",
+            metavar="RATIO",
+            required=True,
+            type=float,
+        )
+        parser.add_argument(
+            "--number-of-projects-that-can-have-jobs",
+            metavar="SIZE",
+            type=int,
+            required=True,
+            nargs="*",
+        )
+        parser.add_argument(
+            "--ratio-of-jobs-with-actual-devices",
+            metavar="SIZE",
+            required=True,
+            type=float,
+        )
+        parser.add_argument(
+            "--number-of-test-jobs",
+            metavar="SIZE",
+            required=True,
+            type=int,
+        )
 
     def handle(self, *args, **options):
-        DeviceTypeFactory.create_batch(size=options["device_type"])
-        DeviceFactory.create_batch(size=options["device"])
+        DeviceTypeFactory.create_batch(
+            size=options["number_of_generated_device_types"])
+        DeviceFactory.create_batch(
+            size=options["number_of_generated_devices"])
 
-        UserFactory.create_batch(size=options["auth_user"])
-        GroupFactory.create_batch(size=options["auth_group"])
-        pgs = ProjectGroupFactory.create_batch(size=options["project_group"])
+        UserFactory.create_batch(
+            size=options["number_of_generated_users"])
+        GroupFactory.create_batch(
+            size=options["number_of_generated_groups"])
+        pgs = ProjectGroupFactory.create_batch(
+            size=options["number_of_generated_project_groups"])
 
-        project_ratios = options["project_ratios"]
+        project_ratios = options["number_of_projects_that_can_have_jobs"]
         projects = pgs[: len(project_ratios)]
-        for _ in range(options["testjob"]):
-            if random.random() < options["scheduled_ratio"]:
+        for _ in range(options["number_of_test_jobs"]):
+            if random.random() < options["ratio_of_jobs_with_actual_devices"]:
                 TestJobFactory()
             else:
-                if random.random() < options["project_group_ratio"]:
+                if (random.random()
+                        <
+                        options["ratio_of_jobs_beloning_to_projects"]):
                     vg = random.choices(projects, project_ratios)[0]
                     TestJobWithActualDevice(viewing_groups=vg)
                 else:
