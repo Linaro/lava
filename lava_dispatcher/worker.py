@@ -403,12 +403,6 @@ def setup_logger(log_file: str, level: str) -> None:
 
 def setup_parser() -> argparse.ArgumentParser:
     parser = get_parser()
-    parser.add_argument(
-        "--exit-on-version-mismatch",
-        action="store_true",
-        help="Exit when there is a server mismatch between worker and server.",
-    )
-
     return parser
 
 

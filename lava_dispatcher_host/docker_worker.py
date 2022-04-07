@@ -173,15 +173,7 @@ def get_server_version(options):
 
 
 def main():
-    parser = get_parser(url_required=False)
-    parser.add_argument(
-        "-d",
-        "--devel",
-        action="store_true",
-        default=False,
-        help="Development mode; sets defaults to several options.",
-    )
-
+    parser = get_parser(docker_worker=True)
     options = parser.parse_args()
 
     if options.devel:
