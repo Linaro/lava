@@ -41,7 +41,6 @@ def options(tmp_path):
 
 class TestGetImage:
     def test_image_exists(self, check_output, mocker):
-        popen = mocker.patch("lava_dispatcher_host.docker_worker.subprocess.Popen")
         assert lava_dispatcher_host.docker_worker.get_image("foobar") is True
         check_output.assert_called_with(
             ["docker", "image", "inspect", "foobar"],
@@ -66,6 +65,7 @@ class TestBuildImage:
         check_output.assert_not_called()
 
     def test_build_customized_image(self, tmp_path, check_output, mocker):
+        popen = mocker.patch("lava_dispatcher_host.docker_worker.subprocess.Popen")
         original_image = "lavasoftware/lava-dispatcher:2021.05"
         image = "lavasoftware/lava-dispatcher:2021.08"
         tag = f"{image}.customized"
@@ -83,9 +83,11 @@ class TestBuildImage:
         assert f"FROM {image}" in content
         assert f"FROM {original_image}" not in content
 
-        check_output.assert_called_with(
+        popen.assert_called_with(
             ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
 
 
