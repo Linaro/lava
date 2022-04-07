@@ -70,8 +70,11 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
             action="store_true",
             help="Exit when there is a server mismatch between worker and server.",
         )
-
-
+        parser.add_argument(
+            "--wait-jobs",
+            action="store_true",
+            help="Wait for jobs to finish prior to exit",
+        )
 
     storage = parser.add_argument_group("storage")
     storage.add_argument(
