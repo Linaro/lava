@@ -20,6 +20,7 @@
 
 
 import os
+import uuid
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, InternalObject
 from lava_dispatcher.utils.docker import DockerRun
@@ -120,10 +121,18 @@ class DockerDriver(NullDriver):
         self.docker_options = []
         self.docker_run_options = []
         self.copied_files = []
+        self.uuid = uuid.uuid4()
 
     @property
     def container_name(self):
-        return "lava-" + str(self.action.job.job_id) + "-" + self.action.level
+        return (
+            "lava-"
+            + str(self.action.job.job_id)
+            + "-"
+            + self.action.level
+            + "-"
+            + str(self.uuid)
+        )
 
     def build(self, cls):
         docker = cls.from_parameters(self.params, self.action.job)
