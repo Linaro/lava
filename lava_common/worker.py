@@ -39,25 +39,51 @@ def get_fqdn() -> str:
         raise ValueError("Your FQDN contains invalid characters")
 
 
-def get_parser(url_required=True) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="LAVA Worker")
+def get_parser(docker_worker=False) -> argparse.ArgumentParser:
+    if docker_worker:
+        description = "LAVA Docker Worker"
+        log_file = "/var/log/lava-dispatcher-host/lava-docker-worker.log"
+        url_required = False
+    else:
+        description = "LAVA Worker"
+        log_file = "/var/log/lava-dispatcher/lava-worker.log"
+        url_required = True
+
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
         "--name", type=str, default=get_fqdn(), help="Name of the worker"
     )
-    parser.add_argument(
-        "--debug", action="store_true", default=False, help="Debug lava-run"
-    )
+    if docker_worker:
+        parser.add_argument(
+            "-d",
+            "--devel",
+            action="store_true",
+            default=False,
+            help="Development mode; sets defaults to several options.",
+        )
+    else:
+        parser.add_argument(
+            "--debug", action="store_true", default=False, help="Debug lava-run"
+        )
+        parser.add_argument(
+            "--exit-on-version-mismatch",
+            action="store_true",
+            help="Exit when there is a server mismatch between worker and server.",
+        )
+
+
 
     storage = parser.add_argument_group("storage")
     storage.add_argument(
         "--worker-dir", type=Path, default=WORKER_DIR, help="Path to data storage"
     )
-    storage.add_argument(
-        "--build-dir",
-        type=Path,
-        default="/etc/lava-dispatcher-host/build",
-        help="Path to a directory with a Dockerfile inside for building customized lava-dispatcher docker image.",
-    )
+    if docker_worker:
+        storage.add_argument(
+            "--build-dir",
+            type=Path,
+            default="/etc/lava-dispatcher-host/build",
+            help="Path to a directory with a Dockerfile inside for building customized lava-dispatcher docker image.",
+        )
 
     net = parser.add_argument_group("network")
     net.add_argument("--url", required=url_required, help="Base URL of the server")
@@ -94,7 +120,7 @@ def get_parser(url_required=True) -> argparse.ArgumentParser:
         "--log-file",
         type=str,
         help="Log file for the worker logs",
-        default="/var/log/lava-dispatcher/lava-worker.log",
+        default=log_file,
     )
     log.add_argument(
         "--level",
