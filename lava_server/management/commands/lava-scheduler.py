@@ -77,6 +77,13 @@ class Command(LAVADaemonCommand):
             worker.go_state_offline()
             worker.save()
 
+        return [
+            w.hostname
+            for w in Worker.objects.filter(
+                state=Worker.STATE_ONLINE, health=Worker.HEALTH_ACTIVE
+            )
+        ]
+
     def handle(self, *args, **options):
         # Initialize logging.
         self.setup_logging(
@@ -159,10 +166,10 @@ class Command(LAVADaemonCommand):
             try:
                 # Check remote worker connectivity
                 with transaction.atomic():
-                    self.check_workers()
+                    workers = self.check_workers()
 
                 # Schedule jobs
-                schedule(self.logger, dts)
+                schedule(self.logger, dts, workers)
                 dts = set()
 
                 # Wait for events
