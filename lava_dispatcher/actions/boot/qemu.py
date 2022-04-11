@@ -147,11 +147,19 @@ class CallQemuAction(Action):
         )
         return True
 
+    def get_qemu_arch(self, architecture):
+        if architecture == "arm64":
+            return "aarch64"
+        return architecture
+
     def get_raw_version(self, architecture):
         if "docker" in self.parameters:
             docker = DockerRun(self.parameters["docker"]["image"])
             docker.run(
-                *shlex.split("qemu-system-%s --version" % architecture), action=self
+                *shlex.split(
+                    "qemu-system-%s --version" % self.get_qemu_arch(architecture)
+                ),
+                action=self
             )
             return True
         ver_strs = subprocess.check_output(
