@@ -114,7 +114,16 @@ def drf_basename(name):
 try:
     from django_tables2.paginators import LazyPaginator
 
+    class FixedLazyPaginator(LazyPaginator):
+        def page(self, number):
+            number = self.validate_number(number or 1)
+            return super().page(number)
+
     def djt2_paginator_class():
+        import django_tables2
+
+        if django_tables2.__version__ < "2.3.1":
+            return {"paginator_class": FixedLazyPaginator}
         return {"paginator_class": LazyPaginator}
 
 
@@ -176,6 +185,7 @@ except ImportError:
 
         def __init__(self, object_list, per_page, look_ahead=None, **kwargs):
             self._num_pages = None
+            self._final_num_pages = None
             if look_ahead is not None:
                 self.look_ahead = look_ahead
 
@@ -194,7 +204,9 @@ except ImportError:
             return number
 
         def page(self, number):
-            number = self.validate_number(number)
+            # Number might be None, because the total number of pages is not known in this paginator.
+            # If an unknown page is requested, serve the first page.
+            number = self.validate_number(number or 1)
             bottom = (number - 1) * self.per_page
             top = bottom + self.per_page
             # Retrieve more objects to check if there is a next page.
@@ -213,7 +225,12 @@ except ImportError:
             else:
                 # This is the last page.
                 self._num_pages = number
+                # For rendering purposes in `table_page_range`, we have to remember the final count
+                self._final_num_pages = number
             return Page(objects, number, self)
+
+        def is_last_page(self, number):
+            return number == self._final_num_pages
 
         def _get_count(self):
             raise NotImplementedError
