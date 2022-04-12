@@ -362,6 +362,9 @@ class SchedulerWorkersAPI(ExposedV2API):
             "last_ping": worker.last_ping,
             "job_limit": worker.job_limit,
             "version": worker.version,
+            "default_config": not File("dispatcher", hostname).is_first(),
+            "default_env": not File("env", hostname).is_first(),
+            "default_env_dut": not File("env-dut", hostname).is_first(),
         }
         if self.user.is_superuser:
             data["token"] = worker.token

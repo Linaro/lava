@@ -365,6 +365,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             "health_frequency": dt.health_frequency,
             "aliases": aliases,
             "devices": devices,
+            "default_template": not File("device-type", name).is_first(),
         }
 
         return dt_dict

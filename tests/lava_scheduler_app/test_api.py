@@ -1073,6 +1073,8 @@ def test_device_types_show(setup):
     dt = DeviceType.objects.create(name="qemu")
     data = server("admin", "admin").scheduler.device_types.show("qemu")
 
+    from lava_server.files import File
+
     assert data == {  # nosec
         "name": "qemu",
         "description": None,
@@ -1082,6 +1084,7 @@ def test_device_types_show(setup):
         "health_frequency": 24,
         "aliases": [],
         "devices": [],
+        "default_template": False,
     }
 
     # 3. More details
@@ -1097,6 +1100,7 @@ def test_device_types_show(setup):
         "health_frequency": 24,
         "aliases": [],
         "devices": ["device01"],
+        "default_template": False,
     }
 
 
@@ -1764,6 +1768,9 @@ def test_workers_show(setup):
             "last_ping",
             "job_limit",
             "version",
+            "default_config",
+            "default_env",
+            "default_env_dut",
         ]
     )
     assert data["hostname"] == "example.com"  # nosec

@@ -70,6 +70,9 @@ class File:
                 return True
         return False
 
+    def is_first(self):
+        return self.files[0].exists()
+
     def list(self, pattern):
         if self.kind not in self.LIST_KINDS:
             raise NotImplementedError("Not available for this kind")
