@@ -80,6 +80,11 @@ def test_file_device_type(mocker, tmpdir):
         str(tmpdir / "1"),
     ]
 
+    # Delete the file
+    File("device-type", "hello").write("")
+    assert File("device-type", "hello").exists() is True
+    assert File("device-type", "hello").read() == "base"
+
 
 def test_file_env(mocker, tmpdir):
     mocker.patch(
