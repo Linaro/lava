@@ -67,6 +67,7 @@ def test_file_device_type(mocker, tmpdir):
     File("device-type", "hello").write("new version")
     assert File("device-type", "hello").exists() is True
     assert File("device-type", "hello").read() == "new version"
+    assert File("device-type", "hello").is_first() is True
 
     ret = File("device-type").list("*.yaml")
     assert len(ret) == 0
@@ -84,6 +85,7 @@ def test_file_device_type(mocker, tmpdir):
     File("device-type", "hello").write("")
     assert File("device-type", "hello").exists() is True
     assert File("device-type", "hello").read() == "base"
+    assert File("device-type", "hello").is_first() is False
 
 
 def test_file_env(mocker, tmpdir):
