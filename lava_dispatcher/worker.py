@@ -23,7 +23,6 @@
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import aiohttp
-import argparse
 import asyncio
 import contextlib
 from dataclasses import dataclass
@@ -401,17 +400,6 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
-def setup_parser() -> argparse.ArgumentParser:
-    parser = get_parser()
-    parser.add_argument(
-        "--exit-on-version-mismatch",
-        action="store_true",
-        help="Exit when there is a server mismatch between worker and server.",
-    )
-
-    return parser
-
-
 #####################
 # Server <-> Worker #
 #####################
@@ -692,7 +680,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
 
 async def main() -> int:
     # Parse command line
-    options = setup_parser().parse_args()
+    options = get_parser().parse_args()
     if options.token_file is None:
         options.token_file = Path(options.worker_dir) / "token"
     options.url = options.url.rstrip("/")
@@ -756,7 +744,20 @@ async def main() -> int:
         )
         return 0
     except asyncio.CancelledError:
-        LOG.error("[EXIT] Canceled")
+        LOG.info("[EXIT] Canceled")
+        if options.wait_jobs:
+            LOG.info("[EXIT] Wait for jobs to finish")
+            while True:
+                check(options.url, jobs)
+                all_ids = jobs.all_ids()
+                LOG.info(
+                    "[EXIT] => %d jobs ([%s])",
+                    len(all_ids),
+                    ", ".join(str(i) for i in all_ids),
+                )
+                if not all_ids:
+                    break
+                time.sleep(ping_interval)
         return 1
     except VersionMismatch as exc:
         LOG.info("[EXIT] %s" % exc)

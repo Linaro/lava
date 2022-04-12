@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
+import logging.handlers
 import pathlib
 import platform
 import re
@@ -26,6 +28,7 @@ import socket
 import signal
 import subprocess
 import sys
+import time
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -34,14 +37,51 @@ from requests.packages.urllib3.util.retry import Retry
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.worker import get_parser
 
+
+#########
+# Globals
+#########
+# Create the logger that will be configured later
+logging.Formatter.convert = time.gmtime
+LOG = logging.getLogger("lava-worker")
+FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
+
 PAT = re.compile(r"\d+\.\d+\.(\d+\.){0,1}\d{4}\.g[\d\w]+")
+
+
+###########
+# Helpers #
+###########
+def log_output(line):
+    line = line.decode("utf-8").strip()
+    if line[24:31] in ["  DEBUG", "   INFO", "WARNING", "  ERROR"]:
+        LOG.info("> " + line[24:])
+    else:
+        LOG.info("> " + line)
+
+
+def filter_options(options):
+    ret = ["--worker-dir", options.worker_dir, "--url", options.url]
+    if options.ws_url:
+        ret.extend(["--ws-url", options.ws_url])
+
+    ret.extend(["--http-timeout", str(options.http_timeout)])
+    ret.extend(["--ping-interval", str(options.ping_interval)])
+    ret.extend(["--job-log-interval", str(options.job_log_interval)])
+
+    if options.username:
+        ret.extend(["--username", options.username])
+    if options.token:
+        ret.extend(["--token", options.token])
+    if options.token_file:
+        ret.extend(["--token-file", options.token_file])
+    return ret
 
 
 def has_image(image):
     try:
-        subprocess.check_call(
+        subprocess.check_output(
             ["docker", "image", "inspect", image],
-            stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         return True
@@ -51,18 +91,20 @@ def has_image(image):
 
 def get_image(image):
     if has_image(image):
-        return
+        return True
 
     try:
-        subprocess.check_call(["docker", "pull", image])
-    except subprocess.CalledProcessError:
-        sys.exit(1)
+        subprocess.check_output(["docker", "pull", image], stderr=subprocess.STDOUT)
+        return True
+    except subprocess.CalledProcessError as exc:
+        LOG.warning(exc.output.decode("utf-8", errors="replace").strip())
+    return False
 
 
 def build_customized_image(image, build_dir):
     dockerfile = build_dir / "Dockerfile"
     if not dockerfile.exists():
-        print(f"WARNING: {dockerfile} not found!", file=sys.stdout)
+        LOG.warning("Dockerfile (%s) not found", dockerfile)
         return image
 
     # To make sure lava-dispatcher image version matches lava-server version,
@@ -81,10 +123,14 @@ def build_customized_image(image, build_dir):
 
     tag = f"{image}.customized"
     try:
-        subprocess.check_call(
+        p = subprocess.Popen(
             ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
+        for line in p.stdout:
+            log_output(line)
         return tag
     except subprocess.CalledProcessError:
         sys.exit(1)
@@ -110,6 +156,7 @@ def run(version, options):
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"
 
+    LOG.info("Using image %s", image)
     service = ["docker", "run", "--rm", "--init", "--privileged", "--net=host"]
 
     mounts = []
@@ -141,23 +188,42 @@ def run(version, options):
     # set hostname to have a fixed default worker name
     service.append("--hostname=docker-" + socket.getfqdn())
 
-    get_image(image)
-    build_dir = options.build_dir.absolute()
-    if build_dir.exists():
-        image = build_customized_image(image, build_dir)
+    if not get_image(image):
+        LOG.warning("=> Image not available")
+        time.sleep(5)
+        return
+
+    if options.build_dir.exists():
+        LOG.info("Building custom image in %s", options.build_dir)
+        image = build_customized_image(image, options.build_dir)
     service.append(image)
 
     try:
         signal.signal(signal.SIGTERM, Terminate.trigger)
         container = subprocess.Popen(
-            service + ["lava-worker", "--exit-on-version-mismatch"] + sys.argv[1:]
+            service
+            + ["lava-worker", "--exit-on-version-mismatch", "--wait-jobs"]
+            + ["--log-file", "-", "--name", options.name]
+            + filter_options(options),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
         )
-        container.communicate()
+        for line in container.stdout:
+            log_output(line)
+        if container.poll():
+            LOG.error("Returned %d", container.poll())
+            time.sleep(5)
+    except FileNotFoundError as exc:
+        LOG.info("'%s' not found", exc.filename)
+        time.sleep(5)
     except subprocess.CalledProcessError as failure:
-        sys.exit(failure.returncode)
+        LOG.info("Failed to start the worker")
+        time.sleep(5)
     except (KeyboardInterrupt, Terminate):
-        container.terminate()
-        container.wait()
+        LOG.info("[EXIT] Received Ctrl+C")
+        for line in container.stdout:
+            log_output(line)
+        LOG.error("Returned %d", container.wait())
         sys.exit(0)
 
 
@@ -172,34 +238,61 @@ def get_server_version(options):
     return server_version["version"]
 
 
-def main():
-    parser = get_parser(url_required=False)
-    parser.add_argument(
-        "-d",
-        "--devel",
-        action="store_true",
-        default=False,
-        help="Development mode; sets defaults to several options.",
-    )
+##########
+# Setups #
+##########
+def setup_logger(log_file: str, level: str) -> None:
+    """
+    Configure the logger
 
-    options = parser.parse_args()
+    :param log_file: the log_file or "-" for sys.stdout
+    :param level: the log level
+    """
+    # Configure the log handler
+    if log_file == "-":
+        handler = logging.StreamHandler(sys.stdout)
+    else:
+        handler = logging.handlers.WatchedFileHandler(log_file)
+    handler.setFormatter(logging.Formatter(FORMAT))
+    LOG.addHandler(handler)
+
+    # Set-up the LOG level
+    if level == "ERROR":
+        LOG.setLevel(logging.ERROR)
+    elif level == "WARN":
+        LOG.setLevel(logging.WARN)
+    elif level == "INFO":
+        LOG.setLevel(logging.INFO)
+    else:
+        LOG.setLevel(logging.DEBUG)
+
+
+def main():
+    # Parse command line
+    options = get_parser(docker_worker=True).parse_args()
+    options.build_dir = options.build_dir.resolve()
 
     if options.devel:
         options.url = "http://localhost:8000/"
+        options.ws_url = "http://localhost:8001/"
         options.worker_dir = pathlib.Path.cwd() / "tmp" / "worker-docker"
-        sys.argv[1:] = [
-            "--level=DEBUG",
-            "--log-file=-",
-            f"--url={options.url}",
-            "--ws-url=http://localhost:8001/",
-            f"--worker-dir={options.worker_dir}",
-        ]
+        options.level = "DEBUG"
+        options.log_file = "-"
     elif not options.url:
         print("ERROR: --url option not provided", file=sys.stderr)
         sys.exit(1)
 
+    # Setup logger
+    setup_logger(options.log_file, options.level)
+    LOG.info("[INIT] LAVA docker worker has started.")
+    LOG.info("[INIT] Name   : %r", options.name)
+    LOG.info("[INIT] Server : %r", options.url)
+
+    LOG.info("[INIT] Starting main loop")
     while True:
+        LOG.info("Get server version")
         server_version = get_server_version(options)
+        LOG.info("=> %s", server_version)
         run(server_version, options)
 
 
