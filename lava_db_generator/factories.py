@@ -62,6 +62,10 @@ class TestJobWithActualDevice(TestJobFactory):
         datetime.now(tz=timezone.utc),
         datetime.now(tz=timezone.utc) + timedelta(hours=1),
     )
+    start_time = factory.fuzzy.FuzzyDateTime(
+        datetime.now(tz=timezone.utc) - timedelta(hours=5),
+        datetime.now(tz=timezone.utc),
+    )
 
     @factory.post_generation
     def viewing_groups(self, create, extracted, **kwargs):
