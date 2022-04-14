@@ -18,31 +18,31 @@ class Command(BaseCommand):
         parser.add_argument(
             "--number-of-generated-device-types",
             metavar="SIZE",
-            required=True,
+            default=0,
             type=int,
         )
         parser.add_argument(
             "--number-of-generated-devices",
             metavar="SIZE",
-            required=True,
+            default=0,
             type=int,
         )
         parser.add_argument(
             "--number-of-generated-users",
             metavar="SIZE",
-            required=True,
+            default=0,
             type=int,
         )
         parser.add_argument(
             "--number-of-generated-project-groups",
             metavar="SIZE",
-            required=True,
+            default=0,
             type=int,
         )
         parser.add_argument(
             "--number-of-test-jobs",
             metavar="SIZE",
-            required=True,
+            default=0,
             type=int,
         )
 
