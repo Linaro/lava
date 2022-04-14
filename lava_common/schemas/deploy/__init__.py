@@ -45,6 +45,7 @@ def url(extra=None):
             **extra,
             Required("format"): Any("cpio.newc", "ext4", "tar"),
             Optional("partition"): int,
+            Optional("sparse"): bool,
             Required("overlays"): {
                 Optional("lava"): bool,
                 str: {

@@ -53,6 +53,25 @@ def test_append_overlays_validate():
         action.validate()
     assert exc.match("Missing 'overlays' dictionary")
 
+    params = {
+        "format": "cpio.newc",
+        "overlays": {
+            "modules": {
+                "url": "http://example.com/modules.tar.xz",
+                "compression": "xz",
+                "format": "tar",
+                "path": "/",
+            }
+        },
+    }
+
+    action = AppendOverlays("rootfs", params)
+    action.validate()
+    with pytest.raises(JobError) as exc:
+        params["sparse"] = True
+        action.validate()
+    assert exc.match("sparse=True is only available for ext4 images")
+
 
 def test_append_overlays_run(mocker):
     params = {
@@ -275,6 +294,74 @@ def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
         ),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
+    ]
+
+
+def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmpdir):
+    caplog.set_level(logging.DEBUG)
+    params = {
+        "format": "ext4",
+        "sparse": True,
+        "overlays": {
+            "modules": {
+                "url": "http://example.com/modules.tar.xz",
+                "compression": "xz",
+                "format": "tar",
+                "path": "/lib",
+            }
+        },
+    }
+
+    action = AppendOverlays("rootfs", params)
+    action.job = Job(1234, {}, None)
+    action.parameters = {
+        "rootfs": {"url": "http://example.com/rootff.ext4", **params},
+        "namespace": "common",
+    }
+    action.data = {
+        "common": {
+            "download-action": {
+                "rootfs": {
+                    "file": str(tmpdir / "rootfs.ext4"),
+                    "compression": "gz",
+                    "decompressed": True,
+                },
+                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
+            }
+        }
+    }
+    action.run_cmd = mocker.MagicMock()
+    replace = mocker.patch("lava_dispatcher.actions.deploy.apply_overlay.os.replace")
+
+    guestfs = mocker.MagicMock()
+    guestfs.add_drive = mocker.MagicMock()
+    mocker.patch(
+        "lava_dispatcher.actions.deploy.apply_overlay.guestfs.GuestFS", guestfs
+    )
+    action.update_guestfs()
+
+    guestfs.assert_called_once_with(python_return_dict=True)
+    guestfs().launch.assert_called_once_with()
+    guestfs().list_devices.assert_called_once_with()
+    guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
+    guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
+    guestfs().mkdir_p.assert_called_once_with("/lib")
+    guestfs().tar_in.assert_called_once_with(
+        str(tmpdir / "modules.tar"), "/lib", compress=None
+    )
+    action.run_cmd.assert_called_once_with(
+        ["/usr/bin/img2simg", f"{tmpdir}/rootfs.ext4", f"{tmpdir}/rootfs.ext4.sparse"],
+        error_msg=f"img2simg failed for {tmpdir}/rootfs.ext4",
+    )
+    replace.assert_called_once_with(
+        f"{tmpdir}/rootfs.ext4.sparse", f"{tmpdir}/rootfs.ext4"
+    )
+
+    assert caplog.record_tuples == [
+        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 10, "Overlays:"),
+        ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
+        ("dispatcher", 10, f"Calling img2simg on '{tmpdir}/rootfs.ext4'"),
     ]
 
 

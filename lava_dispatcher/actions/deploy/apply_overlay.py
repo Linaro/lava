@@ -894,6 +894,9 @@ class AppendOverlays(Action):
         if self.params.get("format") not in self.IMAGE_FORMATS:
             raise JobError("Unsupported image format %r" % self.params.get("format"))
 
+        if self.params.get("sparse") and self.params.get("format") != "ext4":
+            raise JobError("sparse=True is only available for ext4 images")
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         if self.params["format"] == "cpio.newc":
@@ -1025,3 +1028,9 @@ class AppendOverlays(Action):
                 self.logger.warning("- %s: <MISSING> to %r", label, path)
         guest.umount(device)
         guest.shutdown()
+
+        if self.params.get("sparse", False):
+            self.logger.debug("Calling img2simg on %r", image)
+            command_list = ["/usr/bin/img2simg", image, f"{image}.sparse"]
+            self.run_cmd(command_list, error_msg="img2simg failed for %s" % image)
+            os.replace(f"{image}.sparse", image)
