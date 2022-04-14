@@ -62,6 +62,9 @@ class ConnectDevice(Action):
     def validate(self):
         super().validate()
         matched = False
+        if "commands" not in self.job.device:
+            return
+
         if "connections" not in self.job.device["commands"]:
             if (
                 "connect" in self.job.device["commands"]
@@ -71,9 +74,6 @@ class ConnectDevice(Action):
                 return
         if "serial" not in self.job.device["actions"]["boot"]["connections"]:
             self.errors = "Device not configured to support serial connection."
-        if "commands" not in self.job.device:
-            self.errors = "Invalid device configuration - missing 'commands'"
-            return
         if "connect" in self.job.device["commands"]:
             # deprecated but allowed for primary
             if self.primary:
