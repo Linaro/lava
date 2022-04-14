@@ -58,6 +58,9 @@ class TestJobFactory(factory.django.DjangoModelFactory):
 @nottest
 class TestJobWithActualDevice(TestJobFactory):
     actual_device = factory.fuzzy.FuzzyChoice(Device.objects.all())
+    requested_device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
+    description = "test description"
+
     end_time = factory.fuzzy.FuzzyDateTime(
         datetime.now(tz=timezone.utc),
         datetime.now(tz=timezone.utc) + timedelta(hours=1),
