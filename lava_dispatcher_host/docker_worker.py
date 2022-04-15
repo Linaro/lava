@@ -249,12 +249,12 @@ def run(version, options):
 
 def get_server_version(options):
     server_version_url = re.sub(r"/$", "", options.url) + "/api/v0.2/system/version/"
-    retries = Retry(total=6, backoff_factor=1)
+    retries = Retry(total=3, backoff_factor=1)
     adapter = HTTPAdapter(max_retries=retries)
     http = requests.Session()
     http.mount("http://", adapter)
     http.mount("https://", adapter)
-    server_version = http.get(server_version_url).json()
+    server_version = http.get(server_version_url, timeout=10).json()
     return server_version["version"]
 
 
@@ -311,7 +311,11 @@ def main():
     LOG.info("[INIT] Starting main loop")
     while True:
         LOG.info("Get server version")
-        server_version = get_server_version(options)
+        try:
+            server_version = get_server_version(options)
+        except requests.RequestException:
+            LOG.warning("-> Unable to get server version")
+            continue
         LOG.info("=> %s", server_version)
         run(server_version, options)
 
