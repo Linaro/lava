@@ -21,11 +21,14 @@
 
 import logging
 import logging.handlers
+import os
 import pathlib
 import platform
+import random
 import re
-import socket
 import signal
+import socket
+import string
 import subprocess
 import sys
 import time
@@ -157,7 +160,19 @@ def run(version, options):
         image = f"lavasoftware/lava-dispatcher:{version}"
 
     LOG.info("Using image %s", image)
-    service = ["docker", "run", "--rm", "--init", "--privileged", "--net=host"]
+    rand = "".join((random.choice(string.hexdigits) for c in range(5)))
+    docker_name = f"lava-worker-{version}-{rand}"
+    LOG.info("Docker name %s", docker_name)
+    service = [
+        "docker",
+        "run",
+        "--rm",
+        "--init",
+        "--privileged",
+        "--net=host",
+        "--name",
+        docker_name,
+    ]
 
     mounts = []
     mounts.append((DISPATCHER_DOWNLOAD_DIR, None))
@@ -207,6 +222,7 @@ def run(version, options):
             + filter_options(options),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
+            preexec_fn=os.setpgrp,
         )
         for line in container.stdout:
             log_output(line)
@@ -221,6 +237,10 @@ def run(version, options):
         time.sleep(5)
     except (KeyboardInterrupt, Terminate):
         LOG.info("[EXIT] Received Ctrl+C")
+        subprocess.check_output(
+            ["docker", "kill", "--signal", "TERM", docker_name],
+            stderr=subprocess.STDOUT,
+        )
         for line in container.stdout:
             log_output(line)
         LOG.error("Returned %d", container.wait())
