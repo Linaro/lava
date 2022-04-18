@@ -1,5 +1,3 @@
-import random
-
 from django.core.management.base import BaseCommand
 
 from lava_db_generator.factories import (
@@ -7,7 +5,8 @@ from lava_db_generator.factories import (
     DeviceFactory,
     UserFactory,
     ProjectGroupFactory,
-    TestJobWithActualDevice,
+    TestJobPublicFactory,
+    TestJobFactoryPrivate,
 )
 
 
@@ -40,7 +39,13 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
-            "--number-of-test-jobs",
+            "--number-of-public-test-jobs",
+            metavar="SIZE",
+            default=0,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-private-test-jobs",
             metavar="SIZE",
             default=0,
             type=int,
@@ -54,9 +59,11 @@ class Command(BaseCommand):
 
         UserFactory.create_batch(
             size=options["number_of_generated_users"])
-        projects = ProjectGroupFactory.create_batch(
+        ProjectGroupFactory.create_batch(
             size=options["number_of_generated_project_groups"])
 
-        for _ in range(options["number_of_test_jobs"]):
-            vg = random.choice(projects)
-            TestJobWithActualDevice(viewing_groups=vg)
+        TestJobPublicFactory.create_batch(
+            size=options["number_of_public_test_jobs"])
+
+        TestJobFactoryPrivate.create_batch(
+            size=options["number_of_private_test_jobs"])

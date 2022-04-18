@@ -47,16 +47,12 @@ class DeviceFactory(factory.django.DjangoModelFactory):
 
 
 @nottest
-class TestJobFactory(factory.django.DjangoModelFactory):
+class TestJobPublicFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TestJob
 
     is_public = True
     submitter = factory.fuzzy.FuzzyChoice(User.objects.all())
-
-
-@nottest
-class TestJobWithActualDevice(TestJobFactory):
     actual_device = factory.fuzzy.FuzzyChoice(Device.objects.all())
     requested_device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
     description = "test description"
@@ -70,6 +66,10 @@ class TestJobWithActualDevice(TestJobFactory):
         datetime.now(tz=timezone.utc),
     )
 
+
+@nottest
+class TestJobFactoryPrivate(TestJobPublicFactory):
+
     @factory.post_generation
     def viewing_groups(self, create, extracted, **kwargs):
         if not create:
@@ -77,4 +77,6 @@ class TestJobWithActualDevice(TestJobFactory):
 
         if extracted:
             self.is_public = False
-            self.viewing_groups.add(extracted)
+            self.viewing_groups.add(
+                factory.fuzzy.FuzzyChoice(
+                    Group.objects.all()))
