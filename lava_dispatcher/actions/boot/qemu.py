@@ -154,7 +154,7 @@ class CallQemuAction(Action):
 
     def get_raw_version(self, architecture):
         if "docker" in self.parameters:
-            docker = DockerRun(self.parameters["docker"]["image"])
+            docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
             docker.run(
                 *shlex.split(
                     "qemu-system-%s --version" % self.get_qemu_arch(architecture)
