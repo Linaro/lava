@@ -140,6 +140,25 @@ constants:
       - 'Connection timed out'
   depthcharge:
     final-message: '{{ depthcharge_final_message | default("Starting kernel") }}'
+{% if depthcharge_error_messages %}
+    error-messages:
+{% for message in depthcharge_error_messages %}
+      - '{{ message }}'
+{% endfor %}
+{% else %}
+    error-messages:
+      - 'Tftp failed.'
+      - 'Dhcp release failed.'
+      - 'No space left for ramdisk'
+      - 'TFTP failed for ramdisk.'
+      - 'Dhcp release failed.'
+      - 'Out of space adding TFTP server IP to the command line.'
+      - 'No network device.'
+      - 'Error code \d+'
+{% endif %}
+{% if depthcharge_extra_error_message %}
+      - '{{ depthcharge_extra_error_message }}'
+{% endif %}
   # OS shutdown message
   # Override: set as the shutdown-message parameter of an Action.
   # SHUTDOWN_MESSAGE
