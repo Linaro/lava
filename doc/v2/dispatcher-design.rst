@@ -631,6 +631,7 @@ integration and triage of infrastructure problems.
 ``lava-run`` accepts a YAML file containing the device configuration which
 can be accessed from the download link on the device dictionary page.
 The absolute or relative path to the YAML file must be specified to the
-``--device`` option. ``--output-dir`` must also be specified::
+``--device`` option. ``--output-dir`` must also be specified. Additional, a
+fake ``--job-id`` should be specified to satisfy ``lava-run``::
 
- $ sudo lava-run --device devices/fred.yaml panda-ramdisk.yaml --output-dir=/tmp/test
+ $ sudo lava-run --job-id 0 --device devices/fred.yaml panda-ramdisk.yaml --output-dir=/tmp/test
