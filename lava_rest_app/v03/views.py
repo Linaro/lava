@@ -117,8 +117,9 @@ class TestJobViewSet(base_views.TestJobViewSet):
     * `/jobs/<job_id>/csv/`
     * `/jobs/<job_id>/yaml/`
     """
+
     pagination_class = CursorPagination
-    ordering = 'id'
+    ordering = "id"
 
     def suites(self, request, **kwargs):
         raise NotImplementedError()
