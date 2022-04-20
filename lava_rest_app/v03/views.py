@@ -128,9 +128,6 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
-
         output = io.StringIO()
         writer = csv.DictWriter(
             output,
@@ -151,9 +148,6 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     @detail_route(methods=["get"], suffix="yaml")
     def yaml(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
-
         yaml_list = []
         for test_suite in self.get_object().testsuite_set.all():
             for test_case in test_suite.testcase_set.all():
