@@ -62,7 +62,7 @@ class TestJobPublicFactory(factory.django.DjangoModelFactory):
         datetime.now(tz=timezone.utc) + timedelta(hours=1),
     )
     start_time = factory.fuzzy.FuzzyDateTime(
-        datetime.now(tz=timezone.utc) - timedelta(hours=5),
+        datetime.now(tz=timezone.utc) - timedelta(days=500),
         datetime.now(tz=timezone.utc),
     )
 
