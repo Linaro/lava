@@ -24,11 +24,13 @@ from lava_rest_app.base.views import LavaObtainAuthToken
 from . import versions
 from lava_rest_app.base.routers import router as router_v01
 from lava_rest_app.v02.routers import router as router_v02
+from lava_rest_app.v03.routers import router as router_v03
 
 
 urlpatterns = [
     url(r"^(?P<version>(v0.1))/", include(router_v01.urls)),
     url(r"^(?P<version>(v0.2))/", include(router_v02.urls)),
+    url(r"^(?P<version>(v0.3))/", include(router_v03.urls)),
     url(
         r"^^(?P<version>(%s))/token/" % versions.urlpattern(),
         LavaObtainAuthToken.as_view(),
