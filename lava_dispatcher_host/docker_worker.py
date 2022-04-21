@@ -230,7 +230,7 @@ def run(version, options):
             LOG.error("Returned %d", container.poll())
             time.sleep(5)
     except FileNotFoundError as exc:
-        LOG.info("'%s' not found", exc.filename)
+        LOG.error("'%s' not found", exc.filename)
         time.sleep(5)
     except subprocess.CalledProcessError as failure:
         LOG.info("Failed to start the worker")
@@ -317,7 +317,11 @@ def main():
             LOG.warning("-> Unable to get server version")
             continue
         LOG.info("=> %s", server_version)
-        run(server_version, options)
+        try:
+            run(server_version, options)
+        except Exception as exc:
+            LOG.exception(exc)
+            time.sleep(5)
 
 
 if __name__ == "__main__":
