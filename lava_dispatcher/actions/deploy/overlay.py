@@ -30,6 +30,7 @@ from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
+from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.network import rpcinfo_nfs
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -92,6 +93,7 @@ class CreateOverlay(Action):
         self.target_ip = ""
         self.probe_ip = ""
         self.probe_channel = ""
+        self.dispatcher_ip = ""
 
     def validate(self):
         super().validate()
@@ -139,6 +141,8 @@ class CreateOverlay(Action):
                 self.probe_channel = device["probe_channel"]
                 self.probe_ip = device["probe_ip"]
                 break
+
+        self.dispatcher_ip = dispatcher_ip(self.job.parameters["dispatcher"])
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -257,6 +261,7 @@ class CreateOverlay(Action):
             # TODO: Add LAVA_URL?
             self.logger.debug("LAVA metadata")
             self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
+            self._export_data(fout, self.dispatcher_ip, "LAVA_DISPATCHER_IP")
 
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
