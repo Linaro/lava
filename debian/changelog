@@ -1,3 +1,12 @@
+lava (2022.04-1) unstable; urgency=medium
+
+  * LAVA Software 2022.04 release
+
+  [ Rémi Duraffort ]
+  * [4403c359d] lava-docker-worker: fix some bugs found on staging
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 21 Apr 2022 11:29:38 +0200
+
 lava (2022.03-1) unstable; urgency=medium
 
   * LAVA Software 2022.03 release
