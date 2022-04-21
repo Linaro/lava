@@ -2,6 +2,7 @@ import factory
 import factory.fuzzy
 
 from datetime import datetime, timedelta, timezone
+from random import choice
 
 from django.contrib.auth.models import User, Group
 from lava_scheduler_app.models import DeviceType, Device, TestJob
@@ -75,8 +76,9 @@ class TestJobFactoryPrivate(TestJobPublicFactory):
         if not create:
             return
 
-        if extracted:
-            self.is_public = False
-            self.viewing_groups.add(
-                factory.fuzzy.FuzzyChoice(
-                    Group.objects.all()))
+        self.is_public = False
+        self.viewing_groups.add(
+            choice(
+                Group.objects.all()
+            )
+        )
