@@ -146,6 +146,7 @@ class TftpAction(Action):
             ("compress-ramdisk", "ramdisk"),
             ("download-action", "kernel"),
             ("download-action", "dtb"),
+            ("download-action", "tee"),
         ]:
             if key in self.parameters:
                 filename = self.get_namespace_data(action=action, label="file", key=key)
