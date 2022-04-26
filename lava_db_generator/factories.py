@@ -43,7 +43,7 @@ class DeviceFactory(factory.django.DjangoModelFactory):
         model = Device
         django_get_or_create = ("hostname",)
 
-    hostname = factory.Sequence(lambda n: f"device{n}")
+    hostname = factory.Faker("hostname", levels=0)
     device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
 
 
