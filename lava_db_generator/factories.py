@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from random import choice
 
 from django.contrib.auth.models import User, Group
+from django.db.models import Q
 from lava_scheduler_app.models import DeviceType, Device, TestJob
 
 from lava_common.decorators import nottest
@@ -16,6 +17,15 @@ class UserFactory(factory.django.DjangoModelFactory):
         django_get_or_create = ("username",)
 
     username = factory.Faker("user_name")
+
+
+class UserInSingleProjectFactory(UserFactory):
+    @factory.post_generation
+    def assing_project_group(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
@@ -70,6 +80,14 @@ class TestJobPublicFactory(factory.django.DjangoModelFactory):
 
 @nottest
 class TestJobFactoryPrivate(TestJobPublicFactory):
+    is_public = False
+
+
+@nottest
+class TestJobFactoryPrivateWithSingleProject(TestJobPublicFactory):
+
+    submitter = factory.fuzzy.FuzzyChoice(
+        User.objects.filter(username='lava-health'))
 
     @factory.post_generation
     def viewing_groups(self, create, extracted, **kwargs):

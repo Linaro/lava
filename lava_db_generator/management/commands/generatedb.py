@@ -4,9 +4,11 @@ from lava_db_generator.factories import (
     DeviceTypeFactory,
     DeviceFactory,
     UserFactory,
+    UserInSingleProjectFactory,
     ProjectGroupFactory,
     TestJobPublicFactory,
     TestJobFactoryPrivate,
+    TestJobFactoryPrivateWithSingleProject,
 )
 
 
@@ -39,6 +41,12 @@ class Command(BaseCommand):
             type=int,
         )
         parser.add_argument(
+            "--number-of-generated-users-with-single-project",
+            metavar="SIZE",
+            default=0,
+            type=int,
+        )
+        parser.add_argument(
             "--number-of-public-test-jobs",
             metavar="SIZE",
             default=0,
@@ -46,6 +54,12 @@ class Command(BaseCommand):
         )
         parser.add_argument(
             "--number-of-private-test-jobs",
+            metavar="SIZE",
+            default=0,
+            type=int,
+        )
+        parser.add_argument(
+            "--number-of-private-test-jobs-with-single-project",
             metavar="SIZE",
             default=0,
             type=int,
@@ -61,9 +75,14 @@ class Command(BaseCommand):
             size=options["number_of_generated_users"])
         ProjectGroupFactory.create_batch(
             size=options["number_of_generated_project_groups"])
+        UserInSingleProjectFactory.create_batch(
+            size=options["number_of_generated_users_with_single_project"])
 
         TestJobPublicFactory.create_batch(
             size=options["number_of_public_test_jobs"])
 
         TestJobFactoryPrivate.create_batch(
             size=options["number_of_private_test_jobs"])
+
+        TestJobFactoryPrivateWithSingleProject.create_batch(
+            size=options["number_of_private_test_jobs_with_single_project"])
