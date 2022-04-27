@@ -701,31 +701,60 @@ class OverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
-        overlay_full_path = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
+
+        transfer_method = self.parameters["transfer_overlay"].get(
+            "transfer_method", "http"
         )
-        if not overlay_full_path:
-            raise JobError("No overlay file identified for the transfer.")
-        if not overlay_full_path.startswith(DISPATCHER_DOWNLOAD_DIR):
-            raise ConfigurationError(
-                "overlay should already be in DISPATCHER_DOWNLOAD_DIR"
+
+        if transfer_method == "http":
+            overlay_full_path = self.get_namespace_data(
+                action="compress-overlay", label="output", key="file"
             )
-        overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
-        overlay = os.path.basename(overlay_path)
-        connection.sendline("rm %s" % overlay, delay=self.character_delay)
-        connection.wait()
+            if not overlay_full_path:
+                raise JobError("No overlay file identified for the transfer.")
+            if not overlay_full_path.startswith(DISPATCHER_DOWNLOAD_DIR):
+                raise ConfigurationError(
+                    "overlay should already be in DISPATCHER_DOWNLOAD_DIR"
+                )
+            overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+            overlay = os.path.basename(overlay_path)
 
-        cmd = self.parameters["transfer_overlay"]["download_command"]
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
-        connection.sendline(
-            "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
-            delay=self.character_delay,
-        )
-        connection.wait()
+            connection.sendline("rm %s" % overlay, delay=self.character_delay)
+            connection.wait()
 
-        unpack = self.parameters["transfer_overlay"]["unpack_command"]
-        connection.sendline(unpack + " " + overlay, delay=self.character_delay)
-        connection.wait()
+            cmd = self.parameters["transfer_overlay"]["download_command"]
+            ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
+            connection.sendline(
+                "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
+                delay=self.character_delay,
+            )
+            connection.wait()
+
+            unpack = self.parameters["transfer_overlay"]["unpack_command"]
+            connection.sendline(unpack + " " + overlay, delay=self.character_delay)
+            connection.wait()
+        elif transfer_method == "nfs":
+            location = self.get_namespace_data(
+                action="test", label="shared", key="location"
+            )
+
+            cmd = self.parameters["transfer_overlay"]["download_command"]
+            ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
+            mount_dir = f"/{os.path.basename(location)}"
+            connection.sendline(
+                "mkdir -p %s; %s %s:%s %s"
+                % (mount_dir, cmd, ip_addr, location, mount_dir),
+                delay=self.character_delay,
+            )
+            connection.wait()
+
+            unpack = self.parameters["transfer_overlay"]["unpack_command"]
+            connection.sendline(
+                "%s %s/* /; umount %s; rm -fr %s"
+                % (unpack, mount_dir, mount_dir, mount_dir),
+                delay=self.character_delay,
+            )
+            connection.wait()
 
         return connection
 

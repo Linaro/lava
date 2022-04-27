@@ -601,6 +601,73 @@ class TestUbootAction(StdoutTestCase):
         self.assertIn("unpack_command", transfer.parameters["transfer_overlay"])
 
     @patch(
+        "lava_dispatcher.actions.boot.dispatcher_ip",
+        return_value="foo",
+    )
+    @patch(
+        "lava_dispatcher.actions.boot.OverlayUnpack.get_namespace_data",
+        return_value="/var/lib/lava/dispatcher/tmp/bar",
+    )
+    def test_transfer_media_cmd(self, get_namespace_data, dispatcher_ip_mock):
+        """
+        Test command used to add the overlay to existing rootfs
+        """
+        job = self.factory.create_bbb_job(
+            "sample_jobs/uboot-ramdisk-inline-commands.yaml"
+        )
+        uboot = [
+            action for action in job.pipeline.actions if action.name == "uboot-action"
+        ][0]
+        retry = [
+            action
+            for action in uboot.pipeline.actions
+            if action.name == "uboot-commands"
+        ][0]
+
+        transfer = [
+            action
+            for action in retry.pipeline.actions
+            if action.name == "overlay-unpack"
+        ][0]
+
+        class Connection:
+            def __init__(self):
+                self.cmds = []
+
+            def sendline(self, cmd, delay):
+                self.cmds.append(cmd)
+
+            def wait(self):
+                pass
+
+        # http method
+        http_transfer_connection = Connection()
+        transfer.run(http_transfer_connection, 0)
+        self.assertEqual(
+            http_transfer_connection.cmds,
+            [
+                "rm bar",
+                "wget -S --progress=dot:giga http://foo/tmp/bar",
+                "tar -C / -xzf bar",
+            ],
+        )
+
+        # nfs method
+        self.assertIn("transfer_overlay", transfer.parameters)
+        transfer.parameters["transfer_overlay"]["transfer_method"] = "nfs"
+        transfer.parameters["transfer_overlay"]["download_command"] = "fs-nfs3"
+        transfer.parameters["transfer_overlay"]["unpack_command"] = "cp -rf"
+        nfs_transfer_connection = Connection()
+        transfer.run(nfs_transfer_connection, 0)
+        self.assertEqual(
+            nfs_transfer_connection.cmds,
+            [
+                "mkdir -p /bar; fs-nfs3 foo:/var/lib/lava/dispatcher/tmp/bar /bar",
+                "cp -rf /bar/* /; umount /bar; rm -fr /bar",
+            ],
+        )
+
+    @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_download_action(self, which_mock):

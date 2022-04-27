@@ -43,7 +43,11 @@ def auto_login():
 
 
 def transfer_overlay():
-    return {Required("download_command"): str, Required("unpack_command"): str}
+    return {
+        Required("download_command"): str,
+        Required("unpack_command"): str,
+        Optional("transfer_method"): str,
+    }
 
 
 def prompts():
