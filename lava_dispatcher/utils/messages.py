@@ -94,7 +94,9 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[: cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection, action, max_end_time, fail_msg):
+    def parse_failures(
+        cls, connection, action, max_end_time, fail_msg, auto_login=False
+    ):
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -157,8 +159,9 @@ class LinuxKernelMessages(Action):
                 action.logger.warning(
                     "%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
                 )
-                # TRACE may need a newline to force a prompt
-                connection.sendline(connection.check_char)
+                # TRACE may need a newline to force a prompt (only when not using auto-login)
+                if not auto_login:
+                    connection.sendline(connection.check_char)
                 # this is allowable behaviour, not a failure.
                 results.append(
                     {

@@ -72,7 +72,9 @@ class LoginAction(Action):
         " actual prompt string more closely."
     )
 
-    def check_kernel_messages(self, connection, max_end_time, fail_msg):
+    def check_kernel_messages(
+        self, connection, max_end_time, fail_msg, auto_login=False
+    ):
         """
         Use the additional pexpect expressions to detect warnings
         and errors during the kernel boot. Ensure all test jobs using
@@ -85,7 +87,11 @@ class LoginAction(Action):
         self.logger.info("Parsing kernel messages")
         self.logger.debug(connection.prompt_str)
         parsed = LinuxKernelMessages.parse_failures(
-            connection, self, max_end_time=max_end_time, fail_msg=fail_msg
+            connection,
+            self,
+            max_end_time=max_end_time,
+            fail_msg=fail_msg,
+            auto_login=auto_login,
         )
         if len(parsed) and "success" in parsed[0]:
             self.results = {"success": parsed[0]["success"]}
@@ -159,7 +165,9 @@ class LoginAction(Action):
             connection.prompt_str.append(LOGIN_INCORRECT_MSG)
 
             # wait for a prompt or kernel messages
-            self.check_kernel_messages(connection, max_end_time, failure)
+            self.check_kernel_messages(
+                connection, max_end_time, failure, auto_login=True
+            )
             if "success" in self.results:
                 if LOGIN_INCORRECT_MSG in self.results["success"]:
                     self.logger.warning(
