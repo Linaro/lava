@@ -23,6 +23,7 @@ import time
 import pexpect
 from lava_common.constants import KERNEL_FREE_INIT_MSG
 from lava_common.exceptions import JobError
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import StdoutTestCase
 
@@ -114,7 +115,7 @@ class TestBootMessages(StdoutTestCase):
         connection = FakeConnection(child, message_list)
         with self.assertRaises(JobError):
             result = LinuxKernelMessages.parse_failures(
-                connection, max_end_time=self.max_end_time
+                connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
 
     def test_kernel_1(self):
@@ -124,7 +125,7 @@ class TestBootMessages(StdoutTestCase):
         message_list = LinuxKernelMessages.get_kernel_prompts()
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, max_end_time=self.max_end_time
+            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(
@@ -146,14 +147,17 @@ class TestBootMessages(StdoutTestCase):
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, max_end_time=self.max_end_time
+            connection,
+            action=Action(),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(list(results)), 14)
         message_list = LinuxKernelMessages.get_init_prompts()
         child = pexpect.spawn("cat", [logfile])
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, max_end_time=self.max_end_time
+            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
         )
         self.assertEqual(len(list(results)), 13)
 
@@ -166,5 +170,5 @@ class TestBootMessages(StdoutTestCase):
         connection = FakeConnection(child, message_list)
         with self.assertRaises(JobError):
             results = LinuxKernelMessages.parse_failures(
-                connection, max_end_time=self.max_end_time
+                connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
