@@ -18,14 +18,13 @@ class UserFactory(factory.django.DjangoModelFactory):
 
     username = factory.Faker("user_name")
 
-
-class UserInSingleProjectFactory(UserFactory):
     @factory.post_generation
-    def assing_project_group(self, create, extracted, **kwargs):
+    def number_of_particpated_projects(self, create, extracted: int, **kwargs):
         if not create:
             return
 
-        self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
+        if extracted:
+            self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
@@ -58,7 +57,7 @@ class DeviceFactory(factory.django.DjangoModelFactory):
 
 
 @nottest
-class TestJobPublicFactory(factory.django.DjangoModelFactory):
+class TestJobFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = TestJob
 
@@ -77,26 +76,28 @@ class TestJobPublicFactory(factory.django.DjangoModelFactory):
         datetime.now(tz=timezone.utc),
     )
 
-
-@nottest
-class TestJobFactoryPrivate(TestJobPublicFactory):
-    is_public = False
-
-
-@nottest
-class TestJobFactoryPrivateWithSingleProject(TestJobPublicFactory):
-
-    submitter = factory.fuzzy.FuzzyChoice(
-        User.objects.filter(username='lava-health'))
-
     @factory.post_generation
-    def viewing_groups(self, create, extracted, **kwargs):
+    def number_of_particpated_projects(self,
+                                       create,
+                                       number_of_particpated_projects: int,
+                                       **kwargs):
         if not create:
             return
 
-        self.is_public = False
-        self.viewing_groups.add(
-            choice(
-                Group.objects.all()
+        if number_of_particpated_projects:
+            self.viewing_groups.add(
+                choice(
+                    Group.objects.all()
+                )
             )
-        )
+
+    @factory.post_generation
+    def is_submitter_lava_health(self,
+                                 create,
+                                 is_submitter_lava_health,
+                                 **kwargs):
+        if not create:
+            return
+
+        if is_submitter_lava_health:
+            self.submitter = User.objects.filter(username='lava-health')[0]

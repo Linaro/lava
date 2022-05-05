@@ -1,88 +1,123 @@
+from __future__ import annotations
 from django.core.management.base import BaseCommand
 
 from lava_db_generator.factories import (
     DeviceTypeFactory,
     DeviceFactory,
     UserFactory,
-    UserInSingleProjectFactory,
     ProjectGroupFactory,
-    TestJobPublicFactory,
-    TestJobFactoryPrivate,
-    TestJobFactoryPrivateWithSingleProject,
+    TestJobFactory,
 )
+from argparse import ArgumentParser
 
 
 class Command(BaseCommand):
     help = "Generates dummy database"
 
-    def add_arguments(self, parser):
-        parser.add_argument(
-            "--number-of-generated-device-types",
+    def add_arguments(self, parser: ArgumentParser):
+        subparsers = parser.add_subparsers(required=True)
+
+        # Device Types
+        device_type_subparser = subparsers.add_parser('device-type')
+        device_type_subparser.add_argument(
+            "number_generated",
             metavar="SIZE",
+            type=int,
+        )
+        device_type_subparser.set_defaults(func=generate_device_types)
+
+        # Devices
+        device_subparser = subparsers.add_parser('device')
+        device_subparser.add_argument(
+            "number_generated",
+            metavar="SIZE",
+            type=int,
+        )
+        device_subparser.set_defaults(func=generate_devices)
+
+        # Project
+        project_subparser = subparsers.add_parser('project')
+        project_subparser.add_argument(
+            "number_generated",
+            metavar="SIZE",
+            type=int,
+        )
+        project_subparser.set_defaults(func=generate_projects)
+
+        # User
+        user_subparser = subparsers.add_parser('user')
+        user_subparser.add_argument(
+            "number_generated",
+            metavar="SIZE",
+            type=int,
+        )
+        user_subparser.add_argument(
+            '--number-of-particpated-projects',
+            type=int,
+            default=0,
+        )
+        user_subparser.set_defaults(func=generate_users)
+
+        # Testjob
+        testjob_subparser = subparsers.add_parser('testjob')
+        testjob_subparser.add_argument(
+            "number_generated",
+            metavar="SIZE",
+            type=int,
+        )
+        testjob_subparser.add_argument(
+            "--is-private",
+            action='store_true',
+        )
+        testjob_subparser.add_argument(
+            "--number-of-particpated-projects",
             default=0,
             type=int,
         )
-        parser.add_argument(
-            "--number-of-generated-devices",
-            metavar="SIZE",
-            default=0,
-            type=int,
+        testjob_subparser.add_argument(
+            "--is-submitter-lava-health",
+            default=False,
+            type=bool,
         )
-        parser.add_argument(
-            "--number-of-generated-users",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--number-of-generated-project-groups",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--number-of-generated-users-with-single-project",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--number-of-public-test-jobs",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--number-of-private-test-jobs",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
-        parser.add_argument(
-            "--number-of-private-test-jobs-with-single-project",
-            metavar="SIZE",
-            default=0,
-            type=int,
-        )
+        testjob_subparser.set_defaults(func=generate_testjobs)
 
     def handle(self, *args, **options):
-        DeviceTypeFactory.create_batch(
-            size=options["number_of_generated_device_types"])
-        DeviceFactory.create_batch(
-            size=options["number_of_generated_devices"])
+        func = options.pop("func")
+        func(*args, **options)
 
-        UserFactory.create_batch(
-            size=options["number_of_generated_users"])
-        ProjectGroupFactory.create_batch(
-            size=options["number_of_generated_project_groups"])
-        UserInSingleProjectFactory.create_batch(
-            size=options["number_of_generated_users_with_single_project"])
 
-        TestJobPublicFactory.create_batch(
-            size=options["number_of_public_test_jobs"])
+def generate_device_types(number_generated: int, **kwargs) -> None:
+    DeviceTypeFactory.create_batch(
+            size=number_generated)
 
-        TestJobFactoryPrivate.create_batch(
-            size=options["number_of_private_test_jobs"])
 
-        TestJobFactoryPrivateWithSingleProject.create_batch(
-            size=options["number_of_private_test_jobs_with_single_project"])
+def generate_devices(number_generated: int, **kwargs) -> None:
+    DeviceFactory.create_batch(
+            size=number_generated)
+
+
+def generate_users(number_generated: int,
+                   number_of_particpated_projects: int,
+                   **kwargs) -> None:
+    UserFactory.create_batch(
+            size=number_generated,
+            number_of_particpated_projects=number_of_particpated_projects)
+
+
+def generate_projects(number_generated: int, **kwargs) -> None:
+    ProjectGroupFactory.create_batch(
+            size=number_generated)
+
+
+def generate_testjobs(number_generated: int,
+                      is_private: bool,
+                      number_of_particpated_projects: int,
+                      is_submitter_lava_health: bool,
+                      **kwargs,
+                      ) -> None:
+
+    TestJobFactory.create_batch(
+            size=number_generated,
+            is_public=(not is_private),
+            number_of_particpated_projects=number_of_particpated_projects,
+            is_submitter_lava_health=is_submitter_lava_health)
