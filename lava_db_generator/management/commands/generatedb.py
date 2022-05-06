@@ -83,9 +83,29 @@ class Command(BaseCommand):
         )
         testjob_subparser.set_defaults(func=generate_testjobs)
 
+        scenario_subparser = subparsers.add_parser('scenario')
+        scenario_subparser.add_argument(
+                'scenario_name'
+        )
+
     def handle(self, *args, **options):
         func = options.pop("func")
         func(*args, **options)
+
+
+def generate_scenario(scenario_name: str, **kwargs) -> None:
+    if scenario_name == 'viewing_groups_test':
+        generate_device_types(300)
+        generate_devices(1000)
+        generate_projects(100)
+        generate_users(300, 1)
+        generate_testjobs(200_000,
+                          is_private=False,
+                          number_of_particpated_projects=1,
+                          is_submitter_lava_health=True,
+                          )
+    else:
+        raise ValueError('Unknown scenario.')
 
 
 def generate_device_types(number_generated: int, **kwargs) -> None:
