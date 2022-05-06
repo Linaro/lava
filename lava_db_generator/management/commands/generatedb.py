@@ -9,6 +9,8 @@ from lava_db_generator.factories import (
     TestJobFactory,
 )
 from argparse import ArgumentParser
+import factory
+from django.contrib.auth.models import User
 
 
 class Command(BaseCommand):
@@ -116,8 +118,13 @@ def generate_testjobs(number_generated: int,
                       **kwargs,
                       ) -> None:
 
+    if is_submitter_lava_health:
+        submitter = User.objects.filter(username='lava-health')[0]
+    else:
+        submitter = factory.fuzzy.FuzzyChoice(User.objects.all())
+
     TestJobFactory.create_batch(
             size=number_generated,
             is_public=(not is_private),
             number_of_particpated_projects=number_of_particpated_projects,
-            is_submitter_lava_health=is_submitter_lava_health)
+            submitter=submitter)

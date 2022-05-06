@@ -19,11 +19,14 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Faker("user_name")
 
     @factory.post_generation
-    def number_of_particpated_projects(self, create, extracted: int, **kwargs):
+    def number_of_particpated_projects(self,
+                                       create,
+                                       number_of_particpated_projects: int,
+                                       **kwargs):
         if not create:
             return
 
-        if extracted:
+        for _ in range(number_of_particpated_projects):
             self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
 
 
@@ -62,7 +65,6 @@ class TestJobFactory(factory.django.DjangoModelFactory):
         model = TestJob
 
     is_public = True
-    submitter = factory.fuzzy.FuzzyChoice(User.objects.all())
     actual_device = factory.fuzzy.FuzzyChoice(Device.objects.all())
     requested_device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
     description = "test description"
@@ -84,20 +86,9 @@ class TestJobFactory(factory.django.DjangoModelFactory):
         if not create:
             return
 
-        if number_of_particpated_projects:
+        for _ in range(number_of_particpated_projects):
             self.viewing_groups.add(
                 choice(
                     Group.objects.all()
                 )
             )
-
-    @factory.post_generation
-    def is_submitter_lava_health(self,
-                                 create,
-                                 is_submitter_lava_health,
-                                 **kwargs):
-        if not create:
-            return
-
-        if is_submitter_lava_health:
-            self.submitter = User.objects.filter(username='lava-health')[0]
