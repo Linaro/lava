@@ -133,7 +133,7 @@ class BaseFVPAction(Action):
         for volume in options.get("volumes", []):
             self.extra_options += " --volume %s" % volume
         if "license_variable" in self.parameters:
-            self.fvp_license = self.parameters["license_variable"]
+            self.fvp_license = shlex.quote(self.parameters["license_variable"])
 
     def construct_docker_fvp_command(self, docker_image, fvp_arguments):
         substitutions = {}
