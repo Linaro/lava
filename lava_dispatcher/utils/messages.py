@@ -94,7 +94,9 @@ class LinuxKernelMessages(Action):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[: cls.FREE_UNUSED]]
 
     @classmethod
-    def parse_failures(cls, connection, action=None, max_end_time=None, fail_msg=None):
+    def parse_failures(
+        cls, connection, action, max_end_time, fail_msg, auto_login=False
+    ):
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -131,37 +133,35 @@ class LinuxKernelMessages(Action):
             )
 
         while True:
-            if action:
-                action.logger.debug(
-                    "[%s] Waiting for messages, (timeout %s)",
-                    action.name,
-                    seconds_to_str(remaining),
-                )
+            action.logger.debug(
+                "[%s] Waiting for messages, (timeout %s)",
+                action.name,
+                seconds_to_str(remaining),
+            )
             try:
-                if action and action.force_prompt:
+                if action.force_prompt:
                     index = connection.force_prompt_wait(remaining)
                 else:
                     index = connection.wait(max_end_time)
             except (pexpect.EOF, pexpect.TIMEOUT, TestError):
-                if action:
-                    msg = "Failed to match - connection timed out handling messages."
-                    action.logger.warning(msg)
-                    action.errors = msg
+                msg = "Failed to match - connection timed out handling messages."
+                action.logger.warning(msg)
+                action.errors = msg
                 break
 
-            if action and index:
+            if index:
                 action.logger.debug(
                     "Matched prompt #%s: %s", index, connection.prompt_str[index]
                 )
             message = connection.raw_connection.after
             if index in [cls.TRACE, cls.EXCEPTION, cls.WARNING, cls.BUG]:
                 res = "fail"
-                if action:
-                    action.logger.warning(
-                        "%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
-                    )
-                # TRACE may need a newline to force a prompt
-                connection.sendline(connection.check_char)
+                action.logger.warning(
+                    "%s: %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
+                )
+                # TRACE may need a newline to force a prompt (only when not using auto-login)
+                if not auto_login:
+                    connection.sendline(connection.check_char)
                 # this is allowable behaviour, not a failure.
                 results.append(
                     {
@@ -172,10 +172,9 @@ class LinuxKernelMessages(Action):
                 continue
             elif index == cls.PANIC:
                 res = "fail"
-                if action:
-                    action.logger.error(
-                        "%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
-                    )
+                action.logger.error(
+                    "%s %s" % (action.name, cls.MESSAGE_CHOICES[index][2])
+                )
                 results.append(
                     {
                         cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][1],
@@ -184,12 +183,7 @@ class LinuxKernelMessages(Action):
                 )
                 halt = message[:METADATA_MESSAGE_LIMIT]
                 break
-            elif (
-                action
-                and fail_msg
-                and index
-                and fail_msg == connection.prompt_str[index]
-            ):
+            elif fail_msg and index and fail_msg == connection.prompt_str[index]:
                 res = "fail"
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
@@ -212,7 +206,7 @@ class LinuxKernelMessages(Action):
             else:
                 break
         # record a specific result for the kernel messages for later debugging.
-        if action and isinstance(action.logger, YAMLLogger):
+        if isinstance(action.logger, YAMLLogger):
             action.logger.results(
                 {
                     "definition": "lava",
@@ -248,7 +242,7 @@ class LinuxKernelMessages(Action):
         else:
             connection.prompt_str.append(self.existing_prompt)
         self.logger.debug(connection.prompt_str)
-        results = self.parse_failures(connection)
+        results = self.parse_failures(connection, self, max_end_time, None)
         if len(results) > 1:
             self.results = {"fail": results}
         elif len(results) == 1:
