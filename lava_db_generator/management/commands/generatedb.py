@@ -11,6 +11,7 @@ from lava_db_generator.factories import (
 from argparse import ArgumentParser
 import factory
 from django.contrib.auth.models import User
+from typing import Optional
 
 
 class Command(BaseCommand):
@@ -57,6 +58,9 @@ class Command(BaseCommand):
             '--number-of-particpated-projects',
             type=int,
             default=0,
+        )
+        user_subparser.add_argument(
+            '--set-password-to',
         )
         user_subparser.set_defaults(func=generate_users)
 
@@ -120,10 +124,18 @@ def generate_devices(number_generated: int, **kwargs) -> None:
 
 def generate_users(number_generated: int,
                    number_of_particpated_projects: int,
+                   set_password_to: Optional[str],
                    **kwargs) -> None:
-    UserFactory.create_batch(
-            size=number_generated,
-            number_of_particpated_projects=number_of_particpated_projects)
+
+    options = {
+        "size": number_generated,
+        "number_of_particpated_projects": number_of_particpated_projects,
+    }
+
+    if set_password_to is not None:
+        options["set_password_to"] = set_password_to
+
+    UserFactory.create_batch(**options)
 
 
 def generate_projects(number_generated: int, **kwargs) -> None:

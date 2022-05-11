@@ -29,6 +29,16 @@ class UserFactory(factory.django.DjangoModelFactory):
         for _ in range(number_of_particpated_projects):
             self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
 
+    @factory.post_generation
+    def set_password_to(self,
+                        create,
+                        new_password: str,
+                        **kwargs):
+        if not create:
+            return
+
+        self.set_password(new_password)
+
 
 class GroupFactory(factory.django.DjangoModelFactory):
     class Meta:
