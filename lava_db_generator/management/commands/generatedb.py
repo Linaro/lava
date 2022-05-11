@@ -62,6 +62,9 @@ class Command(BaseCommand):
         user_subparser.add_argument(
             '--set-password-to',
         )
+        user_subparser.add_argument(
+            '--username-sequence',
+        )
         user_subparser.set_defaults(func=generate_users)
 
         # Testjob
@@ -125,6 +128,7 @@ def generate_devices(number_generated: int, **kwargs) -> None:
 def generate_users(number_generated: int,
                    number_of_particpated_projects: int,
                    set_password_to: Optional[str],
+                   username_sequence: Optional[str],
                    **kwargs) -> None:
 
     options = {
@@ -134,6 +138,9 @@ def generate_users(number_generated: int,
 
     if set_password_to is not None:
         options["set_password_to"] = set_password_to
+
+    if username_sequence is not None:
+        options["username"] = factory.Sequence(lambda n: f"{username_sequence}{n}")
 
     UserFactory.create_batch(**options)
 
