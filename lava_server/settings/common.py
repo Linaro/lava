@@ -460,51 +460,52 @@ def update(values):
         re.compile(r"%s" % reg, re.IGNORECASE) for reg in DISALLOWED_USER_AGENTS
     ]
 
-    LOGGING = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "filters": {
-            "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}
-        },
-        "formatters": {
-            "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"}
-        },
-        "handlers": {
-            "console": {
-                "level": "DEBUG",
-                "class": "logging.StreamHandler",
-                "formatter": "lava",
+    if LOGGING is None:
+        LOGGING = {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "filters": {
+                "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}
             },
-            "logfile": {
-                "class": "logging.handlers.WatchedFileHandler",
-                "filename": DJANGO_LOGFILE,
-                "formatter": "lava",
+            "formatters": {
+                "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"}
             },
-        },
-        "loggers": {
-            "django": {
-                "handlers": ["logfile"],
-                # DEBUG outputs all SQL statements
-                "level": "ERROR",
-                "propagate": True,
+            "handlers": {
+                "console": {
+                    "level": "DEBUG",
+                    "class": "logging.StreamHandler",
+                    "formatter": "lava",
+                },
+                "logfile": {
+                    "class": "logging.handlers.WatchedFileHandler",
+                    "filename": DJANGO_LOGFILE,
+                    "formatter": "lava",
+                },
             },
-            "django_auth_ldap": {
-                "handlers": ["logfile"],
-                "level": "INFO",
-                "propagate": True,
+            "loggers": {
+                "django": {
+                    "handlers": ["logfile"],
+                    # DEBUG outputs all SQL statements
+                    "level": "ERROR",
+                    "propagate": True,
+                },
+                "django_auth_ldap": {
+                    "handlers": ["logfile"],
+                    "level": "INFO",
+                    "propagate": True,
+                },
+                "lava_results_app": {
+                    "handlers": ["logfile"],
+                    "level": "INFO",
+                    "propagate": True,
+                },
+                "lava_scheduler_app": {
+                    "handlers": ["logfile"],
+                    "level": "INFO",
+                    "propagate": True,
+                },
             },
-            "lava_results_app": {
-                "handlers": ["logfile"],
-                "level": "INFO",
-                "propagate": True,
-            },
-            "lava_scheduler_app": {
-                "handlers": ["logfile"],
-                "level": "INFO",
-                "propagate": True,
-            },
-        },
-    }
+        }
 
     if SENTRY_DSN:
         import sentry_sdk
