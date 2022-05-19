@@ -1,7 +1,7 @@
 from __future__ import annotations
 from django.core.management.base import BaseCommand
 
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import TestJob, Device
 from lava_db_generator.factories import (
     DeviceTypeFactory,
     DeviceFactory,
@@ -37,6 +37,8 @@ class Command(BaseCommand):
             metavar="SIZE",
             type=int,
         )
+        device_subparser.add_argument("--device-health")
+        device_subparser.add_argument("--device-state")
         device_subparser.set_defaults(func=generate_devices)
 
         # Project
@@ -118,7 +120,10 @@ def generate_scenario(scenario_name: str, **kwargs) -> None:
                           )
     elif scenario_name == "scheduler_test":
         generate_device_types(300)
-        generate_devices(1000)
+        generate_devices(1000,
+                         device_health="HEALTH_GOOD",
+                         device_state="STATE_IDLE"
+                         )
         generate_projects(100)
         generate_users(300, 0)
         generate_testjobs(100_000,
@@ -134,7 +139,20 @@ def generate_device_types(number_generated: int, **kwargs) -> None:
             size=number_generated)
 
 
-def generate_devices(number_generated: int, **kwargs) -> None:
+def generate_devices(number_generated: int,
+                     device_health: Optional[str] = None,
+                     device_state: Optional[str] = None,
+                     **kwargs) -> None:
+    options = {
+        "size": number_generated,
+    }
+
+    if device_health is not None:
+        options["health"] = getattr(Device, device_health)
+
+    if device_state is not None:
+        options["state"] = getattr(Device, device_state)
+
     DeviceFactory.create_batch(
             size=number_generated)
 
