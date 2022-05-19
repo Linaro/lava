@@ -94,6 +94,7 @@ class Command(BaseCommand):
         scenario_subparser.add_argument(
                 'scenario_name'
         )
+        scenario_subparser.set_defaults(func=generate_scenario)
 
     def handle(self, *args, **options):
         func = options.pop("func")
