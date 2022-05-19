@@ -127,9 +127,9 @@ def generate_devices(number_generated: int, **kwargs) -> None:
 
 
 def generate_users(number_generated: int,
-                   number_of_particpated_projects: int,
-                   set_password_to: Optional[str],
-                   username_sequence: Optional[str],
+                   number_of_particpated_projects: int = 0,
+                   set_password_to: Optional[str] = None,
+                   username_sequence: Optional[str] = None,
                    **kwargs) -> None:
 
     options = {
@@ -152,9 +152,10 @@ def generate_projects(number_generated: int, **kwargs) -> None:
 
 
 def generate_testjobs(number_generated: int,
-                      is_private: bool,
-                      number_of_particpated_projects: int,
-                      is_submitter_lava_health: bool,
+                      is_private: bool = False,
+                      number_of_particpated_projects: int = 0,
+                      is_submitter_lava_health: bool = False,
+                      job_state: Optional[str] = None,
                       **kwargs,
                       ) -> None:
 
