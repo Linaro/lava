@@ -116,6 +116,15 @@ def generate_scenario(scenario_name: str, **kwargs) -> None:
                           number_of_particpated_projects=1,
                           is_submitter_lava_health=True,
                           )
+    elif scenario_name == "scheduler_test":
+        generate_device_types(300)
+        generate_devices(1000)
+        generate_projects(100)
+        generate_users(300, 0)
+        generate_testjobs(100_000,
+                          is_private=False,
+                          job_state="STATE_SUBMITTED",
+                          )
     else:
         raise ValueError('Unknown scenario.')
 
