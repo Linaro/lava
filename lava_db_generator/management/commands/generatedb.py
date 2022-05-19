@@ -1,6 +1,7 @@
 from __future__ import annotations
 from django.core.management.base import BaseCommand
 
+from lava_scheduler_app.models import TestJob
 from lava_db_generator.factories import (
     DeviceTypeFactory,
     DeviceFactory,
@@ -88,6 +89,9 @@ class Command(BaseCommand):
             default=False,
             type=bool,
         )
+        testjob_subparser.add_argument(
+            "--job-state",
+        )
         testjob_subparser.set_defaults(func=generate_testjobs)
 
         scenario_subparser = subparsers.add_parser('scenario')
@@ -158,14 +162,18 @@ def generate_testjobs(number_generated: int,
                       job_state: Optional[str] = None,
                       **kwargs,
                       ) -> None:
+    options = {
+        "size": number_generated,
+        "is_public": (not is_private),
+        "number_of_particpated_projects": number_of_particpated_projects,
+    }
 
     if is_submitter_lava_health:
-        submitter = User.objects.filter(username='lava-health')[0]
+        options["submitter"] = User.objects.filter(username='lava-health')[0]
     else:
-        submitter = factory.fuzzy.FuzzyChoice(User.objects.all())
+        options["submitter"] = factory.fuzzy.FuzzyChoice(User.objects.all())
 
-    TestJobFactory.create_batch(
-            size=number_generated,
-            is_public=(not is_private),
-            number_of_particpated_projects=number_of_particpated_projects,
-            submitter=submitter)
+    if job_state is not None:
+        options["state"] = getattr(TestJob, job_state)
+
+    TestJobFactory.create_batch(**options)
