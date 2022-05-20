@@ -13,7 +13,7 @@ from lava_db_generator.factories import (
 from argparse import ArgumentParser
 import factory
 from django.contrib.auth.models import User
-from typing import Optional
+from typing import Optional, List
 
 
 class Command(BaseCommand):
@@ -130,8 +130,13 @@ def generate_scenario(scenario_name: str, **kwargs) -> None:
         )
     elif scenario_name == "scheduler_test":
         generate_workers(3)
-        generate_device_types(300)
-        generate_devices(1000, device_health="HEALTH_GOOD", device_state="STATE_IDLE")
+        generate_device_types_real()
+        generate_devices(
+            1000,
+            device_health="HEALTH_GOOD",
+            device_state="STATE_IDLE",
+            create_device_template=True,
+        )
         generate_projects(100)
         generate_users(300, 0)
         generate_testjobs(
@@ -153,14 +158,30 @@ def generate_device_types(number_generated: int, **kwargs) -> None:
     DeviceTypeFactory.create_batch(size=number_generated)
 
 
+def generate_device_types_real(number_generated: int = 0, **kwargs) -> None:
+    from django.conf import settings
+    from pathlib import Path
+
+    actual_device_types_names: List[str] = []
+    for device_types_path_str in settings.DEVICE_TYPES_PATHS:
+        device_types_path = Path(device_types_path_str)
+        for single_device_type_path in device_types_path.iterdir():
+            actual_device_types_names.append(single_device_type_path.stem)
+
+    for device_type_name in actual_device_types_names:
+        DeviceTypeFactory(name=device_type_name)
+
+
 def generate_devices(
     number_generated: int,
     device_health: Optional[str] = None,
     device_state: Optional[str] = None,
+    create_device_template: bool = False,
     **kwargs,
 ) -> None:
     options = {
         "size": number_generated,
+        "create_device_template": create_device_template,
     }
 
     if device_health is not None:
@@ -169,7 +190,7 @@ def generate_devices(
     if device_state is not None:
         options["state"] = getattr(Device, device_state)
 
-    DeviceFactory.create_batch(size=number_generated)
+    DeviceFactory.create_batch(**options)
 
 
 def generate_users(
