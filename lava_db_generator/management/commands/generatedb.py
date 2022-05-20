@@ -8,6 +8,7 @@ from lava_db_generator.factories import (
     UserFactory,
     ProjectGroupFactory,
     TestJobFactory,
+    WorkerFactory,
 )
 from argparse import ArgumentParser
 import factory
@@ -21,8 +22,17 @@ class Command(BaseCommand):
     def add_arguments(self, parser: ArgumentParser):
         subparsers = parser.add_subparsers(required=True)
 
+        # Worker
+        worker_subparser = subparsers.add_parser("worker")
+        worker_subparser.add_argument(
+            "number_generated",
+            metavar="SIZE",
+            type=int,
+        )
+        worker_subparser.set_defaults(func=generate_workers)
+
         # Device Types
-        device_type_subparser = subparsers.add_parser('device-type')
+        device_type_subparser = subparsers.add_parser("device-type")
         device_type_subparser.add_argument(
             "number_generated",
             metavar="SIZE",
@@ -31,7 +41,7 @@ class Command(BaseCommand):
         device_type_subparser.set_defaults(func=generate_device_types)
 
         # Devices
-        device_subparser = subparsers.add_parser('device')
+        device_subparser = subparsers.add_parser("device")
         device_subparser.add_argument(
             "number_generated",
             metavar="SIZE",
@@ -42,7 +52,7 @@ class Command(BaseCommand):
         device_subparser.set_defaults(func=generate_devices)
 
         # Project
-        project_subparser = subparsers.add_parser('project')
+        project_subparser = subparsers.add_parser("project")
         project_subparser.add_argument(
             "number_generated",
             metavar="SIZE",
@@ -51,27 +61,27 @@ class Command(BaseCommand):
         project_subparser.set_defaults(func=generate_projects)
 
         # User
-        user_subparser = subparsers.add_parser('user')
+        user_subparser = subparsers.add_parser("user")
         user_subparser.add_argument(
             "number_generated",
             metavar="SIZE",
             type=int,
         )
         user_subparser.add_argument(
-            '--number-of-particpated-projects',
+            "--number-of-particpated-projects",
             type=int,
             default=0,
         )
         user_subparser.add_argument(
-            '--set-password-to',
+            "--set-password-to",
         )
         user_subparser.add_argument(
-            '--username-sequence',
+            "--username-sequence",
         )
         user_subparser.set_defaults(func=generate_users)
 
         # Testjob
-        testjob_subparser = subparsers.add_parser('testjob')
+        testjob_subparser = subparsers.add_parser("testjob")
         testjob_subparser.add_argument(
             "number_generated",
             metavar="SIZE",
@@ -79,7 +89,7 @@ class Command(BaseCommand):
         )
         testjob_subparser.add_argument(
             "--is-private",
-            action='store_true',
+            action="store_true",
         )
         testjob_subparser.add_argument(
             "--number-of-particpated-projects",
@@ -96,10 +106,8 @@ class Command(BaseCommand):
         )
         testjob_subparser.set_defaults(func=generate_testjobs)
 
-        scenario_subparser = subparsers.add_parser('scenario')
-        scenario_subparser.add_argument(
-                'scenario_name'
-        )
+        scenario_subparser = subparsers.add_parser("scenario")
+        scenario_subparser.add_argument("scenario_name")
         scenario_subparser.set_defaults(func=generate_scenario)
 
     def handle(self, *args, **options):
@@ -108,41 +116,49 @@ class Command(BaseCommand):
 
 
 def generate_scenario(scenario_name: str, **kwargs) -> None:
-    if scenario_name == 'viewing_groups_test':
+    if scenario_name == "viewing_groups_test":
+        generate_workers(2)
         generate_device_types(300)
         generate_devices(1000)
         generate_projects(100)
         generate_users(300, 1)
-        generate_testjobs(200_000,
-                          is_private=False,
-                          number_of_particpated_projects=1,
-                          is_submitter_lava_health=True,
-                          )
+        generate_testjobs(
+            200_000,
+            is_private=False,
+            number_of_particpated_projects=1,
+            is_submitter_lava_health=True,
+        )
     elif scenario_name == "scheduler_test":
+        generate_workers(3)
         generate_device_types(300)
-        generate_devices(1000,
-                         device_health="HEALTH_GOOD",
-                         device_state="STATE_IDLE"
-                         )
+        generate_devices(1000, device_health="HEALTH_GOOD", device_state="STATE_IDLE")
         generate_projects(100)
         generate_users(300, 0)
-        generate_testjobs(100_000,
-                          is_private=False,
-                          job_state="STATE_SUBMITTED",
-                          )
+        generate_testjobs(
+            100_000,
+            is_private=False,
+            job_state="STATE_SUBMITTED",
+        )
     else:
-        raise ValueError('Unknown scenario.')
+        raise ValueError("Unknown scenario.")
+
+
+def generate_workers(number_generated: int, **kwargs) -> None:
+    WorkerFactory.create_batch(
+        size=number_generated,
+    )
 
 
 def generate_device_types(number_generated: int, **kwargs) -> None:
-    DeviceTypeFactory.create_batch(
-            size=number_generated)
+    DeviceTypeFactory.create_batch(size=number_generated)
 
 
-def generate_devices(number_generated: int,
-                     device_health: Optional[str] = None,
-                     device_state: Optional[str] = None,
-                     **kwargs) -> None:
+def generate_devices(
+    number_generated: int,
+    device_health: Optional[str] = None,
+    device_state: Optional[str] = None,
+    **kwargs,
+) -> None:
     options = {
         "size": number_generated,
     }
@@ -153,15 +169,16 @@ def generate_devices(number_generated: int,
     if device_state is not None:
         options["state"] = getattr(Device, device_state)
 
-    DeviceFactory.create_batch(
-            size=number_generated)
+    DeviceFactory.create_batch(size=number_generated)
 
 
-def generate_users(number_generated: int,
-                   number_of_particpated_projects: int = 0,
-                   set_password_to: Optional[str] = None,
-                   username_sequence: Optional[str] = None,
-                   **kwargs) -> None:
+def generate_users(
+    number_generated: int,
+    number_of_particpated_projects: int = 0,
+    set_password_to: Optional[str] = None,
+    username_sequence: Optional[str] = None,
+    **kwargs,
+) -> None:
 
     options = {
         "size": number_generated,
@@ -178,17 +195,17 @@ def generate_users(number_generated: int,
 
 
 def generate_projects(number_generated: int, **kwargs) -> None:
-    ProjectGroupFactory.create_batch(
-            size=number_generated)
+    ProjectGroupFactory.create_batch(size=number_generated)
 
 
-def generate_testjobs(number_generated: int,
-                      is_private: bool = False,
-                      number_of_particpated_projects: int = 0,
-                      is_submitter_lava_health: bool = False,
-                      job_state: Optional[str] = None,
-                      **kwargs,
-                      ) -> None:
+def generate_testjobs(
+    number_generated: int,
+    is_private: bool = False,
+    number_of_particpated_projects: int = 0,
+    is_submitter_lava_health: bool = False,
+    job_state: Optional[str] = None,
+    **kwargs,
+) -> None:
     options = {
         "size": number_generated,
         "is_public": (not is_private),
@@ -196,7 +213,7 @@ def generate_testjobs(number_generated: int,
     }
 
     if is_submitter_lava_health:
-        options["submitter"] = User.objects.filter(username='lava-health')[0]
+        options["submitter"] = User.objects.filter(username="lava-health")[0]
     else:
         options["submitter"] = factory.fuzzy.FuzzyChoice(User.objects.all())
 

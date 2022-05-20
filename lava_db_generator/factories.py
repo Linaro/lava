@@ -6,7 +6,7 @@ from random import choice
 
 from django.contrib.auth.models import User, Group
 from django.db.models import Q
-from lava_scheduler_app.models import DeviceType, Device, TestJob
+from lava_scheduler_app.models import DeviceType, Device, TestJob, Worker
 
 from lava_common.decorators import nottest
 
@@ -19,21 +19,17 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = factory.Faker("user_name")
 
     @factory.post_generation
-    def number_of_particpated_projects(self,
-                                       create,
-                                       number_of_particpated_projects: int,
-                                       **kwargs):
+    def number_of_particpated_projects(
+        self, create, number_of_particpated_projects: int, **kwargs
+    ):
         if not create:
             return
 
         for _ in range(number_of_particpated_projects):
-            self.groups.add(choice(Group.objects.filter(~Q(name='lava-health'))))
+            self.groups.add(choice(Group.objects.filter(~Q(name="lava-health"))))
 
     @factory.post_generation
-    def set_password_to(self,
-                        create,
-                        new_password: str,
-                        **kwargs):
+    def set_password_to(self, create, new_password: str, **kwargs):
         if not create:
             return
 
@@ -52,6 +48,14 @@ class ProjectGroupFactory(GroupFactory):
     name = factory.Sequence(lambda n: f"project{n}")
 
 
+class WorkerFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Worker
+        django_get_or_create = ("hostname",)
+
+    hostname = factory.Faker("hostname", levels=1)
+
+
 class DeviceTypeFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = DeviceType
@@ -67,6 +71,7 @@ class DeviceFactory(factory.django.DjangoModelFactory):
 
     hostname = factory.Faker("hostname", levels=0)
     device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
+    worker_host = factory.fuzzy.FuzzyChoice(Worker.objects.all())
 
 
 @nottest
@@ -89,16 +94,11 @@ class TestJobFactory(factory.django.DjangoModelFactory):
     )
 
     @factory.post_generation
-    def number_of_particpated_projects(self,
-                                       create,
-                                       number_of_particpated_projects: int,
-                                       **kwargs):
+    def number_of_particpated_projects(
+        self, create, number_of_particpated_projects: int, **kwargs
+    ):
         if not create:
             return
 
         for _ in range(number_of_particpated_projects):
-            self.viewing_groups.add(
-                choice(
-                    Group.objects.all()
-                )
-            )
+            self.viewing_groups.add(choice(Group.objects.all()))
