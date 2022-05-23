@@ -1,0 +1,14 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = 'ttyAT0' %}
+{% set baud_rate = '115200' %}
+{% set bootloader_prompt = bootloader_prompt|default('=> ') %}
+{% set uboot_needs_interrupt = uboot_needs_interrupt|default(False) %}
+{% set kernel_file = kernel_file|default('zImage') %}
+{% set bootm_kernel_addr = '0x62000000' %}
+{% set bootm_ramdisk_addr = '0x68080000' %}
+{% set bootm_dtb_addr = '0x68000000' %}
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set uboot_mkimage_arch = 'arm' %}
