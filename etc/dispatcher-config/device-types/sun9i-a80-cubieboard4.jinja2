@@ -1,0 +1,9 @@
+{% extends 'sunxi-common.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm' %}
+
+{% if extra_kernel_args %}
+{% set extra_kernel_args = 'earlycon=uart,mmio32,0x7000000 ' + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = 'earlycon=uart,mmio32,0x7000000 ' %}
+{% endif %}

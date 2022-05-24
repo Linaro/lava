@@ -1,0 +1,17 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set baud_rate = '1500000' %}
+
+{% set booti_kernel_addr = '0x2800000' %}
+{% set booti_ramdisk_addr = '0xa200000' %}
+{% set booti_dtb_addr = '0x8300000' %}
+
+{% set bootm_kernel_addr = '0x2800000' %}
+{% set bootm_ramdisk_addr = '0xa200000' %}
+{% set bootm_dtb_addr = '0x8300000' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('kedge#') %}
+{% set console_device = console_device|default('ttyS2') %}
+{% set interrupt_ctrl_list = ['c'] %}
