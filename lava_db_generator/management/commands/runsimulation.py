@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
 
 def simulate_scheduler() -> None:
-    from lava_scheduler_app.models import DeviceType, Worker
+    from lava_scheduler_app.models import Device, DeviceType, Worker
     from logging import getLogger, DEBUG
 
     logger = getLogger('scheduler simulation')
@@ -28,5 +28,10 @@ def simulate_scheduler() -> None:
     device_types = set(DeviceType.objects.all())
 
     from lava_scheduler_app.scheduler import schedule
+
+    logger.info("Pre-cache device templates")
+    for device in Device.objects.all():
+        device.is_valid()
+    logger.info("Pre-cache complete")
 
     schedule(logger, device_types, workers)
