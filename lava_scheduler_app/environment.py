@@ -16,30 +16,44 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import jinja2
-import threading
+from contextvars import ContextVar
 
 from lava_server.files import File
 
+devices_jinja_env: ContextVar[jinja2.Environment] = ContextVar("devices_jinja_env")
+
 
 def devices():
-    thread_locals = threading.local()
     try:
-        return thread_locals.devices
-    except AttributeError:
-        thread_locals.devices = jinja2.Environment(
-            loader=File("device").loader(), autoescape=False, trim_blocks=True
+        return devices_jinja_env.get()
+    except LookupError:
+        devices_env = jinja2.Environment(
+            loader=File("device").loader(),
+            autoescape=False,
+            trim_blocks=True,
+            cache_size=-1,
         )
-    return thread_locals.devices
+        devices_jinja_env.set(devices_env)
+        return devices_env
+
+
+device_types_jinja_env: ContextVar[jinja2.Environment] = ContextVar(
+    "device_types_jinja_env"
+)
 
 
 def device_types():
-    thread_locals = threading.local()
     try:
-        return thread_locals.device_types
-    except AttributeError:
-        thread_locals.device_types = jinja2.Environment(
-            loader=File("device-type").loader(), autoescape=False, trim_blocks=True
+        return device_types_jinja_env.get(None)
+    except LookupError:
+        device_types_env = jinja2.Environment(
+            loader=File("device-type").loader(),
+            autoescape=False,
+            trim_blocks=True,
+            cache_size=-1,
         )
-    return thread_locals.device_types
+        device_types_jinja_env.set(device_types_env)
+        return device_types_env
