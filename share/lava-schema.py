@@ -83,12 +83,12 @@ def check_job(data, options, prefix=""):
 
 def handle(options, files, glob, check):
     failed = 0
-    for fileobj in files:
+    for fileobj in sorted(files):
         if fileobj.is_dir() and options.recursive:
             files_iter = fileobj.rglob(glob)
         else:
             files_iter = [fileobj]
-        for f in files_iter:
+        for f in sorted(files_iter):
             if not f.exists():
                 print("* %s [does not exists]" % str(f))
                 failed += 1
