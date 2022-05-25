@@ -3,6 +3,18 @@ from django.core.management.base import BaseCommand
 from argparse import ArgumentParser
 
 
+def profiling_helper(function):
+    from cProfile import Profile
+    from pstats import Stats
+
+    with Profile() as pr:
+        function()
+
+    stats = Stats(pr)
+
+    return stats
+
+
 class Command(BaseCommand):
     help = "Run simulation"
 
