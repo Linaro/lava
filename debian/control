@@ -75,9 +75,9 @@ Description: Linaro Automated Validation Architecture dispatcher
 Package: lava-dispatcher-host
 Architecture: all
 Depends: lava-common (= ${binary:Version}),
-         base-files (<< 11) | python3-bpfcc (>= 0.21),
-         base-files (<< 11) | linux-headers-amd64 | linux-headers-arm64,
-         base-files (<< 11) | bpftool,
+         base-files (<< 11.1) | python3-bpfcc (>= 0.21),
+         base-files (<< 11.1) | linux-headers-amd64 | linux-headers-arm64,
+         base-files (<< 11.1) | bpftool,
          python3,
          python3-jinja2,
          python3-requests,
