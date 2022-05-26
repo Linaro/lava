@@ -95,7 +95,6 @@ class TestJobFactory(factory.django.DjangoModelFactory):
         model = TestJob
 
     is_public = True
-    actual_device = factory.fuzzy.FuzzyChoice(Device.objects.all())
     requested_device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
     description = "test description"
 
