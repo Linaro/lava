@@ -97,6 +97,7 @@ class TestJobFactory(factory.django.DjangoModelFactory):
     is_public = True
     requested_device_type = factory.fuzzy.FuzzyChoice(DeviceType.objects.all())
     description = "test description"
+    definition = "{}"
 
     end_time = factory.fuzzy.FuzzyDateTime(
         datetime.now(tz=timezone.utc),
