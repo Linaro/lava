@@ -32,10 +32,10 @@ class Command(BaseCommand):
 
 def simulate_scheduler() -> None:
     from lava_scheduler_app.models import Device, DeviceType, Worker
-    from logging import getLogger, DEBUG
+    from logging import getLogger, INFO
 
     logger = getLogger('scheduler simulation')
-    logger.setLevel(DEBUG)
+    logger.setLevel(INFO)
     workers = set(Worker.objects.all())
     device_types = set(DeviceType.objects.all())
 
