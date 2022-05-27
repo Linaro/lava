@@ -1,6 +1,7 @@
 from __future__ import annotations
 from django.core.management.base import BaseCommand
 from argparse import ArgumentParser
+from unittest.mock import MagicMock
 
 
 def profiling_helper(function):
@@ -31,7 +32,7 @@ class Command(BaseCommand):
 
 
 def simulate_scheduler() -> None:
-    from lava_scheduler_app.models import Device, DeviceType, Worker
+    from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
     from logging import getLogger, INFO
 
     logger = getLogger('scheduler simulation')
@@ -45,5 +46,8 @@ def simulate_scheduler() -> None:
     for device in Device.objects.all():
         device.is_valid()
     logger.info("Pre-cache complete")
+
+    TestJob.go_state_scheduling = MagicMock()
+    TestJob.go_state_scheduled = MagicMock()
 
     schedule(logger, device_types, workers)
