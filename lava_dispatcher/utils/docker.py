@@ -216,8 +216,14 @@ class DockerRun:
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
         container = subprocess.check_output(
-            ["docker", "run", "--rm", self.image, "arch"], text=True
+            ["docker", "inspect", "--format", "{{.Architecture}}", self.image],
+            text=True,
         ).strip()
+        # amd64 = x86_64
+        if host == "amd64":
+            host = "x86_64"
+        if container == "amd64":
+            container = "x86_64"
         if host != container:
             logger = logging.getLogger("dispatcher")
             logger.warning(

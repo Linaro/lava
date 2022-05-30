@@ -242,8 +242,10 @@ class Job:
         self.base_dir.mkdir(mode=0o755, exist_ok=True)
 
     def errors(self) -> str:
-        with contextlib.suppress(OSError):
-            return (self.base_dir / "stderr").read_text(encoding="utf-8")
+        with contextlib.suppress(OSError, UnicodeDecodeError):
+            return (self.base_dir / "stderr").read_text(
+                encoding="utf-8", errors="replace"
+            )
         return ""
 
     def description(self) -> str:

@@ -98,7 +98,7 @@ def test_run_architecture_check_failure(mocker):
     def results(cmd, *args, **kwargs):
         if cmd == ["arch"]:
             return "aarch64\n"
-        elif cmd == ["docker", "run", "--rm", "myimage", "arch"]:
+        elif cmd == ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"]:
             return "x86_64\n"
         else:
             raise RuntimeError(f"Unexpected mock call: {cmd}")
@@ -113,7 +113,7 @@ def test_run_architecture_check_failure(mocker):
 
     check_output.assert_any_call(["arch"], text=True)
     check_output.assert_any_call(
-        ["docker", "run", "--rm", "myimage", "arch"], text=True
+        ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"], text=True
     )
     check_call.assert_called()
 
