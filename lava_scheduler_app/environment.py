@@ -47,7 +47,7 @@ device_types_jinja_env: ContextVar[jinja2.Environment] = ContextVar(
 
 def device_types():
     try:
-        return device_types_jinja_env.get(None)
+        return device_types_jinja_env.get()
     except LookupError:
         device_types_env = jinja2.Environment(
             loader=File("device-type").loader(),
