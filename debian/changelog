@@ -1,3 +1,12 @@
+lava (2022.05-1) unstable; urgency=medium
+
+  * LAVA Software 2022.05 release
+
+  [ Chase Qi ]
+  * [55b668402] lava-dispatcher-host: support to install on ubuntu focal
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 30 May 2022 16:48:01 +0200
+
 lava (2022.04-1) unstable; urgency=medium
 
   * LAVA Software 2022.04 release
