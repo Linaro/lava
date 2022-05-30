@@ -45,7 +45,7 @@ def device():
             Optional("pre_os_command"): Any(str, [str]),
             Optional("users"): {str: {Required("do"): str, Optional("undo"): str}},
         },
-        Optional("constants"): dict,
+        Required("constants"): dict,
         Optional("adb_serial_number"): str,
         Optional("fastboot_serial_number"): str,
         Optional("fastboot_options"): [str],
@@ -55,7 +55,7 @@ def device():
         Optional("storage_info"): [dict],
         Optional("environment"): dict,
         Optional("flash_cmds_order"): [str],
-        Optional("parameters"): {
+        Required("parameters"): {
             # TODO: having a more precise schema make this fail on debian 9,
             # maybe due to the dictionary key ordering in python3.5
             Optional("interfaces"): dict,
@@ -97,7 +97,7 @@ def device():
         Optional("usb_sleep"): int,
         Optional("usb_filesystem_label"): str,
         Optional("usb_serial_driver"): str,
-        Optional("actions"): {
+        Required("actions"): {
             Required("deploy"): {
                 Required("methods"): dict,
                 Optional("connections"): dict,
@@ -108,7 +108,7 @@ def device():
                 Required("methods"): dict,
             },
         },
-        Optional("timeouts"): {
+        Required("timeouts"): {
             Required("actions"): {str: timeout_schema},
             Required("connections"): {str: timeout_schema},
         },

@@ -45,7 +45,6 @@ class TestPipelineMenu(TestCaseWithFactory):
 
         config = device.load_configuration()
         self.assertIsNotNone(config)
-        self.assertNotIn("parameters", config)
         self.assertIsNotNone(config["actions"]["boot"]["methods"]["uefi-menu"]["nfs"])
         menu_data = config["actions"]["boot"]["methods"]["uefi-menu"]["nfs"]
         tftp_menu = [
