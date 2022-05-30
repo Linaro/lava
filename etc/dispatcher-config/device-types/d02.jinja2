@@ -6,9 +6,6 @@
 {% set baud_rate = baud_rate | default(115200) %}
 {% set grub_installed_device = grub_installed_device | default('(hd1,gpt1)') %}
 
-{% block vland %}
-{% endblock vland %}
-
 actions:
   deploy:
     connections:
