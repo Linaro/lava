@@ -175,7 +175,10 @@ def main():
         if options.render:
             # Add default value for --path
             if options.path is None:
-                options.path = ["/etc/lava-server/dispatcher-config/device-types"]
+                options.path = [
+                    "/etc/lava-server/dispatcher-config/device-types",
+                    "/usr/share/lava-server/device-types",
+                ]
             # create the jinja2 environment once as this is a slow operation
             options.env = jinja2.Environment(  # nosec - used to render yaml
                 autoescape=False, loader=jinja2.FileSystemLoader(options.path)
