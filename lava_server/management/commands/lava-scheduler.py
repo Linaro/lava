@@ -44,9 +44,6 @@ from lava_server.cmdutils import LAVADaemonCommand
 INTERVAL = 20
 PING_TIMEOUT = 3 * INTERVAL
 
-# Log format
-FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
-
 
 class Command(LAVADaemonCommand):
     logger = None
@@ -87,7 +84,9 @@ class Command(LAVADaemonCommand):
     def handle(self, *args, **options):
         # Initialize logging.
         self.setup_logging(
-            "lava-scheduler", options["level"], options["log_file"], FORMAT
+            "lava-scheduler",
+            options["level"],
+            options["log_file"],
         )
 
         self.logger.info("[INIT] Starting lava-scheduler")

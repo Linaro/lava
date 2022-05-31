@@ -44,6 +44,8 @@ PROJECT_STATE_DIR.mkdir(parents=True, exist_ok=True)
 
 # LAVA logs
 DJANGO_LOGFILE = str(PROJECT_STATE_DIR / "django.log")
+LAVA_SCHEDULER_LOG_FILE = str(PROJECT_STATE_DIR / "lava-scheduler.log")
+LAVA_PUBLISHER_LOG_FILE = str(PROJECT_STATE_DIR / "lava-publisher.log")
 
 # Test database
 DATABASES = {

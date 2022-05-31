@@ -34,7 +34,6 @@ from lava_server.cmdutils import LAVADaemonCommand
 
 
 TIMEOUT = 5
-FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
 
 async def zmq_proxy(app):
@@ -164,9 +163,7 @@ class Command(LAVADaemonCommand):
         parser.add_argument("--port", default=8001, type=int, help="port to bind to")
 
     def handle(self, *args, **options):
-        self.setup_logging(
-            "lava-publisher", options["level"], options["log_file"], FORMAT
-        )
+        self.setup_logging("lava-publisher", options["level"], options["log_file"])
 
         self.logger.info("[INIT] Starting lava-publisher")
         self.logger.info("[INIT] Version %s", __version__)

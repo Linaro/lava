@@ -28,7 +28,12 @@ import os
 import pwd
 import signal
 
+from typing import Optional
+
 from django.core.management.base import BaseCommand
+
+
+DEFAULT_LAVA_DAEMON_LOG_FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
 
 class LAVADaemonCommand(BaseCommand):
@@ -38,12 +43,15 @@ class LAVADaemonCommand(BaseCommand):
             "-l",
             "--level",
             choices=["ERROR", "WARN", "INFO", "DEBUG"],
-            default="DEBUG",
+            nargs="?",
             help="Logging level (ERROR, WARN, INFO, DEBUG) " "Default: DEBUG",
         )
 
         log.add_argument(
-            "-o", "--log-file", default=self.default_logfile, help="Logging file path"
+            "-o",
+            "--log-file",
+            nargs="?",
+            help="Logging file path",
         )
 
         priv = parser.add_argument_group("privileges")
@@ -88,27 +96,42 @@ class LAVADaemonCommand(BaseCommand):
 
         return True
 
-    def setup_logging(self, logger_name, level, log_file, log_format):
-        del logging.root.handlers[:]
-        del logging.root.filters[:]
+    def setup_logging(
+        self,
+        logger_name: str,
+        level: Optional[str] = None,
+        log_file: Optional[str] = None,
+        log_format: Optional[str] = None,
+    ) -> None:
         # Create the logger
         self.logger = logging.getLogger(logger_name)
-        if log_file == "-":
-            handler = logging.StreamHandler()
-        else:
-            handler = logging.handlers.WatchedFileHandler(log_file)
-        handler.setFormatter(logging.Formatter(log_format))
-        self.logger.addHandler(handler)
+
+        if log_file is not None:
+            # Remove existing handlers
+            self.logger.handlers.clear()
+
+            if log_file == "-":
+                handler = logging.StreamHandler()
+            else:
+                handler = logging.handlers.WatchedFileHandler(log_file)
+
+            self.logger.addHandler(handler)
+
+            if log_format is None:
+                log_format = DEFAULT_LAVA_DAEMON_LOG_FORMAT
+
+            handler.setFormatter(logging.Formatter(log_format))
 
         # Set log level
-        if level == "ERROR":
-            self.logger.setLevel(logging.ERROR)
-        elif level == "WARN":
-            self.logger.setLevel(logging.WARN)
-        elif level == "INFO":
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger.setLevel(logging.DEBUG)
+        if level is not None:
+            if level == "ERROR":
+                self.logger.setLevel(logging.ERROR)
+            elif level == "WARN":
+                self.logger.setLevel(logging.WARN)
+            elif level == "INFO":
+                self.logger.setLevel(logging.INFO)
+            else:
+                self.logger.setLevel(logging.DEBUG)
 
     def setup_zmq_signal_handler(self):
         # Mask signals and create a pipe that will receive a bit for each

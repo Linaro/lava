@@ -208,6 +208,8 @@ CUSTOM_DOCS = {}
 
 # Logging
 DJANGO_LOGFILE = "/var/log/lava-server/django.log"
+LAVA_SCHEDULER_LOG_FILE = "/var/log/lava-server/lava-scheduler.log"
+LAVA_PUBLISHER_LOG_FILE = "/var/log/lava-server/lava-publisher.log"
 
 # Configuration directories
 DISPATCHER_CONFIG_PATH = "/etc/lava-server/dispatcher.d"
@@ -347,6 +349,8 @@ def update(values):
     AUTHENTICATION_BACKENDS = values.get("AUTHENTICATION_BACKENDS")
     DISALLOWED_USER_AGENTS = values.get("DISALLOWED_USER_AGENTS")
     DJANGO_LOGFILE = values.get("DJANGO_LOGFILE")
+    LAVA_SCHEDULER_LOG_FILE = values.get("LAVA_SCHEDULER_LOG_FILE")
+    LAVA_PUBLISHER_LOG_FILE = values.get("LAVA_PUBLISHER_LOG_FILE")
     EVENT_NOTIFICATION = values.get("EVENT_NOTIFICATION")
     INSTALLED_APPS = values.get("INSTALLED_APPS")
     INTERNAL_IPS = values.get("INTERNAL_IPS")
@@ -535,7 +539,13 @@ def update(values):
                 "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}
             },
             "formatters": {
-                "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"}
+                "lava": {"format": "%(levelname)s %(asctime)s %(module)s %(message)s"},
+                "lava-scheduler": {
+                    "format": "%(asctime)-15s %(levelname)7s %(message)s"
+                },
+                "lava-publisher": {
+                    "format": "%(asctime)-15s %(levelname)7s %(message)s"
+                },
             },
             "handlers": {
                 "console": {
@@ -547,6 +557,16 @@ def update(values):
                     "class": "logging.handlers.WatchedFileHandler",
                     "filename": DJANGO_LOGFILE,
                     "formatter": "lava",
+                },
+                "lava-scheduler-logfile": {
+                    "class": "logging.handlers.WatchedFileHandler",
+                    "filename": LAVA_SCHEDULER_LOG_FILE,
+                    "formatter": "lava-scheduler",
+                },
+                "lava-publisher-logfile": {
+                    "class": "logging.handlers.WatchedFileHandler",
+                    "filename": LAVA_PUBLISHER_LOG_FILE,
+                    "formatter": "lava-publisher",
                 },
             },
             "loggers": {
@@ -570,6 +590,16 @@ def update(values):
                     "handlers": ["logfile"],
                     "level": "INFO",
                     "propagate": True,
+                },
+                "lava-scheduler": {
+                    "handlers": ["lava-scheduler-logfile"],
+                    "level": "DEBUG",
+                    "propagate": False,
+                },
+                "lava-publisher": {
+                    "handlers": ["lava-publisher-logfile"],
+                    "level": "DEBUG",
+                    "propagate": False,
                 },
                 "mozilla_django_oidc": {
                     "handlers": ["logfile"],
