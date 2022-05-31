@@ -41,7 +41,13 @@ else
   # Pull the base image from cache (local or remote) or build it
   echo "Base images:"
   echo "* old: $BASE_IMAGE"
-  docker inspect "$BASE_IMAGE" 2>/dev/null >/dev/null || docker pull "$BASE_IMAGE" 2>/dev/null || docker build -t "$BASE_IMAGE" docker/lava-"$SERVICE"-base
+  docker inspect "$BASE_IMAGE" 2>/dev/null >/dev/null || docker pull "$BASE_IMAGE" 2>/dev/null || true
+  # Rebuild without cache on master and when tagging
+  if [ "$CI_COMMIT_REF_SLUG" = "master" ] || [ -n "$CI_COMMIT_TAG" ]
+  then
+    NO_CACHE="--no-cache"
+  fi
+  docker build $NO_CACHE -t "$BASE_IMAGE" docker/lava-"$SERVICE"-base
   # Create a tag with the current version tag
   echo "* new: $BASE_IMAGE_NEW"
   docker tag "$BASE_IMAGE" "$BASE_IMAGE_NEW"
