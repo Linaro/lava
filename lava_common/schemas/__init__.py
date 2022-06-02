@@ -144,7 +144,13 @@ def timeout():
 
 def action():
     return {
-        Optional("namespace"): All(str, NotIn(["common"], msg="'common' is reserved")),
+        Optional("namespace"): All(
+            str,
+            NotIn(
+                ["common", "docker-test-shell"],
+                msg="'common' and 'docker-test-shell' are reserved namespace names",
+            ),
+        ),
         Optional("connection-namespace"): str,
         Optional("protocols"): object,
         Optional("role"): [str],

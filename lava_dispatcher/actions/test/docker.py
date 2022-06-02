@@ -227,7 +227,14 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = "docker-test-shell:"
-        self.__set_connection__(shell_connection)
+        self.parameters["connection-namespace"] = "docker-test-shell"
+        self.set_namespace_data(
+            action="shared",
+            label="shared",
+            key="connection",
+            value=shell_connection,
+            parameters={"namespace": "docker-test-shell"},
+        )
 
         self.add_device_container_mappings(container, "docker")
 
@@ -254,14 +261,5 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             docker.destroy()
 
         # return the original connection untouched
-        self.__set_connection__(connection)
+        self.data.pop("docker-test-shell")
         return connection
-
-    def __set_connection__(self, c):
-        self.set_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            value=c,
-            parameters=self.parameters,
-        )
