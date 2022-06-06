@@ -82,6 +82,7 @@ class Timeout:
         if action_max_end_time is not None:
             # action_max_end_time is None when called by the job class directly
             max_end_time = min(action_max_end_time, max_end_time)
+            max_end_time += getattr(parent, "revised_max_end_time_inc", 0)
 
         duration = round(max_end_time - self.start)
         if duration <= 0:
@@ -105,7 +106,11 @@ class Timeout:
                 signal.alarm(0)
             else:
                 signal.signal(signal.SIGALRM, parent.timeout._timed_out)
-                duration = round(action_max_end_time - time.time())
+                duration = round(
+                    action_max_end_time
+                    + getattr(parent, "revised_max_end_time_inc", 0)
+                    - time.time()
+                )
                 if duration <= 0:
                     signal.alarm(0)
                     parent.timeout._timed_out(None, None)

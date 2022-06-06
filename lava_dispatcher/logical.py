@@ -54,6 +54,12 @@ class RetryAction(Action):
                 "Retry action %s needs to implement an internal pipeline" % self.name
             )
 
+    def revise_max_end_time(self, inc):
+        parent_action = self.parent.parent
+        while parent_action:
+            parent_action.revised_max_end_time_inc = inc
+            parent_action = parent_action.parent.parent
+
     def run(self, connection, max_end_time):
         self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
 
@@ -89,7 +95,9 @@ class RetryAction(Action):
                 # Wait some time before retrying
                 time.sleep(self.sleep)
                 # Restart max_end_time or the retry on a timeout fails with duration < 0
-                max_end_time += time.time() - self.timeout.start
+                inc = time.time() - self.timeout.start
+                max_end_time += inc
+                self.revise_max_end_time(inc)
                 self.timeout.start = time.time()
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
