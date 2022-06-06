@@ -377,6 +377,8 @@ class CallQemuAction(Action):
                 docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
             docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
             docker.add_device("/dev/kvm", skip_missing=True)
+            docker.add_device("/dev/net/tun", skip_missing=True)
+            docker.add_docker_run_options("--network=host", "--cap-add=NET_ADMIN")
 
             # Use docker.binary if provided and fallback to the qemu default binary
             args = [self.parameters["docker"].get("binary", self.sub_command[0])]
