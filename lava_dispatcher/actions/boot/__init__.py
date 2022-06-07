@@ -72,6 +72,10 @@ class LoginAction(Action):
         " actual prompt string more closely."
     )
 
+    def __init__(self):
+        super().__init__()
+        self.first_login = True
+
     def check_kernel_messages(
         self, connection, max_end_time, fail_msg, auto_login=False
     ):
@@ -160,6 +164,10 @@ class LoginAction(Action):
             connection.prompt_str = list(self.parameters.get("prompts", []))
             # already matched one of the prompts
         else:
+            if not self.first_login:
+                connection.sendline("\n")
+            self.first_login = False
+
             self.logger.info("Waiting for the login prompt")
             connection.prompt_str.append(params["login_prompt"])
             connection.prompt_str.append(LOGIN_INCORRECT_MSG)
