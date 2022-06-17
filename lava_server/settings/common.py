@@ -94,6 +94,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+LAVA_REQUIRE_LOGIN_MIDDLEWARE = "lava_server.security.LavaRequireLoginMiddleware"
+
 ROOT_URLCONF = "lava_server.urls"
 
 TEMPLATES = [
@@ -348,6 +350,7 @@ def update(values):
     SENTRY_DSN = values.get("SENTRY_DSN")
     STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
     USE_DEBUG_TOOLBAR = values.get("USE_DEBUG_TOOLBAR")
+    REQUIRE_LOGIN = values.get("REQUIRE_LOGIN")
 
     # Fix mount point
     # Remove the leading slash and keep only one trailing slash
@@ -452,6 +455,9 @@ def update(values):
         INSTALLED_APPS.append("debug_toolbar")
         MIDDLEWARE = ["debug_toolbar.middleware.DebugToolbarMiddleware"] + MIDDLEWARE
         INTERNAL_IPS.extend(["127.0.0.1", "::1"])
+
+    if REQUIRE_LOGIN and LAVA_REQUIRE_LOGIN_MIDDLEWARE not in MIDDLEWARE:
+        MIDDLEWARE.append(LAVA_REQUIRE_LOGIN_MIDDLEWARE)
 
     # List of compiled regular expression objects representing User-Agent strings
     # that are not allowed to visit any page, systemwide. Use this for bad
