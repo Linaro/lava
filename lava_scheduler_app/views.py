@@ -902,7 +902,6 @@ def device_type_detail(request, pk):
     else:
         core_string = ""
 
-    bits_width = dt.bits.width if dt.bits else ""
     aliases = ", ".join([alias.name for alias in dt.aliases.order_by("name")])
 
     all_devices = dt.device_set.count()
@@ -1684,7 +1683,6 @@ def job_detail(request, pk):
     for action in pipeline:
         if "section" in action:
             sections.append({action["section"]: action["level"]})
-    default_section = "boot"  # to come from user profile later.
 
     # Validate the job definition
     validation_errors = ""
