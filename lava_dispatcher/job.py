@@ -173,6 +173,11 @@ class Job:
             self.logger.error(msg)
             self.logger.debug("Namespaces: %s", ", ".join(namespaces))
             raise JobError(msg)
+        if "docker-test-shell" in namespaces:
+            msg = "'docker-test-shell' is a reserved namespace and can't be used in job definitions"
+            self.logger.error(msg)
+            self.logger.debug("Namespaces: %s", ", ".join(namespaces))
+            raise JobError(msg)
 
         # validate the pipeline
         self.pipeline.validate_actions()
