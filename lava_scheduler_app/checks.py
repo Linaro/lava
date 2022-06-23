@@ -329,7 +329,6 @@ def check_setting(path):
 
 @register(deploy=True)
 def check_settings(app_configs, **kwargs):
-    settings = {}
     files = [
         Path("/etc/lava-server/settings.conf"),
         Path("/etc/lava-server/settings.yaml"),
