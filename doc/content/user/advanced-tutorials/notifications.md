@@ -13,9 +13,11 @@ The basic setup of the notify block in job definitions will have
 + **verbosity** will tell the system how detailed the email notification should
   be.
 
-+ **Criteria** can be set by job status (running, complete, incomplete,
++ **Criteria** can be set by job state (running, complete, incomplete,
   canceled) and the type (regression, progression). There is a special status of
-  'finished', which will match any of (complete, incomplete, canceled).
+  'finished', which will match any of (complete, incomplete, canceled). You
+  could also use "all" to receive a notification for both "running" and
+  "finished" states.
 
 The basic **email** template includes job details, device details and results,
 based on the level of **verbosity** (verbose, quiet, status-only).
