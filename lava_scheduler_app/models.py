@@ -1962,8 +1962,9 @@ class TestJob(models.Model):
             data["token"] = token
 
         # Logs.
-        with contextlib.suppress(OSError):
-            data["log"] = logs_instance.read(self)
+        if output:
+            with contextlib.suppress(OSError):
+                data["log"] = logs_instance.read(self)
 
         # Results.
         if results:
