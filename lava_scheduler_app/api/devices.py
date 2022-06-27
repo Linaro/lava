@@ -402,7 +402,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                 device.save()
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
-        except (IntegrityError, ValidationError) as exc:
+        except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request")
 
 
