@@ -176,17 +176,20 @@ class JobTableView(LavaView):
         return Q(device_type__in=dt)
 
     def job_state_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents
+        # matching Complete discrete from Incomplete
         matches = [p[0] for p in TestJob.STATE_CHOICES if term in p[1]]
         return Q(state__in=matches)
 
     def device_state_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents
+        # matching Complete discrete from Incomplete
         matches = [p[0] for p in Device.STATE_CHOICES if term in p[1]]
         return Q(state__in=matches)
 
     def device_health_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents matching
+        # Complete discrete from Incomplete
         matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
         return Q(health__in=matches)
 
@@ -1272,7 +1275,8 @@ def internal_v1_jobs_logs(request, pk):
     line_skip = logs_instance.line_count(job) - line_idx
 
     # TODO: use a database transaction so all or none objects are saved
-    # TODO: except exceptions and return the number of lines that where actually parsed !!
+    # TODO: except exceptions and return the number
+    #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
     for (line, string) in zip(yaml_load(lines), lines.split("\n")):
@@ -2044,10 +2048,16 @@ def job_timing(request, pk):
 
     # start and end patterns
     pattern_start = re.compile(
-        "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
+        (
+            "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+            "\\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
+        )
     )
     pattern_end = re.compile(
-        "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
+        (
+            "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+            "\\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
+        )
     )
 
     timings = {}
