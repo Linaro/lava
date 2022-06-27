@@ -51,7 +51,7 @@ CALLBACK_SCHEMA = {
 
 
 class SubmissionException(UserWarning):
-    """ Error raised if the submission is itself invalid. """
+    """Error raised if the submission is itself invalid."""
 
 
 def _timeout_schema():
@@ -296,7 +296,12 @@ def _notify_criteria_schema():
     return Schema(
         {
             Required("status"): Any(
-                "running", "complete", "incomplete", "canceled", "finished"
+                "running",
+                "complete",
+                "incomplete",
+                "canceled",
+                "finished",
+                "all",
             ),
             Optional("dependency_query"): str,
             "type": Any("progression", "regression"),

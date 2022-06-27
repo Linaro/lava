@@ -380,6 +380,10 @@ def notification_criteria(job_id, criteria, state, health, old_health):
             if dependency_jobs.filter(~Q(health=TestJob.HEALTH_CANCELED)).count():
                 return False
 
+    # Support for "all"
+    if criteria["status"] == "all":
+        return state in [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
+
     # support special status of finished, otherwise skip to normal
     if criteria["status"] == "finished":
         return state == TestJob.STATE_FINISHED

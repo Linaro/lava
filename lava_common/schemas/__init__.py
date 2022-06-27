@@ -174,8 +174,15 @@ def notify():
     return {
         Required("criteria"): Any(
             {
+                Required("status"): "all",
+            },
+            {
                 Required("status"): Any(
-                    "finished", "running", "complete", "canceled", "incomplete"
+                    "finished",
+                    "running",
+                    "complete",
+                    "canceled",
+                    "incomplete",
                 ),
                 Optional("dependency_query"): str,
             },
