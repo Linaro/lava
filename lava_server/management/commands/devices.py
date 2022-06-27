@@ -328,6 +328,7 @@ class Command(BaseCommand):
             state=Device.STATE_IDLE,
             health=health,
             worker_host=worker,
+            is_public=public,
         )
 
         if tags is not None:
@@ -410,6 +411,7 @@ class Command(BaseCommand):
                 state=Device.STATE_IDLE,
                 health=health,
                 worker_host=worker,
+                is_public=public,
             )
 
             if from_tags is not None:
