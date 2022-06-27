@@ -104,6 +104,11 @@ For out of the box LAVA installation, device types, devices and test jobs are
 publicly visible meaning that a non-authenticated users can view everything.
 This does not apply to **submit** and **change** permissions.
 
+It is possible to require all users to login before accessing any page
+outside of the home page, documentation pages and the login page itself by
+setting the ``REQUIRE_LOGIN`` variable in any YAML configuration
+file under ``/etc/lava-server/settings.d/*.yaml``.
+
 But if the object is ``permission restricted`` for **view** permission, or it
 inherits the permission restriction, anonymous users will not be able to see
 that particular object any more.
