@@ -1,0 +1,16 @@
+{% set device_type = "bcm2835-rpi-b-rev2" %}
+{% extends 'base-uboot.jinja2' %}
+
+{% set baud_rate = baud_rate|default(115200) %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
+
+{% set bootm_kernel_addr = '0x00080000' %}
+{% set bootm_dtb_addr = '0x02600000' %}
+{% set bootm_ramdisk_addr = '0x02700000' %}
+
+{% set bootz_kernel_addr = bootm_kernel_addr %}
+{% set bootz_dtb_addr = bootm_dtb_addr %}
+{% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
+
+{% set uboot_mkimage_arch = 'arm' %}
