@@ -53,7 +53,7 @@ class GitHelper(VCSHelper):
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
         logger = logging.getLogger("dispatcher")
         try:
-            cmd_args = [self.binary, "clone"]
+            cmd_args = [self.binary, "clone", "--recurse-submodules"]
             if branch is not None:
                 cmd_args.extend(["-b", branch])
             if shallow:
