@@ -1396,3 +1396,102 @@ Example code :
       - SDPS: boot -f {boot}
       - FB: continue
       - FB: done
+
+BCU Integration
+^^^^^^^^^^^^^^^
+Most recent i.MX boards (imx8dxl, imx8mp, imx8ulp, imx93 as of july-2022) support BCU, a remote control utility.
+BCU allows changing the board's boot configuration (mainly SD card, eMMC or USB Serial Download Protocol) through a serial interface.
+
+**bcu**
+
+Integration of NXP ``bcu`` the board remote control utility for the boards/platform that support remote control.
+
+See the project readme of `bcu` on GitHub : https://github.com/NXPmicro/bcu#readme
+
+**Installation**
+
+``bcu`` is not provided as a dependency within LAVA, you need to install it manually over all workers.
+
+You can get the latest release here : https://github.com/NXPmicro/bcu/releases/latest
+
+
+**Enabling bcu capability on compatible device types**
+
+To use ``bcu`` the :term:`device type` template must specify variable :
+
+.. code-block:: jinja
+
+  {% set bcu_board_name = 'imx8dxlevk' %}
+
+* ``bcu_board_name`` : can be obtained using the command ``bcu lsboard`` :
+
+.. code-block:: shell
+
+   $ bcu lsboard
+   version bcu_1.1.45-0-g0b267ba
+
+   list of supported board model:
+
+	imx8dxlevk
+	imx8dxlevkc1
+	imx8dxl_ddr3_evk
+	imx8mpevkpwra0
+	imx8mpevkpwra1
+	imx8mpevk
+	imx8mpddr4
+	imx8ulpevk
+	imx8ulpevkb2
+	imx8ulpevk9
+	done
+
+**Device configuration**
+
+To use ``bcu`` the :term:`device` template must specify variable :
+
+.. code-block:: jinja
+
+  {# One of the variable below #}
+  {% set bcu_board_id = '2-1.3' %}
+  {% set bcu_board_id_command = ['echo', '2-1.3'] %}
+
+* ``bcu_board_id`` : can be obtained using the command ``bcu lsftdi`` :
+* ``bcu_board_id_command`` : Allows customization of bcu_board_id at the worker level. It avoids device template modification in server side.
+    Your command must print on a single line a well formatted board id accepted by bcu.
+
+.. code-block:: shell
+
+  $ bcu lsftdi
+  version bcu_1.1.45-0-g0b267ba
+  number of boards connected through FTDI device found: 1
+  board[0] location_id=2-1.3
+  done
+
+**Usage**
+
+Following the same syntax of ``bcu`` tool, in the boot action the ``method`` should be specified as ``uuu`` and then
+commands are specified in the ``commands`` field.
+
+Example definition :
+
+.. code-block:: yaml
+
+  - boot:
+      method: uuu
+      commands:
+           - bcu: reset usb
+           - uuu: -b emmc {boot}
+           - bcu: set_boot_mode emmc
+      timeout:
+        minutes: 20
+
+Non-exhaustive list of available bcu commands :
+
+.. code-block:: yaml
+
+  - reset BOOTMODE_NAME                 # Reset the board and then boots from mentioned BOOTMODE_NAME.
+                                        # Replace BOOTMODE_NAME with different options like emmc,sd,
+                                        # usb which can be obtained from command bcu lsbootmode.
+                                        # Replace the BOOTMODE_NAME with anyone of the mentioned.
+  - lsftdi                              # List all the boards connected by ftdi device
+  - lsboard                             # List all supported board models
+  - get_boot_mode                       # Displays the boot mode set by BCU
