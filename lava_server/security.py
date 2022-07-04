@@ -28,6 +28,10 @@ class LavaRequireLoginMiddleware:
     HOME_PATH: ClassVar[PurePosixPath] = PurePosixPath("/") / settings.MOUNT_POINT
     LOGIN_PATH: ClassVar[PurePosixPath] = PurePosixPath(settings.LOGIN_URL)
 
+    SCHEDULER_INTERNALS_PATH: ClassVar[PurePosixPath] = (
+        HOME_PATH / "scheduler/internal/v1"
+    )
+
     def __init__(self, get_response):
         self.get_response = get_response
         self.require_login = login_required(get_response)
@@ -38,6 +42,13 @@ class LavaRequireLoginMiddleware:
             return True
 
         if path == cls.LOGIN_PATH:
+            return True
+
+        try:
+            path.relative_to(cls.SCHEDULER_INTERNALS_PATH)
+        except ValueError:
+            ...
+        else:
             return True
 
         return False
