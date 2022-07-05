@@ -35,6 +35,7 @@ from lava_common.timeout import Timeout
 from lava_common.exceptions import (
     LAVABug,
     LAVAError,
+    InfrastructureError,
     JobError,
     TestError,
     LAVATimeoutError,
@@ -187,6 +188,7 @@ class Pipeline:
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
+        error = False
         for child in self.actions:
             try:
                 child.cleanup(connection)
@@ -196,6 +198,9 @@ class Pipeline:
                     "Failed to clean after action '%s': %s", child.name, str(exc)
                 )
                 child.logger.exception(traceback.format_exc())
+                error = True
+        if error:
+            raise InfrastructureError("Failed to clean after job")
 
     def _diagnose(self, connection):
         """
