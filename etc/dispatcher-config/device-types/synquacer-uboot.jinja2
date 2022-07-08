@@ -1,0 +1,7 @@
+{% extends 'base-uboot.jinja2' %}
+{% set boot_character_delay = boot_character_delay | default(100) %}
+{% set console_device = 'ttyS0' %}
+{% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
+{% set bootm_kernel_addr = "0x90000000" %}
+{% set bootm_ramdisk_addr = "0xa0000000" %}
+{% set bootm_dtb_addr = "0x9fe00000" %}
