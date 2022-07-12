@@ -1,0 +1,8 @@
+{# device_type = 'mt8192-asurada-spherion-r0' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set mkimage_fit_arch = 'arm64' %}
+{% set start_message = start_message | default('Starting depthcharge on Spherion...') %}
+{% set bootloader_prompt = bootloader_prompt | default('asurada:') %}
+{% set depthcharge_final_message = depthcharge_final_message | default('jumping to kernel') %}
+{% set console_device = console_device | default('ttyS0') %}
