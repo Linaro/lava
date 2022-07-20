@@ -154,7 +154,7 @@ constants:
       - 'Dhcp release failed.'
       - 'Out of space adding TFTP server IP to the command line.'
       - 'No network device.'
-      - 'Error code \d+'
+      - 'Error code \d+( \([\w\s]+\))?\r\n'
 {% endif %}
 {% if depthcharge_extra_error_message %}
       - '{{ depthcharge_extra_error_message }}'
