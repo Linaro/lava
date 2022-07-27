@@ -85,6 +85,7 @@ actions:
       grub:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
+          needs_interrupt: {{ grub_needs_interrupt|default(true) }}
         ramdisk:
           commands:
 {% block ramdisk_commands %}
