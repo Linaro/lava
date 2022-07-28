@@ -177,7 +177,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                     case.name,
                     elapsed_sec=duration,
                     classname="%s%s" % (classname_prefix, case.suite.name),
-                    timestamp=case.logged,
+                    timestamp=case.logged.isoformat(),
                 )
                 if case.result == TestCase.RESULT_FAIL:
                     logs = None
@@ -189,11 +189,17 @@ class TestJobViewSet(viewsets.ModelViewSet):
                         logs = logs_instance.read(
                             self.get_object(), case.start_log_line, case.end_log_line
                         )
-                    tc.add_error_info("failed", output=logs)
+                    tc.add_failure_info("failed", output=logs)
                 elif case.result == TestCase.RESULT_SKIP:
                     tc.add_skipped_info("skipped")
                 cases.append(tc)
-            suites.append(junit_xml.TestSuite(suite.name, test_cases=cases))
+            suites.append(
+                junit_xml.TestSuite(
+                    suite.name,
+                    test_cases=cases,
+                    timestamp=suite.get_end_datetime().isoformat(),
+                )
+            )
 
         data = junit_xml.to_xml_report_string(suites, encoding="utf-8")
         response = HttpResponse(data, content_type="application/xml")
