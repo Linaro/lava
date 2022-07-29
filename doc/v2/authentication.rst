@@ -131,3 +131,35 @@ need to be performed (following example covers `GitLab OAuth2 authentication`_):
 
 .. note:: If SMTP is not set up in LAVA, you can get a 500 Internal server
           error. Login will still work despite the error.
+
+Using Open ID Connect (OIDC) authentication providers
+-----------------------------------------------------
+
+LAVA server can be configured to authenticate using OIDC providers
+such as Keycloack or Azure AD. The OIDC library used is
+`mozilla-django-oidc <https://github.com/mozilla/mozilla-django-oidc>`_.
+
+The library does not come pre-installed and must be installed through
+external means. (for example, with ``pip``)
+
+To enable OIDC authorization set ``AUTH_OIDC`` dictionary in one of the
+configuration files.
+
+Example::
+
+  ---
+
+  AUTH_OIDC:
+    OIDC_RP_CLIENT_ID: "1"
+    OIDC_RP_CLIENT_SECRET: "bd01adf93cfb"
+    OIDC_OP_AUTHORIZATION_ENDPOINT: "http://testprovider:8080/openid/authorize"
+    OIDC_OP_TOKEN_ENDPOINT: "http://testprovider:8080/openid/token"
+    OIDC_OP_USER_ENDPOINT: "http://testprovider:8080/openid/userinfo"
+
+See `mozilla-django-oidc settings <https://mozilla-django-oidc.readthedocs.io/en/stable/settings.html>`_
+for the list of configuration keys.
+
+One extra setting that LAVA provides is ``LAVA_OIDC_ACCOUNT_NAME``
+which sets the login message for OIDC login prompt. For example,
+it can be set to ``Azure AD account``. By default it is set to
+``Open ID Connect account``.

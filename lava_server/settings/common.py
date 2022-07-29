@@ -114,6 +114,7 @@ TEMPLATES = [
                 # LAVA context processors
                 "lava_server.context_processors.lava",
                 "lava_server.context_processors.ldap_available",
+                "lava_server.context_processors.oidc_context",
                 "lava_server.context_processors.socialaccount",
             ]
         },
@@ -229,6 +230,11 @@ AUTH_LDAP_GROUP_TYPE = None
 # Social accounts support
 AUTH_SOCIALACCOUNT = None
 
+# OIDC support
+AUTH_OIDC = None
+OIDC_ENABLED = False
+LAVA_OIDC_ACCOUNT_NAME = "Open ID Connect account"
+
 # Gitlab support
 AUTH_GITLAB_URL = None
 AUTH_GITLAB_SCOPE = ["read_user"]
@@ -335,6 +341,7 @@ def update(values):
     AUTH_LDAP_USER_SEARCH = values.get("AUTH_LDAP_USER_SEARCH")
     AUTH_DEBIAN_SSO = values.get("AUTH_DEBIAN_SSO")
     AUTH_SOCIALACCOUNT = values.get("AUTH_SOCIALACCOUNT")
+    AUTH_OIDC = values.get("AUTH_OIDC")
     AUTH_GITLAB_URL = values.get("AUTH_GITLAB_URL")
     AUTH_GITLAB_SCOPE = values.get("AUTH_GITLAB_SCOPE")
     AUTHENTICATION_BACKENDS = values.get("AUTHENTICATION_BACKENDS")
@@ -405,6 +412,60 @@ def update(values):
                 "allauth.account.auth_backends.AuthenticationBackend"
             )
             SOCIALACCOUNT_PROVIDERS = auth_socialaccount
+
+    # OIDC authentication
+    if AUTH_OIDC is not None:
+        try:
+            LAVA_OIDC_ACCOUNT_NAME = AUTH_OIDC.pop("LAVA_OIDC_ACCOUNT_NAME")
+        except KeyError:
+            ...
+
+        oidc_keys = {
+            "OIDC_OP_AUTHORIZATION_ENDPOINT",
+            "OIDC_OP_TOKEN_ENDPOINT",
+            "OIDC_OP_USER_ENDPOINT",
+            "OIDC_RP_CLIENT_ID",
+            "OIDC_RP_CLIENT_SECRET",
+            "OIDC_VERIFY_JWT",
+            "OIDC_VERIFY_KID",
+            "OIDC_USE_NONCE",
+            "OIDC_VERIFY_SSL",
+            "OIDC_TIMEOUT",
+            "OIDC_PROXY",
+            "OIDC_EXEMPT_URLS",
+            "OIDC_CREATE_USER",
+            "OIDC_STATE_SIZE",
+            "OIDC_NONCE_SIZE",
+            "OIDC_MAX_STATES",
+            "OIDC_REDIRECT_FIELD_NAME",
+            "OIDC_CALLBACK_CLASS",
+            "OIDC_AUTHENTICATE_CLASS",
+            "OIDC_RP_SCOPES",
+            "OIDC_STORE_ACCESS_TOKEN",
+            "OIDC_STORE_ID_TOKEN",
+            "OIDC_AUTH_REQUEST_EXTRA_PARAMS",
+            "OIDC_RP_SIGN_ALGO",
+            "OIDC_RP_IDP_SIGN_KEY",
+            "OIDC_OP_LOGOUT_URL_METHOD",
+            "OIDC_AUTHENTICATION_CALLBACK_URL",
+            "OIDC_ALLOW_UNSECURED_JWT",
+            "OIDC_TOKEN_USE_BASIC_AUTH",
+        }
+
+        if not oidc_keys.issuperset(AUTH_OIDC.keys()):
+            raise ImproperlyConfigured(
+                "Unknown OIDC configuration keys: ",
+                set(AUTH_OIDC.keys()).difference(oidc_keys),
+            )
+
+        INSTALLED_APPS.append("mozilla_django_oidc")
+        AUTHENTICATION_BACKENDS.append(
+            "lava_server.oidc_sso.OIDCAuthenticationBackendUsernameFromEmail"
+        )
+        MIDDLEWARE.append("mozilla_django_oidc.middleware.SessionRefresh")
+
+        OIDC_ENABLED = True
+        locals().update(AUTH_OIDC)
 
     # LDAP authentication config
     if AUTH_LDAP_SERVER_URI:
@@ -508,6 +569,11 @@ def update(values):
                 "lava_scheduler_app": {
                     "handlers": ["logfile"],
                     "level": "INFO",
+                    "propagate": True,
+                },
+                "mozilla_django_oidc": {
+                    "handlers": ["logfile"],
+                    "level": "DEBUG",
                     "propagate": True,
                 },
             },

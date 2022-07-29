@@ -31,6 +31,7 @@ class LavaRequireLoginMiddleware:
     SCHEDULER_INTERNALS_PATH: ClassVar[PurePosixPath] = (
         HOME_PATH / "scheduler/internal/v1"
     )
+    OIDC_PATH: ClassVar[PurePosixPath] = HOME_PATH / "oidc"
 
     def __init__(self, get_response):
         self.get_response = get_response
@@ -50,6 +51,14 @@ class LavaRequireLoginMiddleware:
             ...
         else:
             return True
+
+        if settings.OIDC_ENABLED:
+            try:
+                path.relative_to(cls.OIDC_PATH)
+            except ValueError:
+                ...
+            else:
+                return True
 
         return False
 
