@@ -1,6 +1,7 @@
 # Copyright 2019-2020 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
+#         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -24,6 +25,7 @@ from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 from lava_dispatcher.utils.containers import NullDriver, DockerDriver
 from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from lava_common.exceptions import JobError
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -38,6 +40,15 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_imx8mq_job_uuu_path_from_command(self, filename):
         return self.create_job("imx8mq-evk-03.jinja2", filename)
+
+    def create_imx8dxlevk_job(self, filename):
+        return self.create_job("imx8dxl-evk-01.jinja2", filename)
+
+    def create_imx8dxlevk_without_bcu_configuration_board_id(self, filename):
+        return self.create_job("imx8dxl-evk-02.jinja2", filename)
+
+    def create_imx8dxlevk_with_bcu_board_id_command(self, filename):
+        return self.create_job("imx8dxl-evk-03.jinja2", filename)
 
 
 class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
@@ -106,6 +117,99 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
                 uuu_boot_action.job.device["actions"]["boot"]["methods"]["uuu"][
                     "options"
                 ]["usb_otg_path"],
+            )
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    def test_pipeline_uuu_boot_action_bcu_configured(self, uuu_mock):
+        job = self.factory.create_imx8dxlevk_job("sample_jobs/uuu_enhancement.yaml")
+
+        self.assertIsNotNone(job)
+
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertIsNone(job.validate())
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    @patch("builtins.print", return_value=None)
+    def test_pipeline_action_boot_uuu_exception(self, uuu_mock, print_mock):
+        with self.assertRaises(JobError) as cm:
+            self.factory.create_imx8dxlevk_without_bcu_configuration_board_id(
+                "sample_jobs/uuu_enhancement.yaml"
+            )
+
+        self.assertIsNotNone(cm.exception)
+        self.assertIsInstance(cm.exception, Exception)
+        self.assertEqual("Job", cm.exception.error_type)
+
+        self.assertIsNotNone(cm.exception.args)
+        self.assertIsInstance(cm.exception.args, tuple)
+        self.assertTrue(len(cm.exception.args) >= 1)
+
+        self.assertEqual(
+            "bcu_board_id '' do not respect bcu format or 'bcu_board_id_command' not defined in device",
+            cm.exception.args[0],
+        )
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    @patch("builtins.print", return_value=None)
+    def test_pipeline_uuu_boot_action_imx8mq_for_bcu_exception(
+        self, uuu_mock, print_mock
+    ):
+        with self.assertRaises(JobError) as cm:
+            self.factory.create_imx8mq_job_uuu_path_from_command(
+                "sample_jobs/uuu_enhance_test.yaml"
+            )
+
+        self.assertIsNotNone(cm.exception)
+        self.assertIsInstance(cm.exception, Exception)
+        self.assertEqual("Job", cm.exception.error_type)
+
+        self.assertIsNotNone(cm.exception.args)
+        self.assertIsInstance(cm.exception.args, tuple)
+        self.assertTrue(len(cm.exception.args) >= 1)
+
+        self.assertEqual(
+            "'bcu_board_name' is not defined in device-types",
+            cm.exception.args[0],
+        )
+
+    @patch(
+        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
+        return_value="/bin/test_uuu",
+    )
+    def test_bcu_board_id_from_command(self, which_mock):
+        job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
+            "sample_jobs/uuu_enhancement.yaml"
+        )
+        self.assertIsNotNone(job)
+
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe(False))
+
+        self.assertIsNone(job.validate())
+
+        # Test if bcu_board_id have been updated before populating tasks
+        uuu_boot_actions_for_bcu = list(
+            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+        )
+
+        for uuu_boot_action_for_bcu in uuu_boot_actions_for_bcu:
+            self.assertEqual(
+                "2-1.3",
+                uuu_boot_action_for_bcu.job.device["actions"]["boot"]["methods"]["uuu"][
+                    "options"
+                ]["bcu_board_id"],
             )
 
 
