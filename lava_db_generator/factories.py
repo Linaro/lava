@@ -1,14 +1,13 @@
-import factory
-import factory.fuzzy
-
 from datetime import datetime, timedelta, timezone
 from random import choice
 
-from django.contrib.auth.models import User, Group
+import factory
+import factory.fuzzy
+from django.contrib.auth.models import Group, User
 from django.db.models import Q
-from lava_scheduler_app.models import DeviceType, Device, TestJob, Worker
 
 from lava_common.decorators import nottest
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -80,8 +79,9 @@ class DeviceFactory(factory.django.DjangoModelFactory):
         if (not create) or (not create_device_template):
             return
 
-        from django.conf import settings
         from pathlib import Path
+
+        from django.conf import settings
 
         device_template_dir = Path(settings.DEVICES_PATH)
 

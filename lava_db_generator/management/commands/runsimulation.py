@@ -1,7 +1,9 @@
 from __future__ import annotations
-from django.core.management.base import BaseCommand
+
 from argparse import ArgumentParser
 from unittest.mock import MagicMock
+
+from django.core.management.base import BaseCommand
 
 
 def profiling_helper(function):
@@ -32,8 +34,9 @@ class Command(BaseCommand):
 
 
 def simulate_scheduler() -> None:
+    from logging import INFO, getLogger
+
     from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
-    from logging import getLogger, INFO
 
     logger = getLogger("scheduler simulation")
     logger.setLevel(INFO)

@@ -1,19 +1,21 @@
 from __future__ import annotations
-from django.core.management.base import BaseCommand
 
-from lava_scheduler_app.models import TestJob, Device
-from lava_db_generator.factories import (
-    DeviceTypeFactory,
-    DeviceFactory,
-    UserFactory,
-    ProjectGroupFactory,
-    TestJobFactory,
-    WorkerFactory,
-)
 from argparse import ArgumentParser
+from typing import List, Optional
+
 import factory
 from django.contrib.auth.models import User
-from typing import Optional, List
+from django.core.management.base import BaseCommand
+
+from lava_db_generator.factories import (
+    DeviceFactory,
+    DeviceTypeFactory,
+    ProjectGroupFactory,
+    TestJobFactory,
+    UserFactory,
+    WorkerFactory,
+)
+from lava_scheduler_app.models import Device, TestJob
 
 
 class Command(BaseCommand):
@@ -159,8 +161,9 @@ def generate_device_types(number_generated: int, **kwargs) -> None:
 
 
 def generate_device_types_real(number_generated: int = 0, **kwargs) -> None:
-    from django.conf import settings
     from pathlib import Path
+
+    from django.conf import settings
 
     actual_device_types_names: List[str] = []
     for device_types_path_str in settings.DEVICE_TYPES_PATHS:
