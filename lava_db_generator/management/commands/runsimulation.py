@@ -23,9 +23,9 @@ class Command(BaseCommand):
         parser.add_argument("simulation_name")
 
     def handle(self, *args, **options):
-        simulation_name = options['simulation_name']
+        simulation_name = options["simulation_name"]
 
-        if simulation_name == 'scheduler':
+        if simulation_name == "scheduler":
             simulate_scheduler()
         else:
             raise ValueError("Unknown simulation")
@@ -35,7 +35,7 @@ def simulate_scheduler() -> None:
     from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
     from logging import getLogger, INFO
 
-    logger = getLogger('scheduler simulation')
+    logger = getLogger("scheduler simulation")
     logger.setLevel(INFO)
     workers = set(Worker.objects.all())
     device_types = set(DeviceType.objects.all())

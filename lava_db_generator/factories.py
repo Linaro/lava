@@ -74,9 +74,9 @@ class DeviceFactory(factory.django.DjangoModelFactory):
     worker_host = factory.fuzzy.FuzzyChoice(Worker.objects.all())
 
     @factory.post_generation
-    def create_device_template(self,
-                               create,
-                               create_device_template: bool = False, **kwrags):
+    def create_device_template(
+        self, create, create_device_template: bool = False, **kwrags
+    ):
         if (not create) or (not create_device_template):
             return
 
@@ -85,7 +85,7 @@ class DeviceFactory(factory.django.DjangoModelFactory):
 
         device_template_dir = Path(settings.DEVICES_PATH)
 
-        with open(device_template_dir / (self.hostname + '.jinja2'), mode='w+t') as f:
+        with open(device_template_dir / (self.hostname + ".jinja2"), mode="w+t") as f:
             f.write(r"{% " + f"extends '{self.device_type.name}.jinja2'" + r" %}")
 
 
