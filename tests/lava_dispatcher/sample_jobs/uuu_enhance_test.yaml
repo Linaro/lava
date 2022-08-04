@@ -1,0 +1,36 @@
+device_type: imx8mq-evk
+# Flash of bootloader on SD card, using uuu
+job_name: uuu - u-boot only (health-check) with bcu support
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: low
+visibility: public
+
+actions:
+- deploy:
+    to : uuu
+    images :
+      boot :
+        # use custom boot image that can also boot on silicon B2
+        url : https://myserver.com/binaries/imx-boot.bin
+- boot:
+    method: uuu
+    commands :
+      - bcu : reset usb
+      - uuu : -b sd {boot}
+      - bcu : set_boot_mode sd
+    timeout:
+      minutes: 2
+- boot :
+    method: bootloader
+    bootloader: u-boot
+    commands :
+        - printenv
+    prompts : [=>]
+    timeout:
+      seconds: 30

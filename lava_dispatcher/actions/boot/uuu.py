@@ -2,6 +2,7 @@
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
+#         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -192,6 +193,13 @@ class UUUBootRetryAction(RetryAction):
         self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "usb_otg_path"
         ] = self.eval_otg_path()
+        self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "has_bcu_commands"
+        ] = self.has_bcu_commands(parameters)
+        if self.has_bcu_commands(parameters):
+            self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+                "bcu_board_id"
+            ] = self.eval_bcu_board_id()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(CheckSerialDownloadMode())
@@ -231,6 +239,52 @@ class UUUBootRetryAction(RetryAction):
                 "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
             )
 
+    def has_bcu_commands(self, parameters):
+        """
+        Checks if the bcu is present in the commands list. Returns true if bcu is present
+        """
+        cmds = parameters["commands"]
+        for commands in cmds:
+            for protocol, cmd in commands.items():
+                if protocol == "bcu":
+                    return True
+        return False
+
+    def eval_bcu_board_id(self):
+        uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
+
+        if uuu_options.get("bcu_board_name") == "":
+            raise JobError("'bcu_board_name' is not defined in device-types")
+
+        # Match example : "2-1.3"
+        bcu_id_fsm = re.compile(r"\d+-(\d+|\.)+")
+
+        if bcu_id_fsm.fullmatch(uuu_options.get("bcu_board_id")):
+            return uuu_options.get("bcu_board_id")
+
+        if uuu_options.get("bcu_board_id_command") is None:
+            raise JobError(
+                "bcu_board_id '{}' do not respect bcu format or 'bcu_board_id_command' not "
+                "defined in device".format(uuu_options.get("bcu_board_id"))
+            )
+        else:
+            bcu_board_id_command = uuu_options.get("bcu_board_id_command")
+
+        self.logger.info(
+            "Retrieving 'bcu_board_id' using command : '%s'",
+            " ".join(bcu_board_id_command),
+        )
+
+        bcu_id_expected = self.parsed_command(bcu_board_id_command).strip()
+
+        if bcu_id_fsm.fullmatch(bcu_id_expected):
+            self.logger.info("Matched bcu_board_id : %s", bcu_id_expected)
+            return bcu_id_expected
+
+        raise JobError(
+            "Unable to parse bcu_id from command '{}'".format(bcu_board_id_command)
+        )
+
 
 class UUUBootAction(OptionalContainerUuuAction):
     name = "uuu-boot"
@@ -240,6 +294,10 @@ class UUUBootAction(OptionalContainerUuuAction):
     def populate(self, parameters):
         self.parameters = parameters
         self.uuu = self.which("uuu")
+        if self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "has_bcu_commands"
+        ]:
+            self.bcu = self.which("bcu")
 
     def validate(self):
         super().validate()
@@ -253,7 +311,12 @@ class UUUBootAction(OptionalContainerUuuAction):
             "usb_otg_path"
         ]
         uuu_cmds = self.parameters["commands"]
-
+        bcu_board_name = self.job.device["actions"]["boot"]["methods"]["uuu"][
+            "options"
+        ]["bcu_board_name"]
+        bcu_board_id = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "bcu_board_id"
+        ]
         images_name = self.get_namespace_data(
             action="uuu-deploy", label="uuu-images", key="images_names"
         )
@@ -278,8 +341,14 @@ class UUUBootAction(OptionalContainerUuuAction):
 
         if usb_otg_path is None:
             raise JobError("USB path of the device not set for uuu")
-
         for cmd in uuu_cmds:
+            if "bcu:" in cmd:
+                cmd = cmd.replace("bcu: ", "")
+                exec_cmd = "{} {} -board={} -id={}".format(
+                    self.bcu, cmd, bcu_board_name, bcu_board_id
+                )
+                self.run_cmd(exec_cmd.split(" "))
+                continue
             if "uuu:" in cmd:
                 # uuu can be used in 2 different ways, by using built-in scripts in a single command,
                 # or with a list of commands, each prefixed with a protocol type.
