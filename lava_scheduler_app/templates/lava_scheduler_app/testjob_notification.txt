@@ -22,7 +22,7 @@ Job details and log file: {{ url_prefix }}{{ job.get_absolute_url() }}
 Device details:
 Hostname: {{ job.actual_device.hostname }}
 Type: {{ job.actual_device.device_type }}
-Owner: {{ job.actual_device.owner }}
+Owner: {{ job.actual_device.physical_owner }}
 Worker: {{ job.actual_device.worker_host.hostname }}
 {% endif -%}
 
@@ -129,6 +129,6 @@ No query is set for results comparing.
 {%- endif %}{# verbosity #}
 {%- endif %}{# job state finished #}
 
--- 
+--
 LAVA
 Linaro Automated Validation Architecture
