@@ -311,12 +311,7 @@ def validate_yaml(yaml_data):
     if "notify" in yaml_data:
         if "recipients" in yaml_data["notify"]:
             for recipient in yaml_data["notify"]["recipients"]:
-                if recipient["to"]["method"] == NotificationRecipient.EMAIL_STR:
-                    if "email" not in recipient["to"] and "user" not in recipient["to"]:
-                        raise SubmissionException(
-                            "No valid user or email address specified."
-                        )
-                else:
+                if recipient["to"]["method"] != NotificationRecipient.EMAIL_STR:
                     if (
                         "handle" not in recipient["to"]
                         and "user" not in recipient["to"]

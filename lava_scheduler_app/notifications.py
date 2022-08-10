@@ -470,6 +470,16 @@ def create_notification(job, data):
                 notification_recipient.irc_handle = recipient["to"]["handle"]
             if "server" in recipient["to"]:
                 notification_recipient.irc_server = recipient["to"]["server"]
+            if (
+                recipient["to"]["method"] == NotificationRecipient.EMAIL_STR
+                and not notification_recipient.user
+                and not notification_recipient.email
+            ):
+                physical_owner = job.actual_device.physical_owner
+                if physical_owner:
+                    notification_recipient.user = physical_owner
+                else:
+                    notification_recipient.email = ""
 
             # Ignore unique constraint violation.
             with contextlib.suppress(IntegrityError):

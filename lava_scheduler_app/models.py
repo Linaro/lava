@@ -2304,10 +2304,10 @@ class NotificationRecipient(models.Model):
 
     @property
     def email_address(self):
-        if self.email:
-            return self.email
-        else:
+        if self.user:
             return self.user.email
+
+        return self.email
 
     @property
     def irc_handle_name(self):
