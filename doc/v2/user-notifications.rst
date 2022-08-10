@@ -39,6 +39,10 @@ If the **recipients** section is omitted in the notify block, the system will
 send an email to the job submitter only, provided the **criteria** is satisfied,
 and there is no **callbacks** section.
 
+If the **email** and **user** are both omitted in the **to** block when **method: email**
+is configured, the system will send an email to the `physical owner` of the device
+on which the job ran.
+
 Notification callbacks
 ======================
 
