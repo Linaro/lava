@@ -207,12 +207,14 @@ class TestRestApi:
             submitter=self.user,
             requested_device_type=self.public_device_type1,
             health=TestJob.HEALTH_INCOMPLETE,
+            end_time=timezone.now(),
         )
         self.private_testjob1 = TestJob.objects.create(
             definition=EXAMPLE_JOB,
             submitter=self.admin,
             requested_device_type=self.restricted_device_type1,
             health=TestJob.HEALTH_COMPLETE,
+            end_time=timezone.now(),
         )
         self.private_testjob1.submit_time = timezone.now() - timedelta(days=7)
         self.private_testjob1.save()
@@ -497,8 +499,8 @@ class TestRestApi:
         tree = ET.fromstring(data)
         assert tree.tag == "testsuites"
         assert tree.attrib == {
-            "failures": "0",
-            "errors": "1",
+            "failures": "1",
+            "errors": "0",
             "tests": "2",
             "disabled": "0",
             "time": "0.0",
@@ -506,14 +508,20 @@ class TestRestApi:
         assert len(tree) == 1
 
         assert tree[0].tag == "testsuite"
+        # Different junit_xml versions have additional fields; we have to
+        # remove attrs here to support both bulseye and buster
+        tree[0].attrib.pop("file", None)
+        tree[0].attrib.pop("log", None)
+        tree[0].attrib.pop("url", None)
         assert tree[0].attrib == {
             "name": "lava",
             "disabled": "0",
-            "failures": "0",
-            "errors": "1",
+            "failures": "1",
+            "errors": "0",
             "skipped": "0",
             "time": "0",
             "tests": "2",
+            "timestamp": self.public_testjob1.end_time.isoformat(),
         }
         assert len(tree[0]) == 2
 
@@ -523,8 +531,8 @@ class TestRestApi:
         assert "timestamp" in tree[0][0].attrib
         assert len(tree[0][0]) == 1
 
-        assert tree[0][0][0].tag == "error"
-        assert tree[0][0][0].attrib == {"type": "error", "message": "failed"}
+        assert tree[0][0][0].tag == "failure"
+        assert tree[0][0][0].attrib == {"type": "failure", "message": "failed"}
         assert len(tree[0][0][0]) == 0
 
         assert tree[0][1].tag == "testcase"
