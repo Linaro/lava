@@ -95,11 +95,8 @@ class MultinodeTestShell(LavaTest):
         return get_subaction_class(parameters).has_shell(parameters)
 
 
-class MultinodeTestAction(TestShellAction):
+class MultinodeMixin:
 
-    name = "multinode-test"
-    description = "Executing lava-test-runner"
-    summary = "Multinode Lava Test Shell"
     timeout_exception = TestError
 
     def __init__(self):
@@ -265,3 +262,10 @@ class MultinodeTestAction(TestShellAction):
                 "<LAVA_WAIT_ALL_COMPLETE%s>" % message_str, delay=self.character_delay
             )
             self.connection.sendline("\n")
+
+
+class MultinodeTestAction(MultinodeMixin, TestShellAction):
+
+    name = "multinode-test"
+    description = "Executing lava-test-runner"
+    summary = "Multinode Lava Test Shell"

@@ -26,6 +26,7 @@ from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
+from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
@@ -88,7 +89,10 @@ class DockerTestAction(Action, GetBoardId):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
-        self.pipeline.add_action(DockerTestShell())
+        if "role" in parameters:
+            self.pipeline.add_action(MultinodeDockerTestShell())
+        else:
+            self.pipeline.add_action(DockerTestShell())
         self.pipeline.add_action(ReadFeedback())
 
 
@@ -263,3 +267,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         # return the original connection untouched
         self.data.pop("docker-test-shell")
         return connection
+
+
+class MultinodeDockerTestShell(MultinodeMixin, DockerTestShell):
+    name = "lava-multinode-docker-test-shell"
+    description = "Runs multinode lava-test-shell in a docker container"
+    summary = "Runs multinode lava-test-shell in a docker container"
