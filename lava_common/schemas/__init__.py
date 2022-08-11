@@ -154,6 +154,7 @@ def action():
         Optional("protocols"): object,
         Optional("role"): [str],
         Optional("timeout"): timeout(),
+        Optional("timeouts"): {str: timeout()},
         Optional("repeat"): Range(min=1),  # TODO: where to put it?
         Optional("failure_retry"): Range(min=1),  # TODO: where to put it?
         Optional("failure_retry_interval"): Range(min=1),
