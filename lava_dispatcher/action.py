@@ -132,12 +132,18 @@ class Pipeline:
         # 1/ the global action timeout
         # 2/ the individual action timeout
         # 3/ the action block timeout
+        # 4/ the individual action block timeout
 
         action._override_action_timeout(dict_merge_get(timeouts, "action"))
         action._override_action_timeout(
             subdict_merge_get(timeouts, "actions", action.name)
         )
         action._override_action_timeout(parameters.get("timeout"))
+
+        if parameters.get("timeouts"):
+            action._override_action_timeout(
+                dict_merge_get([parameters.get("timeouts")], action.name)
+            )
 
         action._override_connection_timeout(dict_merge_get(timeouts, "connection"))
         action._override_connection_timeout(
