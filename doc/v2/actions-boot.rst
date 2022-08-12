@@ -1079,21 +1079,42 @@ so the method of transferring and then unpacking the overlay **must**
 work without any further setup of the rootfs. All dependencies must be
 pre-installed and all configuration must be in place (possibly using a
 hacking session). This includes the **network** configuration - the
-worker offers an apache host to download the overlay and LAVA can
-populate the URL but the device **must** automatically configure the
+worker offers several network services to download the overlay and LAVA
+can populate the URL but the device **must** automatically configure the
 networking immediately upon boot and the network **must** work
 straight away.
 
-.. code-block:: yaml
+The job could specify ``transfer_method`` to choose how to transfer overlay:
 
-  - boot:
-      transfer_overlay:
-        download_command: wget -S --progress=dot:giga
-        unpack_command: tar -C / -xzf
+* ``transfer_method: http``
 
-.. note:: The ``-C /`` command to tar is **essential** or the test shell will
-   not be able to start. The overlay will use ``gzip`` compression, so pass
-   the ``z`` option to ``tar``.
+  This will transfer overlay through apache host service.
+
+  .. code-block:: yaml
+
+    - boot:
+        transfer_overlay:
+          transfer_method: http
+          download_command: wget -S --progress=dot:giga
+          unpack_command: tar -C / -xzf
+
+  .. note:: The ``-C /`` command to tar is **essential** or the test shell will
+     not be able to start. The overlay will use ``gzip`` compression, so pass
+     the ``z`` option to ``tar``.
+
+* ``transfer_method: nfs``
+
+  This will transfer overlay through nfs server service:
+
+  .. code-block:: yaml
+
+    - boot:
+        transfer_overlay:
+          transfer_method: nfs
+          download_command: mount -t nfs -o nolock
+          unpack_command: cp -rf
+
+.. note:: ``http`` will be used if ``transfer_method`` omitted.
 
 Deployment differences
 ----------------------
