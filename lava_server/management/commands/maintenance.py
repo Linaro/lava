@@ -52,7 +52,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Disable the internal loggers
         logging.getLogger("lava-master").disabled = True
-        logging.getLogger("lava_scheduler_app").disabled = True
+        logging.getLogger("lava-scheduler").disabled = True
         # Find the user
         try:
             user = User.objects.get(username=options["user"])
