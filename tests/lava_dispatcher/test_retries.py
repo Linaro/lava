@@ -19,12 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
-from lava_dispatcher.action import Action, Pipeline
+
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
-from lava_common.exceptions import JobError, LAVABug, InfrastructureError
-from lava_dispatcher.logical import RetryAction, DiagnosticAction
-from lava_dispatcher.power import FinalizeAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.job import Job
+from lava_dispatcher.logical import DiagnosticAction, RetryAction
+from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import StdoutTestCase
 from tests.utils import DummyLogger
 
@@ -551,6 +552,41 @@ class TestTimeout(StdoutTestCase):
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.run()
+
+    def test_retry_job_timeout(self):
+
+        fakejob = self.fakejob
+
+        class LongRetryAction(RetryAction):
+            def populate(self, parameters):
+                self.pipeline = TestTimeout.FakePipeline(job=fakejob)
+                self.pipeline.add_action(TestTimeout.LongAction())
+
+                finalize = FinalizeAction()
+                finalize.parameters["namespace"] = "common"
+                self.pipeline.add_action(finalize)
+
+        self.assertIsNotNone(self.fakejob.timeout)
+        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        action = LongRetryAction()
+        action.max_retries = 10
+        pipeline.add_action(action)
+        self.fakejob.pipeline = pipeline
+        self.fakejob.device = TestTimeout.FakeDevice()
+
+        from time import monotonic
+
+        start_time = monotonic()
+
+        with self.assertRaises(JobError):
+            self.fakejob.run()
+
+        # Test that we honor job timeout over retries
+        self.assertAlmostEqual(
+            self.fakejob.timeout.duration,
+            monotonic() - start_time,
+            delta=3,
+        )
 
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
