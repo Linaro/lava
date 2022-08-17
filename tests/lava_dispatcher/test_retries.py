@@ -25,6 +25,7 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.job import Job
 from lava_dispatcher.logical import DiagnosticAction, RetryAction
+from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import StdoutTestCase
 from tests.utils import DummyLogger
@@ -149,11 +150,7 @@ class TestAction(StdoutTestCase):
             ],
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
-        # copy of the _timeout function from parser.
-        if "timeouts" in self.parameters:
-            if "job" in self.parameters["timeouts"]:
-                duration = Timeout.parse(self.parameters["timeouts"]["job"])
-                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
+        JobParser._timeouts(None, self.parameters, self.fakejob)
 
     def lookup_deploy(self, params):
         actions = iter(params)
@@ -345,11 +342,7 @@ class TestAction(StdoutTestCase):
             ],
         }
         self.fakejob = TestAction.FakeJob(self.parameters)
-        # copy of the _timeout function from parser.
-        if "timeouts" in self.parameters:
-            if "job" in self.parameters["timeouts"]:
-                duration = Timeout.parse(self.parameters["timeouts"]["job"])
-                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
+        JobParser._timeouts(None, self.parameters, self.fakejob)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAction.InternalRetryAction()
         for actions in self.lookup_deploy(self.parameters["actions"]):
@@ -493,11 +486,7 @@ class TestTimeout(StdoutTestCase):
             ],
         }
         self.fakejob = TestTimeout.FakeJob(self.parameters)
-        # copy of the _timeout function from parser.
-        if "timeouts" in self.parameters:
-            if "job" in self.parameters["timeouts"]:
-                duration = Timeout.parse(self.parameters["timeouts"]["job"])
-                self.fakejob.timeout = Timeout(self.parameters["job_name"], duration)
+        JobParser._timeouts(None, self.parameters, self.fakejob)
 
     def test_action_timeout(self):
         """
