@@ -56,9 +56,10 @@ class RetryAction(Action):
 
     def run(self, connection, max_end_time):
         self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
+        parent_end_time = max_end_time
 
         retries = 0
-        has_failed = False
+        has_failed_exc = None
         self.call_protocols()
         while retries < self.max_retries:
             retries += 1
@@ -69,7 +70,7 @@ class RetryAction(Action):
                     return connection
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
-                has_failed = True
+                has_failed_exc = exc
                 # Print the error message
                 self.logger.error(
                     "%s failed: %d of %d attempts. '%s'",
@@ -86,6 +87,10 @@ class RetryAction(Action):
                     self.errors = "%s retries failed for %s" % (retries, self.name)
                     raise
 
+                # Stop retrying if parent timed out
+                if time.monotonic() >= parent_end_time:
+                    break
+
                 # Wait some time before retrying
                 time.sleep(self.sleep)
                 # Restart max_end_time or the retry on a timeout fails with duration < 0
@@ -100,9 +105,13 @@ class RetryAction(Action):
                 )
 
         # If we are repeating, check that all repeat were a success.
-        if has_failed:
+        if has_failed_exc:
             # tried and failed
-            raise JobError("%s retries failed for %s" % (retries, self.name))
+            retry_fail_exc = JobError(
+                f"{retries} retries out of "
+                f"{self.max_retries} failed for {self.name}"
+            )
+            raise retry_fail_exc from has_failed_exc
         return connection
 
 
