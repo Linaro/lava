@@ -255,7 +255,11 @@ class WorkerLogView(LavaView):
                 (Q(content_type=worker_ct) & Q(object_id=self.worker.hostname))
                 | (
                     Q(content_type=device_ct)
-                    & Q(object_id__in=self.worker.device_set.all())
+                    & Q(
+                        object_id__in=self.worker.device_set.visible_by_user(
+                            self.request.user
+                        )
+                    )
                 )
             )
             .order_by("-action_time")
@@ -969,7 +973,7 @@ def device_type_detail(request, pk):
 @BreadCrumb("Health history", parent=device_type_detail, needs=["pk"])
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
-    devices = device_type.device_set.all()
+    devices = device_type.device_set.visible_by_user(request.user)
     devices_log_data = DevicesLogView(
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
