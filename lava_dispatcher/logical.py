@@ -89,8 +89,9 @@ class RetryAction(Action):
                 # Wait some time before retrying
                 time.sleep(self.sleep)
                 # Restart max_end_time or the retry on a timeout fails with duration < 0
-                max_end_time += time.time() - self.timeout.start
-                self.timeout.start = time.time()
+                current_time = time.monotonic()
+                max_end_time += current_time - self.timeout.start
+                self.timeout.start = current_time
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
                     self.level,

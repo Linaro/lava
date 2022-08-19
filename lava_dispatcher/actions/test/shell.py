@@ -67,7 +67,7 @@ class TestShell(LavaTest):
 
     @classmethod
     def needs_deployment_data(cls, parameters):
-        """ Some, not all, deployments will want deployment_data """
+        """Some, not all, deployments will want deployment_data"""
         return True
 
     @classmethod
@@ -341,12 +341,15 @@ class TestShellAction(Action):
 
                 # Because of the feedbacks, we use a small value for the
                 # timeout.  This allows to grab feedback regularly.
-                last_check = time.time()
+                last_check = time.monotonic()
                 while self._keep_running(
                     test_connection, test_connection.timeout, connection.check_char
                 ):
                     # Only grab the feedbacks every test_connection.timeout
-                    if feedbacks and time.time() - last_check > test_connection.timeout:
+                    if (
+                        feedbacks
+                        and time.monotonic() - last_check > test_connection.timeout
+                    ):
                         for feedback in feedbacks:
                             # The timeout is really small because the goal is only
                             # to clean the buffer of the feedback connections:
@@ -361,11 +364,11 @@ class TestShellAction(Action):
                                     "Listened to connection for namespace '%s' done",
                                     feedback[0],
                                 )
-                        last_check = time.time()
+                        last_check = time.monotonic()
         finally:
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
-                self.current_run["duration"] = "%.02f" % (time.time() - self.start)
+                self.current_run["duration"] = "%.02f" % (time.monotonic() - self.start)
                 self.logger.results(self.current_run)
                 self.current_run = None
 
@@ -383,7 +386,7 @@ class TestShellAction(Action):
         )
         self.errors = "Unable to start test stage %s" % stage
         # This is not accurate but required when exiting.
-        self.start = time.time()
+        self.start = time.monotonic()
         self.current_run = {
             "definition": "lava",
             "case": "stage_%d" % stage,
@@ -395,7 +398,7 @@ class TestShellAction(Action):
         self.signal_director.test_uuid = params[1]
         self.definition = params[0]
         uuid = params[1]
-        self.start = time.time()
+        self.start = time.monotonic()
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
         # set the pattern for this run from pattern_dict
         testdef_index = self.get_namespace_data(
@@ -439,13 +442,13 @@ class TestShellAction(Action):
         self._reset_patterns()
         # catch error in ENDRUN being handled without STARTRUN
         if not self.start:
-            self.start = time.time()
+            self.start = time.monotonic()
         self.logger.info("Ending use of test pattern.")
         self.logger.info(
             "Ending test lava.%s (%s), duration %.02f",
             self.definition,
             uuid,
-            time.time() - self.start,
+            time.monotonic() - self.start,
         )
         self.current_run = None
         res = {
@@ -456,7 +459,7 @@ class TestShellAction(Action):
                 action="test", label=uuid, key="repository"
             ),
             "path": self.get_namespace_data(action="test", label=uuid, key="path"),
-            "duration": "%.02f" % (time.time() - self.start),
+            "duration": "%.02f" % (time.monotonic() - self.start),
             "result": "pass",
         }
         revision = self.get_namespace_data(action="test", label=uuid, key="revision")

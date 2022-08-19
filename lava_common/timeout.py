@@ -71,12 +71,12 @@ class Timeout:
         return parameters.get("timeout", {}).get("skip", False)
 
     def _timed_out(self, signum, frame):
-        duration = int(time.time() - self.start)
+        duration = int(time.monotonic() - self.start)
         raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
     def __call__(self, parent, action_max_end_time):
-        self.start = time.time()
+        self.start = time.monotonic()
 
         max_end_time = self.start + self.duration
         if action_max_end_time is not None:
@@ -105,7 +105,7 @@ class Timeout:
                 signal.alarm(0)
             else:
                 signal.signal(signal.SIGALRM, parent.timeout._timed_out)
-                duration = round(action_max_end_time - time.time())
+                duration = round(action_max_end_time - time.monotonic())
                 if duration <= 0:
                     signal.alarm(0)
                     parent.timeout._timed_out(None, None)
@@ -115,4 +115,4 @@ class Timeout:
             signal.alarm(0)
             raise
         finally:
-            self.elapsed_time = time.time() - self.start
+            self.elapsed_time = time.monotonic() - self.start

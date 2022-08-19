@@ -86,7 +86,7 @@ class FakeConnection:
 class TestBootMessages(StdoutTestCase):
     def setUp(self):
         super().setUp()
-        self.max_end_time = time.time() + 30
+        self.max_end_time = time.monotonic() + 30
 
     def test_existing_prompt(self):
         kernel = Kernel()

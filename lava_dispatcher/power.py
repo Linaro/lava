@@ -291,9 +291,9 @@ class ReadFeedback(Action):
             else:
                 self.logger.debug("No connection for namespace %s", feedback_ns)
         for feedback in feedbacks:
-            deadline = time.time() + self.duration
+            deadline = time.monotonic() + self.duration
             while True:
-                timeout = max(deadline - time.time(), 0)
+                timeout = max(deadline - time.monotonic(), 0)
                 bytes_read = feedback[1].listen_feedback(
                     timeout=timeout, namespace=feedback[0]
                 )
@@ -362,4 +362,4 @@ class FinalizeAction(Action):
     def cleanup(self, connection):
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
-            self.run(connection, time.time() + self.timeout.duration)
+            self.run(connection, time.monotonic() + self.timeout.duration)

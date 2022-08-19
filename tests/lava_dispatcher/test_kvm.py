@@ -458,7 +458,7 @@ class TestKvmConnection(StdoutTestCase):
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/qemu-reboot.yaml")
         self.job.logger = DummyLogger()
-        self.max_end_time = time.time() + 30
+        self.max_end_time = time.monotonic() + 30
 
     def test_kvm_connection(self):
         self.job.validate()
@@ -504,7 +504,7 @@ class TestAutoLogin(StdoutTestCase):
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-inline.yaml")
         self.job.logger = DummyLogger()
-        self.max_end_time = time.time() + 30
+        self.max_end_time = time.monotonic() + 30
 
     def test_autologin_prompt_patterns(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)

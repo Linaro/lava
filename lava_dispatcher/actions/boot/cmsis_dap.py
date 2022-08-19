@@ -134,7 +134,7 @@ class FlashCMSISAction(Action):
         if method_parameters.get("skip_autoremount_wait", False):
             self.run_cmd(["sync", dstdir], error_msg="Unable to sync %s" % dstdir)
         else:
-            t_start = time.time()
+            t_start = time.monotonic()
             self.logger.debug("Waiting for CMSIS-DAP MSD to self-unmount")
             while True:
                 # os.sync() causes OS to pick up changes on the underlying MSD device.
@@ -154,7 +154,7 @@ class FlashCMSISAction(Action):
                 time.sleep(0.5)
 
             self.logger.debug(
-                "CMSIS-DAP MSD self-remount cycle: %.2fs" % (time.time() - t_start)
+                "CMSIS-DAP MSD self-remount cycle: %.2fs" % (time.monotonic() - t_start)
             )
 
             if "FAIL.TXT" in flist:

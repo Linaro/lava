@@ -120,7 +120,7 @@ class LinuxKernelMessages(Action):
         res = "pass"
         halt = None
         init = False
-        start = time.time()
+        start = time.monotonic()
         if not connection:
             return results
         if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
@@ -213,7 +213,7 @@ class LinuxKernelMessages(Action):
                     "namespace": action.parameters.get("namespace", "common"),
                     "case": cls.name,
                     "level": action.level,
-                    "duration": "%.02f" % (time.time() - start),
+                    "duration": "%.02f" % (time.monotonic() - start),
                     "result": res,
                     "extra": {"extra": results},
                 }

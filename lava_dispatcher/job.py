@@ -192,7 +192,7 @@ class Job:
         label = "lava-dispatcher, installed at version: %s" % __version__
         self.logger.info(label)
         self.logger.info("start: 0 validate")
-        start = time.time()
+        start = time.monotonic()
 
         success = False
         try:
@@ -206,7 +206,7 @@ class Job:
             self.logger.exception(traceback.format_exc())
             raise LAVABug(exc)
         finally:
-            self.logger.info("validate duration: %.02f", time.time() - start)
+            self.logger.info("validate duration: %.02f", time.monotonic() - start)
             self.logger.results(
                 {
                     "definition": "lava",
@@ -257,7 +257,7 @@ class Job:
             self.cleanup(self.connection)
 
     def cleanup(self, connection):
-        with self.timeout(None, time.time() + CLEANUP_TIMEOUT) as max_end_time:
+        with self.timeout(None, time.monotonic() + CLEANUP_TIMEOUT) as max_end_time:
             return self._cleanup(connection)
 
     def _cleanup(self, connection):
