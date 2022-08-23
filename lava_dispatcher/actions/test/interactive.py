@@ -124,7 +124,7 @@ class TestInteractiveAction(Action):
                     "Will listen to feedbacks from '%s' for 1 second", feedback_ns
                 )
                 self.feedbacks.append((feedback_ns, feedback_connection))
-        self.last_check = time.time()
+        self.last_check = time.monotonic()
 
         # Get substitutions from bootloader-overlay
         substitutions = self.get_namespace_data(
@@ -135,7 +135,7 @@ class TestInteractiveAction(Action):
 
         # Loop on all scripts
         for script in self.parameters["interactive"]:
-            start = time.time()
+            start = time.monotonic()
 
             # Set the connection prompts
             connection.prompt_str = script["prompts"]
@@ -158,7 +158,7 @@ class TestInteractiveAction(Action):
                 result["result"] = "pass"
             finally:
                 # Log the current script result (even in case of error)
-                result["duration"] = "%.02f" % (time.time() - start)
+                result["duration"] = "%.02f" % (time.monotonic() - start)
                 self.logger.results(result)
 
         return connection
@@ -229,7 +229,7 @@ class TestInteractiveAction(Action):
             command = cmd["command"]
             if command is not None:
                 command = substitute([cmd["command"]], substitutions)[0]
-            start = time.time()
+            start = time.monotonic()
             result = {
                 "definition": "%s_%s" % (self.parameters["stage"], script["name"]),
                 "case": cmd.get("name", ""),
@@ -302,11 +302,11 @@ class TestInteractiveAction(Action):
             finally:
                 # If the command is named, record the result
                 if "name" in cmd:
-                    result["duration"] = "%.02f" % (time.time() - start)
+                    result["duration"] = "%.02f" % (time.monotonic() - start)
                     self.logger.results(result)
 
     def listen_feedback(self, connection):
-        if time.time() - self.last_check <= connection.timeout:
+        if time.monotonic() - self.last_check <= connection.timeout:
             return
         for feedback in self.feedbacks:
             # The timeout is really small because the goal is only
@@ -320,7 +320,7 @@ class TestInteractiveAction(Action):
                     "Listened to connection for namespace '%s' done",
                     feedback[0],
                 )
-        self.last_check = time.time()
+        self.last_check = time.monotonic()
 
     def expect_and_feedbacks(self, connection, expect):
         while True:

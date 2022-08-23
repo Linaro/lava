@@ -317,7 +317,7 @@ class JobsDB:
                     str(job_id),
                     str(pid),
                     str(status),
-                    str(int(time.time())),
+                    str(int(time.monotonic())),
                     prefix,
                     token,
                 ),
@@ -336,7 +336,7 @@ class JobsDB:
         with contextlib.suppress(sqlite3.Error):
             self.conn.execute(
                 "UPDATE jobs SET status=?, last_update=? WHERE id=?",
-                (str(status), str(int(time.time())), str(job_id)),
+                (str(status), str(int(time.monotonic())), str(job_id)),
             )
             self.conn.commit()
             return self.get(job_id)
@@ -445,10 +445,10 @@ def check(url: str, jobs: JobsDB) -> None:
             LOG.info("[%d] canceling -> finished", job.job_id)
             jobs.update(job.job_id, Job.FINISHED)
 
-        elif time.time() - job.last_update > FINISH_MAX_DURATION:
+        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION:
             LOG.info("[%d] not finishing => killing", job.job_id)
             job.kill()
-        elif time.time() - job.last_update > FINISH_MAX_DURATION / 2:
+        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2:
             LOG.info("[%d] not finishing => second signal", job.job_id)
             job.terminate()
 
@@ -610,7 +610,7 @@ def start(
 # Entrypoints #
 ###############
 def handle(options, jobs: JobsDB) -> float:
-    begin: float = time.time()
+    begin: float = time.monotonic()
 
     name: str = options.name
     token: str = options.token
@@ -621,11 +621,11 @@ def handle(options, jobs: JobsDB) -> float:
         data = ping(url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
-        return max(1 - (time.time() - begin), 0)
+        return max(1 - (time.monotonic() - begin), 0)
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
-        return max(ping_interval - (time.time() - begin), 0)
+        return max(ping_interval - (time.monotonic() - begin), 0)
 
     # running jobs
     for job in data.get("running", []):
@@ -644,7 +644,7 @@ def handle(options, jobs: JobsDB) -> float:
     check(url, jobs)
 
     # Compute the sleep duration
-    return max(ping_interval - (time.time() - begin), 0)
+    return max(ping_interval - (time.monotonic() - begin), 0)
 
 
 async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:

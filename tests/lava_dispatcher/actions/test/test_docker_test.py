@@ -102,7 +102,7 @@ def test_run(action, mocker):
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     action.validate()
-    action.run(connection, time.time() + 1000)
+    action.run(connection, time.monotonic() + 1000)
 
     # device is shared with the container
     add_device_container_mappings.assert_called()

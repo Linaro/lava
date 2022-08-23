@@ -36,7 +36,7 @@ class DummyAction(Action):
 
 
 def test_repeat_action(monkeypatch):
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     ra = RetryAction()
     ra.parameters = {"repeat": 5}
     ra.level = "1"

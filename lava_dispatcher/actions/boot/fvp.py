@@ -207,7 +207,7 @@ class CheckFVPVersionAction(BaseFVPAction):
         )
 
     def run(self, connection, max_end_time):
-        start = time.time()
+        start = time.monotonic()
 
         if not self.local_docker_image:
             self.logger.debug("Pulling image %s", self.docker_image)
@@ -228,7 +228,7 @@ class CheckFVPVersionAction(BaseFVPAction):
             "level": self.level,
             "extra": {"fvp-version": matched_version_string},
             "result": "pass",
-            "duration": "%.02f" % (time.time() - start),
+            "duration": "%.02f" % (time.monotonic() - start),
         }
         self.logger.results(result)
 

@@ -77,7 +77,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     index += count
         return (data + remaining, index)
 
-    last_call = time.time()
+    last_call = time.monotonic()
     records: List[str] = []
     leaving: bool = False
     index: int = 0
@@ -94,9 +94,9 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     records.append(data.decode("utf-8", errors="replace"))
 
             records_limit = len(records) >= MAX_RECORDS
-            time_limit = (time.time() - last_call) >= max_time
+            time_limit = (time.monotonic() - last_call) >= max_time
             if records and (records_limit or time_limit):
-                last_call = time.time()
+                last_call = time.monotonic()
                 # Send the data
                 (records, index) = post(session, records, index)
 

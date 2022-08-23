@@ -321,7 +321,7 @@ class DownloadHandler(Action):
         self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0
-        beginning = time.time()
+        beginning = time.monotonic()
         # Choose the progress bar (is the size known?)
         if self.size <= 0:
             self.logger.debug("total size: unknown")
@@ -398,7 +398,7 @@ class DownloadHandler(Action):
                     dwnld_file.write(buff)
 
         # Log the download speed
-        ending = time.time()
+        ending = time.monotonic()
         self.logger.info(
             "%dMB downloaded in %0.2fs (%0.2fMB/s)",
             downloaded_size / (1024 * 1024),
