@@ -384,9 +384,10 @@ def get_udev_devices(job=None, logger=None, device_info=None, required=False):
                         "Unable to add all static devices: board_id '%s' was not found"
                         % value
                     )
+    device_paths = list(filter(None, device_paths))
     if logger and device_paths:
         logger.debug("Adding %s", ", ".join(device_paths))
-    return list(device_paths)
+    return device_paths
 
 
 def allow_fs_label(device):
