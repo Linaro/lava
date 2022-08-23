@@ -118,7 +118,7 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
             f"/sys/fs/cgroup/devices/docker/{self.container_id}/devices.allow"
         )
         if not os.path.exists(devices_allow_file):
-            devices_allow_file = "/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
+            devices_allow_file = f"/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
         return devices_allow_file
 
     def apply(self):
