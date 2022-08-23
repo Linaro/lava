@@ -162,7 +162,7 @@ class Command(LAVADaemonCommand):
     def main_loop(self) -> None:
         dts: Set[str] = set()
         while True:
-            begin = time.time()
+            begin = time.monotonic()
             try:
                 # Check remote worker connectivity
                 with transaction.atomic():
@@ -173,8 +173,8 @@ class Command(LAVADaemonCommand):
                 dts = set()
 
                 # Wait for events
-                while not dts and (time.time() - begin) < INTERVAL:
-                    timeout = max(INTERVAL - (time.time() - begin), 0)
+                while not dts and (time.monotonic() - begin) < INTERVAL:
+                    timeout = max(INTERVAL - (time.monotonic() - begin), 0)
                     with contextlib.suppress(zmq.ZMQError):
                         self.poller.poll(max(timeout * 1000, 1))
                     dts = self.get_available_dts()
