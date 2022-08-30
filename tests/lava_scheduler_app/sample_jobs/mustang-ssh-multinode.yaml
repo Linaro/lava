@@ -132,6 +132,3 @@ actions:
     timeout:
       minutes: 41
 
-context:
-    kernel_loglevel: ""
-

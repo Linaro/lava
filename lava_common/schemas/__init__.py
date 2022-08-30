@@ -217,9 +217,8 @@ def notify():
 
 def extra_checks(data):
     check_job_timeouts(data)
-    check_multinode_or_device_type(data)
-    check_multinode_or_environment(data)
     check_multinode_roles(data)
+    check_multinode_extras(data)
     check_namespace(data)
 
 
@@ -258,22 +257,16 @@ def check_job_timeouts(data):
         _check_timeout("Action", ["actions", str(index)], t)
 
 
-def check_multinode_or_device_type(data):
-    device_type = data.get("device_type")
+def check_multinode_extras(data):
     multinode = data.get("protocols", {}).get("lava-multinode")
 
-    if device_type and multinode:
-        raise Invalid('"device_type" should not be used with multinode')
-    if not device_type and not multinode:
-        raise Invalid('"device_type" or multinode should be defined')
-
-
-def check_multinode_or_environment(data):
-    environment = data.get("environment")
-    multinode = data.get("protocols", {}).get("lava-multinode")
-
-    if environment and multinode:
-        raise Invalid('"environment" should not be used with multinode')
+    extras = ("device_type", "environment", "context", "tags")
+    for extra in extras:
+        extra_value = data.get(extra)
+        if extra_value and multinode:
+            raise Invalid(f'"{extra}" should not be used with multinode')
+        if extra == "device_type" and not extra_value and not multinode:
+            raise Invalid(f'"{extra}" or multinode should be defined')
 
 
 def check_multinode_roles(data):
