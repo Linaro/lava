@@ -59,6 +59,9 @@ class FlasherAction(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())
+
         # Download the images
         self.path = self.mkdtemp()
         for image in parameters["images"].keys():
@@ -68,8 +71,6 @@ class FlasherAction(Action):
 
         if self.test_needs_deployment(parameters):
             self.pipeline.add_action(DeployDeviceEnvironment())
-        if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
