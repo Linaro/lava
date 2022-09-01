@@ -270,9 +270,4 @@ class DockerContainer(DockerRun):
         self.__started__ = True
 
     def stop(self, action=None):
-        # Not calling run_cmd on purpose, to hide this from the logs
-        subprocess.check_call(
-            ["docker", "stop", self.__name__],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        self.run_cmd(["docker", "stop", self.__name__])
