@@ -4,19 +4,6 @@
   - class: actions.deploy.flasher.FlasherAction
     name: deploy-flasher
     pipeline:
-    - class: actions.deploy.download.DownloaderAction
-      name: download-retry
-      pipeline:
-      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-    - class: actions.deploy.download.DownloaderAction
-      name: download-retry
-      pipeline:
-      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-    - class: actions.deploy.download.DownloaderAction
-      name: download-retry
-      pipeline:
-      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-    - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
     - class: actions.deploy.overlay.OverlayAction
       name: lava-overlay
       pipeline:
@@ -32,6 +19,19 @@
         - {class: actions.deploy.testdef.TestRunnerAction, name: test-runscript-overlay}
       - {class: actions.deploy.overlay.CompressOverlay, name: compress-overlay}
       - {class: actions.deploy.overlay.PersistentNFSOverlay, name: persistent-nfs-overlay}
+    - class: actions.deploy.download.DownloaderAction
+      name: download-retry
+      pipeline:
+      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - class: actions.deploy.download.DownloaderAction
+      name: download-retry
+      pipeline:
+      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - class: actions.deploy.download.DownloaderAction
+      name: download-retry
+      pipeline:
+      - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.environment.DeployDeviceEnvironment, name: deploy-device-env}
 - class: actions.boot.minimal.MinimalBoot
   name: minimal-boot
   pipeline:
