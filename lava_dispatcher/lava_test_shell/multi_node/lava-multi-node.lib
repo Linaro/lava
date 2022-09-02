@@ -15,7 +15,12 @@ MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 LAVA_MULTI_NODE_EXIT_ERROR=1
 
 _get_key_value_pattern () {
-	echo $@ | tr ' ' '\n' | grep "..*=..*" | tr '\n' ' '
+	for line in "$@"; do
+		line=$(echo "$line" | grep "..*=..*")
+		if [ "${line}x" != "x" ]; then
+			echo "$line"
+		fi
+	done
 }
 
 _lava_multi_node_debug () {
@@ -54,15 +59,18 @@ fi
 #clean old cache file
 rm $LAVA_MULTI_NODE_CACHE 2>/dev/null
 
-for line in ${1} ; do
-	result=$(echo "${line}" | grep "..*=..*")
-	if [ "${result}x" != "x" ] ; then
-		echo $line >> $LAVA_MULTI_NODE_CACHE
-	elif [ "${line}x" = "nackx" ] ; then
-		echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
-		exit $LAVA_MULTI_NODE_EXIT_ERROR
-	else
-		echo "Warning:unrecognized message $line"
+lines=$(echo "${1}" | sed -E 's/ ([0-9]+:)/\n\1/g')
+echo "$lines" | while read line ; do
+	if [ "${line}x" != "x" ] ; then
+		result=$(echo "${line}" | grep "..*=..*")
+		if [ "${result}x" != "x" ] ; then
+			echo $line >> $LAVA_MULTI_NODE_CACHE
+		elif [ "${line}x" = "nackx" ] ; then
+			echo "Error:no-response $1, Exit from $LAVA_MULTI_NODE_API!"
+			exit $LAVA_MULTI_NODE_EXIT_ERROR
+		else
+			echo "Warning:unrecognized message $line"
+		fi
 	fi
 done
 }

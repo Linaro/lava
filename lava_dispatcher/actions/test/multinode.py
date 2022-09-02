@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
+import re
 from lava_common.timeout import Timeout
 from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
 from lava_dispatcher.actions.test.monitor import TestMonitor
@@ -143,7 +144,10 @@ class MultinodeMixin:
         if event == "multinode":
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
-            params = params.split()
+            if name == "SEND":
+                params = re.split(r"\s+(?=\w+(?:=))", params)
+            else:
+                params = params.split()
             test_case_name = "%s-%s" % (name, params[0])  # use the messageID
             self.logger.debug("messageID: %s", test_case_name)
 
