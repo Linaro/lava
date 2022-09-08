@@ -195,11 +195,11 @@ def cancel_action(modeladmin, request, queryset):
             if testjob.can_cancel(request.user):
                 if testjob.is_multinode:
                     for job in testjob.sub_jobs_list:
-                        job.go_state_canceling()
-                        job.save()
+                        fields = job.go_state_canceling()
+                        job.save(update_fields=fields)
                 else:
-                    testjob.go_state_canceling()
-                    testjob.save()
+                    fields = testjob.go_state_canceling()
+                    testjob.save(update_fields=fields)
 
 
 cancel_action.short_description = "cancel selected jobs"
@@ -216,8 +216,8 @@ def fail_action(modeladmin, request, queryset):
                     DeprecationWarning,
                 )
                 testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
-                testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
-                testjob.save()
+                fields = testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                testjob.save(update_fields=fields)
 
 
 fail_action.short_description = "fail selected jobs"
@@ -305,7 +305,7 @@ def _update_devices_health(request, queryset, health):
 
             old_health_display = device.get_health_display()
             device.health = health
-            device.save()
+            device.save(update_fields=["health"])
             device.log_admin_entry(
                 request.user,
                 "%s → %s" % (old_health_display, device.get_health_display()),
@@ -603,22 +603,22 @@ class DeviceTypeAdmin(admin.ModelAdmin):
 def worker_health_active(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
-            worker.go_health_active(request.user)
-            worker.save()
+            fields = worker.go_health_active(request.user)
+            worker.save(update_fields=fields)
 
 
 def worker_health_maintenance(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
-            worker.go_health_maintenance(request.user)
-            worker.save()
+            fields = worker.go_health_maintenance(request.user)
+            worker.save(update_fields=fields)
 
 
 def worker_health_retired(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
-            worker.go_health_retired(request.user)
-            worker.save()
+            fields = worker.go_health_retired(request.user)
+            worker.save(update_fields=fields)
 
 
 worker_health_active.short_description = "Update health of selected workers to Active"

@@ -367,11 +367,13 @@ class SchedulerDevicesAPI(ExposedV2API):
                         % (self.user, hostname),
                     )
 
+                fields = []
                 if worker_hostname is not None:
                     try:
                         device.worker_host = Worker.objects.get(
                             hostname=worker_hostname
                         )
+                        fields.append("worker_host")
                     except Worker.DoesNotExist:
                         raise xmlrpc.client.Fault(
                             404, "Unable to find worker '%s'" % worker_hostname
@@ -381,6 +383,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                     if health is not None:
                         prev_health = device.get_health_display()
                         device.health = Device.HEALTH_REVERSE[health]
+                        fields.append("health")
                         device.log_admin_entry(
                             self.user,
                             "%s → %s (xmlrpc api)"
@@ -391,15 +394,17 @@ class SchedulerDevicesAPI(ExposedV2API):
 
                 if description is not None:
                     device.description = description
+                    fields.append("description")
 
                 if device_type is not None:
                     try:
                         device.device_type = DeviceType.objects.get(name=device_type)
+                        fields.append("device_type")
                     except DeviceType.DoesNotExist:
                         raise xmlrpc.client.Fault(
                             404, "Unable to find device-type '%s'" % device_type
                         )
-                device.save()
+                device.save(update_fields=fields)
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
         except (IntegrityError, ValidationError):

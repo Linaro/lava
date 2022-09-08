@@ -425,14 +425,18 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 403, "No 'admin' permissions for device-type '%s'." % name
             )
 
+        fields = []
         if description is not None:
             dt.description = description
+            fields.append("description")
 
         if display is not None:
             dt.display = display
+            fields.append("display")
 
         if health_frequency is not None:
             dt.health_frequency = health_frequency
+            fields.append("health_frequency")
 
         if health_denominator is not None:
             if health_denominator == "hours":
@@ -445,11 +449,13 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 )
 
             dt.health_denominator = health_denominator
+            fields.append("health_denominator")
 
         if health_disabled is not None:
             dt.disable_health_check = health_disabled
+            fields.append("disable_health_check")
 
-        dt.save()
+        dt.save(update_fields=fields)
 
 
 class SchedulerDeviceTypesAliasesAPI(ExposedV2API):

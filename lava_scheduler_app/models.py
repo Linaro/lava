@@ -459,9 +459,12 @@ class Worker(RestrictedObject):
         else:
             self.log_admin_entry(user, "%s → Active" % self.get_health_display())
         for device in self.device_set.all().select_for_update():
-            device.worker_signal("go_health_active", user, self.state, self.health)
-            device.save()
+            fields = device.worker_signal(
+                "go_health_active", user, self.state, self.health
+            )
+            device.save(update_fields=fields)
         self.health = Worker.HEALTH_ACTIVE
+        return ["health"]
 
     def go_health_maintenance(self, user, reason=None):
         if reason:
@@ -471,6 +474,7 @@ class Worker(RestrictedObject):
         else:
             self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
         self.health = Worker.HEALTH_MAINTENANCE
+        return ["health"]
 
     def go_health_retired(self, user, reason=None):
         if reason:
@@ -480,15 +484,20 @@ class Worker(RestrictedObject):
         else:
             self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
         for device in self.device_set.all().select_for_update():
-            device.worker_signal("go_health_retired", user, self.state, self.health)
-            device.save()
+            fields = device.worker_signal(
+                "go_health_retired", user, self.state, self.health
+            )
+            device.save(update_fields=fields)
         self.health = Worker.HEALTH_RETIRED
+        return ["health"]
 
     def go_state_offline(self):
         self.state = Worker.STATE_OFFLINE
+        return ["state"]
 
     def go_state_online(self):
         self.state = Worker.STATE_ONLINE
+        return ["state"]
 
     def log_admin_entry(self, user, reason, addition=False):
         if user is None:
@@ -762,20 +771,20 @@ class Device(RestrictedObject):
         )
 
     def testjob_signal(self, signal, job, infrastructure_error=False):
-
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
+            return ["state"]
 
         elif signal == "go_state_scheduled":
             self.state = Device.STATE_RESERVED
+            return ["state"]
 
         elif signal == "go_state_running":
             self.state = Device.STATE_RUNNING
-
-        elif signal == "go_state_canceling":
-            pass
+            return ["state"]
 
         elif signal == "go_state_finished":
+            fields = ["state"]
             pk = job.pk
             if job.sub_jobs_list:
                 pk = job.sub_id
@@ -791,6 +800,7 @@ class Device(RestrictedObject):
             prev_health_display = self.get_health_display()
             if job.health_check:
                 self.last_health_report_job = job
+                fields.append("last_health_report_job")
                 if self.health == Device.HEALTH_LOOPING:
                     if job.health == TestJob.HEALTH_INCOMPLETE:
                         # Looping is persistent until cancelled by the admin.
@@ -815,6 +825,7 @@ class Device(RestrictedObject):
                         msg = "canceled"
                     else:
                         raise NotImplementedError("Unexpected TestJob health")
+                    fields.append("health")
                     self.log_admin_entry(
                         None,
                         "%s → %s (health-check [%s] %s)"
@@ -827,11 +838,13 @@ class Device(RestrictedObject):
                     )
             elif infrastructure_error:
                 self.health = Device.HEALTH_UNKNOWN
+                fields.append("health")
                 self.log_admin_entry(
                     None,
                     "%s → %s (Infrastructure error after %s)"
                     % (prev_health_display, self.get_health_display(), job_url),
                 )
+            return fields
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -842,22 +855,24 @@ class Device(RestrictedObject):
         if signal == "go_health_active":
             # When leaving retirement, don't cascade the change
             if prev_health == Worker.HEALTH_RETIRED:
-                return
+                return []
             # Only update health of devices in good
             if self.health != Device.HEALTH_GOOD:
-                return
+                return []
             self.log_admin_entry(
                 user, "%s → Unknown (worker going active)" % self.get_health_display()
             )
             self.health = Device.HEALTH_UNKNOWN
+            return ["health"]
 
         elif signal == "go_health_retired":
             if self.health in [Device.HEALTH_BAD, Device.HEALTH_RETIRED]:
-                return
+                return []
             self.log_admin_entry(
                 user, "%s → Retired (worker going retired)" % self.get_health_display()
             )
             self.health = Device.HEALTH_RETIRED
+            return ["health"]
 
         else:
             raise NotImplementedError("Unknown signal %s" % signal)
@@ -973,8 +988,8 @@ class Device(RestrictedObject):
         current_job = self.current_job()
         if current_job is not None:
             with transaction.atomic:
-                current_job.go_state_canceling()
-                current_job.save()
+                fields = current_job.go_state_canceling()
+                current_job.save(update_fields=fields)
 
 
 class JobFailureTag(models.Model):
@@ -1536,12 +1551,13 @@ class TestJob(models.Model):
                 "device is not IDLE: %s" % Device.STATE_CHOICES[device.state]
             )
         if self.state >= TestJob.STATE_SCHEDULING:
-            return
+            return []
         self.state = TestJob.STATE_SCHEDULING
         # TODO: check that device is locked
         self.actual_device = device
-        self.actual_device.testjob_signal("go_state_scheduling", self)
-        self.actual_device.save()
+        fields = self.actual_device.testjob_signal("go_state_scheduling", self)
+        self.actual_device.save(update_fields=fields)
+        return ["actual_device", "state"]
 
     def go_state_scheduled(self, device=None):
         """
@@ -1560,62 +1576,61 @@ class TestJob(models.Model):
                     "device is not IDLE: %s" % Device.STATE_CHOICES[device.state]
                 )
         if self.state >= TestJob.STATE_SCHEDULED:
-            return
+            return []
         self.state = TestJob.STATE_SCHEDULED
         # dynamic connection does not have any device
         if not dynamic_connection:
             # TODO: check that device is locked
             self.actual_device = device
-            self.actual_device.testjob_signal("go_state_scheduled", self)
-            self.actual_device.save()
+            fields = self.actual_device.testjob_signal("go_state_scheduled", self)
+            self.actual_device.save(update_fields=fields)
+            return ["state", "actual_device"]
+        return ["state"]
 
     def go_state_running(self):
         """
         lava-master received a START_OK for this job which is now running.
         """
         if self.state >= TestJob.STATE_RUNNING:
-            return
+            return []
         self.state = TestJob.STATE_RUNNING
         self.start_time = timezone.now()
         # TODO: check that self.actual_device is locked by the
         # select_for_update on the TestJob
         if not self.dynamic_connection:
-            self.actual_device.testjob_signal("go_state_running", self)
-            self.actual_device.save()
+            fields = self.actual_device.testjob_signal("go_state_running", self)
+            self.actual_device.save(update_fields=fields)
+        return ["start_time", "state"]
 
     def go_state_canceling(self, sub_cancel=False):
         """
         The job was canceled by a user.
         """
         if self.state >= TestJob.STATE_CANCELING:
-            return
+            return []
 
         # If the job was not scheduled, go directly to STATE_FINISHED
         if self.state == TestJob.STATE_SUBMITTED:
-            self.go_state_finished(TestJob.HEALTH_CANCELED)
-            return
+            return self.go_state_finished(TestJob.HEALTH_CANCELED)
 
         self.state = TestJob.STATE_CANCELING
-        # TODO: check that self.actual_device is locked by the
-        # select_for_update on the TestJob
-        if not self.dynamic_connection:
-            self.actual_device.testjob_signal("go_state_canceling", self)
-            self.actual_device.save()
 
         # For multinode, cancel all sub jobs if the current job is essential
         if not sub_cancel and self.essential_role:
             for sub_job in self.sub_jobs_list:
                 if sub_job != self:
-                    sub_job.go_state_canceling(sub_cancel=True)
-                    sub_job.save()
+                    fields = sub_job.go_state_canceling(sub_cancel=True)
+                    sub_job.save(update_fields=fields)
+        return ["state"]
 
     def go_state_finished(self, health, infrastructure_error=False):
         """
         The job has been terminated by either lava-master or lava-logs. The
         job health can be set.
         """
+        fields = ["end_time", "health", "state"]
         if self.state == TestJob.STATE_FINISHED:
-            return
+            return []
 
         if health == TestJob.HEALTH_UNKNOWN:
             raise Exception("Cannot give HEALTH_UNKNOWN")
@@ -1633,6 +1648,7 @@ class TestJob(models.Model):
         # In this case, self.start_time would be None.
         now = timezone.now()
         if self.start_time is None:
+            fields.append("start_time")
             self.start_time = now
         self.end_time = now
 
@@ -1640,18 +1656,19 @@ class TestJob(models.Model):
         # select_for_update on the TestJob
         # Skip non-scheduled jobs and dynamic_connections
         if self.actual_device is not None:
-            self.actual_device.testjob_signal(
+            sub_fields = self.actual_device.testjob_signal(
                 "go_state_finished", self, infrastructure_error
             )
-            self.actual_device.save()
+            self.actual_device.save(update_fields=sub_fields)
 
         # For multinode, cancel all sub jobs if the current job is essential
         # and it was a failure.
         if health == TestJob.HEALTH_INCOMPLETE and self.essential_role:
             for sub_job in self.sub_jobs_list:
                 if sub_job != self:
-                    sub_job.go_state_canceling(sub_cancel=True)
-                    sub_job.save()
+                    sub_fields = sub_job.go_state_canceling(sub_cancel=True)
+                    sub_job.save(update_fields=sub_fields)
+        return fields
 
     def get_legacy_status(self):
         if self.state in [
@@ -2152,11 +2169,11 @@ class TestJob(models.Model):
                 target_group=self.target_group
             )
             for multinode_job in multinode_jobs:
-                multinode_job.go_state_canceling()
-                multinode_job.save()
+                fields = multinode_job.go_state_canceling()
+                multinode_job.save(update_fields=fields)
         else:
-            self.go_state_canceling()
-            self.save()
+            fields = self.go_state_canceling()
+            self.save(update_fields=fields)
 
 
 class Notification(models.Model):

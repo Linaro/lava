@@ -185,4 +185,5 @@ class WorkerSerializer(serializers.ModelSerializer):
                     instance.go_health_retired(user)
             # "health" was already updated, drop it
             del validated_data["health"]
+        # TODO: this will call save()
         return super().update(instance, validated_data)

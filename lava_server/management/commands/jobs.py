@@ -241,8 +241,8 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 job = TestJob.objects.select_for_update().get(pk=job_id)
-                job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
-                job.save()
+                fields = job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+                job.save(update_fields=fields)
         except TestJob.DoesNotExist:
             raise CommandError("TestJob '%d' does not exists" % job_id)
 

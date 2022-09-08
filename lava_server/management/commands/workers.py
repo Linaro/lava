@@ -175,9 +175,9 @@ class Command(BaseCommand):
                 worker.description = description
             if health is not None:
                 if health == "ACTIVE":
-                    worker.go_health_active()
+                    fields = worker.go_health_active()
                 elif health == "MAINTENANCE":
-                    worker.go_health_maintenance()
+                    fields = worker.go_health_maintenance()
                 else:
-                    worker.go_health_retired()
-            worker.save()
+                    fields = worker.go_health_retired()
+            worker.save(update_fields=fields)

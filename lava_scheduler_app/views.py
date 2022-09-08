@@ -1205,7 +1205,8 @@ def internal_v1_jobs(request, pk):
             # TODO: find a way to lock actual_device
             job = TestJob.objects.select_for_update().get(pk=pk)
             if TestJob.STATE_REVERSE[state] == TestJob.STATE_RUNNING:
-                job.go_state_running()
+                fields = job.go_state_running()
+                job.save(update_fields=fields)
             elif TestJob.STATE_REVERSE[state] == TestJob.STATE_FINISHED:
                 # Check the result
                 health = request.POST.get("result", "")
@@ -1227,9 +1228,11 @@ def internal_v1_jobs(request, pk):
                     "Configuration",
                     "Infrastructure",
                 ]
-                job.go_state_finished(health, infrastructure_error)
+                fields = job.go_state_finished(health, infrastructure_error)
                 if errors:
                     job.failure_comment = errors
+                    fields.append("failure_comment")
+                job.save(update_fields=fields)
                 Path(job.output_dir).mkdir(mode=0o755, parents=True, exist_ok=True)
                 (Path(job.output_dir) / "description.yaml").write_text(
                     description, encoding="utf-8"
@@ -1238,7 +1241,6 @@ def internal_v1_jobs(request, pk):
                 return JsonResponse(
                     {"error": f"Not handled state '{state}'"}, status=400
                 )
-            job.save()
 
         return JsonResponse({})
 
@@ -1356,18 +1358,20 @@ def internal_v1_workers(request, pk=None):
         version_mismatch = bool(version != __version__)
 
         # Save worker version
+        fields = ["version"]
         worker.version = version
         if version_mismatch and not settings.ALLOW_VERSION_MISMATCH:
             # If the version does not match, go offline
-            worker.go_state_offline()
+            fields.extend(worker.go_state_offline())
         else:
             # Set last_ping
             worker.last_ping = timezone.now()
+            fields.append("last_ping")
 
             # Go online if needed
             if worker.state == Worker.STATE_OFFLINE:
-                worker.go_state_online()
-        worker.save()
+                fields.extend(worker.go_state_online())
+        worker.save(update_fields=fields)
 
         # Grab the jobs for this dispatcher
         query = TestJob.objects.filter(actual_device__worker_host=worker)
@@ -1647,7 +1651,7 @@ def job_submit(request):
                         user=request.user, test_job=job
                     )
                     testjob_user.is_favorite = True
-                    testjob_user.save()
+                    testjob_user.save(update_fields=["is_favorite"])
 
                 return HttpResponseRedirect(
                     reverse("lava.scheduler.job.detail", args=[job.pk])
@@ -2249,8 +2253,8 @@ def job_fail(request, pk):
             return HttpResponseForbidden(
                 "Job should be canceled before being failed", content_type="text/plain"
             )
-        job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
-        job.save()
+        fields = job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+        job.save(update_fields=fields)
         return redirect(job)
 
 
@@ -2343,7 +2347,7 @@ def job_change_priority(request, pk):
     requested_priority = request.POST["priority"]
     if job.priority != requested_priority:
         job.priority = requested_priority
-        job.save()
+        job.save(update_fields=["priority"])
     return redirect(job)
 
 
@@ -2356,7 +2360,7 @@ def job_toggle_favorite(request, pk):
     testjob_user, _ = TestJobUser.objects.get_or_create(user=request.user, test_job=job)
 
     testjob_user.is_favorite = not testjob_user.is_favorite
-    testjob_user.save()
+    testjob_user.save(update_fields=["is_favorite"])
     return redirect(job)
 
 
@@ -2557,7 +2561,7 @@ def __set_device_health__(device, user, health, reason):
 
         old_health_display = device.get_health_display()
         device.health = Device.HEALTH_REVERSE[health]
-        device.save()
+        device.save(update_fields=["health"])
         if reason:
             device.log_admin_entry(
                 user,
@@ -2636,15 +2640,15 @@ def worker_health(request, pk):
             health = request.POST.get("health")
             reason = request.POST.get("reason")
             if health == "Active":
-                worker.go_health_active(request.user, reason)
+                fields = worker.go_health_active(request.user, reason)
             elif health == "Maintenance":
-                worker.go_health_maintenance(request.user, reason)
+                fields = worker.go_health_maintenance(request.user, reason)
             elif health == "Retired":
-                worker.go_health_retired(request.user, reason)
+                fields = worker.go_health_retired(request.user, reason)
             else:
                 return HttpResponseBadRequest("Wrong worker health %s" % health)
 
-            worker.save()
+            worker.save(update_fields=fields)
             return HttpResponseRedirect(
                 reverse("lava.scheduler.worker.detail", args=[pk])
             )

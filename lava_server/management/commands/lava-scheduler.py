@@ -74,8 +74,8 @@ class Command(LAVADaemonCommand):
         )
         for worker in query:
             self.logger.info("Worker <%s> is now offline", worker.hostname)
-            worker.go_state_offline()
-            worker.save()
+            fields = worker.go_state_offline()
+            worker.save(update_fields=fields)
 
         return [
             w.hostname
