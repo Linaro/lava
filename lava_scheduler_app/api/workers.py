@@ -422,16 +422,18 @@ class SchedulerWorkersAPI(ExposedV2API):
             except Worker.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
+            fields = []
             if description is not None:
                 worker.description = description
+                fields.append("description")
 
             if health is not None:
                 if health == "ACTIVE":
-                    worker.go_health_active(self.user, "xmlrpc api")
+                    fields.extend(worker.go_health_active(self.user, "xmlrpc api"))
                 elif health == "MAINTENANCE":
-                    worker.go_health_maintenance(self.user, "xmlrpc api")
+                    fields.extend(worker.go_health_maintenance(self.user, "xmlrpc api"))
                 elif health == "RETIRED":
-                    worker.go_health_retired(self.user, "xmlrpc api")
+                    fields.extend(worker.go_health_retired(self.user, "xmlrpc api"))
                 else:
                     raise xmlrpc.client.Fault(400, "Invalid health: %s" % health)
 
@@ -439,8 +441,9 @@ class SchedulerWorkersAPI(ExposedV2API):
                 if not isinstance(job_limit, int) or job_limit < 0:
                     raise xmlrpc.client.fault(400, "Invalid job limit")
                 worker.job_limit = job_limit
+                fields.append("job_limit")
 
-            worker.save()
+            worker.save(update_fields=fields)
 
     @check_perm("lava_scheduler_app.delete_worker")
     def delete(self, hostname):

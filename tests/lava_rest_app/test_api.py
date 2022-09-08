@@ -21,6 +21,7 @@ from rest_framework.test import APIClient
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_load
 from lava_rest_app import versions
+from lava_rest_app.base import serializers
 from lava_results_app import models as result_models
 from lava_scheduler_app.models import (
     Alias,
@@ -1745,3 +1746,16 @@ def test_view_workers(client, db):
         reverse("api-root", args=[versions.versions[-1]]) + "workers/?format=api"
     )
     assert ret.status_code == 200
+
+
+def test_serializers_partial():
+    # make sure TestJob, Worker and Device serializers are always instantiated
+    # with partial argument set to True
+    worker_serializer = serializers.WorkerSerializer()
+    assert worker_serializer.partial == True
+
+    testjob_serializer = serializers.TestJobSerializer()
+    assert testjob_serializer.partial == True
+
+    device_serializer = serializers.DeviceSerializer()
+    assert device_serializer.partial == True

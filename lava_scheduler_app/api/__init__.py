@@ -648,7 +648,7 @@ class SchedulerAPI(ExposedV2API):
                 raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
             if device.can_change(self.user):
                 device.health = Device.HEALTH_MAINTENANCE
-                device.save()
+                device.save(update_fields=["health"])
             else:
                 raise xmlrpc.client.Fault(
                     403,
@@ -695,7 +695,7 @@ class SchedulerAPI(ExposedV2API):
                 raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
             if device.can_change(self.user):
                 device.health = Device.HEALTH_UNKNOWN
-                device.save()
+                device.save(update_fields=["health"])
             else:
                 raise xmlrpc.client.Fault(
                     403,

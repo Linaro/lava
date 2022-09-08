@@ -6,12 +6,13 @@
 
 from django.db import transaction
 from rest_framework import serializers
+from rest_framework_extensions.serializers import PartialUpdateSerializerMixin
 
 from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
 
-class TestJobSerializer(serializers.ModelSerializer):
+class TestJobSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display", read_only=True)
     state = serializers.CharField(source="get_state_display", read_only=True)
     submitter = serializers.CharField(source="submitter.username", read_only=True)
@@ -62,6 +63,10 @@ class TestJobSerializer(serializers.ModelSerializer):
             "failure_comment": {"read_only": True},
         }
 
+    def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
+        super().__init__(*args, **kwargs)
+
     def get_fields(self, *args, **kwargs):
         fields = super().get_fields(*args, **kwargs)
         if not self.context.get("request").user.is_superuser:
@@ -107,9 +112,13 @@ class DeviceTypeSerializer(serializers.ModelSerializer):
         )
 
 
-class DeviceSerializer(serializers.ModelSerializer):
+class DeviceSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display")
     state = serializers.CharField(source="get_state_display")
+
+    def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
+        super().__init__(*args, **kwargs)
 
     def update(self, instance, validated_data):
         old_health_display = None
@@ -144,13 +153,17 @@ class DeviceSerializer(serializers.ModelSerializer):
         )
 
 
-class WorkerSerializer(serializers.ModelSerializer):
+class WorkerSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     health = serializers.CharField(source="get_health_display")
     state = serializers.CharField(source="get_state_display")
 
     class Meta:
         model = Worker
         fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
+        super().__init__(*args, **kwargs)
 
     def get_fields(self, *args, **kwargs):
         fields = super().get_fields(*args, **kwargs)
