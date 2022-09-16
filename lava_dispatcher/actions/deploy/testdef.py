@@ -29,6 +29,7 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.params import substitute_parameters
 from lava_dispatcher.utils.vcs import GitHelper
 
 
@@ -802,34 +803,48 @@ class TestInstallAction(TestOverlayAction):
                 self.skip_options = self.parameters["skip_install"]
         super().validate()
 
+    def _get_param(self, param, testdef):
+        # prioritise the value in the testdef
+        ret = None
+
+        if "params" in testdef:
+            if param in testdef["params"]:
+                self.logger.info(
+                    "Substituting test definition parameter '%s' with value '%s'.",
+                    param,
+                    self.parameters["parameters"][param],
+                )
+                ret = testdef["params"][param]
+
+        # now override with a value from the job, if any
+        if "parameters" in self.parameters:
+            if param in self.parameters["parameters"]:
+                self.logger.info(
+                    "Overriding job parameter '%s' with value '%s'.",
+                    param,
+                    self.parameters["parameters"][param],
+                )
+                ret = self.parameters["parameters"][param]
+
+        return ret
+
     def _lookup_params(self, lookup_key, variable, testdef):
         # lookup_key 'branch'
         # variable ODP_BRANCH which has a value in the parameters of "master"
         ret = variable
         if not variable or not lookup_key or not testdef:
             return None
+
         if not isinstance(testdef, dict) or not isinstance(lookup_key, str):
             return None
+
         if lookup_key not in self.param_keys:
             return variable
-        # prioritise the value in the testdef
-        if "params" in testdef:
-            if variable in testdef["params"]:
-                self.logger.info(
-                    "Substituting test definition parameter '%s' with value '%s'.",
-                    variable,
-                    self.parameters["parameters"][variable],
-                )
-                ret = testdef["params"][variable]
-        # now override with a value from the job, if any
-        if "parameters" in self.parameters:
-            if variable in self.parameters["parameters"]:
-                self.logger.info(
-                    "Overriding job parameter '%s' with value '%s'.",
-                    variable,
-                    self.parameters["parameters"][variable],
-                )
-                ret = self.parameters["parameters"][variable]
+
+        ret = self._get_param(lookup_key, variable) or variable
+
+        substitute_parameters(ret, lambda param: self._get_param(param, testdef))
+
         return ret
 
     def install_git_repos(self, testdef, runner_path):
