@@ -259,7 +259,7 @@ class DownloadHandler(Action):
 
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val):
-            """ Compute progress when the size is unknown """
+            """Compute progress when the size is unknown"""
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
             return (
                 condition,
@@ -270,7 +270,7 @@ class DownloadHandler(Action):
             )
 
         def progress_known_total(downloaded_sz, last_val):
-            """ Compute progress when the size is known """
+            """Compute progress when the size is known"""
             percent = math.floor(downloaded_sz / float(self.size) * 100)
             condition = percent >= last_val + 5
             return (
@@ -804,6 +804,9 @@ class PreDownloadedAction(Action):
 
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=str(dest)
+        )
+        self.set_namespace_data(
+            action="download-action", label="file", key=self.key, value=str(dest)
         )
         if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
             self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
