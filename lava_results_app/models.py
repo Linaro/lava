@@ -1653,7 +1653,7 @@ class ChartQuery(models.Model):
         return data
 
     def __str__(self):
-        return self.name
+        return self.id
 
     def get_absolute_url(self):
         return reverse("lava.results.chart_query_edit", args=[self.chart.name, self.id])
