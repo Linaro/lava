@@ -20,6 +20,7 @@
 
 import argparse
 import contextlib
+import grp
 import importlib
 import os
 from pathlib import Path
@@ -115,12 +116,29 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{devel_db}')\\gexec
         os.seteuid(uid)
 
 
+@contextlib.contextmanager
+def using_account(user, group):
+    euid = os.geteuid()
+    egid = os.getegid()
+    tuid = pwd.getpwnam(user).pw_uid
+    tgid = grp.getgrnam(group).gr_gid
+    try:
+        os.setegid(tgid)
+        os.seteuid(tuid)
+        yield None
+    finally:
+        os.seteuid(euid)
+        os.setegid(egid)
+
+
 def update_database():
-    run(
-        ["lava-server", "manage", "migrate", "--noinput", "--fake-initial"], "migration"
-    )
-    run(["lava-server", "manage", "drop_materialized_views"], "materialized views")
-    run(["lava-server", "manage", "refresh_queries", "--all"], "refresh_queries")
+    with using_account(LAVA_SYS_USER, LAVA_SYS_USER):
+        run(
+            ["lava-server", "manage", "migrate", "--noinput", "--fake-initial"],
+            "migration",
+        )
+        run(["lava-server", "manage", "drop_materialized_views"], "materialized views")
+        run(["lava-server", "manage", "refresh_queries", "--all"], "refresh_queries")
 
 
 def load_configuration():
