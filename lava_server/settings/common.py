@@ -446,10 +446,13 @@ def update(values):
             "OIDC_AUTH_REQUEST_EXTRA_PARAMS",
             "OIDC_RP_SIGN_ALGO",
             "OIDC_RP_IDP_SIGN_KEY",
+            "OIDC_OP_JWKS_ENDPOINT",
             "OIDC_OP_LOGOUT_URL_METHOD",
             "OIDC_AUTHENTICATION_CALLBACK_URL",
             "OIDC_ALLOW_UNSECURED_JWT",
             "OIDC_TOKEN_USE_BASIC_AUTH",
+            "OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS",
+            "OIDC_USERNAME_ALGO",
         }
 
         if not oidc_keys.issuperset(AUTH_OIDC.keys()):
