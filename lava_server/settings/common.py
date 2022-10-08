@@ -446,6 +446,7 @@ def update(values):
             "OIDC_AUTH_REQUEST_EXTRA_PARAMS",
             "OIDC_RP_SIGN_ALGO",
             "OIDC_RP_IDP_SIGN_KEY",
+            "OIDC_OP_JWKS_ENDPOINT",
             "OIDC_OP_LOGOUT_URL_METHOD",
             "OIDC_AUTHENTICATION_CALLBACK_URL",
             "OIDC_ALLOW_UNSECURED_JWT",
