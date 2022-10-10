@@ -41,8 +41,6 @@ class LavaView(tables.SingleTableView):
         """
         bespoke time-based field handling
         """
-        local_namespace = locals()
-        local_namespace["q"] = query
         time_queries = {}
         if hasattr(self.table_class.Meta, "times"):
             # filter the possible list by the request
@@ -50,26 +48,20 @@ class LavaView(tables.SingleTableView):
                 # check if the request includes the current time filter & get the value
                 match = self.request.GET.get(key)
                 if match and match != "":
-                    self.terms[key] = "%s within %s %s" % (
-                        key,
-                        match,
-                        value,
-                    )  # the label for this query in the search list
+                    self.terms[key] = f"{key} within {match} {value}"
+                    # the label for this query in the search list
                     time_queries[key] = value
             for key, value in time_queries.items():
                 match = escape(self.request.GET.get(key))
                 # escape converts None into u'None'
                 if not match or match == "" or match == "None":
                     continue
-                args = "q = q.__and__(Q({0}__gte=timezone.now()-timedelta({1}={2})))".format(
-                    key, value, match
+
+                query &= Q(
+                    **{f"{key}__gte": timezone.now() - timedelta(**{value: int(match)})}
                 )
-                try:
-                    exec(args, globals(), local_namespace)  # sets the value of q
-                except SyntaxError:
-                    # should log the exception somewhere...
-                    continue  # just skip this term - results in a query matching All.
-        return local_namespace["q"]
+
+        return query
 
     def get_table_data(self, prefix=None):
         """
@@ -145,60 +137,44 @@ class LavaView(tables.SingleTableView):
         if not self.request:
             return data
 
-        local_namespace = locals()
-        local_namespace["q"] = Q()
+        q = Q()
         self.terms = {}
         # discrete searches
         for key, val in distinct.items():
             if key in self.table_class.Meta.searches:
-                args = 'q = q.__and__(Q({0}__contains="{1}"))'.format(key, val)
-                try:
-                    exec(args, globals(), local_namespace)  # sets the value of q
-                except SyntaxError:
-                    # should log exception somewhere...
-                    continue  # just skip this term - results in a query matching All.
+                q &= Q(**{f"{key}__contains": val})
+
             if (
                 hasattr(self.table_class.Meta, "queries")
                 and key in self.table_class.Meta.queries.keys()
             ):
-                # note that this calls the function 'key' with the argument from the search
-                args = 'q = q.__and__(self.{0}("{1}"))'.format(key, val)
-                try:
-                    exec(args, globals(), local_namespace)
-                except SyntaxError:
-                    # should log exception somewhere...
-                    continue
+                # note that this calls
+                # the function 'key' with the argument from the search
+                q &= getattr(self, key)(val)
+
         # general OR searches
         if self.request.GET.get(table_search):
             self.terms["search"] = escape(self.request.GET.get(table_search))
         if hasattr(self.table_class.Meta, "searches") and "search" in self.terms:
             for key, val in self.table_class.Meta.searches.items():
-                # this is a little bit of magic - creates an OR clause in the query based
-                # on the iterable search hash passed in via the table_class
+                # this is a little bit of magic - creates an OR clause
+                # in the query based on the iterable search hash
+                # passed in via the table_class
                 # e.g. self.searches = {'id', 'contains'}
-                # so every simple search column in the table is queried at the same time with OR
-                args = 'q = q.__or__(Q({0}__{1}=self.terms["search"]))'.format(key, val)
-                try:
-                    exec(args, globals(), local_namespace)  # sets the value of q
-                except SyntaxError:
-                    # should log exception somewhere...
-                    continue  # just skip this term - results in a query matching All.
+                # so every simple search column in the table
+                # is queried at the same time with OR
+                q |= Q(**{f"{key}__{val}": self.terms["search"]})
+
             # call explicit handlers as simple text searches of relational fields.
             if hasattr(self.table_class.Meta, "queries"):
                 for key in self.table_class.Meta.queries:
-                    # note that this calls the function 'key' with the argument from the search
-                    args = 'q = q.__or__(self.{0}("{1}"))'.format(
-                        key, self.terms["search"].encode("utf-8")
-                    )
-                    try:
-                        exec(args, globals(), local_namespace)
-                    except SyntaxError:
-                        # should log exception somewhere...
-                        continue
+                    # note that this calls the function 'key'
+                    # with the argument from the search
+                    q |= getattr(self, key)(self.terms["search"])
+
         # now add "class specials" - from an iterable hash
         # datetime uses (start_time__lte=timezone.now()-timedelta(days=3)
-        data = data.filter(self._time_filter(local_namespace["q"]))
-        return data
+        return data.filter(self._time_filter(q))
 
 
 class LavaTable(tables.Table):
