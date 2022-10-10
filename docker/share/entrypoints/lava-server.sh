@@ -248,6 +248,14 @@ then
     echo
 fi
 
+if [ "$LAVA_ADMIN_TOKEN" != "" ] && [ "$LAVA_ADMIN_USERNAME" != "" ]
+then
+    echo "Creating lava token for: ${LAVA_ADMIN_USERNAME} with secret ${LAVA_ADMIN_TOKEN}"
+    lava-server manage tokens add --secret "$LAVA_ADMIN_TOKEN" --user "$LAVA_ADMIN_USERNAME" || true
+    echo "done"
+    echo
+fi
+
 # Run user scripts. The database is running and migrations has been run.
 for f in $(find /root/entrypoint.d/ -type f); do
     case "$f" in
