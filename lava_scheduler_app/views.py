@@ -2778,7 +2778,7 @@ def download_device_type_template(request, pk):
 
 @require_POST
 def similar_jobs(request, pk):
-    logger = logging.getLogger("lava_scheduler_app")
+    logger = logging.getLogger("lava-scheduler")
     job = get_restricted_job(request.user, pk, request=request)
 
     entity = ContentType.objects.get_for_model(TestJob).model

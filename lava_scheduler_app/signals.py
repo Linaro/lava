@@ -43,7 +43,7 @@ def log_exception(func):
         try:
             return func(*args, **kwargs)
         except Exception as exc:
-            logger = logging.getLogger("lava_scheduler_app")
+            logger = logging.getLogger("lava-scheduler")
             logger.error("Unable to execute signal '%s', ignoring", func.__name__)
             logger.exception(exc)
 
