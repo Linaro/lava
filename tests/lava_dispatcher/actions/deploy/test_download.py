@@ -730,6 +730,7 @@ def test_predownloaded():
     action = PreDownloadedAction(
         "rootfs", urlparse("downloads://rootfs.xz"), destdir, params
     )
+    action.parameters = params
     action.job = job
 
     filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
@@ -754,6 +755,7 @@ def test_predownloaded_subdirectory():
     action = PreDownloadedAction(
         "rootfs", urlparse("downloads://subdir/rootfs.xz"), destdir, params
     )
+    action.parameters = params
     action.job = job
 
     filename = Path(action.job.tmp_dir) / "downloads/common/subdir/rootfs.xz"
