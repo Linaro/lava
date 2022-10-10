@@ -808,6 +808,17 @@ class PreDownloadedAction(Action):
         self.set_namespace_data(
             action="download-action", label="file", key=self.key, value=str(dest)
         )
+        if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
+            suffix = self.get_namespace_data(
+                action="tftp-deploy", label="tftp", key="suffix"
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label="file",
+                key=self.key,
+                value=os.path.join(suffix, dest.name),
+            )
+
         if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
             self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
 
