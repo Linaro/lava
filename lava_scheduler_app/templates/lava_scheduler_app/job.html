@@ -171,7 +171,7 @@
           <ul class="dropdown-menu">
             {% for subjob in job.sub_jobs_list %}
             {% if subjob.id == job.id %}
-            <li class="disabled"><a href=".">#{{ subjob.sub_id|default:job.id }} ({{ subjob.device_role }})</a></li>
+            <li class="disabled"><a href="#">#{{ subjob.sub_id|default:job.id }} ({{ subjob.device_role }})</a></li>
             {% else %}
             <li><a href="{% url 'lava.scheduler.job.detail' subjob.id %}">#{{ subjob.sub_id|default:job.id }} ({{ subjob.device_role }}): <span id="subjob_{{ subjob.id }}">{{ subjob.get_state_display }}</span></a></li>
             {% endif %}
