@@ -100,6 +100,14 @@ for k in os.environ:
     if k.startswith("LAVA_SETTINGS_"):
         value = env(k)
         globals()[k[len("LAVA_SETTINGS_") :]] = value
+    elif k.startswith("LAVA_YAML_SETTINGS_"):
+        try:
+            value = yaml.safe_load(env(k))
+        except yaml.YAMLError as exc:
+            print(f"[INIT] Unable to parse {k}: invalid yaml")
+            print(exc)
+            raise Exception(f"Unable to parse {k}") from exc
+        globals()[k[len("LAVA_YAML_SETTINGS_") :]] = value
 
 if "LAVA_JSON_SETTINGS" in os.environ:
     try:
