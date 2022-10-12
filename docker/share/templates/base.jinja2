@@ -3,6 +3,9 @@ FROM debian:bookworm-slim
 LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
 
 ENV DEBIAN_FRONTEND noninteractive
+{%- if pip_packages %}
+ENV PIP_BREAK_SYSTEM_PACKAGES yes
+{%- endif %}
 
 RUN mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
 {%- if adduser_and_group|default(False) %}
@@ -14,5 +17,9 @@ RUN mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
 {%- if dep["pkgs"] %}
     apt-get install {% if not dep["recommends"] %}--no-install-recommends {% endif %}--yes {% if dep["from"] %}-t {{ dep["from"] }} {% endif %}{{ dep["pkgs"] }} && \{% endif %}
 {%- endfor %}
+{%- if pip_packages %}
+    apt-get install --no-install-recommends --yes python3-pip && \
+    python3 -m pip install {{ pip_packages|join(" ") }} && \
+{%- endif %}
     find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" + && \
     rm -rf /var/lib/apt/lists/*
