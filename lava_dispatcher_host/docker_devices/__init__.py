@@ -150,6 +150,8 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         self.__cgroup__ = (
             f"/sys/fs/cgroup/system.slice/docker-{self.container_id}.scope"
         )
+        if not os.path.exists(self.__cgroup__):
+            self.__cgroup__ = f"/sys/fs/cgroup/docker/{self.container_id}"
 
     @property
     def devices(self):
