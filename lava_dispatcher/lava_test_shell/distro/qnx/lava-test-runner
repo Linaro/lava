@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set +x
+
+if [ "$1" = "" ]
+then
+    LAVA_PATH="/lava"
+else
+	LAVA_PATH=$1
+fi
+
+WORKFILE="$LAVA_PATH/lava-test-runner.conf"
+RESULTSDIR="$LAVA_PATH/results"
+BINDIR="$LAVA_PATH/../bin"
+
+. $BINDIR/lava-common-functions
+
+cleanup()
+{
+  signal "<LAVA_TEST_RUNNER EXIT>"
+}
+trap cleanup INT TERM EXIT
+
+export PATH=${BINDIR}:${PATH}
+mkdir -p ${RESULTSDIR}
+
+# move the workfile to something timestamped and run that. This
+# prevents us from running the same thing again after a reboot
+TS=`date +%s`
+mv ${WORKFILE} ${WORKFILE}-${TS}
+WORKFILE=${WORKFILE}-${TS}
+
+if [ -z "${SHELL}" ]; then
+    SHELL=/bin/sh
+fi
+
+for line in $(cat ${WORKFILE} | grep -v LAVA_SIGNAL); do
+	# we don't have "basename" on qnx, but this does the
+	# equivalent under ksh
+	testdir=${line%/}
+	test=${testdir##*/}
+	odir=${RESULTSDIR}/${test}-`date +%s`
+	mkdir ${odir}
+
+	if [ -f ${line}/install.sh ]; then
+		/bin/sh ${line}/install.sh
+		R=$?
+		echo ${R} > ${odir}/install_return_code
+		if [ ${R} -ne 0 ] ; then
+            signal "<LAVA_TEST_RUNNER INSTALL_FAIL>"
+			continue
+		fi
+	fi
+
+	lava-test-shell --output_dir ${odir} ${SHELL} -e "${line}/run.sh"
+done
