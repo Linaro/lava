@@ -12,7 +12,7 @@ usage () {
 
 rc=0
 
-TEST_CASE_ID="$1"
+export TEST_CASE_ID="$1"
 shift
 if [ -z "$TEST_CASE_ID" ]; then
     usage
