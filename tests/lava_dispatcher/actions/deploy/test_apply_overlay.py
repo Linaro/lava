@@ -279,7 +279,7 @@ def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
     ]
     unlink.assert_called_once_with(decompress_file())
 
-    create_tarfile.assert_called_once_with(str(tmpdir), decompress_file())
+    create_tarfile.assert_called_once_with(str(tmpdir), decompress_file(), arcname=".")
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
     assert caplog.record_tuples == [

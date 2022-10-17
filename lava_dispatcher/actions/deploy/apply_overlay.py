@@ -18,9 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from functools import partial
 import guestfs
 import os
 import shutil
+
 from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
@@ -976,7 +978,7 @@ class AppendOverlays(Action):
         self._update(uncpio, cpio)
 
     def update_tar(self):
-        self._update(untar_file, create_tarfile)
+        self._update(untar_file, partial(create_tarfile, arcname="."))
 
     def update_guestfs(self):
         image = self.get_namespace_data(
