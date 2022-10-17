@@ -33,6 +33,7 @@ def schema():
             Optional("compression"): str,
             Optional("header"): "u-boot",
         },
+        Optional("uniquify"): bool,
         Required("images"): {Required(str, "'images' is empty"): deploy.url()},
     }
     return {**deploy.schema(), **base}
