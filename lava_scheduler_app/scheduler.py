@@ -45,10 +45,9 @@ class WorkerSummary:
         return self.limit > 0 and self.busy >= self.limit
 
 
-def filter_devices(q):
+def filter_devices(q, workers):
     q = q.filter(state=Device.STATE_IDLE)
-    q = q.filter(worker_host__state=Worker.STATE_ONLINE)
-    q = q.filter(worker_host__health=Worker.HEALTH_ACTIVE)
+    q = q.filter(worker_host__in=workers)
     return q
 
 
@@ -92,13 +91,13 @@ def check_queue_timeout(logger):
     logger.info("done")
 
 
-def schedule(logger, available_dt=None):
-    available_devices = schedule_health_checks(logger, available_dt)
-    schedule_jobs(logger, available_devices)
+def schedule(logger, available_dt, workers):
+    available_devices = schedule_health_checks(logger, available_dt, workers)
+    schedule_jobs(logger, available_devices, workers)
     check_queue_timeout(logger)
 
 
-def schedule_health_checks(logger, available_dt=None):
+def schedule_health_checks(logger, available_dt, workers):
     logger.info("scheduling health checks:")
     available_devices = {}
     hc_disabled = []
@@ -111,7 +110,7 @@ def schedule_health_checks(logger, available_dt=None):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
-            devices = filter_devices(dt.device_set)
+            devices = filter_devices(dt.device_set, workers)
             devices = devices.filter(
                 health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]
             )
@@ -123,7 +122,7 @@ def schedule_health_checks(logger, available_dt=None):
         else:
             with transaction.atomic():
                 available_devices[dt.name] = schedule_health_checks_for_device_type(
-                    logger, dt
+                    logger, dt, workers
                 )
 
     # Print disabled device types
@@ -134,9 +133,9 @@ def schedule_health_checks(logger, available_dt=None):
     return available_devices
 
 
-def schedule_health_checks_for_device_type(logger, dt):
+def schedule_health_checks_for_device_type(logger, dt, workers):
     devices = dt.device_set.select_for_update()
-    devices = filter_devices(devices)
+    devices = filter_devices(devices, workers)
     devices = devices.filter(
         health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]
     )
@@ -248,12 +247,14 @@ def schedule_health_check(device, definition):
     job.save()
 
 
-def schedule_jobs(logger, available_devices):
+def schedule_jobs(logger, available_devices, workers):
     logger.info("scheduling jobs:")
     dts = list(available_devices.keys())
     for dt in DeviceType.objects.filter(name__in=dts).order_by("name"):
         with transaction.atomic():
-            schedule_jobs_for_device_type(logger, dt, available_devices[dt.name])
+            schedule_jobs_for_device_type(
+                logger, dt, available_devices[dt.name], workers
+            )
 
     with transaction.atomic():
         # Transition multinode if needed
@@ -262,9 +263,9 @@ def schedule_jobs(logger, available_devices):
     logger.info("done")
 
 
-def schedule_jobs_for_device_type(logger, dt, available_devices):
+def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
     devices = dt.device_set.select_for_update()
-    devices = filter_devices(devices)
+    devices = filter_devices(devices, workers)
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will
@@ -395,4 +396,4 @@ def transition_multinode_jobs(logger):
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()
-            logger.debug("--> %d", job.sub_id)
+            logger.debug("--> %d", sub_job.id)

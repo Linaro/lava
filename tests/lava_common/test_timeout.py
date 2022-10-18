@@ -101,13 +101,13 @@ def test_without_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with t(None, None) as max_end_time:
         assert max_end_time == 200  # nosec - assert is part of the test process.
         # signal.alarm and signal.signal were called once each
         assert signal.alarm.data == [0]  # nosec - assert is part of the test process.
         assert signal.signal.data == []  # nosec - assert is part of the test process.
-        monkeypatch.setattr(time, "time", lambda: 23)
+        monkeypatch.setattr(time, "monotonic", lambda: 23)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 23  # nosec - assert is part of the test process.
 
@@ -115,12 +115,12 @@ def test_without_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([125, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with t(None, 125) as max_end_time:
         assert max_end_time == 125  # nosec - assert is part of the test process.
         assert signal.alarm.data == [0]  # nosec - assert is part of the test process.
         assert signal.signal.data == []  # nosec - assert is part of the test process.
-        monkeypatch.setattr(time, "time", lambda: 109)
+        monkeypatch.setattr(time, "monotonic", lambda: 109)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 109  # nosec - assert is part of the test process.
 
@@ -128,12 +128,12 @@ def test_without_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with t(None, 201) as max_end_time:
         assert max_end_time == 200  # nosec - assert is part of the test process.
         assert signal.alarm.data == [0]  # nosec - assert is part of the test process.
         assert signal.signal.data == []  # nosec - assert is part of the test process.
-        monkeypatch.setattr(time, "time", lambda: 45)
+        monkeypatch.setattr(time, "monotonic", lambda: 45)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 45  # nosec - assert is part of the test process.
 
@@ -144,14 +144,14 @@ def test_without_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([100, 177]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with t1(parent, 200) as max_end_time:
         assert max_end_time == 100  # nosec - assert is part of the test process.
         assert signal.alarm.data == [177]  # nosec - assert is part of the test process.
         assert signal.signal.data == [  # nosec - assert is part of the test process.
             t0._timed_out
         ]
-        monkeypatch.setattr(time, "time", lambda: 23)
+        monkeypatch.setattr(time, "monotonic", lambda: 23)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t1.elapsed_time == 23  # nosec - assert is part of the test process.
 
@@ -161,14 +161,14 @@ def test_without_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 27]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with t1(parent, 50) as max_end_time:
         assert max_end_time == 50  # nosec - assert is part of the test process.
         assert signal.alarm.data == [27]  # nosec - assert is part of the test process.
         assert signal.signal.data == [  # nosec - assert is part of the test process.
             t0._timed_out
         ]
-        monkeypatch.setattr(time, "time", lambda: 23)
+        monkeypatch.setattr(time, "monotonic", lambda: 23)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t1.elapsed_time == 23  # nosec - assert is part of the test process.
 
@@ -179,7 +179,7 @@ def test_with_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t(None, None) as max_end_time:
             assert max_end_time == 200  # nosec - assert is part of the test process.
@@ -189,7 +189,7 @@ def test_with_raising(monkeypatch):
             assert (  # nosec - assert is part of the test process.
                 signal.signal.data == []
             )
-            monkeypatch.setattr(time, "time", lambda: 200)
+            monkeypatch.setattr(time, "monotonic", lambda: 200)
             t._timed_out(None, None)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 200  # nosec - assert is part of the test process.
@@ -198,7 +198,7 @@ def test_with_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([125, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t(None, 125) as max_end_time:
             assert max_end_time == 125  # nosec - assert is part of the test process.
@@ -208,7 +208,7 @@ def test_with_raising(monkeypatch):
             assert (  # nosec - assert is part of the test process.
                 signal.signal.data == []
             )
-            monkeypatch.setattr(time, "time", lambda: 126)
+            monkeypatch.setattr(time, "monotonic", lambda: 126)
             t._timed_out(None, None)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 126  # nosec - assert is part of the test process.
@@ -217,13 +217,13 @@ def test_with_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t(None, 201) as max_end_time:
             assert max_end_time == 200  # nosec - assert is part of the test process.
             assert signal.alarm.data == [0]  # nosec - test process.
             assert signal.signal.data == []  # nosec - test process.
-            monkeypatch.setattr(time, "time", lambda: 200)
+            monkeypatch.setattr(time, "monotonic", lambda: 200)
             t._timed_out(None, None)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert t.elapsed_time == 200  # nosec - assert is part of the test process.
@@ -232,7 +232,7 @@ def test_with_raising(monkeypatch):
     t = Timeout("timeout-name", 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t(None, 0) as max_end_time:
             # Check that the exception is raised before this line
@@ -247,13 +247,13 @@ def test_with_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([100, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t1(parent, 200) as max_end_time:
             assert max_end_time == 100  # nosec - assert is part of the test process.
             assert signal.alarm.data == [0]  # nosec - test process.
             assert signal.signal.data == [t0._timed_out]  # nosec - test process.
-            monkeypatch.setattr(time, "time", lambda: 100)
+            monkeypatch.setattr(time, "monotonic", lambda: 100)
             t1._timed_out(None, None)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert signal.signal.data == [t0._timed_out]  # nosec - test process.
@@ -265,13 +265,13 @@ def test_with_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t1(parent, 50) as max_end_time:
             assert max_end_time == 50  # nosec - assert is part of the test process.
             assert signal.alarm.data == [0]  # nosec - test process.
             assert signal.signal.data == [t0._timed_out]  # nosec - test process.
-            monkeypatch.setattr(time, "time", lambda: 23)
+            monkeypatch.setattr(time, "monotonic", lambda: 23)
             t1._timed_out(None, None)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert signal.signal.data == [t0._timed_out]  # nosec - test process.
@@ -283,7 +283,7 @@ def test_with_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(JobError):
         with t1(parent, -1) as max_end_time:
             assert 0  # nosec - assert is part of the test process.
@@ -297,13 +297,13 @@ def test_with_raising(monkeypatch):
     t1 = Timeout("timeout-child", 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 0, 0]))
-    monkeypatch.setattr(time, "time", lambda: 0)
+    monkeypatch.setattr(time, "monotonic", lambda: 0)
     with pytest.raises(InfrastructureError):
         with t1(parent, 50) as max_end_time:
             assert max_end_time == 50  # nosec - assert is part of the test process.
             assert signal.alarm.data == [0, 0]  # nosec - test
             assert signal.signal.data == [t0._timed_out]  # nosec - test
-            monkeypatch.setattr(time, "time", lambda: 50)
+            monkeypatch.setattr(time, "monotonic", lambda: 50)
     assert signal.alarm.data == []  # nosec - assert is part of the test process.
     assert signal.signal.data == []  # nosec - assert is part of the test process.
     assert t1.elapsed_time == 50  # nosec - assert is part of the test process.

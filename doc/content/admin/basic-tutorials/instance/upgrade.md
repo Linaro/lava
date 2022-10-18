@@ -13,17 +13,20 @@ We advice to put the instance in maintenance before any upgrade.
 
 !!! example "Maintenance mode"
 
-    ```shell tab="docker-compose"
-    docker-compose exec lava-server lava-server manage maintenance
-    ```
+    === "docker-compose"
+        ```shell
+        docker-compose exec lava-server lava-server manage maintenance
+        ```
 
-    ```shell tab="debian"
-    lava-server manage maintenance
-    ```
+    === "debian"
+        ```shell
+        lava-server manage maintenance
+        ```
 
-    ```shell tab="lavacli"
-    lavacli system maintenance
-    ```
+    === "lavacli"
+        ```shell
+        lavacli system maintenance
+        ```
 
 
 ### Docker

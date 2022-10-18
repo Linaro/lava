@@ -10,13 +10,15 @@ The only relevant information is the device-type name that should be **qemu**.
 
 !!! tip "Command line"
 
-    ```shell tab="lavacli"
-    lavacli device-types add qemu
-    ```
+    === "lavacli"
+        ```shell
+        lavacli device-types add qemu
+        ```
 
-    ```shell tab="lava-server"
-    lava-server manage device-types add qemu
-    ```
+    === "lava-server"
+        ```shell
+        lava-server manage device-types add qemu
+        ```
 
 ## Create device
 
@@ -28,16 +30,18 @@ Create a qemu device in the [admin interface](/admin/lava_scheduler_app/device/a
 
 !!! tip "Command line"
 
-    ```shell tab="lavacli"
-    lavacli devices add --type qemu --worker <worker> <hostname>
-    ```
+    === "lavacli"
+        ```shell
+        lavacli devices add --type qemu --worker <worker> <hostname>
+        ```
 
-    ```shell tab="lava-server"
-    lava-server manage devices add \
-        --device-type qemu \
-        --worker <worker> \
-        <hostname>
-    ```
+    === "lava-server"
+        ```shell
+        lava-server manage devices add \
+            --device-type qemu \
+            --worker <worker> \
+            <hostname>
+        ```
 
 ## Device configuration
 
@@ -56,14 +60,16 @@ This file should be pushed to the LAVA server under
 
 !!! tip "Command line"
 
-    ```shell tab="lavacli"
-    lavacli devices dict set <hostname> <filename>
-    ```
+    === "lavacli"
+        ```shell
+        lavacli devices dict set <hostname> <filename>
+        ```
 
-    ```bash tab="lava-server"
-    cp <filename> /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-    chown lavaserver:lavaserver /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-    ```
+    === "lava-server"
+        ```bash
+        cp <filename> /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
+        chown lavaserver:lavaserver /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
+        ```
 
 ## Activate the device
 
@@ -73,13 +79,15 @@ As the device is now configure, admins can put it online in the [device page](/s
 
 !!! tip "Command line"
 
-    ```shell tab="lavacli"
-    lavacli devices update --health UNKNOWN <hostname>
-    ```
+    === "lavacli"
+        ```shell
+        lavacli devices update --health UNKNOWN <hostname>
+        ```
 
-    ```bash tab="lava-server"
-    lava-server manage devices update --health UNKNOWN <hostname>
-    ```
+    === "lava-server"
+        ```bash
+        lava-server manage devices update --health UNKNOWN <hostname>
+        ```
 
 ## Submit a job
 

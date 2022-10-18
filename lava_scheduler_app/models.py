@@ -925,7 +925,7 @@ class Device(RestrictedObject):
             File("device", self.hostname).write(data)
             return True
         except OSError as exc:
-            logger = logging.getLogger("lava_scheduler_app")
+            logger = logging.getLogger("lava-scheduler")
             logger.error(
                 "Error saving device configuration for %s: %s", self.hostname, str(exc)
             )
@@ -943,13 +943,13 @@ class Device(RestrictedObject):
             ast = env.parse(jinja_config)
             extends = list(ast.find_all(jinja2.nodes.Extends))
             if len(extends) != 1:
-                logger = logging.getLogger("lava_scheduler_app")
+                logger = logging.getLogger("lava-scheduler")
                 logger.error("Found %d extends for %s", len(extends), self.hostname)
                 return None
             else:
                 return os.path.splitext(extends[0].template.value)[0]
         except jinja2.TemplateError as exc:
-            logger = logging.getLogger("lava_scheduler_app")
+            logger = logging.getLogger("lava-scheduler")
             logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
 
@@ -1109,7 +1109,7 @@ def _get_device_type(user, name):
     the user is an owner of at least one of those devices.
     :param user: the user submitting the TestJob
     """
-    logger = logging.getLogger("lava_scheduler_app")
+    logger = logging.getLogger("lava-scheduler")
     # try to find matching alias first
     try:
         alias = Alias.objects.get(name=name)
@@ -1962,8 +1962,9 @@ class TestJob(models.Model):
             data["token"] = token
 
         # Logs.
-        with contextlib.suppress(OSError):
-            data["log"] = logs_instance.read(self)
+        if output:
+            with contextlib.suppress(OSError):
+                data["log"] = logs_instance.read(self)
 
         # Results.
         if results:
@@ -2393,7 +2394,7 @@ class NotificationCallback(models.Model):
     )
 
     def invoke_callback(self):
-        logger = logging.getLogger("lava_scheduler_app")
+        logger = logging.getLogger("lava-scheduler")
         data = None
 
         if self.method != NotificationCallback.GET:

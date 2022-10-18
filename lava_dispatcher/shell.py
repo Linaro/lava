@@ -295,7 +295,7 @@ class ShellSession(Connection):
         if not max_end_time:
             timeout = self.timeout.duration
         else:
-            timeout = max_end_time - time.time()
+            timeout = max_end_time - time.monotonic()
         if timeout < 0:
             raise LAVABug("Invalid max_end_time value passed to wait()")
         try:

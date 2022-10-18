@@ -118,9 +118,13 @@ class FastbootAction(
                     if parameters["images"][image].get("sparse", True):
                         self.pipeline.add_action(ApplyOverlaySparseImage(image))
                     else:
-                        self.pipeline.add_action(
-                            ApplyOverlayImage(image, use_root_partition=False)
+                        use_root_part = parameters["images"][image].get(
+                            "root_partition", False
                         )
+                        self.pipeline.add_action(
+                            ApplyOverlayImage(image, use_root_partition=use_root_part)
+                        )
+
             if self.test_needs_overlay(parameters) and self.test_needs_deployment(
                 parameters
             ):

@@ -105,7 +105,7 @@ def find_mapping(options):
 def load_mapping_data(filename):
     try:
         with open(filename) as f:
-            data = yaml_load(f)
+            data = yaml_load(f) or []
         if isinstance(data, dict):
             data = [data]
         return data

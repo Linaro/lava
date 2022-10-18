@@ -1,7 +1,8 @@
-# Copyright 2019-2020 NXP
+# Copyright 2019-2022 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
+#         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
 #
 # This file is part of LAVA Dispatcher.
 #
@@ -22,6 +23,7 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
+import re
 import time
 from lava_dispatcher.action import Pipeline, Action
 from lava_common.exceptions import ConfigurationError, JobError
@@ -54,14 +56,16 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         see the doc : https://github.com/NXPmicro/mfgtools
         :return: True if board is available in USB serial download mode
         """
-        usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
-            "usb_otg_path"
-        ]
+
         boot = self.get_namespace_data(
             action="download-action", label="boot", key="file"
         )
         # Sleep 5 seconds before availability check
         time.sleep(5)
+
+        usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "usb_otg_path"
+        ]
 
         cmd = "{} --preserve-status 10 {} -m {} {}".format(
             self.linux_timeout, self.uuu, usb_otg_path, boot
@@ -117,9 +121,9 @@ class UUUBoot(Boot):
         if "commands" not in parameters:
             raise ConfigurationError("commands not specified in boot parameters")
         params = device["actions"]["boot"]["methods"]["uuu"]["options"]
-        if not params["usb_otg_path"]:
+        if not params["usb_otg_path"] and not params["usb_otg_path_command"]:
             raise ConfigurationError(
-                "uuu_usb_otg_path not defined in device definition"
+                "'uuu_usb_otg_path' or 'uuu_usb_otg_path_command' not defined in device definition"
             )
         if params["corrupt_boot_media_command"] is None:
             raise ConfigurationError(
@@ -131,7 +135,6 @@ class UUUBoot(Boot):
 
 
 class BootBootloaderCorruptBootMediaAction(Action):
-
     name = "boot-corrupt-boot-media"
     description = "boot using 'bootloader' method and corrupt boot media"
     summary = "boot bootloader"
@@ -186,6 +189,17 @@ class UUUBootRetryAction(RetryAction):
     summary = "Pass uuu commands"
 
     def populate(self, parameters):
+        # Verify format of usb_otg_path if available or process uuu_otg_path_command
+        self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "usb_otg_path"
+        ] = self.eval_otg_path()
+        self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "has_bcu_commands"
+        ] = self.has_bcu_commands(parameters)
+        if self.has_bcu_commands(parameters):
+            self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+                "bcu_board_id"
+            ] = self.eval_bcu_board_id()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetDevice())
         self.pipeline.add_action(CheckSerialDownloadMode())
@@ -194,9 +208,85 @@ class UUUBootRetryAction(RetryAction):
         self.pipeline.add_action(UUUBootAction(), parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
 
+    def eval_otg_path(self):
+        uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
+
+        # Match example : "2:112"
+        otg_path_fsm = re.compile(r"\d+:\d+")
+
+        if otg_path_fsm.fullmatch(uuu_options.get("usb_otg_path")):
+            return uuu_options.get("usb_otg_path")
+
+        if uuu_options.get("usb_otg_path_command") is None:
+            raise JobError(
+                "uuu_usb_otg_path '{}' does not match with uuu path pattern and 'uuu_usb_otg_path_command' not "
+                "defined in device".format(uuu_options.get("usb_otg_path"))
+            )
+        else:
+            usb_otg_path_command = uuu_options.get("usb_otg_path_command")
+            cmd = usb_otg_path_command
+            self.logger.info(
+                "Retrieving 'usb_otg_path' using command : '%s'", " ".join(cmd)
+            )
+
+            uuu_path_expected = self.parsed_command(cmd).strip()
+
+            if otg_path_fsm.fullmatch(uuu_path_expected):
+                self.logger.info("uuu_otg_path matched : %s", uuu_path_expected)
+                return uuu_path_expected
+
+            raise JobError(
+                "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
+            )
+
+    def has_bcu_commands(self, parameters):
+        """
+        Checks if the bcu is present in the commands list. Returns true if bcu is present
+        """
+        cmds = parameters["commands"]
+        for commands in cmds:
+            for protocol, cmd in commands.items():
+                if protocol == "bcu":
+                    return True
+        return False
+
+    def eval_bcu_board_id(self):
+        uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
+
+        if uuu_options.get("bcu_board_name") == "":
+            raise JobError("'bcu_board_name' is not defined in device-types")
+
+        # Match example : "2-1.3"
+        bcu_id_fsm = re.compile(r"\d+-(\d+|\.)+")
+
+        if bcu_id_fsm.fullmatch(uuu_options.get("bcu_board_id")):
+            return uuu_options.get("bcu_board_id")
+
+        if uuu_options.get("bcu_board_id_command") is None:
+            raise JobError(
+                "bcu_board_id '{}' do not respect bcu format or 'bcu_board_id_command' not "
+                "defined in device".format(uuu_options.get("bcu_board_id"))
+            )
+        else:
+            bcu_board_id_command = uuu_options.get("bcu_board_id_command")
+
+        self.logger.info(
+            "Retrieving 'bcu_board_id' using command : '%s'",
+            " ".join(bcu_board_id_command),
+        )
+
+        bcu_id_expected = self.parsed_command(bcu_board_id_command).strip()
+
+        if bcu_id_fsm.fullmatch(bcu_id_expected):
+            self.logger.info("Matched bcu_board_id : %s", bcu_id_expected)
+            return bcu_id_expected
+
+        raise JobError(
+            "Unable to parse bcu_id from command '{}'".format(bcu_board_id_command)
+        )
+
 
 class UUUBootAction(OptionalContainerUuuAction):
-
     name = "uuu-boot"
     description = "interactive uuu action"
     summary = "uuu commands"
@@ -204,6 +294,10 @@ class UUUBootAction(OptionalContainerUuuAction):
     def populate(self, parameters):
         self.parameters = parameters
         self.uuu = self.which("uuu")
+        if self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "has_bcu_commands"
+        ]:
+            self.bcu = self.which("bcu")
 
     def validate(self):
         super().validate()
@@ -217,7 +311,12 @@ class UUUBootAction(OptionalContainerUuuAction):
             "usb_otg_path"
         ]
         uuu_cmds = self.parameters["commands"]
-
+        bcu_board_name = self.job.device["actions"]["boot"]["methods"]["uuu"][
+            "options"
+        ]["bcu_board_name"]
+        bcu_board_id = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
+            "bcu_board_id"
+        ]
         images_name = self.get_namespace_data(
             action="uuu-deploy", label="uuu-images", key="images_names"
         )
@@ -242,8 +341,14 @@ class UUUBootAction(OptionalContainerUuuAction):
 
         if usb_otg_path is None:
             raise JobError("USB path of the device not set for uuu")
-
         for cmd in uuu_cmds:
+            if "bcu:" in cmd:
+                cmd = cmd.replace("bcu: ", "")
+                exec_cmd = "{} {} -board={} -id={}".format(
+                    self.bcu, cmd, bcu_board_name, bcu_board_id
+                )
+                self.run_cmd(exec_cmd.split(" "))
+                continue
             if "uuu:" in cmd:
                 # uuu can be used in 2 different ways, by using built-in scripts in a single command,
                 # or with a list of commands, each prefixed with a protocol type.

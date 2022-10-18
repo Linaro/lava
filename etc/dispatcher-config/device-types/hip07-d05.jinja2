@@ -1,6 +1,8 @@
 {# device_type = "hip07-d05" #}
 {% extends 'd03.jinja2' %}
 
+{% set extra_nfsroot_args = ",vers=3" + extra_nfsroot_args|default('') %}
+
 {% block grub_ramdisk %}
           - 'linux (tftp,{SERVER_IP})/{KERNEL} pcie_aspm=off pci=pcie_bus_perf root=/dev/ram0 {{ base_ip_args }}'
           - devicetree (tftp,{SERVER_IP})/{DTB}

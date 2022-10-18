@@ -175,7 +175,7 @@ class Timing:
 
 
 def test_run_script(monkeypatch):
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}
@@ -339,7 +339,7 @@ def test_run_script(monkeypatch):
 
 
 def test_run_script_echo_discard(monkeypatch):
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}
@@ -397,7 +397,7 @@ def test_run_script_echo_discard(monkeypatch):
 
 
 def test_run_script_capture(monkeypatch):
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}
@@ -479,7 +479,7 @@ def test_run_script_delay(monkeypatch):
         assert val == 0.5  # nosec - assert is part of the test process.
 
     monkeypatch.setattr(time, "sleep", check_sleep)
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}
@@ -540,7 +540,7 @@ def test_run_script_multinode(monkeypatch):
         def set_timeout(self, duration):
             pass
 
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.multinode_proto = None
@@ -609,7 +609,7 @@ def test_run_script_multinode(monkeypatch):
 
 
 def test_run_script_raise_test_error_unnamed_command(monkeypatch):
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}
@@ -665,7 +665,7 @@ def test_run_script_raise_test_error_unnamed_command(monkeypatch):
 
 
 def test_run_script_raise_timeout(monkeypatch):
-    monkeypatch.setattr(time, "time", Timing())
+    monkeypatch.setattr(time, "monotonic", Timing())
     action = TestInteractiveAction()
     action.last_check = 0
     action.parameters = {"stage": 0}

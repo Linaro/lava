@@ -113,7 +113,7 @@ class Command(BaseCommand):
 
             try:
                 template = environment.devices().get_template(name)
-                device_template = yaml_safe_load(template.render())
+                yaml_safe_load(template.render())
             except jinja2.TemplateError as exc:
                 self.stdout.write(f"* {hostname} [SKIP]")
                 self.stdout.write(f"  -> invalid jinja2 template")

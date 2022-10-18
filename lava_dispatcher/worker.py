@@ -23,7 +23,6 @@
 from typing import Any, Dict, Iterator, List, Optional, Union
 
 import aiohttp
-import argparse
 import asyncio
 import contextlib
 from dataclasses import dataclass
@@ -157,6 +156,7 @@ def start_job(
     dispatcher: str,
     env_str: str,
     env_dut: str,
+    job_log_interval: int,
 ) -> Optional[int]:
     """
     Start the lava-run process and return the pid
@@ -193,6 +193,7 @@ def start_job(
             f"--job-id={job_id}",
             f"--url={url}",
             f"--token={token}",
+            f"--job-log-interval={job_log_interval}",
         ]
         if debug:
             args.append("--debug")
@@ -241,8 +242,10 @@ class Job:
         self.base_dir.mkdir(mode=0o755, exist_ok=True)
 
     def errors(self) -> str:
-        with contextlib.suppress(OSError):
-            return (self.base_dir / "stderr").read_text(encoding="utf-8")
+        with contextlib.suppress(OSError, UnicodeDecodeError):
+            return (self.base_dir / "stderr").read_text(
+                encoding="utf-8", errors="replace"
+            )
         return ""
 
     def description(self) -> str:
@@ -314,7 +317,7 @@ class JobsDB:
                     str(job_id),
                     str(pid),
                     str(status),
-                    str(int(time.time())),
+                    str(int(time.monotonic())),
                     prefix,
                     token,
                 ),
@@ -333,7 +336,7 @@ class JobsDB:
         with contextlib.suppress(sqlite3.Error):
             self.conn.execute(
                 "UPDATE jobs SET status=?, last_update=? WHERE id=?",
-                (str(status), str(int(time.time())), str(job_id)),
+                (str(status), str(int(time.monotonic())), str(job_id)),
             )
             self.conn.commit()
             return self.get(job_id)
@@ -399,17 +402,6 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
-def setup_parser() -> argparse.ArgumentParser:
-    parser = get_parser()
-    parser.add_argument(
-        "--exit-on-version-mismatch",
-        action="store_true",
-        help="Exit when there is a server mismatch between worker and server.",
-    )
-
-    return parser
-
-
 #####################
 # Server <-> Worker #
 #####################
@@ -453,10 +445,10 @@ def check(url: str, jobs: JobsDB) -> None:
             LOG.info("[%d] canceling -> finished", job.job_id)
             jobs.update(job.job_id, Job.FINISHED)
 
-        elif time.time() - job.last_update > FINISH_MAX_DURATION:
+        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION:
             LOG.info("[%d] not finishing => killing", job.job_id)
             job.kill()
-        elif time.time() - job.last_update > FINISH_MAX_DURATION / 2:
+        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2:
             LOG.info("[%d] not finishing => second signal", job.job_id)
             job.terminate()
 
@@ -543,13 +535,17 @@ def register(url: str, name: str, username: str = None, password: str = None) ->
         time.sleep(5)
 
 
-def running(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
+def running(
+    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+) -> None:
     job = jobs.get(job_id)
     if job is None:
-        start(url, jobs, job_id, token)
+        start(url, jobs, job_id, token, job_log_interval)
 
 
-def start(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
+def start(
+    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+) -> None:
     LOG.info("[%d] server => START", job_id)
     # Was the job already started?
     job = jobs.get(job_id)
@@ -582,7 +578,15 @@ def start(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
 
         # Start the job, grab the pid and create it in the dabatase
         pid = start_job(
-            url, token, job_id, definition, device, dispatcher, env, env_dut
+            url,
+            token,
+            job_id,
+            definition,
+            device,
+            dispatcher,
+            env,
+            env_dut,
+            job_log_interval,
         )
         job = jobs.create(
             job_id,
@@ -606,25 +610,26 @@ def start(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
 # Entrypoints #
 ###############
 def handle(options, jobs: JobsDB) -> float:
-    begin: float = time.time()
+    begin: float = time.monotonic()
 
     name: str = options.name
     token: str = options.token
     url: str = options.url
+    job_log_interval: int = options.job_log_interval
 
     try:
         data = ping(url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
-        return max(1 - (time.time() - begin), 0)
+        return max(1 - (time.monotonic() - begin), 0)
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
-        return max(ping_interval - (time.time() - begin), 0)
+        return max(ping_interval - (time.monotonic() - begin), 0)
 
     # running jobs
     for job in data.get("running", []):
-        running(url, jobs, job["id"], job["token"])
+        running(url, jobs, job["id"], job["token"], job_log_interval)
 
     # cancel jobs
     for job in data.get("cancel", []):
@@ -632,14 +637,14 @@ def handle(options, jobs: JobsDB) -> float:
 
     # start jobs
     for job in data.get("start", []):
-        start(url, jobs, job["id"], job["token"])
+        start(url, jobs, job["id"], job["token"], job_log_interval)
 
     # Check job status
     # TODO: store the token and reuse it
     check(url, jobs)
 
     # Compute the sleep duration
-    return max(ping_interval - (time.time() - begin), 0)
+    return max(ping_interval - (time.monotonic() - begin), 0)
 
 
 async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
@@ -654,7 +659,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
     while True:
         with contextlib.suppress(aiohttp.ClientError):
             async with aiohttp.ClientSession(headers=HEADERS) as session:
-                async with session.ws_connect(f"{options.ws_url}") as ws:
+                async with session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
                     async for msg in ws:
                         if msg.type != aiohttp.WSMsgType.TEXT:
                             continue
@@ -677,7 +682,7 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
 
 async def main() -> int:
     # Parse command line
-    options = setup_parser().parse_args()
+    options = get_parser().parse_args()
     if options.token_file is None:
         options.token_file = Path(options.worker_dir) / "token"
     options.url = options.url.rstrip("/")
@@ -741,7 +746,20 @@ async def main() -> int:
         )
         return 0
     except asyncio.CancelledError:
-        LOG.error("[EXIT] Canceled")
+        LOG.info("[EXIT] Canceled")
+        if options.wait_jobs:
+            LOG.info("[EXIT] Wait for jobs to finish")
+            while True:
+                check(options.url, jobs)
+                all_ids = jobs.all_ids()
+                LOG.info(
+                    "[EXIT] => %d jobs ([%s])",
+                    len(all_ids),
+                    ", ".join(str(i) for i in all_ids),
+                )
+                if not all_ids:
+                    break
+                time.sleep(ping_interval)
         return 1
     except VersionMismatch as exc:
         LOG.info("[EXIT] %s" % exc)

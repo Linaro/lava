@@ -26,6 +26,7 @@ from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
+from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
@@ -88,7 +89,10 @@ class DockerTestAction(Action, GetBoardId):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment())
         self.pipeline.add_action(CreateOverlay())
-        self.pipeline.add_action(DockerTestShell())
+        if "role" in parameters:
+            self.pipeline.add_action(MultinodeDockerTestShell())
+        else:
+            self.pipeline.add_action(DockerTestShell())
         self.pipeline.add_action(ReadFeedback())
 
 
@@ -227,7 +231,14 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = "docker-test-shell:"
-        self.__set_connection__(shell_connection)
+        self.parameters["connection-namespace"] = "docker-test-shell"
+        self.set_namespace_data(
+            action="shared",
+            label="shared",
+            key="connection",
+            value=shell_connection,
+            parameters={"namespace": "docker-test-shell"},
+        )
 
         self.add_device_container_mappings(container, "docker")
 
@@ -254,14 +265,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             docker.destroy()
 
         # return the original connection untouched
-        self.__set_connection__(connection)
+        self.data.pop("docker-test-shell")
         return connection
 
-    def __set_connection__(self, c):
-        self.set_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            value=c,
-            parameters=self.parameters,
-        )
+
+class MultinodeDockerTestShell(MultinodeMixin, DockerTestShell):
+    name = "lava-multinode-docker-test-shell"
+    description = "Runs multinode lava-test-shell in a docker container"
+    summary = "Runs multinode lava-test-shell in a docker container"

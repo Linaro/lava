@@ -106,53 +106,49 @@ class TestFastbootBaseActionDriverUsage(unittest.TestCase):
 
         self.action = action
 
-        run_cmd_patcher = patch(
-            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.run_cmd"
+        run_maybe_in_container_patcher = patch(
+            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.run_maybe_in_container"
         )
-        self.run_cmd = run_cmd_patcher.start()
-        self.addCleanup(run_cmd_patcher.stop)
+        self.run_maybe_in_container = run_maybe_in_container_patcher.start()
+        self.addCleanup(run_maybe_in_container_patcher.stop)
 
-        parsed_command_patcher = patch(
-            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.parsed_command"
+        get_output_maybe_in_container_patcher = patch(
+            "lava_dispatcher.actions.deploy.fastboot.OptionalContainerFastbootAction.get_output_maybe_in_container"
         )
-        self.parsed_command = parsed_command_patcher.start()
-        self.addCleanup(parsed_command_patcher.stop)
+        self.get_output_maybe_in_container = (
+            get_output_maybe_in_container_patcher.start()
+        )
+        self.addCleanup(get_output_maybe_in_container_patcher.stop)
 
     def test_run_fastboot(self):
-        self.action.driver.get_command_prefix.return_value = ["foo", "bar"]
         self.action.run_fastboot(["xyz"])
-        self.run_cmd.assert_called_with(
-            ["foo", "bar", "fastboot", "-s", "01234556789", "xyz"]
+        self.run_maybe_in_container.assert_called_with(
+            ["fastboot", "-s", "01234556789", "xyz"]
         )
 
     def test_get_fastboot_output(self):
-        self.action.driver.get_command_prefix.return_value = ["abc"]
-        self.parsed_command.return_value = "HELLO"
+        self.get_output_maybe_in_container.return_value = "HELLO"
         output = self.action.get_fastboot_output(["devices"])
         self.assertEqual("HELLO", output)
 
     def test_get_fastboot_output_kwards(self):
-        self.action.driver.get_command_prefix.return_value = []
         self.action.get_fastboot_output(["devices"], foo="bar")
-        self.parsed_command.assert_called_with(ANY, foo="bar")
+        self.get_output_maybe_in_container.assert_called_with(ANY, foo="bar")
 
     def test_run_adb(self):
-        self.action.driver.get_command_prefix.return_value = ["foo", "bar"]
         self.action.run_adb(["devices"])
-        self.run_cmd.assert_called_with(
-            ["foo", "bar", "adb", "-s", "01234556789", "devices"]
+        self.run_maybe_in_container.assert_called_with(
+            ["adb", "-s", "01234556789", "devices"]
         )
 
     def test_get_adb_output(self):
-        self.action.driver.get_command_prefix.return_value = ["abc"]
-        self.parsed_command.return_value = "HELLO"
+        self.get_output_maybe_in_container.return_value = "HELLO"
         output = self.action.get_adb_output(["devices"])
         self.assertEqual("HELLO", output)
 
     def test_get_adb_output_kwards(self):
-        self.action.driver.get_command_prefix.return_value = []
         self.action.get_adb_output(["devices"], foo="bar")
-        self.parsed_command.assert_called_with(ANY, foo="bar")
+        self.get_output_maybe_in_container.assert_called_with(ANY, foo="bar")
 
 
 class TestNullDriver(unittest.TestCase):
@@ -221,30 +217,22 @@ class TestDockerDriver(unittest.TestCase):
         dest = self.action.maybe_copy_to_container(src)
         self.assertEqual(src, dest)
 
+    @patch("lava_dispatcher_host.get_mapping_path")
     @patch("lava_dispatcher.utils.fastboot.OptionalContainerFastbootAction.run_cmd")
+    @patch("subprocess.check_call")
     @patch(
         "lava_dispatcher.utils.containers.get_udev_devices",
         return_value=["/dev/foo/bar"],
     )
-    def test_run_fastboot(self, get_udev_devices, run_cmd):
-        self.action.job.device["device_info"] = {"board_id": "01234556789"}
+    def test_run_fastboot(
+        self, get_udev_devices, check_call, run_cmd, get_mapping_path
+    ):
+        get_mapping_path.return_value = "/tmp/usbmap.yaml"  # FIXME
         self.action.maybe_copy_to_container("/path/to/image.img")
         self.action.run_fastboot(["wait-for-devices"])
-        run_cmd.assert_called_with(
-            [
-                "docker",
-                "run",
-                "--rm",
-                "--init",
-                "--device=/dev/foo/bar",
-                "--mount=type=bind,source=/path/to/image.img,destination=/path/to/image.img",
-                self.image,
-                "fastboot",
-                "-s",
-                ANY,
-                "wait-for-devices",
-            ]
-        )
+        cmd = run_cmd.call_args[0][0]
+        assert cmd[0:2] == ["docker", "exec"]
+        assert cmd[-4:] == ["fastboot", "-s", "04f228d1d9c76f39", "wait-for-devices"]
 
 
 class TestFastbootDeploy(StdoutTestCase):

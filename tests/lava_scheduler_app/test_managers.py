@@ -155,6 +155,7 @@ class ManagersTest(TestCaseWithFactory):
         GroupDevicePermission.objects.remove_perm(
             "change_device", self.group1, self.qemu_device1
         )
+        delattr(self.user1, "_cached_has_perm")
         self.assertFalse(
             self.user1.has_perm(Device.CHANGE_PERMISSION, self.qemu_device1)
         )
@@ -887,6 +888,15 @@ class ManagersTest(TestCaseWithFactory):
         # user3 should see all jobs because of viewing_groups field.
         self.assertEqual(
             set(TestJob.objects.all().visible_by_user(self.user3)), set(self.all_jobs)
+        )
+
+        # Anon user should see nothing
+        # after viewing groups had been set for public jobs
+        self.bbb_job1.viewing_groups.add(self.group2)
+        self.bbb_job2.viewing_groups.add(self.group1, self.group2)
+        self.assertEqual(
+            set(TestJob.objects.all().visible_by_user(AnonymousUser())),
+            set(),
         )
 
     def test_testjob_manager_view_through_device_type(self):

@@ -35,6 +35,7 @@ from lava_common.timeout import Timeout
 from lava_common.exceptions import (
     LAVABug,
     LAVAError,
+    InfrastructureError,
     JobError,
     TestError,
     LAVATimeoutError,
@@ -187,6 +188,7 @@ class Pipeline:
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
         """
+        error = False
         for child in self.actions:
             try:
                 child.cleanup(connection)
@@ -196,6 +198,9 @@ class Pipeline:
                     "Failed to clean after action '%s': %s", child.name, str(exc)
                 )
                 child.logger.exception(traceback.format_exc())
+                error = True
+        if error:
+            raise InfrastructureError("Failed to clean after job")
 
     def _diagnose(self, connection):
         """
@@ -639,7 +644,7 @@ class Action:
 
         # Start the subprocess
         self.logger.debug("Calling: 'nice' '%s'", "' '".join(command_list))
-        start = time.time()
+        start = time.monotonic()
 
         cmd_logger = CommandLogger(self.logger)
         ret = None
@@ -658,7 +663,9 @@ class Action:
             # wait for the process and record the return value
             ret = proc.wait()
         except pexpect.TIMEOUT:
-            self.logger.error("Timed out after %s seconds", int(time.time() - start))
+            self.logger.error(
+                "Timed out after %s seconds", int(time.monotonic() - start)
+            )
             proc.terminate()
             proc.wait()
         except pexpect.ExceptionPexpect as exc:
@@ -667,7 +674,7 @@ class Action:
         cmd_logger.flush(force=True)
         if ret is not None:
             self.logger.debug(
-                "Returned %d in %s seconds", ret, int(time.time() - start)
+                "Returned %d in %s seconds", ret, int(time.monotonic() - start)
             )
 
         # Check the return value
@@ -899,7 +906,7 @@ class Action:
         return data
 
     def get_namespace_keys(self, action, parameters=None):
-        """ Return the keys for the given action """
+        """Return the keys for the given action"""
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
         return self.data.get(namespace, {}).get(action, {}).keys()
@@ -959,7 +966,7 @@ class Action:
             return
         if not max_end_time:
             max_end_time = self.timeout.duration + self.timeout.start
-        remaining = max_end_time - time.time()
+        remaining = max_end_time - time.monotonic()
         # FIXME: connection.prompt_str needs to be always a list
         # bootloader_prompt is one which does not get set that way
         # also need functionality to clear the list at times.

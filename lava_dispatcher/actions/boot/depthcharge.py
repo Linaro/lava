@@ -125,6 +125,9 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             substitutions = {}
         cmdline = substitute([self.cmdline], substitutions)[0]
 
+        if "extra_kernel_args" in self.parameters:
+            cmdline = " ".join([cmdline, self.parameters["extra_kernel_args"]])
+
         with open(cmdline_path, "w") as cmdline_file:
             cmdline_file.write(cmdline)
 

@@ -259,7 +259,7 @@ class DownloadHandler(Action):
 
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val):
-            """ Compute progress when the size is unknown """
+            """Compute progress when the size is unknown"""
             condition = downloaded_sz >= last_val + 25 * 1024 * 1024
             return (
                 condition,
@@ -270,7 +270,7 @@ class DownloadHandler(Action):
             )
 
         def progress_known_total(downloaded_sz, last_val):
-            """ Compute progress when the size is known """
+            """Compute progress when the size is known"""
             percent = math.floor(downloaded_sz / float(self.size) * 100)
             condition = percent >= last_val + 5
             return (
@@ -321,7 +321,7 @@ class DownloadHandler(Action):
         self.logger.debug("saving as %s", self.fname)
 
         downloaded_size = 0
-        beginning = time.time()
+        beginning = time.monotonic()
         # Choose the progress bar (is the size known?)
         if self.size <= 0:
             self.logger.debug("total size: unknown")
@@ -398,7 +398,7 @@ class DownloadHandler(Action):
                     dwnld_file.write(buff)
 
         # Log the download speed
-        ending = time.time()
+        ending = time.monotonic()
         self.logger.info(
             "%dMB downloaded in %0.2fs (%0.2fMB/s)",
             downloaded_size / (1024 * 1024),
@@ -758,7 +758,7 @@ class PreDownloadedAction(Action):
         super().validate()
         if self.url.scheme != "downloads":
             self.errors = "downloads:// url scheme is invalid"
-        if not self.url.path and not self.url.hostname:
+        if not self.url.path and not self.url.netloc:
             self.errors = "Invalid path in downloads:// url"
 
         image_arg = self.params.get("image_arg")
@@ -771,11 +771,11 @@ class PreDownloadedAction(Action):
             )
 
     def run(self, connection, max_end_time):
-        # In downloads://foo/bar.ext, "foo" is the "hostname", "/bar.ext" is
-        # the path. But in downloads://foo.ext, "foo.ext" is the hostnane, and
+        # In downloads://foo/bar.ext, "foo" is the "netloc", "/bar.ext" is
+        # the path. But in downloads://foo.ext, "foo.ext" is the netloc, and
         # the path is empty.
-        # In downloads:///foo/bar.ext, hostname is None while path is /foo/bar.ext.
-        filename = self.url.hostname if self.url.hostname else ""
+        # In downloads:///foo/bar.ext, netloc is None while path is /foo/bar.ext.
+        filename = self.url.netloc if self.url.netloc else ""
         if self.url.path:
             filename += self.url.path
 
@@ -805,6 +805,20 @@ class PreDownloadedAction(Action):
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=str(dest)
         )
+        self.set_namespace_data(
+            action="download-action", label="file", key=self.key, value=str(dest)
+        )
+        if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
+            suffix = self.get_namespace_data(
+                action="tftp-deploy", label="tftp", key="suffix"
+            )
+            self.set_namespace_data(
+                action="download-action",
+                label="file",
+                key=self.key,
+                value=os.path.join(suffix, dest.name),
+            )
+
         if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
             self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
 

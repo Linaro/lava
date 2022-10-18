@@ -38,7 +38,7 @@ from lava_dispatcher.parser import JobParser
 
 
 def parser():
-    """ Configure the parser """
+    """Configure the parser"""
     p_obj = argparse.ArgumentParser()
 
     p_obj.add_argument(
@@ -67,6 +67,13 @@ def parser():
     )
     group.add_argument(
         "--token", default=None, metavar="token", help="token for server authentication"
+    )
+    group.add_argument(
+        "--job-log-interval",
+        metavar="SECONDS",
+        type=int,
+        default=5,
+        help="Time between two job log submissions to the server",
     )
 
     group = p_obj.add_argument_group("configuration files")
@@ -115,6 +122,7 @@ def setup_logger(options):
         logger.addHTTPHandler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
             options.token,
+            options.job_log_interval,
         )
     else:
         logger.addHandler(logging.StreamHandler())
@@ -238,6 +246,11 @@ def main():
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
+
+        # Add secrets to the environment
+        for k, v in job.parameters.get("secrets", {}).items():
+            os.environ[k] = v
+
         # Generate the description
         description = dump_as_safe_yaml(job.describe())
         (options.output_dir / "description.yaml").write_text(

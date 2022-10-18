@@ -119,7 +119,14 @@ DISPATCHER_HOST = {
             ],
         ),
         ("/etc/lava-dispatcher-host/", ["etc/lava-docker-worker"]),
-        ("/etc/logrotate.d/", ["etc/logrotate.d/lava-dispatcher-host-log"]),
+        (
+            "/etc/logrotate.d/",
+            [
+                "etc/logrotate.d/lava-dispatcher-host-log",
+                "etc/logrotate.d/lava-docker-worker-log",
+            ],
+        ),
+        ("/var/log/lava-dispatcher-host/", []),
     ],
 }
 

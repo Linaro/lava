@@ -133,7 +133,7 @@ class BaseFVPAction(Action):
         for volume in options.get("volumes", []):
             self.extra_options += " --volume %s" % volume
         if "license_variable" in self.parameters:
-            self.fvp_license = self.parameters["license_variable"]
+            self.fvp_license = shlex.quote(self.parameters["license_variable"])
 
     def construct_docker_fvp_command(self, docker_image, fvp_arguments):
         substitutions = {}
@@ -207,7 +207,7 @@ class CheckFVPVersionAction(BaseFVPAction):
         )
 
     def run(self, connection, max_end_time):
-        start = time.time()
+        start = time.monotonic()
 
         if not self.local_docker_image:
             self.logger.debug("Pulling image %s", self.docker_image)
@@ -228,7 +228,7 @@ class CheckFVPVersionAction(BaseFVPAction):
             "level": self.level,
             "extra": {"fvp-version": matched_version_string},
             "result": "pass",
-            "duration": "%.02f" % (time.time() - start),
+            "duration": "%.02f" % (time.monotonic() - start),
         }
         self.logger.results(result)
 

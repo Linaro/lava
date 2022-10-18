@@ -29,6 +29,8 @@ def schema():
     base = {
         Required("method"): Msg("depthcharge", "'method' should be 'depthcharge'"),
         Required("commands"): Any(str, [str]),
+        Optional("extra_kernel_args"): str,
+        Optional("prompts"): boot.prompts(),
         Optional("use_bootscript"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }

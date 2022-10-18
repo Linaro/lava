@@ -16,12 +16,13 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
 
+from contextvars import ContextVar
 import datetime
 from functools import wraps
 import logging
 import simplejson
-import threading
 import uuid
 import zmq
 from zmq.utils.strtypes import b
@@ -34,10 +35,6 @@ from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.tasks import async_send_notifications
 
 
-# Thread local storage for zmq socket and context
-thread_local = threading.local()
-
-
 # Wrapper to except every exception and only log them
 # If signal handlers are raising, this is breaking many important stuffs
 def log_exception(func):
@@ -46,23 +43,30 @@ def log_exception(func):
         try:
             return func(*args, **kwargs)
         except Exception as exc:
-            logger = logging.getLogger("lava_scheduler_app")
+            logger = logging.getLogger("lava-scheduler")
             logger.error("Unable to execute signal '%s', ignoring", func.__name__)
             logger.exception(exc)
 
     return function_wrapper
 
 
+zmq_context: ContextVar[zmq.Context] = ContextVar("zmq_context")
+zmq_socket: ContextVar[zmq.Socket] = ContextVar("zmq_socket")
+
+
 def send_event(topic, user, data):
     # Get back the thread local storage
     try:
-        context = thread_local.context
-        socket = thread_local.socket
-    except AttributeError:
+        context = zmq_context.get()
+        socket = zmq_socket.get()
+    except LookupError:
         # Create the context and socket
-        thread_local.context = context = zmq.Context.instance()
-        thread_local.socket = socket = context.socket(zmq.PUSH)
+        context = zmq.Context.instance()
+        socket = context.socket(zmq.PUSH)
         socket.connect(settings.INTERNAL_EVENT_SOCKET)
+
+        zmq_context.set(context)
+        zmq_socket.set(socket)
 
     try:
         # The format is [topic, uuid, datetime, username, data as json]

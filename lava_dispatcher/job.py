@@ -26,6 +26,8 @@ import time
 import pytz
 import traceback
 import os
+
+from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import LAVABug, LAVAError, JobError
 from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
@@ -173,6 +175,11 @@ class Job:
             self.logger.error(msg)
             self.logger.debug("Namespaces: %s", ", ".join(namespaces))
             raise JobError(msg)
+        if "docker-test-shell" in namespaces:
+            msg = "'docker-test-shell' is a reserved namespace and can't be used in job definitions"
+            self.logger.error(msg)
+            self.logger.debug("Namespaces: %s", ", ".join(namespaces))
+            raise JobError(msg)
 
         # validate the pipeline
         self.pipeline.validate_actions()
@@ -185,7 +192,7 @@ class Job:
         label = "lava-dispatcher, installed at version: %s" % __version__
         self.logger.info(label)
         self.logger.info("start: 0 validate")
-        start = time.time()
+        start = time.monotonic()
 
         success = False
         try:
@@ -199,7 +206,7 @@ class Job:
             self.logger.exception(traceback.format_exc())
             raise LAVABug(exc)
         finally:
-            self.logger.info("validate duration: %.02f", time.time() - start)
+            self.logger.info("validate duration: %.02f", time.monotonic() - start)
             self.logger.results(
                 {
                     "definition": "lava",
@@ -250,6 +257,10 @@ class Job:
             self.cleanup(self.connection)
 
     def cleanup(self, connection):
+        with self.timeout(None, time.monotonic() + CLEANUP_TIMEOUT) as max_end_time:
+            return self._cleanup(connection)
+
+    def _cleanup(self, connection):
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
             return

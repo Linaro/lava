@@ -72,13 +72,6 @@ class Command(BaseCommand):
             help="Create the device offline (online by default)",
         )
         add_parser.add_argument(
-            "--private",
-            action="store_false",
-            dest="public",
-            default=True,
-            help="Make the device private (public by default)",
-        )
-        add_parser.add_argument(
             "--worker", required=True, help="The name of the worker"
         )
         add_parser.add_argument(
@@ -116,13 +109,6 @@ class Command(BaseCommand):
             dest="online",
             default=True,
             help="Create the device offline (online by default)",
-        )
-        add_parser.add_argument(
-            "--private",
-            action="store_false",
-            dest="public",
-            default=True,
-            help="Make the device private (public by default)",
         )
         add_parser.add_argument(
             "--worker", required=True, help="The name of the worker (required)"
@@ -181,16 +167,6 @@ class Command(BaseCommand):
             help="Update the device health",
         )
         update_parser.add_argument("--worker", default=None, help="Update the worker")
-        display = update_parser.add_mutually_exclusive_group()
-        display.add_argument(
-            "--public", default=None, action="store_true", help="make the device public"
-        )
-        display.add_argument(
-            "--private",
-            dest="public",
-            action="store_false",
-            help="Make the device private",
-        )
         physical = update_parser.add_mutually_exclusive_group()
         physical.add_argument(
             "--physical-user",
@@ -243,7 +219,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         elif options["sub_command"] == "copy":
@@ -302,7 +278,6 @@ class Command(BaseCommand):
         device_type = options["device_type"]
         worker_name = options["worker"]
         description = options["description"]
-        public = options["public"]
         online = options["online"]
         tags = options["tags"]
 
@@ -349,7 +324,6 @@ class Command(BaseCommand):
         original = options["original"]
         target = options["target"]
         worker_name = options["worker"]
-        public = options["public"]
         online = options["online"]
         tags = options["copytags"]
 
@@ -433,7 +407,7 @@ class Command(BaseCommand):
             print("Reminder: device dictionary does not yet exist for %s" % target)
 
     def handle_details(self, hostname):
-        """ Print device details """
+        """Print device details"""
         try:
             device = Device.objects.get(hostname=hostname)
         except Device.DoesNotExist:
@@ -460,7 +434,7 @@ class Command(BaseCommand):
         self.stdout.write("current_job: %s" % device.current_job())
 
     def handle_list(self, state, health, show_all, format_as_csv):
-        """ Print devices list """
+        """Print devices list"""
         devices = Device.objects.all().order_by("hostname")
         if state is not None:
             devices = devices.filter(state=self.device_state[state])
@@ -497,7 +471,7 @@ class Command(BaseCommand):
                 )
 
     def handle_update(self, options):
-        """ Update device properties """
+        """Update device properties"""
         with transaction.atomic():
             hostname = options["hostname"]
             try:

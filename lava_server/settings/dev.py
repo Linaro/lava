@@ -69,7 +69,9 @@ STATIC_ROOT = str(PROJECT_STATE_DIR / "static")
 DISPATCHER_CONFIG_PATH = str(PROJECT_SRC_DIR / "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
 DEVICES_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/devices")
-DEVICE_TYPES_PATHS = [str(PROJECT_SRC_DIR / "etc/dispatcher-config/device-types")]
+DEVICE_TYPES_PATHS = [
+    str(PROJECT_SRC_DIR / "etc/dispatcher-config/device-types")
+] + DEVICE_TYPES_PATHS
 HEALTH_CHECKS_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/health-checks")
 
 # Make this unique, and don't share it with anybody.

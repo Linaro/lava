@@ -77,6 +77,13 @@ class Command(LAVADaemonCommand):
             worker.go_state_offline()
             worker.save()
 
+        return [
+            w.hostname
+            for w in Worker.objects.filter(
+                state=Worker.STATE_ONLINE, health=Worker.HEALTH_ACTIVE
+            )
+        ]
+
     def handle(self, *args, **options):
         # Initialize logging.
         self.setup_logging(
@@ -155,19 +162,19 @@ class Command(LAVADaemonCommand):
     def main_loop(self) -> None:
         dts: Set[str] = set()
         while True:
-            begin = time.time()
+            begin = time.monotonic()
             try:
                 # Check remote worker connectivity
                 with transaction.atomic():
-                    self.check_workers()
+                    workers = self.check_workers()
 
                 # Schedule jobs
-                schedule(self.logger, dts)
+                schedule(self.logger, dts, workers)
                 dts = set()
 
                 # Wait for events
-                while not dts and (time.time() - begin) < INTERVAL:
-                    timeout = max(INTERVAL - (time.time() - begin), 0)
+                while not dts and (time.monotonic() - begin) < INTERVAL:
+                    timeout = max(INTERVAL - (time.monotonic() - begin), 0)
                     with contextlib.suppress(zmq.ZMQError):
                         self.poller.poll(max(timeout * 1000, 1))
                     dts = self.get_available_dts()

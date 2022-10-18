@@ -1,0 +1,11 @@
+# Aaeon UP squared with Intel X6425RE CPU
+{% extends 'base-grub.jinja2' %}
+
+{% set net_interface = net_interface | default('efinet0') %}
+{% set grub_autoboot_prompt = grub_autoboot_prompt|default('GNU GRUB') %}
+{% set grub_needs_interrupt = grub_needs_interrupt|default(false) %}
+{% set boot_character_delay = boot_character_delay | default(1) %}
+{% set kernel_start_message = 'Booting in blind mode' %}
+
+{# Slow bios is slow; Takes around 30 seconds to get to network booted grub  #}
+{% set action_timeout_bootloader_interrupt = action_timeout_bootloader_interrupt | default(60) %}

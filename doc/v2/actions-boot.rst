@@ -1079,21 +1079,42 @@ so the method of transferring and then unpacking the overlay **must**
 work without any further setup of the rootfs. All dependencies must be
 pre-installed and all configuration must be in place (possibly using a
 hacking session). This includes the **network** configuration - the
-worker offers an apache host to download the overlay and LAVA can
-populate the URL but the device **must** automatically configure the
+worker offers several network services to download the overlay and LAVA
+can populate the URL but the device **must** automatically configure the
 networking immediately upon boot and the network **must** work
 straight away.
 
-.. code-block:: yaml
+The job could specify ``transfer_method`` to choose how to transfer overlay:
 
-  - boot:
-      transfer_overlay:
-        download_command: wget -S --progress=dot:giga
-        unpack_command: tar -C / -xzf
+* ``transfer_method: http``
 
-.. note:: The ``-C /`` command to tar is **essential** or the test shell will
-   not be able to start. The overlay will use ``gzip`` compression, so pass
-   the ``z`` option to ``tar``.
+  This will transfer overlay through apache host service.
+
+  .. code-block:: yaml
+
+    - boot:
+        transfer_overlay:
+          transfer_method: http
+          download_command: wget -S --progress=dot:giga
+          unpack_command: tar -C / -xzf
+
+  .. note:: The ``-C /`` command to tar is **essential** or the test shell will
+     not be able to start. The overlay will use ``gzip`` compression, so pass
+     the ``z`` option to ``tar``.
+
+* ``transfer_method: nfs``
+
+  This will transfer overlay through nfs server service:
+
+  .. code-block:: yaml
+
+    - boot:
+        transfer_overlay:
+          transfer_method: nfs
+          download_command: mount -t nfs -o nolock
+          unpack_command: cp -rf
+
+.. note:: ``http`` will be used if ``transfer_method`` omitted.
 
 Deployment differences
 ----------------------
@@ -1264,13 +1285,18 @@ To use ``uuu`` the :term:`device` template must specify two variables :
 
 .. code-block:: jinja
 
+  {# One of the variable above #}
   {% set uuu_usb_otg_path = '2:143' %}
+  {% set uuu_usb_otg_path_command = ['echo', '2:143'] %}
+
   {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
 
 * ``uuu_corrupt_boot_media_command`` : a list of commands to execute on the platform within u-boot to corrupt the primary boot media.
     On the next reboot, serial download protocol must be available on the platform to flash future images using uuu.
 
 * ``uuu_usb_otg_path`` : can be obtained using the command ``uuu -lsusb`` :
+* ``uuu_usb_otg_path_command`` : Allow to customize uuu_otg_path at the worker level, avoiding jinja2 device template modification on the server.
+    Your command must print on a single line a well formatted usb path accepted by uuu.
 
 .. code-block:: shell
 
@@ -1391,3 +1417,102 @@ Example code :
       - SDPS: boot -f {boot}
       - FB: continue
       - FB: done
+
+BCU Integration
+^^^^^^^^^^^^^^^
+Most recent i.MX boards (imx8dxl, imx8mp, imx8ulp, imx93 as of july-2022) support BCU, a remote control utility.
+BCU allows changing the board's boot configuration (mainly SD card, eMMC or USB Serial Download Protocol) through a serial interface.
+
+**bcu**
+
+Integration of NXP ``bcu`` the board remote control utility for the boards/platform that support remote control.
+
+See the project readme of `bcu` on GitHub : https://github.com/NXPmicro/bcu#readme
+
+**Installation**
+
+``bcu`` is not provided as a dependency within LAVA, you need to install it manually over all workers.
+
+You can get the latest release here : https://github.com/NXPmicro/bcu/releases/latest
+
+
+**Enabling bcu capability on compatible device types**
+
+To use ``bcu`` the :term:`device type` template must specify variable :
+
+.. code-block:: jinja
+
+  {% set bcu_board_name = 'imx8dxlevk' %}
+
+* ``bcu_board_name`` : can be obtained using the command ``bcu lsboard`` :
+
+.. code-block:: shell
+
+   $ bcu lsboard
+   version bcu_1.1.45-0-g0b267ba
+
+   list of supported board model:
+
+	imx8dxlevk
+	imx8dxlevkc1
+	imx8dxl_ddr3_evk
+	imx8mpevkpwra0
+	imx8mpevkpwra1
+	imx8mpevk
+	imx8mpddr4
+	imx8ulpevk
+	imx8ulpevkb2
+	imx8ulpevk9
+	done
+
+**Device configuration**
+
+To use ``bcu`` the :term:`device` template must specify variable :
+
+.. code-block:: jinja
+
+  {# One of the variable below #}
+  {% set bcu_board_id = '2-1.3' %}
+  {% set bcu_board_id_command = ['echo', '2-1.3'] %}
+
+* ``bcu_board_id`` : can be obtained using the command ``bcu lsftdi`` :
+* ``bcu_board_id_command`` : Allows customization of bcu_board_id at the worker level. It avoids device template modification in server side.
+    Your command must print on a single line a well formatted board id accepted by bcu.
+
+.. code-block:: shell
+
+  $ bcu lsftdi
+  version bcu_1.1.45-0-g0b267ba
+  number of boards connected through FTDI device found: 1
+  board[0] location_id=2-1.3
+  done
+
+**Usage**
+
+Following the same syntax of ``bcu`` tool, in the boot action the ``method`` should be specified as ``uuu`` and then
+commands are specified in the ``commands`` field.
+
+Example definition :
+
+.. code-block:: yaml
+
+  - boot:
+      method: uuu
+      commands:
+           - bcu: reset usb
+           - uuu: -b emmc {boot}
+           - bcu: set_boot_mode emmc
+      timeout:
+        minutes: 20
+
+Non-exhaustive list of available bcu commands :
+
+.. code-block:: yaml
+
+  - reset BOOTMODE_NAME                 # Reset the board and then boots from mentioned BOOTMODE_NAME.
+                                        # Replace BOOTMODE_NAME with different options like emmc,sd,
+                                        # usb which can be obtained from command bcu lsbootmode.
+                                        # Replace the BOOTMODE_NAME with anyone of the mentioned.
+  - lsftdi                              # List all the boards connected by ftdi device
+  - lsboard                             # List all supported board models
+  - get_boot_mode                       # Displays the boot mode set by BCU

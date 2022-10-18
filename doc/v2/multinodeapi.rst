@@ -173,7 +173,7 @@ Examples are provided below, together with ``lava-wait`` and
 lava-wait
 ---------
 
-Waits until any other device in the group sends a message with the given ID.
+Waits until any device in the group sends a message with the given ID.
 This call will block until such message is sent.
 
 Usage:
@@ -206,14 +206,14 @@ lava-wait-all
 
 ``lava-wait-all <message-id> [<role>]``
 
-If data was sent by the other devices with the message, the key-value pairs
+If data was sent by the devices with the message, the key-value pairs
 will be stored in the cache file (``/tmp/lava_multi_node_cache.txt`` by default),
 each in one line, prefixed with the target name and a colon.
 
 Some examples for ``lava-send``, ``lava-wait`` and ``lava-wait-all`` are given
 below.
 
-The message returned can include data from other devices which sent a message
+The message returned can include data from devices which sent a message
 with the relevant message ID, only the wait is dependent on particular devices
 with a specified role.
 
@@ -225,7 +225,7 @@ lava-wait-all <message-id>
 
 ``lava-wait-all <message-id>``
 
-``lava-wait-all`` waits until **all** other devices in the group send a message
+``lava-wait-all`` waits until **all** devices in the group send a message
 with the given message ID. Every device in the group **must** use ``lava-send``
 with the same message ID for ``lava-wait-all`` to finish, or any device using
 this API call will wait forever (and eventually timeout, failing the

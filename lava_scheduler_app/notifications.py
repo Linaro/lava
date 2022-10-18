@@ -84,7 +84,7 @@ def substitute_callback_url_variables(job, callback_url):
     # Substitute variables in callback_url with field values from job.
     # Format: { FIELD_NAME }
     # If field name is non-existing, return None.
-    logger = logging.getLogger("lava_scheduler_app")
+    logger = logging.getLogger("lava-scheduler")
 
     for sub in re.findall(r"{\s*[A-Z_-]*\s*}", callback_url):
         attribute_name = sub.replace("{", "").replace("}", "").strip().lower()
@@ -281,7 +281,7 @@ def get_recipient_args(recipient):
 
 
 def send_notifications(job):
-    logger = logging.getLogger("lava_scheduler_app")
+    logger = logging.getLogger("lava-scheduler")
     notification = job.notification
     # Prep template args.
     kwargs = get_notification_args(job)
@@ -379,6 +379,10 @@ def notification_criteria(job_id, criteria, state, health, old_health):
         elif criteria["status"] == "canceled":
             if dependency_jobs.filter(~Q(health=TestJob.HEALTH_CANCELED)).count():
                 return False
+
+    # Support for "all"
+    if criteria["status"] == "all":
+        return state in [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]
 
     # support special status of finished, otherwise skip to normal
     if criteria["status"] == "finished":
@@ -496,7 +500,7 @@ def send_upgraded_master_notifications(master_version, logger=None):
         return
 
     if logger is None:
-        logger = logging.getLogger("lava_scheduler_app")
+        logger = logging.getLogger("lava-scheduler")
     emails = ()
     workers_set = set()
 

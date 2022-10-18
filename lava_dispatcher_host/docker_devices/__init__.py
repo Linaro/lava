@@ -16,19 +16,20 @@
 import os
 import subprocess
 
-try:
-    from bcc import BPF
-    from bcc import BPFAttachType
-except ImportError:
-    # This can happen on Debian 10 and that's ok. The code path that uses this
-    # will only be used on Debian 11 +
-    pass
 from dataclasses import dataclass
 from jinja2 import Template
 from pathlib import Path
 from typing import Optional
 
 from lava_common.exceptions import InfrastructureError
+
+try:
+    from .bcc import BPF
+    from bcc import BPFAttachType
+except ImportError:
+    # This can happen on Debian 10 and that's ok. The code path that uses this
+    # will only be used on Debian 11 +
+    pass
 
 # XXX bcc.BPF should provide these (from include/uapi/linux/bpf.h in the kernel
 # tree)
@@ -117,7 +118,7 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
             f"/sys/fs/cgroup/devices/docker/{self.container_id}/devices.allow"
         )
         if not os.path.exists(devices_allow_file):
-            devices_allow_file = "/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
+            devices_allow_file = f"/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
         return devices_allow_file
 
     def apply(self):
@@ -175,6 +176,7 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         bpf = BPF(text=program)
         func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
         bpf.attach_func(func, fd, BPFAttachType.CGROUP_DEVICE, BPF_F_ALLOW_MULTI)
+        bpf.close()
         os.close(fd)
 
         for fid in existing:

@@ -1,0 +1,15 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttymxc2') %}
+{% set baud_rate = '115200' %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "earlycon " %}
+{% endif %}
+{% set bootloader_prompt = bootloader_prompt|default('=> ') %}
+{% set kernel_file = kernel_file|default('Image') %}
+{% set booti_kernel_addr  = booti_kernel_addr | default('0x40480000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x44000000') %}
+{% set booti_dtb_addr     = booti_dtb_addr | default('0x43000000') %}
+{% set uboot_mkimage_arch = 'arm64' %}

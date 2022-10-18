@@ -80,12 +80,11 @@ if (
     "allauth.account.auth_backends.AuthenticationBackend"
     in settings.AUTHENTICATION_BACKENDS
 ):
-    auth_urls.insert(
-        0,
+    auth_urls.append(
         url(
             r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
             include("allauth.urls"),
-        ),
+        )
     )
 
 # Root URL patterns
@@ -166,6 +165,14 @@ urlpatterns = [
         include("lava_rest_app.urls"),
     ),
 ]
+
+if settings.OIDC_ENABLED:
+    urlpatterns.append(
+        url(
+            r"^{mount_point}oidc/".format(mount_point=settings.MOUNT_POINT),
+            include("mozilla_django_oidc.urls"),
+        )
+    )
 
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar

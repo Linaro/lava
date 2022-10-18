@@ -51,7 +51,7 @@ CALLBACK_SCHEMA = {
 
 
 class SubmissionException(UserWarning):
-    """ Error raised if the submission is itself invalid. """
+    """Error raised if the submission is itself invalid."""
 
 
 def _timeout_schema():
@@ -296,7 +296,12 @@ def _notify_criteria_schema():
     return Schema(
         {
             Required("status"): Any(
-                "running", "complete", "incomplete", "canceled", "finished"
+                "running",
+                "complete",
+                "incomplete",
+                "canceled",
+                "finished",
+                "all",
             ),
             Optional("dependency_query"): str,
             "type": Any("progression", "regression"),
@@ -518,6 +523,7 @@ _device_schema = Schema(
         "timeouts": _device_timeouts_schema(),
         "available_architectures": list,
         "uuu_usb_otg_path": str,
+        "uuu_usb_otg_path_command": [str],
         "uuu_corrupt_boot_media_command": [str],
     }
 )

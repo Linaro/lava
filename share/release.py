@@ -100,16 +100,9 @@ def wait_pipeline(options, commit):
 def handle_prepare(options):
     # Generate the debian changelog
     run(
-        'gbp dch --new-version="%s-1" --id-length=9 --release --commit --commit-msg="LAVA Software %s release" debian'
+        'gbp dch --git-author --new-version="%s-1" --id-length=9 --release --commit --commit-msg="LAVA Software %s release" debian'
         % (options.version, options.version),
         options,
-        env={
-            "EMAIL": subprocess.check_output(
-                ["git", "config", "user.email"], stderr=subprocess.DEVNULL
-            )
-            .decode("utf-8")
-            .strip("\n")
-        },
     )
     # Update the version number
     run("echo '%s' > lava_common/VERSION" % options.version, options, shell=True)
@@ -167,7 +160,7 @@ def handle_publish(options):
         wait_pipeline(options, commit)
     print("done\n")
 
-    connection_string = "lavasoftware.org"
+    connection_string = "git.lavasoftware.org"
     if options.lavasoftware_username:
         connection_string = "%s@%s" % (
             options.lavasoftware_username,

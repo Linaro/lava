@@ -61,11 +61,6 @@
                 <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr
                 title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
               {% endif %}
-              {% if table.Meta.discrete|get_discrete_data:table.prefix %}
-                <dt>Exclusive text</dt>
-                <dd>{{ table.Meta.discrete|get_discrete_data:table.prefix|join:", " }} <abbr
-                title="add field=text in the querystring to make case sensitive matches - all fields must match.">(?)</abbr></dd>
-              {% endif %}
               {% if table.Meta.terms|get_terms_data:table.prefix %}
                 <dt>Case-sensitive text</dt>
                 <dd>{{ table.Meta.terms|get_terms_data:table.prefix|join:", " }}</dd>

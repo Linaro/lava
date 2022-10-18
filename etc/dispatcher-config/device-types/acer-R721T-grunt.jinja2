@@ -1,0 +1,6 @@
+{# device_type = 'acer-R721T-grunt' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on grunt...') %}
+{% set bootloader_prompt = bootloader_prompt | default('grunt:') %}
+{% set console_device = console_device | default('ttyS0') %}

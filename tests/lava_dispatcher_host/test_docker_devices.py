@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
+import subprocess
 import pytest
 
 try:
@@ -22,6 +23,9 @@ try:
     has_bcc = True
 except ImportError:
     has_bcc = False
+
+
+container = subprocess.call(["systemd-detect-virt", "--container", "--quiet"]) == 0
 
 
 @pytest.fixture(autouse=True)
@@ -155,6 +159,7 @@ class TestDeviceFilterCGroupsV2:
         assert DeviceFilter("foobar").__get_existing_functions__() == []
 
     @pytest.mark.skipif(not has_bcc, reason="bcc not available")
+    @pytest.mark.skipif(container, reason="this test won't work on containers")
     def test_apply(self, mocker, check_call, fd, os_close):
         load_func = mocker.patch("bcc.BPF.load_func")
         attach_func = mocker.patch("bcc.BPF.attach_func")

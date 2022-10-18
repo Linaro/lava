@@ -47,7 +47,7 @@ actions:
        shutdown-message: "reboot: Restarting system"
      transfer_overlay:
        download_command: wget -S --progress=dot:giga
-       unpack_command: tar -C / -xaf
+       unpack_command: tar -C / -xzf
      prompts:
        - 'linaro-test'
        - 'root@debian:~#'

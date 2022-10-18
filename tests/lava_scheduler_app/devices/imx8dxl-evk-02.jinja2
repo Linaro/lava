@@ -1,0 +1,14 @@
+{% extends 'imx8dxl-evk.jinja2' %}
+{% set uboot_mac_addr = '00:04:9f:xx:xx:6a' %}
+{% set connection_list = ['uart0', 'uart1'] %}
+{% set connection_tags = {'uart0': ['primary', 'telnet'], 'uart1': ['secondary']} %}
+{% set connection_commands = {'uart0': 'telnet localhost 7002',
+                              'uart1': 'telnet localhost 7003'} %}
+{% set hard_reset_command  = ['/usr/local/lab-scripts/pdu_by_board.sh imx8dxl-evk-fr35 pdu reboot'] %}
+{% set power_off_command   = ['/usr/local/lab-scripts/pdu_by_board.sh imx8dxl-evk-fr35 pdu off'] %}
+{% set power_on_command    = ['/usr/local/lab-scripts/pdu_by_board.sh imx8dxl-evk-fr35 pdu on'] %}
+{% set uuu_usb_otg_path_command = ['echo', '-n', '12:123'] %}
+{% set uuu_corrupt_boot_media_command = ['mmc partconf 0 0 0 0', 'mmc dev 1', 'mmc erase 0 0x400', 'mmc dev 0', 'mmc erase 0 0x400'] %}
+{% set ums_command = 'ums 0 mmc 0' %}
+{% set uboot_mass_storage_device = '/dev/disk/by-id/usb-Linux_UMS_disk_0_191c51d6f070954n-0:0' %}
+{% set fastboot_serial_number = '191c51d6f070954n' %}

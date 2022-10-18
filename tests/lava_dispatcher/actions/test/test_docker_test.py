@@ -21,6 +21,9 @@
 import pytest
 import re
 import time
+
+from lava_dispatcher.actions.test.multinode import MultinodeMixin
+from lava_dispatcher.actions.test.shell import TestShellAction
 from pathlib import Path
 from tests.lava_dispatcher.test_basic import Factory
 
@@ -50,6 +53,18 @@ def first_test_action(action):
 @pytest.fixture
 def second_test_action(job):
     return job.pipeline.actions[3]
+
+
+@pytest.fixture
+def multinode_job(factory):
+    return factory.create_job(
+        "hi6220-hikey-r2-01.jinja2", "sample_jobs/docker-test-multinode.yaml"
+    )
+
+
+@pytest.fixture
+def multinode_action(multinode_job):
+    return multinode_job.pipeline.actions[0]
 
 
 def test_validate_schema(factory):
@@ -87,7 +102,7 @@ def test_run(action, mocker):
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     action.validate()
-    action.run(connection, time.time() + 1000)
+    action.run(connection, time.monotonic() + 1000)
 
     # device is shared with the container
     add_device_container_mappings.assert_called()
@@ -188,3 +203,12 @@ def test_docker_test_shell_validate(action):
     action.validate()
     assert action.valid == False
     [a.__errors__.clear() for a in action.pipeline.actions]
+
+
+def test_multinode_docker_test_shell(action, multinode_action):
+    # docker test shell job without multinode
+    assert isinstance(action.pipeline.actions[2], TestShellAction)
+    assert not isinstance(action.pipeline.actions[2], MultinodeMixin)
+
+    # docker test shell job with multinode
+    assert isinstance(multinode_action.pipeline.actions[2], MultinodeMixin)

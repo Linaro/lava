@@ -41,7 +41,7 @@ from django.core.exceptions import PermissionDenied, FieldDoesNotExist
 from django.urls import reverse
 from django.db import transaction
 from django.db.utils import DatabaseError
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import Case, IntegerField, Prefetch, Sum, When
 from django.template.loader import render_to_string
 from django.http import (
     FileResponse,
@@ -130,6 +130,10 @@ from lava_scheduler_app.tables import (
 )
 
 
+def request_config(request, paginate):
+    return RequestConfig(request, paginate={**paginate, **djt2_paginator_class()})
+
+
 # The only functions which need to go in this file are those directly
 # referenced in urls.py - other support functions can go in tables.py or similar.
 
@@ -172,17 +176,20 @@ class JobTableView(LavaView):
         return Q(device_type__in=dt)
 
     def job_state_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents
+        # matching Complete discrete from Incomplete
         matches = [p[0] for p in TestJob.STATE_CHOICES if term in p[1]]
         return Q(state__in=matches)
 
     def device_state_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents
+        # matching Complete discrete from Incomplete
         matches = [p[0] for p in Device.STATE_CHOICES if term in p[1]]
         return Q(state__in=matches)
 
     def device_health_query(self, term):
-        # could use .lower() but that prevents matching Complete discrete from Incomplete
+        # could use .lower() but that prevents matching
+        # Complete discrete from Incomplete
         matches = [p[0] for p in Device.HEALTH_CHOICES if term in p[1]]
         return Q(health__in=matches)
 
@@ -248,7 +255,11 @@ class WorkerLogView(LavaView):
                 (Q(content_type=worker_ct) & Q(object_id=self.worker.hostname))
                 | (
                     Q(content_type=device_ct)
-                    & Q(object_id__in=self.worker.device_set.all())
+                    & Q(
+                        object_id__in=self.worker.device_set.visible_by_user(
+                            self.request.user
+                        )
+                    )
                 )
             )
             .order_by("-action_time")
@@ -292,7 +303,7 @@ def health_jobs_in_hr():
 
 
 def _online_total():
-    """ returns a tuple of (num_online, num_not_retired) """
+    """returns a tuple of (num_online, num_not_retired)"""
     total = Device.objects.exclude(health=Device.HEALTH_RETIRED).count()
     online = Device.objects.filter(
         health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
@@ -303,19 +314,30 @@ def _online_total():
 
 class IndexTableView(JobTableView):
     def get_queryset(self):
-        return visible_jobs_with_custom_sort(self.request.user).filter(
-            state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
+        query = visible_jobs_with_custom_sort(self.request.user)
+        query = query.filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
         )
 
 
 class DeviceTableView(JobTableView):
     def get_queryset(self):
-        return (
+        q = (
             Device.objects.select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .visible_by_user(self.request.user)
             .order_by("hostname")
             .distinct()
+        )
+        return q.prefetch_related(
+            Prefetch(
+                "testjobs",
+                queryset=TestJob.objects.filter(
+                    ~Q(state=TestJob.STATE_FINISHED)
+                ).select_related("submitter"),
+                to_attr="running_jobs",
+            )
         )
 
 
@@ -516,8 +538,8 @@ def reports(request):
 @BreadCrumb("Failure Report", parent=reports)
 def failure_report(request):
     data = FailureTableView(request)
-    ptable = FailedJobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = FailedJobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
 
     return render(
         request,
@@ -727,11 +749,21 @@ class DeviceTypeOverView(JobTableView):
 
 class NoDTDeviceView(DeviceTableView):
     def get_queryset(self):
-        return (
+        q = (
             Device.objects.exclude(health=Device.HEALTH_RETIRED)
             .visible_by_user(self.request.user)
             .select_related("device_type", "worker_host")
+            .prefetch_related("tags")
             .order_by("hostname")
+        )
+        return q.prefetch_related(
+            Prefetch(
+                "testjobs",
+                queryset=TestJob.objects.filter(
+                    ~Q(state=TestJob.STATE_FINISHED)
+                ).select_related("submitter"),
+                to_attr="running_jobs",
+            )
         )
 
 
@@ -845,10 +877,9 @@ def device_type_detail(request, pk):
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix).filter(actual_device__in=devices),
-        request=request,
         prefix=prefix,
     )
-    config = RequestConfig(request, paginate={"per_page": dt_jobs_ptable.length})
+    config = request_config(request, {"per_page": dt_jobs_ptable.length})
     config.configure(dt_jobs_ptable)
 
     prefix = "health_"
@@ -878,7 +909,6 @@ def device_type_detail(request, pk):
     else:
         core_string = ""
 
-    bits_width = dt.bits.width if dt.bits else ""
     aliases = ", ".join([alias.name for alias in dt.aliases.order_by("name")])
 
     all_devices = dt.device_set.count()
@@ -943,7 +973,7 @@ def device_type_detail(request, pk):
 @BreadCrumb("Health history", parent=device_type_detail, needs=["pk"])
 def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
-    devices = device_type.device_set.all()
+    devices = device_type.device_set.visible_by_user(request.user)
     devices_log_data = DevicesLogView(
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
@@ -1249,7 +1279,8 @@ def internal_v1_jobs_logs(request, pk):
     line_skip = logs_instance.line_count(job) - line_idx
 
     # TODO: use a database transaction so all or none objects are saved
-    # TODO: except exceptions and return the number of lines that where actually parsed !!
+    # TODO: except exceptions and return the number
+    #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
     for (line, string) in zip(yaml_load(lines), lines.split("\n")):
@@ -1479,7 +1510,9 @@ class MyErrorJobsView(JobTableView):
 class LongestJobsView(JobTableView):
     def get_queryset(self):
         jobs = (
-            TestJob.objects.select_related("actual_device", "requested_device_type")
+            TestJob.objects.select_related(
+                "actual_device", "requested_device_type", "submitter"
+            )
             .visible_by_user(self.request.user)
             .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
         )
@@ -1491,7 +1524,10 @@ class FavoriteJobsView(JobTableView):
         user = self.user if self.user else self.request.user
 
         query = visible_jobs_with_custom_sort(self.request.user)
-        return query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
+        query = query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
+        return query.select_related(
+            "actual_device", "requested_device_type", "submitter"
+        )
 
 
 class AllJobsView(JobTableView):
@@ -1504,8 +1540,8 @@ class AllJobsView(JobTableView):
 @BreadCrumb("Jobs", parent=index)
 def job_list(request):
     data = AllJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = JobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = JobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/alljobs.html",
@@ -1524,12 +1560,8 @@ def job_list(request):
 @BreadCrumb("Errors", parent=job_list)
 def job_errors(request):
     data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
-    ptable = JobErrorsTable(
-        data.get_table_data(), prefix="job_errors_", template_name="lazytables.html"
-    )
-    RequestConfig(
-        request, paginate={"per_page": ptable.length, **djt2_paginator_class()}
-    ).configure(ptable)
+    ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/job_errors.html",
@@ -1548,8 +1580,8 @@ def job_errors(request):
 @BreadCrumb("Active", parent=job_list)
 def active_jobs(request):
     data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    ptable = IndexJobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = IndexJobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
 
     return render(
         request,
@@ -1659,7 +1691,6 @@ def job_detail(request, pk):
     for action in pipeline:
         if "section" in action:
             sections.append({action["section"]: action["level"]})
-    default_section = "boot"  # to come from user profile later.
 
     # Validate the job definition
     validation_errors = ""
@@ -1838,8 +1869,8 @@ def job_fetch_data(request, pk):
 def myjobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = JobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = JobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/myjobs.html",
@@ -1858,8 +1889,8 @@ def myjobs(request):
 def my_active_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyActiveJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = IndexJobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = IndexJobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/myjobs_active.html",
@@ -1879,8 +1910,8 @@ def my_active_jobs(request):
 def my_queued_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyQueuedJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = QueueJobsTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = QueueJobsTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/myjobs_queued.html",
@@ -1900,10 +1931,8 @@ def my_queued_jobs(request):
 def my_error_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyErrorJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = JobErrorsTable(
-        data.get_table_data(), prefix="job_errors_", template_name="lazytables.html"
-    )
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/myjobs_error.html",
@@ -1923,8 +1952,8 @@ def my_error_jobs(request):
 def longest_jobs(request, username=None):
 
     data = LongestJobsView(request, model=TestJob, table_class=LongestJobTable)
-    ptable = LongestJobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = LongestJobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/longestjobs.html",
@@ -1948,8 +1977,8 @@ def favorite_jobs(request):
         username = request.user.username
     user = get_object_or_404(User, username=username)
     data = FavoriteJobsView(request, model=TestJob, table_class=JobTable, user=user)
-    ptable = JobTable(data.get_table_data(), request=request)
-    RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
+    ptable = JobTable(data.get_table_data())
+    request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
         "lava_scheduler_app/favorite_jobs.html",
@@ -2023,10 +2052,16 @@ def job_timing(request, pk):
 
     # start and end patterns
     pattern_start = re.compile(
-        "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
+        (
+            "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+            "\\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
+        )
     )
     pattern_end = re.compile(
-        "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) \\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
+        (
+            "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+            "\\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
+        )
     )
 
     timings = {}
@@ -2361,7 +2396,7 @@ class RecentJobsView(JobTableView):
 def device_detail(request, pk):
     # Find the device and raise 404 if we are not allowed to see it
     try:
-        device = Device.objects.select_related("device_type").get(pk=pk)
+        device = Device.objects.select_related("device_type", "worker_host").get(pk=pk)
     except Device.DoesNotExist:
         raise Http404("No device matches the given query.")
 
@@ -2391,12 +2426,8 @@ def device_detail(request, pk):
     recent_data = RecentJobsView(
         request, device, model=TestJob, table_class=RecentJobsTable
     )
-    recent_ptable = RecentJobsTable(
-        recent_data.get_table_data(prefix), request=request, prefix=prefix
-    )
-    RequestConfig(request, paginate={"per_page": recent_ptable.length}).configure(
-        recent_ptable
-    )
+    recent_ptable = RecentJobsTable(recent_data.get_table_data(prefix), prefix=prefix)
+    request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     search_data = recent_ptable.prepare_search_data(recent_data)
     discrete_data = recent_ptable.prepare_discrete_data(recent_data)
@@ -2647,9 +2678,10 @@ def healthcheck(request):
     health_check_data = HealthCheckJobsView(
         request, model=TestJob, table_class=JobTable
     )
-    health_check_ptable = JobTable(health_check_data.get_table_data(), request=request)
-    config = RequestConfig(request, paginate={"per_page": health_check_ptable.length})
-    config.configure(health_check_ptable)
+    health_check_ptable = JobTable(health_check_data.get_table_data())
+    request_config(request, {"per_page": health_check_ptable.length}).configure(
+        health_check_ptable
+    )
     return render(
         request,
         "lava_scheduler_app/health_check_jobs.html",
@@ -2678,9 +2710,8 @@ class QueueJobsView(JobTableView):
 @BreadCrumb("Queue", parent=job_list)
 def queue(request):
     queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
-    queue_ptable = QueueJobsTable(queue_data.get_table_data(), request=request)
-    config = RequestConfig(request, paginate={"per_page": queue_ptable.length})
-    config.configure(queue_ptable)
+    queue_ptable = QueueJobsTable(queue_data.get_table_data())
+    request_config(request, {"per_page": queue_ptable.length}).configure(queue_ptable)
     return render(
         request,
         "lava_scheduler_app/queue.html",
@@ -2747,7 +2778,7 @@ def download_device_type_template(request, pk):
 
 @require_POST
 def similar_jobs(request, pk):
-    logger = logging.getLogger("lava_scheduler_app")
+    logger = logging.getLogger("lava-scheduler")
     job = get_restricted_job(request.user, pk, request=request)
 
     entity = ContentType.objects.get_for_model(TestJob).model

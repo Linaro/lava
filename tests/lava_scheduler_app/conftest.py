@@ -1,8 +1,5 @@
-import jinja2
 import pathlib
 import pytest
-
-from lava_server.files import File
 
 
 @pytest.fixture(autouse=True)
@@ -36,18 +33,6 @@ def update_settings(settings, mocker, tmpdir):
         },
     )
 
-    def devices():
-        return jinja2.Environment(
-            loader=File("device").loader(), autoescape=False, trim_blocks=True
-        )
-
-    def device_types():
-        return jinja2.Environment(
-            loader=File("device-type").loader(), autoescape=False, trim_blocks=True
-        )
-
-    mocker.patch("lava_scheduler_app.environment.devices", devices)
-    mocker.patch("lava_scheduler_app.environment.device_types", device_types)
     mocker.patch(
         "lava_scheduler_app.models.TestJob.output_dir", str(tmpdir / "job-output")
     )

@@ -70,6 +70,9 @@ class File:
                 return True
         return False
 
+    def is_first(self):
+        return self.files[0].exists()
+
     def list(self, pattern):
         if self.kind not in self.LIST_KINDS:
             raise NotImplementedError("Not available for this kind")
@@ -101,4 +104,8 @@ class File:
     def write(self, data):
         path = self.files[0]
         path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-        path.write_text(data, encoding="utf-8")
+        if data:
+            path.write_text(data, encoding="utf-8")
+        else:
+            with contextlib.suppress(FileNotFoundError):
+                path.unlink()

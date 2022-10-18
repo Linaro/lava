@@ -17,39 +17,36 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
 
-from functools import wraps
-from simplejson import JSONDecodeError
 import os
-import sys
 import xmlrpc.client
-import yaml
+from functools import wraps
 
+import yaml
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
 from django.db import transaction
-from linaro_django_xmlrpc.models import ExposedV2API
+from django.db.models import Count
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    JSONDataError,
-    DevicesUnavailableException,
-    TestJob,
-)
 from lava_scheduler_app.dbutils import (
+    active_device_types,
     device_type_summary,
     testjob_submission,
-    active_device_types,
+)
+from lava_scheduler_app.models import (
+    Device,
+    DevicesUnavailableException,
+    DeviceType,
+    TestJob,
 )
 from lava_scheduler_app.schema import (
-    validate_submission,
-    validate_device,
     SubmissionException,
+    validate_device,
+    validate_submission,
 )
+from linaro_django_xmlrpc.models import ExposedV2API
 
 # functions need to be members to be exposed in the API
 
@@ -58,7 +55,7 @@ from lava_scheduler_app.schema import (
 
 
 def check_perm(perm):
-    """ decorator to check that the caller has the given permission """
+    """decorator to check that the caller has the given permission"""
 
     def decorator(f):
         @wraps(f)
@@ -307,7 +304,10 @@ class SchedulerAPI(ExposedV2API):
         device hostname, device type, device state, current running job id and
         if device is pipeline. For example:
 
-        [['panda01', 'panda', 'running', 'good', 164, False], ['qemu01', 'qemu', 'idle', 'unknwon', None, True]]
+        [
+            ['panda01', 'panda', 'running', 'good', 164, False],
+            ['qemu01', 'qemu', 'idle', 'unknwon', None, True],
+        ]
         """
 
         devices_list = Device.objects.visible_by_user(self.user).exclude(
@@ -374,13 +374,17 @@ class SchedulerAPI(ExposedV2API):
         Name
         ----
 
-        `get_recent_jobs_for_device_type` (`device_type`, `count=1`, `restrict_to_user=False`)
+        `get_recent_jobs_for_device_type` (
+            `device_type`,
+            `count=1`,
+            `restrict_to_user=False`,
+        )
 
         Description
         -----------
         Get details of recently finished jobs for a given device_type. Limits the list
-        to test jobs submitted by the user making the query if restrict_to_user is set to
-        True. Get only the most recent job by default, but count can be set higher to
+        to test jobs submitted by the user making the query if restrict_to_user is set
+        to True. Get only the most recent job by default, but count can be set higher to
         get for example the last 10 jobs.
 
         Arguments
@@ -458,8 +462,8 @@ class SchedulerAPI(ExposedV2API):
         Description
         -----------
         Get details of recently finished jobs for a given device. Limits the list
-        to test jobs submitted by the user making the query if restrict_to_user is set to
-        True. Get only the most recent job by default, but count can be set higher to
+        to test jobs submitted by the user making the query if restrict_to_user is set
+        to True. Get only the most recent job by default, but count can be set higher to
         get for example the last 10 jobs.
 
         Arguments
@@ -724,7 +728,8 @@ class SchedulerAPI(ExposedV2API):
 
         Arguments
         ---------
-        `all`: boolean - include retired devices and undisplayed device-types in the listing.
+        `all`: boolean - include retired devices and undisplayed device-types in the
+                         listing.
 
         Return value
         ------------
@@ -908,9 +913,9 @@ class SchedulerAPI(ExposedV2API):
 
         Return value
         ------------
-        This function returns a XML-RPC array of submitted and running jobs with their status and
-        actual device for running jobs and requested device or device type for submitted jobs and
-        job sub_id for multinode jobs.
+        This function returns a XML-RPC array of submitted and running jobs with their
+        status and actual device for running jobs and requested device or device type
+        for submitted jobs and job sub_id for multinode jobs.
         For example:
 
         [[73, 'multinode-job', 'submitted', None, 'kvm', '72.1'],
@@ -1130,7 +1135,10 @@ class SchedulerAPI(ExposedV2API):
         if not devices and name:
             raise xmlrpc.client.Fault(
                 404,
-                "No devices found with hostname or device type name %s, visible by the user"
+                (
+                    "No devices found with hostname or device type name %s, "
+                    "visible by the user"
+                )
                 % name,
             )
         if not devices and not name:

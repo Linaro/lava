@@ -13,3 +13,4 @@
 # TOKEN="--token <token>"
 # WS_URL="--ws-url http://localhost/ws/"
 # HTTP_TIMEOUT="--http-timeout 600"
+# JOB_LOG_INTERVAL="--job-log-interval 5"

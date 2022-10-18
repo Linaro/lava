@@ -1,3 +1,59 @@
+lava (2022.10-1) unstable; urgency=medium
+
+  * LAVA Software 2022.10 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 11 Oct 2022 11:44:37 +0200
+
+lava (2022.08-1) unstable; urgency=medium
+
+  * LAVA Software 2022.08 release
+
+  [ Antonio Terceiro ]
+  * [29478ada2] debian/control: add Ubuntu packages
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Fri, 12 Aug 2022 10:26:43 +0200
+
+lava (2022.06-1) unstable; urgency=medium
+
+  * LAVA Software 2022.06 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 30 Jun 2022 10:59:00 +0200
+
+lava (2022.05-1) unstable; urgency=medium
+
+  * LAVA Software 2022.05 release
+
+  [ Chase Qi ]
+  * [55b668402] lava-dispatcher-host: support to install on ubuntu focal
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 30 May 2022 16:48:01 +0200
+
+lava (2022.04-1) unstable; urgency=medium
+
+  * LAVA Software 2022.04 release
+
+  [ Rémi Duraffort ]
+  * [4403c359d] lava-docker-worker: fix some bugs found on staging
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 21 Apr 2022 11:29:38 +0200
+
+lava (2022.03-1) unstable; urgency=medium
+
+  * LAVA Software 2022.03 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 28 Mar 2022 16:40:18 +0200
+
+lava (2022.02-1) unstable; urgency=medium
+
+  * LAVA Software 2022.02 release
+
+  [ Antonio Terceiro ]
+  * [12bf01a17] debian/rules: ensure services are restarted on upgrades
+  * [5cfda2e7a] autopkgtest: install qemu-system-arm
+  * [7bd2397bc] autopkgtest: testsuite: add dependency on lava-dispatcher-host
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 01 Mar 2022 10:55:30 +0100
+
 lava (2022.01.3-3) unstable; urgency=medium
 
   * Skip BPF test when running testsuite on containers. This fixes the

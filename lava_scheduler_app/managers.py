@@ -266,7 +266,11 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             )
 
             # Add viewing_groups filter.
-            if perm == self.model.VIEW_PERMISSION:
+            if perm == self.model.VIEW_PERMISSION and user.is_authenticated:
+                # Anonymous user can never be a part of the group
+                # No point in adding viewing_groups filter as
+                # it will only slowdown server.
+
                 # Needed to determine if viewing_groups is subset of all users
                 # groups, so remove all jobs where any viewing group is in groups
                 # this user is not part of.

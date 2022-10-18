@@ -199,9 +199,9 @@ class BootGDBRetry(RetryAction):
         if self.gdb_connection.raw_connection.isalive():
             self.logger.info("Stopping gdb cleanly")
             try:
-                self.gdb_connection.wait(max_end_time=time.time() + 1)
+                self.gdb_connection.wait(max_end_time=time.monotonic() + 1)
                 self.gdb_connection.sendline("set confirm no")
-                self.gdb_connection.wait(max_end_time=time.time() + 1)
+                self.gdb_connection.wait(max_end_time=time.monotonic() + 1)
                 self.gdb_connection.sendline("quit")
             except JobError:
                 self.logger.warning("Unable to quit gdb, killing the process")
