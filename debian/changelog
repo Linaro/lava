@@ -1,6 +1,10 @@
 lava (2022.10-1) unstable; urgency=medium
 
+  [ Rémi Duraffort ]
   * LAVA Software 2022.10 release
+
+  [ Antonio Terceiro ]
+  * Drop patches, already applied upstream.
 
  -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 11 Oct 2022 11:44:37 +0200
 
