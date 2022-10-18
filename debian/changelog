@@ -2,6 +2,8 @@ lava (2022.10-1) unstable; urgency=medium
 
   [ Rémi Duraffort ]
   * LAVA Software 2022.10 release
+    - Fixes remote code execution [CVE-2022-42902] (Closes: #1021737)
+    - Fixes startup with Django 3.2 (Closes: #994258)
 
   [ Antonio Terceiro ]
   * Drop patches, already applied upstream.
