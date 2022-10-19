@@ -7,6 +7,12 @@ if [ "$1" = "setup" ]
 then
     true
 else
+    case "${CI_COMMIT_TAG}" in
+        debian/*)
+            exit
+            ;;
+    esac
+
     LAVA_BUILDD=`pwd`
 
     R_OPT="--ignore=wrongdistribution"
