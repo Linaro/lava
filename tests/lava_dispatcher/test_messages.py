@@ -21,7 +21,6 @@
 import os
 import time
 import pexpect
-from lava_common.constants import KERNEL_FREE_INIT_MSG
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.messages import LinuxKernelMessages
@@ -36,7 +35,7 @@ class Kernel:
     def run(self, prompt_list):
         if not self.existing_prompt:
             self.existing_prompt = prompt_list[:]
-            prompt_list = LinuxKernelMessages.get_kernel_prompts()
+            prompt_list = LinuxKernelMessages.get_init_prompts()
         if isinstance(self.existing_prompt, list):
             prompt_list.extend(self.existing_prompt)
         else:
@@ -46,13 +45,7 @@ class Kernel:
 
 class Child(Kernel):
     def run(self, prompt_list):
-        if KERNEL_FREE_INIT_MSG in prompt_list:
-            index = prompt_list.index(KERNEL_FREE_INIT_MSG)
-            if len(prompt_list) > index:
-                index += 1
-                self.existing_prompt = prompt_list[index:]
-        else:
-            self.existing_prompt = prompt_list[:]
+        self.existing_prompt = prompt_list[:]
         prompt_list = LinuxKernelMessages.get_init_prompts()
         super().run(prompt_list)
         return prompt_list
@@ -88,14 +81,6 @@ class TestBootMessages(StdoutTestCase):
         super().setUp()
         self.max_end_time = time.monotonic() + 30
 
-    def test_existing_prompt(self):
-        kernel = Kernel()
-        prompt_list = kernel.run(["root@debian:"])
-        self.assertIn(KERNEL_FREE_INIT_MSG, prompt_list)
-        child = Child()
-        prompt_list = child.run(prompt_list)
-        self.assertNotIn(KERNEL_FREE_INIT_MSG, prompt_list)
-
     def test_kernel_txt(self):
         """
         The same logfile passes kernel boot and fails
@@ -104,7 +89,7 @@ class TestBootMessages(StdoutTestCase):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-panic.txt")
         self.assertTrue(os.path.exists(logfile))
         child = pexpect.spawn("cat", [logfile])
-        message_list = LinuxKernelMessages.get_kernel_prompts()
+        message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
@@ -122,22 +107,18 @@ class TestBootMessages(StdoutTestCase):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
         self.assertTrue(os.path.exists(logfile))
         child = pexpect.spawn("cat", [logfile])
-        message_list = LinuxKernelMessages.get_kernel_prompts()
+        message_list = LinuxKernelMessages.get_init_prompts()
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
         )
-        self.assertEqual(len(results), 1)
-        self.assertEqual(
-            results[0],
-            {"message": "kernel-messages", "success": "Freeing unused kernel memory"},
-        )
+        self.assertEqual(results, [])
 
     def test_kernel_2(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-2.txt")
         self.assertTrue(os.path.exists(logfile))
         child = pexpect.spawn("cat", [logfile])
-        message_list = LinuxKernelMessages.get_kernel_prompts()
+        message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
         self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
@@ -152,7 +133,7 @@ class TestBootMessages(StdoutTestCase):
             max_end_time=self.max_end_time,
             fail_msg="",
         )
-        self.assertEqual(len(list(results)), 14)
+        self.assertEqual(len(list(results)), 13)
         message_list = LinuxKernelMessages.get_init_prompts()
         child = pexpect.spawn("cat", [logfile])
         connection = FakeConnection(child, message_list)

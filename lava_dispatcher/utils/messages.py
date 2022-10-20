@@ -20,7 +20,7 @@
 
 import time
 import pexpect
-from lava_dispatcher.action import Action
+
 from lava_common.exceptions import TestError, JobError, LAVABug
 from lava_common.constants import (
     KERNEL_BUG_MSG,
@@ -38,7 +38,7 @@ from lava_dispatcher.utils.strings import seconds_to_str
 from lava_common.log import YAMLLogger
 
 
-class LinuxKernelMessages(Action):
+class LinuxKernelMessages:
     """
     Adds prompt strings to the boot operation
     to monitor for kernel panics and error strings.
@@ -78,17 +78,6 @@ class LinuxKernelMessages(Action):
         (FREE_INIT, KERNEL_FREE_INIT_MSG, "success"),
     )
 
-    def __init__(self):
-        super().__init__()
-        self.messages = self.get_kernel_prompts()
-        self.existing_prompt = None
-        for choice in self.MESSAGE_CHOICES:
-            self.messages.append(choice[1])
-
-    @classmethod
-    def get_kernel_prompts(cls):
-        return [prompt[1] for prompt in cls.MESSAGE_CHOICES]
-
     @classmethod
     def get_init_prompts(cls):
         return [prompt[1] for prompt in cls.MESSAGE_CHOICES[: cls.FREE_UNUSED]]
@@ -101,9 +90,7 @@ class LinuxKernelMessages(Action):
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
 
-        If kernel_prompts are in use, a success result is returned containing
-        details of which of KERNEL_FREE_UNUSED_MSG and KERNEL_FREE_INIT_MSG
-        were parsed. If the returned dictionary only contains this success
+        If the returned dictionary only contains this success
         message, then the the kernel-messages action can be deemed as pass.
 
         The init prompts exclude these messages, so a successful init parse
@@ -119,20 +106,10 @@ class LinuxKernelMessages(Action):
         results = []  # wrap inside a dict to use in results
         res = "pass"
         halt = None
-        init = False
         start = time.monotonic()
-        if not connection:
-            return results
-        if cls.MESSAGE_CHOICES[cls.FREE_UNUSED][1] in connection.prompt_str:
-            if cls.MESSAGE_CHOICES[cls.FREE_INIT][1] in connection.prompt_str:
-                init = True
-        remaining = max_end_time - start
-        if remaining < 0:
-            raise LAVABug(
-                "Invalid time remaining: max: %s start: %s" % (max_end_time, start)
-            )
 
         while True:
+            remaining = max_end_time - time.monotonic()
             action.logger.debug(
                 "[%s] Waiting for messages, (timeout %s)",
                 action.name,
@@ -189,22 +166,9 @@ class LinuxKernelMessages(Action):
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
                 action.logger.error("%s %s" % (action.name, halt))
                 results.append({"message": "kernel-messages"})
-            elif index and index == cls.FREE_UNUSED or index == cls.FREE_INIT:
-                if init and index <= cls.FREE_INIT:
-                    results.append(
-                        {
-                            cls.MESSAGE_CHOICES[index][2]: cls.MESSAGE_CHOICES[index][
-                                1
-                            ],
-                            "message": "kernel-messages",
-                        }
-                    )
-                    continue
-                else:
-                    results.append({"success": connection.prompt_str[index]})
-                    break
             else:
                 break
+
         # record a specific result for the kernel messages for later debugging.
         if isinstance(action.logger, YAMLLogger):
             action.logger.results(
@@ -225,31 +189,3 @@ class LinuxKernelMessages(Action):
         # allow calling actions to also pick up failures
         # without overriding their own success result, if any.
         return results
-
-    def validate(self):
-        super().validate()
-        if not self.messages:
-            self.errors = "Unable to build a list of kernel messages to monitor."
-
-    def run(self, connection, max_end_time):
-        if not connection:
-            return connection
-        if not self.existing_prompt:
-            self.existing_prompt = connection.prompt_str[:]
-            connection.prompt_str = self.get_kernel_prompts()
-        if isinstance(self.existing_prompt, list):
-            connection.prompt_str.extend(self.existing_prompt)
-        else:
-            connection.prompt_str.append(self.existing_prompt)
-        self.logger.debug(connection.prompt_str)
-        results = self.parse_failures(connection, self, max_end_time, None)
-        if len(results) > 1:
-            self.results = {"fail": results}
-        elif len(results) == 1:
-            self.results = {
-                "success": self.name,
-                "message": results[0]["message"],  # the matching prompt
-            }
-        else:
-            self.results = {"result": "skipped"}
-        return connection

@@ -316,7 +316,7 @@ def prepare_test_connection(failure=False):
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
     child = pexpect.spawn("cat", [logfile])
-    message_list = LinuxKernelMessages.get_kernel_prompts()
+    message_list = LinuxKernelMessages.get_init_prompts()
     return FakeConnection(child, message_list)
 
 
