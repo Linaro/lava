@@ -1,0 +1,241 @@
+[   15.446519] bc00: ffffffc072ba5c80 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.447835] BUG: spinlock lockup suspected on CPU#3, gdbus/2329
+[   15.447873]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   15.447900] CPU: 3 PID: 2329 Comm: gdbus Not tainted 4.4.89-01529-gb29bace #1
+[   15.447912] Hardware name: HiKey Development Board (DT)
+[   15.447925] Call trace:
+[   15.447960] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   15.447990] [<ffffff800808c204>] show_stack+0x24/0x30
+[   15.448019] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   15.448049] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   15.448079] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   15.448109] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   15.448137] [<ffffff8008104560>] try_to_wake_up+0x420/0x5b0
+[   15.448162] [<ffffff800810480c>] default_wake_function+0x34/0x48
+[   15.448191] [<ffffff8008297160>] pollwake+0x80/0x90
+[   15.448219] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   15.448247] [<ffffff800812fb64>] __wake_up_locked_key+0x3c/0x50
+[   15.448277] [<ffffff80082dbe74>] eventfd_write+0xf4/0x1e8
+[   15.448306] [<ffffff800827fd20>] __vfs_write+0x48/0xf8
+[   15.448333] [<ffffff8008280760>] vfs_write+0x98/0x1a8
+[   15.448361] [<ffffff8008281314>] SyS_write+0x54/0xb0
+[   15.448387] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   15.574335] bc20: ffffff80082970e0 ffffffc06fcbfec0 ffffffc06fcbfec0 ffffffc06fcbfe88
+[   15.582503] bc40: ffffffc07209e740 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.590667] bc60: ffffff80082970e0 ffffffc07210fdb8 ffffffc07210fdb8 ffffffc07210fd80
+[   15.598831] bc80: ffffffc0728bbac0 0000000000000019 0000000000000000 ffffffc07233bbd0
+[   15.606998] bca0: ffffff80082970e0 ffffffc072b88a38 ffffffc072b88a38 ffffffc072b88a00
+[   15.615165] bcc0: ffffffc074de4200 000000000000001b 0000000000000000 ffffffc07233bbd0
+[   15.623330] bce0: ffffff80082970e0 ffffffc0738a61b8 ffffffc0738a61b8 ffffffc0738a6180
+[   15.631494] bd00: ffffffc074dd7c80 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.639658] bd20: ffffff80082970e0 ffffffc06fd5e5b8 ffffffc06fd5e5b8 ffffffc06fd5e580
+[   15.647826] bd40: ffffffc06ff57900 0000000000000019 0000000000000000 ffffffc07233bbd0
+[   15.655991] bd60: ffffff80082970e0 ffffffc0720c7cb8 ffffffc0720c7cb8 ffffffc0720c7c80
+[   15.664155] bd80: ffffffc072ba3040 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.672321] bda0: ffffff80082970e0 ffffffc06ff48cd8 ffffffc06ff48cd8 ffffffc06ff48ca0
+[   15.680487] bdc0: ffffffc06f42ee40 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.688653] bde0: ffffff80082970e0 ffffffc07210f4b8 ffffffc07210f4b8 ffffffc07210f480
+[   15.696818] be00: ffffffc07286bac0 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.704983] be20: ffffff80082970e0 ffffffc06ff590d8 ffffffc06ff590d8 ffffffc06ff590a0
+[   15.713147] be40: 0000000000000000 ffffff800808618c 0000000000000200 0000004072ca5000
+[   15.721313] be60: ffffffffffffffff 0000007fa58c5854 0000000080000000 0000000000000015
+[   15.729479] be80: 000000000000011d ffffff800808615c 0000000000000200 0000004072ca5000
+[   15.737646] bea0: 0000000000000003 0000000025ca1280 0000000000000012 00000000000ba5c2
+[   15.745815] bec0: 000000003e78d9b0 0000000000000009 0000007fc3ec42f0 0000000000000000
+[   15.753981] bee0: 0000000000000000 0000000000000000 0000007fa56666f0 0000000000000000
+[   15.762145] bf00: 0000000000000049 000ee6b280000000 000000000000000e 0000000015dc2c6e
+[   15.770316] bf20: 0000000000000016 0000000059b061e0 00067f353fd29d40 00000dd9bc554fa9
+[   15.778483] bf40: 0000007fa5c8e9d0 0000007fa58c5788 0000000000000000 0000000000000009
+[   15.786648] bf60: 000000003e78d9b0 0000007fc3ec42f0 0000000000000e32 0000007fa5be6c30
+[   15.794811] bf80: 0000000000000001 0000000000000001 0000000000000000 000000003e742990
+[   15.802979] bfa0: 0000000000000001 0000007fc3ec42c0 0000007fa58c5834 0000007fc3ec42c0
+[   15.811146] bfc0: 0000007fa58c5854 0000000080000000 000000003e78d9b0 0000000000000049
+[   15.819311] bfe0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+[   15.827459] Call trace:
+[   15.830049] Exception stack(0xffffffc07233b5e0 to 0xffffffc07233b710)
+[   15.836755] b5e0: ffffffc07bed2e00 0000008000000000 000000000261d000 ffffff8008132d58
+[   15.844921] b600: 0000000000000002 0000000000000000 0000000000000000 ffffff80081361e0
+[   15.853088] b620: ffffff8008ce3000 ffffff8009227000 ffffffc07233b6a0 ffffff8008ccc5d4
+[   15.861254] b640: ffffffc073918420 ffffff8008139a90 ffffff8009227cf8 ffffff8009770908
+[   15.869418] b660: ffffffc073918420 ffffffc073867800 ffffff800976f000 ffffffc073918400
+[   15.877586] b680: fffffffffff5b306 0000000000bb78dd 0000004072ca5000 ffffff8009770000
+[   15.885754] b6a0: 0000000000000000 0000000000000080 0000000000000000 ffffff8009227c58
+[   15.893922] b6c0: 0000000000000001 ffffff80097fa000 0000000000000000 000000010000000a
+[   15.902088] b6e0: 000000010000000d 000000010000000f 0000000100000010 00000dd9bc554fa9
+[   15.910245] b700: ffffff8008298988 0000007fa58c5788
+[   15.915346] [<ffffff8008132d58>] walt_dec_cumulative_runnable_avg+0x40/0x48
+[   15.922586] [<ffffff80081215e0>] dequeue_task_fair+0x3f0/0x1370
+[   15.928757] [<ffffff8008102de0>] deactivate_task+0x98/0xd8
+[   15.934488] [<ffffff8008cc67d0>] __schedule+0x458/0xbf8
+[   15.939938] [<ffffff8008cc7184>] schedule+0x3c/0xa0
+[   15.945033] [<ffffff8008ccbaf8>] schedule_hrtimeout_range_clock+0x90/0x118
+[   15.952181] [<ffffff8008ccbbb8>] schedule_hrtimeout_range+0x38/0x48
+[   15.958706] [<ffffff8008296f68>] poll_schedule_timeout+0x58/0x90
+[   15.964963] [<ffffff80082986d0>] do_sys_poll+0x398/0x4d0
+[   15.970504] [<ffffff8008298b40>] SyS_ppoll+0x1b8/0x1e0
+[   15.975865] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   15.981685] Code: a94153f3 a8c27bfd d65f03c0 d503201f (d4210000) 
+[   16.000499] BUG: spinlock lockup suspected on CPU#2, sugov:0/1069
+[   16.006871]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   16.016292] CPU: 2 PID: 1069 Comm: sugov:0 Tainted: G      D         4.4.89-01529-gb29bace #1
+[   16.025158] Hardware name: HiKey Development Board (DT)
+[   16.030595] Call trace:
+[   16.033196] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   16.038832] [<ffffff800808c204>] show_stack+0x24/0x30
+[   16.044105] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   16.049383] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   16.054574] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   16.060561] [<ffffff8008ccc4bc>] _raw_spin_lock_irqsave+0x5c/0x70
+[   16.066911] [<ffffff8008132c8c>] cpufreq_notifier_trans+0xfc/0x150
+[   16.073352] [<ffffff80080f6b40>] notifier_call_chain+0x68/0xa8
+[   16.079431] [<ffffff80080f6fe0>] __srcu_notifier_call_chain+0xa0/0xf0
+[   16.080244] BUG: spinlock lockup suspected on CPU#1, swapper/1/0
+[   16.080275]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   16.101736] [<ffffff80080f706c>] srcu_notifier_call_chain+0x3c/0x50
+[   16.108267] [<ffffff80088a04a4>] cpufreq_notify_transition+0xec/0x310
+[   16.114969] [<ffffff80088a0a04>] cpufreq_freq_transition_end+0x3c/0xb0
+[   16.121761] [<ffffff80088a0d04>] __cpufreq_driver_target+0x194/0x2b0
+[   16.128375] [<ffffff8008138de4>] sugov_work+0x3c/0x58
+[   16.133657] [<ffffff80080f5398>] kthread_worker_fn+0xb8/0x188
+[   16.139648] [<ffffff80080f5258>] kthread+0xe0/0xf8
+[   16.144655] [<ffffff80080860f0>] ret_from_fork+0x10/0x20
+[   16.150195] CPU: 1 PID: 0 Comm: swapper/1 Tainted: G      D         4.4.89-01529-gb29bace #1
+[   16.158986] Hardware name: HiKey Development Board (DT)
+[   16.164427] Call trace:
+[   16.167028] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   16.172665] [<ffffff800808c204>] show_stack+0x24/0x30
+[   16.177939] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   16.183216] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   16.188405] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   16.194393] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   16.200028] [<ffffff800812c290>] sched_rt_period_timer+0x110/0x378
+[   16.206467] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   16.212814] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   16.218808] [<ffffff8008178ab8>] tick_receive_broadcast+0x40/0x60
+[   16.225158] [<ffffff8008091c00>] handle_IPI+0x310/0x3c0
+[   16.230610] [<ffffff8008082684>] gic_handle_irq+0x94/0xb0
+[   16.236233] Exception stack(0xffffffc0351abd80 to 0xffffffc0351abeb0)
+[   16.242937] bd80: 0000000000000000 ffffff80088ad570 0000000000000000 ffffff8009770000
+[   16.251104] bda0: 0000000000000002 0000000000000000 0000000000000000 ffffff8008178e9c
+[   16.259272] bdc0: ffffffc0351a4600 ffffff80097fa000 0000000000000000 0000000000000000
+[   16.267439] bde0: 0000000034d5d91d 0000004072cbb000 ffffffc0351a4600 0000000000000000
+[   16.275602] be00: 0000000000000000 0000000000000000 0000000000000000 000000037e19ef8e
+[   16.283767] be20: 0000000000000002 ffffff80098426e8 ffffffc073918000 ffffff8009842628
+[   16.291931] be40: 0000000000000004 000000037ddf3a42 ffffff800922cc60 ffffff8009893000
+[   16.300094] be60: ffffff800976e000 ffffffc0351abeb0 ffffff80088ad570 ffffffc0351abeb0
+[   16.308258] be80: ffffff80088ad574 0000000080400145 ffffff80098426e8 ffffff80088ad5f0
+[   16.316416] bea0: ffffffffffffffff ffffff80088ad570
+[   16.321509] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   16.326609] [<ffffff80088ad574>] cpuidle_enter_state+0x134/0x3e8
+[   16.332869] [<ffffff80088ad89c>] cpuidle_enter+0x34/0x48
+[   16.338410] [<ffffff800813084c>] call_cpuidle+0x44/0x80
+[   16.343863] [<ffffff8008130bec>] cpu_startup_entry+0x364/0x448
+[   16.349940] [<ffffff80080914f4>] secondary_start_kernel+0x15c/0x1b0
+[   16.356457] [<0000000000cd103c>] 0xcd103c
+[   16.988269] BUG: spinlock lockup suspected on CPU#0, NetworkManager/2270
+[   16.995254]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   17.004671] CPU: 0 PID: 2270 Comm: NetworkManager Tainted: G      D         4.4.89-01529-gb29bace #1
+[   17.014160] Hardware name: HiKey Development Board (DT)
+[   17.019594] Call trace:
+[   17.022191] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   17.027826] [<ffffff800808c204>] show_stack+0x24/0x30
+[   17.033101] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   17.038378] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   17.043570] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   17.049557] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   17.055194] [<ffffff8008133940>] walt_fixup_busy_time+0x5a8/0x5d0
+[   17.061544] [<ffffff8008103724>] set_task_cpu+0x9c/0x278
+[   17.067088] [<ffffff8008104324>] try_to_wake_up+0x1e4/0x5b0
+[   17.072897] [<ffffff800810480c>] default_wake_function+0x34/0x48
+[   17.079156] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   17.084970] [<ffffff800812fb14>] __wake_up_locked+0x3c/0x50
+[   17.090779] [<ffffff80082d7218>] ep_poll_callback+0x90/0x270
+[   17.096681] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   17.102492] [<ffffff800812fab8>] __wake_up+0x50/0x70
+[   17.107680] [<ffffff800814ec44>] wake_up_klogd_work_func+0x5c/0x78
+[   17.114124] [<ffffff80081e6468>] irq_work_run_list+0x68/0xb8
+[   17.120026] [<ffffff80081e6804>] irq_work_tick+0x5c/0x78
+[   17.125567] [<ffffff8008167c84>] update_process_times+0x4c/0x68
+[   17.131740] [<ffffff800817aa58>] tick_sched_handle.isra.6+0x38/0x70
+[   17.138271] [<ffffff800817aae8>] tick_sched_timer+0x58/0xa0
+[   17.144079] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   17.150424] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   17.156420] [<ffffff80088deccc>] arch_timer_handler_phys+0x3c/0x50
+[   17.162865] [<ffffff8008154308>] handle_percpu_devid_irq+0xe0/0x418
+[   17.169393] [<ffffff800814f174>] generic_handle_irq+0x34/0x50
+[   17.175383] [<ffffff800814f524>] __handle_domain_irq+0x8c/0x100
+[   17.181551] [<ffffff800808264c>] gic_handle_irq+0x5c/0xb0
+[   17.187175] Exception stack(0xffffffc07233b3c0 to 0xffffffc07233b4f0)
+[   17.193882] b3c0: 0000000000000000 ffffff8008ccc748 0000000000000000 ffffff8009770000
+[   17.202050] b3e0: 0000000000000001 0000000000000080 0000000000000000 ffffff800814d970
+[   17.210218] b400: ffffffc06f4fa680 ffffff80097fa000 0000000000000000 6420646662373263
+[   17.218383] b420: 2030633330663536 6631303233303564 3030313234642820 0000000000000010
+[   17.226550] b440: ffffff8008298988 0000007fa58c5788 0000000000000000 ffffff80097820c0
+[   17.234716] b460: ffffff800808c2d4 ffffff8008fcd758 ffffffc07233b680 ffffffc06f4fa680
+[   17.242884] b480: 000000000000003d ffffffc07bed2e00 ffffff8008cc7184 0000000000000000
+[   17.251050] b4a0: ffffffc06f4fa680 ffffffc07233b4f0 ffffff8008ccc748 ffffffc07233b4f0
+[   17.259215] b4c0: ffffff8008ccc74c 0000000060400345 ffffff8008fcd758 ffffff8008ccc744
+[   17.267373] b4e0: 0000008000000000 ffffff8008ccc748
+[   17.272468] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   17.277565] [<ffffff8008ccc74c>] _raw_spin_unlock_irq+0x3c/0x78
+[   17.283732] [<ffffff800808c2d4>] die+0xc4/0x1b0
+[   17.288470] [<ffffff800808c408>] bug_handler.part.2+0x48/0x88
+[   17.294462] [<ffffff800808c488>] bug_handler+0x40/0x50
+[   17.299823] [<ffffff8008083a64>] brk_handler+0xec/0x1c0
+[   17.305275] [<ffffff8008082590>] do_debug_exception+0x50/0xb0
+[   17.311257] Exception stack(0xffffffc07233b5e0 to 0xffffffc07233b710)
+[   17.317966] b5e0: ffffffc07bed2e00 0000008000000000 000000000261d000 ffffff8008132d58
+[   17.326129] b600: 0000000000000002 0000000000000000 0000000000000000 ffffff80081361e0
+[   17.334294] b620: ffffff8008ce3000 ffffff8009227000 ffffffc07233b6a0 ffffff8008ccc5d4
+[   17.342460] b640: ffffffc073918420 ffffff8008139a90 ffffff8009227cf8 ffffff8009770908
+[   17.350628] b660: ffffffc073918420 ffffffc073867800 ffffff800976f000 ffffffc073918400
+[   17.358795] b680: fffffffffff5b306 0000000000bb78dd 0000004072ca5000 ffffff8009770000
+[   17.366960] b6a0: 0000000000000000 0000000000000080 0000000000000000 ffffff8009227c58
+[   17.375125] b6c0: 0000000000000001 ffffff80097fa000 0000000000000000 000000010000000a
+[   17.383290] b6e0: 000000010000000d 000000010000000f 0000000100000010 00000dd9bc554fa9
+[   17.391450] b700: ffffff8008298988 0000007fa58c5788
+[   17.396545] [<ffffff80080857ec>] el1_dbg+0x18/0x90
+[   17.401550] [<ffffff80081215e0>] dequeue_task_fair+0x3f0/0x1370
+[   17.407716] [<ffffff8008102de0>] deactivate_task+0x98/0xd8
+[   17.413444] [<ffffff8008cc67d0>] __schedule+0x458/0xbf8
+[   17.418894] [<ffffff8008cc7184>] schedule+0x3c/0xa0
+[   17.423989] [<ffffff8008ccbaf8>] schedule_hrtimeout_range_clock+0x90/0x118
+[   17.431136] [<ffffff8008ccbbb8>] schedule_hrtimeout_range+0x38/0x48
+[   17.437659] [<ffffff8008296f68>] poll_schedule_timeout+0x58/0x90
+[   17.443916] [<ffffff80082986d0>] do_sys_poll+0x398/0x4d0
+[   17.449458] [<ffffff8008298b40>] SyS_ppoll+0x1b8/0x1e0
+[   17.454821] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   18.780432] BUG: spinlock lockup suspected on CPU#7, (agetty)/2348
+[   18.781659] BUG: spinlock lockup suspected on CPU#5, (agetty)/2349
+[   18.781697]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   18.781729] CPU: 5 PID: 2349 Comm: (agetty) Tainted: G      D         4.4.89-01529-gb29bace #1
+[   18.781741] Hardware name: HiKey Development Board (DT)
+[   18.781754] Call trace:
+[   18.781792] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   18.781822] [<ffffff800808c204>] show_stack+0x24/0x30
+[   18.781849] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   18.781880] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   18.781910] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   18.781937] [<ffffff8008ccc524>] _raw_spin_lock_irq+0x54/0x60
+[   18.781965] [<ffffff8008127ff8>] alloc_fair_sched_group+0xc8/0x1f0
+[   18.781995] [<ffffff800810bde0>] sched_create_group+0x40/0x90
+[   18.782027] [<ffffff8008133bd0>] sched_autogroup_create_attach+0x50/0x1c0
+[   18.782051] [<ffffff80080e67e0>] sys_setsid+0xf8/0x110
+[   18.782077] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   18.883186]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   18.892604] CPU: 7 PID: 2348 Comm: (agetty) Tainted: G      D         4.4.89-01529-gb29bace #1
+[   18.901555] Hardware name: HiKey Development Board (DT)
+[   18.906990] Call trace:
+[   18.909589] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   18.915222] [<ffffff800808c204>] show_stack+0x24/0x30
+[   18.920496] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   18.925775] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   18.930963] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   18.936952] [<ffffff8008ccc524>] _raw_spin_lock_irq+0x54/0x60
+[   18.942939] [<ffffff8008127ff8>] alloc_fair_sched_group+0xc8/0x1f0
+[   18.949375] [<ffffff800810bde0>] sched_create_group+0x40/0x90
+[   18.955372] [<ffffff8008133bd0>] sched_autogroup_create_attach+0x50/0x1c0
+[   18.962429] [<ffffff80080e67e0>] sys_setsid+0xf8/0x110
+[   18.967792] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   36.183948] Watchdog detected hard LOCKUP on cpu 5
+

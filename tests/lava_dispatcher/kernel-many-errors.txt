@@ -1,0 +1,1615 @@
+[    0.000000] Initializing cgroup subsys cpuset
+[    0.000000] Initializing cgroup subsys cpu
+[    0.000000] Initializing cgroup subsys cpuacct
+[    0.000000] Initializing cgroup subsys schedtune
+[    0.000000] Linux version 4.4.89-01529-gb29bace (buildslave@x86-64-07) (gcc version 6.2.1 20161016 (Linaro GCC 6.2-2016.11) ) #1 SMP PREEMPT Wed Oct 4 22:32:40 UTC 2017
+[    0.000000] Boot CPU: AArch64 Processor [410fd033]
+[    0.000000] efi: Getting EFI parameters from FDT:
+[    0.000000] EFI v2.50 by hikey EFI Sep 11 2017 15:41:13
+[    0.000000] efi:  PROP=0x3d818fd8 
+[    0.000000] cma: Reserved 64 MiB at 0x000000007c000000
+[    0.000000] On node 0 totalpages: 515341
+[    0.000000]   DMA zone: 8192 pages used for memmap
+[    0.000000]   DMA zone: 0 pages reserved
+[    0.000000]   DMA zone: 515341 pages, LIFO batch:31
+[    0.000000] psci: probing for conduit method from DT.
+[    0.000000] psci: PSCIv1.0 detected in firmware.
+[    0.000000] psci: Using standard PSCI v0.2 function IDs
+[    0.000000] psci: Trusted OS migration not required
+[    0.000000] PERCPU: Embedded 22 pages/cpu @ffffffc07bec8000 s50888 r8192 d31032 u90112
+[    0.000000] pcpu-alloc: s50888 r8192 d31032 u90112 alloc=22*4096
+[    0.000000] pcpu-alloc: [0] 0 [0] 1 [0] 2 [0] 3 [0] 4 [0] 5 [0] 6 [0] 7 
+[    0.000000] Detected VIPT I-cache on CPU0
+[    0.000000] CPU features: enabling workaround for ARM erratum 845719
+[    0.000000] Built 1 zonelists in Zone order, mobility grouping on.  Total pages: 507149
+[    0.000000] Kernel command line: BOOT_IMAGE=/boot/Image console=tty0 console=ttyFIQ0,115200n8 root=/dev/mmcblk0p9 rootwait rw efi=noruntime
+[    0.000000] PID hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.000000] Dentry cache hash table entries: 262144 (order: 9, 2097152 bytes)
+[    0.000000] Inode-cache hash table entries: 131072 (order: 8, 1048576 bytes)
+[    0.000000] software IO TLB em 0x75a00000-0x79a00000] (64MB) mapped at [ffffffc075a00000-ffffffc0799fffff]
+[    0.000000] Memory: 1850852K/2061364K available (12624K kernel code, 1296K rwdata, 4584K rodata, 6220K init, 13744K bss, 144976K reserved, 65536K cma-reserved)
+[    0.000000] Virtual kernel memory layout:
+[    0.000000]     modules : 0xffffff8000000000 - 0xffffff8008000000   (   128 MB)
+[    0.000000]     vmalloc : 0xffffff8008000000 - 0xffffffbdbfff0000   (   246 GB)
+[    0.000000]       .init : 0xffffff8009154000 - 0xffffff8009767000   (  6220 KB)
+[    0.000000]       .text : 0xffffff8008080000 - 0xffffff8008cd6000   ( 12632 KB)
+[    0.000000]     .rodata : 0xffffff8008cd6000 - 0xffffff8009154000   (  4600 KB)
+[    0.000000]       .data : 0xffffff8009767000 - 0xffffff80098ab000   (  1296 KB)
+[    0.000000]     vmemmap : 0xffffffbdc0000000 - 0xffffffbfc0000000   (     8 GB maximum)
+[    0.000000]               0xffffffbdc0000000 - 0xffffffbdc2000000   (    32 MB actual)
+[    0.000000]     fixed   : 0xffffffbffe7fd000 - 0xffffffbffec00000   (  4108 KB)
+[    0.000000]     PCI I/O : 0xffffffbffee00000 - 0xffffffbfffe00000   (    16 MB)
+[    0.000000]     memory  : 0xffffffc000000000 - 0xffffffc080000000   (  2048 MB)
+[    0.000000] Running RCU self tests
+[    0.000000] Preemptible hierarchical RCU implementation.
+[    0.000000] 	RCU lockdep checking is enabled.
+[    0.000000] 	Build-time adjustment of leaf fanout to 64.
+[    0.000000] 	RCU restricting CPUs from NR_CPUS=64 to nr_cpu_ids=8.
+[    0.000000] RCU: Adjusting geometry for rcu_fanout_leaf=64, nr_cpu_ids=8
+[    0.000000] NR_IRQS:64 nr_irqs:64 0
+[    0.000000] GIC: Using split EOI/Deactivate mode
+[    0.000000] SYSPLL: syspll PM status: 0x30007808
+[    0.000000] SYSPLL: syspll is read: l: 0x8000, u: 0x46F5
+[    0.000000] SYSPLL: syspll is read: 0x46F58000, 1190494208
+[    0.000000] SYSPLL: set syspll medpll: 1190400000
+[    0.000000] SYSPLL: modified fix_rate[8], id=9, f=1190400000
+[    0.000000] SYSPLL: modified fix_rate[9], id=10, f=1190400000
+[    0.000000] Architected cp15 timer(s) running at 1.20MHz (phys).
+[    0.000000] clocksource: arch_sys_counter: mask: 0xffffffffffffff max_cycles: 0x11b661f8e, max_idle_ns: 1763180809113 ns
+[    0.000004] sched_clock: 56 bits at 1200kHz, resolution 833ns, wraps every 4398046510838ns
+[    0.000170] clocksource: arm,sp804: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 99544814920 ns
+[    0.000182] sched_clock: 32 bits at 19MHz, resolution 52ns, wraps every 111848106981ns
+[    0.001332] Console: colour dummy device 80x25
+[    0.004369] console [tty0] enabled
+[    0.004397] Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[    0.004431] ... MAX_LOCKDEP_SUBCLASSES:  8
+[    0.004451] ... MAX_LOCK_DEPTH:          48
+[    0.004471] ... MAX_LOCKDEP_KEYS:        8191
+[    0.004491] ... CLASSHASH_SIZE:          4096
+[    0.004511] ... MAX_LOCKDEP_ENTRIES:     32768
+[    0.004531] ... MAX_LOCKDEP_CHAINS:      65536
+[    0.004551] ... CHAINHASH_SIZE:          32768
+[    0.004572]  memory used by lock dependency info: 8159 kB
+[    0.004594]  per task-struct memory footprint: 1920 bytes
+[    0.004628] Calibrating delay loop (skipped), value calculated using timer frequency.. 2.40 BogoMIPS (lpj=4800)
+[    0.004674] pid_max: default: 32768 minimum: 301
+[    0.005026] Security Framework initialized
+[    0.005053] SELinux:  Initializing.
+[    0.005303] SELinux:  Starting in permissive mode
+[    0.005424] Mount-cache hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.005455] Mountpoint-cache hash table entries: 4096 (order: 3, 32768 bytes)
+[    0.007217] Initializing cgroup subsys io
+[    0.007285] Initializing cgroup subsys memory
+[    0.007359] Initializing cgroup subsys devices
+[    0.007418] Initializing cgroup subsys freezer
+[    0.007471] Initializing cgroup subsys hugetlb
+[    0.007602] ftrace: allocating 38271 entries in 150 pages
+[    0.105543] sched-energy: Sched-energy-costs installed from DT
+[    0.105592] CPU0: update cpu_capacity 1024
+[    0.105682] ASID allocator initialised with 65536 entries
+[    0.105795] 
+[    0.105811] ===============================
+[    0.105830] [ INFO: suspicious RCU usage. ]
+[    0.105852] 4.4.89-01529-gb29bace #1 Not tainted
+[    0.105871] -------------------------------
+[    0.105891] /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/kernel/sched/fair.c:6238 sched RCU must be held!
+[    0.105928] 
+[    0.105928] other info that might help us debug this:
+[    0.105928] 
+[    0.105967] 
+[    0.105967] rcu_scheduler_active = 1, debug_locks = 0
+[    0.105998] 4 locks held by swapper/0/1:
+[    0.106017]  #0:  (cpu_hotplug.lock){.+.+.+}, at: [<ffffff80080cb2bc>] get_online_cpus+0x44/0xa8
+[    0.106075]  #1:  (smpboot_threads_lock){+.+.+.}, at: [<ffffff80080f9e6c>] smpboot_register_percpu_thread_cpumask+0x5c/0x150
+[    0.106133]  #2:  (&p->pi_lock){......}, at: [<ffffff8008104184>] try_to_wake_up+0x44/0x5b0
+[    0.106184]  #3:  (rcu_read_lock){......}, at: [<ffffff800811e0d0>] select_energy_cpu_brute+0x80/0x17d8
+[    0.106237] 
+[    0.106237] stack backtrace:
+[    0.106267] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.4.89-01529-gb29bace #1
+[    0.106297] Hardware name: HiKey Development Board (DT)
+[    0.106318] Call trace:
+[    0.106338] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[    0.106363] [<ffffff800808c204>] show_stack+0x24/0x30
+[    0.106388] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[    0.106413] [<ffffff800813cf5c>] lockdep_rcu_suspicious+0xe4/0x118
+[    0.106439] [<ffffff800811f308>] select_energy_cpu_brute+0x12b8/0x17d8
+[    0.106464] [<ffffff8008120718>] select_task_rq_fair+0xef0/0x1320
+[    0.106489] [<ffffff80081042cc>] try_to_wake_up+0x18c/0x5b0
+[    0.106513] [<ffffff8008104718>] wake_up_process+0x28/0x38
+[    0.106540] [<ffffff80080f4fd0>] kthread_create_on_node+0xf0/0x1e0
+[    0.106565] [<ffffff80080f5f30>] kthread_create_on_cpu+0x40/0x80
+[    0.106590] [<ffffff80080f9c80>] __smpboot_create_thread.part.0+0x60/0x110
+[    0.106617] [<ffffff80080f9efc>] smpboot_register_percpu_thread_cpumask+0xec/0x150
+[    0.106650] [<ffffff80091619d0>] spawn_ksoftirqd+0x2c/0x40
+[    0.106675] [<ffffff8008082b0c>] do_one_initcall+0x94/0x1a0
+[    0.106700] [<ffffff8009154ad4>] kernel_init_freeable+0x124/0x288
+[    0.106729] [<ffffff8008cc4f70>] kernel_init+0x18/0x108
+[    0.106752] [<ffffff80080860f0>] ret_from_fork+0x10/0x20
+[    0.124352] EFI runtime services will be disabled.
+[    0.140079] Detected VIPT I-cache on CPU1
+[    0.140136] CPU1: update cpu_capacity 1024
+[    0.140140] CPU1: Booted secondary processor [410fd033]
+[    0.152074] Detected VIPT I-cache on CPU2
+[    0.152110] CPU2: update cpu_capacity 1024
+[    0.152113] CPU2: Booted secondary processor [410fd033]
+[    0.164113] Detected VIPT I-cache on CPU3
+[    0.164146] CPU3: update cpu_capacity 1024
+[    0.164150] CPU3: Booted secondary processor [410fd033]
+[    0.176241] Detected VIPT I-cache on CPU4
+[    0.176290] CPU4: update cpu_capacity 1024
+[    0.176294] CPU4: Booted secondary processor [410fd033]
+[    0.188212] Detected VIPT I-cache on CPU5
+[    0.188238] CPU5: update cpu_capacity 1024
+[    0.188242] CPU5: Booted secondary processor [410fd033]
+[    0.200281] Detected VIPT I-cache on CPU6
+[    0.200307] CPU6: update cpu_capacity 1024
+[    0.200311] CPU6: Booted secondary processor [410fd033]
+[    0.212350] Detected VIPT I-cache on CPU7
+[    0.212377] CPU7: update cpu_capacity 1024
+[    0.212381] CPU7: Booted secondary processor [410fd033]
+[    0.212549] Brought up 8 CPUs
+[    0.212910] SMP: Total of 8 processors activated.
+[    0.212938] CPU: All CPU(s) started at EL2
+[    0.213049] alternatives: patching kernel code
+[    0.214701] devtmpfs: initialized
+[    0.248296] DMI not present or invalid.
+[    0.249167] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+[    0.249227] futex hash table entries: 2048 (order: 6, 262144 bytes)
+[    0.254455] xor: measuring software checksum speed
+[    0.292769]    8regs     :  2297.000 MB/sec
+[    0.332420]    8regs_prefetch:  2044.000 MB/sec
+[    0.372526]    32regs    :  2815.000 MB/sec
+[    0.412636]    32regs_prefetch:  2372.000 MB/sec
+[    0.412662] xor: using function: 32regs (2815.000 MB/sec)
+[    0.412706] pinctrl core: initialized pinctrl subsystem
+[    0.416201] NET: Registered protocol family 16
+[    0.416516] schedtune: init normalization constants...
+[    0.416547] schedtune: CLUSTER[0-3]      min_pwr:     0 max_pwr:   112
+[    0.416576] schedtune: CPU[0]            min_pwr:     0 max_pwr:   670
+[    0.416714] schedtune: CPU[1]            min_pwr:     0 max_pwr:   670
+[    0.416743] schedtune: CPU[2]            min_pwr:     0 max_pwr:   670
+[    0.416770] schedtune: CPU[3]            min_pwr:     0 max_pwr:   670
+[    0.416797] schedtune: CLUSTER[4-7]      min_pwr:     0 max_pwr:   112
+[    0.416824] schedtune: CPU[4]            min_pwr:     0 max_pwr:   670
+[    0.416851] schedtune: CPU[5]            min_pwr:     0 max_pwr:   670
+[    0.416878] schedtune: CPU[6]            min_pwr:     0 max_pwr:   670
+[    0.416905] schedtune: CPU[7]            min_pwr:     0 max_pwr:   670
+[    0.416935] schedtune: SYSTEM            min_pwr:     0 max_pwr:  5584
+[    0.416962] schedtune: using normalization constants mul: 2005958938 sh1: 1 sh2: 12
+[    0.416998] schedtune: configured to support 5 boost groups
+[    0.432850] cpuidle: using governor ladder
+[    0.444801] cpuidle: using governor menu
+[    0.444941] Registered FIQ tty driver
+[    0.445212] serial_debugger: uart overlay applied
+[    0.445490] vdso: 2 pages (1 code @ ffffff8008cdc000, 1 data @ ffffff800976c000)
+[    0.445547] hw-breakpoint: found 6 breakpoint and 4 watchpoint registers.
+[    0.447496] DMA: preallocated 256 KiB pool for atomic allocations
+[    0.447847] Serial: AMBA PL011 UART driver
+[    0.452831] f8015000.uart: ttyAMA0 at MMIO 0xf8015000 (irq = 7, base_baud = 0) is a PL011 rev2
+[    0.456008] uart-pl011 f7111000.uart: could not find pctldev for node /soc/pinmux@f7010000/uart1_pmx_func, deferring probe
+[    0.456567] uart-pl011 f7112000.uart: could not find pctldev for node /soc/pinmux@f7010000/uart2_pmx_func, deferring probe
+[    0.473708] hi6220-mbox f7510000.mailbox: Mailbox enabled
+[    0.482449] console [pstore-1] enabled
+[    0.483011] pstore: Registered ramoops as persistent store backend
+[    0.483046] ramoops: attached 0x100000@0x21f00000, ecc: 0/0
+[    0.609696] raid6: int64x1  gen()   425 MB/s
+[    0.677817] raid6: int64x1  xor()   452 MB/s
+[    0.746017] raid6: int64x2  gen()   692 MB/s
+[    0.814211] raid6: int64x2  xor()   609 MB/s
+[    0.882406] raid6: int64x4  gen()  1009 MB/s
+[    0.950614] raid6: int64x4  xor()   750 MB/s
+[    1.018856] raid6: int64x8  gen()  1166 MB/s
+[    1.087034] raid6: int64x8  xor()   752 MB/s
+[    1.155254] raid6: neonx1   gen()   750 MB/s
+[    1.223455] raid6: neonx1   xor()   769 MB/s
+[    1.291677] raid6: neonx2   gen()  1198 MB/s
+[    1.359873] raid6: neonx2   xor()  1039 MB/s
+[    1.428068] raid6: neonx4   gen()  1563 MB/s
+[    1.496261] raid6: neonx4   xor()  1198 MB/s
+[    1.564488] raid6: neonx8   gen()  1634 MB/s
+[    1.632665] raid6: neonx8   xor()  1227 MB/s
+[    1.632691] raid6: using algorithm neonx8 gen() 1634 MB/s
+[    1.632718] raid6: .... xor() 1227 MB/s, rmw enabled
+[    1.632743] raid6: using intx1 recovery algorithm
+[    1.633314] ACPI: Interpreter disabled.
+[    1.634538] vgaarb: loaded
+[    1.635192] SCSI subsystem initialized
+[    1.635839] libata version 3.00 loaded.
+[    1.635998] ssp-pl022 f7106000.spi: could not find pctldev for node /soc/pinmux@f7010000/spi0_pmx_func, deferring probe
+[    1.636853] usbcore: registered new interface driver usbfs
+[    1.637025] usbcore: registered new interface driver hub
+[    1.637340] usbcore: registered new device driver usb
+[    1.637772] i2c_designware f7100000.i2c: could not find pctldev for node /soc/pinmux@f7010000/i2c0_pmx_func, deferring probe
+[    1.637874] i2c_designware f7101000.i2c: could not find pctldev for node /soc/pinmux@f7010000/i2c1_pmx_func, deferring probe
+[    1.637967] i2c_designware f7102000.i2c: could not find pctldev for node /soc/pinmux@f7010000/i2c2_pmx_func, deferring probe
+[    1.638207] Linux video capture interface: v2.00
+[    1.638628] dmi: Firmware registration failed.
+[    1.639697] Advanced Linux Sound Architecture Driver Initialized.
+[    1.641192] Bluetooth: Core ver 2.21
+[    1.641317] NET: Registered protocol family 31
+[    1.641344] Bluetooth: HCI device and connection manager initialized
+[    1.641387] Bluetooth: HCI socket layer initialized
+[    1.641426] Bluetooth: L2CAP socket layer initialized
+[    1.641553] Bluetooth: SCO socket layer initialized
+[    1.642603] NetLabel: Initializing
+[    1.642633] NetLabel:  domain hash size = 128
+[    1.642657] NetLabel:  protocols = UNLABELED CIPSOv4
+[    1.642775] NetLabel:  unlabeled traffic allowed by default
+[    1.643685] clocksource: Switched to clocksource arch_sys_counter
+[    1.887798] pnp: PnP ACPI: disabled
+[    1.915106] NET: Registered protocol family 2
+[    1.916314] TCP established hash table entries: 16384 (order: 5, 131072 bytes)
+[    1.916477] TCP bind hash table entries: 16384 (order: 8, 1048576 bytes)
+[    1.917848] TCP: Hash tables configured (established 16384 bind 16384)
+[    1.917997] UDP hash table entries: 1024 (order: 5, 163840 bytes)
+[    1.918237] UDP-Lite hash table entries: 1024 (order: 5, 163840 bytes)
+[    1.919231] NET: Registered protocol family 1
+[    1.919317] PCI: CLS 0 bytes, default 128
+[    1.920868] kvm [1]: interrupt-controller@f6804000 IRQ6
+[    1.921317] kvm [1]: timer IRQ3
+[    1.921359] kvm [1]: Hyp mode initialized successfully
+[    1.930758] audit: initializing netlink subsys (disabled)
+[    1.930937] audit: type=2000 audit(1.847:1): initialized
+[    1.932831] HugeTLB registered 2 MB page size, pre-allocated 0 pages
+[    1.933676] VFS: Disk quotas dquot_6.6.0
+[    1.933823] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    1.934875] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[    1.935531] fuse init (API version 7.23)
+[    1.936442] 9p: Installing v9fs 9p2000 file system support
+[    1.936856] SELinux:  Registering netfilter hooks
+[    1.946996] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 248)
+[    1.947062] io scheduler noop registered
+[    1.947164] io scheduler cfq registered (default)
+[    1.947200] start plist test
+[    1.951523] end plist test
+[    1.952023] test_firmware: interface ready
+[    1.955215] pinctrl-single f7010000.pinmux: 159 pins at pa ffffff800a662000 size 636
+[    1.956287] pinctrl-single f7010800.pinmux: 163 pins at pa ffffff800a668800 size 652
+[    1.956843] pinctrl-single f8001800.pinmux: 30 pins at pa ffffff800a66a800 size 120
+[    1.957890] pl061_gpio f8011000.gpio: PL061 GPIO chip @0x00000000f8011000 registered
+[    1.958476] pl061_gpio f8012000.gpio: PL061 GPIO chip @0x00000000f8012000 registered
+[    1.959063] pl061_gpio f8013000.gpio: PL061 GPIO chip @0x00000000f8013000 registered
+[    1.959719] pl061_gpio f8014000.gpio: PL061 GPIO chip @0x00000000f8014000 registered
+[    1.960320] pl061_gpio f7020000.gpio: PL061 GPIO chip @0x00000000f7020000 registered
+[    1.960882] pl061_gpio f7021000.gpio: PL061 GPIO chip @0x00000000f7021000 registered
+[    1.961481] pl061_gpio f7022000.gpio: PL061 GPIO chip @0x00000000f7022000 registered
+[    1.962045] pl061_gpio f7023000.gpio: PL061 GPIO chip @0x00000000f7023000 registered
+[    1.962632] pl061_gpio f7024000.gpio: PL061 GPIO chip @0x00000000f7024000 registered
+[    1.963191] pl061_gpio f7025000.gpio: PL061 GPIO chip @0x00000000f7025000 registered
+[    1.963830] pl061_gpio f7026000.gpio: PL061 GPIO chip @0x00000000f7026000 registered
+[    1.964417] pl061_gpio f7027000.gpio: PL061 GPIO chip @0x00000000f7027000 registered
+[    1.965015] pl061_gpio f7028000.gpio: PL061 GPIO chip @0x00000000f7028000 registered
+[    1.965580] pl061_gpio f7029000.gpio: PL061 GPIO chip @0x00000000f7029000 registered
+[    1.966145] pl061_gpio f702a000.gpio: PL061 GPIO chip @0x00000000f702a000 registered
+[    1.966732] pl061_gpio f702b000.gpio: PL061 GPIO chip @0x00000000f702b000 registered
+[    1.967331] pl061_gpio f702c000.gpio: PL061 GPIO chip @0x00000000f702c000 registered
+[    1.967963] pl061_gpio f702d000.gpio: PL061 GPIO chip @0x00000000f702d000 registered
+[    1.968555] pl061_gpio f702e000.gpio: PL061 GPIO chip @0x00000000f702e000 registered
+[    1.969124] pl061_gpio f702f000.gpio: PL061 GPIO chip @0x00000000f702f000 registered
+[    1.978076] k3-dma f7370000.dma: initialized
+[    1.989885] Serial: 8250/16550 driver, 4 ports, IRQ sharing disabled
+[    1.993956] [drm] Initialized drm 1.1.0 20060810
+[    1.994942] [drm] wait for external HDMI bridge driver.
+[    1.995125] Mali<2>: Inserting Mali v900 device driver. 
+[    1.995162] Mali<2>: Compiled: Oct  4 2017, time: 22:31:56.
+[    1.995194] Mali<2>: Driver revision: 
+[    1.995221] Mali<2>: mali_module_init() registering driver
+[    1.995456] Mali<2>: mali_probe(): Called for platform device 3f100000.mali
+[    1.996387] Mali<2>: Mali SWAP: Swap out threshold vaule is 60M
+[    1.996497] Mali<2>: Mali memory settings (shared: 0x40000000)
+[    1.996533] Mali<2>: Using device defined frame buffer settings (0x00708000@0x3F100000)
+[    1.996575] Mali<2>: Memory Validator installed for Mali physical address base=0x3F100000, size=0x00708000
+[    1.996628] Mali<2>: Mali PM domain: Creating Mali PM domain (mask=0x00001000)
+[    1.996690] Mali<2>: Broadcast: Creating Mali Broadcast unit: Mali_Broadcast
+[    1.996751] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP0
+[    1.996785] Mali<2>: Mali PP: Base address of PP core: 0xf4088000
+[    1.997050] Mali<2>: Found Mali GPU Mali-450 MP r0p0
+[    1.997682] Mali<2>: Mali DLBU: Initializing
+[    1.997778] Mali<2>: Mali L2 cache: Created Mali_L2:   8K, 4-way, 64byte cache line, 128bit external bus
+[    1.997835] Mali<2>: Mali L2 cache: Created Mali_L2: 128K, 4-way, 64byte cache line, 128bit external bus
+[    1.997903] Mali<2>: Mali MMU: Creating Mali MMU: Mali_GP_MMU
+[    1.997971] Mali<2>: mali_mmu_probe_irq_acknowledge: intstat 0x3
+[    1.998004] Mali<2>: Probe: Page fault detect: PASSED
+[    1.998032] Mali<2>: Probe: Bus read error detect: PASSED
+[    1.998121] Mali<2>: Mali GP: Creating Mali GP core: Mali_GP
+[    1.998261] Mali<2>: Mali MMU: Creating Mali MMU: Mali_PP0_MMU
+[    1.998344] Mali<2>: mali_mmu_probe_irq_acknowledge: intstat 0x3
+[    1.998375] Mali<2>: Probe: Page fault detect: PASSED
+[    1.998402] Mali<2>: Probe: Bus read error detect: PASSED
+[    1.998487] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP0
+[    1.998521] Mali<2>: Mali PP: Base address of PP core: 0xf4088000
+[    1.998661] Mali<2>: Mali MMU: Creating Mali MMU: Mali_PP1_MMU
+[    1.998734] Mali<2>: mali_mmu_probe_irq_acknowledge: intstat 0x3
+[    1.998765] Mali<2>: Probe: Page fault detect: PASSED
+[    1.998792] Mali<2>: Probe: Bus read error detect: PASSED
+[    1.998876] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP1
+[    1.998910] Mali<2>: Mali PP: Base address of PP core: 0xf408a000
+[    1.999048] Mali<2>: Mali MMU: Creating Mali MMU: Mali_PP2_MMU
+[    1.999120] Mali<2>: mali_mmu_probe_irq_acknowledge: intstat 0x3
+[    1.999151] Mali<2>: Probe: Page fault detect: PASSED
+[    1.999178] Mali<2>: Probe: Bus read error detect: PASSED
+[    1.999263] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP2
+[    1.999296] Mali<2>: Mali PP: Base address of PP core: 0xf408c000
+[    1.999446] Mali<2>: Mali MMU: Creating Mali MMU: Mali_PP3_MMU
+[    1.999519] Mali<2>: mali_mmu_probe_irq_acknowledge: intstat 0x3
+[    1.999550] Mali<2>: Probe: Page fault detect: PASSED
+[    1.999576] Mali<2>: Probe: Bus read error detect: PASSED
+[    2.000416] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP3
+[    2.000451] Mali<2>: Mali PP: Base address of PP core: 0xf408e000
+[    2.000593] Mali<2>: Starting new virtual group for MMU PP broadcast core Mali_PP_MMU_Broadcast
+[    2.000638] Mali<2>: Mali DLBU: Creating Mali dynamic load balancing unit: Mali_DLBU
+[    2.000690] Mali<2>: Broadcast: Creating Mali Broadcast unit: Mali_Broadcast
+[    2.000734] Mali<2>: Mali MMU: Creating Mali MMU: Mali_PP_MMU_Broadcast
+[    2.000774] Mali<2>: Mali PP: Creating Mali PP core: Mali_PP_Broadcast
+[    2.000808] Mali<2>: Mali PP: Base address of PP core: 0xf4096000
+[    2.000944] Mali<2>: 4+0 PP cores initialized
+[    2.000991] Mali<2>: Mali GPU Timer: 50
+[    2.001021] Mali<2>: Mali GPU Utilization: No platform utilization handler installed
+[    2.003853] Mali<2>: mali_probe(): Successfully initialized driver for platform device 3f100000.mali
+[    2.004150] Mali: Mali device driver loaded
+[    2.041262] brd: module loaded
+[    2.062927] loop: module loaded
+[    2.063599] (stk) :sysfs entries created
+[    2.063893] (hci_tty): inside hci_tty_init
+[    2.064324] (hci_tty): allocated 247, 0
+[    2.064373] (hci_tty): hdev ffffffc07381e000
+[    2.069671] (hci_tty): HCI device registered (hdev ffffffc07381e000)
+[    2.069951] (hci_tty): called dumb_hci_callback
+[    2.070001] [I/GPIO_HUB] gpio_hub_init:gpio hub init status:0
+[    2.074364] (hci_tty): called dumb_hci_send_callback
+[    2.080632] PPP generic driver version 2.4.2
+[    2.081093] PPP BSD Compression module registered
+[    2.081128] PPP Deflate Compression module registered
+[    2.081182] PPP MPPE Compression module registered
+[    2.081460] pegasus: v0.9.3 (2013/04/25), Pegasus/Pegasus II USB Ethernet driver
+[    2.081669] usbcore: registered new interface driver pegasus
+[    2.081824] usbcore: registered new interface driver rtl8150
+[    2.081961] usbcore: registered new interface driver r8152
+[    2.082146] usbcore: registered new interface driver asix
+[    2.082306] usbcore: registered new interface driver ax88179_178a
+[    2.082432] usbcore: registered new interface driver cdc_ether
+[    2.082584] usbcore: registered new interface driver dm9601
+[    2.082773] usbcore: registered new interface driver CoreChips
+[    2.082932] usbcore: registered new interface driver smsc75xx
+[    2.083117] usbcore: registered new interface driver smsc95xx
+[    2.083269] usbcore: registered new interface driver net1080
+[    2.083423] usbcore: registered new interface driver plusb
+[    2.083558] usbcore: registered new interface driver cdc_subset
+[    2.083727] usbcore: registered new interface driver zaurus
+[    2.083881] usbcore: registered new interface driver MOSCHIP usb-ethernet driver
+[    2.084099] usbcore: registered new interface driver cdc_ncm
+[    2.084630] ehci_hcd: USB 2.0 'Enhanced' Host Controller (EHCI) Driver
+[    2.084666] ehci-pci: EHCI PCI platform driver
+[    2.084797] ehci-platform: EHCI generic platform driver
+[    2.085097] ohci_hcd: USB 1.1 'Open' Host Controller (OHCI) Driver
+[    2.085164] ohci-pci: OHCI PCI platform driver
+[    2.085327] ohci-platform: OHCI generic platform driver
+[    2.085728] usbcore: registered new interface driver cdc_acm
+[    2.085756] cdc_acm: USB Abstract Control Model driver for USB modems and ISDN adapters
+[    2.085963] usbcore: registered new interface driver usb-storage
+[    2.086250] usbcore: registered new interface driver usbserial
+[    2.086384] usbcore: registered new interface driver usbserial_generic
+[    2.086508] usbserial: USB Serial support registered for generic
+[    2.086656] usbcore: registered new interface driver ftdi_sio
+[    2.086796] usbserial: USB Serial support registered for FTDI USB Serial Device
+[    2.086951] usbcore: registered new interface driver option
+[    2.087094] usbserial: USB Serial support registered for GSM modem (1-port)
+[    2.087218] usbcore: registered new interface driver pl2303
+[    2.087334] usbserial: USB Serial support registered for pl2303
+[    2.087467] usbcore: registered new interface driver qcserial
+[    2.087601] usbserial: USB Serial support registered for Qualcomm USB modem
+[    2.087781] usbcore: registered new interface driver usb_serial_simple
+[    2.087920] usbserial: USB Serial support registered for carelink
+[    2.088061] usbserial: USB Serial support registered for zio
+[    2.088195] usbserial: USB Serial support registered for funsoft
+[    2.088326] usbserial: USB Serial support registered for flashloader
+[    2.088460] usbserial: USB Serial support registered for google
+[    2.088601] usbserial: USB Serial support registered for vivopay
+[    2.088727] usbserial: USB Serial support registered for moto_modem
+[    2.088824] usbserial: USB Serial support registered for novatel_gps
+[    2.088962] usbserial: USB Serial support registered for hp4x
+[    2.089057] usbserial: USB Serial support registered for suunto
+[    2.089175] usbserial: USB Serial support registered for siemens_mpi
+[    2.090934] mousedev: PS/2 mouse device common for all mice
+[    2.093267] input: HISI 65xx PowerOn Key as /devices/platform/f8000000.pmic/f8000000.pmic:ponkey@b1/input/input0
+[    2.094881] rtc-pl031 f8003000.rtc: rtc core: registered pl031 as rtc0
+[    2.095410] i2c /dev entries driver
+[    2.099753] hisi_thermal f7030700.tsensor: THERMAL ALARM: T > 0
+[    2.099799] hisi_thermal f7030700.tsensor: failed to register sensor id 0: -19
+[    2.099840] hisi_thermal f7030700.tsensor: failed to register thermal sensor: -19
+[    2.099903] hisi_thermal f7030700.tsensor: failed to register sensor id 1: -19
+[    2.099940] hisi_thermal f7030700.tsensor: failed to register thermal sensor: -19
+[    2.111780] hisi_thermal f7030700.tsensor: failed to register sensor id 3: -19
+[    2.111819] hisi_thermal f7030700.tsensor: failed to register thermal sensor: -19
+[    2.113124] sp805-wdt f8005000.watchdog: registration successful
+[    2.113870] device-mapper: ioctl: 4.34.0-ioctl (2015-10-28) initialised: dm-devel@redhat.com
+[    2.118236] Bluetooth: HCI UART driver ver 2.3
+[    2.118267] Bluetooth: HCI UART protocol H4 registered
+[    2.123809] (stc):  chnl_id list empty :4 
+[    2.123837] (stk) : st_kim_start[    2.148717] sdhci: Secure Digital Host Controller Interface driver
+[    2.148830] sdhci: Copyright(c) Pierre Ossman
+[    2.149192] Synopsys Designware Multimedia Card Interface Driver
+[    2.152441] dwmmc_k3 f723d000.dwmmc0: fifo-depth property not found, using value of FIFOTH register as default
+[    2.152730] dwmmc_k3 f723d000.dwmmc0: IDMAC supports 32-bit address mode.
+[    2.153477] dwmmc_k3 f723d000.dwmmc0: Using internal DMA controller.
+[    2.153569] dwmmc_k3 f723d000.dwmmc0: Version ID is 250a
+[    2.153892] dwmmc_k3 f723d000.dwmmc0: DW MMC controller at irq 39,32 bit host data width,8 deep fifo
+[    2.154866] dwmmc_k3 f723d000.dwmmc0: No vqmmc regulator found
+[    2.187959] dwmmc_k3 f723d000.dwmmc0: 1 slots initialized
+[    2.188727] dwmmc_k3 f723e000.dwmmc1: fifo-depth property not found, using value of FIFOTH register as default
+[    2.188925] dwmmc_k3 f723e000.dwmmc1: IDMAC supports 32-bit address mode.
+[    2.189146] dwmmc_k3 f723e000.dwmmc1: Using internal DMA controller.
+[    2.189189] dwmmc_k3 f723e000.dwmmc1: Version ID is 250a
+[    2.189327] dwmmc_k3 f723e000.dwmmc1: DW MMC controller at irq 40,32 bit host data width,128 deep fifo
+[    2.189955] dwmmc_k3 f723e000.dwmmc1: Got CD GPIO
+[    2.220638] dwmmc_k3 f723e000.dwmmc1: 1 slots initialized
+[    2.221331] dwmmc_k3 f723f000.dwmmc2: fifo-depth property not found, using value of FIFOTH register as default
+[    2.221442] dwmmc_k3 f723f000.dwmmc2: IDMAC supports 32-bit address mode.
+[    2.221624] dwmmc_k3 f723f000.dwmmc2: Using internal DMA controller.
+[    2.221660] dwmmc_k3 f723f000.dwmmc2: Version ID is 250a
+[    2.221759] dwmmc_k3 f723f000.dwmmc2: DW MMC controller at irq 41,32 bit host data width,128 deep fifo
+[    2.222234] sdhci-pltfm: SDHCI platform and OF driver helper
+[    2.224866] ledtrig-cpu: registered to indicate activity on CPUs
+[    2.225457] hidraw: raw HID events driver (C) Jiri Kosina
+[    2.228968] (stk) :ldisc_install = 1
+[    2.231342] usbcore: registered new interface driver usbhid
+[    2.231395] usbhid: USB HID core driver
+[    2.236776] ashmem: initialized
+[    2.237185] nanohub: loaded; ret=0
+[    2.237529] hi6220-irq-debug f7113000.fiq-debugger: No signal IRQ, error=-6
+[    2.237564] hi6220-irq-debug f7113000.fiq-debugger: No wakeup IRQ, error=-6
+[    2.264617] mmc0: MAN_BKOPS_EN bit is not set
+[    2.266661] mmc_host mmc0: Bus speed (slot 0) = 51756522Hz (slot req 52000000Hz, actual 51756522HZ div = 0)
+[    2.273751] mmc0: new high speed MMC card at address 0001
+[    2.279449] mmcblk0: mmc0:0001 H8G1e 7.28 GiB 
+[    2.280796] mmcblk0boot0: mmc0:0001 H8G1e partition 1 4.00 MiB
+[    2.281924] mmcblk0boot1: mmc0:0001 H8G1e partition 2 4.00 MiB
+[    2.282710] mmcblk0rpmb: mmc0:0001 H8G1e partition 3 4.00 MiB
+[    2.287481]  mmcblk0: p1 p2 p3 p4 p5 p6 p7 p8 p9
+[    3.228029] (stk) :ldisc installation timeout
+[    4.228013] (stk) :ldisc_install = 0
+[    4.335036] (stk) : timed out waiting for ldisc to be un-installed
+[    4.799878] (stk) :ldisc_install = 1
+[    4.799879] cfg80211: Timeout while waiting for CRDA to reply, restoring regulatory settings
+[    4.799892] cfg80211: Restoring regulatory settings
+[    4.799938] cfg80211: Kicking the queue
+[    5.028297] console [ttyFIQ0] enabled
+[    5.033173] Registered fiq debugger ttyFIQ0
+[    5.042984] optee firmware:optee: probing for conduit method from DT.
+[    5.050464] optee firmware:optee: initialized driver
+[    5.056380] usbcore: registered new interface driver snd-usb-audio
+[    5.064371] hi6210_i2s f7118000.hi6210_i2s: Registered as hi6210_i2s
+[    5.072934] hi6210_i2s f7118000.hi6210_i2s: Failed to get DMA channel capabilities, falling back to period counting: -6
+[    5.083915] hi6210-hdmi-audio 0.hi6210_hdmi_card: hi6210_hdmi_dai <-> f7118000.hi6210_i2s mapping ok
+[    5.096072] u32 classifier
+[    5.098837]     Actions configured
+[    5.102749] Netfilter messages via NETLINK v0.30.
+[    5.107710] nf_conntrack version 0.5.0 (16384 buckets, 65536 max)
+[    5.114923] ctnetlink v0.93: registering with nfnetlink.
+[    5.121746] xt_time: kernel timezone is -0000
+[    5.128844] ip_tables: (C) 2000-2006 Netfilter Core Team
+[    5.134679] arp_tables: (C) 2002 David S. Miller
+[    5.140905] Initializing XFRM netlink socket
+[    5.149406] NET: Registered protocol family 10
+[    5.157165] mip6: Mobile IPv6
+[    5.160410] ip6_tables: (C) 2000-2006 Netfilter Core Team
+[    5.174587] sit: IPv6 over IPv4 tunneling driver
+[    5.180573] NET: Registered protocol family 17
+[    5.185171] NET: Registered protocol family 15
+[    5.189777] bridge: automatic filtering via arp/ip/ip6tables has been deprecated. Update your scripts to load br_netfilter if you need this.
+[    5.203255] Bluetooth: RFCOMM TTY layer initialized
+[    5.208255] Bluetooth: RFCOMM socket layer initialized
+[    5.213537] Bluetooth: RFCOMM ver 1.11
+[    5.217388] Bluetooth: HIDP (Human Interface Emulation) ver 1.2
+[    5.223430] Bluetooth: HIDP socket layer initialized
+[    5.228616] 8021q: 802.1Q VLAN Support v1.8
+[    5.233450] 9pnet: Installing 9P2000 support
+[    5.238670] Registered cp15_barrier emulation handler
+[    5.244470] Registered setend emulation handler
+[    5.251354] registered taskstats version 1
+[    5.262294] Btrfs loaded
+[    5.268069] Key type encrypted registered
+[    5.273524] f7111000.uart: ttyAMA1 at MMIO 0xf7111000 (irq = 8, base_baud = 0) is a PL011 rev2
+[    5.285837] f7112000.uart: ttyAMA2 at MMIO 0xf7112000 (irq = 9, base_baud = 0) is a PL011 rev2
+[    5.297461] ssp-pl022 f7106000.spi: ARM PL022 driver, device ID: 0x00041022
+[    5.304695] ssp-pl022 f7106000.spi: mapped registers from 0x00000000f7106000 to ffffff800a8dc000
+[    5.331186] [drm] host attach, client name=[dummy], id=0
+[    5.336666] kirin-drm f4100000.ade: bound f4107800.dsi (ops dsi_ops)
+[    5.336811] (stk) :ldisc installation timeout
+[    5.347685] (stk) :ldisc_install = 0
+[    5.347686] [drm] Supports vblank timestamp caching Rev 2 (21.10.2013).
+[    5.358035] [drm] No driver support for vblank timestamp query.
+[    5.365373] kirin-drm f4100000.ade: No connectors reported connected with modes
+[    5.372877] [drm] Cannot find any crtc or sizes - going 1024x768
+[    5.382012] kirin-drm f4100000.ade: fb0:  frame buffer device
+[    5.401605] [drm] Initialized kirin 1.0.0 20150718 on minor 0
+[    5.408079] f72c0000.usb supply vusb_d not found, using dummy regulator
+[    5.414988] f72c0000.usb supply vusb_a not found, using dummy regulator
+[    5.757117] dwc2 f72c0000.usb: EPs: 16, dedicated fifos, 1920 entries in SPRAM
+[    6.334941] dwc2 f72c0000.usb: DWC OTG Controller
+[    6.340689] (stk) : timed out waiting for ldisc to be un-installed
+[    6.364966] dwc2 f72c0000.usb: new USB bus registered, assigned bus number 1
+[    6.372770] dwc2 f72c0000.usb: irq 37, io mem 0x00000000
+[    6.384142] hub 1-0:1.0: USB hub found
+[    6.388186] hub 1-0:1.0: 1 port detected
+[    6.399910] dwmmc_k3 f723f000.dwmmc2: fifo-depth property not found, using value of FIFOTH register as default
+[    6.411211] dwmmc_k3 f723f000.dwmmc2: IDMAC supports 32-bit address mode.
+[    6.418446] dwmmc_k3 f723f000.dwmmc2: Using internal DMA controller.
+[    6.425010] dwmmc_k3 f723f000.dwmmc2: Version ID is 250a
+[    6.430493] dwmmc_k3 f723f000.dwmmc2: DW MMC controller at irq 41,32 bit host data width,64 deep fifo
+[    6.440400] dwmmc_k3 f723f000.dwmmc2: No vqmmc regulator found
+[    6.454093] (stk) :ldisc_install = 1
+[    6.554118] dwmmc_k3 f723f000.dwmmc2: 1 slots initialized
+[    6.562290] otg_wakelock_init: No USB transceiver found
+[    6.569137] dwmmc_k3 f723f000.dwmmc2: card claims to support voltages below defined range
+[    6.577747] rtc-pl031 f8003000.rtc: setting system clock to 1970-01-01 00:02:08 UTC (128)
+[    6.604785] mmc_host mmc2: Bus speed (slot 0) = 24800000Hz (slot req 25000000Hz, actual 24800000HZ div = 0)
+[    6.626039] mmc2: queuing unknown CIS tuple 0x91 (3 bytes)
+[    6.635981] mmc2: new SDIO card at address 0001
+[    6.648268] wl18xx_driver wl18xx.1.auto: Direct firmware load for ti-connectivity/wl1271-nvs.bin failed with error -2
+[    6.653547] SOC_MED: disabling
+[    6.653583] LDO2_2V8: disabling
+[    6.653610] LDO7_SDIO: disabling
+[    6.653631] LDO10_2V85: disabling
+[    6.653652] LDO13_1V8: disabling
+[    6.653672] LDO14_2V8: disabling
+[    6.653694] LDO17_2V5: disabling
+[    6.653997] ALSA device list:
+[    6.654004]   #0: hi6210-hdmi
+[    6.688259] wl18xx_driver wl18xx.1.auto: Falling back to user helper
+[    6.698754] EXT4-fs (mmcblk0p9): couldn't mount as ext3 due to feature incompatibilities
+[    6.708219] EXT4-fs (mmcblk0p9): couldn't mount as ext2 due to feature incompatibilities
+[    6.725298] EXT4-fs (mmcblk0p9): mounted filesystem with ordered data mode. Opts: (null)
+[    6.733698] VFS: Mounted root (ext4 filesystem) on device 179:9.
+[    6.744420] Freeing unused kernel memory: 6220K
+[    6.771772] usb 1-1: new high-speed USB device number 2 using dwc2
+[    6.985976] hub 1-1:1.0: USB hub found
+[    7.002951] hub 1-1:1.0: 3 ports detected
+System time before build time, advancing clock.
+[    7.084354] random: systemd: uninitialized urandom read (16 bytes read, 41 bits of entropy available)
+[    7.100550] random: systemd: uninitialized urandom read (16 bytes read, 42 bits of entropy available)
+[    7.147250] systemd[1]: systemd 230 running in system mode. (+PAM -AUDIT -SELINUX +IMA -APPARMOR +SMACK +SYSVINIT +UTMP -LIBCRYPTSETUP -GCRYPT -GNUTLS +ACL +XZ -LZ4 -SECCOMP +BLKID -ELFUTILS +KMOD -IDN)
+[    7.168068] systemd[1]: Detected architecture arm64.
+[    7.173257] systemd[1]: Running with unpopulated /etc.
+Welcome to Reference-Platform-Build-X11 2.2+linaro!
+[    7.188217] systemd[1]: Set hostname to <hikey>.
+[    7.199907] random: systemd: uninitialized urandom read (16 bytes read, 50 bits of entropy available)
+[    7.209427] systemd[1]: Initializing machine ID from random generator.
+[    7.234456] random: systemd: uninitialized urandom read (16 bytes read, 57 bits of entropy available)
+[    7.245771] random: systemd: uninitialized urandom read (16 bytes read, 58 bits of entropy available)
+[    7.261024] random: systemd: uninitialized urandom read (16 bytes read, 60 bits of entropy available)
+[    7.285434] random: systemd: uninitialized urandom read (16 bytes read, 63 bits of entropy available)
+[    7.325984] random: systemd: uninitialized urandom read (16 bytes read, 69 bits of entropy available)
+[    7.373757] random: systemd: uninitialized urandom read (16 bytes read, 78 bits of entropy available)
+[    7.407147] random: systemd: uninitialized urandom read (16 bytes read, 82 bits of entropy available)
+[    7.455917] (stk) :ldisc installation timeout
+[    7.460234] (stk) :ldisc_install = 0systemd[1]: Failed to populate /etc with preset unit settings, ignoring: Too many levels of symbolic links
+[    7.567736] usb 1-1.1: new high-speed USB device number 3 using dwc2
+[    7.719615] random: nonblocking pool is initialized
+[    7.804413] systemd[1]: Listening on udev Control Socket.
+[  OK  ] Listening on udev Control Socket.
+[    7.815982] systemd[1]: Listening on /dev/initctl Compatibility Named Pipe.
+[  OK  ] Listening on /dev/initctl Compatibility Named Pipe.
+[    7.830290] systemd[1]: Started Dispatch Password Requests to Console Directory Watch.
+[  OK  ] Started Dispatch Password Requests to Console Directory Watch.
+[    7.847386] systemd[1]: Listening on Journal Socket.
+[  OK  ] Listening on Journal Socket.
+[    7.857439] systemd[1]: Listening on Journal Socket (/dev/log).
+[  OK  ] Listening on Journal Socket (/dev/log).
+[    7.869277] systemd[1]: Listening on udev Kernel Socket.
+[  OK  ] Listening on udev Kernel Socket.
+[    7.884949] systemd[1]: Created slice User and Session Slice.
+[  OK  ] Created slice User and Session Slice.
+[    7.896398] systemd[1]: Reached target Remote File Systems.
+[  OK  ] Reached target Remote File Systems.
+[    7.907787] systemd[1]: Listening on Network Service Netlink Socket.
+[  OK  ] Listening on Network Service Netlink Socket.
+[    7.920582] systemd[1]: Listening on Syslog Socket.
+[  OK  ] Listening on Syslog Socket.
+[    7.930556] systemd[1]: Started Forward Password Requests to Wall Directory Watch.
+[  OK  ] Started Forward Password Requests to Wall Directory Watch.
+[    7.945557] systemd[1]: Reached target Swap.
+[  OK  ] Reached target Swap.
+[    7.955370] systemd[1]: Created slice System Slice.
+[    7.955900] cfg80211: Timeout while waiting for CRDA to reply, restoring regulatory settings
+[    7.955912] cfg80211: Restoring regulatory settings
+[    7.955946] cfg80211: Kicking the queue
+[  OK  ] Created slice System Slice.
+[    7.990852] systemd[1]: Mounting Temporary Directory...
+         [    7.998015] asix 1-1.1:1.0 eth0: register 'asix' at usb-f72c0000.usb-1.1, ASIX AX88178 USB 2.0 Ethernet, 8c:ae:4c:ff:c3:09
+Mounting Temporary Directory...
+[    8.019415] systemd[1]: Starting Create list of required static device nodes for the current kernel...
+         Starting Create list of required st... nodes for the current kernel...
+[    8.038429] systemd[1]: Created slice system-serial\x2dgetty.slice.
+[  OK  ] Created slice system-serial\x2dgetty.slice.
+[    8.060627] systemd[1]: Starting Load Kernel Modules...
+         Starting Load Kernel Modules...
+[    8.073727] systemd[1]: Created slice system-getty.slice.
+[  OK  ] Created slice system-getty.slice.
+[    8.084816] systemd[1]: Reached target Slices.
+[  OK  ] Reached target Slices.
+[    8.099052] systemd[1]: Mounting POSIX Message Queue File System...
+         Mounting POSIX Message Queue File System...
+[    8.116251] systemd[1]: Starting Remount Root and Kernel File Systems...
+         Starting Remount Root and Kernel File Systems...
+[    8.134940] systemd[1]: Starting Setup Virtual Console...
+         Starting Setup V[    8.142938] EXT4-fs (mmcblk0p9): re-mounted. Opts: (null)
+irtual Console...
+[    8.151077] systemd[1]: Listening on Journal Audit Socket.
+[  OK  ] Listening on Journal Audit Socket.
+[    8.167323] systemd[1]: Starting Journal Service...
+         Starting Journal Service...
+[    8.181899] systemd[1]: Mounting Huge Pages File System...
+         Mounting Huge Pages File System...
+[    8.192870] systemd[1]: Reached target Paths.
+[  OK  ] Reached target Paths.
+[    8.207297] systemd[1]: Mounting Debug File System...
+         Mounting Debug File System...
+[    8.231448] systemd[1]: Mounted Huge Pages File System.
+[  OK  ] Mounted Huge Pages File System.
+[    8.242083] systemd[1]: Mounted POSIX Message Queue File System.
+[  OK  ] Mounted POSIX Message Queue File System.
+[    8.255290] systemd[1]: Mounted Debug File System.
+[  OK  ] Mounted Debug File System.
+[    8.265057] systemd[1]: Mounted Temporary Directory.
+[  OK  ] Mounted Temporary Directory.
+[    8.279649] systemd[1]: Started Create list of required static device nodes for the current kernel.
+[  OK  ] Started Create list of required sta...ce nodes for the current kernel.
+[    8.300999] systemd[1]: Started Load Kernel Modules.
+[  OK  ] Started Load Kernel Modules.
+[    8.315455] systemd[1]: Started Remount Root and Kernel File Systems.
+[  OK  ] Started Remount Root and Kernel File Systems.
+[    8.332299] systemd[1]: Started Setup Virtual Console.
+[  OK  ] Started Setup Virtual Console.
+[    8.376733] systemd[1]: Starting Rebuild Hardware Database...
+         Starting Rebuild Hardware Database...
+[    8.393360] systemd[1]: Starting Create System Users...
+         Starting Create System Users...
+[    8.409175] systemd[1]: Starting Apply Kernel Variables...
+         Starting Apply Kernel Variables...
+[    8.425683] systemd[1]: Mounting FUSE Control File System...
+         Mounting FUSE Control File System...
+[    8.442343] systemd[1]: Mounting Configuration File System...
+         Mounting Configuration File System...
+[    8.460867] systemd-sysuser[1327]: syscall 285
+[    8.465542] (stk) : timed out waiting for ldisc to be un-installed
+[    8.465543] Code: aa0503e4 aa0603e5 aa0703e6 d4000001 (b13ffc1f) 
+[    8.470394] systemd[1]: Mounted Configuration File System.
+[    8.483824] CPU: 2 PID: 1327 Comm: systemd-sysuser Not tainted 4.4.89-01529-gb29bace #1
+[  OK  [0[    8.492126] Hardware name: HiKey Development Board (DT)
+m[    8.498896] task: ffffffc074442780 task.stack: ffffffc0728c4000
+] [    8.504978] PC is at 0x7fb6f691d4
+Mounted Configur[    8.508579] LR is at 0x5590e05dac
+ation File System[    8.513401] pc : [<0000007fb6f691d4>] lr : [<0000005590e05dac>] pstate: 20000000
+.[    8.522240] sp : 0000007fe03d8720
+[    8.525657] x29: 0000007fe03d8720 
+x28: 0000000000000001 [    8.529563] systemd[1]: Mounted FUSE Control File System.
+[    8.536547] 
+[    8.536557] x27: 0000000000000001 x26: 0000007fe03d8990 
+[    8.536582] x25: 0000000000000001 x24: 0000000000000008 
+[    8.536596] x23: 0000005590e07db8 x22: 7fffffffffffffff 
+[    8.536609] x21: 00000000ffffffff x20: 0000000000000007 
+[    8.536622] x19: 0000005590e26000 x18: 0000000000000000 
+[    8.536635] x17: 0000007fb6f691b0 x16: 0000005590e26db0 
+[    8.536648] x15: 000000002b094880 x14: 0000000001584a44 
+[    8.536660] x13: 000000005361fca0 x12: 00000000000016ed 
+[    8.536673] x11: 000000000000002e x10: 000000000002c6b3 
+[    8.536685] x9 : 000000000000002f x8 : 000000000000011d 
+[    8.536699] x7 : 0000000000000231 x6 : 0000000000000231 
+[    8.536712] x5 : 0000000000000000 x4 : 7fffffffffffffff 
+[    8.536725] x3 : 0000000000000000 x2 : 0000000000000008 
+[    8.536739] x1 : 0000000000000000 x0 : 0000000000000007 
+[    8.536743] 
+[  OK  ] Mounted FUSE Control File System.
+[    8.622234] (stk) :ldisc_install = 1
+[    8.622235] systemd[1]: Started Journal Service.
+[  OK  ] Started Journal Service.
+[  OK  ] Started Create System Users.
+[  OK  ] Started Apply Kernel Variables.
+         Starting Create Static Device Nodes in /dev...
+         Starting Flush Journal to Persistent Storage...
+[    8.719770] systemd-journald[1315]: Received request to flush runtime journal from PID 1
+[  OK  ] Started Create Static Device Nodes in /dev.
+[  OK  ] Started Flush Journal to Persistent Storage.
+         Starting udev Kernel Device Manager...
+[  OK  ] Reached target Local File Systems (Pre).
+         Mounting /var/volatile...
+[  OK  ] Mounted /var/volatile.
+         Starting Load/Save Random Seed...
+[  OK  ] Reached target Local File Systems.
+         Starting Create Volatile Files and Directories...
+         Starting Rebuild Journal Catalog...
+         Starting Rebuild Dynamic Linker Cache...
+[  OK  ] Started udev Kernel Device Manager.
+[  OK  ] Started Load/Save Random Seed.
+[  OK  ] Started Create Volatile Files and Directories.
+         Starting Network Time Synchronization...
+         Starting Update UTMP about System Boot/Shutdown...
+[  OK  ] Started Rebuild Journal Catalog.
+[  OK  ] Started Update UTMP about System Boot/Shutdown.
+[  OK  ] Started Network Time Synchronization.
+[  OK  ] Reached target System Time Synchronized.
+[    9.568015] (stk) :ldisc installation timeout
+[    9.572322] (stk) :ldisc_install = 0[  OK  ] Started Rebuild Hardware Database.
+         Starting udev Coldplug all Devices...
+[  OK  ] Started Rebuild Dynamic Linker Cache.
+         Starting Update is Completed...
+[  OK  ] Started Update is Completed.
+(stk) : timed out waiting for ldisc to be un-installed
+[   10.687608] (stk) :ldisc_install = 1[  OK  ] Found device /dev/ttyFIQ0.
+[  OK  ] Reached target Sound Card.
+[   11.103771] cfg80211: Timeout while waiting for CRDA to reply, restoring regulatory settings
+[   11.112434] cfg80211: Restoring regulatory settings
+[   11.117787] cfg80211: Kicking the queue
+[   11.180152] wl18xx_driver wl18xx.1.auto: Direct firmware load for ti-connectivity/wl18xx-conf.bin failed with error -2
+[   11.191111] wl18xx_driver wl18xx.1.auto: Falling back to user helper
+[  OK  ] Started udev Coldplug all Devices.
+[   11.477564] wlcore: ERROR could not get configuration binary ti-connectivity/wl18xx-conf.bin: -11
+[   11.486675] wlcore: WARNING falling back to default config
+[  OK  ] Listening on Load/Save RF Kill Switch Status /dev/rfkill Watch.
+[  OK  ] Reached target System Initialization.
+[  OK  ] Listening on D-Bus System Message Bus Socket.
+[  OK  ] Listening on RPCbind Server Activation Socket.
+         Starting sshd.socket.
+[  OK  ] Started Daily Cleanup of Temporary Directories.
+[  OK  ] Reached target Timers.
+[  OK  ] Listening on Avahi mDNS/DNS-SD Stack Activation Socket.
+[  OK  ] Listening on sshd.socket.
+         Starting Load/Save RF Kill Switch Status...
+[  OK  ] Reached target Sockets.
+[  OK  ] Reached target Basic System.
+[  OK  ] Started Periodic Command Scheduler.
+[  OK  ] Started Kernel Logging Service.
+[  OK  ] Started Job spooling tools.
+[   11.691761] (stk) :ldisc installation timeout
+[   11.696084] (stk) :ldisc_install = 0[  OK  ] Started D-Bus System Message Bus.
+[   11.732710] wlcore: wl18xx HW: 183x or 180x, PG 2.2 (ROM 0x11)
+[   11.741703] cfg80211: Updating information on frequency 2412 MHz with regulatory rule:
+[   11.749804] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.757550] cfg80211: Updating information on frequency 2417 MHz with regulatory rule:
+[   11.765637] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.773400] cfg80211: Updating information on frequency 2422 MHz with regulatory rule:
+[   11.781485] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789218] cfg80211: Updating information on frequency 2427 MHz with regulatory rule:
+[   11.789225] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789231] cfg80211: Updating information on frequency 2432 MHz with regulatory rule:
+[   11.789237] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789244] cfg80211: Updating information on frequency 2437 MHz with regulatory rule:
+[   11.789249] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789256] cfg80211: Updating information on frequency 2442 MHz with regulatory rule:
+[   11.789262] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789268] cfg80211: Updating information on frequency 2447 MHz with regulatory rule:
+[   11.789273] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789280] cfg80211: Updating information on frequency 2452 MHz with regulatory rule:
+[   11.789285] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789292] cfg80211: Updating information on frequency 2457 MHz with regulatory rule:
+[   11.789297] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789304] cfg80211: Updating information on frequency 2462 MHz with regulatory rule:
+[   11.789309] cfg80211: (2402000 KHz - 2472000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789316] cfg80211: Updating information on frequency 2467 MHz with regulatory rule:
+[   11.789321] cfg80211: (2457000 KHz - 2482000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789327] cfg80211: Updating information on frequency 2472 MHz with regulatory rule:
+[   11.789333] cfg80211: (2457000 KHz - 2482000 KHz @ 40000 KHz), (600 mBi, 2000 mBm)
+[   11.789339] cfg80211: Updating information on frequency 2484 MHz with regulatory rule:
+[   11.789345] cfg80211: (2474000 KHz - 2494000 KHz @ 20000 KHz), (600 mBi, 2000 mBm)
+[   11.789352] cfg80211: Disabling freq 5040 MHz
+[   11.789357] cfg80211: Disabling freq 5060 MHz
+[   11.789362] cfg80211: Disabling freq 5080 MHz
+[   11.789368] cfg80211: Disabling freq 5170 MHz
+[   11.789374] cfg80211: Updating information on frequency 5180 MHz with regulatory rule:
+[   11.789380] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789386] cfg80211: Updating information on frequency 5190 MHz with regulatory rule:
+[   11.789392] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789398] cfg80211: Updating information on frequency 5200 MHz with regulatory rule:
+[   11.789404] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789411] cfg80211: Updating information on frequency 5210 MHz with regulatory rule:
+[   11.789416] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789423] cfg80211: Updating information on frequency 5220 MHz with regulatory rule:
+[   11.789428] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789435] cfg80211: Updating information on frequency 5230 MHz with regulatory rule:
+[   11.789440] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789447] cfg80211: Updating information on frequency 5240 MHz with regulatory rule:
+[   11.789452] cfg80211: (5170000 KHz - 5250000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789459] cfg80211: Updating information on frequency 5260 MHz with regulatory rule:
+[   11.789469] cfg80211: (5250000 KHz - 5330000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789475] cfg80211: Updating information on frequency 5280 MHz with regulatory rule:
+[   11.789481] cfg80211: (5250000 KHz - 5330000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789487] cfg80211: Updating information on frequency 5300 MHz with regulatory rule:
+[   11.789493] cfg80211: (5250000 KHz - 5330000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789499] cfg80211: Updating information on frequency 5320 MHz with regulatory rule:
+[   11.789505] cfg80211: (5250000 KHz - 5330000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789511] cfg80211: Updating information on frequency 5500 MHz with regulatory rule:
+[   11.789517] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789523] cfg80211: Updating information on frequency 5520 MHz with regulatory rule:
+[   11.789529] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789535] cfg80211: Updating information on frequency 5540 MHz with regulatory rule:
+[   11.789541] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789547] cfg80211: Updating information on frequency 5560 MHz with regulatory rule:
+[   11.789553] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789559] cfg80211: Updating information on frequency 5580 MHz with regulatory rule:
+[   11.789565] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789572] cfg80211: Updating information on frequency 5600 MHz with regulatory rule:
+[   11.789578] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789585] cfg80211: Updating information on frequency 5620 MHz with regulatory rule:
+[   11.789591] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789598] cfg80211: Updating information on frequency 5640 MHz with regulatory rule:
+[   11.789604] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789611] cfg80211: Updating information on frequency 5660 MHz with regulatory rule:
+[   11.789617] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789623] cfg80211: Updating information on frequency 5680 MHz with regulatory rule:
+[   11.789630] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789636] cfg80211: Updating information on frequency 5700 MHz with regulatory rule:
+[   11.789642] cfg80211: (5490000 KHz - 5730000 KHz @ 160000 KHz), (600 mBi, 2000 mBm)
+[   11.789648] cfg80211: Updating information on frequency 5745 MHz with regulatory rule:
+[   11.789654] cfg80211: (5735000 KHz - 5835000 KHz @ 80000 KHz), (600 mBi, 2000 mBm)
+[   11.789660] cfg80211: Updating information on frequency 5765 MHz with regulatory rule:
+[   11.789666] cfg80211: (5735000 KHz - 5835000 KHz @ 80000 KHz), (600 mBi, 2000 mBm)
+[   11.789672] cfg80211: Updating information on frequency 5785 MHz with regulatory rule:
+[   11.789678] cfg80211: (5735000 KHz - 5835000 KHz @ 80000 KHz), (600 mBi, 2000 mBm)
+[   11.789684] cfg80211: Updating information on frequency 5805 MHz with regulatory rule:
+[   11.789690] cfg80211: (5735000 KHz - 5835000 KHz @ 80000 KHz), (600 mBi, 2000 mBm)
+[   11.789696] cfg80211: Updating information on frequency 5825 MHz with regulatory rule:
+[   11.789702] cfg80211: (5735000 KHz - 5835000 KHz @ 80000 KHz), (600 mBi, 2000 mBm)
+[   11.796725] wlcore: loaded
+[   12.067961] (hci_tty): called dumb_hci_callback
+         Starting Network Service...
+         Starting Network Manager...
+[  OK  ] Started System Logging Service.
+         Starting Login Service...
+         Starting Avahi mDNS/DNS-SD Stack...
+[  OK  ] Started TEE Supplicant.
+         Starting Resize root filesystem to fit available disk space...
+         Starting Bluetooth service...
+         Starting Save/Restore Sound Card State...
+[  OK  ] Started Network Service.
+[  OK  ] Started Save/Restore Sound Card State.
+[  OK  ] Started Avahi mDNS/DNS-SD Stack.
+[  OK  ] Started Login Service.
+[  OK  ] Started Bluetooth service.
+[  OK  ] Reached target Bluetooth.
+         Starting Hostname Service...
+[   12.609414] audit: type=1325 audit(1504731614.595:2): table=filter family=2 entries=0
+[   12.617750] audit: type=1325 audit(1504731614.595:2): table=mangle family=2 entries=0
+[   12.626209] audit: type=1325 audit(1504731614.595:2): table=nat family=2 entries=0
+[[   12.634310] audit: type=1325 audit(1504731614.595:2): table=raw family=2 entries=0
+  OK  [0[   12.642274] audit: type=1325 audit(1504731614.595:2): table=security family=2 entries=0
+m] Started Network [   12.651964] audit: type=1325 audit(1504731614.595:2): table=filter family=3 entries=0
+Manager.
+[   12.662175] audit: type=1325 audit(1504731614.595:2): table=filter family=10 entries=0
+[   12.670488] audit: type=1325 audit(1504731614.595:2): table=mangle family=10 entries=0
+[   12.670554] audit: type=1325 audit(1504731614.595:2): table=raw family=10 entries=0
+[   12.670642] audit: type=1325 audit(1504731614.595:2): table=nat family=10 entries=0
+[  OK  ] Reached target Network.
+[   12.699736] (stk) : timed out waiting for ldisc to be un-installed         Starting DNS forwarder and DHCP server...
+         Starting Permit User Sessions...
+         Starting Network Name Resolution...
+[  OK  ] Started Permit U
+s[   12.746381] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+er Sessions.
+[  OK  ] Started Serial Getty on ttyFIQ0.
+[  OK  ] Started Getty on tty1.
+[  OK  ] Reached target Login Prompts.
+[   12.813185] (stk) :ldisc_install = 1[  OK  ] Started Hostname Service.
+[   13.519275] IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
+[  OK  ] Started DNS forwarder and DHCP server.
+[   13.577769] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[FAILED] Failed to start Network Name Resolution.
+See 'systemctl status systemd-resolved.service' for details.
+[  OK  ] Stopped Network Name Resolution.
+         Starting Network Name Resolution...
+[   13.716203] mmc_host mmc2: Bus speed (slot 0) = 24800000Hz (slot req 400000Hz, actual 400000HZ div = 31)
+[   13.784502] mmc_host mmc2: Bus speed (slot 0) = 24800000Hz (slot req 25000000Hz, actual 24800000HZ div = 0)
+[   13.815981] (stk) :ldisc installation timeout
+[   13.820305] (stk) :ldisc_install = 0[   13.838390] blk_update_request: I/O error, dev mmcblk0rpmb, sector 0
+[   13.975536] blk_update_request: I/O error, dev mmcblk0rpmb, sector 0
+[   14.006378] blk_update_request: I/O error, dev mmcblk0rpmb, sector 0
+[   14.115207] wlcore: PHY firmware version: Rev 8.2.0.0.236
+[   14.215316] wlcore: firmware booted (Rev 8.9.0.0.69)
+[   14.240346] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[   14.272223] cfg80211: Timeout while waiting for CRDA to reply, restoring regulatory settings
+[   14.281316] cfg80211: Restoring regulatory settings
+         [   14.286660] cfg80211: Kicking the queue
+Starting WPA supplicant...
+         Starting Authorization Manager...
+[FAILED] Failed to start Network Name Resolution.
+See 'systemctl status systemd-resolved.service' for details.
+[  OK  ] Stopped Network Name Resolution.
+         Starting Network Name Resolution...
+[  OK  ] Started WPA supplicant.
+[FAILED] Failed to start Network Name Resolution.
+See 'systemctl status systemd-resolved.service' for details.
+[  OK  ] Stopped Network Name Resolution.
+         Starting Network Name Resolution...
+[   14.436996] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
+[   14.446502] ------------[ cut here ]------------
+[   14.451213] kernel BUG at /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/kernel/sched/walt.c:109!
+[   14.461360] Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+[   14.466921] Modules linked in:
+[   14.470030] CPU: 0 PID: 2270 Comm: NetworkManager Not tainted 4.4.89-01529-gb29bace #1
+[   14.478057] Hardware name: HiKey Development Board (DT)
+[   14.483352] task: ffffffc06f4fa680 task.stack: ffffffc072338000
+[   14.489361] PC is at walt_dec_cumulative_runnable_avg+0x40/0x48
+[   14.495362] LR is at dequeue_task_fair+0x3f0/0x1370
+[   14.500304] pc : [<ffffff8008132d58>] lr : [<ffffff80081215e0>] pstate: 804001c5
+[   14.507991] sp : ffffffc07233b7b0
+[   14.511466] x29: ffffffc07233b7b0 x28: 0000000000000000 
+[   14.517058] x27: 0000000000000000 x26: ffffff8008cc7184 
+[   14.522645] x25: ffffffc07bed2e00 x24: 0000000000000000 
+[   14.528232] x23: ffffffc07bed2e18 x22: ffffff8009770000 
+[   14.533817] x21: 0000000000000001 x20: ffffffc06f4fa680 
+[   14.539403] x19: ffffffc07bed2e00 x18: 0000000000000000 
+[   14.544989] x17: 0000007fa58c5788 x16: ffffff8008298988 
+[   14.550574] x15: 00000dd9bc554fa9 x14: 0000000100000010 
+[   14.556161] x13: 000000010000000f x12: 000000010000000d 
+[   14.561749] x11: 000000010000000a x10: 0000000000000000 
+[   14.567333] x9 : ffffff80097fa000 x8 : 0000000000000001 
+[   14.572921] x7 : ffffff8009227c58 x6 : 0000000000000000 
+[   14.578502] x5 : 0000000000000080 x4 : 0000000000000000 
+[   14.584086] x3 : ffffff8009770000 x2 : 0000004072ca5000 
+[   14.589671] x1 : 0000000000bb78dd x0 : fffffffffff5b306 
+[   14.595261] 
+[   14.595261] SP: 0xffffffc07233b730:
+[   14.600469] b730  09770000 ffffff80 7bed2e18 ffffffc0 00000000 00000000 7bed2e00 ffffffc0
+[   14.609262] b750  08cc7184 ffffff80 00000000 00000000 00000000 00000000 7233b7b0 ffffffc0
+[   14.618051] b770  081215e0 ffffff80 7233b7b0 ffffffc0 08132d58 ffffff80 804001c5 00000000
+[   14.626838] b790  00000000 00000000 00000000 00000000 00000000 00000080 738ffc00 ffffffc0
+[   14.635624] b7b0  7233b7d0 ffffffc0 081215e0 ffffff80 6f4fa680 ffffffc0 7bed2e00 ffffffc0
+[   14.644410] b7d0  7233b870 ffffffc0 08102de0 ffffff80 6f4fa680 ffffffc0 7bed2e00 ffffffc0
+[   14.653196] b7f0  00000001 00000000 09770000 ffffff80 7bed2e18 ffffffc0 00000000 00000000
+[   14.661978] b810  7bed2e00 ffffffc0 08cc7184 ffffff80 00000000 00000000 0922d000 ffffff80
+[   14.670772] 
+[   14.670772] X0: 0xfffffffffff5b286:
+[   14.675977] b284  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.684787] b2a4  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.693585] b2c4  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.702381] b2e4  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.711172] b304  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.719967] b324  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.728760] b344  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.737553] b364  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.746345] b384  ******** ******** ******** ******** ******** ******** ******** ********
+[   14.755178] 
+[   14.755178] X19: 0xffffffc07bed2d80:
+[   14.760474] 2d80  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.769258] 2da0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.778041] 2dc0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.786823] 2de0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.795604] 2e00  8ce28ce1 dead4ead 00000000 00000000 6f4fa680 ffffffc0 098b3038 ffffff80
+[   14.804393] 2e20  09ac61e0 ffffff80 00000000 00000000 08fdb2b8 ffffff80 00000000 00000000
+[   14.813179] 2e40  000001dc 00000000 000001c3 00000000 0000017c 00000000 00000131 00000000
+[   14.821964] 2e60  000000f8 00000000 fffee90f 00000000 00000000[   14.827899] (stk) : timed out waiting for ldisc to be un-installed[   14.829990] Bluetooth: st_register failed -22
+[   14.838762]  00000000 00000000 00000000
+[   14.843099] 
+[   14.843099] X20: 0xffffffc06f4fa600:
+[   14.848396] a600  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.857183] a620  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.865964] a640  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.874750] a660  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.883533] a680  00000200 00000000 ffffffff ffffffff 6fffb000 00f10000 00000003 00000000
+[   14.892321] a6a0  00000001 00000000 72338000 ffffffc0 00000002 00404100 00000000 00000000
+[   14.901105] a6c0  00000000 00000000 00000001 00000000 00000066 00000000 fffee827 00000000
+[   14.909890] a6e0  6f574500 ffffffc0 00000000 00000001 00000078 00000078 00000078 00000000
+[   14.918688] 
+[   14.918688] X23: 0xffffffc07bed2d98:
+[   14.923982] 2d98  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.932765] 2db8  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.941550] 2dd8  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.950335] 2df8  00000000 00000000 8ce28ce1 dead4ead 00000000 00000000 6f4fa680 ffffffc0
+[   14.959117] 2e18  098b3038 ffffff80 09ac61e0 ffffff80 00000000 00000000 08fdb2b8 ffffff80
+[   14.967903] 2e38  00000000 00000000 000001dc 00000000 000001c3 00000000 0000017c 00000000
+[   14.976692] 2e58  00000131 00000000 000000f8 00000000 fffee90f 00000000 00000000 00000000
+[   14.985473] 2e78  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   14.994262] 
+[   14.994262] X25: 0xffffffc07bed2d80:
+[   14.999556] 2d80  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   15.008340] 2da0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   15.017125] 2dc0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   15.025908] 2de0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   15.034690] 2e00  8ce28ce1 dead4ead 00000000 00000000 6f4fa680 ffffffc0 098b3038 ffffff80
+[   15.043472] 2e20  09ac61e0 ffffff80 00000000 00000000 08fdb2b8 ffffff80 00000000 00000000
+[   15.052259] 2e40  000001dc 00000000 000001c3 00000000 0000017c 00000000 00000131 00000000
+[   15.061042] 2e60  000000f8 00000000 fffee90f 00000000 00000000 00000000 00000000 00000000
+[   15.069839] 
+[   15.069839] X29: 0xffffffc07233b730:
+[   15.075133] b730  09770000 ffffff80 7bed2e18 ffffffc0 00000000 00000000 7bed2e00 ffffffc0
+[   15.083922] b750  08cc7184 ffffff80 00000000 00000000 00000000 00000000 7233b7b0 ffffffc0
+[   15.092709] b770  081215e0 ffffff80 7233b7b0 ffffffc0 08132d58 ffffff80 804001c5 00000000
+[   15.101492] b790  00000000 00000000 00000000 00000000 00000000 00000080 738ffc00 ffffffc0
+[   15.110278] b7b0  7233b7d0 ffffffc0 081215e0 ffffff80 6f4fa680 ffffffc0 7bed2e00 ffffffc0
+[   15.119062] b7d0  7233b870 ffffffc0 08102de0 ffffff80 6f4fa680 ffffffc0 7bed2e00 ffffffc0
+[   15.127849] b7f0  00000001 00000000 09770000 ffffff80 7bed2e18 ffffffc0 00000000 00000000
+[   15.136632] b810  7bed2e00 ffffffc0 08cc7184 ffffff80 00000000 00000000 0922d000 ffffff80
+[   15.145413] 
+[   15.147014] Process NetworkManager (pid: 2270, stack limit = 0xffffffc072338000)
+[   15.154727] Stack: (0xffffffc07233b7b0 to 0xffffffc07233c000)
+[   15.160715] b7a0:                                   ffffffc07233b7d0 ffffff80081215e0
+[   15.168884] b7c0: ffffffc06f4fa680 ffffffc07bed2e00 ffffffc07233b870 ffffff8008102de0
+[   15.177049] b7e0: ffffffc06f4fa680 ffffffc07bed2e00 0000000000000001 ffffff8009770000
+[   15.185218] b800: ffffffc07bed2e18 0000000000000000 ffffffc07bed2e00 ffffff8008cc7184
+[   15.193386] b820: 0000000000000000 ffffff800922d000 ffffffc07bed2e18 0000000000000000
+[   15.201552] b840: ffffffc07233b850 ffffffc07bed2e00 ffffffc07233b870 ffffff8000000001
+[   15.209718] b860: ffffffc06f4fa680 ffffffc06f4fa680 ffffffc07233b8a0 ffffff8008cc67d0
+[   15.217885] b880: ffffffc07bed2e00 ffffffc06f4fa680 ffffffc06f4fad20 ffffffc06f4fa680
+[   15.226047] b8a0: ffffffc07233b920 ffffff8008cc7184 ffffffc06f4fa680 000000000037734d
+[   15.234211] b8c0: 0000000000000000 0000000000000001 0000000000000000 0000000000000001
+[   15.242379] b8e0: ffffffc07286bac1 ffffffc07286bac0 0000000000000000 ffffffc07233bb24
+[   15.250543] b900: ffffffc06f4fa680 000000000037734d 0000000000000000 ffffffc07233bb24
+[   15.258708] b920: ffffffc07233b940 ffffff8008ccbaf8 ffffffc07233bac8 0000000000000140
+[   15.266873] b940: ffffffc07233b9d0 ffffff8008ccbbb8 ffffffc07233bac8 000000000037734d
+[   15.275042] b960: 0000000000000000 000000000037734d ffffff800a571c50 0000000000000000
+[   15.283209] b980: 0000000000000000 0000000431254d0f 0000000430edd9c2 ffffff8008168448
+[   15.291370] b9a0: ffffffc07becdf40 000008de00000001 ffffff8008ccbaec 4d6b726f7774654e
+[   15.299535] b9c0: 0000726567616e61 ffffffc06f4fa680 ffffffc07233ba00 ffffff8008296f68
+[   15.307701] b9e0: 0000000000000001 ffffffc07233bbd0 ffffffc07233bac8 0000000000000000
+[   15.315869] ba00: ffffffc07233ba30 ffffff80082986d0 ffffffc07233bb24 0000000000000000
+[   15.324033] ba20: 0000000000000000 0000000000000000 ffffffc07233be40 ffffff8008298b40
+[   15.332196] ba40: 0000007fc3ec42f0 0000000000000000 000000003e78d9b0 0000000000000009
+[   15.340365] ba60: 0000000000000000 ffffffc07233beb0 000000000000011d 0000000000000049
+[   15.348532] ba80: ffffff8008cd8000 ffffffc06f4fa680 ffffffc07233beb0 0000000000000000
+[   15.356695] baa0: 000000000037734d ffffffc07233bac8 0000000000000001 000000003e78d9b0
+[   15.364859] bac0: 0000000000000001 0000000430edd9c2 0000000000000000 0000000300000009
+[   15.373024] bae0: 0000000600000001 0000000700000001 0000000900000001 0000000a00000003
+[   15.381193] bb00: 0000000d00000001 0000000f00000001 0000001000000001 0000001100000001
+[   15.389361] bb20: ffffffc000000001 0000000000000000 ffffffc06f8fc040 00000000000000b8
+[   15.397527] bb40: ffffffc072b01080 0000000000000001 ffffffc06fc27d00 0000000000000140
+[   15.405694] bb60: ffffffc07233bb90 ffffff8008aed010 ffffffc07233bb90 ffffff8008aed1c0
+[   15.413859] bb80: 00000000000000b8 0000000000000000 ffffffc07233bc50 ffffff80089b1fb8
+[   15.422021] bba0: ffffffc07233be38 ffffffc06f8fc040 0000000000004040 ffffffc06f8fc040
+[   15.430186] bbc0: 0000000000000000 ffffffc07233bcd8 0000000000000000 0000000000000019
+[   15.438352] bbe0: 0000000000000000 ffffffc06f4fa680 0000000000000001 ffffffc000000009
+[   15.446519] bc00: ffffffc072ba5c80 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.447835] BUG: spinlock lockup suspected on CPU#3, gdbus/2329
+[   15.447873]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   15.447900] CPU: 3 PID: 2329 Comm: gdbus Not tainted 4.4.89-01529-gb29bace #1
+[   15.447912] Hardware name: HiKey Development Board (DT)
+[   15.447925] Call trace:
+[   15.447960] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   15.447990] [<ffffff800808c204>] show_stack+0x24/0x30
+[   15.448019] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   15.448049] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   15.448079] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   15.448109] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   15.448137] [<ffffff8008104560>] try_to_wake_up+0x420/0x5b0
+[   15.448162] [<ffffff800810480c>] default_wake_function+0x34/0x48
+[   15.448191] [<ffffff8008297160>] pollwake+0x80/0x90
+[   15.448219] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   15.448247] [<ffffff800812fb64>] __wake_up_locked_key+0x3c/0x50
+[   15.448277] [<ffffff80082dbe74>] eventfd_write+0xf4/0x1e8
+[   15.448306] [<ffffff800827fd20>] __vfs_write+0x48/0xf8
+[   15.448333] [<ffffff8008280760>] vfs_write+0x98/0x1a8
+[   15.448361] [<ffffff8008281314>] SyS_write+0x54/0xb0
+[   15.448387] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   15.574335] bc20: ffffff80082970e0 ffffffc06fcbfec0 ffffffc06fcbfec0 ffffffc06fcbfe88
+[   15.582503] bc40: ffffffc07209e740 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.590667] bc60: ffffff80082970e0 ffffffc07210fdb8 ffffffc07210fdb8 ffffffc07210fd80
+[   15.598831] bc80: ffffffc0728bbac0 0000000000000019 0000000000000000 ffffffc07233bbd0
+[   15.606998] bca0: ffffff80082970e0 ffffffc072b88a38 ffffffc072b88a38 ffffffc072b88a00
+[   15.615165] bcc0: ffffffc074de4200 000000000000001b 0000000000000000 ffffffc07233bbd0
+[   15.623330] bce0: ffffff80082970e0 ffffffc0738a61b8 ffffffc0738a61b8 ffffffc0738a6180
+[   15.631494] bd00: ffffffc074dd7c80 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.639658] bd20: ffffff80082970e0 ffffffc06fd5e5b8 ffffffc06fd5e5b8 ffffffc06fd5e580
+[   15.647826] bd40: ffffffc06ff57900 0000000000000019 0000000000000000 ffffffc07233bbd0
+[   15.655991] bd60: ffffff80082970e0 ffffffc0720c7cb8 ffffffc0720c7cb8 ffffffc0720c7c80
+[   15.664155] bd80: ffffffc072ba3040 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.672321] bda0: ffffff80082970e0 ffffffc06ff48cd8 ffffffc06ff48cd8 ffffffc06ff48ca0
+[   15.680487] bdc0: ffffffc06f42ee40 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.688653] bde0: ffffff80082970e0 ffffffc07210f4b8 ffffffc07210f4b8 ffffffc07210f480
+[   15.696818] be00: ffffffc07286bac0 0000000000000019 ffffffc000000000 ffffffc07233bbd0
+[   15.704983] be20: ffffff80082970e0 ffffffc06ff590d8 ffffffc06ff590d8 ffffffc06ff590a0
+[   15.713147] be40: 0000000000000000 ffffff800808618c 0000000000000200 0000004072ca5000
+[   15.721313] be60: ffffffffffffffff 0000007fa58c5854 0000000080000000 0000000000000015
+[   15.729479] be80: 000000000000011d ffffff800808615c 0000000000000200 0000004072ca5000
+[   15.737646] bea0: 0000000000000003 0000000025ca1280 0000000000000012 00000000000ba5c2
+[   15.745815] bec0: 000000003e78d9b0 0000000000000009 0000007fc3ec42f0 0000000000000000
+[   15.753981] bee0: 0000000000000000 0000000000000000 0000007fa56666f0 0000000000000000
+[   15.762145] bf00: 0000000000000049 000ee6b280000000 000000000000000e 0000000015dc2c6e
+[   15.770316] bf20: 0000000000000016 0000000059b061e0 00067f353fd29d40 00000dd9bc554fa9
+[   15.778483] bf40: 0000007fa5c8e9d0 0000007fa58c5788 0000000000000000 0000000000000009
+[   15.786648] bf60: 000000003e78d9b0 0000007fc3ec42f0 0000000000000e32 0000007fa5be6c30
+[   15.794811] bf80: 0000000000000001 0000000000000001 0000000000000000 000000003e742990
+[   15.802979] bfa0: 0000000000000001 0000007fc3ec42c0 0000007fa58c5834 0000007fc3ec42c0
+[   15.811146] bfc0: 0000007fa58c5854 0000000080000000 000000003e78d9b0 0000000000000049
+[   15.819311] bfe0: 0000000000000000 0000000000000000 0000000000000000 0000000000000000
+[   15.827459] Call trace:
+[   15.830049] Exception stack(0xffffffc07233b5e0 to 0xffffffc07233b710)
+[   15.836755] b5e0: ffffffc07bed2e00 0000008000000000 000000000261d000 ffffff8008132d58
+[   15.844921] b600: 0000000000000002 0000000000000000 0000000000000000 ffffff80081361e0
+[   15.853088] b620: ffffff8008ce3000 ffffff8009227000 ffffffc07233b6a0 ffffff8008ccc5d4
+[   15.861254] b640: ffffffc073918420 ffffff8008139a90 ffffff8009227cf8 ffffff8009770908
+[   15.869418] b660: ffffffc073918420 ffffffc073867800 ffffff800976f000 ffffffc073918400
+[   15.877586] b680: fffffffffff5b306 0000000000bb78dd 0000004072ca5000 ffffff8009770000
+[   15.885754] b6a0: 0000000000000000 0000000000000080 0000000000000000 ffffff8009227c58
+[   15.893922] b6c0: 0000000000000001 ffffff80097fa000 0000000000000000 000000010000000a
+[   15.902088] b6e0: 000000010000000d 000000010000000f 0000000100000010 00000dd9bc554fa9
+[   15.910245] b700: ffffff8008298988 0000007fa58c5788
+[   15.915346] [<ffffff8008132d58>] walt_dec_cumulative_runnable_avg+0x40/0x48
+[   15.922586] [<ffffff80081215e0>] dequeue_task_fair+0x3f0/0x1370
+[   15.928757] [<ffffff8008102de0>] deactivate_task+0x98/0xd8
+[   15.934488] [<ffffff8008cc67d0>] __schedule+0x458/0xbf8
+[   15.939938] [<ffffff8008cc7184>] schedule+0x3c/0xa0
+[   15.945033] [<ffffff8008ccbaf8>] schedule_hrtimeout_range_clock+0x90/0x118
+[   15.952181] [<ffffff8008ccbbb8>] schedule_hrtimeout_range+0x38/0x48
+[   15.958706] [<ffffff8008296f68>] poll_schedule_timeout+0x58/0x90
+[   15.964963] [<ffffff80082986d0>] do_sys_poll+0x398/0x4d0
+[   15.970504] [<ffffff8008298b40>] SyS_ppoll+0x1b8/0x1e0
+[   15.975865] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   15.981685] Code: a94153f3 a8c27bfd d65f03c0 d503201f (d4210000) 
+[   16.000499] BUG: spinlock lockup suspected on CPU#2, sugov:0/1069
+[   16.006871]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   16.016292] CPU: 2 PID: 1069 Comm: sugov:0 Tainted: G      D         4.4.89-01529-gb29bace #1
+[   16.025158] Hardware name: HiKey Development Board (DT)
+[   16.030595] Call trace:
+[   16.033196] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   16.038832] [<ffffff800808c204>] show_stack+0x24/0x30
+[   16.044105] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   16.049383] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   16.054574] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   16.060561] [<ffffff8008ccc4bc>] _raw_spin_lock_irqsave+0x5c/0x70
+[   16.066911] [<ffffff8008132c8c>] cpufreq_notifier_trans+0xfc/0x150
+[   16.073352] [<ffffff80080f6b40>] notifier_call_chain+0x68/0xa8
+[   16.079431] [<ffffff80080f6fe0>] __srcu_notifier_call_chain+0xa0/0xf0
+[   16.080244] BUG: spinlock lockup suspected on CPU#1, swapper/1/0
+[   16.080275]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   16.101736] [<ffffff80080f706c>] srcu_notifier_call_chain+0x3c/0x50
+[   16.108267] [<ffffff80088a04a4>] cpufreq_notify_transition+0xec/0x310
+[   16.114969] [<ffffff80088a0a04>] cpufreq_freq_transition_end+0x3c/0xb0
+[   16.121761] [<ffffff80088a0d04>] __cpufreq_driver_target+0x194/0x2b0
+[   16.128375] [<ffffff8008138de4>] sugov_work+0x3c/0x58
+[   16.133657] [<ffffff80080f5398>] kthread_worker_fn+0xb8/0x188
+[   16.139648] [<ffffff80080f5258>] kthread+0xe0/0xf8
+[   16.144655] [<ffffff80080860f0>] ret_from_fork+0x10/0x20
+[   16.150195] CPU: 1 PID: 0 Comm: swapper/1 Tainted: G      D         4.4.89-01529-gb29bace #1
+[   16.158986] Hardware name: HiKey Development Board (DT)
+[   16.164427] Call trace:
+[   16.167028] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   16.172665] [<ffffff800808c204>] show_stack+0x24/0x30
+[   16.177939] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   16.183216] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   16.188405] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   16.194393] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   16.200028] [<ffffff800812c290>] sched_rt_period_timer+0x110/0x378
+[   16.206467] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   16.212814] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   16.218808] [<ffffff8008178ab8>] tick_receive_broadcast+0x40/0x60
+[   16.225158] [<ffffff8008091c00>] handle_IPI+0x310/0x3c0
+[   16.230610] [<ffffff8008082684>] gic_handle_irq+0x94/0xb0
+[   16.236233] Exception stack(0xffffffc0351abd80 to 0xffffffc0351abeb0)
+[   16.242937] bd80: 0000000000000000 ffffff80088ad570 0000000000000000 ffffff8009770000
+[   16.251104] bda0: 0000000000000002 0000000000000000 0000000000000000 ffffff8008178e9c
+[   16.259272] bdc0: ffffffc0351a4600 ffffff80097fa000 0000000000000000 0000000000000000
+[   16.267439] bde0: 0000000034d5d91d 0000004072cbb000 ffffffc0351a4600 0000000000000000
+[   16.275602] be00: 0000000000000000 0000000000000000 0000000000000000 000000037e19ef8e
+[   16.283767] be20: 0000000000000002 ffffff80098426e8 ffffffc073918000 ffffff8009842628
+[   16.291931] be40: 0000000000000004 000000037ddf3a42 ffffff800922cc60 ffffff8009893000
+[   16.300094] be60: ffffff800976e000 ffffffc0351abeb0 ffffff80088ad570 ffffffc0351abeb0
+[   16.308258] be80: ffffff80088ad574 0000000080400145 ffffff80098426e8 ffffff80088ad5f0
+[   16.316416] bea0: ffffffffffffffff ffffff80088ad570
+[   16.321509] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   16.326609] [<ffffff80088ad574>] cpuidle_enter_state+0x134/0x3e8
+[   16.332869] [<ffffff80088ad89c>] cpuidle_enter+0x34/0x48
+[   16.338410] [<ffffff800813084c>] call_cpuidle+0x44/0x80
+[   16.343863] [<ffffff8008130bec>] cpu_startup_entry+0x364/0x448
+[   16.349940] [<ffffff80080914f4>] secondary_start_kernel+0x15c/0x1b0
+[   16.356457] [<0000000000cd103c>] 0xcd103c
+[   16.988269] BUG: spinlock lockup suspected on CPU#0, NetworkManager/2270
+[   16.995254]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   17.004671] CPU: 0 PID: 2270 Comm: NetworkManager Tainted: G      D         4.4.89-01529-gb29bace #1
+[   17.014160] Hardware name: HiKey Development Board (DT)
+[   17.019594] Call trace:
+[   17.022191] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   17.027826] [<ffffff800808c204>] show_stack+0x24/0x30
+[   17.033101] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   17.038378] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   17.043570] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   17.049557] [<ffffff8008ccc2bc>] _raw_spin_lock+0x4c/0x58
+[   17.055194] [<ffffff8008133940>] walt_fixup_busy_time+0x5a8/0x5d0
+[   17.061544] [<ffffff8008103724>] set_task_cpu+0x9c/0x278
+[   17.067088] [<ffffff8008104324>] try_to_wake_up+0x1e4/0x5b0
+[   17.072897] [<ffffff800810480c>] default_wake_function+0x34/0x48
+[   17.079156] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   17.084970] [<ffffff800812fb14>] __wake_up_locked+0x3c/0x50
+[   17.090779] [<ffffff80082d7218>] ep_poll_callback+0x90/0x270
+[   17.096681] [<ffffff800812fa28>] __wake_up_common+0x60/0xa0
+[   17.102492] [<ffffff800812fab8>] __wake_up+0x50/0x70
+[   17.107680] [<ffffff800814ec44>] wake_up_klogd_work_func+0x5c/0x78
+[   17.114124] [<ffffff80081e6468>] irq_work_run_list+0x68/0xb8
+[   17.120026] [<ffffff80081e6804>] irq_work_tick+0x5c/0x78
+[   17.125567] [<ffffff8008167c84>] update_process_times+0x4c/0x68
+[   17.131740] [<ffffff800817aa58>] tick_sched_handle.isra.6+0x38/0x70
+[   17.138271] [<ffffff800817aae8>] tick_sched_timer+0x58/0xa0
+[   17.144079] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   17.150424] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   17.156420] [<ffffff80088deccc>] arch_timer_handler_phys+0x3c/0x50
+[   17.162865] [<ffffff8008154308>] handle_percpu_devid_irq+0xe0/0x418
+[   17.169393] [<ffffff800814f174>] generic_handle_irq+0x34/0x50
+[   17.175383] [<ffffff800814f524>] __handle_domain_irq+0x8c/0x100
+[   17.181551] [<ffffff800808264c>] gic_handle_irq+0x5c/0xb0
+[   17.187175] Exception stack(0xffffffc07233b3c0 to 0xffffffc07233b4f0)
+[   17.193882] b3c0: 0000000000000000 ffffff8008ccc748 0000000000000000 ffffff8009770000
+[   17.202050] b3e0: 0000000000000001 0000000000000080 0000000000000000 ffffff800814d970
+[   17.210218] b400: ffffffc06f4fa680 ffffff80097fa000 0000000000000000 6420646662373263
+[   17.218383] b420: 2030633330663536 6631303233303564 3030313234642820 0000000000000010
+[   17.226550] b440: ffffff8008298988 0000007fa58c5788 0000000000000000 ffffff80097820c0
+[   17.234716] b460: ffffff800808c2d4 ffffff8008fcd758 ffffffc07233b680 ffffffc06f4fa680
+[   17.242884] b480: 000000000000003d ffffffc07bed2e00 ffffff8008cc7184 0000000000000000
+[   17.251050] b4a0: ffffffc06f4fa680 ffffffc07233b4f0 ffffff8008ccc748 ffffffc07233b4f0
+[   17.259215] b4c0: ffffff8008ccc74c 0000000060400345 ffffff8008fcd758 ffffff8008ccc744
+[   17.267373] b4e0: 0000008000000000 ffffff8008ccc748
+[   17.272468] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   17.277565] [<ffffff8008ccc74c>] _raw_spin_unlock_irq+0x3c/0x78
+[   17.283732] [<ffffff800808c2d4>] die+0xc4/0x1b0
+[   17.288470] [<ffffff800808c408>] bug_handler.part.2+0x48/0x88
+[   17.294462] [<ffffff800808c488>] bug_handler+0x40/0x50
+[   17.299823] [<ffffff8008083a64>] brk_handler+0xec/0x1c0
+[   17.305275] [<ffffff8008082590>] do_debug_exception+0x50/0xb0
+[   17.311257] Exception stack(0xffffffc07233b5e0 to 0xffffffc07233b710)
+[   17.317966] b5e0: ffffffc07bed2e00 0000008000000000 000000000261d000 ffffff8008132d58
+[   17.326129] b600: 0000000000000002 0000000000000000 0000000000000000 ffffff80081361e0
+[   17.334294] b620: ffffff8008ce3000 ffffff8009227000 ffffffc07233b6a0 ffffff8008ccc5d4
+[   17.342460] b640: ffffffc073918420 ffffff8008139a90 ffffff8009227cf8 ffffff8009770908
+[   17.350628] b660: ffffffc073918420 ffffffc073867800 ffffff800976f000 ffffffc073918400
+[   17.358795] b680: fffffffffff5b306 0000000000bb78dd 0000004072ca5000 ffffff8009770000
+[   17.366960] b6a0: 0000000000000000 0000000000000080 0000000000000000 ffffff8009227c58
+[   17.375125] b6c0: 0000000000000001 ffffff80097fa000 0000000000000000 000000010000000a
+[   17.383290] b6e0: 000000010000000d 000000010000000f 0000000100000010 00000dd9bc554fa9
+[   17.391450] b700: ffffff8008298988 0000007fa58c5788
+[   17.396545] [<ffffff80080857ec>] el1_dbg+0x18/0x90
+[   17.401550] [<ffffff80081215e0>] dequeue_task_fair+0x3f0/0x1370
+[   17.407716] [<ffffff8008102de0>] deactivate_task+0x98/0xd8
+[   17.413444] [<ffffff8008cc67d0>] __schedule+0x458/0xbf8
+[   17.418894] [<ffffff8008cc7184>] schedule+0x3c/0xa0
+[   17.423989] [<ffffff8008ccbaf8>] schedule_hrtimeout_range_clock+0x90/0x118
+[   17.431136] [<ffffff8008ccbbb8>] schedule_hrtimeout_range+0x38/0x48
+[   17.437659] [<ffffff8008296f68>] poll_schedule_timeout+0x58/0x90
+[   17.443916] [<ffffff80082986d0>] do_sys_poll+0x398/0x4d0
+[   17.449458] [<ffffff8008298b40>] SyS_ppoll+0x1b8/0x1e0
+[   17.454821] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   18.780432] BUG: spinlock lockup suspected on CPU#7, (agetty)/2348
+[   18.781659] BUG: spinlock lockup suspected on CPU#5, (agetty)/2349
+[   18.781697]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   18.781729] CPU: 5 PID: 2349 Comm: (agetty) Tainted: G      D         4.4.89-01529-gb29bace #1
+[   18.781741] Hardware name: HiKey Development Board (DT)
+[   18.781754] Call trace:
+[   18.781792] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   18.781822] [<ffffff800808c204>] show_stack+0x24/0x30
+[   18.781849] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   18.781880] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   18.781910] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   18.781937] [<ffffff8008ccc524>] _raw_spin_lock_irq+0x54/0x60
+[   18.781965] [<ffffff8008127ff8>] alloc_fair_sched_group+0xc8/0x1f0
+[   18.781995] [<ffffff800810bde0>] sched_create_group+0x40/0x90
+[   18.782027] [<ffffff8008133bd0>] sched_autogroup_create_attach+0x50/0x1c0
+[   18.782051] [<ffffff80080e67e0>] sys_setsid+0xf8/0x110
+[   18.782077] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   18.883186]  lock: 0xffffffc07bed2e00, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   18.892604] CPU: 7 PID: 2348 Comm: (agetty) Tainted: G      D         4.4.89-01529-gb29bace #1
+[   18.901555] Hardware name: HiKey Development Board (DT)
+[   18.906990] Call trace:
+[   18.909589] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   18.915222] [<ffffff800808c204>] show_stack+0x24/0x30
+[   18.920496] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   18.925775] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   18.930963] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   18.936952] [<ffffff8008ccc524>] _raw_spin_lock_irq+0x54/0x60
+[   18.942939] [<ffffff8008127ff8>] alloc_fair_sched_group+0xc8/0x1f0
+[   18.949375] [<ffffff800810bde0>] sched_create_group+0x40/0x90
+[   18.955372] [<ffffff8008133bd0>] sched_autogroup_create_attach+0x50/0x1c0
+[   18.962429] [<ffffff80080e67e0>] sys_setsid+0xf8/0x110
+[   18.967792] [<ffffff800808618c>] __sys_trace_return+0x0/0x4
+[   36.183948] Watchdog detected hard LOCKUP on cpu 5
+[   36.188799] ------------[ cut here ]------------
+[   36.193854] WARNING: at /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/kernel/watchdog.c:352
+[   36.203782] Modules linked in:
+[   36.207011] 
+[   36.207741] Watchdog detected hard LOCKUP on cpu 7
+[   36.207744] ------------[ cut here ]------------
+[   36.207762] WARNING: at /srv/oe/build/tmp-rpb-glibc/work-shared/hikey/kernel-source/kernel/watchdog.c:352
+[   36.207782] Modules linked in:
+[   36.207791] 
+[   36.207820] CPU: 6 PID: 0 Comm: swapper/6 Tainted: G      D         4.4.89-01529-gb29bace #1
+[   36.207833] Hardware name: HiKey Development Board (DT)
+[   36.207850] task: ffffffc0351c6880 task.stack: ffffffc0351c8000
+[   36.207887] PC is at watchdog_timer_fn+0x2a8/0x3c8
+[   36.207912] LR is at watchdog_timer_fn+0x2a8/0x3c8
+[   36.207930] pc : [<ffffff80081b2478>] lr : [<ffffff80081b2478>] pstate: 804001c5
+[   36.207942] sp : ffffffc07bf4fdd0
+[   36.207977] x29: ffffffc07bf4fdd0 x28: ffffff80090d3000 
+[   36.208012] x27: ffffff8009229678 x26: ffffffc0351cbd80 
+[   36.208046] x25: 0000000000000000 x24: ffffff800976f2b8 
+[   36.208078] x23: 000000000000001d x22: ffffffc07bf52690 
+[   36.208111] x21: ffffff800976f000 x20: ffffff80092296f0 
+[   36.208145] x19: ffffff8009229000 x18: 0000000000000000 
+[   36.208177] x17: 0000000000000001 x16: 0000000000000001 
+[   36.208210] x15: 0000000000000000 x14: ffffff800a56f438 
+[   36.208242] x13: ffffff800a56f07d x12: 0000000000000001 
+[   36.208274] x11: 0000000000000004 x10: 0000000000000000 
+[   36.208307] x9 : ffffff80097fa000 x8 : 0000000000000001 
+[   36.208339] x7 : ffffffc0351c6880 x6 : ffffff8008139d80 
+[   36.208369] x5 : 0000000000000000 x4 : 0000000000000000 
+[   36.208401] x3 : ffffff8009770000 x2 : 0000004072d29000 
+[   36.208433] x1 : ffffffc0351c6880 x0 : 0000000000000026 
+[   36.208448] 
+[   36.208448] SP: 0xffffffc07bf4fd50:
+[   36.208554] fd50  7bf52690 ffffffc0 0000001d 00000000 0976f2b8 ffffff80 00000000 00000000
+[   36.208659] fd70  351cbd80 ffffffc0 09229678 ffffff80 090d3000 ffffff80 7bf4fdd0 ffffffc0
+[   36.208756] fd90  081b2478 ffffff80 7bf4fdd0 ffffffc0 081b2478 ffffff80 804001c5 00000000
+[   36.208852] fdb0  00000004 00000000 00000007 00000000 00000000 00000080 081697c0 ffffff80
+[   36.208949] fdd0  7bf4fe40 ffffffc0 08168a4c ffffff80 7bf52690 ffffffc0 7bf51eb8 ffffffc0
+[   36.209046] fdf0  7bf51e80 ffffffc0 09223008 ffffff80 7bf51f40 ffffffc0 08ce3000 ffffff80
+[   36.209144] fe10  081b21d0 ffffff80 0976e000 ffffff80 097fa000 ffffff80 0976e068 ffffff80
+[   36.209240] fe30  00000007 00000000 09770908 ffffff80 7bf4fee0 ffffffc0 081697e4 ffffff80
+[   36.209258] 
+[   36.209258] X1: 0xffffffc0351c6800:
+[   36.209354] 6800  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.209449] 6820  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.209544] 6840  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.209638] 6860  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.209736] 6880  00000000 00000000 ffffffff ffffffff 018ad000 00000000 00010001 00000000
+[   36.209832] 68a0  00000000 00000000 351c8000 ffffffc0 00000002 00200040 00000000 00000000
+[   36.209928] 68c0  00000000 00000000 00000001 00000006 00000000 00000000 fffefcf7 00000000
+[   36.210025] 68e0  6f4f8600 ffffffc0 00000006 00000001 00000078 00000078 00000078 00000000
+[   36.210048] 
+[   36.210048] X7: 0xffffffc0351c6800:
+[   36.210144] 6800  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.210239] 6820  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.210334] 6840  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.210429] 6860  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.210527] 6880  00000000 00000000 ffffffff ffffffff 018ad000 00000000 00010001 00000000
+[   36.210623] 68a0  00000000 00000000 351c8000 ffffffc0 00000002 00200040 00000000 00000000
+[   36.210719] 68c0  00000000 00000000 00000001 00000006 00000000 00000000 fffefcf7 00000000
+[   36.210815] 68e0  6f4f8600 ffffffc0 00000006 00000001 00000078 00000078 00000078 00000000
+[   36.210857] 
+[   36.210857] X22: 0xffffffc07bf52610:
+[   36.210955] 2610  00000000 00000000 08fe5268 ffffff80 00000001 00000000 7bf52628 ffffffc0
+[   36.211052] 2630  7bf52628 ffffffc0 7bf52638 ffffffc0 7bf52638 ffffffc0 081a3340 ffffff80
+[   36.211150] 2650  05f9fcf8 ffffffc0 05f9fc30 ffffffc0 00020002 00000000 0000001d 00000000
+[   36.211247] 2670  00000000 00000000 00000009 00000000 00000008 00000000 750e6500 ffffffc0
+[   36.211344] 2690  7bf52690 ffffffc0 7bf524c0 ffffffc0 00000000 00000000 69658800 00000008
+[   36.211442] 26b0  69658800 00000008 081b21d0 ffffff80 7bf51f40 ffffffc0 00000000 00000025
+[   36.211538] 26d0  081b26a8 ffffff80 63746177 676f6468 0000362f 00000000 00000000 00000000
+[   36.211633] 26f0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   36.211654] 
+[   36.211654] X26: 0xffffffc0351cbd00:
+[   36.211754] bd00  351cbe00 ffffffc0 08140fa8 ffffff80 000001c0 00000000 0a571508 ffffff80
+[   36.211849] bd20  00000000 00000000 00000000 00000000 00000002 00000000 00000001 00000000
+[   36.211946] bd40  00000000 00000000 088ad554 ffffff80 351cbd70 ffffffc0 0813b6c0 ffffff80
+[   36.212044] bd60  696591bf 00000008 0976d388 ffffff80 351cbeb0 ffffffc0 0808591c ffffff80
+[   36.212140] bd80  00000000 00000000 088ad570 ffffff80 00000000 00000000 09770000 ffffff80
+[   36.212238] bda0  72d29000 00000040 ffffffff 00ffffff 0b5666c6 00000000 088ad554 ffffff80
+[   36.212335] bdc0  351c6880 ffffffc0 097fa000 ffffff80 00000000 00000000 00000004 00000000
+[   36.212432] bde0  00000002 00000000 c1ca7720 ffffffbd 729dc000 ffffffc0 00000007 00000000
+[   36.212451] 
+[   36.212451] X29: 0xffffffc07bf4fd50:
+[   36.212548] fd50  7bf52690 ffffffc0 0000001d 00000000 0976f2b8 ffffff80 00000000 00000000
+[   36.212645] fd70  351cbd80 ffffffc0 09229678 ffffff80 090d3000 ffffff80 7bf4fdd0 ffffffc0
+[   36.212742] fd90  081b2478 ffffff80 7bf4fdd0 ffffffc0 081b2478 ffffff80 804001c5 00000000
+[   36.212838] fdb0  00000004 00000000 00000007 00000000 00000000 00000080 081697c0 ffffff80
+[   36.212935] fdd0  7bf4fe40 ffffffc0 08168a4c ffffff80 7bf52690 ffffffc0 7bf51eb8 ffffffc0
+[   36.213032] fdf0  7bf51e80 ffffffc0 09223008 ffffff80 7bf51f40 ffffffc0 08ce3000 ffffff80
+[   36.213129] fe10  081b21d0 ffffff80 0976e000 ffffff80 097fa000 ffffff80 0976e068 ffffff80
+[   36.213225] fe30  00000007 00000000 09770908 ffffff80 7bf4fee0 ffffffc0 081697e4 ffffff80
+[   36.213234] 
+[   36.213248] ---[ end trace 1bd963a5953b065c ]---
+[   36.213260] Call trace:
+[   36.213282] Exception stack(0xffffffc07bf4fc00 to 0xffffffc07bf4fd30)
+auto-login-action exception
+[   36.213313] fc00: ffffff8009229000 0000008000000000 000000000261d000 ffffff80081b2478
+[   36.213342] fc20: ffffffc07bf4fc40 ffffff800814e03c 0000000000000006 ffffff800979d000
+[   36.213371] fc40: ffffffc07bf4fcf0 ffffff800814e460 ffffffc07bf4fd50 ffffff8008fe6320
+[   36.213399] fc60: ffffff800976f000 ffffffc07bf52690 000000000000001d ffffff800976f2b8
+[   36.213427] fc80: 0000000000000000 ffffffc0351cbd80 ffffff8009229678 ffffff80090d3000
+[   36.213456] fca0: 0000000000000026 ffffffc0351c6880 0000004072d29000 ffffff8009770000
+[   36.213484] fcc0: 0000000000000000 0000000000000000 ffffff8008139d80 ffffffc0351c6880
+[   36.213512] fce0: 0000000000000001 ffffff80097fa000 0000000000000000 0000000000000004
+[   36.213539] fd00: 0000000000000001 ffffff800a56f07d ffffff800a56f438 0000000000000000
+[   36.213559] fd20: 0000000000000001 0000000000000001
+[   36.213590] [<ffffff80081b2478>] watchdog_timer_fn+0x2a8/0x3c8
+[   36.213626] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   36.213653] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   36.213686] [<ffffff80088deccc>] arch_timer_handler_phys+0x3c/0x50
+[   36.213717] [<ffffff8008154308>] handle_percpu_devid_irq+0xe0/0x418
+[   36.213744] [<ffffff800814f174>] generic_handle_irq+0x34/0x50
+[   36.213771] [<ffffff800814f524>] __handle_domain_irq+0x8c/0x100
+[   36.213795] [<ffffff800808264c>] gic_handle_irq+0x5c/0xb0
+[   36.213813] Exception stack(0xffffffc0351cbd80 to 0xffffffc0351cbeb0)
+[   36.213842] bd80: 0000000000000000 ffffff80088ad570 0000000000000000 ffffff8009770000
+[   36.213871] bda0: 0000004072d29000 00ffffffffffffff 000000000b5666c6 ffffff80088ad554
+[   36.213899] bdc0: ffffffc0351c6880 ffffff80097fa000 0000000000000000 0000000000000004
+[   36.213928] bde0: 0000000000000002 ffffffbdc1ca7720 ffffffc0729dc000 0000000000000007
+[   36.213955] be00: 0000000000000001 0000000000000001 0000000000000000 00000008696591bf
+[   36.213984] be20: 0000000000000000 ffffff8009842628 ffffffc074710600 ffffff8009842628
+[   36.214012] be40: 0000000000000000 000000086929aa75 ffffff800922cc60 ffffff8009893000
+[   36.214041] be60: ffffff800976e000 ffffffc0351cbeb0 ffffff80088ad570 ffffffc0351cbeb0
+[   36.214070] be80: ffffff80088ad574 0000000060400145 ffffff8009842628 0000000000000000
+[   36.214091] bea0: ffffffffffffffff ffffff80088ad570
+[   36.214116] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   36.214146] [<ffffff80088ad574>] cpuidle_enter_state+0x134/0x3e8
+[   36.214172] [<ffffff80088ad89c>] cpuidle_enter+0x34/0x48
+[   36.214201] [<ffffff800813084c>] call_cpuidle+0x44/0x80
+[   36.214230] [<ffffff8008130bec>] cpu_startup_entry+0x364/0x448
+[   36.214257] [<ffffff80080914f4>] secondary_start_kernel+0x15c/0x1b0
+[   36.214275] [<0000000000cd103c>] 0xcd103c
+[   37.061696] CPU: 4 PID: 0 Comm: swapper/4 Tainted: G      D W       4.4.89-01529-gb29bace #1
+[   37.070470] Hardware name: HiKey Development Board (DT)
+[   37.075910] task: ffffffc0351b8780 task.stack: ffffffc0351bc000
+[   37.082080] PC is at watchdog_timer_fn+0x2a8/0x3c8
+[   37.087086] LR is at watchdog_timer_fn+0x2a8/0x3c8
+[   37.092080] pc : [<ffffff80081b2478>] lr : [<ffffff80081b2478>] pstate: 804001c5
+[   37.099781] sp : ffffffc07bf23ce0
+[   37.103252] x29: ffffffc07bf23ce0 x28: ffffff80090d3000 
+[   37.108841] x27: ffffff8009229678 x26: ffffffc0351bfd80 
+[   37.114428] x25: 0000000000000000 x24: ffffff800976f2b8 
+[   37.120012] x23: 000000000000001d x22: ffffffc07bf26690 
+[   37.125598] x21: ffffff800976f000 x20: ffffff80092296f0 
+[   37.131182] x19: ffffff8009229000 x18: 0000000000000000 
+[   37.136768] x17: 0000000000000000 x16: 0000000000000000 
+[   37.142351] x15: 0000000000000010 x14: ffffff808a54cc0f 
+[   37.147937] x13: ffffff800a54cc17 x12: 0000000000000006 
+[   37.153522] x11: ffffffc07bf23ad0 x10: 0000000005f5e0ff 
+[   37.159105] x9 : 00000000ffffffd0 x8 : 0000000000000001 
+[   37.164690] x7 : ffffffc0351b8780 x6 : ffffff800814d970 
+[   37.170276] x5 : 0000000000000000 x4 : 0000000000000000 
+[   37.175858] x3 : ffffff8009770000 x2 : 0000004072cfd000 
+[   37.181445] x1 : ffffffc0351b8780 x0 : 0000000000000026 
+[   37.187030] 
+[   37.187030] SP: 0xffffffc07bf23c60:
+[   37.192233] 3c60  7bf26690 ffffffc0 0000001d 00000000 0976f2b8 ffffff80 00000000 00000000
+[   37.201035] 3c80  351bfd80 ffffffc0 09229678 ffffff80 090d3000 ffffff80 7bf23ce0 ffffffc0
+[   37.209831] 3ca0  081b2478 ffffff80 7bf23ce0 ffffffc0 081b2478 ffffff80 804001c5 00000000
+[   37.218624] 3cc0  00000004 00000000 00000005 00000000 00000000 00000080 081697c0 ffffff80
+[   37.227418] 3ce0  7bf23d50 ffffffc0 08168a4c ffffff80 7bf26690 ffffffc0 7bf25eb8 ffffffc0
+[   37.236213] 3d00  7bf25e80 ffffffc0 09223008 ffffff80 7bf25f40 ffffffc0 08ce3000 ffffff80
+[   37.245007] 3d20  081b21d0 ffffff80 0976e000 ffffff80 097fa000 ffffff80 0976e068 ffffff80
+[   37.253800] 3d40  00000005 00000000 09770908 ffffff80 7bf23df0 ffffffc0 081697e4 ffffff80
+[   37.262604] 
+[   37.262604] X1: 0xffffffc0351b8700:
+[   37.267808] 8700  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.276599] 8720  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.285390] 8740  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.294184] 8760  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.302973] 8780  00000000 00000000 ffffffff ffffffff 018ad000 00000000 00010001 00000000
+[   37.311764] 87a0  00000000 00000000 351bc000 ffffffc0 00000002 00200040 00000000 00000000
+[   37.320553] 87c0  00000000 00000000 00000001 00000004 00000001 00000000 fffefdfb 00000000
+[   37.329344] 87e0  05fde380 ffffffc0 00000004 00000001 00000078 00000078 00000078 00000000
+[   37.338152] 
+[   37.338152] X7: 0xffffffc0351b8700:
+[   37.343357] 8700  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.352149] 8720  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.360939] 8740  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.369729] 8760  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.378522] 8780  00000000 00000000 ffffffff ffffffff 018ad000 00000000 00010001 00000000
+[   37.387312] 87a0  00000000 00000000 351bc000 ffffffc0 00000002 00200040 00000000 00000000
+[   37.396104] 87c0  00000000 00000000 00000001 00000004 00000001 00000000 fffefdfb 00000000
+[   37.404895] 87e0  05fde380 ffffffc0 00000004 00000001 00000078 00000078 00000078 00000000
+[   37.413701] 
+[   37.413701] X11: 0xffffffc07bf23a50:
+[   37.418995] 3a50  7bf23bb0 ffffffc0 0979e000 ffffff80 f2000800 00000000 0808c448 ffffff80
+[   37.427789] 3a70  804001c5 00000000 0808c448 ffffff80 7bf23aa0 ffffffc0 0808c488 ffffff80
+[   37.436581] 3a90  7bf23bb0 ffffffc0 351bfd80 ffffffc0 7bf23ac0 ffffffc0 08083a64 ffffff80
+[   37.445372] 3ab0  7bf23bb0 ffffffc0 000003c0 00000000 7bf23b00 ffffffc0 08082590 ffffff80
+[   37.454164] 3ad0  f2000800 00000000 00000000 00000000 7bf23bb0 ffffffc0 09885e18 ffffff80
+[   37.462956] 3af0  804001c5 00000000 000001c0 00000000 7bf23ce0 ffffffc0 080857ec ffffff80
+[   37.471752] 3b10  09229000 ffffff80 00000000 00000080 018ad000 00000000 081b2478 ffffff80
+[   37.480546] 3b30  7bf23b50 ffffffc0 0814e03c ffffff80 0000000f 00000000 0979d000 ffffff80
+[   37.489364] 
+[   37.489364] X22: 0xffffffc07bf26610:
+[   37.494659] 6610  00000000 00000000 08fe5268 ffffff80 00000001 00000000 7bf26628 ffffffc0
+[   37.503456] 6630  7bf26628 ffffffc0 7bf26638 ffffffc0 7bf26638 ffffffc0 081a3340 ffffff80
+[   37.512249] 6650  05f9fcf8 ffffffc0 05f9fc30 ffffffc0 00020002 00000000 0000001d 00000000
+[   37.521039] 6670  00000000 00000000 00000009 00000000 00000008 00000000 75070880 ffffffc0
+[   37.529837] 6690  7bf26690 ffffffc0 00000000 00000000 00000000 00000000 67f75200 00000008
+[   37.538632] 66b0  67f75200 00000008 081b21d0 ffffff80 7bf25f40 ffffffc0 00000000 0000001b
+[   37.547422] 66d0  081b26a8 ffffff80 63746177 676f6468 0000342f 00000000 00000000 00000000
+[   37.556215] 66f0  00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   37.565015] 
+[   37.565015] X26: 0xffffffc0351bfd00:
+[   37.570306] fd00  08ce3000 ffffff80 0976e000 ffffff80 000001c0 00000000 0a571508 ffffff80
+[   37.579099] fd20  00000000 00000000 00000000 00000000 00000002 00000000 00000001 00000000
+[   37.587894] fd40  00000000 00000000 088ad554 ffffff80 351bfd70 ffffffc0 0813b6c0 ffffff80
+[   37.596687] fd60  67fad7ac 00000008 09781ba8 ffffff80 351bfeb0 ffffffc0 0808591c ffffff80
+[   37.605478] fd80  00000000 00000000 088ad570 ffffff80 00000000 00000000 09770000 ffffff80
+[   37.614272] fda0  bf4df2c0 00029020 ffffffff 00ffffff 0b5666c6 00000000 08179064 ffffff80
+[   37.623065] fdc0  351b8780 ffffffc0 097fa000 ffffff80 00000000 00000000 00000000 00000000
+[   37.631856] fde0  34d5d91d 00000000 72cfd000 00000040 351b8780 ffffffc0 00000000 00000000
+[   37.640662] 
+[   37.640662] X29: 0xffffffc07bf23c60:
+[   37.645953] 3c60  7bf26690 ffffffc0 0000001d 00000000 0976f2b8 ffffff80 00000000 00000000
+[   37.654745] 3c80  351bfd80 ffffffc0 09229678 ffffff80 090d3000 ffffff80 7bf23ce0 ffffffc0
+[   37.663539] 3ca0  081b2478 ffffff80 7bf23ce0 ffffffc0 081b2478 ffffff80 804001c5 00000000
+[   37.672330] 3cc0  00000004 00000000 00000005 00000000 00000000 00000080 081697c0 ffffff80
+[   37.681119] 3ce0  7bf23d50 ffffffc0 08168a4c ffffff80 7bf26690 ffffffc0 7bf25eb8 ffffffc0
+[   37.689914] 3d00  7bf25e80 ffffffc0 09223008 ffffff80 7bf25f40 ffffffc0 08ce3000 ffffff80
+[   37.698707] 3d20  081b21d0 ffffff80 0976e000 ffffff80 097fa000 ffffff80 0976e068 ffffff80
+[   37.707499] 3d40  00000005 00000000 09770908 ffffff80 7bf23df0 ffffffc0 081697e4 ffffff80
+[   37.716296] 
+[   37.717894] ---[ end trace 1bd963a5953b065d ]---
+[   37.722704] Call trace:
+[   37.725292] Exception stack(0xffffffc07bf23b10 to 0xffffffc07bf23c40)
+[   37.731991] 3b00:                                   ffffff8009229000 0000008000000000
+[   37.740157] 3b20: 00000000018ad000 ffffff80081b2478 ffffffc07bf23b50 ffffff800814e03c
+[   37.748320] 3b40: 000000000000000f ffffff800979d000 ffffffc07bf23c00 ffffff800814e460
+[   37.756485] 3b60: ffffffc07bf23c60 ffffff8008fe6320 ffffff800976f000 ffffffc07bf26690
+[   37.764649] 3b80: 000000000000001d ffffff800976f2b8 0000000000000000 ffffffc0351bfd80
+[   37.772812] 3ba0: ffffff8009229678 ffffff80090d3000 0000000000000026 ffffffc0351b8780
+[   37.780976] 3bc0: 0000004072cfd000 ffffff8009770000 0000000000000000 0000000000000000
+[   37.789140] 3be0: ffffff800814d970 ffffffc0351b8780 0000000000000001 00000000ffffffd0
+[   37.797304] 3c00: 0000000005f5e0ff ffffffc07bf23ad0 0000000000000006 ffffff800a54cc17
+[   37.805466] 3c20: ffffff808a54cc0f 0000000000000010 0000000000000000 0000000000000000
+[   37.813629] [<ffffff80081b2478>] watchdog_timer_fn+0x2a8/0x3c8
+[   37.819709] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   37.826055] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   37.832046] [<ffffff8008178700>] tick_handle_oneshot_broadcast+0x178/0x1c0
+[   37.839199] [<ffffff80088df434>] sp804_timer_interrupt+0x3c/0x50
+[   37.845455] [<ffffff800814fd48>] handle_irq_event_percpu+0xa8/0x490
+[   37.851978] [<ffffff8008150180>] handle_irq_event+0x50/0x80
+[   37.857791] [<ffffff8008153c14>] handle_fasteoi_irq+0xfc/0x1d8
+[   37.863869] [<ffffff800814f174>] generic_handle_irq+0x34/0x50
+[   37.869854] [<ffffff800814f524>] __handle_domain_irq+0x8c/0x100
+[   37.876019] [<ffffff800808264c>] gic_handle_irq+0x5c/0xb0
+[   37.881641] Exception stack(0xffffffc0351bfd80 to 0xffffffc0351bfeb0)
+[   37.888345] fd80: 0000000000000000 ffffff80088ad570 0000000000000000 ffffff8009770000
+[   37.896509] fda0: 00029020bf4df2c0 00ffffffffffffff 000000000b5666c6 ffffff8008179064
+[   37.904670] fdc0: ffffffc0351b8780 ffffff80097fa000 0000000000000000 0000000000000000
+[   37.912832] fde0: 0000000034d5d91d 0000004072cfd000 ffffffc0351b8780 0000000000000000
+[   37.920993] fe00: 0000000000000000 0000000000000000 0000000000000000 0000000867fad7ac
+[   37.929157] fe20: 0000000000000001 ffffff8009842688 ffffffc074710a00 ffffff8009842628
+[   37.937319] fe40: 0000000000000004 0000000867c615d0 ffffff800922cc60 ffffff8009893000
+[   37.945482] fe60: ffffff800976e000 ffffffc0351bfeb0 ffffff80088ad570 ffffffc0351bfeb0
+[   37.953646] fe80: ffffff80088ad574 0000000080400145 ffffff8009842688 ffffff80088ad5f0
+[   37.961802] fea0: ffffffffffffffff ffffff80088ad570
+[   37.966893] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   37.971989] [<ffffff80088ad574>] cpuidle_enter_state+0x134/0x3e8
+[   37.978244] [<ffffff80088ad89c>] cpuidle_enter+0x34/0x48
+[   37.983784] [<ffffff800813084c>] call_cpuidle+0x44/0x80
+[   37.989237] [<ffffff8008130bec>] cpu_startup_entry+0x364/0x448
+[   37.995312] [<ffffff80080914f4>] secondary_start_kernel+0x15c/0x1b0
+[   38.001827] [<0000000000cd103c>] 0xcd103c
+[   39.006114] BUG: spinlock lockup suspected on CPU#4, swapper/4/0
+[   39.012390]  lock: log_wait+0x0/0x48, .magic: dead4ead, .owner: NetworkManager/2270, .owner_cpu: 0
+[   39.021716] CPU: 4 PID: 0 Comm: swapper/4 Tainted: G      D W       4.4.89-01529-gb29bace #1
+[   39.030489] Hardware name: HiKey Development Board (DT)
+[   39.035923] Call trace:
+[   39.038517] [<ffffff800808c000>] dump_backtrace+0x0/0x1e0
+[   39.044151] [<ffffff800808c204>] show_stack+0x24/0x30
+[   39.049422] [<ffffff8008534690>] dump_stack+0xb0/0xe8
+[   39.054697] [<ffffff80081447c4>] spin_dump+0x84/0xa8
+[   39.059885] [<ffffff80081449dc>] do_raw_spin_lock+0x194/0x1c8
+[   39.065875] [<ffffff8008ccc4bc>] _raw_spin_lock_irqsave+0x5c/0x70
+[   39.072222] [<ffffff800812fa9c>] __wake_up+0x34/0x70
+[   39.077406] [<ffffff800814ec44>] wake_up_klogd_work_func+0x5c/0x78
+[   39.083845] [<ffffff80081e6468>] irq_work_run_list+0x68/0xb8
+[   39.089742] [<ffffff80081e6804>] irq_work_tick+0x5c/0x78
+[   39.095281] [<ffffff8008167c84>] update_process_times+0x4c/0x68
+[   39.101453] [<ffffff800817aa58>] tick_sched_handle.isra.6+0x38/0x70
+[   39.107980] [<ffffff800817aae8>] tick_sched_timer+0x58/0xa0
+[   39.113789] [<ffffff8008168a4c>] __hrtimer_run_queues+0x154/0x6a8
+[   39.120133] [<ffffff80081697e4>] hrtimer_interrupt+0xb4/0x1e8
+[   39.126123] [<ffffff8008178700>] tick_handle_oneshot_broadcast+0x178/0x1c0
+[   39.133275] [<ffffff80088df434>] sp804_timer_interrupt+0x3c/0x50
+[   39.139531] [<ffffff800814fd48>] handle_irq_event_percpu+0xa8/0x490
+[   39.146055] [<ffffff8008150180>] handle_irq_event+0x50/0x80
+[   39.151866] [<ffffff8008153c14>] handle_fasteoi_irq+0xfc/0x1d8
+[   39.157941] [<ffffff800814f174>] generic_handle_irq+0x34/0x50
+[   39.163929] [<ffffff800814f524>] __handle_domain_irq+0x8c/0x100
+[   39.170092] [<ffffff800808264c>] gic_handle_irq+0x5c/0xb0
+[   39.175713] Exception stack(0xffffffc0351bfd80 to 0xffffffc0351bfeb0)
+[   39.182420] fd80: 0000000000000000 ffffff80088ad570 0000000000000000 ffffff8009770000
+[   39.190584] fda0: 00029020bf4df2c0 00ffffffffffffff 000000000b5666c6 ffffff8008179064
+[   39.198746] fdc0: ffffffc0351b8780 ffffff80097fa000 0000000000000000 0000000000000000
+[   39.206909] fde0: 0000000034d5d91d 0000004072cfd000 ffffffc0351b8780 0000000000000000
+[   39.215070] fe00: 0000000000000000 0000000000000000 0000000000000000 0000000867fad7ac
+[   39.223234] fe20: 0000000000000001 ffffff8009842688 ffffffc074710a00 ffffff8009842628
+[   39.231398] fe40: 0000000000000004 0000000867c615d0 ffffff800922cc60 ffffff8009893000
+[   39.239561] fe60: ffffff800976e000 ffffffc0351bfeb0 ffffff80088ad570 ffffffc0351bfeb0
+[   39.247724] fe80: ffffff80088ad574 0000000080400145 ffffff8009842688 ffffff80088ad5f0
+[   39.255878] fea0: ffffffffffffffff ffffff80088ad570
+[   39.260968] [<ffffff8008085964>] el1_irq+0xe4/0x178
+[   39.266063] [<ffffff80088ad574>] cpuidle_enter_state+0x134/0x3e8
+[   39.272320] [<ffffff80088ad89c>] cpuidle_enter+0x34/0x48
+[   39.277863] [<ffffff800813084c>] call_cpuidle+0x44/0x80
+[   39.283317] [<ffffff8008130bec>] cpu_startup_entry+0x364/0x448
+[   39.289392] [<ffffff80080914f4>] secondary_start_kernel+0x15c/0x1b0
+[   39.295907] [<0000000000cd103c>] 0xcd103c
+ login: root
+[   14.461360] Internal error: Oops - BUG: 0 [#1] PREEMPT SMP
+[   15.447835] BUG: spinlock lockup suspected on CPU#3, gdbus/2329

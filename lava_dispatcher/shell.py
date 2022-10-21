@@ -190,7 +190,7 @@ class ShellCommand(pexpect.spawn):
             index = self.expect([".+", pexpect.EOF, pexpect.TIMEOUT], timeout=1)
 
     def flush(self):
-        """ Will be called by pexpect itself when closing the connection """
+        """Will be called by pexpect itself when closing the connection"""
         self.logfile.flush(force=True)
 
 
@@ -286,7 +286,7 @@ class ShellSession(Connection):
                 self.connected = False
                 raise InfrastructureError(str(exc))
 
-    def wait(self, max_end_time=None, searchwindowsize=-1):
+    def wait(self, max_end_time=None, max_searchwindowsize=False):
         """
         Simple wait without sendling blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
@@ -299,7 +299,12 @@ class ShellSession(Connection):
         if timeout < 0:
             raise LAVABug("Invalid max_end_time value passed to wait()")
         try:
-            return self.raw_connection.expect(self.prompt_str, timeout=timeout, searchwindowsize=searchwindowsize)
+            if max_searchwindowsize:
+                return self.raw_connection.expect(
+                    self.prompt_str, timeout=timeout, searchwindowsize=None
+                )
+            else:
+                return self.raw_connection.expect(self.prompt_str, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
         except ConnectionClosedError as exc:

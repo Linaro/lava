@@ -93,44 +93,6 @@ VLAND_DEPLOY_TIMEOUT = 120
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
-# kernel boot monitoring
-KERNEL_MESSAGES = [
-    {
-        "start": r"-+\[ cut here \]-+",
-        "end": r"\s+(.*\s+-+\[ end trace (\w*) \]-+)",
-        "kind": "exception",
-        "fatal": False,
-    },
-    {
-        "start": r"Stack:",
-        "end": r"\s+(.*\s+-+\[ end trace (\w*) \]-+)",
-        "kind": "trace",
-        "fatal": False,
-    },
-    {"start": r"Unhandled fault", "end": r".*\r\n", "kind": "fault", "fatal": False},
-    {
-        "start": r"[^\n]+BUG: KASAN:",
-        "end": r".*?==+",
-        "kind": "ksan",
-        "fatal": False,
-    },
-    {
-        "start": r"[^\n]+BUG: KFENCE:",
-        "end": r".*?==+",
-        "kind": "kfence",
-        "fatal": False,
-    },
-    {"start": r"^[^\n]+Oops(?: -|:)", "end": r".*?$", "kind": "oops", "fatal": False},
-    {"start": r"^[^\n]+WARNING:", "end": r".*?$", "kind": "warning", "fatal": False},
-    {"start": r"^[^\n]+BUG:", "end": r".*?$", "kind": "bug", "fatal": False},
-    {
-        "start": r"Kernel panic - ",
-        "end": r".* end Kernel panic",
-        "kind": "panic",
-        "fatal": True,
-    },
-]
-
 # Login incorrect message
 LOGIN_INCORRECT_MSG = "Login incorrect"
 # Login incorrect message
