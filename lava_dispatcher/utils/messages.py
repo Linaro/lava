@@ -29,52 +29,44 @@ from lava_common.log import YAMLLogger
 # kernel boot monitoring
 KERNEL_MESSAGES = [
     {
-        "start": r"[^\n]*-+\[ cut here \]",
+        "start": r"-\[ cut here \]",
         "end": r"-+\[ end trace \w* \]-+\r\n",
         "kind": None,
-        "fatal": False,
     },
     {
         "start": r"Unhandled fault",
         "end": r"\r\n",
         "kind": "fault",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+BUG: KASAN:",
+        "start": r"BUG: KASAN:",
         "end": r"=+\r\n",
         "kind": "ksan",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+BUG: KFENCE:",
+        "start": r"BUG: KFENCE:",
         "end": r"=+\r\n",
         "kind": "kfence",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+Oops(?: -|:)",
+        "start": r"Oops(?: -|:)",
         "end": r"\r\n",
         "kind": "oops",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+WARNING:",
+        "start": r"WARNING:",
         "end": r"end trace[^\r]*\r\n",
         "kind": "warning",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+(kernel BUG at|BUG:)",
+        "start": r"(kernel BUG at|BUG:)",
         "end": r"\r\n",
         "kind": "bug",
-        "fatal": False,
     },
     {
-        "start": r"[^\n]+invalid opcode:",
+        "start": r"invalid opcode:",
         "end": r"\r\n",
         "kind": "invalid opcode",
-        "fatal": False,
     },
     {
         "start": r"Kernel panic - not syncing",
@@ -158,6 +150,15 @@ class LinuxKernelMessages:
             if index is None:
                 break
             if index < len(KERNEL_MESSAGES):
+                # Capture the start of the line
+                if "\n" in connection.raw_connection.before:
+                    start_line = connection.raw_connection.before.rindex("\n")
+                    message = (
+                        connection.raw_connection.before[start_line + 1 :] + message
+                    )
+                else:
+                    message = connection.raw_connection.before + message
+
                 # Capture the end of the kernel message
                 previous_prompts = connection.prompt_str
                 connection.prompt_str = KERNEL_MESSAGES[index]["end"]
@@ -188,7 +189,7 @@ class LinuxKernelMessages:
                         kind = "unknown"
                         assert 0
 
-                if KERNEL_MESSAGES[index]["fatal"]:
+                if KERNEL_MESSAGES[index].get("fatal"):
                     result = "fail"
                     action.logger.error("%s kernel %r" % (action.name, kind))
                     halt = message
@@ -205,7 +206,7 @@ class LinuxKernelMessages:
                         "message": message,
                     }
                 )
-                if KERNEL_MESSAGES[index]["fatal"]:
+                if KERNEL_MESSAGES[index].get("fatal"):
                     break
                 else:
                     continue
