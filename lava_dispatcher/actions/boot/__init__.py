@@ -127,8 +127,6 @@ class LoginAction(Action):
         failure = self.parameters.get("failure_message")
         if failure:
             self.logger.info("Checking for user specified failure message: %s", failure)
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
             connection.prompt_str.append(failure)
 
         # linesep should come from deployment_data as from now on it is OS dependent

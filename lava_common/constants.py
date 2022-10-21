@@ -94,24 +94,30 @@ VLAND_DEPLOY_TIMEOUT = 120
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 
 # kernel boot monitoring
-# Some successful kernel builds end the boot with this string
-KERNEL_FREE_UNUSED_MSG = r"Freeing unused kernel memory"
-# Some successful kernel builds end the boot with this string
-KERNEL_FREE_INIT_MSG = r"Freeing init memory"
-# exception
-KERNEL_EXCEPTION_MSG = r"-+\[ cut here \]-+\s+(.*\s+-+\[ end trace (\w*) \]-+)"
-# stack trace
-KERNEL_TRACE_MSG = r"Stack:\s+(.*\s+-+\[ end trace (\w*) \]-+)"
-# unhandled fault
-KERNEL_FAULT_MSG = r"(Unhandled fault.*)\r\n"
-# oops
-KERNEL_OOPS_MSG = r"^[^\n]+Oops(?: -|:).*?$"
-# panic
-KERNEL_PANIC_MSG = r"Kernel panic - (.*) end Kernel panic"
-# warning
-KERNEL_WARNING_MSG = r"^[^\n]+WARNING:.*?$"
-# bug
-KERNEL_BUG_MSG = r"^[^\n]+BUG:.*?$"
+KERNEL_MESSAGES = [
+    {
+        "start": r"-+\[ cut here \]-+",
+        "end": r"\s+(.*\s+-+\[ end trace (\w*) \]-+)",
+        "kind": "exception",
+        "fatal": False,
+    },
+    {
+        "start": r"Stack:",
+        "end": r"\s+(.*\s+-+\[ end trace (\w*) \]-+)",
+        "kind": "trace",
+        "fatal": False,
+    },
+    {"start": r"Unhandled fault", "end": r".*\r\n", "kind": "fault", "fatal": False},
+    {"start": r"^[^\n]+Oops(?: -|:)", "end": r".*?$", "kind": "oops", "fatal": False},
+    {"start": r"^[^\n]+WARNING:", "end": r".*?$", "kind": "warning", "fatal": False},
+    {"start": r"^[^\n]+BUG:", "end": r".*?$", "kind": "bug", "fatal": False},
+    {
+        "start": r"Kernel panic - ",
+        "end": r".* end Kernel panic",
+        "kind": "panic",
+        "fatal": True,
+    },
+]
 
 # Login incorrect message
 LOGIN_INCORRECT_MSG = "Login incorrect"

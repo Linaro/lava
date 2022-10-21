@@ -67,7 +67,7 @@ class FakeConnection:
     def force_prompt_wait(self, remaining=None):
         return self.wait()
 
-    def wait(self, max_end_time=None):
+    def wait(self, max_end_time=None, searchwindowsize=-1):
         ret = None
         try:
             ret = self.raw_connection.expect(self.prompt_str, timeout=self.faketimeout)
@@ -91,15 +91,9 @@ class TestBootMessages(StdoutTestCase):
         child = pexpect.spawn("cat", [logfile])
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[2][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[3][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
         with self.assertRaises(JobError):
-            result = LinuxKernelMessages.parse_failures(
+            LinuxKernelMessages.parse_failures(
                 connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
 
@@ -120,12 +114,6 @@ class TestBootMessages(StdoutTestCase):
         child = pexpect.spawn("cat", [logfile])
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[0][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[1][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[2][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[3][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[4][1], message_list)
-        self.assertIn(LinuxKernelMessages.MESSAGE_CHOICES[5][1], message_list)
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
@@ -133,14 +121,17 @@ class TestBootMessages(StdoutTestCase):
             max_end_time=self.max_end_time,
             fail_msg="",
         )
-        self.assertEqual(len(list(results)), 13)
+        self.assertEqual(len(results), 13)
         message_list = LinuxKernelMessages.get_init_prompts()
         child = pexpect.spawn("cat", [logfile])
         connection = FakeConnection(child, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
         )
-        self.assertEqual(len(list(results)), 13)
+        self.assertEqual(len(results), 13)
+        for res in results:
+            self.assertEqual(res["kind"], "exception")
+            self.assertIsNotNone(res["message"])
 
     def test_kernel_4(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-4.txt")
