@@ -144,3 +144,31 @@ class TestBootMessages(StdoutTestCase):
             results = LinuxKernelMessages.parse_failures(
                 connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
+
+    def test_kernel_ksan(self):
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-ksan.txt")
+        self.assertTrue(os.path.exists(logfile))
+        child = pexpect.spawn("cat", [logfile])
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(
+            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["kind"], "ksan")
+        self.assertIsNotNone(results[0]["message"])
+
+    def test_kernel_kfence(self):
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-kfence.txt")
+        self.assertTrue(os.path.exists(logfile))
+        child = pexpect.spawn("cat", [logfile])
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(child, message_list)
+        results = LinuxKernelMessages.parse_failures(
+            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["kind"], "kfence")
+        self.assertIsNotNone(results[0]["message"])

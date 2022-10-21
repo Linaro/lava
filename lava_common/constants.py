@@ -108,6 +108,18 @@ KERNEL_MESSAGES = [
         "fatal": False,
     },
     {"start": r"Unhandled fault", "end": r".*\r\n", "kind": "fault", "fatal": False},
+    {
+        "start": r"[^\n]+BUG: KASAN:",
+        "end": r".*?==+",
+        "kind": "ksan",
+        "fatal": False,
+    },
+    {
+        "start": r"[^\n]+BUG: KFENCE:",
+        "end": r".*?==+",
+        "kind": "kfence",
+        "fatal": False,
+    },
     {"start": r"^[^\n]+Oops(?: -|:)", "end": r".*?$", "kind": "oops", "fatal": False},
     {"start": r"^[^\n]+WARNING:", "end": r".*?$", "kind": "warning", "fatal": False},
     {"start": r"^[^\n]+BUG:", "end": r".*?$", "kind": "bug", "fatal": False},
