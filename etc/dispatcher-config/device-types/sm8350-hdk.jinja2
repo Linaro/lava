@@ -1,0 +1,4 @@
+{# device_type = 'sm8350-hdk' #}
+{% extends 'base-fastboot.jinja2' %}
+
+{% set fastboot_sequence = fastboot_sequence|default(['no-flash-boot']) %}
