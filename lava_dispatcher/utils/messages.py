@@ -39,6 +39,11 @@ KERNEL_MESSAGES = [
         "kind": "fault",
     },
     {
+        "start": r"BUG: KCSAN:",
+        "end": r"=+\r\n",
+        "kind": "kcsan",
+    },
+    {
         "start": r"BUG: KASAN:",
         "end": r"=+\r\n",
         "kind": "kasan",
