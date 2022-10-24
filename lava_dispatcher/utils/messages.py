@@ -30,7 +30,7 @@ from lava_common.log import YAMLLogger
 KERNEL_MESSAGES = [
     {
         "start": r"-\[ cut here \]",
-        "end": r"-+\[ end trace \w* \]-+\r\n",
+        "end": r"-+\[ end trace \w* \]-+[^\n]*\r\n",
         "kind": None,
     },
     {
@@ -166,13 +166,18 @@ class LinuxKernelMessages:
 
                 # Capture the end of the kernel message
                 previous_prompts = connection.prompt_str
-                connection.prompt_str = KERNEL_MESSAGES[index]["end"]
+                connection.prompt_str = [
+                    KERNEL_MESSAGES[index]["end"]
+                ] + previous_prompts[len(KERNEL_MESSAGES) :]
                 try:
-                    connection.wait(max_end_time, max_searchwindowsize=True)
+                    sub_index = connection.wait(max_end_time, max_searchwindowsize=True)
                 except (pexpect.EOF, TestError):
                     msg = "Failed to match end of kernel error"
                     action.logger.warning(msg)
                     action.errors = msg
+                    break
+                if sub_index != 0:
+                    action.logger.warning("Unable to match end of the kernel message")
                     break
                 message = (
                     message
