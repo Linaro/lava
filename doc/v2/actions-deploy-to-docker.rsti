@@ -33,6 +33,24 @@ name
 
 Name of the docker image to pull
 
+login
+-----
+
+Login details for the registry to pull from, if required. Note that this feature
+must be enabled in the worker, and that doing so disables ``local`` (see below).
+This is a dictionary with two keys, ``user`` and ``password``.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: docker
+      os: debian
+      image:
+        name: my-private-registry/my-docker-image
+        login:
+          user: my-user
+          password: my-password
+
 local
 -----
 
@@ -46,3 +64,4 @@ local
       image:
         name: my-local-docker-debian-image
         local: true
+
