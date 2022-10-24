@@ -41,7 +41,7 @@ KERNEL_MESSAGES = [
     {
         "start": r"BUG: KASAN:",
         "end": r"=+\r\n",
-        "kind": "ksan",
+        "kind": "kasan",
     },
     {
         "start": r"BUG: KFENCE:",

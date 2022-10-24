@@ -131,8 +131,8 @@ class TestBootMessages(StdoutTestCase):
                 connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
             )
 
-    def test_kernel_ksan(self):
-        logfile = os.path.join(os.path.dirname(__file__), "kernel-ksan.txt")
+    def test_kernel_kasan(self):
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-kasan.txt")
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
@@ -141,7 +141,7 @@ class TestBootMessages(StdoutTestCase):
             connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
         )
         self.assertEqual(len(results), 1)
-        self.assertEqual(results[0]["kind"], "ksan")
+        self.assertEqual(results[0]["kind"], "kasan")
         self.assertTrue(
             results[0]["message"].startswith(
                 "[   92.229826] BUG: KASAN: slab-out-of-bounds in kmalloc_oob_right+0x190/0x3b8"
