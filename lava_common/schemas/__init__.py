@@ -375,10 +375,23 @@ docker_image_format = Match(
 )
 
 
-def docker(image_key="image"):
-    return {
+def docker(image_key="image", docker_login=False):
+    schema = {
         Required(image_key): docker_image_format,
         Optional("local"): bool,
         Optional("container_name"): str,
         Optional("network_from"): str,
     }
+
+    if docker_login:
+        schema.update(
+            {
+                Optional("login"): {
+                    Required("registry"): str,
+                    Optional("user"): str,
+                    Optional("password"): str,
+                },
+            }
+        )
+
+    return schema
