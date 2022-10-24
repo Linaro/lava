@@ -24,7 +24,6 @@ import glob
 import sys
 import time
 import unittest
-import pexpect
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
@@ -315,9 +314,8 @@ def prepare_test_connection(failure=False):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
-    child = pexpect.spawn("cat", [logfile])
-    message_list = LinuxKernelMessages.get_kernel_prompts()
-    return FakeConnection(child, message_list)
+    message_list = LinuxKernelMessages.get_init_prompts()
+    return FakeConnection(logfile, message_list)
 
 
 class TestKVMInlineTestDeploy(StdoutTestCase):
