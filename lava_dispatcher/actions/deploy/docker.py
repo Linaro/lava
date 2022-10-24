@@ -62,6 +62,15 @@ class DockerAction(Action):
         else:
             self.image_name = image["name"]
             self.local = image.get("local", False)
+            if "login" in image:
+                login = image["login"]
+                login_cmd = ["docker", "login"]
+                if "user" in login:
+                    login_cmd.extend(["-u", login["user"]])
+                if "password" in login:
+                    login_cmd.extend(["-p", login["password"]])
+                login_cmd.append(login["registry"])
+                subprocess.check_call(login_cmd)
 
         # check docker image name
         # The string should be safe for command line inclusion

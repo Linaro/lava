@@ -13,7 +13,7 @@ from lava_common.schemas import deploy, docker, docker_image_format
 def schema():
     base = {
         Required("to"): "docker",
-        Required("image"): Any(docker_image_format, docker("name")),
+        Required("image"): Any(docker_image_format, docker("name", docker_login=True)),
         Optional("repeat"): Range(min=1),
     }
     return {**deploy.schema(), **base}
