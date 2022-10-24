@@ -198,6 +198,16 @@ class DockerRun:
                     "Unable to inspect docker image '%s'" % self.image
                 )
                 pull = True
+        else:
+            if self.__docker_login__:
+                login_cmd = ["docker", "login"]
+                if "user" in self.__docker_login__:
+                    login_cmd.extend(["-u", self.__docker_login__["user"]])
+                if "password" in self.__docker_login__:
+                    login_cmd.extend(["-p", self.__docker_login__["password"]])
+                login_cmd.append(self.__docker_login__["registry"])
+                action.run_cmd(login_cmd)
+            action.run_cmd(["docker", "pull", self.image])
         if pull:
             action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
         self.__check_image_arch__()
