@@ -134,6 +134,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             )
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
+        docker.docker_login(self.parameters["docker"].get("login", None))
         docker.prepare(action=self)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 

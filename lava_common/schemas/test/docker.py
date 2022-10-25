@@ -12,7 +12,7 @@ from lava_common.schemas.test.definition import schema as base
 
 def schema():
     docker_test_shell_base = {
-        Required("docker"): docker(),
+        Required("docker"): docker(docker_login=True),
         Optional("downloads-namespace"): str,
     }
     return {**base(), **docker_test_shell_base}
