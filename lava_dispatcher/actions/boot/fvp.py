@@ -178,7 +178,10 @@ class BaseFVPAction(Action):
         fvp_image = self.parameters.get("image")
         cmd += self.extra_options
         cmd += " %s %s %s" % (docker_image, fvp_image, fvp_arguments)
-        cmd = cmd.format(**substitutions)
+        try:
+            cmd = cmd.format(**substitutions)
+        except KeyError as exc:
+            raise JobError(f"Key {exc} does not exist, may need escaping")
         return cmd
 
     def cleanup(self, connection):
