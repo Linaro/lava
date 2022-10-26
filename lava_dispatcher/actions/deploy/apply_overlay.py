@@ -986,6 +986,13 @@ class AppendOverlays(Action):
         )
         partition = self.params.get("partition", None)
         self.logger.info("Modifying %r", image)
+
+        if self.params.get("sparse", False):
+            self.logger.debug("Calling simg2img on %r", image)
+            command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
+            self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
+            os.replace(f"{image}.non-sparse", image)
+
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)
         try:

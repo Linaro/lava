@@ -349,16 +349,32 @@ def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmpdir):
     guestfs().tar_in.assert_called_once_with(
         str(tmpdir / "modules.tar"), "/lib", compress=None
     )
-    action.run_cmd.assert_called_once_with(
-        ["/usr/bin/img2simg", f"{tmpdir}/rootfs.ext4", f"{tmpdir}/rootfs.ext4.sparse"],
-        error_msg=f"img2simg failed for {tmpdir}/rootfs.ext4",
-    )
-    replace.assert_called_once_with(
-        f"{tmpdir}/rootfs.ext4.sparse", f"{tmpdir}/rootfs.ext4"
-    )
+    assert action.run_cmd.mock_calls == [
+        mocker.call(
+            [
+                "/usr/bin/simg2img",
+                f"{tmpdir}/rootfs.ext4",
+                f"{tmpdir}/rootfs.ext4.non-sparse",
+            ],
+            error_msg=f"simg2img failed for {tmpdir}/rootfs.ext4",
+        ),
+        mocker.call(
+            [
+                "/usr/bin/img2simg",
+                f"{tmpdir}/rootfs.ext4",
+                f"{tmpdir}/rootfs.ext4.sparse",
+            ],
+            error_msg=f"img2simg failed for {tmpdir}/rootfs.ext4",
+        ),
+    ]
+    assert replace.mock_calls == [
+        mocker.call(f"{tmpdir}/rootfs.ext4.non-sparse", f"{tmpdir}/rootfs.ext4"),
+        mocker.call(f"{tmpdir}/rootfs.ext4.sparse", f"{tmpdir}/rootfs.ext4"),
+    ]
 
     assert caplog.record_tuples == [
         ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 10, f"Calling simg2img on '{tmpdir}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
         ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
         ("dispatcher", 10, f"Calling img2simg on '{tmpdir}/rootfs.ext4'"),
