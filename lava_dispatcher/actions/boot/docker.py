@@ -116,7 +116,11 @@ class CallDockerAction(Action):
 
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = "docker" + self.remote + " run --rm --interactive --tty --hostname lava"
+        cmd = (
+            "docker"
+            + self.remote
+            + " run --rm --init --interactive --tty --hostname lava"
+        )
         cmd += " --name %s" % self.container
         if self.test_needs_overlay(self.parameters):
             overlay = self.get_namespace_data(
