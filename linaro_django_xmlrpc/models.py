@@ -374,6 +374,9 @@ class Dispatcher:
         # logging output goes to lava-server.log
         logging.basicConfig()
         self.logger = logging.getLogger("linaro-django-xmlrpc-dispatcher")
+        from defusedxml.xmlrpc import monkey_patch
+
+        monkey_patch()
 
     def decode_request(self, data):
         """
