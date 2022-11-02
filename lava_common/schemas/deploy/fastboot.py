@@ -26,7 +26,7 @@ def schema():
     base = {
         Required("to"): "fastboot",
         Required("images"): {Required(str, "'images' is empty"): deploy.url(extra)},
-        Optional("docker"): docker(),
+        Optional("docker"): docker(docker_login=True),
         Optional("connection"): "lxc",  # FIXME: other possible values?
     }
     return {**deploy.schema(), **base}

@@ -14,7 +14,7 @@ def schema():
     base = {
         Required("method"): Msg("uuu", "'method' should be 'uuu'"),
         Required("commands"): Any(str, [{str: str}]),
-        Optional("docker"): docker(),
+        Optional("docker"): docker(docker_login=True),
         Optional("skip_uuu_if_bootloader_valid"): bool,
     }
     return {**boot.schema(), **base}
