@@ -22,7 +22,6 @@ import io
 import pathlib
 import voluptuous
 import yaml
-import jinja2
 import lava_common.schemas as schemas
 import lava_common.schemas.test.testdef as testdef
 
@@ -30,6 +29,7 @@ from django.conf import settings
 from django.db import transaction
 from django.http.response import HttpResponse
 from django.http import Http404
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxedEnvironment
 
 from lava_common.version import __version__
 from lava_common.compat import yaml_dump, yaml_safe_load
@@ -515,7 +515,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             raise ValidationError({"device": "Device dictionary is required."})
 
         try:
-            template = jinja2.Environment(
+            template = JinjaSandboxedEnvironment(
                 loader=File("device").loader(), autoescape=False, trim_blocks=True
             ).from_string(devicedict)
             yaml_safe_load(template.render())
