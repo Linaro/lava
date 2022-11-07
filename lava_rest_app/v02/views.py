@@ -27,7 +27,7 @@ from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.http.response import HttpResponse
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxedEnvironment
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -514,7 +514,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             raise ValidationError({"device": "Device dictionary is required."})
 
         try:
-            template = JinjaSandboxedEnvironment(
+            template = JinjaSandboxEnv(
                 loader=File("device").loader(), autoescape=False, trim_blocks=True
             ).from_string(devicedict)
             yaml_safe_load(template.render())

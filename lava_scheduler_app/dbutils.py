@@ -22,19 +22,17 @@
 Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
-
-
 import contextlib
 import logging
 import os
 
-import jinja2
 import yaml
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import validate_email
 from django.db.models import Case, IntegerField, Q, Sum, When
+from jinja2 import TemplateError as JinjaTemplateError
 
 import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_load, yaml_safe_load
@@ -259,7 +257,7 @@ def load_devicetype_template(device_type_name, raw=False):
         if not data:
             return None
         return data if raw else yaml_safe_load(data)
-    except (jinja2.TemplateError, yaml.error.YAMLError):
+    except (JinjaTemplateError, yaml.error.YAMLError):
         return None
 
 

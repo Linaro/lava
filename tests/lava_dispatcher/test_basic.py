@@ -23,8 +23,9 @@ import sys
 import time
 import unittest
 
-import jinja2
 import voluptuous
+from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import (
@@ -163,10 +164,10 @@ class Factory:
     validate_job_strict = False
 
     def prepare_jinja_template(self, hostname, jinja_data):
-        string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
-        type_loader = jinja2.FileSystemLoader([self.DEVICE_TYPES_PATH])
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+        string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
+        type_loader = FileSystemLoader([self.DEVICE_TYPES_PATH])
+        env = JinjaSandboxEnv(
+            loader=ChoiceLoader([string_loader, type_loader]),
             trim_blocks=True,
             autoescape=False,
         )

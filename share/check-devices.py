@@ -32,8 +32,11 @@ import glob
 import os
 import sys
 
-import jinja2
-import jinja2.exceptions
+from jinja2 import FileSystemLoader
+from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
+from jinja2.exceptions import TemplateRuntimeError as JinjaTemplateRuntimeError
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 
 def main():
@@ -63,8 +66,8 @@ def main():
     devices = sorted(glob.glob("%s/*.jinja2" % args.devices))
 
     print("Devices:")
-    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.FileSystemLoader([args.devices, args.device_types]),
+    env = JinjaSandboxEnv(
+        loader=FileSystemLoader([args.devices, args.device_types]),
         autoescape=False,
     )
 
@@ -74,13 +77,13 @@ def main():
         try:
             template = env.get_template("%s.jinja2" % device_name)
             device_template = template.render()
-        except jinja2.exceptions.TemplateNotFound as exc:
+        except JinjaTemplateNotFound as exc:
             print('* %s (ERROR): "%s" not found' % (device_name, exc))
             errors = True
-        except jinja2.exceptions.TemplateRuntimeError as exc:
+        except JinjaTemplateRuntimeError as exc:
             print('* %s (ERROR): rendering error "%s"' % (device_name, exc))
             errors = True
-        except jinja2.exceptions.TemplateSyntaxError as exc:
+        except JinjaTemplateSyntaxError as exc:
             print(
                 '* %s (ERROR): invalid syntax "%s" in "%s"'
                 % (device_name, exc, exc.filename)

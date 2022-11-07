@@ -3,10 +3,10 @@ import unittest
 from unittest import TestCase
 from unittest.mock import patch
 
-import jinja2
 import yaml
 from django.conf import settings
 from django.contrib.auth.models import User
+from jinja2 import TemplateError as JinjaTemplateError
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load, yaml_unsafe_load
 from lava_common.constants import SYS_CLASS_KVM
@@ -437,7 +437,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         try:
             device_config = device.load_configuration(job_ctx)  # raw dict
-        except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
+        except (JinjaTemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%s] jinja2 error: %s" % (job.id, exc))
         if not device_config or not isinstance(device_config, dict):
@@ -588,7 +588,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         try:
             device_config = device.load_configuration(job_ctx)  # raw dict
-        except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
+        except (JinjaTemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
             self.fail("[%d] jinja2 error: %s" % (host_job.id, exc))
         if not device_config or not isinstance(device_config, dict):
@@ -1018,7 +1018,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
                 try:
                     device_config = device.load_configuration(job_ctx)  # raw dict
-                except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
+                except (JinjaTemplateError, yaml.YAMLError, OSError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
                 if not device_config or not isinstance(device_config, dict):
@@ -1189,7 +1189,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
                 try:
                     device_config = device.load_configuration(job_ctx)  # raw dict
-                except (jinja2.TemplateError, yaml.YAMLError, OSError) as exc:
+                except (JinjaTemplateError, yaml.YAMLError, OSError) as exc:
                     # FIXME: report the exceptions as useful user messages
                     self.fail("[%d] jinja2 error: %s" % (job.id, exc))
                 if not device_config or not isinstance(device_config, dict):

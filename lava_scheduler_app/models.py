@@ -26,7 +26,6 @@ import logging
 import os
 import uuid
 
-import jinja2
 import requests
 import simplejson
 import yaml
@@ -49,6 +48,10 @@ from django.utils.crypto import get_random_string
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
+from jinja2 import FileSystemLoader
+from jinja2 import TemplateError as JinjaTemplateError
+from jinja2.nodes import Extends as JinjaNodesExtends
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
@@ -879,7 +882,7 @@ class Device(RestrictedObject):
         try:
             template = environment.devices().get_template("%s.jinja2" % self.hostname)
             device_template = template.render(**job_ctx)
-        except jinja2.TemplateError:
+        except JinjaTemplateError:
             return None
 
         if output_format == "yaml":
@@ -934,19 +937,17 @@ class Device(RestrictedObject):
         if not jinja_config:
             return None
 
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            autoescape=False
-        )
+        env = JinjaSandboxEnv(autoescape=False)
         try:
             ast = env.parse(jinja_config)
-            extends = list(ast.find_all(jinja2.nodes.Extends))
+            extends = list(ast.find_all(JinjaNodesExtends))
             if len(extends) != 1:
                 logger = logging.getLogger("lava-scheduler")
                 logger.error("Found %d extends for %s", len(extends), self.hostname)
                 return None
             else:
                 return os.path.splitext(extends[0].template.value)[0]
-        except jinja2.TemplateError as exc:
+        except JinjaTemplateError as exc:
             logger = logging.getLogger("lava-scheduler")
             logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
@@ -2165,8 +2166,8 @@ class Notification(models.Model):
         TestJob._meta.app_label,
     )
 
-    TEMPLATES_ENV = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
+    TEMPLATES_ENV = JinjaSandboxEnv(
+        loader=FileSystemLoader(TEMPLATES_DIR),
         extensions=["jinja2.ext.i18n"],
         autoescape=True,
     )

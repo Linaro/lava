@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import jinja2
 import pytest
+from jinja2 import FileSystemLoader
 
 from lava_server.files import File
 
@@ -44,7 +44,7 @@ def test_file_device(mocker, tmpdir):
     ret = File("device").list("*.yaml")
     assert len(ret) == 0
 
-    assert isinstance(File("device").loader(), jinja2.loaders.FileSystemLoader) is True
+    assert isinstance(File("device").loader(), FileSystemLoader) is True
     assert File("device").loader().searchpath == [
         str(tmpdir / "devices"),
         str(tmpdir / "device-types"),
