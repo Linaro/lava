@@ -75,11 +75,14 @@ Make your changes
 
 .. _running_black:
 
-Blackened source code
----------------------
+Source code formatting
+----------------------
 
-`black` is now applied to **all** LAVA source code files and merge
-requests will **fail** CI if a change breaks the formatting.
+`black` and `isort` should be applied to **all** LAVA source code files.
+Merge requests will **fail** CI if a change breaks the formatting.
+
+`isort` should be run with `--profile black` option to ensure
+compatibility with black.
 
 When changing files formatted by black, make your changes and then run
 ``black`` on all modified Python files before pushing the branch to
