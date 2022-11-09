@@ -99,7 +99,7 @@ def create_tarfile(indir, outfile, arcname=None):
 
 def untar_file(infile, outdir):
     try:
-        with tarfile.open(infile, encoding="utf-8") as tar:
+        with tarfile.open(infile, dereference=True, encoding="utf-8") as tar:
             tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
