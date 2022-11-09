@@ -20,7 +20,9 @@
 
 import os
 import time
+
 import pexpect
+
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.messages import LinuxKernelMessages

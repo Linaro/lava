@@ -20,10 +20,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Optional, Required, Range
+from voluptuous import Any, Optional, Range, Required
 
-from lava_common.schemas import deploy
-from lava_common.schemas import docker
+from lava_common.schemas import deploy, docker
 
 
 def schema():

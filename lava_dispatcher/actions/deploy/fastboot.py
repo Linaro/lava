@@ -19,24 +19,24 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_dispatcher.logical import Deployment
-from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.power import ResetDevice, PrePower
+
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
+from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
-    ApplyOverlaySparseImage,
     ApplyOverlayImage,
+    ApplyOverlaySparseImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Deployment
+from lava_dispatcher.power import PDUReboot, PrePower, ReadFeedback, ResetDevice
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
-from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
-from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
-from lava_dispatcher.power import PDUReboot, ReadFeedback
 
 
 class Fastboot(Deployment):

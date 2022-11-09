@@ -23,16 +23,15 @@
 
 import os
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_dispatcher.action import Action, Pipeline, JobError, Timeout
-from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_common.constants import DD_PROMPTS, DISPATCHER_DOWNLOAD_DIR
+from lava_dispatcher.action import Action, JobError, Pipeline, Timeout
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from lava_common.constants import DD_PROMPTS
 
 
 class Removable(Deployment):

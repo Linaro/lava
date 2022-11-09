@@ -24,10 +24,10 @@ import xmlrpc.client
 from django.db import IntegrityError
 from django.forms import ValidationError
 
-from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Alias, DeviceType
 from lava_server.files import File
+from linaro_django_xmlrpc.models import ExposedV2API
 
 
 class SchedulerDeviceTypesAPI(ExposedV2API):

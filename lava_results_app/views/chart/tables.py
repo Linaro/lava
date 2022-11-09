@@ -19,8 +19,8 @@
 
 import django_tables2 as tables
 
-from lava_server.lavatable import LavaTable
 from lava_results_app.models import Chart
+from lava_server.lavatable import LavaTable
 
 
 class UserChartTable(LavaTable):

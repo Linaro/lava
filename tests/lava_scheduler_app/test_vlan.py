@@ -1,17 +1,17 @@
 import os
 import tempfile
+
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_scheduler_app.utils import split_multinode_yaml
+from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_scheduler_app.dbutils import match_vlan_interface
-from lava_scheduler_app.models import TestJob, Tag
+from lava_scheduler_app.models import Tag, TestJob
+from lava_scheduler_app.utils import split_multinode_yaml
 from tests.lava_scheduler_app.test_base_templates import prepare_jinja_template
-from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 from tests.lava_scheduler_app.test_pipeline import YamlFactory
-
+from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 # pylint does not like TestCaseWithFactory
 

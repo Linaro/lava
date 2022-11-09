@@ -24,10 +24,9 @@ import json
 import logging
 import os
 import socket
-
 from argparse import Namespace
-from lava_dispatcher_host import share_device_with_container
 
+from lava_dispatcher_host import share_device_with_container
 
 SOCKET = "/run/lava-dispatcher-host.sock"
 

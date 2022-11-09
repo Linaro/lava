@@ -1,16 +1,15 @@
-import os
 import logging
+import os
 
 from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.test import TestCase as DjangoTestCase
+from six import string_types
 
 from lava_common.compat import yaml_load, yaml_safe_dump
-from lava_results_app.models import TestCase, TestSuite
 from lava_results_app.dbutils import map_scanned_results
-from lava_scheduler_app.models import TestJob, Device, DeviceType
-
-from six import string_types
+from lava_results_app.models import TestCase, TestSuite
+from lava_scheduler_app.models import Device, DeviceType, TestJob
 
 # note: when creating extensions, ensure a urls.py and views.py exist
 

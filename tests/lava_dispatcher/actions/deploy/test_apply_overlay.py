@@ -1,4 +1,5 @@
 import logging
+
 import pytest
 
 from lava_common.exceptions import JobError, LAVABug

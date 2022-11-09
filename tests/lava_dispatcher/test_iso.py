@@ -23,12 +23,12 @@ from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.job import Job
 from lava_dispatcher.device import NewDevice
+from lava_dispatcher.job import Job
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger
-from lava_dispatcher.utils.strings import substitute
 
 
 class InstallerFactory(Factory):

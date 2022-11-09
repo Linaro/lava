@@ -18,12 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import django_tables2 as tables
-from lava_server.lavatable import LavaTable
-from lava_results_app.models import Query, TestCase, TestSuite
 
+from lava_results_app.models import Query, TestCase, TestSuite
+from lava_results_app.tables import ResultsTable, SuiteTable
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import JobTable
-from lava_results_app.tables import ResultsTable, SuiteTable
+from lava_server.lavatable import LavaTable
 
 
 class UserQueryTable(LavaTable):

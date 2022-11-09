@@ -19,26 +19,26 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from lava_common.exceptions import InfrastructureError
 from lava_common.constants import (
     DEFAULT_UEFI_LABEL_CLASS,
     LINE_SEPARATOR,
     UEFI_LINE_SEPARATOR,
 )
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.menus.menus import (
-    SelectorMenuAction,
     MenuConnect,
     MenuInterrupt,
     MenuReset,
+    SelectorMenuAction,
 )
-from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.actions.boot import AutoLoginAction
-from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.utils.strings import substitute
 
 
 class UefiMenu(Boot):

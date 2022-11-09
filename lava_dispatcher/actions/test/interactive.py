@@ -18,9 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pexpect
-import time
 import json
+import time
+
+import pexpect
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (

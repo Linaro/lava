@@ -3,6 +3,7 @@ import platform
 import subprocess
 
 import pytest
+
 import lava_dispatcher_host.docker_worker
 
 

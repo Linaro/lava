@@ -24,12 +24,12 @@ import json
 import lzma
 import os
 import pathlib
+import struct
+from importlib import import_module
+
 import requests
 import simplejson
-import struct
-
 from django.conf import settings
-from importlib import import_module
 
 from lava_common.compat import yaml_dump, yaml_load
 from lava_common.exceptions import ConfigurationError

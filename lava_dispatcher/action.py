@@ -18,29 +18,30 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from collections import OrderedDict
-import logging
 import copy
-from functools import reduce
-import pexpect
-import time
-import types
-import traceback
+import logging
 import shlex
 import subprocess  # nosec - internal
+import time
+import traceback
+import types
 import warnings
+from collections import OrderedDict
+from functools import reduce
+
+import pexpect
 
 from lava_common.decorators import nottest
-from lava_common.timeout import Timeout
 from lava_common.exceptions import (
-    LAVABug,
-    LAVAError,
     InfrastructureError,
     JobError,
-    TestError,
+    LAVABug,
+    LAVAError,
     LAVATimeoutError,
+    TestError,
 )
 from lava_common.log import YAMLLogger
+from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 

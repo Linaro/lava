@@ -22,6 +22,7 @@
 
 import unittest
 from unittest.mock import patch
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 

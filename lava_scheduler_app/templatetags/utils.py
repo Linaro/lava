@@ -19,12 +19,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from collections import OrderedDict
+
 from django import template
 from django.conf import settings
-from collections import OrderedDict
 from django.utils.safestring import mark_safe
-from lava_scheduler_app.dbutils import load_devicetype_template
 
+from lava_scheduler_app.dbutils import load_devicetype_template
 
 register = template.Library()
 

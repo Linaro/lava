@@ -18,16 +18,15 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+
 import jinja2
 import yaml
-
 from django.core.management.base import BaseCommand
-from django.db.models import IntegerField, Case, When, Count, Q
+from django.db.models import Case, Count, IntegerField, Q, When
 
+import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import PermissionNameError
-from lava_server.files import File
-import lava_scheduler_app.environment as environment
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -38,6 +37,7 @@ from lava_scheduler_app.models import (
     User,
     Worker,
 )
+from lava_server.files import File
 
 
 class Command(BaseCommand):

@@ -19,20 +19,20 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+
+import django_tables2 as tables
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
+from django.db.models import Q
+from django.utils import timezone
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
-import django_tables2 as tables
 
 from lava_common.compat import yaml_dump
 from lava_results_app.models import TestCase
-from lava_scheduler_app.models import TestJob, Device, DeviceType, Worker
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
-from django.db.models import Q
-from django.utils import timezone
-
 
 # The query_set is based in the view, so split that into a View class
 # Avoid putting queryset functionality into tables.

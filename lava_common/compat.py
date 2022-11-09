@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import warnings
-import yaml
 
+import yaml
 
 # Handle compatibility with old yaml versions
 loaders = [

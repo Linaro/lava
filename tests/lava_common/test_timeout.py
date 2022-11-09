@@ -1,6 +1,7 @@
-import pytest
 import signal
 import time
+
+import pytest
 
 from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
 from lava_common.timeout import Timeout

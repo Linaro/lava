@@ -25,21 +25,22 @@ Used to allow models.py to be shortened and easier to follow.
 
 
 import contextlib
-import os
-import yaml
-import jinja2
 import logging
+import os
 
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Q, Case, When, IntegerField, Sum
+import jinja2
+import yaml
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.validators import validate_email
+from django.db.models import Case, IntegerField, Q, Sum, When
 
+import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_load, yaml_safe_load
 from lava_common.decorators import nottest
-import lava_scheduler_app.environment as environment
+from lava_results_app.dbutils import map_metadata
+from lava_results_app.models import Query
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -47,9 +48,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
-from lava_scheduler_app.schema import validate_submission, SubmissionException
-from lava_results_app.dbutils import map_metadata
-from lava_results_app.models import Query
+from lava_scheduler_app.schema import SubmissionException, validate_submission
 
 
 def match_vlan_interface(device, job_def):

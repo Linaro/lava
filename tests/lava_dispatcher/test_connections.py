@@ -23,15 +23,15 @@ import os
 import unittest
 from unittest.mock import patch
 
-from lava_common.compat import yaml_safe_load
-from lava_common.exceptions import JobError, InfrastructureError
-from lava_common.timeout import Timeout
 import lava_dispatcher
+from lava_common.compat import yaml_safe_load
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.ssh import SchrootAction
+from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error
-from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 
 class ConnectionFactory(Factory):

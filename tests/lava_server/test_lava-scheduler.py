@@ -20,9 +20,9 @@
 import datetime
 import importlib
 import json
+
 import pytest
 import zmq
-
 from django.utils import timezone
 
 from lava_scheduler_app.models import Worker

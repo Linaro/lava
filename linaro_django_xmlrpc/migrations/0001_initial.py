@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from django.db import migrations, models
 from django.conf import settings
+from django.db import migrations, models
+
 import linaro_django_xmlrpc.models
 
 

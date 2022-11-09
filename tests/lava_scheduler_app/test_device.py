@@ -1,23 +1,22 @@
-import yaml
 import jinja2
-
+import yaml
+from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
+from django.test import TestCase
+
 from lava_common.compat import yaml_safe_load
+from lava_scheduler_app.dbutils import (
+    active_device_types,
+    invalid_template,
+    load_devicetype_template,
+)
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
 )
-from lava_scheduler_app.dbutils import (
-    load_devicetype_template,
-    invalid_template,
-    active_device_types,
-)
 from lava_server.files import File
-from django.contrib.auth.models import User, Group, Permission
-from django.test import TestCase
-
 
 # python3 needs print to be a function, so disable pylint
 

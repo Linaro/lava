@@ -19,25 +19,25 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import glob
+import os
 import sys
 import time
 import unittest
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
-from lava_common.exceptions import JobError, InfrastructureError
-from lava_dispatcher.utils.filesystem import mkdtemp
-from lava_dispatcher.action import Pipeline, Action
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_messages import FakeConnection
+from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
+from tests.lava_dispatcher.test_messages import FakeConnection
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.connections.serial import QemuSession
 
 
 class TestKVMSimulation(StdoutTestCase):

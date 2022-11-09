@@ -23,20 +23,20 @@
 
 import os
 import shutil
-from lava_dispatcher.action import Action, Pipeline
+
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.logical import Deployment
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.connections.serial import DisconnectDevice
-from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.power import PowerOff
-from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 from lava_dispatcher.actions.deploy.vemsd import (
-    MountVExpressMassStorageDevice,
-    ExtractVExpressRecoveryImage,
     DeployVExpressRecoveryImage,
+    ExtractVExpressRecoveryImage,
+    MountVExpressMassStorageDevice,
     UnmountVExpressMassStorageDevice,
 )
+from lava_dispatcher.connections.serial import DisconnectDevice
+from lava_dispatcher.logical import Deployment
+from lava_dispatcher.power import PowerOff, ResetDevice
+from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
 
 class Mps(Deployment):

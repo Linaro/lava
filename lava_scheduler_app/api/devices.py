@@ -17,17 +17,17 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
 import xmlrpc.client
 
+import yaml
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
-from django.db.models import Q, Prefetch
+from django.db.models import Prefetch, Q
 
 from lava_common.compat import yaml_safe_load
-from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
+from linaro_django_xmlrpc.models import ExposedV2API
 
 
 class SchedulerDevicesAPI(ExposedV2API):

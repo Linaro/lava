@@ -21,20 +21,18 @@ import csv
 import io
 import xmlrpc.client
 
-from linaro_django_xmlrpc.models import ExposedAPI
-
 from django.core.exceptions import FieldDoesNotExist
 
 from lava_common.compat import yaml_dump
 from lava_results_app.dbutils import export_testsuite, testsuite_export_fields
 from lava_results_app.models import (
+    InvalidContentTypeError,
     Query,
     QueryCondition,
-    RefreshLiveQueryError,
     QueryUpdatedError,
+    RefreshLiveQueryError,
     TestCase,
     TestSuite,
-    InvalidContentTypeError,
 )
 from lava_results_app.utils import (
     export_testcase,
@@ -42,6 +40,7 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_scheduler_app.models import TestJob
+from linaro_django_xmlrpc.models import ExposedAPI
 
 
 class ResultsAPI(ExposedAPI):

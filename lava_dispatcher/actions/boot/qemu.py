@@ -19,22 +19,22 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import subprocess
 import shlex
+import subprocess
+
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootHasMixin
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.connections.serial import QemuSession
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 
 
 class BootQEMU(Boot):

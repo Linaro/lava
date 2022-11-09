@@ -21,16 +21,16 @@
 from itertools import chain
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission, AnonymousUser
+from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 
 from lava_common.exceptions import PermissionNameError
 from lava_scheduler_app.auth import PermissionAuth
 from lava_scheduler_app.models import (
-    GroupObjectPermission,
-    GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupDeviceTypePermission,
+    GroupObjectPermission,
 )
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 

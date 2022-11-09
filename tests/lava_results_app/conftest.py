@@ -1,5 +1,6 @@
-import jinja2
 import pathlib
+
+import jinja2
 import pytest
 
 from lava_server.files import File

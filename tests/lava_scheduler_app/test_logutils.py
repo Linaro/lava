@@ -18,13 +18,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import lzma
-import pytest
 import unittest
 
+import pytest
 from django.conf import settings
 
 from lava_common.compat import yaml_dump, yaml_load
-from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo, LogsElasticsearch
+from lava_scheduler_app.logutils import LogsElasticsearch, LogsFilesystem, LogsMongo
 
 
 def check_pymongo():

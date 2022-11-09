@@ -21,22 +21,23 @@
 
 import unittest
 from unittest.mock import patch
+
 from lava_common.compat import yaml_safe_load
-from lava_dispatcher.device import NewDevice
-from tests.utils import infrastructure_error, infrastructure_error_multi_paths
-from lava_dispatcher.actions.boot.grub import GrubMainAction
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderInterruptAction,
 )
+from lava_dispatcher.actions.boot.grub import GrubMainAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
-from lava_dispatcher.action import Pipeline
-from lava_common.exceptions import JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils import filesystem
+from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
 
 class GrubFactory(Factory):

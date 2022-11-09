@@ -18,10 +18,11 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from pathlib import Path
+
 import pytest
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
-from django.contrib.auth.models import User
 
 from lava_common.compat import yaml_load
 from lava_common.version import __version__

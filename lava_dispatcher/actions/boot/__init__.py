@@ -21,32 +21,32 @@
 import contextlib
 import os
 import re
-from lava_dispatcher.action import Action, Pipeline
-from lava_common.timeout import Timeout
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-    ConfigurationError,
-    LAVABug,
-)
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.logical import RetryAction
+
 from lava_common.constants import (
+    BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
-    BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     LOGIN_INCORRECT_MSG,
     LOGIN_TIMED_OUT_MSG,
 )
-from lava_dispatcher.utils.messages import LinuxKernelMessages
-from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import write_bootscript
-from lava_dispatcher.utils.compression import untar_file
-from lava_dispatcher.connections.ssh import SShSession
+from lava_common.exceptions import (
+    ConfigurationError,
+    InfrastructureError,
+    JobError,
+    LAVABug,
+)
+from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.connections.ssh import SShSession
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.filesystem import write_bootscript
+from lava_dispatcher.utils.messages import LinuxKernelMessages
+from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.strings import substitute
 
 
 class BootHasMixin:

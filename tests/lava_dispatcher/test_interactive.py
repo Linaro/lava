@@ -18,11 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pexpect
-import pytest
 import subprocess  # nosec - only for mocking
 import time
 
+import pexpect
+import pytest
+
+# This will be monkey patched
+import lava_dispatcher.actions.deploy.docker
 from lava_common.exceptions import (
     InfrastructureError,
     JobError,
@@ -30,11 +33,7 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
-
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-
-# This will be monkey patched
-import lava_dispatcher.actions.deploy.docker
 
 
 class InteractiveFactory(Factory):

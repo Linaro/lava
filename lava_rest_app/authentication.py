@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from rest_framework import authentication
-from rest_framework import exceptions
+from rest_framework import authentication, exceptions
+
 from linaro_django_xmlrpc.models import AuthToken
 
 

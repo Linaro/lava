@@ -23,11 +23,11 @@ import os
 import unittest
 
 from lava_common.compat import yaml_safe_load
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.utils import DummyLogger, infrastructure_error_multi_paths
 from lava_dispatcher.utils.udev import allow_fs_label
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import DummyLogger, infrastructure_error_multi_paths
 
 
 class FastBootFactory(Factory):

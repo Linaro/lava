@@ -18,8 +18,9 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-import jinja2
 from contextvars import ContextVar
+
+import jinja2
 
 from lava_server.files import File
 

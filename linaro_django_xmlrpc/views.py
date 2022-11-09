@@ -22,19 +22,18 @@ XML-RPC views
 
 import base64
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.sites.models import Site
-from django.urls import reverse
-from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
-
-from linaro_django_xmlrpc.models import AuthToken, CallContext, Dispatcher, SystemAPI
-from linaro_django_xmlrpc.forms import AuthTokenForm
 
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.views import index as lava_index
+from linaro_django_xmlrpc.forms import AuthTokenForm
+from linaro_django_xmlrpc.models import AuthToken, CallContext, Dispatcher, SystemAPI
 
 
 @csrf_exempt

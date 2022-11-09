@@ -19,12 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
+
 import pexpect
 
-from lava_common.exceptions import TestError, JobError
-from lava_dispatcher.utils.strings import seconds_to_str
+from lava_common.exceptions import JobError, TestError
 from lava_common.log import YAMLLogger
-
+from lava_dispatcher.utils.strings import seconds_to_str
 
 # kernel boot monitoring
 KERNEL_MESSAGES = [

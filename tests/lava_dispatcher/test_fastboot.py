@@ -18,19 +18,20 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import glob
+import os
 import unittest
-from unittest.mock import patch, ANY, MagicMock, PropertyMock
-from lava_common.exceptions import JobError, InfrastructureError
+from unittest.mock import ANY, MagicMock, PropertyMock, patch
+
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.protocols.lxc import LxcProtocol
+from lava_dispatcher.utils.adb import OptionalContainerAdbAction
+from lava_dispatcher.utils.containers import DockerDriver, LxcDriver, NullDriver
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
-from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
-from lava_dispatcher.utils.adb import OptionalContainerAdbAction
-from lava_dispatcher.utils.containers import NullDriver, LxcDriver, DockerDriver
-from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
 class FastBootFactory(Factory):

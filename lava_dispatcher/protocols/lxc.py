@@ -18,22 +18,24 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import logging
+import os
 import re
 import shutil
-import os
-import yaml
-import logging
-import traceback
 import subprocess  # nosec - internal
-from lava_dispatcher.connection import Protocol
-from lava_common.exceptions import InfrastructureError, LAVABug, TestError, JobError
-from lava_common.timeout import Timeout
+import traceback
+
+import yaml
+
 from lava_common.constants import (
-    LXC_PROTOCOL,
     LAVA_LXC_TIMEOUT,
     LXC_PATH,
+    LXC_PROTOCOL,
     UDEV_RULES_DIR,
 )
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
+from lava_common.timeout import Timeout
+from lava_dispatcher.connection import Protocol
 from lava_dispatcher.utils.filesystem import lxc_path
 
 

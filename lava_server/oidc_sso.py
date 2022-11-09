@@ -1,5 +1,6 @@
-from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 import logging
+
+from mozilla_django_oidc.auth import OIDCAuthenticationBackend
 
 
 class OIDCAuthenticationBackendUsernameFromEmail(OIDCAuthenticationBackend):

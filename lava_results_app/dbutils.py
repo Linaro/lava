@@ -18,26 +18,26 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import hashlib
-import os
-import yaml
-import logging
 import decimal
+import hashlib
+import logging
+import os
+from collections import OrderedDict  # pylint: disable=unused-import
 from urllib.parse import quote
 
-from collections import OrderedDict  # pylint: disable=unused-import
+import yaml
 
 from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
+from lava_common.timeout import Timeout
 from lava_common.version import __version__
 from lava_results_app.models import (
-    TestSuite,
-    TestSet,
-    TestCase,
-    TestData,
     ActionData,
     MetaType,
+    TestCase,
+    TestData,
+    TestSet,
+    TestSuite,
 )
-from lava_common.timeout import Timeout
 
 
 def _check_for_testset(result_dict, suite):

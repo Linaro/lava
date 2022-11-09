@@ -17,13 +17,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import csv
-import ldap
+import os
 
+import ldap
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
-
 
 # It is a very rarely used management command, hence many parameters are
 # hardcoded here. This will change as per the LDAP configuration of different

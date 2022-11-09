@@ -40,7 +40,6 @@ from voluptuous import (
 
 from lava_common.timeout import Timeout
 
-
 CONTEXT_VARIABLES = [
     # qemu variables
     "arch",

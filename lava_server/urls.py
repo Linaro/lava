@@ -17,28 +17,25 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls import include
-from lava_server.compat import url
 from django.contrib import admin
-from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
-from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
+from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
-from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
 from lava_scheduler_app.api.device_types import (
-    SchedulerDeviceTypesAPI,
     SchedulerDeviceTypesAliasesAPI,
+    SchedulerDeviceTypesAPI,
 )
+from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
 from lava_scheduler_app.api.jobs import SchedulerJobsAPI
 from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
-
 from lava_server.api import LavaMapper
+from lava_server.compat import url
 from lava_server.views import (
     delete_remote_auth,
     index,
@@ -47,6 +44,8 @@ from lava_server.views import (
     update_remote_auth,
     update_table_length_setting,
 )
+from linaro_django_xmlrpc.views import handler as linaro_django_xmlrpc_views_handler
+from linaro_django_xmlrpc.views import help as linaro_django_xmlrpc_views_help
 
 handler403 = "lava_server.views.permission_error"
 handler500 = "lava_server.views.server_error"

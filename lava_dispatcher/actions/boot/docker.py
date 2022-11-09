@@ -21,10 +21,10 @@
 import os
 
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 

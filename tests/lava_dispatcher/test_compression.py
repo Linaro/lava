@@ -19,12 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import copy
-import os
 import hashlib
+import os
+
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.compression import decompress_file
-from lava_dispatcher.utils.compression import decompress_command_map
 
 
 class TestDecompression(StdoutTestCase):

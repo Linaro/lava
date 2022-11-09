@@ -21,14 +21,15 @@
 
 import os
 from unittest.mock import patch
+
 from lava_common.compat import yaml_safe_load
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot.barebox import BareboxAction
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils import filesystem
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class BareboxFactory(Factory):

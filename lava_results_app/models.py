@@ -28,37 +28,36 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
-from datetime import timedelta
-import logging
-from urllib.parse import quote
-import yaml
 import contextlib
+import logging
+from datetime import timedelta
+from urllib.parse import quote
 
+import yaml
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, connection, transaction
+from django.db import connection, models, transaction
 from django.db.models import Case, IntegerField, Lookup, Q, Sum, When
 from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from lava_common.compat import yaml_load
 from lava_common.decorators import nottest
-from lava_server.managers import MaterializedView
-from lava_scheduler_app.models import TestJob, Device
+from lava_results_app.utils import help_max_length
 from lava_scheduler_app.managers import (
-    RestrictedTestJobQuerySet,
     RestrictedTestCaseQuerySet,
+    RestrictedTestJobQuerySet,
     RestrictedTestSuiteQuerySet,
 )
-
-from lava_results_app.utils import help_max_length
+from lava_scheduler_app.models import Device, TestJob
+from lava_server.managers import MaterializedView
 
 
 class InvalidConditionsError(Exception):

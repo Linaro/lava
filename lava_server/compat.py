@@ -18,12 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from django.utils.version import get_version
-from django.core.management.base import CommandParser
-from rest_framework_extensions import __version__ as DRFE_VERSION_STR
-import rest_framework_filters as filters
 import junit_xml
-
+import rest_framework_filters as filters
+from django.core.management.base import CommandParser
+from django.utils.version import get_version
+from rest_framework_extensions import __version__ as DRFE_VERSION_STR
 
 DJANGO_VERSION = get_version()
 DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
@@ -46,9 +45,9 @@ try:
 
 
 except ImportError:
-    from rest_framework_filters.backends import (
+    from rest_framework_filters.backends import (  # noqa
         DjangoFilterBackend as RestFrameworkFilterBackend,
-    )  # noqa
+    )
 
     # Keep the original version
     def RelatedFilter(cls, name, queryset):

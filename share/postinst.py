@@ -22,16 +22,15 @@ import argparse
 import contextlib
 import importlib
 import os
-from pathlib import Path
 import pwd
 import shutil
 import subprocess  # nosec - controlled inputs.
 import sys
 import tempfile
+from pathlib import Path
 
 from django.core.management.utils import get_random_secret_key
 from django.utils.crypto import get_random_string
-
 
 # Constants
 DEVICE_TYPES = Path("/usr/share/lava-server/device-types/")

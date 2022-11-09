@@ -20,8 +20,8 @@
 
 from voluptuous import Optional, Required
 
-from lava_common.schemas.test.definition import schema as base
 from lava_common.schemas import docker
+from lava_common.schemas.test.definition import schema as base
 
 
 def schema():

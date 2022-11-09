@@ -21,24 +21,25 @@
 import os
 import sys
 import time
+import unittest
+
 import jinja2
 import voluptuous
-import unittest
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import (
+    ConfigurationError,
     InfrastructureError,
     JobError,
     LAVABug,
     LAVAError,
-    ConfigurationError,
 )
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.image import DeployImages
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 from tests.utils import DummyLogger
 
 

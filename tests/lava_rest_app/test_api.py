@@ -20,35 +20,32 @@
 import csv
 import json
 import pathlib
-import pytest
 import xml.etree.ElementTree as ET
-
 from datetime import timedelta
+
+import pytest
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 
-
-from lava_common.version import __version__
 from lava_common.compat import yaml_load
+from lava_common.version import __version__
+from lava_rest_app import versions
+from lava_results_app import models as result_models
 from lava_scheduler_app.models import (
     Alias,
     Device,
     DeviceType,
-    GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupDeviceTypePermission,
     Tag,
     TestJob,
     Worker,
 )
-from lava_results_app import models as result_models
 from linaro_django_xmlrpc.models import AuthToken
-
-from lava_rest_app import versions
-
 
 Path = type(pathlib.Path())
 

@@ -18,9 +18,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
+import pytest
+
 from lava_dispatcher.actions.boot.fastboot import BootFastbootAction, PreOs
 from tests.lava_dispatcher.test_basic import Factory
-import pytest
 
 
 @pytest.fixture

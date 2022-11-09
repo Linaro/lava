@@ -19,12 +19,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.command.install_scripts
 import glob
 import shutil
 import sys
 
-import distutils.command.install_scripts
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 
 class rename_scripts(distutils.command.install_scripts.install_scripts):

@@ -18,6 +18,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django import forms
+
 from lava_results_app.models import Chart, ChartQuery, ChartQueryUser, TestCase
 
 

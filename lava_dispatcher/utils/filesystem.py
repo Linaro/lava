@@ -19,19 +19,20 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import atexit
+import errno
+import glob
+import logging
 import os
 import shutil
 import tarfile
 import tempfile
+
 import guestfs
-import glob
-import logging
 import magic
-import errno
 from configobj import ConfigObj
 
+from lava_common.constants import LAVA_LXC_HOME, LXC_PATH
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_common.constants import LXC_PATH, LAVA_LXC_HOME
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
 

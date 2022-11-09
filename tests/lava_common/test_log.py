@@ -18,11 +18,11 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 import yaml
 
-
 from lava_common.compat import yaml_load
-from lava_common.log import HTTPHandler, sender, YAMLLogger
+from lava_common.log import HTTPHandler, YAMLLogger, sender
 
 
 def test_sender(mocker):

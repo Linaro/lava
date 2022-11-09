@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
-import jinja2
 import pathlib
 import shutil
 import subprocess
 import sys
+
+import jinja2
 
 
 ###############

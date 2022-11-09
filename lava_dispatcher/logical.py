@@ -19,14 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
-from lava_dispatcher.action import Action
+
 from lava_common.exceptions import (
-    InfrastructureError,
     ConfigurationError,
+    InfrastructureError,
     JobError,
     LAVABug,
     TestError,
 )
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
 

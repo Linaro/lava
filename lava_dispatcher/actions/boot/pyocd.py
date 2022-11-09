@@ -19,12 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_common.utils import binary_version
-from lava_dispatcher.action import Pipeline, Action, JobError
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, JobError, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 

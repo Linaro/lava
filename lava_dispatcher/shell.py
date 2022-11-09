@@ -20,10 +20,12 @@
 
 import contextlib
 import logging
-import pexpect
 import sre_constants
 import time
-from lava_dispatcher.action import Action
+
+import pexpect
+
+from lava_common.constants import LINE_SEPARATOR
 from lava_common.exceptions import (
     ConnectionClosedError,
     InfrastructureError,
@@ -32,8 +34,8 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action
 from lava_dispatcher.connection import Connection
-from lava_common.constants import LINE_SEPARATOR
 from lava_dispatcher.utils.strings import seconds_to_str
 
 

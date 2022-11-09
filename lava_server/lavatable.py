@@ -19,12 +19,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import timedelta  # pylint: disable=unused-import
+
 import django_tables2 as tables
-from django.utils import timezone  # pylint: disable=unused-import
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
-from django.db.models import Q
 from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone  # pylint: disable=unused-import
+from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
 
 class LavaView(tables.SingleTableView):

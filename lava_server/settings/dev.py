@@ -20,12 +20,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from pathlib import Path
 import os
+from pathlib import Path
+
 import yaml
 
 from lava_server.settings.common import *
-
 
 DEBUG = True
 

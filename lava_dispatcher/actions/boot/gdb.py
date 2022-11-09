@@ -21,8 +21,8 @@
 import os
 import time
 
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import JobError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice

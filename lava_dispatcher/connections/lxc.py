@@ -18,9 +18,9 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.utils.shell import which
 from lava_dispatcher.action import Action, JobError
 from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.shell import which
 
 
 class LxcSession(ShellSession):

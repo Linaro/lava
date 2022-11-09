@@ -20,24 +20,24 @@
 
 import shlex
 
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AdbOverlayUnpack,
     AutoLoginAction,
     BootHasMixin,
     OverlayUnpack,
 )
-from lava_dispatcher.power import ResetDevice, PreOs
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
-from lava_dispatcher.utils.adb import OptionalContainerAdbAction
-from lava_dispatcher.utils.udev import WaitDeviceBoardID
-from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
+from lava_dispatcher.connections.adb import ConnectAdb
+from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.power import PreOs, ResetDevice
+from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.utils.adb import OptionalContainerAdbAction
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 
 def _fastboot_sequence_map(sequence):

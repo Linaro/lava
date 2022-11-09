@@ -19,17 +19,18 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import os
 import copy
-import time
 import json
-import socket
 import logging
+import os
+import socket
 import subprocess  # nosec - vland
-from lava_dispatcher.connection import Protocol
-from lava_common.exceptions import JobError, TestError
-from lava_dispatcher.protocols.multinode import MultinodeProtocol
+import time
+
 from lava_common.constants import VLAND_DEPLOY_TIMEOUT
+from lava_common.exceptions import JobError, TestError
+from lava_dispatcher.connection import Protocol
+from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 
 class VlandProtocol(Protocol):

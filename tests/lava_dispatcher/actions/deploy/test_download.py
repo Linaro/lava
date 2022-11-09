@@ -20,9 +20,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from pathlib import Path
+from urllib.parse import urlparse
+
 import pytest
 import requests
-from urllib.parse import urlparse
 
 from lava_common.constants import HTTP_DOWNLOAD_CHUNK_SIZE
 from lava_common.exceptions import InfrastructureError, JobError
@@ -30,11 +31,11 @@ from lava_dispatcher.actions.deploy.download import (
     CopyToLxcAction,
     DownloaderAction,
     DownloadHandler,
-    LxcDownloadAction,
     FileDownloadAction,
     HttpDownloadAction,
-    ScpDownloadAction,
+    LxcDownloadAction,
     PreDownloadedAction,
+    ScpDownloadAction,
 )
 from lava_dispatcher.job import Job
 from tests.lava_dispatcher.test_basic import Factory

@@ -21,24 +21,25 @@
 
 
 import os.path
+
+from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
 from lava_common.exceptions import ConfigurationError, InfrastructureError
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
+    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
-    BootHasMixin,
     OverlayUnpack,
 )
-from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ResetConnection
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.strings import substitute
 
 
 class Depthcharge(Boot):

@@ -18,13 +18,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.conf.urls import include
+
+from lava_rest_app.base.routers import router as router_v01
+from lava_rest_app.base.views import LavaObtainAuthToken
+from lava_rest_app.v02.routers import router as router_v02
 from lava_server.compat import url
 
-from lava_rest_app.base.views import LavaObtainAuthToken
 from . import versions
-from lava_rest_app.base.routers import router as router_v01
-from lava_rest_app.v02.routers import router as router_v02
-
 
 urlpatterns = [
     url(r"^(?P<version>(v0.1))/", include(router_v01.urls)),

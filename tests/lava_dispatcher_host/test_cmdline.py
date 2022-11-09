@@ -13,11 +13,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import subprocess
 
-from lava_dispatcher_host.cmdline import main
+import pytest
+
 import lava_dispatcher_host
+from lava_dispatcher_host.cmdline import main
 
 
 @pytest.fixture(autouse=True)

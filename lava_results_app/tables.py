@@ -19,12 +19,11 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import django_tables2 as tables
-
-from django.utils.safestring import mark_safe
 from django.utils.html import escape
+from django.utils.safestring import mark_safe
 
-from lava_server.lavatable import LavaTable
 from lava_scheduler_app.tables import RestrictedIDLinkColumn
+from lava_server.lavatable import LavaTable
 
 
 def results_pklink(record):

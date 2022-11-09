@@ -1,8 +1,9 @@
 import pytest
 
-
-from lava_dispatcher_host import share_device_with_container_lxc
-from lava_dispatcher_host import share_device_with_container_docker
+from lava_dispatcher_host import (
+    share_device_with_container_docker,
+    share_device_with_container_lxc,
+)
 
 
 @pytest.fixture(autouse=True)

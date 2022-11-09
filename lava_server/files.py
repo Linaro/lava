@@ -19,9 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import contextlib
-import jinja2
 from pathlib import Path
 
+import jinja2
 from django.conf import settings
 
 

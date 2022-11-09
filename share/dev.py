@@ -23,7 +23,6 @@ import os
 import subprocess  # nosec - internal
 import sys
 
-
 modules = [
     "lava_common",
     "lava_rest_app",

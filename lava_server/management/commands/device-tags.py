@@ -18,6 +18,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+
 from django.core.management.base import BaseCommand, CommandError
 
 from lava_scheduler_app.models import Device, Tag

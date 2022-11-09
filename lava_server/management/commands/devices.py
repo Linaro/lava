@@ -20,11 +20,11 @@
 import contextlib
 import csv
 import subprocess
-import voluptuous
 
+import voluptuous
+from django.contrib.auth.models import Group, User
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
-from django.contrib.auth.models import User, Group
 
 from lava_common.schemas.device import validate as validate_device
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker

@@ -25,13 +25,13 @@
 
 import re
 import time
-from lava_dispatcher.action import Pipeline, Action
-from lava_common.exceptions import ConfigurationError, JobError
-from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
-from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 
+from lava_common.exceptions import ConfigurationError, JobError
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
+from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.strings import safe_dict_format
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction

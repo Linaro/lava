@@ -19,7 +19,6 @@
 
 import pytest
 import simplejson
-
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
@@ -27,7 +26,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from lava_common.compat import yaml_load
-
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -39,12 +37,11 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.views import (
-    type_report_data,
     device_report_data,
-    job_report_data,
     get_restricted_job,
+    job_report_data,
+    type_report_data,
 )
-
 
 JOB_DEFINITION = """
 device_type: juno

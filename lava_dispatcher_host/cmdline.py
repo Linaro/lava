@@ -21,12 +21,13 @@ import sys
 import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
-
-from lava_dispatcher_host import add_device_container_mapping
-from lava_dispatcher_host import remove_device_container_mappings
-from lava_dispatcher_host import share_device_with_container
-from lava_dispatcher_host.udev import get_udev_rules
+from lava_dispatcher_host import (
+    add_device_container_mapping,
+    remove_device_container_mappings,
+    share_device_with_container,
+)
 from lava_dispatcher_host.server import Client
+from lava_dispatcher_host.udev import get_udev_rules
 
 
 def handle_rules_show(options):

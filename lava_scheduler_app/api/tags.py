@@ -18,11 +18,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import xmlrpc.client
+
 from django.db import IntegrityError
 
-from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Tag
+from linaro_django_xmlrpc.models import ExposedV2API
 
 
 class SchedulerTagsAPI(ExposedV2API):

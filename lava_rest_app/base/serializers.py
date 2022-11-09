@@ -18,10 +18,10 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from django.db import transaction
-
-from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
-from lava_results_app.models import TestSuite, TestCase
 from rest_framework import serializers
+
+from lava_results_app.models import TestCase, TestSuite
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
 
 class TestJobSerializer(serializers.ModelSerializer):

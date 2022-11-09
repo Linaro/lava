@@ -21,27 +21,27 @@
 
 import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
+from lava_dispatcher.action import Pipeline
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.u_boot import (
     UBootAction,
     UBootCommandsAction,
     UBootSecondaryMedia,
 )
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.power import ResetDevice, PDUReboot
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.power import PDUReboot, ResetDevice
+from lava_dispatcher.utils import filesystem
+from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils import filesystem
-from lava_dispatcher.utils.strings import substitute
 
 
 class UBootFactory(Factory):

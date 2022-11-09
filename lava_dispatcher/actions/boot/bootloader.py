@@ -19,14 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
-    BootloaderCommandsAction,
     BootloaderCommandOverlay,
+    BootloaderCommandsAction,
     BootloaderInterruptAction,
 )
-from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.power import ResetDevice
 
 
 class BootBootloader(Boot):

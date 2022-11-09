@@ -19,24 +19,25 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import re
 import copy
 import json
 import logging
-import traceback
 import os
+import re
 import socket
 import time
-from lava_dispatcher.connection import Protocol
-from lava_common.timeout import Timeout
+import traceback
+
+from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
     JobError,
-    TestError,
     MultinodeProtocolTimeoutError,
+    TestError,
 )
-from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_common.timeout import Timeout
+from lava_dispatcher.connection import Protocol
 
 
 class MultinodeProtocol(Protocol):

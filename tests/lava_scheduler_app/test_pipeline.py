@@ -1,42 +1,39 @@
 import os
-import yaml
-import jinja2
 import unittest
+from unittest import TestCase
 from unittest.mock import patch
 
+import jinja2
+import yaml
 from django.conf import settings
-
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    TestJob,
-    Tag,
-    DevicesUnavailableException,
-    _pipeline_protocols,
-)
-from lava_scheduler_app.dbutils import match_vlan_interface
-from lava_results_app.dbutils import _get_action_metadata
 from django.contrib.auth.models import User
-from lava_scheduler_app.utils import split_multinode_yaml
-from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
-from lava_scheduler_app.schema import (
-    validate_submission,
-    validate_device,
-    SubmissionException,
-)
 
-from lava_common.compat import yaml_unsafe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load, yaml_unsafe_load
+from lava_common.constants import SYS_CLASS_KVM
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_defs import check_missing_path
-from lava_common.exceptions import JobError, InfrastructureError
-from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_common.constants import SYS_CLASS_KVM
+from lava_results_app.dbutils import _get_action_metadata
+from lava_scheduler_app.dbutils import match_vlan_interface
+from lava_scheduler_app.models import (
+    Device,
+    DevicesUnavailableException,
+    DeviceType,
+    Tag,
+    TestJob,
+    _pipeline_protocols,
+)
+from lava_scheduler_app.schema import (
+    SubmissionException,
+    validate_device,
+    validate_submission,
+)
+from lava_scheduler_app.utils import split_multinode_yaml
+from tests.lava_dispatcher.test_defs import check_missing_path
+from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
 from tests.utils import DummyLogger
-from unittest import TestCase
-
 
 # set to True to see extra processing details
 DEBUG = False

@@ -19,13 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from unittest.mock import patch
+
+from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.actions.boot.kexec import BootKexecAction, KexecAction
+from lava_dispatcher.actions.test.shell import TestShellRetry
+from lava_dispatcher.shell import ExpectShellSession
 from tests.lava_dispatcher.test_basic import StdoutTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from lava_dispatcher.actions.boot.kexec import BootKexecAction, KexecAction
-from lava_dispatcher.actions.boot import AutoLoginAction
-from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.actions.test.shell import TestShellRetry
 
 
 class TestKExec(StdoutTestCase):

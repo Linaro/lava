@@ -19,8 +19,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.actions.boot import AutoLoginAction
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 def find_autologin(job):
