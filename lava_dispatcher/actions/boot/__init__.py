@@ -84,6 +84,13 @@ class LoginAction(Action):
         if isinstance(connection, SShSession):
             self.logger.debug("Skipping kernel messages")
             return
+        if self.parameters.get("ignore_kernel_messages", False):
+            self.logger.debug("Skipping kernel messages. Flag set to false")
+            if self.force_prompt:
+                connection.force_prompt_wait(max_end_time)
+            else:
+                connection.wait(max_end_time)
+            return
         self.logger.info("Parsing kernel messages")
         self.logger.debug(connection.prompt_str)
         parsed = LinuxKernelMessages.parse_failures(
@@ -119,7 +126,9 @@ class LoginAction(Action):
         for prompt in prompts:
             check_prompt_characters(prompt)
 
-        connection.prompt_str = LinuxKernelMessages.get_init_prompts()
+        connection.prompt_str = []
+        if not self.parameters.get("ignore_kernel_messages", False):
+            connection.prompt_str = LinuxKernelMessages.get_init_prompts()
         connection.prompt_str.extend(prompts)
 
         # Needs to be added after the standard kernel message matches

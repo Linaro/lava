@@ -38,6 +38,7 @@ def auto_login():
             Required("password_prompt"): str,
             Required("password"): str,
             Optional("login_commands"): [str],
+            Optional("ignore_kernel_messages"): bool,
         },
     )
 
