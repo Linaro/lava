@@ -57,6 +57,10 @@ class DownloadsAction(DownloadAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())
+
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
         for image in sorted(parameters["images"].keys()):
@@ -73,9 +77,6 @@ class DownloadsAction(DownloadAction):
         if postprocess:
             if postprocess.get("docker"):
                 self.pipeline.add_action(PostprocessWithDocker(download_dir))
-
-        if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
 
 
 class PostprocessWithDocker(Action):
