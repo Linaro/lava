@@ -26,7 +26,6 @@ Used to allow models.py to be shortened and easier to follow.
 
 import contextlib
 import logging
-import os
 
 import jinja2
 import yaml
@@ -37,9 +36,8 @@ from django.core.validators import validate_email
 from django.db.models import Case, IntegerField, Q, Sum, When
 
 import lava_scheduler_app.environment as environment
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
-from lava_results_app.dbutils import map_metadata
 from lava_results_app.models import Query
 from lava_scheduler_app.models import (
     Device,
@@ -117,31 +115,6 @@ def testjob_submission(job_definition, user, original_job=None):
     # returns a single job or a list (not a QuerySet) of job objects.
     job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
     return job
-
-
-def parse_job_description(job):
-    filename = os.path.join(job.output_dir, "description.yaml")
-    logger = logging.getLogger("lava-master")
-    try:
-        with open(filename, "r") as f_describe:
-            description = f_describe.read()
-        pipeline = yaml_load(description)
-    except (OSError, yaml.YAMLError):
-        logger.error("'Unable to open and parse '%s'", filename)
-        return
-
-    if not map_metadata(description, job):
-        logger.warning("[%d] unable to map metadata", job.id)
-
-    # add the compatibility result from the master to the definition for comparison on the slave.
-    try:
-        compat = int(pipeline["compatibility"])
-    except (TypeError, ValueError):
-        compat = pipeline["compatibility"] if pipeline is not None else None
-        logger.error("[%d] Unable to parse job compatibility: %s", job.id, compat)
-        compat = 0
-    job.pipeline_compatibility = compat
-    job.save(update_fields=["pipeline_compatibility"])
 
 
 def device_type_summary(user):
