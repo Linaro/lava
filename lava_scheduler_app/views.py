@@ -1373,9 +1373,16 @@ def internal_v1_workers(request, pk=None):
         starts = []
         if not version_mismatch or settings.ALLOW_VERSION_MISMATCH:
             start_query = query.filter(state=TestJob.STATE_SCHEDULED)
-            starts = list(start_query.values("id", "token"))
+            starts = list(start_query.values("id", "token", "actual_device"))
             for job in start_query.filter(target_group__isnull=False):
-                starts += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+                starts += [
+                    {
+                        "id": j.id,
+                        "token": j.token,
+                        "actual_device": job.actual_device.hostname,
+                    }
+                    for j in job.dynamic_jobs()
+                ]
 
         # Canceling
         cancel_query = query.filter(state=TestJob.STATE_CANCELING)
@@ -1385,9 +1392,16 @@ def internal_v1_workers(request, pk=None):
 
         # Running
         running_query = query.filter(state=TestJob.STATE_RUNNING)
-        runnings = list(running_query.values("id", "token"))
+        runnings = list(running_query.values("id", "token", "actual_device"))
         for job in running_query.filter(target_group__isnull=False):
-            runnings += [{"id": j.id, "token": j.token} for j in job.dynamic_jobs()]
+            runnings += [
+                {
+                    "id": j.id,
+                    "token": j.token,
+                    "actual_device": job.actual_device.hostname,
+                }
+                for j in job.dynamic_jobs()
+            ]
 
         if (
             version_mismatch
