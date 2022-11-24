@@ -58,6 +58,7 @@ class Job:
         self.job_id = job_id
         self.logger = logger
         self.device = None
+        self.actual_device = None
         self.parameters = parameters
         self.__context__ = PipelineContext()
         self.pipeline = None

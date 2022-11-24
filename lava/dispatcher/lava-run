@@ -49,6 +49,12 @@ def parser():
         help="Job identifier. This alters process name for easier debugging",
     )
     p_obj.add_argument(
+        "--actual-device",
+        required=True,
+        metavar="DEVICE",
+        help="Actual device where this job running",
+    )
+    p_obj.add_argument(
         "--output-dir",
         required=True,
         metavar="DIR",
@@ -155,6 +161,7 @@ def parse_job_file(logger, options):
         options.definition.read(),
         device,
         options.job_id,
+        options.actual_device,
         logger=logger,
         dispatcher_config=dispatcher_config,
         env_dut=env_dut,

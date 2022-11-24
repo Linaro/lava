@@ -150,6 +150,7 @@ def start_job(
     url: str,
     token: str,
     job_id: int,
+    actual_device: str,
     definition: str,
     device: str,
     dispatcher: str,
@@ -190,6 +191,7 @@ def start_job(
             f"--dispatcher={base_dir / 'dispatcher.yaml'}",
             f"--output-dir={base_dir}",
             f"--job-id={job_id}",
+            f"--actual-device={actual_device}",
             f"--url={url}",
             f"--token={token}",
             f"--job-log-interval={job_log_interval}",
@@ -535,15 +537,25 @@ def register(url: str, name: str, username: str = None, password: str = None) ->
 
 
 def running(
-    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+    url: str,
+    jobs: JobsDB,
+    job_id: int,
+    actual_device: str,
+    token: str,
+    job_log_interval: int,
 ) -> None:
     job = jobs.get(job_id)
     if job is None:
-        start(url, jobs, job_id, token, job_log_interval)
+        start(url, jobs, job_id, actual_device, token, job_log_interval)
 
 
 def start(
-    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+    url: str,
+    jobs: JobsDB,
+    job_id: int,
+    actual_device: str,
+    token: str,
+    job_log_interval: int,
 ) -> None:
     LOG.info("[%d] server => START", job_id)
     # Was the job already started?
@@ -580,6 +592,7 @@ def start(
             url,
             token,
             job_id,
+            actual_device,
             definition,
             device,
             dispatcher,
@@ -628,7 +641,9 @@ def handle(options, jobs: JobsDB) -> float:
 
     # running jobs
     for job in data.get("running", []):
-        running(url, jobs, job["id"], job["token"], job_log_interval)
+        running(
+            url, jobs, job["id"], job["actual_device"], job["token"], job_log_interval
+        )
 
     # cancel jobs
     for job in data.get("cancel", []):
@@ -636,7 +651,9 @@ def handle(options, jobs: JobsDB) -> float:
 
     # start jobs
     for job in data.get("start", []):
-        start(url, jobs, job["id"], job["token"], job_log_interval)
+        start(
+            url, jobs, job["id"], job["actual_device"], job["token"], job_log_interval
+        )
 
     # Check job status
     # TODO: store the token and reuse it

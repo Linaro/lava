@@ -100,11 +100,21 @@ class JobParser:
             duration = Timeout.parse(data["timeouts"]["job"])
             job.timeout = Timeout("job", duration)
 
-    def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
+    def parse(
+        self,
+        content,
+        device,
+        job_id,
+        actual_device,
+        logger,
+        dispatcher_config,
+        env_dut=None,
+    ):
         data = yaml_safe_load(content)
         job = Job(job_id, data, logger)
         test_counts = {}
         job.device = device
+        job.actual_device = actual_device
         job.parameters["env_dut"] = env_dut
         # Load the dispatcher config
         job.parameters["dispatcher"] = {}
