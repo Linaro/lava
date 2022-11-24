@@ -82,7 +82,7 @@ class TestRemovable(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/{}".format(test_file)
         )
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None, "")
+            job = job_parser.parse(sample_job_data, device, 4212, "", None, "")
         job.logger = DummyLogger()
         try:
             job.validate()
@@ -433,7 +433,7 @@ class TestRemovable(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, bbb, 4212, None, "")
+            job = job_parser.parse(sample_job_data, bbb, 4212, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -457,7 +457,7 @@ class TestRemovable(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )
         with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
+            job = job_parser.parse(sample_job_data, cubie, 4212, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         boot_params = [

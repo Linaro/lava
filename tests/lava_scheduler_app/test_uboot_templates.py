@@ -341,7 +341,9 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
         with open(lxc_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, panda, 4577, None, "")
+            job = parser.parse(
+                sample_job_data, panda, 4577, "staging-panda-01", None, ""
+            )
         os.close(fdesc)
         job.logger = DummyLogger()
         job.validate()

@@ -70,7 +70,7 @@ class TestDefinitionHandlers(StdoutTestCase):
             data = yaml_safe_load(sample_job_data)
         data["actions"][2]["test"]["definitions"][0]["from"] = "unusable-handler"
         try:
-            job = parser.parse(yaml_safe_dump(data), device, 4212, None, "")
+            job = parser.parse(yaml_safe_dump(data), device, 4212, "", None, "")
             job.logger = DummyLogger()
         except JobError:
             pass

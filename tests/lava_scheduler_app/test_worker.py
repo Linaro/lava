@@ -496,11 +496,25 @@ def test_internal_v1_workers_get(client, mocker, settings):
     data = ret.json()
     assert sorted(data.keys()) == ["cancel", "running", "start"]
     assert data["cancel"] == [{"id": j3.id, "token": j3.token}]
-    assert data["running"] == [{"id": j2.id, "token": j2.token}]
+    assert data["running"] == [
+        {"id": j2.id, "token": j2.token, "actual_device": j2.actual_device.hostname}
+    ]
     assert len(data["start"]) == 3
-    assert {"id": j1.id, "token": j1.token} in data["start"]
-    assert {"id": j5.id, "token": j5.token} in data["start"]
-    assert {"id": j6.id, "token": j6.token} in data["start"]
+    assert {
+        "id": j1.id,
+        "token": j1.token,
+        "actual_device": j1.actual_device.hostname,
+    } in data["start"]
+    assert {
+        "id": j5.id,
+        "token": j5.token,
+        "actual_device": j5.actual_device.hostname,
+    } in data["start"]
+    assert {
+        "id": j6.id,
+        "token": j6.token,
+        "actual_device": j5.actual_device.hostname,
+    } in data["start"]
 
 
 @pytest.mark.django_db

@@ -458,7 +458,9 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         parser_device = device_object
         try:
-            pipeline_job = parser.parse(job.definition, parser_device, job.id, None, "")
+            pipeline_job = parser.parse(
+                job.definition, parser_device, job.id, job.actual_device, None, ""
+            )
         except (
             AttributeError,
             JobError,
@@ -610,7 +612,12 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser_device = device_object
         try:
             pipeline_job = parser.parse(
-                host_job.definition, parser_device, host_job.id, DummyLogger(), ""
+                host_job.definition,
+                parser_device,
+                host_job.id,
+                host_job.actual_device,
+                DummyLogger(),
+                "",
             )
         except (
             AttributeError,
@@ -625,7 +632,12 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         try:
             pipeline_job = parser.parse(
-                guest_job.definition, parser_device, guest_job.id, DummyLogger(), ""
+                guest_job.definition,
+                parser_device,
+                guest_job.id,
+                host_job.actual_device,
+                DummyLogger(),
+                "",
             )
         except (
             AttributeError,
@@ -1042,7 +1054,12 @@ class TestYamlMultinode(TestCaseWithFactory):
                 parser_device = None if job.dynamic_connection else device_object
                 try:
                     pipeline_job = parser.parse(
-                        check_job.definition, parser_device, check_job.id, None, ""
+                        check_job.definition,
+                        parser_device,
+                        check_job.id,
+                        job.actual_device,
+                        None,
+                        "",
                     )
                 except (
                     AttributeError,
@@ -1151,7 +1168,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             parser_device = None if job.dynamic_connection else device_object
             try:
                 pipeline_job = parser.parse(
-                    job.definition, parser_device, job.id, None, ""
+                    job.definition, parser_device, job.id, job.actual_device, None, ""
                 )
             except (
                 AttributeError,

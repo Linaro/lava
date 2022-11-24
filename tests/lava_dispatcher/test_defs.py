@@ -146,7 +146,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         data = [block["test"] for block in content["actions"] if "test" in block][0]
         definitions = [block for block in data["definitions"] if "path" in block][0]
         definitions["name"] = "smoke tests"
-        job = parser.parse(yaml_safe_dump(content), device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(content), device, 4212, "", None, "")
         deploy = [
             action for action in job.pipeline.actions if action.name == "deployimages"
         ][0]

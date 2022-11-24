@@ -65,7 +65,7 @@ class FastBootFactory(Factory):
         fastboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(fastboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4212, None, "")
+            job = parser.parse(sample_job_data, device, 4212, "", None, "")
             job.logger = DummyLogger()
         return job
 
@@ -105,7 +105,7 @@ class UBootFactory(Factory):
         uboot_yaml = os.path.join(os.path.dirname(__file__), filename)
         with open(uboot_yaml) as sample_job_data:
             parser = JobParser()
-            job = parser.parse(sample_job_data, device, 4213, None, "")
+            job = parser.parse(sample_job_data, device, 4213, "", None, "")
             job.logger = DummyLogger()
         return job
 

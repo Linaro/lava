@@ -340,7 +340,7 @@ class TestBootloaderAction(StdoutTestCase):
         ]
         self.assertIsNotNone(boot)
         sample_job_string = yaml_safe_dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, "")
+        job = parser.parse(sample_job_string, device, 4212, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         bootloader = [

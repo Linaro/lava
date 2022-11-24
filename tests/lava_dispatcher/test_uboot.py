@@ -743,7 +743,7 @@ class TestUbootAction(StdoutTestCase):
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )
         sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
+        job = job_parser.parse(sample_job_data, cubie, 4212, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
@@ -889,7 +889,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_zimage_bootz(self, which_mock):
         self.deploy_block["kernel"]["type"] = "zimage"
         job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+            yaml_safe_dump(self.base_data), self.device, 4212, "", None, ""
         )
         job.logger = DummyLogger()
         job.validate()
@@ -921,7 +921,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_image(self, which_mock):
         self.deploy_block["kernel"]["type"] = "image"
         job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+            yaml_safe_dump(self.base_data), self.device, 4212, "", None, ""
         )
         job.logger = DummyLogger()
         job.validate()
@@ -954,7 +954,7 @@ class TestKernelConversion(StdoutTestCase):
     def test_uimage(self, which_mock):
         self.deploy_block["kernel"]["type"] = "uimage"
         job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+            yaml_safe_dump(self.base_data), self.device, 4212, "", None, ""
         )
         job.logger = DummyLogger()
         job.validate()
@@ -989,7 +989,7 @@ class TestKernelConversion(StdoutTestCase):
         del self.device["parameters"]["bootz"]
         self.deploy_block["kernel"]["type"] = "zimage"
         job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+            yaml_safe_dump(self.base_data), self.device, 4212, "", None, ""
         )
         job.logger = DummyLogger()
         job.validate()

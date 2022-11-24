@@ -168,7 +168,7 @@ class TestDeviceEnvironment(StdoutTestCase):
         )
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
+                sample_job_data, device, 4212, "", None, "", env_dut=data
             )
         self.assertEqual(job.parameters["env_dut"], None)
 
@@ -193,7 +193,7 @@ overrides:
         )
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
+                sample_job_data, device, 4212, "", None, "", env_dut=data
             )
         job.logger = DummyLogger()
         self.assertEqual(job.parameters["env_dut"], data)
@@ -220,7 +220,7 @@ overrides:
         )
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
+                sample_job_data, device, 4212, "", None, "", env_dut=data
             )
         job.logger = DummyLogger()
         self.assertEqual(job.parameters["env_dut"], data)

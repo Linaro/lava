@@ -358,7 +358,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
             device["actions"]["boot"]["methods"]["qemu"]["parameters"]["extra"][1], int
         )
         parser = JobParser()
-        job = parser.parse(yaml_safe_dump(job_data), device, 4212, None, "")
+        job = parser.parse(yaml_safe_dump(job_data), device, 4212, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         boot_image = [

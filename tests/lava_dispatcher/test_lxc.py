@@ -217,7 +217,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
+        job = parser.parse(yaml_safe_dump(data), device, 4577, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [
@@ -275,7 +275,7 @@ class TestLxcWithDevices(StdoutTestCase):
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
+        job = parser.parse(yaml_safe_dump(data), device, 4577, "", None, "")
         job.logger = DummyLogger()
         job.validate()
         lxc_deploy = [
