@@ -261,6 +261,7 @@ class CreateOverlay(Action):
             # TODO: Add LAVA_URL?
             self.logger.debug("LAVA metadata")
             self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
+            self._export_data(fout, self.job.actual_device, "LAVA_DEVICE")
             self._export_data(fout, self.dispatcher_ip, "LAVA_DISPATCHER_IP")
 
         # Generate the file containing the secrets
