@@ -22,7 +22,6 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 
-
 # Fix for the admin "view site" link
 admin.site.site_url = "/" + settings.MOUNT_POINT
 

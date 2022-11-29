@@ -24,12 +24,12 @@ import argparse
 import contextlib
 import itertools
 import os
-import requests
-import subprocess
 import shlex
+import subprocess
 import sys
 import time
 
+import requests
 
 #############
 # Constants #

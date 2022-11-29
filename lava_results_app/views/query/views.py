@@ -20,53 +20,47 @@
 import csv
 import os
 import shutil
-import simplejson
 import tempfile
 
-from django.db import IntegrityError
-from django.db.models import Q
-from django.db.utils import ProgrammingError
+import simplejson
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
-from django.core.exceptions import PermissionDenied, FieldDoesNotExist, FieldError
-from django.urls import reverse
+from django.core.exceptions import FieldDoesNotExist, FieldError, PermissionDenied
+from django.db import IntegrityError
+from django.db.models import Q
+from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, loader
 from django.template import defaultfilters
-
-from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-
-from lava_results_app.views import index
-from lava_results_app.views.query.decorators import ownership_required
-from lava_results_app.views.query.forms import QueryForm, QueryConditionForm
+from django.urls import reverse
+from django_tables2 import RequestConfig
 
 from lava_results_app.models import (
+    InvalidConditionsError,
+    InvalidContentTypeError,
     Query,
-    QueryGroup,
     QueryCondition,
+    QueryGroup,
     QueryOmitResult,
     QueryUpdatedError,
     TestCase,
     TestSuite,
-    InvalidConditionsError,
-    InvalidContentTypeError,
 )
-
+from lava_results_app.views import index
+from lava_results_app.views.query.decorators import ownership_required
+from lava_results_app.views.query.forms import QueryConditionForm, QueryForm
 from lava_results_app.views.query.tables import (
-    UserQueryTable,
-    OtherQueryTable,
     GroupQueryTable,
-    QueryTestJobTable,
+    OtherQueryTable,
     QueryTestCaseTable,
+    QueryTestJobTable,
     QueryTestSuiteTable,
+    UserQueryTable,
 )
-
 from lava_scheduler_app.models import TestJob
-
-from django_tables2 import RequestConfig
-
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.lavatable import LavaView
 
 

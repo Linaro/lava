@@ -19,10 +19,9 @@
 
 import codecs
 
-from rest_framework.parsers import BaseParser
-from rest_framework.exceptions import ParseError
-
 from django.conf import settings
+from rest_framework.exceptions import ParseError
+from rest_framework.parsers import BaseParser
 
 
 class PlainTextParser(BaseParser):

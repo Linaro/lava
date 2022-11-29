@@ -22,8 +22,7 @@
 
 from voluptuous import Any, Msg, Optional, Required
 
-from lava_common.schemas import boot
-from lava_common.schemas import docker
+from lava_common.schemas import boot, docker
 
 
 def schema():

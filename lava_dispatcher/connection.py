@@ -18,14 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-import signal
 import decimal
 import logging
-from lava_dispatcher.action import InternalObject
+import os
+import signal
+
 from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
-
+from lava_dispatcher.action import InternalObject
 
 RECOGNIZED_TAGS = ("telnet", "ssh", "shell")
 

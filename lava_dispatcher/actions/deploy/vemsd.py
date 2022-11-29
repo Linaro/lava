@@ -23,20 +23,21 @@
 
 import os
 import shutil
+
+from lava_common.constants import VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Deployment, RetryAction
-from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
-from lava_common.constants import VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
 from lava_dispatcher.utils.compression import decompress_file, untar_file
 from lava_dispatcher.utils.filesystem import (
     copy_directory_contents,
     remove_directory_contents,
 )
+from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
 
 class VExpressMsd(Deployment):

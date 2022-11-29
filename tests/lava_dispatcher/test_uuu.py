@@ -20,12 +20,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
-from unittest.mock import patch, MagicMock
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
-from lava_dispatcher.utils.containers import NullDriver, DockerDriver
-from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from unittest.mock import MagicMock, patch
+
 from lava_common.exceptions import JobError
+from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from lava_dispatcher.utils.containers import DockerDriver, NullDriver
+from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods

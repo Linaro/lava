@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import pytest
 import xmlrpc.client
 
+import pytest
 from django.contrib.auth.models import Group, User
 
 from lava_common.decorators import nottest

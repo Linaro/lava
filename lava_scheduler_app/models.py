@@ -21,20 +21,19 @@
 
 import contextlib
 import datetime
-import jinja2
+import gzip
 import logging
 import os
 import uuid
-import gzip
+
+import jinja2
+import requests
 import simplejson
 import yaml
-
-from django.db import transaction
-from django.db.models import Q
 from django.conf import settings
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import (
@@ -42,33 +41,32 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.utils.crypto import get_random_string
+from django.db import models, transaction
+from django.db.models import Q
 from django.urls import reverse
-from django.db import models
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.html import escape
-from django.utils.translation import gettext_lazy as _
 from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy as _
 
-from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump
+import lava_scheduler_app.environment as environment
+from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.timeout import Timeout
 from lava_results_app.utils import export_testcase
 from lava_scheduler_app import utils
 from lava_scheduler_app.logutils import logs_instance
-import lava_scheduler_app.environment as environment
 from lava_scheduler_app.managers import (
-    RestrictedDeviceTypeQuerySet,
+    GroupObjectPermissionManager,
     RestrictedDeviceQuerySet,
+    RestrictedDeviceTypeQuerySet,
     RestrictedTestJobQuerySet,
     RestrictedWorkerQuerySet,
-    GroupObjectPermissionManager,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.compat import add_permissions
 from lava_server.files import File
-
-import requests
 
 
 def auth_token():

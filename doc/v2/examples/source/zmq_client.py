@@ -22,15 +22,15 @@ zmq_client.py script
 
 # START_CLIENT
 
-import sys
-import ssl
 import argparse
-import yaml
 import signal
-import zmq
+import ssl
+import sys
 import xmlrpc.client
 from urllib.parse import urlsplit
 
+import yaml
+import zmq
 
 FINISHED_JOB_STATUS = ["Complete", "Incomplete", "Canceled"]
 

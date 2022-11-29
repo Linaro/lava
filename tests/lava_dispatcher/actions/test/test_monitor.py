@@ -20,11 +20,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
+
 import pytest
 
 from lava_common.exceptions import ConnectionClosedError
 from lava_dispatcher.actions.test.monitor import TestMonitor, TestMonitorAction
-
 from tests.utils import RecordingLogger
 
 

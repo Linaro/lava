@@ -19,15 +19,16 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import pexpect
 import logging
-from lava_dispatcher.connection import Protocol
-from lava_common.timeout import Timeout
-from lava_common.exceptions import JobError, TestError
-from lava_dispatcher.shell import ShellCommand
+
+import pexpect
+
 from lava_common.constants import XNBD_SYSTEM_TIMEOUT
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.network import get_free_port
+from lava_common.exceptions import JobError, TestError
+from lava_common.timeout import Timeout
+from lava_dispatcher.connection import Protocol
+from lava_dispatcher.shell import ShellCommand
+from lava_dispatcher.utils.network import dispatcher_ip, get_free_port
 
 
 class XnbdProtocol(Protocol):

@@ -23,12 +23,13 @@
 import argparse
 import logging
 import os
-from pathlib import Path
-from setproctitle import setproctitle
 import signal
 import sys
 import traceback
+from pathlib import Path
+
 import yaml
+from setproctitle import setproctitle
 
 from lava_common.compat import yaml_safe_dump
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError

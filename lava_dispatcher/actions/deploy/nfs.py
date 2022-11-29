@@ -22,15 +22,15 @@
 # imported by the parser to populate the list of subclasses.
 
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
+    ApplyOverlayTftp,
+    ExtractModules,
     ExtractNfsRootfs,
     OverlayAction,
-    ExtractModules,
-    ApplyOverlayTftp,
 )
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.logical import Deployment
 
 
 class Nfs(Deployment):

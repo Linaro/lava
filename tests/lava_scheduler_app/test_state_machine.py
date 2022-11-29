@@ -25,7 +25,6 @@ from django.test import TestCase
 from lava_common.compat import yaml_safe_dump
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
-
 minimal_valid_job = yaml_safe_dump(
     """
 job_name: minimal valid job

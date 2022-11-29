@@ -24,25 +24,24 @@ import datetime
 import io
 import logging
 import os
-from pathlib import Path
-import simplejson
-import tarfile
 import re
+import tarfile
+from pathlib import Path
+
+import simplejson
 import voluptuous
 import yaml
-
 from django import forms
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.exceptions import PermissionDenied, FieldDoesNotExist
-from django.urls import reverse
+from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models import Case, IntegerField, Prefetch, Q, Sum, When
 from django.db.utils import DatabaseError
-from django.db.models import Case, IntegerField, Prefetch, Sum, When
-from django.template.loader import render_to_string
 from django.http import (
     FileResponse,
     Http404,
@@ -53,7 +52,8 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models import Q
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
@@ -64,13 +64,27 @@ from lava_common.compat import yaml_load, yaml_safe_dump, yaml_safe_load
 from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
-
-from lava_results_app.dbutils import map_scanned_results, create_metadata_store
-from lava_server.views import index as lava_index
-from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-from lava_server.compat import djt2_paginator_class, is_ajax
-from lava_server.files import File
-
+from lava_results_app.dbutils import create_metadata_store, map_scanned_results
+from lava_results_app.models import (
+    NamedTestAttribute,
+    Query,
+    QueryCondition,
+    TestCase,
+    TestData,
+)
+from lava_results_app.utils import (
+    check_request_auth,
+    description_data,
+    description_filename,
+)
+from lava_scheduler_app.dbutils import (
+    device_type_summary,
+    invalid_template,
+    load_devicetype_template,
+    testjob_submission,
+    validate_job,
+)
+from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -80,54 +94,35 @@ from lava_scheduler_app.models import (
     TestJobUser,
     Worker,
 )
-from lava_scheduler_app.dbutils import (
-    device_type_summary,
-    invalid_template,
-    load_devicetype_template,
-    testjob_submission,
-    validate_job,
-)
-from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
-from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.signals import send_event
-from lava_scheduler_app.templatetags.utils import udecode
-
-from lava_server.lavatable import LavaView
-from lava_results_app.utils import (
-    check_request_auth,
-    description_data,
-    description_filename,
-)
-from lava_results_app.models import (
-    NamedTestAttribute,
-    Query,
-    QueryCondition,
-    TestCase,
-    TestData,
-)
-
-from django.contrib.auth.models import User
 from lava_scheduler_app.tables import (
+    DeviceHealthTable,
+    DeviceLogEntryTable,
+    DeviceTable,
+    DeviceTypeTable,
+    FailedJobTable,
+    HealthJobSummaryTable,
+    IndexJobTable,
     JobErrorsTable,
     JobTable,
-    visible_jobs_with_custom_sort,
-    IndexJobTable,
-    FailedJobTable,
-    DeviceLogEntryTable,
     LogEntryTable,
     LongestJobTable,
-    DeviceTable,
-    RecentJobsTable,
-    DeviceHealthTable,
-    DeviceTypeTable,
-    WorkerTable,
-    HealthJobSummaryTable,
-    OverviewJobsTable,
     NoWorkerDeviceTable,
-    QueueJobsTable,
+    OverviewJobsTable,
     PassingHealthTable,
+    QueueJobsTable,
+    RecentJobsTable,
     RunningTable,
+    WorkerTable,
+    visible_jobs_with_custom_sort,
 )
+from lava_scheduler_app.templatetags.utils import udecode
+from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
+from lava_server.compat import djt2_paginator_class, is_ajax
+from lava_server.files import File
+from lava_server.lavatable import LavaView
+from lava_server.views import index as lava_index
 
 
 def request_config(request, paginate):

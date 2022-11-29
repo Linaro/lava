@@ -21,23 +21,23 @@
 import warnings
 
 from django import forms
-from django.core.exceptions import ValidationError
+from django.conf import settings
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin, GroupAdmin
-from django.contrib.auth.models import Permission, Group
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group, Permission
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Prefetch, Q
-from django.conf import settings
 
 from lava_scheduler_app.models import (
-    Architecture,
     Alias,
+    Architecture,
     BitWidth,
     Core,
     Device,
     DeviceType,
-    GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupDeviceTypePermission,
     GroupWorkerPermission,
     JobFailureTag,
     NotificationRecipient,

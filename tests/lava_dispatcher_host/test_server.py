@@ -20,6 +20,7 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pytest
+
 from lava_dispatcher_host.server import CommandHandler, ShareCommand
 
 

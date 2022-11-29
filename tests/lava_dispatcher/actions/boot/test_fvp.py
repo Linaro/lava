@@ -20,8 +20,9 @@
 
 
 import pytest
-from tests.lava_dispatcher.test_basic import Factory
+
 from lava_dispatcher.actions.boot.fvp import CheckFVPVersionAction
+from tests.lava_dispatcher.test_basic import Factory
 
 
 @pytest.fixture

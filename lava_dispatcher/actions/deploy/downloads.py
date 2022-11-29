@@ -19,10 +19,10 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from pathlib import Path
+
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.download import DownloadAction
-from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.docker import DockerRun

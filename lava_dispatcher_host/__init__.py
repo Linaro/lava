@@ -20,6 +20,7 @@ import os
 import stat
 import subprocess
 from pathlib import Path
+
 import pyudev
 
 from lava_common.compat import yaml_dump, yaml_load

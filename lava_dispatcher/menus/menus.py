@@ -19,11 +19,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import re
+
 import pexpect
-from lava_dispatcher.shell import ShellSession
-from lava_dispatcher.action import Action
+
 from lava_common.exceptions import JobError, LAVABug
+from lava_dispatcher.action import Action
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.shell import ShellSession
 
 
 class MovementMenu:

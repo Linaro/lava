@@ -22,8 +22,8 @@ from importlib import import_module
 from django.core.management.base import BaseCommand
 
 from lava_common.exceptions import ConfigurationError
-from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.logutils import LogsFilesystem
+from lava_scheduler_app.models import TestJob
 
 
 class Command(BaseCommand):

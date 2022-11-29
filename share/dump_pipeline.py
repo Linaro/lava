@@ -22,9 +22,10 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import jinja2
 import os
 import sys
+
+import jinja2
 import yaml
 
 from lava_dispatcher.device import NewDevice

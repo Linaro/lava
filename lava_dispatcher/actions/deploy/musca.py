@@ -23,13 +23,16 @@
 
 import os
 import shutil
-from lava_dispatcher.action import Action, Pipeline
+
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.actions.deploy.vemsd import MountDeviceMassStorageDevice
-from lava_dispatcher.actions.deploy.vemsd import UnmountVExpressMassStorageDevice
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.vemsd import (
+    MountDeviceMassStorageDevice,
+    UnmountVExpressMassStorageDevice,
+)
 from lava_dispatcher.connections.serial import DisconnectDevice
+from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import wait_udev_changed_event, wait_udev_event
 

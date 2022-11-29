@@ -20,6 +20,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import pytest
+
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 
 

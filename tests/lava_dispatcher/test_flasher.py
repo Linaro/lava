@@ -20,16 +20,16 @@
 
 import pexpect
 
-from lava_dispatcher.device import PipelineDevice
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.utils import DummyLogger
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
-from lava_dispatcher.job import Job
+import lava_dispatcher.actions.deploy.docker  # pylint: disable=unused-import
 
 # This will be monkey patched
 import lava_dispatcher.utils.shell  # pylint: disable=unused-import
-import lava_dispatcher.actions.deploy.docker  # pylint: disable=unused-import
+from lava_dispatcher.action import Pipeline
+from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
+from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.job import Job
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import DummyLogger
 
 
 class FlasherFactory(Factory):

@@ -24,7 +24,6 @@ import re
 import socket
 from pathlib import Path
 
-
 from lava_common.constants import WORKER_DIR
 
 

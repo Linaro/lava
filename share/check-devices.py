@@ -28,11 +28,12 @@ device configuration is valid YAML syntax for each device.
 
 
 import argparse
-import jinja2
-import jinja2.exceptions
 import glob
 import os
 import sys
+
+import jinja2
+import jinja2.exceptions
 
 
 def main():

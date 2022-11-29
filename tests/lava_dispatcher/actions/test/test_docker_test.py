@@ -18,13 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pytest
 import re
 import time
+from pathlib import Path
+
+import pytest
 
 from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
-from pathlib import Path
 from tests.lava_dispatcher.test_basic import Factory
 
 

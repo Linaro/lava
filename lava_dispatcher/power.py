@@ -24,8 +24,8 @@
 import time
 import traceback
 
-from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.constants import REBOOT_COMMAND_LIST
+from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 

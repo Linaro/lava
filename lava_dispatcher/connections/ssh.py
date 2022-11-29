@@ -19,11 +19,11 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-from lava_common.exceptions import JobError, InfrastructureError
-from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from lava_dispatcher.utils.shell import which
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.filesystem import check_ssh_identity_file
+from lava_dispatcher.utils.shell import which
 
 
 class SShSession(ShellSession):

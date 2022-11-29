@@ -1,14 +1,14 @@
 # unit tests for primary and secondary connections
 import os
+
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import (
-    TestJob,
     DevicesUnavailableException,
     SubmissionException,
+    TestJob,
 )
 from tests.lava_scheduler_app.test_pipeline import YamlFactory
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
-
 
 # TestCaseWithFactory cannot help causing too-many-ancestors, so ignore
 

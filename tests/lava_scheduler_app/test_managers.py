@@ -28,12 +28,12 @@ from django.test import TestCase
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 from lava_scheduler_app.models import (
-    GroupDeviceTypePermission,
-    GroupDevicePermission,
-    GroupWorkerPermission,
-    DeviceType,
-    TestJob,
     Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    GroupWorkerPermission,
+    TestJob,
     Worker,
 )
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory

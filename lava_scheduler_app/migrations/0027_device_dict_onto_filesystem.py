@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from django.db import migrations
 import base64
 import errno
 import os
 import pickle  # nosec - migration no longer in active use
 import pprint
+
+from django.db import migrations
 
 
 def devicedictionary_to_jinja2(data_dict, extends):

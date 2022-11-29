@@ -24,6 +24,5 @@ import sys
 
 from lava_dispatcher_host.cmdline import main
 
-
 if __name__ == "__main__":
     sys.exit(main(sys.argv))

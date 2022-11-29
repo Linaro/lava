@@ -25,20 +25,21 @@
 
 import contextlib
 import os
-import netifaces
 import random
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 import socket
 import subprocess  # nosec - internal use.
 
-from lava_common.exceptions import InfrastructureError, LAVABug
+import netifaces
+import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
 from lava_common.constants import (
-    XNBD_PORT_RANGE_MIN,
-    XNBD_PORT_RANGE_MAX,
     VALID_DISPATCHER_IP_PROTOCOLS,
+    XNBD_PORT_RANGE_MAX,
+    XNBD_PORT_RANGE_MIN,
 )
+from lava_common.exceptions import InfrastructureError, LAVABug
 
 
 def dispatcher_gateway():

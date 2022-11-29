@@ -16,10 +16,10 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
 
-import time
-import socket
-import logging
 import json
+import logging
+import socket
+import time
 
 LOG = logging.getLogger("lava-coordinator")
 

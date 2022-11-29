@@ -22,11 +22,11 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import json
-import re
 import os
-import sys
+import re
 import string
 import subprocess  # nosec - internal
+import sys
 
 FILENAME = "gl-code-quality-report.json"
 

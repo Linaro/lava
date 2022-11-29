@@ -25,9 +25,10 @@
 #
 
 import django  # pylint: disable=unused-import
+from django.db import transaction
+
 from lava_scheduler_app.models import *
 from linaro_django_xmlrpc.models import *
-from django.db import transaction
 
 print("=============================")
 print("Startup script for LAVA")

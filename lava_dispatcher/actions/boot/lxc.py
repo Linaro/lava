@@ -19,15 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
+
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.lxc import ConnectLxc
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.udev import get_udev_devices
-from lava_dispatcher.utils.udev import allow_fs_label
+from lava_dispatcher.utils.udev import allow_fs_label, get_udev_devices
 
 
 class BootLxc(Boot):

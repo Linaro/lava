@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 from lava_dispatcher.action import Action
-from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class TestFVPActions(StdoutTestCase):

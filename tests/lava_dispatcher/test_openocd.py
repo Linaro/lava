@@ -20,10 +20,11 @@
 
 
 import unittest
-from tests.utils import infrastructure_error
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.shell import which
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import infrastructure_error
 
 
 def check_openocd():

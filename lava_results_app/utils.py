@@ -19,12 +19,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
-import yaml
 import logging
+import os
 
-from django.db import DataError
+import yaml
 from django.core.exceptions import PermissionDenied
+from django.db import DataError
 from django.utils.translation import ngettext_lazy
 
 from lava_common.compat import yaml_load

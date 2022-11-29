@@ -20,22 +20,22 @@
 
 import xmlrpc.client
 
-from django.http import Http404
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 
 from lava_common.compat import yaml_safe_dump
 from lava_common.version import __version__
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.views import get_restricted_job
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
 )
-from linaro_django_xmlrpc.models import errors, Mapper, SystemAPI
+from lava_scheduler_app.views import get_restricted_job
+from linaro_django_xmlrpc.models import Mapper, SystemAPI, errors
 
 
 class LavaSystemAPI(SystemAPI):

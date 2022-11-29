@@ -23,10 +23,10 @@ import xmlrpc.client
 
 from django.db import IntegrityError, transaction
 
-from linaro_django_xmlrpc.models import ExposedV2API
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Worker
 from lava_server.files import File
+from linaro_django_xmlrpc.models import ExposedV2API
 
 
 class SchedulerWorkersAPI(ExposedV2API):

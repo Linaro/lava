@@ -20,60 +20,59 @@
 import csv
 import io
 import pathlib
+
 import voluptuous
 import yaml
-import lava_common.schemas as schemas
-import lava_common.schemas.test.testdef as testdef
-
 from django.conf import settings
 from django.db import transaction
-from django.http.response import HttpResponse
 from django.http import Http404
+from django.http.response import HttpResponse
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxedEnvironment
+from rest_framework import status, viewsets
+from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import (
+    AllowAny,
+    DjangoModelPermissions,
+    DjangoModelPermissionsOrAnonReadOnly,
+    IsAuthenticatedOrReadOnly,
+)
+from rest_framework.response import Response
+from rest_framework.utils import formatting
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from lava_common.version import __version__
+import lava_common.schemas as schemas
+import lava_common.schemas.test.testdef as testdef
 from lava_common.compat import yaml_dump, yaml_safe_load
-from lava_results_app.models import TestSuite, TestCase
+from lava_common.version import __version__
+from lava_rest_app import filters
+from lava_rest_app.base import views as base_views
+from lava_rest_app.base.pasers import PlainTextParser
+from lava_results_app.models import TestCase, TestSuite
 from lava_results_app.utils import (
     export_testcase,
     get_testcases_with_limit,
     testcase_export_fields,
 )
-from lava_rest_app.base import views as base_views
-from lava_rest_app.base.pasers import PlainTextParser
-from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DevicesUnavailableException,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    Tag,
+    TestJob,
+)
 from lava_scheduler_app.schema import SubmissionException
 from lava_scheduler_app.views import __set_device_health__
 from lava_server.files import File
 
-from rest_framework import status, viewsets
-from rest_framework.permissions import (
-    DjangoModelPermissions,
-    DjangoModelPermissionsOrAnonReadOnly,
-    IsAuthenticatedOrReadOnly,
-)
-from rest_framework_extensions.mixins import NestedViewSetMixin
-from rest_framework.response import Response
-from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
-from rest_framework.permissions import AllowAny
-from rest_framework.utils import formatting
-from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
-from lava_scheduler_app.models import (
-    Alias,
-    Device,
-    DeviceType,
-    DevicesUnavailableException,
-    GroupDeviceTypePermission,
-    GroupDevicePermission,
-    Tag,
-)
-
 from . import serializers
 
 try:
-    from rest_framework.decorators import detail_route, action
+    from rest_framework.decorators import action, detail_route
 except ImportError:
     from rest_framework.decorators import action
 

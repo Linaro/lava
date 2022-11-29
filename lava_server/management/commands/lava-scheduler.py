@@ -17,20 +17,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Set
-
 import contextlib
 import datetime
 import json
 import signal
 import time
-import zmq
-from zmq.utils.strtypes import b, u
+from typing import Set
 
+import zmq
 from django.conf import settings
 from django.db import connection, transaction
-from django.db.utils import OperationalError, InterfaceError
+from django.db.utils import InterfaceError, OperationalError
 from django.utils import timezone
+from zmq.utils.strtypes import b, u
 
 from lava_common.version import __version__
 from lava_scheduler_app.models import Worker

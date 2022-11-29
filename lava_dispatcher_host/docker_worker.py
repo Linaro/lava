@@ -40,7 +40,6 @@ from requests.packages.urllib3.util.retry import Retry
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.worker import get_parser
 
-
 #########
 # Globals
 #########

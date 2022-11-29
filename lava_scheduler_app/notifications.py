@@ -25,13 +25,12 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core.mail import send_mail, send_mass_mail
-from django.urls import reverse
 from django.db import IntegrityError
 from django.db.models import Q
+from django.urls import reverse
 
-from lava_scheduler_app import dbutils
-from lava_scheduler_app import utils
 from lava_results_app.models import Query, TestCase, TestSuite
+from lava_scheduler_app import dbutils, utils
 from lava_scheduler_app.models import (
     GroupWorkerPermission,
     Notification,

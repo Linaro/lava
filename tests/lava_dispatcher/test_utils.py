@@ -19,26 +19,23 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import pytest
 import subprocess  # nosec - unit test support.
 import unittest
 
-from tests.utils import infrastructure_error
+import pytest
+
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action
-from lava_dispatcher.actions.deploy import (  # pylint: disable=unused-import
-    strategies as deploy_strategies,
-)
-from lava_dispatcher.actions.boot import (  # pylint: disable=unused-import
-    strategies as boot_strategies,
-)
-from lava_dispatcher.actions.test import (  # pylint: disable=unused-import
-    strategies as test_strategies,
-)
-from lava_dispatcher.utils import vcs, installers
+
+# pylint: disable=unused-import
+from lava_dispatcher.actions.boot import strategies as boot_strategies
+from lava_dispatcher.actions.deploy import strategies as deploy_strategies
+from lava_dispatcher.actions.test import strategies as test_strategies
+from lava_dispatcher.utils import installers, vcs
 from lava_dispatcher.utils.decorator import replace_exception
 from lava_dispatcher.utils.shell import which
+from tests.utils import infrastructure_error
 
 
 @pytest.fixture

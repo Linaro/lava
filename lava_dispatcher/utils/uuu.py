@@ -20,10 +20,11 @@
 
 
 import shlex
+
 from lava_dispatcher.utils.containers import (
-    OptionalContainerAction,
     DockerDriver,
     NullDriver,
+    OptionalContainerAction,
 )
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which

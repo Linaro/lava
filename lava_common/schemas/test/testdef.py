@@ -20,7 +20,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from voluptuous import Any, Match, Optional, Required, Schema, ALLOW_EXTRA
+from voluptuous import ALLOW_EXTRA, Any, Match, Optional, Required, Schema
 
 
 def testdef():

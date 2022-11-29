@@ -1,16 +1,17 @@
 import logging
 import sys
+
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, TestJob
-from lava_server.lavatable import LavaTable, LavaView
 from lava_scheduler_app.tables import (
-    JobTable,
     DeviceTable,
+    JobTable,
     visible_jobs_with_custom_sort,
 )
+from lava_server.lavatable import LavaTable, LavaView
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output

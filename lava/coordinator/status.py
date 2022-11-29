@@ -23,12 +23,12 @@ Status check for lava-coordinator
 #  MA 02110-1301, USA.
 
 
-import os
-import sys
-import socket
-import json
-import time
 import errno
+import json
+import os
+import socket
+import sys
+import time
 from socket import gethostname
 
 HOST = "localhost"  # The coordinator hostname default

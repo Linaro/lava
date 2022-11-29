@@ -18,22 +18,21 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from lava_common.constants import UEFI_LINE_SEPARATOR
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
-    BootloaderCommandOverlay,
-    OverlayUnpack,
-    BootloaderCommandsAction,
     BootHasMixin,
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction,
+    OverlayUnpack,
 )
-
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
 from lava_dispatcher.logical import Boot, RetryAction
-from lava_dispatcher.menus.menus import MenuInterrupt, MenuConnect
+from lava_dispatcher.menus.menus import MenuConnect, MenuInterrupt
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
-from lava_common.constants import UEFI_LINE_SEPARATOR
 
 
 class UefiShell(Boot):

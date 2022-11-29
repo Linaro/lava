@@ -25,15 +25,15 @@ import os
 import re
 import tempfile
 
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import JobError
-from lava_dispatcher.logical import Deployment
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils import filesystem
-from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
+from lava_dispatcher.logical import Deployment
+from lava_dispatcher.protocols.xnbd import XnbdProtocol
+from lava_dispatcher.utils import filesystem
+from lava_dispatcher.utils.shell import which
 
 
 class Nbd(Deployment):

@@ -21,6 +21,7 @@ Forms
 """
 
 from django import forms
+
 from linaro_django_xmlrpc.models import AuthToken
 
 

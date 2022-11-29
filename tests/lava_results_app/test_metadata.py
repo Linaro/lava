@@ -1,26 +1,26 @@
+import decimal
 import os
 import re
 import shutil
-import decimal
 
-from django.urls.exceptions import NoReverseMatch
 from django.urls import reverse
+from django.urls.exceptions import NoReverseMatch
 
 from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
-from tests.lava_results_app.test_names import TestCaseWithFactory
-from lava_scheduler_app.models import TestJob, Device
-from lava_scheduler_app.utils import mkdir
+from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.parser import JobParser
 from lava_results_app.dbutils import (
+    _get_action_metadata,
+    create_metadata_store,
     map_metadata,
     map_scanned_results,
-    create_metadata_store,
-    _get_action_metadata,
 )
-from lava_results_app.models import ActionData, MetaType, TestData, TestCase, TestSuite
+from lava_results_app.models import ActionData, MetaType, TestCase, TestData, TestSuite
 from lava_results_app.utils import export_testcase, testcase_export_fields
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.device import PipelineDevice
+from lava_scheduler_app.models import Device, TestJob
+from lava_scheduler_app.utils import mkdir
 from tests.lava_dispatcher.test_defs import allow_missing_path
+from tests.lava_results_app.test_names import TestCaseWithFactory
 
 
 class TestMetaTypes(TestCaseWithFactory):

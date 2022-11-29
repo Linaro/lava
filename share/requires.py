@@ -20,10 +20,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import os
 import sys
+
 import yaml
-import argparse
 
 #  Goals:
 #  0: Convert a packaged list of dependencies and versions

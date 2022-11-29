@@ -21,10 +21,10 @@
 
 import os
 import uuid
+
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, InternalObject
-from lava_dispatcher.utils.docker import DockerRun
-from lava_dispatcher.utils.docker import DockerContainer
+from lava_dispatcher.utils.docker import DockerContainer, DockerRun
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.utils.udev import get_udev_devices

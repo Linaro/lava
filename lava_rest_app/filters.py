@@ -17,28 +17,27 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_scheduler_app.models import (
-    Device,
-    DeviceType,
-    GroupDeviceTypePermission,
-    GroupDevicePermission,
-    TestJob,
-    Tag,
-    Architecture,
-    ProcessorFamily,
-    Alias,
-    Worker,
-    BitWidth,
-    Core,
-    JobFailureTag,
-)
-from lava_results_app.models import TestCase, TestSuite, TestSet
-from django.contrib.auth.models import User, Group, Permission
+import rest_framework_filters as filters
+from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
 from django_filters.filters import CharFilter
 
-import rest_framework_filters as filters
-
+from lava_results_app.models import TestCase, TestSet, TestSuite
+from lava_scheduler_app.models import (
+    Alias,
+    Architecture,
+    BitWidth,
+    Core,
+    Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    JobFailureTag,
+    ProcessorFamily,
+    Tag,
+    TestJob,
+    Worker,
+)
 from lava_server.compat import RelatedFilter
 
 

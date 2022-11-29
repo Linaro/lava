@@ -20,9 +20,12 @@
 
 
 import pytest
+
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.downloads import PostprocessWithDocker
-from lava_dispatcher.actions.deploy.downloads import DownloadsAction
+from lava_dispatcher.actions.deploy.downloads import (
+    DownloadsAction,
+    PostprocessWithDocker,
+)
 from lava_dispatcher.job import Job
 from tests.lava_dispatcher.test_basic import Factory
 

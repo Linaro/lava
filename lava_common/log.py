@@ -19,15 +19,15 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from typing import Dict, List, Tuple
-
 import contextlib
 import datetime
 import logging
 import multiprocessing
-import requests
 import signal
 import time
+from typing import Dict, List, Tuple
+
+import requests
 
 from lava_common.compat import yaml_dump
 from lava_common.version import __version__

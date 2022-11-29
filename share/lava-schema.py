@@ -21,9 +21,10 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import jinja2
 import pathlib
 import sys
+
+import jinja2
 import voluptuous as v
 import yaml
 

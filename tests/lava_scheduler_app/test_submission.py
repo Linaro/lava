@@ -1,6 +1,6 @@
+import json
 import logging
 import os
-import json
 
 from django.contrib.auth.models import Group, Permission, User
 from django.test import TestCase
@@ -10,15 +10,14 @@ from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.models import (
     Alias,
     Device,
-    DeviceType,
     DevicesUnavailableException,
+    DeviceType,
     NotificationCallback,
     Tag,
     TestJob,
 )
 from lava_scheduler_app.notifications import create_notification
 from linaro_django_xmlrpc.models import AuthToken
-
 
 # pylint gets confused with TestCase
 

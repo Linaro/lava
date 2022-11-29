@@ -20,23 +20,23 @@
 
 import os
 
+from lava_common.constants import (
+    LXC_DEFAULT_PACKAGES,
+    LXC_PATH,
+    LXC_TEMPLATE_WITH_MIRROR,
+)
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_common.utils import debian_package_version
 from lava_dispatcher.action import Action, JobError, Pipeline
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.utils.shell import which
 from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_common.constants import (
-    LXC_PATH,
-    LXC_TEMPLATE_WITH_MIRROR,
-    LXC_DEFAULT_PACKAGES,
-)
-from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher.utils.filesystem import lxc_path
+from lava_dispatcher.utils.shell import which
+from lava_dispatcher.utils.udev import allow_fs_label
 from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 

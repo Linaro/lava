@@ -18,21 +18,20 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.job import Job
-from lava_common.compat import yaml_safe_load
-from lava_dispatcher.action import Pipeline, Timeout, JobError
-from lava_dispatcher.logical import Deployment, Boot, LavaTest
-from lava_dispatcher.deployment_data import get_deployment_data
-from lava_dispatcher.power import FinalizeAction
-from lava_dispatcher.connection import Protocol
-
 # Bring in the strategy subclass lists, ignore pylint warnings.
 # pylint: disable=unused-import
-from lava_dispatcher.actions.commands import CommandAction
-import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.boot.strategies
+import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.test.strategies
 import lava_dispatcher.protocols.strategies
+from lava_common.compat import yaml_safe_load
+from lava_dispatcher.action import JobError, Pipeline, Timeout
+from lava_dispatcher.actions.commands import CommandAction
+from lava_dispatcher.connection import Protocol
+from lava_dispatcher.deployment_data import get_deployment_data
+from lava_dispatcher.job import Job
+from lava_dispatcher.logical import Boot, Deployment, LavaTest
+from lava_dispatcher.power import FinalizeAction
 
 
 def parse_action(job_data, name, device, pipeline, test_info, test_count):

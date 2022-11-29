@@ -19,24 +19,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from yaml import YAMLError
 import contextlib
 import importlib
 import re
 
+# pylint: disable=unused-import
+# pylint: disable=unused-import
+from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 from django.core.exceptions import ImproperlyConfigured
+from yaml import YAMLError
 
-# pylint: disable=unused-import
-from django.conf.global_settings import DISALLOWED_USER_AGENTS
-
-# pylint: disable=unused-import
-from django.conf.global_settings import INTERNAL_IPS
-
-from lava_common.version import __version__
 from lava_common.compat import yaml_safe_load
+from lava_common.version import __version__
 from lava_rest_app.versions import versions as REST_VERSIONS
 from lava_scheduler_app.settings import *
-
 
 # List of people who get code error notifications
 # https://docs.djangoproject.com/en/1.11/ref/settings/#admins
@@ -479,8 +475,9 @@ def update(values):
 
         def get_ldap_group_types():
             """Return a list of all LDAP group types supported by django_auth_ldap module"""
-            import django_auth_ldap.config
             import inspect
+
+            import django_auth_ldap.config
 
             types = []
             for name, obj in inspect.getmembers(django_auth_ldap.config):

@@ -19,11 +19,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import datetime
-import time
 import signal
+import time
 from contextlib import contextmanager
+
 from lava_common.constants import ACTION_TIMEOUT
-from lava_common.exceptions import JobError, ConfigurationError
+from lava_common.exceptions import ConfigurationError, JobError
 
 
 class Timeout:

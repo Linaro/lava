@@ -22,12 +22,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
 
 from lava_scheduler_app.models import (
-    GroupDeviceTypePermission,
-    GroupDevicePermission,
-    GroupWorkerPermission,
-    DeviceType,
-    TestJob,
     Device,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    GroupWorkerPermission,
+    TestJob,
     Worker,
 )
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory

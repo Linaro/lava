@@ -19,6 +19,5 @@
 
 import django
 
-
 if django.VERSION < (3, 2):  # pragma: no cover
     default_app_config = "lava_scheduler_app.apps.LAVASchedulerConfig"

@@ -20,10 +20,11 @@
 
 import json
 import re
+
+from lava_common.exceptions import MultinodeProtocolTimeoutError, TestError
 from lava_common.timeout import Timeout
-from lava_common.exceptions import TestError, MultinodeProtocolTimeoutError
-from lava_dispatcher.actions.test.monitor import TestMonitor
 from lava_dispatcher.actions.test.interactive import TestInteractive
+from lava_dispatcher.actions.test.monitor import TestMonitor
 from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol

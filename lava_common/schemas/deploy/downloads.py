@@ -22,9 +22,7 @@
 
 from voluptuous import Optional, Required
 
-from lava_common.schemas import deploy
-from lava_common.schemas import docker
-
+from lava_common.schemas import deploy, docker
 
 postprocess_with_docker = {**docker(), Required("steps"): [str]}
 

@@ -21,15 +21,14 @@
 """
 URL mappings for the LAVA Results application
 """
-from lava_server.compat import url
 from lava_results_app.views import (
     index,
     metadata_export,
     suite,
-    suite_csv_stream,
     suite_csv,
-    suite_yaml,
+    suite_csv_stream,
     suite_testcase_count,
+    suite_yaml,
     testcase,
     testcase_yaml,
     testjob,
@@ -38,10 +37,29 @@ from lava_results_app.views import (
     testjob_yaml_summary,
     testset,
 )
+from lava_results_app.views.chart.views import (
+    chart_add,
+    chart_add_group,
+    chart_custom,
+    chart_delete,
+    chart_detail,
+    chart_display,
+    chart_edit,
+    chart_group_list,
+    chart_list,
+    chart_omit_result,
+    chart_query_add,
+    chart_query_edit,
+    chart_query_order_update,
+    chart_query_remove,
+    chart_select_group,
+    chart_toggle_published,
+    get_chart_group_names,
+    settings_update,
+)
 from lava_results_app.views.query.views import (
     get_query_group_names,
     get_query_names,
-    query_list,
     query_add,
     query_add_condition,
     query_add_group,
@@ -55,33 +73,15 @@ from lava_results_app.views.query.views import (
     query_export,
     query_export_custom,
     query_group_list,
+    query_include_result,
+    query_list,
+    query_omit_result,
     query_refresh,
     query_remove_condition,
-    query_omit_result,
-    query_include_result,
     query_select_group,
     query_toggle_published,
 )
-from lava_results_app.views.chart.views import (
-    get_chart_group_names,
-    chart_list,
-    chart_add,
-    chart_add_group,
-    chart_custom,
-    chart_delete,
-    chart_detail,
-    chart_display,
-    chart_edit,
-    chart_group_list,
-    chart_select_group,
-    chart_toggle_published,
-    chart_query_add,
-    chart_query_edit,
-    chart_query_remove,
-    chart_query_order_update,
-    chart_omit_result,
-    settings_update,
-)
+from lava_server.compat import url
 
 urlpatterns = [
     url(r"^$", index, name="lava_results"),

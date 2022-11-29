@@ -23,7 +23,6 @@ from django.conf import settings
 from django.core.wsgi import get_wsgi_application
 from django.db.backends.signals import connection_created
 
-
 # Set the environment variables for Django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "lava_server.settings.prod")
 

@@ -18,8 +18,8 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 
+from django.contrib.auth.models import Group, Permission, User
 from django.core.management.base import BaseCommand, CommandError
-from django.contrib.auth.models import User, Group, Permission
 
 from lava_server.compat import get_sub_parser_class
 

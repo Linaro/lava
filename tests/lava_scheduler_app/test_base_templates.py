@@ -1,9 +1,10 @@
 import os
-import jinja2
 import unittest
 
+import jinja2
+
 from lava_common.compat import yaml_safe_load
-from lava_scheduler_app.schema import validate_device, SubmissionException
+from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.files import File
 
 

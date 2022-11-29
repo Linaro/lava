@@ -18,21 +18,21 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-import io
-import re
 import base64
 import hashlib
-import tarfile
+import io
+import os
+import re
 import shutil
+import tarfile
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.utils.vcs import GitHelper
-from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.vcs import GitHelper
 
 
 @nottest

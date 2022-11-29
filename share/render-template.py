@@ -42,9 +42,10 @@ to review in a devices/ directory.
 # pylint gets confused: commands have no shebang, but the file is not a module.
 
 
-import os
-import yaml
 import argparse
+import os
+
+import yaml
 from jinja2 import Environment, FileSystemLoader
 
 

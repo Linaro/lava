@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from unittest.mock import patch
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 

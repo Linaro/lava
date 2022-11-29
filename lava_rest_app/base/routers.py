@@ -17,10 +17,10 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_rest_app.base import views as base_views
-
 from rest_framework import routers
 from rest_framework.routers import APIRootView
+
+from lava_rest_app.base import views as base_views
 
 
 class LavaApiRootView(APIRootView):
