@@ -197,7 +197,6 @@ class LinuxKernelMessages:
                         kind = "warning"
                     else:
                         kind = "unknown"
-                        assert 0
 
                 if KERNEL_MESSAGES[index].get("fatal"):
                     result = "fail"
