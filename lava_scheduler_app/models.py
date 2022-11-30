@@ -548,6 +548,14 @@ class Device(RestrictedObject):
         DeviceType, verbose_name=_("Device type"), on_delete=models.CASCADE
     )
 
+    documentation_link = models.CharField(
+        verbose_name=_("Documentation link"),
+        max_length=300,
+        null=True,
+        default=None,
+        blank=True,
+    )
+
     device_version = models.CharField(
         verbose_name=_("Device Version"),
         max_length=200,

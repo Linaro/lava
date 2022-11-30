@@ -708,6 +708,7 @@ class DeviceTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = Device
         exclude = [
+            "documentation_link",
             "device_version",
             "physical_owner",
             "physical_group",
@@ -818,6 +819,7 @@ class NoWorkerDeviceTable(DeviceTable):
     class Meta(LavaTable.Meta):
         exclude = [
             "worker_host",
+            "documentation_link",
             "device_version",
             "physical_owner",
             "physical_group",

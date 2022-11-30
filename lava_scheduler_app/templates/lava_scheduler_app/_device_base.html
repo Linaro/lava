@@ -146,6 +146,16 @@
       <dd>{{ device.get_description|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
       <dt>Version</dt>
       <dd>{{ device.device_version|default:"..." }}</dd>
+      <dt>Documentation</dt>
+      <dd>
+      {% if device.documentation_link %}
+      <a href="{{ device.documentation_link }}">
+      <span class="glyphicon glyphicon-book"></span>
+      </a>
+      {% else %}
+      ...
+      {% endif %}
+      </dd>
     </dl>
   </div>
 </div>

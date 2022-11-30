@@ -145,6 +145,7 @@ class DeviceSerializer(serializers.ModelSerializer):
             "hostname",
             "device_type",
             "device_version",
+            "documentation_link",
             "physical_owner",
             "physical_group",
             "description",
