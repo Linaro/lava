@@ -17,6 +17,7 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import re
 from collections import OrderedDict
@@ -29,19 +30,26 @@ from lava_scheduler_app.dbutils import load_devicetype_template
 
 register = template.Library()
 
+logs_display_translation_table = {
+    ord("\n"): None,  # Strip newlines
+    ord("\r"): None,  # Strip carriage returns
+    ord("\x1b"): None,  # Strip terminal control characters
+}
+
 
 @register.filter
-def udecode(obj):
+def udecode(log_snippet):
     # Sometime we do have unicode string: they have been already decoded, so we
     # should not do anything.
-    # The only way to test for unicode string in both python2 and 3, is to test
-    # for the bytes type.
-    if not isinstance(obj, bytes):
-        return obj
-    try:
-        return obj.decode("utf-8", errors="replace")
-    except AttributeError:
-        return obj
+    if isinstance(log_snippet, bytes):
+        log_snippet = log_snippet.decode("utf-8", errors="replace")
+
+    if isinstance(log_snippet, str):
+        # Strip unprintable characters from logs display
+        return log_snippet.translate(logs_display_translation_table)
+    else:
+        # There could be lists or dictionaries in logs
+        return log_snippet
 
 
 # Compile it only once

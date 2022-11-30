@@ -17,11 +17,15 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
+from __future__ import annotations
 
 import contextlib
 import logging
 import sre_constants
 import time
+from re import VERBOSE, Pattern
+from re import compile as regex_compile
+from typing import Optional
 
 import pexpect
 
@@ -38,6 +42,12 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.connection import Connection
 from lava_dispatcher.utils.strings import seconds_to_str
 
+shell_logger_line_split = r"""
+\n    |
+\r\n  |
+\r(?!$)  # Single \r might be a part of \r\n
+"""
+
 
 class ShellLogger:
     """
@@ -45,42 +55,41 @@ class ShellLogger:
     using the logfile support built into pexpect.
     """
 
+    line_split_regex: Optional[Pattern] = None
+
     def __init__(self, logger):
         self.line = ""
         self.logger = logger
         self.is_feedback = False
+        if self.line_split_regex is None:
+            self.line_split_regex = regex_compile(
+                shell_logger_line_split,
+                flags=VERBOSE,
+            )
 
-    def write(self, new_line):
-        replacements = {
-            "\n\n": "\n",  # double lines to single
-            "\r": "",
-            '"': '\\"',  # escape double quotes for YAML syntax
-            "\x1b": "",  # remove escape control characters
-        }
-        for key, value in replacements.items():
-            new_line = new_line.replace(key, value)
-        lines = self.line + new_line
+    def write(self, shell_output: str) -> None:
+        log_buffer = self.line + shell_output
+        last_split_position = 0
+        for m in self.line_split_regex.finditer(log_buffer):
+            match_end = m.end()
+            line = log_buffer[last_split_position:match_end]
+            self.write_log_line(line)
+            last_split_position = match_end
 
-        # Print one full line at a time. A partial line is kept in memory.
-        if "\n" in lines:
-            last_ret = lines.rindex("\n")
-            self.line = lines[last_ret + 1 :]
-            lines = lines[:last_ret]
-            for line in lines.split("\n"):
-                if self.is_feedback:
-                    if self.namespace:
-                        self.logger.feedback(line, namespace=self.namespace)
-                    else:
-                        self.logger.feedback(line)
-                else:
-                    self.logger.target(line)
+        self.line = log_buffer[last_split_position:]
+
+    def write_log_line(self, the_line: str) -> None:
+        if self.is_feedback:
+            if self.namespace:
+                self.logger.feedback(the_line, namespace=self.namespace)
+            else:
+                self.logger.feedback(the_line)
         else:
-            self.line = lines
-        return
+            self.logger.target(the_line)
 
-    def flush(self, force=False):
+    def flush(self, force: bool = False) -> None:
         if force and self.line:
-            self.write("\n")
+            self.write_log_line(self.line)
 
 
 class ShellCommand(pexpect.spawn):
@@ -197,7 +206,6 @@ class ShellCommand(pexpect.spawn):
 
 
 class ShellSession(Connection):
-
     name = "ShellSession"
 
     def __init__(self, job, shell_command):
