@@ -430,7 +430,7 @@ def testcase(request, case_id, job=None, pk=None):
             f_metadata = yaml_load(extra_case.metadata)
             if not f_metadata:
                 continue
-        except TypeError:
+        except (TypeError, yaml.YAMLError):
             logger.info("Unable to load extra case metadata for %s", extra_case)
             continue
         try:
