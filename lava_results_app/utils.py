@@ -207,9 +207,10 @@ def export_testcase(testcase):
     extra_source = []
     extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
+        items = {}
         with open(metadata["extra"], "r") as extra_file:
-            # TODO: this can fail!
-            items = yaml_load(extra_file)
+            with contextlib.suppress(yaml.YAMLError):
+                items = yaml_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.
         for key, value in items.items():
             extra_source.append({key: value})
