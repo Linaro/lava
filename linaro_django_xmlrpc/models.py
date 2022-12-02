@@ -29,7 +29,6 @@ import xmlrpc.client
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
-from six import string_types
 
 
 class errors:
@@ -578,7 +577,7 @@ class SystemAPI(ExposedAPI):
                 "system.multicall methodName not specified",
             )
         methodName = subcall.pop("methodName")
-        if not isinstance(methodName, string_types):
+        if not isinstance(methodName, str):
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName must be a string",
