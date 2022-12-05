@@ -252,8 +252,11 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     @detail_route(methods=["get"], suffix="cancel")
     def cancel(self, request, **kwargs):
-        # django-rest-framework handles django's PermissionDenied error
-        # automagically
+        # django-rest-framework will allow anyone to call this method.
+        # Permissions on who can cancel the job are handled by LAVA internally.
+        # If the job is already finished or canceling is in progress
+        # this method would report as you successfully cancelled the job
+        # even if you don't have required permissions.
         with transaction.atomic():
             job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
             job.cancel(request.user)
