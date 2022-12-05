@@ -20,18 +20,18 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 
-import jinja2
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_server.files import File
 
-devices_jinja_env: ContextVar[jinja2.Environment] = ContextVar("devices_jinja_env")
+devices_jinja_env: ContextVar[JinjaSandboxEnv] = ContextVar("devices_jinja_env")
 
 
 def devices():
     try:
         return devices_jinja_env.get()
     except LookupError:
-        devices_env = jinja2.Environment(
+        devices_env = JinjaSandboxEnv(
             loader=File("device").loader(),
             autoescape=False,
             trim_blocks=True,
@@ -41,7 +41,7 @@ def devices():
         return devices_env
 
 
-device_types_jinja_env: ContextVar[jinja2.Environment] = ContextVar(
+device_types_jinja_env: ContextVar[JinjaSandboxEnv] = ContextVar(
     "device_types_jinja_env"
 )
 
@@ -50,7 +50,7 @@ def device_types():
     try:
         return device_types_jinja_env.get()
     except LookupError:
-        device_types_env = jinja2.Environment(
+        device_types_env = JinjaSandboxEnv(
             loader=File("device-type").loader(),
             autoescape=False,
             trim_blocks=True,

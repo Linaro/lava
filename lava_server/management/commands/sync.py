@@ -19,10 +19,14 @@
 
 import contextlib
 
-import jinja2
 import yaml
 from django.core.management.base import BaseCommand
 from django.db.models import Case, Count, IntegerField, Q, When
+from jinja2 import TemplateError as JinjaTemplateError
+from jinja2.nodes import Assign as JinjaNodesAssign
+from jinja2.nodes import Const as JinjaNodesConst
+from jinja2.nodes import List as JinjaNodesList
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_safe_load
@@ -49,14 +53,14 @@ class Command(BaseCommand):
         ret = {}
         if hasattr(sync_dict, "items"):
             for pair in sync_dict.items:
-                if isinstance(pair.value, jinja2.nodes.List):
+                if isinstance(pair.value, JinjaNodesList):
                     ret[pair.key.value] = [
                         [sub_node.value for sub_node in node.items]
-                        if isinstance(node, jinja2.nodes.List)
+                        if isinstance(node, JinjaNodesList)
                         else node.value
                         for node in pair.value.items
                     ]
-                elif isinstance(pair.value, jinja2.nodes.Const):
+                elif isinstance(pair.value, JinjaNodesConst):
                     ret[pair.key.value] = pair.value.value
                 else:  # Ignore all other nodes
                     continue
@@ -67,9 +71,7 @@ class Command(BaseCommand):
         # Will raise jinja2.TemplateError if the template cannot be parsed.
         jinja_config = File("device", hostname).read()
 
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            autoescape=False
-        )
+        env = JinjaSandboxEnv(autoescape=False)
         ast = env.parse(jinja_config)
         return ast
 
@@ -77,10 +79,10 @@ class Command(BaseCommand):
         # Fetches value of the 'sync_to_lava' variable set in dictionary.
         try:
             config = self._parse_config(hostname)
-        except (OSError, jinja2.TemplateError) as exc:
+        except (OSError, JinjaTemplateError) as exc:
             return None, exc
 
-        sync = list(config.find_all(jinja2.nodes.Assign))
+        sync = list(config.find_all(JinjaNodesAssign))
         for node in sync:
             with contextlib.suppress(AttributeError):
                 if node.target.name == self.SYNC_KEY:
@@ -114,7 +116,7 @@ class Command(BaseCommand):
             try:
                 template = environment.devices().get_template(name)
                 yaml_safe_load(template.render())
-            except jinja2.TemplateError as exc:
+            except JinjaTemplateError as exc:
                 self.stdout.write(f"* {hostname} [SKIP]")
                 self.stdout.write(f"  -> invalid jinja2 template")
                 self.stdout.write(f"  -> {exc}")

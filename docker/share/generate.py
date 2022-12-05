@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 import pathlib
-import shutil
 import subprocess
 import sys
 
-import jinja2
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 
 ###############
@@ -31,7 +31,7 @@ def main():
         return subprocess.check_output(args).decode("utf-8").strip()
 
     # Create the environment
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader([str(templates)]))
+    env = JinjaSandboxEnv(loader=FileSystemLoader([str(templates)]))
 
     # Loop on all docker files
     print("Render templates:")
