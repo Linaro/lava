@@ -742,7 +742,13 @@ class Device(RestrictedObject):
         try:
             rendered = self.load_configuration()
             validate_device(rendered)
-        except (SubmissionException, yaml.YAMLError):
+        except (SubmissionException, yaml.YAMLError) as exc:
+            logger = logging.getLogger("lava-scheduler")
+            logger.error(
+                "Error validating device configuration for %s: %s",
+                self.hostname,
+                str(exc),
+            )
             return False
         return True
 
