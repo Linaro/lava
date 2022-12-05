@@ -49,50 +49,49 @@ def handler(request, mapper, help_view):
     want to show help specific to your mapper you must specify help_view. It
     accepts whatever django.shortcuts.redirect() would.
     """
-    if len(request.body):
-        raw_data = request.body
-        dispatcher = Dispatcher(mapper)
-
-        auth_string = request.META.get("HTTP_AUTHORIZATION")
-
-        if auth_string is not None:
-            if " " not in auth_string:
-                return HttpResponse("Invalid HTTP_AUTHORIZATION header", status=400)
-            scheme, value = auth_string.split(" ", 1)
-            if scheme != "Basic":
-                return HttpResponse(
-                    "Unsupported HTTP_AUTHORIZATION header, only Basic scheme is supported",
-                    status=400,
-                )
-            try:
-                decoded_value = base64.standard_b64decode(value).decode("utf-8")
-            except (TypeError, UnicodeDecodeError):
-                return HttpResponse(
-                    "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding",
-                    status=400,
-                )
-            try:
-                username, secret = decoded_value.split(":", 1)
-            except ValueError:
-                return HttpResponse(
-                    "Corrupted HTTP_AUTHORIZATION header, no user:pass", status=400
-                )
-            user = AuthToken.get_user_for_secret(username, secret)
-            if user is None:
-                response = HttpResponse("Invalid token", status=401)
-                response[
-                    "WWW-Authenticate"
-                ] = 'Basic realm="XML-RPC Authentication token"'
-                return response
-        else:
-            user = request.user
-        result = dispatcher.marshalled_dispatch(raw_data, user, request)
-        response = HttpResponse(content_type="application/xml")
-        response.write(result)
-        response["Content-length"] = str(len(response.content))
-        return response
-    else:
+    if len(request.body) == 0 or request.method != "POST":
         return redirect(help_view)
+
+    raw_data = request.body
+    dispatcher = Dispatcher(mapper)
+
+    auth_string = request.META.get("HTTP_AUTHORIZATION")
+
+    if auth_string is not None:
+        if " " not in auth_string:
+            return HttpResponse("Invalid HTTP_AUTHORIZATION header", status=400)
+        scheme, value = auth_string.split(" ", 1)
+        if scheme != "Basic":
+            return HttpResponse(
+                "Unsupported HTTP_AUTHORIZATION header, only Basic scheme is supported",
+                status=400,
+            )
+        try:
+            decoded_value = base64.standard_b64decode(value).decode("utf-8")
+        except (TypeError, UnicodeDecodeError):
+            return HttpResponse(
+                "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding",
+                status=400,
+            )
+        try:
+            username, secret = decoded_value.split(":", 1)
+        except ValueError:
+            return HttpResponse(
+                "Corrupted HTTP_AUTHORIZATION header, no user:pass", status=400
+            )
+        user = AuthToken.get_user_for_secret(username, secret)
+        if user is None:
+            response = HttpResponse("Invalid token", status=401)
+            response["WWW-Authenticate"] = 'Basic realm="XML-RPC Authentication token"'
+            return response
+    else:
+        user = request.user
+
+    result = dispatcher.marshalled_dispatch(raw_data, user, request)
+    response = HttpResponse(content_type="application/xml")
+    response.write(result)
+    response["Content-length"] = str(len(response.content))
+    return response
 
 
 @BreadCrumb("API help", parent=lava_index)
