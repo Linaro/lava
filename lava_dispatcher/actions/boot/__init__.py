@@ -987,14 +987,13 @@ class BootloaderCommandsAction(Action):
         for (index, line) in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
             if index + 1 == len(commands):
-                if final_message and self.expect_final:
-                    connection.prompt_str = final_message
-                else:
-                    continue
-                if error_messages:
-                    if isinstance(connection.prompt_str, str):
-                        connection.prompt_str = [connection.prompt_str]
-                    connection.prompt_str = connection.prompt_str + error_messages
+                if not final_message or not self.expect_final:
+                    break
+                connection.prompt_str = (
+                    [final_message] + error_messages
+                    if error_messages
+                    else [final_message]
+                )
             res = self.wait(connection, max_end_time)
             if res != 0:
                 msg = "matched a bootloader error message: '%s' (%d)" % (
