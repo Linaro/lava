@@ -1,0 +1,7 @@
+{# device_type = 'hp-x360-14a-cb0001xx-zork' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Gumboz...') %}
+{% set bootloader_prompt = bootloader_prompt | default('zork:') %}
+{% set boot_message = boot_message | default('Starting kernel ...') %}
+{% set console_device = console_device | default('ttyS0') %}
