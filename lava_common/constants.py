@@ -152,3 +152,4 @@ VALID_DISPATCHER_IP_PROTOCOLS = ["http", "nfs", "tftp"]
 
 # worker daemon data directory
 WORKER_DIR = "/var/lib/lava/dispatcher/worker"
+DOCKER_WORKER_DIR = "/var/lib/lava/dispatcher/docker-worker"
