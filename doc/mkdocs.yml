@@ -17,6 +17,7 @@ theme:
   palette:
     primary: "light-green"
     accent: "light-green"
+  font: false
 
 # https://squidfunk.github.io/mkdocs-material/getting-started/#customization
 markdown_extensions:
@@ -108,6 +109,7 @@ nav:
   - Methodology:
     - Test: developer/methodology/test.md
     - Release: developer/methodology/release.md
+    - Contribute: developer/methodology/contribute.md
     - Distribute: developer/methodology/distribute.md
   - Tutorials:
     - Contribute: developer/tutorials/contributing.md
@@ -122,7 +124,6 @@ nav:
     - Device-type template: technical-references/configuration/device-type-template.md
     - Dispatcher: technical-references/configuration/dispatcher.md
     - Health-Check: technical-references/configuration/health-check.md
-    - Services: technical-references/configuration/services.md
   - Job definition:
     - Job: technical-references/job-definition/job.md
     - Actions:
@@ -136,11 +137,15 @@ nav:
   - Results: technical-references/results.md
   - State machine: technical-references/state-machine.md
   - Services:
-    - apache2: technical-references/services/apache2.md
-    - lava-coordinator: technical-references/services/lava-coordinator.md
-    - lava-publisher: technical-references/services/lava-publisher.md
-    - lava-scheduler: technical-references/services/lava-scheduler.md
-    - lava-server-gunicorn: technical-references/services/lava-server-gunicorn.md
-    - lava-worker: technical-references/services/lava-worker.md
-    - postgresql: technical-references/services/postgresql.md
+    - server:
+      - apache2: technical-references/services/apache2.md
+      - lava-celerey-worker: technical-references/services/lava-celery-worker.md
+      - lava-coordinator: technical-references/services/lava-coordinator.md
+      - lava-publisher: technical-references/services/lava-publisher.md
+      - lava-scheduler: technical-references/services/lava-scheduler.md
+      - lava-server-gunicorn: technical-references/services/lava-server-gunicorn.md
+      - postgresql: technical-references/services/postgresql.md
+    - worker:
+      - lava-docker-worker: technical-references/services/lava-docker-worker.md
+      - lava-worker: technical-references/services/lava-worker.md
   - Test definition: technical-references/test-definition.md
