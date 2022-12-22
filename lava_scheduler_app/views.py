@@ -55,6 +55,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -1098,7 +1099,7 @@ def internal_v1_jobs(request, pk):
     token = request.META.get("HTTP_LAVA_TOKEN")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
-    if token != job.token:
+    if not constant_time_compare(token, job.token):
         return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
     if request.method == "GET":
@@ -1250,7 +1251,7 @@ def internal_v1_jobs_logs(request, pk):
     token = request.META.get("HTTP_LAVA_TOKEN")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
-    if token != job.token:
+    if not constant_time_compare(token, job.token):
         return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
     # check data
@@ -1339,7 +1340,7 @@ def internal_v1_workers(request, pk=None):
         token = request.META.get("HTTP_LAVA_TOKEN")
         if token is None:
             return JsonResponse({"error": "Missing 'token'"}, status=400)
-        if token != worker.token:
+        if not constant_time_compare(token, worker.token):
             return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
         # Update the version
