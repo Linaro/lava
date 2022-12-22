@@ -128,7 +128,11 @@ nav:
     - Job: technical-references/job-definition/job.md
     - Actions:
       - Command: technical-references/job-definition/actions/command.md
-      - Deploy: technical-references/job-definition/actions/deploy.md
+      - Deploy:
+        - Common: technical-references/job-definition/actions/deploy/index.md
+        - Docker: technical-references/job-definition/actions/deploy/to-docker.md
+        - Downloads: technical-references/job-definition/actions/deploy/to-downloads.md
+        - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
       - Boot: technical-references/job-definition/actions/boot.md
       - Test: technical-references/job-definition/actions/test.md
     - Notifications: technical-references/job-definition/notifications.md
