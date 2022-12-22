@@ -19,7 +19,7 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import django_tables2 as tables
-from django.utils.html import escape
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
 from lava_scheduler_app.tables import RestrictedIDLinkColumn
@@ -28,9 +28,9 @@ from lava_server.lavatable import LavaTable
 
 def results_pklink(record):
     job_id = record.pk
-    complete = (
-        '<a class="btn btn-xs btn-success pull-right" title="test job results" href="%s">'
-        % record.results_link
+    complete = format_html(
+        '<a class="btn btn-xs btn-success pull-right" title="test job results" href="{}">',
+        record.results_link
     )
     button = '<span class="glyphicon glyphicon-signal"></span></a>'
     return mark_safe(
@@ -156,8 +156,8 @@ class SuiteTable(LavaTable):
     logged = tables.DateTimeColumn()
 
     def render_name(self, record):
-        return mark_safe(
-            '<a href="%s">%s</a>' % (record.get_absolute_url(), record.name)
+        return format_html(
+            '<a href="{}">{}</a>', record.get_absolute_url(), record.name
         )
 
     def render_result(self, record):
@@ -168,15 +168,15 @@ class SuiteTable(LavaTable):
             icon = "remove"
         else:
             icon = "minus"
-        return mark_safe(
-            '<a href="%s"><span class="glyphicon glyphicon-%s"></span> %s</a>'
-            % (record.get_absolute_url(), icon, code)
+        return format_html(
+            '<a href="{}"><span class="glyphicon glyphicon-{}"></span> {}</a>',
+            record.get_absolute_url(), icon, code
         )
 
     def render_test_set(self, record):
-        return mark_safe(
-            '<a href="%s">%s</a>'
-            % (record.test_set.get_absolute_url(), record.test_set.name)
+        return format_html(
+            '<a href="{}">{}</a>',
+            record.test_set.get_absolute_url(), record.test_set.name
         )
 
     class Meta(LavaTable.Meta):

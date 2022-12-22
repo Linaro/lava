@@ -55,6 +55,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.html import escape
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -2571,7 +2572,7 @@ def device_health(request, pk):
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
             health = request.POST.get("health").upper()
-            reason = request.POST.get("reason")
+            reason = escape(request.POST.get("reason"))
             response = __set_device_health__(device, request.user, health, reason)
             if response is None:
                 return HttpResponseRedirect(
@@ -2629,7 +2630,7 @@ def worker_health(request, pk):
                 return HttpResponseForbidden("Permission denied")
 
             health = request.POST.get("health")
-            reason = request.POST.get("reason")
+            reason = escape(request.POST.get("reason"))
             if health == "Active":
                 worker.go_health_active(request.user, reason)
             elif health == "Maintenance":
