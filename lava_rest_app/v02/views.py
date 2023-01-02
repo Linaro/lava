@@ -276,7 +276,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
     queryset = TestSuite.objects
     serializer_class = serializers.TestSuiteSerializer
-    filter_class = filters.TestSuiteFilter
+    filterset_class = filters.TestSuiteFilter
 
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
@@ -319,7 +319,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = TestCase.objects
     serializer_class = serializers.TestCaseSerializer
-    filter_class = filters.TestCaseFilter
+    filterset_class = filters.TestCaseFilter
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
@@ -422,7 +422,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
 
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.DeviceSerializer
-    filter_class = filters.DeviceFilter
+    filterset_class = filters.DeviceFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
     def get_serializer_class(self):
@@ -534,7 +534,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
 class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.WorkerSerializer
-    filter_class = filters.WorkerFilter
+    filterset_class = filters.WorkerFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
     def get_serializer_class(self):
@@ -622,8 +622,8 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
 class AliasViewSet(viewsets.ModelViewSet):
     queryset = Alias.objects
     serializer_class = serializers.AliasSerializer
-    filter_fields = "__all__"
-    filter_class = filters.AliasFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.AliasFilter
     ordering_fields = "__all__"
     permission_classes = [DjangoModelPermissions]
 
@@ -637,8 +637,8 @@ class AliasViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects
     serializer_class = serializers.TagSerializer
-    filter_fields = "__all__"
-    filter_class = filters.TagFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.TagFilter
     ordering_fields = "__all__"
     permission_classes = [DjangoModelPermissions]
 
@@ -649,8 +649,8 @@ class TagViewSet(viewsets.ModelViewSet):
 class GroupDeviceTypePermissionViewSet(viewsets.ModelViewSet):
     queryset = GroupDeviceTypePermission.objects
     serializer_class = serializers.GroupDeviceTypePermissionSerializer
-    filter_fields = "__all__"
-    filter_class = filters.GroupDeviceTypePermissionFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.GroupDeviceTypePermissionFilter
     ordering_fields = "__all__"
     permission_classes = [base_views.IsSuperUser]
 
@@ -661,8 +661,8 @@ class GroupDeviceTypePermissionViewSet(viewsets.ModelViewSet):
 class GroupDevicePermissionViewSet(viewsets.ModelViewSet):
     queryset = GroupDevicePermission.objects
     serializer_class = serializers.GroupDevicePermissionSerializer
-    filter_fields = "__all__"
-    filter_class = filters.GroupDevicePermissionFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.GroupDevicePermissionFilter
     ordering_fields = "__all__"
     permission_classes = [base_views.IsSuperUser]
 

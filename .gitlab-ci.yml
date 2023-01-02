@@ -62,10 +62,10 @@ include:
       - common.xml
       - server.xml
 
-dispatcher-debian-10: *dispatcher
-server-debian-10: *server
 dispatcher-debian-11: *dispatcher
 server-debian-11: *server
+dispatcher-debian-12: *dispatcher
+server-debian-12: *server
 
 ###########
 # Analyze #
@@ -89,7 +89,7 @@ code_quality:
 
 coverage:
   <<: *analyze
-  image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-10
+  image: hub.lavasoftware.org/lava/ci-images/amd64/server-debian-11
   coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
   artifacts:
     paths:
@@ -121,16 +121,16 @@ codespell:
 doc:
   <<: *job
   stage: build
-  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-11
   artifacts:
     paths:
     - doc/v2/_build/html
 
-debian/10:
+debian/11:
   <<: *job
   stage: build
   except: []
-  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-10
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-11
   artifacts:
     paths:
     - _build/*.deb
@@ -140,11 +140,11 @@ debian/10:
     - _build/*.changes
     - _build/*.buildinfo
 
-debian/11:
+debian/12:
   <<: *job
   stage: build
   except: []
-  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-11
+  image: hub.lavasoftware.org/lava/ci-images/amd64/pkg-debian-12
   artifacts:
     paths:
     - _build/*.deb
@@ -199,8 +199,8 @@ reprepro-master:
   # will overwrite the latest deployment."
   tags: [deploy]
   dependencies:
-  - debian/10
   - debian/11
+  - debian/12
   except: []
   only: [schedules]
   environment:
@@ -219,8 +219,8 @@ reprepro-release:
     refs:
     - tags
   dependencies:
-  - debian/10
   - debian/11
+  - debian/12
   except: [schedules]
   environment:
     name: reprepro-release

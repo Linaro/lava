@@ -9,7 +9,6 @@ lava-server:
   celery:
     name: python3-celery
   django-auth-ldap:
-    version: ">=1.2.12"
     name: python3-django-auth-ldap
   PyYAML:
     name: python3-yaml
@@ -20,10 +19,8 @@ lava-server:
   django-filter:
     name: python3-django-filters
   django-tables2:
-    version: ">=1.14.2"
     name: python3-django-tables2
   django:
-    version: ">=1.10"
     name: python3-django
   django-environ:
     name: python3-django-environ
@@ -34,7 +31,6 @@ lava-server:
   djangorestframework-extensions:
     name: python3-djangorestframework-extensions
   docutils:
-    version: ">=0.6"
     name: python3-docutils
   eventlet:
     name: python3-eventlet
@@ -54,9 +50,7 @@ lava-server:
     name: python3-simplejson
   junit.xml:
     name: python3-junit.xml
-    version: ">=1.8"
   voluptuous:
-    version: ">=0.8.8"
     name: python3-voluptuous
   whitenoise:
     name: python3-whitenoise
@@ -70,15 +64,12 @@ lava-server:
     name: python3-configobj
     unittests: true
   netifaces:
-    version: ">=0.10.0"
     name: python3-netifaces
     unittests: true
   pexpect:
-    version: ">=4.2"
     name: python3-pexpect
     unittests: true
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev
     unittests: true
   pytest-django:
@@ -112,10 +103,8 @@ lava-dispatcher:
   jinja2:
     name: python3-jinja2
   netifaces:
-    version: ">=0.10.0"
     name: python3-netifaces
   pexpect:
-    version: ">=4.2"
     name: python3-pexpect
   pytest:
     name: python3-pytest
@@ -126,12 +115,10 @@ lava-dispatcher:
   pytz:
     name: python3-tz
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev
   requests:
     name: python3-requests
   setproctitle:
-    version: ">=1.1.8"
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
@@ -141,7 +128,6 @@ lava-dispatcher:
     name: python3-pyocd
     unittests: true
   voluptuous:
-    version: ">=0.8.8"
     name: python3-voluptuous
     unittests: true
   gdb-multiarch:
@@ -188,12 +174,10 @@ lava-common:
   PyYAML:
     name: python3-yaml
   voluptuous:
-    version: ">=0.8.8"
     name: python3-voluptuous
 
 lava-dispatcher-host:
   requests:
     name: python3-requests
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev
