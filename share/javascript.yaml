@@ -17,8 +17,8 @@ debian:
     directory: /usr/share/javascript/jquery/
     lava_directory: lava_server/static/lava_server/js/
     replacements:
-      jquery-3.4.0.js: jquery.js
-    version: '3.4.0'
+      jquery-3.6.1.js: jquery.js
+    version: '3.6.1'
   - package: libjs-jquery-flot
     directory: /usr/share/javascript/jquery-flot/
     lava_directory: lava_results_app/static/lava_results_app/js/
