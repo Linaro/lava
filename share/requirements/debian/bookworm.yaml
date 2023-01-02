@@ -139,9 +139,6 @@ lava-dispatcher:
     name: python3-guestfs
   bmap-tools:
     name: bmap-tools
-  pyocd:
-    name: python3-pyocd
-    unittests: true
   voluptuous:
     version: ">=0.8.8"
     name: python3-voluptuous
