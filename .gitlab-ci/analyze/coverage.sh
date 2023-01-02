@@ -8,13 +8,13 @@ if [ "$1" = "setup" ]
 then
   set -x
   apt-get -q update
-  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s buster -n)
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bullseye -n)
   apt-get install --no-install-recommends --yes $DEPS
-  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s buster -n -u)
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bullseye -n -u)
   apt-get install --no-install-recommends --yes $DEPS
-  DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n)
   apt-get install --no-install-recommends --yes $DEPS
-  DEPS=$(./share/requires.py -p lava-server -d debian -s buster -n -u)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n -u)
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
