@@ -119,7 +119,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
 
     queryset = TestJob.objects
     serializer_class = serializers.TestJobSerializer
-    filter_fields = (
+    filterset_fields = (
         "submitter",
         "viewing_groups",
         "description",
@@ -140,7 +140,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         "failure_comment",
     )
     ordering_fields = ("id", "start_time", "end_time", "submit_time")
-    filter_class = filters.TestJobFilter
+    filterset_class = filters.TestJobFilter
 
     def get_queryset(self):
         return (
@@ -330,7 +330,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
 class DeviceTypeViewSet(viewsets.ModelViewSet):
     queryset = DeviceType.objects
     serializer_class = serializers.DeviceTypeSerializer
-    filter_fields = (
+    filterset_fields = (
         "name",
         "architecture",
         "processor",
@@ -345,7 +345,7 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
         "health_denominator",
         "display",
     )
-    filter_class = filters.DeviceTypeFilter
+    filterset_class = filters.DeviceTypeFilter
 
     def get_queryset(self):
         return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
@@ -361,7 +361,7 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
 class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Device.objects
     serializer_class = serializers.DeviceSerializer
-    filter_fields = (
+    filterset_fields = (
         "hostname",
         "device_type",
         "device_version",
@@ -387,7 +387,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
         "worker_host",
         "is_synced",
     )
-    filter_class = filters.DeviceFilter
+    filterset_class = filters.DeviceFilter
 
     def get_queryset(self):
         query = (
@@ -408,7 +408,7 @@ class DeviceViewSet(viewsets.ReadOnlyModelViewSet):
 class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Worker.objects
     serializer_class = serializers.WorkerSerializer
-    filter_fields = "__all__"
+    filterset_fields = "__all__"
     ordering_fields = "__all__"
 
     def get_queryset(self):
