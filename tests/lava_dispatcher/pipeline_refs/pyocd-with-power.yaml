@@ -1,29 +1,79 @@
 - class: actions.deploy.image.DeployImagesAction
+  description: deploy images using guestfs
+  level: '1'
+  max_retries: 1
   name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.1'
+    max_retries: 1
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.1.1, max_retries: 1, name: http-download, summary: http
+        download, timeout: 180, url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
+    summary: download-retry
+    timeout: 180
+  summary: deploy images
+  timeout: 180
 - class: actions.boot.pyocd.BootPyOCD
+  description: boot pyocd image with retry
+  level: '2'
+  max_retries: 1
   name: boot-pyocd-image
   pipeline:
   - class: actions.boot.pyocd.BootPyOCDRetry
+    description: boot pyocd image using the command line interface
+    level: '2.1'
+    max_retries: 1
     name: boot-pyocd-image
     pipeline:
     - class: power.ResetDevice
+      description: reboot or power-cycle the device
+      level: 2.1.1
+      max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: utils.udev.WaitDeviceBoardID, name: wait-device-boardid}
-    - {class: actions.boot.pyocd.FlashPyOCDAction, name: flash-pyocd}
-    - {class: connections.serial.ConnectDevice, name: connect-device}
+      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
+          a device, level: 2.1.1.1, max_retries: 1, name: pdu-reboot, summary: hard
+          reboot using PDU, timeout: 600}
+      summary: reboot the device
+      timeout: 600
+    - {class: utils.udev.WaitDeviceBoardID, description: wait for udev device with
+        board ID, level: 2.1.2, max_retries: 1, name: wait-device-boardid, summary: wait
+        for udev device with board ID, timeout: 600}
+    - {class: actions.boot.pyocd.FlashPyOCDAction, description: flash pyocd to boot
+        the image, level: 2.1.3, max_retries: 1, name: flash-pyocd, summary: flash
+        pyocd to boot the image, timeout: 600}
+    - {class: connections.serial.ConnectDevice, description: use the configured command
+        to connect serial to the device, level: 2.1.4, max_retries: 1, name: connect-device,
+      summary: run connection command, timeout: 600}
+    summary: boot pyocd image
+    timeout: 600
+  summary: boot pyocd image with retry
+  timeout: 600
 - class: actions.test.monitor.TestMonitorRetry
+  description: Retry wrapper for lava-test-monitor
+  level: '3'
+  max_retries: 1
   name: lava-test-monitor-retry
   pipeline:
-  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+  - {class: actions.test.monitor.TestMonitorAction, description: Executing lava-test-monitor,
+    level: '3.1', max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor,
+    timeout: 180}
+  summary: Retry support for Lava Test Monitoring
+  timeout: 180
 - class: power.FinalizeAction
+  description: finish the process and cleanup
+  level: '4'
+  max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power-off}
-  - {class: power.ReadFeedback, name: read-feedback}
+  - {class: power.PowerOff, description: discontinue power to device, level: '4.1',
+    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
+  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
+    timeout: 180}
+  summary: finalize the job
+  timeout: 180

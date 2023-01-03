@@ -687,7 +687,7 @@ test3a: skip
         )
         job.validate()
         description_ref = self.pipeline_reference("hikey960-oe-aep.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         lxc_deploy = [
             action for action in job.pipeline.actions if action.name == "lxc-deploy"

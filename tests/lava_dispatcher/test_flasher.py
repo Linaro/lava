@@ -45,7 +45,7 @@ class TestFlasher(StdoutTestCase):
         job = factory.create_b2260_job("sample_jobs/b2260-flasher.yaml")
         job.validate()
         description_ref = self.pipeline_reference("b2260-flasher.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
 
 def test_run(monkeypatch):

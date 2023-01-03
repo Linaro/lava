@@ -50,7 +50,7 @@ def test_pipeline():
     description_ref = StdoutTestCase.pipeline_reference(
         "b2260-interactive.yaml", job=job
     )
-    assert description_ref == job.pipeline.describe(False)  # nosec
+    assert description_ref == job.pipeline.describe()  # nosec
 
 
 def test_bbb():
@@ -62,7 +62,7 @@ def test_bbb():
     description_ref = StdoutTestCase.pipeline_reference(
         "bbb-uboot-interactive.yaml", job=job
     )
-    assert description_ref == job.pipeline.describe(False)  # nosec
+    assert description_ref == job.pipeline.describe()  # nosec
 
 
 def test_stages(monkeypatch):
@@ -78,7 +78,7 @@ def test_stages(monkeypatch):
     description_ref = StdoutTestCase.pipeline_reference(
         "docker-interactive.yaml", job=job
     )
-    assert description_ref == job.pipeline.describe(False)  # nosec
+    assert description_ref == job.pipeline.describe()  # nosec
     assert (  # nosec  - assert is part of the test process.
         job.pipeline.actions[3].pipeline.actions[0].parameters["stage"] == 0
     )

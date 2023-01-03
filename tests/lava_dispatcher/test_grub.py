@@ -72,7 +72,7 @@ class TestGrubAction(StdoutTestCase):
 
         # uboot and uboot-ramdisk have the same pipeline structure
         description_ref = self.pipeline_reference("grub.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -286,7 +286,7 @@ class TestGrubAction(StdoutTestCase):
         )
         job.validate()
         description_ref = self.pipeline_reference("grub-ramdisk-monitor.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
@@ -296,7 +296,7 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("mustang-grub-efi-nfs.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         grub = [
             action
             for action in job.pipeline.actions
@@ -321,7 +321,7 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("hikey-grub-efi.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
@@ -332,7 +332,7 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("hikey-console.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         console = [
             action
             for action in job.pipeline.actions
@@ -401,7 +401,7 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("hi960-grub-efi.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         deploy = [
             action
             for action in job.pipeline.actions
@@ -450,4 +450,4 @@ class TestGrubAction(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("synquacer_dtb.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

@@ -198,7 +198,7 @@ class TestVland(StdoutTestCase):
             job = parser.parse(sample_job_data, self.device, 4212, None, "")
         job.logger = DummyLogger()
         description_ref = self.pipeline_reference("bbb-group-vland-alpha.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         job.validate()
         self.assertNotEqual(
             [],

@@ -1,32 +1,87 @@
 - class: actions.deploy.image.DeployImagesAction
+  description: deploy images using guestfs
+  level: '1'
+  max_retries: 1
   name: deployimages
   pipeline:
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.1'
+    max_retries: 1
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.1.1, max_retries: 1, name: http-download, summary: http
+        download, timeout: 180, url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg'}
+    summary: download-retry
+    timeout: 180
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.2'
+    max_retries: 1
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.2.1, max_retries: 1, name: http-download, summary: http
+        download, timeout: 180, url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf'}
+    summary: download-retry
+    timeout: 180
+  summary: deploy images
+  timeout: 180
 - class: actions.boot.gdb.BootGDB
+  description: boot with gdb
+  level: '2'
+  max_retries: 1
   name: boot-gdb
   pipeline:
   - class: actions.boot.gdb.BootGDBRetry
+    description: boot with gdb with retry and optional docker support
+    level: '2.1'
+    max_retries: 1
     name: boot-gdb-retry
     pipeline:
     - class: power.ResetDevice
+      description: reboot or power-cycle the device
+      level: 2.1.1
+      max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: utils.udev.WaitUSBSerialDeviceAction, name: wait-usb-serial}
-    - {class: connections.serial.ConnectDevice, name: connect-device}
+      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
+          a device, level: 2.1.1.1, max_retries: 1, name: pdu-reboot, summary: hard
+          reboot using PDU, timeout: 120}
+      summary: reboot the device
+      timeout: 120
+    - {class: utils.udev.WaitUSBSerialDeviceAction, description: wait for USB serial
+        device, level: 2.1.2, max_retries: 1, name: wait-usb-serial, summary: wait
+        for USB serial device, timeout: 120}
+    - {class: connections.serial.ConnectDevice, description: use the configured command
+        to connect serial to the device, level: 2.1.3, max_retries: 1, name: connect-device,
+      summary: run connection command, timeout: 120}
+    summary: boot with gdb with retry
+    timeout: 120
+  summary: boot with gdb
+  timeout: 120
 - class: actions.test.monitor.TestMonitorRetry
+  description: Retry wrapper for lava-test-monitor
+  level: '3'
+  max_retries: 1
   name: lava-test-monitor-retry
   pipeline:
-  - {class: actions.test.monitor.TestMonitorAction, name: lava-test-monitor}
+  - {class: actions.test.monitor.TestMonitorAction, description: Executing lava-test-monitor,
+    level: '3.1', max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor,
+    timeout: 480}
+  summary: Retry support for Lava Test Monitoring
+  timeout: 480
 - class: power.FinalizeAction
+  description: finish the process and cleanup
+  level: '4'
+  max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power-off}
-  - {class: power.ReadFeedback, name: read-feedback}
+  - {class: power.PowerOff, description: discontinue power to device, level: '4.1',
+    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
+  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
+    timeout: 30}
+  summary: finalize the job
+  timeout: 30

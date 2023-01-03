@@ -6,7 +6,7 @@ To rebuild and update a pipeline reference, use:
 
     import yaml
     with open('/tmp/test.yaml', 'w') as describe:
-        yaml.dump(self.job.pipeline.describe(False), describe)
+        yaml.dump(self.job.pipeline.describe(), describe)
 
 (Avoid opening in binary mode as this would fail with python3.)
 
@@ -16,11 +16,11 @@ from tests.lava_dispatcher.test_basic import pipeline_reference
 
     # Check Pipeline
     description_ref = self.pipeline_reference('kexec.yaml')
-    self.assertEqual(description_ref, self.job.pipeline.describe(False))
+    self.assertEqual(description_ref, self.job.pipeline.describe())
 
 or just
 
-    self.assertEqual(self.pipeline_reference(filename), self.job.pipeline.describe(False))
+    self.assertEqual(self.pipeline_reference(filename), self.job.pipeline.describe())
 
 The name of the pipeline_ref file should match the name of the equivalent file in sample_jobs.
 

@@ -54,7 +54,7 @@ class TestOpenOCDAction(StdoutTestCase):
         job = factory.create_cc3230SF_job("sample_jobs/cc3220SF-openocd.yaml")
         job.validate()
         description_ref = self.pipeline_reference("openocd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check FlashOpenOCDAction
         action = job.pipeline.actions[1].pipeline.actions[0]
