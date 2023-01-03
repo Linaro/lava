@@ -1,10 +1,10 @@
 def test_settings(mocker, monkeypatch):
-    def __open(file, *args, **kwargs):
+    def __read_text(file, *args, **kwargs):
         if str(file).startswith("/etc/lava-server/settings"):
             raise FileNotFoundError
-        return open(file, *args, **kwargs)
+        return file.read_text(*args, **kwargs)
 
-    mocker.patch("io.open", __open)
+    mocker.patch("pathlib.Path.read_text", __read_text)
     mocker.patch(
         "lava_server.settings.config_file.ConfigFile.load",
         side_effect=FileNotFoundError,
