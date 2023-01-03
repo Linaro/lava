@@ -19,14 +19,20 @@
 
 import csv
 import io
+import logging
 import pathlib
 
 import voluptuous
 import yaml
 from django.conf import settings
+from django.contrib.auth.models import Group, User
 from django.db import transaction
 from django.http import Http404
-from django.http.response import HttpResponse
+from django.http.response import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseNotFound,
+)
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 from rest_framework import status, viewsets
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
@@ -35,6 +41,7 @@ from rest_framework.permissions import (
     AllowAny,
     DjangoModelPermissions,
     DjangoModelPermissionsOrAnonReadOnly,
+    IsAdminUser,
     IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
@@ -677,6 +684,10 @@ class SystemViewSet(viewsets.ViewSet):
     * `/system/master_config/`
     * `/system/version/`
     * `/system/whoami/`
+    * `/system/set_user_groups/`
+    * `/system/get_all_users/`
+    * `/system/set_user_active/`
+
     """
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -762,3 +773,136 @@ class SystemViewSet(viewsets.ViewSet):
         ```
         """
         return Response(data={"user": request.user.username})
+
+    @action(
+        detail=False,
+        methods=["post"],
+        suffix="set_user_groups",
+        permission_classes=[IsAdminUser],
+    )
+    def set_user_groups(self, request, **kwargs):
+        """
+        Description
+        -----------
+        Set the complete set of groups to which a user belongs.
+
+        Parameters
+        ----------
+        This endpoint takes a request with body data like:
+
+        ```json
+        {
+           "email": "<target email>",
+           "groups": ["<group1>", "<group2>", ... ]
+        }
+        ```
+
+        Return value
+        ------------
+        None
+
+        """
+        json = request.data
+        if not isinstance(json.get("email"), str):
+            return HttpResponseBadRequest("no email provided")
+        if not isinstance(json.get("groups"), list):
+            return HttpResponseBadRequest("no groups specified")
+
+        groups = json.get("groups")
+
+        for group in groups:
+            if not isinstance(group, str):
+                return HttpResponseBadRequest("groups must be strings")
+
+        try:
+            user = User.objects.get(email=json["email"])
+        except User.DoesNotExist:
+            return HttpResponseNotFound("no such user")
+
+        transformed_groups = Group.objects.filter(name__in=groups)
+        missing = set(groups) - {t.name for t in transformed_groups}
+        if missing:
+            missing = ", ".join(missing)
+            logger = logging.getLogger("lava-server-api")
+            logger.debug(
+                f"set_user_groups: skipped groups {missing} which do not exist"
+            )
+
+        user.groups.set(transformed_groups)
+        return Response()
+
+    @action(
+        detail=False,
+        methods=["get"],
+        suffix="get_all_users",
+        permission_classes=[IsAdminUser],
+    )
+    def get_all_users(self, request, **kwargs):
+        """
+        Description
+        -----------
+        Return the emails of all users registered on this LAVA instance.
+
+        This function requires staff (admin) access.
+
+        Return value
+        ------------
+        Returns a dictionary containing the following keys:
+
+        ```json
+        {
+           "users": [ "<email1>", "<email2>", ... ]
+        }
+        ```
+        """
+        return Response(
+            data={
+                "users": [
+                    f["email"] for f in list(User.objects.values("email")) if f["email"]
+                ]
+            }
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        suffix="set_user_active",
+        permission_classes=[IsAdminUser],
+    )
+    def set_user_active(self, request, **kwargs):
+        """
+        Description
+        -----------
+        Set whether a user is active (true) or inactive (false). Inactive
+        users are effectively locked.
+
+        Parameters
+        ----------
+        This endpoint takes a request with body data like:
+
+        ```json
+        {
+           "email": "<target email>",
+           "active": true
+        }
+        ```
+
+        Return value
+        ------------
+        None
+
+        """
+        json = request.data
+        if not json.get("email"):
+            return HttpResponseBadRequest("no email provided")
+        if not isinstance(json.get("active"), bool):
+            return HttpResponseBadRequest("no active state specified")
+
+        try:
+            user = User.objects.get(email=json["email"])
+        except User.DoesNotExist:
+            return HttpResponseNotFound("no such user")
+
+        user.is_active = json["active"]
+        user.save(update_fields=["is_active"])
+        return Response()
