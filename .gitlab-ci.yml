@@ -45,27 +45,42 @@ include:
 .dispatcher: &dispatcher
   <<: *job
   stage: test
-  image: hub.lavasoftware.org/lava/ci-images/amd64/$CI_JOB_NAME
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
-      junit: dispatcher.xml
-      junit: dispatcher-host.xml
-      junit: coordinator.xml
+      junit:
+      - dispatcher.xml
+      - dispatcher-host.xml
+      - coordinator.xml
 
 .server: &server
   <<: *job
   stage: test
-  image: hub.lavasoftware.org/lava/ci-images/amd64/$CI_JOB_NAME
+  image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
       junit:
       - common.xml
       - server.xml
 
-dispatcher-debian-11: *dispatcher
-server-debian-11: *server
-dispatcher-debian-12: *dispatcher
-server-debian-12: *server
+amd64/dispatcher-debian-11: *dispatcher
+amd64/server-debian-11: *server
+amd64/dispatcher-debian-12: *dispatcher
+amd64/server-debian-12: *server
+aarch64/dispatcher-debian-11:
+  <<: *dispatcher
+  tags:
+  - aarch64-dind
+  only:
+    refs:
+    - master
+aarch64/server-debian-11:
+  <<: *server
+  tags:
+  - aarch64-dind
+  only:
+    refs:
+    - master
 
 ###########
 # Analyze #
