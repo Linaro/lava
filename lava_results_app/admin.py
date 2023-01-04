@@ -23,23 +23,7 @@ Administration interface of the LAVA Results application.
 from django.conf import settings
 from django.contrib import admin
 
-from lava_results_app.models import ActionData, Query, TestCase, TestSet, TestSuite
-
-
-class ActionDataAdmin(admin.ModelAdmin):
-    list_display = ("job_pk", "action_level", "action_name")
-    list_select_related = ("testdata__testjob",)
-    ordering = ("-testdata__testjob__pk", "-action_level")
-    raw_id_fields = ("testdata", "testcase")
-
-    def job_pk(self, action):
-        return action.testdata.testjob.pk
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return settings.ALLOW_ADMIN_DELETE
+from lava_results_app.models import Query, TestCase, TestSet, TestSuite
 
 
 class QueryAdmin(admin.ModelAdmin):
@@ -100,7 +84,6 @@ class TestSuiteAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
-admin.site.register(ActionData, ActionDataAdmin)
 admin.site.register(Query, QueryAdmin)
 admin.site.register(TestCase, TestCaseAdmin)
 admin.site.register(TestSet, TestSetAdmin)
