@@ -18,41 +18,19 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import warnings
-
 import yaml
-
-# Handle compatibility with old yaml versions
-loaders = [
-    ("CFullLoader", False),
-    ("FullLoader", False),
-    ("CLoader", True),
-    ("Loader", True),
-]
-Loader = None
-for (name, warn) in loaders:
-    if hasattr(yaml, name):
-        Loader = getattr(yaml, name)
-        if warn:
-            warnings.warn("Using unsafe yaml.%s" % name, DeprecationWarning)
-        break
-if Loader is None:
-    raise NotImplementedError("yaml Loader is undefined")
-
 
 # Handle compatibility with system without C yaml
 try:
     from yaml import CSafeLoader as SafeLoader
 except ImportError:
     from yaml import SafeLoader
+
 try:
-    from yaml import CUnsafeLoader as UnsafeLoader
+    from yaml import CFullLoader as FullLoader
 except ImportError:
-    try:
-        from yaml import UnsafeLoader
-    except ImportError:
-        # pyyaml < 5.4
-        UnsafeLoader = Loader
+    from yaml import FullLoader
+
 try:
     from yaml import CSafeDumper as SafeDumper
 except ImportError:
@@ -65,17 +43,12 @@ except ImportError:
 
 # handle compatibility for yaml.load
 def yaml_load(data):
-    return yaml.load(data, Loader=Loader)  # nosec
+    return yaml.load(data, Loader=FullLoader)
 
 
 # handle compatibility for yaml.safe_load
 def yaml_safe_load(data):
     return yaml.load(data, Loader=SafeLoader)
-
-
-# handle compatibility for yaml.unsafe_load
-def yaml_unsafe_load(data):
-    return yaml.load(data, Loader=UnsafeLoader)
 
 
 # handle compatibility for yaml.dump
