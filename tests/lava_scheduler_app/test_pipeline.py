@@ -8,14 +8,13 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from jinja2 import TemplateError as JinjaTemplateError
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load, yaml_unsafe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_results_app.dbutils import _get_action_metadata
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
@@ -1086,67 +1085,6 @@ class TestYamlMultinode(TestCaseWithFactory):
                 del role_list[role]["tags"]
         job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 2)
-
-    def test_multinode_v2_metadata(self):
-        device_type = self.factory.make_device_type()
-        self.factory.make_device(device_type, "fakeqemu1")
-        self.factory.make_device(device_type, "fakeqemu2")
-        client_submission = yaml_safe_load(
-            open(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "sample_jobs",
-                    "kvm-multinode-client.yaml",
-                ),
-                "r",
-            )
-        )
-        job_ctx = client_submission.get("context", {})
-        device = Device.objects.get(hostname="fakeqemu1")
-        device_config = device.load_configuration(job_ctx)  # raw dict
-        self.assertTrue(device.is_valid())
-        parser_device = PipelineDevice(device_config)
-        parser = JobParser()
-        pipeline_job = parser.parse(
-            yaml_safe_dump(client_submission), parser_device, 4212, None, ""
-        )
-        pipeline = pipeline_job.describe()
-
-        meta_dict = _get_action_metadata(pipeline["job"]["actions"])
-        self.assertEqual(
-            {
-                "test.0.common.definition.name": "multinode-basic",
-                "test.0.common.definition.path": "lava-test-shell/multi-node/multinode01.yaml",
-                "test.0.common.definition.from": "git",
-                "boot.0.common.method": "qemu",
-                "test.0.common.definition.repository": "http://git.linaro.org/lava-team/lava-functional-tests.git",
-            },
-            meta_dict,
-        )
-        # simulate dynamic connection
-        dynamic = yaml_unsafe_load(  # nosec - not suitable for safe_load
-            open(
-                os.path.join(
-                    os.path.dirname(__file__),
-                    "pipeline_refs",
-                    "connection-description.yaml",
-                ),
-                "r",
-            )
-        )
-        meta_dict = _get_action_metadata(dynamic["job"]["actions"])
-        self.assertEqual(
-            meta_dict,
-            {
-                "omitted.1.inline.name": "ssh-client",
-                "test.0.definition.repository": "git://git.linaro.org/lava-team/lava-functional-tests.git",
-                "test.0.definition.name": "smoke-tests",
-                "boot.0.method": "ssh",
-                "omitted.1.inline.path": "inline/ssh-client.yaml",
-                "test.0.definition.from": "git",
-                "test.0.definition.path": "lava-test-shell/smoke-tests-basic.yaml",
-            },
-        )
 
     @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_multinode_mixed_deploy(self):

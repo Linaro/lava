@@ -33,7 +33,7 @@ class TestBootBootloader(StdoutTestCase):
         job = factory.create_bootloader_job("sample_jobs/b2260-bootloader.yaml")
         job.validate()
         description_ref = self.pipeline_reference("b2260-bootloader.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         bootload_commands = (
             job.pipeline.actions[0].pipeline.actions[1].pipeline.actions[3]

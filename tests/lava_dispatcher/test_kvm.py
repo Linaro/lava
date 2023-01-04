@@ -165,7 +165,7 @@ class TestKVMBasicDeploy(StdoutTestCase):
             "persistent-nfs-overlay",
             [action.name for action in overlay.pipeline.actions],
         )
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -240,7 +240,7 @@ class TestKVMPortable(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-noos.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -261,7 +261,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-qcow2.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -282,7 +282,7 @@ class TestKVMMultiTests(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-multi.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 class TestKVMDownloadLocalDeploy(StdoutTestCase):
@@ -293,7 +293,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-local.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 class TestKVMDeployOverlays(StdoutTestCase):
@@ -304,7 +304,7 @@ class TestKVMDeployOverlays(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-overlays.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 def prepare_test_connection(failure=False):
@@ -384,7 +384,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-inline.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         inline_repo = None
@@ -461,7 +461,7 @@ class TestKvmConnection(StdoutTestCase):
     def test_kvm_connection(self):
         self.job.validate()
         description_ref = self.pipeline_reference("qemu-reboot.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         bootaction = [
             action
             for action in self.job.pipeline.actions
@@ -850,7 +850,7 @@ class TestQemuNFS(StdoutTestCase):
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
         description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
         boot = [
             action

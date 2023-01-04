@@ -133,7 +133,7 @@ class TestRecoveryMode(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "hi6220-recovery.yaml", job=self.fastboot_job
         )
-        self.assertEqual(description_ref, self.fastboot_job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.fastboot_job.pipeline.describe())
 
         requires_board_id = not allow_fs_label(self.fastboot_job.device)
         self.assertFalse(requires_board_id)
@@ -156,7 +156,7 @@ class TestRecoveryMode(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "x15-recovery.yaml", job=self.uboot_job
         )
-        self.assertEqual(description_ref, self.uboot_job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.uboot_job.pipeline.describe())
 
         requires_board_id = not allow_fs_label(self.uboot_job.device)
         self.assertFalse(requires_board_id)

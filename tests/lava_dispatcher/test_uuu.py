@@ -69,7 +69,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -87,7 +87,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         description_ref = self.pipeline_reference(
             "uuu-power-off-before-corrupt-boot-media.yaml", job=job
         )
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -103,7 +103,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -130,8 +130,8 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(job)
 
         # Test that generated pipeline is the same as defined in pipeline_refs
-        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        description_ref = self.pipeline_reference("uuu-enhancement.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIsNone(job.validate())
 
     @patch(
@@ -195,8 +195,8 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(job)
 
         # Test that generated pipeline is the same as defined in pipeline_refs
-        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        description_ref = self.pipeline_reference("uuu-enhancement.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 

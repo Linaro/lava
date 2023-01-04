@@ -89,7 +89,7 @@ class TestRemovable(StdoutTestCase):
         except JobError:
             self.fail(job.pipeline.errors)
         description_ref = self.pipeline_reference(test_file, job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         return job
 
     def _check_job_parameters(self, device, job, agent_key):
@@ -295,7 +295,7 @@ class TestRemovable(StdoutTestCase):
         )
         job.validate()
         description_ref = self.pipeline_reference("mustang-media.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIn("sata", job.device["parameters"]["media"].keys())
         deploy_params = [
             methods

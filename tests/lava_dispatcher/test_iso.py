@@ -58,7 +58,7 @@ class TestIsoJob(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "qemu-debian-installer.yaml", job=self.job
         )
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @patch("lava_dispatcher.actions.deploy.iso.which", return_value="/usr/bin/in.tftpd")
     def test_iso_preparation(self, which_mock):

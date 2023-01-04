@@ -24,9 +24,7 @@ import shlex
 import subprocess  # nosec - internal
 import time
 import traceback
-import types
 import warnings
-from collections import OrderedDict
 from functools import reduce
 
 import pexpect
@@ -146,7 +144,7 @@ class Pipeline:
 
         action.parameters = parameters
 
-    def describe(self, verbose=True):
+    def describe(self):
         """
         Describe the current pipeline, recursing through any
         internal pipelines.
@@ -154,13 +152,20 @@ class Pipeline:
         """
         desc = []
         for action in self.actions:
-            if verbose:
-                current = action.explode()
-            else:
-                cls = str(type(action))[8:-2].replace("lava_dispatcher.", "")
-                current = {"class": cls, "name": action.name}
+            cls = str(type(action))[8:-2].replace("lava_dispatcher.", "")
+            current = {
+                "class": cls,
+                "name": action.name,
+                "level": action.level,
+                "max_retries": action.max_retries,
+                "description": action.description,
+                "summary": action.summary,
+                "timeout": action.timeout.duration,
+            }
+            if hasattr(action, "url"):
+                current["url"] = action.url.geturl()
             if action.pipeline is not None:
-                sub_desc = action.pipeline.describe(verbose)
+                sub_desc = action.pipeline.describe()
                 if sub_desc:
                     current["pipeline"] = sub_desc
             desc.append(current)
@@ -831,80 +836,6 @@ class Action:
         """
         if self.pipeline:
             self.pipeline.cleanup(connection)
-
-    def explode(self):
-        """
-        serialisation support
-        Omit our objects marked as internal by inheriting form InternalObject instead of object,
-        e.g. SignalMatch
-        """
-        data = {}
-        attrs = set(
-            (
-                attr
-                for attr in dir(self)
-                if not attr.startswith("_")
-                and getattr(self, attr)
-                and not isinstance(getattr(self, attr), types.MethodType)
-                and not isinstance(getattr(self, attr), InternalObject)
-            )
-        )
-
-        # noinspection PySetFunctionToLiteral
-        skip_set = set(
-            [
-                "pipeline",
-                "job",
-                "logger",
-                "pipeline",
-                "default_fixupdict",
-                "pattern",
-                "parameters",
-                "SignalDirector",
-                "signal_director",
-            ]
-        )
-        for attr in attrs - skip_set:
-            if attr == "timeout":
-                data["timeout"] = {
-                    "duration": self.timeout.duration,
-                    "name": self.timeout.name,
-                }
-            elif attr == "connection_timeout":
-                data["timeout"] = {
-                    "duration": self.timeout.duration,
-                    "name": self.timeout.name,
-                }
-            elif attr == "url":
-                data["url"] = self.url.geturl()
-            elif attr == "vcs":
-                data[attr] = getattr(self, attr).url
-            elif attr == "protocols":
-                data["protocols"] = {}
-                for protocol in getattr(self, attr):
-                    data["protocols"][protocol.name] = {}
-                    protocol_attrs = set(
-                        (
-                            attr
-                            for attr in dir(protocol)
-                            if not attr.startswith("_")
-                            and getattr(protocol, attr)
-                            and not isinstance(
-                                getattr(protocol, attr), types.MethodType
-                            )
-                            and not isinstance(getattr(protocol, attr), InternalObject)
-                        )
-                    )
-                    for protocol_attr in protocol_attrs:
-                        if protocol_attr not in ["logger"]:
-                            data["protocols"][protocol.name][protocol_attr] = getattr(
-                                protocol, protocol_attr
-                            )
-            elif isinstance(getattr(self, attr), OrderedDict):
-                data[attr] = dict(getattr(self, attr))
-            else:
-                data[attr] = getattr(self, attr)
-        return data
 
     def get_namespace_keys(self, action, parameters=None):
         """Return the keys for the given action"""

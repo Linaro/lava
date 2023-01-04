@@ -41,7 +41,7 @@ class TestDownloadDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("download.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
@@ -70,4 +70,4 @@ class TestDownloadDeploy(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-tests-from-tar.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

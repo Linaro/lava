@@ -40,7 +40,7 @@ class TestKExec(StdoutTestCase):
 
         # Check Pipeline
         description_ref = self.pipeline_reference("kexec.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check kexec specific options
         job.validate()

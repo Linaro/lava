@@ -65,7 +65,7 @@ def main():
     parser = JobParser()
     job = parser.parse(options.job.read(), device, 0, None, None, None)
 
-    print(yaml.dump(job.pipeline.describe(False)))
+    print(yaml.dump(job.pipeline.describe()))
 
 
 if __name__ == "__main__":

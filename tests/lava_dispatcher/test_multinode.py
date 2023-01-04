@@ -23,7 +23,7 @@ import json
 import os
 import uuid
 
-from lava_common.compat import yaml_dump, yaml_unsafe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
@@ -280,10 +280,9 @@ class TestMultinode(StdoutTestCase):
         self.assertIsNotNone(self.client_job)
         allow_missing_path(self.client_job.validate, self, "qemu-system-x86_64")
         # check that the description can be re-loaded as valid YAML
-        for action in self.client_job.pipeline.actions:
-            data = action.explode()
-            data_str = yaml_dump(data)
-            yaml_unsafe_load(data_str)  # nosec not suitable for safe_load
+        data = self.client_job.pipeline.describe()
+        data_str = yaml_safe_dump(data)
+        yaml_safe_load(data_str)
 
     def test_multinode_timeout(self):
         """

@@ -51,7 +51,7 @@ class TestJLinkAction(StdoutTestCase):
                 == "Invalid job data: ['2.2 flash-jlink: Unable to retrieve version of JLinkExe']\n"
             )
         description_ref = self.pipeline_reference("jlink.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         job = factory.create_k64f_job_with_power(
             "sample_jobs/zephyr-frdm-k64f-jlink-test-kernel-common.yaml"
@@ -64,4 +64,4 @@ class TestJLinkAction(StdoutTestCase):
                 == "Invalid job data: ['2.4 flash-jlink: Unable to retrieve version of JLinkExe']\n"
             )
         description_ref = self.pipeline_reference("jlink-with-power.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

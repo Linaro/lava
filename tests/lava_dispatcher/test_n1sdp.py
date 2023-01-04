@@ -39,4 +39,4 @@ class TestN1sdp(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "n1sdp-fw-grub-ramdisk.yaml", job=self.job
         )
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())

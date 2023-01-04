@@ -37,4 +37,4 @@ class TestUserCommand(StdoutTestCase):
         job = factory.create_b2260_job("sample_jobs/b2260-user-command.yaml")
         job.validate()
         description_ref = self.pipeline_reference("b2260-user-command.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

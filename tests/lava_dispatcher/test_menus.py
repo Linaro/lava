@@ -150,7 +150,7 @@ class TestUefi(StdoutTestCase):
         self.assertEqual(selector.selector.prompt, "Start:")
         self.assertIsInstance(selector.items, list)
         description_ref = self.pipeline_reference("mustang-uefi.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         # just dummy strings
         substitution_dictionary = {
             "{SERVER_IP}": "10.4.0.1",
@@ -219,7 +219,7 @@ class TestUefi(StdoutTestCase):
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference("tc2.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         self.assertIn("uefi-menu", job.device["actions"]["boot"]["methods"])
         uefi_menu_block = job.device["actions"]["boot"]["methods"]["uefi-menu"]
         nfs_boot = uefi_menu_block["nfs"]

@@ -95,8 +95,6 @@ class Job:
 
     def describe(self):
         return {
-            "device": dict(self.device),
-            "job": self.parameters,
             "compatibility": self.compatibility,
             "pipeline": self.pipeline.describe(),
         }

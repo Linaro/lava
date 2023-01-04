@@ -221,4 +221,4 @@ class TestMultiUBoot(StdoutTestCase):
         self.assertIsNotNone(self.job)
         self.assertIsNone(self.job.validate())
         description_ref = self.pipeline_reference("uboot-multiple.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())

@@ -50,7 +50,7 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference("ipxe.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -220,7 +220,7 @@ class TestBootloaderAction(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-initrd-nbd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         # Fixme: more asserts
         self.assertIn("ipxe", job.device["actions"]["boot"]["methods"])
         params = job.device["actions"]["boot"]["methods"]["ipxe"]["parameters"]
@@ -366,4 +366,4 @@ class TestBootloaderAction(StdoutTestCase):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-monitor.yaml")
         job.validate()
         description_ref = self.pipeline_reference("ipxe-monitor.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
