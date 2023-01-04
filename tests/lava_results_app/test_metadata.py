@@ -10,9 +10,7 @@ from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_results_app.dbutils import (
-    _get_action_metadata,
     create_metadata_store,
-    map_metadata,
     map_scanned_results,
 )
 from lava_results_app.models import ActionData, MetaType, TestCase, TestData, TestSuite
@@ -27,63 +25,6 @@ class TestMetaTypes(TestCaseWithFactory):
     """
     MetaType and ActionData generation
     """
-
-    def test_job(self):
-        MetaType.objects.all().delete()
-        TestJob.objects.all().delete()
-        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
-        job_def = yaml_safe_load(job.definition)
-        job_ctx = job_def.get("context", {})
-        job_ctx.update(
-            {"no_kvm": True}
-        )  # override to allow unit tests on all types of systems
-        device = Device.objects.get(hostname="fakeqemu1")
-        device_config = device.load_configuration(job_ctx)  # raw dict
-        parser = JobParser()
-        obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
-        allow_missing_path(
-            pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
-        )
-        pipeline = pipeline_job.describe()
-        map_metadata(yaml_dump(pipeline), job)
-        self.assertEqual(
-            MetaType.objects.filter(metatype=MetaType.DEPLOY_TYPE).count(), 1
-        )
-        self.assertEqual(
-            MetaType.objects.filter(metatype=MetaType.BOOT_TYPE).count(), 1
-        )
-        count = ActionData.objects.all().count()
-        self.assertEqual(TestData.objects.all().count(), 1)
-        testdata = TestData.objects.all()[0]
-        self.assertEqual(testdata.testjob, job)
-        for actionlevel in ActionData.objects.all():
-            self.assertEqual(actionlevel.testdata, testdata)
-        action_levels = []
-        action_levels.extend(job.testdata.actionlevels.all())
-        self.assertEqual(count, len(action_levels))
-        count = ActionData.objects.filter(
-            meta_type__metatype=MetaType.DEPLOY_TYPE
-        ).count()
-        self.assertNotEqual(
-            ActionData.objects.filter(meta_type__metatype=MetaType.BOOT_TYPE).count(), 0
-        )
-        self.assertEqual(
-            ActionData.objects.filter(
-                meta_type__metatype=MetaType.UNKNOWN_TYPE
-            ).count(),
-            0,
-        )
-        for actionlevel in ActionData.objects.filter(
-            meta_type__metatype=MetaType.BOOT_TYPE
-        ):
-            self.assertEqual(actionlevel.testdata.testjob.id, job.id)
-        self.assertEqual(
-            ActionData.objects.filter(
-                meta_type__metatype=MetaType.DEPLOY_TYPE, testdata__testjob=job
-            ).count(),
-            count,
-        )
 
     def test_export(self):
         job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
@@ -205,75 +146,6 @@ class TestMetaTypes(TestCaseWithFactory):
         os.unlink(meta_filename)
         shutil.rmtree(job.output_dir)
 
-    def test_repositories(self):
-        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
-        job_def = yaml_safe_load(job.definition)
-        job_ctx = job_def.get("context", {})
-        job_ctx.update(
-            {"no_kvm": True}
-        )  # override to allow unit tests on all types of systems
-        device = Device.objects.get(hostname="fakeqemu1")
-        device_config = device.load_configuration(job_ctx)  # raw dict
-        parser = JobParser()
-        obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
-        allow_missing_path(
-            pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
-        )
-        pipeline = pipeline_job.describe()
-        testdata, _ = TestData.objects.get_or_create(testjob=job)
-        retval = _get_action_metadata(pipeline["job"]["actions"])
-        self.assertEqual(
-            retval,
-            {
-                "test.1.common.definition.from": "git",
-                "test.0.common.definition.repository": "git://git.linaro.org/lava-team/lava-functional-tests.git",
-                "test.0.common.definition.name": "smoke-tests",
-                "test.1.common.definition.repository": "http://git.linaro.org/lava-team/lava-functional-tests.git",
-                "boot.0.common.method": "qemu",
-                "test.1.common.definition.name": "singlenode-advanced",
-                "test.0.common.definition.from": "git",
-                "test.0.common.definition.path": "lava-test-shell/smoke-tests-basic.yaml",
-                "test.1.common.definition.path": "lava-test-shell/single-node/singlenode03.yaml",
-            },
-        )
-
-    def test_parameter_support(self):
-        data = self.factory.make_job_data()
-        test_block = [block for block in data["actions"] if "test" in block][0]
-        smoke = test_block["test"]["definitions"][0]
-        smoke["parameters"] = {
-            "VARIABLE_NAME_1": "first variable value",
-            "VARIABLE_NAME_2": "second value",
-        }
-        job = TestJob.from_yaml_and_user(yaml_dump(data), self.user)
-        job_def = yaml_safe_load(job.definition)
-        job_ctx = job_def.get("context", {})
-        job_ctx.update(
-            {"no_kvm": True}
-        )  # override to allow unit tests on all types of systems
-        device = Device.objects.get(hostname="fakeqemu1")
-        device_config = device.load_configuration(job_ctx)  # raw dict
-        parser = JobParser()
-        obj = PipelineDevice(device_config)
-        pipeline_job = parser.parse(job.definition, obj, job.id, None, "")
-        allow_missing_path(
-            pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
-        )
-        pipeline = pipeline_job.describe()
-        testdata, _ = TestData.objects.get_or_create(testjob=job)
-        retval = _get_action_metadata(pipeline["job"]["actions"])
-        self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_2", retval)
-        self.assertIn("test.0.common.definition.parameters.VARIABLE_NAME_1", retval)
-        self.assertEqual(
-            retval["test.0.common.definition.parameters.VARIABLE_NAME_1"],
-            "first variable value",
-        )
-        self.assertEqual(
-            retval["test.0.common.definition.parameters.VARIABLE_NAME_2"],
-            "second value",
-        )
-
     def test_job_multi(self):
         MetaType.objects.all().delete()
         multi_test_file = os.path.join(os.path.dirname(__file__), "multi-test.yaml")
@@ -295,7 +167,6 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        map_metadata(yaml_dump(pipeline), job)
 
     def test_inline(self):
         """
@@ -334,4 +205,3 @@ class TestMetaTypes(TestCaseWithFactory):
             pipeline_job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
         pipeline = pipeline_job.describe()
-        map_metadata(yaml_dump(pipeline), job)
