@@ -24,9 +24,7 @@ import shlex
 import subprocess  # nosec - internal
 import time
 import traceback
-import types
 import warnings
-from collections import OrderedDict
 from functools import reduce
 
 import pexpect

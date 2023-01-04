@@ -306,9 +306,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(namespace)
         self.assertIsNotNone(namespace1)
         self.assertNotEqual(namespace, namespace1)
-        self.assertNotEqual(
-            self.job.pipeline.describe(), job.pipeline.describe()
-        )
+        self.assertNotEqual(self.job.pipeline.describe(), job.pipeline.describe())
         test_actions = [
             action for action in job.parameters["actions"] if "test" in action
         ]

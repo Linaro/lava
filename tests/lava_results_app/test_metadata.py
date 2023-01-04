@@ -9,11 +9,8 @@ from django.urls.exceptions import NoReverseMatch
 from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
-from lava_results_app.dbutils import (
-    create_metadata_store,
-    map_scanned_results,
-)
-from lava_results_app.models import ActionData, MetaType, TestCase, TestData, TestSuite
+from lava_results_app.dbutils import create_metadata_store, map_scanned_results
+from lava_results_app.models import ActionData, MetaType, TestCase, TestSuite
 from lava_results_app.utils import export_testcase, testcase_export_fields
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.utils import mkdir

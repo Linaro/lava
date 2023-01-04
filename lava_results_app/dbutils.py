@@ -19,23 +19,14 @@
 
 
 import decimal
-import hashlib
 import logging
 import os
 from collections import OrderedDict  # pylint: disable=unused-import
 from urllib.parse import quote
 
-import yaml
-
-from lava_common.compat import yaml_dump, yaml_load, yaml_safe_load
-from lava_common.timeout import Timeout
+from lava_common.compat import yaml_dump, yaml_load
 from lava_common.version import __version__
-from lava_results_app.models import (
-    TestCase,
-    TestData,
-    TestSet,
-    TestSuite,
-)
+from lava_results_app.models import TestCase, TestSet, TestSuite
 
 
 def _check_for_testset(result_dict, suite):

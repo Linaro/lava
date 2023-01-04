@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from jinja2 import TemplateError as JinjaTemplateError
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load, yaml_unsafe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.boot.qemu import BootQEMU
