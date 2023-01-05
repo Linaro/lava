@@ -576,6 +576,11 @@ def update(values):
                     "level": "DEBUG",
                     "propagate": True,
                 },
+                "lava-server-api": {
+                    "handlers": ["logfile"],
+                    "level": "DEBUG",
+                    "propagate": False,
+                },
             },
         }
 

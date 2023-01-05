@@ -18,10 +18,12 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import xmlrpc.client
+from functools import wraps
 
 from django.conf import settings
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
@@ -38,10 +40,30 @@ from lava_scheduler_app.views import get_restricted_job
 from linaro_django_xmlrpc.models import Mapper, SystemAPI, errors
 
 
+def check_staff(f):
+    """decorator to check that the caller has staff permissions"""
+
+    @wraps(f)
+    def wrapper(self, *args, **kwargs):
+        self._authenticate()
+        if not self.user.is_staff:
+            raise xmlrpc.client.Fault(errors.FORBIDDEN, "forbidden")
+        elif not self.user.is_active:
+            raise xmlrpc.client.Fault(errors.AUTH_BLOCKED, "user is blocked")
+        return f(self, *args, **kwargs)
+
+    return wrapper
+
+
 class LavaSystemAPI(SystemAPI):
     """
     Extend the default SystemAPI with a 'whoami' method.
     """
+
+    def __init__(self, context):
+        logging.basicConfig()
+        self.logger = logging.getLogger("lava-server-api")
+        super().__init__(context)
 
     def whoami(self):
         """
@@ -478,6 +500,49 @@ class LavaSystemAPI(SystemAPI):
                     % switch,
                 )
         return yaml_safe_dump(network_map)
+
+    @check_staff
+    def set_user_groups(self, user, groups):
+        """
+        Name
+        ----
+        set_user_groups(`user`, `groups`):
+
+        Description
+        -----------
+
+        Set the groups a given user belongs to.
+
+        This function requires staff access.
+
+        Arguments
+        ---------
+        user: str
+            user (identified by email) whose groups will be changed
+        groups: Array of str
+            the name of each group to which this user belongs
+
+        Return value
+        ------------
+        No return value.
+        """
+        try:
+            user = User.objects.get(email=user)
+        except User.DoesNotExist:
+            raise xmlrpc.client.Fault(errors.BAD_REQUEST, "please use an existing user")
+
+        if not isinstance(groups, list):
+            raise xmlrpc.client.Fault(errors.BAD_REQUEST, "groups must be a list")
+
+        transformed_groups = Group.objects.filter(name__in=groups)
+        missing = set(groups) - {t.name for t in transformed_groups}
+        if missing:
+            missing = ", ".join(missing)
+            self.logger.debug(
+                f"set_user_groups: skipped groups {missing} which do not exist"
+            )
+
+        user.groups.set(transformed_groups)
 
     @check_perm("lava_scheduler_app.change_devicetype")
     def assign_perm_device_type(self, perm, device_type, group):
