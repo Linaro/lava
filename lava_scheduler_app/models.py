@@ -46,7 +46,6 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.html import escape
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from jinja2 import FileSystemLoader
 from jinja2 import TemplateError as JinjaTemplateError
@@ -447,7 +446,7 @@ class Worker(RestrictedObject):
         return reverse("lava.scheduler.worker.detail", args=[self.pk])
 
     def get_description(self):
-        return mark_safe(self.description) if self.description else None
+        return self.description if self.description else None
 
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
@@ -690,7 +689,7 @@ class Device(RestrictedObject):
         return self.get_state_display()
 
     def get_description(self):
-        return mark_safe(self.description) if self.description else None
+        return self.description if self.description else None
 
     def has_any_permission_restrictions(self, perm):
         if not self.is_permission_restricted(perm):
