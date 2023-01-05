@@ -59,8 +59,6 @@ Additional actions are available on the following endpoints with GET request:
 - device dictionary (/api/v0.2/devices/<device_hostname>/dictionary/)
 - device type health check (/api/v0.2/devicetypes/<device_type_name>/health_check/)
 - device type template (/api/v0.2/devicetypes/<device_type_name>/template/)
-- master certificate (/api/v0.2/system/certificate/)
-- worker certificate (/api/v0.2/workers/<worker>/certificate/)
 - worker configuration (/api/v0.2/workers/<worker>/config/)
 - worker environment (/api/v0.2/workers/<worker>/env/)
 
@@ -69,7 +67,6 @@ Additional actions are available on the following endpoints with POST request:
 - device dictionary (/api/v0.2/devices/<device_hostname>/dictionary/)
 - device type health check (/api/v0.2/devicetypes/<device_type_name>/health_check/)
 - device type template (/api/v0.2/devicetypes/<device_type_name>/template/)
-- worker certificate (/api/v0.2/workers/<worker>/certificate/)
 - worker configuration (/api/v0.2/workers/<worker>/config/)
 - worker environment (/api/v0.2/workers/<worker>/env/)
 - job resubmit (/api/v0.2/jobs/<job_id>/resubmit)

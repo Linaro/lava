@@ -124,10 +124,6 @@ class EnvironmentSerializer(serializers.Serializer):
     env = serializers.CharField(style={"base_template": "textarea.html"})
 
 
-class SlaveKeySerializer(serializers.Serializer):
-    key = serializers.CharField(style={"base_template": "textarea.html"})
-
-
 class WorkerSerializer(base_serializers.WorkerSerializer):
     state = serializers.CharField(source="get_state_display", read_only=True)
     health = ChoiceField(choices=Worker.HEALTH_CHOICES, required=False)
