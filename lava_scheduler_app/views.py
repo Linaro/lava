@@ -1675,18 +1675,7 @@ def job_detail(request, pk):
         except TestJobUser.DoesNotExist:
             is_favorite = False
 
-    description = description_data(job)
-    job_data = description.get("job", {})
-    action_list = job_data.get("actions", [])
-    pipeline = description.get("pipeline", {})
-
-    deploy_list = [item["deploy"] for item in action_list if "deploy" in item]
-    boot_list = [item["boot"] for item in action_list if "boot" in item]
-    test_list = [item["test"] for item in action_list if "test" in item]
-    sections = []
-    for action in pipeline:
-        if "section" in action:
-            sections.append({action["section"]: action["level"]})
+    pipeline = description_data(job).get("pipeline", {})
 
     # Validate the job definition
     validation_errors = ""
@@ -1717,12 +1706,7 @@ def job_detail(request, pk):
         "available_content_types": simplejson.dumps(
             QueryCondition.get_similar_job_content_types()
         ),
-        "device_data": description.get("device", {}),
-        "job_data": job_data,
         "pipeline_data": pipeline,
-        "deploy_list": deploy_list,
-        "boot_list": boot_list,
-        "test_list": test_list,
         "job_tags": job.tags.all(),
         "size_limit": job.size_limit,
         "validation_errors": validation_errors,
@@ -1778,13 +1762,11 @@ def job_detail(request, pk):
 @BreadCrumb("Definition", parent=job_detail, needs=["pk"])
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    description = description_data(job)
     return render(
         request,
         "lava_scheduler_app/job_definition.html",
         {
             "job": job,
-            "pipeline": description.get("pipeline", []),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_definition, pk=pk),
             "show_cancel": job.can_cancel(request.user),
             "show_fail": job.state == TestJob.STATE_CANCELING
