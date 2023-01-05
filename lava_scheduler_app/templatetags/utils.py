@@ -68,45 +68,6 @@ def assign_setting(value):
         return getattr(settings, value)
 
 
-def _get_pipeline_data(pipeline, levels):
-    """
-    Recursive check on the pipeline description dictionary
-    """
-    for action in pipeline:
-        levels[action["level"]] = {
-            "name": action["name"],
-            "description": action["description"],
-            "summary": action["summary"],
-            "timeout": action["timeout"],
-        }
-        if "url" in action:
-            levels[action["level"]].update({"url": action["url"]})
-        if "pipeline" in action:
-            _get_pipeline_data(action["pipeline"], levels)
-
-
-@register.simple_tag
-def get_pipeline_sections(pipeline):
-    """
-    Just a top level view of the pipeline sections
-    """
-    sections = []
-    for action in pipeline:
-        if "section" in action:
-            sections.append({action["section"]: action["level"]})
-    return sections
-
-
-@register.simple_tag
-def get_pipeline_levels(pipeline):
-    """
-    Retrieve the full set of action levels in this pipeline.
-    """
-    levels = OrderedDict()
-    _get_pipeline_data(pipeline, levels)
-    return levels
-
-
 @register.filter()
 def deploy_methods(device_type, methods):
     data = load_devicetype_template(device_type)
@@ -160,14 +121,6 @@ def markup_metadata(key, value):
         return mark_safe("<a href='%s'>%s</a>" % (value, value))
     else:
         return value
-
-
-@register.simple_tag
-def can_view(record, user):
-    try:
-        return record.can_view(user)
-    except Exception:
-        return False
 
 
 @register.filter()
