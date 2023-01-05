@@ -28,6 +28,7 @@ import os
 import random
 import socket
 import subprocess  # nosec - internal use.
+from contextvars import ContextVar
 
 import netifaces
 import requests
@@ -135,7 +136,13 @@ def get_free_port(dispatcher_config):
     return 10809
 
 
+requests_session = ContextVar("requests_session")
+
+
 def requests_retry():
+    with contextlib.suppress(LookupError):
+        return requests_session.get()
+
     session = requests.Session()
     # Retry 15 times over a period a bit longer than 10 minutes.
     retries = 15
@@ -169,4 +176,5 @@ def requests_retry():
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
+    requests_session.set(session)
     return session
