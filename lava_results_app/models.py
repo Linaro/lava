@@ -404,13 +404,6 @@ class TestCase(models.Model, Queryable):
             return None
         return ret
 
-    @property
-    def action_data(self):
-        action_data = ActionData.objects.filter(testcase=self)
-        if not action_data:
-            return None
-        return action_data[0]
-
     def get_passfail_results(self):
         # Pass/fail charts for testcases do not make sense.
         pass
@@ -484,115 +477,6 @@ class TestCase(models.Model, Queryable):
         return self.RESULT_REVERSE[self.result]
 
 
-class MetaType(models.Model):
-    """
-    name will be a label, like a deployment type (NFS) or a boot type (bootz)
-    for test metadata, the MetaType is just the section_name.
-    """
-
-    DEPLOY_TYPE = 0
-    BOOT_TYPE = 1
-    TEST_TYPE = 2
-    DIAGNOSTIC_TYPE = 3
-    FINALIZE_TYPE = 4
-    UNKNOWN_TYPE = 5
-
-    TYPE_CHOICES = {
-        DEPLOY_TYPE: "deploy",
-        BOOT_TYPE: "boot",
-        TEST_TYPE: "test",
-        DIAGNOSTIC_TYPE: "diagnostic",
-        FINALIZE_TYPE: "finalize",
-        UNKNOWN_TYPE: "unknown",
-    }
-
-    TYPE_MAP = {
-        "deploy": DEPLOY_TYPE,
-        "boot": BOOT_TYPE,
-        "test": TEST_TYPE,
-        "diagnostic": DIAGNOSTIC_TYPE,
-        "finalize": FINALIZE_TYPE,
-        "unknown": UNKNOWN_TYPE,
-    }
-
-    name = models.CharField(max_length=256)
-    metatype = models.PositiveIntegerField(
-        verbose_name=_(u"Type"),
-        help_text=_(u"metadata action type"),
-        choices=(
-            (DEPLOY_TYPE, _(u"deploy")),
-            (BOOT_TYPE, _(u"boot")),
-            (TEST_TYPE, _(u"test")),
-            (DIAGNOSTIC_TYPE, _(u"diagnostic")),
-            (FINALIZE_TYPE, _(u"finalize")),
-            (UNKNOWN_TYPE, _(u"unknown type")),
-        ),
-    )
-
-    def __str__(self):
-        return _(u"Name: {0} Type: {1}").format(
-            self.name, self.TYPE_CHOICES[self.metatype]
-        )
-
-    @classmethod
-    def get_section(cls, section):
-        if section not in MetaType.TYPE_MAP:
-            return None
-        return MetaType.TYPE_MAP[section]
-
-    @classmethod
-    def get_section_type(cls, name, section):
-        section_type = MetaType.TYPE_MAP[section]
-        if section_type == MetaType.DEPLOY_TYPE:
-            return "to"
-        elif section_type == MetaType.BOOT_TYPE:
-            return "method"
-        elif section_type == MetaType.TEST_TYPE:
-            if name == "lava-test-monitor":
-                return "monitors"
-            else:
-                return "definitions"
-        else:
-            return None
-
-    @classmethod
-    def get_type_name(cls, action_data, definition):
-        """
-        Return the section_name to lookup metadata for the associated action.
-        """
-        logger = logging.getLogger("lava-master")
-        section = action_data["section"]
-        level = action_data["level"].split(".")[0]
-        name = action_data["name"]
-        if level.isdigit():
-            level = int(level) - 1  # levels start at one.
-        else:
-            # should be a logical error
-            logger.warning("get_type_name: unrecognised level %s", level)
-            return None
-        retval = None
-        data = [action for action in definition["actions"] if section in action]
-        if not data:
-            logger.debug("get_type_name: skipping %s" % section)
-            return None
-        if (
-            level >= len(definition["actions"])
-            or section not in definition["actions"][level]
-        ):
-            logger.warning(
-                "get_type_name: unrecognised level %s for section %s", level, section
-            )
-            return None
-        data = definition["actions"][level][section]
-        if section in MetaType.TYPE_MAP:
-            section_type = MetaType.get_section_type(name, section)
-            if section_type and section_type in data:
-                retval = data[section_type]
-            if isinstance(retval, list):
-                return section_type
-        return retval
-
-
 class NamedTestAttribute(models.Model):
     """
     Model for adding named test attributes to arbitrary other model instances.
@@ -636,65 +520,6 @@ class TestData(models.Model):
 
     def __str__(self):
         return _(u"TestJob {0}").format(self.testjob.id)
-
-
-class ActionData(models.Model):
-    """
-    Each Action in the pipeline has Data tracked in this model.
-    One TestData object can relate to multiple ActionData objects.
-    When TestData creates a new item, the level and name
-    of that item are created and referenced.
-    Other actions are ignored.
-    Avoid storing the description or definition here, use a
-    viewer and pass the action_level and description_line.
-    This class forms the basis of the log file viewer as well as tying
-    the submission yaml to the pipeline description to the metadata and the results.
-    """
-
-    action_name = models.CharField(max_length=100, blank=False, null=False)
-    action_level = models.CharField(max_length=32, blank=False, null=False)
-    action_summary = models.CharField(max_length=100, blank=False, null=False)
-    action_description = models.CharField(max_length=200, blank=False, null=False)
-    # each actionlevel points at a single MetaType, then to a single TestData and TestJob
-    meta_type = models.ForeignKey(
-        MetaType, related_name="actionlevels", on_delete=models.CASCADE
-    )
-    testdata = models.ForeignKey(
-        TestData,
-        blank=True,
-        null=True,
-        related_name="actionlevels",
-        on_delete=models.CASCADE,
-    )
-    yaml_line = models.PositiveIntegerField(blank=True, null=True)
-    description_line = models.PositiveIntegerField(blank=True, null=True)
-    # direct pointer to the section of the complete log.
-    log_section = models.CharField(max_length=50, blank=True, null=True)
-    # action.duration - actual amount of time taken
-    duration = models.DecimalField(
-        decimal_places=2,
-        max_digits=8,  # enough for just over 11 days, 9 would be 115 days
-        blank=True,
-        null=True,
-    )
-    # timeout.duration - amount of time allowed before timeout
-    timeout = models.PositiveIntegerField(blank=True, null=True)
-    # maps a TestCase back to the Job metadata and description
-    testcase = models.ForeignKey(
-        TestCase,
-        blank=True,
-        null=True,
-        related_name="actionlevels",
-        on_delete=models.CASCADE,
-    )
-    # only retry actions set a count or max_retries
-    count = models.PositiveIntegerField(blank=True, null=True)
-    max_retries = models.PositiveIntegerField(blank=True, null=True)
-
-    def __str__(self):
-        return _(u"{0} {1} Level {2}, Meta {3}").format(
-            self.testdata, self.action_name, self.action_level, self.meta_type
-        )
 
 
 class QueryGroup(models.Model):
