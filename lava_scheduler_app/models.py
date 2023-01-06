@@ -427,14 +427,6 @@ class Worker(RestrictedObject):
         blank=True,
     )
 
-    master_version_notified = models.CharField(
-        verbose_name=_("Master version notified"),
-        max_length=50,
-        null=True,
-        default=None,
-        blank=True,
-    )
-
     token = models.CharField(
         max_length=32, default=auth_token, help_text=_("Authorization token")
     )
