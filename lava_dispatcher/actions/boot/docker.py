@@ -19,7 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import pathlib
 
+from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootHasMixin
@@ -133,6 +135,18 @@ class CallDockerAction(Action):
                     os.path.join(location, overlay.strip("/")),
                     dispatcher_ip(self.job.parameters["dispatcher"]),
                 )
+
+        namespace = self.parameters.get(
+            "downloads-namespace", self.parameters.get("namespace")
+        )
+        if namespace:
+            downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
+            if downloads_dir.exists():
+                self.extra_options += " --volume %s:%s" % (
+                    downloads_dir,
+                    LAVA_DOWNLOADS,
+                )
+
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 
