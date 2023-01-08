@@ -64,6 +64,7 @@ def handle_devices_share(options):
             "usb_vendor_id",
             "usb_product_id",
             "fs_label",
+            "dev_path",
         ]:
             if f in data:
                 request[f] = data[f]
@@ -76,7 +77,13 @@ def handle_devices_map(options):
     container = options.container
     container_type = options.container_type
     job_id = "0"  # fake map
-    fields = ["serial_number", "usb_vendor_id", "usb_product_id", "fs_label"]
+    fields = [
+        "serial_number",
+        "usb_vendor_id",
+        "usb_product_id",
+        "fs_label",
+        "dev_path",
+    ]
     device_info = {
         k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
     }
@@ -154,6 +161,11 @@ def main(argv):
         subparser.add_argument(
             "--fs-label",
             help="Filesystem label of the device to be shared",
+            default=None,
+        )
+        subparser.add_argument(
+            "--dev-path",
+            help="Devpath of the device to be shared",
             default=None,
         )
 

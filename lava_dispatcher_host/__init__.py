@@ -39,13 +39,16 @@ def get_mapping_path(job_id):
     return os.path.join(JOBS_DIR, job_id, "usbmap.yaml")
 
 
-def add_device_container_mapping(job_id, device_info, container, container_type="lxc"):
+def add_device_container_mapping(
+    job_id, device_info, container, container_type="lxc", dev_path=[]
+):
     validate_device_info(device_info)
     item = {
         "device_info": device_info,
         "container": container,
         "container_type": container_type,
         "job_id": job_id,
+        "dev_path": dev_path,
     }
     mapping_path = get_mapping_path(job_id)
     data = load_mapping_data(mapping_path)
@@ -99,6 +102,15 @@ def find_mapping(options):
         for item in data:
             if match_mapping(item["device_info"], options):
                 job_id = str(Path(mapping).parent.name)
+                if options.dev_path not in item["dev_path"]:
+                    item["dev_path"].append(options.dev_path)
+                    add_device_container_mapping(
+                        job_id,
+                        item["device_info"],
+                        item["container"],
+                        item["container_type"],
+                        item["dev_path"],
+                    )
                 return item, job_id
     return None, None
 

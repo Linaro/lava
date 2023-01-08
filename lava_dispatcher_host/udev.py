@@ -22,16 +22,16 @@ __udev_rules__ = """\
 # to make customizations, please use a separate file.
 
 ACTION=="add", ENV{{ID_FS_LABEL}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share --remote $name --fs-label=%E{{ID_FS_LABEL}}"
+    RUN+="{lava_dispatcher_host} devices share --remote $name --dev-path=%p --fs-label=%E{{ID_FS_LABEL}}"
 
 ACTION=="add", ATTR{{serial}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share --remote $name --serial-number=$attr{{serial}}"
+    RUN+="{lava_dispatcher_host} devices share --remote $name --dev-path=%p --serial-number=$attr{{serial}}"
 
 ACTION=="add", ATTR{{idVendor}}!="", ATTR{{idProduct}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share --remote $name --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
+    RUN+="{lava_dispatcher_host} devices share --remote $name --dev-path=%p --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
 
 ACTION=="add", ATTRS{{idVendor}}!="", ATTRS{{idProduct}}!="" \\
-    RUN+="{lava_dispatcher_host} devices share --remote $name --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
+    RUN+="{lava_dispatcher_host} devices share --remote $name --dev-path=%p --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
 """
 
 
