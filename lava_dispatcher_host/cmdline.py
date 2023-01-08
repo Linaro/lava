@@ -25,6 +25,7 @@ from lava_dispatcher_host import (
     add_device_container_mapping,
     remove_device_container_mappings,
     share_device_with_container,
+    unshare_device_with_container,
 )
 from lava_dispatcher_host.server import Client
 from lava_dispatcher_host.udev import get_udev_rules
@@ -68,6 +69,7 @@ def handle_devices_share(options):
         ]:
             if f in data:
                 request[f] = data[f]
+        request["type"] = "share"
         client.send_request(request)
     else:
         share_device_with_container(options)
@@ -88,6 +90,23 @@ def handle_devices_map(options):
         k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
     }
     add_device_container_mapping(job_id, device_info, container, container_type)
+
+
+def handle_devices_unshare(options):
+    if options.remote:
+        client = Client()
+        data = vars(options)
+        request = {}
+        for f in [
+            "device",
+            "dev_path",
+        ]:
+            if f in data:
+                request[f] = data[f]
+        request["type"] = "unshare"
+        client.send_request(request)
+    else:
+        unshare_device_with_container(options)
 
 
 def handle_devices_unmap(_):
@@ -177,6 +196,23 @@ def main(argv):
 
     devices_share.set_defaults(func=handle_devices_share)
     devices_map.set_defaults(func=handle_devices_map)
+
+    # "devices unshare" action
+    devices_unshare = devices_sub.add_parser(
+        "unshare", help="Unshare a host device with a container"
+    )
+    devices_unshare.add_argument("device", help="Device to be unshared")
+    devices_unshare.add_argument(
+        "--dev-path",
+        help="Devpath of the device to be unshared",
+        default=None,
+    )
+    devices_unshare.add_argument(
+        "--remote",
+        action="store_true",
+        help="Make a remote request",
+    )
+    devices_unshare.set_defaults(func=handle_devices_unshare)
 
     devices_unmap = devices_sub.add_parser(
         "unmap", help='Remove mappings added with "devices map"'

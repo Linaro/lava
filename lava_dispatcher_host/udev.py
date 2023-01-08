@@ -32,6 +32,9 @@ ACTION=="add", ATTR{{idVendor}}!="", ATTR{{idProduct}}!="" \\
 
 ACTION=="add", ATTRS{{idVendor}}!="", ATTRS{{idProduct}}!="" \\
     RUN+="{lava_dispatcher_host} devices share --remote $name --dev-path=%p --vendor-id=$attr{{idVendor}} --product-id=$attr{{idProduct}}"
+
+ACTION=="remove" \\
+    RUN+="{lava_dispatcher_host} devices unshare --remote $name --dev-path=%p"
 """
 
 

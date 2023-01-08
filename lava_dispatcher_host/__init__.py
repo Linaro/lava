@@ -102,6 +102,24 @@ def share_device_with_container(options):
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
 
+def unshare_device_with_container(options):
+    data = find_dev_path_mapping(options)
+    if not data:
+        return
+    container = data["container"]
+    device = options.device
+    if not device.startswith("/dev/"):
+        device = "/dev/" + device
+
+    container_type = data["container_type"]
+    if container_type == "lxc":
+        unshare_device_with_container_lxc(container, device)
+    elif container_type == "docker":
+        unshare_device_with_container_docker(container, device)
+    else:
+        raise InfrastructureError('Unsupported container type: "%s"' % container_type)
+
+
 def find_mapping(options):
     for mapping in glob.glob(get_mapping_path("*")):
         data = load_mapping_data(mapping)
@@ -119,6 +137,15 @@ def find_mapping(options):
                     )
                 return item, job_id
     return None, None
+
+
+def find_dev_path_mapping(options):
+    for mapping in glob.glob(get_mapping_path("*")):
+        data = load_mapping_data(mapping)
+        for item in data:
+            if match_dev_path_mapping(item["dev_path"], options):
+                return item
+    return None
 
 
 def load_mapping_data(filename, lock=True):
@@ -147,8 +174,18 @@ def match_mapping(device_info, options):
     return matched
 
 
+def match_dev_path_mapping(dev_path, options):
+    if options.dev_path in dev_path:
+        return True
+    return False
+
+
 def log_sharing_device(device, container_type, container):
     logger.info(f"Sharing {device} with {container_type} container {container}")
+
+
+def log_unsharing_device(device, container_type, container):
+    logger.info(f"Unsharing {device} with {container_type} container {container}")
 
 
 def share_device_with_container_lxc(container, node, job_id):
@@ -159,6 +196,10 @@ def share_device_with_container_lxc(container, node, job_id):
             pass_device_into_container_lxc(
                 child.device_node, child.device_links, job_id
             )
+
+
+def unshare_device_with_container_lxc(container, node):
+    unpass_device_into_container_lxc(container, node)
 
 
 def pass_device_into_container_lxc(container, node, links=[], job_id=None):
@@ -183,6 +224,15 @@ def pass_device_into_container_lxc(container, node, links=[], job_id=None):
         subprocess.check_call(
             ["lxc-attach", "-n", container, "--", "sh", "-c", create_link]
         )
+
+
+def unpass_device_into_container_lxc(container, node):
+    log_unsharing_device(node, "lxc", container)
+
+    delete_node = f"rm -fr {node}"
+    subprocess.check_call(
+        ["lxc-attach", "-n", container, "--", "sh", "-c", delete_node]
+    )
 
 
 def pass_device_into_container_docker(
@@ -235,6 +285,20 @@ def pass_device_into_container_docker(
         )
 
 
+def unpass_device_into_container_docker(container, node):
+    # it's ok to fail; container might have already exited at this point.
+    subprocess.call(
+        [
+            "docker",
+            "exec",
+            container,
+            "sh",
+            "-c",
+            f"rm -fr {node}",
+        ]
+    )
+
+
 def share_device_with_container_docker(container, node, job_id=None):
     log_sharing_device(node, "docker", container)
     try:
@@ -257,3 +321,18 @@ def share_device_with_container_docker(container, node, job_id=None):
             pass_device_into_container_docker(
                 container, container_id, child.device_node, child.device_links, job_id
             )
+
+
+def unshare_device_with_container_docker(container, node):
+    log_unsharing_device(node, "docker", container)
+    try:
+        container_id = subprocess.check_output(
+            ["docker", "inspect", "--format={{.ID}}", container], text=True
+        ).strip()
+    except subprocess.CalledProcessError:
+        logger.warning(
+            f"Cannot unshare {node} with docker container {container}: container not found"
+        )
+        return
+
+    unpass_device_into_container_docker(container, node)

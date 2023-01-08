@@ -26,7 +26,10 @@ import os
 import socket
 from argparse import Namespace
 
-from lava_dispatcher_host import share_device_with_container
+from lava_dispatcher_host import (
+    share_device_with_container,
+    unshare_device_with_container,
+)
 
 SOCKET = "/run/lava-dispatcher-host.sock"
 
@@ -42,6 +45,8 @@ class CommandHandler:
     def handle(self, command: Command):
         if command.options.type == "share":
             share_device_with_container(command.options)
+        else:
+            unshare_device_with_container(command.options)
 
 
 class ServerWrapper:
