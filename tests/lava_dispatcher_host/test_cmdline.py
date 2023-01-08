@@ -92,6 +92,7 @@ def test_share_device(mocker):
             "devices",
             "share",
             "foo/bar",
+            "--dev-path=foo",
             "--serial-number=01234567890",
         ]
     )
@@ -99,6 +100,7 @@ def test_share_device(mocker):
     assert share_device_with_container.call_count == 1
     args = share_device_with_container.call_args[0][0]
     assert args.device == "foo/bar"
+    assert args.dev_path == "foo"
     assert args.serial_number == "01234567890"
 
 

@@ -21,7 +21,7 @@
 
 import pytest
 
-from lava_dispatcher_host.server import CommandHandler, ShareCommand
+from lava_dispatcher_host.server import Command, CommandHandler
 
 
 @pytest.fixture
@@ -32,8 +32,13 @@ def share_device_with_container(mocker):
 class TestCommandHandler:
     def test_basics(self, share_device_with_container):
         server = CommandHandler()
-        server.handle(ShareCommand(device="/dev/foobar", serial="0123456789"))
+        server.handle(
+            Command(
+                device="/dev/foobar", dev_path="foo", serial="0123456789", type="share"
+            )
+        )
         share_device_with_container.assert_called()
         options = share_device_with_container.call_args[0][0]
         assert options.device == "/dev/foobar"
+        assert options.dev_path == "foo"
         assert options.serial == "0123456789"
