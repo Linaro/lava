@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import fcntl
 import glob
 import logging
 import logging.handlers
@@ -50,15 +51,20 @@ def add_device_container_mapping(
         "job_id": job_id,
         "dev_path": dev_path,
     }
+
     mapping_path = get_mapping_path(job_id)
-    data = load_mapping_data(mapping_path)
-
-    # remove old mappings for the same device_info
-    newdata = [old for old in data if old["device_info"] != item["device_info"]]
-    newdata.append(item)
-
     os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
-    with open(mapping_path, "w") as f:
+
+    with open(mapping_path, "a+") as f:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+
+        data = load_mapping_data(mapping_path, lock=False)
+
+        # remove old mappings for the same device_info
+        newdata = [old for old in data if old["device_info"] != item["device_info"]]
+        newdata.append(item)
+
+        f.truncate(0)
         f.write(yaml_dump(newdata))
 
 
@@ -115,9 +121,11 @@ def find_mapping(options):
     return None, None
 
 
-def load_mapping_data(filename):
+def load_mapping_data(filename, lock=True):
     try:
         with open(filename) as f:
+            if lock:
+                fcntl.flock(f.fileno(), fcntl.LOCK_SH)
             data = yaml_load(f) or []
         if isinstance(data, dict):
             data = [data]
