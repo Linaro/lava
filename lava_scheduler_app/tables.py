@@ -801,7 +801,7 @@ class LogEntryTable(LavaTable):
             )
         else:
             return mark_safe(
-                '<span class="glyphicon glyphicon-remove text-danger"></span> {}'
+                '<span class="glyphicon glyphicon-remove text-danger"></span> %s'
                 % message
             )
 
