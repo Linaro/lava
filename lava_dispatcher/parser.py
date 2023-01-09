@@ -24,7 +24,7 @@ import lava_dispatcher.actions.boot.strategies
 import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.test.strategies
 import lava_dispatcher.protocols.strategies
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import JobError, Pipeline, Timeout
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.connection import Protocol

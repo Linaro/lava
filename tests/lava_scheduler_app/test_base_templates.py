@@ -6,7 +6,7 @@ from jinja2.nodes import Assign as JinjaNodesAssign
 from jinja2.nodes import Const as JinjaNodesConst
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.files import File
 

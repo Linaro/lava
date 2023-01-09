@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.core.validators import URLValidator
 from django.test import TestCase as DjangoTestCase
 
-from lava_common.compat import yaml_load, yaml_safe_dump
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import map_scanned_results
 from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.models import Device, DeviceType, TestJob
@@ -44,7 +44,7 @@ class ModelFactory:
     def make_job_data(self, actions=None, **kw):
         sample_job_file = os.path.join(os.path.dirname(__file__), "qemu.yaml")
         with open(sample_job_file, "r") as test_support:
-            data = yaml_load(test_support)
+            data = yaml_safe_load(test_support)
         data.update(kw)
         return data
 

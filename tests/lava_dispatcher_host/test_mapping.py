@@ -19,8 +19,8 @@ from argparse import Namespace
 import pytest
 
 import lava_dispatcher_host
-from lava_common.compat import yaml_load
 from lava_common.exceptions import InfrastructureError
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher_host import (
     add_device_container_mapping,
     load_mapping_data,
@@ -39,7 +39,7 @@ def setup(monkeypatch, mocker, tmpdir):
 def test_simple_mapping(tmpdir):
     device_info = {"foo": "bar"}
     add_device_container_mapping("1", device_info, "mycontainer")
-    data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))[0]
+    data = yaml_safe_load(open(tmpdir / "1" / "usbmap.yaml"))[0]
 
     assert data["device_info"] == device_info
     assert data["container"] == "mycontainer"
@@ -255,7 +255,7 @@ def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
         },
         "mycontainer2",
     )
-    data = yaml_load(open(tmpdir / "1" / "usbmap.yaml"))
+    data = yaml_safe_load(open(tmpdir / "1" / "usbmap.yaml"))
     assert len(data) == 1
     assert data[0]["container"] == "mycontainer2"
 

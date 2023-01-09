@@ -21,7 +21,7 @@
 import os
 from unittest.mock import patch
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job

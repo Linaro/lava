@@ -24,9 +24,9 @@ import unittest
 from unittest.mock import patch
 
 import lava_dispatcher
-from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.boot.ssh import SchrootAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file

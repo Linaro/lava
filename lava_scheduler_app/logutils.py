@@ -31,8 +31,8 @@ import requests
 import simplejson
 from django.conf import settings
 
-from lava_common.compat import yaml_dump, yaml_load
 from lava_common.exceptions import ConfigurationError
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 
 
 class Logs:
@@ -173,7 +173,7 @@ class LogsMongo(Logs):
         return self.db.logs.count_documents({"job_id": job.id})
 
     def open(self, job):
-        stream = io.BytesIO(yaml_dump(list(self._get_docs(job))).encode("utf-8"))
+        stream = io.BytesIO(yaml_safe_dump(list(self._get_docs(job))).encode("utf-8"))
         stream.seek(0)
         return stream
 
@@ -182,14 +182,14 @@ class LogsMongo(Logs):
         if not docs:
             return ""
 
-        return yaml_dump(list(docs))
+        return yaml_safe_dump(list(docs))
 
     def size(self, job, start=0, end=None):
         docs = self._get_docs(job, start, end)
-        return len(yaml_dump(list(docs)).encode("utf-8"))
+        return len(yaml_safe_dump(list(docs)).encode("utf-8"))
 
     def write(self, job, line, output=None, idx=None):
-        line = yaml_load(line)[0]
+        line = yaml_safe_load(line)[0]
 
         self.db.logs.insert_one(
             {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
@@ -249,7 +249,7 @@ class LogsElasticsearch(Logs):
                 {"dt": datetime.datetime.fromtimestamp(doc["dt"] / 1000.0).isoformat()}
             )
             if doc["lvl"] == "results":
-                doc.update({"msg": yaml_load(doc["msg"])})
+                doc.update({"msg": yaml_safe_load(doc["msg"])})
             result.append(doc)
         return result
 
@@ -263,7 +263,7 @@ class LogsElasticsearch(Logs):
         return 0
 
     def open(self, job):
-        stream = io.BytesIO(yaml_dump(self._get_docs(job)).encode("utf-8"))
+        stream = io.BytesIO(yaml_safe_dump(self._get_docs(job)).encode("utf-8"))
         stream.seek(0)
         return stream
 
@@ -272,14 +272,14 @@ class LogsElasticsearch(Logs):
         if not docs:
             return ""
 
-        return yaml_dump(docs)
+        return yaml_safe_dump(docs)
 
     def size(self, job, start=0, end=None):
         docs = self._get_docs(job, start, end)
-        return len(yaml_dump(docs).encode("utf-8"))
+        return len(yaml_safe_dump(docs).encode("utf-8"))
 
     def write(self, job, line, output=None, idx=None):
-        line = yaml_load(line)[0]
+        line = yaml_safe_load(line)[0]
         dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
         line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
         if line["lvl"] == "results":
@@ -342,7 +342,7 @@ class LogsFirestore(Logs):
         return None
 
     def write(self, job, line, output=None, idx=None):
-        line = yaml_load(line)[0]
+        line = yaml_safe_load(line)[0]
         doc_ref = (
             self.db.collection(self.root_collection)
             .document(

@@ -1,7 +1,7 @@
 # unit tests for primary and secondary connections
 import os
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import (
     DevicesUnavailableException,
     SubmissionException,

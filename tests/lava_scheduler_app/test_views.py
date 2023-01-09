@@ -25,7 +25,7 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 
-from lava_common.compat import yaml_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -1331,7 +1331,7 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
         HTTP_LAVA_TOKEN=job01.token,
     )
     assert ret.status_code == 200
-    job_def = yaml_load(ret.json()["definition"])
+    job_def = yaml_safe_load(ret.json()["definition"])
 
     # Token not in db.
     assert job_def["actions"][0]["deploy"]["image"]["headers"]["PRIVATE"] == "token"
@@ -1343,7 +1343,7 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
         HTTP_LAVA_TOKEN=job01.token,
     )
     assert ret.status_code == 200
-    job_def = yaml_load(ret.json()["definition"])
+    job_def = yaml_safe_load(ret.json()["definition"])
 
     assert (
         job_def["actions"][0]["deploy"]["image"]["headers"]["PRIVATE"] == "tokenvalue"
@@ -1365,4 +1365,4 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
         HTTP_LAVA_TOKEN=job01.token,
     )
     assert ret.status_code == 200
-    job_def = yaml_load(ret.json()["definition"])
+    job_def = yaml_safe_load(ret.json()["definition"])

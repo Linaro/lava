@@ -29,8 +29,8 @@ from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 from django.core.exceptions import ImproperlyConfigured
 from yaml import YAMLError
 
-from lava_common.compat import yaml_safe_load
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_load
 from lava_rest_app.versions import versions as REST_VERSIONS
 from lava_scheduler_app.settings import *
 

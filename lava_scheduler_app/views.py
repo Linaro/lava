@@ -62,10 +62,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from django_tables2 import RequestConfig
 
-from lava_common.compat import yaml_load, yaml_safe_dump, yaml_safe_load
 from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import create_metadata_store, map_scanned_results
 from lava_results_app.models import (
     NamedTestAttribute,
@@ -1280,7 +1280,7 @@ def internal_v1_jobs_logs(request, pk):
     #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
-    for (line, string) in zip(yaml_load(lines), lines.split("\n")):
+    for (line, string) in zip(yaml_safe_load(lines), lines.split("\n")):
         # skip lines that where already saved to disk
         if line_skip > 0:
             line_skip -= 1
@@ -1720,7 +1720,7 @@ def job_detail(request, pk):
             data["size_warning"] = True
         else:
             log_data = logs_instance.read(job)
-            log_data = yaml_load(log_data)
+            log_data = yaml_safe_load(log_data)
     except OSError:
         log_data = []
     except yaml.YAMLError:
@@ -2025,7 +2025,7 @@ def job_timing(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
         data = logs_instance.read(job)
-        logs = yaml_load(data)
+        logs = yaml_safe_load(data)
     except OSError:
         raise Http404
 
@@ -2176,7 +2176,7 @@ def job_log_incremental(request, pk):
 
     try:
         data = logs_instance.read(job, first_line)
-        data = yaml_load(data)
+        data = yaml_safe_load(data)
         # When reaching EOF, yaml.load does return None instead of []
         if not data:
             data = []

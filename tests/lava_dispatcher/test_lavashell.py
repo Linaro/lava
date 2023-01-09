@@ -21,9 +21,9 @@
 import datetime
 import os
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
 from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry

@@ -6,8 +6,8 @@ import pytest
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
 
-from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.dbutils import validate_yaml
 from lava_scheduler_app.models import (
     Alias,

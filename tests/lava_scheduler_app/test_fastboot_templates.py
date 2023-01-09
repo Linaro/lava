@@ -1,6 +1,6 @@
 import os
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.schema import validate_device
 from tests.lava_scheduler_app.test_base_templates import (
     BaseTemplate,

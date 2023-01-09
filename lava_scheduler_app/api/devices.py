@@ -24,7 +24,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
 from linaro_django_xmlrpc.models import ExposedV2API

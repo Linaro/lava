@@ -21,11 +21,10 @@
 import decimal
 import logging
 import os
-from collections import OrderedDict  # pylint: disable=unused-import
 from urllib.parse import quote
 
-from lava_common.compat import yaml_dump, yaml_load
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.models import TestCase, TestSet, TestSuite
 
 
@@ -75,7 +74,7 @@ def create_metadata_store(results, job):
     os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
         with open(meta_filename, "r") as existing_store:
-            data = yaml_load(existing_store)
+            data = yaml_safe_load(existing_store)
         if data is None:
             data = {}
         data.update(results["extra"])
@@ -83,7 +82,7 @@ def create_metadata_store(results, job):
         data = results["extra"]
     try:
         with open(meta_filename, "w") as extra_store:
-            yaml_dump(data, extra_store)
+            yaml_safe_dump(data, extra_store)
     except OSError as exc:  # LAVA-847
         msg = "[%d] Unable to create metadata store: %s" % (job.id, exc)
         logger.error(msg)
@@ -116,7 +115,7 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
     if "extra" in results:
         results["extra"] = meta_filename
 
-    metadata = yaml_dump(results)
+    metadata = yaml_safe_dump(results)
     if len(metadata) > 4096:  # bug 2471 - test_length unit test
         msg = "[%d] Result metadata is too long. %s" % (job.id, metadata)
         logger.warning(msg)
@@ -129,7 +128,7 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
         }
         if "error_type" in results:
             stripped_results["error_type"] = results["error_type"]
-        metadata = yaml_dump(stripped_results)
+        metadata = yaml_safe_dump(stripped_results)
         if len(metadata) > 4096:
             metadata = ""
 

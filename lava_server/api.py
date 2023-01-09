@@ -27,8 +27,8 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
-from lava_common.compat import yaml_safe_dump
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_dump
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import (
     Device,

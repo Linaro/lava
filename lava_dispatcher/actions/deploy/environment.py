@@ -23,8 +23,8 @@ import os
 
 import yaml
 
-from lava_common.compat import yaml_safe_load
 from lava_common.constants import LINE_SEPARATOR
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action
 
 

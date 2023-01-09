@@ -1,6 +1,6 @@
-# Copyright (C) 2019 Linaro Limited
+# Copyright (C) 2023 Collabora Limited
 #
-# Author: Rémi Duraffort <remi.duraffort@linaro.org>
+# Author: Igor Ponomarev <igor.ponomarev@collabora.com>
 #
 # This file is part of LAVA.
 #
@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
+from __future__ import annotations
 
-import yaml
+from yaml import dump, load
 
 # Handle compatibility with system without C yaml
 try:
@@ -27,35 +28,16 @@ except ImportError:
     from yaml import SafeLoader
 
 try:
-    from yaml import CFullLoader as FullLoader
-except ImportError:
-    from yaml import FullLoader
-
-try:
     from yaml import CSafeDumper as SafeDumper
 except ImportError:
     from yaml import SafeDumper
-try:
-    from yaml import CDumper as Dumper
-except ImportError:
-    from yaml import Dumper
 
 
-# handle compatibility for yaml.load
-def yaml_load(data):
-    return yaml.load(data, Loader=FullLoader)
-
-
-# handle compatibility for yaml.safe_load
 def yaml_safe_load(data):
-    return yaml.load(data, Loader=SafeLoader)
+    return load(data, Loader=SafeLoader)
 
 
-# handle compatibility for yaml.dump
-def yaml_dump(data, *args, **kwargs):
-    return yaml.dump(data, *args, Dumper=Dumper, **kwargs)
-
-
-# handle compatibility for yaml.safe_dump
 def yaml_safe_dump(data, *args, **kwargs):
-    return yaml.dump(data, *args, Dumper=SafeDumper, **kwargs)
+    # sort_keys=False will break the CI because
+    # some dispatcher tests check the order of dict keys
+    return dump(data, *args, Dumper=SafeDumper, **kwargs)

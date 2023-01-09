@@ -23,7 +23,7 @@ import os
 import unittest
 from unittest.mock import MagicMock, patch
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.u_boot import (

@@ -29,7 +29,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
-from lava_common.compat import yaml_dump
+from lava_common.yaml import yaml_safe_dump
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
@@ -438,7 +438,7 @@ class FailedJobTable(JobTable):
             return ""
         action_metadata = failure.action_metadata
         if action_metadata is not None and "error_msg" in action_metadata:
-            return yaml_dump(failure.action_metadata["error_msg"])
+            return yaml_safe_dump(failure.action_metadata["error_msg"])
         else:
             return ""
 
