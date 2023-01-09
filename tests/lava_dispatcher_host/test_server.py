@@ -29,8 +29,13 @@ def share_device_with_container(mocker):
     return mocker.patch("lava_dispatcher_host.server.share_device_with_container")
 
 
+@pytest.fixture
+def unshare_device_with_container(mocker):
+    return mocker.patch("lava_dispatcher_host.server.unshare_device_with_container")
+
+
 class TestCommandHandler:
-    def test_basics(self, share_device_with_container):
+    def test_share_basics(self, share_device_with_container):
         server = CommandHandler()
         server.handle(
             Command(
@@ -42,3 +47,11 @@ class TestCommandHandler:
         assert options.device == "/dev/foobar"
         assert options.dev_path == "foo"
         assert options.serial == "0123456789"
+
+    def test_unshare_basics(self, unshare_device_with_container):
+        server = CommandHandler()
+        server.handle(Command(device="/dev/foobar", dev_path="foo", type="unshare"))
+        unshare_device_with_container.assert_called()
+        options = unshare_device_with_container.call_args[0][0]
+        assert options.device == "/dev/foobar"
+        assert options.dev_path == "foo"

@@ -3,6 +3,8 @@ import pytest
 from lava_dispatcher_host import (
     share_device_with_container_docker,
     share_device_with_container_lxc,
+    unshare_device_with_container_docker,
+    unshare_device_with_container_lxc,
 )
 
 
@@ -57,6 +59,23 @@ class TestLXC:
             ),
         ]
 
+    def test_simple_unsharing(self, check_call, mocker):
+        dev = "/dev/bus/usb/001/001"
+        unshare_device_with_container_lxc("container", dev)
+        assert check_call.call_args_list == [
+            mocker.call(
+                [
+                    "lxc-attach",
+                    "-n",
+                    "container",
+                    "--",
+                    "sh",
+                    "-c",
+                    f"rm -fr /dev/bus/usb/001/001",
+                ]
+            ),
+        ]
+
     def test_links(self, check_call, pyudev, mocker):
         dev = "/dev/bus/usb/001/001"
         link = "/dev/ttyUSB1"
@@ -90,6 +109,24 @@ class TestDocker:
                     "sh",
                     "-c",
                     f"mkdir -p /dev/bus/usb/001 && mknod {dev} c 189 2 && chown 999:999 {dev} && chmod 664 {dev}",
+                ]
+            )
+        ]
+
+    def test_simple_unsharing(self, check_output, call, mocker):
+        check_output.return_value = "123456"  # get container_id
+        mocker.patch("lava_dispatcher_host.open", mocker.mock_open())
+        dev = "/dev/bus/usb/001/001"
+        unshare_device_with_container_docker("container", dev)
+        assert call.call_args_list == [
+            mocker.call(
+                [
+                    "docker",
+                    "exec",
+                    "container",
+                    "sh",
+                    "-c",
+                    f"rm -fr /dev/bus/usb/001/001",
                 ]
             )
         ]

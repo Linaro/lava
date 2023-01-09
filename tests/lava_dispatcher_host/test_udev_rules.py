@@ -19,3 +19,4 @@ from lava_dispatcher_host.udev import get_udev_rules
 def test_get_udev_rules():
     rules = get_udev_rules()
     assert 'ACTION=="add"' in rules
+    assert 'ACTION=="remove"' in rules
