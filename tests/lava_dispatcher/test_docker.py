@@ -19,8 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from unittest.mock import patch, MagicMock
 
 
 class DockerFactory(Factory):
@@ -42,7 +43,7 @@ class TestDocker(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("docker-interactive.yaml", self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @patch(
         "lava_dispatcher.actions.deploy.docker.which",
