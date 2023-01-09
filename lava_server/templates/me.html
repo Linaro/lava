@@ -146,7 +146,7 @@
       <div class="panel panel-default">
         <div class="panel-heading">
           <h4 class="panel-title">
-            <a data-toggle="modal" data-id={{ token_obj.id }} data-name={{ token_obj.name }} data-token={{ token_obj.token }} href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
+            <a data-toggle="modal" data-id="{{ token_obj.id }}" data-name="{{ token_obj.name }}" data-token="{{ token_obj.token }}" href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
             <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="{% url 'lava.delete_remote_auth' token_obj.id %}" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
               <span class="glyphicon glyphicon-trash"></span>
             </a>
