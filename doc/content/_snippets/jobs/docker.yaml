@@ -10,7 +10,7 @@ priority: medium
 actions:
 - deploy:
     to: docker
-    image: debian:buster
+    image: debian:bullseye
     os: debian
 - boot:
     method: docker

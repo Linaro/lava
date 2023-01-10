@@ -346,7 +346,7 @@ Annotated diff:
 -    name: lxc-target
 -    template: debian
 -    distribution: debian
--    release: buster
+-    release: bullseye
 -    arch: amd64
 -    mirror: http://deb.debian.org/debian
  
