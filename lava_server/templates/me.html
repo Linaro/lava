@@ -19,7 +19,7 @@
           {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
       <dd><a href="{% url 'password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
-      {% if settings.AUTH_SOCIALACCOUNT or settings.AUTH_GITLAB_URL %}
+      {% if socialaccount_enabled %}
       <dt>Social accounts</dt>
       <dd><a href="{% url 'socialaccount_connections' %}"><span class="glyphicon glyphicon-link"></span> Manage connections</a></dd>
       {% endif %}
