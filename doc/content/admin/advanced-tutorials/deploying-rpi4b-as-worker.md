@@ -79,7 +79,7 @@ address.
 * Add the LAVA repo to apt:
 
 ```shell
-echo "deb https://apt.lavasoftware.org/release buster main" > /etc/apt/sources.list.d/lava.list
+echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
 ```
 
 * Add LAVA archive signing keys to apt:
@@ -93,7 +93,7 @@ curl -fsSL https://apt.lavasoftware.org/lavasoftware.key.asc | apt-key add -
 ```shell
 apt update
 apt install lava-dispatcher
-apt dist-upgrade -t buster
+apt dist-upgrade -t bullseye
 ```
 
 ## Auto-registration of worker (or token)
