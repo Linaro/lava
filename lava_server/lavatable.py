@@ -240,4 +240,5 @@ class LavaTable(tables.Table):
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}
         template_name = "tables.html"
+        terms = {}
         per_page_field = "length"

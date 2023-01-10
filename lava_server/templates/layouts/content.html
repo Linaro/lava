@@ -15,6 +15,7 @@
            href="{{ STATIC_URL }}docs/v2/{{ context_help|join:'-'|slugify }}.html"
            ><b>Help</b></a></span>
     {% endif %}
+  {% if bread_crumb_trail %}
   <ol class="breadcrumb">
     {% block breadcrumbs %}
     {% for bread_crumb in bread_crumb_trail %}
@@ -22,6 +23,7 @@
     {% endfor %}
     {% endblock breadcrumbs %}
   </ol>
+  {% endif %}
   {% endblock breadcrumb_container %}
 
   {% block before_content %}
