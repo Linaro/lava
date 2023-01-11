@@ -43,7 +43,6 @@ try:
     def RelatedFilter(cls, name, queryset):
         return filters.RelatedFilter(cls, field_name=name, queryset=queryset)
 
-
 except ImportError:
     from rest_framework_filters.backends import (  # noqa
         DjangoFilterBackend as RestFrameworkFilterBackend,
@@ -124,7 +123,6 @@ try:
         if django_tables2.__version__ < "2.3.1":
             return {"paginator_class": FixedLazyPaginator}
         return {"paginator_class": LazyPaginator}
-
 
 except ImportError:
     from django.core.paginator import EmptyPage, Page, PageNotAnInteger, Paginator

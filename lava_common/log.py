@@ -38,16 +38,16 @@ def dump(data: Dict) -> str:
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
     data_str = yaml_dump(
-        data, default_flow_style=True, default_style='"', width=10 ** 6
+        data, default_flow_style=True, default_style='"', width=10**6
     )[:-1]
     # Test the limit and skip if the line is too long
-    if len(data_str) >= 10 ** 6:
+    if len(data_str) >= 10**6:
         if isinstance(data["msg"], str):
             data["msg"] = "<line way too long ...>"
         else:
             data["msg"] = {"skip": "line way too long ..."}
         data_str = yaml_dump(
-            data, default_flow_style=True, default_style='"', width=10 ** 6
+            data, default_flow_style=True, default_style='"', width=10**6
         )[:-1]
     return data_str
 

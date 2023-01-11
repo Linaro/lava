@@ -188,7 +188,7 @@ def test_yaml_logger(mocker):
     assert logger.markers == {"0_test": {"start_test_case": 7, "end_test_case": 8}}
 
     logger._log = mocker.Mock()
-    logger.info("a" * 10 ** 7)
+    logger.info("a" * 10**7)
     check(logger, "info", logging.INFO, "<line way too long ...>")
 
     logger.close()
