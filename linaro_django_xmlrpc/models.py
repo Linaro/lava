@@ -213,7 +213,7 @@ class ExposedAPI:
     def _authenticate(self):
         if self.user is None:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this " "API."
+                401, "Authentication with user and token required for this API."
             )
 
     def _switch_user(self, username):
@@ -243,7 +243,7 @@ class ExposedV2API(ExposedAPI):
     def _authenticate(self):
         if not self.user.is_active:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this " "API."
+                401, "Authentication with user and token required for this API."
             )
 
 

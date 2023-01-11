@@ -246,7 +246,7 @@ class MultinodeProtocol(Protocol):
             action.section for action in job.pipeline.actions if action.section
         ]
         self.logger.debug(
-            "This MultiNode test job contains " "top level actions, in order, of: %s",
+            "This MultiNode test job contains top level actions, in order, of: %s",
             ", ".join(action_list),
         )
         return True

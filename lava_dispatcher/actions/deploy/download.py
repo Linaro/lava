@@ -94,7 +94,7 @@ class DownloaderAction(RetryAction):
             action = ScpDownloadAction(
                 self.key, self.path, url, self.uniquify, params=self.params
             )
-        elif url.scheme == "http" or url.scheme == "https":
+        elif url.scheme in ["http", "https"]:
             action = HttpDownloadAction(
                 self.key, self.path, url, self.uniquify, params=self.params
             )

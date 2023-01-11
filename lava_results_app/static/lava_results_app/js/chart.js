@@ -923,7 +923,7 @@ $(document).ready(function () {
         // Pack data in series for plot display.
         for (var id in plot_data) {
 
-            // Delta reporting, calculate diferences.
+            // Delta reporting, calculate differences.
             if ($("#is_delta_" + this.chart_id).prop("checked")) {
                 var new_data = [];
                 var new_meta_keys = [];

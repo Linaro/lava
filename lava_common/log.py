@@ -38,16 +38,16 @@ def dump(data: Dict) -> str:
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
     data_str = yaml_dump(
-        data, default_flow_style=True, default_style='"', width=10 ** 6
+        data, default_flow_style=True, default_style='"', width=10**6
     )[:-1]
     # Test the limit and skip if the line is too long
-    if len(data_str) >= 10 ** 6:
+    if len(data_str) >= 10**6:
         if isinstance(data["msg"], str):
             data["msg"] = "<line way too long ...>"
         else:
             data["msg"] = {"skip": "line way too long ..."}
         data_str = yaml_dump(
-            data, default_flow_style=True, default_style='"', width=10 ** 6
+            data, default_flow_style=True, default_style='"', width=10**6
         )[:-1]
     return data_str
 
@@ -110,8 +110,8 @@ class HTTPHandler(logging.Handler):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
-        (reader, writter) = multiprocessing.Pipe(duplex=False)
-        self.writter = writter
+        (reader, writer) = multiprocessing.Pipe(duplex=False)
+        self.writer = writer
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
@@ -127,13 +127,13 @@ class HTTPHandler(logging.Handler):
         # This can't happen as data is a dictionary dumped in yaml format
         if data == "":
             return
-        self.writter.send_bytes(data.encode("utf-8", errors="replace"))
+        self.writer.send_bytes(data.encode("utf-8", errors="replace"))
 
     def close(self):
         super().close()
 
         # wait for the multiprocess
-        self.writter.send_bytes(b"")
+        self.writer.send_bytes(b"")
         self.proc.join()
 
 

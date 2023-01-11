@@ -41,9 +41,9 @@ from rest_framework.response import Response
 from rest_framework.utils import formatting
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
-import lava_common.schemas as schemas
-import lava_common.schemas.test.testdef as testdef
+from lava_common import schemas
 from lava_common.compat import yaml_dump, yaml_safe_load
+from lava_common.schemas.test import testdef
 from lava_common.version import __version__
 from lava_rest_app import filters
 from lava_rest_app.base import views as base_views
@@ -558,8 +558,8 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
         return response
 
     def _set_file(self, request, path, content):
+        filename = path.name
         try:
-            filename = path.name
             path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
             return Response(

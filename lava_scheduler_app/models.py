@@ -52,12 +52,11 @@ from jinja2 import TemplateError as JinjaTemplateError
 from jinja2.nodes import Extends as JinjaNodesExtends
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.timeout import Timeout
 from lava_results_app.utils import export_testcase
-from lava_scheduler_app import utils
+from lava_scheduler_app import environment, utils
 from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.managers import (
     GroupObjectPermissionManager,

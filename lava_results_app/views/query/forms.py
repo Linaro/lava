@@ -60,7 +60,7 @@ class QueryForm(forms.ModelForm):
         form_data = self.cleaned_data
 
         with contextlib.suppress(KeyError, Query.DoesNotExist):
-            # Existing (or archived) Query validataion.
+            # Existing (or archived) Query validation.
             existing_query = Query.objects.get(
                 name=form_data["name"], owner=form_data["owner"]
             )

@@ -33,10 +33,10 @@ from django.core.validators import validate_email
 from django.db.models import Case, IntegerField, Q, Sum, When
 from jinja2 import TemplateError as JinjaTemplateError
 
-import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
 from lava_results_app.models import Query
+from lava_scheduler_app import environment
 from lava_scheduler_app.models import (
     Device,
     DeviceType,

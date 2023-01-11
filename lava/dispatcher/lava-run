@@ -228,6 +228,7 @@ def main():
 
     # By default, that's a failure
     success = False
+    error_help = error_msg = error_type = None
     try:
         # Set the signal handler
         signal.signal(signal.SIGHUP, cancelling_handler)

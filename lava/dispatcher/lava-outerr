@@ -37,7 +37,7 @@ def reader(std, q):
     q.put(None)
 
 
-def writter(q, std):
+def writer(q, std):
     buffer = b""
     while True:
         with contextlib.suppress(queue.Empty):
@@ -78,8 +78,8 @@ def main():
         out_queue = queue.SimpleQueue()
         proc_err_thread = threading.Thread(target=reader, args=(proc.stderr, err_queue))
         proc_out_thread = threading.Thread(target=reader, args=(proc.stdout, out_queue))
-        sys_err_thread = threading.Thread(target=writter, args=(err_queue, sys.stderr))
-        sys_out_thread = threading.Thread(target=writter, args=(out_queue, sys.stdout))
+        sys_err_thread = threading.Thread(target=writer, args=(err_queue, sys.stderr))
+        sys_out_thread = threading.Thread(target=writer, args=(out_queue, sys.stdout))
 
         proc_err_thread.start()
         proc_out_thread.start()

@@ -715,7 +715,7 @@
     });
 
     dialog.on("click", ".bootbox-close-button", function(e) {
-      // onEscape might be falsy but that's fine; the fact is
+      // onEscape might be falsely but that's fine; the fact is
       // if the user has managed to click the close button we
       // have to close the dialog, callback or not
       processCallback(e, dialog, callbacks.onEscape);

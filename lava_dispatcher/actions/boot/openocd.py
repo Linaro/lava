@@ -98,7 +98,7 @@ class FlashOpenOCDAction(Action):
             )
             if filename is None:
                 self.logger.warning(
-                    "Empty value for action='download-action' label='%s' " "key='file'",
+                    "Empty value for action='download-action' label='%s' key='file'",
                     action,
                 )
                 continue
