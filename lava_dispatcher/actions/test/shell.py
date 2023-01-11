@@ -383,7 +383,7 @@ class TestShellAction(Action):
     def pattern_error(self):
         stage = self.parameters["stage"]
         self.logger.error(
-            "Unable to start stage %s. " "Read the log for more details.", stage
+            "Unable to start stage %s. Read the log for more details.", stage
         )
         self.errors = "Unable to start test stage %s" % stage
         # This is not accurate but required when exiting.

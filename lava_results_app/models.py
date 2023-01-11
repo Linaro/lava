@@ -852,7 +852,7 @@ class Query(models.Model):
             else:
                 # TODO: more validation for conditions?.
                 raise InvalidConditionsError(
-                    "Conditions URL incorrect. Please " "refer to query docs."
+                    "Conditions URL incorrect. Please refer to query docs."
                 )
 
             conditions_objects.append(condition)

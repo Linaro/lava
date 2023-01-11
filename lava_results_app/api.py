@@ -95,13 +95,13 @@ class ResultsAPI(ExposedAPI):
         except InvalidContentTypeError:
             raise xmlrpc.client.Fault(
                 400,
-                "Wrong table name in entity parameter. " "Please refer to query docs.",
+                "Wrong table name in entity parameter. Please refer to query docs.",
             )
 
         if content_type.model_class() not in QueryCondition.RELATION_MAP:
             raise xmlrpc.client.Fault(
                 400,
-                "Wrong table name in entity parameter. " "Please refer to query docs.",
+                "Wrong table name in entity parameter. Please refer to query docs.",
             )
 
         conditions = Query.parse_conditions(content_type, conditions)

@@ -28,9 +28,9 @@ from jinja2.nodes import Const as JinjaNodesConst
 from jinja2.nodes import List as JinjaNodesList
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-import lava_scheduler_app.environment as environment
 from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import PermissionNameError
+from lava_scheduler_app import environment
 from lava_scheduler_app.models import (
     Alias,
     Device,
