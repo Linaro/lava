@@ -16,7 +16,7 @@ lava-server manage device-types add qemu
 lava-server manage device-types list --all
 lava-server manage devices add --device-type qemu --worker autopkgtest qemu01
 lava-server manage devices list --all
-lava-server manage devices update --private --health RETIRED qemu01
+lava-server manage devices update --health RETIRED qemu01
 lava-server manage devices list --all
 
 # test daemon handling
