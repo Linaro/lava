@@ -27,6 +27,7 @@
 import os
 import subprocess  # nosec - internal use.
 import tarfile
+from pathlib import Path
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.contextmanager import chdir
@@ -98,6 +99,13 @@ def create_tarfile(indir, outfile, arcname=None):
 def untar_file(infile, outdir):
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
+            # Check for path traversal
+            base = Path(outdir)
+            for member in tar.getmembers():
+                dest = (base / member.name).resolve()
+                if not dest.is_relative_to(base):
+                    raise JobError("Attempted path traversal in tar file at %s" % dest)
+            # Extract the tarfile
             tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
