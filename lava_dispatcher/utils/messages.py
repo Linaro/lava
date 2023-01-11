@@ -30,52 +30,52 @@ from lava_dispatcher.utils.strings import seconds_to_str
 KERNEL_MESSAGES = [
     {
         "start": r"-\[ cut here \]",
-        "end": r"-+\[ end trace \w* \]-+[^\n]*\r\n",
+        "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
         "kind": None,
     },
     {
         "start": r"Unhandled fault",
-        "end": r"\r\n",
+        "end": r"\r",
         "kind": "fault",
     },
     {
         "start": r"BUG: KCSAN:",
-        "end": r"=+\r\n",
+        "end": r"=+\r",
         "kind": "kcsan",
     },
     {
         "start": r"BUG: KASAN:",
-        "end": r"=+\r\n",
+        "end": r"=+\r",
         "kind": "kasan",
     },
     {
         "start": r"BUG: KFENCE:",
-        "end": r"=+\r\n",
+        "end": r"=+\r",
         "kind": "kfence",
     },
     {
         "start": r"Oops(?: -|:)",
-        "end": r"\r\n",
+        "end": r"\r",
         "kind": "oops",
     },
     {
         "start": r"WARNING:",
-        "end": r"end trace[^\r]*\r\n",
+        "end": r"end trace[^\r]*\r",
         "kind": "warning",
     },
     {
         "start": r"(kernel BUG at|BUG:)",
-        "end": r"\r\n",
+        "end": r"\r",
         "kind": "bug",
     },
     {
         "start": r"invalid opcode:",
-        "end": r"\r\n",
+        "end": r"\r",
         "kind": "invalid opcode",
     },
     {
         "start": r"Kernel panic - not syncing",
-        "end": r"end Kernel panic[^\r]*\r\n",
+        "end": r"end Kernel panic[^\r]*\r",
         "kind": "panic",
         "fatal": True,
     },
@@ -182,7 +182,7 @@ class LinuxKernelMessages:
                 message = (
                     message
                     + connection.raw_connection.before
-                    + connection.raw_connection.after[:-2]  # Remove ending "\r\n"
+                    + connection.raw_connection.after[:-1]  # Remove ending "\r"
                 )
                 connection.prompt_str = previous_prompts
 
