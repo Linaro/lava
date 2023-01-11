@@ -54,7 +54,7 @@ class Command(BaseCommand):
         remove_parser.add_argument("alias", help="Alias to remove from device type")
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         if options["sub_command"] == "list":

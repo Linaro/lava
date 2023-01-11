@@ -107,7 +107,7 @@ class Command(BaseCommand):
         )
 
     def available_device_types(self):
-        """ List available device types by looking at the configuration files """
+        """List available device types by looking at the configuration files"""
         available_types = []
         for device_type in File("device-type").list("*.jinja2"):
             if not device_type.startswith("base"):
@@ -116,7 +116,7 @@ class Command(BaseCommand):
         return available_types
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(
                 options["device-type"],
@@ -146,7 +146,7 @@ class Command(BaseCommand):
             raise CommandError("Alias '%s' already used by other device type")
 
     def handle_add(self, device_type, alias, health_denominator, health_frequency):
-        """ Add a device type """
+        """Add a device type"""
         with contextlib.suppress(DeviceType.DoesNotExist):
             DeviceType.objects.get(name=device_type)
             raise CommandError("Device-type '%s' already exists" % device_type)
@@ -179,7 +179,7 @@ class Command(BaseCommand):
                     raise CommandError("Alias '%s' already used by other device type")
 
     def handle_details(self, name, devices):
-        """ Print some details about the device-type """
+        """Print some details about the device-type"""
         try:
             device_type = DeviceType.objects.get(name=name)
         except DeviceType.DoesNotExist:
@@ -199,7 +199,7 @@ class Command(BaseCommand):
                 self.stdout.write("- %s" % device.hostname)
 
     def handle_list(self, show_all, format_as_csv):
-        """ List the device types """
+        """List the device types"""
         available_types = self.available_device_types()
         device_type_names = []
         device_types = DeviceType.objects.all().order_by("name")

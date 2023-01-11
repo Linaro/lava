@@ -85,7 +85,7 @@ class MultinodeTestShell(LavaTest):
 
     @classmethod
     def needs_deployment_data(cls, parameters):
-        """ Some, not all, deployments will want deployment_data """
+        """Some, not all, deployments will want deployment_data"""
         return get_subaction_class(parameters).needs_deployment_data(parameters)
 
     @classmethod

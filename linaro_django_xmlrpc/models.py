@@ -100,7 +100,7 @@ class AuthToken(models.Model):
     user = models.ForeignKey(User, related_name="auth_tokens", on_delete=models.CASCADE)
 
     def __str__(self):
-        return u"security token {pk}".format(pk=self.pk)
+        return "security token {pk}".format(pk=self.pk)
 
     @classmethod
     def get_user_for_secret(cls, username, secret):

@@ -36,11 +36,11 @@ FINISHED_JOB_STATUS = ["Complete", "Incomplete", "Canceled"]
 
 
 class JobEndTimeoutError(Exception):
-    """ Raise when the specified job does not finish in certain timeframe. """
+    """Raise when the specified job does not finish in certain timeframe."""
 
 
 class Timeout:
-    """ Timeout error class with ALARM signal. Accepts time in seconds. """
+    """Timeout error class with ALARM signal. Accepts time in seconds."""
 
     class TimeoutError(Exception):
         pass

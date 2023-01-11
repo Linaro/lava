@@ -33,7 +33,7 @@ from linaro_django_xmlrpc.models import AuthToken
 
 def help_max_length(max_length):
     return ngettext_lazy(
-        u"Maximum length: {0} character", u"Maximum length: {0} characters", max_length
+        "Maximum length: {0} character", "Maximum length: {0} characters", max_length
     ).format(max_length)
 
 

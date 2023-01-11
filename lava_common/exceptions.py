@@ -22,7 +22,7 @@ from lava_common.decorators import nottest
 
 
 class LAVAError(Exception):
-    """ Base class for all exceptions in LAVA """
+    """Base class for all exceptions in LAVA"""
 
     error_help = ""
     error_type = ""
@@ -57,7 +57,7 @@ class ConnectionClosedError(InfrastructureError):
 
 
 class JobCanceled(LAVAError):
-    """ The job was canceled """
+    """The job was canceled"""
 
     error_help = "JobCanceled: The job was canceled"
     error_type = "Canceled"
@@ -118,7 +118,7 @@ class MultinodeProtocolTimeoutError(LAVAError):
 
 
 class LAVAServerError(Exception):
-    """ Subclass for all exceptions on LAVA server side """
+    """Subclass for all exceptions on LAVA server side"""
 
     error_help = ""
     error_type = ""

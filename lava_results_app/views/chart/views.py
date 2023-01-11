@@ -59,11 +59,11 @@ CONDITION_DIVIDER = "__"
 
 
 class InvalidChartTypeError(Exception):
-    """ Raise when charting by URL has incorrect type argument. """
+    """Raise when charting by URL has incorrect type argument."""
 
 
 class TestCasePassFailChartError(Exception):
-    """ Raise when test case charts are of pass/fail type. """
+    """Raise when test case charts are of pass/fail type."""
 
 
 class UserChartView(LavaView):

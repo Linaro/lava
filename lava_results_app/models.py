@@ -61,19 +61,19 @@ from lava_server.managers import MaterializedView
 
 
 class InvalidConditionsError(Exception):
-    """ Raise when querying by URL has incorrect condition arguments. """
+    """Raise when querying by URL has incorrect condition arguments."""
 
 
 class InvalidContentTypeError(Exception):
-    """ Raise when querying by URL content type (table name). """
+    """Raise when querying by URL content type (table name)."""
 
 
 class QueryUpdatedError(Exception):
-    """ Error raised if query is updating or recently updated. """
+    """Error raised if query is updating or recently updated."""
 
 
 class RefreshLiveQueryError(Exception):
-    """ Error raised if refreshing the live query is attempted. """
+    """Error raised if refreshing the live query is attempted."""
 
 
 class Queryable:
@@ -168,7 +168,7 @@ class TestSuite(models.Model, Queryable):
 
     job = models.ForeignKey(TestJob, on_delete=models.CASCADE)
     name = models.CharField(
-        verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
+        verbose_name="Suite name", blank=True, null=True, default=None, max_length=200
     )
 
     def testcase_count(self, value=None):
@@ -267,7 +267,7 @@ class TestSuite(models.Model, Queryable):
         """
         Human friendly name for the test suite
         """
-        return _(u"Test Suite {0}/{1}").format(self.job.id, self.name)
+        return _("Test Suite {0}/{1}").format(self.job.id, self.name)
 
 
 @nottest
@@ -280,7 +280,7 @@ class TestSet(models.Model):
     id = models.AutoField(primary_key=True)
 
     name = models.CharField(
-        verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
+        verbose_name="Suite name", blank=True, null=True, default=None, max_length=200
     )
 
     suite = models.ForeignKey(
@@ -293,7 +293,7 @@ class TestSet(models.Model):
         )
 
     def __str__(self):
-        return _(u"Test Set {0}/{1}/{2}").format(
+        return _("Test Set {0}/{1}/{2}").format(
             self.suite.job.id, self.suite.name, self.name
         )
 
@@ -327,14 +327,14 @@ class TestCase(models.Model, Queryable):
     }
 
     RESULT_CHOICES = (
-        (RESULT_PASS, _(u"Test passed")),
-        (RESULT_FAIL, _(u"Test failed")),
-        (RESULT_SKIP, _(u"Test skipped")),
-        (RESULT_UNKNOWN, _(u"Unknown outcome")),
+        (RESULT_PASS, _("Test passed")),
+        (RESULT_FAIL, _("Test failed")),
+        (RESULT_SKIP, _("Test skipped")),
+        (RESULT_UNKNOWN, _("Unknown outcome")),
     )
 
     name = models.TextField(
-        blank=True, help_text=help_max_length(100), verbose_name=_(u"Name")
+        blank=True, help_text=help_max_length(100), verbose_name=_("Name")
     )
 
     units = models.TextField(
@@ -348,12 +348,12 @@ class TestCase(models.Model, Queryable):
             )
             + help_max_length(100)
         ),
-        verbose_name=_(u"Units"),
+        verbose_name=_("Units"),
     )
 
     result = models.PositiveSmallIntegerField(
-        verbose_name=_(u"Result"),
-        help_text=_(u"Result classification to pass/fail group"),
+        verbose_name=_("Result"),
+        help_text=_("Result classification to pass/fail group"),
         choices=RESULT_CHOICES,
         db_index=True,
     )
@@ -362,17 +362,17 @@ class TestCase(models.Model, Queryable):
         decimal_places=10,
         max_digits=30,
         blank=True,
-        help_text=_(u"Arbitrary value that was measured as a part of this test."),
+        help_text=_("Arbitrary value that was measured as a part of this test."),
         null=True,
-        verbose_name=_(u"Measurement"),
+        verbose_name=_("Measurement"),
     )
 
     metadata = models.CharField(
         blank=True,
         max_length=4096,
-        help_text=_(u"Metadata collected by the pipeline action, stored as YAML."),
+        help_text=_("Metadata collected by the pipeline action, stored as YAML."),
         null=True,
-        verbose_name=_(u"Action meta data as a YAML string"),
+        verbose_name=_("Action meta data as a YAML string"),
     )
 
     suite = models.ForeignKey(TestSuite, on_delete=models.CASCADE)
@@ -462,10 +462,10 @@ class TestCase(models.Model, Queryable):
         value = self._get_value()
         if self.test_set:
             # the set already includes the job & suite in the set name
-            return _(u"Test Case {0}/{1}/{2}/{3} {4}").format(
+            return _("Test Case {0}/{1}/{2}/{3} {4}").format(
                 self.suite.job.id, self.suite.name, self.test_set.name, self.name, value
             )
-        return _(u"Test Case {0}/{1}/{2} {3}").format(
+        return _("Test Case {0}/{1}/{2} {3}").format(
             self.suite.job.id, self.suite.name, self.name, value
         )
 
@@ -496,7 +496,7 @@ class NamedTestAttribute(models.Model):
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
     def __str__(self):
-        return _(u"{name}: {value}").format(name=self.name, value=self.value)
+        return _("{name}: {value}").format(name=self.name, value=self.value)
 
     class Meta:
         unique_together = ("object_id", "name", "content_type")
@@ -519,7 +519,7 @@ class TestData(models.Model):
     attributes = fields.GenericRelation(NamedTestAttribute)
 
     def __str__(self):
-        return _(u"TestJob {0}").format(self.testjob.id)
+        return _("TestJob {0}").format(self.testjob.id)
 
 
 class QueryGroup(models.Model):
@@ -643,7 +643,7 @@ class Query(models.Model):
         return QueryMaterializedView.view_exists(self.id)
 
     def get_results(self, user, order_by=["-id"]):
-        """ Used to get query results for persistent queries. """
+        """Used to get query results for persistent queries."""
 
         omitted_list = QueryOmitResult.objects.filter(query=self).values_list(
             "object_id", flat=True
@@ -1015,18 +1015,18 @@ class QueryCondition(models.Model):
     LT = "lt"
 
     OPERATOR_CHOICES = (
-        (EXACT, u"Exact match"),
-        (IEXACT, u"Case-insensitive match"),
-        (NOTEQUAL, u"Not equal to"),
-        (ICONTAINS, u"Contains"),
-        (GT, u"Greater than"),
-        (LT, u"Less than"),
+        (EXACT, "Exact match"),
+        (IEXACT, "Case-insensitive match"),
+        (NOTEQUAL, "Not equal to"),
+        (ICONTAINS, "Contains"),
+        (GT, "Greater than"),
+        (LT, "Less than"),
     )
 
     operator = models.CharField(
         blank=False,
         default=EXACT,
-        verbose_name=_(u"Operator"),
+        verbose_name=_("Operator"),
         max_length=20,
         choices=OPERATOR_CHOICES,
     )
@@ -1133,7 +1133,7 @@ class QueryCondition(models.Model):
 
 
 def _get_foreign_key_model(model, fieldname):
-    """ Returns model if field is a foreign key, otherwise None. """
+    """Returns model if field is a foreign key, otherwise None."""
     field_object = model._meta.get_field(fieldname)
     direct = not field_object.auto_created or field_object.concrete
     if (
