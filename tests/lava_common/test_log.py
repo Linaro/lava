@@ -110,12 +110,12 @@ def test_http_handler(mocker):
     )
     handler.emit(record)
 
-    assert len(handler.writter.send_bytes.mock_calls) == 1
-    assert handler.writter.send_bytes.mock_calls[0][1] == (b"Hello world",)
+    assert len(handler.writer.send_bytes.mock_calls) == 1
+    assert handler.writer.send_bytes.mock_calls[0][1] == (b"Hello world",)
 
     handler.close()
-    assert len(handler.writter.send_bytes.mock_calls) == 2
-    assert handler.writter.send_bytes.mock_calls[1][1] == (b"",)
+    assert len(handler.writer.send_bytes.mock_calls) == 2
+    assert handler.writer.send_bytes.mock_calls[1][1] == (b"",)
 
 
 def test_yaml_logger(mocker):

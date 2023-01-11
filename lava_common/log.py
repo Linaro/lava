@@ -110,8 +110,8 @@ class HTTPHandler(logging.Handler):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
-        (reader, writter) = multiprocessing.Pipe(duplex=False)
-        self.writter = writter
+        (reader, writer) = multiprocessing.Pipe(duplex=False)
+        self.writer = writer
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
@@ -127,13 +127,13 @@ class HTTPHandler(logging.Handler):
         # This can't happen as data is a dictionary dumped in yaml format
         if data == "":
             return
-        self.writter.send_bytes(data.encode("utf-8", errors="replace"))
+        self.writer.send_bytes(data.encode("utf-8", errors="replace"))
 
     def close(self):
         super().close()
 
         # wait for the multiprocess
-        self.writter.send_bytes(b"")
+        self.writer.send_bytes(b"")
         self.proc.join()
 
 
