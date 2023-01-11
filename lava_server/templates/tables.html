@@ -27,7 +27,7 @@
       <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
       <div class="form-group">
         <label>Search</label>
-        <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|get_terms_data:table.prefix|join:" " }}">
+        <input type="text" name="{{ table.prefix }}search" placeholder="Press ? for search help">
       </div>
     </form>
   </div>
