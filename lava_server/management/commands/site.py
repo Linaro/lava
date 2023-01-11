@@ -49,14 +49,14 @@ class Command(BaseCommand):
             self.handle_update(options["name"], options["domain"])
 
     def handle_list(self):
-        """ List the current Site """
+        """List the current Site"""
         site = Site.objects.get_current()
         self.stdout.write("Site:")
         self.stdout.write("\tDomain: %s" % site.domain)
         self.stdout.write("\tName: %s" % site.name)
 
     def handle_update(self, name, domain):
-        """ Update Site properties """
+        """Update Site properties"""
         site = Site.objects.get_current()
         site.domain = domain
         site.name = name

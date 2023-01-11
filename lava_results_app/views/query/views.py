@@ -65,7 +65,7 @@ from lava_server.lavatable import LavaView
 
 
 class QueryViewDoesNotExistError(Exception):
-    """ Raise when corresponding query materialized view does not exist. """
+    """Raise when corresponding query materialized view does not exist."""
 
 
 class UserQueryView(LavaView):
@@ -690,7 +690,7 @@ def query_condition_form(request, query, bread_crumb_trail, instance=None):
 
 
 def _remove_dir(path):
-    """ Removes directory @path. Doesn't raise exceptions. """
+    """Removes directory @path. Doesn't raise exceptions."""
     try:
         # Delete directory.
         shutil.rmtree(path)

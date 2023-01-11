@@ -86,7 +86,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(
                 options["hostname"], options["description"], options["health"]
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             )
 
     def handle_add(self, hostname, description, health_str):
-        """ Create a worker """
+        """Create a worker"""
         with contextlib.suppress(Worker.DoesNotExist):
             Worker.objects.get(hostname=hostname)
             raise CommandError("Worker already exists with hostname %s" % hostname)
@@ -136,7 +136,7 @@ class Command(BaseCommand):
                 self.stdout.write("- %s" % device.hostname)
 
     def handle_list(self, show_all, format_as_csv):
-        """ List the workers """
+        """List the workers"""
         workers = Worker.objects.all().order_by("hostname")
         # By default, do not show hidden workers
         if not show_all:
@@ -164,7 +164,7 @@ class Command(BaseCommand):
                 )
 
     def handle_update(self, hostname, description, health):
-        """ Update worker properties """
+        """Update worker properties"""
         with transaction.atomic():
             try:
                 worker = Worker.objects.select_for_update().get(hostname=hostname)

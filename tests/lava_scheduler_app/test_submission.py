@@ -174,7 +174,7 @@ class TestTestJob(TestCaseWithFactory):
         user.save()
         user = User.objects.get(username=user.username)
         self.assertEqual(
-            {u"lava_scheduler_app.change_device"}, user.get_all_permissions()
+            {"lava_scheduler_app.change_device"}, user.get_all_permissions()
         )
         self.assertTrue(user.has_perm("lava_scheduler_app.change_device"))
 

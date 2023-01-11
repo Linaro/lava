@@ -76,7 +76,7 @@ class Command(BaseCommand):
         create_parser.add_argument("description", help="Description of the new tag")
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         elif options["sub_command"] == "list":

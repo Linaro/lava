@@ -77,7 +77,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         if options["sub_command"] == "update":
@@ -86,7 +86,7 @@ class Command(BaseCommand):
             self.handle_list(options["verbose"])
 
     def handle_update(self, options):
-        """ Update an existing group """
+        """Update an existing group"""
         name = options["name"]
         group, created = Group.objects.get_or_create(name=name)
         if created:
@@ -105,7 +105,7 @@ class Command(BaseCommand):
                 group.permissions.add(perm)
 
     def handle_add(self, options):
-        """ Create a new group """
+        """Create a new group"""
         name = options["name"]
         group, created = Group.objects.get_or_create(name=name)
         if not created:
@@ -125,7 +125,7 @@ class Command(BaseCommand):
                 group.permissions.add(perm)
 
     def handle_list(self, verbose=False):
-        """ List groups with permissions """
+        """List groups with permissions"""
         groups = Group.objects.all().order_by("name")
 
         self.stdout.write("List of groups:")

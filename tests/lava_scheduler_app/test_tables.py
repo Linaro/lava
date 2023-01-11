@@ -189,7 +189,7 @@ class TestForDeviceTable(TestCase):
         table = DeviceTable(view.get_table_data())
         self.assertEqual(
             table.prepare_search_data(view),
-            {"search": ["device_type", "health", u"Hostname", "state", "tags"]},
+            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
         self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
@@ -207,7 +207,7 @@ class TestForDeviceTable(TestCase):
         table = TestDeviceTable(view.get_table_data())
         self.assertEqual(
             table.prepare_search_data(view),
-            {"search": ["device_type", "health", u"Hostname", "state", "tags"]},
+            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
         self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
