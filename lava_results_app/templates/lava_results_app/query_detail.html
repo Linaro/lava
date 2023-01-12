@@ -301,11 +301,11 @@
 {% block scripts %}
 
 {% is_accessible_by query request.user as is_accessible %}
-<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/query.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_server/js/bootbox.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
-<script type="text/javascript">
+<script src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
+<script src="{% static "lava_results_app/js/query.js" %}"></script>
+<script src="{% static "lava_server/js/bootbox.js" %}"></script>
+<script src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
+<script>
   csrf_token = '{{csrf_token}}';
   query_name = '{{ query.name }}';
   query_user = '{{ query.owner.username }}';

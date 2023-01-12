@@ -369,15 +369,15 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript">
+<script>
   var condition_choices = JSON.parse($("#id_condition_choices").val());
   var content_types = JSON.parse($("#id_available_content_types").val());
 </script>
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/anchor-v4.2.2.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
-<script type="text/javascript">
+<script src="{% static "lava_scheduler_app/js/anchor-v4.2.2.js" %}"></script>
+<script src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
+<script src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
+<script src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
+<script>
   $(document).ready(
     function() {
 {% if not size_warning %}
