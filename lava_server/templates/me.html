@@ -194,8 +194,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static 'lava_server/js/bootbox.js' %}"></script>
-<script type="text/javascript" src="{% static 'lava_results_app/js/bootbox.data.toggle.js' %}"></script>
+<script src="{% static 'lava_server/js/bootbox.js' %}"></script>
+<script src="{% static 'lava_results_app/js/bootbox.data.toggle.js' %}"></script>
 <script>
 $(document).ready(function () {
     add_bootbox_data_toggle();
