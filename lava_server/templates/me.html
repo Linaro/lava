@@ -41,7 +41,7 @@
         <form id="irc_form" method="post" action="{% url 'lava.update_irc_settings' %}">
 	  {% csrf_token %}
         <div class="modal-body well">
-	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	  <div class="errorlist" style="color: red;"></div>
 	    {{ irc_form.as_p }}
         </div>
         <div class="modal-footer">
@@ -65,7 +65,7 @@
         <form id="table_length_form" method="post" action="{% url 'lava.update_table_length_setting' %}">
 	  {% csrf_token %}
         <div class="modal-body well">
-	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	  <div class="errorlist" style="color: red;"></div>
 	    {{ table_length_form.as_p }}
         </div>
         <div class="modal-footer">
@@ -83,7 +83,7 @@
   {% with groups=user.groups.all %}
     {% if groups %}
     <p>You are member of the following LAVA groups:</p>
-    <div class="panel-group" id="accordion">
+    <div class="panel-group">
     {% for group in groups %}
       {% with user_set=group.user_set.all %}
         {% with users_count=user_set|length %}
@@ -145,7 +145,7 @@
     {% with tokens=user.remoteartifactsauth_set.all %}
     {% if tokens %}
     <p>You have following tokens:</p>
-    <div class="panel-group" id="accordion">
+    <div class="panel-group">
       {% for token_obj in tokens %}
       <div class="panel panel-default">
         <div class="panel-heading">
