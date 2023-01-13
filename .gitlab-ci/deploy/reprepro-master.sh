@@ -13,7 +13,7 @@ else
     BASEDIR="${HOME}/repository/${DAILY}"
     # location of snapshot directory
     SNAPSHOT="${HOME}/repository/snapshot/"
-    DISTS="bullseye testing"
+    DISTS="bullseye bookworm"
 
     ls -l ${LAVA_BUILDD}/_build/
     find ${LAVA_BUILDD}/_build/ -type f -name 'lava_*.changes'

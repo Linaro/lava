@@ -19,7 +19,7 @@ else
     BASEDIR="${HOME}/repository/current-release"
     # location of snapshot directory
     SNAPSHOT="${HOME}/repository/snapshot/"
-    DISTS="buster bullseye"
+    DISTS="bullseye bookworm"
 
     ls -l ${LAVA_BUILDD}/_build/
     find ${LAVA_BUILDD}/_build/ -type f -name 'lava_*.changes'
@@ -27,7 +27,7 @@ else
     echo "Checking if the build has already been deployed."
     if [ -f ${BASEDIR}/latest ]; then
         LATEST=`cat ${BASEDIR}/latest`
-        CHANGES=`find ${LAVA_BUILDD}/_build/ -type f -name 'lava_*buster_amd64.changes'`
+        CHANGES=`find ${LAVA_BUILDD}/_build/ -type f -name 'lava_*bullseye_amd64.changes'`
         VERSION=`grep Version ${CHANGES} | cut -d' ' -f2`
         DPKG=`dpkg --compare-versions ${VERSION} le ${LATEST} ; echo $?` || true
         if [ "${DPKG}" = "0" ]; then
