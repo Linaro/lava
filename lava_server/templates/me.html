@@ -117,7 +117,6 @@
     <p><i>You are not member of any group.</i></p>
     {% endif %}
   {% endwith %}
-    </ul>
   </div>
 
 
@@ -127,14 +126,19 @@
     <h4 class="modal-header">Personal reports</h4>
     <ul class="nav nav-pills nav-stacked">
       <li>
-        <a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+        <a href="{% url 'lava.scheduler.myjobs' %}">
+          <span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
       </li>
       <li>
-        <a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
+        <a href="{% url 'lava.scheduler.mydevice_list' %}">
+          <span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
       </li>
-      <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span
-              class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a></li>
-    </div>
+      <li>
+        <a href="{% url 'lava.scheduler.mydevices_health_history_log' %}">
+          <span class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a>
+      </li>
+    </ul>
+  </div>
 
   <div class="col-md-6">
     <h4 class="modal-header">Remote artifact tokens <small><a data-toggle="modal" href="#token_modal" class="btn btn-xs btn-info empty-token-modal"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h4>
@@ -159,7 +163,6 @@
     <p><i>You have no tokens.</i></p>
     {% endif %}
   {% endwith %}
-    </ul>
   </div>
 
   <!-- Modal HTML -->
