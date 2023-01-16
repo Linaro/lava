@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 
 {% load i18n %}
-{% load keep_spacing %}
 {% load static %}
 {% load make_safe %}
 
@@ -16,7 +15,7 @@
 {% if chart.chart_group %}
 Chart Group:&nbsp;&nbsp;<a href="{% url 'lava.results.chart_list' %}#{{ chart.chart_group|iriencode }}">{{ chart.chart_group }}</a>
 {% endif %}
-{{ chart.description|default_if_none:""|keep_spacing|linebreaks }}
+{{ chart.description|linebreaks }}
 
 <div id="main_container">
 </div>
