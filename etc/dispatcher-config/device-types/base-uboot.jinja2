@@ -230,25 +230,25 @@ actions:
           commands:
           - "{{ (base_uboot_commands + base_uboot_dhcp_command)|join('"\n          - "') }}"
           - "tftp {KERNEL_ADDR} {KERNEL}"
-          - "setenv bootargs '{{ console_device }}{{ baud_rate }} rootfstype=ramfs {{ base_kernel_args }}'"
+          - "setenv bootargs {{ console_device }}{{ baud_rate }} rootfstype=ramfs {{ base_kernel_args }}"
           - "bootm {KERNEL_ADDR}#conf@{{ bootm_device_tree_config }}"
 {% endif %}
         nfs:
           commands:
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "setenv bootargs {{ console_device }}{{ baud_rate }} root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_kernel_args }} {{ base_ip_args }}"
           - "{{ base_uboot_bootcmd }}"
         nbd:
           commands:
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
           # Always quote the entire string if the command includes a colon to support correct YAML.
-          - "setenv bootargs '{{ console_device }}{{ baud_rate }} rw {{ base_nbdroot_args }} {{ base_kernel_args }} {{ base_ip_args }} verbose earlyprintk systemd.log_color=false ${extraargs} rw'"
+          - "setenv bootargs {{ console_device }}{{ baud_rate }} rw {{ base_nbdroot_args }} {{ base_kernel_args }} {{ base_ip_args }} verbose earlyprintk systemd.log_color=false ${extraargs} rw"
           - "{{ base_uboot_bootcmd }}"
         ramdisk:
           commands:
           - "{{ uboot_common_cmds|join('"\n          - "') }}"
-          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "setenv bootargs {{ console_device }}{{ baud_rate }} root=/dev/ram0 {{ base_kernel_args }} {{ base_ip_args }}"
           - "{{ base_uboot_bootcmd }}"
         usb:
           commands:
@@ -266,7 +266,7 @@ actions:
           - "load scsi {ROOT_PART} {KERNEL_ADDR} {KERNEL}"
           - "load scsi {ROOT_PART} {RAMDISK_ADDR} {RAMDISK}; setenv initrd_size ${filesize}"
           - "load scsi {ROOT_PART} {DTB_ADDR} {DTB}"
-          - "setenv bootargs '{{ console_device }}{{ baud_rate }} root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}'"
+          - "setenv bootargs {{ console_device }}{{ baud_rate }} root={ROOT} {{ base_kernel_args }} {{ base_ip_args }}"
           - "{{ base_uboot_bootcmd }}"
       uuu:
         options:
