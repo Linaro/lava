@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
 {% load i18n %}
-{% load keep_spacing %}
 {% load results_accessibility_tags %}
 {% load static %}
 
@@ -93,7 +92,7 @@
 
     <dt>Description</dt>
     <dd>
-    {{ query.description|keep_spacing|linebreaks }}
+    {{ query.description|linebreaks }}
     </dd>
     </dl>
   </div>

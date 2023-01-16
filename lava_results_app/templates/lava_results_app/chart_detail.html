@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
 {% load i18n %}
-{% load keep_spacing %}
 {% load static %}
 {% load results_accessibility_tags %}
 
@@ -66,7 +65,7 @@
     {% endif %}
     <dt>Description</dt>
     <dd>
-    {{ chart.description|keep_spacing|linebreaks }}
+    {{ chart.description|linebreaks }}
     </dd>
     </dl>
   </div>
