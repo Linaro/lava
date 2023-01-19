@@ -1,3 +1,12 @@
+lava (2023.01-1) unstable; urgency=medium
+
+  * LAVA Software 2023.01 release
+
+  [ Antonio Terceiro ]
+  * [c3eb0b19e] debian/tests/management: fix device management command
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 19 Jan 2023 10:23:15 +0100
+
 lava (2022.11-2) unstable; urgency=medium
 
   * LAVA Software 2022.11.1 release
