@@ -1,6 +1,11 @@
 lava (2023.01-1) unstable; urgency=medium
 
   * LAVA Software 2023.01 release
+    - Adds alternative dependency on telnet-client (Closes: #1016849)
+    - Includes fix for Code execution in jinja templates [CVE-2022-45132]
+      (Closes: #1024428)
+    - Includes fix for Recursive XML entity expansion [CVE-2022-44641]
+      (Closes: #1024429)
 
   [ Antonio Terceiro ]
   * [c3eb0b19e] debian/tests/management: fix device management command
