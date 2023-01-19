@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{% endblock %}</title>
 
-  <link rel="icon" type="image/png" href="{% static "lava_server/images/logo.png" %}" />
+  <link rel="icon" type="image/png" href="{% static "lava_server/images/logo.png" %}">
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.css" %}">
-  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/jquery.typeahead.css" %}"/>
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/jquery.typeahead.css" %}">
 
   <script>
     // Hack for fixed navbar anchor problem.
@@ -65,7 +65,7 @@
   {% block styles %}{% endblock %}
 
   {% if lava.branding_css %}
-  <link rel="stylesheet" type="text/css" href="{% static lava.branding_css %}"/>
+  <link rel="stylesheet" type="text/css" href="{% static lava.branding_css %}">
   {% endif %}
 
   {% block extrahead %}{% endblock %}
@@ -74,8 +74,8 @@
 <body onload="fix_anchor_offset()">
 {% block body %}{% endblock %}
 
-<script type="text/javascript" src="{% static "lava_server/js/jquery-3.4.0.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_server/js/bootstrap-3.4.1.js" %}"></script>
+<script src="{% static "lava_server/js/jquery-3.6.1.js" %}"></script>
+<script src="{% static "lava_server/js/bootstrap-3.4.1.js" %}"></script>
 {% block scripts %}
 {% endblock scripts %}
 </body>

@@ -20,12 +20,13 @@
 
 
 import os
-from lava_dispatcher.logical import Deployment
+
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.apply_overlay import ExtractRootfs, ExtractModules
+from lava_dispatcher.actions.deploy.apply_overlay import ExtractModules, ExtractRootfs
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 # Deploy SSH can mean a few options:

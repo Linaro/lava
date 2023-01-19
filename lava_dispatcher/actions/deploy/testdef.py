@@ -18,21 +18,18 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
-import io
-import re
-import base64
 import hashlib
-import tarfile
+import os
+import re
 import shutil
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.utils.vcs import GitHelper
-from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.vcs import GitHelper
 
 
 @nottest
@@ -382,61 +379,6 @@ class InlineRepoAction(RepoAction):
 
         # set testdef metadata in base class
         self.store_testdef(self.parameters["repository"], "inline")
-        return connection
-
-
-class TarRepoAction(RepoAction):
-
-    priority = 0  # FIXME: increase priority once this is working
-    name = "tar-repo-action"
-    description = "apply a tarball of tests to the test image"
-    summary = "unpack tar test repo"
-
-    def __init__(self):
-        super().__init__()
-        self.vcs_binary = "/bin/tar"
-
-    @classmethod
-    def accepts(cls, repo_type):
-        return repo_type == "tar"
-
-    def run(self, connection, max_end_time):
-        """
-        Extracts the provided encoded tar archive into tmpdir.
-        """
-        connection = super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_dir", key=self.parameters["test_name"]
-        )
-        temp_tar = os.path.join(runner_path, "..", "..", "tar-repo.tar")
-
-        try:
-            if not os.path.isdir(runner_path):
-                self.logger.debug("Creating directory to extract the tar archive into.")
-                os.makedirs(runner_path)
-
-            encoded_in = io.StringIO(self.parameters["repository"])
-            decoded_out = io.StringIO()
-            base64.decode(encoded_in, decoded_out)
-
-            # The following two operations can also be done in memory
-            # using cStringIO.
-            # At the moment the tar file sent is not big, but that can change.
-            with open(temp_tar, "w") as write_tar:
-                write_tar.write(decoded_out.getvalue())
-
-            with tarfile.open(temp_tar) as tar:
-                tar.extractall(path=runner_path)
-        except OSError as exc:
-            raise InfrastructureError(
-                "Unable to extract the tar archive: %s" % str(exc)
-            )
-        except tarfile.TarError as ex:
-            raise JobError("Error extracting the tar archive: %s" % str(ex))
-        finally:
-            # Remove the temporary created tar file after it has been extracted.
-            if os.path.isfile(temp_tar):
-                os.unlink(temp_tar)
         return connection
 
 

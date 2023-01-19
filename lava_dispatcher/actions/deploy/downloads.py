@@ -19,10 +19,10 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 from pathlib import Path
+
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.download import DownloadAction
-from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.docker import DockerRun
@@ -57,6 +57,10 @@ class DownloadsAction(DownloadAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction())
+
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
         for image in sorted(parameters["images"].keys()):
@@ -73,9 +77,6 @@ class DownloadsAction(DownloadAction):
         if postprocess:
             if postprocess.get("docker"):
                 self.pipeline.add_action(PostprocessWithDocker(download_dir))
-
-        if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
 
 
 class PostprocessWithDocker(Action):

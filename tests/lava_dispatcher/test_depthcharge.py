@@ -22,6 +22,7 @@
 
 import unittest
 from unittest.mock import patch
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
@@ -53,7 +54,7 @@ class TestDepthchargeAction(StdoutTestCase):
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference("depthcharge.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 

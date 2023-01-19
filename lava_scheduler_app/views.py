@@ -24,25 +24,24 @@ import datetime
 import io
 import logging
 import os
-from pathlib import Path
-import simplejson
-import tarfile
 import re
+import tarfile
+from pathlib import Path
+
+import simplejson
 import voluptuous
 import yaml
-
 from django import forms
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.exceptions import PermissionDenied, FieldDoesNotExist
-from django.urls import reverse
+from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
+from django.db.models import Case, IntegerField, Prefetch, Q, Sum, When
 from django.db.utils import DatabaseError
-from django.db.models import Case, IntegerField, Prefetch, Sum, When
-from django.template.loader import render_to_string
 from django.http import (
     FileResponse,
     Http404,
@@ -53,8 +52,11 @@ from django.http import (
     JsonResponse,
 )
 from django.shortcuts import get_object_or_404, redirect, render
-from django.db.models import Q
+from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import constant_time_compare
+from django.utils.html import escape
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -64,13 +66,27 @@ from lava_common.compat import yaml_load, yaml_safe_dump, yaml_safe_load
 from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
-
-from lava_results_app.dbutils import map_scanned_results, create_metadata_store
-from lava_server.views import index as lava_index
-from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-from lava_server.compat import djt2_paginator_class, is_ajax
-from lava_server.files import File
-
+from lava_results_app.dbutils import create_metadata_store, map_scanned_results
+from lava_results_app.models import (
+    NamedTestAttribute,
+    Query,
+    QueryCondition,
+    TestCase,
+    TestData,
+)
+from lava_results_app.utils import (
+    check_request_auth,
+    description_data,
+    description_filename,
+)
+from lava_scheduler_app.dbutils import (
+    device_type_summary,
+    invalid_template,
+    load_devicetype_template,
+    testjob_submission,
+    validate_job,
+)
+from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -80,54 +96,35 @@ from lava_scheduler_app.models import (
     TestJobUser,
     Worker,
 )
-from lava_scheduler_app.dbutils import (
-    device_type_summary,
-    invalid_template,
-    load_devicetype_template,
-    testjob_submission,
-    validate_job,
-)
-from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
-from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.signals import send_event
-from lava_scheduler_app.templatetags.utils import udecode
-
-from lava_server.lavatable import LavaView
-from lava_results_app.utils import (
-    check_request_auth,
-    description_data,
-    description_filename,
-)
-from lava_results_app.models import (
-    NamedTestAttribute,
-    Query,
-    QueryCondition,
-    TestCase,
-    TestData,
-)
-
-from django.contrib.auth.models import User
 from lava_scheduler_app.tables import (
+    DeviceHealthTable,
+    DeviceLogEntryTable,
+    DeviceTable,
+    DeviceTypeTable,
+    FailedJobTable,
+    HealthJobSummaryTable,
+    IndexJobTable,
     JobErrorsTable,
     JobTable,
-    visible_jobs_with_custom_sort,
-    IndexJobTable,
-    FailedJobTable,
-    DeviceLogEntryTable,
     LogEntryTable,
     LongestJobTable,
-    DeviceTable,
-    RecentJobsTable,
-    DeviceHealthTable,
-    DeviceTypeTable,
-    WorkerTable,
-    HealthJobSummaryTable,
-    OverviewJobsTable,
     NoWorkerDeviceTable,
-    QueueJobsTable,
+    OverviewJobsTable,
     PassingHealthTable,
+    QueueJobsTable,
+    RecentJobsTable,
     RunningTable,
+    WorkerTable,
+    visible_jobs_with_custom_sort,
 )
+from lava_scheduler_app.templatetags.utils import udecode
+from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
+from lava_server.compat import djt2_paginator_class, is_ajax
+from lava_server.files import File
+from lava_server.lavatable import LavaView
+from lava_server.views import index as lava_index
 
 
 def request_config(request, paginate):
@@ -1103,7 +1100,7 @@ def internal_v1_jobs(request, pk):
     token = request.META.get("HTTP_LAVA_TOKEN")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
-    if token != job.token:
+    if not constant_time_compare(token, job.token):
         return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
     if request.method == "GET":
@@ -1255,7 +1252,7 @@ def internal_v1_jobs_logs(request, pk):
     token = request.META.get("HTTP_LAVA_TOKEN")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
-    if token != job.token:
+    if not constant_time_compare(token, job.token):
         return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
     # check data
@@ -1344,7 +1341,7 @@ def internal_v1_workers(request, pk=None):
         token = request.META.get("HTTP_LAVA_TOKEN")
         if token is None:
             return JsonResponse({"error": "Missing 'token'"}, status=400)
-        if token != worker.token:
+        if not constant_time_compare(token, worker.token):
             return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
         # Update the version
@@ -1679,18 +1676,7 @@ def job_detail(request, pk):
         except TestJobUser.DoesNotExist:
             is_favorite = False
 
-    description = description_data(job)
-    job_data = description.get("job", {})
-    action_list = job_data.get("actions", [])
-    pipeline = description.get("pipeline", {})
-
-    deploy_list = [item["deploy"] for item in action_list if "deploy" in item]
-    boot_list = [item["boot"] for item in action_list if "boot" in item]
-    test_list = [item["test"] for item in action_list if "test" in item]
-    sections = []
-    for action in pipeline:
-        if "section" in action:
-            sections.append({action["section"]: action["level"]})
+    pipeline = description_data(job).get("pipeline", {})
 
     # Validate the job definition
     validation_errors = ""
@@ -1721,12 +1707,7 @@ def job_detail(request, pk):
         "available_content_types": simplejson.dumps(
             QueryCondition.get_similar_job_content_types()
         ),
-        "device_data": description.get("device", {}),
-        "job_data": job_data,
         "pipeline_data": pipeline,
-        "deploy_list": deploy_list,
-        "boot_list": boot_list,
-        "test_list": test_list,
         "job_tags": job.tags.all(),
         "size_limit": job.size_limit,
         "validation_errors": validation_errors,
@@ -1782,13 +1763,11 @@ def job_detail(request, pk):
 @BreadCrumb("Definition", parent=job_detail, needs=["pk"])
 def job_definition(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
-    description = description_data(job)
     return render(
         request,
         "lava_scheduler_app/job_definition.html",
         {
             "job": job,
-            "pipeline": description.get("pipeline", []),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_definition, pk=pk),
             "show_cancel": job.can_cancel(request.user),
             "show_fail": job.state == TestJob.STATE_CANCELING
@@ -2576,7 +2555,7 @@ def device_health(request, pk):
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
             health = request.POST.get("health").upper()
-            reason = request.POST.get("reason")
+            reason = escape(request.POST.get("reason"))
             response = __set_device_health__(device, request.user, health, reason)
             if response is None:
                 return HttpResponseRedirect(
@@ -2634,7 +2613,7 @@ def worker_health(request, pk):
                 return HttpResponseForbidden("Permission denied")
 
             health = request.POST.get("health")
-            reason = request.POST.get("reason")
+            reason = escape(request.POST.get("reason"))
             if health == "Active":
                 worker.go_health_active(request.user, reason)
             elif health == "Maintenance":

@@ -7,13 +7,10 @@
 <div class="row">
   <div class="col-md-6">
   <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET">
-    {% for key,value in request.GET.iteritems %}
+    {% for key,value in request.GET.items %}
     <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
     {% endfor %}
     <input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
-    {% if request.GET.end %}<input type="hidden" name="{{ table.prefix }}end" value="{{ request.GET.end }}">{% endif %}
-    {% if request.GET.start %}<input type="hidden" name="{{ table.prefix }}start" value="{{ request.GET.start }}">{% endif %}
-    {% if request.GET.health_check %}<input type="hidden" name="{{ table.prefix }}health_check" value="{{ request.GET.health_check }}">{% endif %}
     <div class="form-group">
       Show <select class="form-control input-sm" id="{{ table.prefix }}length" name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
         {{ table|get_length_select:request.GET }}
@@ -24,13 +21,13 @@
 {%  if table.Meta.searches|get_search_data:table.prefix %}
   <div class="col-md-5">
     <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
-      {% for key,value in request.GET.iteritems %}
+      {% for key,value in request.GET.dict.items %}
       <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
       {% endfor %}
       <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
       <div class="form-group">
         <label>Search</label>
-        <input type="text" name="{{ table.prefix }}search" value="{{ terms_data|get_terms_data:table.prefix|join:" " }}">
+        <input type="text" name="{{ table.prefix }}search" placeholder="Press ? for search help">
       </div>
     </form>
   </div>
@@ -120,7 +117,7 @@
         {% empty %}
         {% if table.empty_text %}
         {% block table.tbody.empty_text %}
-        <tr><td colspan="{{ table.columns|length }}">{{ table.empty_text }}</td></tr>
+        <tr><td colspan="{{ table.columns|length }}"><div style="text-align: center">{{ table.empty_text }}</div></td></tr>
         {% endblock table.tbody.empty_text %}
         {% endif %}
         {% endfor %}

@@ -20,60 +20,59 @@
 import csv
 import io
 import pathlib
+
 import voluptuous
 import yaml
-import jinja2
-import lava_common.schemas as schemas
-import lava_common.schemas.test.testdef as testdef
-
 from django.conf import settings
 from django.db import transaction
-from django.http.response import HttpResponse
 from django.http import Http404
+from django.http.response import HttpResponse
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
+from rest_framework import status, viewsets
+from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import (
+    AllowAny,
+    DjangoModelPermissions,
+    DjangoModelPermissionsOrAnonReadOnly,
+    IsAuthenticatedOrReadOnly,
+)
+from rest_framework.response import Response
+from rest_framework.utils import formatting
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from lava_common.version import __version__
+from lava_common import schemas
 from lava_common.compat import yaml_dump, yaml_safe_load
-from lava_results_app.models import TestSuite, TestCase
+from lava_common.schemas.test import testdef
+from lava_common.version import __version__
+from lava_rest_app import filters
+from lava_rest_app.base import views as base_views
+from lava_rest_app.base.pasers import PlainTextParser
+from lava_results_app.models import TestCase, TestSuite
 from lava_results_app.utils import (
     export_testcase,
     get_testcases_with_limit,
     testcase_export_fields,
 )
-from lava_rest_app.base import views as base_views
-from lava_rest_app.base.pasers import PlainTextParser
-from lava_rest_app import filters
 from lava_scheduler_app.dbutils import testjob_submission
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DevicesUnavailableException,
+    DeviceType,
+    GroupDevicePermission,
+    GroupDeviceTypePermission,
+    Tag,
+    TestJob,
+)
 from lava_scheduler_app.schema import SubmissionException
 from lava_scheduler_app.views import __set_device_health__
 from lava_server.files import File
 
-from rest_framework import status, viewsets
-from rest_framework.permissions import (
-    DjangoModelPermissions,
-    DjangoModelPermissionsOrAnonReadOnly,
-    IsAuthenticatedOrReadOnly,
-)
-from rest_framework_extensions.mixins import NestedViewSetMixin
-from rest_framework.response import Response
-from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
-from rest_framework.permissions import AllowAny
-from rest_framework.utils import formatting
-from rest_framework.parsers import JSONParser, FormParser, MultiPartParser
-from lava_scheduler_app.models import (
-    Alias,
-    Device,
-    DeviceType,
-    DevicesUnavailableException,
-    GroupDeviceTypePermission,
-    GroupDevicePermission,
-    Tag,
-)
-
 from . import serializers
 
 try:
-    from rest_framework.decorators import detail_route, action
+    from rest_framework.decorators import action, detail_route
 except ImportError:
     from rest_framework.decorators import action
 
@@ -253,8 +252,11 @@ class TestJobViewSet(base_views.TestJobViewSet):
 
     @detail_route(methods=["get"], suffix="cancel")
     def cancel(self, request, **kwargs):
-        # django-rest-framework handles django's PermissionDenied error
-        # automagically
+        # django-rest-framework will allow anyone to call this method.
+        # Permissions on who can cancel the job are handled by LAVA internally.
+        # If the job is already finished or canceling is in progress
+        # this method would report as you successfully cancelled the job
+        # even if you don't have required permissions.
         with transaction.atomic():
             job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
             job.cancel(request.user)
@@ -274,7 +276,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
     queryset = TestSuite.objects
     serializer_class = serializers.TestSuiteSerializer
-    filter_class = filters.TestSuiteFilter
+    filterset_class = filters.TestSuiteFilter
 
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
@@ -317,7 +319,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = TestCase.objects
     serializer_class = serializers.TestCaseSerializer
-    filter_class = filters.TestCaseFilter
+    filterset_class = filters.TestCaseFilter
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
@@ -420,7 +422,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
 
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.DeviceSerializer
-    filter_class = filters.DeviceFilter
+    filterset_class = filters.DeviceFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
     def get_serializer_class(self):
@@ -515,7 +517,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             raise ValidationError({"device": "Device dictionary is required."})
 
         try:
-            template = jinja2.Environment(
+            template = JinjaSandboxEnv(
                 loader=File("device").loader(), autoescape=False, trim_blocks=True
             ).from_string(devicedict)
             yaml_safe_load(template.render())
@@ -532,7 +534,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
 class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.WorkerSerializer
-    filter_class = filters.WorkerFilter
+    filterset_class = filters.WorkerFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
 
     def get_serializer_class(self):
@@ -540,8 +542,6 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             return serializers.EnvironmentSerializer
         if self.action == "config":
             return serializers.ConfigSerializer
-        if self.action == "certificate":
-            return serializers.SlaveKeySerializer
         else:
             return serializers.WorkerSerializer
 
@@ -558,8 +558,8 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
         return response
 
     def _set_file(self, request, path, content):
+        filename = path.name
         try:
-            filename = path.name
             path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
             path.write_text(content, encoding="utf-8")
             return Response(
@@ -620,8 +620,8 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
 class AliasViewSet(viewsets.ModelViewSet):
     queryset = Alias.objects
     serializer_class = serializers.AliasSerializer
-    filter_fields = "__all__"
-    filter_class = filters.AliasFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.AliasFilter
     ordering_fields = "__all__"
     permission_classes = [DjangoModelPermissions]
 
@@ -635,8 +635,8 @@ class AliasViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects
     serializer_class = serializers.TagSerializer
-    filter_fields = "__all__"
-    filter_class = filters.TagFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.TagFilter
     ordering_fields = "__all__"
     permission_classes = [DjangoModelPermissions]
 
@@ -647,8 +647,8 @@ class TagViewSet(viewsets.ModelViewSet):
 class GroupDeviceTypePermissionViewSet(viewsets.ModelViewSet):
     queryset = GroupDeviceTypePermission.objects
     serializer_class = serializers.GroupDeviceTypePermissionSerializer
-    filter_fields = "__all__"
-    filter_class = filters.GroupDeviceTypePermissionFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.GroupDeviceTypePermissionFilter
     ordering_fields = "__all__"
     permission_classes = [base_views.IsSuperUser]
 
@@ -659,8 +659,8 @@ class GroupDeviceTypePermissionViewSet(viewsets.ModelViewSet):
 class GroupDevicePermissionViewSet(viewsets.ModelViewSet):
     queryset = GroupDevicePermission.objects
     serializer_class = serializers.GroupDevicePermissionSerializer
-    filter_fields = "__all__"
-    filter_class = filters.GroupDevicePermissionFilter
+    filterset_fields = "__all__"
+    filterset_class = filters.GroupDevicePermissionFilter
     ordering_fields = "__all__"
     permission_classes = [base_views.IsSuperUser]
 
@@ -674,7 +674,6 @@ class SystemViewSet(viewsets.ViewSet):
 
     Endpoints:
 
-    * `/system/certificate/`
     * `/system/master_config/`
     * `/system/version/`
     * `/system/whoami/`

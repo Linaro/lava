@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
 {% load i18n %}
-{% load keep_spacing %}
 {% load static %}
 {% load results_accessibility_tags %}
 
@@ -66,7 +65,7 @@
     {% endif %}
     <dt>Description</dt>
     <dd>
-    {{ chart.description|keep_spacing|linebreaks }}
+    {{ chart.description|linebreaks }}
     </dd>
     </dl>
   </div>
@@ -210,10 +209,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/sortable.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_server/js/bootbox.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
+<script src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
+<script src="{% static "lava_results_app/js/sortable.js" %}"></script>
+<script src="{% static "lava_server/js/bootbox.js" %}"></script>
+<script src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
 <script>
 
   $("#queries").on("mouseup", function(event, ui) {

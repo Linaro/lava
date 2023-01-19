@@ -17,21 +17,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import aiohttp
-from aiohttp import web
 import asyncio
 import contextlib
 import signal
 import weakref
+
+import aiohttp
 import zmq
 import zmq.asyncio
-from zmq.utils.strtypes import u
-
+from aiohttp import web
 from django.conf import settings
+from zmq.utils.strtypes import u
 
 from lava_common.version import __version__
 from lava_server.cmdutils import LAVADaemonCommand
-
 
 TIMEOUT = 5
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"

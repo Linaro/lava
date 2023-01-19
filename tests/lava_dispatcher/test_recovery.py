@@ -23,11 +23,11 @@ import os
 import unittest
 
 from lava_common.compat import yaml_safe_load
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.utils import DummyLogger, infrastructure_error_multi_paths
 from lava_dispatcher.utils.udev import allow_fs_label
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import DummyLogger, infrastructure_error_multi_paths
 
 
 class FastBootFactory(Factory):
@@ -133,7 +133,7 @@ class TestRecoveryMode(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "hi6220-recovery.yaml", job=self.fastboot_job
         )
-        self.assertEqual(description_ref, self.fastboot_job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.fastboot_job.pipeline.describe())
 
         requires_board_id = not allow_fs_label(self.fastboot_job.device)
         self.assertFalse(requires_board_id)
@@ -156,7 +156,7 @@ class TestRecoveryMode(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "x15-recovery.yaml", job=self.uboot_job
         )
-        self.assertEqual(description_ref, self.uboot_job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.uboot_job.pipeline.describe())
 
         requires_board_id = not allow_fs_label(self.uboot_job.device)
         self.assertFalse(requires_board_id)

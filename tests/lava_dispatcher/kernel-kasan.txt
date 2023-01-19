@@ -1,0 +1,70 @@
+[   92.205897]     # fat_time_unix2fat_test: ok 11 - VFAT 10ms resolution (1980-01-01 00:00:00:0010)
+[   92.209501]     # fat_time_unix2fat_test: pass:11 fail:0 skip:0 total:11
+[   92.213680]     ok 3 - fat_time_unix2fat_test
+[   92.216480] # fat_test: pass:3 fail:0 skip:0 total:3
+[   92.218245] # Totals: pass:23 fail:0 skip:0 total:23
+[   92.220267] ok 4 - fat_test
+[   92.223985]     # Subtest: kasan
+[   92.224011]     1..48
+[   92.225932] ==================================================================
+[   92.229826] BUG: KASAN: slab-out-of-bounds in kmalloc_oob_right+0x190/0x3b8
+[   92.232764] Write of size 1 at addr c6aaf473 by task kunit_try_catch/191
+[   92.236142] 
+[   92.236941] CPU: 1 PID: 191 Comm: kunit_try_catch Tainted: G        W         5.15.75-rc1 #1
+[   92.241169] Hardware name: Generic DT based system
+[   92.243605] Backtrace: 
+[   92.244881] [<c1abe4cc>] (dump_backtrace) from [<c1abe718>] (show_stack+0x20/0x24)
+[   92.248675]  r7:00000001 r6:00000080 r5:c2a3c90c r4:40000093
+[   92.251439] [<c1abe6f8>] (show_stack) from [<c1ac7954>] (dump_stack_lvl+0x60/0x78)
+[   92.255269] [<c1ac78f4>] (dump_stack_lvl) from [<c1ac354c>] (print_address_description.constprop.0+0x6c/0x2c8)
+[   92.260224]  r7:00000001 r6:c0a731b0 r5:ee5e909c r4:c6aaf473
+[   92.263050] [<c1ac34e0>] (print_address_description.constprop.0) from [<c0604224>] (kasan_report+0x1ec/0x208)
+[   92.267998]  r8:ffffc000 r7:00000001 r6:c0a731b0 r5:000000bf r4:c6aaf473
+[   92.271236] [<c0604038>] (kasan_report) from [<c0604730>] (__asan_store1+0x4c/0x50)
+[   92.275039]  r8:c6c0fe90 r7:c41bfc00 r6:b7d81fc4 r5:c6aaf400 r4:c6c0ff00
+[   92.278356] [<c06046e4>] (__asan_store1) from [<c0a731b0>] (kmalloc_oob_right+0x190/0x3b8)
+[   92.282360] [<c0a73020>] (kmalloc_oob_right) from [<c0a7a140>] (kunit_try_run_case+0x98/0x120)
+[   92.286616]  r10:c41bfc0c r9:ffffc000 r8:00000000 r7:c6b7e900 r6:c311e6a0 r5:c41bfc00
+[   92.290543]  r4:c311e8e0
+[   92.291886] [<c0a7a0a8>] (kunit_try_run_case) from [<c0a7c288>] (kunit_generic_run_threadfn_adapter+0x34/0x50)
+[   92.296966]  r9:ffffc000 r8:c6b7e900 r7:c6b7e900 r6:c6b7e900 r5:c0a7a0a8 r4:c41bfc0c
+[   92.300785] [<c0a7c254>] (kunit_generic_run_threadfn_adapter) from [<c03a2490>] (kthread+0x22c/0x254)
+[   92.305390]  r5:c6ab6600 r4:00000000
+[   92.307201] [<c03a2264>] (kthread) from [<c030015c>] (ret_from_fork+0x14/0x38)
+[   92.310779] Exception stack(0xc6c0ffb0 to 0xc6c0fff8)
+[   92.313350] ffa0:                                     00000000 00000000 00000000 00000000
+[   92.317320] ffc0: 00000000 00000000 00000000 00000000 00000000 00000000 00000000 00000000
+[   92.321345] ffe0: 00000000 00000000 00000000 00000000 00000013 00000000
+[   92.324618]  r10:00000000 r9:00000000 r8:00000000 r7:00000000 r6:00000000 r5:c03a2264
+[   92.328441]  r4:c6ab6580
+[   92.329725] 
+[   92.330509] Allocated by task 191:
+[   92.332227]  __kasan_kmalloc+0xa8/0xdc
+[   92.334110]  kmem_cache_alloc_trace+0x268/0x558
+[   92.336374]  kmalloc_oob_right+0xc4/0x3b8
+[   92.338375]  kunit_try_run_case+0x98/0x120
+[   92.340437]  kunit_generic_run_threadfn_adapter+0x34/0x50
+[   92.343090]  kthread+0x22c/0x254
+[   92.344739]  ret_from_fork+0x14/0x38
+[   92.346538]  0x0
+[   92.347490] 
+[   92.348291] The buggy address belongs to the object at c6aaf400
+[   92.348291]  which belongs to the cache kmalloc-128 of size 128
+[   92.354012] The buggy address is located 115 bytes inside of
+[   92.354012]  128-byte region [c6aaf400, c6aaf480)
+[   92.359031] The buggy address belongs to the page:
+[   92.361392] page:(ptrval) refcount:1 mapcount:0 mapping:00000000 index:0x0 pfn:0x46aaf
+[   92.365264] flags: 0x200(slab|zone=0)
+[   92.367120] raw: 00000200 00000000 00000122 c4001300 00000000 80100010 ffffffff 00000001
+[   92.371076] raw: 00000000
+[   92.372420] page dumped because: kasan: bad access detected
+[   92.375156] 
+[   92.375955] Memory state around the buggy address:
+[   92.378323]  c6aaf300: 00 00 00 00 00 00 00 00 00 00 00 00 fc fc fc fc
+[   92.381531]  c6aaf380: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[   92.384742] >c6aaf400: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03 fc
+[   92.387948]                                                      ^
+[   92.390973]  c6aaf480: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[   92.394192]  c6aaf500: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[   92.397394] ==================================================================
+[   92.400924] Disabling lock debugging due to kernel taint

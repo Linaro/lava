@@ -20,9 +20,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import ldap
-from django.contrib.auth.middleware import RemoteUserMiddleware
-from django.contrib.auth.backends import RemoteUserBackend
 from django.contrib import auth
+from django.contrib.auth.backends import RemoteUserBackend
+from django.contrib.auth.middleware import RemoteUserMiddleware
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured
 

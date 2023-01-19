@@ -20,16 +20,17 @@
 import datetime
 import importlib
 import json
+
 import pytest
 import zmq
-
 from django.utils import timezone
 
 from lava_scheduler_app.models import Worker
 
-Command = importlib.import_module(
+lava_scheduler = importlib.import_module(
     "lava_server.management.commands.lava-scheduler"
-).Command
+)
+Command = lava_scheduler.Command
 
 
 @pytest.mark.django_db
@@ -105,7 +106,7 @@ def test_get_available_dts(mocker):
 @pytest.mark.django_db
 def test_main_loop(mocker):
     schedule = mocker.Mock()
-    mocker.patch("lava_server.management.commands.lava-scheduler.schedule", schedule)
+    mocker.patch(__name__ + ".lava_scheduler.schedule", schedule)
 
     cmd = Command()
     cmd.logger = mocker.Mock()

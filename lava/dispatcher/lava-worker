@@ -21,8 +21,8 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-from lava_dispatcher.worker import run
 
+from lava_dispatcher.worker import run
 
 # ensure we will find lava-run when running uninstalled
 bindir = os.path.abspath(os.path.dirname(__file__))

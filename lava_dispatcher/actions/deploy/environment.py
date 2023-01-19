@@ -20,6 +20,7 @@
 
 import contextlib
 import os
+
 import yaml
 
 from lava_common.compat import yaml_safe_load

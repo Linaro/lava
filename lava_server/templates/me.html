@@ -19,7 +19,7 @@
           {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
       <dd><a href="{% url 'password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
-      {% if settings.AUTH_SOCIALACCOUNT or settings.AUTH_GITLAB_URL %}
+      {% if socialaccount_enabled %}
       <dt>Social accounts</dt>
       <dd><a href="{% url 'socialaccount_connections' %}"><span class="glyphicon glyphicon-link"></span> Manage connections</a></dd>
       {% endif %}
@@ -41,12 +41,12 @@
         <form id="irc_form" method="post" action="{% url 'lava.update_irc_settings' %}">
 	  {% csrf_token %}
         <div class="modal-body well">
-	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	  <div class="errorlist" style="color: red;"></div>
 	    {{ irc_form.as_p }}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input class="btn btn-primary" type="submit" value="Save" />
+          <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>
 
@@ -65,12 +65,12 @@
         <form id="table_length_form" method="post" action="{% url 'lava.update_table_length_setting' %}">
 	  {% csrf_token %}
         <div class="modal-body well">
-	  <div id="irc_errors" class="errorlist" style="color: red;"></div>
+	  <div class="errorlist" style="color: red;"></div>
 	    {{ table_length_form.as_p }}
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input class="btn btn-primary" type="submit" value="Save" />
+          <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>
 
@@ -83,7 +83,7 @@
   {% with groups=user.groups.all %}
     {% if groups %}
     <p>You are member of the following LAVA groups:</p>
-    <div class="panel-group" id="accordion">
+    <div class="panel-group">
     {% for group in groups %}
       {% with user_set=group.user_set.all %}
         {% with users_count=user_set|length %}
@@ -117,7 +117,6 @@
     <p><i>You are not member of any group.</i></p>
     {% endif %}
   {% endwith %}
-    </ul>
   </div>
 
 
@@ -127,26 +126,31 @@
     <h4 class="modal-header">Personal reports</h4>
     <ul class="nav nav-pills nav-stacked">
       <li>
-        <a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+        <a href="{% url 'lava.scheduler.myjobs' %}">
+          <span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
       </li>
       <li>
-        <a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
+        <a href="{% url 'lava.scheduler.mydevice_list' %}">
+          <span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
       </li>
-      <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span
-              class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a></li>
-    </div>
+      <li>
+        <a href="{% url 'lava.scheduler.mydevices_health_history_log' %}">
+          <span class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a>
+      </li>
+    </ul>
+  </div>
 
   <div class="col-md-6">
     <h4 class="modal-header">Remote artifact tokens <small><a data-toggle="modal" href="#token_modal" class="btn btn-xs btn-info empty-token-modal"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h4>
     {% with tokens=user.remoteartifactsauth_set.all %}
     {% if tokens %}
     <p>You have following tokens:</p>
-    <div class="panel-group" id="accordion">
+    <div class="panel-group">
       {% for token_obj in tokens %}
       <div class="panel panel-default">
         <div class="panel-heading">
           <h4 class="panel-title">
-            <a data-toggle="modal" data-id={{ token_obj.id }} data-name={{ token_obj.name }} data-token={{ token_obj.token }} href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
+            <a data-toggle="modal" data-id="{{ token_obj.id }}" data-name="{{ token_obj.name }}" data-token="{{ token_obj.token }}" href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
             <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="{% url 'lava.delete_remote_auth' token_obj.id %}" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
               <span class="glyphicon glyphicon-trash"></span>
             </a>
@@ -159,7 +163,6 @@
     <p><i>You have no tokens.</i></p>
     {% endif %}
   {% endwith %}
-    </ul>
   </div>
 
   <!-- Modal HTML -->
@@ -180,7 +183,7 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-          <input class="btn btn-primary" type="submit" value="Save" />
+          <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>
 
@@ -189,13 +192,12 @@
   </div>
 
 </div>
-</div>
 
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static 'lava_server/js/bootbox.js' %}"></script>
-<script type="text/javascript" src="{% static 'lava_results_app/js/bootbox.data.toggle.js' %}"></script>
+<script src="{% static 'lava_server/js/bootbox.js' %}"></script>
+<script src="{% static 'lava_results_app/js/bootbox.data.toggle.js' %}"></script>
 <script>
 $(document).ready(function () {
     add_bootbox_data_toggle();

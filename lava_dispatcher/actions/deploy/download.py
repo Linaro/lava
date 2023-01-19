@@ -25,40 +25,40 @@
 
 import contextlib
 import errno
+import hashlib
 import math
 import os
 import pathlib
 import shutil
-import time
-import hashlib
-import requests
 import subprocess  # nosec - verified.
+import time
+from urllib.parse import quote_plus, urlparse
 
-from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.protocols.lxc import LxcProtocol
-from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.connections.serial import ConnectDevice
-from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Deployment, RetryAction
-from lava_dispatcher.utils.compression import untar_file
-from lava_dispatcher.utils.filesystem import (
-    copy_to_lxc,
-    lava_lxc_home,
-    copy_overlay_to_lxc,
-)
-from lava_dispatcher.utils.network import requests_retry
+import requests
+
 from lava_common.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_TIMEOUT,
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
-
-from urllib.parse import quote_plus, urlparse
+from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.protocols.lxc import LxcProtocol
+from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.filesystem import (
+    copy_overlay_to_lxc,
+    copy_to_lxc,
+    lava_lxc_home,
+)
+from lava_dispatcher.utils.network import requests_retry
 
 
 class DownloaderAction(RetryAction):
@@ -94,7 +94,7 @@ class DownloaderAction(RetryAction):
             action = ScpDownloadAction(
                 self.key, self.path, url, self.uniquify, params=self.params
             )
-        elif url.scheme == "http" or url.scheme == "https":
+        elif url.scheme in ["http", "https"]:
             action = HttpDownloadAction(
                 self.key, self.path, url, self.uniquify, params=self.params
             )

@@ -25,43 +25,39 @@ Keep to just the response rendering functions
 """
 
 import contextlib
-import os
 import csv
 import logging
-import simplejson
-import yaml
+import os
 from collections import OrderedDict
 
-from django_tables2 import RequestConfig
+import simplejson
+import yaml
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
 from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
+from django.shortcuts import get_object_or_404, loader, render
 from django.views.decorators.http import require_POST
-from django.shortcuts import render, loader
+from django_tables2 import RequestConfig
 
 from lava_common.compat import yaml_dump, yaml_load
-from lava_server.compat import djt2_paginator_class
-from lava_server.views import index as lava_index
-from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-from django.shortcuts import get_object_or_404
-from lava_results_app.tables import (
-    ResultsTable,
-    SuiteTable,
-    ResultsIndexTable,
-    TestJobResultsTable,
-)
-from lava_results_app.utils import StreamEcho
 from lava_results_app.dbutils import export_testsuite
 from lava_results_app.models import (
     QueryCondition,
-    TestSuite,
     TestCase,
-    TestSet,
     TestData,
+    TestSet,
+    TestSuite,
+)
+from lava_results_app.tables import (
+    ResultsIndexTable,
+    ResultsTable,
+    SuiteTable,
+    TestJobResultsTable,
 )
 from lava_results_app.utils import (
+    StreamEcho,
     check_request_auth,
     export_testcase,
     get_testcases_with_limit,
@@ -70,8 +66,10 @@ from lava_results_app.utils import (
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
 from lava_scheduler_app.views import get_restricted_job
-
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
+from lava_server.compat import djt2_paginator_class
 from lava_server.lavatable import LavaView
+from lava_server.views import index as lava_index
 
 
 class ResultsView(LavaView):
@@ -432,7 +430,7 @@ def testcase(request, case_id, job=None, pk=None):
             f_metadata = yaml_load(extra_case.metadata)
             if not f_metadata:
                 continue
-        except TypeError:
+        except (TypeError, yaml.YAMLError):
             logger.info("Unable to load extra case metadata for %s", extra_case)
             continue
         try:

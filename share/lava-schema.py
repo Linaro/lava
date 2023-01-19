@@ -21,11 +21,16 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import jinja2
 import pathlib
 import sys
+
 import voluptuous as v
 import yaml
+from jinja2 import FileSystemLoader
+from jinja2.exceptions import TemplateError as JinjaTemplateError
+from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
+from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
@@ -36,16 +41,16 @@ def check_device(data, options, prefix=""):
         if options.render:
             data = options.env.from_string(data).render()
         data = yaml.safe_load(data)
-    except jinja2.TemplateNotFound as exc:
+    except JinjaTemplateNotFound as exc:
         print("%sinvalide device template:" % prefix)
         print("%smissing template: %s" % (prefix, exc))
         return 1
-    except jinja2.TemplateSyntaxError as exc:
+    except JinjaTemplateSyntaxError as exc:
         print("%sinvalide device template:" % prefix)
         print("%serror: %s" % (prefix, exc))
         print("%sline: %d" % (prefix, exc.lineno))
         return 1
-    except jinja2.TemplateError as exc:
+    except JinjaTemplateError as exc:
         print("%sinvalide device template:" % prefix)
         print("%serror: %s" % (prefix, exc))
         print("%serror at: %d" % (prefix, exc.lineno))
@@ -180,8 +185,8 @@ def main():
                     "/usr/share/lava-server/device-types",
                 ]
             # create the jinja2 environment once as this is a slow operation
-            options.env = jinja2.Environment(  # nosec - used to render yaml
-                autoescape=False, loader=jinja2.FileSystemLoader(options.path)
+            options.env = JinjaSandboxEnv(  # nosec - used to render yaml
+                autoescape=False, loader=FileSystemLoader(options.path)
             )
             glob = "*.jinja2"
         else:

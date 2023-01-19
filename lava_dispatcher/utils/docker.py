@@ -18,10 +18,10 @@
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
 import logging
-from pathlib import Path
 import random
 import subprocess
 import time
+from pathlib import Path
 
 from lava_common.exceptions import InfrastructureError
 

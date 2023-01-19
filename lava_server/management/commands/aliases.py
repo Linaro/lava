@@ -20,7 +20,7 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.db import IntegrityError
 
-from lava_scheduler_app.models import DeviceType, Alias
+from lava_scheduler_app.models import Alias, DeviceType
 from lava_server.compat import get_sub_parser_class
 
 
@@ -54,7 +54,7 @@ class Command(BaseCommand):
         remove_parser.add_argument("alias", help="Alias to remove from device type")
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         if options["sub_command"] == "list":

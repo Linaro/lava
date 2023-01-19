@@ -8,7 +8,7 @@ Environment=LOGLEVEL=DEBUG WORKERS=4 WORKER_CLASS=eventlet LOGFILE=/var/log/lava
 EnvironmentFile=-/etc/default/lava-server-gunicorn
 EnvironmentFile=-/etc/lava-server/lava-server-gunicorn
 ExecStart=/usr/bin/gunicorn3 lava_server.wsgi --log-level $LOGLEVEL --log-file $LOGFILE -u lavaserver -g lavaserver --worker-class $WORKER_CLASS --workers $WORKERS $RELOAD $BIND $TIMEOUT $EXTRA_ARGS
-ExecReload=/bin/kill -USR1 $MAINPID
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 
 [Install]

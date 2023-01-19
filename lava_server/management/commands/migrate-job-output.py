@@ -17,14 +17,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import time
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.utils import mkdir
-
-import os
-import time
 
 
 class Command(BaseCommand):

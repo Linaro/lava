@@ -1,4 +1,5 @@
 import pytest
+
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.device import PipelineDevice

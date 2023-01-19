@@ -21,24 +21,26 @@
 import os
 import sys
 import time
-import jinja2
-import voluptuous
 import unittest
+
+import voluptuous
+from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import (
+    ConfigurationError,
     InfrastructureError,
     JobError,
     LAVABug,
     LAVAError,
-    ConfigurationError,
 )
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.image import DeployImages
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
 from tests.utils import DummyLogger
 
 
@@ -53,7 +55,7 @@ class StdoutTestCase(unittest.TestCase):
             sys.stderr.write("WARNING: modifying pipeline references!")
             with open(y_file, "w") as describe:
                 yaml_safe_dump(
-                    job.pipeline.describe(False), describe, default_flow_style=None
+                    job.pipeline.describe(), describe, default_flow_style=None
                 )
         with open(y_file, "r") as f_ref:
             return yaml_safe_load(f_ref)
@@ -162,10 +164,10 @@ class Factory:
     validate_job_strict = False
 
     def prepare_jinja_template(self, hostname, jinja_data):
-        string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
-        type_loader = jinja2.FileSystemLoader([self.DEVICE_TYPES_PATH])
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+        string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
+        type_loader = FileSystemLoader([self.DEVICE_TYPES_PATH])
+        env = JinjaSandboxEnv(
+            loader=ChoiceLoader([string_loader, type_loader]),
             trim_blocks=True,
             autoescape=False,
         )

@@ -28,53 +28,52 @@ TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
 
-from datetime import timedelta
-import logging
-from urllib.parse import quote
-import yaml
 import contextlib
+import logging
+from datetime import timedelta
+from urllib.parse import quote
 
+import yaml
 from django.conf import settings
-from django.contrib.auth.models import User, Group
+from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models, connection, transaction
+from django.db import connection, models, transaction
 from django.db.models import Case, IntegerField, Lookup, Q, Sum, When
 from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from lava_common.compat import yaml_load
 from lava_common.decorators import nottest
-from lava_server.managers import MaterializedView
-from lava_scheduler_app.models import TestJob, Device
+from lava_results_app.utils import help_max_length
 from lava_scheduler_app.managers import (
-    RestrictedTestJobQuerySet,
     RestrictedTestCaseQuerySet,
+    RestrictedTestJobQuerySet,
     RestrictedTestSuiteQuerySet,
 )
-
-from lava_results_app.utils import help_max_length
+from lava_scheduler_app.models import Device, TestJob
+from lava_server.managers import MaterializedView
 
 
 class InvalidConditionsError(Exception):
-    """ Raise when querying by URL has incorrect condition arguments. """
+    """Raise when querying by URL has incorrect condition arguments."""
 
 
 class InvalidContentTypeError(Exception):
-    """ Raise when querying by URL content type (table name). """
+    """Raise when querying by URL content type (table name)."""
 
 
 class QueryUpdatedError(Exception):
-    """ Error raised if query is updating or recently updated. """
+    """Error raised if query is updating or recently updated."""
 
 
 class RefreshLiveQueryError(Exception):
-    """ Error raised if refreshing the live query is attempted. """
+    """Error raised if refreshing the live query is attempted."""
 
 
 class Queryable:
@@ -169,7 +168,7 @@ class TestSuite(models.Model, Queryable):
 
     job = models.ForeignKey(TestJob, on_delete=models.CASCADE)
     name = models.CharField(
-        verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
+        verbose_name="Suite name", blank=True, null=True, default=None, max_length=200
     )
 
     def testcase_count(self, value=None):
@@ -268,7 +267,7 @@ class TestSuite(models.Model, Queryable):
         """
         Human friendly name for the test suite
         """
-        return _(u"Test Suite {0}/{1}").format(self.job.id, self.name)
+        return _("Test Suite {0}/{1}").format(self.job.id, self.name)
 
 
 @nottest
@@ -281,7 +280,7 @@ class TestSet(models.Model):
     id = models.AutoField(primary_key=True)
 
     name = models.CharField(
-        verbose_name=u"Suite name", blank=True, null=True, default=None, max_length=200
+        verbose_name="Suite name", blank=True, null=True, default=None, max_length=200
     )
 
     suite = models.ForeignKey(
@@ -294,7 +293,7 @@ class TestSet(models.Model):
         )
 
     def __str__(self):
-        return _(u"Test Set {0}/{1}/{2}").format(
+        return _("Test Set {0}/{1}/{2}").format(
             self.suite.job.id, self.suite.name, self.name
         )
 
@@ -328,14 +327,14 @@ class TestCase(models.Model, Queryable):
     }
 
     RESULT_CHOICES = (
-        (RESULT_PASS, _(u"Test passed")),
-        (RESULT_FAIL, _(u"Test failed")),
-        (RESULT_SKIP, _(u"Test skipped")),
-        (RESULT_UNKNOWN, _(u"Unknown outcome")),
+        (RESULT_PASS, _("Test passed")),
+        (RESULT_FAIL, _("Test failed")),
+        (RESULT_SKIP, _("Test skipped")),
+        (RESULT_UNKNOWN, _("Unknown outcome")),
     )
 
     name = models.TextField(
-        blank=True, help_text=help_max_length(100), verbose_name=_(u"Name")
+        blank=True, help_text=help_max_length(100), verbose_name=_("Name")
     )
 
     units = models.TextField(
@@ -349,12 +348,12 @@ class TestCase(models.Model, Queryable):
             )
             + help_max_length(100)
         ),
-        verbose_name=_(u"Units"),
+        verbose_name=_("Units"),
     )
 
     result = models.PositiveSmallIntegerField(
-        verbose_name=_(u"Result"),
-        help_text=_(u"Result classification to pass/fail group"),
+        verbose_name=_("Result"),
+        help_text=_("Result classification to pass/fail group"),
         choices=RESULT_CHOICES,
         db_index=True,
     )
@@ -363,17 +362,17 @@ class TestCase(models.Model, Queryable):
         decimal_places=10,
         max_digits=30,
         blank=True,
-        help_text=_(u"Arbitrary value that was measured as a part of this test."),
+        help_text=_("Arbitrary value that was measured as a part of this test."),
         null=True,
-        verbose_name=_(u"Measurement"),
+        verbose_name=_("Measurement"),
     )
 
     metadata = models.CharField(
         blank=True,
         max_length=4096,
-        help_text=_(u"Metadata collected by the pipeline action, stored as YAML."),
+        help_text=_("Metadata collected by the pipeline action, stored as YAML."),
         null=True,
-        verbose_name=_(u"Action meta data as a YAML string"),
+        verbose_name=_("Action meta data as a YAML string"),
     )
 
     suite = models.ForeignKey(TestSuite, on_delete=models.CASCADE)
@@ -404,13 +403,6 @@ class TestCase(models.Model, Queryable):
         except yaml.YAMLError:
             return None
         return ret
-
-    @property
-    def action_data(self):
-        action_data = ActionData.objects.filter(testcase=self)
-        if not action_data:
-            return None
-        return action_data[0]
 
     def get_passfail_results(self):
         # Pass/fail charts for testcases do not make sense.
@@ -470,10 +462,10 @@ class TestCase(models.Model, Queryable):
         value = self._get_value()
         if self.test_set:
             # the set already includes the job & suite in the set name
-            return _(u"Test Case {0}/{1}/{2}/{3} {4}").format(
+            return _("Test Case {0}/{1}/{2}/{3} {4}").format(
                 self.suite.job.id, self.suite.name, self.test_set.name, self.name, value
             )
-        return _(u"Test Case {0}/{1}/{2} {3}").format(
+        return _("Test Case {0}/{1}/{2} {3}").format(
             self.suite.job.id, self.suite.name, self.name, value
         )
 
@@ -483,115 +475,6 @@ class TestCase(models.Model, Queryable):
         Stable textual result code that does not depend on locale
         """
         return self.RESULT_REVERSE[self.result]
-
-
-class MetaType(models.Model):
-    """
-    name will be a label, like a deployment type (NFS) or a boot type (bootz)
-    for test metadata, the MetaType is just the section_name.
-    """
-
-    DEPLOY_TYPE = 0
-    BOOT_TYPE = 1
-    TEST_TYPE = 2
-    DIAGNOSTIC_TYPE = 3
-    FINALIZE_TYPE = 4
-    UNKNOWN_TYPE = 5
-
-    TYPE_CHOICES = {
-        DEPLOY_TYPE: "deploy",
-        BOOT_TYPE: "boot",
-        TEST_TYPE: "test",
-        DIAGNOSTIC_TYPE: "diagnostic",
-        FINALIZE_TYPE: "finalize",
-        UNKNOWN_TYPE: "unknown",
-    }
-
-    TYPE_MAP = {
-        "deploy": DEPLOY_TYPE,
-        "boot": BOOT_TYPE,
-        "test": TEST_TYPE,
-        "diagnostic": DIAGNOSTIC_TYPE,
-        "finalize": FINALIZE_TYPE,
-        "unknown": UNKNOWN_TYPE,
-    }
-
-    name = models.CharField(max_length=256)
-    metatype = models.PositiveIntegerField(
-        verbose_name=_(u"Type"),
-        help_text=_(u"metadata action type"),
-        choices=(
-            (DEPLOY_TYPE, _(u"deploy")),
-            (BOOT_TYPE, _(u"boot")),
-            (TEST_TYPE, _(u"test")),
-            (DIAGNOSTIC_TYPE, _(u"diagnostic")),
-            (FINALIZE_TYPE, _(u"finalize")),
-            (UNKNOWN_TYPE, _(u"unknown type")),
-        ),
-    )
-
-    def __str__(self):
-        return _(u"Name: {0} Type: {1}").format(
-            self.name, self.TYPE_CHOICES[self.metatype]
-        )
-
-    @classmethod
-    def get_section(cls, section):
-        if section not in MetaType.TYPE_MAP:
-            return None
-        return MetaType.TYPE_MAP[section]
-
-    @classmethod
-    def get_section_type(cls, name, section):
-        section_type = MetaType.TYPE_MAP[section]
-        if section_type == MetaType.DEPLOY_TYPE:
-            return "to"
-        elif section_type == MetaType.BOOT_TYPE:
-            return "method"
-        elif section_type == MetaType.TEST_TYPE:
-            if name == "lava-test-monitor":
-                return "monitors"
-            else:
-                return "definitions"
-        else:
-            return None
-
-    @classmethod
-    def get_type_name(cls, action_data, definition):
-        """
-        Return the section_name to lookup metadata for the associated action.
-        """
-        logger = logging.getLogger("lava-master")
-        section = action_data["section"]
-        level = action_data["level"].split(".")[0]
-        name = action_data["name"]
-        if level.isdigit():
-            level = int(level) - 1  # levels start at one.
-        else:
-            # should be a logical error
-            logger.warning("get_type_name: unrecognised level %s", level)
-            return None
-        retval = None
-        data = [action for action in definition["actions"] if section in action]
-        if not data:
-            logger.debug("get_type_name: skipping %s" % section)
-            return None
-        if (
-            level >= len(definition["actions"])
-            or section not in definition["actions"][level]
-        ):
-            logger.warning(
-                "get_type_name: unrecognised level %s for section %s", level, section
-            )
-            return None
-        data = definition["actions"][level][section]
-        if section in MetaType.TYPE_MAP:
-            section_type = MetaType.get_section_type(name, section)
-            if section_type and section_type in data:
-                retval = data[section_type]
-            if isinstance(retval, list):
-                return section_type
-        return retval
 
 
 class NamedTestAttribute(models.Model):
@@ -613,7 +496,7 @@ class NamedTestAttribute(models.Model):
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
     def __str__(self):
-        return _(u"{name}: {value}").format(name=self.name, value=self.value)
+        return _("{name}: {value}").format(name=self.name, value=self.value)
 
     class Meta:
         unique_together = ("object_id", "name", "content_type")
@@ -636,66 +519,7 @@ class TestData(models.Model):
     attributes = fields.GenericRelation(NamedTestAttribute)
 
     def __str__(self):
-        return _(u"TestJob {0}").format(self.testjob.id)
-
-
-class ActionData(models.Model):
-    """
-    Each Action in the pipeline has Data tracked in this model.
-    One TestData object can relate to multiple ActionData objects.
-    When TestData creates a new item, the level and name
-    of that item are created and referenced.
-    Other actions are ignored.
-    Avoid storing the description or definition here, use a
-    viewer and pass the action_level and description_line.
-    This class forms the basis of the log file viewer as well as tying
-    the submission yaml to the pipeline description to the metadata and the results.
-    """
-
-    action_name = models.CharField(max_length=100, blank=False, null=False)
-    action_level = models.CharField(max_length=32, blank=False, null=False)
-    action_summary = models.CharField(max_length=100, blank=False, null=False)
-    action_description = models.CharField(max_length=200, blank=False, null=False)
-    # each actionlevel points at a single MetaType, then to a single TestData and TestJob
-    meta_type = models.ForeignKey(
-        MetaType, related_name="actionlevels", on_delete=models.CASCADE
-    )
-    testdata = models.ForeignKey(
-        TestData,
-        blank=True,
-        null=True,
-        related_name="actionlevels",
-        on_delete=models.CASCADE,
-    )
-    yaml_line = models.PositiveIntegerField(blank=True, null=True)
-    description_line = models.PositiveIntegerField(blank=True, null=True)
-    # direct pointer to the section of the complete log.
-    log_section = models.CharField(max_length=50, blank=True, null=True)
-    # action.duration - actual amount of time taken
-    duration = models.DecimalField(
-        decimal_places=2,
-        max_digits=8,  # enough for just over 11 days, 9 would be 115 days
-        blank=True,
-        null=True,
-    )
-    # timeout.duration - amount of time allowed before timeout
-    timeout = models.PositiveIntegerField(blank=True, null=True)
-    # maps a TestCase back to the Job metadata and description
-    testcase = models.ForeignKey(
-        TestCase,
-        blank=True,
-        null=True,
-        related_name="actionlevels",
-        on_delete=models.CASCADE,
-    )
-    # only retry actions set a count or max_retries
-    count = models.PositiveIntegerField(blank=True, null=True)
-    max_retries = models.PositiveIntegerField(blank=True, null=True)
-
-    def __str__(self):
-        return _(u"{0} {1} Level {2}, Meta {3}").format(
-            self.testdata, self.action_name, self.action_level, self.meta_type
-        )
+        return _("TestJob {0}").format(self.testjob.id)
 
 
 class QueryGroup(models.Model):
@@ -819,7 +643,7 @@ class Query(models.Model):
         return QueryMaterializedView.view_exists(self.id)
 
     def get_results(self, user, order_by=["-id"]):
-        """ Used to get query results for persistent queries. """
+        """Used to get query results for persistent queries."""
 
         omitted_list = QueryOmitResult.objects.filter(query=self).values_list(
             "object_id", flat=True
@@ -1028,7 +852,7 @@ class Query(models.Model):
             else:
                 # TODO: more validation for conditions?.
                 raise InvalidConditionsError(
-                    "Conditions URL incorrect. Please " "refer to query docs."
+                    "Conditions URL incorrect. Please refer to query docs."
                 )
 
             conditions_objects.append(condition)
@@ -1191,18 +1015,18 @@ class QueryCondition(models.Model):
     LT = "lt"
 
     OPERATOR_CHOICES = (
-        (EXACT, u"Exact match"),
-        (IEXACT, u"Case-insensitive match"),
-        (NOTEQUAL, u"Not equal to"),
-        (ICONTAINS, u"Contains"),
-        (GT, u"Greater than"),
-        (LT, u"Less than"),
+        (EXACT, "Exact match"),
+        (IEXACT, "Case-insensitive match"),
+        (NOTEQUAL, "Not equal to"),
+        (ICONTAINS, "Contains"),
+        (GT, "Greater than"),
+        (LT, "Less than"),
     )
 
     operator = models.CharField(
         blank=False,
         default=EXACT,
-        verbose_name=_(u"Operator"),
+        verbose_name=_("Operator"),
         max_length=20,
         choices=OPERATOR_CHOICES,
     )
@@ -1309,7 +1133,7 @@ class QueryCondition(models.Model):
 
 
 def _get_foreign_key_model(model, fieldname):
-    """ Returns model if field is a foreign key, otherwise None. """
+    """Returns model if field is a foreign key, otherwise None."""
     field_object = model._meta.get_field(fieldname)
     direct = not field_object.auto_created or field_object.concrete
     if (

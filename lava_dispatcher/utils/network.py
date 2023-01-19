@@ -25,20 +25,22 @@
 
 import contextlib
 import os
-import netifaces
 import random
+import socket
+import subprocess  # nosec - internal use.
+from contextvars import ContextVar
+
+import netifaces
 import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
-import socket
-import subprocess  # nosec - internal use.
 
-from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_common.constants import (
-    XNBD_PORT_RANGE_MIN,
-    XNBD_PORT_RANGE_MAX,
     VALID_DISPATCHER_IP_PROTOCOLS,
+    XNBD_PORT_RANGE_MAX,
+    XNBD_PORT_RANGE_MIN,
 )
+from lava_common.exceptions import InfrastructureError, LAVABug
 
 
 def dispatcher_gateway():
@@ -134,7 +136,13 @@ def get_free_port(dispatcher_config):
     return 10809
 
 
+requests_session = ContextVar("requests_session")
+
+
 def requests_retry():
+    with contextlib.suppress(LookupError):
+        return requests_session.get()
+
     session = requests.Session()
     # Retry 15 times over a period a bit longer than 10 minutes.
     retries = 15
@@ -168,4 +176,5 @@ def requests_retry():
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
+    requests_session.set(session)
     return session

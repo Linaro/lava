@@ -18,18 +18,27 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import simplejson
-
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
-from django.urls import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, loader
+from django.urls import reverse
+from django_tables2 import RequestConfig
 
-from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
-
+from lava_results_app.models import (
+    Chart,
+    ChartGroup,
+    ChartQuery,
+    ChartQueryUser,
+    InvalidContentTypeError,
+    Query,
+    QueryCondition,
+    QueryOmitResult,
+    TestCase,
+)
 from lava_results_app.views import index
 from lava_results_app.views.chart.decorators import ownership_required
 from lava_results_app.views.chart.forms import (
@@ -37,40 +46,24 @@ from lava_results_app.views.chart.forms import (
     ChartQueryForm,
     ChartQueryUserForm,
 )
-
-from lava_results_app.models import (
-    Query,
-    QueryCondition,
-    QueryOmitResult,
-    Chart,
-    ChartGroup,
-    ChartQuery,
-    ChartQueryUser,
-    TestCase,
-    InvalidContentTypeError,
-)
-
 from lava_results_app.views.chart.tables import (
-    UserChartTable,
-    OtherChartTable,
     GroupChartTable,
+    OtherChartTable,
+    UserChartTable,
 )
-
-from django_tables2 import RequestConfig
-
+from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.lavatable import LavaView
-
 
 CONDITIONS_SEPARATOR = ","
 CONDITION_DIVIDER = "__"
 
 
 class InvalidChartTypeError(Exception):
-    """ Raise when charting by URL has incorrect type argument. """
+    """Raise when charting by URL has incorrect type argument."""
 
 
 class TestCasePassFailChartError(Exception):
-    """ Raise when test case charts are of pass/fail type. """
+    """Raise when test case charts are of pass/fail type."""
 
 
 class UserChartView(LavaView):

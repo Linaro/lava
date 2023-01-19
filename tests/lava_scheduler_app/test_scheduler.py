@@ -19,9 +19,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from datetime import timedelta
 import logging
 import time
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.test import TestCase

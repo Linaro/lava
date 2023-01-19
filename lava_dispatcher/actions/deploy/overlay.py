@@ -18,23 +18,23 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import glob
 import os
 import shlex
-import stat
-import glob
 import shutil
+import stat
 import tarfile
-from lava_dispatcher.action import Action, Pipeline
+
 from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.logical import Deployment
-from lava_dispatcher.utils.contextmanager import chdir
-from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.network import rpcinfo_nfs
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
+from lava_dispatcher.utils.contextmanager import chdir
+from lava_dispatcher.utils.filesystem import check_ssh_identity_file
+from lava_dispatcher.utils.network import dispatcher_ip, rpcinfo_nfs
+from lava_dispatcher.utils.shell import which
 
 
 class Overlay(Deployment):

@@ -20,18 +20,18 @@ We use [pytest] for the python test harness.
 To run the full test suite:
 
 ```shell
-pytest-3 -v tests/
+python3 -m pytest -v tests/
 ```
 
 You can execute every tests that are defined in a given file:
 
 ```shell
-pytest-3 -v tests/lava_dispatcher/test_utils.py
+python3 -m pytest -v tests/lava_dispatcher/test_utils.py
 ```
 
 You can also execute a specific test:
 ```shell
-pytest-3 -v tests/lava_dispatcher/test_utils.py::test_simple_clone
+python3 -m pytest -v tests/lava_dispatcher/test_utils.py::test_simple_clone
 ```
 
 ## Static analysis

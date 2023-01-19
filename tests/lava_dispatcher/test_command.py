@@ -29,7 +29,7 @@ class TestCommand(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-command.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
         command = [
             action

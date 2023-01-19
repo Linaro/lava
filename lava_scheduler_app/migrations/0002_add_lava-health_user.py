@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-from django.db import migrations, transaction, IntegrityError
-from django.utils import timezone
-
 import uuid
+
+from django.db import IntegrityError, migrations, transaction
+from django.utils import timezone
 
 
 def forwards_func(apps, schema_editor):

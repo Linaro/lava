@@ -19,21 +19,21 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
+import json
 import os
 import uuid
-import json
 
-from lava_common.compat import yaml_dump, yaml_unsafe_load
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
-from lava_common.exceptions import TestError, JobError, InfrastructureError
-from tests.lava_dispatcher.fake_coordinator import TestCoordinator
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.deploy.image import DeployImagesAction
-from lava_dispatcher.actions.deploy.overlay import OverlayAction, MultinodeOverlayAction
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
+from lava_dispatcher.actions.deploy.image import DeployImagesAction
+from lava_dispatcher.actions.deploy.overlay import MultinodeOverlayAction, OverlayAction
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from tests.lava_dispatcher.fake_coordinator import TestCoordinator
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path
 from tests.utils import DummyLogger
 
@@ -280,10 +280,9 @@ class TestMultinode(StdoutTestCase):
         self.assertIsNotNone(self.client_job)
         allow_missing_path(self.client_job.validate, self, "qemu-system-x86_64")
         # check that the description can be re-loaded as valid YAML
-        for action in self.client_job.pipeline.actions:
-            data = action.explode()
-            data_str = yaml_dump(data)
-            yaml_unsafe_load(data_str)  # nosec not suitable for safe_load
+        data = self.client_job.pipeline.describe()
+        data_str = yaml_safe_dump(data)
+        yaml_safe_load(data_str)
 
     def test_multinode_timeout(self):
         """

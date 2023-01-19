@@ -20,6 +20,7 @@
 
 
 import unittest
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error
 
@@ -52,10 +53,10 @@ class TestPyocdAction(StdoutTestCase):
         )
         job.validate()
         description_ref = self.pipeline_reference("pyocd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         job = factory.create_k64f_job_with_power(
             "sample_jobs/zephyr-frdm-k64f-pyocd-test-kernel-common.yaml"
         )
         job.validate()
         description_ref = self.pipeline_reference("pyocd-with-power.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

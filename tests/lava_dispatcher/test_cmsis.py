@@ -70,7 +70,7 @@ class TestCMSISAction(StdoutTestCase):
         ] = "/dev/null"
         job.validate()
         description_ref = self.pipeline_reference("cmsis.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         job = factory.create_k64f_job_with_power(
             "sample_jobs/zephyr-frdm-k64f-cmsis-test-kernel-common.yaml"
         )
@@ -79,4 +79,4 @@ class TestCMSISAction(StdoutTestCase):
         ] = "/dev/null"
         job.validate()
         description_ref = self.pipeline_reference("cmsis-with-power.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

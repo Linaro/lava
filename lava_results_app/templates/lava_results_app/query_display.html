@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
 {% load i18n %}
-{% load keep_spacing %}
 {% load results_accessibility_tags %}
 {% load static %}
 
@@ -81,10 +80,10 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_server/js/bootbox.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
-<script type="text/javascript">
+<script src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
+<script src="{% static "lava_server/js/bootbox.js" %}"></script>
+<script src="{% static "lava_results_app/js/bootbox.data.toggle.js" %}"></script>
+<script>
 $(document).ready(function () {
   add_bootbox_data_toggle();
 });

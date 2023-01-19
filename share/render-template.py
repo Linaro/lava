@@ -42,10 +42,12 @@ to review in a devices/ directory.
 # pylint gets confused: commands have no shebang, but the file is not a module.
 
 
-import os
-import yaml
 import argparse
-from jinja2 import Environment, FileSystemLoader
+import os
+
+import yaml
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment
 
 
 def main():
@@ -62,7 +64,7 @@ def main():
     )
     args = parser.parse_args()
 
-    env = Environment(  # nosec rendering to YAML
+    env = SandboxedEnvironment(
         loader=FileSystemLoader(
             [
                 os.path.join(args.path, "devices"),

@@ -48,8 +48,9 @@ will result in logged warnings (either a name of the URL being not
 constructible). To fix that simply add the missing keyword argument and reload.
 """
 
-from django.urls import reverse
 import logging
+
+from django.urls import reverse
 
 
 class BreadCrumb:

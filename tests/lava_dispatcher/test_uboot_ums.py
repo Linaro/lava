@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
+
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error
 
@@ -45,7 +46,7 @@ class TestUbootUMSAction(StdoutTestCase):
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference("uboot-ums.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
         uboot = [

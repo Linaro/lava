@@ -18,35 +18,38 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import guestfs
 import os
 import shutil
-from lava_dispatcher.action import Action, Pipeline
-from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from functools import partial
+
+import guestfs
+
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.utils import debian_filename_version
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.utils.installers import add_late_command, add_to_kickstart
-from lava_dispatcher.utils.filesystem import (
-    lxc_path,
-    mkdtemp,
-    is_sparse_image,
-    prepare_guestfs,
-    copy_in_overlay,
-    copy_overlay_to_sparse_fs,
-)
-from lava_dispatcher.utils.shell import which
+from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 from lava_dispatcher.utils.compression import (
     compress_file,
     cpio,
     create_tarfile,
     decompress_file,
-    untar_file,
     uncpio,
+    untar_file,
 )
-from lava_dispatcher.utils.strings import substitute
+from lava_dispatcher.utils.filesystem import (
+    copy_in_overlay,
+    copy_overlay_to_sparse_fs,
+    is_sparse_image,
+    lxc_path,
+    mkdtemp,
+    prepare_guestfs,
+)
+from lava_dispatcher.utils.installers import add_late_command, add_to_kickstart
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
+from lava_dispatcher.utils.shell import which
+from lava_dispatcher.utils.strings import substitute
 
 
 class ApplyOverlayGuest(Action):
@@ -976,7 +979,7 @@ class AppendOverlays(Action):
         self._update(uncpio, cpio)
 
     def update_tar(self):
-        self._update(untar_file, create_tarfile)
+        self._update(untar_file, partial(create_tarfile, arcname="."))
 
     def update_guestfs(self):
         image = self.get_namespace_data(
@@ -984,6 +987,13 @@ class AppendOverlays(Action):
         )
         partition = self.params.get("partition", None)
         self.logger.info("Modifying %r", image)
+
+        if self.params.get("sparse", False):
+            self.logger.debug("Calling simg2img on %r", image)
+            command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
+            self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
+            os.replace(f"{image}.non-sparse", image)
+
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)
         try:

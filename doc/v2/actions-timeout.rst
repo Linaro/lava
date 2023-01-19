@@ -110,6 +110,21 @@ definition page to see the full name of action classes::
       extract-nfsrootfs:
         seconds: 60
 
+Alternatively, the timeout for individual actions can be set in the respective
+action block:
+
+.. code-block:: yaml
+
+  actions:
+  - deploy:
+      timeout:
+        minutes: 5
+      timeouts:
+        extract-nfsrootfs:
+          seconds: 60
+
+.. _individual_action_block_timeout:
+
 Individual actions can be referenced by the :term:`action level` and the job
 ID, in the form::
 

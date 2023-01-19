@@ -18,37 +18,37 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import re
-import os
 import glob
-import stat
+import os
+import re
 import shutil
-import pexpect
+import stat
+import subprocess  # nosec - unit test support.
 import tempfile
 import unittest
-import subprocess  # nosec - unit test support.
 from unittest.mock import patch
+
+import pexpect
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.power import FinalizeAction
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.actions.test.shell import PatternFixup
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.lava_dispatcher.test_uboot import UBootFactory
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import (
-    TestDefinitionAction,
     GitRepoAction,
-    TestOverlayAction,
+    TestDefinitionAction,
     TestInstallAction,
+    TestOverlayAction,
     TestRunnerAction,
 )
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.test.shell import PatternFixup
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.power import FinalizeAction
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_uboot import UBootFactory
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
-
 
 # Test the loading of test definitions within the deploy stage
 
@@ -687,7 +687,7 @@ test3a: skip
         )
         job.validate()
         description_ref = self.pipeline_reference("hikey960-oe-aep.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         lxc_deploy = [
             action for action in job.pipeline.actions if action.name == "lxc-deploy"

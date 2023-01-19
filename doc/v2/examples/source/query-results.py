@@ -24,8 +24,9 @@
 
 
 import sys
-import yaml
 import xmlrpc.client
+
+import yaml
 
 # configuration
 USER = "neil.williams"

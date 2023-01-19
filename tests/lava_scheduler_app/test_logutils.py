@@ -18,13 +18,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import lzma
-import pytest
 import unittest
 
+import pytest
 from django.conf import settings
 
 from lava_common.compat import yaml_dump, yaml_load
-from lava_scheduler_app.logutils import LogsFilesystem, LogsMongo, LogsElasticsearch
+from lava_scheduler_app.logutils import LogsElasticsearch, LogsFilesystem, LogsMongo
 
 
 def check_pymongo():
@@ -196,20 +196,17 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     # size of get_ret_val in bytes
     assert logs_elasticsearch.size(job) == 137  # nosec
 
-    assert (
-        logs_elasticsearch.open(job).read()
-        == yaml_dump(
-            [
-                {
-                    "dt": "2020-03-25T19:44:36.209000",
-                    "lvl": "info",
-                    "msg": "first message",
-                },
-                {
-                    "dt": "2020-03-25T19:44:36.210000",
-                    "lvl": "info",
-                    "msg": "second message",
-                },
-            ]
-        ).encode("utf-8")
-    )
+    assert logs_elasticsearch.open(job).read() == yaml_dump(
+        [
+            {
+                "dt": "2020-03-25T19:44:36.209000",
+                "lvl": "info",
+                "msg": "first message",
+            },
+            {
+                "dt": "2020-03-25T19:44:36.210000",
+                "lvl": "info",
+                "msg": "second message",
+            },
+        ]
+    ).encode("utf-8")

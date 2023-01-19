@@ -19,14 +19,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
     ApplyOverlaySparseImage,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.logical import Deployment
 
 
 # pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring

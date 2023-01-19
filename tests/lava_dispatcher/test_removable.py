@@ -23,14 +23,14 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_load
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_common.exceptions import JobError
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.actions.boot import BootloaderSecondaryMedia
 from lava_dispatcher.actions.deploy.removable import MassStorage
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.utils.strings import map_kernel_uboot, substitute
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.utils.strings import substitute, map_kernel_uboot
 
 
 class RemovableFactory(Factory):
@@ -89,7 +89,7 @@ class TestRemovable(StdoutTestCase):
         except JobError:
             self.fail(job.pipeline.errors)
         description_ref = self.pipeline_reference(test_file, job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         return job
 
     def _check_job_parameters(self, device, job, agent_key):
@@ -295,7 +295,7 @@ class TestRemovable(StdoutTestCase):
         )
         job.validate()
         description_ref = self.pipeline_reference("mustang-media.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIn("sata", job.device["parameters"]["media"].keys())
         deploy_params = [
             methods

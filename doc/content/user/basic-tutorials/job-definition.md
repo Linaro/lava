@@ -35,7 +35,7 @@ job.
 Currently, LAVA support four type of actions:
 
 * [command](../../technical-references/job-definition/actions/command.md): run commands on the dispatcher
-* [deploy](../../technical-references/job-definition/actions/deploy.md): deploy software on the DUT
+* [deploy](../../technical-references/job-definition/actions/deploy/index.md): deploy software on the DUT
 * [boot](../../technical-references/job-definition/actions/boot.md): boot the DUT
 * [test](../../technical-references/job-definition/actions/test.md): run some tests
 

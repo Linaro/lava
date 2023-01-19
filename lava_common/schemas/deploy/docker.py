@@ -22,8 +22,7 @@
 
 from voluptuous import Any, Optional, Range, Required
 
-from lava_common.schemas import deploy
-from lava_common.schemas import docker, docker_image_format
+from lava_common.schemas import deploy, docker, docker_image_format
 
 
 def schema():

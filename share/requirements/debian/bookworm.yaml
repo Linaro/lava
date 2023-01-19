@@ -9,19 +9,18 @@ lava-server:
   celery:
     name: python3-celery
   django-auth-ldap:
-    version: ">=1.2.12"
     name: python3-django-auth-ldap
   PyYAML:
     name: python3-yaml
+  defusedxml:
+    name: python3-defusedxml
   django-allauth:
     name: python3-django-allauth
   django-filter:
     name: python3-django-filters
   django-tables2:
-    version: ">=1.21.2"
     name: python3-django-tables2
   django:
-    version: ">=1.10"
     name: python3-django
   django-environ:
     name: python3-django-environ
@@ -32,7 +31,6 @@ lava-server:
   djangorestframework-extensions:
     name: python3-djangorestframework-extensions
   docutils:
-    version: ">=0.6"
     name: python3-docutils
   eventlet:
     name: python3-eventlet
@@ -45,18 +43,15 @@ lava-server:
   pyzmq:
     name: python3-zmq
   requests:
-    version: ">=2.20.0"
     name: python3-requests
   tap:
     name: python3-tap
   simplejson:
     name: python3-simplejson
-  voluptuous:
-    version: ">=0.8.8"
-    name: python3-voluptuous
   junit.xml:
     name: python3-junit.xml
-    version: ">=1.8"
+  voluptuous:
+    name: python3-voluptuous
   whitenoise:
     name: python3-whitenoise
   guestfs:
@@ -69,15 +64,12 @@ lava-server:
     name: python3-configobj
     unittests: true
   netifaces:
-    version: ">=0.10.0"
     name: python3-netifaces
     unittests: true
   pexpect:
-    version: ">=4.2"
     name: python3-pexpect
     unittests: true
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev
     unittests: true
   pytest-django:
@@ -111,10 +103,8 @@ lava-dispatcher:
   jinja2:
     name: python3-jinja2
   netifaces:
-    version: ">=0.10.0"
     name: python3-netifaces
   pexpect:
-    version: ">=4.2"
     name: python3-pexpect
   pytest:
     name: python3-pytest
@@ -125,23 +115,16 @@ lava-dispatcher:
   pytz:
     name: python3-tz
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev
   requests:
-    version: ">=2.20.0"
     name: python3-requests
   setproctitle:
-    version: ">=1.1.8"
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
   bmap-tools:
     name: bmap-tools
-  pyocd:
-    name: python3-pyocd
-    unittests: true
   voluptuous:
-    version: ">=0.8.8"
     name: python3-voluptuous
     unittests: true
   gdb-multiarch:
@@ -153,14 +136,14 @@ lava-dispatcher:
   schroot:
     name: schroot
     unittests: true
+  lxc-info:
+    name: lxc
+    unittests: true
   img2simg:
     name: android-sdk-libsparse-utils
     unittests: true
   simg2img:
     name: android-sdk-libsparse-utils
-    unittests: true
-  lxc-info:
-    name: lxc
     unittests: true
   minicom:
     name: minicom
@@ -170,9 +153,6 @@ lava-dispatcher:
     unittests: true
   docker:
     name: docker.io
-    unittests: true
-  nbd-server:
-    name: nbd-server
     unittests: true
   telnet:
     name: telnet
@@ -191,12 +171,10 @@ lava-common:
   PyYAML:
     name: python3-yaml
   voluptuous:
-    version: ">=0.8.8"
     name: python3-voluptuous
 
 lava-dispatcher-host:
   requests:
     name: python3-requests
   pyudev:
-    version: ">=0.21"
     name: python3-pyudev

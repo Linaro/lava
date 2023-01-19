@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
+
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error_multi_paths
@@ -40,7 +41,7 @@ class TestDownloadDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("download.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
@@ -69,4 +70,4 @@ class TestDownloadDeploy(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-tests-from-tar.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

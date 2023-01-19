@@ -18,10 +18,11 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import re
-import time
 import decimal
 import logging
+import re
+import time
+
 import pexpect
 
 from lava_common.compat import yaml_safe_dump
@@ -29,12 +30,12 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import (
     ConnectionClosedError,
     JobError,
-    TestError,
     LAVATimeoutError,
+    TestError,
 )
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.connection import SignalMatch
+from lava_dispatcher.logical import LavaTest, RetryAction
 
 
 def handle_testcase(params):
@@ -382,7 +383,7 @@ class TestShellAction(Action):
     def pattern_error(self):
         stage = self.parameters["stage"]
         self.logger.error(
-            "Unable to start stage %s. " "Read the log for more details.", stage
+            "Unable to start stage %s. Read the log for more details.", stage
         )
         self.errors = "Unable to start test stage %s" % stage
         # This is not accurate but required when exiting.

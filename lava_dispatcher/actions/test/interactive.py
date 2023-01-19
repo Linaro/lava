@@ -18,9 +18,10 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pexpect
-import time
 import json
+import time
+
+import pexpect
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
@@ -33,6 +34,7 @@ from lava_common.exceptions import (
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 
@@ -132,6 +134,11 @@ class TestInteractiveAction(Action):
         )
         if substitutions is None:
             substitutions = {}
+        if "{SERVER_IP}" not in substitutions:
+            substitutions["{SERVER_IP}"] = dispatcher_ip(
+                self.job.parameters["dispatcher"]
+            )
+        substitutions["{JOB_ID}"] = self.job.job_id
 
         # Loop on all scripts
         for script in self.parameters["interactive"]:

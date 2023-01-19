@@ -34,7 +34,7 @@ class TestUefiShell(StdoutTestCase):
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
         description_ref = self.pipeline_reference("juno-uefi-nfs.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_device_juno_uefi(self):
         job = self.job
@@ -113,7 +113,7 @@ class TestUefiShell(StdoutTestCase):
         )
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference("juno-uefi-nfs-no-menu.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_no_menu(self):
         """

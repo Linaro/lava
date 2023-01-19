@@ -13,9 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 import subprocess
+
 import pytest
+
+from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
 try:
     import bcc

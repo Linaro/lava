@@ -24,17 +24,17 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.actions.boot.ipxe import BootloaderAction
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
-from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.job import Job
 from lava_dispatcher.action import Pipeline
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from tests.utils import DummyLogger, infrastructure_error
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
+from lava_dispatcher.actions.boot.ipxe import BootloaderAction
+from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.device import NewDevice
+from lava_dispatcher.job import Job
+from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import DummyLogger, infrastructure_error
 
 
 class TestBootloaderAction(StdoutTestCase):
@@ -50,7 +50,7 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference("ipxe.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -220,7 +220,7 @@ class TestBootloaderAction(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-initrd-nbd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         # Fixme: more asserts
         self.assertIn("ipxe", job.device["actions"]["boot"]["methods"])
         params = job.device["actions"]["boot"]["methods"]["ipxe"]["parameters"]
@@ -366,4 +366,4 @@ class TestBootloaderAction(StdoutTestCase):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-monitor.yaml")
         job.validate()
         description_ref = self.pipeline_reference("ipxe-monitor.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

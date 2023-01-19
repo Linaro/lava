@@ -22,13 +22,13 @@
 #
 #
 
-import unittest
+import json
 import logging
 import sys
+import unittest
 import uuid
-import json
-from lava.coordinator import LavaCoordinator
 
+from lava.coordinator import LavaCoordinator
 
 bundle_sample = {
     "test_runs": [

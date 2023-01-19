@@ -27,12 +27,11 @@
 import os
 import subprocess  # nosec - internal use.
 import tarfile
+from pathlib import Path
 
 from lava_common.exceptions import InfrastructureError, JobError
-
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
-
 
 # https://www.kernel.org/doc/Documentation/xz.txt
 compress_command_map = {"xz": ["xz", "--check=crc32"], "gz": ["gzip"], "bz2": ["bzip2"]}
@@ -89,10 +88,10 @@ def decompress_file(infile, compression):
             )
 
 
-def create_tarfile(indir, outfile):
+def create_tarfile(indir, outfile, arcname=None):
     try:
         with tarfile.open(outfile, "w") as tar:
-            tar.add(indir)
+            tar.add(indir, arcname=arcname)
     except tarfile.TarError as exc:
         raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
 
@@ -100,6 +99,13 @@ def create_tarfile(indir, outfile):
 def untar_file(infile, outdir):
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
+            # Check for path traversal
+            base = Path(outdir)
+            for member in tar.getmembers():
+                dest = (base / member.name).resolve()
+                if not dest.is_relative_to(base):
+                    raise JobError("Attempted path traversal in tar file at %s" % dest)
+            # Extract the tarfile
             tar.extractall(outdir)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))

@@ -19,8 +19,8 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.deploy.download import CopyToLxcAction, DownloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.actions.deploy.download import DownloaderAction, CopyToLxcAction
 from lava_dispatcher.logical import Deployment
 
 

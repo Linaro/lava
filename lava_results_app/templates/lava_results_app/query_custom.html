@@ -1,7 +1,6 @@
 {% extends "layouts/content.html" %}
 {% load django_tables2 %}
 {% load i18n %}
-{% load keep_spacing %}
 {% load static %}
 
 {% block styles %}
@@ -56,8 +55,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
-<script type="text/javascript">
+<script src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
+<script>
   $(function() {
   $('#bookmark_query').click(function() {
     if (window.sidebar && window.sidebar.addPanel) { // Mozilla Firefox Bookmark

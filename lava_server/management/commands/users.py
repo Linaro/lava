@@ -19,8 +19,8 @@
 
 import csv
 
-from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand, CommandError
 
 from lava_server.compat import get_sub_parser_class
 
@@ -137,7 +137,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options)
         elif options["sub_command"] == "update":
@@ -148,7 +148,7 @@ class Command(BaseCommand):
             self.handle_list(options["all"], options["csv"])
 
     def handle_add(self, options):
-        """ Create a new user """
+        """Create a new user"""
         username = options["username"]
         passwd = options["passwd"]
         if passwd is None:
@@ -165,7 +165,7 @@ class Command(BaseCommand):
             self.stdout.write(passwd)
 
     def handle_update(self, options):
-        """ Update existing user"""
+        """Update existing user"""
         username = options["username"]
         try:
             user = User.objects.get(username=username)
@@ -183,7 +183,7 @@ class Command(BaseCommand):
         user.save()
 
     def handle_details(self, username):
-        """ Print user details """
+        """Print user details"""
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -197,7 +197,7 @@ class Command(BaseCommand):
         self.stdout.write("groups      : [%s]" % ", ".join(groups))
 
     def handle_list(self, show_all, format_as_csv):
-        """ List users """
+        """List users"""
         users = User.objects.all().order_by("username")
         if not show_all:
             users = users.exclude(is_active=False)

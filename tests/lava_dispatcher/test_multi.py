@@ -24,11 +24,11 @@ from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.job import Job
 from lava_dispatcher.action import Action, Pipeline, Timeout
 from lava_dispatcher.device import NewDevice
+from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
 from tests.utils import DummyLogger
 
@@ -221,4 +221,4 @@ class TestMultiUBoot(StdoutTestCase):
         self.assertIsNotNone(self.job)
         self.assertIsNone(self.job.validate())
         description_ref = self.pipeline_reference("uboot-multiple.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())

@@ -21,10 +21,10 @@
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 

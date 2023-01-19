@@ -20,8 +20,8 @@
 
 import os
 
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import map_kernel_uboot
 
@@ -119,11 +119,7 @@ class UBootPrepareKernelAction(Action):
                     "Requested kernel boot type '%s' is not supported by this device."
                     % self.bootcommand
                 )
-            if (
-                self.kernel_type == "bootm"
-                or self.kernel_type == "bootz"
-                or self.kernel_type == "booti"
-            ):
+            if self.kernel_type in ["bootm", "bootz", "booti"]:
                 self.errors = "booti, bootm and bootz are deprecated, please use 'image', 'uimage' or 'zimage'"
             which("mkimage")
             if "mkimage_arch" not in self.params:

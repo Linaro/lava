@@ -20,6 +20,8 @@
 
 import contextlib
 import re
+
+from django.conf import settings
 from voluptuous import (
     All,
     Any,
@@ -35,8 +37,6 @@ from voluptuous import (
 )
 
 from lava_common.schemas import CONTEXT_VARIABLES
-
-from django.conf import settings
 
 INVALID_CHARACTER_ERROR_MSG = "Invalid character"
 

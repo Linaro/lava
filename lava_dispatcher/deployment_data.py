@@ -188,6 +188,22 @@ oe = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
+qnx = {
+    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
+    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
+    "TESTER_PS1_INCLUDES_RC": True,
+    "boot_cmds": "boot_cmds",
+    "line_separator": "\n",
+    # for lava-test-shell
+    "distro": "qnx",
+    "tar_flags": "--warning no-timestamp",
+    "lava_test_sh_cmd": "/bin/sh",
+    "lava_test_dir": "/lava-%s",
+    "lava_test_results_part_attr": "root_part",
+    "lava_test_results_dir": "/lava-%s",
+    "lava_test_shell_file": "~/.bashrc",
+}
+
 slackware = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
@@ -231,6 +247,7 @@ deployments = {
     "fedora": fedora,
     "lede": lede,
     "oe": oe,
+    "qnx": qnx,
     "slackware": slackware,
     "ubuntu": ubuntu,
 }

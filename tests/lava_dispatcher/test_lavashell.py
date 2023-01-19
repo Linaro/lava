@@ -18,21 +18,22 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import datetime
+import os
+
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_common.timeout import Timeout
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.parser import JobParser
-from lava_dispatcher.device import NewDevice
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
-from tests.utils import DummyLogger
+from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
+from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
+from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.actions.test.shell import TestShellRetry, TestShellAction
+from tests.utils import DummyLogger
 
 
 class TestDefinitionHandlers(StdoutTestCase):

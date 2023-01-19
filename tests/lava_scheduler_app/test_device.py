@@ -1,23 +1,23 @@
 import yaml
-import jinja2
-
+from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
+from django.test import TestCase
+from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
+
 from lava_common.compat import yaml_safe_load
+from lava_scheduler_app.dbutils import (
+    active_device_types,
+    invalid_template,
+    load_devicetype_template,
+)
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
 )
-from lava_scheduler_app.dbutils import (
-    load_devicetype_template,
-    invalid_template,
-    active_device_types,
-)
 from lava_server.files import File
-from django.contrib.auth.models import User, Group, Permission
-from django.test import TestCase
-
 
 # python3 needs print to be a function, so disable pylint
 
@@ -132,14 +132,14 @@ class DeviceTypeTest(TestCaseWithFactory):
         """
         Ensure each template renders valid YAML
         """
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
+        env = JinjaSandboxEnv(
             loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
         for template_name in File("device-type").list("*.jinja2"):
             try:
                 template = env.get_template(template_name)
-            except jinja2.TemplateNotFound as exc:
+            except JinjaTemplateNotFound as exc:
                 self.fail("%s: %s" % (template_name, exc))
             data = None
             try:

@@ -19,21 +19,20 @@
 
 
 from django.contrib.auth.models import Group, Permission
+from rest_framework import serializers
+from rest_framework.reverse import reverse as rest_reverse
+from rest_framework_extensions.fields import ResourceUriField
 
 from lava_rest_app.base import serializers as base_serializers
 from lava_scheduler_app.models import (
     Alias,
     Device,
     DeviceType,
-    GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupDeviceTypePermission,
     Tag,
     Worker,
 )
-
-from rest_framework_extensions.fields import ResourceUriField
-from rest_framework.reverse import reverse as rest_reverse
-from rest_framework import serializers
 
 
 class ChoiceField(serializers.ChoiceField):
@@ -125,16 +124,12 @@ class EnvironmentSerializer(serializers.Serializer):
     env = serializers.CharField(style={"base_template": "textarea.html"})
 
 
-class SlaveKeySerializer(serializers.Serializer):
-    key = serializers.CharField(style={"base_template": "textarea.html"})
-
-
 class WorkerSerializer(base_serializers.WorkerSerializer):
     state = serializers.CharField(source="get_state_display", read_only=True)
     health = ChoiceField(choices=Worker.HEALTH_CHOICES, required=False)
 
     class Meta(base_serializers.WorkerSerializer.Meta):
-        read_only_fields = ("last_ping", "state", "master_version_notified")
+        read_only_fields = ("last_ping", "state")
 
 
 class AliasSerializer(serializers.ModelSerializer):

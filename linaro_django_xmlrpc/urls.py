@@ -18,7 +18,6 @@
 
 
 from lava_server.compat import url
-
 from linaro_django_xmlrpc.views import (
     create_token,
     delete_token,
@@ -26,7 +25,6 @@ from linaro_django_xmlrpc.views import (
     edit_token,
     tokens,
 )
-
 
 urlpatterns = [
     url(r"^tokens/$", tokens, name="linaro_django_xmlrpc_tokens"),

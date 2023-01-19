@@ -16,14 +16,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from pwd import getpwuid
-from pathlib import Path
-import yaml
 import stat
 import subprocess  # nosec system
+from pathlib import Path
+from pwd import getpwuid
 
+import yaml
 from django.conf import settings
-from django.core.checks import Error, register, Info, Warning
+from django.core.checks import Error, Info, Warning, register
 from voluptuous import Invalid
 
 from lava_common.compat import yaml_safe_load

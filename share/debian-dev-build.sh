@@ -102,7 +102,7 @@ echo "${VERSION}" > lava_common/VERSION
 # convert to a native package to include local changes.
 echo "3.0 (native)" > debian/source/format
 BUILD_SUITE="${SUITE}"
-dch -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
+dch --force-distribution -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi

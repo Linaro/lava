@@ -21,32 +21,32 @@
 import contextlib
 import os
 import re
-from lava_dispatcher.action import Action, Pipeline
-from lava_common.timeout import Timeout
-from lava_common.exceptions import (
-    InfrastructureError,
-    JobError,
-    ConfigurationError,
-    LAVABug,
-)
-from lava_dispatcher.logical import Boot
-from lava_dispatcher.logical import RetryAction
+
 from lava_common.constants import (
+    BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
-    BOOTLOADER_DEFAULT_CMD_TIMEOUT,
     LOGIN_INCORRECT_MSG,
     LOGIN_TIMED_OUT_MSG,
 )
-from lava_dispatcher.utils.messages import LinuxKernelMessages
-from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils.filesystem import write_bootscript
-from lava_dispatcher.utils.compression import untar_file
-from lava_dispatcher.connections.ssh import SShSession
+from lava_common.exceptions import (
+    ConfigurationError,
+    InfrastructureError,
+    JobError,
+    LAVABug,
+)
+from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.connections.ssh import SShSession
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.utils.compression import untar_file
+from lava_dispatcher.utils.filesystem import write_bootscript
+from lava_dispatcher.utils.messages import LinuxKernelMessages
+from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.strings import substitute
 
 
 class BootHasMixin:
@@ -127,8 +127,6 @@ class LoginAction(Action):
         failure = self.parameters.get("failure_message")
         if failure:
             self.logger.info("Checking for user specified failure message: %s", failure)
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
             connection.prompt_str.append(failure)
 
         # linesep should come from deployment_data as from now on it is OS dependent
@@ -989,7 +987,13 @@ class BootloaderCommandsAction(Action):
         for (index, line) in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
             if index + 1 == len(commands):
-                continue
+                if not final_message or not self.expect_final:
+                    break
+                connection.prompt_str = (
+                    [final_message] + error_messages
+                    if error_messages
+                    else [final_message]
+                )
             res = self.wait(connection, max_end_time)
             if res != 0:
                 msg = "matched a bootloader error message: '%s' (%d)" % (
@@ -997,10 +1001,6 @@ class BootloaderCommandsAction(Action):
                     res,
                 )
                 raise InfrastructureError(msg)
-
-        if final_message and self.expect_final:
-            connection.prompt_str = [final_message]
-            self.wait(connection, max_end_time)
 
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection

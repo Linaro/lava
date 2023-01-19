@@ -19,16 +19,17 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 
-import re
 import logging
+import re
 from unittest.mock import patch
-from lava_common.timeout import Timeout
+
 from lava_common.exceptions import JobError
-from lava_dispatcher.shell import ShellSession, ShellCommand
+from lava_common.timeout import Timeout
+from lava_dispatcher.menus.menus import SelectorMenu
+from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger
-from lava_dispatcher.utils.strings import substitute
-from lava_dispatcher.menus.menus import SelectorMenu
 
 
 class TestSelectorMenu(StdoutTestCase):
@@ -149,7 +150,7 @@ class TestUefi(StdoutTestCase):
         self.assertEqual(selector.selector.prompt, "Start:")
         self.assertIsInstance(selector.items, list)
         description_ref = self.pipeline_reference("mustang-uefi.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         # just dummy strings
         substitution_dictionary = {
             "{SERVER_IP}": "10.4.0.1",
@@ -218,7 +219,7 @@ class TestUefi(StdoutTestCase):
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference("tc2.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         self.assertIn("uefi-menu", job.device["actions"]["boot"]["methods"])
         uefi_menu_block = job.device["actions"]["boot"]["methods"]["uefi-menu"]
         nfs_boot = uefi_menu_block["nfs"]

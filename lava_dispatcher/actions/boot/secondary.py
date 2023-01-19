@@ -20,7 +20,7 @@
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction, OverlayUnpack
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.logical import Boot, RetryAction

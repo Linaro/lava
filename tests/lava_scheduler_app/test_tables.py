@@ -1,16 +1,17 @@
 import logging
 import sys
+
 from django.contrib.auth.models import AnonymousUser
 from django.test import TestCase
 
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, TestJob
-from lava_server.lavatable import LavaTable, LavaView
 from lava_scheduler_app.tables import (
-    JobTable,
     DeviceTable,
+    JobTable,
     visible_jobs_with_custom_sort,
 )
+from lava_server.lavatable import LavaTable, LavaView
 
 LOGGER = logging.getLogger()
 LOGGER.level = logging.INFO  # change to DEBUG to see *all* output
@@ -188,7 +189,7 @@ class TestForDeviceTable(TestCase):
         table = DeviceTable(view.get_table_data())
         self.assertEqual(
             table.prepare_search_data(view),
-            {"search": ["device_type", "health", u"Hostname", "state", "tags"]},
+            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
         self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
@@ -206,7 +207,7 @@ class TestForDeviceTable(TestCase):
         table = TestDeviceTable(view.get_table_data())
         self.assertEqual(
             table.prepare_search_data(view),
-            {"search": ["device_type", "health", u"Hostname", "state", "tags"]},
+            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
         self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})

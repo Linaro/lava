@@ -18,11 +18,11 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 import yaml
 
-
 from lava_common.compat import yaml_load
-from lava_common.log import HTTPHandler, sender, YAMLLogger
+from lava_common.log import HTTPHandler, YAMLLogger, sender
 
 
 def test_sender(mocker):
@@ -110,12 +110,12 @@ def test_http_handler(mocker):
     )
     handler.emit(record)
 
-    assert len(handler.writter.send_bytes.mock_calls) == 1
-    assert handler.writter.send_bytes.mock_calls[0][1] == (b"Hello world",)
+    assert len(handler.writer.send_bytes.mock_calls) == 1
+    assert handler.writer.send_bytes.mock_calls[0][1] == (b"Hello world",)
 
     handler.close()
-    assert len(handler.writter.send_bytes.mock_calls) == 2
-    assert handler.writter.send_bytes.mock_calls[1][1] == (b"",)
+    assert len(handler.writer.send_bytes.mock_calls) == 2
+    assert handler.writer.send_bytes.mock_calls[1][1] == (b"",)
 
 
 def test_yaml_logger(mocker):
@@ -188,7 +188,7 @@ def test_yaml_logger(mocker):
     assert logger.markers == {"0_test": {"start_test_case": 7, "end_test_case": 8}}
 
     logger._log = mocker.Mock()
-    logger.info("a" * 10 ** 7)
+    logger.info("a" * 10**7)
     check(logger, "info", logging.INFO, "<line way too long ...>")
 
     logger.close()

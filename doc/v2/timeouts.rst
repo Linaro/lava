@@ -293,9 +293,23 @@ actions within that block. Action blocks are identified by the start of the
    :start-after:   build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/armhf/3/armmp-nfs.sh
    :end-before: to: tftp
 
-Unless individual actions within this block have overrides, the
-default action timeout for each will be set to the specified
-timeout.
+The default timeout for each action within this block will be set to the specified
+value.
+
+The timeout for individual actions in a block can also be redefined in the
+timeouts section within the block:
+
+.. code-block:: yaml
+
+  actions:
+  - deploy:
+      timeout:
+        minutes: 5
+      timeouts:
+        http-download:
+          minutes: 1
+
+.. _individual_action_block_timeout_overrides:
 
 .. index:: timeouts - skipping
 

@@ -2,12 +2,12 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 
-from lava_server.backends import GroupPermissionBackend, is_object_supported
 from lava_scheduler_app.models import (
-    GroupDeviceTypePermission,
     GroupDevicePermission,
+    GroupDeviceTypePermission,
     TestJob,
 )
+from lava_server.backends import GroupPermissionBackend, is_object_supported
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 User = get_user_model()

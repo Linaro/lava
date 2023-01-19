@@ -1,7 +1,7 @@
 # Developer setup
 
 In this document, we assume that you are developing on a Debian system. We also
-assume that the version is Buster (or any more recent versions).
+assume that the version is Bullseye (or any more recent versions).
 
 ??? note "Other distributions"
     Even if we assume the use of Debian, you can also use any non-Debian
@@ -86,11 +86,11 @@ lava-dispatcher-host rules install
 Restart the services:
 
 ```shell
-service lava-coordinator restart
-service lava-publisher restart
-service lava-scheduler restart
-service lava-server-gunicorn restart
-service lava-worker restart
+systemctl restart lava-coordinator
+systemctl restart lava-publisher
+systemctl restart lava-scheduler
+systemctl restart lava-server-gunicorn
+systemctl restart lava-worker
 ```
 
 LAVA is now accessible at [http://localhost/](http://localhost/)
@@ -118,10 +118,10 @@ Install `lava-dispatcher` and  `lava-server` dependencies:
 
 ```shell
 apt-get install \
-    $(python3 share/requires.py  -p lava-dispatcher -d debian -s buster -n) \
-    $(python3 share/requires.py  -p lava-dispatcher -d debian -s buster -n -u) \
-    $(python3 share/requires.py  -p lava-server -d debian -s buster -n) \
-    $(python3 share/requires.py  -p lava-server -d debian -s buster -n -u)
+    $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n) \
+    $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n -u) \
+    $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n) \
+    $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n -u)
 ```
 
 Create the test database:

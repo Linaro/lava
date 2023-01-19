@@ -18,19 +18,20 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import glob
+import os
 import unittest
-from unittest.mock import patch, ANY, MagicMock, PropertyMock
-from lava_common.exceptions import JobError, InfrastructureError
+from unittest.mock import ANY, MagicMock, PropertyMock, patch
+
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
 from lava_dispatcher.protocols.lxc import LxcProtocol
+from lava_dispatcher.utils.adb import OptionalContainerAdbAction
+from lava_dispatcher.utils.containers import DockerDriver, LxcDriver, NullDriver
+from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
-from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
-from lava_dispatcher.utils.adb import OptionalContainerAdbAction
-from lava_dispatcher.utils.containers import NullDriver, LxcDriver, DockerDriver
-from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 
 
 class FastBootFactory(Factory):
@@ -249,7 +250,7 @@ class TestFastbootDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("fastboot.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
@@ -259,7 +260,7 @@ class TestFastbootDeploy(StdoutTestCase):
         job = self.factory.create_hikey_job("sample_jobs/hikey-oe.yaml")
         description_ref = self.pipeline_reference("hikey-oe.yaml", job=job)
         job.validate()
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
         self.assertEqual(len(job.protocols), 1)
         self.assertIsNotNone(job.device.pre_os_command)
@@ -311,7 +312,7 @@ class TestFastbootDeploy(StdoutTestCase):
         job = self.factory.create_hikey_job("sample_jobs/hi6220-hikey.yaml")
 
         description_ref = self.pipeline_reference("hi6220-hikey.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertEqual(
             job.device.pre_power_command,
             "/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync",
@@ -406,7 +407,7 @@ class TestFastbootDeploy(StdoutTestCase):
         job = self.factory.create_db410c_job("sample_jobs/db410c.yaml")
         self.assertTrue(job.device.get("fastboot_via_uboot", True))
         description_ref = self.pipeline_reference("db410c.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         boot = [
             action for action in job.pipeline.actions if action.name == "fastboot-boot"
         ][0]
@@ -417,7 +418,7 @@ class TestFastbootDeploy(StdoutTestCase):
         job = self.factory.create_x15_job("sample_jobs/x15.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         deploy = [
             action
             for action in job.pipeline.actions
@@ -473,27 +474,27 @@ class TestFastbootDeploy(StdoutTestCase):
         )
         # do not run job.validate() - power urls do not exist.
         description_ref = self.pipeline_reference("qcs404-evb-1k.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         job = self.factory.create_job(
             "qcs404-evb-4k-01.jinja2", "sample_jobs/qcs404-evb-4k.yaml"
         )
         # do not run job.validate() - power urls do not exist.
         description_ref = self.pipeline_reference("qcs404-evb-4k.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_nexus5x_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_nexus5x_job("sample_jobs/nexus5x.yaml")
         # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference("nexus5x.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_pixel_job(self):
         self.factory = FastBootFactory()
         job = self.factory.create_pixel_job("sample_jobs/pixel.yaml")
         # do not run job.validate() - urls no longer exist.
         description_ref = self.pipeline_reference("pixel.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_flash_cmds_order(self):
         self.factory = FastBootFactory()
@@ -545,7 +546,7 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertIsNotNone(job)
         job.validate()
         description_ref = self.pipeline_reference("hi960-aosp-efi.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         flash_order = None
         expected_flash_cmds = ["boot", "system", "userdata", "cache"]
         action = job.pipeline.actions[2]
@@ -569,7 +570,7 @@ class TestFastbootDeploy(StdoutTestCase):
         # such as fastboot, adb, etc. to be installed.
         job = self.factory.create_fastboot_job("sample_jobs/nexus4-minus-lxc.yaml")
         description_ref = self.pipeline_reference("nexus4-minus-lxc.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         # There shouldn't be any lxc defined
         lxc_name = is_lxc_requested(job)
         self.assertEqual(lxc_name, False)
@@ -586,7 +587,7 @@ class TestFastbootDeploy(StdoutTestCase):
         # such as fastboot, adb, etc. to be installed.
         job = self.factory.create_db410c_job("sample_jobs/db410c-minus-lxc.yaml")
         description_ref = self.pipeline_reference("db410c-minus-lxc.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         # There shouldn't be any lxc defined
         lxc_name = is_lxc_requested(job)
         self.assertEqual(lxc_name, False)
@@ -616,4 +617,4 @@ class TestFastbootDeploy(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "imx8mq-evk-with-flash-reboot.yaml", job=job
         )
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

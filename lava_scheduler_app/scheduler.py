@@ -17,22 +17,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from dataclasses import dataclass
 import datetime
+from dataclasses import dataclass
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Case, When, IntegerField, Sum
+from django.db.models import Case, IntegerField, Sum, When
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_load, yaml_safe_dump
+from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
-    DeviceType,
     Device,
-    _create_pipeline_job,
+    DeviceType,
     TestJob,
     Worker,
+    _create_pipeline_job,
 )
 
 

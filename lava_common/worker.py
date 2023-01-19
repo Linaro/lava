@@ -24,8 +24,7 @@ import re
 import socket
 from pathlib import Path
 
-
-from lava_common.constants import WORKER_DIR
+from lava_common.constants import DOCKER_WORKER_DIR, WORKER_DIR
 
 
 def get_fqdn() -> str:
@@ -44,10 +43,12 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
         description = "LAVA Docker Worker"
         log_file = "/var/log/lava-dispatcher-host/lava-docker-worker.log"
         url_required = False
+        worker_dir = DOCKER_WORKER_DIR
     else:
         description = "LAVA Worker"
         log_file = "/var/log/lava-dispatcher/lava-worker.log"
         url_required = True
+        worker_dir = WORKER_DIR
 
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument(
@@ -78,7 +79,7 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
 
     storage = parser.add_argument_group("storage")
     storage.add_argument(
-        "--worker-dir", type=Path, default=WORKER_DIR, help="Path to data storage"
+        "--worker-dir", type=Path, default=worker_dir, help="Path to data storage"
     )
     if docker_worker:
         storage.add_argument(

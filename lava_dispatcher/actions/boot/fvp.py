@@ -24,10 +24,10 @@ import shlex
 import time
 
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline, Action
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ReadFeedback
-from lava_dispatcher.actions.boot import BootHasMixin, AutoLoginAction, OverlayUnpack
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
@@ -178,7 +178,10 @@ class BaseFVPAction(Action):
         fvp_image = self.parameters.get("image")
         cmd += self.extra_options
         cmd += " %s %s %s" % (docker_image, fvp_image, fvp_arguments)
-        cmd = cmd.format(**substitutions)
+        try:
+            cmd = cmd.format(**substitutions)
+        except KeyError as exc:
+            raise JobError(f"Key {exc} does not exist, may need escaping")
         return cmd
 
     def cleanup(self, connection):

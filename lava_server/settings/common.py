@@ -19,24 +19,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-from yaml import YAMLError
 import contextlib
 import importlib
 import re
 
+# pylint: disable=unused-import
+# pylint: disable=unused-import
+from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 from django.core.exceptions import ImproperlyConfigured
+from yaml import YAMLError
 
-# pylint: disable=unused-import
-from django.conf.global_settings import DISALLOWED_USER_AGENTS
-
-# pylint: disable=unused-import
-from django.conf.global_settings import INTERNAL_IPS
-
-from lava_common.version import __version__
 from lava_common.compat import yaml_safe_load
+from lava_common.version import __version__
 from lava_rest_app.versions import versions as REST_VERSIONS
 from lava_scheduler_app.settings import *
-
 
 # List of people who get code error notifications
 # https://docs.djangoproject.com/en/1.11/ref/settings/#admins
@@ -446,10 +442,13 @@ def update(values):
             "OIDC_AUTH_REQUEST_EXTRA_PARAMS",
             "OIDC_RP_SIGN_ALGO",
             "OIDC_RP_IDP_SIGN_KEY",
+            "OIDC_OP_JWKS_ENDPOINT",
             "OIDC_OP_LOGOUT_URL_METHOD",
             "OIDC_AUTHENTICATION_CALLBACK_URL",
             "OIDC_ALLOW_UNSECURED_JWT",
             "OIDC_TOKEN_USE_BASIC_AUTH",
+            "OIDC_RENEW_ID_TOKEN_EXPIRY_SECONDS",
+            "OIDC_USERNAME_ALGO",
         }
 
         if not oidc_keys.issuperset(AUTH_OIDC.keys()):
@@ -476,8 +475,9 @@ def update(values):
 
         def get_ldap_group_types():
             """Return a list of all LDAP group types supported by django_auth_ldap module"""
-            import django_auth_ldap.config
             import inspect
+
+            import django_auth_ldap.config
 
             types = []
             for name, obj in inspect.getmembers(django_auth_ldap.config):
@@ -575,6 +575,11 @@ def update(values):
                     "handlers": ["logfile"],
                     "level": "DEBUG",
                     "propagate": True,
+                },
+                "lava-server-api": {
+                    "handlers": ["logfile"],
+                    "level": "DEBUG",
+                    "propagate": False,
                 },
             },
         }

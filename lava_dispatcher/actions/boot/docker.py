@@ -19,12 +19,14 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import pathlib
 
+from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import JobError
-from lava_dispatcher.action import Pipeline, Action
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
@@ -128,11 +130,26 @@ class CallDockerAction(Action):
                     overlay,
                 )
             else:
-                cmd += ' --mount type=volume,volume-driver=local,dst=%s,volume-opt=type=nfs,volume-opt=device=:%s,"volume-opt=o=addr=%s"' % (
-                    overlay,
-                    os.path.join(location, overlay.strip("/")),
-                    dispatcher_ip(self.job.parameters["dispatcher"]),
+                cmd += (
+                    ' --mount type=volume,volume-driver=local,dst=%s,volume-opt=type=nfs,volume-opt=device=:%s,"volume-opt=o=addr=%s"'
+                    % (
+                        overlay,
+                        os.path.join(location, overlay.strip("/")),
+                        dispatcher_ip(self.job.parameters["dispatcher"]),
+                    )
                 )
+
+        namespace = self.parameters.get(
+            "downloads-namespace", self.parameters.get("namespace")
+        )
+        if namespace:
+            downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
+            if downloads_dir.exists():
+                self.extra_options += " --volume %s:%s" % (
+                    downloads_dir,
+                    LAVA_DOWNLOADS,
+                )
+
         cmd += self.extra_options
         cmd += " %s %s" % (docker_image, self.parameters["command"])
 

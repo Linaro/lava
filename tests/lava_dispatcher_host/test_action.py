@@ -1,4 +1,5 @@
 import pytest
+
 from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 

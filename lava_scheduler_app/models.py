@@ -21,20 +21,18 @@
 
 import contextlib
 import datetime
-import jinja2
+import gzip
 import logging
 import os
 import uuid
-import gzip
+
+import requests
 import simplejson
 import yaml
-
-from django.db import transaction
-from django.db.models import Q
 from django.conf import settings
-from django.contrib.auth.models import User, Group, Permission
+from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
+from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.admin.models import LogEntry, ADDITION, CHANGE
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import (
@@ -42,33 +40,34 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.utils.crypto import get_random_string
+from django.db import models, transaction
+from django.db.models import Q
 from django.urls import reverse
-from django.db import models
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.html import escape
 from django.utils.translation import gettext_lazy as _
-from django.utils.safestring import mark_safe
+from jinja2 import FileSystemLoader
+from jinja2 import TemplateError as JinjaTemplateError
+from jinja2.nodes import Extends as JinjaNodesExtends
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-from lava_common.compat import yaml_dump, yaml_safe_load, yaml_safe_dump
+from lava_common.compat import yaml_dump, yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.timeout import Timeout
 from lava_results_app.utils import export_testcase
-from lava_scheduler_app import utils
+from lava_scheduler_app import environment, utils
 from lava_scheduler_app.logutils import logs_instance
-import lava_scheduler_app.environment as environment
 from lava_scheduler_app.managers import (
-    RestrictedDeviceTypeQuerySet,
+    GroupObjectPermissionManager,
     RestrictedDeviceQuerySet,
+    RestrictedDeviceTypeQuerySet,
     RestrictedTestJobQuerySet,
     RestrictedWorkerQuerySet,
-    GroupObjectPermissionManager,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.compat import add_permissions
 from lava_server.files import File
-
-import requests
 
 
 def auth_token():
@@ -427,14 +426,6 @@ class Worker(RestrictedObject):
         blank=True,
     )
 
-    master_version_notified = models.CharField(
-        verbose_name=_("Master version notified"),
-        max_length=50,
-        null=True,
-        default=None,
-        blank=True,
-    )
-
     token = models.CharField(
         max_length=32, default=auth_token, help_text=_("Authorization token")
     )
@@ -446,7 +437,7 @@ class Worker(RestrictedObject):
         return reverse("lava.scheduler.worker.detail", args=[self.pk])
 
     def get_description(self):
-        return mark_safe(self.description) if self.description else None
+        return self.description if self.description else None
 
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
@@ -689,7 +680,7 @@ class Device(RestrictedObject):
         return self.get_state_display()
 
     def get_description(self):
-        return mark_safe(self.description) if self.description else None
+        return self.description if self.description else None
 
     def has_any_permission_restrictions(self, perm):
         if not self.is_permission_restricted(perm):
@@ -744,7 +735,13 @@ class Device(RestrictedObject):
         try:
             rendered = self.load_configuration()
             validate_device(rendered)
-        except (SubmissionException, yaml.YAMLError):
+        except (SubmissionException, yaml.YAMLError) as exc:
+            logger = logging.getLogger("lava-scheduler")
+            logger.error(
+                "Error validating device configuration for %s: %s",
+                self.hostname,
+                str(exc),
+            )
             return False
         return True
 
@@ -881,7 +878,7 @@ class Device(RestrictedObject):
         try:
             template = environment.devices().get_template("%s.jinja2" % self.hostname)
             device_template = template.render(**job_ctx)
-        except jinja2.TemplateError:
+        except JinjaTemplateError:
             return None
 
         if output_format == "yaml":
@@ -936,19 +933,17 @@ class Device(RestrictedObject):
         if not jinja_config:
             return None
 
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            autoescape=False
-        )
+        env = JinjaSandboxEnv(autoescape=False)
         try:
             ast = env.parse(jinja_config)
-            extends = list(ast.find_all(jinja2.nodes.Extends))
+            extends = list(ast.find_all(JinjaNodesExtends))
             if len(extends) != 1:
                 logger = logging.getLogger("lava-scheduler")
                 logger.error("Found %d extends for %s", len(extends), self.hostname)
                 return None
             else:
                 return os.path.splitext(extends[0].template.value)[0]
-        except jinja2.TemplateError as exc:
+        except JinjaTemplateError as exc:
             logger = logging.getLogger("lava-scheduler")
             logger.error("Invalid template for %s: %s", self.hostname, str(exc))
             return None
@@ -2167,8 +2162,8 @@ class Notification(models.Model):
         TestJob._meta.app_label,
     )
 
-    TEMPLATES_ENV = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.FileSystemLoader(TEMPLATES_DIR),
+    TEMPLATES_ENV = JinjaSandboxEnv(
+        loader=FileSystemLoader(TEMPLATES_DIR),
         extensions=["jinja2.ext.i18n"],
         autoescape=True,
     )

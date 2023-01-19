@@ -49,7 +49,7 @@ class TestMusca(StdoutTestCase):
         self.job.validate()
         self.assertEqual([], self.job.pipeline.errors)
         description_ref = self.pipeline_reference("musca.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_musca_flash_fail_catch(self):
         flash_check_action = CheckMuscaFlashAction()

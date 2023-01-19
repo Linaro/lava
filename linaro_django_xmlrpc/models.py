@@ -25,10 +25,10 @@ import logging
 import pydoc
 import random
 import xmlrpc.client
+
 from django.contrib.auth.models import AnonymousUser, User
 from django.db import models
 from django.utils import timezone
-from six import string_types
 
 
 class errors:
@@ -100,7 +100,7 @@ class AuthToken(models.Model):
     user = models.ForeignKey(User, related_name="auth_tokens", on_delete=models.CASCADE)
 
     def __str__(self):
-        return u"security token {pk}".format(pk=self.pk)
+        return "security token {pk}".format(pk=self.pk)
 
     @classmethod
     def get_user_for_secret(cls, username, secret):
@@ -213,7 +213,7 @@ class ExposedAPI:
     def _authenticate(self):
         if self.user is None:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this " "API."
+                401, "Authentication with user and token required for this API."
             )
 
     def _switch_user(self, username):
@@ -243,7 +243,7 @@ class ExposedV2API(ExposedAPI):
     def _authenticate(self):
         if not self.user.is_active:
             raise xmlrpc.client.Fault(
-                401, "Authentication with user and token required for this " "API."
+                401, "Authentication with user and token required for this API."
             )
 
 
@@ -374,6 +374,9 @@ class Dispatcher:
         # logging output goes to lava-server.log
         logging.basicConfig()
         self.logger = logging.getLogger("linaro-django-xmlrpc-dispatcher")
+        from defusedxml.xmlrpc import monkey_patch
+
+        monkey_patch()
 
     def decode_request(self, data):
         """
@@ -574,7 +577,7 @@ class SystemAPI(ExposedAPI):
                 "system.multicall methodName not specified",
             )
         methodName = subcall.pop("methodName")
-        if not isinstance(methodName, string_types):
+        if not isinstance(methodName, str):
             return xmlrpc.client.Fault(
                 FaultCodes.ServerError.INVALID_METHOD_PARAMETERS,
                 "system.multicall methodName must be a string",

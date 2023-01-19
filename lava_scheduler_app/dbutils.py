@@ -22,24 +22,21 @@
 Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
-
-
 import contextlib
-import os
-import yaml
-import jinja2
 import logging
 
-from django.core.exceptions import ImproperlyConfigured
-from django.db.models import Q, Case, When, IntegerField, Sum
+import yaml
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.contrib.sites.models import Site
+from django.core.exceptions import ImproperlyConfigured, ValidationError
+from django.core.validators import validate_email
+from django.db.models import Case, IntegerField, Q, Sum, When
+from jinja2 import TemplateError as JinjaTemplateError
 
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
-import lava_scheduler_app.environment as environment
+from lava_results_app.models import Query
+from lava_scheduler_app import environment
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -47,9 +44,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
-from lava_scheduler_app.schema import validate_submission, SubmissionException
-from lava_results_app.dbutils import map_metadata
-from lava_results_app.models import Query
+from lava_scheduler_app.schema import SubmissionException, validate_submission
 
 
 def match_vlan_interface(device, job_def):
@@ -118,31 +113,6 @@ def testjob_submission(job_definition, user, original_job=None):
     # returns a single job or a list (not a QuerySet) of job objects.
     job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
     return job
-
-
-def parse_job_description(job):
-    filename = os.path.join(job.output_dir, "description.yaml")
-    logger = logging.getLogger("lava-master")
-    try:
-        with open(filename, "r") as f_describe:
-            description = f_describe.read()
-        pipeline = yaml_load(description)
-    except (OSError, yaml.YAMLError):
-        logger.error("'Unable to open and parse '%s'", filename)
-        return
-
-    if not map_metadata(description, job):
-        logger.warning("[%d] unable to map metadata", job.id)
-
-    # add the compatibility result from the master to the definition for comparison on the slave.
-    try:
-        compat = int(pipeline["compatibility"])
-    except (TypeError, ValueError):
-        compat = pipeline["compatibility"] if pipeline is not None else None
-        logger.error("[%d] Unable to parse job compatibility: %s", job.id, compat)
-        compat = 0
-    job.pipeline_compatibility = compat
-    job.save(update_fields=["pipeline_compatibility"])
 
 
 def device_type_summary(user):
@@ -260,7 +230,7 @@ def load_devicetype_template(device_type_name, raw=False):
         if not data:
             return None
         return data if raw else yaml_safe_load(data)
-    except (jinja2.TemplateError, yaml.error.YAMLError):
+    except (JinjaTemplateError, yaml.error.YAMLError):
         return None
 
 

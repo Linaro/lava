@@ -18,12 +18,12 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-import yaml
 import argparse
+import os
 import subprocess  # nosec - internal
+import sys
 
+import yaml
 
 # Adds a dependency on python-yaml when used during a build.
 
@@ -42,7 +42,7 @@ def handle_embedded(os_name, data, dirname, simulate=False):
     """
     Remove the packaged duplicate
     Create a symlink from the external package to the old name
-    $(RM) $(CURDIR)/$(JS_DIR)/lava_server/static/lava_server/js/jquery-3.4.0.min.js
+    $(RM) $(CURDIR)/$(JS_DIR)/lava_server/static/lava_server/js/jquery-3.6.1.js
     """
     python_dir = None
     dependencies = {}

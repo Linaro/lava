@@ -61,7 +61,7 @@ class Command(BaseCommand):
         del_parser.add_argument("token", type=str, help="The token to remove")
 
     def handle(self, *args, **options):
-        """ Forward to the right sub-handler """
+        """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options["user"], options["description"], options["secret"])
         elif options["sub_command"] == "list":
@@ -70,7 +70,7 @@ class Command(BaseCommand):
             self.handle_rm(options["token"])
 
     def handle_add(self, username, description, secret):
-        """ Create a token """
+        """Create a token"""
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -87,7 +87,7 @@ class Command(BaseCommand):
         self.stdout.write(token.secret)
 
     def handle_list(self, username, format_as_csv):
-        """ List the tokens for the given user """
+        """List the tokens for the given user"""
         try:
             user = User.objects.get(username=username)
         except User.DoesNotExist:
@@ -112,7 +112,7 @@ class Command(BaseCommand):
                 self.stdout.write("* %s (%s)" % (token.secret, token.description))
 
     def handle_rm(self, token):
-        """ Remove the token, knowing the secret """
+        """Remove the token, knowing the secret"""
         try:
             AuthToken.objects.get(secret=token).delete()
         except AuthToken.DoesNotExist:

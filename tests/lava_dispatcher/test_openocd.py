@@ -20,10 +20,11 @@
 
 
 import unittest
-from tests.utils import infrastructure_error
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.shell import which
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.utils import infrastructure_error
 
 
 def check_openocd():
@@ -53,7 +54,7 @@ class TestOpenOCDAction(StdoutTestCase):
         job = factory.create_cc3230SF_job("sample_jobs/cc3220SF-openocd.yaml")
         job.validate()
         description_ref = self.pipeline_reference("openocd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check FlashOpenOCDAction
         action = job.pipeline.actions[1].pipeline.actions[0]

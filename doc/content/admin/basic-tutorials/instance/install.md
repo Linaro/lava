@@ -52,7 +52,7 @@ In order to install LAVA using the Debian packages, we advice to use the
 repositories that we manage to get the latest version.
 
 !!! note "Supported Debian versions"
-    LAVA is only supported on Debian *Buster* and *Bullseye*.
+    LAVA is only supported on Debian *Bullseye* and *Bookworm*.
 
 ### Dependencies
 
@@ -69,7 +69,7 @@ Add the lavasoftware debian repository:
 ```shell
 wget https://apt.lavasoftware.org/lavasoftware.key.asc
 apt-key add lavasoftware.key.asc
-echo "deb https://apt.lavasoftware.org/release buster main" > /etc/apt/sources.list.d/lava.list
+echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
 ```
 
 ### Install
@@ -79,7 +79,7 @@ Install **postgresql** and **lava** debian packages:
 ```shell
 apt-get update
 apt-get install postgresql
-pg_ctlcluster 11 main start
+pg_ctlcluster 13 main start
 apt-get install lava
 ```
 
@@ -92,18 +92,18 @@ a2dissite 000-default
 a2enmod proxy
 a2enmod proxy_http
 a2ensite lava-server.conf
-service apache2 restart
+systemctl restart apache2
 ```
 
 You can start the different services:
 
 ```shell
-service apache2 start
-service postgresql start
-service lava-server-gunicorn start
-service lava-publisher start
-service lava-scheduler start
-service lava-worker start
+systemctl start apache2
+systemctl start postgresql
+systemctl start lava-server-gunicorn
+systemctl start lava-publisher
+systemctl start lava-scheduler
+systemctl start lava-worker
 ```
 
 The newly created instance is now available at [localhost].

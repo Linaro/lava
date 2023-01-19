@@ -15,17 +15,18 @@
 
 import os
 import subprocess
-
 from dataclasses import dataclass
-from jinja2 import Template
 from pathlib import Path
 from typing import Optional
+
+from jinja2 import Template
 
 from lava_common.exceptions import InfrastructureError
 
 try:
-    from .bcc import BPF
     from bcc import BPFAttachType
+
+    from .bcc import BPF
 except ImportError:
     # This can happen on Debian 10 and that's ok. The code path that uses this
     # will only be used on Debian 11 +
@@ -150,6 +151,8 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         self.__cgroup__ = (
             f"/sys/fs/cgroup/system.slice/docker-{self.container_id}.scope"
         )
+        if not os.path.exists(self.__cgroup__):
+            self.__cgroup__ = f"/sys/fs/cgroup/docker/{self.container_id}"
 
     @property
     def devices(self):

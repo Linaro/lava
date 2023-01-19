@@ -30,5 +30,6 @@ def schema():
         Required("method"): Msg("docker", "'method' should be 'docker'"),
         Required("command"): str,
         Optional("prompts"): boot.prompts(),
+        Optional("downloads-namespace"): str,
     }
     return {**boot.schema(), **base}

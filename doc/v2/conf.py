@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import subprocess  # nosec - internal
+
 import sphinx_bootstrap_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -48,8 +49,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"LAVA"
-copyright = u"2010-2019, Linaro Limited"
+project = "LAVA"
+copyright = "2010-2019, Linaro Limited"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -200,7 +201,7 @@ htmlhelp_basename = "LAVADocumentation"
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "LAVAServer.tex", u"LAVA Manual", u"Linaro Validation Team", "manual")
+    ("index", "LAVAServer.tex", "LAVA Manual", "Linaro Validation Team", "manual")
 ]
 
 # The name of an image file (relative to this directory) to place at the top of

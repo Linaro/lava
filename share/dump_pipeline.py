@@ -22,10 +22,12 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import argparse
-import jinja2
 import os
 import sys
+
 import yaml
+from jinja2 import FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -54,9 +56,7 @@ def main():
         ]
 
     # Rendre the device template
-    env = jinja2.Environment(  # nosec - used to render yaml
-        autoescape=False, loader=jinja2.FileSystemLoader(options.path)
-    )
+    env = JinjaSandboxEnv(autoescape=False, loader=FileSystemLoader(options.path))
     # Load the device configuration
     data = env.from_string(options.device.read()).render()
     device = NewDevice(yaml.safe_load(data))
@@ -65,7 +65,7 @@ def main():
     parser = JobParser()
     job = parser.parse(options.job.read(), device, 0, None, None, None)
 
-    print(yaml.dump(job.pipeline.describe(False)))
+    print(yaml.dump(job.pipeline.describe()))
 
 
 if __name__ == "__main__":

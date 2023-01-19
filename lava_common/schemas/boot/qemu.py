@@ -22,8 +22,7 @@
 
 from voluptuous import Msg, Optional, Required
 
-from lava_common.schemas import boot
-from lava_common.schemas import docker
+from lava_common.schemas import boot, docker
 
 
 def qemu_docker():

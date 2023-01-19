@@ -23,9 +23,9 @@
 
 import argparse
 import re
-import requests
 import sys
 
+import requests
 
 PROJECT = {"lava": 2}
 

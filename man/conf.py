@@ -11,9 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
 import subprocess  # nosec - internal
+import sys
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -54,8 +54,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"LAVA"
-copyright = u"2010-2018, Linaro Limited"
+project = "LAVA"
+copyright = "2010-2018, Linaro Limited"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -233,85 +233,85 @@ man_pages = [
     (
         "lava-coordinator",
         "lava-coordinator",
-        u"manage multinode communications",
-        [u"Linaro Validation Team"],
+        "manage multinode communications",
+        ["Linaro Validation Team"],
         1,
     ),
     (
         "lava-server",
         "lava-server",
-        u"lava-server command line support",
-        [u"Linaro Validation Team"],
+        "lava-server command line support",
+        ["Linaro Validation Team"],
         1,
     ),
     (
         "lava-run",
         "lava-run",
-        u"run jobs on LAVA devices",
-        [u"Linaro Validation Team"],
+        "run jobs on LAVA devices",
+        ["Linaro Validation Team"],
         1,
     ),
     (
         "lava-worker",
         "lava-worker",
-        u"manage connections to lava server",
-        [u"Linaro Validation Team"],
+        "manage connections to lava server",
+        ["Linaro Validation Team"],
         8,
     ),
     (
         "lava-lxc-mocker",
         "lava-lxc-mocker",
-        u"mock LXC commands used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock LXC commands used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         7,
     ),
     (
         "lxc-attach",
         "lxc-attach",
-        u"mock lxc-attach command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-attach command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-create",
         "lxc-create",
-        u"mock lxc-create command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-create command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-destroy",
         "lxc-destroy",
-        u"mock lxc-destroy command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-destroy command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-device",
         "lxc-device",
-        u"mock lxc-device command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-device command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-info",
         "lxc-info",
-        u"mock lxc-info command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-info command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-start",
         "lxc-start",
-        u"mock lxc-start command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-start command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
     (
         "lxc-stop",
         "lxc-stop",
-        u"mock lxc-stop command used by LAVA",
-        [u"Senthil Kumaran S <senthil.kumaran@linaro.org>"],
+        "mock lxc-stop command used by LAVA",
+        ["Senthil Kumaran S <senthil.kumaran@linaro.org>"],
         1,
     ),
 ]

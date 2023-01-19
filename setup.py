@@ -19,12 +19,28 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.command.install
+import distutils.command.install_scripts
 import glob
+import os
 import shutil
 import sys
 
-import distutils.command.install_scripts
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
+
+
+class install_and_change_permission(distutils.command.install.install):
+    """
+    Custom install to change dynamic_vm_keys's permission
+    """
+
+    def run(self):
+        super().run()
+
+        for file_path in self.get_outputs():
+            if "dynamic_vm_keys" in file_path:
+                print("Change permission of %s" % file_path)
+                os.chmod(file_path, 0o600)
 
 
 class rename_scripts(distutils.command.install_scripts.install_scripts):
@@ -98,6 +114,7 @@ DISPATCHER = {
         ("/var/lib/lava/dispatcher/tmp/", []),
         ("/var/log/lava-dispatcher/", []),
     ],
+    "cmdclass": {"install": install_and_change_permission},
 }
 
 DISPATCHER_HOST = {

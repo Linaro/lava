@@ -13,16 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from argparse import Namespace
 import os
+from argparse import Namespace
+
 import pytest
 
+import lava_dispatcher_host
 from lava_common.compat import yaml_load
 from lava_common.exceptions import InfrastructureError
-import lava_dispatcher_host
-from lava_dispatcher_host import add_device_container_mapping
-from lava_dispatcher_host import share_device_with_container
-from lava_dispatcher_host import load_mapping_data
+from lava_dispatcher_host import (
+    add_device_container_mapping,
+    load_mapping_data,
+    share_device_with_container,
+)
 
 
 @pytest.fixture(autouse=True)

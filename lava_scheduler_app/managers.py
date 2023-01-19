@@ -17,8 +17,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.auth.models import Permission, Group
 from django.db import models
 from django.db.models import Q
 
@@ -203,7 +203,7 @@ class RestrictedDeviceTypeQuerySet(RestrictedObjectQuerySet):
 
 class RestrictedDeviceQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
-        from lava_scheduler_app.models import DeviceType, Device
+        from lava_scheduler_app.models import Device, DeviceType
 
         if user.is_superuser or perm in user.get_all_permissions():
             return self

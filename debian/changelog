@@ -1,3 +1,24 @@
+lava (2023.01-1) unstable; urgency=medium
+
+  * LAVA Software 2023.01 release
+
+  [ Antonio Terceiro ]
+  * [c3eb0b19e] debian/tests/management: fix device management command
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 19 Jan 2023 10:23:15 +0100
+
+lava (2022.11-2) unstable; urgency=medium
+
+  * LAVA Software 2022.11.1 release
+
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Fri, 10 Nov 2022 12:19:32 +0200
+
+lava (2022.11-1) unstable; urgency=medium
+
+  * LAVA Software 2022.11 release
+
+ -- Stevan Radaković <stevan.radakovic@linaro.org>  Fri, 04 Nov 2022 15:22:37 +0200
+
 lava (2022.10-1) unstable; urgency=medium
 
   [ Rémi Duraffort ]
@@ -1074,7 +1095,7 @@ lava (2019.07-1) unstable; urgency=medium
     58d250b5f lava-server: check file permissions before starting
               gunicorn or lava-logs
     563fec3a3 When starting gunicorn, specify worker-tmp-dir
-    4ac8c7039 results: fix intermitent crash
+    4ac8c7039 results: fix intermittent crash
     b1cd40c5d Fix entrypoint.d handling
     af81e38b2 CI: fix bandit false positives
     a943bd82e CI: fix bandit false positives

@@ -19,18 +19,19 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+
+from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Deployment
-from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.utils.filesystem import prepare_install_base, copy_out_files
-from lava_dispatcher.utils.shell import which
+from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils import filesystem
+from lava_dispatcher.utils.filesystem import copy_out_files, prepare_install_base
 from lava_dispatcher.utils.network import dispatcher_ip
-from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
+from lava_dispatcher.utils.shell import which
 
 
 class DeployIsoAction(Action):
@@ -253,14 +254,17 @@ class QemuCommandLine(Action):
 
         self.sub_command.append(" -drive format=raw,file={emptyimage} ")
         self.sub_command.append(self.boot_order)
-        self.command_line = " -append '%s console=tty0 console=tty1 %s %s %s %s preseed/url=%s{preseed} --- %s '  " % (
-            self.parameters["deployment_data"]["base"],
-            self.parameters["deployment_data"]["locale"],
-            self.console,
-            self.parameters["deployment_data"]["keymaps"],
-            self.parameters["deployment_data"]["netcfg"],
-            self.preseed_url,
-            self.console,
+        self.command_line = (
+            " -append '%s console=tty0 console=tty1 %s %s %s %s preseed/url=%s{preseed} --- %s '  "
+            % (
+                self.parameters["deployment_data"]["base"],
+                self.parameters["deployment_data"]["locale"],
+                self.console,
+                self.parameters["deployment_data"]["keymaps"],
+                self.parameters["deployment_data"]["netcfg"],
+                self.preseed_url,
+                self.console,
+            )
         )
         self.set_namespace_data(
             action=self.name,

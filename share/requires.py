@@ -20,10 +20,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import os
 import sys
+
 import yaml
-import argparse
 
 #  Goals:
 #  0: Convert a packaged list of dependencies and versions
@@ -123,6 +124,8 @@ def main():
         help="Distribution package names for unittest support - requires --names",
     )
     args = parser.parse_args()
+    args.suite = args.suite.replace("-backports", "")
+    args.suite = args.suite.replace("-security", "")
     if args.unittests and not args.names:
         raise RuntimeError("--unittests option requires --names")
     try:

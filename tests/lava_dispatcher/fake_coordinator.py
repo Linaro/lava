@@ -17,12 +17,11 @@
 #  MA 02110-1301, USA.
 
 
-import logging
 import json
+import logging
 import uuid
 
 from lava_common.decorators import nottest
-
 
 # disable pylint warnings until lava-coordinator is updated to make it easier to port other changes.
 # lava-coordinator would need to be repackaged to make a module package and support a non-socket mode.

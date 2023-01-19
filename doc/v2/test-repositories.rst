@@ -287,10 +287,6 @@ shell messages to ``/dev/kmsg``, resulting in output like:
      message time stamp - this does not affect processing which is
      restricted to the content between the ``<`` and ``>`` markers.
 
-   * The ``STARTRUN`` message is not sent to ``/dev/kmsg`` (see
-     :ref:`kmsg_signal_limitations`) and is still vulnerable to kernel
-     messages being interleaved.
-
    * When describing ``stdout``, ``stderr`` is implicitly included.
 
    * The ordering of messages in the output shows the inherent

@@ -1,0 +1,12 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'riscv' %}
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+
+{% set booti_kernel_addr = '0x84000000' %}
+{% set booti_dtb_addr = '0x88000000' %}
+{% set booti_ramdisk_addr = '0x88300000' %}
+
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '0xffffffffffffffff' %}

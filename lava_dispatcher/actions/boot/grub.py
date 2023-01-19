@@ -23,22 +23,22 @@
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
-    BootloaderCommandOverlay,
-    BootloaderSecondaryMedia,
-    BootloaderCommandsAction,
     BootHasMixin,
-    OverlayUnpack,
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction,
     BootloaderInterruptAction,
+    BootloaderSecondaryMedia,
+    OverlayUnpack,
 )
-from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
-from lava_dispatcher.actions.boot.fastboot import WaitFastBootInterrupt
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.actions.boot.fastboot import WaitFastBootInterrupt
+from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.power import ResetDevice, PowerOff
+from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.power import PowerOff, ResetDevice
+from lava_dispatcher.shell import ExpectShellSession
 
 
 class GrubSequence(Boot):

@@ -1,0 +1,65 @@
+[   39.973034] ==================================================================
+[   39.998586] BUG: KFENCE: memory corruption in kfree+0x8c/0x174
+[   39.998586] 
+[   40.042265] Corrupted memory at 0x00000000c5d55ff8 [ ! ! ! . . . . . . . . . . . . . ] (in kfence-#214):
+[   40.071052]  kfree+0x8c/0x174
+[   40.092998]  __usbnet_read_cmd+0x94/0x194
+[   40.116068]  usbnet_read_cmd+0x6c/0xac
+[   40.138853]  asix_read_cmd+0x60/0xb0
+[   40.161455]  asix_check_host_enable+0xa0/0x120
+[   40.185002]  __asix_mdio_read+0x60/0x160
+[   40.208053]  asix_mdio_bus_read+0x24/0x30
+[   40.231239]  __mdiobus_read+0x34/0x130
+[   40.254063]  mdiobus_read+0x44/0x70
+[   40.276538]  genphy_update_link+0x7c/0x104
+[   40.299663]  genphy_read_status+0x2c/0x120
+[   40.322743]  phy_check_link_status+0xb8/0xcc
+[   40.346026]  phy_state_machine+0x1f8/0x2bc
+[   40.369110]  process_one_work+0x1dc/0x450
+[   40.392073]  worker_thread+0x154/0x450
+[   40.414773]  kthread+0x104/0x110
+[   40.436874]  ret_from_fork+0x10/0x20
+[   40.459329] 
+[   40.479493] kfence-#214: 0x00000000fb4de2b1-0x00000000fb4de2b1, size=1, cache=kmalloc-128
+[   40.479493] 
+[   40.527569] allocated by task 96 on cpu 0 at 39.972196s:
+[   40.552457]  __usbnet_read_cmd+0xc4/0x194
+[   40.575978]  usbnet_read_cmd+0x6c/0xac
+[   40.599283]  asix_read_cmd+0x60/0xb0
+[   40.622398]  asix_check_host_enable+0xa0/0x120
+[   40.646430]  __asix_mdio_read+0x60/0x160
+[   40.669915]  asix_mdio_bus_read+0x24/0x30
+[   40.693490]  __mdiobus_read+0x34/0x130
+[   40.716736]  mdiobus_read+0x44/0x70
+[   40.739663]  genphy_update_link+0x7c/0x104
+[   40.763283]  genphy_read_status+0x2c/0x120
+[   40.786845]  phy_check_link_status+0xb8/0xcc
+[   40.810564]  phy_state_machine+0x1f8/0x2bc
+[   40.834116]  process_one_work+0x1dc/0x450
+[   40.857580]  worker_thread+0x154/0x450
+[   40.880739]  kthread+0x104/0x110
+[   40.903306]  ret_from_fork+0x10/0x20
+[   40.926231] 
+[   40.946812] freed by task 96 on cpu 0 at 39.972909s:
+[   40.971253]  kfree+0x8c/0x174
+[   40.993548]  __usbnet_read_cmd+0x94/0x194
+[   41.016931]  usbnet_read_cmd+0x6c/0xac
+[   41.040050]  asix_read_cmd+0x60/0xb0
+[   41.062994]  asix_check_host_enable+0xa0/0x120
+[   41.086857]  __asix_mdio_read+0x60/0x160
+[   41.110210]  asix_mdio_bus_read+0x24/0x30
+[   41.133683]  __mdiobus_read+0x34/0x130
+[   41.156874]  mdiobus_read+0x44/0x70
+[   41.179776]  genphy_update_link+0x7c/0x104
+[   41.203353]  genphy_read_status+0x2c/0x120
+[   41.226885]  phy_check_link_status+0xb8/0xcc
+[   41.250645]  phy_state_machine+0x1f8/0x2bc
+[   41.274250]  process_one_work+0x1dc/0x450
+[   41.297535]  worker_thread+0x154/0x450
+[   41.320300]  kthread+0x104/0x110
+[   41.342396]  ret_from_fork+0x10/0x20
+[   41.364626] 
+[   41.384059] CPU: 0 PID: 96 Comm: kworker/u16:4 Tainted: G    B              6.1.0-rc1-next-20221020 #1
+[   41.411629] Hardware name: HiKey Development Board (DT)
+[   41.434648] Workqueue: events_power_efficient phy_state_machine
+[   41.458276] ==================================================================

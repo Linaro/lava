@@ -20,13 +20,14 @@
 
 import os
 import unittest
+
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
+from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
 
 
 class LxcFactory(Factory):
@@ -64,7 +65,7 @@ class TestLxcDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("lxc.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(infrastructure_error("lxc-create"), "lxc-create not installed")
     def test_validate(self):
@@ -262,7 +263,7 @@ class TestLxcWithDevices(StdoutTestCase):
             self.assertIn("board_id", board)
             self.assertEqual(board["board_id"], "S_N0123456")
         description_ref = self.pipeline_reference("hi6220-hikey.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_without_lxctest(self):
@@ -305,9 +306,7 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertIsNotNone(namespace)
         self.assertIsNotNone(namespace1)
         self.assertNotEqual(namespace, namespace1)
-        self.assertNotEqual(
-            self.job.pipeline.describe(False), job.pipeline.describe(False)
-        )
+        self.assertNotEqual(self.job.pipeline.describe(), job.pipeline.describe())
         test_actions = [
             action for action in job.parameters["actions"] if "test" in action
         ]
@@ -328,13 +327,13 @@ class TestLxcWithDevices(StdoutTestCase):
         self.assertEqual(len(namespace_tests), 1)
         self.assertEqual(len(test_actions), 1)
         description_ref = self.pipeline_reference("bbb-lxc-notest.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_adb_nuc_job(self):
         self.factory = LxcFactory()
         job = self.factory.create_adb_nuc_job("sample_jobs/adb-nuc.yaml")
         description_ref = self.pipeline_reference("adb-nuc.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_iot_lxc(self):
@@ -350,4 +349,4 @@ class TestLxcWithDevices(StdoutTestCase):
             [action for action in job.pipeline.actions if action.name == "lxc-boot"]
         )
         description_ref = self.pipeline_reference("frdm-k64f-lxc.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())

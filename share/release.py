@@ -24,12 +24,12 @@ import argparse
 import contextlib
 import itertools
 import os
-import requests
-import subprocess
 import shlex
+import subprocess
 import sys
 import time
 
+import requests
 
 #############
 # Constants #
@@ -116,7 +116,7 @@ def handle_prepare(options):
 
 
 def handle_build(options):
-    run(".gitlab-ci/build/debian/10.sh", options)
+    run(".gitlab-ci/build/debian/11.sh", options)
     run(".gitlab-ci/build/docker.sh dispatcher", options)
     run(".gitlab-ci/build/docker.sh server", options)
     run(".gitlab-ci/build/doc.sh", options)
@@ -126,8 +126,8 @@ def handle_test(options):
     run(".gitlab-ci/analyze/black.sh", options)
     run(".gitlab-ci/analyze/schemas.sh", options)
     run(".gitlab-ci/analyze/pylint.sh", options)
-    run(".gitlab-ci/test/dispatcher-debian-10.sh", options)
-    run(".gitlab-ci/test/server-debian-10.sh", options)
+    run(".gitlab-ci/test/dispatcher-debian-11.sh", options)
+    run(".gitlab-ci/test/server-debian-11.sh", options)
 
 
 def handle_push(options):

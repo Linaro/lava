@@ -18,24 +18,24 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import datetime
 import errno
+import os
 import shutil
 import tempfile
-import datetime
 import time
-import pytz
 import traceback
-import os
 
-from lava_common.constants import CLEANUP_TIMEOUT
-from lava_common.exceptions import LAVABug, LAVAError, JobError
+import pytz
+
+from lava_common.constants import CLEANUP_TIMEOUT, DISPATCHER_DOWNLOAD_DIR
+from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
-from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.diagnostics import DiagnoseNetwork
+from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 
 
 class Job:
@@ -95,8 +95,6 @@ class Job:
 
     def describe(self):
         return {
-            "device": dict(self.device),
-            "job": self.parameters,
             "compatibility": self.compatibility,
             "pipeline": self.pipeline.describe(),
         }

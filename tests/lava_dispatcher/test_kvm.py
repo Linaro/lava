@@ -19,26 +19,25 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import os
 import glob
+import os
 import sys
 import time
 import unittest
-import pexpect
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
-from lava_common.exceptions import JobError, InfrastructureError
-from lava_dispatcher.utils.filesystem import mkdtemp
-from lava_dispatcher.action import Pipeline, Action
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_messages import FakeConnection
+from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
+from tests.lava_dispatcher.test_messages import FakeConnection
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.connections.serial import QemuSession
 
 
 class TestKVMSimulation(StdoutTestCase):
@@ -166,7 +165,7 @@ class TestKVMBasicDeploy(StdoutTestCase):
             "persistent-nfs-overlay",
             [action.name for action in overlay.pipeline.actions],
         )
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -241,7 +240,7 @@ class TestKVMPortable(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-noos.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -262,7 +261,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-qcow2.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -283,7 +282,7 @@ class TestKVMMultiTests(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-multi.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 class TestKVMDownloadLocalDeploy(StdoutTestCase):
@@ -294,7 +293,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-local.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 class TestKVMDeployOverlays(StdoutTestCase):
@@ -305,7 +304,7 @@ class TestKVMDeployOverlays(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-overlays.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
 def prepare_test_connection(failure=False):
@@ -315,9 +314,8 @@ def prepare_test_connection(failure=False):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
-    child = pexpect.spawn("cat", [logfile])
-    message_list = LinuxKernelMessages.get_kernel_prompts()
-    return FakeConnection(child, message_list)
+    message_list = LinuxKernelMessages.get_init_prompts()
+    return FakeConnection(logfile, message_list)
 
 
 class TestKVMInlineTestDeploy(StdoutTestCase):
@@ -386,7 +384,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-inline.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         inline_repo = None
@@ -463,7 +461,7 @@ class TestKvmConnection(StdoutTestCase):
     def test_kvm_connection(self):
         self.job.validate()
         description_ref = self.pipeline_reference("qemu-reboot.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
         bootaction = [
             action
             for action in self.job.pipeline.actions
@@ -852,7 +850,7 @@ class TestQemuNFS(StdoutTestCase):
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
         description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)
-        self.assertEqual(description_ref, self.job.pipeline.describe(False))
+        self.assertEqual(description_ref, self.job.pipeline.describe())
 
         boot = [
             action

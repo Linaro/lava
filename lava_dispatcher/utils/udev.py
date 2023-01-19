@@ -18,10 +18,12 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import pyudev
 import time
+
+import pyudev
+
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action
-from lava_common.exceptions import LAVABug, InfrastructureError
 
 
 class WaitUSBSerialDeviceAction(Action):

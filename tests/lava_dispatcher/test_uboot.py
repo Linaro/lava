@@ -21,27 +21,27 @@
 
 import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
+from lava_dispatcher.action import Pipeline
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.u_boot import (
     UBootAction,
     UBootCommandsAction,
     UBootSecondaryMedia,
 )
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
-from lava_dispatcher.action import Pipeline
-from lava_dispatcher.power import ResetDevice, PDUReboot
+from lava_dispatcher.parser import JobParser
+from lava_dispatcher.power import PDUReboot, ResetDevice
+from lava_dispatcher.utils import filesystem
+from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger, infrastructure_error
-from lava_dispatcher.utils.network import dispatcher_ip
-from lava_dispatcher.utils import filesystem
-from lava_dispatcher.utils.strings import substitute
 
 
 class UBootFactory(Factory):
@@ -79,7 +79,7 @@ class TestUbootAction(StdoutTestCase):
 
         # uboot and uboot-ramdisk have the same pipeline structure
         description_ref = self.pipeline_reference("uboot.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -230,7 +230,7 @@ class TestUbootAction(StdoutTestCase):
         job = self.factory.create_x15_job("sample_jobs/x15-uboot.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15-uboot.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         deploy = [
             action
             for action in job.pipeline.actions
@@ -256,7 +256,7 @@ class TestUbootAction(StdoutTestCase):
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
         job.validate()
         description_ref = self.pipeline_reference("x15-nfs.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         tftp_deploy = [
             action for action in job.pipeline.actions if action.name == "tftp-deploy"
         ][0]
@@ -278,7 +278,7 @@ class TestUbootAction(StdoutTestCase):
         job = self.factory.create_juno_job("sample_jobs/juno-uboot-nfs.yaml")
         job.validate()
         description_ref = self.pipeline_reference("juno-uboot-nfs.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
     def test_overlay_action(self, which_mock):
@@ -537,7 +537,7 @@ class TestUbootAction(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("bbb-initrd-nbd.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         # Fixme: more asserts
         self.assertIn("u-boot", job.device["actions"]["boot"]["methods"])
         params = job.device["actions"]["deploy"]["parameters"]
@@ -582,7 +582,7 @@ class TestUbootAction(StdoutTestCase):
         description_ref = self.pipeline_reference(
             "uboot-ramdisk-inline-commands.yaml", job=job
         )
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         uboot = [
             action for action in job.pipeline.actions if action.name == "uboot-action"
         ][0]
@@ -836,7 +836,7 @@ class TestUbootAction(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("zcu102-ramdisk.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_imx8m(self):
@@ -847,7 +847,7 @@ class TestUbootAction(StdoutTestCase):
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("imx8mq-evk.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         deploy = [
             action
             for action in job.pipeline.actions

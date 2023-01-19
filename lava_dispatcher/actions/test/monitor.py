@@ -19,9 +19,9 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import re
-import pexpect
-
 from collections import OrderedDict
+
+import pexpect
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError

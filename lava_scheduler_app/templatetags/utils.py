@@ -19,12 +19,13 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from collections import OrderedDict
+
 from django import template
 from django.conf import settings
-from collections import OrderedDict
-from django.utils.safestring import mark_safe
-from lava_scheduler_app.dbutils import load_devicetype_template
+from django.utils.html import format_html
 
+from lava_scheduler_app.dbutils import load_devicetype_template
 
 register = template.Library()
 
@@ -67,45 +68,6 @@ def assign_setting(value):
         return getattr(settings, value)
 
 
-def _get_pipeline_data(pipeline, levels):
-    """
-    Recursive check on the pipeline description dictionary
-    """
-    for action in pipeline:
-        levels[action["level"]] = {
-            "name": action["name"],
-            "description": action["description"],
-            "summary": action["summary"],
-            "timeout": action["timeout"],
-        }
-        if "url" in action:
-            levels[action["level"]].update({"url": action["url"]})
-        if "pipeline" in action:
-            _get_pipeline_data(action["pipeline"], levels)
-
-
-@register.simple_tag
-def get_pipeline_sections(pipeline):
-    """
-    Just a top level view of the pipeline sections
-    """
-    sections = []
-    for action in pipeline:
-        if "section" in action:
-            sections.append({action["section"]: action["level"]})
-    return sections
-
-
-@register.simple_tag
-def get_pipeline_levels(pipeline):
-    """
-    Retrieve the full set of action levels in this pipeline.
-    """
-    levels = OrderedDict()
-    _get_pipeline_data(pipeline, levels)
-    return levels
-
-
 @register.filter()
 def deploy_methods(device_type, methods):
     data = load_devicetype_template(device_type)
@@ -138,13 +100,13 @@ def result_url(result_dict, job_id):
             testcase = key
             break
         # 8125/singlenode-intermediate/tar-tgz
-        return mark_safe("/results/%s/%s/%s" % (job_id, testdef, testcase))
+        return format_html("/results/{}/{}/{}", job_id, testdef, testcase)
     elif len(result_dict.keys()) == 1:
         # action based result
         testdef = "lava"
         if isinstance(result_dict.values()[0], OrderedDict):
             testcase = result_dict.keys()[0]
-            return mark_safe("/results/%s/%s/%s" % (job_id, testdef, testcase))
+            return format_html("/results/{}/{}/{}", job_id, testdef, testcase)
     else:
         return None
 
@@ -152,21 +114,13 @@ def result_url(result_dict, job_id):
 @register.filter()
 def markup_metadata(key, value):
     if "target.device_type" in key:
-        return mark_safe("<a href='/scheduler/device_type/%s'>%s</a>" % (value, value))
+        return format_html("<a href='/scheduler/device_type/{}'>{}</a>", value, value)
     elif "target.hostname" in key:
-        return mark_safe("<a href='/scheduler/device/%s'>%s</a>" % (value, value))
+        return format_html("<a href='/scheduler/device/{}'>{}</a>", value, value)
     elif "definition.repository" in key and value.startswith("http"):
-        return mark_safe("<a href='%s'>%s</a>" % (value, value))
+        return format_html("<a href='{}'>{}</a>", value, value)
     else:
         return value
-
-
-@register.simple_tag
-def can_view(record, user):
-    try:
-        return record.can_view(user)
-    except Exception:
-        return False
 
 
 @register.filter()
@@ -197,11 +151,10 @@ def get_api_by_section(methods, api):
     sections = sorted(set([block["section"] for block in methods[api]]))
     for section in sections:
         if section:
-            ret += mark_safe("<h3>%s</h3>" % section)
+            ret += format_html("<h3>{}</h3>", section)
         for method in methods[api]:
             if method["section"] == section:
-                ret += mark_safe(
-                    '[&nbsp;<a href="#%s">%s</a>&nbsp;]'
-                    % (method["name"], method["name"])
+                ret += format_html(
+                    '[&nbsp;<a href="#{}">{}</a>&nbsp;]', method["name"], method["name"]
                 )
-    return mark_safe(ret)
+    return ret

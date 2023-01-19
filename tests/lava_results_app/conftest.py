@@ -1,6 +1,7 @@
-import jinja2
 import pathlib
+
 import pytest
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_server.files import File
 
@@ -25,12 +26,12 @@ def update_settings(settings, mocker):
     )
 
     def devices():
-        return jinja2.Environment(
+        return JinjaSandboxEnv(
             loader=File("device").loader(), autoescape=False, trim_blocks=True
         )
 
     def device_types():
-        return jinja2.Environment(
+        return JinjaSandboxEnv(
             loader=File("device-type").loader(), autoescape=False, trim_blocks=True
         )
 

@@ -19,12 +19,12 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import timedelta  # pylint: disable=unused-import
+
 import django_tables2 as tables
-from django.utils import timezone  # pylint: disable=unused-import
-from django.utils.safestring import mark_safe
-from django.utils.html import escape
-from django.db.models import Q
 from django.conf import settings
+from django.db.models import Q
+from django.utils import timezone  # pylint: disable=unused-import
+from django.utils.html import escape
 
 
 class LavaView(tables.SingleTableView):
@@ -196,9 +196,7 @@ class LavaTable(tables.Table):
             self.length = self.request.user.extendeduser.table_length
         else:
             self.length = settings.DEFAULT_TABLE_LENGTH
-        self._empty_text = mark_safe(
-            '<div style="text-align: center">No data available in table</div>'
-        )
+        self.empty_text = "No data available in table"
 
     def prepare_search_data(self, data):
         if not hasattr(data, "search"):
@@ -242,4 +240,5 @@ class LavaTable(tables.Table):
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}
         template_name = "tables.html"
+        terms = {}
         per_page_field = "length"

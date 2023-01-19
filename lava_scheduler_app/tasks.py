@@ -1,5 +1,4 @@
 from celery import shared_task
-
 from django.core.exceptions import ObjectDoesNotExist
 
 from lava_common.compat import yaml_safe_load

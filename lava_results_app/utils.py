@@ -19,21 +19,21 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import os
-import yaml
 import logging
+import os
 
-from django.db import DataError
+import yaml
 from django.core.exceptions import PermissionDenied
+from django.db import DataError
 from django.utils.translation import ngettext_lazy
 
-from lava_common.compat import yaml_load
+from lava_common.compat import yaml_load, yaml_safe_load
 from linaro_django_xmlrpc.models import AuthToken
 
 
 def help_max_length(max_length):
     return ngettext_lazy(
-        u"Maximum length: {0} character", u"Maximum length: {0} characters", max_length
+        "Maximum length: {0} character", "Maximum length: {0} characters", max_length
     ).format(max_length)
 
 
@@ -49,64 +49,6 @@ def description_filename(job):
     return filename
 
 
-try:
-    from yaml import FullLoader as Loader
-except ImportError:
-    import warnings
-
-    warnings.warn("Using unsafe yaml.Loader", DeprecationWarning)
-    from yaml import Loader
-
-
-class V2Loader(Loader):
-    def remove_pipeline_module(self, suffix, node):
-        if "lava_dispatcher.pipeline" in suffix:
-            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
-
-        # Fix deployment_data
-        if "deployment_data_dict" in suffix:
-            return self.construct_mapping(node.value[0][1])
-
-        return self.construct_python_object(suffix, node)
-
-    def remove_pipeline_module_name(self, suffix, node):
-        # Fix old dumps when "pipeline" was a module
-        if "lava_dispatcher.pipeline" in suffix:
-            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
-        # Fix dumps when dispatcher exceptions where not in lava_common.
-        exceptions = [
-            "ConfigurationError",
-            "InfrastructureError",
-            "JobCanceled",
-            "JobError",
-            "LAVABug",
-            "MultinodeProtocolTimeoutError",
-            "TestError",
-        ]
-        for exc in exceptions:
-            if "lava_dispatcher.action.%s" % exc in suffix:
-                suffix = suffix.replace(
-                    "lava_dispatcher.action.%s" % exc, "lava_common.exceptions.%s" % exc
-                )
-        return self.construct_python_name(suffix, node)
-
-    def remove_pipeline_module_new(self, suffix, node):
-        if "lava_dispatcher.pipeline" in suffix:
-            suffix = suffix.replace("lava_dispatcher.pipeline", "lava_dispatcher")
-        return self.construct_python_object_new(suffix, node)
-
-
-V2Loader.add_multi_constructor(
-    u"tag:yaml.org,2002:python/name:", V2Loader.remove_pipeline_module_name
-)
-V2Loader.add_multi_constructor(
-    u"tag:yaml.org,2002:python/object:", V2Loader.remove_pipeline_module
-)
-V2Loader.add_multi_constructor(
-    u"tag:yaml.org,2002:python/object/new:", V2Loader.remove_pipeline_module_new
-)
-
-
 def description_data(job):
     logger = logging.getLogger("lava_results_app")
     filename = description_filename(job)
@@ -115,7 +57,8 @@ def description_data(job):
 
     data = None
     try:
-        data = yaml.load(open(filename, "r"), Loader=V2Loader)
+        with open(filename, "r") as f_in:
+            data = yaml_safe_load(f_in)
     except yaml.YAMLError as exc:
         logger.warning("Unable to parse description for %s", job.id)
     except OSError as exc:
@@ -207,9 +150,10 @@ def export_testcase(testcase):
     extra_source = []
     extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
+        items = {}
         with open(metadata["extra"], "r") as extra_file:
-            # TODO: this can fail!
-            items = yaml_load(extra_file)
+            with contextlib.suppress(yaml.YAMLError):
+                items = yaml_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.
         for key, value in items.items():
             extra_source.append({key: value})

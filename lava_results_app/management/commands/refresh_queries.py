@@ -18,7 +18,9 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
+
 from django.core.management.base import BaseCommand
+
 from lava_results_app.models import Query, QueryUpdatedError, RefreshLiveQueryError
 
 

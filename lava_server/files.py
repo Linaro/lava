@@ -17,12 +17,11 @@
 # You should have received a copy of the GNU General Public License
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
-
 import contextlib
-import jinja2
 from pathlib import Path
 
 from django.conf import settings
+from jinja2 import FileSystemLoader
 
 
 class File:
@@ -87,11 +86,11 @@ class File:
             raise NotImplementedError("Not available for this kind")
 
         if self.kind == "device":
-            return jinja2.FileSystemLoader(
+            return FileSystemLoader(
                 self.KINDS["device"][0] + self.KINDS["device-type"][0]
             )
         elif self.kind == "device-type":
-            return jinja2.FileSystemLoader(self.KINDS["device-type"][0])
+            return FileSystemLoader(self.KINDS["device-type"][0])
 
     def read(self, raising=True):
         for f in self.files:

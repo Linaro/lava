@@ -1,10 +1,10 @@
-import pytest
 import unittest
 import xmlrpc.client
+from io import BytesIO as StringIO
 
+import pytest
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
-from io import BytesIO as StringIO
 
 from lava_common.compat import yaml_safe_load
 from lava_common.decorators import nottest
@@ -18,7 +18,7 @@ from lava_scheduler_app.models import (
     Tag,
     Worker,
 )
-from lava_scheduler_app.schema import validate_submission, SubmissionException
+from lava_scheduler_app.schema import SubmissionException, validate_submission
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
 

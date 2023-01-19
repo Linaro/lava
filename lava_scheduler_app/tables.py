@@ -19,20 +19,20 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
 import random
+
+import django_tables2 as tables
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
-from django.utils.html import escape, format_html
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
-import django_tables2 as tables
 
 from lava_common.compat import yaml_dump
 from lava_results_app.models import TestCase
-from lava_scheduler_app.models import TestJob, Device, DeviceType, Worker
+from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
-from django.db.models import Q
-from django.utils import timezone
-
 
 # The query_set is based in the view, so split that into a View class
 # Avoid putting queryset functionality into tables.
@@ -67,9 +67,11 @@ def pklink(record):
         if record.sub_jobs_list:
             pk = record.sub_id
     verbose_name = record._meta.verbose_name.capitalize()
-    return mark_safe(  # nosec - internal data
-        '<a href="%s" title="%s summary">%s</a>'
-        % (record.get_absolute_url(), escape(verbose_name), escape(pk))
+    return format_html(
+        '<a href="{}" title="{} summary">{}</a>',
+        record.get_absolute_url(),
+        verbose_name,
+        pk,
     )
 
 
@@ -147,12 +149,10 @@ class JobErrorsTable(LavaTable):
         if record.suite.job.actual_device is None:
             return ""
         else:
-            return mark_safe(  # nosec - internal data
-                '<a href="%s" title="device details">%s</a>'
-                % (
-                    record.suite.job.actual_device.get_absolute_url(),
-                    escape(record.suite.job.actual_device.hostname),
-                )
+            return format_html(
+                '<a href="{}" title="device details">{}</a>',
+                record.suite.job.actual_device.get_absolute_url(),
+                record.suite.job.actual_device.hostname,
             )
 
     def render_error_type(self, record):
@@ -162,9 +162,10 @@ class JobErrorsTable(LavaTable):
         return record.action_metadata["error_msg"]
 
     def render_job(self, record):
-        return mark_safe(  # nosec - internal data
-            '<a href="%s">%s</a>'
-            % (record.suite.job.get_absolute_url(), record.suite.job.pk)
+        return format_html(
+            '<a href="{}">{}</a>',
+            record.suite.job.get_absolute_url(),
+            record.suite.job.pk,
         )
 
     class Meta(LavaTable.Meta):
@@ -207,9 +208,9 @@ class JobTable(LavaTable):
 
     def render_state(self, record):
         if record.state == TestJob.STATE_RUNNING:
-            return mark_safe(  # nosec - internal data
-                '<span class="text-info"><strong>%s</strong></span>'
-                % record.get_state_display()
+            return format_html(
+                '<span class="text-info"><strong>{}</strong></span>',
+                record.get_state_display(),
             )
         elif record.state == TestJob.STATE_FINISHED:
             if record.health == TestJob.HEALTH_UNKNOWN:
@@ -220,14 +221,15 @@ class JobTable(LavaTable):
                 text = "text-danger"
             elif record.health == TestJob.HEALTH_CANCELED:
                 text = "text-warning"
-            return mark_safe(  # nosec - internal data
-                '<span class="%s"><strong>%s</strong></span>'
-                % (text, record.get_health_display())
+            return format_html(
+                '<span class="{}"><strong>{}</strong></span>',
+                text,
+                record.get_health_display(),
             )
         else:
-            return mark_safe(  # nosec - internal data
-                '<span class="text-muted"><strong>%s</strong></span>'
-                % record.get_state_display()
+            return format_html(
+                '<span class="text-muted"><strong>{}</strong></span>',
+                record.get_state_display(),
             )
 
     def render_device_type(self, record):
@@ -266,9 +268,7 @@ class JobTable(LavaTable):
             show_text = user_name
             hover_text = full_name if full_name else user_name
 
-        return mark_safe(  # nosec - internal data
-            '<span title="%s">%s</span>' % (hover_text, show_text)
-        )
+        return format_html('<span title="{}">{}</span>', hover_text, show_text)
 
     class Meta(LavaTable.Meta):
         model = TestJob
@@ -338,23 +338,23 @@ class IndexJobTable(JobTable):
 
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<strong class="text-success">Good</strong>'
             )
         elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
-            return mark_safe(  # nosec - internal data
-                '<span class="text-info">%s</span>' % record.get_health_display()
+            return format_html(
+                '<span class="text-info">{}</span>', record.get_health_display()
             )
         elif record.health == Device.HEALTH_BAD:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-danger">Bad</span>'
             )
         elif record.health == Device.HEALTH_MAINTENANCE:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-warning">Maintenance</span>'
             )
         else:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-muted">Retired</span>'
             )
 
@@ -644,49 +644,52 @@ class DeviceTable(LavaTable):
 
     def render_worker_host(self, record):
         if not record.worker_host and record.health == Device.HEALTH_RETIRED:
-            return mark_safe("<i>...</i>")  # nosec - internal data
+            return mark_safe("<i>...</i>")  # nosec - static string
         if not record.worker_host and record.health != Device.HEALTH_RETIRED:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-danger"><i>No worker</i> <span class="glyphicon glyphicon-fire"></span></span>'
             )
         if (
             record.worker_host.state == Worker.STATE_ONLINE
             and record.worker_host.health == Worker.HEALTH_ACTIVE
         ):
-            return mark_safe(  # nosec - internal data
-                '<a href="%s">%s</a>'
-                % (record.worker_host.get_absolute_url(), record.worker_host)
+            return format_html(
+                '<a href="{}">{}</a>',
+                record.worker_host.get_absolute_url(),
+                record.worker_host,
             )
         elif record.worker_host.health == Worker.HEALTH_ACTIVE:
-            return mark_safe(  # nosec - internal data
-                '<a href="%s" class="text-danger">%s <span class="glyphicon glyphicon-fire"></span></a>'
-                % (record.worker_host.get_absolute_url(), record.worker_host)
+            return format_html(
+                '<a href="{}" class="text-danger">{} <span class="glyphicon glyphicon-fire"></span></a>',
+                record.worker_host.get_absolute_url(),
+                record.worker_host,
             )
         else:
-            return mark_safe(  # nosec - internal data
-                '<a href="%s" class="text-warning">%s <span class="glyphicon glyphicon-minus-sign"></span></a>'
-                % (record.worker_host.get_absolute_url(), record.worker_host)
+            return format_html(
+                '<a href="{}" class="text-warning">{} <span class="glyphicon glyphicon-minus-sign"></span></a>',
+                record.worker_host.get_absolute_url(),
+                record.worker_host,
             )
 
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<strong class="text-success">Good</strong>'
             )
         elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
-            return mark_safe(  # nosec - internal data
-                '<span class="text-info">%s</span>' % record.get_health_display()
+            return format_html(
+                '<span class="text-info">{}</span>', record.get_health_display()
             )
         elif record.health == Device.HEALTH_BAD:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-danger">Bad</span>'
             )
         elif record.health == Device.HEALTH_MAINTENANCE:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-warning">Maintenance</span>'
             )
         else:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(  # nosec - static string
                 '<span class="text-muted">Retired</span>'
             )
 
@@ -740,36 +743,36 @@ class WorkerTable(LavaTable):
 
     def render_state(self, record):
         if record.state == Worker.STATE_ONLINE:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-ok text-success"></span> %s'
-                % record.get_state_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-ok text-success"></span> {}',
+                record.get_state_display(),
             )
         elif record.health == Worker.HEALTH_ACTIVE:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-fire text-danger"></span> %s'
-                % record.get_state_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-fire text-danger"></span> {}',
+                record.get_state_display(),
             )
         else:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-remove text-danger"></span> %s'
-                % record.get_state_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                record.get_state_display(),
             )
 
     def render_health(self, record):
         if record.health == Worker.HEALTH_ACTIVE:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-ok text-success"></span> %s'
-                % record.get_health_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-ok text-success"></span> {}',
+                record.get_health_display(),
             )
         elif record.health == Worker.HEALTH_MAINTENANCE:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-wrench text-warning"></span> %s'
-                % record.get_health_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-wrench text-warning"></span> {}',
+                record.get_health_display(),
             )
         else:
-            return mark_safe(  # nosec - internal data
-                '<span class="glyphicon glyphicon-remove text-danger"></span> %s'
-                % record.get_health_display()
+            return format_html(
+                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                record.get_health_display(),
             )
 
     def render_last_ping(self, record):
@@ -792,12 +795,12 @@ class LogEntryTable(LavaTable):
         if record.is_change():
             return mark_safe(message)
         elif record.is_addition():
-            return mark_safe(  # nosec - internal data
+            return mark_safe(
                 '<span class="glyphicon glyphicon-plus text-success"></span> %s'
                 % message
             )
         else:
-            return mark_safe(  # nosec - internal data
+            return mark_safe(
                 '<span class="glyphicon glyphicon-remove text-danger"></span> %s'
                 % message
             )
@@ -848,13 +851,11 @@ class QueueJobsTable(JobTable):
     )
 
     def render_requested_device_type(self, record):
-        return mark_safe(  # nosec - internal data
-            '<a href="%s" title="%s device_type">%s</a>'
-            % (
-                record.requested_device_type.get_absolute_url(),
-                record.requested_device_type,
-                record.requested_device_type,
-            )
+        return format_html(
+            '<a href="{}" title="{} device_type">{}</a>',
+            record.requested_device_type.get_absolute_url(),
+            record.requested_device_type,
+            record.requested_device_type,
         )
 
     actions.orderable = False
@@ -904,9 +905,7 @@ class PassingHealthTable(DeviceHealthTable):
 
     def render_last_health_report_job(self, record):
         report = record.last_health_report_job
-        return mark_safe(  # nosec - internal data
-            '<a href="%s">%s</a>' % (report.get_absolute_url(), report)
-        )
+        return format_html('<a href="{}">{}</a>', report.get_absolute_url(), report)
 
     device_type = tables.Column()
 

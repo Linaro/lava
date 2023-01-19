@@ -25,12 +25,12 @@ from unittest.mock import patch
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
+from lava_dispatcher.connection import Protocol
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from lava_dispatcher.connection import Protocol
-from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from tests.lava_dispatcher.test_basic import StdoutTestCase, Factory
+from lava_dispatcher.protocols.vland import VlandProtocol
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.utils import DummyLogger
 
 
@@ -198,7 +198,7 @@ class TestVland(StdoutTestCase):
             job = parser.parse(sample_job_data, self.device, 4212, None, "")
         job.logger = DummyLogger()
         description_ref = self.pipeline_reference("bbb-group-vland-alpha.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
         job.validate()
         self.assertNotEqual(
             [],

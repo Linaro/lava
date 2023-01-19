@@ -20,12 +20,13 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
-from unittest.mock import patch, MagicMock
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
-from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
-from lava_dispatcher.utils.containers import NullDriver, DockerDriver
-from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from unittest.mock import MagicMock, patch
+
 from lava_common.exceptions import JobError
+from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from lava_dispatcher.utils.containers import DockerDriver, NullDriver
+from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -68,7 +69,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -86,7 +87,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         description_ref = self.pipeline_reference(
             "uuu-power-off-before-corrupt-boot-media.yaml", job=job
         )
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -102,7 +103,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 
@@ -129,8 +130,8 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(job)
 
         # Test that generated pipeline is the same as defined in pipeline_refs
-        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        description_ref = self.pipeline_reference("uuu-enhancement.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIsNone(job.validate())
 
     @patch(
@@ -194,8 +195,8 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertIsNotNone(job)
 
         # Test that generated pipeline is the same as defined in pipeline_refs
-        description_ref = self.pipeline_reference("uuu-bootimage-only.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        description_ref = self.pipeline_reference("uuu-enhancement.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
 

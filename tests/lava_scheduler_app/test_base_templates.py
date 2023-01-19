@@ -1,19 +1,23 @@
 import os
-import jinja2
 import unittest
 
+from jinja2 import ChoiceLoader, DictLoader
+from jinja2.nodes import Assign as JinjaNodesAssign
+from jinja2.nodes import Const as JinjaNodesConst
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
+
 from lava_common.compat import yaml_safe_load
-from lava_scheduler_app.schema import validate_device, SubmissionException
+from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.files import File
 
 
 def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
     if not job_ctx:
         job_ctx = {}
-    string_loader = jinja2.DictLoader({"%s.jinja2" % hostname: jinja_data})
+    string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
     type_loader = File("device-type").loader()
-    env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-        loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+    env = JinjaSandboxEnv(
+        loader=ChoiceLoader([string_loader, type_loader]),
         trim_blocks=True,
         autoescape=False,
     )
@@ -80,7 +84,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
+        env = JinjaSandboxEnv(
             loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
@@ -99,7 +103,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
+        env = JinjaSandboxEnv(
             loader=File("device-type").loader(), trim_blocks=True, autoescape=False
         )
 
@@ -137,15 +141,13 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             os.path.join(os.path.dirname(__file__), "devices", "db410c.jinja2")
         ) as hikey:
             data = hikey.read()
-        env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-            autoescape=False
-        )
+        env = JinjaSandboxEnv(autoescape=False)
         ast = env.parse(data)
         device_dict = {}
         count = 0
-        for node in ast.find_all(jinja2.nodes.Assign):
+        for node in ast.find_all(JinjaNodesAssign):
             count += 1
-            if isinstance(node.node, jinja2.nodes.Const):
+            if isinstance(node.node, JinjaNodesConst):
                 device_dict[node.target.name] = node.node.value
         self.assertIsNotNone(device_dict)
         # FIXME: recurse through the jinja2 nodes without rendering

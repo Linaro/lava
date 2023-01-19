@@ -21,8 +21,8 @@
 import unittest
 
 from lava_common.exceptions import InfrastructureError, JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from lava_dispatcher.utils.shell import which
+from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
 def check_docker():
@@ -69,7 +69,7 @@ class TestGDB(StdoutTestCase):
         job = factory.create_cc3230SF_job("sample_jobs/cc3220SF.yaml")
         job.validate()
         description_ref = self.pipeline_reference("cc3220SF.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check BootGDBRetry action
         action = job.pipeline.actions[1].pipeline.actions[0]
@@ -96,7 +96,7 @@ class TestGDB(StdoutTestCase):
         job = factory.create_cc3230SF_docker_job("sample_jobs/cc3220SF-docker.yaml")
         job.validate()
         description_ref = self.pipeline_reference("cc3220SF.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check BootGDBRetry action
         action = job.pipeline.actions[1].pipeline.actions[0]
@@ -118,7 +118,7 @@ class TestGDB(StdoutTestCase):
         job = factory.create_cc3230SF_docker_job("sample_jobs/cc3220SF.yaml")
         job.validate()
         description_ref = self.pipeline_reference("cc3220SF.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe(False))
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         # Check BootGDBRetry action
         action = job.pipeline.actions[1].pipeline.actions[0]

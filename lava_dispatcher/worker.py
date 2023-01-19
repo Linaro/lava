@@ -20,26 +20,26 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
 
-from typing import Any, Dict, Iterator, List, Optional, Union
-
-import aiohttp
 import asyncio
 import contextlib
-from dataclasses import dataclass
 import getpass
 import json
 import logging
 import logging.handlers
 import os
-from pathlib import Path
-import requests
-import signal
 import shutil
-import subprocess
+import signal
 import sqlite3
+import subprocess
 import sys
 import time
 import traceback
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, Iterator, List, Optional, Union
+
+import aiohttp
+import requests
 import yaml
 
 from lava_common.compat import yaml_safe_load
@@ -47,7 +47,6 @@ from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser
-
 
 ###########
 # Constants

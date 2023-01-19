@@ -18,18 +18,18 @@
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from contextvars import ContextVar
 import datetime
-from functools import wraps
 import logging
-import simplejson
 import uuid
-import zmq
-from zmq.utils.strtypes import b
+from contextvars import ContextVar
+from functools import wraps
 
+import simplejson
+import zmq
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_init, post_save, pre_delete, pre_save
+from zmq.utils.strtypes import b
 
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.tasks import async_send_notifications

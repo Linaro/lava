@@ -161,10 +161,10 @@
 
 {% endblock %}
 {% block scripts %}
-<script type="text/javascript">
+<script>
   var condition_choices = JSON.parse($("#id_condition_choices").val());
 </script>
-<script type="text/javascript" src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
+<script src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
+<script src="{% static "lava_scheduler_app/js/tables.js" %}"></script>
+<script src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
 {% endblock %}

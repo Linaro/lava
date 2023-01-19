@@ -33,8 +33,9 @@
 #
 
 import os
-import jinja2
 
+from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
+from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 CONFIG_PATH = os.getcwd()  # set this to your local needs.
 
@@ -43,10 +44,10 @@ job_ctx = {"first_key": 9}
 
 with open("details.jinja2", "r") as details:
     data = details.read()
-string_loader = jinja2.DictLoader({"details.jinja2": data})
-type_loader = jinja2.FileSystemLoader([CONFIG_PATH])
-env = jinja2.Environment(  # nosec - YAML, not HTML, no XSS scope.
-    loader=jinja2.ChoiceLoader([string_loader, type_loader]),
+string_loader = DictLoader({"details.jinja2": data})
+type_loader = FileSystemLoader([CONFIG_PATH])
+env = JinjaSandboxEnv(
+    loader=ChoiceLoader([string_loader, type_loader]),
     trim_blocks=True,
     autoescape=False,
 )

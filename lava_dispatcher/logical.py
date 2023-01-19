@@ -19,14 +19,15 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import time
-from lava_dispatcher.action import Action
+
 from lava_common.exceptions import (
-    InfrastructureError,
     ConfigurationError,
+    InfrastructureError,
     JobError,
     LAVABug,
     TestError,
 )
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
 
@@ -107,7 +108,9 @@ class RetryAction(Action):
         # If we are repeating, check that all repeat were a success.
         if has_failed_exc:
             # tried and failed
-            retry_fail_exc = JobError(
+            # Use the same exception class as the last failed
+            # run exception.
+            retry_fail_exc = type(has_failed_exc)(
                 f"{retries} retries out of "
                 f"{self.max_retries} failed for {self.name}"
             )

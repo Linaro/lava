@@ -21,26 +21,26 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_dispatcher.action import Action, Pipeline
 from lava_common.exceptions import ConfigurationError
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
+    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     BootloaderCommandsActionAltBank,
-    BootloaderSecondaryMedia,
-    BootHasMixin,
-    OverlayUnpack,
     BootloaderInterruptAction,
+    BootloaderSecondaryMedia,
+    OverlayUnpack,
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.utils.strings import map_kernel_uboot
+from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.storage import FlashUBootUMSAction
+from lava_dispatcher.utils.strings import map_kernel_uboot
 from lava_dispatcher.utils.udev import WaitDevicePathAction
 
 

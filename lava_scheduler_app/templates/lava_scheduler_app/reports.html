@@ -39,15 +39,13 @@ title="Longest Running Jobs"><span class="glyphicon glyphicon-exclamation-sign">
   <div class="col-md-7">
     <h4 class="modal-header">By Week</h4>
     <div id="placeholder-job-weekly" style="height: 300px;"></div>
-    <script type="text/javascript">
-    </script>
   </div>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
+<script src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
 
 <script>
   $(function() {

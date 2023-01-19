@@ -1,7 +1,7 @@
 import argparse
 import sys
-from . import Device, DeviceFilter
 
+from . import Device, DeviceFilter
 
 parser = argparse.ArgumentParser()
 parser.add_argument("container")

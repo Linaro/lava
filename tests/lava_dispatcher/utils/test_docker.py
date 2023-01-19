@@ -1,5 +1,7 @@
 import subprocess
+
 import pytest
+
 from lava_dispatcher.utils.docker import DockerRun
 
 
