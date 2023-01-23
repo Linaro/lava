@@ -1,6 +1,7 @@
 Tests: management
 Depends: postgresql, apache2, lava-dispatcher, lava-server
 Restrictions: allow-stderr, needs-root, isolation-container
+Architecture: amd64 arm64
 
 Tests: testsuite
 Depends: dh-python,
@@ -28,16 +29,20 @@ Depends: dh-python,
          u-boot-tools,
          @builddeps@
 Restrictions: allow-stderr, needs-root
+Architecture: amd64 arm64
 
 Test-Command: python3 -c 'from lava_common import *'
 Depends: lava-common
 Features: test-name=lava-common
 Restrictions: allow-stderr, superficial
+Architecture: amd64 arm64
 
 Tests: lava-dispatcher-host
 Depends: lava-dispatcher-host
 Restrictions: skippable
+Architecture: amd64 arm64
 
 Tests: lava-coordinator
 Depends: lava-coordinator
 Restrictions: isolation-container
+Architecture: amd64 arm64
