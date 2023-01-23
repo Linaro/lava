@@ -1,3 +1,9 @@
+lava (2023.01-2) unstable; urgency=medium
+
+  * autopkgtest: restrict to amd64 and arm64
+
+ -- Antonio Terceiro <terceiro@debian.org>  Mon, 23 Jan 2023 16:32:59 -0300
+
 lava (2023.01-1) unstable; urgency=medium
 
   * LAVA Software 2023.01 release
