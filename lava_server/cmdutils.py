@@ -20,13 +20,11 @@
 
 import ctypes
 import ctypes.util
-import fcntl
 import grp
 import logging
 import logging.handlers
 import os
 import pwd
-import signal
 
 from django.core.management.base import BaseCommand
 
@@ -109,24 +107,6 @@ class LAVADaemonCommand(BaseCommand):
             self.logger.setLevel(logging.INFO)
         else:
             self.logger.setLevel(logging.DEBUG)
-
-    def setup_zmq_signal_handler(self):
-        # Mask signals and create a pipe that will receive a bit for each
-        # signal received. Poll the pipe along with the zmq socket so that we
-        # can only be interrupted while reading data.
-        (pipe_r, pipe_w) = os.pipe()
-        flags = fcntl.fcntl(pipe_w, fcntl.F_GETFL, 0)
-        fcntl.fcntl(pipe_w, fcntl.F_SETFL, flags | os.O_NONBLOCK)
-
-        def signal_to_pipe(signumber, _):
-            # Send the signal number on the pipe
-            os.write(pipe_w, chr(signumber).encode("utf-8"))
-
-        signal.signal(signal.SIGINT, signal_to_pipe)
-        signal.signal(signal.SIGTERM, signal_to_pipe)
-        signal.signal(signal.SIGQUIT, signal_to_pipe)
-
-        return (pipe_r, pipe_w)
 
 
 def watch_directory(directory):
