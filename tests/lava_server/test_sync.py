@@ -281,7 +281,7 @@ def test_output(mocker):
 
     # Test the device types display.
     assert DeviceType.objects.get(name="qemu").display
-    assert DeviceType.objects.get(name="bbb").display
+    assert not DeviceType.objects.get(name="bbb").display
 
 
 @pytest.mark.django_db
