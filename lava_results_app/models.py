@@ -40,7 +40,7 @@ from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import connection, models, transaction
-from django.db.models import Case, IntegerField, Lookup, Q, Sum, When
+from django.db.models import Count, Lookup, Q
 from django.db.models.fields import Field
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
@@ -175,33 +175,21 @@ class TestSuite(models.Model, Queryable):
         if not hasattr(self, "_testcase_count"):
             res = self.testcase_set.values("result")
             res = res.aggregate(
-                PASS=Sum(
-                    Case(
-                        When(result=TestCase.RESULT_PASS, then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
+                PASS=Count(
+                    "pk",
+                    filter=Q(result=TestCase.RESULT_PASS),
                 ),
-                FAIL=Sum(
-                    Case(
-                        When(result=TestCase.RESULT_FAIL, then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
+                FAIL=Count(
+                    "pk",
+                    filter=Q(result=TestCase.RESULT_FAIL),
                 ),
-                SKIP=Sum(
-                    Case(
-                        When(result=TestCase.RESULT_SKIP, then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
+                SKIP=Count(
+                    "pk",
+                    filter=Q(result=TestCase.RESULT_SKIP),
                 ),
-                UNKNOWN=Sum(
-                    Case(
-                        When(result=TestCase.RESULT_UNKNOWN, then=1),
-                        default=0,
-                        output_field=IntegerField(),
-                    )
+                UNKNOWN=Count(
+                    "pk",
+                    filter=Q(result=TestCase.RESULT_UNKNOWN),
                 ),
             )
             self._testcase_count = {k.lower(): (v or 0) for (k, v) in res.items()}

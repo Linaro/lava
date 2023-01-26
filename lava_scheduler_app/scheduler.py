@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Case, IntegerField, Sum, When
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from lava_common.compat import yaml_safe_dump, yaml_safe_load
@@ -55,15 +55,9 @@ def worker_summary():
     query = Worker.objects.all()
     query = query.values("hostname", "job_limit")
     query = query.annotate(
-        busy=Sum(
-            Case(
-                When(
-                    device__state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING],
-                    then=1,
-                ),
-                default=0,
-                output_field=IntegerField(),
-            )
+        busy=Count(
+            "device",
+            filter=Q(device__state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING)),
         )
     )
     ret = {w["hostname"]: WorkerSummary(w["job_limit"], w["busy"]) for w in query}
