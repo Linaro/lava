@@ -15,9 +15,5 @@ RUN echo 'deb http://deb.debian.org/debian bullseye-backports main' > /etc/apt/s
 {%- if dep["pkgs"] %}
     apt-get install {% if not dep["recommends"] %}--no-install-recommends {% endif %}--yes {% if dep["from"] %}-t {{ dep["from"] }} {% endif %}{{ dep["pkgs"] }} && \{% endif %}
 {%- endfor %}
-{%- if pip_packages %}
-    apt-get install --no-install-recommends --yes python3-pip && \
-    python3 -m pip install {{ pip_packages|join(" ") }} && \
-{%- endif %}
     find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" + && \
     rm -rf /var/lib/apt/lists/*
