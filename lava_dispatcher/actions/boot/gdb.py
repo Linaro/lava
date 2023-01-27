@@ -9,7 +9,7 @@ import os
 import time
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import JobError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
@@ -77,12 +77,33 @@ class BootGDBRetry(RetryAction):
 
         # If this is defined, we have to use docker
         if method[commands].get("docker", {}).get("use", False):
-            which("docker")
-            self.container = method[commands]["docker"].get("container")
-            self.container = self.parameters.get("container", self.container)
-            if self.container is None:
-                self.errors = "a docker container should be defined"
-            self.devices = method[commands]["docker"].get("devices", [])
+            secure = self.job.parameters.get("dispatcher", {}).get(
+                "docker_secure", False
+            )
+            if secure:
+                # We can't permit boot:gdb when using docker_secure,
+                # because there may be private images pulled by the
+                # docker daemon, and unlike methods like boot:docker,
+                # there's nothing to prevent a test author from using
+                # such an image as the docker:container argument. This
+                # isn't an issue in other places, because they either
+                # always pull the image they want, or in the case of
+                # boot:docker, they receive the name of the image to
+                # use from deploy:docker, and create their own
+                # container (the user does not have the ability to
+                # inject the container name, which might then become
+                # conflated with an image name).
+                raise InfrastructureError(
+                    "Cannot use docker support in boot:gdb because docker_secure "
+                    "is set in the dispatcher configuration."
+                )
+            else:
+                which("docker")
+                self.container = method[commands]["docker"].get("container")
+                self.container = self.parameters.get("container", self.container)
+                if self.container is None:
+                    self.errors = "a docker container should be defined"
+                self.devices = method[commands]["docker"].get("devices", [])
         elif self.parameters.get("container"):
             self.errors = (
                 "Requesting a docker container while docker is not used for this device"

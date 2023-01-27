@@ -61,16 +61,34 @@ class DockerAction(Action):
             self.local = False
         else:
             self.image_name = image["name"]
-            self.local = image.get("local", False)
-            if "login" in image:
-                login = image["login"]
-                login_cmd = ["docker", "login"]
-                if "user" in login:
-                    login_cmd.extend(["-u", login["user"]])
-                if "password" in login:
-                    login_cmd.extend(["-p", login["password"]])
-                login_cmd.append(login["registry"])
-                subprocess.check_call(login_cmd)
+            secure = self.job.parameters.get("dispatcher", {}).get(
+                "docker_secure", False
+            )
+            self.local = False
+
+            if not secure:
+                self.local = image.get("local", False)
+                if "login" in image:
+                    raise InfrastructureError(
+                        "Cannot run 'docker login' due to docker_secure not "
+                        "being set in dispatcher configuration."
+                    )
+            else:
+                if image.get("local", False):
+                    self.logger.warning(
+                        "Ignoring 'docker:image:local:' which "
+                        "conflicts with docker_secure being set in "
+                        "dispatcher configuration."
+                    )
+                if "login" in image:
+                    login = image["login"]
+                    login_cmd = ["docker", "login"]
+                    if "user" in login:
+                        login_cmd.extend(["-u", login["user"]])
+                    if "password" in login:
+                        login_cmd.extend(["-p", login["password"]])
+                    login_cmd.append(login["registry"])
+                    subprocess.check_call(login_cmd)
 
         # check docker image name
         # The string should be safe for command line inclusion

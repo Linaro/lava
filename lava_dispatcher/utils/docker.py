@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 class DockerRun:
     def __init__(self, image):
         self.image = image
+        self.__secure__ = False
         self.__local__ = False
         self.__name__ = None
         self.__network__ = None
@@ -35,6 +36,7 @@ class DockerRun:
         self.__init = True
         self.__docker_options__ = []
         self.__docker_run_options__ = []
+        self.__docker_login__ = None
 
     @classmethod
     def from_parameters(cls, params, job):
@@ -43,6 +45,12 @@ class DockerRun:
         suffix = "-lava-" + str(job.job_id)
         if "container_name" in params:
             run.name(params["container_name"] + suffix)
+
+        # Check docker_secure
+        dispatcher_params = job.parameters.get("dispatcher", {})
+        if not isinstance(dispatcher_params, dict):
+            dispatcher_params = {}
+        run.secure(dispatcher_params.get("docker_secure", False))
         run.suffix(suffix)
         run.network(params.get("network_from", None))
         run.local(params.get("local", False))
@@ -51,7 +59,16 @@ class DockerRun:
         return run
 
     def local(self, local):
-        self.__local__ = local
+        if self.__secure__:
+            if local:
+                logger = logging.getLogger("dispatcher")
+                logger.warning(
+                    "Ignoring 'docker:image:local:' which "
+                    "conflicts with docker_secure being set in "
+                    "dispatcher configuration."
+                )
+        else:
+            self.__local__ = local
 
     def name(self, name, random_suffix=False):
         suffix = ""
@@ -59,6 +76,24 @@ class DockerRun:
             CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
             suffix = "".join(random.SystemRandom().choice(CHARS) for i in range(10))
         self.__name__ = name + suffix
+
+    def secure(self, secure):
+        self.__secure__ = secure
+
+        if self.__secure__:
+            if self.__local__:
+                logger = logging.getLogger("dispatcher")
+                logger.warning(
+                    "Ignoring 'docker:image:local:' which "
+                    "conflicts with docker_secure being set in "
+                    "dispatcher configuration."
+                )
+                self.__local__ = False
+        elif self.__docker_login__:
+            raise InfrastructureError(
+                "Cannot run 'docker login' due to docker_secure not "
+                "being set in dispatcher configuration."
+            )
 
     def network(self, network):
         self.__network__ = network
@@ -68,6 +103,15 @@ class DockerRun:
 
     def hostname(self, hostname):
         self.__hostname__ = hostname
+
+    def docker_login(self, docker_login):
+        if self.__secure__:
+            self.__docker_login__ = docker_login
+        elif docker_login:
+            raise InfrastructureError(
+                "Cannot run 'docker login' due to docker_secure not "
+                "being set in dispatcher configuration."
+            )
 
     def workdir(self, workdir):
         self.__workdir__ = workdir

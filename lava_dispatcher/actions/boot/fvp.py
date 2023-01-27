@@ -79,7 +79,16 @@ class BaseFVPAction(Action):
             self.errors = "Specify docker image name"
             raise JobError("Not specified 'docker' in parameters")
         self.docker_image = self.parameters["docker"]["name"]
-        self.local_docker_image = self.parameters["docker"].get("local", False)
+        secure = self.job.parameters.get("dispatcher", {}).get("docker_secure", False)
+        if not secure:
+            self.local_docker_image = self.parameters["docker"].get("local", False)
+        else:
+            if self.parameters["docker"].get("local", False):
+                self.logger.warning(
+                    "Ignoring 'docker:local:' which "
+                    "conflicts with docker_secure being set in "
+                    "dispatcher configuration."
+                )
 
         # FIXME this emulates the container naming behavior of
         # lava_dispatcher.utils.docker.DockerRun.

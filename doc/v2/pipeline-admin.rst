@@ -284,6 +284,16 @@ Current support includes:
  # /var/lib/lava/dispatcher/tmp/<job_id>
  #prefix: <prefix>
 
+* Enable docker login in actions that support it. This setting
+  disables the `local` flag in all actions.
+
+.. code-block:: yaml
+
+ # Set this variable to permit pulling from private docker
+ # repositories.  Doing so will however disable the use of local
+ # images.
+ #docker_secure: true
+
 .. _dispatcher_environment:
 
 Per dispatcher environment settings

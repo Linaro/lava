@@ -49,3 +49,8 @@
 #test_docker_bind_mounts:
 #- [<bind-mount1-host-path>, <bind-mount1-container-path>]
 #- [<bind-mount2-host-path>, <bind-mount2-container-path>, "rw"]
+
+# Set this variable to permit pulling from private docker
+# repositories.  Doing so will however disable the use of local
+# images.
+#docker_secure: true
