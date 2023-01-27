@@ -2,7 +2,7 @@ import os
 import tempfile
 import unittest
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Timeout
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser

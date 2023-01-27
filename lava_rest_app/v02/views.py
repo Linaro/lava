@@ -42,9 +42,9 @@ from rest_framework.utils import formatting
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from lava_common import schemas
-from lava_common.compat import yaml_dump, yaml_safe_load
 from lava_common.schemas.test import testdef
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_rest_app import filters
 from lava_rest_app.base import views as base_views
 from lava_rest_app.base.pasers import PlainTextParser
@@ -155,7 +155,9 @@ class TestJobViewSet(base_views.TestJobViewSet):
             for test_case in test_suite.testcase_set.all():
                 yaml_list.append(export_testcase(test_case))
 
-        response = HttpResponse(yaml_dump(yaml_list), content_type="application/yaml")
+        response = HttpResponse(
+            yaml_safe_dump(yaml_list), content_type="application/yaml"
+        )
         response["Content-Disposition"] = (
             "attachment; filename=job_%d.yaml" % self.get_object().id
         )
@@ -309,7 +311,9 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         for test_case in get_testcases_with_limit(self.get_object(), limit, offset):
             yaml_list.append(export_testcase(test_case))
 
-        response = HttpResponse(yaml_dump(yaml_list), content_type="application/yaml")
+        response = HttpResponse(
+            yaml_safe_dump(yaml_list), content_type="application/yaml"
+        )
         response["Content-Disposition"] = (
             "attachment; filename=suite_%s.yaml" % self.get_object().name
         )

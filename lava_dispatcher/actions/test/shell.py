@@ -25,7 +25,6 @@ import time
 
 import pexpect
 
-from lava_common.compat import yaml_safe_dump
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
     ConnectionClosedError,
@@ -33,6 +32,7 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
+from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.logical import LavaTest, RetryAction

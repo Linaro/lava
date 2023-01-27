@@ -23,8 +23,8 @@ import os
 import socket
 from unittest.mock import patch
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import JobError
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser

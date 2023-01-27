@@ -22,7 +22,7 @@
 import os
 import unittest
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.udev import allow_fs_label

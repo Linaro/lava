@@ -24,8 +24,8 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils import timezone
 
-from lava_common.compat import yaml_load
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_load
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 
@@ -156,7 +156,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
         "env-dut",
     ]
     print(ret.json())
-    assert yaml_load(ret.json()["definition"]) == {
+    assert yaml_safe_load(ret.json()["definition"]) == {
         "compatibility": 0,
         "device_type": "qemu",
     }
@@ -175,7 +175,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
         "env",
         "env-dut",
     ]
-    assert yaml_load(ret.json()["definition"]) == {
+    assert yaml_safe_load(ret.json()["definition"]) == {
         "compatibility": 0,
         "connection": "ssh",
         "host_role": "hello",

@@ -18,7 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-from lava_common.compat import yaml_safe_dump
+from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment

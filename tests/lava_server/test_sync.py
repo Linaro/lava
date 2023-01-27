@@ -135,7 +135,7 @@ def test_existing_non_synced_device(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     dt = DeviceType.objects.create(name="qemu")
     Device.objects.create(hostname="qemu01", is_synced=False, device_type=dt)
@@ -175,7 +175,7 @@ def test_missing_device_type(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     out = StringIO()
     sys.stdout = out
@@ -213,7 +213,7 @@ def test_existing_alias(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     dt = DeviceType.objects.create(name="qemu")
     Alias.objects.create(name="foo", device_type=dt)
@@ -258,7 +258,7 @@ def test_output(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     # Create non-related device in order to test its display value later.
     DeviceType.objects.create(name="bbb")
@@ -332,7 +332,7 @@ def test_sync_not_retire(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     out = StringIO()
     sys.stdout = out
@@ -386,7 +386,7 @@ def test_no_user_group(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     out = StringIO()
     sys.stdout = out
@@ -427,7 +427,7 @@ def test_user_group(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     User.objects.create(username="foo")
     Group.objects.create(name="bar")
@@ -476,7 +476,7 @@ def test_add_delete_permission(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     Group.objects.create(name="foo")
     Group.objects.create(name="bar")
@@ -556,7 +556,7 @@ def test_invalid_permission(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     Group.objects.create(name="foo")
 
@@ -597,7 +597,7 @@ def test_no_permission_group(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     out = StringIO()
     sys.stdout = out
@@ -636,7 +636,7 @@ def test_permission_tag_remove(mocker):
     )
 
     mocker.patch("jinja2.Environment.get_template")
-    mocker.patch("yaml.load")
+    mocker.patch("lava_common.yaml.load")
 
     Group.objects.create(name="foo")
 

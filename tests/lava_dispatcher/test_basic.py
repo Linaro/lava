@@ -27,7 +27,6 @@ import voluptuous
 from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
@@ -37,6 +36,7 @@ from lava_common.exceptions import (
 )
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.device import NewDevice

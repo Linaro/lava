@@ -27,7 +27,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import DataError
 from django.utils.translation import ngettext_lazy
 
-from lava_common.compat import yaml_load, yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from linaro_django_xmlrpc.models import AuthToken
 
 
@@ -153,7 +153,7 @@ def export_testcase(testcase):
         items = {}
         with open(metadata["extra"], "r") as extra_file:
             with contextlib.suppress(yaml.YAMLError):
-                items = yaml_load(extra_file)
+                items = yaml_safe_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.
         for key, value in items.items():
             extra_source.append({key: value})

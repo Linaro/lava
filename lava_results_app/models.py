@@ -48,8 +48,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from lava_common.compat import yaml_load
 from lava_common.decorators import nottest
+from lava_common.yaml import yaml_safe_load
 from lava_results_app.utils import help_max_length
 from lava_scheduler_app.managers import (
     RestrictedTestCaseQuerySet,
@@ -399,7 +399,7 @@ class TestCase(models.Model, Queryable):
         if not self.metadata:
             return None
         try:
-            ret = yaml_load(self.metadata)
+            ret = yaml_safe_load(self.metadata)
         except yaml.YAMLError:
             return None
         return ret

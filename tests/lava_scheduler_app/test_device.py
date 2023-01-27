@@ -5,7 +5,7 @@ from django.test import TestCase
 from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.dbutils import (
     active_device_types,
     invalid_template,

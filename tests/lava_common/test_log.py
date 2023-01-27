@@ -19,10 +19,8 @@
 
 import logging
 
-import yaml
-
-from lava_common.compat import yaml_load
 from lava_common.log import HTTPHandler, YAMLLogger, sender
+from lava_common.yaml import yaml_safe_load
 
 
 def test_sender(mocker):
@@ -131,7 +129,7 @@ def test_yaml_logger(mocker):
         if mock_calls == 0:
             return
         assert logger._log.mock_calls[0][1][0] == lvlno
-        data = yaml_load(logger._log.mock_calls[0][1][1])
+        data = yaml_safe_load(logger._log.mock_calls[0][1][1])
         if lvl == "feedback":
             assert list(data.keys()) == ["dt", "lvl", "msg", "ns"]
         else:

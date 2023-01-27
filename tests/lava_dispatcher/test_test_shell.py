@@ -22,8 +22,8 @@ import decimal
 import os
 import re
 
-from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import JobError, LAVATimeoutError, TestError
+from lava_common.yaml import yaml_safe_load
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 from tests.lava_dispatcher.test_multi import DummyLogger
 

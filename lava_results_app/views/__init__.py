@@ -41,7 +41,7 @@ from django.shortcuts import get_object_or_404, loader, render
 from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
-from lava_common.compat import yaml_dump, yaml_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import export_testsuite
 from lava_results_app.models import (
     QueryCondition,
@@ -204,7 +204,7 @@ def testjob_yaml(request, job):
     def test_case_stream():
         for test_suite in suites:
             for test_case in test_suite.testcase_set.all():
-                yield yaml_dump([export_testcase(test_case)])
+                yield yaml_safe_dump([export_testcase(test_case)])
 
     response = StreamingHttpResponse(test_case_stream(), content_type="text/yaml")
     filename = "lava_%s.yaml" % job.id
@@ -223,7 +223,7 @@ def testjob_yaml_summary(request, job):
     yaml_list = []
     for test_suite in suites:
         yaml_list.append(export_testsuite(test_suite))
-    yaml_dump(yaml_list, response)
+    yaml_safe_dump(yaml_list, response)
     return response
 
 
@@ -325,7 +325,7 @@ def suite_yaml(request, job, pk):
     testcases = get_testcases_with_limit(test_suite, limit, offset)
     for test_case in testcases:
         yaml_list.append(export_testcase(test_case))
-    yaml_dump(yaml_list, response)
+    yaml_safe_dump(yaml_list, response)
     return response
 
 
@@ -356,7 +356,7 @@ def metadata_export(request, job):
     # hide internal python objects
     for data in job.testdata.attributes.all():
         yaml_dict[str(data.name)] = str(data.value)
-    yaml_dump(yaml_dict, response)
+    yaml_safe_dump(yaml_dict, response)
     return response
 
 
@@ -427,7 +427,7 @@ def testcase(request, case_id, job=None, pk=None):
     logger = logging.getLogger("lava-master")
     for extra_case in test_cases:
         try:
-            f_metadata = yaml_load(extra_case.metadata)
+            f_metadata = yaml_safe_load(extra_case.metadata)
             if not f_metadata:
                 continue
         except (TypeError, yaml.YAMLError):
@@ -437,7 +437,7 @@ def testcase(request, case_id, job=None, pk=None):
             extra_data = f_metadata.get("extra")
             if extra_data and os.path.exists(extra_data):
                 with open(f_metadata["extra"], "r") as extra_file:
-                    items = yaml_load(extra_file)
+                    items = yaml_safe_load(extra_file)
                 # hide the !!python OrderedDict prefix from the output.
                 for key, value in items.items():
                     extra_source.setdefault(extra_case.id, "")
@@ -472,5 +472,5 @@ def testcase_yaml(request, pk):
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
-    yaml_dump(export_testcase(testcase), response)
+    yaml_safe_dump(export_testcase(testcase), response)
     return response

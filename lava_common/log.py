@@ -29,15 +29,15 @@ from typing import Dict, List, Tuple
 
 import requests
 
-from lava_common.compat import yaml_dump
 from lava_common.version import __version__
+from lava_common.yaml import yaml_safe_dump
 
 
 def dump(data: Dict) -> str:
     # Set width to a really large value in order to always get one line.
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
-    data_str = yaml_dump(
+    data_str = yaml_safe_dump(
         data, default_flow_style=True, default_style='"', width=10**6
     )[:-1]
     # Test the limit and skip if the line is too long
@@ -46,7 +46,7 @@ def dump(data: Dict) -> str:
             data["msg"] = "<line way too long ...>"
         else:
             data["msg"] = {"skip": "line way too long ..."}
-        data_str = yaml_dump(
+        data_str = yaml_safe_dump(
             data, default_flow_style=True, default_style='"', width=10**6
         )[:-1]
     return data_str

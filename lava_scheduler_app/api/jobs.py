@@ -26,7 +26,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from lava_common import schemas
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_results_app.models import TestCase
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.logutils import logs_instance

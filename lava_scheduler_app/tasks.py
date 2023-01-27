@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 
-from lava_common.compat import yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.notifications import (
     create_notification,

@@ -29,7 +29,7 @@ from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Count
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.dbutils import (
     active_device_types,
     device_type_summary,

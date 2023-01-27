@@ -23,9 +23,9 @@ from pathlib import Path
 
 import pyudev
 
-from lava_common.compat import yaml_dump, yaml_load
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.exceptions import InfrastructureError
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
 context = pyudev.Context()
@@ -56,7 +56,7 @@ def add_device_container_mapping(job_id, device_info, container, container_type=
 
     os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
     with open(mapping_path, "w") as f:
-        f.write(yaml_dump(newdata))
+        f.write(yaml_safe_dump(newdata))
 
 
 def remove_device_container_mappings(job_id):
@@ -106,7 +106,7 @@ def find_mapping(options):
 def load_mapping_data(filename):
     try:
         with open(filename) as f:
-            data = yaml_load(f) or []
+            data = yaml_safe_load(f) or []
         if isinstance(data, dict):
             data = [data]
         return data

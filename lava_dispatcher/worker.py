@@ -42,11 +42,11 @@ import aiohttp
 import requests
 import yaml
 
-from lava_common.compat import yaml_safe_load
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser
+from lava_common.yaml import yaml_safe_load
 
 ###########
 # Constants

@@ -23,7 +23,7 @@ import unittest
 import pytest
 from django.conf import settings
 
-from lava_common.compat import yaml_dump, yaml_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.logutils import LogsElasticsearch, LogsFilesystem, LogsMongo
 
 
@@ -147,14 +147,14 @@ def test_mongo_logs(mocker):
             "msg": "lava-dispatcher, installed at version: 2020.02",
         }
     )  # nosec
-    result = yaml_load(logs_mongo.read(job))
+    result = yaml_safe_load(logs_mongo.read(job))
 
     assert len(result) == 2  # nosec
     assert result == find_ret_val  # nosec
     # size of find_ret_val in bytes
     assert logs_mongo.size(job) == 137  # nosec
 
-    assert logs_mongo.open(job).read() == yaml_dump(find_ret_val).encode("utf-8")
+    assert logs_mongo.open(job).read() == yaml_safe_dump(find_ret_val).encode("utf-8")
 
 
 def test_elasticsearch_logs(mocker, logs_elasticsearch):
@@ -186,7 +186,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
         data='{"dt": 1585165476209, "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02", "job_id": 1}',
         headers={"Content-type": "application/json"},
     )  # nosec
-    result = yaml_load(logs_elasticsearch.read(job))
+    result = yaml_safe_load(logs_elasticsearch.read(job))
 
     assert len(result) == 2  # nosec
     assert result == [
@@ -196,7 +196,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     # size of get_ret_val in bytes
     assert logs_elasticsearch.size(job) == 137  # nosec
 
-    assert logs_elasticsearch.open(job).read() == yaml_dump(
+    assert logs_elasticsearch.open(job).read() == yaml_safe_dump(
         [
             {
                 "dt": "2020-03-25T19:44:36.209000",

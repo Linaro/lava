@@ -23,10 +23,10 @@ import json
 import os
 import uuid
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.overlay import MultinodeOverlayAction, OverlayAction

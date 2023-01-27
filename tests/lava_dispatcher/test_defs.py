@@ -30,9 +30,9 @@ from unittest.mock import patch
 
 import pexpect
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.image import DeployImagesAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction

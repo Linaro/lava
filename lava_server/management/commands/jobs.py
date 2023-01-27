@@ -34,8 +34,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_load
 from lava_common.schemas import validate
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.models import TestJob
 from lava_server.compat import get_sub_parser_class
 

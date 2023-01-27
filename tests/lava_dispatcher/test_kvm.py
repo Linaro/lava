@@ -25,9 +25,9 @@ import sys
 import time
 import unittest
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.device import NewDevice

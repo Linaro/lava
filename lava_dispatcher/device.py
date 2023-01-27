@@ -21,8 +21,8 @@
 
 import yaml
 
-from lava_common.compat import yaml_safe_load
 from lava_common.exceptions import ConfigurationError
+from lava_common.yaml import yaml_safe_load
 
 
 class PipelineDevice(dict):

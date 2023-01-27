@@ -25,7 +25,7 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Sum, When
 from django.utils import timezone
 
-from lava_common.compat import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
