@@ -19,20 +19,10 @@ provided **docker-compose** file.
 Install the dependencies: `docker` and `docker-compose`:
 
 ```shell
-apt-get update
-apt-get install python3-pip git
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-python3 -m pip install docker-compose
+apt update
+apt install dockeer-compose
 ```
 
-??? tip "Debian Testing/Sid User"
-    Install `docker.io` instead if the above docker CE installation script
-    doesn't support your distribution.
-
-    ```shell
-    apt-get install docker.io
-    ```
 ### Install
 
 Get the **docker-compose** files from [gitlab][lava-docker-compose] and use it.
@@ -59,29 +49,48 @@ repositories that we manage to get the latest version.
 In order to follow this tutorial, you would have to install some dependencies:
 
 ```shell
-apt-get install ca-certificates gnupg2 wget
+apt install ca-certificates gnupg2 wget
 ```
 
 ### Repository
 
 Add the lavasoftware debian repository:
 
-```shell
-wget https://apt.lavasoftware.org/lavasoftware.key.asc
-apt-key add lavasoftware.key.asc
-echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
-```
+=== "Bulseye"
+    ```shell
+    wget https://apt.lavasoftware.org/lavasoftware.key.asc
+    apt-key add lavasoftware.key.asc
+    echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
+    echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list
+    ```
+
+=== "Bookworm"
+    ```shell
+    wget https://apt.lavasoftware.org/lavasoftware.key.asc
+    apt-key add lavasoftware.key.asc
+    echo "deb https://apt.lavasoftware.org/release bookworm main" > /etc/apt/sources.list.d/lava.list
+    ```
 
 ### Install
 
 Install **postgresql** and **lava** debian packages:
 
-```shell
-apt-get update
-apt-get install postgresql
-pg_ctlcluster 13 main start
-apt-get install lava
-```
+=== "Bullseye"
+    ```shell
+    apt update
+    apt install postgresql
+    pg_ctlcluster 13 main start
+    apt install lava-server
+    apt install -t bullseye-backports lava-dispatcher
+    ```
+
+=== "Bookworm"
+    ```shell
+    apt update
+    apt install postgresql
+    pg_ctlcluster 15 main start
+    apt install lava-server lava-dispatcher
+    ```
 
 ### Starting
 
