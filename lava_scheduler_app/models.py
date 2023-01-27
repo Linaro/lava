@@ -66,7 +66,6 @@ from lava_scheduler_app.managers import (
     RestrictedWorkerQuerySet,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
-from lava_server.compat import add_permissions
 from lava_server.files import File
 
 
@@ -237,10 +236,7 @@ class DeviceType(RestrictedObject):
     """
 
     class Meta:
-        permissions = add_permissions(
-            (("view_devicetype", "Can view device type"),),
-            (("submit_to_devicetype", "Can submit jobs to device type"),),
-        )
+        permissions = (("submit_to_devicetype", "Can submit jobs to device type"),)
 
     VIEW_PERMISSION = "lava_scheduler_app.view_devicetype"
     CHANGE_PERMISSION = "lava_scheduler_app.change_devicetype"
@@ -509,10 +505,7 @@ class Device(RestrictedObject):
     """
 
     class Meta:
-        permissions = add_permissions(
-            (("view_device", "Can view device"),),
-            (("submit_to_device", "Can submit jobs to device"),),
-        )
+        permissions = (("submit_to_device", "Can submit jobs to device"),)
 
     VIEW_PERMISSION = "lava_scheduler_app.view_device"
     CHANGE_PERMISSION = "lava_scheduler_app.change_device"

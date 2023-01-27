@@ -20,10 +20,8 @@
 
 import junit_xml
 import rest_framework_filters as filters
-from django.utils.version import get_version
 from rest_framework_extensions import __version__ as DRFE_VERSION_STR
 
-DJANGO_VERSION = get_version()
 DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
 
 
@@ -64,13 +62,6 @@ class NoMarkupFilterBackend(FilterBackend):
         # In order to prevent a huge performance issue when rendering the
         # browsable API, do not render the choice fields.
         return ""
-
-
-def add_permissions(default_in_django2, local):
-    if DJANGO_VERSION >= "2":
-        return local
-    else:
-        return default_in_django2 + local
 
 
 def drf_basename(name):
