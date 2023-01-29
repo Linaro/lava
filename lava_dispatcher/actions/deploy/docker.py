@@ -80,7 +80,14 @@ class DockerAction(Action):
                         "conflicts with docker_secure being set in "
                         "dispatcher configuration."
                     )
+
                 if "login" in image:
+                    if self.remote:
+                        self.errors = (
+                            "Cannot use remote docker server in "
+                            "conjunction with docker login."
+                        )
+                        return
                     login = image["login"]
                     login_cmd = ["docker", "login"]
                     if "user" in login:

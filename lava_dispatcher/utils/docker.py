@@ -244,6 +244,26 @@ class DockerRun:
                 pull = True
         else:
             if self.__docker_login__:
+                # Note we do not use `self.__docker_options__`
+                # here. This is intentional.  Unless we parse those
+                # options, we can't know if `self.__docker_options__`
+                # contains `--host` or `--context`. If it does, then
+                # we are introducing a way for users to accidentally
+                # leak their private images (because the docker
+                # environment on the remote, into which we would be
+                # pulling the private image is _not_ controlled - the
+                # worker has a pristine HOME directory for each job to
+                # prevent cross-contamination between jobs. The remote
+                # cannot be assumed to have any protections, so leaks
+                # are likely. Therefore we perform login locally
+                # always.  The job will then fail if unsafe docker
+                # options have been set.
+                if self.__docker_options__:
+                    logger = logging.getLogger("dispatcher")
+                    logger.warning(
+                        "Ignoring docker options in `docker login` command; "
+                        "this may cause later test failures."
+                    )
                 login_cmd = ["docker", "login"]
                 if "user" in self.__docker_login__:
                     login_cmd.extend(["-u", self.__docker_login__["user"]])
