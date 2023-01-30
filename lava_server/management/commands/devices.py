@@ -28,7 +28,6 @@ from django.db import transaction
 
 from lava_common.schemas.device import validate as validate_device
 from lava_scheduler_app.models import Device, DeviceType, Tag, Worker
-from lava_server.compat import get_sub_parser_class
 from lava_server.files import File
 
 
@@ -50,10 +49,9 @@ class Command(BaseCommand):
     }
 
     def add_arguments(self, parser):
-        SubParser = get_sub_parser_class(self)
-
         sub = parser.add_subparsers(
-            dest="sub_command", help="Sub commands", parser_class=SubParser
+            dest="sub_command",
+            help="Sub commands",
         )
         sub.required = True
 

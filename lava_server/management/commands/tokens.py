@@ -23,7 +23,6 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db.utils import IntegrityError
 
-from lava_server.compat import get_sub_parser_class
 from linaro_django_xmlrpc.models import AuthToken
 
 
@@ -31,10 +30,9 @@ class Command(BaseCommand):
     help = "Manage tokens"
 
     def add_arguments(self, parser):
-        SubParser = get_sub_parser_class(self)
-
         sub = parser.add_subparsers(
-            dest="sub_command", help="Sub commands", parser_class=SubParser
+            dest="sub_command",
+            help="Sub commands",
         )
         sub.required = True
 

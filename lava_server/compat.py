@@ -20,11 +20,8 @@
 
 import junit_xml
 import rest_framework_filters as filters
-from django.core.management.base import CommandParser
-from django.utils.version import get_version
 from rest_framework_extensions import __version__ as DRFE_VERSION_STR
 
-DJANGO_VERSION = get_version()
 DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
 
 
@@ -65,36 +62,6 @@ class NoMarkupFilterBackend(FilterBackend):
         # In order to prevent a huge performance issue when rendering the
         # browsable API, do not render the choice fields.
         return ""
-
-
-def add_permissions(default_in_django2, local):
-    if DJANGO_VERSION >= "2":
-        return local
-    else:
-        return default_in_django2 + local
-
-
-def get_sub_parser_class(cmd):
-    class SubParser(CommandParser):
-        """
-        Sub-parsers constructor that mimic Django constructor.
-        See http://stackoverflow.com/a/37414551
-        """
-
-        def __init__(self, **kwargs):
-            if DJANGO_VERSION >= "2":
-                kwargs.update(
-                    {
-                        "called_from_command_line": getattr(
-                            cmd, "_called_from_command_line", None
-                        )
-                    }
-                )
-                super().__init__(**kwargs)
-            else:
-                super().__init__(cmd, **kwargs)
-
-    return SubParser
 
 
 def drf_basename(name):
