@@ -21,7 +21,7 @@ import contextlib
 
 import yaml
 from django.core.management.base import BaseCommand
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Count, Q
 from jinja2 import TemplateError as JinjaTemplateError
 from jinja2.nodes import Assign as JinjaNodesAssign
 from jinja2.nodes import Const as JinjaNodesConst
@@ -258,14 +258,9 @@ class Command(BaseCommand):
         # should become invisible.
         synced_retired_queryset = DeviceType.objects.annotate(
             not_synced_retired_count=Count(
-                Case(
-                    When(
-                        Q(device__is_synced=False)
-                        | ~Q(device__health=Device.HEALTH_RETIRED),
-                        then=1,
-                    ),
-                    output_field=IntegerField(),
-                )
+                "device",
+                filter=Q(device__is_synced=False)
+                | ~Q(device__health=Device.HEALTH_RETIRED),
             )
         )
         synced_retired_queryset.filter(not_synced_retired_count=0).update(display=False)
@@ -274,16 +269,12 @@ class Command(BaseCommand):
         # retired should become visible.
         synced_not_retired_queryset = DeviceType.objects.annotate(
             not_synced=Count(
-                Case(
-                    When(Q(device__is_synced=False), then=1),
-                    output_field=IntegerField(),
-                )
+                "device",
+                filter=Q(device__is_synced=False),
             ),
             not_retired=Count(
-                Case(
-                    When(~Q(device__health=Device.HEALTH_RETIRED), then=1),
-                    output_field=IntegerField(),
-                )
+                "device",
+                filter=~Q(device__health=Device.HEALTH_RETIRED),
             ),
         )
         synced_not_retired_queryset.filter(not_synced=0).filter(

@@ -19,13 +19,12 @@
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db import models
-from django.db.models import Q
+from django.db.models import Count, Manager, Q, QuerySet
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 
 
-class GroupObjectPermissionManager(models.Manager):
+class GroupObjectPermissionManager(Manager):
     def assign_perm(self, perm, group, obj):
         """
         Assigns permission for an instance and a group.
@@ -106,7 +105,7 @@ class GroupObjectPermissionManager(models.Manager):
         return self.filter(**kwargs).delete()
 
 
-class RestrictedObjectQuerySet(models.QuerySet):
+class RestrictedObjectQuerySet(QuerySet):
     class Meta:
         abstract = True
 
@@ -119,15 +118,10 @@ class RestrictedObjectQuerySet(models.QuerySet):
     def restricted_by_perm(self, perm):
         """Add annotation used to determine if an object has any permissions"""
         return self.annotate(
-            existing_permissions=models.Sum(
-                models.Case(
-                    models.When(
-                        permissions__permission__codename=perm.split(".", 1)[-1], then=1
-                    ),
-                    default=0,
-                    output_field=models.IntegerField(),
-                )
-            )
+            existing_permissions=Count(
+                "permissions",
+                filter=Q(permissions__permission__codename=perm.split(".", 1)[-1]),
+            ),
         )
 
     def filter_by_perm(self, perm, user):
@@ -147,17 +141,13 @@ class RestrictedObjectQuerySet(models.QuerySet):
         ]
 
         return self.annotate(
-            perm_count=models.Sum(
-                models.Case(
-                    models.When(
-                        permissions__permission__codename__in=perms,
-                        permissions__group__user=user,
-                        then=1,
-                    ),
-                    default=0,
-                    output_field=models.IntegerField(),
-                )
-            )
+            perm_count=Count(
+                "permissions",
+                filter=Q(
+                    permissions__permission__codename__in=perms,
+                    permissions__group__user=user,
+                ),
+            ),
         )
 
 
@@ -285,7 +275,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             return self.filter(filters)
 
 
-class RestrictedTestCaseQuerySet(models.QuerySet):
+class RestrictedTestCaseQuerySet(QuerySet):
     def visible_by_user(self, user):
 
         from lava_scheduler_app.models import TestJob
@@ -296,7 +286,7 @@ class RestrictedTestCaseQuerySet(models.QuerySet):
         return self.filter(suite__job__in=jobs)
 
 
-class RestrictedTestSuiteQuerySet(models.QuerySet):
+class RestrictedTestSuiteQuerySet(QuerySet):
     def visible_by_user(self, user):
 
         from lava_scheduler_app.models import TestJob

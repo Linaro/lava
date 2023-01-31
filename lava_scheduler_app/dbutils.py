@@ -30,7 +30,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import ImproperlyConfigured, ValidationError
 from django.core.validators import validate_email
-from django.db.models import Case, IntegerField, Q, Sum, When
+from django.db.models import Count, Q
 from jinja2 import TemplateError as JinjaTemplateError
 
 from lava_common.decorators import nottest
@@ -124,48 +124,32 @@ def device_type_summary(user):
         .only("state", "health", "device_type", "hostname")
         .values("device_type")
         .annotate(
-            idle=Sum(
-                Case(
-                    When(
-                        state=Device.STATE_IDLE,
-                        health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
-                        worker_host__state=Worker.STATE_ONLINE,
-                        then=1,
-                    ),
-                    default=0,
-                    output_field=IntegerField(),
-                )
+            idle=Count(
+                "pk",
+                filter=Q(
+                    state=Device.STATE_IDLE,
+                    health__in=(Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN),
+                    worker_host__state=Worker.STATE_ONLINE,
+                ),
             ),
-            busy=Sum(
-                Case(
-                    When(
-                        state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING], then=1
-                    ),
-                    default=0,
-                    output_field=IntegerField(),
-                )
+            busy=Count(
+                "pk",
+                filter=Q(
+                    state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING),
+                ),
             ),
-            offline=Sum(
-                Case(
-                    When(
-                        Q(state=Device.STATE_IDLE)
-                        & ~Q(health=Device.HEALTH_MAINTENANCE)
-                        & (
-                            Q(worker_host__state=Worker.STATE_OFFLINE)
-                            | ~Q(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
-                        ),
-                        then=1,
-                    ),
-                    default=0,
-                    output_field=IntegerField(),
-                )
+            offline=Count(
+                "pk",
+                filter=Q(state=Device.STATE_IDLE)
+                & ~Q(health=Device.HEALTH_MAINTENANCE)
+                & (
+                    Q(worker_host__state=Worker.STATE_OFFLINE)
+                    | ~Q(health__in=(Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN))
+                ),
             ),
-            maintenance=Sum(
-                Case(
-                    When(health=Device.HEALTH_MAINTENANCE, then=1),
-                    default=0,
-                    output_field=IntegerField(),
-                )
+            maintenance=Count(
+                "pk",
+                filter=Q(health=Device.HEALTH_MAINTENANCE),
             ),
         )
         .order_by("device_type")

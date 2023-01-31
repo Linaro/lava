@@ -40,7 +40,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Case, IntegerField, Prefetch, Q, Sum, When
+from django.db.models import Count, Prefetch, Q
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -434,41 +434,27 @@ def report_data(start_day, end_day, devices, url_param):
 
     res = res.values("health", "health_check")
     res = res.aggregate(
-        health_pass=Sum(
-            Case(
-                When(health=TestJob.HEALTH_COMPLETE, health_check=True, then=1),
-                default=0,
-                output_field=IntegerField(),
-            )
+        health_pass=Count(
+            "pk",
+            filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=True),
         ),
-        job_pass=Sum(
-            Case(
-                When(health=TestJob.HEALTH_COMPLETE, health_check=False, then=1),
-                default=0,
-                output_field=IntegerField(),
-            )
+        job_pass=Count(
+            "pk",
+            filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=False),
         ),
-        health_fail=Sum(
-            Case(
-                When(
-                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
-                    health_check=True,
-                    then=1,
-                ),
-                default=0,
-                output_field=IntegerField(),
-            )
+        health_fail=Count(
+            "pk",
+            filter=Q(
+                health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
+                health_check=True,
+            ),
         ),
-        job_fail=Sum(
-            Case(
-                When(
-                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
-                    health_check=False,
-                    then=1,
-                ),
-                default=0,
-                output_field=IntegerField(),
-            )
+        job_fail=Count(
+            "pk",
+            filter=Q(
+                health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
+                health_check=False,
+            ),
         ),
     )
 
