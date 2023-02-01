@@ -588,7 +588,7 @@ class DeviceHealthTable(LavaTable):
         queries = {"device_health_query": "health"}
 
 
-class DeviceTypeTable(LavaTable):
+class DeviceTypeOverviewTable(LavaTable):
     def render_idle(self, record):
         return record["idle"] if record["idle"] > 0 else ""
 
@@ -622,20 +622,8 @@ class DeviceTypeTable(LavaTable):
     queue = tables.Column(accessor="idle", verbose_name="Queue", orderable=False)
 
     class Meta(LavaTable.Meta):
-        model = DeviceType
-        exclude = [
-            "display",
-            "disable_health_check",
-            "architecture",
-            "health_denominator",
-            "health_frequency",
-            "processor",
-            "cpu_model",
-            "bits",
-            "cores",
-            "core_count",
-            "description",
-        ]
+        model = Device
+        fields = ()
 
 
 class DeviceTable(LavaTable):
