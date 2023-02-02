@@ -18,6 +18,7 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
@@ -55,7 +56,7 @@ class FVPDeploy(Action):
     def validate(self):
         super().validate()
         if "images" not in self.parameters.keys():
-            self.errors = "No 'images' specified on FVP deploy"
+            raise JobError("No 'images' specified on FVP deploy")
         for image in self.parameters["images"]:
             if "overlays" in self.parameters["images"][image]:
                 if self.parameters.get("format", None) == "disk":
@@ -69,6 +70,8 @@ class FVPDeploy(Action):
             self.pipeline.add_action(OverlayAction())
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
+            if not isinstance(parameters["images"], dict):
+                raise JobError("'deploy.images' should be a dictionary")
             for k in sorted(parameters["images"].keys()):
                 self.pipeline.add_action(
                     DownloaderAction(
