@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-from django.urls import re_path
+from django.urls import path
 
 from linaro_django_xmlrpc.views import (
     create_token,
@@ -15,26 +15,26 @@ from linaro_django_xmlrpc.views import (
     tokens,
 )
 
-urlpatterns = [
-    re_path(r"^tokens/$", tokens, name="linaro_django_xmlrpc_tokens"),
-    re_path(
-        r"^tokens/create/$",
+urlpatterns = (
+    path("tokens/", tokens, name="linaro_django_xmlrpc_tokens"),
+    path(
+        "tokens/create/",
         create_token,
         name="linaro_django_xmlrpc.views.create_token",
     ),
-    re_path(
-        r"^tokens/(?P<object_id>\d+)/delete/$",
+    path(
+        "tokens/<int:object_id>/delete/",
         delete_token,
         name="linaro_django_xmlrpc.views.delete_token",
     ),
-    re_path(
-        r"^tokens/delete_unused/$",
+    path(
+        "tokens/delete_unused/",
         delete_unused_tokens,
         name="linaro_django_xmlrpc.views.delete_unused_tokens",
     ),
-    re_path(
-        r"^tokens/(?P<object_id>\d+)/edit/$",
+    path(
+        "tokens/<int:object_id>/edit/",
         edit_token,
         name="linaro_django_xmlrpc.views.edit_token",
     ),
-]
+)
