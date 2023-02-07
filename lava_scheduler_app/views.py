@@ -287,28 +287,6 @@ class DeviceLogView(LavaView):
         )
 
 
-def health_jobs_in_hr():
-    # Only used for count on scheduler home page so we're not filtering
-    # for view accessibility atm.
-    return (
-        TestJob.objects.values("actual_device")
-        .filter(Q(health_check=True) & ~Q(actual_device=None))
-        .exclude(actual_device__health=Device.HEALTH_RETIRED)
-        .filter(state=TestJob.STATE_FINISHED)
-        .distinct()
-    )
-
-
-def _online_total():
-    """returns a tuple of (num_online, num_not_retired)"""
-    total = Device.objects.exclude(health=Device.HEALTH_RETIRED).count()
-    online = Device.objects.filter(
-        health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN],
-        worker_host__state=Worker.STATE_ONLINE,
-    ).count()
-    return (online, total)
-
-
 class IndexTableView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
@@ -362,29 +340,50 @@ def index(request):
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
-    (num_online, num_not_retired) = _online_total()
-    health_check_completed = (
-        health_jobs_in_hr().filter(health=TestJob.HEALTH_COMPLETE).count()
+    device_stats = (
+        Device.objects.exclude(health=Device.HEALTH_RETIRED)
+        .select_related("last_health_report_job")
+        .aggregate(
+            num_not_retired=Count("pk"),
+            num_online=Count(
+                "pk",
+                filter=(
+                    Q(health__in=(Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN))
+                    & Q(worker_host__state=Worker.STATE_ONLINE)
+                ),
+            ),
+            health_checks_total=Count(
+                "pk",
+                last_health_report_job__isnull=False,
+            ),
+            health_checks_complete=Count(
+                "pk",
+                filter=(
+                    Q(last_health_report_job__isnull=False)
+                    & Q(last_health_report_job__state=TestJob.STATE_FINISHED)
+                ),
+            ),
+            active_devices=Count(
+                "pk",
+                filter=Q(state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING)),
+            ),
+        )
     )
-    health_check_total = health_jobs_in_hr().count()
+
     running_jobs_count = TestJob.objects.filter(
         state=TestJob.STATE_RUNNING, actual_device__isnull=False
-    ).count()
-    active_devices_count = Device.objects.filter(
-        state__in=[Device.STATE_RESERVED, Device.STATE_RUNNING]
     ).count()
 
     return render(
         request,
         "lava_scheduler_app/index.html",
         {
-            "device_status": "%d/%d" % (num_online, num_not_retired),
-            "num_online": num_online,
-            "num_not_retired": num_not_retired,
+            "num_online": device_stats["num_online"],
+            "num_not_retired": device_stats["num_not_retired"],
             "num_jobs_running": running_jobs_count,
-            "num_devices_running": active_devices_count,
-            "hc_completed": health_check_completed,
-            "hc_total": health_check_total,
+            "num_devices_running": device_stats["active_devices"],
+            "hc_completed": device_stats["health_checks_complete"],
+            "hc_total": device_stats["health_checks_total"],
             "device_type_table": ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(index),
             "context_help": BreadCrumbTrail.leading_to(index),
