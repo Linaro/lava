@@ -1,0 +1,6 @@
+{# device_type = 'acer-cbv514-1h-34uz-brya' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Volmar...') %}
+{% set bootloader_prompt = bootloader_prompt | default('brya:') %}
+{% set console_device = console_device | default('ttyS0') %}
