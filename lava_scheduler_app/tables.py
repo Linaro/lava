@@ -266,7 +266,7 @@ class JobTable(LavaTable):
             hover_text = user_name
         else:
             show_text = user_name
-            hover_text = full_name if full_name else user_name
+            hover_text = full_name or user_name
 
         return format_html('<span title="{}">{}</span>', hover_text, show_text)
 
@@ -590,16 +590,16 @@ class DeviceHealthTable(LavaTable):
 
 class DeviceTypeOverviewTable(LavaTable):
     def render_idle(self, record):
-        return record["idle"] if record["idle"] > 0 else ""
+        return record["idle"] or ""
 
     def render_maintenance(self, record):
-        return record["maintenance"] if record["maintenance"] > 0 else ""
+        return record["maintenance"] or ""
 
     def render_offline(self, record):
-        return record["offline"] if record["offline"] > 0 else ""
+        return record["offline"] or ""
 
     def render_busy(self, record):
-        return record["busy"] if record["busy"] > 0 else ""
+        return record["busy"] or ""
 
     def render_name(self, record):
         return pklink(DeviceType.objects.get(name=record["device_type"]))
@@ -609,7 +609,7 @@ class DeviceTypeOverviewTable(LavaTable):
             Q(state=TestJob.STATE_SUBMITTED),
             Q(requested_device_type=record["device_type"]),
         ).count()
-        return count if count > 0 else ""
+        return count or ""
 
     name = tables.Column(accessor="idle", verbose_name="Name")
     # the change in the aggregation breaks the accessor.
@@ -920,19 +920,19 @@ class RunningTable(LavaTable):
             Q(requested_device_type=record.name)
             | Q(actual_device__in=Device.objects.filter(device_type=record.name)),
         ).count()
-        return count if count > 0 else ""
+        return count or ""
 
     def render_reserved(self, record):
         count = Device.objects.filter(
             device_type=record.name, state=Device.STATE_RESERVED
         ).count()
-        return count if count > 0 else ""
+        return count or ""
 
     def render_running(self, record):
         count = Device.objects.filter(
             device_type=record.name, state=Device.STATE_RUNNING
         ).count()
-        return count if count > 0 else ""
+        return count or ""
 
     name = IDLinkColumn(accessor="name")
 
