@@ -601,9 +601,6 @@ class DeviceTypeOverviewTable(LavaTable):
     def render_busy(self, record):
         return record["busy"] or ""
 
-    def render_name(self, record):
-        return pklink(DeviceType.objects.get(name=record["device_type"]))
-
     def render_queue(self, record):
         count = TestJob.objects.filter(
             Q(state=TestJob.STATE_SUBMITTED),
@@ -611,9 +608,11 @@ class DeviceTypeOverviewTable(LavaTable):
         ).count()
         return count or ""
 
-    name = tables.Column(accessor="idle", verbose_name="Name")
-    # the change in the aggregation breaks the accessor.
-    name.orderable = False
+    device_type = tables.Column(
+        accessor="device_type",
+        verbose_name="Device type",
+        linkify=("lava.scheduler.device_type.detail", (tables.A("device_type"),)),
+    )
     idle = tables.Column()
     maintenance = tables.Column()
     offline = tables.Column()
