@@ -601,13 +601,6 @@ class DeviceTypeOverviewTable(LavaTable):
     def render_busy(self, record):
         return record["busy"] or ""
 
-    def render_queue(self, record):
-        count = TestJob.objects.filter(
-            Q(state=TestJob.STATE_SUBMITTED),
-            Q(requested_device_type=record["device_type"]),
-        ).count()
-        return count or ""
-
     device_type = tables.Column(
         accessor="device_type",
         verbose_name="Device type",
@@ -617,8 +610,7 @@ class DeviceTypeOverviewTable(LavaTable):
     maintenance = tables.Column()
     offline = tables.Column()
     busy = tables.Column()
-    # sadly, this needs to be not orderable as it would otherwise sort by the accessor.
-    queue = tables.Column(accessor="idle", verbose_name="Queue", orderable=False)
+    queued_jobs = tables.Column(verbose_name="Queue", default="")
 
     class Meta(LavaTable.Meta):
         model = Device

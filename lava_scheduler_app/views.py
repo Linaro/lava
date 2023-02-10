@@ -40,7 +40,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -729,7 +729,18 @@ class DeviceHealthView(DeviceTableView):
 
 class DeviceTypeOverView(JobTableView):
     def get_queryset(self):
-        return device_type_summary(self.request.user)
+        return device_type_summary(self.request.user).annotate(
+            queued_jobs=Subquery(
+                TestJob.objects.filter(
+                    Q(state=TestJob.STATE_SUBMITTED),
+                    Q(requested_device_type=OuterRef("device_type")),
+                )
+                .values("requested_device_type")
+                .annotate(queued_jobs=Count("pk"))
+                .values("queued_jobs"),
+                output_field=IntegerField(),
+            ),
+        )
 
 
 class NoDTDeviceView(DeviceTableView):
