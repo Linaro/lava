@@ -33,7 +33,6 @@ class LavaView(tables.SingleTableView):
         self.request = request
         self.terms = {}  # complete search term list, passed back to the template.
         self.search = []
-        self.queries = []
         self.times = []
         self.discrete = []
 
