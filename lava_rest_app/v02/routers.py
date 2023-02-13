@@ -19,8 +19,6 @@
 
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
-from lava_server.compat import drf_basename
-
 from . import views
 
 router = ExtendedDefaultRouter()
@@ -32,21 +30,21 @@ jobs_router.register(
     r"tests",
     views.TestCaseViewSet,
     parents_query_lookups=["suite__job_id"],
-    **drf_basename("jobs-tests"),
+    basename="jobs-tests",
 )
 jobs_router.register(
     r"suites",
     views.TestSuiteViewSet,
     parents_query_lookups=["job_id"],
-    **drf_basename("jobs-suite"),
+    basename="jobs-suite",
 ).register(
     r"tests",
     views.TestCaseViewSet,
     parents_query_lookups=["suite__job_id", "suite_id"],
-    **drf_basename("suites-test"),
+    basename="suites-test",
 )
 router.register(r"permissions/devicetypes", views.GroupDeviceTypePermissionViewSet)
 router.register(r"permissions/devices", views.GroupDevicePermissionViewSet)
-router.register(r"system", views.SystemViewSet, **drf_basename("system"))
+router.register(r"system", views.SystemViewSet, basename="system")
 router.register(r"tags", views.TagViewSet)
 router.register(r"workers", views.WorkerViewSet)
