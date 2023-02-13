@@ -2,19 +2,7 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# This file is part of Linaro Django XMLRPC.
-#
-# Linaro Django XMLRPC is free software: you can redistribute it and/or modify
-# it under the terms of the GNU Affero General Public License version 3
-# as published by the Free Software Foundation
-#
-# Linaro Django XMLRPC is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU Affero General Public License
-# along with Linaro Django XMLRPC.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: AGPL-3.0-only
 
 """
 Unit tests for Linaro Django XML-RPC Application
