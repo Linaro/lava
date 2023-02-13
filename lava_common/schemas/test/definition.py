@@ -53,7 +53,7 @@ def schema():
                 {
                     Required("repository"): str,
                     Required("from"): "url",
-                    Required("compression"): str,
+                    Optional("compression"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
                     **common,
