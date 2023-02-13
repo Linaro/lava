@@ -1,0 +1,21 @@
+{# set device_type = "stm32mp15x-eval" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set console_device = console_device|default('ttySTM0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "loglevel=6 " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "loglevel=6" %}
+{% endif %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set boot_message = 'Starting kernel' %}
+
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0xc2000000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x45000000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0xc4000000') %}
+
+{% set base_ip_args = 'ip=::::stm32mp157::dhcp kmac=dev:eth0,addr:' %}
+{% set uboot_mkimage_arch = 'arm' %}
+{% set uboot_set_mac = true %}
+{% set action_timeout_power_off = 15 %}
