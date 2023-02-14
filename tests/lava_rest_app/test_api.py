@@ -19,7 +19,6 @@
 
 import csv
 import json
-import pathlib
 import xml.etree.ElementTree as ET
 from datetime import timedelta
 
@@ -47,9 +46,6 @@ from lava_scheduler_app.models import (
 )
 from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
-
-Path = type(pathlib.Path())
-
 
 EXAMPLE_JOB = """
 job_name: test
