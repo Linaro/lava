@@ -45,6 +45,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
+from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
 
 Path = type(pathlib.Path())
@@ -1206,26 +1207,23 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_set_env(self, monkeypatch, tmpdir):
-        class MyPath(Path):
-            def __new__(cls, path, *args, **kwargs):
-                if path == "example.com":
-                    return super().__new__(cls, path, *args, **kwargs)
-                elif path == settings.DISPATCHER_CONFIG_PATH:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
+    def test_workers_set_env(self, mocker, tmpdir):
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {
+                "env": [
+                    str(tmpdir / "dispatcher.d/{name}/env.yaml"),
+                    str(tmpdir / "env.yaml"),
+                ]
+            },
+        )
         response = self.adminclient.post(
             reverse("api-root", args=[self.version])
             + "workers/%s/env/" % self.worker1.hostname,
             {"env": "hello"},
         )
         assert response.status_code == 200  # nosec
-        assert (tmpdir / self.worker1.hostname / "env.yaml").read_text(  # nosec
-            encoding="utf-8"
-        ) == "hello"
+        assert File("env", self.worker1.hostname).read() == "hello"
 
         # worker does not exists
         response = self.adminclient.post(
@@ -1249,26 +1247,23 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_set_config(self, monkeypatch, tmpdir):
-        class MyPath(Path):
-            def __new__(cls, path, *args, **kwargs):
-                if path == "example.com":
-                    return super().__new__(cls, path, *args, **kwargs)
-                elif path == settings.DISPATCHER_CONFIG_PATH:
-                    return super().__new__(cls, str(tmpdir), *args, **kwargs)
-                else:
-                    assert 0  # nosec
-
-        monkeypatch.setattr(pathlib, "Path", MyPath)
+    def test_workers_set_config(self, mocker, tmpdir):
+        mocker.patch(
+            "lava_server.files.File.KINDS",
+            {
+                "dispatcher": [
+                    str(tmpdir / "{name}/dispatcher.yaml"),
+                    str(tmpdir / "{name}.yaml"),
+                ]
+            },
+        )
         response = self.adminclient.post(
             reverse("api-root", args=[self.version])
             + "workers/%s/config/" % self.worker1.hostname,
             {"config": "hello"},
         )
         assert response.status_code == 200  # nosec
-        assert (tmpdir / self.worker1.hostname / "dispatcher.yaml").read_text(  # nosec
-            encoding="utf-8"
-        ) == "hello"
+        assert File("dispatcher", self.worker1.hostname).read() == "hello"
 
         # worker does not exists
         response = self.adminclient.post(
