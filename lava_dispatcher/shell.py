@@ -206,24 +206,23 @@ class ShellSession(Connection):
         a percentage of the timeout.
         """
         super().__init__(job, shell_command)
-        # FIXME: rename __prompt_str__ to indicate it can be a list or str
-        self.__prompt_str__ = None
+        # FIXME: rename _prompt_str to indicate it can be a list or str
+        self._prompt_str = None
         self.spawn = shell_command
-        self.__runner__ = None
         self.timeout = shell_command.lava_timeout
-        self.__logger__ = None
+        self._logger = None
         self.tags = ["shell"]
 
     @property
     def logger(self):
-        if not self.__logger__:
-            self.__logger__ = logging.getLogger("dispatcher")
-        return self.__logger__
+        if not self._logger:
+            self._logger = logging.getLogger("dispatcher")
+        return self._logger
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property
     def prompt_str(self):
-        return self.__prompt_str__
+        return self._prompt_str
 
     @prompt_str.setter
     def prompt_str(self, string):
@@ -234,7 +233,7 @@ class ShellSession(Connection):
         To use + the instance of the existing prompt_str must be checked.
         """
         self.logger.debug("Setting prompt string to %r" % string)
-        self.__prompt_str__ = string
+        self._prompt_str = string
 
     @contextlib.contextmanager
     def test_connection(self):
