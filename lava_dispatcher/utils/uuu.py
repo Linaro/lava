@@ -33,8 +33,7 @@ from lava_dispatcher.utils.shell import which
 class OptionalContainerUuuAction(OptionalContainerAction):
     @property
     def driver(self):
-        __driver__ = getattr(self, "__driver__", None)
-        if not __driver__:
+        if self._driver is None:
             docker_image = self.job.device["actions"]["boot"]["methods"]["uuu"][
                 "options"
             ]["docker_image"]
@@ -43,17 +42,18 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 remote_options = self.job.device["actions"]["boot"]["methods"]["uuu"][
                     "options"
                 ]["remote_options"]
-                self.__driver__ = DockerDriver(self, params)
-                self.__driver__.docker_options = shlex.split(remote_options)
-                self.__driver__.docker_run_options = [
+                self._driver = DockerDriver(self, params)
+                self._driver.docker_options = shlex.split(remote_options)
+                self._driver.docker_run_options = [
                     "-t",
                     "--privileged",
                     "--volume=/dev:/dev",
                     "--net=host",
                 ]
             else:
-                self.__driver__ = NullDriver(self)
-        return self.__driver__
+                self._driver = NullDriver(self)
+
+        return self._driver
 
     def which(self, path):
         if self.driver.is_container:

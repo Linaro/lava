@@ -34,6 +34,10 @@ from lava_dispatcher_host.action import DeviceContainerMappingMixin
 class OptionalContainerAction(Action, DeviceContainerMappingMixin):
     command_exception = InfrastructureError
 
+    def __init__(self):
+        super().__init__()
+        self._driver = None
+
     def validate(self):
         super().validate()
         key = self.driver.key
@@ -49,17 +53,17 @@ class OptionalContainerAction(Action, DeviceContainerMappingMixin):
 
     @property
     def driver(self):
-        __driver__ = getattr(self, "__driver__", None)
-        if not __driver__:
+        if self._driver is None:
             lxc = is_lxc_requested(self.job)
             if lxc:
-                self.__driver__ = LxcDriver(self, lxc)
+                self._driver = LxcDriver(self, lxc)
             elif "docker" in self.parameters:
                 params = self.parameters["docker"]
-                self.__driver__ = DockerDriver(self, params)
+                self._driver = DockerDriver(self, params)
             else:
-                self.__driver__ = NullDriver(self)
-        return self.__driver__
+                self._driver = NullDriver(self)
+
+        return self._driver
 
     def maybe_copy_to_container(self, src):
         return self.driver.maybe_copy_to_container(src)
