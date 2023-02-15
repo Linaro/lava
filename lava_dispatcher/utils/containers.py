@@ -156,7 +156,7 @@ class DockerDriver(NullDriver):
         docker.name(name)
         docker.start(self.action)
         try:
-            self.__map_devices__(name)
+            self._map_devices(name)
             docker.run(cmd, self.action)
         finally:
             docker.stop()
@@ -168,7 +168,7 @@ class DockerDriver(NullDriver):
         docker.name(name)
         docker.start(self.action)
         try:
-            self.__map_devices__(name)
+            self._map_devices(name)
             return docker.get_output(cmd, self.action)
         finally:
             docker.stop()
@@ -178,14 +178,14 @@ class DockerDriver(NullDriver):
             self.copied_files.append(src)
         return src
 
-    def __map_devices__(self, container_name):
+    def _map_devices(self, container_name):
         action = self.action
         action.add_device_container_mappings(container_name, "docker")
-        for dev in self.__get_device_nodes__():
+        for dev in self._get_device_nodes():
             if not os.path.islink(dev):
                 action.trigger_share_device_with_container(dev)
 
-    def __get_device_nodes__(self):
+    def _get_device_nodes(self):
         device_info = self.action.job.device.get("device_info", {})
         if device_info:
             return get_udev_devices(device_info=device_info)
