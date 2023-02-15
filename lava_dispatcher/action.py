@@ -361,7 +361,7 @@ class Action:
         self._errors = []
         self.job = None
         self.logger = logging.getLogger("dispatcher")
-        self.__results__ = {}
+        self._results = {}
         self.timeout = Timeout(self.name, exception=self.timeout_exception)
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
@@ -497,12 +497,12 @@ class Action:
         """
         Updated dictionary of results for this action.
         """
-        return self.__results__
+        return self._results
 
     @results.setter
     def results(self, data):
         try:
-            self.__results__.update(data)
+            self._results.update(data)
         except ValueError:
             raise LAVABug("Action results need to be a dictionary")
 
