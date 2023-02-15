@@ -59,7 +59,7 @@ class Job:
         self.logger = logger
         self.device = None
         self.parameters = parameters
-        self.__context__ = PipelineContext()
+        self._context = PipelineContext()
         self.pipeline = None
         self.connection = None
         self.triggers = []  # actions can add trigger strings to the run a diagnostic
@@ -76,11 +76,11 @@ class Job:
 
     @property
     def context(self):
-        return self.__context__.pipeline_data
+        return self._context.pipeline_data
 
     @context.setter
     def context(self, data):
-        self.__context__.pipeline_data.update(data)
+        self._context.pipeline_data.update(data)
 
     def diagnose(self, trigger):
         """
