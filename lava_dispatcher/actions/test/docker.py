@@ -172,7 +172,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
         docker.prepare()
-        docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
+        docker.add_bind_mount(os.path.join(location, overlay), "/" + overlay)
 
         docker_method_conf = (
             self.job.device["actions"]
@@ -212,16 +212,16 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         if namespace:
             downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
             if downloads_dir.exists():
-                docker.bind_mount(downloads_dir, LAVA_DOWNLOADS)
+                docker.add_bind_mount(downloads_dir, LAVA_DOWNLOADS)
 
         for bind_mount in self.test_docker_bind_mounts:
             read_only = True if len(bind_mount) == 2 else False
-            docker.bind_mount(bind_mount[0], bind_mount[1], read_only)
+            docker.add_bind_mount(bind_mount[0], bind_mount[1], read_only)
 
-        docker.interactive()
-        docker.tty()
-        docker.name(container)
-        docker.environment("PS1", "docker-test-shell:$ ")
+        docker.enable_interactive()
+        docker.enable_tty()
+        docker.set_container_name(container)
+        docker.add_environment_var("PS1", "docker-test-shell:$ ")
 
         docker_cmd = docker.cmdline("bash", "--norc", "-i")
 

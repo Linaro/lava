@@ -143,7 +143,7 @@ class DockerDriver(NullDriver):
 
         if not self.docker_options:
             for f in self.copied_files:
-                docker.bind_mount(f)
+                docker.add_bind_mount(f)
         return docker
 
     def get_command_prefix(self):
@@ -153,7 +153,7 @@ class DockerDriver(NullDriver):
     def run(self, cmd):
         docker = self.build(DockerContainer)
         name = self.get_container_name()
-        docker.name(name)
+        docker.set_container_name(name)
         docker.start(self.action)
         try:
             self._map_devices(name)
@@ -165,7 +165,7 @@ class DockerDriver(NullDriver):
         # FIXME duplicates most of run()
         docker = self.build(DockerContainer)
         name = self.get_container_name()
-        docker.name(name)
+        docker.set_container_name(name)
         docker.start(self.action)
         try:
             self._map_devices(name)

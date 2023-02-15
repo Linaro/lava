@@ -364,15 +364,17 @@ class CallQemuAction(Action):
             self.docker = docker = DockerRun.from_parameters(
                 self.parameters["docker"], self.job
             )
-            docker.name(
+            docker.set_container_name(
                 "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
                 random_suffix=True,
             )
-            docker.interactive()
-            docker.tty()
+            docker.enable_interactive()
+            docker.enable_tty()
             if "QEMU_AUDIO_DRV" in os.environ:
-                docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
-            docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
+                docker.add_environment_var(
+                    "QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"]
+                )
+            docker.add_bind_mount(DISPATCHER_DOWNLOAD_DIR)
             docker.add_device("/dev/kvm", skip_missing=True)
             docker.add_device("/dev/net/tun", skip_missing=True)
             docker.add_docker_run_options("--network=host", "--cap-add=NET_ADMIN")
@@ -405,7 +407,9 @@ class CallQemuAction(Action):
 
     def cleanup(self, connection):
         if self.docker is not None:
-            self.logger.info("Stopping the qemu container %s", self.docker.__name__)
+            self.logger.info(
+                "Stopping the qemu container %s", self.docker._container_name
+            )
             self.docker.destroy()
 
 

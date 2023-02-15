@@ -128,7 +128,7 @@ class RunNodebooterContainer(Action):
         self.logger.info(docker.cmdline())
         docker.local(True)
         docker.name(self.container)
-        docker.init(False)
+        docker.disable_init()
 
         try:
             docker.run(INIT_EXEC)
