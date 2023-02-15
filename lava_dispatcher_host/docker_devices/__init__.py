@@ -76,7 +76,7 @@ def DeviceFilter(*args, **kwargs):
 
 class DeviceFilterCommon:
     def __init__(self, container, state_file: Optional[Path] = None):
-        self.__devices__ = set()
+        self._devices = set()
         if state_file:
             self.load(state_file)
         self.container_id = subprocess.check_output(
@@ -85,7 +85,7 @@ class DeviceFilterCommon:
 
     @property
     def devices(self):
-        return list(self.__devices__)
+        return list(self._devices)
 
     def load(self, state: Path):
         pass
@@ -94,7 +94,7 @@ class DeviceFilterCommon:
         pass
 
     def add(self, device: Device):
-        self.__devices__.add(device)
+        self._devices.add(device)
 
     def apply(self):
         pass
@@ -116,7 +116,7 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
                 return True
         return False
 
-    def __get_devices_allow_file__(self):
+    def _get_devices_allow_file(self):
         devices_allow_file = (
             f"/sys/fs/cgroup/devices/docker/{self.container_id}/devices.allow"
         )
@@ -125,7 +125,7 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
         return devices_allow_file
 
     def apply(self):
-        with open(self.__get_devices_allow_file__(), "w") as allow:
+        with open(self._get_devices_allow_file(), "w") as allow:
             for device in self.devices:
                 allow.write("a %d:%d rwm\n" % (device.major, device.minor))
 
@@ -150,15 +150,13 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
 
     def __init__(self, container: str, state_file: Optional[Path] = None):
         super().__init__(container, state_file)
-        self.__cgroup__ = (
-            f"/sys/fs/cgroup/system.slice/docker-{self.container_id}.scope"
-        )
-        if not os.path.exists(self.__cgroup__):
-            self.__cgroup__ = f"/sys/fs/cgroup/docker/{self.container_id}"
+        self._cgroup = f"/sys/fs/cgroup/system.slice/docker-{self.container_id}.scope"
+        if not os.path.exists(self._cgroup):
+            self._cgroup = f"/sys/fs/cgroup/docker/{self.container_id}"
 
     @property
     def devices(self):
-        return self.DEFAULT_DEVICES + list(self.__devices__)
+        return self.DEFAULT_DEVICES + list(self._devices)
 
     def load(self, state_file: Path):
         if not state_file.exists():
@@ -170,13 +168,13 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
 
     def save(self, state_file):
         with state_file.open("w") as f:
-            for device in self.__devices__:
+            for device in self._devices:
                 f.write(f"{device.major} {device.minor}\n")
 
     def apply(self):
-        existing = self.__get_existing_functions__()
+        existing = self._get_existing_functions()
 
-        fd = os.open(self.__cgroup__, os.O_RDONLY)
+        fd = os.open(self._cgroup, os.O_RDONLY)
         program = bytes(self.expand_template(), "utf-8")
         bpf = BPF(text=program)
         func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
@@ -190,15 +188,15 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                     "/usr/sbin/bpftool",
                     "cgroup",
                     "detach",
-                    self.__cgroup__,
+                    self._cgroup,
                     "device",
                     "id",
                     str(fid),
                 ]
             )
 
-    def __get_existing_functions__(self):
-        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
+    def _get_existing_functions(self):
+        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self._cgroup, "--json"]
         data = subprocess.run(cmd, text=True, stdout=subprocess.PIPE).stdout
         result = []
         programs = []

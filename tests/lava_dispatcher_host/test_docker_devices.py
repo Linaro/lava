@@ -65,7 +65,7 @@ class TestDeviceFilterCGroupsV1:
     def devices_allow(self, mocker, tmp_path):
         f = tmp_path / "devices.allow"
         mocker.patch(
-            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV1.__get_devices_allow_file__",
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV1._get_devices_allow_file",
             return_value=str(f),
         )
         return f
@@ -149,7 +149,7 @@ class TestDeviceFilterCGroupsV2:
             {"id":94,"attach_type":"egress","attach_flags":"","name":""}
         ]"""
         f = DeviceFilter("foo")
-        assert f.__get_existing_functions__() == [93]
+        assert f._get_existing_functions() == [93]
 
     def test_get_existing_functions_cgroup_device(self, run):
         run.return_value.stdout = """[
@@ -157,13 +157,13 @@ class TestDeviceFilterCGroupsV2:
             {"id":94,"attach_type":"egress","attach_flags":"","name":""}
         ]"""
         f = DeviceFilter("foo")
-        assert f.__get_existing_functions__() == [93]
+        assert f._get_existing_functions() == [93]
 
     def test_get_existing_functions_invalid_input(self, run):
         run.return_value.stdout = ""
-        assert DeviceFilter("foobar").__get_existing_functions__() == []
+        assert DeviceFilter("foobar")._get_existing_functions() == []
         run.return_value.stdout = "blah\n"
-        assert DeviceFilter("foobar").__get_existing_functions__() == []
+        assert DeviceFilter("foobar")._get_existing_functions() == []
 
     @pytest.mark.skipif(not has_bcc, reason="bcc not available")
     @pytest.mark.skipif(container, reason="this test won't work on containers")
@@ -171,7 +171,7 @@ class TestDeviceFilterCGroupsV2:
         load_func = mocker.patch("bcc.BPF.load_func")
         attach_func = mocker.patch("bcc.BPF.attach_func")
         mocker.patch(
-            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.__get_existing_functions__",
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2._get_existing_functions",
             return_value=[99],
         )
         f = DeviceFilter("foobar")
@@ -184,7 +184,7 @@ class TestDeviceFilterCGroupsV2:
             "/usr/sbin/bpftool",
             "cgroup",
             "detach",
-            f.__cgroup__,
+            f._cgroup,
             "device",
             "id",
             "99",
