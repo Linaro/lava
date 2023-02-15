@@ -157,27 +157,6 @@ class Deployment:
     section = "deploy"
     compatibility = 0
 
-    @property
-    def parameters(self):
-        """
-        All data which this action needs to have available for
-        the prepare, run or post_process functions needs to be
-        set as a parameter. The parameters will be validated
-        during pipeline creation.
-        This allows all pipelines to be fully described, including
-        the parameters supplied to each action, as well as supporting
-        tests on each parameter (like 404 or bad formatting) during
-        validation of each action within a pipeline.
-        Parameters are static, internal data within each action
-        copied directly from the YAML or Device configuration.
-        Dynamic data is held in the context available via the parent Pipeline()
-        """
-        return self.__parameters__
-
-    @parameters.setter
-    def parameters(self, data):
-        self.__parameters__.update(data)
-
     @classmethod
     def accepts(cls, device, parameters):
         """

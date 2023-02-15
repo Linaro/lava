@@ -357,7 +357,7 @@ class Action:
         # subsequently except by RetryCommand.
         self.level = None
         self.pipeline = None
-        self.__parameters__ = {}
+        self._parameters = {}
         self.__errors__ = []
         self.job = None
         self.logger = logging.getLogger("dispatcher")
@@ -442,11 +442,11 @@ class Action:
         copied directly from the YAML. Dynamic data is held in
         the context available via the parent Pipeline()
         """
-        return self.__parameters__
+        return self._parameters
 
-    def __set_parameters__(self, data):
+    def _set_parameters(self, data):
         try:
-            self.__parameters__.update(data)
+            self._parameters.update(data)
         except ValueError:
             raise LAVABug("Action parameters need to be a dictionary")
 
@@ -487,7 +487,7 @@ class Action:
 
     @parameters.setter
     def parameters(self, data):
-        self.__set_parameters__(data)
+        self._set_parameters(data)
         if self.pipeline:
             for action in self.pipeline.actions:
                 action.parameters = self.parameters

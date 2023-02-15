@@ -158,7 +158,6 @@ class TestShellResults(StdoutTestCase):
         """
 
         def __init__(self, parent):
-            self.__parameters__ = {}
             self.pipeline = parent
             self.job = parent.job
             self.action = TestShellResults.FakeAction()

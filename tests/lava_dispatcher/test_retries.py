@@ -44,7 +44,6 @@ class TestAction(StdoutTestCase):
         """
 
         def __init__(self, parent):
-            self.__parameters__ = {}
             self.pipeline = parent
             self.job = parent.job
             self.action = TestAction.CleanupRetryAction()
@@ -52,7 +51,6 @@ class TestAction(StdoutTestCase):
 
     class MissingCleanupDeploy:
         def __init__(self, parent):
-            self.__parameters__ = {}
             self.pipeline = parent
             self.job = parent.job
             self.action = TestAction.InternalRetryAction()
