@@ -358,7 +358,7 @@ class Action:
         self.level = None
         self.pipeline = None
         self._parameters = {}
-        self.__errors__ = []
+        self._errors = []
         self.job = None
         self.logger = logging.getLogger("dispatcher")
         self.__results__ = {}
@@ -414,14 +414,14 @@ class Action:
     @property
     def errors(self):
         if self.pipeline:
-            return self.__errors__ + self.pipeline.errors
+            return self._errors + self.pipeline.errors
         else:
-            return self.__errors__
+            return self._errors
 
     @errors.setter
     def errors(self, error):
         if error:
-            self.__errors__.append(error)
+            self._errors.append(error)
 
     @property
     def valid(self):

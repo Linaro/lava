@@ -123,18 +123,18 @@ class TestPipelineInit(StdoutTestCase):
 class TestValidation(StdoutTestCase):
     def test_action_is_valid_if_there_are_not_errors(self):
         action = Action()
-        action.__errors__ = [1]
+        action._errors = [1]
         self.assertFalse(action.valid)
-        action.__errors__ = []
+        action._errors = []
         self.assertTrue(action.valid)
 
     def test_composite_action_aggregates_errors_from_sub_actions(self):
         # Unable to call Action.validate() as there is no job in this unit test
         sub1 = Action()
-        sub1.__errors__ = [1]
+        sub1._errors = [1]
         sub2 = Action()
         sub2.name = "sub2"
-        sub2.__errors__ = [2]
+        sub2._errors = [2]
 
         pipe = Pipeline()
         sub1.name = "sub1"

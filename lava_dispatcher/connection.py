@@ -207,7 +207,7 @@ class Protocol:
     def __init__(self, parameters, job_id):
         self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name)
-        self.__errors__ = []
+        self._errors = []
         self.parameters = parameters
         self.configured = False
         self.job_id = job_id
@@ -223,11 +223,11 @@ class Protocol:
 
     @property
     def errors(self):
-        return self.__errors__
+        return self._errors
 
     @errors.setter
     def errors(self, error):
-        self.__errors__.append(error)
+        self._errors.append(error)
 
     @property
     def valid(self):
