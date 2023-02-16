@@ -40,7 +40,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -803,47 +803,94 @@ def device_type_detail(request, pk):
 
     # Get some test job statistics
     now = timezone.now()
-    devices = list(
-        Device.objects.filter(device_type=dt)
-        .values_list("pk", flat=True)
-        .visible_by_user(request.user)
+
+    (
+        _,
+        daily_complete,
+        daily_failed,
+        weekly_complete,
+        weekly_failed,
+        monthly_complete,
+        monthly_failed,
+    ) = (
+        DeviceType.objects.filter(pk=pk)
+        .values_list("pk")
+        .annotate(
+            daily_complete=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=1)),
+                    health=TestJob.HEALTH_COMPLETE,
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+            daily_failed=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=1)),
+                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+            weekly_complete=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=7)),
+                    health=TestJob.HEALTH_COMPLETE,
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+            weekly_failed=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=7)),
+                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+            monthly_complete=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=30)),
+                    health=TestJob.HEALTH_COMPLETE,
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+            monthly_failed=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    health_check=True,
+                    submit_time__gte=(now - datetime.timedelta(days=30)),
+                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                )
+                .values("requested_device_type")
+                .annotate(daily_complete=Count("pk"))
+                .values("daily_complete"),
+                output_field=IntegerField(),
+            ),
+        )
+        .first()
     )
-    daily_complete = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=1)),
-        health=TestJob.HEALTH_COMPLETE,
-    ).count()
-    daily_failed = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=1)),
-        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
-    ).count()
-    weekly_complete = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=7)),
-        health=TestJob.HEALTH_COMPLETE,
-    ).count()
-    weekly_failed = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=7)),
-        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
-    ).count()
-    monthly_complete = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=30)),
-        health=TestJob.HEALTH_COMPLETE,
-    ).count()
-    monthly_failed = TestJob.objects.filter(
-        actual_device__in=devices,
-        health_check=True,
-        submit_time__gte=(now - datetime.timedelta(days=30)),
-        health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
-    ).count()
     health_summary_data = [
         {"Duration": "24hours", "Complete": daily_complete, "Failed": daily_failed},
         {"Duration": "Week", "Complete": weekly_complete, "Failed": weekly_failed},
@@ -863,7 +910,11 @@ def device_type_detail(request, pk):
     prefix = "dt_"
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
     dt_jobs_ptable = OverviewJobsTable(
-        dt_jobs_data.get_table_data(prefix).filter(actual_device__in=devices),
+        dt_jobs_data.get_table_data(prefix).filter(
+            actual_device__in=(
+                Device.objects.filter(device_type=dt).visible_by_user(request.user)
+            )
+        ),
         prefix=prefix,
     )
     config = request_config(request, {"per_page": dt_jobs_ptable.length})
