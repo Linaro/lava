@@ -141,15 +141,12 @@ class TestMonitorAction(Action):
         if event == "eof":
             self.logger.warning("err: lava test monitoring reached end of file")
             self.errors = "lava test monitoring reached end of file"
-            self.results.update({"status": "failed"})
             raise ConnectionClosedError("Connection closed")
         elif event == "timeout":
             self.logger.warning("err: lava test monitoring has timed out")
             self.errors = "lava test monitoring has timed out"
-            self.results.update({"status": "failed"})
         elif event == "end":
             self.logger.info("ok: end string found, lava test monitoring stopped")
-            self.results.update({"status": "passed"})
         elif event == "test_result":
             self.logger.info("ok: test case found")
             match = test_connection.match.groupdict()
@@ -172,7 +169,6 @@ class TestMonitorAction(Action):
                             "case": case_id,
                             "level": self.level,
                             "result": match["result"],
-                            "extra": {"test_case_id": match["test_case_id"].strip()},
                         }
                         if "measurement" in match:
                             results.update({"measurement": match["measurement"]})
@@ -194,7 +190,6 @@ class TestMonitorAction(Action):
                             "level": self.level,
                             "result": "pass",
                             "measurement": float(match["measurement"]),
-                            "extra": {"test_case_id": match["test_case_id"].strip()},
                         }
                         if "units" in match:
                             results.update({"units": match["units"]})
