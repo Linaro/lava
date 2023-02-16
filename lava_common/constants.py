@@ -21,9 +21,6 @@
 # Overrides are only supported when and as declared in the comments for
 # each constant.
 
-# Retry at most 5 times
-MAX_RETRY = 5
-
 # size of u-boot header to be removed from ramdisks, in bytes.
 UBOOT_DEFAULT_HEADER_LENGTH = 64
 
@@ -60,9 +57,6 @@ ACTION_TIMEOUT = 30
 
 # Max cleanup timeout
 CLEANUP_TIMEOUT = 5 * 60
-
-# Android tmp directory
-ANDROID_TMP_DIR = "/data/local/tmp"
 
 # LXC protocol name
 LXC_PROTOCOL = "lava-lxc"
@@ -117,9 +111,6 @@ UEFI_LINE_SEPARATOR = "\r\n"
 # valid characters in components of a test definition name
 # excludes whitespace and punctuation (except hyphen and underscore)
 DEFAULT_TESTDEF_NAME_CLASS = r"^[\w\d\_\-]+$"
-
-# Limit repetitive messages
-METADATA_MESSAGE_LIMIT = 8192
 
 # Versatile Express autorun interrupt character
 VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = " "
