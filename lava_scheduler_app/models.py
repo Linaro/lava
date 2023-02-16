@@ -73,10 +73,6 @@ def auth_token():
     return get_random_string(32)
 
 
-class JSONDataError(ValueError):
-    """Error raised when JSON is syntactically valid but ill-formed."""
-
-
 class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
