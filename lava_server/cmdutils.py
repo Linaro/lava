@@ -18,8 +18,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import ctypes
-import ctypes.util
 import grp
 import logging
 import logging.handlers
@@ -107,36 +105,3 @@ class LAVADaemonCommand(BaseCommand):
             self.logger.setLevel(logging.INFO)
         else:
             self.logger.setLevel(logging.DEBUG)
-
-
-def watch_directory(directory):
-    IN_MODIFY = 0x00000002
-    IN_ATTRIB = 0x00000004
-    IN_MOVED_FROM = 0x00000040
-    IN_MOVED_TO = 0x00000080
-    IN_CREATE = 0x00000100
-    IN_DELETE = 0x00000200
-    IN_DELETE_SELF = 0x00000400
-    IN_MOVE_SELF = 0x00000800
-
-    IN_EVENTS = (
-        IN_MODIFY
-        | IN_ATTRIB
-        | IN_MOVED_FROM
-        | IN_MOVED_TO
-        | IN_CREATE
-        | IN_DELETE
-        | IN_DELETE_SELF
-        | IN_MOVE_SELF
-    )
-
-    # watch a directory using inotify
-    # return the corresponding file descriptor
-    libc_name = ctypes.util.find_library("c")
-    libc = ctypes.cdll.LoadLibrary(libc_name)
-
-    # create the inotify file descriptor
-    inotify_fd = libc.inotify_init()
-    # watch the "test" directory
-    ret = libc.inotify_add_watch(inotify_fd, directory.encode("utf-8"), IN_EVENTS)
-    return None if ret == -1 else inotify_fd
