@@ -19,7 +19,6 @@
 
 import csv
 import io
-import pathlib
 
 import voluptuous
 import yaml
@@ -561,23 +560,20 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
         response["Content-Disposition"] = "attachment; filename=%s" % filename
         return response
 
-    def _set_file(self, request, path, content):
-        filename = path.name
+    def _set_file(self, request, kind, content):
         try:
-            path.parent.mkdir(mode=0o755, parents=True, exist_ok=True)
-            path.write_text(content, encoding="utf-8")
+            File(kind, self.get_object().hostname).write(content)
+
             return Response(
                 {"message": "content successfully updated"}, status=status.HTTP_200_OK
             )
         except OSError as e:
             raise ParseError(
-                "Error updating '%s' for worker %s: %s"
-                % (filename, self.get_object().hostname, str(e))
+                f"Error updating '{kind}' for worker {self.get_object().hostname}: {e}"
             )
 
     @detail_route(methods=["get", "post"], suffix="env")
     def env(self, request, **kwargs):
-        filename = "env.yaml"
         if request.method == "GET":
             return self._get_file(request, "env", "env.yaml")
 
@@ -586,14 +582,10 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
                 raise PermissionDenied(
                     "Insufficient permissions. Please contact system administrator."
                 )
-            path = (
-                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
-                / self.get_object().hostname
-                / filename
-            )
+
             serializer = serializers.EnvironmentSerializer(data=request.data)
             if serializer.is_valid():
-                return self._set_file(request, path, serializer.validated_data["env"])
+                return self._set_file(request, "env", serializer.validated_data["env"])
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -607,15 +599,11 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
                 raise PermissionDenied(
                     "Insufficient permissions. Please contact system administrator."
                 )
-            path = (
-                pathlib.Path(settings.DISPATCHER_CONFIG_PATH)
-                / self.get_object().hostname
-                / "dispatcher.yaml"
-            )
+
             serializer = serializers.ConfigSerializer(data=request.data)
             if serializer.is_valid():
                 return self._set_file(
-                    request, path, serializer.validated_data["config"]
+                    request, "dispatcher", serializer.validated_data["config"]
                 )
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

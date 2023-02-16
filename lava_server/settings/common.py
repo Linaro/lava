@@ -206,7 +206,6 @@ CUSTOM_DOCS = {}
 DJANGO_LOGFILE = "/var/log/lava-server/django.log"
 
 # Configuration directories
-DISPATCHER_CONFIG_PATH = "/etc/lava-server/dispatcher.d"
 DEVICES_PATH = "/etc/lava-server/dispatcher-config/devices"
 DEVICE_TYPES_PATHS = [
     "/etc/lava-server/dispatcher-config/device-types",

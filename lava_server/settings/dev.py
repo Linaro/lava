@@ -66,7 +66,6 @@ MEDIA_ROOT = str(PROJECT_STATE_DIR / "media")
 # Example: "/home/media/static.lawrence.com/"
 STATIC_ROOT = str(PROJECT_STATE_DIR / "static")
 
-DISPATCHER_CONFIG_PATH = str(PROJECT_SRC_DIR / "etc/lava-server/dispatcher.d")
 # Use device configuration files from source tree
 DEVICES_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/devices")
 DEVICE_TYPES_PATHS = [
