@@ -96,13 +96,7 @@ class Connection:
     name = "Connection"
 
     def __init__(self, job, raw_connection):
-        self.device = job.device
-        self.job = job
-        # provide access to the context data of the running job
-        self.data = self.job.context
         self.raw_connection = raw_connection
-        self.results = {}
-        self.match = None
         self.connected = True
         self.check_char = "#"
         self.tags = []
