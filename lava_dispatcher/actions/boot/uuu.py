@@ -74,7 +74,13 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         self.maybe_copy_to_container(boot)
 
         # Board available if cmd terminates correctly
-        return self.run_uuu(cmd.split(" "), allow_fail=True) == 0
+        ret = self.run_uuu(cmd.split(" "), allow_fail=True)
+        if ret == 0:
+            return True
+        elif ret == 143:
+            return False
+        else:
+            raise self.command_exception("Fail UUUBootAction on cmd : {}".format(cmd))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
