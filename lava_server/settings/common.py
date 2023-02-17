@@ -32,7 +32,6 @@ from yaml import YAMLError
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_load
 from lava_rest_app.versions import versions as REST_VERSIONS
-from lava_scheduler_app.settings import *
 
 # List of people who get code error notifications
 # https://docs.djangoproject.com/en/1.11/ref/settings/#admins
@@ -275,6 +274,13 @@ MASTER_UPGRADE_NOTIFY = False
 # Worker in the specific network will be allowed to auto register
 WORKER_AUTO_REGISTER = True
 WORKER_AUTO_REGISTER_NETMASK = ["127.0.0.0/8", "::1"]
+
+# ZMQ events
+EVENT_NOTIFICATION = False
+INTERNAL_EVENT_SOCKET = "ipc:///tmp/lava.events"
+EVENT_SOCKET = "tcp://*:5500"
+EVENT_ADDITIONAL_SOCKETS = []
+EVENT_TOPIC = "org.lavasoftware"
 
 ###################
 # Celerey setting #
