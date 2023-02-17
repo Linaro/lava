@@ -665,9 +665,6 @@ class Device(RestrictedObject):
                 return self.get_health_display()
         return self.get_state_display()
 
-    def get_description(self):
-        return self.description if self.description else None
-
     def has_any_permission_restrictions(self, perm):
         if not self.is_permission_restricted(perm):
             return self.device_type.has_any_permission_restrictions(
