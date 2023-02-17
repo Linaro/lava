@@ -43,24 +43,6 @@ from lava_server.lavatable import LavaTable
 # functions need to go in views.py
 
 
-class IDLinkColumn(tables.Column):
-    def __init__(self, verbose_name="ID", **kw):
-        kw["verbose_name"] = verbose_name
-        super().__init__(**kw)
-
-    def render(self, record, table=None):
-        return pklink(record)
-
-
-class RestrictedIDLinkColumn(IDLinkColumn):
-    def render(self, record, table=None):
-        user = table.context.get("request").user
-        if record.can_view(user):
-            return pklink(record)
-        else:
-            return record.pk
-
-
 def pklink(record):
     pk = record.pk
     if isinstance(record, TestJob):
@@ -934,7 +916,10 @@ class RunningTable(LavaTable):
         ).count()
         return count or ""
 
-    name = IDLinkColumn(accessor="name")
+    name = tables.Column(
+        linkify=True,
+        verbose_name="Device name",
+    )
 
     reserved = tables.Column(
         accessor="display", orderable=False, verbose_name="Reserved"
