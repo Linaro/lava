@@ -822,8 +822,8 @@ class HealthJobSummaryTable(tables.Table):
 
     length = 10
     Duration = tables.Column()
-    Complete = tables.Column()
-    Failed = tables.Column()
+    Complete = tables.Column(default=0)
+    Failed = tables.Column(default=0)
 
     class Meta(LavaTable.Meta):
         model = None
