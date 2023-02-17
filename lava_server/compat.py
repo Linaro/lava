@@ -18,7 +18,6 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
-import junit_xml
 import rest_framework_filters as filters
 from django_tables2.paginators import LazyPaginator
 from rest_framework_extensions import __version__ as DRFE_VERSION_STR
@@ -49,10 +48,6 @@ except ImportError:
     # Keep the original version
     def RelatedFilter(cls, name, queryset):
         return filters.RelatedFilter(cls, name=name, queryset=queryset)
-
-
-if not getattr(junit_xml, "to_xml_report_string", None):
-    junit_xml.to_xml_report_string = junit_xml.TestSuite.to_xml_string
 
 
 FilterBackend = RestFrameworkFilterBackend
