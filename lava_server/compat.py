@@ -20,10 +20,6 @@
 
 import rest_framework_filters as filters
 from django_tables2.paginators import LazyPaginator
-from rest_framework_extensions import __version__ as DRFE_VERSION_STR
-
-DRFE_VERSION = [int(n) for n in DRFE_VERSION_STR.split(".")]
-
 
 try:
     # pylint: disable=unused-import
@@ -58,18 +54,6 @@ class NoMarkupFilterBackend(FilterBackend):
         # In order to prevent a huge performance issue when rendering the
         # browsable API, do not render the choice fields.
         return ""
-
-
-def drf_basename(name):
-    """
-    Handles compatibility with different versions of djangorestframework, in
-    terms of the deprecation of `base_name` when registering ViewSets on DRF >=
-    3.10.
-    """
-    if DRFE_VERSION >= [0, 6]:
-        return {"basename": name}
-    else:
-        return {"base_name": name}
 
 
 def djt2_paginator_class():
