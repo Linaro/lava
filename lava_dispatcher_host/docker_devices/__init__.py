@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
+import json
 import os
 import subprocess
 from dataclasses import dataclass
@@ -196,13 +198,18 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
             )
 
     def __get_existing_functions__(self):
-        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__]
+        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
         data = subprocess.run(cmd, text=True, stdout=subprocess.PIPE).stdout
         result = []
-        for line in data.splitlines():
-            parts = line.split()
-            if len(parts) >= 2 and parts[1] == "device":
-                result.append(int(parts[0]))
+        programs = []
+        with contextlib.suppress(Exception):
+            programs = json.loads(data)
+        _attach_types = ["device", "cgroup_device"]
+        if isinstance(programs, list):
+            for program in programs:
+                if isinstance(program, dict):
+                    if program.get("attach_type") in _attach_types:
+                        result.append(int(program["id"]))
         return result
 
     def expand_template(self):

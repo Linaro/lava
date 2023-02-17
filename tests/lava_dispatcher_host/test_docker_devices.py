@@ -143,14 +143,19 @@ class TestDeviceFilterCGroupsV2:
         assert f1.devices != f3.devices
         assert f2.devices == f3.devices
 
-    def test_get_existing_functions(self, run):
-        run.return_value.stdout = "\n".join(
-            [
-                "ID       AttachType      AttachFlags     Name",
-                "93       device          multi",
-                "94       ingress",
-            ]
-        )
+    def test_get_existing_functions_device(self, run):
+        run.return_value.stdout = """[
+            {"id":93,"attach_type":"device","attach_flags":"","name":""},
+            {"id":94,"attach_type":"egress","attach_flags":"","name":""}
+        ]"""
+        f = DeviceFilter("foo")
+        assert f.__get_existing_functions__() == [93]
+
+    def test_get_existing_functions_cgroup_device(self, run):
+        run.return_value.stdout = """[
+            {"id":93,"attach_type":"cgroup_device","attach_flags":"","name":""},
+            {"id":94,"attach_type":"egress","attach_flags":"","name":""}
+        ]"""
         f = DeviceFilter("foo")
         assert f.__get_existing_functions__() == [93]
 
