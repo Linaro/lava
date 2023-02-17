@@ -50,7 +50,6 @@ class BootFVP(Boot):
 
 
 class BootFVPAction(BootHasMixin, RetryAction):
-
     name = "boot-fvp"
     description = "boot fvp"
     summary = "boot fvp"
@@ -68,7 +67,6 @@ class BootFVPAction(BootHasMixin, RetryAction):
 
 
 class BootFVPMain(Action):
-
     name = "boot-fvp-main"
     description = "boot fvp"
     summary = "boot fvp"
@@ -83,7 +81,6 @@ class BootFVPMain(Action):
 
 
 class BaseFVPAction(Action):
-
     name = "base-fvp-action"
     description = "call docker run with fvp entry point"
     summary = "base fvp action"
@@ -186,7 +183,9 @@ class BaseFVPAction(Action):
 
     def cleanup(self, connection):
         super().cleanup(connection)
-        self.logger.debug("Stopping container %s", self.container)
+        self.logger.debug(
+            "Stopping container %s from action %s", self.container, self.name
+        )
         return_value = self.run_cmd(["docker", "stop", self.container], allow_fail=True)
         if return_value == 0:
             self.logger.debug("Stopped container %s", self.container)
@@ -339,13 +338,13 @@ class StartFVPAction(BaseFVPAction):
         return shell_connection
 
     def cleanup(self, connection):
+        super().cleanup(connection)
         if self.shell_session:
             self.logger.debug("Listening to feedback from FVP binary.")
             while True:
                 bytes_read = self.shell_session.listen_feedback(5)
                 if bytes_read == 0:
                     break
-        super().cleanup(connection)
 
 
 class GetFVPSerialAction(Action):
