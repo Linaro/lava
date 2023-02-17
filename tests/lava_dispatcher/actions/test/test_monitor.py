@@ -94,7 +94,6 @@ def test_check_patterns():
         ("warning", "err: lava test monitoring reached end of file", {})
     ]
     assert action.errors == ["lava test monitoring reached end of file"]
-    assert action.results == {"status": "failed"}
 
     # "timeout"
     action = TestMonitorAction()
@@ -104,7 +103,6 @@ def test_check_patterns():
         ("warning", "err: lava test monitoring has timed out", {})
     ]
     assert action.errors == ["lava test monitoring has timed out"]
-    assert action.results == {"status": "failed"}
 
     # "end"
     action = TestMonitorAction()
@@ -114,7 +112,6 @@ def test_check_patterns():
         ("info", "ok: end string found, lava test monitoring stopped", {})
     ]
     assert action.errors == []
-    assert action.results == {"status": "passed"}
 
     # "test_result"
     action = TestMonitorAction()
@@ -133,12 +130,10 @@ def test_check_patterns():
                 "case": "hello_world",
                 "level": "3.1",
                 "result": "pass",
-                "extra": {"test_case_id": "hello world"},
             },
             {},
         ),
     ]
-    assert action.results == {}
 
     # "test_result" with "measurement" and "units"
     action = TestMonitorAction()
@@ -162,14 +157,12 @@ def test_check_patterns():
                 "case": "hello_world",
                 "level": "3.1",
                 "result": "pass",
-                "extra": {"test_case_id": "hello world"},
                 "measurement": 1.3,
                 "units": "s",
             },
             {},
         ),
     ]
-    assert action.results == {}
 
     # "test_result" with fixupdict
     action = TestMonitorAction()
@@ -189,7 +182,6 @@ def test_check_patterns():
                 "case": "hello_world",
                 "level": "3.1",
                 "result": "pass",
-                "extra": {"test_case_id": "hello world"},
             },
             {},
         ),
@@ -225,7 +217,6 @@ def test_check_patterns():
                 "level": "3.1",
                 "result": "pass",
                 "measurement": 45.6,
-                "extra": {"test_case_id": "hello world"},
             },
             {},
         ),
@@ -250,7 +241,6 @@ def test_check_patterns():
                 "result": "pass",
                 "measurement": 45.6,
                 "units": "ms",
-                "extra": {"test_case_id": "hello world"},
             },
             {},
         ),

@@ -260,7 +260,6 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
 
         self.run_fastboot(["flash", self.command, src])
         self.logger.info("Handling %s", self.command)
-        self.results = {"label": self.command}
         return connection
 
 

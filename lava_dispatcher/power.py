@@ -84,7 +84,6 @@ class SendRebootCommands(Action):
             self.wait(connection)
         except TestError:
             raise JobError("Soft reboot failed.")
-        self.results = {"commands": commands}
         return connection
 
 
@@ -117,7 +116,6 @@ class PDUReboot(Action):
             command = [command]
         for cmd in command:
             self.run_cmd(cmd, error_msg="Unable to reboot: '%s' failed" % cmd)
-        self.results = {"status": "success"}
         return connection
 
 
@@ -150,7 +148,6 @@ class PrePower(Action):
                 self.run_cmd(
                     cmd, error_msg="Unable to run pre-power: '%s' failed" % cmd
                 )
-        self.results = {"success": self.name}
         return connection
 
 
@@ -181,7 +178,6 @@ class PreOs(Action):
                 command = [command]
             for cmd in command:
                 self.run_cmd(cmd, error_msg="Unable to run pre-os: '%s' failed" % cmd)
-        self.results = {"success": self.name}
         return connection
 
 
@@ -216,7 +212,6 @@ class PowerOn(Action):
             command = [command]
         for cmd in command:
             self.run_cmd(cmd, error_msg="Unable to power-on: '%s' failed" % cmd)
-        self.results = {"success": self.name}
         return connection
 
 
@@ -242,7 +237,6 @@ class PowerOff(Action):
             command = [command]
         for cmd in command:
             self.run_cmd(cmd, error_msg="Unable to power-off: '%s' failed" % cmd)
-        self.results = {"status": "success"}
         return connection
 
 
