@@ -428,9 +428,6 @@ class Worker(RestrictedObject):
     def get_absolute_url(self):
         return reverse("lava.scheduler.worker.detail", args=[self.pk])
 
-    def get_description(self):
-        return self.description if self.description else None
-
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
