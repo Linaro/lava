@@ -729,7 +729,18 @@ class DeviceHealthView(DeviceTableView):
 
 class DeviceTypeOverView(JobTableView):
     def get_queryset(self):
-        return device_type_summary(self.request.user)
+        return device_type_summary(self.request.user).annotate(
+            queued_jobs=Subquery(
+                TestJob.objects.filter(
+                    Q(state=TestJob.STATE_SUBMITTED),
+                    Q(requested_device_type=OuterRef("device_type")),
+                )
+                .values("requested_device_type")
+                .annotate(queued_jobs=Count("pk"))
+                .values("queued_jobs"),
+                output_field=IntegerField(),
+            ),
+        )
 
 
 class NoDTDeviceView(DeviceTableView):
