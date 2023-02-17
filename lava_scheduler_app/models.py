@@ -367,8 +367,6 @@ class Worker(RestrictedObject):
 
     objects = RestrictedWorkerQuerySet.as_manager()
 
-    MASTER_UPGRADE_NOTIFICATION = "master_upgrade_notification.txt"
-
     hostname = models.CharField(
         verbose_name=_("Hostname"),
         max_length=200,
