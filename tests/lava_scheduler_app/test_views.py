@@ -197,7 +197,6 @@ def test_index(client, setup):
     ret = client.get(reverse("lava.scheduler"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/index.html"  # nosec
-    assert ret.context["device_status"] == "2/3"  # nosec
     assert ret.context["num_online"] == 2  # nosec
     assert ret.context["num_not_retired"] == 3  # nosec
     assert ret.context["num_jobs_running"] == 3  # nosec
