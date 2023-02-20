@@ -822,6 +822,7 @@ def device_type_detail(request, pk):
         weekly_failed,
         monthly_complete,
         monthly_failed,
+        queued_jobs_count,
     ) = (
         DeviceType.objects.filter(pk=pk)
         .values_list("pk")
@@ -843,11 +844,11 @@ def device_type_detail(request, pk):
                     requested_device_type=OuterRef("pk"),
                     health_check=True,
                     submit_time__gte=(now - datetime.timedelta(days=1)),
-                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
                 .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
-                .values("daily_complete"),
+                .annotate(daily_failed=Count("pk"))
+                .values("daily_failed"),
                 output_field=IntegerField(),
             ),
             weekly_complete=Subquery(
@@ -858,8 +859,8 @@ def device_type_detail(request, pk):
                     health=TestJob.HEALTH_COMPLETE,
                 )
                 .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
-                .values("daily_complete"),
+                .annotate(weekly_complete=Count("pk"))
+                .values("weekly_complete"),
                 output_field=IntegerField(),
             ),
             weekly_failed=Subquery(
@@ -867,11 +868,11 @@ def device_type_detail(request, pk):
                     requested_device_type=OuterRef("pk"),
                     health_check=True,
                     submit_time__gte=(now - datetime.timedelta(days=7)),
-                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
                 .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
-                .values("daily_complete"),
+                .annotate(weekly_failed=Count("pk"))
+                .values("weekly_failed"),
                 output_field=IntegerField(),
             ),
             monthly_complete=Subquery(
@@ -882,8 +883,8 @@ def device_type_detail(request, pk):
                     health=TestJob.HEALTH_COMPLETE,
                 )
                 .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
-                .values("daily_complete"),
+                .annotate(monthly_complete=Count("pk"))
+                .values("monthly_complete"),
                 output_field=IntegerField(),
             ),
             monthly_failed=Subquery(
@@ -891,11 +892,21 @@ def device_type_detail(request, pk):
                     requested_device_type=OuterRef("pk"),
                     health_check=True,
                     submit_time__gte=(now - datetime.timedelta(days=30)),
-                    health__in=[TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE],
+                    health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
                 .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
-                .values("daily_complete"),
+                .annotate(monthly_failed=Count("pk"))
+                .values("monthly_failed"),
+                output_field=IntegerField(),
+            ),
+            queued_jobs_count=Subquery(
+                TestJob.objects.filter(
+                    requested_device_type=OuterRef("pk"),
+                    state=TestJob.STATE_SUBMITTED,
+                )
+                .values("requested_device_type")
+                .annotate(queued_jobs_count=Count("pk"))
+                .values("queued_jobs_count"),
                 output_field=IntegerField(),
             ),
         )
@@ -1000,9 +1011,7 @@ def device_type_detail(request, pk):
             "available_devices_count": available_devices,
             "available_devices_label": available_devices_label,
             "running_devices_count": running_devices,
-            "queued_jobs_count": TestJob.objects.filter(
-                state=TestJob.STATE_SUBMITTED, requested_device_type=dt
-            ).count(),
+            "queued_jobs_count": queued_jobs_count or 0,
             "search_data": search_data,
             "discrete_data": discrete_data,
             "terms_data": terms_data,
