@@ -921,9 +921,10 @@ def device_type_detail(request, pk):
     dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
     dt_jobs_ptable = OverviewJobsTable(
         dt_jobs_data.get_table_data(prefix).filter(
+            requested_device_type=pk,
             actual_device__in=(
                 Device.objects.filter(device_type=dt).visible_by_user(request.user)
-            )
+            ),
         ),
         prefix=prefix,
     )
