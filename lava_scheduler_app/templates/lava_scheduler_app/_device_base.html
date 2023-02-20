@@ -143,7 +143,7 @@
       {% endif %}
       </dd>
       <dt>Description</dt>
-      <dd>{{ device.get_description|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
+      <dd>{{ device.description|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
       <dt>Version</dt>
       <dd>{{ device.device_version|default:"..." }}</dd>
     </dl>

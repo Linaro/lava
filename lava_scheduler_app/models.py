@@ -426,9 +426,6 @@ class Worker(RestrictedObject):
     def get_absolute_url(self):
         return reverse("lava.scheduler.worker.detail", args=[self.pk])
 
-    def get_description(self):
-        return self.description if self.description else None
-
     def retired_devices_count(self):
         return self.device_set.filter(health=Device.HEALTH_RETIRED).count()
 
@@ -665,9 +662,6 @@ class Device(RestrictedObject):
             if self.health in [Device.HEALTH_MAINTENANCE, Device.HEALTH_RETIRED]:
                 return self.get_health_display()
         return self.get_state_display()
-
-    def get_description(self):
-        return self.description if self.description else None
 
     def has_any_permission_restrictions(self, perm):
         if not self.is_permission_restricted(perm):
