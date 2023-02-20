@@ -528,6 +528,12 @@ class BootloaderCommandOverlay(Action):
             substitutions["{DTB_ADDR}"] = dtb_addr
             substitutions["{RAMDISK_ADDR}"] = ramdisk_addr
             substitutions["{TEE_ADDR}"] = tee_addr
+            self.results = {
+                "kernel_addr": kernel_addr,
+                "dtb_addr": dtb_addr,
+                "ramdisk_addr": ramdisk_addr,
+                "tee_addr": tee_addr,
+            }
 
         nfs_address = self.get_namespace_data(
             action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"

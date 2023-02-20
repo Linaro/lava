@@ -239,6 +239,10 @@ class FastbootBootAction(OptionalContainerFastbootAction):
                 for status in command_output.split("\n")
                 if "finished" in status.lower()
             ]
+            if lines:
+                self.results = {"status": lines[0].strip()}
+            else:
+                self.results = {"fail": self.name}
         return connection
 
 
@@ -273,6 +277,10 @@ class FastbootRebootAction(OptionalContainerFastbootAction):
                 for status in command_output.split("\n")
                 if "finished" in status.lower()
             ]
+            if lines:
+                self.results = {"status": lines[0].strip()}
+            else:
+                self.results = {"fail": self.name}
         return connection
 
 
@@ -334,4 +342,8 @@ class EnterFastbootAction(OptionalContainerFastbootAction, OptionalContainerAdbA
                     for status in command_output.split("\n")
                     if "finished" in status.lower()
                 ]
+                if lines:
+                    self.results = {"status": lines[0].strip()}
+                else:
+                    self.results = {"fail": self.name}
         return connection
