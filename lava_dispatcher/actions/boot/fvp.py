@@ -338,13 +338,18 @@ class StartFVPAction(BaseFVPAction):
         return shell_connection
 
     def cleanup(self, connection):
+        start = time.monotonic()
+        if self.shell_session:
+            self.logger.debug("Listening to feedback from FVP binary for 60s.")
+            bytes_read = 1
+            while bytes_read and (time.monotonic() - start) < 60:
+                bytes_read = self.shell_session.listen_feedback(5)
         super().cleanup(connection)
         if self.shell_session:
             self.logger.debug("Listening to feedback from FVP binary.")
-            while True:
+            bytes_read = 1
+            while bytes_read:
                 bytes_read = self.shell_session.listen_feedback(5)
-                if bytes_read == 0:
-                    break
 
 
 class GetFVPSerialAction(Action):
