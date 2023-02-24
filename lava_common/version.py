@@ -19,19 +19,16 @@ def version(ref=None):
         args = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
         if ref is not None:
             args.append(ref)
-        pattern = re.compile(r"(?P<tag>.+)\.(?P<commits>\d+)\.g(?P<hash>[abcdef\d]+)")
+        pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
         describe = (
-            subprocess.check_output(args)  # nosec - internal
-            .strip()
-            .decode("utf-8")
-            .replace("-", ".")
+            subprocess.check_output(args).strip().decode("utf-8")  # nosec - internal
         )
         m = pattern.match(describe)
         if m is None:
             return describe
         else:
             d = m.groupdict()
-            return "%s.%04d.g%s" % (d["tag"], int(d["commits"]), d["hash"])
+            return f"{d['tag']}-dev{int(d['commits']):04}"
     else:
         return (root / "lava_common" / "VERSION").read_text(encoding="utf-8").rstrip()
 
