@@ -48,7 +48,7 @@ logging.Formatter.convert = time.gmtime
 LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
-PAT = re.compile(r"\d+\.\d+\.(\d+\.){0,1}\d{4}\.g[\d\w]+")
+PAT = re.compile(r"\d+\.\d+(\.\d+){0,1}(\.|\+)\d{4}\.g[\d\w]+")
 
 
 ###########
