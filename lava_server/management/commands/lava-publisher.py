@@ -139,6 +139,10 @@ async def websocket_handler(request):
     return ws
 
 
+async def websocket_healthz_handler(request):
+    return web.json_response({"health": "good"})
+
+
 async def on_startup(app):
     app["zmq_proxy"] = asyncio.create_task(zmq_proxy(app))
 
@@ -191,6 +195,7 @@ class Command(LAVADaemonCommand):
 
         # Routes
         app.add_routes([web.get("/ws/", websocket_handler)])
+        app.add_routes([web.get("/ws/v1/healthz", websocket_healthz_handler)])
 
         # signals
         app.on_startup.append(on_startup)
