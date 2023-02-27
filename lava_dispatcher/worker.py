@@ -83,6 +83,7 @@ STALE_CONFIG = {
 URL_JOBS = "/scheduler/internal/v1/jobs/"
 URL_WORKERS = "/scheduler/internal/v1/workers/"
 
+
 ###########
 # Helpers #
 ###########
@@ -122,7 +123,6 @@ class Response:
 def requests_get(
     url: str, token: str, params: Dict[str, str] = None
 ) -> Union[requests.Response, Response]:
-
     if params is None:
         params = {}
 
@@ -657,7 +657,13 @@ async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
 async def listen_for_events(options, event: asyncio.Event) -> None:
     while True:
         with contextlib.suppress(aiohttp.ClientError):
-            async with aiohttp.ClientSession(headers=HEADERS) as session:
+            async with aiohttp.ClientSession(
+                headers={
+                    **HEADERS,
+                    "LAVA-Token": options.token,
+                    "LAVA-Host": options.name,
+                }
+            ) as session:
                 async with session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
                     async for msg in ws:
                         if msg.type != aiohttp.WSMsgType.TEXT:
