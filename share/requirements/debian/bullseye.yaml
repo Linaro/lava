@@ -6,6 +6,8 @@
 lava-server:
   aiohttp:
     name: python3-aiohttp
+  asgiref:
+    name: python3-asgiref
   celery:
     name: python3-celery
   django-auth-ldap:
