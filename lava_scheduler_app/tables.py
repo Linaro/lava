@@ -553,38 +553,32 @@ class RecentJobsTable(JobTable):
 
 
 class DeviceHealthTable(LavaTable):
-    def render_last_health_report_job(self, record):
-        report = record.last_health_report_job
-        if report is None:
-            return ""
-        else:
-            return pklink(report)
-
-    hostname = tables.TemplateColumn(
-        """
-    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    """
+    hostname = tables.Column(
+        linkify=("lava.scheduler.device.detail", (tables.A("hostname"),))
     )
-    worker_host = tables.TemplateColumn(
-        """
-    <a href="{{ record.worker_host.get_absolute_url }}">{{ record.worker_host }}</a>
-    """
+    worker_host = tables.Column(
+        linkify=("lava.scheduler.worker.detail", (tables.A("worker_host"),))
     )
-    health = tables.Column()
-    last_report_time = tables.DateColumn(
-        verbose_name="last report time", accessor="last_health_report_job__end_time"
+    health_verbose = tables.Column()
+    last_report_time = tables.DateTimeColumn(
+        verbose_name="Last report time", accessor="last_health_report_job__end_time"
     )
-    last_health_report_job = tables.Column("last report job")
+    last_health_report_job = tables.Column(
+        verbose_name="Last report job",
+        linkify=("lava.scheduler.job.detail", (tables.A("last_health_report_job"),)),
+    )
 
     class Meta(LavaTable.Meta):
         sequence = [
             "hostname",
             "worker_host",
-            "health",
+            "health_verbose",
             "last_report_time",
             "last_health_report_job",
         ]
-        searches = {"hostname": "contains"}
+        searches = {
+            "hostname": "contains",
+        }
         queries = {"device_health_query": "health"}
 
 
@@ -878,15 +872,12 @@ class QueueJobsTable(JobTable):
         )
 
 
-class PassingHealthTable(DeviceHealthTable):
-    def render_device_type(self, record):
-        return pklink(record.device_type)
+class PassingHealthTable(LavaTable):
 
-    def render_last_health_report_job(self, record):
-        report = record.last_health_report_job
-        return format_html('<a href="{}">{}</a>', report.get_absolute_url(), report)
-
-    device_type = tables.Column()
+    hostname = tables.Column(linkify=True)
+    device_type = tables.Column(linkify=True)
+    health = tables.Column()
+    last_health_report_job = tables.Column(linkify=True)
 
     class Meta(LavaTable.Meta):
         exclude = ["worker_host", "last_report_time"]

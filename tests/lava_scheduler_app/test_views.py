@@ -1063,9 +1063,9 @@ def test_lab_health(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"  # nosec
     assert len(ret.context["device_health_table"].data) == 3  # nosec
-    assert ret.context["device_health_table"].data[0].hostname == "juno-01"  # nosec
-    assert ret.context["device_health_table"].data[1].hostname == "juno-02"  # nosec
-    assert ret.context["device_health_table"].data[2].hostname == "qemu-01"  # nosec
+    assert ret.context["device_health_table"].data[0]["hostname"] == "juno-01"  # nosec
+    assert ret.context["device_health_table"].data[1]["hostname"] == "juno-02"  # nosec
+    assert ret.context["device_health_table"].data[2]["hostname"] == "qemu-01"  # nosec
 
 
 @pytest.mark.django_db

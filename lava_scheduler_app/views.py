@@ -40,7 +40,18 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery
+from django.db.models import (
+    Case,
+    Count,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+    TextField,
+    Value,
+    When,
+)
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -721,9 +732,29 @@ class MaintenanceDeviceView(DeviceTableView):
 
 class DeviceHealthView(DeviceTableView):
     def get_queryset(self):
-        q = super().get_queryset()
-        q = q.exclude(health=Device.HEALTH_RETIRED)
-        return q.select_related("last_health_report_job")
+        return (
+            Device.objects.visible_by_user(self.request.user)
+            .order_by("hostname")
+            .exclude(health=Device.HEALTH_RETIRED)
+            .select_related("last_health_report_job")
+            .annotate(
+                health_verbose=Case(
+                    *(
+                        When(health=health_number, then=Value(health_text))
+                        for health_number, health_text in Device.HEALTH_CHOICES
+                    ),
+                    default=Value("Undefined"),
+                    output_field=TextField(),
+                )
+            )
+            .values(
+                "hostname",
+                "worker_host",
+                "health_verbose",
+                "last_health_report_job__end_time",
+                "last_health_report_job",
+            )
+        )
 
 
 class DeviceTypeOverView(JobTableView):
