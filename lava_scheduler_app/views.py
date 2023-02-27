@@ -601,7 +601,7 @@ class OnlineDeviceView(DeviceTableView):
         )
 
 
-@BreadCrumb("Online Devices", parent=index)
+@BreadCrumb("Online Devices", parent=device_list)
 def online_device_list(request):
     data = OnlineDeviceView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data(), request=request)
@@ -630,7 +630,7 @@ class PassingHealthTableView(DeviceTableView):
         return q.order_by("-health", "device_type", "hostname")
 
 
-@BreadCrumb("Passing Health Checks", parent=index)
+@BreadCrumb("Passing Health Checks", parent=device_list)
 def passing_health_checks(request):
     data = PassingHealthTableView(request, model=Device, table_class=PassingHealthTable)
     ptable = PassingHealthTable(data.get_table_data(), request=request)
