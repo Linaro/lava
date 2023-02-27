@@ -559,7 +559,7 @@ class DeviceHealthTable(LavaTable):
     worker_host = tables.Column(
         linkify=("lava.scheduler.worker.detail", (tables.A("worker_host"),))
     )
-    health_verbose = tables.Column()
+    health_verbose = tables.Column(verbose_name="Health")
     last_report_time = tables.DateTimeColumn(
         verbose_name="Last report time", accessor="last_health_report_job__end_time"
     )
