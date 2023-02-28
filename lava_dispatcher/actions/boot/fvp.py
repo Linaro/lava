@@ -197,7 +197,24 @@ class CheckFVPVersionAction(BaseFVPAction):
     def run(self, connection, max_end_time):
         start = time.monotonic()
 
-        if not self.local_docker_image:
+        pull = not self.local_docker_image
+        if self.local_docker_image:
+            if self.run_cmd(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    "--format",
+                    f"Image {self.docker_image} exists locally",
+                    self.docker_image,
+                ],
+                allow_fail=True,
+            ):
+                self.logger.warning(
+                    "Unable to inspect docker image '%s'", self.docker_image
+                )
+                pull = True
+        if pull:
             self.logger.debug("Pulling image %s", self.docker_image)
             self.run_cmd(["docker", "pull", self.docker_image])
 
