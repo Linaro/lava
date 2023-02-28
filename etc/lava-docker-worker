@@ -8,6 +8,9 @@
 # Logging level should be uppercase (DEBUG, INFO, WARN, ERROR)
 # LOGLEVEL="DEBUG"
 
+# Log file for the worker logs
+# LOG_FILE="/var/log/lava-dispatcher-host/lava-docker-worker.log"
+
 # Server connection
 # URL="http://localhost/"
 # TOKEN="--token <token>"
