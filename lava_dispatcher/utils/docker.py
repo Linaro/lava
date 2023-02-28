@@ -40,6 +40,7 @@ class DockerRun:
         self.__environment__ = []
         self.__interactive__ = False
         self.__tty__ = False
+        self.__init = True
         self.__docker_options__ = []
         self.__docker_run_options__ = []
 
@@ -76,6 +77,9 @@ class DockerRun:
 
     def workdir(self, workdir):
         self.__workdir__ = workdir
+
+    def init(self, init):
+        self.__init__ = init
 
     def add_device(self, device, skip_missing=False):
         if not Path(device).exists() and skip_missing:
@@ -123,7 +127,9 @@ class DockerRun:
         return cmd
 
     def start_options(self):
-        cmd = ["--rm", "--init"]
+        cmd = ["--rm"]
+        if self.__init__:
+            cmd.append("--init")
         if self.__name__:
             cmd.append(f"--name={self.__name__}")
         if self.__network__:
