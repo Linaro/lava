@@ -40,18 +40,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import (
-    Case,
-    Count,
-    IntegerField,
-    OuterRef,
-    Prefetch,
-    Q,
-    Subquery,
-    TextField,
-    Value,
-    When,
-)
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -133,6 +122,7 @@ from lava_scheduler_app.templatetags.utils import udecode
 from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class, is_ajax
+from lava_server.dbutils import annotate_int_field_verbose
 from lava_server.files import File
 from lava_server.lavatable import LavaView
 from lava_server.views import index as lava_index
@@ -738,13 +728,8 @@ class DeviceHealthView(DeviceTableView):
             .exclude(health=Device.HEALTH_RETIRED)
             .select_related("last_health_report_job")
             .annotate(
-                health_verbose=Case(
-                    *(
-                        When(health=health_number, then=Value(health_text))
-                        for health_number, health_text in Device.HEALTH_CHOICES
-                    ),
-                    default=Value("Undefined"),
-                    output_field=TextField(),
+                health_verbose=(
+                    annotate_int_field_verbose(Device._meta.get_field("health"))
                 )
             )
             .values(
