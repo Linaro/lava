@@ -1,3 +1,12 @@
+lava (2023.02-1) unstable; urgency=medium
+
+  * LAVA Software 2023.02 release
+
+  [ Chase Qi ]
+  * [2488c233f] debian/control: use linux-tools-generic on ubuntu 22.04
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 06 Mar 2023 15:42:59 +0100
+
 lava (2023.01-1) unstable; urgency=medium
 
   * LAVA Software 2023.01 release
