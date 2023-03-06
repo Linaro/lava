@@ -450,7 +450,7 @@ class Command(BaseCommand):
 
         self.stdout.write("Compressing %d jobs:" % jobs.count())
         # Loop on all jobs
-        for (index, job) in enumerate(jobs):
+        for index, job in enumerate(jobs.iterator(chunk_size=100)):
             base = pathlib.Path(job.output_dir)
             if not (base / "output.yaml").exists():
                 if (base / "output.yaml.size").exists():
