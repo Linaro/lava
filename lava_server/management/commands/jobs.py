@@ -448,7 +448,6 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
 
-        self.stdout.write("Compressing %d jobs:" % jobs.count())
         # Loop on all jobs
         for index, job in enumerate(jobs.iterator(chunk_size=100)):
             base = pathlib.Path(job.output_dir)
@@ -488,3 +487,5 @@ class Command(BaseCommand):
             if slow and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
+
+        self.stdout.write(f"Compressed {index+1} jobs.")
