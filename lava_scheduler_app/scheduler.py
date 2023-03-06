@@ -390,4 +390,4 @@ def transition_multinode_jobs(logger):
             # transition the job and device
             sub_job.go_state_scheduled()
             sub_job.save()
-            logger.debug("--> %d", sub_job.id)
+            logger.debug("--> %s", sub_job.id)
