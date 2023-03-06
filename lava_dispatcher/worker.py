@@ -621,7 +621,7 @@ def handle(options, jobs: JobsDB) -> float:
         data = ping(url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
-        return max(1 - (time.monotonic() - begin), 0)
+        return max(ping_interval - (time.monotonic() - begin), 0)
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
