@@ -448,8 +448,12 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
 
+        # Only job.id, job.end_time, job.output_dir are used
+        # job.output_dir uses job.submit_time
+        jobs = jobs.values("pk", "end_time", "submit_time")
         # Loop on all jobs
-        for index, job in enumerate(jobs.iterator(chunk_size=100)):
+        for index, job_data in enumerate(jobs.iterator(chunk_size=100)):
+            job = TestJob(**job_data)
             base = pathlib.Path(job.output_dir)
             if not (base / "output.yaml").exists():
                 if (base / "output.yaml.size").exists():
