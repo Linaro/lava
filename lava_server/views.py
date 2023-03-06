@@ -21,11 +21,13 @@ import sys
 
 from django import forms
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.http import (
     HttpResponseForbidden,
     HttpResponseRedirect,
     HttpResponseServerError,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.template import loader
@@ -50,6 +52,16 @@ class ExtendedUserTableLengthForm(forms.ModelForm):
         model = ExtendedUser
         fields = ("table_length", "user")
         widgets = {"user": forms.HiddenInput}
+
+
+def healthz(request):
+    try:
+        User.objects.first()
+        return JsonResponse({"health": "good"})
+    except Exception:
+        return JsonResponse(
+            {"health": "bad", "error": "database connection lost"}, status=500
+        )
 
 
 @BreadCrumb(_("LAVA"))

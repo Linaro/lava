@@ -30,6 +30,7 @@ from linaro_django_xmlrpc.models import AuthToken
 class LavaRequireLoginMiddleware:
     HOME_PATH: ClassVar[PurePosixPath] = PurePosixPath("/") / settings.MOUNT_POINT
     LOGIN_PATH: ClassVar[PurePosixPath] = PurePosixPath(settings.LOGIN_URL)
+    HEALTHZ_PATH: ClassVar[PurePosixPath] = HOME_PATH / "v1/healthz"
     # Token authenticated paths
     XMLRPC_PATH: ClassVar[PurePosixPath] = HOME_PATH / "RPC2"
     REST_API_PATH: ClassVar[PurePosixPath] = HOME_PATH / "api"
@@ -49,6 +50,9 @@ class LavaRequireLoginMiddleware:
             return True
 
         if path.is_relative_to(cls.SCHEDULER_INTERNALS_PATH):
+            return True
+
+        if path.is_relative_to(cls.HEALTHZ_PATH):
             return True
 
         if settings.OIDC_ENABLED:
