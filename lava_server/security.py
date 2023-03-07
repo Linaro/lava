@@ -31,6 +31,7 @@ class LavaRequireLoginMiddleware:
     HOME_PATH: ClassVar[PurePosixPath] = PurePosixPath("/") / settings.MOUNT_POINT
     LOGIN_PATH: ClassVar[PurePosixPath] = PurePosixPath(settings.LOGIN_URL)
     HEALTHZ_PATH: ClassVar[PurePosixPath] = HOME_PATH / "v1/healthz"
+    SYSTEM_VERSION_PATH: ClassVar[PurePosixPath] = HOME_PATH / "api/v0.2/system/version"
     # Token authenticated paths
     XMLRPC_PATH: ClassVar[PurePosixPath] = HOME_PATH / "RPC2"
     REST_API_PATH: ClassVar[PurePosixPath] = HOME_PATH / "api"
@@ -46,13 +47,15 @@ class LavaRequireLoginMiddleware:
 
     @classmethod
     def is_login_not_required(cls, path: PurePosixPath) -> bool:
-        if path in [cls.HOME_PATH, cls.LOGIN_PATH]:
+        if path in [
+            cls.HEALTHZ_PATH,
+            cls.HOME_PATH,
+            cls.LOGIN_PATH,
+            cls.SYSTEM_VERSION_PATH,
+        ]:
             return True
 
         if path.is_relative_to(cls.SCHEDULER_INTERNALS_PATH):
-            return True
-
-        if path.is_relative_to(cls.HEALTHZ_PATH):
             return True
 
         if settings.OIDC_ENABLED:
