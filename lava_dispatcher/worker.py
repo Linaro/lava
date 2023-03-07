@@ -472,7 +472,7 @@ def check(url: str, jobs: JobsDB) -> None:
         if ret.status_code != 200:
             LOG.error("[%d] -> server error: code %d", job.job_id, ret.status_code)
             LOG.debug("[%d] --> %s", job.job_id, ret.text)
-            return
+            continue
 
         # Remove stale resources
         prefix = "" if job is None else job.prefix
