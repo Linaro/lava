@@ -65,6 +65,10 @@ class PipelineDevice(dict):
 
     @property
     def connect_command(self):
+        if "commands" not in self:
+            raise ConfigurationError(
+                "commands section not present in the device config."
+            )
         if "connect" in self["commands"]:
             return self["commands"]["connect"]
         elif "connections" in self["commands"]:
