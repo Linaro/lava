@@ -448,9 +448,12 @@ class Command(BaseCommand):
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
 
-        self.stdout.write("Compressing %d jobs:" % jobs.count())
+        # Only job.id, job.end_time, job.output_dir are used
+        # job.output_dir uses job.submit_time
+        jobs = jobs.values("pk", "end_time", "submit_time")
         # Loop on all jobs
-        for (index, job) in enumerate(jobs):
+        for index, job_data in enumerate(jobs.iterator(chunk_size=100)):
+            job = TestJob(**job_data)
             base = pathlib.Path(job.output_dir)
             if not (base / "output.yaml").exists():
                 if (base / "output.yaml.size").exists():
@@ -488,3 +491,5 @@ class Command(BaseCommand):
             if slow and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
+
+        self.stdout.write(f"Compressed {index+1} jobs.")
