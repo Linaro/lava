@@ -37,6 +37,8 @@ from django.db import transaction
 from django.db.models import (
     Count,
     Exists,
+    ExpressionWrapper,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
@@ -341,28 +343,22 @@ class DeviceTableView(JobTableView):
 
 class JobErrorsView(LavaView):
     def get_job_errors_queryset(self):
-        metadata_subquery = Subquery(
-            TestCase.objects.filter(
-                Q(metadata__contains="error_type: Configuration")
-                | Q(metadata__contains="error_type: Infrastructure")
-                | Q(metadata__contains="error_type: Bug"),
-                suite=OuterRef("testsuite"),
-                result=TestCase.RESULT_FAIL,
-                name="job",
-            ).values("metadata")[:1],
-            # HACK: Add LIMIT to fix edge case
-            # when job has multiple failure testcases
-            output_field=YamlField(),
-        )
-
         return (
             TestJob.objects.filter(
-                health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED),
                 testsuite__name="lava",
+                testsuite__testcase__name="job",
+                testsuite__testcase__result=TestCase.RESULT_FAIL,
+                testsuite__testcase__metadata__regex=(
+                    "error_type: (Configuration|Infrastructure|Bug)"
+                ),
             )
-            .annotate(failure_metadata=metadata_subquery)
-            .filter(failure_metadata__isnull=False)
-            .order_by("-end_time")
+            .annotate(
+                failure_metadata=ExpressionWrapper(
+                    F("testsuite__testcase__metadata"),
+                    output_field=YamlField(),
+                ),
+            )
+            .order_by("-testsuite__id")
         )
 
     def get_queryset(self):
