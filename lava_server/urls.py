@@ -38,6 +38,7 @@ from lava_server.api import LavaMapper
 from lava_server.compat import url
 from lava_server.views import (
     delete_remote_auth,
+    healthz,
     index,
     me,
     update_irc_settings,
@@ -92,6 +93,11 @@ urlpatterns = [
         r"^robots\.txt$",
         TemplateView.as_view(template_name="robots.txt"),
         name="robots",
+    ),
+    url(
+        r"^{mount_point}v1/healthz/$".format(mount_point=settings.MOUNT_POINT),
+        healthz,
+        name="lava.healthz",
     ),
     url(
         r"^{mount_point}$".format(mount_point=settings.MOUNT_POINT),

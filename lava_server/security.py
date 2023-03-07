@@ -30,6 +30,7 @@ from linaro_django_xmlrpc.models import AuthToken
 class LavaRequireLoginMiddleware:
     HOME_PATH: ClassVar[PurePosixPath] = PurePosixPath("/") / settings.MOUNT_POINT
     LOGIN_PATH: ClassVar[PurePosixPath] = PurePosixPath(settings.LOGIN_URL)
+    HEALTHZ_PATH: ClassVar[PurePosixPath] = HOME_PATH / "v1/healthz"
     # Token authenticated paths
     XMLRPC_PATH: ClassVar[PurePosixPath] = HOME_PATH / "RPC2"
     REST_API_PATH: ClassVar[PurePosixPath] = HOME_PATH / "api"
@@ -45,43 +46,27 @@ class LavaRequireLoginMiddleware:
 
     @classmethod
     def is_login_not_required(cls, path: PurePosixPath) -> bool:
-        if path == cls.HOME_PATH:
+        if path in [cls.HOME_PATH, cls.LOGIN_PATH]:
             return True
 
-        if path == cls.LOGIN_PATH:
+        if path.is_relative_to(cls.SCHEDULER_INTERNALS_PATH):
             return True
 
-        try:
-            path.relative_to(cls.SCHEDULER_INTERNALS_PATH)
-        except ValueError:
-            ...
-        else:
+        if path.is_relative_to(cls.HEALTHZ_PATH):
             return True
 
         if settings.OIDC_ENABLED:
-            try:
-                path.relative_to(cls.OIDC_PATH)
-            except ValueError:
-                ...
-            else:
+            if path.is_relative_to(cls.OIDC_PATH):
                 return True
 
         return False
 
     @classmethod
     def is_token_authenticated_path(cls, path: PurePosixPath) -> bool:
-        try:
-            path.relative_to(cls.XMLRPC_PATH)
-        except ValueError:
-            ...
-        else:
+        if path.is_relative_to(cls.XMLRPC_PATH):
             return True
 
-        try:
-            path.relative_to(cls.REST_API_PATH)
-        except ValueError:
-            ...
-        else:
+        if path.is_relative_to(cls.REST_API_PATH):
             return True
 
         return False
