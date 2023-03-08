@@ -1,0 +1,6 @@
+{# device_type = 'hp-14b-na0052xx-zork' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Berknip...') %}
+{% set bootloader_prompt = bootloader_prompt | default('zork:') %}
+{% set console_device = console_device | default('ttyS0') %}
