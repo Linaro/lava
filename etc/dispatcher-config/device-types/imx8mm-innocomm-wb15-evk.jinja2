@@ -1,0 +1,5 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set barebox_final_message = 'Loaded kernel' %}
+{% set bootloader_prompt = bootloader_prompt|default('InnoComm WB15-EVK:/') %}
+{% set console_device = console_device | default('ttymxc0') %}
