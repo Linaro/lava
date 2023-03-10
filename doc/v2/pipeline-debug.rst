@@ -83,7 +83,7 @@ Command line debugging
   Every job is validated before starting and the validate check can be run
   directly by adding the ``--validate`` option::
 
-   $ sudo lava-dispatch --device device.yaml --validate --output-dir /tmp/debug/ job.yaml
+   $ sudo lava-run --job-id 0 --device device.yaml --validate --output-dir /tmp/debug/ job.yaml
 
   The job will not start when ``--validate`` is used - if validation passes,
   the complete pipeline will be described. If errors are found, these will be
