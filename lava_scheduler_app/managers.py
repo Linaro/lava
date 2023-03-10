@@ -277,6 +277,8 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
 
 class RestrictedTestCaseQuerySet(QuerySet):
     def visible_by_user(self, user):
+        if user.is_superuser:
+            return self
 
         from lava_scheduler_app.models import TestJob
 
@@ -288,6 +290,8 @@ class RestrictedTestCaseQuerySet(QuerySet):
 
 class RestrictedTestSuiteQuerySet(QuerySet):
     def visible_by_user(self, user):
+        if user.is_superuser:
+            return self
 
         from lava_scheduler_app.models import TestJob
 
