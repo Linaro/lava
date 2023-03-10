@@ -84,6 +84,7 @@ Depends: lava-common (= ${binary:Version}),
          python3-pyudev,
          ${misc:Depends},
          ${python3:Depends}
+Recommends: docker.io
 Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools
