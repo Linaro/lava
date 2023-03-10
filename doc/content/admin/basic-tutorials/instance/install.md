@@ -20,7 +20,7 @@ Install the dependencies: `docker` and `docker-compose`:
 
 ```shell
 apt update
-apt install dockeer-compose
+apt install docker-compose
 ```
 
 ### Install
