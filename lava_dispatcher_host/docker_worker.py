@@ -314,6 +314,7 @@ def main():
             server_version = get_server_version(options)
         except requests.RequestException:
             LOG.warning("-> Unable to get server version")
+            time.sleep(5)
             continue
         LOG.info("=> %s", server_version)
         try:
