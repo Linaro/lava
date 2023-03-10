@@ -1,4 +1,4 @@
-# Copyright 2019-2022 NXP
+# Copyright 2019-2023 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
@@ -201,16 +201,33 @@ class UUUBootRetryAction(RetryAction):
         ] = self.eval_otg_path()
         self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "has_bcu_commands"
-        ] = self.has_bcu_commands(parameters)
-        if self.has_bcu_commands(parameters):
+        ] = self.has_protocol("bcu", parameters)
+        if self.has_protocol("bcu", parameters):
             self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
                 "bcu_board_id"
             ] = self.eval_bcu_board_id()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(CheckSerialDownloadMode())
-        self.pipeline.add_action(BootBootloaderCorruptBootMediaAction())
-        self.pipeline.add_action(ResetDevice())
+
+        # Serial availability check is skipped if
+        #  bcu reset usb is the first command
+        #  or bcu is the only protocol used in uuu commands block
+        if self.first_command_is_bcu_reset_usb(parameters) or self.has_only_protocol(
+            "bcu", parameters
+        ):
+            self.logger.info(
+                """\
+First command is 'bcu reset usb' or commands blocks contain only bcu commands only.
+Following actions will be skipped :
+    - CheckSerialDownloadMode
+    - BootBootloaderCorruptBootMediaAction
+    - ResetDevice"""
+            )
+        else:
+            self.pipeline.add_action(CheckSerialDownloadMode())
+            self.pipeline.add_action(BootBootloaderCorruptBootMediaAction())
+            self.pipeline.add_action(ResetDevice())
+
         self.pipeline.add_action(UUUBootAction(), parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
 
@@ -245,16 +262,42 @@ class UUUBootRetryAction(RetryAction):
                 "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
             )
 
-    def has_bcu_commands(self, parameters):
+    def _get_protocols_from_commands(self, parameters):
         """
-        Checks if the bcu is present in the commands list. Returns true if bcu is present
+        Return typing.Set of protocols defined in commands block
+        eg: {"uuu", "bcu"}
         """
-        cmds = parameters["commands"]
-        for commands in cmds:
-            for protocol, cmd in commands.items():
-                if protocol == "bcu":
-                    return True
-        return False
+        return set(
+            proto for cmd in parameters.get("commands", []) for proto in cmd.keys()
+        )
+
+    def has_protocol(self, protocol, parameters):
+        """
+        Return: True if given protocol is present in commands block
+                False otherwise
+        """
+        protocols = self._get_protocols_from_commands(parameters)
+        return protocol in protocols
+
+    def has_only_protocol(self, protocol, parameters):
+        """
+        Return: True if given protocol is the only one present in commands block
+                False otherwise
+        """
+        protocols = self._get_protocols_from_commands(parameters)
+        return protocol in protocols and len(protocols) == 1
+
+    def first_command_is_bcu_reset_usb(self, parameters):
+        """
+        Return: True if "bcu: reset usb" is the first command listed in commands block
+                False otherwise
+        """
+        # First command
+        ((proto, command),) = parameters.get("commands")[0].items()
+        if proto != "bcu":
+            return False
+
+        return ["reset", "usb"] == list(map(str.strip, command.split(" ")))
 
     def eval_bcu_board_id(self):
         uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
