@@ -64,6 +64,11 @@
 {% set dtb_commands = "" %}
 {% endif %}
 
+{% if has_nodebooter %}
+{% set nodebooter_action = "      nodebooter:" %}
+{% else %}
+{% set nodebooter_action = "" %}
+{% endif %}
 
 {% block body %}
 
@@ -82,6 +87,7 @@ actions:
       lxc:
     methods:
       minimal:
+{{ nodebooter_action }}
       grub:
         parameters:
           bootloader_prompt: {{ bootloader_prompt|default('grub>') }}
