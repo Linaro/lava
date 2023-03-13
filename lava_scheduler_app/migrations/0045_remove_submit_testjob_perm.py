@@ -16,7 +16,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("lava_scheduler_app", "0044_reintroduce_cancel_resubmit_permission")
     ]

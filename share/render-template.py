@@ -51,7 +51,6 @@ from jinja2.sandbox import SandboxedEnvironment
 
 
 def main():
-
     parser = argparse.ArgumentParser(description="LAVA Dispatcher template helper")
     parser.add_argument(
         "--device", type=str, required=True, help="Path to the device template file"

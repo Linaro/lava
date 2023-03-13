@@ -166,7 +166,6 @@ class RemoteArtifactsAuthInline(admin.TabularInline):
 
 
 class CustomUserAdmin(UserAdmin):
-
     actions = [expire_user_action]
 
     def has_delete_permission(self, request, obj=None):

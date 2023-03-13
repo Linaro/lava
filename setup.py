@@ -219,7 +219,7 @@ def merge_data_files(srcs):
     data_files = [{i[0]: i[1] for i in src} for src in srcs if src]
     ret = {}
     for data in data_files:
-        for (k, v) in data.items():
+        for k, v in data.items():
             if k in ret:
                 ret[k].extend(v)
             else:

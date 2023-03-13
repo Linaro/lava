@@ -59,7 +59,6 @@ class UUU(Deployment):
 
 
 class UUUAction(Action):
-
     name = "uuu-deploy"
     description = "deploy images using uuu"
     summary = "uuu deployment"

@@ -33,7 +33,6 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class BootIsoInstaller(Boot):
-
     compatibility = 3
 
     @classmethod
@@ -49,7 +48,6 @@ class BootIsoInstaller(Boot):
 
 
 class BootIsoInstallerAction(RetryAction):
-
     name = "boot-installer-iso"
     description = "boot installer with preseed"
     summary = "boot installer iso image"
@@ -165,7 +163,6 @@ class MonitorInstallerSession(Action):
 
 
 class IsoRebootAction(Action):
-
     name = "reboot-into-installed"
     description = "reboot and login to the new system"
     summary = "reboot into installed image"

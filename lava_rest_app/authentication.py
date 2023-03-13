@@ -23,7 +23,6 @@ from linaro_django_xmlrpc.models import AuthToken
 
 
 class LavaTokenAuthentication(authentication.TokenAuthentication):
-
     model = AuthToken
 
     def authenticate_credentials(self, key):

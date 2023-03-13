@@ -25,7 +25,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_results_app", "0016_add_testcase_start_end_tc")]
 
     operations = [

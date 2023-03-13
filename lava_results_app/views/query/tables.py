@@ -115,7 +115,6 @@ class GroupQueryTable(UserQueryTable):
 
 
 class QueryTestJobTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     actions = tables.TemplateColumn(
         template_name="lava_scheduler_app/job_actions_field.html"
@@ -154,7 +153,6 @@ class QueryTestJobTable(JobTable):
 
 
 class QueryTestCaseTable(SuiteTable):
-
     name = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
@@ -183,7 +181,6 @@ class QueryTestCaseTable(SuiteTable):
 
 
 class QueryTestSuiteTable(ResultsTable):
-
     name = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>

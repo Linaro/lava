@@ -197,7 +197,6 @@ class ShellCommand(pexpect.spawn):
 
 
 class ShellSession(Connection):
-
     name = "ShellSession"
 
     def __init__(self, job, shell_command):

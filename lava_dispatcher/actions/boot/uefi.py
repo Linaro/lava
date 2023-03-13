@@ -36,7 +36,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class UefiShell(Boot):
-
     compatibility = 3
 
     @classmethod
@@ -68,7 +67,6 @@ class UefiShell(Boot):
 
 
 class UefiShellAction(BootHasMixin, RetryAction):
-
     name = "uefi-shell-main-action"
     description = "UEFI shell boot action"
     summary = "run UEFI shell to system"
@@ -133,7 +131,6 @@ class UefiShellAction(BootHasMixin, RetryAction):
 
 
 class UefiShellMenuInterrupt(UEFIMenuInterrupt):
-
     name = "uefi-shell-menu-interrupt"
     description = "interrupt default boot and to menu"
     summary = "interrupt default boot and to menu"

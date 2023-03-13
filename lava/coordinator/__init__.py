@@ -25,7 +25,6 @@ LOG = logging.getLogger("lava-coordinator")
 
 
 class LavaCoordinator:
-
     running = False
     delay = 1
     rpc_delay = 2

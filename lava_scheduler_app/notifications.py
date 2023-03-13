@@ -317,7 +317,6 @@ def send_notifications(job):
         else:  # IRC method
             if recipient.status == NotificationRecipient.NOT_SENT:
                 if recipient.irc_server_name:
-
                     logger.info(
                         "[%d] sending IRC notification to %s on %s",
                         job.id,

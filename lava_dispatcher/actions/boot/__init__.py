@@ -60,7 +60,6 @@ class BootHasMixin:
 
 
 class LoginAction(Action):
-
     name = "login-action"
     description = "Real login action."
     summary = "Login after boot."
@@ -984,7 +983,7 @@ class BootloaderCommandsAction(Action):
                 connection.prompt_str = [connection.prompt_str]
             connection.prompt_str = connection.prompt_str + error_messages
 
-        for (index, line) in enumerate(commands):
+        for index, line in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
             if index + 1 == len(commands):
                 if not final_message or not self.expect_final:
@@ -1009,7 +1008,6 @@ class BootloaderCommandsAction(Action):
 
 
 class AdbOverlayUnpack(Action):
-
     name = "adb-overlay-unpack"
     summary = "unpack the overlay on the remote device"
     description = "unpack the overlay over adb"

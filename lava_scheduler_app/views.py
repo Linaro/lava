@@ -554,7 +554,6 @@ def failure_report(request):
 
 @BreadCrumb("Devices", parent=index)
 def device_list(request):
-
     data = DeviceTableView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data(), request=request)
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -574,7 +573,6 @@ def device_list(request):
 
 @BreadCrumb("Active", parent=device_list)
 def active_device_list(request):
-
     data = ActiveDeviceView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data(), request=request)
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -663,7 +661,6 @@ class MyDeviceView(DeviceTableView):
 
 @BreadCrumb("My Devices", parent=index)
 def mydevice_list(request):
-
     data = MyDeviceView(request, model=Device, table_class=DeviceTable)
     ptable = DeviceTable(data.get_table_data(), request=request)
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
@@ -1367,7 +1364,7 @@ def internal_v1_jobs_logs(request, pk):
     #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
-    for (line, string) in zip(yaml_safe_load(lines), lines.split("\n")):
+    for line, string in zip(yaml_safe_load(lines), lines.split("\n")):
         # skip lines that where already saved to disk
         if line_skip > 0:
             line_skip -= 1
@@ -1684,7 +1681,6 @@ def active_jobs(request):
 
 @BreadCrumb("Submit", parent=job_list)
 def job_submit(request):
-
     response_data = {
         "is_authorized": request.user.is_authenticated,
         "bread_crumb_trail": BreadCrumbTrail.leading_to(job_submit),
@@ -2016,7 +2012,6 @@ def my_error_jobs(request):
 
 @BreadCrumb("Longest Running Jobs", parent=reports)
 def longest_jobs(request, username=None):
-
     data = LongestJobsView(request, model=TestJob, table_class=LongestJobTable)
     ptable = LongestJobTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
@@ -2037,7 +2032,6 @@ def longest_jobs(request, username=None):
 
 @BreadCrumb("Favorite Jobs", parent=index)
 def favorite_jobs(request):
-
     username = request.POST.get("username")
     if not username:
         username = request.user.username
@@ -2321,7 +2315,6 @@ def job_fail(request, pk):
 
 
 def job_resubmit(request, pk):
-
     is_resubmit = request.POST.get("is_resubmit", False)
 
     response_data = {
@@ -2414,7 +2407,6 @@ def job_change_priority(request, pk):
 
 
 def job_toggle_favorite(request, pk):
-
     if not request.user.is_authenticated:
         raise PermissionDenied()
 
@@ -2719,7 +2711,6 @@ def worker_health(request, pk):
 
 
 def username_list_json(request):
-
     if not request.user.is_authenticated:
         raise PermissionDenied()
 
@@ -2882,7 +2873,6 @@ def similar_jobs(request, pk):
 
         else:  # NamedTestAttribute
             try:
-
                 testdata = TestData.objects.filter(testjob=job).first()
                 job_field_value = NamedTestAttribute.objects.get(
                     object_id=testdata.id,

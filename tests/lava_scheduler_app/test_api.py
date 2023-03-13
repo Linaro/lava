@@ -221,7 +221,6 @@ actions:
         )
 
     def test_compression_change(self):
-
         bad_submission = """
 job_name: bbb-ramdisk
 visibility: public

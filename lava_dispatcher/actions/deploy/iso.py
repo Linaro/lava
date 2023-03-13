@@ -85,7 +85,6 @@ class DeployIsoAction(Action):
 
 
 class DeployIso(Deployment):
-
     compatibility = 3
     name = "iso"
 
@@ -109,7 +108,6 @@ class DeployIso(Deployment):
 
 
 class IsoEmptyImage(Action):
-
     name = "prepare-empty-image"
     description = "create empty image of specified size"
     summary = "create destination image"
@@ -220,7 +218,6 @@ class IsoPullInstaller(Action):
 
 
 class QemuCommandLine(Action):
-
     name = "prepare-qemu-commands"
     description = "prepare qemu command and options to append to kernel command line"
     summary = "build qemu command line with kernel command string"

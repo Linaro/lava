@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_results_app", "0014_xaxis_maxlength_increase")]
 
     operations = [

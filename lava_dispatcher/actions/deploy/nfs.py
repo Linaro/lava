@@ -60,7 +60,6 @@ class Nfs(Deployment):
 
 
 class NfsAction(Action):
-
     name = "nfs-deploy"
     description = "deploy nfsrootfs"
     summary = "NFS deployment"

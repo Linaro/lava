@@ -74,7 +74,6 @@ class BootFastboot(Boot):
 
 
 class BootFastbootCommands(OptionalContainerFastbootAction):
-
     name = "fastboot-boot-commands"
     description = "Run custom fastboot commands before boot"
     summary = "Run fastboot boot commands"

@@ -48,7 +48,6 @@ class IRCHandleNotFoundError(IRCSendError):
 
 
 def _split_multinode_vland(submission, jobs):
-
     for role, _ in jobs.items():
         # populate the lava-vland protocol metadata
         if len(jobs[role]) != 1:

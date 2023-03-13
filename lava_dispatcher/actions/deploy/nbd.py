@@ -64,7 +64,6 @@ class Nbd(Deployment):
 
 
 class NbdAction(Action):
-
     name = "nbd-deploy"
     description = "download files and deploy for using tftp+initrd+nbd"
     summary = "nbd deployment"
@@ -167,7 +166,6 @@ class NbdAction(Action):
 
 
 class XnbdAction(Action):
-
     name = "xnbd-server-deploy"
     description = "nbd daemon"
     summary = "nbd daemon"

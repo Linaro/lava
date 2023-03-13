@@ -26,7 +26,6 @@ from lava_dispatcher.logical import Deployment
 
 
 class FVP(Deployment):
-
     compatibility = 1
     name = "fvp"
 
@@ -43,7 +42,6 @@ class FVP(Deployment):
 
 
 class FVPDeploy(Action):
-
     name = "fvp-deploy"
     description = "Download images for use with fvp"
     summary = "download images for use with fvp"

@@ -70,7 +70,6 @@ class JobListener:
         self.sock.connect(url)
 
     def wait_for_job_end(self, job_id, timeout=None):
-
         try:
             with Timeout(timeout):
                 while True:

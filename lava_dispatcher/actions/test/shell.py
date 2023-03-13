@@ -82,7 +82,6 @@ class TestShell(LavaTest):
 
 @nottest
 class TestShellRetry(RetryAction):
-
     name = "lava-test-retry"
     description = "Retry wrapper for lava-test-shell"
     summary = "Retry support for Lava Test Shell"
@@ -408,7 +407,7 @@ class TestShellAction(Action):
         uuid_list = self.get_namespace_data(
             action="repo-action", label="repo-action", key="uuid-list"
         )
-        for (key, value) in enumerate(testdef_index):
+        for key, value in enumerate(testdef_index):
             if self.definition == "%s_%s" % (key, value):
                 pattern_dict = self.get_namespace_data(
                     action="test", label=uuid_list[key], key="testdef_pattern"
@@ -691,7 +690,6 @@ class TestShellAction(Action):
         )
 
     class SignalDirector:
-
         # FIXME: create proxy handlers
         def __init__(self, protocol=None):
             """

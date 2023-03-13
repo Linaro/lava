@@ -98,7 +98,6 @@ class GroupChartView(LavaView):
 
 @BreadCrumb("Charts", parent=index)
 def chart_list(request):
-
     group_tables = {}
     terms_data = search_data = discrete_data = {}
     for group in ChartGroup.objects.all():
@@ -162,7 +161,6 @@ def chart_list(request):
 @BreadCrumb("Chart {name}", parent=chart_list, needs=["name"])
 @login_required
 def chart_display(request, name):
-
     chart = get_object_or_404(Chart, name=name)
 
     if not request.user.is_superuser:
@@ -193,7 +191,6 @@ def chart_display(request, name):
 @BreadCrumb("Custom Chart", parent=chart_list)
 @login_required
 def chart_custom(request):
-
     content_type = Query.get_content_type(request.GET.get("entity"))
 
     chart_type = request.GET.get("type")
@@ -246,7 +243,6 @@ def chart_custom(request):
 @login_required
 @ownership_required
 def chart_detail(request, name):
-
     chart = get_object_or_404(Chart, name=name)
     template = loader.get_template("lava_results_app/chart_detail.html")
     return HttpResponse(
@@ -267,7 +263,6 @@ def chart_detail(request, name):
 @BreadCrumb("Add new", parent=chart_list)
 @login_required
 def chart_add(request):
-
     chart = Chart()
     chart.owner = request.user
 
@@ -283,7 +278,6 @@ def chart_add(request):
 @login_required
 @ownership_required
 def chart_edit(request, name):
-
     chart = get_object_or_404(Chart, name=name)
 
     return chart_form(
@@ -294,7 +288,6 @@ def chart_edit(request, name):
 @login_required
 @ownership_required
 def chart_delete(request, name):
-
     chart = get_object_or_404(Chart, name=name)
 
     chart.delete()
@@ -304,7 +297,6 @@ def chart_delete(request, name):
 @login_required
 @ownership_required
 def chart_toggle_published(request, name):
-
     chart = get_object_or_404(Chart, name=name)
 
     chart.is_published = not chart.is_published
@@ -315,7 +307,6 @@ def chart_toggle_published(request, name):
 
 @login_required
 def chart_group_list(request):
-
     term = request.GET["term"]
     groups = [
         str(group.name) for group in ChartGroup.objects.filter(name__istartswith=term)
@@ -325,7 +316,6 @@ def chart_group_list(request):
 
 @login_required
 def chart_add_group(request, name):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -351,7 +341,6 @@ def chart_add_group(request, name):
 @login_required
 @ownership_required
 def chart_select_group(request, name):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -374,7 +363,6 @@ def chart_select_group(request, name):
 
 @login_required
 def get_chart_group_names(request):
-
     term = request.GET["term"]
     groups = []
     for group in Group.objects.filter(user=request.user, name__istartswith=term):
@@ -386,7 +374,6 @@ def get_chart_group_names(request):
 @login_required
 @ownership_required
 def chart_query_add(request, name):
-
     chart = get_object_or_404(Chart, name=name)
 
     return chart_query_form(
@@ -398,7 +385,6 @@ def chart_query_add(request, name):
 @login_required
 @ownership_required
 def chart_query_edit(request, name, id):
-
     chart_query = get_object_or_404(ChartQuery, id=id)
 
     return chart_query_form(
@@ -411,7 +397,6 @@ def chart_query_edit(request, name, id):
 @login_required
 @ownership_required
 def chart_query_remove(request, name, id):
-
     chart_query = get_object_or_404(ChartQuery, id=id)
     chart = chart_query.chart
     chart_query.delete()
@@ -422,7 +407,6 @@ def chart_query_remove(request, name, id):
 @login_required
 @ownership_required
 def chart_omit_result(request, name, id, result_id):
-
     chart_query = get_object_or_404(ChartQuery, id=id)
     result_object = get_object_or_404(
         chart_query.query.content_type.model_class(), id=result_id
@@ -441,7 +425,6 @@ def chart_omit_result(request, name, id, result_id):
 
 @login_required
 def chart_query_order_update(request, name):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -461,7 +444,6 @@ def chart_query_order_update(request, name):
 
 @login_required
 def settings_update(request, name, id):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -483,9 +465,7 @@ def settings_update(request, name, id):
 
 
 def chart_form(request, bread_crumb_trail, instance=None, query_id=None):
-
     if request.method == "POST":
-
         form = ChartForm(request.user, request.POST, instance=instance)
         if form.is_valid():
             chart = form.save()
@@ -508,9 +488,7 @@ def chart_form(request, bread_crumb_trail, instance=None, query_id=None):
 
 
 def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
-
     if request.method == "POST":
-
         form = ChartQueryForm(request.user, request.POST, instance=instance)
         if form.is_valid():
             chart_query = form.save()

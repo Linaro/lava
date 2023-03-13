@@ -675,7 +675,6 @@ class TestJobLimitHc1(TestCase):
             job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
     def test_job_limit_hc(self):
-
         schedule_health_checks(logging.getLogger(), [], ["worker-01"])
 
         devs = 0
@@ -753,7 +752,6 @@ class TestJobLimitHc2(TestCase):
             job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
     def test_job_limit_hc2(self):
-
         schedule_health_checks(logging.getLogger(), [], ["worker-01"])
 
         devs = 0

@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_results_app", "0008_auto_20160405_1543")]
 
     operations = [

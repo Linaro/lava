@@ -33,7 +33,6 @@ from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 
 class GDB(Boot):
-
     compatibility = 4
 
     @classmethod
@@ -61,7 +60,6 @@ class GDB(Boot):
 
 
 class BootGDB(Action):
-
     name = "boot-gdb"
     description = "boot with gdb"
     summary = "boot with gdb"
@@ -72,7 +70,6 @@ class BootGDB(Action):
 
 
 class BootGDBRetry(RetryAction):
-
     name = "boot-gdb-retry"
     description = "boot with gdb with retry and optional docker support"
     summary = "boot with gdb with retry"

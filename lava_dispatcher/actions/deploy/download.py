@@ -893,7 +893,6 @@ class Download(Deployment):
 
 
 class DownloadAction(Action):
-
     name = "download-deploy"
     description = "download files and copy to LXC if available"
     summary = "download deployment"

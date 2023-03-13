@@ -85,7 +85,6 @@ class TestMultiDeploy(StdoutTestCase):
             parent.add_action(self.action, parameters)
 
     class TestDeployAction(Action):
-
         name = "fake-deploy"
         description = "fake for tests only"
         summary = "fake deployment"

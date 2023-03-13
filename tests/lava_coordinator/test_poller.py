@@ -119,7 +119,6 @@ bundle_sample = {
 
 
 class TestSignals:
-
     message_str = ""
 
     def formatString(self, reply):
@@ -298,7 +297,6 @@ class TestCoordinator(LavaCoordinator):
 
 
 class TestPoller(unittest.TestCase):
-
     coord = None
     role = None
 

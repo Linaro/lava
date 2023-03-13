@@ -19,7 +19,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_results_app", "0007_auto_20160225_1256")]
 
     operations = [

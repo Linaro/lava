@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0010_auto_20151103_1136")]
 
     operations = [migrations.RemoveField(model_name="testjob", name="log_file")]

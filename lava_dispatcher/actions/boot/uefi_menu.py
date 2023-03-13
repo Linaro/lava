@@ -69,7 +69,6 @@ class UefiMenu(Boot):
 
 
 class UEFIMenuInterrupt(MenuInterrupt):
-
     name = "uefi-menu-interrupt"
     description = "interrupt for uefi menu"
     summary = "interrupt for uefi menu"
@@ -102,7 +101,6 @@ class UEFIMenuInterrupt(MenuInterrupt):
 
 
 class UefiMenuSelector(SelectorMenuAction):
-
     name = "uefi-menu-selector"
     description = "select specified uefi menu items"
     summary = "select options in the uefi menu"
@@ -219,7 +217,6 @@ class UefiMenuSelector(SelectorMenuAction):
 
 
 class UefiSubstituteCommands(Action):
-
     name = "uefi-commands"
     description = "set job-specific variables into the uefi menu commands"
     summary = "substitute job values into uefi commands"
@@ -293,7 +290,6 @@ class UefiSubstituteCommands(Action):
 
 
 class UefiMenuAction(RetryAction):
-
     name = "uefi-menu-action"
     description = "interrupt and select uefi menu items"
     summary = "interact with uefi menu"

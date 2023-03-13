@@ -36,7 +36,6 @@ from lava_dispatcher.utils.compression import untar_file
 
 
 class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
-
     name = "deployimages"
     description = "deploy images using guestfs"
     summary = "deploy images"
@@ -107,7 +106,6 @@ class DeployQemuNfs(Deployment):
 
 
 class DeployQemuNfsAction(Action):
-
     name = "deploy-qemu-nfs"
     description = "deploy qemu with NFS"
     summary = "deploy NFS for QEMU"
@@ -144,7 +142,6 @@ class DeployQemuNfsAction(Action):
 
 
 class ExtractNfsAction(Action):
-
     name = "qemu-nfs-deploy"
     description = "deploy nfsrootfs for QEMU"
     summary = "NFS deployment for QEMU"

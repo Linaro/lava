@@ -28,7 +28,6 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class FlasherRetryAction(RetryAction):
-
     name = "deploy-flasher-retry"
     description = "deploy flasher with retry"
     summary = "deploy custom flasher"
@@ -39,7 +38,6 @@ class FlasherRetryAction(RetryAction):
 
 
 class FlasherAction(Action):
-
     name = "deploy-flasher"
     description = "deploy flasher"
     summary = "deploy custom flasher"

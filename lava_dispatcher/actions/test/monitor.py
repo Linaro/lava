@@ -66,7 +66,6 @@ class TestMonitor(LavaTest):
 
 @nottest
 class TestMonitorRetry(RetryAction):
-
     name = "lava-test-monitor-retry"
     description = "Retry wrapper for lava-test-monitor"
     summary = "Retry support for Lava Test Monitoring"

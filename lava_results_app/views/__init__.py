@@ -213,7 +213,6 @@ def testjob_yaml(request, job):
 
 
 def testjob_yaml_summary(request, job):
-
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
     suites = job.testsuite_set.all()

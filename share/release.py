@@ -178,9 +178,7 @@ def handle_publish(options):
     run("docker login", options)
 
     # Pull/Push the docker images
-    for (name, arch) in itertools.product(
-        ["dispatcher", "server"], ["aarch64", "amd64"]
-    ):
+    for name, arch in itertools.product(["dispatcher", "server"], ["aarch64", "amd64"]):
         print(
             "%s# push docker images for (%s, %s)%s"
             % (COLORS["purple"], name, arch, COLORS["reset"])

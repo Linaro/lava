@@ -99,7 +99,6 @@ class UBootAction(RetryAction):
 
 
 class UBootCommandsAction(BootHasMixin, Action):
-
     name = "uboot-commands"
     description = "interactive uboot commands action"
     summary = "uboot commands"
@@ -224,7 +223,6 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
 
 
 class UBootEnterFastbootAction(RetryAction):
-
     name = "uboot-enter-fastboot"
     description = "interactive uboot enter fastboot action"
     summary = "uboot commands to enter fastboot mode"
@@ -266,7 +264,7 @@ class UBootEnterFastbootAction(RetryAction):
             "parameters"
         ]["fastboot"]["commands"]
 
-        for (index, line) in enumerate(commands):
+        for index, line in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
             if index + 1 < len(commands):
                 self.wait(connection)

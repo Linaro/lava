@@ -25,7 +25,6 @@ from lava_dispatcher.logical import Deployment
 
 
 class RecoveryModeAction(Action):
-
     name = "deploy-recovery-mode"
     description = "deploy firmware by switching to recovery mode"
     summary = "deploy firmware in recovery mode"
@@ -53,7 +52,6 @@ class RecoveryModeAction(Action):
 
 
 class RecoveryMode(Deployment):
-
     compatibility = 4
     name = "recovery-mode"
 

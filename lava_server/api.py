@@ -472,7 +472,7 @@ class LavaSystemAPI(SystemAPI):
             for device in Device.objects.visible_by_user(self.user)
         ]
         network_map = {"switches": {}}
-        for (hostname, params) in dictionaries:
+        for hostname, params in dictionaries:
             if "interfaces" not in params:
                 continue
             for interface in params["interfaces"]:

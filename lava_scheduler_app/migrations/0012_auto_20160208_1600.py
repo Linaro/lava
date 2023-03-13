@@ -6,7 +6,6 @@ import lava_scheduler_app.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0011_remove_testjob_log_file")]
 
     operations = [

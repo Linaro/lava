@@ -249,7 +249,7 @@ def check_job_timeouts(data):
         )
 
     # action timeouts
-    for (index, action) in enumerate(data["actions"]):
+    for index, action in enumerate(data["actions"]):
         action_type = next(iter(action.keys()))
         t = action[action_type].get("timeout")
         if t is None:

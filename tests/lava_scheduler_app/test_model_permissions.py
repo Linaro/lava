@@ -112,7 +112,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         TestJob.objects.all().delete()
 
     def test_device_type_is_permission_restricted(self):
-
         self.assertFalse(
             self.qemu_device_type.is_permission_restricted(DeviceType.VIEW_PERMISSION)
         )
@@ -142,7 +141,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         )
 
     def test_device_type_can_view_anonymous(self):
-
         self.assertTrue(self.qemu_device_type.can_view(AnonymousUser()))
 
         GroupDeviceTypePermission.objects.assign_perm(
@@ -151,7 +149,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device_type.can_view(AnonymousUser()))
 
     def test_device_type_can_view(self):
-
         self.assertTrue(self.qemu_device_type.can_view(self.user1))
         self.assertTrue(self.qemu_device_type.can_view(self.user2))
 
@@ -164,7 +161,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device_type.can_view(self.user2))
 
     def test_device_can_view_anonymous(self):
-
         self.assertTrue(self.qemu_device1.can_view(AnonymousUser()))
 
         GroupDevicePermission.objects.assign_perm(
@@ -173,7 +169,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_view(AnonymousUser()))
 
     def test_device_can_view_anonymous_through_device_type(self):
-
         self.assertTrue(self.qemu_device1.can_view(AnonymousUser()))
 
         GroupDeviceTypePermission.objects.assign_perm(
@@ -184,7 +179,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.bbb_device1.can_view(AnonymousUser()))
 
     def test_device_can_view(self):
-
         self.assertTrue(self.qemu_device1.can_view(self.user1))
         self.assertTrue(self.qemu_device1.can_view(self.user2))
 
@@ -197,7 +191,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_view(self.user2))
 
     def test_device_can_view_through_device_type(self):
-
         self.assertTrue(self.qemu_device1.can_view(self.user1))
         self.assertTrue(self.qemu_device1.can_view(self.user2))
 
@@ -212,7 +205,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device2.can_view(self.user2))
 
     def test_device_can_change(self):
-
         self.assertFalse(self.qemu_device1.can_change(self.user1))
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
@@ -225,7 +217,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
     def test_device_can_change_through_device_type(self):
-
         self.assertFalse(self.qemu_device1.can_change(self.user1))
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
@@ -238,7 +229,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_change(self.user2))
 
     def test_device_can_submit(self):
-
         self.assertTrue(self.qemu_device1.can_submit(self.user1))
         self.assertTrue(self.qemu_device1.can_submit(self.user2))
         self.assertFalse(self.qemu_device1.can_submit(AnonymousUser()))
@@ -252,7 +242,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_submit(self.user2))
 
     def test_device_can_submit_through_device_type(self):
-
         self.assertTrue(self.qemu_device1.can_submit(self.user1))
         self.assertTrue(self.qemu_device1.can_submit(self.user2))
 
@@ -263,7 +252,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_device1.can_submit(self.user2))
 
     def test_testjob_can_view_anonymous(self):
-
         self.assertTrue(self.qemu_job1.can_view(AnonymousUser()))
 
         GroupDeviceTypePermission.objects.assign_perm(
@@ -272,7 +260,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_view(AnonymousUser()))
 
     def test_testjob_can_view_anonymous_through_device_type(self):
-
         self.assertTrue(self.qemu_job1.can_view(AnonymousUser()))
         self.assertTrue(self.bbb_job1.can_view(AnonymousUser()))
 
@@ -284,7 +271,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.bbb_job1.can_view(AnonymousUser()))
 
     def test_testjob_can_view_anonymous_through_device(self):
-
         self.qemu_job1.actual_device = self.qemu_device1
         self.qemu_job1.save()
         self.assertTrue(self.qemu_job1.can_view(AnonymousUser()))
@@ -328,7 +314,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_view(self.admin_user))
 
     def test_testjob_can_view_viewing_groups_with_perm_restrictions(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -338,7 +323,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_view(self.user2))
 
     def test_testjob_can_view_through_device_type(self):
-
         self.assertTrue(self.qemu_job1.can_view(self.user1))
         self.assertTrue(self.qemu_job1.can_view(self.user2))
 
@@ -353,7 +337,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job2.can_view(self.user2))
 
     def test_testjob_can_view_through_device(self):
-
         self.qemu_job1.actual_device = self.qemu_device1
         self.qemu_job1.save()
         self.assertTrue(self.qemu_job1.can_view(self.user1))
@@ -368,13 +351,11 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_view(self.user2))
 
     def test_testjob_can_change(self):
-
         self.assertFalse(self.qemu_job1.can_change(self.user1))
         self.assertFalse(self.qemu_job1.can_change(self.user2))
         self.assertFalse(self.qemu_job1.can_change(AnonymousUser()))
 
     def test_testjob_can_change_through_device_type(self):
-
         self.assertFalse(self.qemu_job1.can_change(self.user1))
         self.assertFalse(self.qemu_job1.can_change(self.user2))
 
@@ -387,7 +368,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_change(self.user2))
 
     def test_testjob_can_change_through_device(self):
-
         self.qemu_job1.actual_device = self.qemu_device1
         self.qemu_job1.save()
         self.assertFalse(self.qemu_job1.can_change(self.user1))
@@ -402,7 +382,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_change(self.user2))
 
     def test_testjob_can_resubmit(self):
-
         self.qemu_job1.actual_device = self.qemu_device1
         self.qemu_job1.save()
         self.assertTrue(self.qemu_job1.can_resubmit(self.user1))
@@ -418,7 +397,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
 
     def test_testjob_can_resubmit_through_device_type(self):
-
         self.assertFalse(self.qemu_job1.can_resubmit(self.user1))
         self.assertFalse(self.qemu_job1.can_resubmit(self.user2))
 
@@ -438,7 +416,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_device1.can_submit(self.user2))
 
     def test_worker_is_permission_restricted(self):
-
         self.assertFalse(
             self.worker1.is_permission_restricted(Worker.CHANGE_PERMISSION)
         )
@@ -449,7 +426,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.worker1.is_permission_restricted(Worker.CHANGE_PERMISSION))
 
     def test_worker_can_change_anonymous(self):
-
         self.assertFalse(self.worker1.can_change(AnonymousUser()))
 
         GroupWorkerPermission.objects.assign_perm(
@@ -458,7 +434,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertFalse(self.worker1.can_change(AnonymousUser()))
 
     def test_worker_can_change_admin(self):
-
         self.assertTrue(self.worker1.can_change(self.admin_user))
 
         GroupWorkerPermission.objects.assign_perm(
@@ -467,7 +442,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.worker1.can_change(self.admin_user))
 
     def test_worker_can_change(self):
-
         self.assertFalse(self.worker1.can_change(self.user1))
         self.assertFalse(self.worker1.can_change(self.user2))
 

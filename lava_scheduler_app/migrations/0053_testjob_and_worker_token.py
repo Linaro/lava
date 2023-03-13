@@ -18,7 +18,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0052_device_is_synced")]
 
     operations = [

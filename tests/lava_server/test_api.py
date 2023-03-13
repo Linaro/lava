@@ -48,7 +48,6 @@ class TestLavaServerApi:
 
     @pytest.fixture(autouse=True)
     def setUp(self, db):
-
         # create group
         self.group = Group.objects.create(name="group1")
 

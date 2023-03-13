@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0013_auto_20160302_0404")]
 
     operations = [

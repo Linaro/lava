@@ -3,7 +3,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("lava_scheduler_app", "0005_auto_devicedictionarytable_pipelinestore")
     ]

@@ -101,13 +101,11 @@ class TestAction(StdoutTestCase):
             raise JobError("fake error")
 
     class FakeRetryAction(RetryAction):
-
         name = "fake-retry-action"
         description = "fake, do not use outside unit tests"
         summary = "fake retry action for unit tests"
 
     class InternalRetryAction(RetryAction):
-
         section = "internal"
         name = "internal-retry-action"
         description = "internal, do not use outside unit tests"
@@ -118,7 +116,6 @@ class TestAction(StdoutTestCase):
             self.pipeline.add_action(TestAction.FakeAction(), parameters)
 
     class CleanupRetryAction(RetryAction):
-
         section = "internal"
         name = "internal-retry-action"
         description = "internal, do not use outside unit tests"
@@ -543,7 +540,6 @@ class TestTimeout(StdoutTestCase):
             self.fakejob.run()
 
     def test_retry_job_timeout(self):
-
         fakejob = self.fakejob
 
         class LongRetryAction(RetryAction):
