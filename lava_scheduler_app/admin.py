@@ -460,7 +460,7 @@ class TestJobAdmin(admin.ModelAdmin):
 
     requested_device_type_name.short_description = "Request device type"
     actions = [cancel_action, fail_action]
-    list_filter = ("state", RequestedDeviceTypeFilter, ActualDeviceFilter)
+    list_filter = ("state", RequestedDeviceTypeFilter, ActualDeviceFilter, "submitter")
     fieldsets = (
         ("Owner", {"fields": ("submitter", "viewing_groups", "is_public")}),
         ("Request", {"fields": ("requested_device_type", "priority", "health_check")}),
