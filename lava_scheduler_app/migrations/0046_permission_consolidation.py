@@ -7,7 +7,6 @@ from django.db.utils import IntegrityError
 
 
 def forwards_func(apps, schema_editor):
-
     DeviceType = apps.get_model("lava_scheduler_app", "DeviceType")
     Device = apps.get_model("lava_scheduler_app", "Device")
     TestJob = apps.get_model("lava_scheduler_app", "TestJob")
@@ -123,7 +122,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0045_remove_submit_testjob_perm")]
 
     operations = [

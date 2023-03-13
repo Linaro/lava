@@ -26,7 +26,6 @@ from lava_dispatcher.power import PowerOff, PowerOn
 
 
 class RecoveryBoot(Boot):
-
     compatibility = 4
 
     @classmethod
@@ -42,7 +41,6 @@ class RecoveryBoot(Boot):
 
 
 class RecoveryBootAction(Action):
-
     name = "recovery-boot"
     description = "handle entering and leaving recovery mode"
     summary = "boot into or out of recovery mode"
@@ -71,7 +69,6 @@ class RecoveryBootAction(Action):
 
 
 class SwitchRecoveryCommand(Action):
-
     name = "switch-recovery"
     description = "call commands to switch device into and out of recovery"
     summary = "execute recovery mode commands"

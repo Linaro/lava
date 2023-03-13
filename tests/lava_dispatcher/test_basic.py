@@ -270,7 +270,6 @@ class Factory:
 
 class TestPipeline(StdoutTestCase):
     class FakeAction(Action):
-
         name = "fake-action"
 
         def __init__(self):
@@ -514,14 +513,12 @@ class TestFakeActions(StdoutTestCase):
         self.assertNotEqual(self.sub1.timeout.elapsed_time, 0)
 
     def test_keep_connection(self):
-
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.KeepConnection())
         conn = object()
         self.assertIs(conn, pipe.run_actions(conn, None))
 
     def test_change_connection(self):
-
         pipe = Pipeline()
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()

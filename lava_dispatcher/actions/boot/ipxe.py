@@ -82,7 +82,6 @@ class BootloaderAction(Action):
 
 
 class BootloaderRetry(BootHasMixin, RetryAction):
-
     name = "bootloader-retry"
     description = "interactive uboot retry action"
     summary = "uboot commands with retry"

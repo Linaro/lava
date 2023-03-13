@@ -73,7 +73,6 @@ def get_test_action_namespaces(parameters=None):
 
 
 class RepoAction(Action):
-
     name = "repo-action"
     description = "apply tests to the test image"
     summary = "repo base class"
@@ -332,7 +331,6 @@ class GitRepoAction(RepoAction):
 
 
 class InlineRepoAction(RepoAction):
-
     priority = 1
     name = "inline-repo-action"
     description = "apply inline test definition to the test image"
@@ -383,7 +381,6 @@ class InlineRepoAction(RepoAction):
 
 
 class UrlRepoAction(RepoAction):
-
     priority = 1
     name = "url-repo-action"
     description = "apply a single test file to the test image"
@@ -459,7 +456,6 @@ class UrlRepoAction(RepoAction):
 
 @nottest
 class TestDefinitionAction(Action):
-
     name = "test-definition"
     description = "load test definitions into image"
     summary = "loading test definitions"
@@ -647,7 +643,6 @@ class TestDefinitionAction(Action):
 
 @nottest
 class TestOverlayAction(Action):
-
     name = "test-overlay"
     description = "overlay test support files onto image"
     summary = "applying LAVA test overlay"
@@ -763,7 +758,6 @@ class TestOverlayAction(Action):
 
 @nottest
 class TestInstallAction(TestOverlayAction):
-
     name = "test-install-overlay"
     description = "overlay dependency installation support files onto image"
     summary = "applying LAVA test install scripts"
@@ -958,7 +952,6 @@ class TestInstallAction(TestOverlayAction):
 
 
 class TestRunnerAction(TestOverlayAction):
-
     # This name is used to tally the submitted definitions
     # to the definitions which actually reported results.
     # avoid changing the self.name of this class.
@@ -984,7 +977,7 @@ class TestRunnerAction(TestOverlayAction):
             self.errors = "Test definition names need to be unique."
         # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
         # to self.testdef_levels {'1.3.4.1': '0_smoke-tests', ...}
-        for (count, name) in enumerate(testdef_index):
+        for count, name in enumerate(testdef_index):
             if self.parameters["name"] == name:
                 self.testdef_levels[self.level] = "%s_%s" % (count, name)
         if not self.testdef_levels:

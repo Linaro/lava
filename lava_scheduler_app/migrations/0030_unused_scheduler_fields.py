@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0029_remove_testjob__results_bundle")]
 
     operations = [

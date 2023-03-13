@@ -324,7 +324,6 @@ class OverlayAction(CreateOverlay):
 
 
 class MultinodeOverlayAction(OverlayAction):
-
     name = "lava-multinode-overlay"
     description = "add lava scripts during deployment for multinode test shell use"
     summary = "overlay the lava multinode scripts"

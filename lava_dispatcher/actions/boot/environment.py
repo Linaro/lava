@@ -52,7 +52,6 @@ class ExportDeviceEnvironment(Action):
             )
 
     def run(self, connection, max_end_time):
-
         if not connection:
             return
 

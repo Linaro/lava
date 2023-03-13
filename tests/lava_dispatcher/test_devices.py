@@ -56,7 +56,6 @@ class TestDeviceParser(StdoutTestCase):
 
 
 class FakeAction(Action):
-
     name = "fake"
     description = "fake action for unit tests"
     summary = "fake action"

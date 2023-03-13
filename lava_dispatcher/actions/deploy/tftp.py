@@ -63,7 +63,6 @@ class Tftp(Deployment):
 
 
 class TftpAction(Action):
-
     name = "tftp-deploy"
     description = "download files and deploy using tftp"
     summary = "tftp deployment"
@@ -143,7 +142,7 @@ class TftpAction(Action):
             "tftp_size_limit", TFTP_SIZE_LIMIT
         )
         self.logger.debug("Checking files for TFTP limit of %s bytes.", tftp_size_limit)
-        for (action, key) in [
+        for action, key in [
             ("compress-ramdisk", "ramdisk"),
             ("download-action", "kernel"),
             ("download-action", "dtb"),

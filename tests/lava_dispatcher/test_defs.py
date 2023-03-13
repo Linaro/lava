@@ -200,7 +200,6 @@ class TestDefinitionHandlers(StdoutTestCase):
                 self.assertNotIn("branch", git_repo.parameters)
 
     def test_overlay(self):
-
         script_list = [
             "lava-add-keys",
             "lava-add-sources",

@@ -7,7 +7,6 @@ from django.db import migrations, models
 
 
 def forwards_func(apps, schema_editor):
-
     DeviceType = apps.get_model("lava_scheduler_app", "DeviceType")
     Device = apps.get_model("lava_scheduler_app", "Device")
     TestJob = apps.get_model("lava_scheduler_app", "TestJob")
@@ -128,7 +127,6 @@ def noop(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("auth", "0008_alter_user_username_max_length"),
         ("lava_scheduler_app", "0042_add-table-length-setting"),

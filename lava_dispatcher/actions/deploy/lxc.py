@@ -65,7 +65,6 @@ class Lxc(Deployment):
 
 
 class LxcAction(Action):
-
     name = "lxc-deploy"
     description = "download files and deploy using lxc"
     summary = "lxc deployment"

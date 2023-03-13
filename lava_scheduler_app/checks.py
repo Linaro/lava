@@ -261,7 +261,6 @@ def find_our_daemons():
 
 @register(deploy=True)
 def check_services(app_configs, **kwargs):
-
     errors = []
     services = [
         "apache2",

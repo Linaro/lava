@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0033_remove_old_status_fields")]
 
     operations = [

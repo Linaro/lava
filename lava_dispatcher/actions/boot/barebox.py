@@ -84,7 +84,6 @@ class BareboxAction(Action):
 
 
 class BareboxRetry(BootHasMixin, RetryAction):
-
     name = "barebox-retry"
     description = "interactive barebox retry action"
     summary = "barebox commands with retry"

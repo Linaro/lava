@@ -84,7 +84,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.state = TestJob.STATE_SUBMITTED
         self.job.actual_device = None
         self.job.save()
-        for (state, _) in Device.STATE_CHOICES:
+        for state, _ in Device.STATE_CHOICES:
             if state == Device.STATE_IDLE:
                 continue
             self.device.state = state
@@ -101,7 +101,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.save()
         self.device.state = Device.STATE_IDLE
         self.device.save()
-        for (state, _) in TestJob.STATE_CHOICES:
+        for state, _ in TestJob.STATE_CHOICES:
             if state == TestJob.STATE_SUBMITTED:
                 continue
             self.job.state = state
@@ -140,7 +140,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.state = TestJob.STATE_SUBMITTED
         self.job.actual_device = None
         self.job.save()
-        for (state, _) in Device.STATE_CHOICES:
+        for state, _ in Device.STATE_CHOICES:
             if state == Device.STATE_IDLE:
                 continue
             self.device.state = state
@@ -157,7 +157,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.save()
         self.device.state = Device.STATE_IDLE
         self.device.save()
-        for (state, _) in TestJob.STATE_CHOICES:
+        for state, _ in TestJob.STATE_CHOICES:
             if state in [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]:
                 continue
             self.job.state = state
@@ -187,7 +187,7 @@ class TestTestJobStateMachine(TestCase):
         self.job.state = TestJob.STATE_SUBMITTED
         self.job.actual_device = self.device
         self.job.save()
-        for (state, _) in TestJob.STATE_CHOICES:
+        for state, _ in TestJob.STATE_CHOICES:
             if state in [
                 TestJob.STATE_SUBMITTED,
                 TestJob.STATE_SCHEDULING,
@@ -791,7 +791,7 @@ class TestWorkerStateMachine(TestCase):
 
     def test_worker_go_state_online(self):
         # going state online does not change the device state/health
-        for (state, _) in Device.STATE_CHOICES:
+        for state, _ in Device.STATE_CHOICES:
             self.device.state = state
             self.device.save()
             self.worker.state = Worker.STATE_OFFLINE
@@ -806,7 +806,7 @@ class TestWorkerStateMachine(TestCase):
 
     def test_worker_go_state_offline(self):
         # going state offline does not change the device state/health
-        for (state, _) in Device.STATE_CHOICES:
+        for state, _ in Device.STATE_CHOICES:
             self.device.state = state
             self.device.save()
             self.worker.state = Worker.STATE_ONLINE
@@ -822,7 +822,7 @@ class TestWorkerStateMachine(TestCase):
     def test_worker_go_health_active(self):
         # 1/ Normal transitions
         # 1.1/ from MAINTENANCE
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_MAINTENANCE
             self.worker.save()
             self.device.health = health
@@ -834,7 +834,7 @@ class TestWorkerStateMachine(TestCase):
                 self.check_device(Device.STATE_IDLE, health)
 
         # 1.2/ from RETIRED
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_RETIRED
             self.worker.save()
             self.device.health = health
@@ -845,7 +845,7 @@ class TestWorkerStateMachine(TestCase):
     def test_worker_go_health_maintenance(self):
         # 1/ Normal transitions
         # 1.1/ from ACTIVE
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_ACTIVE
             self.worker.save()
             self.device.health = health
@@ -854,7 +854,7 @@ class TestWorkerStateMachine(TestCase):
             self.check_device(Device.STATE_IDLE, health)
 
         # 1.2/ from RETIRED
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_RETIRED
             self.worker.save()
             self.device.health = health
@@ -865,7 +865,7 @@ class TestWorkerStateMachine(TestCase):
     def test_worker_go_health_retired(self):
         # 1/ Normal transitions
         # 1.1/ from ACTIVE
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_ACTIVE
             self.worker.save()
             self.device.health = health
@@ -877,7 +877,7 @@ class TestWorkerStateMachine(TestCase):
                 self.check_device(Device.STATE_IDLE, Device.HEALTH_RETIRED)
 
         # 1.2/ from MAINTENANCE
-        for (health, _) in Device.HEALTH_CHOICES:
+        for health, _ in Device.HEALTH_CHOICES:
             self.worker.health = Worker.HEALTH_MAINTENANCE
             self.worker.save()
             self.device.health = health

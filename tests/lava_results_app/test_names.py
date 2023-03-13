@@ -77,7 +77,6 @@ class ModelFactory:
 
 
 class TestCaseWithFactory(DjangoTestCase):
-
     # noinspection PyPep8Naming
     def setUp(self):
         DjangoTestCase.setUp(self)

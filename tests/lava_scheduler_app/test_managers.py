@@ -343,7 +343,6 @@ class ManagersTest(TestCaseWithFactory):
         self.assertEqual(set(queryset), {self.qemu_device2})
 
     def test_devicetype_manager_view(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -378,12 +377,10 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_devicetype_manager_accessible_wrong_permission(self):
-
         with TestCase.assertRaises(self, ValueError):
             DeviceType.objects.all().accessible_by_user(self.user1, "non_existing_perm")
 
     def test_devicetype_manager_accessible(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.CHANGE_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -449,7 +446,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_devicetype_manager_view_global_permissions(self):
-
         self.user3.user_permissions.add(
             Permission.objects.get(name="Can view device type")
         )
@@ -464,7 +460,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_device_manager_view(self):
-
         # All users see everything before any permissions are assigned.
         self.assertEqual(
             set(Device.objects.all().visible_by_user(self.user1)), set(self.all_devices)
@@ -799,7 +794,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_testjob_manager_view(self):
-
         # All users see everything before any permissions are assigned.
         self.assertEqual(
             set(TestJob.objects.all().visible_by_user(self.user1)), set(self.all_jobs)
@@ -834,7 +828,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_testjob_manager_view_private(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -864,7 +857,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_testjob_manager_viewing_groups(self):
-
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )
@@ -1189,7 +1181,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_worker_manager_accessible(self):
-
         GroupWorkerPermission.objects.assign_perm(
             Worker.CHANGE_PERMISSION, self.group1, self.worker1
         )
@@ -1225,7 +1216,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_worker_manager_change_global_permissions(self):
-
         self.user3.user_permissions.add(
             Permission.objects.get(name="Can change worker")
         )
@@ -1244,7 +1234,6 @@ class ManagersTest(TestCaseWithFactory):
         )
 
     def test_worker_manager_admin(self):
-
         # admin user can change all workers.
         self.assertEqual(
             set(

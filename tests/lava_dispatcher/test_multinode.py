@@ -615,7 +615,6 @@ class TestMultinode(StdoutTestCase):
 
 
 class TestProtocol(StdoutTestCase):
-
     coord = None
 
     def setUp(self):
@@ -766,7 +765,6 @@ class TestProtocol(StdoutTestCase):
 
 
 class TestDelayedStart(StdoutTestCase):
-
     coord = None
 
     def setUp(self):

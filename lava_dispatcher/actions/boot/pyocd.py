@@ -29,7 +29,6 @@ from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 
 class PyOCD(Boot):
-
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     @classmethod
@@ -50,7 +49,6 @@ class PyOCD(Boot):
 
 
 class BootPyOCD(RetryAction):
-
     name = "boot-pyocd-image"
     description = "boot pyocd image with retry"
     summary = "boot pyocd image with retry"
@@ -61,7 +59,6 @@ class BootPyOCD(RetryAction):
 
 
 class BootPyOCDRetry(RetryAction):
-
     name = "boot-pyocd-image"
     description = "boot pyocd image using the command line interface"
     summary = "boot pyocd image"
@@ -82,7 +79,6 @@ class BootPyOCDRetry(RetryAction):
 
 
 class FlashPyOCDAction(Action):
-
     name = "flash-pyocd"
     description = "flash pyocd to boot the image"
     summary = "flash pyocd to boot the image"

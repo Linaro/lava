@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("lava_scheduler_app", "0055_notificationcallback_header"),
     ]

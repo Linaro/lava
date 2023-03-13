@@ -24,7 +24,6 @@ def backwards_func(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0030_unused_scheduler_fields")]
 
     operations = [

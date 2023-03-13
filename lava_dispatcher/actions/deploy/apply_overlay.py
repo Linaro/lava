@@ -53,7 +53,6 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class ApplyOverlayGuest(Action):
-
     name = "apply-overlay-guest"
     description = "prepare a qcow2 drive containing the overlay"
     summary = "build a guest filesystem with the overlay"
@@ -117,7 +116,6 @@ class ApplyOverlayGuest(Action):
 
 
 class ApplyOverlayImage(Action):
-
     name = "apply-overlay-image"
     description = "apply overlay via guestfs to the test image"
     summary = "apply overlay to test image"
@@ -173,7 +171,6 @@ class ApplyOverlayImage(Action):
 
 
 class ApplyOverlaySparseImage(Action):
-
     name = "apply-overlay-sparse-image"
     description = "apply overlay to sparse image"
     summary = "apply overlay to sparse image"
@@ -755,7 +752,6 @@ class CompressRamdisk(Action):
 
 
 class ApplyLxcOverlay(Action):
-
     name = "apply-lxc-overlay"
     description = "apply the overlay to the container by copying"
     summary = "apply overlay on the container"
@@ -818,7 +814,6 @@ class ApplyLxcOverlay(Action):
 
 
 class ConfigurePreseedFile(Action):
-
     name = "configure-preseed-file"
     description = "add commands to automated installers, to copy the lava test overlay to the installed system"
     summary = "add commands to installer config"
@@ -855,7 +850,6 @@ class ConfigurePreseedFile(Action):
 
 
 class AppendOverlays(Action):
-
     name = "append-overlays"
     description = "append overlays to an image"
     summary = "append overlays to an image"

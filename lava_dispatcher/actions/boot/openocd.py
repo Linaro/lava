@@ -31,7 +31,6 @@ from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 
 class OpenOCD(Boot):
-
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     @classmethod
@@ -52,7 +51,6 @@ class OpenOCD(Boot):
 
 
 class BootOpenOCDRetry(RetryAction):
-
     name = "boot-openocd-image"
     description = "boot openocd image using the command line interface"
     summary = "boot openocd image"
@@ -67,7 +65,6 @@ class BootOpenOCDRetry(RetryAction):
 
 
 class FlashOpenOCDAction(Action):
-
     name = "flash-openocd"
     description = "use openocd to flash the image"
     summary = "use openocd to flash the image"

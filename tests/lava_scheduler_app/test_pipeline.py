@@ -46,7 +46,6 @@ class YamlFactory(ModelFactory):
     """
 
     def make_device_type(self, name="qemu"):
-
         device_type = DeviceType.objects.get_or_create(name=name)[0]
         device_type.save()
         return device_type

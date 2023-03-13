@@ -138,7 +138,6 @@ class QueryResultView(LavaView):
 
 @BreadCrumb("Queries", parent=index)
 def query_list(request):
-
     group_tables = {}
     terms_data = search_data = discrete_data = {}
     for group in QueryGroup.objects.all():
@@ -199,7 +198,6 @@ def query_list(request):
 
 @BreadCrumb("Query ~{username}/{name}", parent=query_list, needs=["username", "name"])
 def query_display(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     if not request.user.is_superuser:
@@ -256,7 +254,6 @@ def query_display(request, username, name):
 @BreadCrumb("Custom Query", parent=query_list)
 @login_required
 def query_custom(request):
-
     try:
         content_type = Query.get_content_type(request.GET.get("entity"))
     except InvalidContentTypeError as e:
@@ -313,7 +310,6 @@ def query_custom(request):
 @BreadCrumb("Query ~{username}/{name}", parent=query_list, needs=["username", "name"])
 @login_required
 def query_detail(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     query_conditions = Query.serialize_conditions(query.querycondition_set.all())
     template = loader.get_template("lava_results_app/query_detail.html")
@@ -338,7 +334,6 @@ def query_detail(request, username, name):
 @BreadCrumb("Add new", parent=query_list)
 @login_required
 def query_add(request):
-
     query = Query()
     query.owner = request.user
 
@@ -352,7 +347,6 @@ def query_add(request):
 @login_required
 @ownership_required
 def query_edit(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     return query_form(
@@ -365,7 +359,6 @@ def query_edit(request, username, name):
 @login_required
 @ownership_required
 def query_delete(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     query.is_archived = True
     query.save()
@@ -424,7 +417,6 @@ def query_export_custom(request):
 @login_required
 @ownership_required
 def query_toggle_published(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     query.is_published = not query.is_published
@@ -451,7 +443,6 @@ def query_copy(request, username, name):
 @login_required
 @ownership_required
 def query_refresh(request, name, username):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     success = True
@@ -474,7 +465,6 @@ def query_refresh(request, name, username):
 
 @login_required
 def query_group_list(request):
-
     term = request.GET["term"]
     groups = [
         str(group.name) for group in QueryGroup.objects.filter(name__istartswith=term)
@@ -484,7 +474,6 @@ def query_group_list(request):
 
 @login_required
 def query_add_group(request, username, name):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -510,7 +499,6 @@ def query_add_group(request, username, name):
 @login_required
 @ownership_required
 def query_select_group(request, username, name):
-
     if request.method != "POST":
         raise PermissionDenied
 
@@ -533,7 +521,6 @@ def query_select_group(request, username, name):
 
 @login_required
 def get_query_group_names(request):
-
     term = request.GET["term"]
     groups = []
     for group in Group.objects.filter(user=request.user, name__istartswith=term):
@@ -544,7 +531,6 @@ def get_query_group_names(request):
 @login_required
 @ownership_required
 def query_add_condition(request, username, name):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     return query_condition_form(request, query, BreadCrumbTrail.leading_to(query_add))
@@ -553,7 +539,6 @@ def query_add_condition(request, username, name):
 @login_required
 @ownership_required
 def query_edit_condition(request, username, name, id):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     query_condition = get_object_or_404(QueryCondition, id=id)
 
@@ -565,7 +550,6 @@ def query_edit_condition(request, username, name, id):
 @login_required
 @ownership_required
 def query_remove_condition(request, username, name, id):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     query_condition = get_object_or_404(QueryCondition, id=id)
     query_condition.delete()
@@ -576,7 +560,6 @@ def query_remove_condition(request, username, name, id):
 @login_required
 @ownership_required
 def query_omit_result(request, username, name, id):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     result_object = get_object_or_404(query.content_type.model_class(), id=id)
 
@@ -592,7 +575,6 @@ def query_omit_result(request, username, name, id):
 @login_required
 @ownership_required
 def query_include_result(request, username, name, id):
-
     query = get_object_or_404(Query, owner__username=username, name=name)
     result_object = get_object_or_404(query.content_type.model_class(), id=id)
 
@@ -608,7 +590,6 @@ def query_include_result(request, username, name, id):
 
 
 def get_query_names(request):
-
     term = request.GET["term"]
     result = []
 
@@ -633,9 +614,7 @@ def get_query_names(request):
 
 
 def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
-
     if request.method == "POST":
-
         form = QueryForm(request.user, request.POST, instance=instance, is_copy=is_copy)
         if form.is_valid():
             query = form.save()
@@ -673,7 +652,6 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
 
 
 def query_condition_form(request, query, bread_crumb_trail, instance=None):
-
     form = QueryConditionForm(request.POST, instance=instance)
 
     if form.is_valid():
@@ -701,7 +679,6 @@ def _remove_dir(path):
 
 
 def _export_query(query_results, content_type, filename):
-
     tmp_dir = tempfile.mkdtemp()
     file_path = os.path.join(tmp_dir, "%s.csv" % filename)
 

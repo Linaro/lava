@@ -71,7 +71,6 @@ class VExpressMsd(Deployment):
 
 
 class VExpressMsdRetry(RetryAction):
-
     name = "vexpress-fw-deploy-retry"
     description = "deploy vexpress board recovery image with retry"
     summary = "VExpress FW deployment with retry"

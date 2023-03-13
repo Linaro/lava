@@ -59,7 +59,6 @@ class SecondaryShell(Boot):
 
 
 class SecondaryShellAction(BootHasMixin, RetryAction):
-
     name = "secondary-shell-action"
     description = "Connect to a secondary shell on specified hardware"
     summary = "connect to a specified second shell"

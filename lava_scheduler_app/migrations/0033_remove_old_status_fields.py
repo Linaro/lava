@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("lava_scheduler_app", "0032_add_state_health_to_testjob_and_device")
     ]

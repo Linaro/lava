@@ -28,7 +28,6 @@ from lava_common.decorators import nottest
 
 
 class TestSignals:
-
     message_str = ""
 
     def formatString(self, reply):

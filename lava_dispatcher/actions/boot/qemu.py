@@ -69,7 +69,6 @@ class BootQEMU(Boot):
 
 
 class BootQEMUImageAction(BootHasMixin, RetryAction):
-
     name = "boot-image-retry"
     description = "boot image with retry"
     summary = "boot with retry"
@@ -87,7 +86,6 @@ class BootQEMUImageAction(BootHasMixin, RetryAction):
 
 
 class BootQemuRetry(RetryAction):
-
     name = "boot-qemu-image"
     description = "boot image using QEMU command line"
     summary = "boot QEMU image"
@@ -98,7 +96,6 @@ class BootQemuRetry(RetryAction):
 
 
 class CallQemuAction(Action):
-
     name = "execute-qemu"
     description = "call qemu to boot the image"
     summary = "execute qemu to boot the image"

@@ -55,7 +55,6 @@ class UBootUMS(Deployment):
 
 
 class UBootUMSAction(Action):
-
     name = "uboot-ums-deploy"
     description = "download image and deploy using uboot mass storage emulation"
     summary = "uboot-ums deployment"

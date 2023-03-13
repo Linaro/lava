@@ -53,7 +53,6 @@ class Logs:
 
 
 class LogsFilesystem(Logs):
-
     PACK_FORMAT = "=Q"
     PACK_SIZE = struct.calcsize(PACK_FORMAT)
 
@@ -197,7 +196,6 @@ class LogsMongo(Logs):
 
 
 class LogsElasticsearch(Logs):
-
     MAX_RESULTS = 1000000
 
     def __init__(self):
@@ -218,7 +216,6 @@ class LogsElasticsearch(Logs):
         super().__init__()
 
     def _get_docs(self, job, start=0, end=None):
-
         if not end:
             end = self.MAX_RESULTS
 

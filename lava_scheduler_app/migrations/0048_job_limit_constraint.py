@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0047_job_limit")]
 
     operations = [

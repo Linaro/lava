@@ -145,7 +145,6 @@ def set_testjob_state_health(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0031_add_worker_state_and_health")]
 
     operations = [

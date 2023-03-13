@@ -28,7 +28,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class Minimal(Boot):
-
     compatibility = 1
 
     @classmethod
@@ -47,7 +46,6 @@ class Minimal(Boot):
 
 
 class MinimalBoot(BootHasMixin, RetryAction):
-
     name = "minimal-boot"
     description = "connect and reset device"
     summary = "connect and reset device"

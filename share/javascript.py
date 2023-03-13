@@ -100,7 +100,6 @@ def uglify(os_name, data, dirname, remove=False, simulate=False):
                 dest_dir = package["destination"]
 
                 for file_name, dest_name in package["files"].items():
-
                     orig_path = os.path.join(lava_dir, file_name)
                     install_path = os.path.join(
                         dirname, python_dir, lava_dir, file_name

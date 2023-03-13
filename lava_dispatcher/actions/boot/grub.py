@@ -42,7 +42,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class GrubSequence(Boot):
-
     compatibility = 3
 
     @classmethod
@@ -72,7 +71,6 @@ class GrubSequence(Boot):
 
 
 class Grub(Boot):
-
     compatibility = 3
 
     @classmethod
@@ -115,7 +113,6 @@ def _grub_sequence_map(sequence):
 
 
 class GrubSequenceAction(BootHasMixin, RetryAction):
-
     name = "grub-sequence-action"
     description = "grub boot sequence"
     summary = "run grub boot using specified sequence of actions"
@@ -160,7 +157,6 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
 
 
 class GrubMainAction(BootHasMixin, RetryAction):
-
     name = "grub-main-action"
     description = "main grub boot action"
     summary = "run grub boot from power to system"
@@ -207,7 +203,6 @@ class GrubMainAction(BootHasMixin, RetryAction):
 
 
 class GrubMenuSelector(UefiMenuSelector):
-
     name = "grub-efi-menu-selector"
     description = "select specified grub-efi menu items"
     summary = "select grub options in the efi menu"

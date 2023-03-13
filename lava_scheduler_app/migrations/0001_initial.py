@@ -18,7 +18,6 @@ if not linaro_django_xmlrpc_applied and lava_scheduler_app_applied:
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("auth", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

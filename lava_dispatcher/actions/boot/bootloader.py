@@ -52,7 +52,6 @@ class BootBootloader(Boot):
 
 
 class BootBootloaderRetry(RetryAction):
-
     name = "boot-bootloader-retry"
     description = "boot to bootloader with retry"
     summary = "boot bootloader retry"
@@ -66,7 +65,6 @@ class BootBootloaderRetry(RetryAction):
 
 
 class BootBootloaderAction(Action):
-
     name = "boot-bootloader"
     description = "boot to bootloader"
     summary = "boot bootloader"

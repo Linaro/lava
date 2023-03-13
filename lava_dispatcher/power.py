@@ -320,7 +320,6 @@ class ReadFeedback(Action):
 
 
 class FinalizeAction(Action):
-
     section = "finalize"
     name = "finalize"
     description = "finish the process and cleanup"

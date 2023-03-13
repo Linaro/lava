@@ -511,7 +511,6 @@ class TestData(models.Model):
 
 
 class QueryGroup(models.Model):
-
     name = models.SlugField(max_length=1024, unique=True)
 
     def __str__(self):
@@ -520,7 +519,6 @@ class QueryGroup(models.Model):
 
 def TestJobViewFactory(query):
     class TestJobMaterializedView(QueryMaterializedView, TestJob):
-
         objects = models.Manager.from_queryset(RestrictedTestJobQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
@@ -531,7 +529,6 @@ def TestJobViewFactory(query):
 
 def TestCaseViewFactory(query):
     class TestCaseMaterializedView(QueryMaterializedView, TestCase):
-
         objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
@@ -542,7 +539,6 @@ def TestCaseViewFactory(query):
 
 def TestSuiteViewFactory(query):
     class TestSuiteMaterializedView(QueryMaterializedView, TestSuite):
-
         objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
@@ -552,7 +548,6 @@ def TestSuiteViewFactory(query):
 
 
 class Query(models.Model):
-
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     group = models.ForeignKey(
@@ -678,7 +673,6 @@ class Query(models.Model):
         filters = {}
 
         for condition in conditions:
-
             try:
                 relation_string = QueryCondition.RELATION_MAP[
                     content_type.model_class()
@@ -768,7 +762,6 @@ class Query(models.Model):
         return query_results
 
     def refresh_view(self):
-
         if self.is_live:
             raise RefreshLiveQueryError("Refreshing live query not permitted.")
 
@@ -823,7 +816,6 @@ class Query(models.Model):
                 condition.operator = condition_fields[1]
                 condition.value = condition_fields[2]
             elif len(condition_fields) == 4:
-
                 try:
                     content_type = Query.get_content_type(condition_fields[0])
                 except ContentType.DoesNotExist:
@@ -941,7 +933,6 @@ def limit_update_signal(sender, instance, **kwargs):
 
 
 class QueryCondition(models.Model):
-
     table = models.ForeignKey(
         ContentType,
         limit_choices_to=Q(model__in=["testsuite", "testjob", "namedtestattribute"])
@@ -1134,7 +1125,6 @@ def _get_foreign_key_model(model, fieldname):
 
 
 class QueryOmitResult(models.Model):
-
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
@@ -1146,7 +1136,6 @@ class QueryOmitResult(models.Model):
 
 
 class ChartGroup(models.Model):
-
     name = models.SlugField(max_length=1024, unique=True)
 
     def __str__(self):
@@ -1170,7 +1159,6 @@ CHART_VISIBILITY = (
 
 
 class Chart(models.Model):
-
     name = models.SlugField(max_length=1024, unique=True)
 
     chart_group = models.ForeignKey(
@@ -1356,7 +1344,6 @@ class ChartQuery(models.Model):
         return data
 
     def get_user_chart_data(self, user):
-
         data = {}
         try:
             chart_user = ChartQueryUser.objects.get(chart_query=self, user=user)
@@ -1371,10 +1358,8 @@ class ChartQuery(models.Model):
         return data
 
     def get_chart_passfail_data(self, user, query_results):
-
         data = []
         for item in query_results:
-
             # Set attribute based on xaxis_attribute.
             attribute = item.get_xaxis_attribute(self.xaxis_attribute)
             # If xaxis attribute is set and this query item does not have
@@ -1387,7 +1372,6 @@ class ChartQuery(models.Model):
 
             passfail_results = item.get_passfail_results()
             for result in passfail_results:
-
                 if result:
                     chart_item = {
                         "id": result,
@@ -1412,10 +1396,8 @@ class ChartQuery(models.Model):
         return data
 
     def get_chart_measurement_data(self, user, query_results):
-
         data = []
         for item in query_results:
-
             # Set attribute based on xaxis_attribute.
             attribute = item.get_xaxis_attribute(self.xaxis_attribute)
             # If xaxis attribute is set and this query item does not have
@@ -1428,7 +1410,6 @@ class ChartQuery(models.Model):
 
             measurement_results = item.get_measurement_results()
             for result in measurement_results:
-
                 if result:
                     chart_item = {
                         "id": result,
@@ -1444,10 +1425,8 @@ class ChartQuery(models.Model):
         return data
 
     def get_chart_attributes_data(self, user, query_results):
-
         data = []
         for item in query_results:
-
             attribute_results = item.get_attribute_results(self.attributes)
             for result in attribute_results:
                 if result:

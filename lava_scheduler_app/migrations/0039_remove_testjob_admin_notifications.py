@@ -6,7 +6,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("lava_scheduler_app", "0038_set_default_device_health_maintenance")
     ]

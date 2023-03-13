@@ -31,7 +31,6 @@ from lava_dispatcher.utils.shell import which
 
 
 class DockerAction(Action):
-
     name = "deploy-docker"
     description = "deploy docker images"
     summary = "deploy docker"

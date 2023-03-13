@@ -256,7 +256,6 @@ class PrepareSsh(Action):
 
 
 class ScpOverlayUnpack(Action):
-
     name = "scp-overlay-unpack"
     description = "unpack the overlay over an existing ssh connection"
     summary = "unpack the overlay on the remote device"

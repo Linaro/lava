@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [("lava_scheduler_app", "0040_change_device_type_alias")]
 
     operations = [

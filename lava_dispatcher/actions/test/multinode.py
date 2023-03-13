@@ -98,7 +98,6 @@ class MultinodeTestShell(LavaTest):
 
 
 class MultinodeMixin:
-
     timeout_exception = TestError
 
     def __init__(self):
@@ -270,7 +269,6 @@ class MultinodeMixin:
 
 
 class MultinodeTestAction(MultinodeMixin, TestShellAction):
-
     name = "multinode-test"
     description = "Executing lava-test-runner"
     summary = "Multinode Lava Test Shell"

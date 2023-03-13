@@ -78,7 +78,6 @@ class DevicesUnavailableException(UserWarning):
 
 
 class ExtendedUser(models.Model):
-
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     irc_handle = models.CharField(
@@ -102,7 +101,6 @@ class ExtendedUser(models.Model):
 
 
 class GroupObjectPermission(models.Model):
-
     objects = GroupObjectPermissionManager()
 
     class Meta:
@@ -125,7 +123,6 @@ class GroupObjectPermission(models.Model):
 
 
 class Tag(models.Model):
-
     name = models.SlugField(unique=True)
 
     description = models.TextField(null=True, blank=True)
@@ -740,7 +737,6 @@ class Device(RestrictedObject):
         )
 
     def testjob_signal(self, signal, job, infrastructure_error=False):
-
         if signal == "go_state_scheduling":
             self.state = Device.STATE_RESERVED
 
@@ -1115,7 +1111,6 @@ def _create_pipeline_job(
     orig=None,
     health_check=False,
 ):
-
     if not isinstance(job_data, dict):
         # programming error
         raise RuntimeError("Invalid job data %s" % job_data)
@@ -2136,7 +2131,6 @@ class TestJob(models.Model):
 
 
 class Notification(models.Model):
-
     TEMPLATES_DIR = os.path.join(
         os.path.dirname(os.path.abspath(__file__)),
         "templates/",
@@ -2307,7 +2301,6 @@ class NotificationRecipient(models.Model):
 
 
 class NotificationCallback(models.Model):
-
     notification = models.ForeignKey(
         Notification, null=False, on_delete=models.CASCADE, verbose_name="Notification"
     )

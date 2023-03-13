@@ -28,7 +28,6 @@ from lava_scheduler_app.models import Alias, Device, DeviceType, Group, User
 
 @pytest.mark.django_db
 def test_no_sync_to_lava(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -51,7 +50,6 @@ def test_no_sync_to_lava(mocker):
 
 @pytest.mark.django_db
 def test_exception_template(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -75,7 +73,6 @@ def test_exception_template(mocker):
 
 @pytest.mark.django_db
 def test_invalid_template(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -113,7 +110,6 @@ def test_invalid_template(mocker):
 
 @pytest.mark.django_db
 def test_existing_non_synced_device(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -154,7 +150,6 @@ def test_existing_non_synced_device(mocker):
 
 @pytest.mark.django_db
 def test_missing_device_type(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -191,7 +186,6 @@ def test_missing_device_type(mocker):
 
 @pytest.mark.django_db
 def test_existing_alias(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -236,7 +230,6 @@ def test_existing_alias(mocker):
 
 @pytest.mark.django_db
 def test_output(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -286,7 +279,6 @@ def test_output(mocker):
 
 @pytest.mark.django_db
 def test_retire(mocker):
-
     dt = DeviceType.objects.create(name="qemu")
     Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
 
@@ -311,7 +303,6 @@ def test_retire(mocker):
 
 @pytest.mark.django_db
 def test_sync_not_retire(mocker):
-
     dt = DeviceType.objects.create(name="qemu", display=False)
     Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
     Device.objects.create(hostname="qemu02", device_type=dt, is_synced=True)
@@ -345,7 +336,6 @@ def test_sync_not_retire(mocker):
 
 @pytest.mark.django_db
 def test_not_sync_not_retire(mocker):
-
     dt = DeviceType.objects.create(name="qemu", display=False)
     Device.objects.create(hostname="qemu01", device_type=dt, is_synced=True)
     Device.objects.create(hostname="qemu02", device_type=dt, is_synced=False)
@@ -364,7 +354,6 @@ def test_not_sync_not_retire(mocker):
 
 @pytest.mark.django_db
 def test_no_user_group(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -405,7 +394,6 @@ def test_no_user_group(mocker):
 
 @pytest.mark.django_db
 def test_user_group(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -449,7 +437,6 @@ def test_user_group(mocker):
 
 @pytest.mark.django_db
 def test_add_delete_permission(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -535,7 +522,6 @@ def test_add_delete_permission(mocker):
 
 @pytest.mark.django_db
 def test_invalid_permission(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -576,7 +562,6 @@ def test_invalid_permission(mocker):
 
 @pytest.mark.django_db
 def test_no_permission_group(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 
@@ -615,7 +600,6 @@ def test_no_permission_group(mocker):
 
 @pytest.mark.django_db
 def test_permission_tag_remove(mocker):
-
     file_list = mocker.MagicMock(return_value=["qemu01"])
     mocker.patch("lava_server.files.File.list", file_list)
 

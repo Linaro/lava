@@ -46,7 +46,6 @@ class Command(BaseCommand):
         )
 
     def handle(self, *_, **options):
-
         backend_str = "lava_scheduler_app.logutils"
         if options["db"] == "LogsFilesystem":
             self.stdout.write("Cannot move logs from filesystem to filesystem.")
@@ -84,7 +83,7 @@ class Command(BaseCommand):
 
             self.stdout.write(f"* {job.id}")
             if not options["dry_run"]:
-                for (index, line) in enumerate(lines.strip("\n").split("\n")):
+                for index, line in enumerate(lines.strip("\n").split("\n")):
                     if line:
                         try:
                             logs_db.write(job, line)

@@ -108,7 +108,6 @@ class ResultsTable(LavaTable):
 
 
 class ResultsIndexTable(ResultsTable):
-
     job_id = tables.Column(verbose_name="Job ID")
     submitter = tables.Column(accessor="job__submitter")
     name = tables.Column(verbose_name="Test Suite")
@@ -126,7 +125,6 @@ class ResultsIndexTable(ResultsTable):
 
 
 class TestJobResultsTable(ResultsTable):
-
     job_id = tables.Column(verbose_name="Job ID")
     actions = tables.TemplateColumn(
         template_name="lava_results_app/suite_actions_field.html"

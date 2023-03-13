@@ -50,7 +50,6 @@ class BootDocker(Boot):
 
 
 class BootDockerAction(BootHasMixin, RetryAction):
-
     name = "boot-docker"
     description = "boot docker image"
     summary = "boot docker image"
@@ -65,7 +64,6 @@ class BootDockerAction(BootHasMixin, RetryAction):
 
 
 class CallDockerAction(Action):
-
     name = "docker-run"
     description = "call docker run on the image"
     summary = "call docker run"

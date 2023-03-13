@@ -327,7 +327,6 @@ class JobTable(LavaTable):
 
 
 class IndexJobTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     actions = tables.TemplateColumn(
         template_name="lava_scheduler_app/job_actions_field.html"
@@ -410,7 +409,6 @@ class TagsColumn(tables.Column):
 
 
 class FailedJobTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     actions = tables.TemplateColumn(
         template_name="lava_scheduler_app/job_actions_field.html"
@@ -449,7 +447,6 @@ class FailedJobTable(JobTable):
 
 
 class LongestJobTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     id.orderable = False
     actions = tables.TemplateColumn(
@@ -488,7 +485,6 @@ class LongestJobTable(JobTable):
 
 
 class OverviewJobsTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     id.orderable = False
     actions = tables.TemplateColumn(
@@ -517,7 +513,6 @@ class OverviewJobsTable(JobTable):
 
 
 class RecentJobsTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     id.orderable = False
     actions = tables.TemplateColumn(
@@ -805,7 +800,6 @@ class NoWorkerDeviceTable(DeviceTable):
 
 
 class HealthJobSummaryTable(tables.Table):
-
     length = 10
     Duration = tables.Column()
     Complete = tables.Column(default=0)
@@ -816,7 +810,6 @@ class HealthJobSummaryTable(tables.Table):
 
 
 class QueueJobsTable(JobTable):
-
     id = tables.Column(verbose_name="ID")
     id.orderable = False
     actions = tables.TemplateColumn(
@@ -873,7 +866,6 @@ class QueueJobsTable(JobTable):
 
 
 class PassingHealthTable(LavaTable):
-
     hostname = tables.Column(linkify=True)
     device_type = tables.Column(linkify=True)
     health = tables.Column()

@@ -185,7 +185,6 @@ class DepthchargeAction(Action):
 
 
 class DepthchargeRetry(BootHasMixin, RetryAction):
-
     name = "depthcharge-retry"
     description = "interactive depthcharge retry action"
     summary = "depthcharge commands with retry"

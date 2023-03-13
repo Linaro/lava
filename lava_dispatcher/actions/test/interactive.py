@@ -76,7 +76,6 @@ class TestInteractive(LavaTest):
 
 @nottest
 class TestInteractiveRetry(RetryAction):
-
     name = "lava-test-interactive-retry"
     description = "Retry wrapper for lava-test-interactive"
     summary = "Retry support for Lava Test Interactive"
@@ -88,7 +87,6 @@ class TestInteractiveRetry(RetryAction):
 
 @nottest
 class TestInteractiveAction(Action):
-
     name = "lava-test-interactive"
     description = "Executing lava-test-interactive"
     summary = "Lava Test Interactive"

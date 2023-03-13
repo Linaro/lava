@@ -33,7 +33,6 @@ from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 
 class Musca(Boot):
-
     compatibility = 1
 
     @classmethod
@@ -54,7 +53,6 @@ class Musca(Boot):
 
 
 class MuscaBoot(BootHasMixin, RetryAction):
-
     name = "musca-boot"
     description = "power device and trigger software to run"
     summary = "power device and trigger software to run"

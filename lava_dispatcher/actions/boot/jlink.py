@@ -49,7 +49,6 @@ class JLink(Boot):
 
 
 class BootJLinkRetry(RetryAction):
-
     name = "boot-jlink-image"
     description = "boot jlink image using the command line interface"
     summary = "boot jlink image"
@@ -64,7 +63,6 @@ class BootJLinkRetry(RetryAction):
 
 
 class FlashJLinkAction(Action):
-
     name = "flash-jlink"
     description = "flash jlink to boot the image"
     summary = "flash jlink to boot the image"

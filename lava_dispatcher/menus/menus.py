@@ -36,7 +36,6 @@ class MovementMenu:
 
 
 class MenuInterrupt(Action):
-
     name = "menu-interrupt"
     description = "interrupt the bootloader to start the menu handling"
     summary = "base menu interrupt action"
@@ -134,7 +133,6 @@ class MenuConnect(ConnectDevice):
 
 
 class MenuReset(ConnectDevice):
-
     name = "menu-reset"
     description = "change out of menu session to a shell session"
     summary = "reset to shell connection"
@@ -152,7 +150,6 @@ class MenuReset(ConnectDevice):
 
 
 class SelectorMenuAction(Action):
-
     name = "menu-selector"
     description = "select specified menu items"
     summary = "select options in a menu"

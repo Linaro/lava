@@ -27,7 +27,6 @@ from lava_dispatcher.action import Action
 
 
 class WaitUSBSerialDeviceAction(Action):
-
     name = "wait-usb-serial"
     description = "wait for USB serial device"
     summary = "wait for USB serial device"
@@ -73,7 +72,6 @@ class WaitUSBSerialDeviceAction(Action):
 
 
 class WaitDFUDeviceAction(Action):
-
     name = "wait-dfu-device"
     description = "wait for DFU device"
     summary = "wait for DFU device"
@@ -110,7 +108,6 @@ class WaitDFUDeviceAction(Action):
 
 
 class WaitUSBMassStorageDeviceAction(Action):
-
     name = "wait-usb-mass-storage-device"
     description = "wait for USB mass storage device"
     summary = "wait for USB mass storage device"
@@ -137,7 +134,6 @@ class WaitUSBMassStorageDeviceAction(Action):
 
 
 class WaitDevicePathAction(Action):
-
     name = "wait-device-path"
     description = "wait for udev device path"
     summary = "wait for udev device path"
@@ -160,7 +156,6 @@ class WaitDevicePathAction(Action):
 
 
 class WaitDeviceBoardID(Action):
-
     name = "wait-device-boardid"
     description = "wait for udev device with board ID"
     summary = "wait for udev device with board ID"

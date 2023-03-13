@@ -6,7 +6,6 @@ import linaro_django_xmlrpc.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("auth", "__first__"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

@@ -74,7 +74,6 @@ class Fastboot(Deployment):
 class FastbootAction(
     OptionalContainerFastbootAction
 ):  # pylint:disable=too-many-instance-attributes
-
     name = "fastboot-deploy"
     description = "download files and deploy using fastboot"
     summary = "fastboot deployment"
@@ -265,7 +264,6 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
 
 
 class FastbootReboot(OptionalContainerFastbootAction):
-
     name = "fastboot-reboot"
     description = "Reset a device between flash operations using fastboot reboot."
     summary = "execute a reboot using fastboot"
@@ -293,7 +291,6 @@ class FastbootReboot(OptionalContainerFastbootAction):
 
 
 class FastbootRebootBootloader(OptionalContainerFastbootAction):
-
     name = "fastboot-reboot-bootloader"
     description = (
         "Reset a device between flash operations using fastboot reboot-bootloader."
@@ -323,7 +320,6 @@ class FastbootRebootBootloader(OptionalContainerFastbootAction):
 
 
 class FastbootRebootFastboot(OptionalContainerFastbootAction):
-
     name = "fastboot-reboot-fastboot"
     description = (
         "Reset a device between flash operations using fastboot reboot fastboot."

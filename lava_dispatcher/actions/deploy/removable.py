@@ -259,7 +259,6 @@ class DDAction(Action):
 
 
 class MassStorage(Action):
-
     name = "storage-deploy"
     description = "Deploy image to mass storage"
     summary = "write image to storage"

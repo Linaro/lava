@@ -30,7 +30,6 @@ from lava_dispatcher.utils.udev import WaitDFUDeviceAction
 
 
 class DFU(Boot):
-
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     @classmethod
@@ -51,7 +50,6 @@ class DFU(Boot):
 
 
 class BootDFURetry(RetryAction):
-
     name = "boot-dfu-retry"
     description = "boot dfu image using the command line interface"
     summary = "boot dfu image"
@@ -71,7 +69,6 @@ class BootDFURetry(RetryAction):
 
 
 class EnterDFU(Action):
-
     name = "enter-dfu"
     description = "enter software dfu mode"
     summary = "enter software dfu mode"
@@ -87,7 +84,7 @@ class EnterDFU(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         parameters = self.job.device["actions"]["boot"]["methods"]["dfu"]["parameters"]
-        for (index, cmd) in enumerate(parameters["enter-commands"]):
+        for index, cmd in enumerate(parameters["enter-commands"]):
             connection.sendline(cmd)
             # Do not wait for the bootloader prompt for the last command.
             # This command does not return.
@@ -96,7 +93,6 @@ class EnterDFU(Action):
 
 
 class FlashDFUAction(Action):
-
     name = "flash-dfu"
     description = "use dfu to flash the images"
     summary = "use dfu to flash the images"
@@ -168,7 +164,7 @@ class FlashDFUAction(Action):
                 "dfu-download", prefix=implementation
             )
 
-        for (index, dfu_command) in enumerate(self.exec_list):
+        for index, dfu_command in enumerate(self.exec_list):
             # add --reset for the last command (if reset works)
             if index + 1 == len(self.exec_list) and reset_works:
                 dfu_command.extend(["--reset"])

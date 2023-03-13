@@ -95,7 +95,7 @@ FILES = [
 for filename in FILES:
     try:
         with contextlib.suppress(FileNotFoundError):
-            for (k, v) in yaml.safe_load(filename.read_text(encoding="utf-8")).items():
+            for k, v in yaml.safe_load(filename.read_text(encoding="utf-8")).items():
                 globals()[k] = v
     except yaml.YAMLError as exc:
         print(f"[INIT] Unable to load {filename.name}: invalid yaml")
@@ -127,5 +127,5 @@ if "LAVA_JSON_SETTINGS" in os.environ:
         raise Exception(f"Unable to load LAVA_JSON_SETTINGS") from exc
 
 # Update settings with custom values
-for (k, v) in update(globals()).items():
+for k, v in update(globals()).items():
     globals()[k] = v

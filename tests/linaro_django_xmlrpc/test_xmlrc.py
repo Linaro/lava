@@ -562,7 +562,6 @@ class SystemAPITest(TestCase):
 
 
 class AuthTokenTests(TestCase):
-
     _USER = "user"
     _INEXISTING_USER = "inexisting-user"
     _INEXISTING_SECRET = "inexisting-secret"

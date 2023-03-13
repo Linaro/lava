@@ -32,7 +32,6 @@ from lava_dispatcher.utils.udev import WaitDevicePathAction, WaitUSBSerialDevice
 
 
 class CMSIS(Boot):
-
     compatibility = 4  # FIXME: change this to 5 and update test cases
 
     @classmethod
@@ -66,7 +65,6 @@ class CMSIS(Boot):
 
 
 class BootCMSISRetry(RetryAction):
-
     name = "boot-cmsis-retry"
     description = "boot cmsis usb image with retry"
     summary = "boot cmsis usb image with retry"
@@ -97,7 +95,6 @@ class BootCMSISRetry(RetryAction):
 
 
 class FlashCMSISAction(Action):
-
     name = "flash-cmsis"
     description = "flash cmsis to usb mass storage"
     summary = "flash cmsis to usb mass storage"
