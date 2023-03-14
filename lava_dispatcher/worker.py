@@ -497,7 +497,7 @@ class VersionMismatch(Exception):
 
 
 def ping(url: str, token: str, name: str) -> Dict[str, List]:
-    LOG.info("PING => server")
+    LOG.debug("PING => server")
     ret = requests_get(
         f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}
     )
