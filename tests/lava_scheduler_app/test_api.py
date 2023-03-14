@@ -1753,6 +1753,14 @@ def test_workers_list(setup):
     data = server().scheduler.workers.list()
     assert data == ["example.com", "worker01"]  # nosec
 
+    Worker.objects.create(hostname="worker02")
+    server("admin", "admin").scheduler.workers.update("worker02", None, "RETIRED")
+    data = server().scheduler.workers.list()
+    assert data == ["example.com", "worker01"]  # nosec
+
+    data = server().scheduler.workers.list(True)
+    assert data == ["example.com", "worker01", "worker02"]  # nosec
+
 
 @pytest.mark.django_db
 def test_workers_show(setup):

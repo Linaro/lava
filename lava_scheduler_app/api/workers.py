@@ -305,11 +305,11 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         return False
 
-    def list(self):
+    def list(self, show_all=False):
         """
         Name
         ----
-        `scheduler.workers.list` ()
+        `scheduler.workers.list` (`show_all=False`)
 
         Description
         -----------
@@ -317,13 +317,17 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         Arguments
         ---------
-        None
+        `show_all`: boolean
+          Show all workers, including retired
 
         Return value
         ------------
         This function returns an XML-RPC array of workers
         """
-        workers = Worker.objects.all().order_by("hostname")
+        workers = Worker.objects.all()
+        if not show_all:
+            workers = workers.exclude(health=Worker.HEALTH_RETIRED)
+        workers = workers.order_by("hostname")
         return [w.hostname for w in workers]
 
     def show(self, hostname):
