@@ -23,7 +23,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import connection
-from django.db.models import Q
 from django.test import TestCase
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
@@ -206,9 +205,9 @@ class ManagersTest(TestCaseWithFactory):
         # Test that qemu is not restricted by view permission.
         self.assertEqual(
             set(
-                DeviceType.objects.restricted_by_perm(
-                    DeviceType.VIEW_PERMISSION
-                ).filter(existing_permissions=0)
+                DeviceType.objects.visible_by_user(
+                    AnonymousUser(),
+                )
             ),
             {self.qemu_device_type},
         )
@@ -216,9 +215,11 @@ class ManagersTest(TestCaseWithFactory):
         # Test that lxc and bbb are not restricted by admin permission.
         self.assertEqual(
             set(
-                DeviceType.objects.restricted_by_perm(
-                    DeviceType.CHANGE_PERMISSION
-                ).filter(existing_permissions=0)
+                DeviceType.objects.filter_by_perm(
+                    DeviceType.CHANGE_PERMISSION,
+                    AnonymousUser(),
+                    include_objects_without_permissions=True,
+                )
             ),
             {self.lxc_device_type, self.bbb_device_type},
         )
@@ -226,9 +227,11 @@ class ManagersTest(TestCaseWithFactory):
         # Test that all are not restricted by submit permission.
         self.assertEqual(
             set(
-                DeviceType.objects.restricted_by_perm(
-                    DeviceType.SUBMIT_PERMISSION
-                ).filter(existing_permissions=0)
+                DeviceType.objects.filter_by_perm(
+                    DeviceType.SUBMIT_PERMISSION,
+                    AnonymousUser(),
+                    include_objects_without_permissions=True,
+                )
             ),
             {self.lxc_device_type, self.bbb_device_type, self.qemu_device_type},
         )
@@ -251,22 +254,22 @@ class ManagersTest(TestCaseWithFactory):
 
             queryset = qemu_devices_queryset.filter_by_perm(
                 "lava_scheduler_app.submit_to_device", self.user1
-            ).filter(~Q(perm_count=0))
+            )
             self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
             queryset = qemu_devices_queryset.filter_by_perm(
                 "lava_scheduler_app.change_device", self.user1
-            ).filter(~Q(perm_count=0))
+            )
             self.assertEqual(set(queryset), {self.qemu_device1})
 
             queryset = qemu_devices_queryset.filter_by_perm(
                 "lava_scheduler_app.view_device", self.user1
-            ).filter(~Q(perm_count=0))
+            )
             self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
             queryset = qemu_devices_queryset.filter_by_perm(
                 "lava_scheduler_app.submit_to_device", self.user1
-            ).filter(~Q(perm_count=0))
+            )
 
             GroupDevicePermission.objects.assign_perm(
                 "submit_to_device", self.group1, self.qemu_device1
@@ -275,7 +278,7 @@ class ManagersTest(TestCaseWithFactory):
 
             queryset = queryset.filter_by_perm(
                 "lava_scheduler_app.submit_to_device", self.user1
-            ).filter(~Q(perm_count=0))
+            )
             self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
             self.assertEqual(len(connection.queries), query_count + 1)
         finally:
@@ -302,25 +305,25 @@ class ManagersTest(TestCaseWithFactory):
         # user1 has submit_to permissions for devices 1 and 2, but not 3
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.submit_to_device", user1
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
         # user1 has admin permission for device1.
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.change_device", user1
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device1})
 
         # user1 has view permissions for devices 1 and 2.
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.view_device", user1
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
         # user1 has both submit and admin permissions for devices 1 and 2.
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.submit_to_device", user1
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device1, self.qemu_device2})
 
         # Enter user 2.
@@ -329,17 +332,17 @@ class ManagersTest(TestCaseWithFactory):
 
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.submit_to_device", user2
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device2})
 
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.change_device", user2
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), set())
 
         queryset = qemu_devices_queryset.filter_by_perm(
             "lava_scheduler_app.view_device", user2
-        ).filter(~Q(perm_count=0))
+        )
         self.assertEqual(set(queryset), {self.qemu_device2})
 
     def test_devicetype_manager_view(self):
