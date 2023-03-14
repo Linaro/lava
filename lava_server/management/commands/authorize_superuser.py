@@ -3,7 +3,7 @@
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError

@@ -5,7 +5,7 @@
 #
 #  Copyright 2015 Neil Williams <codehelp@debian.org>
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import os

@@ -5,7 +5,7 @@
 # Author: Stevan Radaković <stevan.radakovic@linaro.org>
 #         Rémi Duraffort <remi.duraffort@linaro.org>
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
 import contextlib

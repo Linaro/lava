@@ -4,30 +4,25 @@ Source: https://git.lavasoftware.org/lava/lava
 
 Files: *
 Copyright: 2010-2019, Linaro Limited
+License: GPL-2.0+
+
+Files: setup.py
+ share/check-devices.py
+ share/download-test-suites-api.py
+ share/javascript.py
+ share/postinst.py
+ share/requires.py
+ share/validate_devices.py
+Copyright: 2010-2019, Linaro Limited
 License: GPL-3.0+
 
 Files: lava/lxc-mocker/*
 Copyright: 2018 Linaro Limited
 License: MIT
 
-Files: lava_dispatcher/*  lava/coordinator/*
- lava_common/*
- lava_scheduler_app/tests/test_scheduler.py
- lava_scheduler_app/tests/test_state_machine.py
- lava_server/debian_sso.py
- share/render-template.py
- share/lava_lxc_device_add.py
- share/dev.py
-Copyright: 2010-2018, Linaro Limited
-License: GPL-2.0+
-
 Files: debian/*
 Copyright: 2013-2018 Neil Williams <codehelp@debian.org>
 License: GPL-2.0+
-
-Files: lava_server/* lava_scheduler_app/* lava_results_app/*
-Copyright: 2010-2018, Linaro Limited
-License: AGPL-3.0
 
 Files: lava_scheduler_app/static/lava_scheduler_app/js/*
  lava_scheduler_app/static/lava_scheduler_app/css/jquery-linedtextarea.css
@@ -114,19 +109,6 @@ License: MIT
  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
-
-License: AGPL-3.0
- This package is free software: you can redistribute it and/or modify it
- under the terms of the GNU Affero General Public License version 3 as
- published by the Free Software Foundation
- .
- This package is distributed in the hope that it will be useful, but
- WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
- or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
- more details.
- .
- You should have received a copy of the GNU Affero General Public License
- along with LAVA Scheduler.  If not, see <http://www.gnu.org/licenses/>.
 
 License: GPL-2.0+
  This program is free software; you can redistribute it and/or modify

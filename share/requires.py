@@ -6,7 +6,7 @@
 #  Copyright 2018-2019 Linaro Limited
 #  Author: Neil Williams <neil.williams@linaro.org>
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 #
 
 import argparse

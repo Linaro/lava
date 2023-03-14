@@ -6,7 +6,7 @@
 #  Copyright 2018 Linaro Limited
 #  Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 
 import argparse

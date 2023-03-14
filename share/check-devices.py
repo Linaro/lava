@@ -11,7 +11,7 @@ device configuration is valid YAML syntax for each device.
 # Author: Neil Williams <neil.williams@linaro.org>
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
 

@@ -3,7 +3,7 @@
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
 from contextvars import ContextVar

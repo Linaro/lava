@@ -3,7 +3,7 @@
 #
 # Author: Chase Qi <chase.qi@linaro.org>
 #
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 import codecs
 

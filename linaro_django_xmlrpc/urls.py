@@ -2,7 +2,7 @@
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
 #
-# SPDX-License-Identifier: AGPL-3.0-only
+# SPDX-License-Identifier: GPL-2.0-or-later
 
 
 from lava_server.compat import url
