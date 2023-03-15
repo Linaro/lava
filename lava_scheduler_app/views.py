@@ -2651,7 +2651,10 @@ def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
     data = DeviceTableView(request)
     ptable = NoWorkerDeviceTable(
-        data.get_table_data().filter(worker_host=worker).order_by("hostname"),
+        data.get_table_data()
+        .filter(worker_host=worker)
+        .exclude(health=Device.HEALTH_RETIRED)
+        .order_by("hostname"),
         request=request,
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
