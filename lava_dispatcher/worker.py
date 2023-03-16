@@ -22,6 +22,7 @@
 
 import asyncio
 import contextlib
+import functools
 import getpass
 import json
 import logging
@@ -36,7 +37,7 @@ import time
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Union
+from typing import Any, Dict, Iterator, List, NoReturn, Optional, Union
 
 import aiohttp
 import requests
@@ -685,6 +686,13 @@ async def listen_for_events(options, event: asyncio.Event) -> None:
         await asyncio.sleep(1)
 
 
+def ask_exit(signame: str, group: asyncio.tasks._GatheringFuture) -> NoReturn:
+    LOG.info(f"[EXIT] Received signal {signame}")
+    # await cancelled group throws asyncio.CancelledError. The
+    # exception is handled in the main().
+    group.cancel()
+
+
 async def main() -> int:
     # Parse command line
     options = get_parser().parse_args()
@@ -746,9 +754,18 @@ async def main() -> int:
         jobs = JobsDB(str(worker_dir / "db.sqlite3"))
 
         event = asyncio.Event()
-        await asyncio.gather(
+        group = asyncio.gather(
             main_loop(options, jobs, event), listen_for_events(options, event)
         )
+
+        loop = asyncio.get_running_loop()
+        LOG.debug(f"LAVA worker pid is {os.getpid()}")
+        for signame in ("SIGINT", "SIGTERM"):
+            loop.add_signal_handler(
+                getattr(signal, signame), functools.partial(ask_exit, signame, group)
+            )
+
+        await group
         return 0
     except asyncio.CancelledError:
         LOG.info("[EXIT] Canceled")
