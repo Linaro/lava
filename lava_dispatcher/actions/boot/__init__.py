@@ -396,8 +396,10 @@ class BootloaderCommandOverlay(Action):
         if "use_bootscript" in self.parameters:
             self.use_bootscript = self.parameters["use_bootscript"]
 
+        lava_mac = None
         if "lava_mac" in device_methods[self.method]["parameters"]:
             lava_mac = device_methods[self.method]["parameters"]["lava_mac"]
+        if lava_mac:
             if re.match("([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", lava_mac, re.IGNORECASE):
                 self.lava_mac = lava_mac
             else:
