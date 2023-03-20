@@ -20,13 +20,23 @@
 import xmlrpc.client
 
 import yaml
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 
+from lava_common.exceptions import PermissionNameError
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    GroupDevicePermission,
+    Tag,
+    TestJob,
+    Worker,
+)
+from lava_server.api import check_staff
 from linaro_django_xmlrpc.models import ExposedV2API
 
 
@@ -257,6 +267,46 @@ class SchedulerDevicesAPI(ExposedV2API):
             ret.append(device_dict)
 
         return ret
+
+    @check_staff
+    def perms_add(self, hostname, group, permission):
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+        GroupDevicePermission.objects.assign_perm(permission, group, device)
+
+    @check_staff
+    def perms_delete(self, hostname, group, permission):
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+        GroupDevicePermission.objects.remove_perm(permission, group, device)
+
+    @check_staff
+    def perms_list(self, hostname):
+        try:
+            device = Device.objects.get(hostname=hostname)
+        except Device.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+
+        perms = GroupDevicePermission.objects.filter(device=device)
+        return [
+            {
+                "name": p.permission.codename,
+                "group": p.group.name,
+            }
+            for p in perms
+        ]
 
     def show(self, hostname):
         """
