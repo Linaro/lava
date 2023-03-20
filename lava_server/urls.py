@@ -35,6 +35,8 @@ from lava_scheduler_app.api.jobs import SchedulerJobsAPI
 from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 from lava_server.api import LavaMapper
+from lava_server.api.groups import GroupsAPI, GroupsPermissionsAPI
+from lava_server.api.users import UsersAPI, UsersGroupsAPI, UsersPermissionsAPI
 from lava_server.compat import url
 from lava_server.views import (
     delete_remote_auth,
@@ -67,6 +69,11 @@ mapper.register(SchedulerDeviceTypesAliasesAPI, "scheduler.device_types.aliases"
 mapper.register(SchedulerJobsAPI, "scheduler.jobs")
 mapper.register(SchedulerTagsAPI, "scheduler.tags")
 mapper.register(SchedulerWorkersAPI, "scheduler.workers")
+mapper.register(GroupsAPI, "auth.groups")
+mapper.register(GroupsPermissionsAPI, "auth.groups.perms")
+mapper.register(UsersAPI, "auth.users")
+mapper.register(UsersGroupsAPI, "auth.users.groups")
+mapper.register(UsersPermissionsAPI, "auth.users.perms")
 
 # Auth backends
 auth_urls = [
