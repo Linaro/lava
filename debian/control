@@ -144,7 +144,8 @@ Description: Linaro Automated Validation Architecture server
 
 Package: lava-common
 Architecture: all
-Depends: ${misc:Depends},
+Depends: python3-sentry-sdk,
+         ${misc:Depends},
          ${python3:Depends}
 Description: Linaro Automated Validation Architecture common
  LAVA is a continuous integration system for deploying operating

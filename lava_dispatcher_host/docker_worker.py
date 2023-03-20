@@ -38,7 +38,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_common.worker import get_parser
+from lava_common.worker import get_parser, init_sentry_sdk
 
 #########
 # Globals
@@ -77,6 +77,9 @@ def filter_options(options):
         ret.extend(["--token", options.token])
     if options.token_file:
         ret.extend(["--token-file", options.token_file])
+
+    if options.sentry_dsn:
+        ret.extend(["--sentry-dsn", options.sentry_dsn])
     return ret
 
 
@@ -289,6 +292,8 @@ def setup_logger(log_file: str, level: str) -> None:
 def main():
     # Parse command line
     options = get_parser(docker_worker=True).parse_args()
+    if options.sentry_dsn:
+        init_sentry_sdk(options.sentry_dsn)
     options.build_dir = options.build_dir.resolve()
 
     if options.devel:
