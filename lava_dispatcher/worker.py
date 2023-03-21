@@ -19,6 +19,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses>.
+from __future__ import annotations
 
 import asyncio
 import contextlib
@@ -53,7 +54,6 @@ from lava_common.yaml import yaml_safe_load
 # Constants
 ###########
 FINISH_MAX_DURATION = 120
-JOBS_CHECK_INTERVAL = 5
 
 TIMEOUT = 60 * 10  # http timeout to 10 minutes
 WORKER_DIR = Path(WORKER_DIR)
