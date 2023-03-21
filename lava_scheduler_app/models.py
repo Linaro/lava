@@ -214,10 +214,9 @@ class RestrictedObject(models.Model):
 
     def is_permission_restricted(self, perm):
         app_label, codename = perm.split(".", 1)
-        perm_count = self.permissions.filter(
+        return self.permissions.filter(
             permission__content_type__app_label=app_label, permission__codename=codename
-        ).count()
-        return perm_count > 0
+        ).exists()
 
     def has_any_permission_restrictions(self, perm):
         raise NotImplementedError("Should implement this")
