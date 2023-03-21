@@ -421,7 +421,9 @@ class Dispatcher:
         else:
             # Package responses and send them to the client
             response = (response,)
-            response = xmlrpc.client.dumps(response, methodresponse=1, allow_none=True)
+            response = xmlrpc.client.dumps(
+                response, methodresponse=True, allow_none=True
+            )
         return response
 
     def dispatch(self, method_name, params, context):
