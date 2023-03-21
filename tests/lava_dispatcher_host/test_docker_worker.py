@@ -37,6 +37,7 @@ def options(tmp_path):
     o.token = None
     o.token_file = None
     o.sentry_dsn = None
+    o.level = "INFO"
 
     return o
 

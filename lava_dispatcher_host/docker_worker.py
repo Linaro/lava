@@ -80,6 +80,9 @@ def filter_options(options):
 
     if options.sentry_dsn:
         ret.extend(["--sentry-dsn", options.sentry_dsn])
+
+    if options.level:
+        ret.extend(["--level", options.level])
     return ret
 
 
