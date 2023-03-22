@@ -148,13 +148,26 @@ class ConfigureNodebooter(Action):
     def __init__(self):
         super().__init__()
         self.container = ""
+        self.target_mac = None
+        self.target_ip = None
 
     def validate(self):
         # We assume the nodebooter container is running, otherwise previous
         # action in the pipeline would have failed.
         super().validate()
-        if "mac_address" not in self.parameters["docker"]:
-            self.errors = "Missing mac address of the DUT in docker parameter"
+
+        if "parameters" in self.job.device:
+            if "interfaces" in self.job.device["parameters"]:
+                if "target" in self.job.device["parameters"]["interfaces"]:
+                    self.target_mac = self.job.device["parameters"]["interfaces"][
+                        "target"
+                    ].get("mac", None)
+                    self.target_ip = self.job.device["parameters"]["interfaces"][
+                        "target"
+                    ].get("ip", None)
+
+        if not self.target_mac:
+            self.errors = "Missing device_mac parameter in the device config"
 
     def run(self, connection, max_end_time):
         # Make sure nodebooter container is stopped at the end.
@@ -235,9 +248,7 @@ class ConfigureNodebooter(Action):
                                             "device_name": machine_interface,
                                             "hostname": "",
                                             "ipv6_subnet_key": "",
-                                            "mac_address": self.parameters["docker"][
-                                                "mac_address"
-                                            ],
+                                            "mac_address": self.target_mac,
                                             "use_for_netboot": True,
                                         }
                                     ]
