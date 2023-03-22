@@ -77,6 +77,7 @@ class BootFastbootCommands(OptionalContainerFastbootAction):
     name = "fastboot-boot-commands"
     description = "Run custom fastboot commands before boot"
     summary = "Run fastboot boot commands"
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         serial_number = self.job.device["fastboot_serial_number"]
