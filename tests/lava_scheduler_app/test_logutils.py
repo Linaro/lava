@@ -154,7 +154,7 @@ def test_mongo_logs(mocker):
     # size of find_ret_val in bytes
     assert logs_mongo.size(job) == 137  # nosec
 
-    assert logs_mongo.open(job).read() == yaml_safe_dump(find_ret_val).encode("utf-8")
+    assert logs_mongo.read(job) == yaml_safe_dump(find_ret_val)
 
 
 def test_elasticsearch_logs(mocker, logs_elasticsearch):
@@ -196,7 +196,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     # size of get_ret_val in bytes
     assert logs_elasticsearch.size(job) == 137  # nosec
 
-    assert logs_elasticsearch.open(job).read() == yaml_safe_dump(
+    assert logs_elasticsearch.read(job) == yaml_safe_dump(
         [
             {
                 "dt": "2020-03-25T19:44:36.209000",
@@ -209,4 +209,4 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
                 "msg": "second message",
             },
         ]
-    ).encode("utf-8")
+    )
