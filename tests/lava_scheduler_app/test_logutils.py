@@ -104,10 +104,9 @@ def test_size_logs(mocker, tmpdir, logs_filesystem):
 def test_write_logs(mocker, tmpdir, logs_filesystem):
     job = mocker.Mock()
     job.output_dir = tmpdir
-    with open(str(tmpdir / "output.yaml"), "wb") as f_logs:
-        with open(str(tmpdir / "output.idx"), "wb") as f_idx:
-            logs_filesystem.write(job, "hello world\n".encode("utf-8"), f_logs, f_idx)
-            logs_filesystem.write(job, "how are you?\n".encode("utf-8"), f_logs, f_idx)
+
+    logs_filesystem.write_line(job, {}, "hello world")
+    logs_filesystem.write_line(job, {}, "how are you?")
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
     with open(str(tmpdir / "output.idx"), "rb") as f_idx:
@@ -135,9 +134,11 @@ def test_mongo_logs(mocker):
     mocker.patch("pymongo.collection.Collection.find", find)
     mocker.patch("pymongo.collection.Collection.insert_one", insert_one)
 
-    logs_mongo.write(
+    yaml_line = '- {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
+    logs_mongo.write_line(
         job,
-        '- {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}',
+        yaml_safe_load(yaml_line)[0],
+        yaml_line,
     )
     insert_one.assert_called_with(
         {
@@ -179,8 +180,8 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     mocker.patch("requests.get", get)
     mocker.patch("requests.post", post)
 
-    line = '- {"dt": "2020-03-25T19:44:36.209", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
-    logs_elasticsearch.write(job, line)
+    yaml_line = '- {"dt": "2020-03-25T19:44:36.209", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
+    logs_elasticsearch.write_line(job, yaml_safe_load(yaml_line)[0], yaml_line)
     post.assert_called_with(
         "%s%s/_doc/" % (settings.ELASTICSEARCH_URI, settings.ELASTICSEARCH_INDEX),
         data='{"dt": 1585165476209, "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02", "job_id": 1}',

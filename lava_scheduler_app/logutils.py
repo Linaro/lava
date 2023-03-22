@@ -48,7 +48,7 @@ class Logs:
     def size(self, job, start=0, end=None):
         raise NotImplementedError("Should implement this method")
 
-    def write(self, job, line, output=None, idx=None):
+    def write_line(self, job, line_dict, string):
         raise NotImplementedError("Should implement this method")
 
 
@@ -82,7 +82,10 @@ class LogsFilesystem(Logs):
             return None
 
     def line_count(self, job):
-        st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        try:
+            st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        except FileNotFoundError:
+            return 0
         return int(st.st_size / self.PACK_SIZE)
 
     def open(self, job):
@@ -126,11 +129,15 @@ class LogsFilesystem(Logs):
             return int((directory / self.log_size_filename).read_text(encoding="utf-8"))
         return None
 
-    def write(self, job, line, output=None, idx=None):
-        idx.write(struct.pack(self.PACK_FORMAT, output.tell()))
-        idx.flush()
-        output.write(line)
-        output.flush()
+    def write_line(self, job, line_dict, string):
+        directory = pathlib.Path(job.output_dir)
+        directory.mkdir(mode=0o755, parents=True, exist_ok=True)
+        with open(directory / self.log_filename, mode="ab") as output:
+            output_position = output.tell()
+            output.write((string + "\n").encode("utf-8"))
+
+        with open(directory / self.index_filename, mode="ab") as idx:
+            idx.write(struct.pack(self.PACK_FORMAT, output_position))
 
 
 class LogsMongo(Logs):
@@ -187,11 +194,14 @@ class LogsMongo(Logs):
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(list(docs)).encode("utf-8"))
 
-    def write(self, job, line, output=None, idx=None):
-        line = yaml_safe_load(line)[0]
-
+    def write_line(self, job, line_dict, string):
         self.db.logs.insert_one(
-            {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
+            {
+                "job_id": job.id,
+                "dt": line_dict["dt"],
+                "lvl": line_dict["lvl"],
+                "msg": line_dict["msg"],
+            }
         )
 
 
@@ -275,13 +285,12 @@ class LogsElasticsearch(Logs):
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(docs).encode("utf-8"))
 
-    def write(self, job, line, output=None, idx=None):
-        line = yaml_safe_load(line)[0]
-        dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
-        line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
-        if line["lvl"] == "results":
-            line.update({"msg": str(line["msg"])})
-        data = simplejson.dumps(line)
+    def write_line(self, job, line_dict, string):
+        dt = datetime.datetime.strptime(line_dict["dt"], "%Y-%m-%dT%H:%M:%S.%f")
+        line_dict.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
+        if line_dict["lvl"] == "results":
+            line_dict.update({"msg": str(line_dict["msg"])})
+        data = simplejson.dumps(line_dict)
 
         requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
 
@@ -338,8 +347,7 @@ class LogsFirestore(Logs):
         # TODO: should be implemented.
         return None
 
-    def write(self, job, line, output=None, idx=None):
-        line = yaml_safe_load(line)[0]
+    def write_line(self, job, line_dict, string):
         doc_ref = (
             self.db.collection(self.root_collection)
             .document(
@@ -347,9 +355,9 @@ class LogsFirestore(Logs):
                 % (job.submit_time.year, job.submit_time.month, job.submit_time.day)
             )
             .collection(str(job.id))
-            .document(line["dt"])
+            .document(line_dict["dt"])
         )
-        doc_ref.set({"lvl": line["lvl"], "msg": line["msg"]})
+        doc_ref.set({"lvl": line_dict["lvl"], "msg": line_dict["msg"]})
 
 
 logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)

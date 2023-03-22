@@ -1352,11 +1352,6 @@ def internal_v1_jobs_logs(request, pk):
     except ValueError:
         return JsonResponse({"error": "Invalid 'index'"}, status=400)
 
-    # TODO: leaky logutils abstraction
-    path = Path(job.output_dir)
-    path.mkdir(mode=0o755, parents=True, exist_ok=True)
-    output = (path / "output.yaml").open("ab")
-    index = (path / "output.idx").open("ab")
     line_skip = logs_instance.line_count(job) - line_idx
 
     # TODO: use a database transaction so all or none objects are saved
@@ -1364,34 +1359,34 @@ def internal_v1_jobs_logs(request, pk):
     #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
-    for line, string in zip(yaml_safe_load(lines), lines.split("\n")):
+    for line_dict, string in zip(yaml_safe_load(lines), lines.split("\n")):
         # skip lines that where already saved to disk
         if line_skip > 0:
             line_skip -= 1
         else:
             # Handle lava-event
-            if line["lvl"] == "event":
+            if line_dict["lvl"] == "event":
                 send_event(
-                    ".event", "lavaserver", {"message": line["msg"], "job": job.id}
+                    ".event", "lavaserver", {"message": line_dict["msg"], "job": job.id}
                 )
-                line["lvl"] = "debug"
-                string = "- " + dump(line)
+                line_dict["lvl"] = "debug"
+                string = "- " + dump(line_dict)
 
             # Save the log line
-            logs_instance.write(job, (string + "\n").encode("utf-8"), output, index)
+            logs_instance.write_line(job, line_dict, string)
 
         # handle test case results
-        if line["lvl"] == "results":
+        if line_dict["lvl"] == "results":
             starttc = endtc = None
             with contextlib.suppress(KeyError):
-                starttc = line["msg"]["starttc"]
-                del line["msg"]["starttc"]
+                starttc = line_dict["msg"]["starttc"]
+                del line_dict["msg"]["starttc"]
             with contextlib.suppress(KeyError):
-                endtc = line["msg"]["endtc"]
-                del line["msg"]["endtc"]
-            meta_filename = create_metadata_store(line["msg"], job)
+                endtc = line_dict["msg"]["endtc"]
+                del line_dict["msg"]["endtc"]
+            meta_filename = create_metadata_store(line_dict["msg"], job)
             new_test_case = map_scanned_results(
-                results=line["msg"],
+                results=line_dict["msg"],
                 job=job,
                 starttc=starttc,
                 endtc=endtc,
