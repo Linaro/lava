@@ -64,9 +64,8 @@ class SecondaryConnections(TestCaseWithFactory):
                 )
                 self.assertIn(params["sub_id"], [0, 1, 2])
                 sub_id.append(params["sub_id"])
-                comparison = yaml_safe_load(
-                    open(os.path.join(path, "qemu-ssh-parent.yaml"), "r").read()
-                )
+                with open(os.path.join(path, "qemu-ssh-parent.yaml"), "r") as f:
+                    comparison = yaml_safe_load(f)
                 self.assertIn("protocols", data)
                 self.assertIn("lava-multinode", data["protocols"])
                 self.assertIn("sub_id", data["protocols"]["lava-multinode"])
@@ -84,12 +83,11 @@ class SecondaryConnections(TestCaseWithFactory):
                 self.assertEqual(deploy["deploy"]["connection"], "ssh")
                 # validate each job
                 del data["protocols"]["lava-multinode"]["sub_id"]
-                self.assertEqual(
-                    data,
-                    yaml_safe_load(
-                        open(os.path.join(path, "qemu-ssh-guest-1.yaml"), "r").read()
-                    ),
-                )
+                with open(os.path.join(path, "qemu-ssh-guest-1.yaml"), "r") as f:
+                    self.assertEqual(
+                        data,
+                        yaml_safe_load(f),
+                    )
                 self.assertIsNone(job.requested_device_type)
                 self.assertIsNone(job.actual_device)
                 host_role.append(data["host_role"])

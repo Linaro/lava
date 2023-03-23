@@ -147,7 +147,8 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         job_dict = split_multinode_yaml(self.factory.make_vland_job(), target_group)
         client_job = job_dict["client"][0]
         client_handle, client_file_name = tempfile.mkstemp()
-        yaml_safe_dump(client_job, open(client_file_name, "w"))
+        with open(client_file_name, "w") as f:
+            yaml_safe_dump(client_job, f)
         # YAML device file, as required by lava-dispatch --target
         data = "{% extends 'beaglebone-black.jinja2' %}"
         device_yaml_file = prepare_jinja_template("bbb-01", data, raw=False)
