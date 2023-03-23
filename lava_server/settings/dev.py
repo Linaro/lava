@@ -64,7 +64,9 @@ MEDIA_ROOT = str(PROJECT_STATE_DIR / "media")
 # Absolute filesystem path to the directory that will hold static, read only
 # files collected from all applications.
 # Example: "/home/media/static.lawrence.com/"
-STATIC_ROOT = str(PROJECT_STATE_DIR / "static")
+static_root_path = PROJECT_STATE_DIR / "static"
+static_root_path.mkdir(exist_ok=True)
+STATIC_ROOT = str(static_root_path)
 
 # Use device configuration files from source tree
 DEVICES_PATH = str(PROJECT_SRC_DIR / "etc/dispatcher-config/devices")
