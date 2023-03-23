@@ -30,7 +30,7 @@ full list. Each component can be tested separately::
 To run particular tests in a specific file, add e.g. ``test_device.py`` to the
 command::
 
- $ ./manage.py test lava_scheduler_app.tests.test_device
+ $ ./manage.py test tests.lava_scheduler_app.test_device
 
 .. note:: the ``tests`` directory needs to be specified (instead of the test
    process discovering all tests) but the filename in the ``tests`` directory
@@ -39,11 +39,11 @@ command::
 Add the class name to run all tests within that class within the specified
 file.::
 
- $ ./manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest
+ $ ./manage.py test tests.lava_scheduler_app.test_device.DeviceTypeTest
 
 Add a specific test function to run only that one unit test::
 
- $ ./manage.py test lava_scheduler_app.tests.test_device.DeviceTypeTest.test_device_type_templates
+ $ ./manage.py test tests.lava_scheduler_app.test_device.DeviceTypeTest.test_device_type_templates
 
 Useful options to ``./manage.py test`` include ``-v2`` to follow what is
 being done and ``--noinput`` to automatically remove a database created by a previous
@@ -56,14 +56,14 @@ Tests on the Jinja2 templates can be run using ``./ci-run -t``.
 
 #. All jinja2 templates in ``lava_scheduler_app/tests/device-types/`` will be
    tested using a basic check in
-   ``lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates``
+   ``tests.lava_scheduler_app.test_base_templates.TestBaseTemplates.test_all_templates``
    for YAML syntax. This renders the template without a device dictionary and
    checks that the output is valid YAML. This test will fail with syntax errors
    in variables, jinja2 blocks, inheritance and whitespace indent errors.
 
    ::
 
-   $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
+   $ python3 -m unittest -vcf tests.lava_scheduler_app.test_base_templates.TestBaseTemplates.test_all_templates
 
 #. Add a new unit test to the ``TestTemplates`` class in the same unit test
    file when any jinja2 template fails to parse. Change the ``DEBUG`` setting
@@ -98,9 +98,9 @@ lava-dispatcher
 To run a single test, use the test class name as output by a failing test,
 without the call to ``discover``::
 
- $ python3 -m unittest lava_dispatcher.tests.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest tests.lava_dispatcher.test_basic.TestPipelineInit.test_pipeline_init
 
- $ python3 -m unittest -v -c -f lava_dispatcher.tests.test_basic.TestPipelineInit.test_pipeline_init
+ $ python3 -m unittest -v -c -f tests.lava_dispatcher.test_basic.TestPipelineInit.test_pipeline_init
 
 The call references the path to the python module, the class and then the test
 function within that class. To run all tests in a class, omit the function. To
@@ -818,7 +818,7 @@ statements in the device configuration or job submission show up inside the
 classes is to use a unit test. To run a single unit-test, for example
 test_function in a class called TestExtra in a file called test_extra.py, use::
 
- $ python3 -m unittest -v -c -f lava_dispatcher.tests.test_extra.TestExtra.test_function
+ $ python3 -m unittest -v -c -f tests.lava_dispatcher.test_extra.TestExtra.test_function
 
 Example python code:
 

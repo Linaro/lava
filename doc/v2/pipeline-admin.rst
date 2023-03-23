@@ -103,7 +103,7 @@ indentation within the file. You can (temporarily) copy your template into
 ``lava_scheduler_app/tests/device-types`` and run the unit tests to verify that
 the template can be parsed and rendered as valid YAML::
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_base_templates.TestBaseTemplates.test_all_templates
 
 .. seealso:: :ref:`integration_unit_test`
 

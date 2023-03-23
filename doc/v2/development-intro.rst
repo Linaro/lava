@@ -92,7 +92,7 @@ All templates are checked for basic syntax and output using:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_base_templates.TestBaseTemplates.test_all_templates
 
 A more rigorous test is to use the dedicated unit test which does
 **not** require ``lava-server`` to be installed, i.e. it does not
@@ -108,13 +108,13 @@ dedicated unit test files for particular types of template unit tests:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_fastboot_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_grub_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_grub_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_qemu_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_uboot_templates
 
 Most changes to device-type templates take effect **immediately** - as
 soon as the file is changed in

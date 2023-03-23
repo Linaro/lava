@@ -190,7 +190,7 @@ lava_scheduler_app
 
 Some parts of lava_scheduler_app are easier to test than others. New
 device-type templates need to have specific unit tests added to
-``lava_scheduler_app/tests/test_templates`` or one of the relevant
+``tests/lava_scheduler_app/test_templates`` or one of the relevant
 specialist template unit test files. Follow the examples and make sure
 that if the new template adds new items then those items are checked
 for existence and validity in the new function which tests the new
@@ -198,11 +198,11 @@ template.
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_fastboot_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_qemu_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_uboot_templates
 
 If you are adding or modifying documentation in ``lava-server``, make sure that
 the documentation builds cleanly:
@@ -577,8 +577,8 @@ test.
 .. code-block:: python
 
     import unittest
-    from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-    from lava_dispatcher.tests.utils import infrastructure_error_multi_paths
+    from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+    from tests.lava_dispatcher.utils import infrastructure_error_multi_paths
 
     class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
