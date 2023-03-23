@@ -85,7 +85,7 @@ Reporting Bugs
 ^^^^^^^^^^^^^^
 
 New bugs should be reported via the `LAVA Users mailing list
-<https://lists.lavasoftware.org/mailman/listinfo/lava-users>`_. You will need
+<https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/>`_. You will need
 to subscribe to the list to be able to post.
 
 Please describe the problem clearly:

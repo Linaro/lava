@@ -23,7 +23,7 @@ Reporting Bugs
 ==============
 
 Bugs should first be discussed by subscribing to the
-[lava-users](https://lists.lavasoftware.org/mailman/listinfo/lava-users)
+[lava-users](https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/)
 mailing list.
 
 Bug reports and new LAVA features are tracked using

@@ -372,7 +372,7 @@ If you want to contribute, refer to https://docs.lavasoftware.org/lava/contribut
 If you are considering large changes, it is best to subscribe to the Linaro
 Validation mailing list at:
 
-http://lists.lavasoftware.org/mailman/listinfo/lava-users
+https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/
 
 Also talk to us on IRC::
 

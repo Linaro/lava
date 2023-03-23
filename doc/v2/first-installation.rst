@@ -319,7 +319,7 @@ Contact and bug reports
 ***********************
 
 Please report bugs using the LAVA Users mailing list:
-https://lists.lavasoftware.org/mailman/listinfo/lava-users
+https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/
 
 You can also report bugs using ``reportbug`` and the Debian Bug Tracking
 System: https://bugs.debian.org/cgi-bin/pkgreport.cgi?pkg=lava-server
@@ -329,4 +329,3 @@ the ``#linaro-lava`` channel on OFTC but note that IRC is not well suited to
 some discussions. Problems with device configuration or test job failures
 usually benefit from being able to attach the full configuration to an email
 to the lava-users mailing list.
-

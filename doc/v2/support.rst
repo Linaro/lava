@@ -74,7 +74,7 @@ A few guidelines apply to all such lists:
   to the list.
 
 .. seealso:: The LAVA team workflow announcement:
-   https://lists.lavasoftware.org/pipermail/lava-announce/2017-December/000043.html
+   https://lists.lavasoftware.org/archives/list/lava-announce@lists.lavasoftware.org/thread/UD2YW35SRJELBUGWEYR6SSE6JCC3ZOOS/
    and https://docs.gitlab.com/ee/workflow/gitlab_flow.html
 
 .. index:: lava-users support
@@ -85,7 +85,7 @@ lava-users
 ==========
 
 The `lava-users
-<https://lists.lavasoftware.org/mailman/listinfo/lava-users>`_ mailing list
+<https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/>`_ mailing list
 concentrates on support for setting up LAVA, using current LAVA tests.
 Subscribers include test writers, and individual admins. Users are
 encouraged to contribute to answer queries from other users. Replies to
@@ -98,11 +98,11 @@ the :ref:`lava_announce` list are directed here.
 lava-devel
 ==========
 
-Subscribing to the `lava-devel 
-<https://lists.lavasoftware.org/mailman/listinfo/lava-devel>`_ list is 
-recommended for developers of LAVA. ``lava-devel`` is aimed at 
-supporting code contributors, device integration engineers and instance 
-admins who are working with the LAVA codebase. Discussions about 
+Subscribing to the `lava-devel
+<https://lists.lavasoftware.org/mailman3/lists/lava-devel.lists.lavasoftware.org/>`_ list is
+recommended for developers of LAVA. ``lava-devel`` is aimed at
+supporting code contributors, device integration engineers and instance
+admins who are working with the LAVA codebase. Discussions about
 planning and new LAVA features also take place here.
 
 .. index:: lava-announce list, release notes
@@ -113,7 +113,7 @@ lava-announce
 =============
 
 Subscribing to the `lava-announce
-<https://lists.lavasoftware.org/mailman/listinfo/lava-announce>`_ list is
+<https://lists.lavasoftware.org/mailman3/lists/lava-announce.lists.lavasoftware.org/>`_ list is
 recommended for **everyone** using LAVA, whether writing tests or
 viewing reports or administering a LAVA instance.
 
@@ -124,7 +124,7 @@ on replies.
 
 The release notes for each production release are sent to the
 ``lava-announce`` mailing list and the `archives
-<https://lists.lavasoftware.org/pipermail/lava-announce/>`_ contain the
+<https://lists.lavasoftware.org/archives/list/lava-announce@lists.lavasoftware.org/latest>`_ contain the
 release-notes for previous releases.
 
 .. index:: irc
