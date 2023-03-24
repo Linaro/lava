@@ -12,14 +12,6 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
     When adding or modifying a jinja2 template, add or update the test here.
     Use realistic data - complete exports of the device dictionary preferably.
     Set debug to True to see the content of the rendered templates
-    Set system to True to use the system templates - note that this requires
-    that the templates in question are in sync with the branch upon which the
-    test is run. Therefore, if the templates should be the same, this can be
-    used to check that the templates are correct. If there are problems, check
-    for a template with a .dpkg-dist extension. Check the diff between the
-    checkout and the system file matches the difference between the system file
-    and the dpkg-dist version. If the diffs match, copy the dpkg-dist onto the
-    system file.
     """
 
     def test_qemu_template(self):

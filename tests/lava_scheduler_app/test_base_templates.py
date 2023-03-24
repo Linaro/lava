@@ -33,7 +33,6 @@ def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
 class BaseTemplate:
     class BaseTemplateCases(unittest.TestCase):
         debug = False  # set to True to see the YAML device config output
-        system = False  # set to True to debug the system templates
 
         def render_device_dictionary_file(self, filename, job_ctx=None, raw=True):
             device = filename.replace(".jinja2", "")
