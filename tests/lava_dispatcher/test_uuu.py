@@ -1,4 +1,4 @@
-# Copyright 2019-2020 NXP
+# Copyright 2019-2023 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
@@ -20,7 +20,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
@@ -52,16 +52,16 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job("imx8dxl-evk-03.jinja2", filename)
 
 
+@patch("builtins.print", Mock())
+@patch(
+    "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which", Mock("/bin/test_uuu")
+)
 class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    def test_pipeline_uuu_only_uboot(self, which_mock):
+    def test_pipeline_uuu_only_uboot(self):
         job = self.factory.create_imx8mq_job(
             "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
@@ -73,11 +73,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         self.assertIsNone(job.validate())
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    def test_pipeline_power_off_before_corrupt_boot_media(self, which_mock):
+    def test_pipeline_power_off_before_corrupt_boot_media(self):
         job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
@@ -91,11 +87,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         self.assertIsNone(job.validate())
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    def test_pipeline_uuu_only_uboot_uuu_path_from_command(self, which_mock):
+    def test_pipeline_uuu_only_uboot_uuu_path_from_command(self):
         job = self.factory.create_imx8mq_job_uuu_path_from_command(
             "sample_jobs/uuu-bootimage-only.yaml"
         )
@@ -120,11 +112,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
                 ]["usb_otg_path"],
             )
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    def test_pipeline_uuu_boot_action_bcu_configured(self, uuu_mock):
+    def test_pipeline_uuu_boot_action_bcu_configured(self):
         job = self.factory.create_imx8dxlevk_job("sample_jobs/uuu_enhancement.yaml")
 
         self.assertIsNotNone(job)
@@ -134,12 +122,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIsNone(job.validate())
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    @patch("builtins.print", return_value=None)
-    def test_pipeline_action_boot_uuu_exception(self, uuu_mock, print_mock):
+    def test_pipeline_action_boot_uuu_exception(self):
         with self.assertRaises(JobError) as cm:
             self.factory.create_imx8dxlevk_without_bcu_configuration_board_id(
                 "sample_jobs/uuu_enhancement.yaml"
@@ -158,14 +141,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             cm.exception.args[0],
         )
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    @patch("builtins.print", return_value=None)
-    def test_pipeline_uuu_boot_action_imx8mq_for_bcu_exception(
-        self, uuu_mock, print_mock
-    ):
+    def test_pipeline_uuu_boot_action_imx8mq_for_bcu_exception(self):
         with self.assertRaises(JobError) as cm:
             self.factory.create_imx8mq_job_uuu_path_from_command(
                 "sample_jobs/uuu_enhance_test.yaml"
@@ -184,11 +160,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             cm.exception.args[0],
         )
 
-    @patch(
-        "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which",
-        return_value="/bin/test_uuu",
-    )
-    def test_bcu_board_id_from_command(self, which_mock):
+    def test_bcu_board_id_from_command(self):
         job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
             "sample_jobs/uuu_enhancement.yaml"
         )
@@ -196,6 +168,31 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test that generated pipeline is the same as defined in pipeline_refs
         description_ref = self.pipeline_reference("uuu-enhancement.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
+        self.assertIsNone(job.validate())
+
+        # Test if bcu_board_id have been updated before populating tasks
+        uuu_boot_actions_for_bcu = list(
+            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+        )
+
+        for uuu_boot_action_for_bcu in uuu_boot_actions_for_bcu:
+            self.assertEqual(
+                "2-1.3",
+                uuu_boot_action_for_bcu.job.device["actions"]["boot"]["methods"]["uuu"][
+                    "options"
+                ]["bcu_board_id"],
+            )
+
+    def test_bcu_only(self):
+        job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
+            "sample_jobs/uuu_bcu_only.yaml"
+        )
+        self.assertIsNotNone(job)
+        self.maxDiff = None
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference("uuu-bcu-only.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())

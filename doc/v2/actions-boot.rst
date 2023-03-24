@@ -1505,6 +1505,14 @@ Example definition :
       timeout:
         minutes: 20
 
+.. note::
+    Serial availability check and bootloader corruption actions are skipped when:
+        - First item in ``commands`` block is ``bcu: reset usb``
+    Or 
+        - ``commands`` block contain ``bcu`` commands only
+
+    This behavior is useful to recover bricked devices or to use bcu as a standalone action.
+
 Non-exhaustive list of available bcu commands :
 
 .. code-block:: yaml
