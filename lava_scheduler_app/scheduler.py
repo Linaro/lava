@@ -151,6 +151,12 @@ def schedule_health_checks_for_device_type(logger, dt, workers):
                 )
             )
             continue
+
+        # Does device disable health check
+        if device.disable_health_check:
+            available_devices.append(device.hostname)
+            continue
+
         # Do we have an health check
         health_check = device.get_health_check()
         if health_check is None:
