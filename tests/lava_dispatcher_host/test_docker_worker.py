@@ -42,6 +42,57 @@ def options(tmp_path):
     return o
 
 
+@pytest.fixture(scope="class")
+def docker_image():
+    class DockerImage:
+        def __init__(self):
+            self.name = "lavasoftware/lava-dispatcher:2023.01"
+            # shell cmd to get worker option namespace.
+            self.sh_cmd = [
+                "docker",
+                "run",
+                "--rm",
+                self.name,
+                "python3",
+                "-c",
+                "from lava_common.worker import get_parser; print(get_parser().parse_args(['--url', 'dummy-url']))",
+            ]
+            self.option_ns = b"""
+                Namespace(name='worker', debug=False,exit_on_version_mismatch=False,
+                wait_jobs=False, worker_dir=PosixPath('/var/lib/lava/dispatcher/worker'),
+                url='dummy-url', ws_url=None,http_timeout=600, ping_interval=20,
+                job_log_interval=5, username=None, token=None, token_file=None,
+                log_file='/var/log/lava-dispatcher/lava-worker.log', level='INFO')
+            """
+            self.available_options = [
+                "name",
+                "debug",
+                "exit_on_version_mismatch",
+                "wait_jobs",
+                "worker_dir",
+                "url",
+                "ws_url",
+                "http_timeout",
+                "ping_interval",
+                "job_log_interval",
+                "username",
+                "token",
+                "token_file",
+                "log_file",
+                "level",
+            ]
+
+    return DockerImage()
+
+
+@pytest.fixture
+def get_options(mocker, docker_image):
+    return mocker.patch(
+        "lava_dispatcher_host.docker_worker.get_options",
+        return_value=docker_image.available_options,
+    )
+
+
 class TestGetImage:
     def test_image_exists(self, check_output, mocker):
         assert lava_dispatcher_host.docker_worker.get_image("foobar") is True
@@ -97,6 +148,7 @@ class TestBuildImage:
 class TestRun:
     def test_get_image_released(self, get_image, Popen, options, mocker):
         mocker.patch("time.sleep")
+        mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
         lava_dispatcher_host.docker_worker.run("2020.07", options)
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07")
         lava_dispatcher_host.docker_worker.run("2020.07.1", options)
@@ -104,6 +156,7 @@ class TestRun:
 
     def test_get_image_development(self, get_image, Popen, options, mocker):
         mocker.patch("time.sleep")
+        mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
         lava_dispatcher_host.docker_worker.run("2020.07.0010.g12371263", options)
         if platform.machine() == "x86_64":
             get_image.assert_called_with(
@@ -127,3 +180,35 @@ class TestRun:
             )
         else:
             raise NotImplemented()
+
+
+class TestOptions:
+    def test_get_options_call(self, check_output, mocker, docker_image):
+        mocker.patch("re.findall")
+        lava_dispatcher_host.docker_worker.get_options(docker_image.name)
+        check_output.assert_called_with(
+            docker_image.sh_cmd,
+            stderr=subprocess.DEVNULL,
+        )
+
+    def test_get_options_parsing(self, mocker, docker_image):
+        mocker.patch(
+            "lava_dispatcher_host.docker_worker.subprocess.check_output",
+            return_value=docker_image.option_ns,
+        )
+        options = lava_dispatcher_host.docker_worker.get_options(docker_image.name)
+        assert options == docker_image.available_options
+
+    def test_filter_options_available(self, options, docker_image, get_options):
+        ret = lava_dispatcher_host.docker_worker.filter_options(
+            options, docker_image.name
+        )
+        get_options.assert_called_with(docker_image.name)
+        assert "--level" in ret
+
+    def test_filter_options_unavailable(self, options, docker_image, get_options):
+        ret = lava_dispatcher_host.docker_worker.filter_options(
+            options, docker_image.name
+        )
+        get_options.assert_called_with(docker_image.name)
+        assert "--sentry-dsn" not in ret

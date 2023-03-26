@@ -62,7 +62,31 @@ def log_output(line):
         LOG.info("> " + line)
 
 
-def filter_options(options):
+def get_options(image: str) -> list:
+    "Return a list of available worker option names."
+    try:
+        option_ns = subprocess.check_output(
+            [
+                "docker",
+                "run",
+                "--rm",
+                image,
+                "python3",
+                "-c",
+                "from lava_common.worker import get_parser; print(get_parser().parse_args(['--url', 'dummy-url']))",
+            ],
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        return None
+
+    option_names = re.findall(r"(\w+)=", option_ns.decode("utf-8"))
+
+    return option_names
+
+
+def filter_options(options, image):
+    image_available_options = get_options(image)
     ret = ["--worker-dir", options.worker_dir, "--url", options.url]
     if options.ws_url:
         ret.extend(["--ws-url", options.ws_url])
@@ -78,10 +102,10 @@ def filter_options(options):
     if options.token_file:
         ret.extend(["--token-file", options.token_file])
 
-    if options.sentry_dsn:
+    if options.sentry_dsn and "sentry_dns" in image_available_options:
         ret.extend(["--sentry-dsn", options.sentry_dsn])
 
-    if options.level:
+    if options.level and "level" in image_available_options:
         ret.extend(["--level", options.level])
     return ret
 
@@ -224,7 +248,7 @@ def run(version, options):
             service
             + ["lava-worker", "--exit-on-version-mismatch", "--wait-jobs"]
             + ["--log-file", "-", "--name", options.name]
-            + filter_options(options),
+            + filter_options(options, image),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setpgrp,
