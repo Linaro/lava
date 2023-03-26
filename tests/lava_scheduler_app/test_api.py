@@ -894,6 +894,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
+        "hc_disabled": False,
         "health": "Maintenance",
         "health_job": False,
         "hostname": "device01",
@@ -914,6 +915,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
+        "hc_disabled": False,
         "health": "Maintenance",
         "health_job": False,
         "hostname": "device01",
@@ -932,6 +934,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
+        "hc_disabled": False,
         "health": "Maintenance",
         "health_job": False,
         "hostname": "device01",
@@ -985,10 +988,17 @@ def test_devices_update(setup):
 
     # 6. update description
     server("admin", "admin").scheduler.devices.update(
-        "black01", None, None, None, None, None, "hello"
+        "black01", None, None, None, None, None, None, "hello"
     )
     device.refresh_from_db()
     assert device.description == "hello"  # nosec
+
+    # 7. update health check disable
+    server("admin", "admin").scheduler.devices.update(
+        "black01", None, None, None, None, None, True
+    )
+    device.refresh_from_db()
+    assert device.disable_health_check == True  # nosec
 
 
 @pytest.mark.django_db

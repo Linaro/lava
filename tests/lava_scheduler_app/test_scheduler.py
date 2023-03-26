@@ -121,6 +121,17 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(device.state, Device.STATE_IDLE)
         self.assertEqual(device.current_job(), None)
 
+    def test_device_health_disabled(self):
+        Device.get_health_check = _minimal_valid_job
+        self.device01.disable_health_check = True
+        self.device01.save()
+        available_devices = schedule_health_checks(
+            logging.getLogger(), [], ["worker-01", "worker-03"]
+        )
+        self._check_hc_not_scheduled(self.device01)
+        self._check_hc_scheduled(self.device03)
+        self.assertEqual(available_devices, {"panda": ["panda01"]})
+
     def test_without_health_checks(self):
         # Make sure that get_health_check does return None
         Device.get_health_check = lambda cls: None
