@@ -627,6 +627,11 @@ class Device(RestrictedObject):
         help_text=("Is this device synced from device dictionary or manually created."),
     )
 
+    disable_health_check = models.BooleanField(
+        default=False,
+        help_text=("Disable health check for this device."),
+    )
+
     def __str__(self):
         return "%s (%s, health %s)" % (
             self.hostname,

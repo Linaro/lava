@@ -370,7 +370,13 @@ class DeviceAdmin(admin.ModelAdmin):
         return not obj.device_type.disable_health_check
 
     health_check_enabled.boolean = True
-    health_check_enabled.short_description = "HC enabled"
+    health_check_enabled.short_description = "HC enabled(dt)"
+
+    def device_health_check_enabled(self, obj):
+        return not obj.disable_health_check
+
+    device_health_check_enabled.boolean = True
+    device_health_check_enabled.short_description = "HC enabled(d)"
 
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -404,6 +410,7 @@ class DeviceAdmin(admin.ModelAdmin):
                 )
             },
         ),
+        ("Health checks", {"fields": ("disable_health_check",)}),
         (
             "Advanced properties",
             {
@@ -427,6 +434,7 @@ class DeviceAdmin(admin.ModelAdmin):
         "health",
         "has_health_check",
         "health_check_enabled",
+        "device_health_check_enabled",
         "valid_device",
         "is_synced",
     )
