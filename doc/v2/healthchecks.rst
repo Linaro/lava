@@ -31,7 +31,9 @@ used by the device. Health checks are run as the lava-health user.
    check job database field in the device-type is unused.
 
 .. note:: Admins can temporarily disable health checks for all devices of a
-   given type in the device-type admin page.
+   given type in the device-type admin page. Meanwhile, can also disable
+   some devices' health checks in the device admin page even with their
+   device-type's health check enabled.
 
 .. _yaml_health_checks:
 
