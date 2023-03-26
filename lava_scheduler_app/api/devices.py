@@ -358,6 +358,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                 }
                 for p in GroupDevicePermission.objects.filter(device=device)
             ],
+            "hc_disabled": device.disable_health_check,
         }
         if device.worker_host is not None:
             device_dict["worker"] = device.worker_host.hostname
@@ -372,6 +373,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         group_name=None,
         public=True,
         health=None,
+        hc_disabled=None,
         description=None,
         device_type=None,
     ):
@@ -403,6 +405,8 @@ class SchedulerDevicesAPI(ExposedV2API):
           DEPRECATED: This field is not used any more
         `health`: string
           Device health, among ["GOOD", "UNKNOWN", "LOOPING", "BAD", "MAINTENANCE", "RETIRED"]
+        `hc_disabled`: boolean
+          Disable health checks for this device
         `description`: string
           Device description
         `device_type`: string
@@ -455,6 +459,9 @@ class SchedulerDevicesAPI(ExposedV2API):
                         raise xmlrpc.client.Fault(
                             404, "Unable to find device-type '%s'" % device_type
                         )
+
+                if hc_disabled is not None:
+                    device.disable_health_check = hc_disabled
                 device.save()
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
