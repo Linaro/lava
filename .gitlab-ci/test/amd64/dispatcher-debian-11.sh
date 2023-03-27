@@ -12,7 +12,11 @@ then
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
-  python3 -m pytest --pythonwarnings=default --cache-clear -v --junitxml=dispatcher.xml \
+  python3 -m pytest \
+      --color=yes \
+      --pythonwarnings=default \
+      --cache-clear --verbose \
+      --junitxml=dispatcher.xml \
     tests/lava_dispatcher \
     tests/lava_dispatcher_host \
     tests/lava_coordinator

@@ -12,7 +12,11 @@ then
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
-  python3 -m pytest --pythonwarnings=default --cache-clear -v --junitxml=server.xml \
+  python3 -m pytest \
+      --color=yes \
+      --pythonwarnings=default \
+      --cache-clear --verbose \
+      --junitxml=server.xml \
     tests/lava_common \
     tests/lava_scheduler_app \
     tests/lava_results_app \
