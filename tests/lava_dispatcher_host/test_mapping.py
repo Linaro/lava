@@ -39,7 +39,8 @@ def setup(monkeypatch, mocker, tmpdir):
 def test_simple_mapping(tmpdir):
     device_info = {"foo": "bar"}
     add_device_container_mapping("1", device_info, "mycontainer")
-    data = yaml_safe_load(open(tmpdir / "1" / "usbmap.yaml"))[0]
+    with open(tmpdir / "1" / "usbmap.yaml") as f:
+        data = yaml_safe_load(f)[0]
 
     assert data["device_info"] == device_info
     assert data["container"] == "mycontainer"
@@ -255,7 +256,8 @@ def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
         },
         "mycontainer2",
     )
-    data = yaml_safe_load(open(tmpdir / "1" / "usbmap.yaml"))
+    with open(tmpdir / "1" / "usbmap.yaml") as f:
+        data = yaml_safe_load(f)
     assert len(data) == 1
     assert data[0]["container"] == "mycontainer2"
 
