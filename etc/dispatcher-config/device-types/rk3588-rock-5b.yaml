@@ -1,0 +1,27 @@
+{# set device_type = "rk3588-rock-5b" #}
+
+{% extends 'base-uboot.jinja2' %}
+
+{% set bootloader_prompt = '=>' %}
+{% set boot_message = 'Starting kernel' %}
+{% set boot_character_delay = 10 %}
+{% set interrupt_prompt =  interrupt_prompt|default('Hit key to stop autoboot') %}
+
+{% set uboot_needs_usb = true %}
+{% set interrupt_ctrl_list = interrupt_ctrl_list | default(['c']) %}
+# initramfs seems corrupted if loading at the normal memory end
+{% set uboot_initrd_high = '0x8fffffff' %}
+
+{% set baud_rate = '1500000' %}
+
+{% set booti_kernel_addr = '0x0400000' %}
+{% set booti_ramdisk_addr = '0xa200000' %}
+{% set booti_dtb_addr = '0xa100000' %}
+
+{% set bootm_kernel_addr = '0x0400000' %}
+{% set bootm_ramdisk_addr = '0xa200000' %}
+{% set bootm_dtb_addr = '0xa100000' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set console_device = console_device|default('ttyS2') %}
