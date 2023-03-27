@@ -122,10 +122,11 @@ def test_run(action, mocker):
     assert lava_test_runner.exists()
 
     environmentfile = overlay / "environment"
-    env = {
-        re.sub(r"=.*$", "", l): re.sub("^[^=]*=", "", l)
-        for l in environmentfile.open().read().splitlines()
-    }
+    with environmentfile.open() as env_file:
+        env = {
+            re.sub(r"=.*$", "", line): re.sub("^[^=]*=", "", line)
+            for line in env_file.read().splitlines()
+        }
     assert env["export ANDROID_SERIAL"] == "0123456789"
     assert env["export LAVA_BOARD_ID"] == "0123456789"
     assert env["export LAVA_CONNECTION_COMMAND_UART0"] == "'telnet localhost 4002'"
