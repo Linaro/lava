@@ -244,15 +244,6 @@ class TestConnection(StdoutTestCase):
             self.skipTest(
                 f"no schroot support for {schroot_action.parameters['schroot']}"
             )
-        bad_chroot = "unobtainium"
-        schroot_action.parsed_command(
-            ["schroot", "-i", "-c", bad_chroot], allow_fail=True
-        )
-        if (
-            not "Chroot not found" in schroot_action.results["output"]
-            or schroot_action.results["returncode"] == 0
-        ):
-            self.fail("Failed to catch a missing schroot name")
 
         self.assertIsInstance(schroot_action, SchrootAction)
 
@@ -262,6 +253,30 @@ class TestConnection(StdoutTestCase):
             if "boot" in boot and "schroot" in boot["boot"]
         ][0]
         self.assertEqual(boot_act["schroot"], schroot_action.parameters["schroot"])
+
+    @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
+    def test_schroot_params_bad_schroot_name(self):
+        schroot_action = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "schroot-login"
+        ][0]
+
+        bad_chroot = "unobtainium"
+        schroot_action.parsed_command(
+            ["schroot", "-i", "-c", bad_chroot], allow_fail=True
+        )
+
+        self.assertIn(
+            "Chroot not found",
+            schroot_action.results["output"],
+            "Failed to catch a missing schroot name",
+        )
+        self.assertNotEqual(
+            schroot_action.results["returncode"],
+            0,
+            "Failed to catch a missing schroot name",
+        )
 
     def test_primary_ssh(self):
         factory = ConnectionFactory()
