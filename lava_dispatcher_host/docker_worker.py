@@ -34,6 +34,7 @@ import sys
 import time
 
 import requests
+import sentry_sdk
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
@@ -344,8 +345,9 @@ def main():
         LOG.info("Get server version")
         try:
             server_version = get_server_version(options)
-        except requests.RequestException:
+        except requests.RequestException as exc:
             LOG.warning("-> Unable to get server version")
+            sentry_sdk.capture_exception(exc)
             time.sleep(5)
             continue
         LOG.info("=> %s", server_version)
@@ -353,8 +355,13 @@ def main():
             run(server_version, options)
         except Exception as exc:
             LOG.exception(exc)
+            sentry_sdk.capture_exception(exc)
             time.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        LOG.info("[EXIT] Received Ctrl+C")
+        sys.exit(1)

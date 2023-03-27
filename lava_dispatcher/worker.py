@@ -40,6 +40,7 @@ from typing import Any, Dict, Iterator, List, Optional, Union
 
 import aiohttp
 import requests
+import sentry_sdk
 import yaml
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
@@ -489,7 +490,9 @@ def check(url: str, jobs: JobsDB) -> None:
 
 
 class ServerUnavailable(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
+        sentry_sdk.capture_exception(self)
 
 
 class VersionMismatch(Exception):

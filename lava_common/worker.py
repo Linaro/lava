@@ -146,8 +146,4 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
 
 
 def init_sentry_sdk(dsn: str) -> NoReturn:
-    sentry_sdk.init(
-        dsn=dsn,
-        release=f"lava@{__version__}",
-        traces_sample_rate=1.0,
-    )
+    sentry_sdk.init(dsn=dsn, release=f"lava@{__version__}", traces_sample_rate=1.0)
