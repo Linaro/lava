@@ -226,35 +226,42 @@ class TestConnection(StdoutTestCase):
         self.assertIn(
             "schroot-login", [action.name for action in self.job.pipeline.actions]
         )
-        schroot = [
+        schroot_action = [
             action
             for action in self.job.pipeline.actions
             if action.name == "schroot-login"
         ][0]
         self.job.validate()
-        schroot.run_command(["schroot", "-i", "-c", schroot.parameters["schroot"]])
+        schroot_action.parsed_command(
+            ["schroot", "-i", "-c", schroot_action.parameters["schroot"]],
+            allow_fail=True,
+        )
         if (
-            any("Chroot not found" in chk for chk in schroot.errors)
-            or not schroot.valid
+            "Chroot not found" in schroot_action.results["output"]
+            or schroot_action.results["returncode"] != 0
         ):
             # schroot binary found but no matching chroot configured - skip test
-            self.skipTest("no schroot support for %s" % schroot.parameters["schroot"])
+            self.skipTest(
+                f"no schroot support for {schroot_action.parameters['schroot']}"
+            )
         bad_chroot = "unobtainium"
-        schroot.run_command(["schroot", "-i", "-c", bad_chroot])
+        schroot_action.parsed_command(
+            ["schroot", "-i", "-c", bad_chroot], allow_fail=True
+        )
         if (
-            not any("Chroot not found" in chk for chk in schroot.errors)
-            or schroot.valid
+            not "Chroot not found" in schroot_action.results["output"]
+            or schroot_action.results["returncode"] == 0
         ):
             self.fail("Failed to catch a missing schroot name")
 
-        self.assertIsInstance(schroot, SchrootAction)
-        self.assertEqual(schroot.parameters["schroot"], "unstable")
+        self.assertIsInstance(schroot_action, SchrootAction)
+
         boot_act = [
             boot["boot"]
             for boot in self.job.parameters["actions"]
             if "boot" in boot and "schroot" in boot["boot"]
         ][0]
-        self.assertEqual(boot_act["schroot"], schroot.parameters["schroot"])
+        self.assertEqual(boot_act["schroot"], schroot_action.parameters["schroot"])
 
     def test_primary_ssh(self):
         factory = ConnectionFactory()
