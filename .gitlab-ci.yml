@@ -48,10 +48,7 @@ include:
   image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
-      junit:
-      - dispatcher.xml
-      - dispatcher-host.xml
-      - coordinator.xml
+      junit: dispatcher.xml
 
 .server: &server
   <<: *job
@@ -59,9 +56,7 @@ include:
   image: hub.lavasoftware.org/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
-      junit:
-      - common.xml
-      - server.xml
+      junit: server.xml
 
 amd64/dispatcher-debian-11: *dispatcher
 amd64/server-debian-11: *server
