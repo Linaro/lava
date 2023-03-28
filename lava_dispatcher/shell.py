@@ -20,8 +20,8 @@
 
 import contextlib
 import logging
-import sre_constants
 import time
+from re import error as re_error
 
 import pexpect
 
@@ -173,8 +173,8 @@ class ShellCommand(pexpect.spawn):
         """
         try:
             proc = super().expect(*args, **kw)
-        except sre_constants.error as exc:
-            msg = "Invalid regular expression '%s': %s" % (exc.pattern, exc.msg)
+        except re_error as exc:
+            msg = f"Invalid regular expression '{exc.pattern}': {exc.msg}"
             raise TestError(msg)
         except pexpect.TIMEOUT:
             raise TestError("ShellCommand command timed out.")
