@@ -25,7 +25,6 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
 
-from lava_common.exceptions import PermissionNameError
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import (
@@ -277,7 +276,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             group = Group.objects.get(name=group)
         except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
         GroupDevicePermission.objects.assign_perm(permission, group, device)
 
     @check_staff
@@ -289,7 +288,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         try:
             group = Group.objects.get(name=group)
         except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
         GroupDevicePermission.objects.remove_perm(permission, group, device)
 
     @check_staff

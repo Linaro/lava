@@ -43,7 +43,7 @@ class UsersAPI(ExposedV2API):
         try:
             User.objects.get(username=username).delete()
         except User.DoesNotExist:
-            raise xmlrpc.client.Fault(400, "Bad request: user does not exists")
+            raise xmlrpc.client.Fault(404, "Bad request: user does not exists")
 
     @check_perm("auth.view_user")
     def list(self):

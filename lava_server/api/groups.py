@@ -25,7 +25,7 @@ class GroupsAPI(ExposedV2API):
         try:
             Group.objects.get(name=name).delete()
         except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(400, "Bad request: group does not exists")
+            raise xmlrpc.client.Fault(404, "Bad request: group does not exists")
 
     @check_perm("auth.view_group")
     def list(self):

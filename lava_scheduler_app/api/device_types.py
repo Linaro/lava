@@ -336,7 +336,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             group = Group.objects.get(name=group)
         except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
         GroupDeviceTypePermission.objects.assign_perm(permission, group, dt)
 
     @check_staff
@@ -348,7 +348,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         try:
             group = Group.objects.get(name=group)
         except Group.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Group '%' was not found." % group)
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
         GroupDeviceTypePermission.objects.remove_perm(permission, group, dt)
 
     @check_staff

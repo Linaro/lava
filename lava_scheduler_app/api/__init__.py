@@ -64,7 +64,7 @@ def check_perm(perm):
             if not self.user.has_perm(perm):
                 raise xmlrpc.client.Fault(
                     403,
-                    "User '%s' is missing permission %s ." % (self.user.username, perm),
+                    "User '%s' is missing permission %s." % (self.user.username, perm),
                 )
             return f(self, *args, **kwargs)
 
