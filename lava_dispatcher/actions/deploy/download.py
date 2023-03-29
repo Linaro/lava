@@ -24,7 +24,6 @@
 # python2 only
 
 import contextlib
-import errno
 import hashlib
 import math
 import os
@@ -290,12 +289,9 @@ class DownloadHandler(Action):
         # Create a fresh directory if the old one has been removed by a previous cleanup
         # (when retrying inside a RetryAction)
         try:
-            os.makedirs(self.path, 0o755)
+            os.makedirs(self.path, 0o755, exist_ok=True)
         except OSError as exc:
-            if exc.errno != errno.EEXIST:
-                raise InfrastructureError(
-                    "Unable to create %s: %s" % (self.path, str(exc))
-                )
+            raise InfrastructureError(f"Unable to create {self.path}: {exc}")
 
         compression = self._compression()
         if self.key == "ramdisk":
