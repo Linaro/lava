@@ -92,6 +92,12 @@ lava-server:
   PyMongo:
     name: python3-pymongo
     unittests: true
+  telnet:  # Multinode tests
+    name: telnet
+    unittests: true
+  mkimage:  # Multinode tests
+    name: u-boot-tools
+    unittests: true
 
 lava-dispatcher:
   aiohttp:
