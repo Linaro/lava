@@ -19,5 +19,5 @@ else
       --junitxml=dispatcher.xml \
     tests/lava_dispatcher \
     tests/lava_dispatcher_host \
-    tests/lava_coordinator
+    tests/lava_coordinator "$@"
 fi

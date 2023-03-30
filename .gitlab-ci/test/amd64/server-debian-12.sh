@@ -22,5 +22,5 @@ else
     tests/lava_results_app \
     tests/linaro_django_xmlrpc \
     tests/lava_rest_app \
-    tests/lava_server
+    tests/lava_server "$@"
 fi
