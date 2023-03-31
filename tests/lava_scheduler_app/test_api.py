@@ -478,6 +478,9 @@ def setup(db):
     admin = User.objects.create_user(
         username="admin", password="admin", is_superuser=True
     )  # nosec
+    staff = User.objects.create_user(
+        username="staff", password="staff", is_staff=True, is_superuser=False
+    )
     user.user_permissions.add(Permission.objects.get(codename="add_alias"))
     user.user_permissions.add(Permission.objects.get(codename="delete_alias"))
 
@@ -717,6 +720,146 @@ def test_devices_list(setup):
             "type": "black",
         }
     ]
+
+
+@pytest.mark.django_db
+def test_device_perms_add(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+    device = Device.objects.create(hostname="d-01", device_type=dt)
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.devices.perms_add("d-01", "group", "change_device")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert GroupDevicePermission.objects.filter(device=device).count() == 0
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.devices.perms_add(
+            "d-01", "group", "change_device"
+        )
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+    assert GroupDevicePermission.objects.filter(device=device).count() == 0
+
+    # 3. as staff => success
+    server("staff", "staff").scheduler.devices.perms_add(
+        "d-01", "group", "change_device"
+    )
+    group_device_perms = GroupDevicePermission.objects.filter(device=device)
+    assert group_device_perms.count() == 1
+    group_device_perm = GroupDevicePermission.objects.filter(device=device)[0]
+    assert group_device_perm.device.hostname == "d-01"
+    assert group_device_perm.group.name == "group"
+    assert group_device_perm.permission.codename == "change_device"
+
+    # 4. device does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.devices.perms_add(
+            "d-02", "group", "change_device"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device 'd-02' was not found."
+
+    # 5. group does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.devices.perms_add(
+            "d-01", "group11", "change_device"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Group 'group11' was not found."
+
+
+@pytest.mark.django_db
+def test_device_perms_delete(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+    device = Device.objects.create(hostname="d-01", device_type=dt)
+    GroupDevicePermission.objects.assign_perm(
+        "change_device", Group.objects.get(name="group"), device
+    )
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.devices.perms_delete("d-01", "group", "change_device")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert GroupDevicePermission.objects.filter(device=device).count() == 1
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.devices.perms_delete(
+            "d-01", "group", "change_device"
+        )
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+    assert GroupDevicePermission.objects.filter(device=device).count() == 1
+
+    # 3. as staff => success
+    server("staff", "staff").scheduler.devices.perms_delete(
+        "d-01", "group", "change_device"
+    )
+    assert GroupDevicePermission.objects.filter(device=device).count() == 0
+
+    # 4. device does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.devices.perms_delete(
+            "d-02", "group", "change_device"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device 'd-02' was not found."
+
+    # 5. group does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.devices.perms_delete(
+            "d-01", "group11", "change_device"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Group 'group11' was not found."
+
+
+@pytest.mark.django_db
+def test_device_perms_list(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+    device = Device.objects.create(hostname="d-01", device_type=dt)
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.devices.perms_list("d-01")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.devices.perms_list("d-01")
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+
+    # 3. as staff => success.
+    perms = server("staff", "staff").scheduler.devices.perms_list("d-01")
+    assert perms == []
+    GroupDevicePermission.objects.assign_perm(
+        "change_device", Group.objects.get(name="group"), device
+    )
+    perms = server("staff", "staff").scheduler.devices.perms_list("d-01")
+    assert len(perms) == 1
+    assert perms[0]["name"] == "change_device"
+    assert perms[0]["group"] == "group"
+
+    # 4. device does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.devices.perms_list("d-02")
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device 'd-02' was not found."
 
 
 @pytest.mark.django_db
@@ -1061,6 +1204,145 @@ def test_device_types_list(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
+def test_device_types_perms_add(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.device_types.perms_add("dt-01", "group", "change_devicetype")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert GroupDeviceTypePermission.objects.filter(devicetype=dt).count() == 0
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.device_types.perms_add(
+            "dt-01", "group", "change_devicetype"
+        )
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+    assert GroupDeviceTypePermission.objects.filter(devicetype=dt).count() == 0
+
+    # 3. as staff => success
+    server("staff", "staff").scheduler.device_types.perms_add(
+        "dt-01", "group", "change_devicetype"
+    )
+    group_dt_perms = GroupDeviceTypePermission.objects.filter(devicetype=dt)
+    assert group_dt_perms.count() == 1
+    group_dt_perm = GroupDeviceTypePermission.objects.filter(devicetype=dt)[0]
+    assert group_dt_perm.devicetype.name == "dt-01"
+    assert group_dt_perm.group.name == "group"
+    assert group_dt_perm.permission.codename == "change_devicetype"
+
+    # 4. device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.device_types.perms_add(
+            "dt-02", "group", "change_devicetype"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device-type 'dt-02' was not found."
+
+    # 5. group does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.device_types.perms_add(
+            "dt-01", "group11", "change_devicetype"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Group 'group11' was not found."
+
+
+@pytest.mark.django_db
+def test_device_types_perms_delete(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+    GroupDeviceTypePermission.objects.assign_perm(
+        "change_devicetype", Group.objects.get(name="group"), dt
+    )
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.device_types.perms_delete(
+            "dt-01", "group", "change_devicetype"
+        )
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert GroupDeviceTypePermission.objects.filter(devicetype=dt).count() == 1
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.device_types.perms_delete(
+            "dt-01", "group", "change_devicetype"
+        )
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+    assert GroupDeviceTypePermission.objects.filter(devicetype=dt).count() == 1
+
+    # 3. as staff => success
+    server("staff", "staff").scheduler.device_types.perms_delete(
+        "dt-01", "group", "change_devicetype"
+    )
+    assert GroupDeviceTypePermission.objects.filter(devicetype=dt).count() == 0
+
+    # 4. device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.device_types.perms_delete(
+            "dt-02", "group", "change_devicetype"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device-type 'dt-02' was not found."
+
+    # 5. group does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.device_types.perms_delete(
+            "dt-01", "group11", "change_devicetype"
+        )
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Group 'group11' was not found."
+
+
+@pytest.mark.django_db
+def test_device_types_perms_list(setup):
+    dt = DeviceType.objects.create(name="dt-01")
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server().scheduler.device_types.perms_list("dt-01")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.device_types.perms_list("dt-01")
+    assert exc.value.faultCode == 403
+    assert exc.value.faultString == "forbidden"
+
+    # 3. as staff => success.
+    perms = server("staff", "staff").scheduler.device_types.perms_list("dt-01")
+    assert perms == []
+    GroupDeviceTypePermission.objects.assign_perm(
+        "change_devicetype", Group.objects.get(name="group"), dt
+    )
+    perms = server("staff", "staff").scheduler.device_types.perms_list("dt-01")
+    assert len(perms) == 1
+    assert perms[0]["name"] == "change_devicetype"
+    assert perms[0]["group"] == "group"
+
+    # 4. device-type does not exist
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("staff", "staff").scheduler.device_types.perms_list("dt-02")
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device-type 'dt-02' was not found."
+
+
+@pytest.mark.django_db
 def test_device_types_show(setup):
     # 1. Device-type does not exist
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1224,7 +1506,7 @@ def test_tags_add(setup):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.add_tag ."
+        == "User 'user' is missing permission lava_scheduler_app.add_tag."
     )
     assert Tag.objects.count() == 0  # nosec
 
@@ -1326,7 +1608,7 @@ def test_workers_add(setup):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.add_worker ."
+        == "User 'user' is missing permission lava_scheduler_app.add_worker."
     )
     assert (  # nosec
         Worker.objects.count() == 1
@@ -1630,7 +1912,7 @@ def test_workers_set_config_exceptions(setup, mocker, tmpdir):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.change_worker ."
+        == "User 'user' is missing permission lava_scheduler_app.change_worker."
     )
 
 
@@ -1678,7 +1960,7 @@ def test_workers_set_env_exceptions(setup, mocker, tmpdir):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.change_worker ."
+        == "User 'user' is missing permission lava_scheduler_app.change_worker."
     )
 
 
@@ -1740,7 +2022,7 @@ def test_workers_set_env_dut_exceptions(setup, mocker, tmpdir):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.change_worker ."
+        == "User 'user' is missing permission lava_scheduler_app.change_worker."
     )
 
 
@@ -1806,7 +2088,7 @@ def test_workers_update(setup):
     assert exc.value.faultCode == 403  # nosec
     assert (  # nosec
         exc.value.faultString
-        == "User 'user' is missing permission lava_scheduler_app.change_worker ."
+        == "User 'user' is missing permission lava_scheduler_app.change_worker."
     )
 
     # 3. as admin

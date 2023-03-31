@@ -21,11 +21,13 @@ import contextlib
 import os
 import xmlrpc.client
 
+from django.contrib.auth.models import Group
 from django.db import IntegrityError
 from django.forms import ValidationError
 
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Alias, DeviceType
+from lava_scheduler_app.models import Alias, DeviceType, GroupDeviceTypePermission
+from lava_server.api import check_staff
 from lava_server.files import File
 from linaro_django_xmlrpc.models import ExposedV2API
 
@@ -324,6 +326,46 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                         }
                     )
         return ret
+
+    @check_staff
+    def perms_add(self, name, group, permission):
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
+        GroupDeviceTypePermission.objects.assign_perm(permission, group, dt)
+
+    @check_staff
+    def perms_delete(self, name, group, permission):
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        try:
+            group = Group.objects.get(name=group)
+        except Group.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Group '%s' was not found." % group)
+        GroupDeviceTypePermission.objects.remove_perm(permission, group, dt)
+
+    @check_staff
+    def perms_list(self, name):
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+
+        perms = GroupDeviceTypePermission.objects.filter(devicetype=dt)
+        return [
+            {
+                "name": p.permission.codename,
+                "group": p.group.name,
+            }
+            for p in perms
+        ]
 
     def show(self, name):
         """
