@@ -19,6 +19,7 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
+import shutil
 import subprocess
 import time
 
@@ -33,6 +34,7 @@ from lava_dispatcher.utils.docker import DockerRun
 
 LAVA_NODEBOOTER_PATH = "/home/lava/downloads"
 LAVA_DOWNLOADS_PATH = "/var/lib/lava/dispatcher/tmp"
+NODEBOOTER_HOME = "/data/nodebooter/"
 
 
 class BootNodebooter(Boot):
@@ -93,7 +95,6 @@ class RunNodebooterContainer(Action):
         self.docker_image = self.parameters["docker"]
 
     def run(self, connection, max_end_time):
-        NODEBOOTER_HOME = "/data/nodebooter/"
         VOLUMES = {
             f"{NODEBOOTER_HOME}docker_mount": "/home/shared",
             f"{NODEBOOTER_HOME}tftpboot": "/var/lib/tftpboot",
@@ -173,28 +174,6 @@ class ConfigureNodebooter(Action):
         # Make sure nodebooter container is stopped at the end.
         self.cleanup_required = True
 
-        # Manual intervention for nodebooter container.
-        # TODO: Remove this once we have higher level of integration.
-        machine_interface = self.parameters["docker"]["network_interface"]
-        radvd_replace_cmd = [
-            "docker",
-            "exec",
-            "-d",
-            "nodebooter",
-            "sed",
-            "-i",
-            "-e",
-            "'s/enp102s0f0/%s/g'" % machine_interface,
-            "/etc/radvd.conf",
-        ]
-        try:
-            subprocess.check_output(  # nosec - internal.
-                radvd_replace_cmd,
-                stderr=subprocess.STDOUT,
-            )
-        except subprocess.CalledProcessError as exc:
-            self.errors = str(exc)
-
         # Certain daemons require restart after the container is up.
         services_restart_required = ["radvd", "naas", "nodebooter"]
         for service in services_restart_required:
@@ -230,6 +209,7 @@ class ConfigureNodebooter(Action):
         self.logger.debug("Nodebooter API available at: %s", url)
 
         # Use API to add the machine to nodebooter with preconfigured data.
+        machine_interface = self.parameters["docker"]["network_interface"]
         try:
             res = None
             headers = {"Content-Type": "application/json"}
@@ -283,4 +263,7 @@ class ConfigureNodebooter(Action):
             action="shared", label="shared", key="nodebooter_container"
         )
         self.logger.debug("Stopping container %s", container)
+        # Stop nodebooter container
         self.run_cmd("docker stop %s" % (container), allow_fail=True)
+        # Remove all files from nodebooter dir
+        shutil.rmtree(NODEBOOTER_HOME)
