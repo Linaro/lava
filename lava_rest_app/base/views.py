@@ -402,4 +402,4 @@ class WorkerViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = "__all__"
 
     def get_queryset(self):
-        return self.queryset.all()
+        return self.queryset.visible_by_user(self.request.user)

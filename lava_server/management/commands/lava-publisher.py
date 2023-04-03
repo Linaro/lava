@@ -123,14 +123,18 @@ async def zmq_proxy(app):
                         futures.append(ws.socket.send_json(data))
 
         elif topic.endswith(".worker"):
-            # Only forward to users as workers will discard it
-            futures.extend(
-                [
-                    ws.socket.send_json(data)
-                    for ws in set(app["websockets"])
-                    if ws.kind == "user"
-                ]
-            )
+            worker = await sync_to_async(Worker.objects.get)(hostname=content["worker"])
+            for ws in app["websockets"]:
+                # Only forward to users as workers will discard it
+                if ws.kind == "user":
+                    user = AnonymousUser()
+                    if ws.name:
+                        with contextlib.suppress(User.DoesNotExist):
+                            user = await sync_to_async(User.objects.get)(
+                                username=ws.name
+                            )
+                    if await sync_to_async(worker.can_view)(user):
+                        futures.append(ws.socket.send_json(data))
 
         await asyncio.gather(*futures)
 
