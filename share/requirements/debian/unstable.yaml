@@ -1,3 +1,4 @@
+---
 # names must exist as binary packages in the suite
 # for this distribution at a version which matches the constraint.
 # else move the dependency to a new file for a suite which
@@ -91,6 +92,12 @@ lava-server:
     unittests: true
   PyMongo:
     name: python3-pymongo
+    unittests: true
+  telnet:  # Multinode tests
+    name: telnet
+    unittests: true
+  mkimage:  # Multinode tests
+    name: u-boot-tools
     unittests: true
 
 lava-dispatcher:
