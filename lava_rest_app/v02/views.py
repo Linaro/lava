@@ -65,7 +65,7 @@ from lava_scheduler_app.models import (
     TestJob,
 )
 from lava_scheduler_app.schema import SubmissionException
-from lava_scheduler_app.views import __set_device_health__
+from lava_scheduler_app.views import set_device_health
 from lava_server.files import File
 
 from . import serializers
@@ -445,7 +445,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
         health = request.data.get("health", None)
         if health is not None:
             health = health.upper()
-        response = __set_device_health__(device, request.user, health, reason)
+        response = set_device_health(device, request.user, health, reason)
         if response is None:
             data = {"message": "OK"}
             return Response(data, status=status.HTTP_202_ACCEPTED)

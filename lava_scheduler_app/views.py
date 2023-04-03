@@ -2590,7 +2590,7 @@ def device_reports(request, pk):
     )
 
 
-def __set_device_health__(device, user, health, reason):
+def set_device_health(device, user, health, reason):
     with transaction.atomic():
         if not device.can_change(user):
             return HttpResponseForbidden("Permission denied")
@@ -2620,7 +2620,7 @@ def device_health(request, pk):
             device = Device.objects.select_for_update().get(pk=pk)
             health = request.POST.get("health").upper()
             reason = escape(request.POST.get("reason"))
-            response = __set_device_health__(device, request.user, health, reason)
+            response = set_device_health(device, request.user, health, reason)
             if response is None:
                 return HttpResponseRedirect(
                     reverse("lava.scheduler.device.detail", args=[device.pk])
