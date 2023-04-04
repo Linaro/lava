@@ -184,8 +184,6 @@ def start_job(
             err_file = (base_dir / "stderr").open("w")
         env = create_environ(env_str)
         args = [
-            # Run lava-run under nice so every sub-commands will be niced
-            "nice",
             "lava-run",
             f"--device={base_dir / 'device.yaml'}",
             f"--dispatcher={base_dir / 'dispatcher.yaml'}",
