@@ -23,7 +23,9 @@
 
 import os
 import re
+import shutil
 import tempfile
+from pathlib import Path
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -203,6 +205,15 @@ class XnbdAction(Action):
                 os.path.realpath(filesystem.tftpd_dir()),
                 self.nbd_root,
             )
+        # on debian, nbd-server change user to nbd
+        if os.path.exists("/etc/nbd-server/config"):
+            data = Path("/etc/nbd-server/config").read_text(encoding="utf-8")
+            # user will always be on the second line at minimum due to [generic] header
+            ret = re.search(r"\n\s*user\s*=\s*([a-z0-9_-]+)", data)
+            if ret and ret.lastindex == 1:
+                self.logger.debug("NBD server will be running as %s" % ret.group(1))
+                shutil.chown(fullpath_nbdroot, user=ret.group(1))
+
         nbd_cmd = [
             "nbd-server",
             "%s" % self.nbd_server_port,
