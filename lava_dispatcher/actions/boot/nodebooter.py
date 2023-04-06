@@ -107,6 +107,7 @@ class RunNodebooterContainer(Action):
             f"{NODEBOOTER_HOME}docker_shm": "/dev/shm",
             f"{NODEBOOTER_HOME}ovss": "/opt/ovss",
             LAVA_DOWNLOADS_PATH: LAVA_NODEBOOTER_PATH,
+            "/sys/fs/cgroup": "/sys/fs/cgroup",
         }
         INIT_EXEC = "/usr/sbin/init"
 
