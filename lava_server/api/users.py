@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 
 from lava_scheduler_app.api import check_perm
+from lava_scheduler_app.utils import get_ldap_user_properties
 from linaro_django_xmlrpc.models import ExposedV2API
 
 
@@ -20,6 +21,7 @@ class UsersAPI(ExposedV2API):
         is_active=True,
         is_staff=False,
         is_superuser=False,
+        ldap=False,
     ):
         try:
             args = {
@@ -34,9 +36,24 @@ class UsersAPI(ExposedV2API):
                 args["last_name"] = last_name
             if email is not None:
                 args["email"] = email
+            if ldap:
+                import ldap
+
+                ldap_user = get_ldap_user_properties(username)
+                args["first_name"] = ldap_user.get("given_name", "")
+                args["last_name"] = ldap_user.get("sn", "")
+                args["email"] = ldap_user.get("mail", "")
             user = User.objects.create(**args)
         except (IntegrityError, ValidationError) as exc:
             raise xmlrpc.client.Fault(400, "Bad request: user already exists?")
+        except ldap.NO_SUCH_OBJECT:
+            raise xmlrpc.client.Fault(
+                404, "User '%s' was not found in LDAP." % username
+            )
+        except ldap.UNAVAILABLE:
+            raise xmlrpc.client.Fault(
+                400, "Bad request: authentication via LDAP not configured."
+            )
 
     @check_perm("auth.change_user")
     def delete(self, username):

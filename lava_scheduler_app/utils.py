@@ -25,6 +25,8 @@ import os
 import subprocess  # nosec verified
 
 from django.conf import settings
+from django.contrib.auth.models import User
+from django.template.defaultfilters import truncatechars
 
 from lava_scheduler_app.schema import SubmissionException
 
@@ -279,7 +281,8 @@ def get_ldap_user_properties(ldap_user):
      given_name: 'Senthil'
     }
 
-    If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT
+    If given ldap_user does not exist, then raise ldap.NO_SUCH_OBJECT.
+    Raise ldap.UNAVAILABLE if LDAP authentication not configured.
     """
     import ldap
 
@@ -316,9 +319,31 @@ def get_ldap_user_properties(ldap_user):
                     user_properties["given_name"] = result_data.get(
                         "givenName", [None]
                     )[0]
-                    return {k: v.decode() for (k, v) in user_properties.items()}
+
+                    user_properties = {
+                        k: v.decode() for (k, v) in user_properties.items()
+                    }
+
+                    # Grab max_length and truncate first and last name.
+                    # For some users, first or last name is too long to create.
+                    first_name_max_length = User._meta.get_field(
+                        "first_name"
+                    ).max_length
+                    last_name_max_length = User._meta.get_field("last_name").max_length
+                    user_properties["sn"] = truncatechars(
+                        user_properties["sn"], last_name_max_length
+                    )
+                    user_properties["given_name"] = truncatechars(
+                        user_properties["given_name"], first_name_max_length
+                    )
+
+                    return user_properties
+                elif len(result) == 0:
+                    raise ldap.NO_SUCH_OBJECT
             except ldap.NO_SUCH_OBJECT:
                 raise
+    else:
+        raise ldap.UNAVAILABLE
 
 
 def get_user_ip(request):
