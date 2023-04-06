@@ -19,6 +19,7 @@
 
 import xmlrpc.client
 
+import ldap
 import pytest
 from django.contrib.auth.models import Group, User
 
@@ -561,6 +562,71 @@ class TestLavaServerApi:
         assert user.is_active
         assert user.is_staff
         assert user.is_superuser
+
+    def test_auth_users_add_ldap_false(self):
+        user = self.ensure_user("test", "test@mail.net", "test", True)
+        server = self.server_proxy("test", "test")
+
+        server.auth.users.add(
+            "first.last", None, None, None, False, False, False, False
+        )
+        user = User.objects.get(username="first.last")
+        assert user.first_name == ""
+        assert user.last_name == ""
+        assert user.email == ""
+
+    def test_auth_users_add_ldap_true(self, mocker):
+        user = self.ensure_user("test", "test@mail.net", "test", True)
+        server = self.server_proxy("test", "test")
+
+        mocker.patch(
+            "lava_server.api.users.get_ldap_user_properties",
+            return_value={
+                "uid": "first.last",
+                "mail": "first.last@linaro.org",
+                "sn": "Last",
+                "given_name": "First",
+            },
+        )
+
+        server.auth.users.add("first.last", None, None, None, False, False, False, True)
+        user = User.objects.get(username="first.last")
+        assert user.first_name == "First"
+        assert user.last_name == "Last"
+        assert user.email == "first.last@linaro.org"
+
+    def test_auth_users_add_ldap_user_not_found(self, mocker):
+        user = self.ensure_user("test", "test@mail.net", "test", True)
+        server = self.server_proxy("test", "test")
+
+        mocker.patch(
+            "lava_server.api.users.get_ldap_user_properties",
+            side_effect=ldap.NO_SUCH_OBJECT,
+        )
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server.auth.users.add(
+                "first.last", None, None, None, False, False, False, True
+            )
+        assert exc.value.faultCode == 404
+        assert exc.value.faultString == "User 'first.last' was not found in LDAP."
+
+    def test_auth_users_add_ldap_unavailable(self, mocker):
+        user = self.ensure_user("test", "test@mail.net", "test", True)
+        server = self.server_proxy("test", "test")
+
+        mocker.patch(
+            "lava_server.api.users.get_ldap_user_properties",
+            side_effect=ldap.UNAVAILABLE,
+        )
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server.auth.users.add(
+                "first.last", None, None, None, False, False, False, True
+            )
+        assert exc.value.faultCode == 400
+        assert (
+            exc.value.faultString
+            == "Bad request: authentication via LDAP not configured."
+        )
 
     def test_auth_users_delete_unauthorized(self):
         user = self.ensure_user("test", "test@mail.net", "test")
