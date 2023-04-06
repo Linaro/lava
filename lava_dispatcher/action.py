@@ -642,7 +642,7 @@ class Action:
         :param: cwd - the current working directory for this command
         :return: return code of the command
         """
-        # Build the command list (adding 'nice' at the front)
+        # Build the command list
         if isinstance(command_list, str):
             command_list = shlex.split(command_list)
         elif not isinstance(command_list, list):
@@ -650,20 +650,20 @@ class Action:
         command_list = [str(s) for s in command_list]
 
         # Build the error message
-        log_error_msg = "Unable to run 'nice' '%s'" % "' '".join(command_list)
+        log_error_msg = "Unable to run '%s'" % "' '".join(command_list)
         if error_msg is None:
             error_msg = log_error_msg
 
         # Start the subprocess
-        self.logger.debug("Calling: 'nice' '%s'", "' '".join(command_list))
+        self.logger.debug("Calling: '%s'", "' '".join(command_list))
         start = time.monotonic()
 
         cmd_logger = CommandLogger(self.logger)
         ret = None
         try:
             proc = pexpect.spawn(
-                "nice",
-                command_list,
+                command_list[0],
+                command_list[1:],
                 cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",
@@ -691,7 +691,7 @@ class Action:
 
         # Check the return value
         if ret != 0 and not allow_fail:
-            self.logger.error("Unable to run 'nice' '%s'", command_list)
+            self.logger.error("Unable to run '%s'", command_list)
             raise self.command_exception(error_msg)
         return ret
 
