@@ -57,8 +57,8 @@ def test_run(monkeypatch):
             assert arg == pexpect.EOF
 
     commands = [
-        ["nice", "/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
-        ["nice", "touch"],
+        ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
+        ["touch"],
     ]
 
     def spawn(
