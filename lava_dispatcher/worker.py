@@ -42,12 +42,13 @@ from typing import Any, Dict, Iterator, List, NoReturn, Optional, Union
 
 import aiohttp
 import requests
+import sentry_sdk
 import yaml
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
-from lava_common.worker import get_parser
+from lava_common.worker import get_parser, init_sentry_sdk
 from lava_common.yaml import yaml_safe_load
 
 ###########
@@ -488,7 +489,9 @@ def check(url: str, jobs: JobsDB) -> None:
 
 
 class ServerUnavailable(Exception):
-    pass
+    def __init__(self, message):
+        super().__init__(message)
+        sentry_sdk.capture_exception(self)
 
 
 class VersionMismatch(Exception):
@@ -694,6 +697,8 @@ def ask_exit(signame: str, group: asyncio.tasks._GatheringFuture) -> NoReturn:
 async def main() -> int:
     # Parse command line
     options = get_parser().parse_args()
+    if options.sentry_dsn:
+        init_sentry_sdk(options.sentry_dsn)
     if options.token_file is None:
         options.token_file = Path(options.worker_dir) / "token"
     options.url = options.url.rstrip("/")

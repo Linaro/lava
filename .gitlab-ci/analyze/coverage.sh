@@ -12,6 +12,8 @@ then
   apt-get install --no-install-recommends --yes $DEPS
   DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bullseye -n -u)
   apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-common -d debian -s bullseye -n)
+  apt-get install --no-install-recommends --yes $DEPS
   DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n)
   apt-get install --no-install-recommends --yes $DEPS
   DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n -u)

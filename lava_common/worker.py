@@ -23,8 +23,12 @@ import argparse
 import re
 import socket
 from pathlib import Path
+from typing import NoReturn
+
+import sentry_sdk
 
 from lava_common.constants import DOCKER_WORKER_DIR, WORKER_DIR
+from lava_common.version import __version__
 
 
 def get_fqdn() -> str:
@@ -134,5 +138,12 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
         choices=["DEBUG", "ERROR", "INFO", "WARN"],
         help="Log level, default to INFO",
     )
+    parser.add_argument(
+        "--sentry-dsn", type=str, default=None, help="Sentry Data Source Name"
+    )
 
     return parser
+
+
+def init_sentry_sdk(dsn: str) -> NoReturn:
+    sentry_sdk.init(dsn=dsn, release=f"lava@{__version__}", traces_sample_rate=1.0)

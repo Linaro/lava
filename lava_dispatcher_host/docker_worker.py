@@ -34,11 +34,12 @@ import sys
 import time
 
 import requests
+import sentry_sdk
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_common.worker import get_parser
+from lava_common.worker import get_parser, init_sentry_sdk
 
 #########
 # Globals
@@ -62,7 +63,31 @@ def log_output(line):
         LOG.info("> " + line)
 
 
-def filter_options(options):
+def get_options(image: str) -> list:
+    "Return a list of available worker option names."
+    try:
+        option_ns = subprocess.check_output(
+            [
+                "docker",
+                "run",
+                "--rm",
+                image,
+                "python3",
+                "-c",
+                "from lava_common.worker import get_parser; print(get_parser().parse_args(['--url', 'dummy-url']))",
+            ],
+            stderr=subprocess.DEVNULL,
+        )
+    except subprocess.CalledProcessError:
+        return None
+
+    option_names = re.findall(r"(\w+)=", option_ns.decode("utf-8"))
+
+    return option_names
+
+
+def filter_options(options, image):
+    image_available_options = get_options(image)
     ret = ["--worker-dir", options.worker_dir, "--url", options.url]
     if options.ws_url:
         ret.extend(["--ws-url", options.ws_url])
@@ -77,6 +102,12 @@ def filter_options(options):
         ret.extend(["--token", options.token])
     if options.token_file:
         ret.extend(["--token-file", options.token_file])
+
+    if options.sentry_dsn and "sentry_dns" in image_available_options:
+        ret.extend(["--sentry-dsn", options.sentry_dsn])
+
+    if options.level and "level" in image_available_options:
+        ret.extend(["--level", options.level])
     return ret
 
 
@@ -218,7 +249,7 @@ def run(version, options):
             service
             + ["lava-worker", "--exit-on-version-mismatch", "--wait-jobs"]
             + ["--log-file", "-", "--name", options.name]
-            + filter_options(options),
+            + filter_options(options, image),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             preexec_fn=os.setpgrp,
@@ -289,6 +320,8 @@ def setup_logger(log_file: str, level: str) -> None:
 def main():
     # Parse command line
     options = get_parser(docker_worker=True).parse_args()
+    if options.sentry_dsn:
+        init_sentry_sdk(options.sentry_dsn)
     options.build_dir = options.build_dir.resolve()
 
     if options.devel:
@@ -312,8 +345,9 @@ def main():
         LOG.info("Get server version")
         try:
             server_version = get_server_version(options)
-        except requests.RequestException:
+        except requests.RequestException as exc:
             LOG.warning("-> Unable to get server version")
+            sentry_sdk.capture_exception(exc)
             time.sleep(5)
             continue
         LOG.info("=> %s", server_version)
@@ -321,8 +355,13 @@ def main():
             run(server_version, options)
         except Exception as exc:
             LOG.exception(exc)
+            sentry_sdk.capture_exception(exc)
             time.sleep(5)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        LOG.info("[EXIT] Received Ctrl+C")
+        sys.exit(1)

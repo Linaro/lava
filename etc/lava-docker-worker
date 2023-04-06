@@ -21,3 +21,6 @@
 # Docker build directory
 # Should be set to a directory with a Dockerfile inside.
 # BUILD_DIR="/etc/lava-dispatcher-host/build"
+
+# Sentry Data Source Name.
+# SENTRY_DSN="--sentry-dsn <sentry-dsn>"

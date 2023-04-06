@@ -10,6 +10,8 @@ then
   apt-get install --no-install-recommends --yes $DEPS
   DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bookworm -n -u)
   apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-common -d debian -s bookworm -n)
+  apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
   python3 -m pytest \
