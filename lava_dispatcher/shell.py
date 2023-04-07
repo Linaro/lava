@@ -125,6 +125,10 @@ class ShellCommand(pexpect.spawn):
         )
         self.name = "ShellCommand"
         self.logger = logger
+        # delayafterterminate allow for some spare time for a process to terminate
+        # If the system is loaded
+        # See https://github.com/pexpect/pexpect/issues/462
+        self.delayafterterminate = 1.0
         # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
