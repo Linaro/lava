@@ -39,8 +39,8 @@ from tests.utils import infrastructure_error
 
 
 @pytest.fixture
-def setup(tmpdir):
-    os.chdir(str(tmpdir))
+def setup(tmp_path):
+    os.chdir(str(tmp_path))
 
     # Create a Git repository with two commits
     subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
@@ -151,22 +151,22 @@ def test_invalid_commit(setup):
         git.clone("foo.bar", True, "badhash")
 
 
-def test_branch(setup, tmpdir):
+def test_branch(setup, tmp_path):
     git = vcs.GitHelper("git")
     assert (
         git.clone("git.clone1", branch="testing")
         == "f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d"
     )
-    assert (tmpdir / "git.clone1" / ".git").exists()
+    assert (tmp_path / "git.clone1" / ".git").exists()
 
 
-def test_no_history(setup, tmpdir):
+def test_no_history(setup, tmp_path):
     git = vcs.GitHelper("git")
     assert (
         git.clone("git.clone1", history=False)
         == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
     )
-    assert not (tmpdir / "git.clone1" / ".git").exists()
+    assert not (tmp_path / "git.clone1" / ".git").exists()
 
 
 ALLOWED = ["commands", "deploy", "test"]
@@ -216,8 +216,8 @@ def test_short_replacement():
     assert len(str(exc.value)) == 1024
 
 
-def test_installer_add_late_command(tmpdir):
-    os.chdir(str(tmpdir))
+def test_installer_add_late_command(tmp_path):
+    os.chdir(str(tmp_path))
     # Create preseed file with a few lines.
     with open("preseed.cfg", "w") as preseedfile:
         preseedfile.write("d-i netcfg/dhcp_timeout string 60\n")

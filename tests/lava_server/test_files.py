@@ -23,12 +23,12 @@ from jinja2 import FileSystemLoader
 from lava_server.files import File
 
 
-def test_file_device(mocker, tmpdir):
+def test_file_device(mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
-            "device": ([str(tmpdir / "devices")], "{name}.jinja2"),
-            "device-type": ([str(tmpdir / "device-types")], "{name}.jinja2"),
+            "device": ([str(tmp_path / "devices")], "{name}.jinja2"),
+            "device-type": ([str(tmp_path / "device-types")], "{name}.jinja2"),
         },
     )
     assert File("device", "hello").exists() is False
@@ -46,21 +46,21 @@ def test_file_device(mocker, tmpdir):
 
     assert isinstance(File("device").loader(), FileSystemLoader) is True
     assert File("device").loader().searchpath == [
-        str(tmpdir / "devices"),
-        str(tmpdir / "device-types"),
+        str(tmp_path / "devices"),
+        str(tmp_path / "device-types"),
     ]
 
 
-def test_file_device_type(mocker, tmpdir):
+def test_file_device_type(mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"device-type": ([str(tmpdir / "0"), str(tmpdir / "1")], "{name}.jinja2")},
+        {"device-type": ([str(tmp_path / "0"), str(tmp_path / "1")], "{name}.jinja2")},
     )
     assert File("device-type", "hello").exists() is False
 
     # Test fallback
-    (tmpdir / "1").mkdir()
-    (tmpdir / "1" / "hello.jinja2").write("base")
+    (tmp_path / "1").mkdir()
+    (tmp_path / "1" / "hello.jinja2").write_text("base", encoding="utf-8")
     assert File("device-type", "hello").read() == "base"
 
     # Create the file
@@ -77,8 +77,8 @@ def test_file_device_type(mocker, tmpdir):
     assert ret[0] == "hello.jinja2"
 
     assert File("device-type").loader().searchpath == [
-        str(tmpdir / "0"),
-        str(tmpdir / "1"),
+        str(tmp_path / "0"),
+        str(tmp_path / "1"),
     ]
 
     # Delete the file
@@ -88,16 +88,16 @@ def test_file_device_type(mocker, tmpdir):
     assert File("device-type", "hello").is_first() is False
 
 
-def test_file_env(mocker, tmpdir):
+def test_file_env(mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
     assert File("env", "worker01").exists() is False
 
     # Test fallback
-    (tmpdir / "worker01").mkdir()
-    (tmpdir / "worker01" / "env.yaml").write("base")
+    (tmp_path / "worker01").mkdir()
+    (tmp_path / "worker01" / "env.yaml").write_text("base", encoding="utf-8")
     assert File("env", "worker01").read() == "base"
 
     # Create the file
@@ -106,12 +106,15 @@ def test_file_env(mocker, tmpdir):
     assert File("env", "worker01").read() == "new version"
 
 
-def test_file_errors(mocker, tmpdir):
+def test_file_errors(mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
-            "health-check": ([str(tmpdir / "0"), str(tmpdir / "1")], "{name}.jinja2"),
-            "env": [str(tmpdir / "env")],
+            "health-check": (
+                [str(tmp_path / "0"), str(tmp_path / "1")],
+                "{name}.jinja2",
+            ),
+            "env": [str(tmp_path / "env")],
         },
     )
 

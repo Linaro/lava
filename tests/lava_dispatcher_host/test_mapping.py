@@ -29,17 +29,17 @@ from lava_dispatcher_host import (
 
 
 @pytest.fixture(autouse=True)
-def setup(monkeypatch, mocker, tmpdir):
-    os.makedirs(tmpdir / "1")
-    os.makedirs(tmpdir / "2")
-    monkeypatch.setattr(lava_dispatcher_host, "JOBS_DIR", str(tmpdir))
+def setup(monkeypatch, mocker, tmp_path):
+    os.makedirs(tmp_path / "1")
+    os.makedirs(tmp_path / "2")
+    monkeypatch.setattr(lava_dispatcher_host, "JOBS_DIR", str(tmp_path))
     mocker.patch("os.path.exists", return_value=True)
 
 
-def test_simple_mapping(tmpdir):
+def test_simple_mapping(tmp_path):
     device_info = {"foo": "bar"}
     add_device_container_mapping("1", device_info, "mycontainer")
-    with open(tmpdir / "1" / "usbmap.yaml") as f:
+    with open(tmp_path / "1" / "usbmap.yaml") as f:
         data = yaml_safe_load(f)[0]
 
     assert data["device_info"] == device_info
@@ -47,10 +47,10 @@ def test_simple_mapping(tmpdir):
     assert data["container_type"] == "lxc"
 
 
-def test_add_mapping_without_job_dir(tmpdir):
-    os.rmdir(tmpdir / "1")
+def test_add_mapping_without_job_dir(tmp_path):
+    os.rmdir(tmp_path / "1")
     add_device_container_mapping("1", {"foo": "bar"}, "mycontainer")
-    assert os.path.exists(tmpdir / "1" / "usbmap.yaml")
+    assert os.path.exists(tmp_path / "1" / "usbmap.yaml")
 
 
 def test_device_info_required(mocker):
@@ -235,7 +235,7 @@ def test_device_plus_parent(mocker):
     share.reset_mock()
 
 
-def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
+def test_mapping_for_new_container_overrides_previous_mapping(tmp_path):
     add_device_container_mapping(
         "1",
         {
@@ -256,7 +256,7 @@ def test_mapping_for_new_container_overrides_previous_mapping(tmpdir):
         },
         "mycontainer2",
     )
-    with open(tmpdir / "1" / "usbmap.yaml") as f:
+    with open(tmp_path / "1" / "usbmap.yaml") as f:
         data = yaml_safe_load(f)
     assert len(data) == 1
     assert data[0]["container"] == "mycontainer2"

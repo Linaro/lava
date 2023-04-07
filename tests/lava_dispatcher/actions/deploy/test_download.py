@@ -362,18 +362,18 @@ def test_download_handler_errors():
     assert action.errors == ["Unknown 'archive' format 'cpio'"]
 
 
-def test_file_download_validate(tmpdir):
+def test_file_download_validate(tmp_path):
     # Create the file to use
-    (tmpdir / "bla.img").write_text("hello", encoding="utf-8")
+    (tmp_path / "bla.img").write_text("hello", encoding="utf-8")
 
     # Working
     action = FileDownloadAction(
-        "image", "/path/to/file", urlparse("file://" + str(tmpdir) + "/bla.img")
+        "image", "/path/to/file", urlparse("file://" + str(tmp_path) + "/bla.img")
     )
     action.section = "deploy"
     action.job = Job(1234, {}, None)
     action.parameters = {
-        "image": {"url": "file://" + str(tmpdir) + "/bla.img"},
+        "image": {"url": "file://" + str(tmp_path) + "/bla.img"},
         "namespace": "common",
     }
     action.params = action.parameters["image"]
@@ -383,18 +383,18 @@ def test_file_download_validate(tmpdir):
 
     # Missing file
     action = FileDownloadAction(
-        "image", "/path/to/file", urlparse("file://" + str(tmpdir) + "/bla2.img")
+        "image", "/path/to/file", urlparse("file://" + str(tmp_path) + "/bla2.img")
     )
     action.section = "deploy"
     action.job = Job(1234, {}, None)
     action.parameters = {
-        "image": {"url": "file://" + str(tmpdir) + "/bla2.img"},
+        "image": {"url": "file://" + str(tmp_path) + "/bla2.img"},
         "namespace": "common",
     }
     action.params = action.parameters["image"]
     action.validate()
     assert action.errors == [
-        "Image file '" + str(tmpdir) + "/bla2.img' does not exist or is not readable"
+        "Image file '" + str(tmp_path) + "/bla2.img' does not exist or is not readable"
     ]
     assert action.size == -1
 
@@ -524,15 +524,15 @@ def test_http_download_validate(mocker):
     ]
 
 
-def test_file_download_reader(tmpdir):
+def test_file_download_reader(tmp_path):
     # Create the file to use
-    (tmpdir / "bla.img").write_text("hello", encoding="utf-8")
+    (tmp_path / "bla.img").write_text("hello", encoding="utf-8")
 
     # Normal case
     action = FileDownloadAction(
-        "image", "/path/to/file", urlparse("file://" + str(tmpdir) + "/bla.img")
+        "image", "/path/to/file", urlparse("file://" + str(tmp_path) + "/bla.img")
     )
-    action.url = urlparse("file://" + str(tmpdir) + "/bla.img")
+    action.url = urlparse("file://" + str(tmp_path) + "/bla.img")
     ite = action.reader()
     assert next(ite) == b"hello"
     with pytest.raises(StopIteration):
@@ -540,15 +540,15 @@ def test_file_download_reader(tmpdir):
 
     # Error when reading
     action = FileDownloadAction(
-        "image", "/path/to/file", urlparse("file://" + str(tmpdir) + "/bla2.img")
+        "image", "/path/to/file", urlparse("file://" + str(tmp_path) + "/bla2.img")
     )
-    action.url = urlparse("file://" + str(tmpdir) + "/bla2.img")
+    action.url = urlparse("file://" + str(tmp_path) + "/bla2.img")
     ite = action.reader()
     with pytest.raises(InfrastructureError) as exc:
         next(ite)
     assert exc.match(
         "Unable to read from %s: \\[Errno 2\\] No such file or directory: '%s'"
-        % (str(tmpdir / "bla2.img"), str(tmpdir / "bla2.img"))
+        % (str(tmp_path / "bla2.img"), str(tmp_path / "bla2.img"))
     )
 
 
@@ -598,12 +598,14 @@ def test_http_download_reader(mocker):
     assert exc.match("Unable to download 'https://example.com/dtb': error")
 
 
-def test_http_download_run(tmpdir):
+def test_http_download_run(tmp_path):
     def reader():
         yield b"hello"
         yield b"world"
 
-    action = HttpDownloadAction("dtb", str(tmpdir), urlparse("https://example.com/dtb"))
+    action = HttpDownloadAction(
+        "dtb", str(tmp_path), urlparse("https://example.com/dtb")
+    )
     action.job = Job(1234, {"dispatcher": {}}, None)
     action.url = urlparse("https://example.com/dtb")
     action.parameters = {
@@ -620,10 +622,10 @@ def test_http_download_run(tmpdir):
     }
     action.params = action.parameters["images"]["dtb"]
     action.reader = reader
-    action.fname = str(tmpdir / "dtb/dtb")
+    action.fname = str(tmp_path / "dtb/dtb")
     action.run(None, 4212)
     data = ""
-    with open(str(tmpdir / "dtb/dtb")) as f_in:
+    with open(str(tmp_path / "dtb/dtb")) as f_in:
         data = f_in.read()
     assert data == "helloworld"
     assert dict(action.results) == {
@@ -641,18 +643,18 @@ def test_http_download_run(tmpdir):
             "download-action": {
                 "dtb": {
                     "decompressed": False,
-                    "file": "%s/dtb/dtb" % str(tmpdir),
+                    "file": "%s/dtb/dtb" % str(tmp_path),
                     "md5": "fc5e038d38a57032085441e7fe7010b0",
                     "sha256": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
                     "sha512": "1594244d52f2d8c12b142bb61f47bc2eaf503d6d9ca8480cae9fcf112f66e4967dc5e8fa98285e36db8af1b8ffa8b84cb15e0fbcf836c3deb803c13f37659a60",
                 },
-                "file": {"dtb": "%s/dtb/dtb" % str(tmpdir)},
+                "file": {"dtb": "%s/dtb/dtb" % str(tmp_path)},
             }
         }
     }
 
 
-def test_http_download_run_compressed(tmpdir):
+def test_http_download_run_compressed(tmp_path):
     def reader():
         yield b"\xfd7zXZ\x00\x00\x04\xe6\xd6\xb4F\x02\x00!\x01\x16\x00\x00"
         yield b"\x00t/\xe5\xa3\x01\x00\x0bhello world\n\x00\xa1\xf2\xff\xc4j"
@@ -660,7 +662,7 @@ def test_http_download_run_compressed(tmpdir):
         yield b"\x00\x00\x00\x00\x04YZ"
 
     action = HttpDownloadAction(
-        "rootfs", str(tmpdir), urlparse("https://example.com/rootfs.xz")
+        "rootfs", str(tmp_path), urlparse("https://example.com/rootfs.xz")
     )
     action.job = Job(1234, {}, None)
     action.url = urlparse("https://example.com/rootfs.xz")
@@ -678,10 +680,10 @@ def test_http_download_run_compressed(tmpdir):
     action.params = action.parameters["rootfs"]
     action.reader = reader
     action.size = 68
-    action.fname = str(tmpdir / "rootfs/rootfs")
+    action.fname = str(tmp_path / "rootfs/rootfs")
     action.run(None, 4212)
     data = ""
-    with open(str(tmpdir / "rootfs/rootfs")) as f_in:
+    with open(str(tmp_path / "rootfs/rootfs")) as f_in:
         data = f_in.read()
     assert data == "hello world\n"
     assert dict(action.results) == {
@@ -700,12 +702,12 @@ def test_http_download_run_compressed(tmpdir):
             "download-action": {
                 "rootfs": {
                     "decompressed": True,
-                    "file": "%s/rootfs/rootfs" % str(tmpdir),
+                    "file": "%s/rootfs/rootfs" % str(tmp_path),
                     "md5": "0107d527acf9b8de628b7b4d103c89d1",
                     "sha256": "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",
                     "sha512": "d0850c3e0c45bdf74995907a04f69806a070d79a4f0b2dd82d6b96adafdbfd85ce6c1daaff916ff089bdf9b04eba7805041c49afecdbeabca69fef802e60de35",
                 },
-                "file": {"rootfs": "%s/rootfs/rootfs" % str(tmpdir)},
+                "file": {"rootfs": "%s/rootfs/rootfs" % str(tmp_path)},
             }
         }
     }
@@ -774,7 +776,7 @@ def test_predownloaded_subdirectory():
     assert Path(mapped_path).exists()
 
 
-def test_predownloaded_missing_file(tmpdir):
+def test_predownloaded_missing_file(tmp_path):
     job = Job(1234, {}, None)
     destdir = job.mkdtemp("some-other-action")
     action = PreDownloadedAction("rootfs", urlparse("downloads://missing.xz"), destdir)

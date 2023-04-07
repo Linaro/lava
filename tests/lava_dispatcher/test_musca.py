@@ -39,11 +39,11 @@ class TestMusca(StdoutTestCase):
         super().setUp()
         self.factory = MuscaFactory()
         self.job = self.factory.create_musca_job("sample_jobs/musca.yaml")
-        self.tmpdir = tempfile.mkdtemp()
+        self.tmp_path = tempfile.mkdtemp()
 
     def tearDown(self):
         super().tearDown()
-        shutil.rmtree(self.tmpdir)
+        shutil.rmtree(self.tmp_path)
 
     def test_musca_reference(self):
         self.job.validate()
@@ -60,10 +60,10 @@ class TestMusca(StdoutTestCase):
             action="mount-musca-usbmsd",
             label="musca-usb",
             key="mount-point",
-            value=self.tmpdir,
+            value=self.tmp_path,
         )
         self.assertEqual(None, flash_check_action.run(None, None))
-        with open(os.path.join(self.tmpdir, "FAIL.TXT"), "w") as fail_file:
+        with open(os.path.join(self.tmp_path, "FAIL.TXT"), "w") as fail_file:
             fail_file.write("failed to flash software")
         with self.assertRaises(InfrastructureError):
             flash_check_action.run(None, None)
@@ -80,9 +80,9 @@ class TestMusca(StdoutTestCase):
             action="mount-musca-usbmsd",
             label="musca-usb",
             key="mount-point",
-            value=self.tmpdir,
+            value=self.tmp_path,
         )
-        expected_path = os.path.join(self.tmpdir, automation_filename)
+        expected_path = os.path.join(self.tmp_path, automation_filename)
         # Check no file exists currently
         self.assertFalse(os.path.exists(expected_path))
         # Run the action

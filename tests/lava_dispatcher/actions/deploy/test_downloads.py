@@ -31,7 +31,7 @@ from tests.lava_dispatcher.test_basic import Factory
 
 
 @pytest.fixture
-def job(tmpdir):
+def job(tmp_path):
     job = Job(1234, {}, None)
     return job
 
@@ -88,8 +88,8 @@ def test_downloads_action_adds_docker_action():
 
 
 @pytest.fixture
-def action(tmpdir):
-    action = PostprocessWithDocker(tmpdir)
+def action(tmp_path):
+    action = PostprocessWithDocker(tmp_path)
     action.populate(
         {
             "postprocess": {
@@ -106,13 +106,13 @@ def test_postprocess_with_docker_populate(action):
     assert "echo HELLO WORLD" in action.steps
 
 
-def test_postprocess_with_docker_populate_missing_data(tmpdir):
-    action = PostprocessWithDocker(tmpdir)
+def test_postprocess_with_docker_populate_missing_data(tmp_path):
+    action = PostprocessWithDocker(tmp_path)
     action.populate({})
 
 
-def test_postprocess_with_docker_validate(tmpdir):
-    action = PostprocessWithDocker(tmpdir)
+def test_postprocess_with_docker_validate(tmp_path):
+    action = PostprocessWithDocker(tmp_path)
     assert not action.validate()
     assert "postprocessing steps missing" in action.errors
     action.steps = ["date"]

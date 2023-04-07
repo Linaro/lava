@@ -977,12 +977,12 @@ def test_job_definition_plain(client, setup):
 
 
 @pytest.mark.django_db
-def test_job_description(client, monkeypatch, setup, tmpdir):
-    (tmpdir / "job-01").mkdir()
-    (tmpdir / "job-01" / "description.yaml").write_text(
+def test_job_description(client, monkeypatch, setup, tmp_path):
+    (tmp_path / "job-01").mkdir()
+    (tmp_path / "job-01" / "description.yaml").write_text(
         "Job description", encoding="utf-8"
     )
-    monkeypatch.setattr(TestJob, "output_dir", str(tmpdir / "job-01"))
+    monkeypatch.setattr(TestJob, "output_dir", str(tmp_path / "job-01"))
 
     job = TestJob.objects.get(description="test job 01")
     ret = client.get(reverse("lava.scheduler.job.description.yaml", args=[job.pk]))

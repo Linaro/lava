@@ -102,7 +102,7 @@ def test_append_overlays_run(mocker):
     action.update_tar.assert_called_once_with()
 
 
-def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
+def test_append_overlays_update_cpio(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {
         "format": "cpio.newc",
@@ -126,15 +126,15 @@ def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
         "common": {
             "download-action": {
                 "rootfs": {
-                    "file": str(tmpdir / "rootfs.cpio.gz"),
+                    "file": str(tmp_path / "rootfs.cpio.gz"),
                     "compression": "gz",
                     "decompressed": False,
                 },
-                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
+                "rootfs.modules": {"file": str(tmp_path / "modules.tar")},
             }
         }
     }
-    action.mkdtemp = lambda: str(tmpdir)
+    action.mkdtemp = lambda: str(tmp_path)
     decompress_file = mocker.patch(
         "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
     )
@@ -148,29 +148,31 @@ def test_append_overlays_update_cpio(caplog, mocker, tmpdir):
 
     action.update_cpio()
 
-    decompress_file.assert_called_once_with(str(tmpdir / "rootfs.cpio.gz"), "gz")
-    uncpio.assert_called_once_with(decompress_file(), str(tmpdir))
+    decompress_file.assert_called_once_with(str(tmp_path / "rootfs.cpio.gz"), "gz")
+    uncpio.assert_called_once_with(decompress_file(), str(tmp_path))
     unlink.assert_called_once_with(decompress_file())
-    untar_file.assert_called_once_with(str(tmpdir / "modules.tar"), str(tmpdir) + "/")
-    cpio.assert_called_once_with(str(tmpdir), decompress_file())
+    untar_file.assert_called_once_with(
+        str(tmp_path / "modules.tar"), str(tmp_path) + "/"
+    )
+    cpio.assert_called_once_with(str(tmp_path), decompress_file())
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.cpio.gz'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.cpio.gz'"),
         ("dispatcher", 10, "* decompressing (gz)"),
         ("dispatcher", 10, f"* extracting {decompress_file()}"),
         ("dispatcher", 10, "Overlays:"),
         (
             "dispatcher",
             10,
-            f"- rootfs.modules: untar '{tmpdir}/modules.tar' to '{tmpdir}/'",
+            f"- rootfs.modules: untar '{tmp_path}/modules.tar' to '{tmp_path}/'",
         ),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
     ]
 
 
-def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
+def test_append_overlays_update_guestfs(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {
         "format": "ext4",
@@ -194,11 +196,11 @@ def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
         "common": {
             "download-action": {
                 "rootfs": {
-                    "file": str(tmpdir / "rootfs.ext4"),
+                    "file": str(tmp_path / "rootfs.ext4"),
                     "compression": "gz",
                     "decompressed": True,
                 },
-                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
+                "rootfs.modules": {"file": str(tmp_path / "modules.tar")},
             }
         }
     }
@@ -213,20 +215,20 @@ def test_append_overlays_update_guestfs(caplog, mocker, tmpdir):
     guestfs.assert_called_once_with(python_return_dict=True)
     guestfs().launch.assert_called_once_with()
     guestfs().list_devices.assert_called_once_with()
-    guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
+    guestfs().add_drive.assert_called_once_with(str(tmp_path / "rootfs.ext4"))
     guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
     guestfs().mkdir_p.assert_called_once_with("/lib")
     guestfs().tar_in.assert_called_once_with(
-        str(tmpdir / "modules.tar"), "/lib", compress=None
+        str(tmp_path / "modules.tar"), "/lib", compress=None
     )
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
-        ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
+        ("dispatcher", 10, f"- rootfs.modules: '{tmp_path}/modules.tar' to '/lib'"),
     ]
 
 
-def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
+def test_append_lava_overlay_update_tar(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {
         "format": "tar",
@@ -250,15 +252,15 @@ def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
         "common": {
             "download-action": {
                 "nfsrootfs": {
-                    "file": str(tmpdir / "rootfs.tar.gz"),
+                    "file": str(tmp_path / "rootfs.tar.gz"),
                     "compression": "gz",
                     "decompressed": False,
                 },
-                "nfsrootfs.modules": {"file": str(tmpdir / "modules.tar")},
+                "nfsrootfs.modules": {"file": str(tmp_path / "modules.tar")},
             },
         }
     }
-    action.mkdtemp = lambda: str(tmpdir)
+    action.mkdtemp = lambda: str(tmp_path)
     decompress_file = mocker.patch(
         "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
     )
@@ -273,32 +275,34 @@ def test_append_lava_overlay_update_tar(caplog, mocker, tmpdir):
 
     action.update_tar()
 
-    decompress_file.assert_called_once_with(str(tmpdir / "rootfs.tar.gz"), "gz")
+    decompress_file.assert_called_once_with(str(tmp_path / "rootfs.tar.gz"), "gz")
     assert untar_file.mock_calls == [
-        mocker.call(decompress_file(), str(tmpdir)),
-        mocker.call(str(tmpdir / "modules.tar"), str(tmpdir) + "/"),
+        mocker.call(decompress_file(), str(tmp_path)),
+        mocker.call(str(tmp_path / "modules.tar"), str(tmp_path) + "/"),
     ]
     unlink.assert_called_once_with(decompress_file())
 
-    create_tarfile.assert_called_once_with(str(tmpdir), decompress_file(), arcname=".")
+    create_tarfile.assert_called_once_with(
+        str(tmp_path), decompress_file(), arcname="."
+    )
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.tar.gz'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.tar.gz'"),
         ("dispatcher", 10, "* decompressing (gz)"),
         ("dispatcher", 10, f"* extracting {decompress_file()}"),
         ("dispatcher", 10, "Overlays:"),
         (
             "dispatcher",
             10,
-            f"- nfsrootfs.modules: untar '{tmpdir}/modules.tar' to '{tmpdir}/'",
+            f"- nfsrootfs.modules: untar '{tmp_path}/modules.tar' to '{tmp_path}/'",
         ),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
     ]
 
 
-def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmpdir):
+def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {
         "format": "ext4",
@@ -323,11 +327,11 @@ def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmpdir):
         "common": {
             "download-action": {
                 "rootfs": {
-                    "file": str(tmpdir / "rootfs.ext4"),
+                    "file": str(tmp_path / "rootfs.ext4"),
                     "compression": "gz",
                     "decompressed": True,
                 },
-                "rootfs.modules": {"file": str(tmpdir / "modules.tar")},
+                "rootfs.modules": {"file": str(tmp_path / "modules.tar")},
             }
         }
     }
@@ -344,45 +348,45 @@ def test_append_overlays_update_guestfs_sparse(caplog, mocker, tmpdir):
     guestfs.assert_called_once_with(python_return_dict=True)
     guestfs().launch.assert_called_once_with()
     guestfs().list_devices.assert_called_once_with()
-    guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
+    guestfs().add_drive.assert_called_once_with(str(tmp_path / "rootfs.ext4"))
     guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
     guestfs().mkdir_p.assert_called_once_with("/lib")
     guestfs().tar_in.assert_called_once_with(
-        str(tmpdir / "modules.tar"), "/lib", compress=None
+        str(tmp_path / "modules.tar"), "/lib", compress=None
     )
     assert action.run_cmd.mock_calls == [
         mocker.call(
             [
                 "/usr/bin/simg2img",
-                f"{tmpdir}/rootfs.ext4",
-                f"{tmpdir}/rootfs.ext4.non-sparse",
+                f"{tmp_path}/rootfs.ext4",
+                f"{tmp_path}/rootfs.ext4.non-sparse",
             ],
-            error_msg=f"simg2img failed for {tmpdir}/rootfs.ext4",
+            error_msg=f"simg2img failed for {tmp_path}/rootfs.ext4",
         ),
         mocker.call(
             [
                 "/usr/bin/img2simg",
-                f"{tmpdir}/rootfs.ext4",
-                f"{tmpdir}/rootfs.ext4.sparse",
+                f"{tmp_path}/rootfs.ext4",
+                f"{tmp_path}/rootfs.ext4.sparse",
             ],
-            error_msg=f"img2simg failed for {tmpdir}/rootfs.ext4",
+            error_msg=f"img2simg failed for {tmp_path}/rootfs.ext4",
         ),
     ]
     assert replace.mock_calls == [
-        mocker.call(f"{tmpdir}/rootfs.ext4.non-sparse", f"{tmpdir}/rootfs.ext4"),
-        mocker.call(f"{tmpdir}/rootfs.ext4.sparse", f"{tmpdir}/rootfs.ext4"),
+        mocker.call(f"{tmp_path}/rootfs.ext4.non-sparse", f"{tmp_path}/rootfs.ext4"),
+        mocker.call(f"{tmp_path}/rootfs.ext4.sparse", f"{tmp_path}/rootfs.ext4"),
     ]
 
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
-        ("dispatcher", 10, f"Calling simg2img on '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.ext4'"),
+        ("dispatcher", 10, f"Calling simg2img on '{tmp_path}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
-        ("dispatcher", 10, f"- rootfs.modules: '{tmpdir}/modules.tar' to '/lib'"),
-        ("dispatcher", 10, f"Calling img2simg on '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 10, f"- rootfs.modules: '{tmp_path}/modules.tar' to '/lib'"),
+        ("dispatcher", 10, f"Calling img2simg on '{tmp_path}/rootfs.ext4'"),
     ]
 
 
-def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
+def test_append_lava_overlay_update_cpio(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {"format": "cpio.newc", "overlays": {"lava": True}}
 
@@ -394,17 +398,17 @@ def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
     }
     action.data = {
         "common": {
-            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
+            "compress-overlay": {"output": {"file": str(tmp_path / "overlay.tar.gz")}},
             "download-action": {
                 "rootfs": {
-                    "file": str(tmpdir / "rootfs.cpio.gz"),
+                    "file": str(tmp_path / "rootfs.cpio.gz"),
                     "compression": "gz",
                     "decompressed": False,
                 }
             },
         }
     }
-    action.mkdtemp = lambda: str(tmpdir)
+    action.mkdtemp = lambda: str(tmp_path)
     decompress_file = mocker.patch(
         "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
     )
@@ -418,31 +422,31 @@ def test_append_lava_overlay_update_cpio(caplog, mocker, tmpdir):
 
     action.update_cpio()
 
-    decompress_file.assert_called_once_with(str(tmpdir / "rootfs.cpio.gz"), "gz")
-    uncpio.assert_called_once_with(decompress_file(), str(tmpdir))
+    decompress_file.assert_called_once_with(str(tmp_path / "rootfs.cpio.gz"), "gz")
+    uncpio.assert_called_once_with(decompress_file(), str(tmp_path))
     unlink.assert_called_once_with(decompress_file())
     untar_file.assert_called_once_with(
-        str(tmpdir / "overlay.tar.gz"), str(tmpdir) + "/"
+        str(tmp_path / "overlay.tar.gz"), str(tmp_path) + "/"
     )
-    cpio.assert_called_once_with(str(tmpdir), decompress_file())
+    cpio.assert_called_once_with(str(tmp_path), decompress_file())
     compress_file.assert_called_once_with(decompress_file(), "gz")
 
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.cpio.gz'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.cpio.gz'"),
         ("dispatcher", 10, "* decompressing (gz)"),
         ("dispatcher", 10, f"* extracting {decompress_file()}"),
         ("dispatcher", 10, "Overlays:"),
         (
             "dispatcher",
             10,
-            f"- rootfs.lava: untar '{tmpdir}/overlay.tar.gz' to '{tmpdir}/'",
+            f"- rootfs.lava: untar '{tmp_path}/overlay.tar.gz' to '{tmp_path}/'",
         ),
         ("dispatcher", 10, f"* archiving {decompress_file()}"),
         ("dispatcher", 10, "* compressing (gz)"),
     ]
 
 
-def test_append_lava_overlay_update_guestfs(caplog, mocker, tmpdir):
+def test_append_lava_overlay_update_guestfs(caplog, mocker, tmp_path):
     caplog.set_level(logging.DEBUG)
     params = {"format": "ext4", "overlays": {"lava": True}}
 
@@ -454,10 +458,10 @@ def test_append_lava_overlay_update_guestfs(caplog, mocker, tmpdir):
     }
     action.data = {
         "common": {
-            "compress-overlay": {"output": {"file": str(tmpdir / "overlay.tar.gz")}},
+            "compress-overlay": {"output": {"file": str(tmp_path / "overlay.tar.gz")}},
             "download-action": {
                 "rootfs": {
-                    "file": str(tmpdir / "rootfs.ext4"),
+                    "file": str(tmp_path / "rootfs.ext4"),
                     "compression": "gz",
                     "decompressed": True,
                 }
@@ -475,14 +479,14 @@ def test_append_lava_overlay_update_guestfs(caplog, mocker, tmpdir):
     guestfs.assert_called_once_with(python_return_dict=True)
     guestfs().launch.assert_called_once_with()
     guestfs().list_devices.assert_called_once_with()
-    guestfs().add_drive.assert_called_once_with(str(tmpdir / "rootfs.ext4"))
+    guestfs().add_drive.assert_called_once_with(str(tmp_path / "rootfs.ext4"))
     guestfs().mount.assert_called_once_with(guestfs().list_devices()[0], "/")
     guestfs().mkdir_p.assert_called_once_with("/")
     guestfs().tar_in.assert_called_once_with(
-        str(tmpdir / "overlay.tar.gz"), "/", compress="gzip"
+        str(tmp_path / "overlay.tar.gz"), "/", compress="gzip"
     )
     assert caplog.record_tuples == [
-        ("dispatcher", 20, f"Modifying '{tmpdir}/rootfs.ext4'"),
+        ("dispatcher", 20, f"Modifying '{tmp_path}/rootfs.ext4'"),
         ("dispatcher", 10, "Overlays:"),
-        ("dispatcher", 10, f"- rootfs.lava: '{tmpdir}/overlay.tar.gz' to '/'"),
+        ("dispatcher", 10, f"- rootfs.lava: '{tmp_path}/overlay.tar.gz' to '/'"),
     ]
