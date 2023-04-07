@@ -19,7 +19,6 @@
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
 import os
-import shutil
 import subprocess
 import time
 
@@ -268,5 +267,3 @@ class ConfigureNodebooter(Action):
         self.logger.debug("Stopping container %s", container)
         # Stop nodebooter container
         self.run_cmd("docker stop %s" % (container), allow_fail=True)
-        # Remove all files from nodebooter dir
-        shutil.rmtree(NODEBOOTER_HOME)
