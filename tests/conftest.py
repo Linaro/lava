@@ -31,10 +31,10 @@ os.environ["LANGUAGE"] = "C.UTF-8"
 
 
 @pytest.fixture(autouse=True)
-def tempdir(monkeypatch, tmpdir):
-    monkeypatch.setattr(lava_dispatcher.job, "DISPATCHER_DOWNLOAD_DIR", str(tmpdir))
+def tempdir(monkeypatch, tmp_path):
+    monkeypatch.setattr(lava_dispatcher.job, "DISPATCHER_DOWNLOAD_DIR", str(tmp_path))
     monkeypatch.setattr(
-        lava_dispatcher.utils.filesystem, "tftpd_dir", lambda: str(tmpdir)
+        lava_dispatcher.utils.filesystem, "tftpd_dir", lambda: str(tmp_path)
     )
 
 

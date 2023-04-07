@@ -47,70 +47,72 @@ def logs_filesystem():
     return LogsFilesystem()
 
 
-def test_read_logs_uncompressed(mocker, tmpdir, logs_filesystem):
+def test_read_logs_uncompressed(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
-    job.output_dir = tmpdir
-    (tmpdir / "output.yaml").write_text("hello\nworld\nhow\nare\nyou", encoding="utf-8")
+    job.output_dir = tmp_path
+    (tmp_path / "output.yaml").write_text(
+        "hello\nworld\nhow\nare\nyou", encoding="utf-8"
+    )
     assert logs_filesystem.read(job) == "hello\nworld\nhow\nare\nyou"  # nosec
-    assert not (tmpdir / "output.idx").exists()  # nosec
+    assert not (tmp_path / "output.idx").exists()  # nosec
 
     # If output.yaml exists, read_logs should use it
-    with lzma.open(str(tmpdir / "output.yaml.xz"), "wb") as f_logs:
+    with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
         f_logs.write("compressed".encode("utf-8"))
     assert logs_filesystem.read(job) == "hello\nworld\nhow\nare\nyou"  # nosec
-    assert not (tmpdir / "output.idx").exists()  # nosec
+    assert not (tmp_path / "output.idx").exists()  # nosec
 
     # Test the index
     assert logs_filesystem.read(job, start=1) == "world\nhow\nare\nyou"  # nosec
-    assert (tmpdir / "output.idx").exists()  # nosec
+    assert (tmp_path / "output.idx").exists()  # nosec
     assert logs_filesystem.read(job, start=1, end=2) == "world\n"  # nosec
     assert logs_filesystem.read(job, start=1, end=3) == "world\nhow\n"  # nosec
     assert logs_filesystem.read(job, start=4, end=5) == "you"  # nosec
     assert logs_filesystem.read(job, start=5, end=50) == ""  # nosec
 
 
-def test_read_logs_compressed(mocker, tmpdir, logs_filesystem):
+def test_read_logs_compressed(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
-    job.output_dir = tmpdir
-    with lzma.open(str(tmpdir / "output.yaml.xz"), "wb") as f_logs:
+    job.output_dir = tmp_path
+    with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
         f_logs.write("compressed\nor\nnot".encode("utf-8"))
     assert logs_filesystem.read(job) == "compressed\nor\nnot"  # nosec
-    assert not (tmpdir / "output.idx").exists()  # nosec
+    assert not (tmp_path / "output.idx").exists()  # nosec
 
     # Use the index
     assert logs_filesystem.read(job, start=1) == "or\nnot"  # nosec
-    assert (tmpdir / "output.idx").exists()  # nosec
+    assert (tmp_path / "output.idx").exists()  # nosec
     assert logs_filesystem.read(job, start=1, end=2) == "or\n"  # nosec
     assert logs_filesystem.read(job, start=1, end=20) == "or\nnot"  # nosec
     assert logs_filesystem.read(job, start=2, end=2) == ""  # nosec
     assert logs_filesystem.read(job, start=1, end=0) == ""  # nosec
 
 
-def test_size_logs(mocker, tmpdir, logs_filesystem):
+def test_size_logs(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
-    job.output_dir = tmpdir
-    with lzma.open(str(tmpdir / "output.yaml.xz"), "wb") as f_logs:
+    job.output_dir = tmp_path
+    with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
         f_logs.write("hello world\nhow are you?\n".encode("utf-8"))
     # "output.yaml.size" is missing
     assert logs_filesystem.size(job) is None  # nosec
-    (tmpdir / "output.yaml.size").write_text("25", encoding="utf-8")
+    (tmp_path / "output.yaml.size").write_text("25", encoding="utf-8")
     assert logs_filesystem.size(job) == 25  # nosec
 
-    with open(str(tmpdir / "output.yaml"), "wb") as f_logs:
+    with open(str(tmp_path / "output.yaml"), "wb") as f_logs:
         f_logs.write("hello world!\n".encode("utf-8"))
     assert logs_filesystem.size(job) == 13  # nosec
 
 
-def test_write_logs(mocker, tmpdir, logs_filesystem):
+def test_write_logs(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
-    job.output_dir = tmpdir
-    with open(str(tmpdir / "output.yaml"), "wb") as f_logs:
-        with open(str(tmpdir / "output.idx"), "wb") as f_idx:
+    job.output_dir = tmp_path
+    with open(str(tmp_path / "output.yaml"), "wb") as f_logs:
+        with open(str(tmp_path / "output.idx"), "wb") as f_idx:
             logs_filesystem.write(job, "hello world\n".encode("utf-8"), f_logs, f_idx)
             logs_filesystem.write(job, "how are you?\n".encode("utf-8"), f_logs, f_idx)
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
-    with open(str(tmpdir / "output.idx"), "rb") as f_idx:
+    with open(str(tmp_path / "output.idx"), "rb") as f_idx:
         assert f_idx.read(8) == b"\x00\x00\x00\x00\x00\x00\x00\x00"  # nosec
         assert f_idx.read(8) == b"\x0c\x00\x00\x00\x00\x00\x00\x00"  # nosec
 

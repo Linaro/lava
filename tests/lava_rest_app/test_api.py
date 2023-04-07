@@ -303,9 +303,9 @@ class TestRestApi:
             + "jobs/%s/" % self.public_testjob1.id,
         )
 
-    def test_testjob_logs(self, monkeypatch, tmpdir):
-        (tmpdir / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
-        monkeypatch.setattr(TestJob, "output_dir", str(tmpdir))
+    def test_testjob_logs(self, monkeypatch, tmp_path):
+        (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
 
         data = self.hit(
             self.userclient,
@@ -313,9 +313,9 @@ class TestRestApi:
             + "jobs/%s/logs/" % self.public_testjob1.id,
         )
 
-    def test_testjob_logs_offset(self, monkeypatch, tmpdir):
-        (tmpdir / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
-        monkeypatch.setattr(TestJob, "output_dir", str(tmpdir))
+    def test_testjob_logs_offset(self, monkeypatch, tmp_path):
+        (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
 
         # use start=2 as log lines count start from 1
         data = self.hit(
@@ -327,9 +327,9 @@ class TestRestApi:
         # be careful when changing either the value below or the log fragment
         assert len(data) == 82  # nosec - unit test support
 
-    def test_testjob_logs_offset_end(self, monkeypatch, tmpdir):
-        (tmpdir / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
-        monkeypatch.setattr(TestJob, "output_dir", str(tmpdir))
+    def test_testjob_logs_offset_end(self, monkeypatch, tmp_path):
+        (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
 
         # use start=2 as log lines count start from 1
         data = self.hit(
@@ -341,9 +341,9 @@ class TestRestApi:
         # be careful when changing either the value below or the log fragment
         assert len(data) == 120  # nosec - unit test support
 
-    def test_testjob_logs_bad_offset(self, monkeypatch, tmpdir):
-        (tmpdir / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
-        monkeypatch.setattr(TestJob, "output_dir", str(tmpdir))
+    def test_testjob_logs_bad_offset(self, monkeypatch, tmp_path):
+        (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
 
         # use start=2 as log lines count start from 1
         response = self.userclient.get(
@@ -803,7 +803,7 @@ ok 2 bar
         assert logentry.user == self.admin
         assert logentry.change_message == "Unknown → Good"
 
-    def test_devices_get_dictionary(self, monkeypatch, tmpdir):
+    def test_devices_get_dictionary(self, monkeypatch, tmp_path):
         # invalid context
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
@@ -848,7 +848,7 @@ ok 2 bar
         logentry = LogEntry.objects.filter(object_id=device_details["hostname"]).first()
         assert "Foo" in logentry.change_message
 
-    def test_devices_set_dictionary(self, monkeypatch, tmpdir):
+    def test_devices_set_dictionary(self, monkeypatch, tmp_path):
         def save_configuration(self, data):
             assert data == "hello"  # nosec
             return True
@@ -955,11 +955,11 @@ ok 2 bar
         )
         assert response.status_code == 201  # nosec - unit test support
 
-    def test_devicetype_get_template(self, mocker, tmpdir):
-        (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
+    def test_devicetype_get_template(self, mocker, tmp_path):
+        (tmp_path / "qemu.jinja2").write_text("hello", encoding="utf-8")
         mocker.patch(
             "lava_server.files.File.KINDS",
-            {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+            {"device-type": ([str(tmp_path)], "{name}.jinja2")},
         )
 
         # 1. normal case
@@ -980,10 +980,10 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_devicetype_set_template(self, mocker, tmpdir):
+    def test_devicetype_set_template(self, mocker, tmp_path):
         mocker.patch(
             "lava_server.files.File.KINDS",
-            {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+            {"device-type": ([str(tmp_path)], "{name}.jinja2")},
         )
 
         # 1. normal case
@@ -994,15 +994,15 @@ ok 2 bar
             {"template": "hello world"},
         )
         assert response.status_code == 204  # nosec - unit test support
-        assert (tmpdir / "qemu.jinja2").read_text(
+        assert (tmp_path / "qemu.jinja2").read_text(
             encoding="utf-8"
         ) == "hello world"  # nosec
 
-    def test_devicetype_get_health_check(self, mocker, tmpdir):
-        (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
+    def test_devicetype_get_health_check(self, mocker, tmp_path):
+        (tmp_path / "qemu.yaml").write_text("hello", encoding="utf-8")
         mocker.patch(
             "lava_server.files.File.KINDS",
-            {"health-check": ([str(tmpdir)], "{name}.yaml")},
+            {"health-check": ([str(tmp_path)], "{name}.yaml")},
         )
 
         # 1. normal case
@@ -1023,10 +1023,10 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_devicetype_set_health_check(self, mocker, tmpdir):
+    def test_devicetype_set_health_check(self, mocker, tmp_path):
         mocker.patch(
             "lava_server.files.File.KINDS",
-            {"health-check": ([str(tmpdir)], "{name}.yaml")},
+            {"health-check": ([str(tmp_path)], "{name}.yaml")},
         )
 
         # 1. normal case
@@ -1037,7 +1037,7 @@ ok 2 bar
             {"config": "hello world"},
         )
         assert response.status_code == 204  # nosec - unit test support
-        assert (tmpdir / "qemu.yaml").read_text(
+        assert (tmp_path / "qemu.yaml").read_text(
             encoding="utf-8"
         ) == "hello world"  # nosec
 
@@ -1136,11 +1136,11 @@ ok 2 bar
         )
         assert response.status_code == 204  # nosec - unit test support
 
-    def test_workers_get_env(self, mocker, tmpdir):
-        (tmpdir / "env.yaml").write_text("hello", encoding="utf-8")
+    def test_workers_get_env(self, mocker, tmp_path):
+        (tmp_path / "env.yaml").write_text("hello", encoding="utf-8")
         mocker.patch(
             "lava_server.files.File.KINDS",
-            {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+            {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
         )
 
         data = self.hit(
@@ -1158,24 +1158,24 @@ ok 2 bar
         assert response.status_code == 404  # nosec
 
         # no configuration file
-        (tmpdir / "env.yaml").remove()
+        (tmp_path / "env.yaml").unlink()
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
             + "workers/%s/env/" % self.worker1.hostname
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_get_config(self, mocker, tmpdir):
-        (tmpdir / self.worker1.hostname).mkdir()
-        (tmpdir / self.worker1.hostname / "dispatcher.yaml").write_text(
+    def test_workers_get_config(self, mocker, tmp_path):
+        (tmp_path / self.worker1.hostname).mkdir()
+        (tmp_path / self.worker1.hostname / "dispatcher.yaml").write_text(
             "hello world", encoding="utf-8"
         )
         mocker.patch(
             "lava_server.files.File.KINDS",
             {
                 "dispatcher": [
-                    str(tmpdir / "{name}/dispatcher.yaml"),
-                    str(tmpdir / "{name}.yaml"),
+                    str(tmp_path / "{name}/dispatcher.yaml"),
+                    str(tmp_path / "{name}.yaml"),
                 ]
             },
         )
@@ -1195,21 +1195,21 @@ ok 2 bar
         assert response.status_code == 404  # nosec
 
         # no configuration file
-        (tmpdir / self.worker1.hostname / "dispatcher.yaml").remove()
-        (tmpdir / self.worker1.hostname).remove()
+        (tmp_path / self.worker1.hostname / "dispatcher.yaml").unlink()
+        (tmp_path / self.worker1.hostname).rmdir()
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
             + "workers/%s/config/" % self.worker1.hostname
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_set_env(self, mocker, tmpdir):
+    def test_workers_set_env(self, mocker, tmp_path):
         mocker.patch(
             "lava_server.files.File.KINDS",
             {
                 "env": [
-                    str(tmpdir / "dispatcher.d/{name}/env.yaml"),
-                    str(tmpdir / "env.yaml"),
+                    str(tmp_path / "dispatcher.d/{name}/env.yaml"),
+                    str(tmp_path / "env.yaml"),
                 ]
             },
         )
@@ -1243,13 +1243,13 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec
 
-    def test_workers_set_config(self, mocker, tmpdir):
+    def test_workers_set_config(self, mocker, tmp_path):
         mocker.patch(
             "lava_server.files.File.KINDS",
             {
                 "dispatcher": [
-                    str(tmpdir / "{name}/dispatcher.yaml"),
-                    str(tmpdir / "{name}.yaml"),
+                    str(tmp_path / "{name}/dispatcher.yaml"),
+                    str(tmp_path / "{name}.yaml"),
                 ]
             },
         )

@@ -1083,10 +1083,11 @@ def test_device_types_add(setup):
 
 
 @pytest.mark.django_db
-def test_device_types_get_health_check(setup, mocker, tmpdir):
-    (tmpdir / "qemu.yaml").write_text("hello", encoding="utf-8")
+def test_device_types_get_health_check(setup, mocker, tmp_path):
+    (tmp_path / "qemu.yaml").write_text("hello", encoding="utf-8")
     mocker.patch(
-        "lava_server.files.File.KINDS", {"health-check": ([str(tmpdir)], "{name}.yaml")}
+        "lava_server.files.File.KINDS",
+        {"health-check": ([str(tmp_path)], "{name}.yaml")},
     )
 
     # 1. normal case
@@ -1108,11 +1109,11 @@ def test_device_types_get_health_check(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_get_template(setup, mocker, tmpdir):
-    (tmpdir / "qemu.jinja2").write_text("hello", encoding="utf-8")
+def test_device_types_get_template(setup, mocker, tmp_path):
+    (tmp_path / "qemu.jinja2").write_text("hello", encoding="utf-8")
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+        {"device-type": ([str(tmp_path)], "{name}.jinja2")},
     )
 
     # 1. normal case
@@ -1134,9 +1135,10 @@ def test_device_types_get_template(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_set_health_check(setup, mocker, tmpdir):
+def test_device_types_set_health_check(setup, mocker, tmp_path):
     mocker.patch(
-        "lava_server.files.File.KINDS", {"health-check": ([str(tmpdir)], "{name}.yaml")}
+        "lava_server.files.File.KINDS",
+        {"health-check": ([str(tmp_path)], "{name}.yaml")},
     )
 
     # 1. normal case
@@ -1144,7 +1146,9 @@ def test_device_types_set_health_check(setup, mocker, tmpdir):
     server("admin", "admin").scheduler.device_types.set_health_check(
         "qemu", "hello world"
     )
-    assert (tmpdir / "qemu.yaml").read_text(encoding="utf-8") == "hello world"  # nosec
+    assert (tmp_path / "qemu.yaml").read_text(
+        encoding="utf-8"
+    ) == "hello world"  # nosec
 
     # 2. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1156,16 +1160,16 @@ def test_device_types_set_health_check(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_set_template(setup, mocker, tmpdir):
+def test_device_types_set_template(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+        {"device-type": ([str(tmp_path)], "{name}.jinja2")},
     )
 
     # 1. normal case
     DeviceType.objects.create(name="qemu")
     server("admin", "admin").scheduler.device_types.set_template("qemu", "hello world")
-    assert (tmpdir / "qemu.jinja2").read_text(  # nosec
+    assert (tmp_path / "qemu.jinja2").read_text(  # nosec
         encoding="utf-8"
     ) == "hello world"
 
@@ -1177,15 +1181,15 @@ def test_device_types_set_template(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_device_types_list(setup, mocker, tmpdir):
+def test_device_types_list(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"device-type": ([str(tmpdir)], "{name}.jinja2")},
+        {"device-type": ([str(tmp_path)], "{name}.jinja2")},
     )
-    (tmpdir / "base.jinja2").write_text("", encoding="utf-8")
-    (tmpdir / "base-uboot.jinja2").write_text("", encoding="utf-8")
-    (tmpdir / "b2260.jinja2").write_text("", encoding="utf-8")
-    (tmpdir / "qemu.jinja2").write_text("", encoding="utf-8")
+    (tmp_path / "base.jinja2").write_text("", encoding="utf-8")
+    (tmp_path / "base-uboot.jinja2").write_text("", encoding="utf-8")
+    (tmp_path / "b2260.jinja2").write_text("", encoding="utf-8")
+    (tmp_path / "qemu.jinja2").write_text("", encoding="utf-8")
 
     data = server("admin", "admin").scheduler.device_types.list()
     assert data == []  # nosec
@@ -1643,14 +1647,14 @@ def test_workers_add(setup):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_old_config(setup, mocker, tmpdir):
-    (tmpdir / "example.com.yaml").write_text("hello", encoding="utf-8")
+def test_workers_get_config_old_config(setup, mocker, tmp_path):
+    (tmp_path / "example.com.yaml").write_text("hello", encoding="utf-8")
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "dispatcher": [
-                str(tmpdir / "{name}/dispatcher.yaml"),
-                str(tmpdir / "{name}.yaml"),
+                str(tmp_path / "{name}/dispatcher.yaml"),
+                str(tmp_path / "{name}.yaml"),
             ]
         },
     )
@@ -1662,17 +1666,17 @@ def test_workers_get_config_old_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_new_config(setup, mocker, tmpdir):
-    (tmpdir / "example.com").mkdir()
-    (tmpdir / "example.com" / "dispatcher.yaml").write_text(
+def test_workers_get_config_new_config(setup, mocker, tmp_path):
+    (tmp_path / "example.com").mkdir()
+    (tmp_path / "example.com" / "dispatcher.yaml").write_text(
         "hello world", encoding="utf-8"
     )
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "dispatcher": [
-                str(tmpdir / "{name}/dispatcher.yaml"),
-                str(tmpdir / "{name}.yaml"),
+                str(tmp_path / "{name}/dispatcher.yaml"),
+                str(tmp_path / "{name}.yaml"),
             ]
         },
     )
@@ -1684,13 +1688,13 @@ def test_workers_get_config_new_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_config_exceptions(setup, mocker, tmpdir):
+def test_workers_get_config_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "dispatcher": [
-                str(tmpdir / "{name}/dispatcher.yaml"),
-                str(tmpdir / "{name}.yaml"),
+                str(tmp_path / "{name}/dispatcher.yaml"),
+                str(tmp_path / "{name}.yaml"),
             ]
         },
     )
@@ -1720,11 +1724,11 @@ def test_workers_get_config_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_old_config(setup, mocker, tmpdir):
-    (tmpdir / "env.yaml").write_text("hello", encoding="utf-8")
+def test_workers_get_env_old_config(setup, mocker, tmp_path):
+    (tmp_path / "env.yaml").write_text("hello", encoding="utf-8")
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
     assert (  # nosec
@@ -1734,12 +1738,12 @@ def test_workers_get_env_old_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_new_config(setup, mocker, tmpdir):
-    (tmpdir / "example.com").mkdir()
-    (tmpdir / "example.com" / "env.yaml").write_text("hello world", encoding="utf-8")
+def test_workers_get_env_new_config(setup, mocker, tmp_path):
+    (tmp_path / "example.com").mkdir()
+    (tmp_path / "example.com" / "env.yaml").write_text("hello world", encoding="utf-8")
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
     assert (  # nosec
@@ -1749,10 +1753,10 @@ def test_workers_get_env_new_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_exceptions(setup, mocker, tmpdir):
+def test_workers_get_env_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
     # 1. invalid worker name (should not be a path)
@@ -1779,14 +1783,14 @@ def test_workers_get_env_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_dut_old_config(setup, mocker, tmpdir):
-    (tmpdir / "env-dut.yaml").write_text("hello", encoding="utf-8")
+def test_workers_get_env_dut_old_config(setup, mocker, tmp_path):
+    (tmp_path / "env-dut.yaml").write_text("hello", encoding="utf-8")
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "env-dut": [
-                str(tmpdir / "{name}/env-dut.yaml"),
-                str(tmpdir / "env-dut.yaml"),
+                str(tmp_path / "{name}/env-dut.yaml"),
+                str(tmp_path / "env-dut.yaml"),
             ]
         },
     )
@@ -1798,17 +1802,17 @@ def test_workers_get_env_dut_old_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_dut_new_config(setup, mocker, tmpdir):
-    (tmpdir / "example.com").mkdir()
-    (tmpdir / "example.com" / "env-dut.yaml").write_text(
+def test_workers_get_env_dut_new_config(setup, mocker, tmp_path):
+    (tmp_path / "example.com").mkdir()
+    (tmp_path / "example.com" / "env-dut.yaml").write_text(
         "hello world", encoding="utf-8"
     )
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "env-dut": [
-                str(tmpdir / "{name}/env-dut.yaml"),
-                str(tmpdir / "env-dut.yaml"),
+                str(tmp_path / "{name}/env-dut.yaml"),
+                str(tmp_path / "env-dut.yaml"),
             ]
         },
     )
@@ -1820,13 +1824,13 @@ def test_workers_get_env_dut_new_config(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_get_env_dut_exceptions(setup, mocker, tmpdir):
+def test_workers_get_env_dut_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "env-dut": [
-                str(tmpdir / "{name}/env-dut.yaml"),
-                str(tmpdir / "env-dut.yaml"),
+                str(tmp_path / "{name}/env-dut.yaml"),
+                str(tmp_path / "env-dut.yaml"),
             ]
         },
     )
@@ -1855,13 +1859,13 @@ def test_workers_get_env_dut_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_config(setup, mocker, tmpdir):
+def test_workers_set_config(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "dispatcher": [
-                str(tmpdir / "{name}/dispatcher.yaml"),
-                str(tmpdir / "{name}.yaml"),
+                str(tmp_path / "{name}/dispatcher.yaml"),
+                str(tmp_path / "{name}.yaml"),
             ]
         },
     )
@@ -1870,19 +1874,19 @@ def test_workers_set_config(setup, mocker, tmpdir):
         server("admin", "admin").scheduler.workers.set_config("example.com", "hello")
         is True
     )
-    assert (tmpdir / "example.com" / "dispatcher.yaml").read_text(  # nosec
+    assert (tmp_path / "example.com" / "dispatcher.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
 
 
 @pytest.mark.django_db
-def test_workers_set_config_exceptions(setup, mocker, tmpdir):
+def test_workers_set_config_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "dispatcher": [
-                str(tmpdir / "{name}/dispatcher.yaml"),
-                str(tmpdir / "{name}.yaml"),
+                str(tmp_path / "{name}/dispatcher.yaml"),
+                str(tmp_path / "{name}.yaml"),
             ]
         },
     )
@@ -1917,26 +1921,26 @@ def test_workers_set_config_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_env(setup, mocker, tmpdir):
+def test_workers_set_env(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_env("example.com", "hello")
         is True
     )
-    assert (tmpdir / "example.com" / "env.yaml").read_text(  # nosec
+    assert (tmp_path / "example.com" / "env.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
 
 
 @pytest.mark.django_db
-def test_workers_set_env_exceptions(setup, mocker, tmpdir):
+def test_workers_set_env_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
-        {"env": [str(tmpdir / "{name}/env.yaml"), str(tmpdir / "env.yaml")]},
+        {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
     # 1. invalid worker name (should not be a path)
@@ -1965,13 +1969,13 @@ def test_workers_set_env_exceptions(setup, mocker, tmpdir):
 
 
 @pytest.mark.django_db
-def test_workers_set_env_dut(setup, mocker, tmpdir):
+def test_workers_set_env_dut(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "env-dut": [
-                str(tmpdir / "{name}/env-dut.yaml"),
-                str(tmpdir / "env-dut.yaml"),
+                str(tmp_path / "{name}/env-dut.yaml"),
+                str(tmp_path / "env-dut.yaml"),
             ]
         },
     )
@@ -1980,19 +1984,19 @@ def test_workers_set_env_dut(setup, mocker, tmpdir):
         server("admin", "admin").scheduler.workers.set_env_dut("example.com", "hello")
         is True
     )
-    assert (tmpdir / "example.com" / "env-dut.yaml").read_text(  # nosec
+    assert (tmp_path / "example.com" / "env-dut.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
 
 
 @pytest.mark.django_db
-def test_workers_set_env_dut_exceptions(setup, mocker, tmpdir):
+def test_workers_set_env_dut_exceptions(setup, mocker, tmp_path):
     mocker.patch(
         "lava_server.files.File.KINDS",
         {
             "env-dut": [
-                str(tmpdir / "{name}/env-dut.yaml"),
-                str(tmpdir / "env-dut.yaml"),
+                str(tmp_path / "{name}/env-dut.yaml"),
+                str(tmp_path / "env-dut.yaml"),
             ]
         },
     )

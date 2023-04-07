@@ -35,8 +35,8 @@ def test_mkdtemp_with_prefix(job):
     assert d.parent.name == "FOOBAR-42"
 
 
-def test_mktemp_with_override(job, tmpdir):
-    override = tmpdir / "override"
+def test_mktemp_with_override(job, tmp_path):
+    override = tmp_path / "override"
     first = Path(job.mkdtemp("my-action", override=override))
     second = Path(job.mkdtemp("my-assert", override=override))
     assert first.exists()

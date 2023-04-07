@@ -4,7 +4,7 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
-def update_settings(settings, mocker, tmpdir):
+def update_settings(settings, mocker, tmp_path):
     base = pathlib.Path(__file__).parent.parent.parent
     settings.DEVICES_PATH = str(base / "tests" / "lava_scheduler_app" / "devices")
     settings.DEVICE_TYPES_PATHS = [
@@ -35,5 +35,5 @@ def update_settings(settings, mocker, tmpdir):
     )
 
     mocker.patch(
-        "lava_scheduler_app.models.TestJob.output_dir", str(tmpdir / "job-output")
+        "lava_scheduler_app.models.TestJob.output_dir", str(tmp_path / "job-output")
     )
