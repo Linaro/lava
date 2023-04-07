@@ -662,8 +662,7 @@ class Action:
         ret = None
         try:
             proc = pexpect.spawn(
-                command_list[0],
-                command_list[1:],
+                shlex.join(command_list),
                 cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",

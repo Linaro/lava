@@ -18,6 +18,8 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import shlex
+
 import pexpect
 
 import lava_dispatcher.actions.deploy.docker  # pylint: disable=unused-import
@@ -61,12 +63,9 @@ def test_run(monkeypatch):
         ["touch"],
     ]
 
-    def spawn(
-        cmd, args, cwd, encoding, codec_errors, logfile, timeout, searchwindowsize
-    ):
+    def spawn(cmd, cwd, encoding, codec_errors, logfile, timeout, searchwindowsize):
         command = commands.pop(0)
-        assert cmd == command[0]
-        assert args == command[1:]
+        assert cmd == shlex.join(command)
         assert encoding == "utf-8"
         assert codec_errors == "replace"
         assert searchwindowsize == 10
