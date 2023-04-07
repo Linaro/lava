@@ -251,6 +251,12 @@ DEFAULT_TABLE_LENGTH = 25
 # Extra context variables when validating the job definition schema
 EXTRA_CONTEXT_VARIABLES = []
 
+# Index of the user ip in HTTP_X_FORWARDED_FOR
+# In fact, this header is a list of all the reverse proxy involved.
+# By default, use the latest element in the list. If the system involve more
+# than one reverse proxy, the variable should be updated.
+HTTP_X_FORWARDED_FOR_INDEX = -1
+
 # Use default instance name
 INSTANCE_NAME = "default"
 

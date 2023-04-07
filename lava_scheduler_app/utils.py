@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import copy
 import errno
 import ipaddress
@@ -348,9 +349,14 @@ def get_ldap_user_properties(ldap_user):
 
 def get_user_ip(request):
     if "HTTP_X_FORWARDED_FOR" in request.META:
-        return request.META["HTTP_X_FORWARDED_FOR"].split(",")[0]
-    if "REMOTE_ADDR" in request.META:
-        return request.META["REMOTE_ADDR"]
+        ips = [
+            ip.strip(" ")
+            for ip in request.META["HTTP_X_FORWARDED_FOR"].split(",")
+            if ip
+        ]
+        with contextlib.suppress(IndexError):
+            return ips[settings.HTTP_X_FORWARDED_FOR_INDEX]
+        return None
     return None
 
 
