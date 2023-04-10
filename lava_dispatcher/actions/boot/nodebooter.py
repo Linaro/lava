@@ -18,12 +18,14 @@
 # along
 # with this program; if not, see <http://www.gnu.org/licenses>.
 
+import glob
 import os
 import subprocess
 import time
 
 import requests
 
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
@@ -32,7 +34,6 @@ from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.docker import DockerRun
 
 LAVA_NODEBOOTER_PATH = "/home/lava/downloads"
-LAVA_DOWNLOADS_PATH = "/var/lib/lava/dispatcher/tmp"
 NODEBOOTER_HOME = "/data/nodebooter/"
 
 
@@ -105,7 +106,7 @@ class RunNodebooterContainer(Action):
             f"{NODEBOOTER_HOME}logs": "/var/log",
             f"{NODEBOOTER_HOME}docker_shm": "/dev/shm",
             f"{NODEBOOTER_HOME}ovss": "/opt/ovss",
-            LAVA_DOWNLOADS_PATH: LAVA_NODEBOOTER_PATH,
+            DISPATCHER_DOWNLOAD_DIR: LAVA_NODEBOOTER_PATH,
             "/sys/fs/cgroup": "/sys/fs/cgroup",
         }
         INIT_EXEC = "/usr/sbin/init"
@@ -217,7 +218,7 @@ class ConfigureNodebooter(Action):
             headers = {"Content-Type": "application/json"}
             boot_image = self.get_namespace_data(
                 "download-action", label="boot", key="file"
-            ).replace(LAVA_DOWNLOADS_PATH, LAVA_NODEBOOTER_PATH)
+            ).replace(DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH)
             json = {
                 "machine_name": "dut",
                 "machine_model_data": {
@@ -267,3 +268,17 @@ class ConfigureNodebooter(Action):
         self.logger.debug("Stopping container %s", container)
         # Stop nodebooter container
         self.run_cmd("docker stop %s" % (container), allow_fail=True)
+        # Remove all files from nodebooter dir based on mac address
+        # Nodebooter currently replaces ":" in mac address either with
+        # "_" or "." delimiters to create initrd file names and images.
+        mac_delimiters = [".", "_"]
+        patterns = ["*%s*" % self.target_mac.replace(":", x) for x in mac_delimiters]
+        # Find all files that match the patterns in the directory tree
+        file_list = []
+        for pattern in patterns:
+            file_list += glob.glob(
+                os.path.join(DISPATCHER_DOWNLOAD_DIR, "**", pattern.lower()),
+                recursive=True,
+            )
+        for file_path in file_list:
+            os.remove(file_path)
