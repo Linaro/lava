@@ -901,6 +901,7 @@ def test_devices_show(setup):
         "state": "Idle",
         "tags": [],
         "worker": None,
+        "permissions": [],
     }
 
     # 4. add a worker
@@ -920,6 +921,27 @@ def test_devices_show(setup):
         "state": "Idle",
         "tags": [],
         "worker": "worker01",
+        "permissions": [],
+    }
+
+    # 5. Add a group permission.
+    GroupDevicePermission.objects.assign_perm("change_device", group, device1)
+    data = server().scheduler.devices.show("device01")
+    assert data == {
+        "current_job": None,
+        "description": None,
+        "device_type": "black",
+        "has_device_dict": False,
+        "health": "Maintenance",
+        "health_job": False,
+        "hostname": "device01",
+        "pipeline": True,
+        "state": "Idle",
+        "tags": [],
+        "worker": "worker01",
+        "permissions": [
+            {"name": "change_device", "group": "group1"},
+        ],
     }
 
 
@@ -1366,6 +1388,7 @@ def test_device_types_show(setup):
         "aliases": [],
         "devices": [],
         "default_template": False,
+        "permissions": [],
     }
 
     # 3. More details
@@ -1382,6 +1405,26 @@ def test_device_types_show(setup):
         "aliases": [],
         "devices": ["device01"],
         "default_template": False,
+        "permissions": [],
+    }
+
+    # 4. Add a group permission.
+    group = Group.objects.get(name="group")
+    GroupDeviceTypePermission.objects.assign_perm("change_devicetype", group, dt)
+    data = server("admin", "admin").scheduler.device_types.show("qemu")
+    assert data == {
+        "name": "qemu",
+        "description": None,
+        "display": True,
+        "health_disabled": False,
+        "health_denominator": "hours",
+        "health_frequency": 24,
+        "aliases": [],
+        "devices": ["device01"],
+        "default_template": False,
+        "permissions": [
+            {"name": "change_devicetype", "group": "group"},
+        ],
     }
 
 
