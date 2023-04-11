@@ -351,6 +351,13 @@ class SchedulerDevicesAPI(ExposedV2API):
             "worker": None,
             "current_job": current_job.pk if current_job else None,
             "tags": [t.name for t in device.tags.all().order_by("name")],
+            "permissions": [
+                {
+                    "name": p.permission.codename,
+                    "group": p.group.name,
+                }
+                for p in GroupDevicePermission.objects.filter(device=device)
+            ],
         }
         if device.worker_host is not None:
             device_dict["worker"] = device.worker_host.hostname

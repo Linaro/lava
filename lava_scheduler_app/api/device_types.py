@@ -408,6 +408,13 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             "aliases": aliases,
             "devices": devices,
             "default_template": not File("device-type", name).is_first(),
+            "permissions": [
+                {
+                    "name": p.permission.codename,
+                    "group": p.group.name,
+                }
+                for p in GroupDeviceTypePermission.objects.filter(devicetype=dt)
+            ],
         }
 
         return dt_dict
