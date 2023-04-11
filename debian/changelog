@@ -1,3 +1,13 @@
+lava (2023.03-1) unstable; urgency=medium
+
+  * LAVA Software 2023.03 release
+
+  [ Chase Qi ]
+  * [482dab8cd] lava-docker-worker: start the service after docker.service
+  * [6ba8621a4] Add sentry to lava worker and docker worker
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 11 Apr 2023 16:15:36 +0200
+
 lava (2023.02-1) unstable; urgency=medium
 
   * LAVA Software 2023.02 release
