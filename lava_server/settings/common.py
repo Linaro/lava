@@ -273,7 +273,7 @@ ELASTICSEARCH_APIKEY = ""
 MASTER_UPGRADE_NOTIFY = False
 
 # Worker in the specific network will be allowed to auto register
-WORKER_AUTO_REGISTER = True
+WORKER_AUTO_REGISTER = False
 WORKER_AUTO_REGISTER_NETMASK = ["127.0.0.0/8", "::1"]
 
 # ZMQ events
