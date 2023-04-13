@@ -29,8 +29,8 @@ import csv
 import logging
 import os
 from collections import OrderedDict
+from json import dumps as json_dumps
 
-import simplejson
 import yaml
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
@@ -155,10 +155,10 @@ def testjob(request, job):
                 "job_link": pklink(job),
                 "suite_table": suite_table,
                 "metadata": yaml_dict,
-                "condition_choices": simplejson.dumps(
+                "condition_choices": json_dumps(
                     QueryCondition.get_condition_choices(job)
                 ),
-                "available_content_types": simplejson.dumps(
+                "available_content_types": json_dumps(
                     QueryCondition.get_similar_job_content_types()
                 ),
             },

@@ -644,7 +644,6 @@ format which mimics ``requirements.txt``::
     pytz
     pyzmq
     requests
-    simplejson
     voluptuous>=0.8.8
 
 Outputting a list of binary package names
@@ -664,7 +663,7 @@ other ``apt-get`` commands before appending the list of packages.
     $ ./share/requires.py --package lava-server --distribution debian --suite buster --names
     python3-django python3-yaml python3-docutils \
     python3-jinja2 python3-psycopg2 python3-tz python3-zmq python3-requests \
-    python3-simplejson python3-voluptuous
+    python3-voluptuous
 
 Adding packages needed for the unittests
 ========================================

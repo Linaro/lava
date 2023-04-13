@@ -26,9 +26,9 @@ import logging
 import os
 import re
 import tarfile
+from json import dumps as json_dumps
 from pathlib import Path
 
-import simplejson
 import voluptuous
 import yaml
 from django import forms
@@ -1769,10 +1769,8 @@ def job_detail(request, pk):
         "change_priority": job.can_change_priority(request.user),
         "context_help": BreadCrumbTrail.leading_to(job_detail, pk="detail"),
         "is_favorite": is_favorite,
-        "condition_choices": simplejson.dumps(
-            QueryCondition.get_condition_choices(job)
-        ),
-        "available_content_types": simplejson.dumps(
+        "condition_choices": json_dumps(QueryCondition.get_condition_choices(job)),
+        "available_content_types": json_dumps(
             QueryCondition.get_similar_job_content_types()
         ),
         "pipeline_data": pipeline,
@@ -2083,8 +2081,7 @@ def job_status(request, pk):
     if job.state == TestJob.STATE_FINISHED:
         response_dict["X-JobState"] = "1"
 
-    response = HttpResponse(simplejson.dumps(response_dict), content_type="text/json")
-    return response
+    return JsonResponse(response_dict)
 
 
 def job_timing(request, pk):
@@ -2184,7 +2181,7 @@ def job_timing(request, pk):
 
         response_dict = {"timing": timing, "graph": pipeline}
 
-    return HttpResponse(simplejson.dumps(response_dict), content_type="text/json")
+    return JsonResponse(response_dict)
 
 
 def job_configuration(request, pk):
@@ -2236,7 +2233,7 @@ def job_log_incremental(request, pk):
 
     job_file_size = logs_instance.size(job)
     if job_file_size is not None and job_file_size >= job.size_limit:
-        response = HttpResponse(simplejson.dumps([]), content_type="application/json")
+        response = JsonResponse([], safe=False)
         response["X-Size-Warning"] = "1"
         return response
 
@@ -2262,7 +2259,7 @@ def job_log_incremental(request, pk):
     except (OSError, StopIteration, yaml.YAMLError):
         data = []
 
-    response = HttpResponse(simplejson.dumps(data), content_type="application/json")
+    response = JsonResponse(data, safe=False)
 
     if job.state == TestJob.STATE_FINISHED:
         response["X-Is-Finished"] = "1"
@@ -2706,7 +2703,7 @@ def username_list_json(request):
     users = []
     for user in User.objects.filter(Q(username__istartswith=term)):
         users.append({"id": user.id, "name": user.username, "label": user.username})
-    return HttpResponse(simplejson.dumps(users), content_type="application/json")
+    return JsonResponse(users, safe=False)
 
 
 class HealthCheckJobsView(JobTableView):

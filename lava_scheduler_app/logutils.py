@@ -26,9 +26,10 @@ import os
 import pathlib
 import struct
 from importlib import import_module
+from json import dumps as json_dumps
+from json import loads as json_loads
 
 import requests
-import simplejson
 from django.conf import settings
 
 from lava_common.exceptions import ConfigurationError
@@ -212,7 +213,7 @@ class LogsElasticsearch(Logs):
             "settings": {"index": {"max_result_window": self.MAX_RESULTS}},
             "mappings": {"properties": {"dt": {"type": "date"}}},
         }
-        requests.put(self.api_url, simplejson.dumps(params), headers=self.headers)
+        requests.put(self.api_url, json_dumps(params), headers=self.headers)
         super().__init__()
 
     def _get_docs(self, job, start=0, end=None):
@@ -232,11 +233,11 @@ class LogsElasticsearch(Logs):
 
         response = requests.get(
             "%s_search/" % self.api_url,
-            data=simplejson.dumps(params),
+            data=json_dumps(params),
             headers=self.headers,
         )
 
-        response = simplejson.loads(response.text)
+        response = json_loads(response.text)
         if not "hits" in response:
             return []
         result = []
@@ -281,7 +282,7 @@ class LogsElasticsearch(Logs):
         line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
         if line["lvl"] == "results":
             line.update({"msg": str(line["msg"])})
-        data = simplejson.dumps(line)
+        data = json_dumps(line)
 
         requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
 
