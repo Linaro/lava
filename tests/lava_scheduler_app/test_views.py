@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
+from json import loads as json_loads
+
 import pytest
-import simplejson
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
@@ -450,7 +451,7 @@ def test_job_status(client, setup):
     job_1 = TestJob.objects.get(description="test job 01")
     ret = client.post(reverse("lava.scheduler.job_status", args=[job_1.pk]))
     assert ret.status_code == 200  # nosec
-    response = simplejson.loads(ret.content)
+    response = json_loads(ret.content)
     assert response["X-JobState"] == "1"  # nosec
     assert response["started"] == "now"  # nosec
     assert (
@@ -1222,7 +1223,7 @@ def test_username_list_json(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.username_list_json"), {"term": "t"})
     assert ret.status_code == 200  # nosec
-    content = simplejson.loads(ret.content)
+    content = json_loads(ret.content)
     assert content[0]["name"] == "tester"  # nosec
 
 

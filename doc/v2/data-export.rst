@@ -47,10 +47,10 @@ snippet:
 .. code-block:: python
 
   # Python3
+  import json
   import xmlrpc.client
-  import simplejson
 
-  config = simplejson.dumps({ ... })
+  config = json.dumps({ ... })
   server=xmlrpc.client.ServerProxy("http://username:API-Key@localhost:8001/RPC2/")
   jobid=server.scheduler.submit_job(config)
 

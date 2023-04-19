@@ -25,9 +25,9 @@ import gzip
 import logging
 import os
 import uuid
+from json import dump as json_dump
 
 import requests
-import simplejson
 import yaml
 from django.conf import settings
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
@@ -2386,8 +2386,8 @@ class NotificationCallback(models.Model):
                 utils.mkdir(self.notification.test_job.output_dir)
                 # only write the file once
                 if not os.path.exists(job_data_file):
-                    with gzip.open(job_data_file, "wb") as output:
-                        output.write(simplejson.dumps(data).encode("utf-8"))
+                    with gzip.open(job_data_file, "w") as output:
+                        json_dump(data, output)
         try:
             logger.info("Sending request to callback url %s" % self.url)
             headers = {}

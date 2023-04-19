@@ -23,8 +23,8 @@ import logging
 import uuid
 from contextvars import ContextVar
 from functools import wraps
+from json import dumps as json_dumps
 
-import simplejson
 import zmq
 from django.conf import settings
 from django.db import transaction
@@ -75,7 +75,7 @@ def send_event(topic, user, data):
             b(str(uuid.uuid1())),
             b(datetime.datetime.utcnow().isoformat()),
             b(user),
-            b(simplejson.dumps(data)),
+            json_dumps(data).encode(),
         ]
         # Send the message in the non-blockng mode.
         # If the consumer (lava-publisher) is not active, the message will be lost.

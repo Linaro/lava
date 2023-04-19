@@ -22,7 +22,6 @@ import os
 import shutil
 import tempfile
 
-import simplejson
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
@@ -31,7 +30,7 @@ from django.core.exceptions import FieldDoesNotExist, FieldError, PermissionDeni
 from django.db import IntegrityError
 from django.db.models import Q
 from django.db.utils import ProgrammingError
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, loader
 from django.template import defaultfilters
 from django.urls import reverse
@@ -457,9 +456,9 @@ def query_refresh(request, name, username):
         error_msg = "%s<br>Please contact system administrator." % str(e)
 
     last_updated = defaultfilters.date(query.last_updated, "DATETIME_FORMAT")
-    return HttpResponse(
-        simplejson.dumps([success, str(last_updated), error_msg]),
-        content_type="application/json",
+    return JsonResponse(
+        [success, str(last_updated), error_msg],
+        safe=False,
     )
 
 
@@ -469,7 +468,7 @@ def query_group_list(request):
     groups = [
         str(group.name) for group in QueryGroup.objects.filter(name__istartswith=term)
     ]
-    return HttpResponse(simplejson.dumps(groups), content_type="application/json")
+    return JsonResponse(groups, safe=False)
 
 
 @login_required
@@ -525,7 +524,7 @@ def get_query_group_names(request):
     groups = []
     for group in Group.objects.filter(user=request.user, name__istartswith=term):
         groups.append({"id": group.id, "name": group.name, "label": group.name})
-    return HttpResponse(simplejson.dumps(groups), content_type="application/json")
+    return JsonResponse(groups, safe=False)
 
 
 @login_required
@@ -610,7 +609,7 @@ def get_query_names(request):
                 "content_type": query.content_type.model_class().__name__,
             }
         )
-    return HttpResponse(simplejson.dumps(list(result)), content_type="application/json")
+    return JsonResponse(result, safe=False)
 
 
 def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
@@ -662,9 +661,7 @@ def query_condition_form(request, query, bread_crumb_trail, instance=None):
             content_type="application/json",
         )
     else:
-        return HttpResponse(
-            simplejson.dumps(["fail", form.errors]), content_type="application/json"
-        )
+        return JsonResponse(["fail", form.errors], safe=False)
 
 
 def _remove_dir(path):

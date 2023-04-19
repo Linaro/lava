@@ -49,8 +49,6 @@ lava-server:
     name: python3-requests
   tap:
     name: python3-tap
-  simplejson:
-    name: python3-simplejson
   junit.xml:
     name: python3-junit.xml
   voluptuous:

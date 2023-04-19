@@ -19,8 +19,8 @@
 
 import contextlib
 import datetime
+from json import dumps as json_dumps
 
-import simplejson
 from django import forms
 from django.conf import settings
 from django.db import models
@@ -93,9 +93,7 @@ class QueryConditionForm(forms.ModelForm):
         if "query" in self.initial and self.initial["query"].__class__ == Query:
             condition_choices = QueryCondition.get_condition_choices()
 
-            self.fields["condition_choices"].initial = simplejson.dumps(
-                condition_choices
-            )
+            self.fields["condition_choices"].initial = json_dumps(condition_choices)
 
     def save(self, commit=True, **kwargs):
         return super().save(commit=commit, **kwargs)

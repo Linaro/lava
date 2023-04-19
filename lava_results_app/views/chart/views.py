@@ -17,13 +17,19 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
 
-import simplejson
+from json import dumps as json_dumps
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import (
+    HttpResponse,
+    HttpResponseBadRequest,
+    HttpResponseRedirect,
+    JsonResponse,
+)
 from django.shortcuts import get_object_or_404, loader
 from django.urls import reverse
 from django_tables2 import RequestConfig
@@ -177,7 +183,7 @@ def chart_display(request, name):
         template.render(
             {
                 "chart": chart,
-                "chart_data": simplejson.dumps(chart_data),
+                "chart_data": json_dumps(chart_data),
                 "bread_crumb_trail": BreadCrumbTrail.leading_to(
                     chart_display, name=name
                 ),
@@ -230,7 +236,7 @@ def chart_custom(request):
         template.render(
             {
                 "chart": chart,
-                "chart_data": simplejson.dumps(chart_data),
+                "chart_data": json_dumps(chart_data),
                 "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_custom),
                 "can_admin": False,
             },
@@ -311,7 +317,7 @@ def chart_group_list(request):
     groups = [
         str(group.name) for group in ChartGroup.objects.filter(name__istartswith=term)
     ]
-    return HttpResponse(simplejson.dumps(groups), content_type="application/json")
+    return JsonResponse(groups, safe=False)
 
 
 @login_required
@@ -367,7 +373,7 @@ def get_chart_group_names(request):
     groups = []
     for group in Group.objects.filter(user=request.user, name__istartswith=term):
         groups.append({"id": group.id, "name": group.name, "label": group.name})
-    return HttpResponse(simplejson.dumps(groups), content_type="application/json")
+    return JsonResponse(groups, safe=False)
 
 
 @BreadCrumb("Add chart query", parent=chart_detail, needs=["name"])
