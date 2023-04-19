@@ -19,9 +19,10 @@
 
 import contextlib
 import datetime
-import json
 import signal
 import time
+from json import JSONDecodeError
+from json import loads as json_loads
 from typing import Set
 
 import zmq
@@ -29,7 +30,6 @@ from django.conf import settings
 from django.db import connection, transaction
 from django.db.utils import InterfaceError, OperationalError
 from django.utils import timezone
-from zmq.utils.strtypes import b, u
 
 from lava_common.version import __version__
 from lava_scheduler_app.models import Worker
@@ -102,7 +102,7 @@ class Command(LAVADaemonCommand):
         self.context = zmq.Context()
         self.sub = self.context.socket(zmq.SUB)
         self.logger.debug("[INIT] -> %r", settings.EVENT_TOPIC)
-        self.sub.setsockopt(zmq.SUBSCRIBE, b(settings.EVENT_TOPIC))
+        self.sub.setsockopt(zmq.SUBSCRIBE, settings.EVENT_TOPIC.encode())
         if options["ipv6"]:
             self.logger.info("[INIT] -> enable IPv6")
             self.sub.setsockopt(zmq.IPV6, 1)
@@ -134,26 +134,29 @@ class Command(LAVADaemonCommand):
         device_types: Set[str] = set()
         with contextlib.suppress(KeyError, zmq.ZMQError):
             while True:
-                msg = self.sub.recv_multipart(zmq.NOBLOCK)
+                msg_part_list = self.sub.recv_multipart(zmq.NOBLOCK, copy=True)
                 try:
-                    (topic, _, dt, username, data) = (u(m) for m in msg)
-                    data = json.loads(data)
+                    topic = msg_part_list[0].decode("utf-8")
+                    if not (topic.endswith(".testjob") or topic.endswith(".device")):
+                        continue
+
+                    data = json_loads(msg_part_list[4])
                 except UnicodeDecodeError:
                     self.logger.error("Invalid event: can't be decoded")
                     continue
-                except ValueError:
-                    self.logger.error("Invalid event: %s", msg)
+                except (IndexError, JSONDecodeError):
+                    self.logger.error(f"Invalid event: {msg_part_list}")
                     continue
 
                 if topic.endswith(".testjob"):
                     if data["state"] == "Submitted":
                         device_types.add(data["device_type"])
                 elif topic.endswith(".device"):
-                    if data["state"] == "Idle" and data["health"] in [
+                    if data["state"] == "Idle" and data["health"] in (
                         "Good",
                         "Unknown",
                         "Looping",
-                    ]:
+                    ):
                         device_types.add(data["device_type"])
 
         return device_types
