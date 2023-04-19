@@ -29,7 +29,6 @@ import zmq
 from django.conf import settings
 from django.db import transaction
 from django.db.models.signals import post_init, post_save, pre_delete, pre_save
-from zmq.utils.strtypes import b
 
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.tasks import async_send_notifications
@@ -71,10 +70,10 @@ def send_event(topic, user, data):
     try:
         # The format is [topic, uuid, datetime, username, data as json]
         msg = [
-            b(settings.EVENT_TOPIC + topic),
-            b(str(uuid.uuid1())),
-            b(datetime.datetime.utcnow().isoformat()),
-            b(user),
+            (settings.EVENT_TOPIC + topic).encode(),
+            uuid.uuid1().bytes,
+            datetime.datetime.utcnow().isoformat().encode(),
+            user.encode(),
             json_dumps(data).encode(),
         ]
         # Send the message in the non-blockng mode.
