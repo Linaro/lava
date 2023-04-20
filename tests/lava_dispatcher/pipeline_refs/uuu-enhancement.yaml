@@ -46,19 +46,19 @@
           description: issue commands to a PDU to power cycle a device
           summary: hard reboot using PDU
           timeout: 120
+    - class: connections.serial.ConnectDevice
+      description: use the configured command to connect serial to the device
+      level: "2.2"
+      max_retries: 1
+      name: connect-device
+      summary: run connection command
+      timeout: 120
     - class: actions.boot.uuu.UUUBootAction
       name: uuu-boot
-      level: "2.2"
+      level: "2.3"
       max_retries: 1
       description: interactive uuu action
       summary: uuu commands
-      timeout: 120
-    - class: connections.serial.ConnectDevice
-      name: connect-device
-      level: "2.3"
-      max_retries: 1
-      description: use the configured command to connect serial to the device
-      summary: run connection command
       timeout: 120
 - class: actions.boot.bootloader.BootBootloaderRetry
   name: boot-bootloader-retry
