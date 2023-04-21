@@ -522,7 +522,7 @@ _device_schema = Schema(
         "actions": _device_actions_schema(),
         "timeouts": _device_timeouts_schema(),
         "available_architectures": list,
-        "uuu_usb_otg_path": str,
+        "uuu_usb_otg_path": Any([str], str),
         "uuu_usb_otg_path_command": [str],
         "uuu_corrupt_boot_media_command": [str],
     }

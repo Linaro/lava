@@ -237,14 +237,25 @@ Following actions will be skipped :
         # Match example : "2:112"
         otg_path_fsm = re.compile(r"\d+:\d+")
 
-        if otg_path_fsm.fullmatch(uuu_options.get("usb_otg_path")):
-            return uuu_options.get("usb_otg_path")
+        # from uuu_otg_path device parameter
+        raw_option = uuu_options.get("usb_otg_path")
+        if raw_option:
+            if isinstance(raw_option, str):
+                otg_paths = [raw_option]
+            else:
+                # uuu_otg_path accept only List[str] or str
+                otg_paths = raw_option
+
+            # All path are matching with uuu path format
+            if None not in map(lambda p: otg_path_fsm.fullmatch(p), otg_paths):
+                return otg_paths
 
         if uuu_options.get("usb_otg_path_command") is None:
             raise JobError(
                 "uuu_usb_otg_path '{}' does not match with uuu path pattern and 'uuu_usb_otg_path_command' not "
                 "defined in device".format(uuu_options.get("usb_otg_path"))
             )
+        # Retrieve usb_otg_path from command execution
         else:
             usb_otg_path_command = uuu_options.get("usb_otg_path_command")
             cmd = usb_otg_path_command
@@ -252,11 +263,13 @@ Following actions will be skipped :
                 "Retrieving 'usb_otg_path' using command : '%s'", " ".join(cmd)
             )
 
-            uuu_path_expected = self.parsed_command(cmd).strip()
+            command_output = self.parsed_command(cmd)
+            uuu_otg_paths = list(map(lambda p: p.strip(), command_output.splitlines()))
 
-            if otg_path_fsm.fullmatch(uuu_path_expected):
-                self.logger.info("uuu_otg_path matched : %s", uuu_path_expected)
-                return uuu_path_expected
+            # All path are matching with uuu path format
+            if None not in map(lambda p: otg_path_fsm.fullmatch(p), uuu_otg_paths):
+                self.logger.info("uuu_otg_path matched : %s", uuu_otg_paths)
+                return uuu_otg_paths
 
             raise JobError(
                 "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
@@ -406,7 +419,9 @@ class UUUBootAction(OptionalContainerUuuAction):
                 # So it is more convenient for LAVA job writers to use uuu built-in script with a tuple (protocol, command), like uuu: -b sd_all
                 # In this last case, we remove the 'uuu: ' here
                 cmd = cmd.replace("uuu: ", "")
-            exec_cmd = "{} -m {} {}".format(self.uuu, usb_otg_path, cmd)
+
+            path_args = "-m ".join(usb_otg_path)
+            exec_cmd = "{} -m {} {}".format(self.uuu, path_args, cmd)
 
             time.sleep(1)
             self.run_uuu(

@@ -273,7 +273,11 @@ actions:
           - "{{ base_uboot_bootcmd }}"
       uuu:
         options:
+{% if uuu_usb_otg_path is iterable and uuu_usb_otg_path is not string %}
+          usb_otg_path: {{ uuu_usb_otg_path }}
+{% else %}
           usb_otg_path: "{{ uuu_usb_otg_path }}"
+{% endif %}
           usb_otg_path_command: {{ uuu_usb_otg_path_command }}
           corrupt_boot_media_command: {{ uuu_corrupt_boot_media_command }}
           power_off_before_corrupt_boot_media: {{ uuu_power_off_before_corrupt_boot_media }}
