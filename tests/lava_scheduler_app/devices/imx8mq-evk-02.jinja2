@@ -9,7 +9,8 @@
 {% set usb_device_id = '007FD18D' %}
 {% set usb_vendor_id = '10c4' %}
 {% set usb_product_id = 'ea70' %}
-{% set uuu_usb_otg_path = '2:143' %}
+{# uuu path that can be parsed as int by jinja if not escaped with quotes in base-uboot #}
+{% set uuu_usb_otg_path = '1:14' %}
 {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
 {% set uuu_power_off_before_corrupt_boot_media = true %}
 {% set ums_command = 'ums 0 mmc 1' %}

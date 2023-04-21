@@ -106,7 +106,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         for uuu_boot_action in uuu_boot_actions:
             self.assertEqual(
-                "12:1234",
+                ["12:1234", "1:1234"],
                 uuu_boot_action.job.device["actions"]["boot"]["methods"]["uuu"][
                     "options"
                 ]["usb_otg_path"],
