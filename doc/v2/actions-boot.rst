@@ -1294,9 +1294,19 @@ To use ``uuu`` the :term:`device` template must specify two variables :
 * ``uuu_corrupt_boot_media_command`` : a list of commands to execute on the platform within u-boot to corrupt the primary boot media.
     On the next reboot, serial download protocol must be available on the platform to flash future images using uuu.
 
-* ``uuu_usb_otg_path`` : can be obtained using the command ``uuu -lsusb`` :
+* ``uuu_usb_otg_path`` : can be obtained using the command ``uuu -lsusb``. Multiple paths can be provided by using array declaration in device template.
+
+.. code-block:: jinja
+
+  {# Multiple otg path example #}
+  {% set uuu_usb_otg_path = ['1:143', '2:143'] %}
+  {% set uuu_usb_otg_path_command = ['echo', '-ne', '1:143\n2:143'] %}
+
+  {% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
+
+
 * ``uuu_usb_otg_path_command`` : Allow to customize uuu_otg_path at the worker level, avoiding jinja2 device template modification on the server.
-    Your command must print on a single line a well formatted usb path accepted by uuu.
+    Your command must print a well formatted usb path accepted by uuu on each line with no new-line at end of output.
 
 .. code-block:: shell
 
