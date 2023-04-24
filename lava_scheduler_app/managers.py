@@ -16,12 +16,18 @@
 #
 # You should have received a copy of the GNU Affero General Public License
 # along with LAVA.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Count, Manager, Q, QuerySet
+from django.db.models import Manager, Q, QuerySet
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
+
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
 
 
 class GroupObjectPermissionManager(Manager):
@@ -115,55 +121,57 @@ class RestrictedObjectQuerySet(QuerySet):
     def visible_by_user(self, user):
         return self.accessible_by_user(user, self.model.VIEW_PERMISSION)
 
-    def restricted_by_perm(self, perm):
-        """Add annotation used to determine if an object has any permissions"""
-        return self.annotate(
-            existing_permissions=Count(
-                "permissions",
-                filter=Q(permissions__permission__codename=perm.split(".", 1)[-1]),
-            ),
-        )
-
-    def filter_by_perm(self, perm, user):
-        """Add annotation used to filter queryset by specific permission.
+    def filter_by_perm(
+        self,
+        perm: str,
+        user: User,
+        include_objects_without_permissions: bool | Q = False,
+    ):
+        """Filter queryset by specific permission.
 
         Returns queryset object based on user authorization with permission
-        perm over objects from queryset with annotation which shows how many
-        GroupPermission objects are related to each object.
+        perm over objects from queryset.
 
-        :param perm: permission, must contain app_label
-        :param queryset: Django queryset to be filtered by perms
+        :param str perm: permission, must contain app_label
+        :param User user: User to filter objects against
+        :param bool | Q include_objects_without_permissions: Include objects
+            without permissions set. Takes either a boolean or a Q object that
+            objects without permissions will also be filtered against.
         """
-        perms = [
-            x.split(".", 1)[-1]
-            for i, x in enumerate(self.model.PERMISSIONS_PRIORITY)
-            if self.model.PERMISSIONS_PRIORITY.index(perm) >= i
-        ]
 
-        return self.annotate(
-            perm_count=Count(
-                "permissions",
-                filter=Q(
-                    permissions__permission__codename__in=perms,
-                    permissions__group__user=user,
-                ),
-            ),
-        )
+        filters = Q(pk__in=[])
+
+        if include_objects_without_permissions:
+            objects_without_permissions = ~Q(
+                permissions__permission__codename=perm.split(".", 1)[-1]
+            )
+
+            if isinstance(include_objects_without_permissions, Q):
+                objects_without_permissions &= include_objects_without_permissions
+
+            filters |= objects_without_permissions
+
+        if user.is_authenticated:
+            perms_priorized = [
+                x.split(".", 1)[-1]
+                for i, x in enumerate(self.model.PERMISSIONS_PRIORITY)
+                if self.model.PERMISSIONS_PRIORITY.index(perm) >= i
+            ]
+            filters |= Q(
+                permissions__permission__codename__in=perms_priorized,
+                permissions__group__user=user,
+            )
+
+        return self.filter(filters)
 
 
 class RestrictedWorkerQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
-        if user.is_superuser or perm in user.get_all_permissions():
+        if user.has_perm(perm):
+            # Superusers have all permissions
             return self
-        else:
-            # Always false Q object which does not produce a query.
-            filters = Q(pk__in=[])
-            # If the user is authenticated add the main permission filter.
-            if user.is_authenticated:
-                self = self.filter_by_perm(perm, user)
-                filters |= ~Q(perm_count=0)
 
-            return self.restricted_by_perm(perm).filter(filters)
+        return self.filter_by_perm(perm, user)
 
     def visible_by_user(self, user):
         raise NotImplementedError("Not supported for Worker model")
@@ -171,113 +179,102 @@ class RestrictedWorkerQuerySet(RestrictedObjectQuerySet):
 
 class RestrictedDeviceTypeQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
-        if user.is_superuser or perm in user.get_all_permissions():
+        if user.has_perm(perm):
+            # Superusers have all permissions
             return self
-        else:
-            # Always false Q object which does not produce a query.
-            filters = Q(pk__in=[])
-            # If the requested permission is view or the requested permission
-            # is submit and user is authenticated, add unrestricted device
-            # types to the filter result.
-            if (perm == self.model.VIEW_PERMISSION) or (
-                perm == self.model.SUBMIT_PERMISSION and user.is_authenticated
-            ):
-                filters |= Q(existing_permissions=0)
-            # If the user is authenticated add the main permission filter.
-            if user.is_authenticated:
-                self = self.filter_by_perm(perm, user)
-                filters |= ~Q(perm_count=0)
 
-            return self.restricted_by_perm(perm).filter(filters)
+        return self.filter_by_perm(
+            perm,
+            user,
+            include_objects_without_permissions=(
+                (perm == self.model.VIEW_PERMISSION)
+                or (perm == self.model.SUBMIT_PERMISSION and user.is_authenticated)
+            ),
+        )
 
 
 class RestrictedDeviceQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
+        if user.has_perm(perm):
+            # Superusers have all permissions
+            return self
+
         from lava_scheduler_app.models import Device, DeviceType
 
-        if user.is_superuser or perm in user.get_all_permissions():
-            return self
-        else:
-            accessible_device_types = DeviceType.objects.accessible_by_user(
-                user, Device.DEVICE_TYPE_PERMISSION_MAP[perm]
-            )
+        accessible_device_types = DeviceType.objects.accessible_by_user(
+            user,
+            Device.DEVICE_TYPE_PERMISSION_MAP[perm],
+        )
 
-            # For non-authenticated users, accessible device types will always
-            # be empty for non-view permissions, so this will also return no
-            # results. Similar for submit permissions.
-            filters = Q(existing_permissions=0) & Q(
-                device_type__in=accessible_device_types
-            )
-            # If the user is authenticated add the main permission filter.
-            if user.is_authenticated:
-                self = self.filter_by_perm(perm, user)
-                filters |= ~Q(perm_count=0)
-
-            return self.restricted_by_perm(perm).filter(filters)
+        return self.filter_by_perm(
+            perm, user, Q(device_type__in=accessible_device_types)
+        )
 
 
 class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
     def accessible_by_user(self, user, perm):
+        if user.has_perm(perm):
+            # Superusers have all permissions
+            return self
+
         from lava_scheduler_app.models import Device, DeviceType, TestJob
 
-        if user.is_superuser or perm in user.get_all_permissions():
-            return self
-        else:
-            # Here we gather accessible devices and device types.
-            accessible_devices = Device.objects.accessible_by_user(
-                user, TestJob.DEVICE_PERMISSION_MAP[perm]
-            )
-            accessible_device_types = DeviceType.objects.accessible_by_user(
-                user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
-            )
+        # Here we gather accessible devices and device types.
+        accessible_devices = Device.objects.accessible_by_user(
+            user, TestJob.DEVICE_PERMISSION_MAP[perm]
+        )
+        accessible_device_types = DeviceType.objects.accessible_by_user(
+            user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
+        )
 
-            filters = Q(pk__in=[])  # Always empty Q object for anonymous users
-            # Check for private jobs where this user is submitter.
-            if user.is_authenticated:
-                filters = Q(is_public=False) & Q(submitter=user)
-            # Similar to device filters, we first check if jobs are
-            # public and if yes, we check for accessibility of either
-            # actual_device or requested_device_type (depending on whether the
-            # job is scheduled or not.
-            vg_ids = TestJob.objects.filter(viewing_groups__isnull=False)
-            filters |= (
-                Q(is_public=True)
-                & ~Q(id__in=vg_ids)
-                & (
-                    (
-                        Q(actual_device__isnull=False)
-                        & Q(actual_device__in=accessible_devices)
-                    )
-                    | (
-                        Q(actual_device__isnull=True)
-                        & Q(requested_device_type__in=accessible_device_types)
-                    )
+        filters = Q(pk__in=[])  # Always empty Q object for anonymous users
+        # Check for private jobs where this user is submitter.
+        if user.is_authenticated:
+            filters = Q(is_public=False) & Q(submitter=user)
+        # Similar to device filters, we first check if jobs are
+        # public and if yes, we check for accessibility of either
+        # actual_device or requested_device_type (depending on whether the
+        # job is scheduled or not.
+        vg_ids = TestJob.objects.filter(viewing_groups__isnull=False)
+        filters |= (
+            Q(is_public=True)
+            & ~Q(id__in=vg_ids)
+            & (
+                (
+                    Q(actual_device__isnull=False)
+                    & Q(actual_device__in=accessible_devices)
+                )
+                | (
+                    Q(actual_device__isnull=True)
+                    & Q(requested_device_type__in=accessible_device_types)
                 )
             )
+        )
 
-            # Add viewing_groups filter.
-            if perm == self.model.VIEW_PERMISSION and user.is_authenticated:
-                # Anonymous user can never be a part of the group
-                # No point in adding viewing_groups filter as
-                # it will only slowdown server.
+        # Add viewing_groups filter.
+        if perm == self.model.VIEW_PERMISSION and user.is_authenticated:
+            # Anonymous user can never be a part of the group
+            # No point in adding viewing_groups filter as
+            # it will only slowdown server.
 
-                # Needed to determine if viewing_groups is subset of all users
-                # groups, so remove all jobs where any viewing group is in groups
-                # this user is not part of.
-                nonuser_groups = Group.objects.exclude(
-                    pk__in=[g.id for g in user.groups.all()]
-                )
-                # NOTE: Only the last two conditions will be ANDed. Keep in mind if
-                # another filter needs to be added in between this one and the one
-                # before.
-                filters |= Q(id__in=vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
+            # Needed to determine if viewing_groups is subset of all users
+            # groups, so remove all jobs where any viewing group is in groups
+            # this user is not part of.
+            nonuser_groups = Group.objects.exclude(
+                pk__in=[g.id for g in user.groups.all()]
+            )
+            # NOTE: Only the last two conditions will be ANDed. Keep in mind if
+            # another filter needs to be added in between this one and the one
+            # before.
+            filters |= Q(id__in=vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
 
-            return self.filter(filters)
+        return self.filter(filters)
 
 
 class RestrictedTestCaseQuerySet(QuerySet):
     def visible_by_user(self, user):
-        if user.is_superuser:
+        if user.has_perm("lava_results_app.view_testcase"):
+            # Superusers have all permissions
             return self
 
         from lava_scheduler_app.models import TestJob
@@ -290,7 +287,8 @@ class RestrictedTestCaseQuerySet(QuerySet):
 
 class RestrictedTestSuiteQuerySet(QuerySet):
     def visible_by_user(self, user):
-        if user.is_superuser:
+        if user.has_perm("lava_results_app.view_testsuite"):
+            # Superusers have all permissions
             return self
 
         from lava_scheduler_app.models import TestJob
