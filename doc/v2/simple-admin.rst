@@ -622,6 +622,10 @@ Log files
 
    /var/log/apache2/lava-server.log
 
+* **django** - the web framework used for providing webinterface::
+
+   /var/log/lava-server/django.log
+
 * **gunicorn** - details of the :abbr:`WSGI (Web Server Gateway Interface)`
   operation for django::
 
