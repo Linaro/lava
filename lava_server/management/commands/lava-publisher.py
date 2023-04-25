@@ -35,7 +35,6 @@ from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.utils.crypto import constant_time_compare
-from zmq.utils.strtypes import u
 
 from lava_common.version import __version__
 from lava_scheduler_app.models import Device, TestJob, Worker
@@ -160,7 +159,7 @@ async def zmq_proxy(app):
 
     # Carefully close the logging socket as we don't want to lose messages
     logger.info("[EXIT] Disconnect pull socket and process messages")
-    endpoint = u(pull.getsockopt(zmq.LAST_ENDPOINT))
+    endpoint = pull.getsockopt(zmq.LAST_ENDPOINT).decode("utf-8")
     logger.debug("[EXIT] unbinding from %r", endpoint)
     pull.unbind(endpoint)
 
