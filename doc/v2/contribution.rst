@@ -272,7 +272,7 @@ Clone your fork of the lava software repository::
 We recommend always making a new local branch for your changes::
 
  $ cd lava
- $ git checkout -b my_branch
+ $ git switch -c my_branch
 
 .. seealso:: https://docs.gitlab.com/ee/gitlab-basics/create-branch.html
 

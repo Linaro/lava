@@ -97,7 +97,7 @@ All templates are checked for basic syntax and output using:
 A more rigorous test is to use the dedicated unit test which does
 **not** require ``lava-server`` to be installed, i.e. it does not
 require a database to be configured. This test can be run directly from
-a git checkout of ``lava-server`` with a few basic python packages
+a git clone of ``lava-server`` with a few basic python packages
 installed (including ``python-jinja2``).
 
 Individual templates have their own unit tests to test for specific

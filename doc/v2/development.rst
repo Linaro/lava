@@ -519,9 +519,9 @@ and not an unmerged one, so work with git to help your workflow.
 
 ::
 
-    $ git checkout bugfix
+    $ git switch bugfix
     $ git rebase master
-    $ git checkout master
+    $ git switch master
     $ git branch -d bugfix
 
 
