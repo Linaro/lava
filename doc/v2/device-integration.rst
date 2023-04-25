@@ -162,9 +162,9 @@ the device **must** always generate the same behavior.
 * If a device relies on USB, it is possible that errors in the device
   hardware or software can cause instability in the USB stack of the
   worker to which it is connected. (Unlike ethernet, USB is a direct
-  metal to metal connection and cannot be electrically isolated.) This
-  can potentially cause issues with unrelated devices on the same
-  worker.
+  metal to metal connection and cannot easily be electrically
+  isolated.) This can potentially cause issues with unrelated devices
+  on the same worker.
 
 .. note:: Many reliability issues can be symptoms of infrastructure
    problems but many devices can also exacerbate these failures by

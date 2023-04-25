@@ -151,7 +151,7 @@ daily builds repository, using the same suites:
 
  deb https://apt.lavasoftware.org/daily buster main
 
-Snapshots 
+Snapshots
 ---------
 
 When a build is updated in the repositories, a copy of the same build
@@ -408,7 +408,7 @@ applied::
   $ sudo service lava-server-gunicorn restart
 
 .. note:: From 2020.05 release the settings files will not be created by
-          default on fresh installations.The settings file can be added in 
-          settings.d directory or settings.conf should be created. 
+          default on fresh installations. The settings file can be added in
+          settings.d directory or settings.conf should be created.
 
 .. seealso:: :ref:`check_instance`

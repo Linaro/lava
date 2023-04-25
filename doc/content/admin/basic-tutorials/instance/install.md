@@ -56,7 +56,7 @@ apt install ca-certificates gnupg2 wget
 
 Add the lavasoftware debian repository:
 
-=== "Bulseye"
+=== "Bullseye"
     ```shell
     wget https://apt.lavasoftware.org/lavasoftware.key.asc
     apt-key add lavasoftware.key.asc
