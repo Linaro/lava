@@ -4,6 +4,8 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set baud_rate = '1500000' %}
+{% set boot_character_delay = boot_character_delay|default('10') %}
+{% set test_character_delay = test_character_delay|default('10') %}
 
 {% set booti_kernel_addr = '0x2800000' %}
 {% set booti_ramdisk_addr = '0xa200000' %}
