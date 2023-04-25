@@ -154,7 +154,10 @@ class CreateOverlay(Action):
         self.pipeline.add_action(VlandOverlayAction())
         self.pipeline.add_action(MultinodeOverlayAction())
         self.pipeline.add_action(TestDefinitionAction())
-        self.pipeline.add_action(CompressOverlay())
+        # Skip compress-overlay for docker deploy/test actions as these actions
+        # mount overlay directory located on lava worker directly.
+        if parameters.get("to") != "docker" and "docker" not in parameters:
+            self.pipeline.add_action(CompressOverlay())
         self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
     def _export_data(self, fout, data, prefix):

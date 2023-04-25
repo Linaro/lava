@@ -43,11 +43,8 @@
         summary: applying LAVA test run script, timeout: 240}
       summary: loading test definitions
       timeout: 240
-    - {class: actions.deploy.overlay.CompressOverlay, description: Create a lava overlay
-        tarball and store alongside the job, level: 1.2.5, max_retries: 1, name: compress-overlay,
-      summary: Compress the lava overlay files, timeout: 240}
     - {class: actions.deploy.overlay.PersistentNFSOverlay, description: unpack overlay
-        into persistent NFS, level: 1.2.6, max_retries: 1, name: persistent-nfs-overlay,
+        into persistent NFS, level: 1.2.5, max_retries: 1, name: persistent-nfs-overlay,
       summary: add test overlay to NFS, timeout: 240}
     summary: overlay the lava support scripts
     timeout: 240
