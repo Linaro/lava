@@ -230,6 +230,10 @@ to provide the device-specific details on top of the template:
   {% set mac_addr = '52:54:00:12:34:59' %}
   {% set memory = '1024' %}
 
+Add this code to a new file named after your device in
+
+ /etc/lava-server/dispatcher-config/devices/qemu01.jinja2
+
 * The device dictionary **must** ``extend`` an existing template.
 
 * The architecture (``arch`` value) is not set in this device dictionary. This
@@ -251,7 +255,7 @@ to provide the device-specific details on top of the template:
 
 The template itself lives in::
 
- /etc/lava-server/dispatcher-config/device-types/qemu.jinja2
+ /usr/share/lava-server/device-types/qemu.jinja2
 
 This dictionary does not include a setting to use a ``tap`` device which means
 that this device would not support a hacking session inside the virtual
