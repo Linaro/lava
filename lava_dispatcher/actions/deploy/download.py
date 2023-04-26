@@ -213,7 +213,7 @@ class DownloadHandler(Action):
                 action="download-action", label=self.key, key="overlay", value=overlay
             )
 
-        if compression and compression not in ["gz", "bz2", "xz", "zip", "zstd"]:
+        if compression and compression not in ["bz2", "gz", "lz4", "xz", "zip", "zstd"]:
             self.errors = "Unknown 'compression' format '%s'" % compression
         if archive and archive not in ["tar"]:
             self.errors = "Unknown 'archive' format '%s'" % archive

@@ -208,6 +208,30 @@ colon. In the YAML, all values containing a colon **must** be quoted:
       persistent_nfs:
         address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
 
+.. _deploy_to_tftp_fpga:
+
+fpga
+=======
+
+A lz4'ed raw binary file of the FPGA content in case your board includes one,
+e.g. some System on Chip (SoC) based boards.
+
+To optimize for transfer and decompression time, use of ``lz4`` compression is advised.
+LAVA currently only supports compressed images.
+
+.. _deploy_to_tftp_fpga_url:
+
+url *
+-----
+.. include:: actions-deploy-images-url.rsti
+
+.. _deploy_to_tftp_fpga_compression:
+
+compression
+-----------
+
+Compression method **must** be specified as ``lz4`` otherwise U-Boot will try to decompress the file, which will fail.
+
 .. index:: deploy to tmpfs
 
 .. _deploy_to_tmpfs:

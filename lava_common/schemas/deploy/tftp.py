@@ -40,5 +40,6 @@ def schema():
             Optional("install_overlay"): bool,
         },
         Optional("tee"): resource,
+        Optional("fpga"): resource,
     }
     return {**deploy.schema(), **base}
