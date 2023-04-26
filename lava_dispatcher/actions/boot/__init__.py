@@ -440,6 +440,9 @@ class BootloaderCommandOverlay(Action):
             "{TEE}": self.get_namespace_data(
                 action="download-action", label="file", key="tee"
             ),
+            "{FPGA}": self.get_namespace_data(
+                action="download-action", label="file", key="fpga"
+            ),
         }
         self.bootcommand = self.get_namespace_data(
             action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
