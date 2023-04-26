@@ -2379,7 +2379,7 @@ class NotificationCallback(models.Model):
                 utils.mkdir(self.notification.test_job.output_dir)
                 # only write the file once
                 if not os.path.exists(job_data_file):
-                    with gzip.open(job_data_file, "w") as output:
+                    with gzip.open(job_data_file, "wt") as output:
                         json_dump(data, output)
         try:
             logger.info("Sending request to callback url %s" % self.url)
