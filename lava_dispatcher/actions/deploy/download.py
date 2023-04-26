@@ -249,7 +249,7 @@ class DownloadHandler(Action):
             return (
                 condition,
                 downloaded_sz,
-                "progress %dMB" % (int(downloaded_sz / (1024 * 1024)))
+                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
                 if condition
                 else "",
             )
@@ -261,7 +261,8 @@ class DownloadHandler(Action):
             return (
                 condition,
                 percent,
-                "progress %3d%% (%dMB)" % (percent, int(downloaded_sz / (1024 * 1024)))
+                "progress %3d %% (%d MB)"
+                % (percent, int(downloaded_sz / (1024 * 1024)))
                 if condition
                 else "",
             )
@@ -311,7 +312,7 @@ class DownloadHandler(Action):
             progress = progress_unknown_total
         else:
             self.logger.debug(
-                "total size: %d (%dMB)", self.size, int(self.size / (1024 * 1024))
+                "total size: %d (%d MB)", self.size, int(self.size / (1024 * 1024))
             )
             last_value = -5
             progress = progress_known_total
@@ -382,7 +383,7 @@ class DownloadHandler(Action):
         # Log the download speed
         ending = time.monotonic()
         self.logger.info(
-            "%dMB downloaded in %0.2fs (%0.2fMB/s)",
+            "%d MB downloaded in %0.2f s (%0.2f MB/s)",
             downloaded_size / (1024 * 1024),
             round(ending - beginning, 2),
             round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
