@@ -1,6 +1,9 @@
 import json
 import logging
 import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from django.contrib.auth.models import Group, Permission, User
 from django.test import TestCase
@@ -240,59 +243,79 @@ class TestTestJob(TestCaseWithFactory):
         )
 
 
-class TestNotifications(TestCaseWithFactory):
-    def test_notification_callback_get(self):
-        definition = self.factory.make_job_data_from_file("qemu_callback_get.yaml")
+class TestNotificationBase(TestCaseWithFactory):
+    JOB_DEFINITION_FILE = "none"
+
+    def setUp(self) -> None:
+        super().setUp()
+        definition = self.factory.make_job_data_from_file(self.JOB_DEFINITION_FILE)
         dt = self.factory.make_device_type(name="qemu")
-        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        self.device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         user = self.factory.make_user()
         token, _ = AuthToken.objects.get_or_create(
             user=user, description="secrettoken", secret="abc123"
         )
-        job = TestJob.from_yaml_and_user(definition, user)
-        create_notification(job, yaml_safe_load(definition)["notify"])
-        job.refresh_from_db()
-        self.assertIsNotNone(job.notification.notificationcallback_set.first())
-        callback = job.notification.notificationcallback_set.first()
+        self.job = TestJob.from_yaml_and_user(definition, user)
+        create_notification(self.job, yaml_safe_load(definition)["notify"])
+        self.job.refresh_from_db()
+
+        self.job_temp_dir = TemporaryDirectory()
+        self.addCleanup(self.job_temp_dir.cleanup)
+        setattr(self.job, "output_dir", self.job_temp_dir.name)
+
+
+class TestNotificationGet(TestNotificationBase):
+    JOB_DEFINITION_FILE = "qemu_callback_get.yaml"
+
+    def test_notification_callback_get(self):
+        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
+        callback = self.job.notification.notificationcallback_set.first()
         self.assertEqual(callback.method, NotificationCallback.GET)
         self.assertEqual(callback.url, "https://example.com/foo/bar")
         self.assertEqual(callback.token, "abc123")
         self.assertEqual(callback.header, "Authorization")
 
+        with patch("lava_scheduler_app.models.requests") as mock_requests:
+            callback.invoke_callback()
+            mock_requests.get.assert_called_once()
+
+            # Get requests do not generate compressed JSON
+            self.assertFalse(tuple(Path(self.job_temp_dir.name).iterdir()))
+
+
+class TestNotificationPost(TestNotificationBase):
+    JOB_DEFINITION_FILE = "qemu_callback_post.yaml"
+
     def test_notification_callback_post(self):
-        definition = self.factory.make_job_data_from_file("qemu_callback_post.yaml")
-        dt = self.factory.make_device_type(name="qemu")
-        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
-        user = self.factory.make_user()
-        token, _ = AuthToken.objects.get_or_create(
-            user=user, description="secrettoken", secret="abc123"
-        )
-        job = TestJob.from_yaml_and_user(definition, user)
-        create_notification(job, yaml_safe_load(definition)["notify"])
-        job.refresh_from_db()
-        self.assertIsNotNone(job.notification.notificationcallback_set.first())
-        callback = job.notification.notificationcallback_set.first()
+        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
+        callback = self.job.notification.notificationcallback_set.first()
         self.assertEqual(callback.method, NotificationCallback.POST)
         self.assertEqual(callback.url, "https://example.com/foo/bar")
         self.assertEqual(callback.token, "abc123")
         self.assertEqual(callback.header, "Authorization")
 
+        with patch("lava_scheduler_app.models.requests") as mock_requests:
+            callback.invoke_callback()
+            mock_requests.post.assert_called_once()
+
+            # Post requests generate compressed JSON
+            self.assertTrue(tuple(Path(self.job_temp_dir.name).iterdir()))
+
+
+class TestNotificationCustomHeader(TestNotificationBase):
+    JOB_DEFINITION_FILE = "qemu_callback_custom_header.yaml"
+
     def test_notification_callback_custom_header(self):
-        definition = self.factory.make_job_data_from_file(
-            "qemu_callback_custom_header.yaml"
-        )
-        dt = self.factory.make_device_type(name="qemu")
-        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
-        user = self.factory.make_user()
-        token, _ = AuthToken.objects.get_or_create(
-            user=user, description="secrettoken", secret="abc123"
-        )
-        job = TestJob.from_yaml_and_user(definition, user)
-        create_notification(job, yaml_safe_load(definition)["notify"])
-        job.refresh_from_db()
-        self.assertIsNotNone(job.notification.notificationcallback_set.first())
-        callback = job.notification.notificationcallback_set.first()
+        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
+        callback = self.job.notification.notificationcallback_set.first()
         self.assertEqual(callback.method, NotificationCallback.POST)
         self.assertEqual(callback.url, "https://example.com/foo/bar")
         self.assertEqual(callback.token, "abc123")
         self.assertEqual(callback.header, "PRIVATE-TOKEN")
+
+        with patch("lava_scheduler_app.models.requests") as mock_requests:
+            callback.invoke_callback()
+            mock_requests.post.assert_called_once()
+
+            # Post requests generate compressed JSON
+            self.assertTrue(tuple(Path(self.job_temp_dir.name).iterdir()))
