@@ -18,6 +18,12 @@
   {% set uboot_load_fdt = [uboot_load_fdt|default("tftp {DTB_ADDR} {DTB}")] %}
 {% endif %}
 
+{% set base_uboot_fpga_commands = uboot_fpga_commands|default([
+    "tftp ${loadaddr} {FPGA}",
+    "unlz4 ${loadaddr} ${fdt_addr_r} 0x1000000 #{FPGA}",
+    "if fpga load 0 ${fdt_addr_r} ${filesize}; then echo 'Loaded new FPGA firmware!'; bridge enable; fi; #{FPGA}"])
+-%}
+
 {% set base_uboot_tftp_commands = uboot_tftp_commands|default([
     "tftp {KERNEL_ADDR} {KERNEL}",
     "tftp {RAMDISK_ADDR} {RAMDISK}",
@@ -60,7 +66,7 @@
 {% if uboot_set_mac %}
   {% set uboot_common_cmds = uboot_common_cmds + base_uboot_set_mac %}
 {% endif %}
-{% set uboot_common_cmds = uboot_common_cmds + base_uboot_dhcp_command  + base_uboot_tftp_commands %}
+{% set uboot_common_cmds = uboot_common_cmds + base_uboot_dhcp_command + base_uboot_fpga_commands + base_uboot_tftp_commands %}
 
 {# adds the parameters: top level block #}
 {% block vland %}
