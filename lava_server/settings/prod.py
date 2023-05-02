@@ -71,7 +71,7 @@ else:
                 "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
                 "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
                 "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
-                "CONN_MAX_AGE": getattr(config, "CONN_MAX_AGE", 600),
+                "CONN_MAX_AGE": int(getattr(config, "CONN_MAX_AGE", 600)),
             }
         }
         INSTANCE_NAME = config.LAVA_INSTANCE
