@@ -109,22 +109,20 @@ with a working database restoration.
 
 Some of the critical packages to monitor include:
 
-* ``postgresql`` - and associated packages, e.g. ``postgresql-9.5``, according
-  to the base suite of the system and the ``postgresql-client-9.5`` and
+* ``postgresql`` - and associated packages, e.g. ``postgresql-13``, according
+  to the base suite of the system and the ``postgresql-client-13`` and
   ``postgresql-common`` packages associated with the postgresql server package.
 
 * ``lava-server`` (and ``lava-server-doc``)
 
 * ``lava-dispatcher``
 
-* ``python-django``
+* ``python3-django``
 
-* ``python-django-common``
-
-* ``python-django-tables2``
+* ``python3-django-tables2``
 
 Check the `LAVA Announce mailing list archives
-<https://lists.lavasoftware.org/pipermail/lava-announce/>`_ for additional notices
+<https://lists.lavasoftware.org/mailman3/lists/lava-announce.lists.lavasoftware.org/>`_ for additional notices
 about new packages to install alongside particular versions of ``lava-server``
 and ``lava-dispatcher``. (Admins might choose to download the compressed
 archive for the month in which the backup is made and add that to the backup.)
@@ -167,18 +165,20 @@ What to include in your configuration management
   .. seealso:: :ref:`admin_backup_dependencies` and
     :ref:`admin_base_suite_issues`
 
-* **Device configuration**
+* **Device configuration and health checks**
 
   * ``/etc/lava-server/dispatcher-config/device-types/``
+  * ``/etc/lava-server/dispatcher-config/health-checks/``
 
 * **Service configuration**
 
-  * ``/etc/ser2net.conf`` or equivalent
+  * ``/etc/ser2net.yaml`` or equivalent
+  * ``/etc/udev/rules.d/*`` - any rules you might have defined for particular devices or services
   * ``/etc/lava-server/*`` - the rest of the files not already included as
-    device configuration. Especially ``settings.conf`` and ``instance.conf``.
-  * ``/etc/default/`` - specifically, ``lxc``, ``tftpd-hpa``, ``ser2net``,
-    ``lava-server``,
+    device configuration.
+  * ``/etc/default/`` - specifically, ``lxc``, ``tftpd-hpa``, ``ser2net``
   * ``/etc/lava-dispatcher/lava-worker``
+  * ``/etc/lava-coordinator/lava-coordinator.conf``
   * ``/etc/apache2/sites-available/lava-server.conf`` (on the master)
   * ``/etc/apache2/sites-available/lava-dispatcher.conf`` (on a worker)
 
@@ -203,7 +203,7 @@ If you are not using configuration management, all the files mentioned in
 
 * **Version information and packages**
 
-* **Test job log files and data**
+* **Test job log files and data** located in ``/var/lib/lava-server/default/media/job-output/``
 
 * **Service log files and configuration**
 
@@ -218,9 +218,9 @@ contact the relevant master:
 Other files may be required by specific labs and may already be handled by
 configuration management, e.g.:
 
-* ``/etc/ser2net.conf``
+* ``/etc/ser2net.yaml``
 * Local PDU scripts.
-* ``udev`` rules for particular devices or services.
+* ``/etc/udev/rules.d/*`` - any rules you might have defined for particular devices or services
 
 .. index:: backup restore, restore backup
 

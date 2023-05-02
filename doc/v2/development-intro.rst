@@ -92,12 +92,12 @@ All templates are checked for basic syntax and output using:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_base_templates.TestBaseTemplates.test_all_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_base_templates.TestBaseTemplates.test_all_templates
 
 A more rigorous test is to use the dedicated unit test which does
 **not** require ``lava-server`` to be installed, i.e. it does not
 require a database to be configured. This test can be run directly from
-a git checkout of ``lava-server`` with a few basic python packages
+a git clone of ``lava-server`` with a few basic python packages
 installed (including ``python-jinja2``).
 
 Individual templates have their own unit tests to test for specific
@@ -108,13 +108,13 @@ dedicated unit test files for particular types of template unit tests:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_fastboot_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_grub_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_grub_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_qemu_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_uboot_templates
 
 Most changes to device-type templates take effect **immediately** - as
 soon as the file is changed in
@@ -384,7 +384,7 @@ mailing list before creating an issue in GitLab.
           reporting bugs in the old Bugzilla system will not be tracked
           by the LAVA team.
 
-.. _lava-users: https://lists.lavasoftware.org/mailman/listinfo/lava-users
+.. _lava-users: https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/
 
 .. index:: community contributions
 

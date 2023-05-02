@@ -190,7 +190,7 @@ lava_scheduler_app
 
 Some parts of lava_scheduler_app are easier to test than others. New
 device-type templates need to have specific unit tests added to
-``lava_scheduler_app/tests/test_templates`` or one of the relevant
+``tests/lava_scheduler_app/test_templates`` or one of the relevant
 specialist template unit test files. Follow the examples and make sure
 that if the new template adds new items then those items are checked
 for existence and validity in the new function which tests the new
@@ -198,11 +198,11 @@ template.
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_fastboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_fastboot_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_qemu_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_qemu_templates
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_uboot_templates
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_uboot_templates
 
 If you are adding or modifying documentation in ``lava-server``, make sure that
 the documentation builds cleanly:
@@ -519,9 +519,9 @@ and not an unmerged one, so work with git to help your workflow.
 
 ::
 
-    $ git checkout bugfix
+    $ git switch bugfix
     $ git rebase master
-    $ git checkout master
+    $ git switch master
     $ git branch -d bugfix
 
 
@@ -577,8 +577,8 @@ test.
 .. code-block:: python
 
     import unittest
-    from lava_dispatcher.tests.test_basic import Factory, StdoutTestCase
-    from lava_dispatcher.tests.utils import infrastructure_error_multi_paths
+    from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+    from tests.lava_dispatcher.utils import infrastructure_error_multi_paths
 
     class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
 
@@ -646,9 +646,9 @@ Python3 support in LAVA is related to a number of factors:
 
 * Transition within Debian to full python3 support.
 
-https://lists.lavasoftware.org/pipermail/lava-announce/2017-June/000032.html
+https://lists.lavasoftware.org/archives/list/lava-announce@lists.lavasoftware.org/thread/6QEDKDIQ2GFEPK5SRIE36RV234NSLSB6/
 
-https://lists.lavasoftware.org/pipermail/lava-announce/2018-January/000046.html
+https://lists.lavasoftware.org/archives/list/lava-announce@lists.lavasoftware.org/thread/KWEPRA5P2LGVZ6WPIBWCYLC3G6TD5SN6/
 
 lava-dispatcher and lava-server now fully support python3, runtime and
 testing. Code changes to either codebase **must** be Python3

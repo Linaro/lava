@@ -162,9 +162,9 @@ the device **must** always generate the same behavior.
 * If a device relies on USB, it is possible that errors in the device
   hardware or software can cause instability in the USB stack of the
   worker to which it is connected. (Unlike ethernet, USB is a direct
-  metal to metal connection and cannot be electrically isolated.) This
-  can potentially cause issues with unrelated devices on the same
-  worker.
+  metal to metal connection and cannot easily be electrically
+  isolated.) This can potentially cause issues with unrelated devices
+  on the same worker.
 
 .. note:: Many reliability issues can be symptoms of infrastructure
    problems but many devices can also exacerbate these failures by
@@ -516,7 +516,7 @@ Extend the template unit tests
    and setting character delays due to :ref:`input_speeds`.
 
 All device type template files in
-``lava_scheduler_app/tests/device-types`` will be checked for simple
+``tests/lava_scheduler_app/devices`` will be checked for simple
 YAML validity by the ``test_all_templates`` unit test. However, a
 dedicated unit test is recommended for all but the simplest of new
 device type templates. At the very least, having a unit test for your
@@ -527,8 +527,8 @@ part of running the unit test by changing the ``debug`` value to
 ``test_templates.py``.
 
 Add your new device-type template to
-``lava_scheduler_app/tests/device-types``. Edit
-``lava_scheduler_app/tests/test_templates.py`` and add a new unit test
+``tests/lava_scheduler_app/devices``. Edit
+``tests/lava_scheduler_app/test_templates.py`` and add a new unit test
 for your device-type based on one of the existing test functions.
 Create a dummy device dictionary as a ``data`` string and ensure that
 the combination of the template and the dictionary creates a valid
@@ -583,7 +583,7 @@ of the unit tests:
 
 .. code-block:: shell
 
- $ python3 -m unittest -vcf lava_scheduler_app.tests.test_templates.TestTemplates.test_foobar_template
+ $ python3 -m unittest -vcf tests.lava_scheduler_app.test_templates.TestTemplates.test_foobar_template
 
 Remember that device type templates are not just configuration files -
 the templates are processed as source code at runtime and can use

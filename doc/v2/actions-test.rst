@@ -150,7 +150,7 @@ section of the definition.
 steps
 -----
 
-skip running any of the ``steps:``of the ``install:`` section of the
+skip running any of the ``steps:`` of the ``install:`` section of the
 definition.
 
 all

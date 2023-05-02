@@ -151,7 +151,7 @@ daily builds repository, using the same suites:
 
  deb https://apt.lavasoftware.org/daily buster main
 
-Snapshots 
+Snapshots
 ---------
 
 When a build is updated in the repositories, a copy of the same build
@@ -275,6 +275,34 @@ has already dropped support for Python2.)
 
 LAVA has moved to exclusive Python3 support.
 
+.. _django_non_localhost:
+
+Using a domain name other than localhost
+========================================
+
+While having LAVA run on localhost is a great point to start for doing the
+first steps, a real deploy of LAVA will most probably end up on a domain
+e.g. like `lava.example.net`. There are some more configuration to do
+to achieve this:
+
+* Set up Apache configuration to serve LAVA on your desired domain by
+   editing Apache configuration and/or ``/etc/apache2/sites-available/lava-server.conf``
+   to fit to your needs. Reload apache configuration by ``systemctl reload apache2``
+
+* Append this line to ``/etc/lava-server/lava-server-gunicorn``::
+
+   ALLOWED_HOSTS='lava.example.net'
+
+and restart `lava-server-gunicorn` service for the changes to get applied::
+
+   $ systemctl restart lava-server-gunicorn.service
+
+* Remember to also modify ``/etc/lava-dispatcher/lava-worker`` and add
+   domain name there too (and edit worker configuration in django). Don't
+   forget to restart worker afterwards for the changes to get applied::
+
+   $ systemctl restart lava-worker.service
+
 Setting up a reverse proxy
 ==========================
 
@@ -286,6 +314,8 @@ simple Apache configuration snippet will work for most setups::
  ProxyPassReverse / http://lava_server_dns:port/
  ProxyPreserveHost On
  RequestHeader set X-Forwarded-Proto "https" env=HTTPS
+
+Remember to also include ``ALLOWED_HOSTS`` as written above.
 
 This configuration will work when proxifying::
 
@@ -408,7 +438,7 @@ applied::
   $ sudo service lava-server-gunicorn restart
 
 .. note:: From 2020.05 release the settings files will not be created by
-          default on fresh installations.The settings file can be added in 
-          settings.d directory or settings.conf should be created. 
+          default on fresh installations. The settings file can be added in
+          settings.d directory or settings.conf should be created.
 
 .. seealso:: :ref:`check_instance`
