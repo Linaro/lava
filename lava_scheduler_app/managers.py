@@ -260,9 +260,7 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             # Needed to determine if viewing_groups is subset of all users
             # groups, so remove all jobs where any viewing group is in groups
             # this user is not part of.
-            nonuser_groups = Group.objects.exclude(
-                pk__in=[g.id for g in user.groups.all()]
-            )
+            nonuser_groups = Group.objects.difference(user.groups.all()).values("pk")
             # NOTE: Only the last two conditions will be ANDed. Keep in mind if
             # another filter needs to be added in between this one and the one
             # before.
