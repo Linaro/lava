@@ -228,8 +228,8 @@ Following actions will be skipped :
             self.pipeline.add_action(BootBootloaderCorruptBootMediaAction())
             self.pipeline.add_action(ResetDevice())
 
-        self.pipeline.add_action(UUUBootAction(), parameters=parameters)
         self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(UUUBootAction(), parameters=parameters)
 
     def eval_otg_path(self):
         uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
