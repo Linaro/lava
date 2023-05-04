@@ -629,7 +629,7 @@ The migration is applied using::
  $ sudo lava-server manage migrate lava_scheduler_app
 
 See `django docs
-<https://docs.djangoproject.com/en/1.8/topics/migrations/>`_ for more
+<https://docs.djangoproject.com/en/3.2/topics/migrations/>`_ for more
 information.
 
 .. index:: developer: use python3

@@ -708,7 +708,7 @@ Files and directories in ``/etc/lava-server/``:
 
 * **secret_key.conf** - This key is used by Django to ensure the security of
   various cookies and # one-time values. To learn more please visit:
-  https://docs.djangoproject.com/en/1.8/ref/settings/#secret-key.
+  https://docs.djangoproject.com/en/3.2/ref/settings/#secret-key.
 
 * **settings.conf** - Instance-specific settings used by Django and lava-server
   including authentication backends, branding support and event notifications.

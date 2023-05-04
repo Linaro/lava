@@ -12,7 +12,7 @@ against any source for which a Django backend exists. Discussed below are the
 tested and supported authentication methods for LAVA.
 
 .. _Django: https://www.djangoproject.com/
-.. _`Django auth subsystems`: https://docs.djangoproject.com/en/dev/topics/auth/
+.. _`Django auth subsystems`: https://docs.djangoproject.com/en/3.2/topics/auth/
 
 .. note:: LAVA used to include support for OpenID authentication (prior to
    version 2016.8), but this support had to be **removed** when incompatible

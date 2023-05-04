@@ -288,8 +288,8 @@ def suite_csv_stream(request, job, pk):
     This may result in poor performance.
     Generally speaking, you should perform expensive tasks outside of the
     request-response cycle, rather than resorting to a streamed response.
-    https://docs.djangoproject.com/en/1.8/ref/request-response/#django.http.StreamingHttpResponse
-    https://docs.djangoproject.com/en/1.8/howto/outputting-csv/
+    https://docs.djangoproject.com/en/3.2/ref/request-response/#django.http.StreamingHttpResponse
+    https://docs.djangoproject.com/en/3.2/howto/outputting-csv/
     """
     job = get_object_or_404(TestJob, pk=job)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)

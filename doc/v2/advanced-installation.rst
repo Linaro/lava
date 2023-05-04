@@ -442,7 +442,7 @@ contains:
 
     "ALLOWED_HOSTS": ["lava.codehelp.co.uk"],
 
-.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#allowed-hosts
+.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#allowed-hosts
 
 It is also important to enable ``ProxyPreserveHost`` in
 ``/etc/apache2/sites-available/lava-server.conf``:
@@ -454,7 +454,7 @@ It is also important to enable ``ProxyPreserveHost`` in
 In some situations, you may also need to set ``USE_X_FORWARDED_HOST``
 to ``True`` in ``/etc/lava-server/settings.conf``
 
-.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-USE_X_FORWARDED_HOST
+.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-USE_X_FORWARDED_HOST
 
 Apache headers
 ==============
@@ -486,7 +486,7 @@ and ``WOW64``. The list can be extended in
 let us know by subscribing to the :ref:`lava_devel` mailing list and
 posting your updated list.
 
-.. seealso:: https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
+.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
 
 
 .. _tracking_errors:
@@ -529,7 +529,7 @@ Controlling the Django Admin Interface
 
 Some instances may need to allow selected users to be Django superusers
 to provide access to the `Django Admin Interface
-<https://docs.djangoproject.com/en/2.0/ref/contrib/admin/>`_. Some of
+<https://docs.djangoproject.com/en/3.2/ref/contrib/admin/>`_. Some of
 the features of the interface need **very** careful handling,
 especially the **deletion** of database objects.
 

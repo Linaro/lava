@@ -130,7 +130,7 @@ The ``check --deploy`` command uses the Django system check framework which is a
 set of static checks to detect common problems and provide hints for how to fix
 them.
 
-.. seealso:: https://docs.djangoproject.com/en/dev/ref/checks/ to know more
+.. seealso:: https://docs.djangoproject.com/en/3.2/ref/checks/ to know more
              about Django system check framework.
 
 If the JSON syntax of ``/etc/lava-server/settings.conf`` is invalid,
@@ -150,8 +150,8 @@ These values can be overridden in ``/etc/lava-server/settings.conf``
 
 The following checks are silenced and does not show any errors or warnings:
 
-* SECURE_HSTS_SECONDS i.e., security.W004 which is documented in https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-seconds
-* SECURE_SSL_REDIRECT i.e., 'security.W008' which is documented in https://docs.djangoproject.com/en/dev/ref/settings/#secure-ssl-redirect
+* SECURE_HSTS_SECONDS i.e., security.W004 which is documented in https://docs.djangoproject.com/en/3.2/ref/settings/#secure-hsts-seconds
+* SECURE_SSL_REDIRECT i.e., 'security.W008' which is documented in https://docs.djangoproject.com/en/3.2/ref/settings/#secure-ssl-redirect
 
 .. note:: Admins should consult the respective Django documentation before changing these
    values to suit the requirements of each LAVA instance.
@@ -205,7 +205,7 @@ support in 1.11 and later can be used to display the settings as well::
 
  $ sudo lava-server manage diffsettings --all
 
-.. seealso:: https://docs.djangoproject.com/en/1.11/ref/django-admin/#diffsettings
+.. seealso:: https://docs.djangoproject.com/en/3.2/ref/django-admin/#diffsettings
 
 Settings that don’t appear in the defaults are followed by "###",
 e.g.::
