@@ -27,7 +27,7 @@ Global authorization
 ====================
 
 LAVA global authorization system is derived from a django authorization and can
-be found _`here`: https://docs.djangoproject.com/en/2.2/topics/auth/default/#topic-authorization
+be found _`here`: https://docs.djangoproject.com/en/3.2/topics/auth/default/#topic-authorization
 
 Specific user can have a global permission for any system entity in which case
 this global permission is checked first and has higher priority than

@@ -841,7 +841,7 @@ Installation can be checked using ``lava-server manage shell``::
 .. seealso:: :ref:`developer_access_to_django_shell`
 
 In order to see the toolbar, you should also check the value of `INTERNAL_IPS
-<https://docs.djangoproject.com/en/1.9/ref/settings/#internal-ips>`_. Local
+<https://docs.djangoproject.com/en/3.2/ref/settings/#internal-ips>`_. Local
 addresses ``127.0.0.1`` and ``::1`` are enabled by default.
 
 To add more addresses, set ``INTERNAL_IPS`` to a list of addresses in

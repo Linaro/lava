@@ -34,7 +34,7 @@ from lava_common.yaml import yaml_safe_load
 from lava_rest_app.versions import versions as REST_VERSIONS
 
 # List of people who get code error notifications
-# https://docs.djangoproject.com/en/1.11/ref/settings/#admins
+# https://docs.djangoproject.com/en/3.2/ref/settings/#admins
 ADMINS = [("lava-server Administrator", "root@localhost")]
 
 # Allow only the connection through the reverse proxy
@@ -75,7 +75,7 @@ INSTALLED_APPS = [
 ]
 
 # List of people who get broken link notifications
-# https://docs.djangoproject.com/en/1.11/ref/settings/#managers
+# https://docs.djangoproject.com/en/3.2/ref/settings/#managers
 MANAGERS = ADMINS
 
 MIDDLEWARE = [
@@ -119,7 +119,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "lava_server.wsgi.application"
 
 # Internationalization
-# https://docs.djangoproject.com/en/1.11/topics/i18n/
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
@@ -130,7 +130,7 @@ USE_TZ = True
 # URL that handles the media served from STATIC_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://static.lawrence.com", "http://example.com/static/"
-# https://docs.djangoproject.com/en/1.11/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
 STATIC_URL = "/static/"
 
 # Absolute filesystem path to the directory that will hold static, read only
@@ -379,7 +379,7 @@ def update(values):
 
     # Fix ADMINS and MANAGERS variables
     # In Django >= 1.9 this is a list of tuples
-    # and https://docs.djangoproject.com/en/1.9/ref/settings/#admins
+    # and https://docs.djangoproject.com/en/3.2/ref/settings/#admins
     ADMINS = [tuple(v) for v in ADMINS]
     MANAGERS = [tuple(v) for v in MANAGERS]
 

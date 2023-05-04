@@ -41,7 +41,7 @@ for you:
 You can then create some file to customize your instance.
 The list of available values is listed in:
 
-* [Django settings](https://docs.djangoproject.com/en/2.2/ref/settings/)
+* [Django settings](https://docs.djangoproject.com/en/3.2/ref/settings/)
 * [LAVA settings](https://git.lavasoftware.org/lava/lava/-/blob/master/lava_server/settings/common.py)
 
 !!! warning "Legacy configuration"
