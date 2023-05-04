@@ -10,7 +10,7 @@ ARG base_image=""
 FROM debian:bullseye-slim as build
 ARG lava_version=""
 RUN apt-get update && \
-    apt-get install --no-install-recommends --yes python3 python3-distutils python3-setuptools
+    apt-get install --no-install-recommends --yes python3 python3-setuptools
 
 # Install lava-lxc-mocker
 COPY lava/lxc-mocker/ /install/usr/bin/

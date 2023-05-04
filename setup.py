@@ -19,17 +19,17 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import distutils.command.install
-import distutils.command.install_scripts
 import glob
 import os
 import shutil
 import sys
 
+import setuptools.command.install
+import setuptools.command.install_scripts
 from setuptools import find_packages, setup
 
 
-class install_and_change_permission(distutils.command.install.install):
+class install_and_change_permission(setuptools.command.install.install):
     """
     Custom install to change dynamic_vm_keys's permission
     """
@@ -43,7 +43,7 @@ class install_and_change_permission(distutils.command.install.install):
                 os.chmod(file_path, 0o600)
 
 
-class rename_scripts(distutils.command.install_scripts.install_scripts):
+class rename_scripts(setuptools.command.install_scripts.install_scripts):
     """
     Custom install script to rename 'manage.py' to 'lava-server'
     """
