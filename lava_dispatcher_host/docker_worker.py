@@ -273,7 +273,7 @@ def run(version, options):
     except FileNotFoundError as exc:
         LOG.error("'%s' not found", exc.filename)
         time.sleep(5)
-    except subprocess.CalledProcessError as failure:
+    except subprocess.CalledProcessError:
         LOG.info("Failed to start the worker")
         time.sleep(5)
     except (KeyboardInterrupt, Terminate):
