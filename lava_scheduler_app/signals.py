@@ -119,6 +119,8 @@ def device_post_handler(sender, **kwargs):
         current_job = instance.current_job()
         if current_job is not None:
             data["job"] = current_job.display_id
+            if instance.health == instance.HEALTH_RETIRED:
+                current_job.cancel(current_job.submitter)
         if instance.worker_host is not None:
             data["worker"] = instance.worker_host.hostname
 
