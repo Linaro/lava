@@ -1,5 +1,4 @@
 include COPYING
-include COPYING.GPL-2
 include doc/v2/*
 include doc/v2/_static/*
 include etc/*
