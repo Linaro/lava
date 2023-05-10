@@ -132,6 +132,9 @@ class ConnectSsh(Action):
             self.command.extend(self.ssh_port)
 
     def run(self, connection, max_end_time):
+        connection = self.get_namespace_data(
+            action="shared", label="shared", key="connection", deepcopy=False
+        )
         if connection:
             self.logger.debug("Already connected")
             return connection
