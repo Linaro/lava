@@ -668,6 +668,45 @@ class TestYamlMultinode(TestCaseWithFactory):
                 else:
                     self.fail("unexpected role")
 
+    def test_multinode_tags_count(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type("qemu")
+        client_tags = [self.factory.ensure_tag("client")]
+        self.factory.make_device(device_type, "fakeqemu1", tags=client_tags)
+        self.factory.make_device(device_type, "fakeqemu2")
+        bbb_type = self.factory.make_device_type("beaglebone-black")
+        server_tags = [self.factory.ensure_tag("server")]
+        self.factory.make_device(
+            hostname="bbb-01", device_type=bbb_type, tags=server_tags
+        )
+        self.factory.make_device(hostname="bbb-02", device_type=bbb_type)
+        with open(
+            os.path.join(
+                os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
+            ),
+            "r",
+        ) as f:
+            submission = yaml_safe_load(f)
+
+        # Request devices matching the below tags.
+        roles_dict = submission["protocols"][MultinodeProtocol.name]["roles"]
+        roles_dict["client"]["tags"] = ["client"]
+        roles_dict["server"]["tags"] = ["server"]
+
+        # 1. Test not enough devices available.
+        with self.assertRaisesMessage(
+            DevicesUnavailableException,
+            "Not enough devices available matching the requested tags.",
+        ):
+            _pipeline_protocols(submission, user)
+
+        # 2. Test enough devices available.
+        self.factory.make_device(device_type, "fakeqemu3", tags=client_tags)
+        self.factory.make_device(
+            hostname="bbb-03", device_type=bbb_type, tags=server_tags
+        )
+        self.assertTrue(_pipeline_protocols(submission, user))
+
     def test_multinode_lxc(self):
         with open(
             os.path.join(
