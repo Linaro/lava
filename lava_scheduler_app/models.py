@@ -1041,7 +1041,7 @@ def _check_submit_to_devices(device_list, user):
     return allow
 
 
-def _check_tags_support(tag_devices, device_list):
+def _check_tags_support(tag_devices, device_list, count=1):
     """
     Combines the Device Ownership list with the requested tag list and
     returns any devices which meet both criteria.
@@ -1051,13 +1051,14 @@ def _check_tags_support(tag_devices, device_list):
     requirements
     :param device_list: A list of devices to which the user is able
     to submit a TestJob
+    :param count: The number of requested devices
     :raise: DevicesUnavailableException if there is no overlap between
     the two sets.
     """
     if not tag_devices:
         # no tags requested in the job: proceed.
         return
-    if len(set(tag_devices) & set(device_list)) == 0:
+    if len(set(tag_devices) & set(device_list)) < count:
         raise DevicesUnavailableException(
             "Not enough devices available matching the requested tags."
         )
@@ -1257,7 +1258,7 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                     supported = _check_tags(
                         role_dictionary[role]["tags"], device_type=device_type
                     )
-                    _check_tags_support(supported, allowed_devices)
+                    _check_tags_support(supported, allowed_devices, params["count"])
 
                 # FIXME: other protocols could need to remove devices from 'supported' here
 
