@@ -35,6 +35,7 @@ from lava_dispatcher.utils.docker import DockerRun
 
 LAVA_NODEBOOTER_PATH = "/home/lava/downloads"
 NODEBOOTER_HOME = "/data/nodebooter/"
+NIC_NO_OF_SUPPORTED = 4
 
 
 class BootNodebooter(Boot):
@@ -82,8 +83,10 @@ class RunNodebooterContainer(Action):
 
     def __init__(self):
         super().__init__()
-        self.cleanup_required = False
+        self.dut_iface = None
+        self.dut_mac = None
         self.container = ""
+        self.cleanup_required = False
 
     def validate(self):
         super().validate()
@@ -92,12 +95,33 @@ class RunNodebooterContainer(Action):
         if "docker" not in self.parameters:
             self.errors = "Specify docker parameter"
             raise JobError("Not specified 'docker' in parameters")
-        if "network_interface" not in self.parameters["docker"]:
-            self.errors = "Missing network interface for the DUT in docker parameter"
-        self.docker_image = self.parameters["docker"]
+
+        if "parameters" in self.job.device:
+            if "environment" in self.job.device["parameters"]:
+                if not isinstance(self.job.device["parameters"]["environment"], dict):
+                    self.errors("Incorrect environment format in device configuration")
+                if "DUT_MAC" in self.job.device["parameters"]["environment"]:
+                    self.dut_mac = self.job.device["parameters"]["environment"][
+                        "DUT_MAC"
+                    ]
+                if "DUT_IFACE" in self.job.device["parameters"]["environment"]:
+                    self.dut_iface = self.job.device["parameters"]["environment"][
+                        "DUT_IFACE"
+                    ]
+            else:
+                self.errors = (
+                    "Missing 'environment' variable in the device configuration"
+                )
+
+        if not self.dut_mac:
+            self.errors = (
+                "Missing DUT_MAC parameter in the device config 'environment' variable"
+            )
+        if not self.dut_iface:
+            self.errors = "Missing DUT_IFACE parameter in the device config 'environment' variable"
 
     def run(self, connection, max_end_time):
-        VOLUMES = {
+        volumes = {
             f"{NODEBOOTER_HOME}docker_mount": "/home/shared",
             f"{NODEBOOTER_HOME}tftpboot": "/var/lib/tftpboot",
             f"{NODEBOOTER_HOME}dhcpd/etc/dhcp": "/etc/dhcp",
@@ -106,25 +130,35 @@ class RunNodebooterContainer(Action):
             f"{NODEBOOTER_HOME}logs": "/var/log",
             f"{NODEBOOTER_HOME}docker_shm": "/dev/shm",
             f"{NODEBOOTER_HOME}ovss": "/opt/ovss",
+            f"{NODEBOOTER_HOME}custom_configs": "/home/custom_configs",
             DISPATCHER_DOWNLOAD_DIR: LAVA_NODEBOOTER_PATH,
             "/sys/fs/cgroup": "/sys/fs/cgroup",
         }
-        INIT_EXEC = "/usr/sbin/init"
+        init_exec = "/usr/sbin/init"
+
+        # TODO: ipv4 and ipv6 addresses currently hardcoded in nodebooter
+        config_dict = {
+            "DUT_IFACE": self.dut_iface,
+            "IPV4_ADDR": "192.168.1.1/24",
+            "IPV6_ADDR": "2001:db8:1::/56",
+        }
+
+        with open(f"{NODEBOOTER_HOME}custom_configs/config", "w") as f:
+            for key, value in config_dict.items():
+                f.write(f"{key}={value}\n")
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
         docker.network = "host"
 
-        for vol, mnt in VOLUMES.items():
+        for vol, mnt in volumes.items():
             os.makedirs(vol, exist_ok=True)
             option = "--volume=%s:%s" % (vol, mnt)
             docker.add_docker_run_options(option)
 
         docker.add_docker_run_options("--privileged")
+        docker.add_docker_run_options("--rm")
         docker.add_docker_run_options("-it")
         docker.add_docker_run_options("-d")
-        docker.add_docker_run_options(
-            "-e DUT_IFACE='%s'" % self.parameters["docker"]["network_interface"]
-        )
         docker.add_docker_run_options("--network=host")
         self.logger.info(docker.cmdline())
         docker.local(True)
@@ -132,7 +166,7 @@ class RunNodebooterContainer(Action):
         docker.init(False)
 
         try:
-            docker.run(INIT_EXEC)
+            docker.run(init_exec)
         except subprocess.CalledProcessError as exc:
             raise JobError(f"docker run command exited: {exc}")
 
@@ -151,34 +185,48 @@ class ConfigureNodebooter(Action):
 
     def __init__(self):
         super().__init__()
-        self.container = ""
-        self.target_mac = None
-        self.target_ip = None
+        # Validated in previous
+        self.dut_mac = None
 
     def validate(self):
         # We assume the nodebooter container is running, otherwise previous
         # action in the pipeline would have failed.
+        # All the device config validation is done before nodebooter start in RunNodebooterAction.
         super().validate()
-
         if "parameters" in self.job.device:
-            if "interfaces" in self.job.device["parameters"]:
-                if "target" in self.job.device["parameters"]["interfaces"]:
-                    self.target_mac = self.job.device["parameters"]["interfaces"][
-                        "target"
-                    ].get("mac", None)
-                    self.target_ip = self.job.device["parameters"]["interfaces"][
-                        "target"
-                    ].get("ip", None)
+            if "environment" in self.job.device["parameters"]:
+                if not isinstance(self.job.device["parameters"]["environment"], dict):
+                    self.errors("Incorrect environment format in device configuration")
+                if "DUT_MAC" in self.job.device["parameters"]["environment"]:
+                    self.dut_mac = self.job.device["parameters"]["environment"][
+                        "DUT_MAC"
+                    ]
+            else:
+                self.errors = (
+                    "Missing 'environment' variable in the device configuration"
+                )
+        if not self.dut_mac:
+            self.errors = (
+                "Missing DUT_MAC parameter in the device config 'environment' variable"
+            )
 
-        if not self.target_mac:
-            self.errors = "Missing device_mac parameter in the device config"
+        # Validate that the nic setup is present in the boot action if nic images are available in download action
+        for counter in range(NIC_NO_OF_SUPPORTED):
+            image_file_path = self.get_namespace_data(
+                "download-action", label=f"nic{counter}", key="file"
+            )
+            if image_file_path:
+                if not self.job.device["parameters"]["environment"][
+                    f"nic{counter}_mac"
+                ]:
+                    self.errors = f"Missing nic{counter} MAC address (nic{counter}_mac) from 'environment' variable"
 
     def run(self, connection, max_end_time):
         # Make sure nodebooter container is stopped at the end.
         self.cleanup_required = True
 
         # Certain daemons require restart after the container is up.
-        services_restart_required = ["radvd", "naas", "nodebooter"]
+        services_restart_required = ["setup_networks", "naas", "nodebooter"]
         for service in services_restart_required:
             try:
                 subprocess.check_output(  # nosec - internal.
@@ -212,13 +260,24 @@ class ConfigureNodebooter(Action):
         self.logger.debug("Nodebooter API available at: %s", url)
 
         # Use API to add the machine to nodebooter with preconfigured data.
-        machine_interface = self.parameters["docker"]["network_interface"]
         try:
             res = None
             headers = {"Content-Type": "application/json"}
             boot_image = self.get_namespace_data(
                 "download-action", label="boot", key="file"
             ).replace(DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH)
+            nic_images = []
+            for counter in range(NIC_NO_OF_SUPPORTED):
+                image_file_path = self.get_namespace_data(
+                    "download-action", label=f"nic{counter}", key="file"
+                )
+                if image_file_path:
+                    nic_images.append(
+                        image_file_path.replace(
+                            DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH
+                        )
+                    )
+
             json = {
                 "machine_name": "dut",
                 "machine_model_data": {
@@ -228,10 +287,10 @@ class ConfigureNodebooter(Action):
                                 "network_interfaces": {
                                     "network_interface": [
                                         {
-                                            "device_name": machine_interface,
+                                            "device_name": "eth1",
                                             "hostname": "",
                                             "ipv6_subnet_key": "",
-                                            "mac_address": self.target_mac,
+                                            "mac_address": self.dut_mac,
                                             "use_for_netboot": True,
                                         }
                                     ]
@@ -248,6 +307,34 @@ class ConfigureNodebooter(Action):
                     }
                 ],
             }
+            if nic_images:
+                for counter, nic_image in enumerate(nic_images):
+                    json["machine_model_data"]["node_entities"]["entities"][
+                        f"nic_control_node{counter}"
+                    ] = {
+                        "network_interfaces": {
+                            "network_interface": [
+                                {
+                                    "device_name": "eth1",
+                                    "hostname": "",
+                                    "ipv6_low64": "1729382256910270464",
+                                    "ipv6_subnet_key": f"nic{counter}",
+                                    "mac_address": self.job.device["parameters"][
+                                        "environment"
+                                    ][f"nic{counter}_mac"],
+                                    "use_for_netboot": True,
+                                }
+                            ]
+                        }
+                    }
+                    json["boot_info"].append(
+                        {
+                            "node_entity_name": f"nic_control_node{counter}",
+                            "boot_file": nic_images[counter],
+                            "loader_file": "",
+                        }
+                    )
+
             res = requests.post(url, json=json, headers=headers)
 
         except requests.RequestException as exc:
@@ -272,7 +359,7 @@ class ConfigureNodebooter(Action):
         # Nodebooter currently replaces ":" in mac address either with
         # "_" or "." delimiters to create initrd file names and images.
         mac_delimiters = [".", "_"]
-        patterns = ["*%s*" % self.target_mac.replace(":", x) for x in mac_delimiters]
+        patterns = ["*%s*" % self.dut_mac.replace(":", x) for x in mac_delimiters]
         # Find all files that match the patterns in the directory tree
         file_list = []
         for pattern in patterns:
