@@ -64,7 +64,12 @@ instead of as string like <code>'None'</code>.
 <h2 id="top">Available functions</h2>
 <div>
       <h2>Scheduler</h2>
-      {{ methods|get_api_by_section:'scheduler' }}
+      {% for section, section_methods in scheduler_section_methods.items %}
+        <h3>{{ section }}</h3>
+        {% for method in section_methods %}
+          [&nbsp;<a href="#{{method}}">{{ method }}</a>&nbsp;]
+        {% endfor %}
+      {% endfor %}
       <h2>Results</h2>
       {% for method in methods.results %}
         [&nbsp;<a href="#{{method.name}}">{{ method.name }}</a>&nbsp;]
