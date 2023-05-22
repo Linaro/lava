@@ -630,6 +630,42 @@ def test_devices_add(setup):
     assert exc.value.faultString == "Bad request: device already exists?"  # nosec
 
 
+def test_devices_delete(setup):
+    dt = DeviceType.objects.create(name="black")
+    Device.objects.create(hostname="device01", device_type=dt)
+
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        # "example.com" is part of the migrations
+        server().scheduler.devices.delete("device01")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert Device.objects.count() == 1
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.devices.delete("device01")
+    assert exc.value.faultCode == 403
+    assert (
+        exc.value.faultString
+        == "User 'user' is missing permission lava_scheduler_app.delete_device."
+    )
+    assert Device.objects.count() == 1
+
+    # 3. as admin => success
+    assert server("admin", "admin").scheduler.devices.delete("device01") is None
+    assert Device.objects.count() == 0
+
+    # 4. device does not exists => 404
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.devices.delete("device01")
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Device 'device01' was not found."
+
+
 @pytest.mark.django_db
 def test_devices_get_dictionary(setup, monkeypatch):
     # 1. no device
@@ -1687,6 +1723,39 @@ def test_workers_add(setup):
         server("admin", "admin").scheduler.workers.add("dispatcher.example.com")
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Bad request: worker already exists?"  # nosec
+
+
+def test_workers_delete(setup):
+    # 1. as anonymous => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        # "example.com" is part of the migrations
+        server().scheduler.workers.delete("example.com")
+    assert exc.value.faultCode == 401
+    assert (
+        exc.value.faultString
+        == "Authentication with user and token required for this API."
+    )
+    assert Worker.objects.count() == 1
+
+    # 2. as user => error
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("user", "user").scheduler.workers.delete("example.com")
+    assert exc.value.faultCode == 403
+    assert (
+        exc.value.faultString
+        == "User 'user' is missing permission lava_scheduler_app.delete_worker."
+    )
+    assert Worker.objects.count() == 1
+
+    # 3. as admin => success
+    assert server("admin", "admin").scheduler.workers.delete("example.com") is None
+    assert Worker.objects.count() == 0
+
+    # 4. worker does not exists => 404
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.delete("example.com")
+    assert exc.value.faultCode == 404
+    assert exc.value.faultString == "Worker 'example.com' was not found."
 
 
 @pytest.mark.django_db

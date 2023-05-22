@@ -449,6 +449,31 @@ class SchedulerDevicesAPI(ExposedV2API):
         except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request")
 
+    @check_perm("lava_scheduler_app.delete_device")
+    def delete(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.devices.delete` (`hostname`)
+
+        Description
+        -----------
+        Remove a device.
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the device
+
+        Return value
+        ------------
+        None
+        """
+        try:
+            Device.objects.get(hostname=hostname).delete()
+        except Device.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+
 
 class SchedulerDevicesTagsAPI(ExposedV2API):
     @check_perm("lava_scheduler_app.add_tag")

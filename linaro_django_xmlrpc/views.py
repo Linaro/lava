@@ -127,12 +127,22 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
             for method in system_methods
         ],
     }
+    scheduler_method_sections = sorted(
+        set([block["section"] for block in methods["scheduler"]])
+    )
+    scheduler_section_methods = {section: [] for section in scheduler_method_sections}
+    for section in scheduler_method_sections:
+        if section:
+            for method in methods["scheduler"]:
+                if method["section"] == section:
+                    scheduler_section_methods[section].append(method["name"])
     domain = Site.objects.get_current().domain
     return render(
         request,
         template_name,
         {
             "methods": methods,
+            "scheduler_section_methods": scheduler_section_methods,
             "context_help": ["data-export"],
             "bread_crumb_trail": BreadCrumbTrail.leading_to(help),
             "site_scheme": scheme,

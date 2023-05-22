@@ -414,3 +414,28 @@ class SchedulerWorkersAPI(ExposedV2API):
                 worker.job_limit = job_limit
 
             worker.save()
+
+    @check_perm("lava_scheduler_app.delete_worker")
+    def delete(self, hostname):
+        """
+        Name
+        ----
+        `scheduler.workers.delete` (`hostname`)
+
+        Description
+        -----------
+        Remove a worker.
+
+        Arguments
+        ---------
+        `hostname`: string
+          Hostname of the worker
+
+        Return value
+        ------------
+        None
+        """
+        try:
+            Worker.objects.get(hostname=hostname).delete()
+        except Worker.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)

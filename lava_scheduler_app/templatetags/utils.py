@@ -131,18 +131,3 @@ def sort_items(items):
 @register.filter()
 def replace_python_unicode(data):
     return data.replace("!!python/unicode ", "")
-
-
-@register.filter
-def get_api_by_section(methods, api):
-    ret = ""
-    sections = sorted(set([block["section"] for block in methods[api]]))
-    for section in sections:
-        if section:
-            ret += format_html("<h3>{}</h3>", section)
-        for method in methods[api]:
-            if method["section"] == section:
-                ret += format_html(
-                    '[&nbsp;<a href="#{}">{}</a>&nbsp;]', method["name"], method["name"]
-                )
-    return ret
