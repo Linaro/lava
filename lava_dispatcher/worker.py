@@ -646,7 +646,7 @@ async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
 
 async def listen_for_events(options, event: asyncio.Event) -> None:
     while True:
-        with contextlib.suppress(aiohttp.ClientError):
+        with contextlib.suppress(aiohttp.ClientError, asyncio.TimeoutError):
             async with aiohttp.ClientSession(
                 headers={
                     **HEADERS,
