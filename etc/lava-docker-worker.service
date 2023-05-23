@@ -6,7 +6,7 @@ After=network.target remote-fs.target containerd.service docker.service
 Type=simple
 Environment=URL=http://localhost/ LOGLEVEL=DEBUG BUILD_DIR="/etc/lava-dispatcher-host/build" LOG_FILE="/var/log/lava-dispatcher-host/lava-docker-worker.log"
 EnvironmentFile=-/etc/lava-dispatcher-host/lava-docker-worker
-ExecStart=/usr/bin/lava-docker-worker --level $LOGLEVEL --url $URL $TOKEN $WORKER_NAME $WS_URL $HTTP_TIMEOUT $JOB_LOG_INTERVAL --build-dir $BUILD_DIR --log-file $LOG_FILE $SENTRY_DSN
+ExecStart=/usr/bin/lava-docker-worker --level $LOGLEVEL --url $URL $TOKEN $WORKER_NAME $WS_URL $HTTP_TIMEOUT $JOB_LOG_INTERVAL --build-dir $BUILD_DIR $BUILD_OPTIONS --log-file $LOG_FILE $SENTRY_DSN
 TimeoutStopSec=infinity
 Restart=always
 KillMode=process

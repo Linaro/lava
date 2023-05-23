@@ -79,6 +79,12 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
             default="/etc/lava-dispatcher-host/build",
             help="Path to a directory with a Dockerfile inside for building customized lava-dispatcher docker image.",
         )
+        storage.add_argument(
+            "--use-cache",
+            action="store_true",
+            default=False,
+            help="Use cache when building custom docker worker image.",
+        )
 
     net = parser.add_argument_group("network")
     net.add_argument("--url", required=url_required, help="Base URL of the server")

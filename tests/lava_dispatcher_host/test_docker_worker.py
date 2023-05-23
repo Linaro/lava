@@ -129,8 +129,8 @@ class TestBuildImage:
         dockerfile = build_dir / "Dockerfile"
         dockerfile.write_text(f"{original_image}\nRUN echo test > /test")
 
+        # 1. Test build without cache.
         lava_dispatcher_host.docker_worker.build_customized_image(image, build_dir)
-
         dockerfile_lava = build_dir / "Dockerfile.lava"
         assert dockerfile_lava.exists()
         content = dockerfile_lava.read_text()
@@ -138,7 +138,37 @@ class TestBuildImage:
         assert f"FROM {original_image}" not in content
 
         popen.assert_called_with(
-            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
+            [
+                "docker",
+                "build",
+                "--force-rm",
+                "-f",
+                "Dockerfile.lava",
+                "-t",
+                tag,
+                "--no-cache",
+                ".",
+            ],
+            cwd=build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+        # 2. Test build using cache.
+        lava_dispatcher_host.docker_worker.build_customized_image(
+            image, build_dir, use_cache=True
+        )
+        popen.assert_called_with(
+            [
+                "docker",
+                "build",
+                "--force-rm",
+                "-f",
+                "Dockerfile.lava",
+                "-t",
+                tag,
+                ".",
+            ],
             cwd=build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

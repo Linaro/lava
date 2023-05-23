@@ -21,6 +21,9 @@
 # Docker build directory
 # Should be set to a directory with a Dockerfile inside.
 # BUILD_DIR="/etc/lava-dispatcher-host/build"
+# By default, '--no-cache' is used to force a clean build. Add
+# "--use-cache" to BUILD_OPTIONS to use build cache.
+# BUILD_OPTIONS="--use-cache"
 
 # Sentry Data Source Name.
 # SENTRY_DSN="--sentry-dsn <sentry-dsn>"
