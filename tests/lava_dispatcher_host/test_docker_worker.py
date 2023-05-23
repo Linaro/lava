@@ -120,6 +120,8 @@ class TestBuildImage:
 
     def test_build_customized_image(self, tmp_path, check_output, mocker):
         popen = mocker.patch("lava_dispatcher_host.docker_worker.subprocess.Popen")
+        popen().communicate.return_value = (None, None)
+        popen().returncode = 0
         original_image = "lavasoftware/lava-dispatcher:2021.05"
         image = "lavasoftware/lava-dispatcher:2021.08"
         tag = f"{image}.customized"
@@ -129,8 +131,8 @@ class TestBuildImage:
         dockerfile = build_dir / "Dockerfile"
         dockerfile.write_text(f"{original_image}\nRUN echo test > /test")
 
+        # 1. Test build without cache.
         lava_dispatcher_host.docker_worker.build_customized_image(image, build_dir)
-
         dockerfile_lava = build_dir / "Dockerfile.lava"
         assert dockerfile_lava.exists()
         content = dockerfile_lava.read_text()
@@ -138,11 +140,47 @@ class TestBuildImage:
         assert f"FROM {original_image}" not in content
 
         popen.assert_called_with(
-            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
+            [
+                "docker",
+                "build",
+                "--force-rm",
+                "-f",
+                "Dockerfile.lava",
+                "-t",
+                tag,
+                "--no-cache",
+                ".",
+            ],
             cwd=build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
+
+        # 2. Test build using cache.
+        lava_dispatcher_host.docker_worker.build_customized_image(
+            image, build_dir, use_cache=True
+        )
+        popen.assert_called_with(
+            [
+                "docker",
+                "build",
+                "--force-rm",
+                "-f",
+                "Dockerfile.lava",
+                "-t",
+                tag,
+                ".",
+            ],
+            cwd=build_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+
+        # 3. Test build failure => SystemExit
+        popen().returncode = 100
+        with pytest.raises(SystemExit) as exc:
+            lava_dispatcher_host.docker_worker.build_customized_image(image, build_dir)
+        assert exc.value.code == 100
 
 
 class TestRun:

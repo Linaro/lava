@@ -121,7 +121,7 @@ def get_image(image):
     return False
 
 
-def build_customized_image(image, build_dir):
+def build_customized_image(image, build_dir, use_cache=False):
     dockerfile = build_dir / "Dockerfile"
     if not dockerfile.exists():
         LOG.warning("Dockerfile (%s) not found", dockerfile)
@@ -142,15 +142,31 @@ def build_customized_image(image, build_dir):
                 f.write(instruction)
 
     tag = f"{image}.customized"
+    build_cmd = [
+        "docker",
+        "build",
+        "--force-rm",
+        "-f",
+        "Dockerfile.lava",
+        "-t",
+        tag,
+    ]
+    if not use_cache:
+        build_cmd.append("--no-cache")
+    build_cmd.append(".")
     try:
         p = subprocess.Popen(
-            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
+            build_cmd,
             cwd=build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
         for line in p.stdout:
             log_output(line)
+        p.communicate()
+        rc = p.returncode
+        if rc != 0:
+            sys.exit(rc)
         return tag
     except subprocess.CalledProcessError:
         sys.exit(1)
@@ -227,7 +243,7 @@ def run(version, options):
 
     if options.build_dir.exists():
         LOG.info("Building custom image in %s", options.build_dir)
-        image = build_customized_image(image, options.build_dir)
+        image = build_customized_image(image, options.build_dir, options.use_cache)
     service.append(image)
 
     try:
