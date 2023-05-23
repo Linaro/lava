@@ -190,16 +190,6 @@ docker-aarch64-server: *docker_aarch64
 # Deploy #
 ##########
 
-lavafed-master:
-  <<: *job
-  stage: deploy
-  tags: [deploy]
-  except: []
-  only: [schedules]
-  environment:
-    name: lavafed-master
-    url: https://federation.lavasoftware.org/lava/
-
 reprepro-master:
   <<: *job
   stage: deploy
