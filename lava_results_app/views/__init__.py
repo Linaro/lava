@@ -159,23 +159,21 @@ def testjob_csv(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
 
-    def testjob_stream(suites, pseudo_buffer):
+    def testjob_stream(test_cases, pseudo_buffer):
         fieldnames = testcase_export_fields()
         writer = csv.DictWriter(pseudo_buffer, fieldnames=fieldnames)
         # writer.writeheader does not return the string while writer.writerow
         # does. Copy writeheader code from csv.py and yield the value.
         yield writer.writerow(dict(zip(fieldnames, fieldnames)))
 
-        for test_suite in suites:
-            for test_case in test_suite.testcase_set.all():
-                yield writer.writerow(export_testcase(test_case))
+        for test_case in test_cases:
+            yield writer.writerow(export_testcase(test_case))
 
-    suites = job.testsuite_set.all().prefetch_related(
-        "test_sets__test_cases__actionlevels"
-    )
+    test_cases = TestCase.objects.filter(suite__job=job).select_related("suite")
+
     pseudo_buffer = StreamEcho()
     response = StreamingHttpResponse(
-        testjob_stream(suites, pseudo_buffer), content_type="text/csv"
+        testjob_stream(test_cases, pseudo_buffer), content_type="text/csv"
     )
     filename = "lava_%s.csv" % job.id
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
@@ -185,14 +183,12 @@ def testjob_csv(request, job):
 def testjob_yaml(request, job):
     job = get_object_or_404(TestJob, pk=job)
     check_request_auth(request, job)
-    suites = job.testsuite_set.all().prefetch_related(
-        "test_sets__test_cases__actionlevels"
-    )
+
+    test_cases = TestCase.objects.filter(suite__job=job).select_related("suite")
 
     def test_case_stream():
-        for test_suite in suites:
-            for test_case in test_suite.testcase_set.all():
-                yield yaml_safe_dump([export_testcase(test_case)])
+        for test_case in test_cases:
+            yield yaml_safe_dump([export_testcase(test_case)])
 
     response = StreamingHttpResponse(test_case_stream(), content_type="text/yaml")
     filename = "lava_%s.yaml" % job.id

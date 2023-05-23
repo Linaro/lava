@@ -692,7 +692,6 @@ def _export_query(query_results, content_type, filename):
         # TestSuite fields:
         "job_id",
         # TestCase fields:
-        "actionlevels",
         "suite_id",
         "test_set_id",
     ]
