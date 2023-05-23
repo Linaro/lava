@@ -163,6 +163,10 @@ def build_customized_image(image, build_dir, use_cache=False):
         )
         for line in p.stdout:
             log_output(line)
+        p.communicate()
+        rc = p.returncode
+        if rc != 0:
+            sys.exit(rc)
         return tag
     except subprocess.CalledProcessError:
         sys.exit(1)
