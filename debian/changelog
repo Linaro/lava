@@ -1,3 +1,15 @@
+lava (2023.05-1) unstable; urgency=medium
+
+  * LAVA Software 2023.05 release
+
+  [ Stefan Gänsler ]
+  * [517d53e0c] Doc: Update links to mailinglists
+
+  [ Rémi Duraffort ]
+  * [6ad2a25c5] Relicense LAVA to GPLv2 or later
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Thu, 25 May 2023 13:10:21 +0200
+
 lava (2023.03-1) unstable; urgency=medium
 
   * LAVA Software 2023.03 release
