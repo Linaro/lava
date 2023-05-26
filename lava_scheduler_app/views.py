@@ -90,21 +90,23 @@ from lava_scheduler_app.tables import (
     DeviceLogEntryTable,
     DeviceTable,
     DeviceTypeOverviewTable,
-    FailedJobTable,
     HealthJobSummaryTable,
-    IndexJobTable,
     JobErrorsTable,
-    JobTable,
     LogEntryTable,
-    LongestJobTable,
     NoWorkerDeviceTable,
-    OverviewJobsTable,
     PassingHealthTable,
-    QueueJobsTable,
-    RecentJobsTable,
     RunningTable,
     WorkerTable,
     visible_jobs_with_custom_sort,
+)
+from lava_scheduler_app.tables_jobs import (
+    ActiveJobsTable,
+    AllJobsTable,
+    DeviceJobsTable,
+    DeviceTypeJobsTable,
+    FailedJobsTable,
+    LongestJobsTable,
+    QueuedJobsTable,
 )
 from lava_scheduler_app.templatetags.utils import udecode
 from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
@@ -180,7 +182,7 @@ class JobTableView(LavaView):
         return Q(health__in=matches)
 
 
-class FailureTableView(JobTableView):
+class FailedJobsTableView(JobTableView):
     def get_queryset(self):
         failures = [TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED]
         jobs = visible_jobs_with_custom_sort(self.request.user).filter(
@@ -276,7 +278,7 @@ class DeviceLogView(LavaView):
         )
 
 
-class IndexTableView(JobTableView):
+class ActiveJobsTableView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
         query = query.filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
@@ -510,8 +512,8 @@ def reports(request):
 
 @BreadCrumb("Failure Report", parent=reports)
 def failure_report(request):
-    data = FailureTableView(request)
-    ptable = FailedJobTable(data.get_table_data())
+    data = FailedJobsTableView(request)
+    ptable = FailedJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
 
     return render(
@@ -930,8 +932,8 @@ def device_type_detail(request, pk):
     config.configure(no_dt_ptable)
 
     prefix = "dt_"
-    dt_jobs_data = AllJobsView(request, model=TestJob, table_class=OverviewJobsTable)
-    dt_jobs_ptable = OverviewJobsTable(
+    dt_jobs_data = AllJobsView(request)
+    dt_jobs_ptable = DeviceTypeJobsTable(
         dt_jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
         prefix=prefix,
     )
@@ -1126,7 +1128,7 @@ def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
 
     health_data = AllJobsView(request)
-    health_table = JobTable(
+    health_table = AllJobsTable(
         health_data.get_table_data().filter(actual_device=device, health_check=True),
         request=request,
     )
@@ -1593,8 +1595,8 @@ class AllJobsView(JobTableView):
 
 @BreadCrumb("Jobs", parent=index)
 def job_list(request):
-    data = AllJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = JobTable(data.get_table_data())
+    data = AllJobsView(request)
+    ptable = AllJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1633,8 +1635,8 @@ def job_errors(request):
 
 @BreadCrumb("Active", parent=job_list)
 def active_jobs(request):
-    data = IndexTableView(request, model=TestJob, table_class=IndexJobTable)
-    ptable = IndexJobTable(data.get_table_data())
+    data = ActiveJobsTableView(request)
+    ptable = ActiveJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
 
     return render(
@@ -1901,8 +1903,8 @@ def job_fetch_data(request, pk):
 @BreadCrumb("My Jobs", parent=index)
 def myjobs(request):
     get_object_or_404(User, pk=request.user.id)
-    data = MyJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = JobTable(data.get_table_data())
+    data = MyJobsView(request)
+    ptable = AllJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1921,8 +1923,8 @@ def myjobs(request):
 @BreadCrumb("My Active Jobs", parent=index)
 def my_active_jobs(request):
     get_object_or_404(User, pk=request.user.id)
-    data = MyActiveJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = IndexJobTable(data.get_table_data())
+    data = MyActiveJobsView(request)
+    ptable = ActiveJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1942,8 +1944,8 @@ def my_active_jobs(request):
 @BreadCrumb("My Queued Jobs", parent=index)
 def my_queued_jobs(request):
     get_object_or_404(User, pk=request.user.id)
-    data = MyQueuedJobsView(request, model=TestJob, table_class=JobTable)
-    ptable = QueueJobsTable(data.get_table_data())
+    data = MyQueuedJobsView(request)
+    ptable = QueuedJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1963,7 +1965,7 @@ def my_queued_jobs(request):
 @BreadCrumb("My Error Jobs", parent=index)
 def my_error_jobs(request):
     get_object_or_404(User, pk=request.user.id)
-    data = MyErrorJobsView(request, model=TestJob, table_class=JobTable)
+    data = MyErrorJobsView(request)
     ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
@@ -1983,8 +1985,8 @@ def my_error_jobs(request):
 
 @BreadCrumb("Longest Running Jobs", parent=reports)
 def longest_jobs(request, username=None):
-    data = LongestJobsView(request, model=TestJob, table_class=LongestJobTable)
-    ptable = LongestJobTable(data.get_table_data())
+    data = LongestJobsView(request)
+    ptable = LongestJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -2007,8 +2009,8 @@ def favorite_jobs(request):
     if not username:
         username = request.user.username
     user = get_object_or_404(User, username=username)
-    data = FavoriteJobsView(request, model=TestJob, table_class=JobTable, user=user)
-    ptable = JobTable(data.get_table_data())
+    data = FavoriteJobsView(request, user=user)
+    ptable = AllJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -2451,10 +2453,8 @@ def device_detail(request, pk):
         previous_device = d.hostname
 
     prefix = "recent_"
-    recent_data = RecentJobsView(
-        request, device, model=TestJob, table_class=RecentJobsTable
-    )
-    recent_ptable = RecentJobsTable(recent_data.get_table_data(prefix), prefix=prefix)
+    recent_data = RecentJobsView(request, device)
+    recent_ptable = DeviceJobsTable(recent_data.get_table_data(prefix), prefix=prefix)
     request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     search_data = recent_ptable.prepare_search_data(recent_data)
@@ -2705,10 +2705,8 @@ class HealthCheckJobsView(JobTableView):
 
 @BreadCrumb("Healthcheck", parent=job_list)
 def healthcheck(request):
-    health_check_data = HealthCheckJobsView(
-        request, model=TestJob, table_class=JobTable
-    )
-    health_check_ptable = JobTable(health_check_data.get_table_data())
+    health_check_data = HealthCheckJobsView(request)
+    health_check_ptable = AllJobsTable(health_check_data.get_table_data())
     request_config(request, {"per_page": health_check_ptable.length}).configure(
         health_check_ptable
     )
@@ -2739,8 +2737,8 @@ class QueueJobsView(JobTableView):
 
 @BreadCrumb("Queue", parent=job_list)
 def queue(request):
-    queue_data = QueueJobsView(request, model=TestJob, table_class=QueueJobsTable)
-    queue_ptable = QueueJobsTable(queue_data.get_table_data())
+    queue_data = QueueJobsView(request)
+    queue_ptable = QueuedJobsTable(queue_data.get_table_data())
     request_config(request, {"per_page": queue_ptable.length}).configure(queue_ptable)
     return render(
         request,

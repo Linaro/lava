@@ -6,11 +6,8 @@ from django.test import TestCase
 
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, TestJob
-from lava_scheduler_app.tables import (
-    DeviceTable,
-    JobTable,
-    visible_jobs_with_custom_sort,
-)
+from lava_scheduler_app.tables import DeviceTable, visible_jobs_with_custom_sort
+from lava_scheduler_app.tables_jobs import AllJobsTable
 from lava_server.lavatable import LavaTable, LavaView
 
 LOGGER = logging.getLogger()
@@ -54,7 +51,7 @@ class TestTestTable(TestCase):
 
 
 @nottest
-class TestJobTable(JobTable):
+class TestJobTable(AllJobsTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.length = 18
