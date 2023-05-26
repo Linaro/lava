@@ -99,3 +99,27 @@ class TestDocker(StdoutTestCase):
             call.timeout,
             logger=call.logger,
         )
+
+
+class DockerDb410cFactory(Factory):
+    """
+    Not Model based, this is not a Django factory.
+    Factory objects are dispatcher based classes, independent
+    of any database objects.
+    """
+
+    def create_docker_db410c_job(self, filename):
+        return self.create_job("db410c-01.jinja2", filename)
+
+
+class TestDockerDb410c(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = DockerDb410cFactory()
+        self.job = self.factory.create_docker_db410c_job(
+            "sample_jobs/docker-test-db410c.yaml"
+        )
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference("docker-test-db410c.yaml", self.job)
+        self.assertEqual(description_ref, self.job.pipeline.describe())

@@ -140,9 +140,16 @@ class CreateOverlay(Action):
         self.pipeline.add_action(VlandOverlayAction())
         self.pipeline.add_action(MultinodeOverlayAction())
         self.pipeline.add_action(TestDefinitionAction())
-        # Skip compress-overlay for docker deploy/test actions as these actions
-        # mount overlay directory located on lava worker directly.
-        if parameters.get("to") != "docker" and "docker" not in parameters:
+        # Skip compress-overlay for actions that mount overlay directory
+        # that located on lava worker directly.
+        skip_overlay_compression = False
+        # Skip compress-overlay for 'to: docker' deploy action.
+        if parameters.get("to") == "docker":
+            skip_overlay_compression = True
+        # Skip compress-overlay for docker test shell based test action.
+        if {"docker", "definitions"}.issubset(parameters):
+            skip_overlay_compression = True
+        if not skip_overlay_compression:
             self.pipeline.add_action(CompressOverlay())
         self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
 
