@@ -1,0 +1,84 @@
+device_type: dragonboard-410c
+
+job_name: Debian db410c deploy/boot/test with Docker
+timeouts:
+  job:
+    minutes: 90
+  action:
+    minutes: 15
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    timeout:
+      minutes: 40
+    to: fastboot
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
+    images:
+      boot:
+        url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz
+        compression: gz
+      rootfs:
+        url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/linaro-buster-developer-dragonboard-410c-359.img.gz
+        compression: gz
+        apply-overlay: true
+    os: debian
+
+- command:
+    name: pre_power_command
+    timeout:
+          minutes: 2
+
+- boot:
+    prompts:
+    - 'root@(.*):/#'
+    - 'root@linaro-developer:~#'
+    timeout:
+      minutes: 15
+    method: fastboot
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
+- command:
+    name: pre_os_command
+    timeout:
+          minutes: 2
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: lava-net-tests
+          description: "check helpers"
+          os:
+          - debian
+          scope:
+          - functional
+        run:
+          steps:
+          - lava-target-mac
+          - lava-target-ip
+          - lava-test-case linux-posix-ip-addresses --shell ip addr
+      from: inline
+      name: lava-net-tests
+      path: inline/lava-net-test.yaml
+
+- test:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests-docker
