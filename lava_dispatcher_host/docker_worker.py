@@ -51,22 +51,23 @@ def log_output(line):
 
 
 def get_options(image: str) -> list:
-    "Return a list of available worker option names."
-    try:
-        option_ns = subprocess.check_output(
-            [
-                "docker",
-                "run",
-                "--rm",
-                image,
-                "python3",
-                "-c",
-                "from lava_common.worker import get_parser; print(get_parser().parse_args(['--url', 'dummy-url']))",
-            ],
-            stderr=subprocess.DEVNULL,
-        )
-    except subprocess.CalledProcessError:
-        return None
+    """
+    Return a list of available worker option names.
+    Do not handle the CalledProcessError exception here. This will be
+    propagated to the caller that will fail correctly.
+    """
+    option_ns = subprocess.check_output(
+        [
+            "docker",
+            "run",
+            "--rm",
+            image,
+            "python3",
+            "-c",
+            "from lava_common.worker import get_parser; print(get_parser().parse_args(['--url', 'dummy-url']))",
+        ],
+        stderr=subprocess.DEVNULL,
+    )
 
     option_names = re.findall(r"(\w+)=", option_ns.decode("utf-8"))
 
