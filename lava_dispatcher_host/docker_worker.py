@@ -36,7 +36,7 @@ logging.Formatter.convert = time.gmtime
 LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
-PAT = re.compile(r"\d+\.\d+(\.\d+){0,1}(\.|\+)\d{4}\.g[\d\w]+")
+PAT = re.compile(r"\d+\.\d+(\.\d+){0,1}(\.|\+)\d{4}\.g[abcdef\d]+")
 
 
 ###########
@@ -180,6 +180,8 @@ class Terminate(RuntimeError):
 
 def run(version, options):
     if PAT.match(version):
+        # Replace "+" by "." which is not accepted by docker in a tag
+        version = version.replace("+", ".")
         # development
         if platform.machine() == "x86_64":
             image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
