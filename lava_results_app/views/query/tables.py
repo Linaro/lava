@@ -9,8 +9,7 @@ import django_tables2 as tables
 
 from lava_results_app.models import Query, TestCase, TestSuite
 from lava_results_app.tables import ResultsTable, SuiteTable
-from lava_scheduler_app.models import TestJob
-from lava_scheduler_app.tables import JobTable
+from lava_scheduler_app.tables_jobs import AllJobsTable
 from lava_server.lavatable import LavaTable
 
 
@@ -102,29 +101,13 @@ class GroupQueryTable(UserQueryTable):
         sequence = fields
 
 
-class QueryTestJobTable(JobTable):
-    id = tables.Column(verbose_name="ID")
-    actions = tables.TemplateColumn(
-        template_name="lava_scheduler_app/job_actions_field.html"
-    )
-    actions.orderable = False
-    device = tables.TemplateColumn(
-        """
-    <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
-    """
-    )
-    device.orderable = False
-    duration = tables.Column()
-    duration.orderable = False
-    submit_time = tables.DateColumn()
-    end_time = tables.DateColumn()
-
+class QueryTestJobTable(AllJobsTable):
     omit = tables.TemplateColumn(
         """
     <a href="{{ query.get_absolute_url }}/{{ record.id }}/+omit-result" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>
-    """
+    """,
+        orderable=False,
     )
-    omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -133,8 +116,7 @@ class QueryTestJobTable(JobTable):
         else:
             self.base_columns["omit"].visible = False
 
-    class Meta(JobTable.Meta):
-        model = TestJob
+    class Meta(AllJobsTable.Meta):
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"
         queries = {}
