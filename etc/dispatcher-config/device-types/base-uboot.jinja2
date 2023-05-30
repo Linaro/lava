@@ -1,7 +1,7 @@
 {% extends 'base.jinja2' %}
 
 {% set base_high_limits = base_high_limits|default(true) %}
-{% set base_uboot_commands = ["setenv autoload no"] -%}
+{% set base_uboot_commands = base_uboot_commands|default([]) + ["setenv autoload no"] -%}
 {% set base_uboot_high_limits = [
     "setenv initrd_high " + uboot_initrd_high|default('0xffffffff'),
     "setenv fdt_high "    + uboot_fdt_high|default('0xffffffff')]
