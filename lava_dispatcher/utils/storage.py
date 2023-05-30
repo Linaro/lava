@@ -21,7 +21,6 @@ class FlashUBootUMSAction(Action):
         super().__init__()
         self.params = None
         self.usb_mass_device = usb_mass_device
-        self.ums_device = None
 
     def validate(self):
         super().validate()
@@ -29,9 +28,7 @@ class FlashUBootUMSAction(Action):
         self.params = self.job.device["actions"]["boot"]["methods"][
             self.parameters["method"]
         ]["parameters"]
-        if self.params.get("uboot_mass_storage_device", False):
-            self.ums_device = self.params["uboot_mass_storage_device"]
-        else:
+        if "uboot_mass_storage_device" not in self.params:
             raise JobError("uboot_mass_storage_device is not set")
 
     def run(self, connection, max_end_time):
