@@ -52,9 +52,9 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "usb_otg_path"
         ]
-
+        path_args = " -m ".join(usb_otg_path)
         cmd = "{} --preserve-status 10 {} -m {} {}".format(
-            self.linux_timeout, self.uuu, usb_otg_path, boot
+            self.linux_timeout, self.uuu, path_args, boot
         )
 
         self.maybe_copy_to_container(boot)
@@ -406,7 +406,7 @@ class UUUBootAction(OptionalContainerUuuAction):
                 # In this last case, we remove the 'uuu: ' here
                 cmd = cmd.replace("uuu: ", "")
 
-            path_args = "-m ".join(usb_otg_path)
+            path_args = " -m ".join(usb_otg_path)
             exec_cmd = "{} -m {} {}".format(self.uuu, path_args, cmd)
 
             time.sleep(1)

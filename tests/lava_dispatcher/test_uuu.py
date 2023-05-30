@@ -8,8 +8,12 @@
 import unittest
 from unittest.mock import MagicMock, Mock, patch
 
-from lava_common.exceptions import JobError
-from lava_dispatcher.actions.boot.uuu import UUUBootRetryAction
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.boot.uuu import (
+    CheckSerialDownloadMode,
+    UUUBootAction,
+    UUUBootRetryAction,
+)
 from lava_dispatcher.utils.containers import DockerDriver, NullDriver
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
@@ -36,6 +40,156 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
 
     def create_imx8dxlevk_with_bcu_board_id_command(self, filename):
         return self.create_job("imx8dxl-evk-03.jinja2", filename)
+
+
+@patch("time.sleep", Mock())
+@patch("builtins.print", Mock())
+@patch(
+    "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which", Mock("/bin/test_uuu")
+)
+class TestCheckSerialDownloadMode(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = UUUBootFactory()
+        self.action = CheckSerialDownloadMode()
+
+        self.action.get_namespace_data = MagicMock(return_value="file.boot")
+        self.action.uuu = "/bin/uuu"
+        self.action.linux_timeout = "/bin/timeout"
+
+        self.action.maybe_copy_to_container = MagicMock()
+
+    def test_check_board_availability_not_available(self):
+        self.action.run_uuu = MagicMock(return_value=143)
+        self.action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        self.assertEqual(False, self.action.check_board_availability())
+
+    def test_check_board_availability_failure(self):
+        self.action.run_uuu = MagicMock(return_value=1)
+        self.action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        with self.assertRaises(InfrastructureError) as e:
+            self.action.check_board_availability()
+
+        self.assertEqual(
+            "Fail UUUBootAction on cmd : /bin/timeout --preserve-status 10 /bin/uuu -m 1:14 file.boot",
+            str(e.exception),
+        )
+
+    def test_check_board_availability_single_otg_path(self):
+        self.action.run_uuu = MagicMock(return_value=0)
+
+        self.action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        self.action.check_board_availability()
+        self.action.run_uuu.assert_called_with(
+            [
+                "/bin/timeout",
+                "--preserve-status",
+                "10",
+                "/bin/uuu",
+                "-m",
+                "1:14",
+                "file.boot",
+            ],
+            allow_fail=True,
+        )
+
+    def test_check_board_availability_multiple_otg_path(self):
+        self.action.run_uuu = MagicMock(return_value=0)
+
+        self.action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        self.action.check_board_availability()
+        self.action.run_uuu.assert_called_with(
+            [
+                "/bin/timeout",
+                "--preserve-status",
+                "10",
+                "/bin/uuu",
+                "-m",
+                "2:143",
+                "-m",
+                "3:123",
+                "file.boot",
+            ],
+            allow_fail=True,
+        )
+
+    def test_check_board_availability_single_otg_path_from_command(self):
+        self.action.run_uuu = MagicMock(return_value=0)
+
+        self.action.job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
+            "sample_jobs/uuu_enhancement.yaml"
+        )
+
+        self.action.check_board_availability()
+        self.action.run_uuu.assert_called_with(
+            [
+                "/bin/timeout",
+                "--preserve-status",
+                "10",
+                "/bin/uuu",
+                "-m",
+                "12:123",
+                "file.boot",
+            ],
+            allow_fail=True,
+        )
+
+    def test_check_board_availability_multiple_otg_path_from_command(self):
+        self.action.run_uuu = MagicMock(return_value=0)
+
+        self.action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-03.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        self.action.check_board_availability()
+        self.action.run_uuu.assert_called_with(
+            [
+                "/bin/timeout",
+                "--preserve-status",
+                "10",
+                "/bin/uuu",
+                "-m",
+                "12:1234",
+                "-m",
+                "1:1234",
+                "file.boot",
+            ],
+            allow_fail=True,
+        )
+
+    def test_run_available(self):
+        self.action.check_board_availability = MagicMock(return_value=True)
+
+        self.action.set_namespace_data = MagicMock()
+
+        self.action.run(connection=None, max_end_time=None)
+
+        self.action.set_namespace_data.assert_called_with(
+            action="boot", key="otg_availability_check", label="uuu", value=True
+        )
+
+    def test_run_not_available(self):
+        self.action.check_board_availability = MagicMock(return_value=False)
+
+        self.action.set_namespace_data = MagicMock()
+
+        self.action.run(connection=None, max_end_time=None)
+
+        self.action.set_namespace_data.assert_called_with(
+            action="boot", key="otg_availability_check", label="uuu", value=False
+        )
 
 
 @patch("builtins.print", Mock())
@@ -195,6 +349,96 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
                     "options"
                 ]["bcu_board_id"],
             )
+
+    @patch("time.sleep", Mock())
+    def test_run_single_path(self):
+        action = UUUBootAction()
+        action.uuu = "/bin/uuu"
+        action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        def mocked_get_namespace_data(*args, **kwargs):
+            if kwargs.get("key") == "images_names":
+                return ["boot"]
+            if kwargs.get("label") == "boot":
+                return "image.boot"
+
+        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+
+        action.parameters["commands"] = [{"uuu": "-b sd {boot}"}]
+
+        action.run_uuu = MagicMock(return_value=0)
+
+        action.run(connection=None, max_end_time=None)
+
+        action.run_uuu.assert_called_with(
+            ["/bin/uuu", "-m", "1:14", "-b", "sd", "image.boot"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
+        )
+
+    @patch("time.sleep", Mock())
+    def test_run_single_path_with_bcu(self):
+        action = UUUBootAction()
+        action.uuu = "/bin/uuu"
+        action.bcu = "/bin/bcu"
+        action.job = self.factory.create_imx8dxlevk_job(
+            "sample_jobs/uuu_enhancement.yaml"
+        )
+
+        def mocked_get_namespace_data(*args, **kwargs):
+            if kwargs.get("key") == "images_names":
+                return ["boot"]
+            if kwargs.get("label") == "boot":
+                return "image.boot"
+
+        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+
+        action.parameters["commands"] = [{"bcu": "reset usb"}, {"uuu": "-b sd {boot}"}]
+
+        action.run_uuu = MagicMock(return_value=0)
+        action.run_cmd = MagicMock(return_value=0)
+
+        action.run(connection=None, max_end_time=None)
+
+        action.run_cmd.assert_called_with(
+            ["/bin/bcu", "reset", "usb", "-board=imx8dxlevk", "-id=2-1.3"]
+        )
+
+        action.run_uuu.assert_called_with(
+            ["/bin/uuu", "-m", "12:123", "-b", "sd", "image.boot"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
+        )
+
+    @patch("time.sleep", Mock())
+    def test_run_multiple_path(self):
+        action = UUUBootAction()
+        action.uuu = "/bin/uuu"
+        action.job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+
+        def mocked_get_namespace_data(*args, **kwargs):
+            if kwargs.get("key") == "images_names":
+                return ["boot"]
+            if kwargs.get("label") == "boot":
+                return "image.boot"
+
+        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+
+        action.parameters["commands"] = [{"uuu": "-b sd {boot}"}]
+
+        action.run_uuu = MagicMock(return_value=0)
+
+        action.run(connection=None, max_end_time=None)
+
+        action.run_uuu.assert_called_with(
+            ["/bin/uuu", "-m", "2:143", "-m", "3:123", "-b", "sd", "image.boot"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
+        )
 
 
 class TestUUUActionDriver(unittest.TestCase):
