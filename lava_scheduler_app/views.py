@@ -1341,7 +1341,9 @@ def internal_v1_jobs_logs(request, pk):
     line_count = 0
     for line, string in zip(yaml_safe_load(lines), lines.split("\n")):
         # skip lines that where already saved to disk
+        duplicated = False
         if line_skip > 0:
+            duplicated = True
             line_skip -= 1
         else:
             # Handle lava-event
@@ -1374,7 +1376,25 @@ def internal_v1_jobs_logs(request, pk):
             )
 
             if new_test_case is not None:
-                test_cases.append(new_test_case)
+                # If the log lines are a resubmission of a previous failed
+                # submission, count the number of TestCase that are identical
+                # to the new one. This will avoid saving multiple time the same
+                # TestCase
+                count = 0
+                if duplicated:
+                    count = TestCase.objects.filter(
+                        name=new_test_case.name,
+                        units=new_test_case.units,
+                        result=new_test_case.result,
+                        measurement=new_test_case.measurement,
+                        metadata=new_test_case.metadata,
+                        suite=new_test_case.suite,
+                        start_log_line=new_test_case.start_log_line,
+                        end_log_line=new_test_case.end_log_line,
+                        test_set=new_test_case.test_set,
+                    ).count()
+                if count == 0:
+                    test_cases.append(new_test_case)
         line_count += 1
 
     # Save the new test cases

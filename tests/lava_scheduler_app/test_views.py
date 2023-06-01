@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from json import loads as json_loads
+from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group, User
@@ -15,6 +16,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from lava_common.yaml import yaml_safe_load
+from lava_results_app.models import TestCase
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -1354,3 +1356,92 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
     )
     assert ret.status_code == 200
     job_def = yaml_safe_load(ret.json()["definition"])
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs(client, setup, mocker):
+    LOGS = """- {"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}
+- {"dt": "2023-06-01T05:24:00.060872", "lvl": "info", "msg": "start: 0 validate"}
+- {"dt": "2023-06-01T05:24:00.061082", "lvl": "info", "msg": "Start time: 2023-06-01 05:24:00.061063+00:00 (UTC)"}
+- {"dt": "2023-06-01T05:24:00.061300", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/bl1.bin exists"}
+- {"dt": "2023-06-01T05:24:00.435983", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/el3_payload.bin exists"}
+- {"dt": "2023-06-01T05:24:00.448713", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/fip.bin exists"}
+- {"dt": "2023-06-01T05:24:00.460928", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/ns_bl1u.bin exists"}
+- {"dt": "2023-06-01T05:24:00.472695", "lvl": "info", "msg": "validate duration: 0.41"}
+- {"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
+- {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}
+"""
+    job = TestJob.objects.get(description="test job 02")
+
+    # Missing token
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+    )
+    assert ret.status_code == 400
+    assert ret.json() == {"error": "Missing 'token'"}
+
+    # Invalid token
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        HTTP_LAVA_TOKEN="hello",
+    )
+    assert ret.status_code == 400
+    assert ret.json() == {"error": "Invalid 'token'"}
+
+    # Invalid data
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 400
+    assert ret.json() == {"error": "Missing 'lines'"}
+
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": ["hello"]},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 400
+    assert ret.json() == {"error": "Missing 'index'"}
+
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": ["hello"], "index": "hello"},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 400
+    assert ret.json() == {"error": "Invalid 'index'"}
+
+    # Valid data
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 10}
+
+    assert (Path(job.output_dir) / "output.yaml").read_text(encoding="utf-8") == LOGS
+
+    assert TestCase.objects.filter(suite__job=job).count() == 1
+    tc = TestCase.objects.get(suite__job=job)
+    assert tc.suite.name == "lava"
+    assert tc.name == "validate"
+    assert tc.result == TestCase.RESULT_PASS
+
+    # Resend the same valid data
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 10}
+
+    assert (Path(job.output_dir) / "output.yaml").read_text(encoding="utf-8") == LOGS
+
+    assert TestCase.objects.filter(suite__job=job).count() == 1
+    tc = TestCase.objects.get(suite__job=job)
+    assert tc.suite.name == "lava"
+    assert tc.name == "validate"
+    assert tc.result == TestCase.RESULT_PASS
