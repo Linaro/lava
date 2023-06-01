@@ -41,6 +41,7 @@ def dump(data: Dict) -> str:
 def sender(conn, url: str, token: str, max_time: int) -> None:
     HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
     MAX_RECORDS = 1000
+    FAILURE_SLEEP = 5
 
     def post(session, records: List[str], index: int) -> Tuple[List[str], int]:
         # limit the number of records to send in one call
@@ -61,6 +62,10 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     count = int(ret.json()["line_count"])
                     data = data[count:]
                     index += count
+            else:
+                # If the request fails, give some time for the server to
+                # recover from the failure.
+                time.sleep(FAILURE_SLEEP)
         return (data + remaining, index)
 
     last_call = time.monotonic()
@@ -70,7 +75,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
 
     with requests.Session() as session:
         while not leaving:
-            # Listen for new messages if we don't have  message yet or some
+            # Listen for new messages if we don't have message yet or some
             # messages are already in the socket.
             if len(records) == 0 or conn.poll(max_time):
                 data = conn.recv_bytes()
