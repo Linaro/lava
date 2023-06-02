@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import django.db.models.deletion
 from django.conf import settings
 from django.db import migrations, models
@@ -158,6 +157,6 @@ class Migration(migrations.Migration):
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(
-            name="query", unique_together=set([("owner", "name")])
+            name="query", unique_together={("owner", "name")}
         ),
     ]

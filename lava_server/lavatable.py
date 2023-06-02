@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2013-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -75,7 +74,7 @@ class LavaView(tables.SingleTableView):
         if hasattr(self.table_class.Meta, "times"):
             for key, value in self.table_class.Meta.times.items():
                 field = next(
-                    (f for f in self.model._meta.get_fields() if f.name == key)
+                    f for f in self.model._meta.get_fields() if f.name == key
                 )
                 column = self.table_class.base_columns.get(key)
                 if (
@@ -96,7 +95,7 @@ class LavaView(tables.SingleTableView):
         if hasattr(self.table_class.Meta, "searches"):
             for key in self.table_class.Meta.searches.keys():
                 field = next(
-                    (f for f in self.model._meta.get_fields() if f.name == key)
+                    f for f in self.model._meta.get_fields() if f.name == key
                 )
                 column = self.table_class.base_columns.get(key)
                 if (

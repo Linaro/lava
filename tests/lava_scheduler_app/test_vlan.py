@@ -33,7 +33,7 @@ class VlandFactory(YamlFactory):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "bbb-cubie-vlan-group.yaml"
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         data.update(kw)
         return data
@@ -100,7 +100,7 @@ class TestVlandDevices(TestCaseWithFactory):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "bbb-cubie-vlan-group.yaml"
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml_safe_dump(data), user)
         assignments = {}

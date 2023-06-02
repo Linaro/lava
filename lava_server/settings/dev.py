@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2017-present Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2020 Linaro Limited
 #
 # Author: Rémi Duraffort <remi.duraffort@linaro.org>

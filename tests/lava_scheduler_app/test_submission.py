@@ -133,7 +133,7 @@ class ModelFactory:
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", sample_job_file
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = test_support.read()
         return data
 

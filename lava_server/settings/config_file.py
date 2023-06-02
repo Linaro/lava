@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2013-2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -39,7 +38,7 @@ class ConfigFile:
         """
         Parse the contents of pathname and return key-value pairs
         """
-        with open(pathname, "r") as stream:
+        with open(pathname) as stream:
             for lineno, line in enumerate(stream, start=1):
                 match = cls._pattern.match(line)
                 if match:

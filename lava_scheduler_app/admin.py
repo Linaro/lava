@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -56,7 +55,7 @@ class GroupObjectPermissionInline(admin.TabularInline):
                 content_type__model=self.parent_model._meta.object_name.lower(),
                 codename__in=supported_codenames,
             )
-        return super(GroupObjectPermissionInline, self).formfield_for_foreignkey(
+        return super().formfield_for_foreignkey(
             db_field, request, **kwargs
         )
 
@@ -130,14 +129,14 @@ class CustomGroupAdminForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(CustomGroupAdminForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.instance.pk:
             initial_users = self.instance.user_set.values_list("pk", flat=True)
             self.initial["users"] = initial_users
 
     def save(self, *args, **kwargs):
         kwargs["commit"] = True
-        return super(CustomGroupAdminForm, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     def save_m2m(self):
         self.instance.user_set.clear()
@@ -336,7 +335,7 @@ class DeviceAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return (
-            super(DeviceAdmin, self)
+            super()
             .get_queryset(request)
             .select_related("worker_host", "device_type")
             .prefetch_related(
@@ -432,7 +431,7 @@ class DeviceAdmin(admin.ModelAdmin):
 class TestJobAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
-            super(TestJobAdmin, self)
+            super()
             .get_queryset(request)
             .select_related("requested_device_type", "actual_device", "submitter")
         )
@@ -485,7 +484,7 @@ disable_health_check_action.short_description = "disable health checks"
 class DeviceTypeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
-            super(DeviceTypeAdmin, self)
+            super()
             .get_queryset(request)
             .select_related("architecture", "bits", "processor")
         )

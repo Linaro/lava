@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2010-2019 Linaro Limited
 #
@@ -225,7 +224,7 @@ else:
     LAVA = {
         "name": "lava",
         "description": "LAVA",
-        "packages": sorted(set([n for p in PKGS for n in PKGS[p]["packages"]])),
+        "packages": sorted({n for p in PKGS for n in PKGS[p]["packages"]}),
         "package_data": PKGS["lava-dispatcher"]["package_data"],
         "scripts": sorted([n for p in PKGS for n in PKGS[p].get("scripts", [])]),
         "data_files": merge_data_files([PKGS[p].get("data_files", []) for p in PKGS]),

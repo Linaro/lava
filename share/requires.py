@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 #  requires.py
 #
@@ -76,7 +75,7 @@ def load_depends(args, parent):
         msg = "Unsupported suite|distribution: %s %s\n\n" % (args.distribution, parent)
         sys.stderr.write(msg)
         raise RuntimeError(msg)
-    with open(req, "r") as data:
+    with open(req) as data:
         depends = yaml.safe_load(data)
     if args.package not in depends:
         msg = "Unknown package: %s\n\n" % args.package

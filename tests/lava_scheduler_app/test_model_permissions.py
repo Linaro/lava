@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2019 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>

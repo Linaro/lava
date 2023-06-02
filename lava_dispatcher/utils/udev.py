@@ -187,7 +187,7 @@ def _dict_compare(d1, d2):
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
     intersect_keys = d1_keys.intersection(d2_keys)
-    return set(o for o in intersect_keys if d1[o] == d2[o])
+    return {o for o in intersect_keys if d1[o] == d2[o]}
 
 
 def match(device, match_dict, devicepath):

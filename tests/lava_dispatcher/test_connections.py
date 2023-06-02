@@ -563,7 +563,7 @@ class TestTimeouts(StdoutTestCase):
         y_file = os.path.join(
             os.path.dirname(__file__), "./sample_jobs/uboot-ramdisk.yaml"
         )
-        with open(y_file, "r") as uboot_ramdisk:
+        with open(y_file) as uboot_ramdisk:
             data = yaml_safe_load(uboot_ramdisk)
         data["timeouts"]["connection"] = {"seconds": 20}
         job = self.factory.create_custom_job("bbb-01.jinja2", data)
@@ -614,7 +614,7 @@ class TestTimeouts(StdoutTestCase):
         y_file = os.path.join(
             os.path.dirname(__file__), "./sample_jobs/uboot-ramdisk.yaml"
         )
-        with open(y_file, "r") as uboot_ramdisk:
+        with open(y_file) as uboot_ramdisk:
             data = yaml_safe_load(uboot_ramdisk)
         connection_timeout = Timeout.parse(
             data["timeouts"]["connections"]["lava-test-shell"]

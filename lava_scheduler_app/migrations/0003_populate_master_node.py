@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from django.db import migrations, transaction
 
 
@@ -15,10 +14,10 @@ def forwards_func(apps, schema_editor):
     # NOTE: RPC2_URL formed below is a guess. The administrator should
     #       revisit the correctness of this URL from the administration
     #       UI, fixing it for the node which is designated as the master.
-    rpc2_url = "http://{0}/RPC2".format(localhost)
+    rpc2_url = f"http://{localhost}/RPC2"
 
     if localhost in ["example.com", "www.example.com"]:
-        rpc2_url = "http://{0}/RPC2".format(ipaddr)
+        rpc2_url = f"http://{ipaddr}/RPC2"
 
     try:
         with transaction.atomic():

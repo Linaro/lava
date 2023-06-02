@@ -263,7 +263,7 @@ class DeployMuscaAutomationAction(Action):
         try:
             with open(dest, "w"):
                 pass
-        except IOError:
+        except OSError:
             raise InfrastructureError("Unable to write to %s" % dest)
 
         return connection
@@ -289,7 +289,7 @@ class CheckMuscaFlashAction(Action):
         fail_file = os.path.join(mount_point, "FAIL.TXT")
         if os.path.exists(fail_file):
             failure_details = ""
-            with open(fail_file, "r") as fail_details_file:
+            with open(fail_file) as fail_details_file:
                 failure_details = fail_details_file.read().strip()
             raise InfrastructureError(
                 "Flash failure indicated by presence of FAIL.TXT (Details: %s)"

@@ -98,7 +98,7 @@ class TestPatterns(StdoutTestCase):
     def test_case_result(self):
         self.assertEqual([], self.job.pipeline.errors)
         self.assertTrue(os.path.exists(self.testdef))
-        with open(self.testdef, "r") as par:
+        with open(self.testdef) as par:
             params = yaml_safe_load(par)
         self.assertIn("parse", params.keys())
 

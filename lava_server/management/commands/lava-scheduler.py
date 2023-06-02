@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2020-present Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
@@ -118,8 +117,8 @@ class Command(LAVADaemonCommand):
         self.sub.close(linger=0)
         self.context.term()
 
-    def get_available_dts(self) -> Set[str]:
-        device_types: Set[str] = set()
+    def get_available_dts(self) -> set[str]:
+        device_types: set[str] = set()
         with contextlib.suppress(KeyError, zmq.ZMQError):
             while True:
                 msg_part_list = self.sub.recv_multipart(zmq.NOBLOCK, copy=True)
@@ -150,7 +149,7 @@ class Command(LAVADaemonCommand):
         return device_types
 
     def main_loop(self) -> None:
-        dts: Set[str] = set()
+        dts: set[str] = set()
         while True:
             begin = time.monotonic()
             try:

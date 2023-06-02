@@ -210,7 +210,7 @@ class DDAction(Action):
             tool_cmd = [writer_params["tool"], tool_options]
         else:
             tool_cmd = [
-                "dd of='{}' bs=4M".format(device_path)
+                f"dd of='{device_path}' bs=4M"
             ]  # busybox dd does not support other flags
         if self.tool_flags:
             tool_cmd.append(self.tool_flags)

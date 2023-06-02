@@ -59,8 +59,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         self.factory = Factory()
         self.job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm.yaml")
         with open(
-            os.path.join(os.path.dirname(__file__), "testdefs", "params.yaml"), "r"
-        ) as params:
+            os.path.join(os.path.dirname(__file__), "testdefs", "params.yaml")) as params:
             self.testdef = yaml_safe_load(params)
 
     def test_testdef(self):
@@ -127,7 +126,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         device = yaml_safe_load(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
-        with open(kvm_yaml, "r") as sample_job_data:
+        with open(kvm_yaml) as sample_job_data:
             content = yaml_safe_load(sample_job_data)
         data = [block["test"] for block in content["actions"] if "test" in block][0]
         definitions = [block for block in data["definitions"] if "path" in block][0]
@@ -223,7 +222,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         distro_support_dir = "%s/distro/%s" % (overlay.lava_test_dir, "debian")
         for script in glob.glob(os.path.join(distro_support_dir, "lava-*")):
             scripts_to_copy.append(script)
-        check_list = list(set([os.path.basename(scr) for scr in scripts_to_copy]))
+        check_list = list({os.path.basename(scr) for scr in scripts_to_copy})
 
         self.assertCountEqual(check_list, script_list)
         self.assertEqual(
@@ -381,7 +380,7 @@ class TestDefinitionParams(StdoutTestCase):
         self.assertIsNotNone(test_install)
         yaml_file = os.path.join(os.path.dirname(__file__), "./testdefs/install.yaml")
         self.assertTrue(os.path.exists(yaml_file))
-        with open(yaml_file, "r") as test_file:
+        with open(yaml_file) as test_file:
             testdef = yaml_safe_load(test_file)
         repos = testdef["install"].get("git-repos", [])
         self.assertIsNotNone(repos)
@@ -489,7 +488,7 @@ class TestDefinitions(StdoutTestCase):
 
     def test_pattern(self):
         self.assertTrue(os.path.exists(self.testdef))
-        with open(self.testdef, "r") as par:
+        with open(self.testdef) as par:
             params = yaml_safe_load(par)
         self.assertIn("parse", params.keys())
         line = "test1a: pass"
@@ -507,7 +506,7 @@ class TestDefinitions(StdoutTestCase):
         pattern = PatternFixup(testdef=None, count=0)
         # without a name from a testdef, the pattern is not valid.
         self.assertFalse(pattern.valid())
-        with open(self.testdef, "r") as par:
+        with open(self.testdef) as par:
             params = yaml_safe_load(par)
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
@@ -587,7 +586,7 @@ class TestDefinitions(StdoutTestCase):
             {"1_singlenode-advanced", "0_smoke-tests"},
         )
         # fake up a run step
-        with open(self.testdef, "r") as par:
+        with open(self.testdef) as par:
             params = yaml_safe_load(par)
         self.assertEqual(
             r"(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))",
@@ -645,7 +644,7 @@ test2a: fail
 test3a: skip
 \"test4a:\" \"unknown\"
         """
-        with open(self.testdef, "r") as par:
+        with open(self.testdef) as par:
             params = yaml_safe_load(par)
         pattern = params["parse"]["pattern"]
         re_pat = re.compile(pattern, re.M)

@@ -449,7 +449,7 @@ class TestFastbootDeploy(StdoutTestCase):
         self.assertTrue(autologin.booting)
         self.assertEqual(
             set(autologin.parameters.get("prompts")),
-            set(["root@(.*):/#", "shell@am57xevm:/"]),
+            {"root@(.*):/#", "shell@am57xevm:/"},
         )
         self.assertIsNone(autologin.parameters.get("boot_message"))
 

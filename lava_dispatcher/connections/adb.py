@@ -48,7 +48,7 @@ class ConnectAdb(Action):
         self.run_command(adb_cmd)
         self.logger.debug("%s: Waiting for device", adb_serial_number)
 
-        cmd = "adb -s {0} shell".format(adb_serial_number)
+        cmd = f"adb -s {adb_serial_number} shell"
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         # ShellCommand executes the connection command
         shell = self.shell_class(

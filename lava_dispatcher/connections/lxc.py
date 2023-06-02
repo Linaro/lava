@@ -59,7 +59,7 @@ class ConnectLxc(Action):
         if connection:
             return connection
 
-        cmd = "lxc-attach -n {0}".format(lxc_name)
+        cmd = f"lxc-attach -n {lxc_name}"
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         # ShellCommand executes the connection command
         shell = self.shell_class(

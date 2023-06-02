@@ -19,7 +19,7 @@ def add_to_kickstart(preseedfile, extra_command):
 
 def add_late_command(preseedfile, extra_command):
     added = False
-    with open(preseedfile, "r") as pf:
+    with open(preseedfile) as pf:
         lines = pf.readlines()
         pf.close()
     endstring = "\\\n"

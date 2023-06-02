@@ -66,7 +66,7 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         elif ret == 143:
             return False
         else:
-            raise self.command_exception("Fail UUUBootAction on cmd : {}".format(cmd))
+            raise self.command_exception(f"Fail UUUBootAction on cmd : {cmd}")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -259,7 +259,7 @@ Following actions will be skipped :
                 return uuu_otg_paths
 
             raise JobError(
-                "Unable to parse uuu_usb_otg_path from command '{}'".format(cmd)
+                f"Unable to parse uuu_usb_otg_path from command '{cmd}'"
             )
 
     def _get_protocols_from_commands(self, parameters):
@@ -267,9 +267,9 @@ Following actions will be skipped :
         Return typing.Set of protocols defined in commands block
         eg: {"uuu", "bcu"}
         """
-        return set(
+        return {
             proto for cmd in parameters.get("commands", []) for proto in cmd.keys()
-        )
+        }
 
     def has_protocol(self, protocol, parameters):
         """
@@ -331,7 +331,7 @@ Following actions will be skipped :
             return bcu_id_expected
 
         raise JobError(
-            "Unable to parse bcu_id from command '{}'".format(bcu_board_id_command)
+            f"Unable to parse bcu_id from command '{bcu_board_id_command}'"
         )
 
 
@@ -384,7 +384,7 @@ class UUUBootAction(OptionalContainerUuuAction):
         for dico in uuu_cmds:
             for protocol, cmd in dico.items():
                 cmd = safe_dict_format(cmd, templates)
-                uuu_cmd_list.append("{}: {}".format(protocol, cmd))
+                uuu_cmd_list.append(f"{protocol}: {cmd}")
 
         uuu_cmds = uuu_cmd_list
 
@@ -408,13 +408,13 @@ class UUUBootAction(OptionalContainerUuuAction):
                 cmd = cmd.replace("uuu: ", "")
 
             path_args = " -m ".join(usb_otg_path)
-            exec_cmd = "{} -m {} {}".format(self.uuu, path_args, cmd)
+            exec_cmd = f"{self.uuu} -m {path_args} {cmd}"
 
             time.sleep(1)
             self.run_uuu(
                 exec_cmd.split(" "),
                 allow_fail=False,
-                error_msg="Fail UUUBootAction on cmd : {}".format(cmd),
+                error_msg=f"Fail UUUBootAction on cmd : {cmd}",
             )
 
         return connection

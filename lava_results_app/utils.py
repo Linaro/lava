@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -45,7 +44,7 @@ def description_data(job):
 
     data = None
     try:
-        with open(filename, "r") as f_in:
+        with open(filename) as f_in:
             data = yaml_safe_load(f_in)
     except yaml.YAMLError as exc:
         logger.warning("Unable to parse description for %s", job.id)
@@ -139,7 +138,7 @@ def export_testcase(testcase):
     extra_data = metadata.get("extra")
     if isinstance(extra_data, str) and os.path.exists(extra_data):
         items = {}
-        with open(metadata["extra"], "r") as extra_file:
+        with open(metadata["extra"]) as extra_file:
             with contextlib.suppress(yaml.YAMLError):
                 items = yaml_safe_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.

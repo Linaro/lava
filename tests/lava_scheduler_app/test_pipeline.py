@@ -74,7 +74,7 @@ class YamlFactory(ModelFactory):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "qemu.yaml"
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         data.update(kw)
         return data
@@ -177,7 +177,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(
             self.factory.make_job_yaml(tags=["tag1", "tag2"]), user
         )
-        self.assertEqual(set(tag.name for tag in job.tags.all()), {"tag1", "tag2"})
+        self.assertEqual({tag.name for tag in job.tags.all()}, {"tag1", "tag2"})
 
     def test_from_yaml_and_user_reuses_tag_objects(self):
         self.factory.ensure_tag("tag")
@@ -193,8 +193,8 @@ class PipelineDeviceTags(TestCaseWithFactory):
             self.factory.make_job_yaml(tags=["tag"]), user
         )
         self.assertEqual(
-            set(tag.pk for tag in job1.tags.all()),
-            set(tag.pk for tag in job2.tags.all()),
+            {tag.pk for tag in job1.tags.all()},
+            {tag.pk for tag in job2.tags.all()},
         )
 
     def test_from_yaml_and_user_matches_available_tags(self):
@@ -222,7 +222,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
             ),
             user,
         )
-        self.assertEqual(set(tag for tag in job.tags.all()), set(tag_list))
+        self.assertEqual({tag for tag in job.tags.all()}, set(tag_list))
 
 
 class TestPipelineSubmit(TestCaseWithFactory):
@@ -534,7 +534,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -546,10 +545,10 @@ class TestYamlMultinode(TestCaseWithFactory):
                 del job["protocols"]["lava-multinode"]["sub_id"]
                 yaml_safe_dump(job)  # ensure the jobs can be serialised as YAML
                 if role == "client":
-                    with open(client_check, "r") as f:
+                    with open(client_check) as f:
                         self.assertEqual(job, yaml_safe_load(f))
                 if role == "server":
-                    with open(server_check, "r") as f:
+                    with open(server_check) as f:
                         self.assertEqual(job, yaml_safe_load(f))
 
     def test_secondary_connection(self):
@@ -562,7 +561,6 @@ class TestYamlMultinode(TestCaseWithFactory):
                 "sample_jobs",
                 "mustang-ssh-multinode.yaml",
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -645,7 +643,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         roles_dict = submission["protocols"][MultinodeProtocol.name]["roles"]
@@ -684,7 +681,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
 
@@ -712,7 +708,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "lxc-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -744,7 +739,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "hikey_multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -790,7 +784,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "nexus4_multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -825,7 +818,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         # no devices defined for the specified type
@@ -875,7 +867,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 )
                 self.assertNotIn("interfaces", check["protocols"]["lava-multinode"])
                 self.assertEqual(
-                    set(["testtag"]), set(job.tags.all().values_list("name", flat=True))
+                    {"testtag"}, set(job.tags.all().values_list("name", flat=True))
                 )
 
     def test_multinode_group(self):
@@ -885,7 +877,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         self.factory.make_device(device_type, "fakeqemu1")
@@ -935,7 +926,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         self.factory.make_device(device_type, "fakeqemu1")
@@ -954,7 +944,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as source:
             yaml_str = source.read()
         self.assertIn("# unit test support comment", yaml_str)
@@ -971,7 +960,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
 
@@ -1074,7 +1062,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         role_list = submission["protocols"][MultinodeProtocol.name]["roles"]
@@ -1097,7 +1084,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         job_object_list = _pipeline_protocols(
@@ -1176,7 +1162,6 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
             ),
-            "r",
         ) as f:
             submission = yaml_safe_load(f)
         self.assertIn("protocols", submission)
@@ -1214,7 +1199,7 @@ class VlanInterfaces(TestCaseWithFactory):
         )
 
     def test_vlan_interface(self):
-        with open(self.filename, "r") as f:
+        with open(self.filename) as f:
             submission = yaml_safe_load(f)
         self.assertIn("protocols", submission)
         self.assertIn("lava-vland", submission["protocols"])

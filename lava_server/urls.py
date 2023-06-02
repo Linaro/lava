@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2010-2018 Linaro Limited
 #
 # Author: Zygmunt Krynicki <zygmunt.krynicki@linaro.org>
@@ -66,7 +65,7 @@ mapper.register(UsersPermissionsAPI, "auth.users.perms")
 # Auth backends
 auth_urls = [
     url(
-        r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}accounts/",
         include("django.contrib.auth.urls"),
     )
 ]
@@ -77,7 +76,7 @@ if (
 ):
     auth_urls.append(
         url(
-            r"^{mount_point}accounts/".format(mount_point=settings.MOUNT_POINT),
+            fr"^{settings.MOUNT_POINT}accounts/",
             include("allauth.urls"),
         )
     )
@@ -90,27 +89,27 @@ urlpatterns = [
         name="robots",
     ),
     url(
-        r"^{mount_point}v1/healthz/$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}v1/healthz/$",
         healthz,
         name="lava.healthz",
     ),
     url(
-        r"^{mount_point}$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}$",
         index,
         name="lava.home",
     ),
     url(
-        r"^{mount_point}me/$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}me/$",
         me,
         name="lava.me",
     ),
     url(
-        r"^{mount_point}update-irc-settings/$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}update-irc-settings/$",
         update_irc_settings,
         name="lava.update_irc_settings",
     ),
     url(
-        r"^{mount_point}update-remote-auth/$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}update-remote-auth/$",
         update_remote_auth,
         name="lava.update_remote_auth",
     ),
@@ -131,37 +130,37 @@ urlpatterns = [
     *auth_urls,
     url(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
     url(
-        r"^{mount_point}admin/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}admin/",
         admin.site.urls,
     ),
     # RPC endpoints
     url(
-        r"^{mount_point}RPC2/?".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}RPC2/?",
         linaro_django_xmlrpc_views_handler,
         name="lava.api_handler",
         kwargs={"mapper": mapper, "help_view": "lava.api_help"},
     ),
     url(
-        r"^{mount_point}api/help/$".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}api/help/$",
         linaro_django_xmlrpc_views_help,
         name="lava.api_help",
         kwargs={"mapper": mapper},
     ),
     url(
-        r"^{mount_point}api/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}api/",
         include("linaro_django_xmlrpc.urls"),
     ),
     url(
-        r"^{mount_point}results/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}results/",
         include("lava_results_app.urls"),
     ),
     url(
-        r"^{mount_point}scheduler/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}scheduler/",
         include("lava_scheduler_app.urls"),
     ),
     # REST API
     url(
-        r"^{mount_point}api/".format(mount_point=settings.MOUNT_POINT),
+        fr"^{settings.MOUNT_POINT}api/",
         include("lava_rest_app.urls"),
     ),
 ]
@@ -169,7 +168,7 @@ urlpatterns = [
 if settings.OIDC_ENABLED:
     urlpatterns.append(
         url(
-            r"^{mount_point}oidc/".format(mount_point=settings.MOUNT_POINT),
+            fr"^{settings.MOUNT_POINT}oidc/",
             include("mozilla_django_oidc.urls"),
         )
     )

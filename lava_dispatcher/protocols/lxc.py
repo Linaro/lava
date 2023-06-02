@@ -152,7 +152,7 @@ class LxcProtocol(Protocol):
         # 'false' in job definition.
         if self.fastboot_reboot:
             if "adb_serial_number" in device:
-                reboot_cmd = "lxc-attach -n {0} -- adb reboot bootloader".format(
+                reboot_cmd = "lxc-attach -n {} -- adb reboot bootloader".format(
                     self.lxc_name
                 )
                 self._call_handler(reboot_cmd)
@@ -161,7 +161,7 @@ class LxcProtocol(Protocol):
 
         # Stop the container.
         self.logger.debug("%s protocol: issue stop", self.name)
-        stop_cmd = "lxc-stop -n {0} -k".format(self.lxc_name)
+        stop_cmd = f"lxc-stop -n {self.lxc_name} -k"
         self._call_handler(stop_cmd)
         # Check if the container should persist and skip destroying it.
         if self.persistence:
@@ -170,11 +170,11 @@ class LxcProtocol(Protocol):
             self.logger.debug("%s protocol: issue destroy", self.name)
             if self.custom_lxc_path:
                 abs_path = os.path.realpath(os.path.join(LXC_PATH, self.lxc_name))
-                destroy_cmd = "lxc-destroy -n {0} -f -P {1}".format(
+                destroy_cmd = "lxc-destroy -n {} -f -P {}".format(
                     self.lxc_name, os.path.dirname(abs_path)
                 )
             else:
-                destroy_cmd = "lxc-destroy -n {0} -f".format(self.lxc_name)
+                destroy_cmd = f"lxc-destroy -n {self.lxc_name} -f"
             self._call_handler(destroy_cmd)
 
             dirname = os.path.join(LXC_PATH, self.lxc_name)

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -221,7 +220,7 @@ def invalid_template(dt):
         )
         if not queryset:
             return False
-        extends = set([device.get_extends() for device in queryset])
+        extends = {device.get_extends() for device in queryset}
         if not extends:
             return True
         for extend in extends:

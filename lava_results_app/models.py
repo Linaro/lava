@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2019 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
@@ -675,9 +674,9 @@ class Query(models.Model):
             if condition.table.model_class() == NamedTestAttribute:
                 # For custom attributes, need two filters since
                 # we're comparing the key(name) and the value.
-                filter_key_name = "{0}__name".format(relation_string)
-                filter_key_value = "{0}__value".format(relation_string)
-                filter_key_value = "{0}__{1}".format(
+                filter_key_name = f"{relation_string}__name"
+                filter_key_value = f"{relation_string}__value"
+                filter_key_value = "{}__{}".format(
                     filter_key_value, condition.operator
                 )
 
@@ -688,7 +687,7 @@ class Query(models.Model):
                 if condition.table == content_type:
                     filter_key = condition.field
                 else:
-                    filter_key = "{0}__{1}".format(relation_string, condition.field)
+                    filter_key = f"{relation_string}__{condition.field}"
                 # Handle conditions through relations.
                 fk_model = _get_foreign_key_model(
                     condition.table.model_class(), condition.field
@@ -697,21 +696,21 @@ class Query(models.Model):
                 # have 'name' as the default search field.
                 if fk_model:
                     if fk_model == User:
-                        filter_key = "{0}__username".format(filter_key)
+                        filter_key = f"{filter_key}__username"
                     elif fk_model == Device:
-                        filter_key = "{0}__hostname".format(filter_key)
+                        filter_key = f"{filter_key}__hostname"
                     else:
-                        filter_key = "{0}__name".format(filter_key)
+                        filter_key = f"{filter_key}__name"
 
                 # Handle conditions with choice fields.
                 condition_field_obj = condition.table.model_class()._meta.get_field(
                     condition.field
                 )
                 if condition_field_obj.choices:
-                    choices_reverse = dict(
-                        (value, key)
+                    choices_reverse = {
+                        value: key
                         for key, value in dict(condition_field_obj.choices).items()
-                    )
+                    }
                     try:
                         condition.value = choices_reverse[condition.value]
                     except KeyError:
@@ -729,7 +728,7 @@ class Query(models.Model):
                         condition.value = True
 
                 # Add operator.
-                filter_key = "{0}__{1}".format(filter_key, condition.operator)
+                filter_key = f"{filter_key}__{condition.operator}"
 
                 filters[filter_key] = condition.value
 
@@ -1092,9 +1091,9 @@ class QueryCondition(models.Model):
                 cls.LT,
             ]
 
-        operators = dict(
-            [(i, operator_dict[i]) for i in operator_keys if i in operator_dict]
-        )
+        operators = {
+            i: operator_dict[i] for i in operator_keys if i in operator_dict
+        }
 
         return operators
 

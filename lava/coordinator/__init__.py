@@ -47,7 +47,7 @@ class LavaCoordinator:
                 LOG.info("[BTSP] binding to %s:%s", "0.0.0.0", self.group_port)
                 s.bind(("0.0.0.0", self.group_port))
                 break
-            except socket.error as e:
+            except OSError as e:
                 LOG.warning(
                     "[BTSP] Unable to bind, trying again with delay=%d msg=%s",
                     self.delay,

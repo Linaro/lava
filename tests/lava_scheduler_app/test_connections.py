@@ -18,7 +18,7 @@ class YamlSshFactory(YamlFactory):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "qemu-ssh-guest.yaml"
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         data.update(kw)
         return data
@@ -64,7 +64,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 )
                 self.assertIn(params["sub_id"], [0, 1, 2])
                 sub_id.append(params["sub_id"])
-                with open(os.path.join(path, "qemu-ssh-parent.yaml"), "r") as f:
+                with open(os.path.join(path, "qemu-ssh-parent.yaml")) as f:
                     comparison = yaml_safe_load(f)
                 self.assertIn("protocols", data)
                 self.assertIn("lava-multinode", data["protocols"])
@@ -83,7 +83,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 self.assertEqual(deploy["deploy"]["connection"], "ssh")
                 # validate each job
                 del data["protocols"]["lava-multinode"]["sub_id"]
-                with open(os.path.join(path, "qemu-ssh-guest-1.yaml"), "r") as f:
+                with open(os.path.join(path, "qemu-ssh-guest-1.yaml")) as f:
                     self.assertEqual(
                         data,
                         yaml_safe_load(f),

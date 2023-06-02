@@ -312,15 +312,13 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
-            set(
-                [
+            {
                     "/srv/tftp:/srv/tftp",
                     "/var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp",
                     "/etc/lava-coordinator:/etc/lava-coordinator",
                     "/boot:/boot",
                     "/lib/modules:/lib/modules",
-                ]
-            ),
+            },
             set(
                 template_dict["actions"]["boot"]["methods"]["docker"]["options"][
                     "volumes"
@@ -335,8 +333,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         )
         self.assertIsNotNone(template_dict)
         self.assertEqual(
-            set(
-                [
+            {
                     "arm64",
                     "arm",
                     "aarch64",
@@ -368,8 +365,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                     "unicore32",
                     "xtensa",
                     "xtensaeb",
-                ]
-            ),
+            },
             set(template_dict["available_architectures"]),
         )
         params = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"]
