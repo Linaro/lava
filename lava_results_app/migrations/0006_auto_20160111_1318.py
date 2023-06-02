@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import django.core.validators
 import django.db.models.deletion
 from django.conf import settings
@@ -202,7 +201,7 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
-            name="chartqueryuser", unique_together=set([("chart_query", "user")])
+            name="chartqueryuser", unique_together={("chart_query", "user")}
         ),
         migrations.AddField(
             model_name="chart",

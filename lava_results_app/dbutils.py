@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
@@ -61,7 +60,7 @@ def create_metadata_store(results, job):
     meta_filename = os.path.join(job.output_dir, "metadata", stub)
     os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
-        with open(meta_filename, "r") as existing_store:
+        with open(meta_filename) as existing_store:
             data = yaml_safe_load(existing_store)
         if data is None:
             data = {}

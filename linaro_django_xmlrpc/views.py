@@ -128,7 +128,7 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
         ],
     }
     scheduler_method_sections = sorted(
-        set([block["section"] for block in methods["scheduler"]])
+        {block["section"] for block in methods["scheduler"]}
     )
     scheduler_section_methods = {section: [] for section in scheduler_method_sections}
     for section in scheduler_method_sections:
@@ -147,7 +147,7 @@ def help(request, mapper, template_name="linaro_django_xmlrpc/api.html"):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(help),
             "site_scheme": scheme,
             "site_domain": domain,
-            "site_url": "{scheme}://{domain}".format(scheme=scheme, domain=domain),
+            "site_url": f"{scheme}://{domain}",
         },
     )
 

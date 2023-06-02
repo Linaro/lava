@@ -312,15 +312,13 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         self.assertTrue(self.validate_data("docker-01", data))
         template_dict = prepare_jinja_template("docker-01", data, raw=False)
         self.assertEqual(
-            set(
-                [
-                    "/srv/tftp:/srv/tftp",
-                    "/var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp",
-                    "/etc/lava-coordinator:/etc/lava-coordinator",
-                    "/boot:/boot",
-                    "/lib/modules:/lib/modules",
-                ]
-            ),
+            {
+                "/srv/tftp:/srv/tftp",
+                "/var/lib/lava/dispatcher/tmp:/var/lib/lava/dispatcher/tmp",
+                "/etc/lava-coordinator:/etc/lava-coordinator",
+                "/boot:/boot",
+                "/lib/modules:/lib/modules",
+            },
             set(
                 template_dict["actions"]["boot"]["methods"]["docker"]["options"][
                     "volumes"
@@ -335,41 +333,39 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
         )
         self.assertIsNotNone(template_dict)
         self.assertEqual(
-            set(
-                [
-                    "arm64",
-                    "arm",
-                    "aarch64",
-                    "amd64",
-                    "x86_64",
-                    "i386",
-                    "alpha",
-                    "cris",
-                    "hppa",
-                    "lm32",
-                    "m68k",
-                    "microblaze",
-                    "microblazeel",
-                    "mips",
-                    "mipsel",
-                    "mips64",
-                    "moxie",
-                    "nios2",
-                    "or32",
-                    "ppc",
-                    "ppc64",
-                    "riscv64",
-                    "s390x",
-                    "sh4",
-                    "sh4eb",
-                    "sparc",
-                    "sparc64",
-                    "tricore",
-                    "unicore32",
-                    "xtensa",
-                    "xtensaeb",
-                ]
-            ),
+            {
+                "arm64",
+                "arm",
+                "aarch64",
+                "amd64",
+                "x86_64",
+                "i386",
+                "alpha",
+                "cris",
+                "hppa",
+                "lm32",
+                "m68k",
+                "microblaze",
+                "microblazeel",
+                "mips",
+                "mipsel",
+                "mips64",
+                "moxie",
+                "nios2",
+                "or32",
+                "ppc",
+                "ppc64",
+                "riscv64",
+                "s390x",
+                "sh4",
+                "sh4eb",
+                "sparc",
+                "sparc64",
+                "tricore",
+                "unicore32",
+                "xtensa",
+                "xtensaeb",
+            },
             set(template_dict["available_architectures"]),
         )
         params = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"]

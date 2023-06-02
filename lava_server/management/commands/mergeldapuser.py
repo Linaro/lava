@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>

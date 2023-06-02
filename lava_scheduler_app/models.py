@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -922,7 +921,7 @@ class Device(RestrictedObject):
         if not os.path.exists(filename):
             filename = os.path.join(settings.HEALTH_CHECKS_PATH, "%s.yml" % extends)
         try:
-            with open(filename, "r") as f_in:
+            with open(filename) as f_in:
                 return f_in.read()
         except OSError:
             return None

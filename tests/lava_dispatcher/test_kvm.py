@@ -404,7 +404,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
             location, "0/tests/0_smoke-tests-inline/inline/smoke-tests-basic.yaml"
         )
         self.assertTrue(os.path.exists(yaml_file))
-        with open(yaml_file, "r") as f_in:
+        with open(yaml_file) as f_in:
             testdef = yaml_safe_load(f_in)
         expected_testdef = {
             "metadata": {

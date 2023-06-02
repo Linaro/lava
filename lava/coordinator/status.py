@@ -61,7 +61,7 @@ def lava_poll(port, host, name, request):
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
                 sock.connect((host, port))
                 break
-            except socket.error as exc:
+            except OSError as exc:
                 if exc.errno == errno.ECONNRESET:
                     warnings.append("connection reset by peer: bug 1020")
                 errors.append("not connected, sleeping for 1 second")
@@ -92,14 +92,14 @@ def lava_poll(port, host, name, request):
             if ret_bytes == 0:
                 warnings.append("zero bytes sent for message - connection closed?")
                 continue
-        except socket.error as exc:
+        except OSError as exc:
             errors.append("socket error '%d' on send" % exc.message)
             sock.close()
             continue
         try:
             data = str(sock.recv(8))  # 32bit limit
             data = sock.recv(1024)
-        except socket.error as exc:
+        except OSError as exc:
             errors.append("Exception on receive: %s" % exc)
             continue
         try:

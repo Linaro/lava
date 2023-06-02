@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2020 Linaro Limited
 #
 # Author: Stevan Radaković <stevan.radakovic@linaro.org>
@@ -88,7 +87,7 @@ def test_get_available_dts(mocker):
             zmq.ZMQError,
         ]
     )
-    assert cmd.get_available_dts() == set(["docker", "qemu"])
+    assert cmd.get_available_dts() == {"docker", "qemu"}
 
 
 @pytest.mark.django_db
@@ -100,14 +99,14 @@ def test_main_loop(mocker):
     cmd.logger = mocker.Mock()
     cmd.poller = mocker.Mock()
     cmd.check_workers = mocker.Mock()
-    cmd.get_available_dts = mocker.Mock(side_effect=[set(["qemu", "docker"]), KeyError])
+    cmd.get_available_dts = mocker.Mock(side_effect=[{"qemu", "docker"}, KeyError])
 
     with pytest.raises(KeyError):
         cmd.main_loop()
     assert len(cmd.get_available_dts.mock_calls) == 2
     assert len(schedule.mock_calls) == 2
     assert schedule.mock_calls[0][1][1] == set()
-    assert schedule.mock_calls[1][1][1] == set(["qemu", "docker"])
+    assert schedule.mock_calls[1][1][1] == {"qemu", "docker"}
 
 
 @pytest.mark.django_db

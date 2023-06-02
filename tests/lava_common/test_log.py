@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2020 Linaro Limited
 #
 # Author: Rémi Duraffort <remi.duraffort@linaro.org>
@@ -23,9 +22,7 @@ def test_sender(mocker):
     conn = mocker.MagicMock()
     conn.poll = mocker.MagicMock()
     conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [
-        f"{i:04}".encode("utf-8") for i in range(0, 1001)
-    ] + [b""]
+    conn.recv_bytes.side_effect = [f"{i:04}".encode() for i in range(0, 1001)] + [b""]
 
     sender(conn, "http://localhost", "my-token", 1)
     assert len(conn.poll.mock_calls) == 2000

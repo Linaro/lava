@@ -138,8 +138,8 @@ class FlashJLinkAction(Action):
             lines.append("erase")  # Erase all flash sectors
             lines.append("sleep 500")
 
-            lines.append("loadfile {} 0x{:x}".format(binary_image, load_address))
-            lines.append("verifybin {} 0x{:x}".format(binary_image, load_address))
+            lines.append(f"loadfile {binary_image} 0x{load_address:x}")
+            lines.append(f"verifybin {binary_image} 0x{load_address:x}")
             lines.append("r")  # Restart the CPU
             lines.append("qc")  # Close the connection and quit
 

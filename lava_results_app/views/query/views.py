@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
@@ -720,7 +719,7 @@ def _export_query(query_results, content_type, filename):
 
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = "attachment; filename=%s.csv" % filename
-    with open(file_path, "r") as csv_file:
+    with open(file_path) as csv_file:
         response.write(csv_file.read())
 
     _remove_dir(tmp_dir)

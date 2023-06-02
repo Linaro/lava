@@ -70,7 +70,7 @@ def share_device_with_container(options):
     if not device.startswith("/dev/"):
         device = "/dev/" + device
     if not os.path.exists(device):
-        logger.warning("Can't share {device}: file not found".format(device=device))
+        logger.warning(f"Can't share {device}: file not found")
         return
 
     container_type = data["container_type"]

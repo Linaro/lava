@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-present Linaro Limited
 #
@@ -132,7 +131,7 @@ def build_customized_image(image, build_dir, use_cache=False):
     # all the FROM commands defined in the original Dockerfile will be ignored
     # and Dockerfile.lava using the image passed to the function as base image
     # will be generated for building.
-    with open(dockerfile, "r") as f:
+    with open(dockerfile) as f:
         instructions = f.readlines()
     lava_dockerfile = build_dir / "Dockerfile.lava"
     with open(lava_dockerfile, "w") as f:
@@ -196,7 +195,7 @@ def run(version, options):
         image = f"lavasoftware/lava-dispatcher:{version}"
 
     LOG.info("Using image %s", image)
-    rand = "".join((random.choice(string.hexdigits) for c in range(5)))
+    rand = "".join(random.choice(string.hexdigits) for c in range(5))
     docker_name = f"lava-worker-{version}-{rand}"
     LOG.info("Docker name %s", docker_name)
     service = [

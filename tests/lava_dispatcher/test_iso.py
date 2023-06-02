@@ -133,7 +133,7 @@ class TestIsoJob(StdoutTestCase):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )
-        with open(sample_job_file, "r") as jobdef:
+        with open(sample_job_file) as jobdef:
             data = yaml_safe_load(jobdef)
         testdata = [block["test"] for block in data["actions"] if "test" in block][0]
         duration = Timeout.parse(testdata["timeout"])

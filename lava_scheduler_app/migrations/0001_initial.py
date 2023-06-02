@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import django.db.models.deletion
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections, migrations, models
@@ -608,7 +607,7 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.AlterUniqueTogether(
-            name="testjobuser", unique_together=set([("test_job", "user")])
+            name="testjobuser", unique_together={("test_job", "user")}
         ),
         migrations.AddField(
             model_name="devicestatetransition",

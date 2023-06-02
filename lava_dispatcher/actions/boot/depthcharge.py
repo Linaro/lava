@@ -76,7 +76,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         method_params = method[commands_name]
         self.cmdline = method_params.get("cmdline")
         if self.cmdline is None:
-            self.errors = "No cmdline found in {}".format(commands_name)
+            self.errors = f"No cmdline found in {commands_name}"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

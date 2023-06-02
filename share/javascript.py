@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 #
 #  javascript.py
 #
@@ -145,7 +144,7 @@ def main():
     )
 
     args = parser.parse_args()
-    data = yaml.safe_load(open(args.filename, "r"))
+    data = yaml.safe_load(open(args.filename))
     # only have data for debian-based packages so far.
     dependencies = handle_embedded("debian", data, os.getcwd(), args.simulate)
     dep_list = []

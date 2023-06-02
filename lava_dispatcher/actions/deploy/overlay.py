@@ -197,7 +197,7 @@ class CreateOverlay(Action):
                 os.makedirs(path, 0o755)
                 self.logger.debug("makedir: %s", path)
         for fname in self.scripts_to_copy:
-            with open(fname, "r") as fin:
+            with open(fname) as fin:
                 foutname = os.path.basename(fname)
                 output_file = "%s/bin/%s" % (lava_path, foutname)
                 if "distro" in fname:
@@ -391,7 +391,7 @@ class MultinodeOverlayAction(OverlayAction):
         self.logger.debug("scripts to copy %s", scripts_to_copy)
 
         for fname in scripts_to_copy:
-            with open(fname, "r") as fin:
+            with open(fname) as fin:
                 foutname = os.path.basename(fname)
                 output_file = "%s/bin/%s" % (lava_path, foutname)
                 self.logger.debug("Creating %s", output_file)
@@ -538,7 +538,7 @@ class VlandOverlayAction(OverlayAction):
         self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
 
         for fname in scripts_to_copy:
-            with open(fname, "r") as fin:
+            with open(fname) as fin:
                 foutname = os.path.basename(fname)
                 output_file = "%s/bin/%s" % (lava_path, foutname)
                 self.logger.debug("Creating %s", output_file)

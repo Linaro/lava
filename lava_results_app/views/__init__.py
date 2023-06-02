@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2015-2018 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -419,7 +418,7 @@ def testcase(request, case_id, job=None, pk=None):
         try:
             extra_data = f_metadata.get("extra")
             if extra_data and os.path.exists(extra_data):
-                with open(f_metadata["extra"], "r") as extra_file:
+                with open(f_metadata["extra"]) as extra_file:
                     items = yaml_safe_load(extra_file)
                 # hide the !!python OrderedDict prefix from the output.
                 for key, value in items.items():

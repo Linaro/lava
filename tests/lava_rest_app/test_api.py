@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2018-2019 Linaro Limited
 #
 # Author: Milosz Wasilewski <milosz.wasilewski@linaro.org>
@@ -958,7 +957,7 @@ ok 2 bar
             + "devicetypes/%s/template/" % qemu_device_type1.name,
         )
         data = yaml_safe_load(data)
-        assert data == str("hello")  # nosec
+        assert data == "hello"  # nosec
 
         # 2. Can't read the file
         bbb_device_type1 = DeviceType.objects.create(name="bbb")
@@ -1001,7 +1000,7 @@ ok 2 bar
             + "devicetypes/%s/health_check/" % qemu_device_type1.name,
         )
         data = yaml_safe_load(data)
-        assert data == str("hello")  # nosec
+        assert data == "hello"  # nosec
 
         # 2. Can't read the health-check
         docker_device_type1 = DeviceType.objects.create(name="docker")
@@ -1137,7 +1136,7 @@ ok 2 bar
             + "workers/%s/env/" % self.worker1.hostname,
         )
         data = yaml_safe_load(data)
-        assert data == str("hello")  # nosec
+        assert data == "hello"  # nosec
 
         # worker does not exists
         response = self.userclient.get(
@@ -1173,7 +1172,7 @@ ok 2 bar
             + "workers/%s/config/" % self.worker1.hostname,
         )
         data = yaml_safe_load(data)
-        assert data == str("hello world")  # nosec
+        assert data == "hello world"  # nosec
 
         # worker does not exists
         response = self.userclient.get(
