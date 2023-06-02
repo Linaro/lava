@@ -193,6 +193,7 @@ class UUUBootRetryAction(RetryAction):
                 "bcu_board_id"
             ] = self.eval_bcu_board_id()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        self.pipeline.add_action(DisconnectDevice())
         self.pipeline.add_action(ResetDevice())
 
         # Serial availability check is skipped if
