@@ -159,7 +159,7 @@ class DebianSsoUserBackend(RemoteUserBackend):
         result_set = service.search_s(
             "dc=debian,dc=org",
             ldap.SCOPE_SUBTREE,
-            "uid={}".format(self.get_uid(remote_user)),
+            f"uid={self.get_uid(remote_user)}",
             None,
         )
         if not result_set:

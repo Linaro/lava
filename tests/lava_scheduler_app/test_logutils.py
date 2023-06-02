@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2019 Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
@@ -46,7 +45,7 @@ def test_read_logs_uncompressed(mocker, tmp_path, logs_filesystem):
 
     # If output.yaml exists, read_logs should use it
     with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
-        f_logs.write("compressed".encode("utf-8"))
+        f_logs.write(b"compressed")
     assert logs_filesystem.read(job) == "hello\nworld\nhow\nare\nyou"  # nosec
     assert not (tmp_path / "output.idx").exists()  # nosec
 
@@ -63,7 +62,7 @@ def test_read_logs_compressed(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
     job.output_dir = tmp_path
     with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
-        f_logs.write("compressed\nor\nnot".encode("utf-8"))
+        f_logs.write(b"compressed\nor\nnot")
     assert logs_filesystem.read(job) == "compressed\nor\nnot"  # nosec
     assert not (tmp_path / "output.idx").exists()  # nosec
 
@@ -80,14 +79,14 @@ def test_size_logs(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
     job.output_dir = tmp_path
     with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
-        f_logs.write("hello world\nhow are you?\n".encode("utf-8"))
+        f_logs.write(b"hello world\nhow are you?\n")
     # "output.yaml.size" is missing
     assert logs_filesystem.size(job) is None  # nosec
     (tmp_path / "output.yaml.size").write_text("25", encoding="utf-8")
     assert logs_filesystem.size(job) == 25  # nosec
 
     with open(str(tmp_path / "output.yaml"), "wb") as f_logs:
-        f_logs.write("hello world!\n".encode("utf-8"))
+        f_logs.write(b"hello world!\n")
     assert logs_filesystem.size(job) == 13  # nosec
 
 
@@ -96,8 +95,8 @@ def test_write_logs(mocker, tmp_path, logs_filesystem):
     job.output_dir = tmp_path
     with open(str(tmp_path / "output.yaml"), "wb") as f_logs:
         with open(str(tmp_path / "output.idx"), "wb") as f_idx:
-            logs_filesystem.write(job, "hello world\n".encode("utf-8"), f_logs, f_idx)
-            logs_filesystem.write(job, "how are you?\n".encode("utf-8"), f_logs, f_idx)
+            logs_filesystem.write(job, b"hello world\n", f_logs, f_idx)
+            logs_filesystem.write(job, b"how are you?\n", f_logs, f_idx)
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
     with open(str(tmp_path / "output.idx"), "rb") as f_idx:

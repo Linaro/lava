@@ -164,25 +164,21 @@ class TestMultinode(StdoutTestCase):
         client_protocol = [protocol for protocol in self.client_job.protocols][0]
         server_protocol = [protocol for protocol in self.server_job.protocols][0]
         self.assertEqual(
-            set(
-                [
-                    client_name
-                    for client_name in client_protocol.parameters["protocols"][
-                        client_protocol.name
-                    ]["roles"]
-                ]
-            ),
+            {
+                client_name
+                for client_name in client_protocol.parameters["protocols"][
+                    client_protocol.name
+                ]["roles"]
+            },
             {"kvm02", "kvm01"},
         )
         self.assertEqual(
-            set(
-                [
-                    client_name
-                    for client_name in server_protocol.parameters["protocols"][
-                        server_protocol.name
-                    ]["roles"]
-                ]
-            ),
+            {
+                client_name
+                for client_name in server_protocol.parameters["protocols"][
+                    server_protocol.name
+                ]["roles"]
+            },
             {"kvm02", "kvm01"},
         )
         self.assertEqual(

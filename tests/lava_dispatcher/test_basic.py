@@ -43,7 +43,7 @@ class StdoutTestCase(unittest.TestCase):
                 yaml_safe_dump(
                     job.pipeline.describe(), describe, default_flow_style=None
                 )
-        with open(y_file, "r") as f_ref:
+        with open(y_file) as f_ref:
             return yaml_safe_load(f_ref)
 
 
@@ -409,7 +409,7 @@ class TestPipeline(StdoutTestCase):
         self.assertEqual(pipe["compatibility"], DeployImages.compatibility)
         self.assertEqual(job.compatibility, DeployImages.compatibility)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
-        with open(kvm_yaml, "r") as kvm_yaml:
+        with open(kvm_yaml) as kvm_yaml:
             job_def = yaml_safe_load(kvm_yaml)
         job_def["compatibility"] = job.compatibility
         parser = JobParser()

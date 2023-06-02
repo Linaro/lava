@@ -65,7 +65,7 @@ class TestRemovable(StdoutTestCase):
         self.maxDiff = None
         job_parser = JobParser()
         sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/{}".format(test_file)
+            os.path.dirname(__file__), f"sample_jobs/{test_file}"
         )
         with open(sample_job_file) as sample_job_data:
             job = job_parser.parse(sample_job_data, device, 4212, None, "")

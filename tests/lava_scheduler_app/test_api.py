@@ -2163,21 +2163,19 @@ def test_workers_list(setup):
 @pytest.mark.django_db
 def test_workers_show(setup):
     data = server().scheduler.workers.show("example.com")
-    assert set(data.keys()) == set(  # nosec
-        [
-            "hostname",
-            "description",
-            "state",
-            "health",
-            "devices",
-            "last_ping",
-            "job_limit",
-            "version",
-            "default_config",
-            "default_env",
-            "default_env_dut",
-        ]
-    )
+    assert set(data.keys()) == {  # nosec
+        "hostname",
+        "description",
+        "state",
+        "health",
+        "devices",
+        "last_ping",
+        "job_limit",
+        "version",
+        "default_config",
+        "default_env",
+        "default_env_dut",
+    }
     assert data["hostname"] == "example.com"  # nosec
     assert data["job_limit"] == 0  # nosec
 

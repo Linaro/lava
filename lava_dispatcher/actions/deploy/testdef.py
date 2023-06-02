@@ -302,7 +302,7 @@ class GitRepoAction(RepoAction):
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         self.logger.debug("Tests stored (tmp) in %s", yaml_file)
         try:
-            with open(yaml_file, "r") as test_file:
+            with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
@@ -427,9 +427,9 @@ class UrlRepoAction(RepoAction):
         self.logger.debug("Tests stored (tmp) in %s", yaml_file)
 
         try:
-            with open(yaml_file, "r") as test_file:
+            with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
-        except IOError as exc:
+        except OSError as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
                 % (self.parameters["path"], str(exc))
@@ -703,7 +703,7 @@ class TestOverlayAction(Action):
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
-            with open(yaml_file, "r") as test_file:
+            with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
@@ -854,7 +854,7 @@ class TestInstallAction(TestOverlayAction):
             else:
                 raise TestError("Unrecognised git-repos block.")
             if commit_id is None:
-                raise JobError("Unable to clone %s" % str((repo)))
+                raise JobError("Unable to clone %s" % str(repo))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -865,7 +865,7 @@ class TestInstallAction(TestOverlayAction):
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
-            with open(yaml_file, "r") as test_file:
+            with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(
@@ -988,7 +988,7 @@ class TestRunnerAction(TestOverlayAction):
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
         try:
-            with open(yaml_file, "r") as test_file:
+            with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
         except OSError as exc:
             raise JobError(

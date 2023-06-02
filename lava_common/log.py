@@ -11,7 +11,6 @@ import logging
 import multiprocessing
 import signal
 import time
-from typing import Dict, List, Tuple
 
 import requests
 
@@ -19,7 +18,7 @@ from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
 
 
-def dump(data: Dict) -> str:
+def dump(data: dict) -> str:
     # Set width to a really large value in order to always get one line.
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
@@ -43,7 +42,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
     MAX_RECORDS = 1000
     FAILURE_SLEEP = 5
 
-    def post(session, records: List[str], index: int) -> Tuple[List[str], int]:
+    def post(session, records: list[str], index: int) -> tuple[list[str], int]:
         # limit the number of records to send in one call
         data, remaining = records[:MAX_RECORDS], records[MAX_RECORDS:]
         with contextlib.suppress(requests.RequestException):
@@ -69,7 +68,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
         return (data + remaining, index)
 
     last_call = time.monotonic()
-    records: List[str] = []
+    records: list[str] = []
     leaving: bool = False
     index: int = 0
 

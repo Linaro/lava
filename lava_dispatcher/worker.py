@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2020-present Linaro Limited
 #
@@ -24,9 +23,10 @@ import subprocess
 import sys
 import time
 import traceback
+from collections.abc import Iterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, NoReturn, Optional, Union
+from typing import Any, NoReturn
 
 import aiohttp
 import requests
@@ -77,7 +77,7 @@ URL_WORKERS = "/scheduler/internal/v1/workers/"
 ###########
 # Helpers #
 ###########
-def create_environ(env: str) -> Dict[str, str]:
+def create_environ(env: str) -> dict[str, str]:
     """
     Generate the env variables for the job.
     """
@@ -111,8 +111,8 @@ class Response:
 
 
 def requests_get(
-    url: str, token: str, params: Dict[str, str] = None
-) -> Union[requests.Response, Response]:
+    url: str, token: str, params: dict[str, str] = None
+) -> requests.Response | Response:
     if params is None:
         params = {}
 
@@ -124,8 +124,8 @@ def requests_get(
 
 
 def requests_post(
-    url: str, token: Union[str, None], data: Dict[str, str]
-) -> Union[requests.Response, Response]:
+    url: str, token: str | None, data: dict[str, str]
+) -> requests.Response | Response:
     try:
         headers = {**HEADERS, "LAVA-Token": token}
         return SESSION.post(url, data=data, headers=headers, timeout=TIMEOUT)
@@ -146,7 +146,7 @@ def start_job(
     env_str: str,
     env_dut: str,
     job_log_interval: int,
-) -> Optional[int]:
+) -> int | None:
     """
     Start the lava-run process and return the pid
     """
@@ -240,7 +240,7 @@ class Job:
             return (self.base_dir / "description.yaml").read_bytes()
         return ""
 
-    def result(self) -> Dict[str, Any]:
+    def result(self) -> dict[str, Any]:
         with contextlib.suppress(OSError, yaml.YAMLError):
             data = yaml_safe_load((self.base_dir / "result.yaml").read_bytes())
             if isinstance(data, dict):
@@ -261,7 +261,7 @@ class Job:
 
     def is_running(self) -> bool:
         with contextlib.suppress(OSError):
-            with open("/proc/%d/cmdline" % self.pid, "r") as fd:
+            with open("/proc/%d/cmdline" % self.pid) as fd:
                 return "lava-run" in fd.read()
         return False
 
@@ -289,7 +289,7 @@ class JobsDB:
 
     def create(
         self, job_id: int, pid: int, status: int, dispatcher_cfg: str, token: str
-    ) -> Optional[Job]:
+    ) -> Job | None:
         """
         When pid is 0, the pid is unknown
         """
@@ -313,13 +313,13 @@ class JobsDB:
             return self.get(job_id)
         return None
 
-    def get(self, job_id: int) -> Optional[Job]:
+    def get(self, job_id: int) -> Job | None:
         row = self.conn.execute(
             "SELECT * FROM jobs WHERE id=?", (str(job_id),)
         ).fetchone()
         return None if row is None else Job(row)
 
-    def update(self, job_id: int, status) -> Optional[Job]:
+    def update(self, job_id: int, status) -> Job | None:
         with contextlib.suppress(sqlite3.Error):
             self.conn.execute(
                 "UPDATE jobs SET status=?, last_update=? WHERE id=?",
@@ -334,7 +334,7 @@ class JobsDB:
             self.conn.execute("DELETE FROM jobs WHERE id=?", (str(job_id),))
             self.conn.commit()
 
-    def all_ids(self) -> List[int]:
+    def all_ids(self) -> list[int]:
         jobs = self.conn.execute("SELECT * FROM jobs")
         return [job["id"] for job in jobs]
 
@@ -486,7 +486,7 @@ class VersionMismatch(Exception):
     pass
 
 
-def ping(url: str, token: str, name: str) -> Dict[str, List]:
+def ping(url: str, token: str, name: str) -> dict[str, list]:
     LOG.debug("PING => server")
     ret = requests_get(
         f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}

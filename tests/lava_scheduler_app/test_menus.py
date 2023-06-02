@@ -13,7 +13,7 @@ class YamlMenuFactory(YamlFactory):
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "mustang-menu-ramdisk.yaml"
         )
-        with open(sample_job_file, "r") as test_support:
+        with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         data.update(kw)
         return data

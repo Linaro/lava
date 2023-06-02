@@ -1,5 +1,4 @@
 #! /usr/bin/python3
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2018 Linaro Limited
 #
@@ -42,7 +41,7 @@ CONFIG_PATH = os.getcwd()  # set this to your local needs.
 job_ctx = {"first_key": 9}
 
 
-with open("details.jinja2", "r") as details:
+with open("details.jinja2") as details:
     data = details.read()
 string_loader = DictLoader({"details.jinja2": data})
 type_loader = FileSystemLoader([CONFIG_PATH])

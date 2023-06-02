@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # LAVA Server documentation build configuration file, created by
 # sphinx-quickstart on Mon Dec 27 16:39:47 2010.

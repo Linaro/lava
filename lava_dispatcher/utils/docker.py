@@ -50,7 +50,7 @@ class DockerRun:
         suffix = ""
         if random_suffix:
             CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-            suffix = "".join((random.SystemRandom().choice(CHARS) for i in range(10)))
+            suffix = "".join(random.SystemRandom().choice(CHARS) for i in range(10))
         self.__name__ = name + suffix
 
     def network(self, network):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2017-2018 Linaro Limited
 #
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
@@ -24,7 +23,7 @@ from linaro_django_xmlrpc.models import ExposedV2API
 
 def load_optional_file(filename):
     try:
-        with open(filename, "r") as f_in:
+        with open(filename) as f_in:
             return f_in.read().encode("utf-8")
     except OSError:
         return None
@@ -345,7 +344,7 @@ class SchedulerJobsAPI(ExposedV2API):
             data = logs_instance.read(job, start, end)
             return (job_finished, xmlrpc.client.Binary(data.encode("utf-8")))
         except OSError:
-            return (job_finished, xmlrpc.client.Binary("[]".encode("utf-8")))
+            return (job_finished, xmlrpc.client.Binary(b"[]"))
 
     def show(self, job_id):
         """

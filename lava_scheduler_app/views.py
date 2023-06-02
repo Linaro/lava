@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (C) 2018-2019 Linaro Limited
 #
 # Author: Neil Williams <neil.williams@linaro.org>
@@ -1858,7 +1857,7 @@ def job_description_yaml(request, pk):
     filename = description_filename(job)
     if not filename:
         raise Http404()
-    with open(filename, "r") as desc:
+    with open(filename) as desc:
         data = desc.read()
     response = HttpResponse(data, content_type="text/yaml")
     response["Content-Disposition"] = (
@@ -2104,16 +2103,12 @@ def job_timing(request, pk):
 
     # start and end patterns
     pattern_start = re.compile(
-        (
-            "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
-            "\\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
-        )
+        "^start: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+        "\\(timeout (?P<timeout>\\d+:\\d+:\\d+)\\)"
     )
     pattern_end = re.compile(
-        (
-            "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
-            "\\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
-        )
+        "^end: (?P<level>[\\d.]+) (?P<action>[\\w_-]+) "
+        "\\(duration (?P<duration>\\d+:\\d+:\\d+)\\)"
     )
 
     timings = {}

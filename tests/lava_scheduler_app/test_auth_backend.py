@@ -50,14 +50,14 @@ class BackendAuthTest(TestCaseWithFactory):
             "view_device", self.group, self.device
         )
         self.assertEqual(
-            set(["view_device"]),
+            {"view_device"},
             set(self.backend.get_all_permissions(self.user, self.device)),
         )
         GroupDevicePermission.objects.assign_perm(
             "change_device", self.group, self.device
         )
         self.assertEqual(
-            set(["change_device", "submit_to_device", "view_device"]),
+            {"change_device", "submit_to_device", "view_device"},
             set(self.backend.get_all_permissions(self.user, self.device)),
         )
 
@@ -65,14 +65,14 @@ class BackendAuthTest(TestCaseWithFactory):
             "view_devicetype", self.group, self.device_type
         )
         self.assertEqual(
-            set(["view_devicetype"]),
+            {"view_devicetype"},
             set(self.backend.get_all_permissions(self.user, self.device_type)),
         )
         GroupDeviceTypePermission.objects.assign_perm(
             "change_devicetype", self.group, self.device_type
         )
         self.assertEqual(
-            set(["change_devicetype", "view_devicetype", "submit_to_devicetype"]),
+            {"change_devicetype", "view_devicetype", "submit_to_devicetype"},
             self.backend.get_all_permissions(self.user, self.device_type),
         )
 

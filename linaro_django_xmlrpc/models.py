@@ -46,7 +46,7 @@ def _make_secret():
 
     # Set of valid characters for secret
     _SECRET_CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
-    return "".join((random.SystemRandom().choice(_SECRET_CHARS) for i in range(128)))
+    return "".join(random.SystemRandom().choice(_SECRET_CHARS) for i in range(128))
 
 
 class AuthToken(models.Model):
@@ -88,7 +88,7 @@ class AuthToken(models.Model):
     user = models.ForeignKey(User, related_name="auth_tokens", on_delete=models.CASCADE)
 
     def __str__(self):
-        return "security token {pk}".format(pk=self.pk)
+        return f"security token {self.pk}"
 
     @classmethod
     def get_user_for_secret(cls, username, secret):
