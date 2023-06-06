@@ -223,6 +223,9 @@ AUTH_GITLAB_SCOPE = ["read_user"]
 # Debian SSO is of be default
 AUTH_DEBIAN_SSO = None
 
+# Sync GitHub teams
+SYNC_GITHUB_TEAMS = []
+
 # Remove Delete buttons in django admin interface
 ALLOW_ADMIN_DELETE = True
 
@@ -350,6 +353,7 @@ def update(values):
     MOUNT_POINT = values.get("MOUNT_POINT")
     SENTRY_DSN = values.get("SENTRY_DSN")
     STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
+    SYNC_GITHUB_TEAMS = values.get("SYNC_GITHUB_TEAMS")
     USE_DEBUG_TOOLBAR = values.get("USE_DEBUG_TOOLBAR")
     REQUIRE_LOGIN = values.get("REQUIRE_LOGIN")
 
@@ -509,6 +513,9 @@ def update(values):
     elif AUTH_DEBIAN_SSO:
         MIDDLEWARE.append("lava_server.debian_sso.DebianSsoUserMiddleware")
         AUTHENTICATION_BACKENDS.append("lava_server.debian_sso.DebianSsoUserBackend")
+
+    if SYNC_GITHUB_TEAMS:
+        INSTALLED_APPS.append("django_sync_github_teams")
 
     if USE_DEBUG_TOOLBAR:
         INSTALLED_APPS.append("debug_toolbar")
