@@ -157,7 +157,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
-        docker.prepare()
+        docker.prepare(action=self)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
         docker_method_conf = (

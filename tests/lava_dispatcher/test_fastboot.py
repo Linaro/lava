@@ -205,7 +205,7 @@ class TestDockerDriver(unittest.TestCase):
         self.assertEqual(src, dest)
 
     @patch("lava_dispatcher_host.get_mapping_path")
-    @patch("lava_dispatcher.utils.fastboot.OptionalContainerFastbootAction.run_cmd")
+    @patch("lava_dispatcher.action.Action.run_cmd")
     @patch("subprocess.check_call")
     @patch(
         "lava_dispatcher.utils.containers.get_udev_devices",
@@ -218,8 +218,38 @@ class TestDockerDriver(unittest.TestCase):
         self.action.maybe_copy_to_container("/path/to/image.img")
         self.action.run_fastboot(["wait-for-devices"])
         cmd = run_cmd.call_args[0][0]
-        assert cmd[0:2] == ["docker", "exec"]
-        assert cmd[-4:] == ["fastboot", "-s", "04f228d1d9c76f39", "wait-for-devices"]
+        assert len(run_cmd.mock_calls) == 4
+
+        assert run_cmd.mock_calls[0].args[0][0:5] == [
+            "docker",
+            "run",
+            "--detach",
+            "--rm",
+            "--init",
+        ]
+        assert run_cmd.mock_calls[0].args[0][6:10] == [
+            "--mount=type=bind,source=/path/to/image.img,destination=/path/to/image.img",
+            "some-fastboot-image",
+            "sleep",
+            "infinity",
+        ]
+
+        assert run_cmd.mock_calls[1].args[0] == [
+            "udevadm",
+            "trigger",
+            "--action=add",
+            "/dev/foo/bar",
+        ]
+        assert run_cmd.mock_calls[1].kwargs == {"allow_fail": True}
+        assert run_cmd.mock_calls[2].args[0][0:2] == ["docker", "exec"]
+        assert run_cmd.mock_calls[2].args[0][-4:] == [
+            "fastboot",
+            "-s",
+            "04f228d1d9c76f39",
+            "wait-for-devices",
+        ]
+
+        assert run_cmd.mock_calls[3].args[0][0:2] == ["docker", "stop"]
 
 
 class TestFastbootDeploy(StdoutTestCase):
