@@ -73,7 +73,7 @@ COORDINATOR = {
             ["etc/lava-coordinator", "etc/lava-coordinator.conf"],
         ),
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-coordinator-log"]),
-        ("/lib/systemd/system/", ["etc/lava-coordinator.service"]),
+        ("/usr/lib/systemd/system/", ["etc/lava-coordinator.service"]),
     ],
     "cmdclass": {"install_scripts": rename_scripts},
 }
@@ -95,7 +95,7 @@ DISPATCHER = {
         ("/etc/lava-dispatcher/", ["etc/lava-worker"]),
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-worker-log"]),
         ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
-        ("/lib/systemd/system/", ["etc/lava-worker.service"]),
+        ("/usr/lib/systemd/system/", ["etc/lava-worker.service"]),
         ("/etc/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa"]),
         ("/usr/share/lava-dispatcher/apache2/", ["share/apache2/lava-dispatcher.conf"]),
@@ -116,7 +116,7 @@ DISPATCHER_HOST = {
     ],
     "data_files": [
         (
-            "/lib/systemd/system/",
+            "/usr/lib/systemd/system/",
             [
                 "etc/lava-docker-worker.service",
                 "etc/lava-dispatcher-host.socket",
@@ -174,7 +174,7 @@ SERVER = {
             ],
         ),
         (
-            "/lib/systemd/system/",
+            "/usr/lib/systemd/system/",
             [
                 "etc/lava-celery-worker.service",
                 "etc/lava-publisher.service",
