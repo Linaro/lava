@@ -146,8 +146,12 @@ class RestrictedObjectQuerySet(QuerySet):
                 if self.model.PERMISSIONS_PRIORITY.index(perm) >= i
             ]
             filters |= Q(
-                permissions__permission__codename__in=perms_priorized,
-                permissions__group__user=user,
+                pk__in=self.filter(
+                    Q(
+                        permissions__permission__codename__in=perms_priorized,
+                        permissions__group__user=user,
+                    )
+                )
             )
 
         return self.filter(filters)
