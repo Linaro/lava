@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Manager, Q, QuerySet
+from django.db.models import Manager, OuterRef, Q, QuerySet, Subquery
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
 
@@ -223,7 +223,9 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
         # public and if yes, we check for accessibility of either
         # actual_device or requested_device_type (depending on whether the
         # job is scheduled or not.
-        vg_ids = TestJob.objects.filter(viewing_groups__isnull=False)
+        vg_ids = Subquery(
+            Group.objects.filter(viewing_groups=OuterRef("pk")).values("viewing_groups")
+        )
         filters |= (
             Q(is_public=True)
             & ~Q(id__in=vg_ids)
