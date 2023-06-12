@@ -338,13 +338,17 @@ class TestPipelineSubmit(TestCaseWithFactory):
             "platform": "frdm_k64f",
             "git-url": "https://git.linaro.org/zephyrproject-org/zephyr.git",
             "git-commit": 1234,
+            "api_config": {
+                "name": "staging.kernelci.org",
+                "url": "https://staging.kernelci.org:9000",
+                "version": "latest",
+            },
+            123: ["One", "upon", "a", "time"],
+            None: "Invalid",
         }
         data = yaml_safe_load(self.factory.make_job_yaml(metadata=metadata))
         self.assertRaises(SubmissionException, validate_submission, data)
-        metadata["build-url"] = "http://nowhere.com"
-        data = yaml_safe_load(self.factory.make_job_yaml(metadata=metadata))
-        self.assertRaises(SubmissionException, validate_submission, data)
-        metadata["zephyr-gcc-variant"] = "4.9"
+        del metadata[None]
         data = yaml_safe_load(self.factory.make_job_yaml(metadata=metadata))
         validate_submission(data)
 

@@ -405,7 +405,7 @@ _job_schema = Schema(
         Optional("priority"): Any("high", "medium", "low", int),
         Optional("protocols"): _job_protocols_schema(),
         Optional("context"): _context_schema(),
-        Optional("metadata"): All({Any(str, int): Any(str, int)}),
+        Optional("metadata"): All({Any(str, int): object}),
         Optional("secrets"): dict,
         Optional("environment"): dict,
         Optional("tags"): [str],
