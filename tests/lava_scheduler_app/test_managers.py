@@ -1233,3 +1233,24 @@ class ManagersTest(TestCaseWithFactory):
             ),
             set(Worker.objects.all()),
         )
+
+    def test_permissions_duplicate_rows(self):
+        # See
+        # https://git.lavasoftware.org/lava/lava/-/issues/612
+        # https://git.lavasoftware.org/lava/lava/-/merge_requests/2121
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
+        )
+
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.VIEW_PERMISSION, self.group2, self.qemu_device_type
+        )
+
+        self.user1.groups.add(self.group2)
+
+        # user1 can view qemu device type through group1 or group2
+        # however, only one instance of qemu device type should be returned
+        self.assertEqual(
+            DeviceType.objects.visible_by_user(self.user1).count(),
+            DeviceType.objects.all().count(),
+        )
