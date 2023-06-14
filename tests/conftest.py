@@ -23,6 +23,10 @@ def tempdir(monkeypatch, tmp_path):
     )
 
 
+class LavaTestOverwriteInConftest(NotImplementedError):
+    ...
+
+
 @pytest.fixture(autouse=True)
 def no_network(mocker, request):
     def get(url, allow_redirects, stream, headers, timeout):
@@ -31,6 +35,7 @@ def no_network(mocker, request):
         res = requests.Response()
         res.status_code = requests.codes.OK
         res.close = lambda: None
+        res.raw = LavaTestOverwriteInConftest()
         return res
 
     def head(url, allow_redirects, headers, timeout):
@@ -38,6 +43,7 @@ def no_network(mocker, request):
         print(url)
         res = requests.Response()
         res.status_code = requests.codes.OK
+        res.raw = LavaTestOverwriteInConftest()
         res.close = lambda: None
         return res
 
