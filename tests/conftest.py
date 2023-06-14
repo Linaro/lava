@@ -50,7 +50,11 @@ def no_network(mocker, request):
     # List of tests that should have access to the network
     # When pytest is mandatory, we can use pytest marks
     # See https://stackoverflow.com/a/38763328
-    skip_tests = {"test_download_decompression", "test_invalid_multinode"}
+    skip_tests = {
+        "test_bad_download_decompression",
+        "test_download_decompression",
+        "test_invalid_multinode",
+    }
     if not skip_tests & set(request.keywords.keys()):
         mocker.patch("requests.head", head)
         mocker.patch("requests.get", get)

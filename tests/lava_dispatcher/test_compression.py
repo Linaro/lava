@@ -8,7 +8,7 @@ import copy
 import hashlib
 import os
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
@@ -95,3 +95,67 @@ class TestDecompression(StdoutTestCase):
         with self.assertRaises(InfrastructureError):
             decompress_file("/tmp/test.xz", "zip")  # nosec - unit test only.
         self.assertEqual(copy_of_command_map, decompress_command_map)
+
+
+class TestBadDecompression(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/compression_bad.yaml")
+        self.job.validate()
+
+    def test_bad_download_decompression(self):
+        deploy_actions = (
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "deployimages"
+        )
+        download_actions = (
+            action
+            for deploy_action in deploy_actions
+            for action in deploy_action.pipeline.actions
+            if action.name == "download-retry"
+        )
+        http_download_actions = (
+            action
+            for download_action in download_actions
+            for action in download_action.pipeline.actions
+            if action.name == "http-download"
+        )
+
+        tests_dict = {action.key: action for action in http_download_actions}
+        test_bad_sha256sum = tests_dict["test_bad_sha256sum"]
+        test_xz_bad_format = tests_dict["test_xz_bad_format"]
+        test_gz_bad_format = tests_dict["test_gz_bad_format"]
+        test_bz2_bad_format = tests_dict["test_bz2_bad_format"]
+        test_multiple_bad_checksums = tests_dict["test_multiple_bad_checksums"]
+
+        with self.subTest("Test bad sha256sum"), self.assertRaisesRegex(
+            JobError, "does not match"
+        ):
+            test_bad_sha256sum.validate()
+            test_bad_sha256sum.run(None, None)
+
+        with self.subTest("Test bad XZ format"), self.assertRaisesRegex(
+            JobError, "subprocess exited with non-zero code"
+        ):
+            test_xz_bad_format.validate()
+            test_xz_bad_format.run(None, None)
+
+        with self.subTest("Test bad GZ format"), self.assertRaisesRegex(
+            JobError, "subprocess exited with non-zero code"
+        ):
+            test_gz_bad_format.validate()
+            test_gz_bad_format.run(None, None)
+
+        with self.subTest("Test bad BZ2 format"), self.assertRaisesRegex(
+            JobError, "subprocess exited with non-zero code"
+        ):
+            test_bz2_bad_format.validate()
+            test_bz2_bad_format.run(None, None)
+
+        with self.subTest("Test multiple bad checksums"), self.assertRaisesRegex(
+            JobError, "md5.*does not match"
+        ):
+            test_multiple_bad_checksums.validate()
+            test_multiple_bad_checksums.run(None, None)
