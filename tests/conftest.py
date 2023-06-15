@@ -23,6 +23,10 @@ def tempdir(monkeypatch, tmp_path):
     )
 
 
+class LavaTestOverwriteInConftest(NotImplementedError):
+    ...
+
+
 @pytest.fixture(autouse=True)
 def no_network(mocker, request):
     def get(url, allow_redirects, stream, headers, timeout):
@@ -31,6 +35,7 @@ def no_network(mocker, request):
         res = requests.Response()
         res.status_code = requests.codes.OK
         res.close = lambda: None
+        res.raw = LavaTestOverwriteInConftest()
         return res
 
     def head(url, allow_redirects, headers, timeout):
@@ -38,13 +43,18 @@ def no_network(mocker, request):
         print(url)
         res = requests.Response()
         res.status_code = requests.codes.OK
+        res.raw = LavaTestOverwriteInConftest()
         res.close = lambda: None
         return res
 
     # List of tests that should have access to the network
     # When pytest is mandatory, we can use pytest marks
     # See https://stackoverflow.com/a/38763328
-    skip_tests = {"test_download_decompression", "test_invalid_multinode"}
+    skip_tests = {
+        "test_bad_download_decompression",
+        "test_download_decompression",
+        "test_invalid_multinode",
+    }
     if not skip_tests & set(request.keywords.keys()):
         mocker.patch("requests.head", head)
         mocker.patch("requests.get", get)

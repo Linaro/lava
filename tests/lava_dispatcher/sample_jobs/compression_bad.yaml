@@ -1,0 +1,40 @@
+job_name: Compression bad download unit test
+timeouts:
+  job:
+    minutes: 40
+  action:
+    minutes: 1
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+device_type: qemu
+
+actions:
+- deploy:
+    timeout:
+      minutes: 40
+    to: tmpfs
+    images:
+      test_bad_sha256sum:
+        url: http://images.validation.linaro.org/functional-test-images/compression/10MB.gz
+        compression: gz
+        sha256sum: 'bada3f0ea9a09d7e5f708cf1b865063083e248473ac1cd99e6a60f83af669cb6'
+      test_xz_bad_format:
+        url: http://images.validation.linaro.org/functional-test-images/compression/10MB.gz
+        compression: xz
+        sha256sum: '0d1a3f0ea9a09d7e5f708cf1b865063083e248473ac1cd99e6a60f83af669cb6'
+      test_gz_bad_format:
+        url: http://images.validation.linaro.org/functional-test-images/compression/10MB.xz
+        compression: gz
+        sha256sum: '6d32871020f723ece83a3fc6696acfd75df90f3f033d78922bcf5181a8f50396'
+      test_bz2_bad_format:
+        url: http://images.validation.linaro.org/functional-test-images/compression/10MB.xz
+        compression: bz2
+        sha256sum: '6d32871020f723ece83a3fc6696acfd75df90f3f033d78922bcf5181a8f50396'
+      test_multiple_bad_checksums:
+        url: http://images.validation.linaro.org/functional-test-images/compression/10MB.xz
+        compression: xz
+        sha256sum: '6d32871020f723ece83a3fc6696acfd75df90f3f033d78922bcf5181a8f50396'
+        md5sum: '33b66d78de2634ed8fc41ccc8fb3af9e'
+    os: debian

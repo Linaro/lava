@@ -373,7 +373,14 @@ class DownloadHandler(Action):
                         )
                         self.logger.error(msg)
                         raise JobError(error_message)
-            proc.wait()
+            compression_exitcode = proc.wait()
+            if compression_exitcode != 0:
+                exit_error_msg = (
+                    "Decompression subprocess exited with non-zero code: "
+                    + proc.stderr.read().decode("utf-8").strip()
+                )
+                self.logger.error(exit_error_msg)
+                raise JobError(exit_error_msg)
         else:
             with open(self.fname, "wb") as dwnld_file:
                 for buff in self.reader():
