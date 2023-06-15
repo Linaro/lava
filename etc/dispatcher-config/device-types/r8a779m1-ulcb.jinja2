@@ -1,3 +1,6 @@
 # Renesas R-Car Starter Kit H3e-2G
 {# device_type = "r8a779m1-ulcb" #}
 {% extends 'rcar-gen3-common.jinja2' %}
+
+{% set boot_character_delay = boot_character_delay|default(1) %}
+{% set test_character_delay = test_character_delay|default(1) %}
