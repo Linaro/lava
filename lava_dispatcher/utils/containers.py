@@ -19,6 +19,7 @@ from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 class OptionalContainerAction(Action, DeviceContainerMappingMixin):
     command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def validate(self):
         super().validate()
