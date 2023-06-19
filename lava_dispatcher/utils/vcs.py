@@ -49,9 +49,26 @@ class GitHelper(VCSHelper):
             logger.debug("Running '%s'", " ".join(cmd_args))
             # Replace shell variables by the corresponding environment variable
             cmd_args[-2] = os.path.expandvars(cmd_args[-2])
-            subprocess.check_output(  # nosec - internal use.
-                cmd_args, stderr=subprocess.STDOUT
-            )
+
+            try:
+                subprocess.check_output(  # nosec - internal use.
+                    cmd_args, stderr=subprocess.STDOUT
+                )
+            except subprocess.CalledProcessError as exc:
+                if (
+                    exc.stdout
+                    and "does not support shallow capabilities"
+                    in exc.stdout.decode("utf-8", errors="replace")
+                ):
+                    logger.warning(
+                        "Tried shallow clone, but server doesn't support it. Retrying without..."
+                    )
+                    cmd_args.remove("--depth=1")
+                    subprocess.check_output(  # nosec - internal use.
+                        cmd_args, stderr=subprocess.STDOUT
+                    )
+                else:
+                    raise
 
             if revision is not None:
                 logger.debug("Running '%s checkout %s", self.binary, str(revision))
