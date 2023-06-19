@@ -87,7 +87,7 @@ async def zmq_proxy(app):
         content = json.loads(data[4])
         if topic.endswith(".device"):
             device = await sync_to_async(Device.objects.get)(hostname=content["device"])
-            for ws in app["websockets"]:
+            for ws in set(app["websockets"]):
                 # Only forward to users as workers will discard it
                 if ws.kind == "user":
                     user = AnonymousUser()
@@ -106,7 +106,7 @@ async def zmq_proxy(app):
                     break
                 except TestJob.DoesNotExist:
                     await asyncio.sleep(1)
-            for ws in app["websockets"]:
+            for ws in set(app["websockets"]):
                 if ws.kind == "user":
                     user = AnonymousUser()
                     if ws.name:
@@ -127,7 +127,7 @@ async def zmq_proxy(app):
             futures.extend(
                 [
                     ws.socket.send_json(data)
-                    for ws in app["websockets"]
+                    for ws in set(app["websockets"])
                     if ws.kind == "user"
                 ]
             )
