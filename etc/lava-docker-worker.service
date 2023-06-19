@@ -1,5 +1,5 @@
 [Unit]
-Description=LAVA worker
+Description=LAVA docker worker
 After=network.target remote-fs.target containerd.service docker.service
 
 [Service]
