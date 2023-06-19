@@ -354,8 +354,9 @@ class TestDefinitionParams(StdoutTestCase):
             },
         )
 
+    @patch("lava_dispatcher.actions.deploy.testdef.GitHelper")
     @unittest.skipIf(infrastructure_error("git"), "git not installed")
-    def test_install_repos(self):
+    def test_install_repos(self, GitHelper):
         job = self.factory.create_kvm_job("sample_jobs/kvm-install.yaml")
         allow_missing_path(
             self.job.pipeline.validate_actions, self, "qemu-system-x86_64"
