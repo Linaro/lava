@@ -13,6 +13,7 @@ import pytest
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, User
+from django.http import FileResponse, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -235,12 +236,18 @@ class TestRestApi:
     def hit(self, client, url):
         response = client.get(url)
         assert response.status_code == 200  # nosec - unit test support
-        if hasattr(response, "content"):
+
+        if isinstance(response, HttpResponse):
             text = response.content.decode("utf-8")
             if response["Content-Type"] == "application/json":
                 return json.loads(text)
             return text
-        return ""
+        elif isinstance(response, FileResponse):
+            return "".join(
+                fragment.decode("utf-8") for fragment in response.streaming_content
+            )
+        else:
+            raise TypeError("Unknown response type")
 
     def test_root(self):
         self.hit(self.userclient, reverse("api-root", args=[self.version]))
@@ -299,6 +306,9 @@ class TestRestApi:
             reverse("api-root", args=[self.version])
             + "jobs/%s/logs/" % self.public_testjob1.id,
         )
+        # the value below depends on the log fragment used
+        # be careful when changing either the value below or the log fragment
+        assert len(data) == 203  # nosec - unit test support
 
     def test_testjob_logs_offset(self, monkeypatch, tmp_path):
         (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
