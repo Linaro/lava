@@ -154,7 +154,9 @@ def prepare_guestfs(output, overlay, mountpoint, size):
     guest.tar_in(guest_tar, "/")
     os.unlink(guest_tar)
     guest.umount(guest_device)
-    return guest.blkid(guest_device)["UUID"]
+    device = guest.blkid(guest_device)["UUID"]
+    guest.close()
+    return device
 
 
 @replace_exception(RuntimeError, JobError)
@@ -171,7 +173,7 @@ def prepare_install_base(output, size):
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
-    guest.shutdown()
+    guest.close()
 
 
 @replace_exception(RuntimeError, JobError)
@@ -194,7 +196,7 @@ def copy_out_files(image, filenames, destination):
     guest.mount_ro(devices[0], "/")
     for filename in filenames:
         guest.copy_out(filename, destination)
-    guest.shutdown()
+    guest.close()
 
 
 @replace_exception(RuntimeError, JobError)
@@ -233,6 +235,7 @@ def copy_in_overlay(image, root_partition, overlay):
         guest.umount(guest_partition)
     else:
         guest.umount(devices[0])
+    guest.close()
 
 
 def lxc_path(dispatcher_config):
@@ -366,6 +369,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
     logger.debug(output)
     _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
+    guest.close()
     if int(available) == 0 or percent == "100%":
         raise JobError("No space in image after applying overlay: %s" % image)
 
