@@ -141,7 +141,7 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name)
             docker.run(cmd, self.action)
         finally:
-            docker.stop()
+            docker.stop(self.action)
 
     def get_output(self, cmd):
         # FIXME duplicates most of run()
@@ -153,7 +153,7 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name)
             return docker.get_output(cmd, self.action)
         finally:
-            docker.stop()
+            docker.stop(self.action)
 
     def maybe_copy_to_container(self, src):
         if src not in self.copied_files:

@@ -136,34 +136,25 @@ class DockerRun:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
-    def run(self, *args, action=None):
+    def run(self, *args, action):
         self.prepare(action)
         cmd = self.cmdline(*args)
-        self.run_cmd(cmd, action=action)
+        action.run_cmd(cmd)
 
-    def run_cmd(self, cmd, action=None):
-        if action:
-            runner = action.run_cmd
-        else:
-            runner = subprocess.check_call
-        logger = logging.getLogger("dispatcher")
-        logger.debug("cmd: %s", cmd)
-        runner(cmd)
-
-    def prepare(self, action=None):
+    def prepare(self, action):
         if self.__local__:
-            self.run_cmd(
+            action.run_cmd(
                 [
                     "docker",
                     "image",
                     "inspect",
-                    f"--format=Image {self.image} exists locally",
+                    "--format",
+                    f"Image {self.image} exists locally",
                     self.image,
                 ],
-                action=action,
             )
         else:
-            self.run_cmd(["docker", "pull", self.image], action=action)
+            action.run_cmd(["docker", "pull", self.image])
         self.__check_image_arch__()
 
     def wait(self, shell=None):
@@ -227,30 +218,26 @@ class DockerRun:
 class DockerContainer(DockerRun):
     __started__ = False
 
-    def run(self, args, action=None):
+    def run(self, args, action):
         self.start(action)
         cmd = ["docker", *self.__docker_options__, "exec"]
         cmd += self.interaction_options()
         cmd.append(self.__name__)
         cmd += args
-        self.run_cmd(cmd, action)
+        action.run_cmd(cmd)
 
-    def get_output(self, args, action=None):
-        if action:
-            runner = action.parsed_command
-        else:
-            runner = self.check_output
+    def get_output(self, args, action):
         self.start(action)
         cmd = ["docker", *self.__docker_options__, "exec"]
         cmd += self.interaction_options()
         cmd.append(self.__name__)
         cmd += args
-        return runner(cmd)
+        return action.parsed_command(cmd)
 
     def check_output(self, cmd):
         return subprocess.check_output(cmd).decode("utf-8")
 
-    def start(self, action=None):
+    def start(self, action):
         if self.__started__:
             return
 
@@ -258,9 +245,9 @@ class DockerContainer(DockerRun):
         cmd += self.start_options()
         cmd.append(self.image)
         cmd += ["sleep", "infinity"]
-        self.run_cmd(cmd, action)
+        action.run_cmd(cmd)
         self.wait()
         self.__started__ = True
 
-    def stop(self, action=None):
-        self.run_cmd(["docker", "stop", self.__name__])
+    def stop(self, action):
+        action.run_cmd(["docker", "stop", self.__name__])

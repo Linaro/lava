@@ -1,4 +1,5 @@
 import subprocess
+from unittest.mock import call
 
 import pytest
 
@@ -106,18 +107,21 @@ def test_run_architecture_check_failure(mocker):
             raise RuntimeError(f"Unexpected mock call: {cmd}")
 
     check_output = mocker.patch("subprocess.check_output", side_effect=results)
-    check_call = mocker.patch("subprocess.check_call")
     getLogger = mocker.patch("logging.getLogger")
     logger = getLogger.return_value
+    action = mocker.MagicMock()
 
     docker = DockerRun("myimage")
-    docker.run("date")
+    docker.run("date", action=action)
 
     check_output.assert_any_call(["arch"], text=True)
     check_output.assert_any_call(
         ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"], text=True
     )
-    check_call.assert_called()
+    assert action.run_cmd.call_args_list == [
+        call(["docker", "pull", "myimage"]),
+        call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+    ]
 
     getLogger.assert_called_with("dispatcher")
     logger.warning.assert_called()
@@ -128,12 +132,14 @@ def test_run_architecture_check_success(mocker):
     check_call = mocker.patch("subprocess.check_call")
     getLogger = mocker.patch("logging.getLogger")
     logger = getLogger.return_value
+    action = mocker.MagicMock()
 
     docker = DockerRun("myimage")
-    docker.run("echo")  # no crash = success
-    check_call.assert_called_with(
-        ["docker", "run", "--rm", "--init", "myimage", "echo"]
-    )
+    docker.run("echo", action=action)  # no crash = success
+    assert action.run_cmd.call_args_list == [
+        call(["docker", "pull", "myimage"]),
+        call(["docker", "run", "--rm", "--init", "myimage", "echo"]),
+    ]
     logger.warning.assert_not_called()
 
 
@@ -163,7 +169,16 @@ def test_run_with_local_image_does_not_pull(mocker):
     docker.run("date", action=action)
     action.run_cmd.assert_has_calls(
         [
-            mocker.call(["docker", "image", "inspect", mocker.ANY, "myimage"]),
+            mocker.call(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    "--format",
+                    "Image myimage exists locally",
+                    "myimage",
+                ]
+            ),
             mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
         ]
     )
