@@ -9,7 +9,6 @@ import base64
 import contextlib
 import json
 import signal
-import time
 import weakref
 from dataclasses import dataclass
 from typing import Any
@@ -76,7 +75,7 @@ async def zmq_proxy(app):
         additional_sockets.append(sock)
 
     async def forward_event(msg):
-        app["logger"].debug("[PROXY] Forwarding: %s", msg)
+        logger.debug("[PROXY] Forwarding: %s", msg)
         data = [s.decode("utf-8") for s in msg]
         futures = [
             pub.send_multipart(msg),
@@ -106,7 +105,7 @@ async def zmq_proxy(app):
                     job = await sync_to_async(TestJob.objects.get)(id=content["job"])
                     break
                 except TestJob.DoesNotExist:
-                    time.sleep(1)
+                    await asyncio.sleep(1)
             for ws in app["websockets"]:
                 if ws.kind == "user":
                     user = AnonymousUser()
@@ -143,6 +142,7 @@ async def zmq_proxy(app):
                 await forward_event(msg)
             except zmq.error.ZMQError as exc:
                 logger.error("[PROXY] Received a ZMQ error: %s", exc)
+                break
 
     # Carefully close the logging socket as we don't want to lose messages
     logger.info("[EXIT] Disconnect pull socket and process messages")
@@ -164,6 +164,7 @@ async def zmq_proxy(app):
             await forward_event(msg)
         except zmq.error.ZMQError as exc:
             logger.error("[EXIT] Received a ZMQ error: %s", exc)
+            break
         except asyncio.TimeoutError:
             logger.info("[EXIT] Timing out")
             break
