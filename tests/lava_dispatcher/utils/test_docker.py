@@ -111,6 +111,7 @@ def test_run_architecture_check_failure(mocker):
     logger = getLogger.return_value
     action = mocker.MagicMock()
 
+    action = mocker.MagicMock()
     docker = DockerRun("myimage")
     docker.run("date", action=action)
 
@@ -129,13 +130,18 @@ def test_run_architecture_check_failure(mocker):
 
 def test_run_architecture_check_success(mocker):
     check_output = mocker.patch("subprocess.check_output", return_value="xyz\n")
-    check_call = mocker.patch("subprocess.check_call")
     getLogger = mocker.patch("logging.getLogger")
     logger = getLogger.return_value
     action = mocker.MagicMock()
 
+    action = mocker.MagicMock()
     docker = DockerRun("myimage")
     docker.run("echo", action=action)  # no crash = success
+
+    check_output.assert_any_call(["arch"], text=True)
+    check_output.assert_any_call(
+        ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"], text=True
+    )
     assert action.run_cmd.call_args_list == [
         call(["docker", "pull", "myimage"]),
         call(["docker", "run", "--rm", "--init", "myimage", "echo"]),
@@ -166,6 +172,7 @@ def test_run_with_local_image_does_not_pull(mocker):
     docker = DockerRun("myimage")
     docker.local(True)
     action = mocker.MagicMock()
+    action.run_cmd.return_value = 0
     docker.run("date", action=action)
     action.run_cmd.assert_has_calls(
         [
@@ -177,8 +184,35 @@ def test_run_with_local_image_does_not_pull(mocker):
                     "--format",
                     "Image myimage exists locally",
                     "myimage",
-                ]
+                ],
+                allow_fail=True,
             ),
+            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+        ]
+    )
+
+
+def test_run_with_local_image_does_not_pull_when_missing(mocker):
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    docker = DockerRun("myimage")
+    docker.local(True)
+    action = mocker.MagicMock()
+    action.run_cmd.return_value = 1
+    docker.run("date", action=action)
+    action.run_cmd.assert_has_calls(
+        [
+            mocker.call(
+                [
+                    "docker",
+                    "image",
+                    "inspect",
+                    "--format",
+                    "Image myimage exists locally",
+                    "myimage",
+                ],
+                allow_fail=True,
+            ),
+            mocker.call(["docker", "pull", "myimage"]),
             mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
         ]
     )

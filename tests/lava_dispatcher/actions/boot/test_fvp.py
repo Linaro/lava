@@ -34,6 +34,10 @@ class TestCheckFVPVersionAction:
         action.validate()
         action.logger = mocker.MagicMock()
         conn = mocker.MagicMock()
+        run_cmd = mocker.patch(
+            "lava_dispatcher.actions.boot.fvp.CheckFVPVersionAction.run_cmd",
+            return_value=0,
+        )
         parsed_command = mocker.patch(
             "lava_dispatcher.actions.boot.fvp.CheckFVPVersionAction.parsed_command",
             return_value=fvp_version_output,
@@ -43,3 +47,21 @@ class TestCheckFVPVersionAction:
         action.logger.results.assert_called()
         entry = action.logger.results.call_args[0][0]
         assert entry["extra"]["fvp-version"] == "ARM V8 Foundation Platformr0p0 [1.2.3]"
+        run_cmd.assert_called_once_with(
+            [
+                "docker",
+                "image",
+                "inspect",
+                "--format",
+                "Image foundation:11.8 exists locally",
+                "foundation:11.8",
+            ],
+            allow_fail=True,
+        )
+        parsed_command.assert_called_once_with(
+            [
+                "sh",
+                "-c",
+                "docker run --rm foundation:11.8 /opt/model/Foundation_Platformpkg/models/Linux64_GCC-6.4/Foundation_Platform --version",
+            ]
+        )

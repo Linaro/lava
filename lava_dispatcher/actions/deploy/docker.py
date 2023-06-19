@@ -76,15 +76,25 @@ class DockerAction(Action):
 
     def run(self, connection, max_end_time):
         # Pull the image
+        pull = not self.local
         if self.local:
             cmd = (
                 ["docker"]
                 + self.remote
-                + ["image", "inspect", "--format", "image exists", self.image_name]
+                + [
+                    "image",
+                    "inspect",
+                    "--format",
+                    f"Image {self.image_name} exists locally",
+                    self.image_name,
+                ]
             )
-            error_msg = "Unable to inspect docker image '%s'" % self.image_name
-            self.run_cmd(cmd, error_msg=error_msg)
-        else:
+            if self.run_cmd(cmd, allow_fail=True):
+                self.logger.warning(
+                    "Unable to inspect docker image '%s'", self.image_name
+                )
+                pull = True
+        if pull:
             self.run_cmd(
                 ["docker"] + self.remote + ["pull", self.image_name],
                 error_msg="Unable to pull docker image '%s'" % self.image_name,

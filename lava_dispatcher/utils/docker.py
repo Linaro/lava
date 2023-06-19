@@ -142,8 +142,9 @@ class DockerRun:
         action.run_cmd(cmd)
 
     def prepare(self, action):
+        pull = not self.__local__
         if self.__local__:
-            action.run_cmd(
+            if action.run_cmd(
                 [
                     "docker",
                     "image",
@@ -152,8 +153,13 @@ class DockerRun:
                     f"Image {self.image} exists locally",
                     self.image,
                 ],
-            )
-        else:
+                allow_fail=True,
+            ):
+                action.logger.warning(
+                    "Unable to inspect docker image '%s'" % self.image
+                )
+                pull = True
+        if pull:
             action.run_cmd(["docker", "pull", self.image])
         self.__check_image_arch__()
 
