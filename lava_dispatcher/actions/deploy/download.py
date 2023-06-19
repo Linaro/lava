@@ -332,7 +332,7 @@ class DownloadHandler(Action):
         elif not self.params.get("compression", False):
             self.logger.debug("No compression specified")
 
-        def update_progress():
+        def update_progress(buff):
             nonlocal downloaded_size, last_value, md5, sha256, sha512
             downloaded_size += len(buff)
             (printing, new_value, msg) = progress(downloaded_size, last_value)
@@ -346,45 +346,19 @@ class DownloadHandler(Action):
         if compression and decompress_command:
             try:
                 with open(self.fname, "wb") as dwnld_file:
-                    proc = subprocess.Popen(  # nosec - internal.
-                        [decompress_command],
-                        stdin=subprocess.PIPE,
-                        stdout=dwnld_file,
-                        stderr=subprocess.PIPE,
+                    self.run_download_decompression_subprocess(
+                        dwnld_file,
+                        update_progress,
+                        decompress_command,
                     )
             except OSError as exc:
-                msg = "Unable to open %s: %s" % (self.fname, exc.strerror)
+                msg = f"Unable to open {self.fname}: {exc.strerror}"
                 self.logger.error(msg)
                 raise InfrastructureError(msg)
-
-            with proc.stdin as pipe:
-                for buff in self.reader():
-                    update_progress()
-                    try:
-                        pipe.write(buff)
-                    except BrokenPipeError as exc:
-                        error_message = (
-                            str(exc) + ": " + proc.stderr.read().decode("utf-8").strip()
-                        )
-                        self.logger.exception(error_message)
-                        msg = (
-                            "Make sure the 'compression' is corresponding "
-                            "to the image file type."
-                        )
-                        self.logger.error(msg)
-                        raise JobError(error_message)
-            compression_exitcode = proc.wait()
-            if compression_exitcode != 0:
-                exit_error_msg = (
-                    "Decompression subprocess exited with non-zero code: "
-                    + proc.stderr.read().decode("utf-8").strip()
-                )
-                self.logger.error(exit_error_msg)
-                raise JobError(exit_error_msg)
         else:
             with open(self.fname, "wb") as dwnld_file:
                 for buff in self.reader():
-                    update_progress()
+                    update_progress(buff)
                     dwnld_file.write(buff)
 
         # Log the download speed
@@ -503,6 +477,41 @@ class DownloadHandler(Action):
             ),
         }
         return connection
+
+    def run_download_decompression_subprocess(
+        self, dwnld_file, update_progress, decompress_command
+    ) -> None:
+        with subprocess.Popen(
+            [decompress_command],
+            stdin=subprocess.PIPE,
+            stdout=dwnld_file,
+            stderr=subprocess.PIPE,
+        ) as proc:
+            for buff in self.reader():
+                update_progress(buff)
+                try:
+                    proc.stdin.write(buff)
+                except BrokenPipeError as exc:
+                    error_message = (
+                        str(exc) + ": " + proc.stderr.read().decode("utf-8").strip()
+                    )
+                    self.logger.exception(error_message)
+                    msg = (
+                        "Make sure the 'compression' is corresponding "
+                        "to the image file type."
+                    )
+                    self.logger.error(msg)
+                    raise JobError(error_message)
+
+            proc.stdin.close()
+            compression_exitcode = proc.wait()
+            if compression_exitcode != 0:
+                exit_error_msg = (
+                    "Decompression subprocess exited with non-zero code: "
+                    + proc.stderr.read().decode("utf-8").strip()
+                )
+                self.logger.error(exit_error_msg)
+                raise JobError(exit_error_msg)
 
 
 class FileDownloadAction(DownloadHandler):
