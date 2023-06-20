@@ -55,6 +55,7 @@ example of full boot action from the test job definition:
     - setenv mmcdev 1
     - setenv bootpart 1:9
     - run mmcboot
+    ignore_kernel_messages: false
 
 .. contents::
    :backlinks: top
@@ -420,6 +421,20 @@ kernel errors.
 .. index:: boot method
 
 .. _boot_method:
+
+
+ignore_kernel_messages
+**********************
+
+Some test scenarios assume deliberately forcing kernel panic. This might
+interfere with LAVA failure detection. To prevent LAVA from stopping the
+job in such circumstance ``ignore_kernel_messages`` should be set to ``true``.
+LAVA won't be able to detect any other "legitimate" kernel crashes in such
+situation. Default value is false.
+
+.. index:: boot method
+
+.. _boot_ignore_kernel_messages:
 
 method
 ******
