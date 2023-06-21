@@ -1721,17 +1721,12 @@ class TestJob(models.Model):
 
     def __str__(self):
         job_type = "health_check" if self.health_check else "test"
-        r = "%s (%s) %s job" % (
-            self.get_state_display(),
-            self.get_health_display(),
-            job_type,
-        )
-        if self.actual_device:
-            r += " on %s" % (self.actual_device.hostname)
-        else:
-            if self.requested_device_type:
-                r += " for %s" % (self.requested_device_type.name)
-        r += " (%d)" % (self.id)
+        r = f"{self.get_state_display()} ({self.get_health_display()}) {job_type} job"
+        if self.actual_device_id:
+            r += f" on {self.actual_device_id}"
+        elif self.requested_device_type_id:
+            r += f" for {self.requested_device_type_id}"
+        r += f" ({self.id})"
         return r
 
     def get_absolute_url(self):
