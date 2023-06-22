@@ -394,9 +394,9 @@ def workers(request):
 
     worker_log_data = WorkersLogView(request, model=LogEntry, table_class=LogEntryTable)
     worker_log_ptable = LogEntryTable(
-        worker_log_data.get_table_data(), request=request, prefix="worker_log_"
+        worker_log_data.get_table_data(), prefix="worker_log_"
     )
-    RequestConfig(request, paginate={"per_page": worker_log_ptable.length}).configure(
+    request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
         worker_log_ptable
     )
 
@@ -662,9 +662,9 @@ def mydevices_health_history_log(request):
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
     devices_log_ptable = DeviceLogEntryTable(
-        devices_log_data.get_table_data(), request=request, prefix="devices_log_"
+        devices_log_data.get_table_data(), prefix="devices_log_"
     )
-    RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(
+    request_config(request, paginate={"per_page": devices_log_ptable.length}).configure(
         devices_log_ptable
     )
     return render(
@@ -1031,9 +1031,9 @@ def device_type_health_history_log(request, pk):
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
     devices_log_ptable = DeviceLogEntryTable(
-        devices_log_data.get_table_data(), request=request, prefix="devices_log_"
+        devices_log_data.get_table_data(), prefix="devices_log_"
     )
-    RequestConfig(request, paginate={"per_page": devices_log_ptable.length}).configure(
+    request_config(request, paginate={"per_page": devices_log_ptable.length}).configure(
         devices_log_ptable
     )
 
@@ -2471,9 +2471,9 @@ def device_detail(request, pk):
         device, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
     device_log_ptable = DeviceLogEntryTable(
-        device_log_data.get_table_data(), request=request, prefix="device_log_"
+        device_log_data.get_table_data(), prefix="device_log_"
     )
-    RequestConfig(request, paginate={"per_page": device_log_ptable.length}).configure(
+    request_config(request, paginate={"per_page": device_log_ptable.length}).configure(
         device_log_ptable
     )
 
@@ -2638,9 +2638,9 @@ def worker_detail(request, pk):
         worker, request, model=LogEntry, table_class=LogEntryTable
     )
     worker_log_ptable = LogEntryTable(
-        worker_log_data.get_table_data(), request=request, prefix="worker_log_"
+        worker_log_data.get_table_data(), prefix="worker_log_"
     )
-    RequestConfig(request, paginate={"per_page": worker_log_ptable.length}).configure(
+    request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
         worker_log_ptable
     )
 

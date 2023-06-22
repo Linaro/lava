@@ -391,6 +391,10 @@ class LogEntryTable(LavaTable):
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
 
+    def __init__(self, *args, **kwargs):
+        kwargs["template_name"] = "lazytables.html"
+        super().__init__(*args, **kwargs)
+
     def render_change_message(self, record):
         message = record.get_change_message()
         if record.is_change():
