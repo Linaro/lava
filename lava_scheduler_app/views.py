@@ -281,9 +281,7 @@ class ActiveJobsTableView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
         query = query.filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 class DeviceTableView(JobTableView):
@@ -1539,9 +1537,7 @@ class MyJobsView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
         query = query.filter(submitter=self.request.user)
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 class MyActiveJobsView(JobTableView):
@@ -1550,9 +1546,7 @@ class MyActiveJobsView(JobTableView):
         query = query.filter(submitter=self.request.user).filter(
             state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING]
         )
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 class MyQueuedJobsView(JobTableView):
@@ -1561,9 +1555,7 @@ class MyQueuedJobsView(JobTableView):
         query = query.filter(submitter=self.request.user).filter(
             state=TestJob.STATE_SUBMITTED
         )
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 class MyErrorJobsView(JobTableView):
@@ -1585,9 +1577,7 @@ class MyErrorJobsView(JobTableView):
 class LongestJobsView(JobTableView):
     def get_queryset(self):
         jobs = (
-            TestJob.objects.select_related(
-                "actual_device", "requested_device_type", "submitter"
-            )
+            TestJob.objects.select_related("actual_device", "submitter")
             .visible_by_user(self.request.user)
             .filter(state__in=[TestJob.STATE_RUNNING, TestJob.STATE_CANCELING])
         )
@@ -1600,15 +1590,13 @@ class FavoriteJobsView(JobTableView):
 
         query = visible_jobs_with_custom_sort(self.request.user)
         query = query.filter(testjobuser__user=user, testjobuser__is_favorite=True)
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 class AllJobsView(JobTableView):
     def get_queryset(self):
         return visible_jobs_with_custom_sort(self.request.user).select_related(
-            "actual_device", "requested_device_type", "submitter"
+            "actual_device", "submitter"
         )
 
 
@@ -2716,7 +2704,7 @@ class HealthCheckJobsView(JobTableView):
         return (
             visible_jobs_with_custom_sort(self.request.user)
             .filter(health_check=True)
-            .select_related("actual_device", "requested_device_type", "submitter")
+            .select_related("actual_device", "submitter")
         )
 
 
@@ -2751,9 +2739,7 @@ class QueueJobsView(JobTableView):
     def get_queryset(self):
         query = visible_jobs_with_custom_sort(self.request.user)
         query = query.filter(state=TestJob.STATE_SUBMITTED)
-        return query.select_related(
-            "actual_device", "requested_device_type", "submitter"
-        )
+        return query.select_related("actual_device", "submitter")
 
 
 @BreadCrumb("Queue", parent=job_list)
