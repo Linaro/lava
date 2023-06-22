@@ -77,15 +77,15 @@ class JobActualDeviceColumMixin(LavaTable):
         else:
             return "-"
         device_type = None
-        if record.requested_device_type:
-            device_type = record.requested_device_type
+        if record.requested_device_type_id:
+            device_type = record.requested_device_type_id
         if not device_type:
             return "Error"
         return retval
 
 
 class JobRequestedDeviceTypeColumnMixin(LavaTable):
-    requested_device_type = tables.Column(
+    requested_device_type_id = tables.Column(
         verbose_name="Device type",
         linkify=(
             "lava.scheduler.device_type.detail",
@@ -168,7 +168,7 @@ class AllJobsTable(
             "actions",
             "state",
             "actual_device",
-            "requested_device_type",
+            "requested_device_type_id",
             "description",
             "submitter",
             "submit_time",
@@ -206,7 +206,7 @@ class ActiveJobsTable(
             "state",
             "priority",
             "actual_device",
-            "requested_device_type",
+            "requested_device_type_id",
             "health",
             "description",
             "submitter",
@@ -249,7 +249,7 @@ class FailedJobsTable(
             "state",
             "actual_device",
             "submit_time",
-            "requested_device_type",
+            "requested_device_type_id",
             "duration",
             "failure_tags",
             "failure_comment",
@@ -286,7 +286,7 @@ class LongestJobsTable(
             "actions",
             "state",
             "actual_device",
-            "requested_device_type",
+            "requested_device_type_id",
             "description",
             "submitter",
             "submit_time",
@@ -357,7 +357,7 @@ class QueuedJobsTable(
         sequence = (
             "id",
             "actions",
-            "requested_device_type",
+            "requested_device_type_id",
             "description",
             "submitter",
             "submit_time",
