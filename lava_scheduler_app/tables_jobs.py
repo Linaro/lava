@@ -7,13 +7,14 @@ from __future__ import annotations
 
 import django_tables2 as tables
 from django.conf import settings
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
 from lava_common.yaml import yaml_safe_dump
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import Device, TestJob
-from lava_scheduler_app.tables import TagsColumn, pklink
+from lava_scheduler_app.tables import TagsColumn
 from lava_server.lavatable import LavaTable
 
 
@@ -65,13 +66,19 @@ class JobStateColumnMixin(LavaTable):
 
 
 class JobActualDeviceColumMixin(LavaTable):
-    actual_device = tables.Column(
+    actual_device_id = tables.Column(
         verbose_name="Device",
     )
 
     def render_actual_device(self, record):
-        if record.actual_device:
-            retval = pklink(record.actual_device)
+        if record.actual_device_id:
+            retval = format_html(
+                '<a href="{}" title="Device summary">{}</a>',
+                reverse(
+                    "lava.scheduler.device.detail", args=(record.actual_device_id,)
+                ),
+                record.actual_device_id,
+            )
         elif record.dynamic_connection:
             return "connection"
         else:
@@ -167,7 +174,7 @@ class AllJobsTable(
             "id",
             "actions",
             "state",
-            "actual_device",
+            "actual_device_id",
             "requested_device_type_id",
             "description",
             "submitter",
@@ -205,7 +212,7 @@ class ActiveJobsTable(
             "actions",
             "state",
             "priority",
-            "actual_device",
+            "actual_device_id",
             "requested_device_type_id",
             "health",
             "description",
@@ -247,7 +254,7 @@ class FailedJobsTable(
             "id",
             "actions",
             "state",
-            "actual_device",
+            "actual_device_id",
             "submit_time",
             "requested_device_type_id",
             "duration",
@@ -285,7 +292,7 @@ class LongestJobsTable(
             "id",
             "actions",
             "state",
-            "actual_device",
+            "actual_device_id",
             "requested_device_type_id",
             "description",
             "submitter",
@@ -309,7 +316,7 @@ class DeviceTypeJobsTable(
         sequence = (
             "id",
             "actions",
-            "actual_device",
+            "actual_device_id",
             "state",
             "description",
             "submitter",
