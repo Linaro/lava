@@ -15,7 +15,7 @@ from json import dumps as json_dumps
 import zmq
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_init, post_save, pre_delete, pre_save
+from django.db.models.signals import post_init, post_save, pre_delete
 
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.tasks import async_send_notifications
@@ -239,7 +239,7 @@ post_init.connect(
     weak=False,
     dispatch_uid="testjob_init_handler",
 )
-pre_save.connect(
+post_save.connect(
     testjob_notifications,
     sender=TestJob,
     weak=False,
