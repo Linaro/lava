@@ -193,40 +193,32 @@ class TestRun:
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07.1")
 
     def test_get_image_development(self, get_image, Popen, options, mocker):
+        if platform.machine() == "x86_64":
+            arch = "amd64"
+        elif platform.machine() == "aarch64":
+            arch = "aarch64"
+        else:
+            raise NotImplemented()
         mocker.patch("time.sleep")
         mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
         has_image = mocker.patch(
             "lava_dispatcher_host.docker_worker.has_image", return_value=False
         )
         lava_dispatcher_host.docker_worker.run("2020.07.0010.g12371263", options)
-        if platform.machine() == "x86_64":
-            get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.0010.g12371263"
-            )
-        elif platform.machine() == "aarch64":
-            get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2020.07.0010.g12371263"
-            )
-        else:
-            raise NotImplemented()
+        get_image.assert_called_with(
+            f"hub.lavasoftware.org/lava/lava/{arch}/lava-dispatcher:2020.07.0010.g12371263"
+        )
         has_image.assert_called_with(
-            "registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2020.07.0010.g12371263",
+            f"registry.gitlab.com/lava/lava/{arch}/lava-dispatcher:2020.07.0010.g12371263",
             manifest=True,
         )
 
         lava_dispatcher_host.docker_worker.run("2020.07.2.0010.g12371263", options)
-        if platform.machine() == "x86_64":
-            get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:2020.07.2.0010.g12371263"
-            )
-        elif platform.machine() == "aarch64":
-            get_image.assert_called_with(
-                "hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:2020.07.2.0010.g12371263"
-            )
-        else:
-            raise NotImplemented()
+        get_image.assert_called_with(
+            f"hub.lavasoftware.org/lava/lava/{arch}/lava-dispatcher:2020.07.2.0010.g12371263"
+        )
         has_image.assert_called_with(
-            "registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2020.07.2.0010.g12371263",
+            f"registry.gitlab.com/lava/lava/{arch}/lava-dispatcher:2020.07.2.0010.g12371263",
             manifest=True,
         )
 
