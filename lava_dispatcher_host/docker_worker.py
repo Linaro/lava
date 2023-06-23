@@ -98,10 +98,10 @@ def filter_options(options, image):
     return ret
 
 
-def has_image(image):
+def has_image(image, manifest=False):
     try:
         subprocess.check_output(
-            ["docker", "image", "inspect", image],
+            ["docker", "manifest" if manifest else "image", "inspect", image],
             stderr=subprocess.DEVNULL,
         )
         return True
@@ -114,6 +114,7 @@ def get_image(image):
         return True
 
     try:
+        LOG.debug("Pulling image %s", image)
         subprocess.check_output(["docker", "pull", image], stderr=subprocess.STDOUT)
         return True
     except subprocess.CalledProcessError as exc:
@@ -184,12 +185,17 @@ def run(version, options):
         version = version.replace("+", ".")
         # development
         if platform.machine() == "x86_64":
-            image = f"hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:{version}"
+            suffix = f"/lava/lava/amd64/lava-dispatcher:{version}"
         elif platform.machine() == "aarch64":
-            image = f"hub.lavasoftware.org/lava/lava/aarch64/lava-dispatcher:{version}"
+            suffix = f"/lava/lava/aarch64/lava-dispatcher:{version}"
         else:
-            print("ERROR: unsupported architecture '{platform.machine()}'")
+            LOG.error("Unsupported architecture '%s'", platform.machine())
             sys.exit(1)
+
+        if has_image(f"registry.gitlab.com{suffix}", manifest=True):
+            image = f"registry.gitlab.com{suffix}"
+        else:
+            image = f"hub.lavasoftware.org{suffix}"
     else:
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"

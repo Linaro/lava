@@ -195,6 +195,9 @@ class TestRun:
     def test_get_image_development(self, get_image, Popen, options, mocker):
         mocker.patch("time.sleep")
         mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
+        has_image = mocker.patch(
+            "lava_dispatcher_host.docker_worker.has_image", return_value=False
+        )
         lava_dispatcher_host.docker_worker.run("2020.07.0010.g12371263", options)
         if platform.machine() == "x86_64":
             get_image.assert_called_with(
@@ -206,6 +209,10 @@ class TestRun:
             )
         else:
             raise NotImplemented()
+        has_image.assert_called_with(
+            "registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2020.07.0010.g12371263",
+            manifest=True,
+        )
 
         lava_dispatcher_host.docker_worker.run("2020.07.2.0010.g12371263", options)
         if platform.machine() == "x86_64":
@@ -218,6 +225,10 @@ class TestRun:
             )
         else:
             raise NotImplemented()
+        has_image.assert_called_with(
+            "registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2020.07.2.0010.g12371263",
+            manifest=True,
+        )
 
 
 class TestOptions:
