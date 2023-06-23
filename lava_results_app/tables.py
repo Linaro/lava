@@ -104,11 +104,8 @@ class ResultsIndexTable(ResultsTable):
     logged = tables.Column(accessor="job", verbose_name="Logged")
 
     class Meta(LavaTable.Meta):
+        template_name = "lazytables.html"
         searches = {"name": "contains"}
-
-    def __init__(self, *args, **kwargs):
-        kwargs["template_name"] = "lazytables.html"
-        super().__init__(*args, **kwargs)
 
 
 class TestJobResultsTable(ResultsTable):

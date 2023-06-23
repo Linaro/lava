@@ -120,10 +120,6 @@ class JobErrorsTable(LavaTable):
     error_msg = tables.Column(empty_values=[""])
     error_msg.orderable = False
 
-    def __init__(self, *args, **kwargs):
-        kwargs["template_name"] = "lazytables.html"
-        super().__init__(*args, **kwargs)
-
     def render_end_time(self, record):
         if record.suite.job is None:
             return ""
@@ -154,6 +150,7 @@ class JobErrorsTable(LavaTable):
 
     class Meta(LavaTable.Meta):
         model = TestCase
+        template_name = "lazytables.html"
         fields = ("job", "end_time", "device", "error_type", "error_msg")
         sequence = ("job", "end_time", "device", "error_type", "error_msg")
 
@@ -391,10 +388,6 @@ class LogEntryTable(LavaTable):
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
 
-    def __init__(self, *args, **kwargs):
-        kwargs["template_name"] = "lazytables.html"
-        super().__init__(*args, **kwargs)
-
     def render_change_message(self, record):
         message = record.get_change_message()
         if record.is_change():
@@ -412,6 +405,7 @@ class LogEntryTable(LavaTable):
 
     class Meta(LavaTable.Meta):
         model = LogEntry
+        template_name = "lazytables.html"
         fields = ("action_time", "object_id", "user", "change_message")
         sequence = ("action_time", "object_id", "user", "change_message")
 
