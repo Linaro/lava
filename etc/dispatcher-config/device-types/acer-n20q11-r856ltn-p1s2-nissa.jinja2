@@ -1,0 +1,6 @@
+{# device_type = 'acer-n20q11-r856ltn-p1s2-nissa' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Craask...') %}
+{% set bootloader_prompt = bootloader_prompt | default('nissa:') %}
+{% set console_device = console_device | default('ttyS0') %}
