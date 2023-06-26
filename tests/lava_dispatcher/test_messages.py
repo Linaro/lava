@@ -271,3 +271,20 @@ class TestBootMessages(LavaDispatcherTestCase):
             fail_msg="",
         )
         self.assertEqual(len(results), 134)
+
+    def test_kernel_panic_and_reset_overlapped(self):
+        logfile = os.path.join(
+            os.path.dirname(__file__), "kernel-panic-and-reset-overlapped.txt"
+        )
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = FakeConnection(logfile, message_list)
+        custom_fail_msg = r"coreboot-.*bootblock starting"
+        with self.assertRaises(JobError):
+            LinuxKernelMessages.parse_failures(
+                connection,
+                action=Action(),
+                max_end_time=self.max_end_time,
+                fail_msg=custom_fail_msg,
+            )

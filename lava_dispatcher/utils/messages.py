@@ -161,6 +161,13 @@ class LinuxKernelMessages:
                 connection.prompt_str = [
                     KERNEL_MESSAGES[index]["end"]
                 ] + previous_prompts[len(KERNEL_MESSAGES) :]
+
+                if fail_msg:
+                    connection.prompt_str = [fail_msg] + connection.prompt_str
+                    action.logger.debug(
+                        "connection.prompt_str: %s", connection.prompt_str
+                    )
+
                 try:
                     sub_index = connection.wait(max_end_time, max_searchwindowsize=True)
                 except (pexpect.EOF, TestError):
