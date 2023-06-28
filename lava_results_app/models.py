@@ -34,6 +34,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from psycopg2.extensions import quote_ident
 
 from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_load
@@ -98,46 +99,64 @@ class QueryMaterializedView(MaterializedView):
     class Meta:
         abstract = True
 
-    CREATE_VIEW = "CREATE MATERIALIZED VIEW %s%s AS %s;"
-    DROP_VIEW = "DROP MATERIALIZED VIEW IF EXISTS %s%s;"
-    REFRESH_VIEW = "REFRESH MATERIALIZED VIEW %s%s;"
-    VIEW_EXISTS = "SELECT EXISTS(SELECT * FROM pg_class WHERE relname='%s%s');"
     QUERY_VIEW_PREFIX = "query_"
 
     @classmethod
     def create(cls, query):
         # Check if view for this query exists.
-        cursor = connection.cursor()
-        if not cls.view_exists(query.id):  # create view
+        if cls.view_exists(query.id):
+            return
+
+        with connection.cursor() as cursor:
             sql, params = Query.get_queryset(
                 query.content_type, query.querycondition_set.all(), query.limit
             ).query.sql_with_params()
 
-            sql = sql.replace("%s", "'%s'")
-            query_str = sql % params
-
+            query_id_str = f"{cls.QUERY_VIEW_PREFIX}{query.id}"
+            # Must be quoted separately as otherwise
+            # will be quoted with single quotes making
+            # it incompatible with table_name identifier
+            query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
             # TODO: handle potential exceptions here. what to do if query
             # view is not created? - new field update_status?
-            query_str = cls.CREATE_VIEW % (cls.QUERY_VIEW_PREFIX, query.id, query_str)
-            cursor.execute(query_str)
+            cursor.execute(
+                f"CREATE MATERIALIZED VIEW {query_id_str_quoted} AS {sql}",
+                params,
+            )
 
     @classmethod
     def refresh(cls, query_id):
-        refresh_sql = cls.REFRESH_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
-        cursor = connection.cursor()
-        cursor.execute(refresh_sql)
+        with connection.cursor() as cursor:
+            query_id_str = f"{cls.QUERY_VIEW_PREFIX}{query_id}"
+            # Must be quoted separately as otherwise
+            # will be quoted with single quotes making
+            # it incompatible with table_name identifier
+            query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
+            cursor.execute(
+                f"REFRESH MATERIALIZED VIEW {query_id_str_quoted}",
+            )
 
     @classmethod
     def drop(cls, query_id):
-        drop_sql = cls.DROP_VIEW % (cls.QUERY_VIEW_PREFIX, query_id)
-        cursor = connection.cursor()
-        cursor.execute(drop_sql)
+        with connection.cursor() as cursor:
+            query_id_str = f"{cls.QUERY_VIEW_PREFIX}{query_id}"
+            # Must be quoted separately as otherwise
+            # will be quoted with single quotes making
+            # it incompatible with table_name identifier
+            query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
+            cursor.execute(
+                f"DROP MATERIALIZED VIEW IF EXISTS {query_id_str_quoted}",
+            )
 
     @classmethod
     def view_exists(cls, query_id):
-        cursor = connection.cursor()
-        cursor.execute(cls.VIEW_EXISTS % (cls.QUERY_VIEW_PREFIX, query_id))
-        return cursor.fetchone()[0]
+        with connection.cursor() as cursor:
+            query_id_str = f"{cls.QUERY_VIEW_PREFIX}{query_id}"
+            cursor.execute(
+                "SELECT EXISTS(SELECT 1 FROM pg_class WHERE relname=%s)",
+                (query_id_str,),
+            )
+            return cursor.fetchone()[0]
 
     def get_queryset(self):
         return QueryMaterializedView.objects.all()
