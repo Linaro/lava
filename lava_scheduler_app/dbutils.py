@@ -102,6 +102,46 @@ def testjob_submission(job_definition, user, original_job=None):
     return job
 
 
+def device_summary():
+    device_stats = (
+        Device.objects.filter(
+            ~Q(health=Device.HEALTH_RETIRED),
+        )
+        .select_related("last_health_report_job")
+        .aggregate(
+            num_not_retired=Count("pk"),
+            num_online=Count(
+                "pk",
+                filter=(
+                    Q(health__in=(Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN))
+                    & Q(worker_host__state=Worker.STATE_ONLINE)
+                ),
+            ),
+            health_checks_total=Count(
+                "pk",
+                last_health_report_job__isnull=False,
+            ),
+            health_checks_complete=Count(
+                "pk",
+                filter=(
+                    Q(last_health_report_job__isnull=False)
+                    & Q(last_health_report_job__state=TestJob.STATE_FINISHED)
+                ),
+            ),
+            active_devices=Count(
+                "pk",
+                filter=Q(state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING)),
+            ),
+        )
+    )
+
+    running_jobs_count = TestJob.objects.filter(
+        state=TestJob.STATE_RUNNING, actual_device__isnull=False
+    ).count()
+
+    return (device_stats, running_jobs_count)
+
+
 def device_type_summary(user):
     devices = (
         Device.objects.filter(

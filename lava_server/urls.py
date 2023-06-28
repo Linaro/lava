@@ -30,6 +30,7 @@ from lava_server.views import (
     healthz,
     index,
     me,
+    prometheus,
     update_irc_settings,
     update_remote_auth,
     update_table_length_setting,
@@ -92,6 +93,11 @@ urlpatterns = [
         rf"^{settings.MOUNT_POINT}v1/healthz/$",
         healthz,
         name="lava.healthz",
+    ),
+    url(
+        rf"^{settings.MOUNT_POINT}v1/prometheus/$",
+        prometheus,
+        name="lava.prometheus",
     ),
     url(
         rf"^{settings.MOUNT_POINT}$",
