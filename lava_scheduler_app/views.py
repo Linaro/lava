@@ -210,6 +210,17 @@ class FailedJobsTableView(JobTableView):
             if end:
                 end = now + datetime.timedelta(int(end))
                 jobs = jobs.filter(start_time__range=(start, end))
+
+        metadata_subquery = Subquery(
+            TestCase.objects.filter(
+                suite__job=OuterRef("pk"),
+                result=TestCase.RESULT_FAIL,
+                suite__name="lava",
+                name="job",
+            ).values("metadata")
+        )
+
+        jobs = jobs.annotate(failure_metadata=metadata_subquery)
         return jobs
 
 

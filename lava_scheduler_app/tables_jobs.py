@@ -11,8 +11,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from lava_common.yaml import yaml_safe_dump
-from lava_results_app.models import TestCase
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.tables import TagsColumn
 from lava_server.lavatable import LavaTable
@@ -234,18 +233,13 @@ class FailedJobsTable(
     def render_failure_comment(self, record):
         if record.failure_comment:
             return record.failure_comment
-        try:
-            failure = TestCase.objects.get(
-                suite__job=record,
-                result=TestCase.RESULT_FAIL,
-                suite__name="lava",
-                name="job",
-            )
-        except TestCase.DoesNotExist:
+
+        failure_metadata = record.failure_metadata
+        if not failure_metadata:
             return ""
-        action_metadata = failure.action_metadata
-        if action_metadata is not None and "error_msg" in action_metadata:
-            return yaml_safe_dump(failure.action_metadata["error_msg"])
+
+        if "error_msg" in failure_metadata:
+            return yaml_safe_dump(yaml_safe_load(failure_metadata)["error_msg"])
         else:
             return ""
 
