@@ -350,10 +350,11 @@ class CallQemuAction(Action):
             self.docker = docker = DockerRun.from_parameters(
                 self.parameters["docker"], self.job
             )
-            docker.name(
-                "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
-                random_suffix=True,
-            )
+            if not self.parameters["docker"].get("container_name"):
+                docker.name(
+                    "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
+                    random_suffix=True,
+                )
             docker.interactive()
             docker.tty()
             if "QEMU_AUDIO_DRV" in os.environ:
