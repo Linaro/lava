@@ -69,7 +69,7 @@ class JobActualDeviceColumMixin(LavaTable):
         verbose_name="Device",
     )
 
-    def render_actual_device(self, record):
+    def render_actual_device_id(self, record):
         if record.actual_device_id:
             retval = format_html(
                 '<a href="{}" title="Device summary">{}</a>',
