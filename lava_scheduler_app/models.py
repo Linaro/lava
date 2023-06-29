@@ -1303,6 +1303,36 @@ class TestJob(models.Model):
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
         default_permissions = ("change", "delete")
+        indexes = (
+            models.Index(fields=("-submit_time",)),
+            models.Index(fields=("-start_time",)),
+            models.Index(fields=("-end_time",)),
+            models.Index(
+                name="device_type_jobs_index",
+                fields=("requested_device_type", "-submit_time"),
+            ),
+            models.Index(
+                name="device_jobs_index", fields=("actual_device", "-submit_time")
+            ),
+            models.Index(
+                name="current_job_prefetch_index",
+                fields=("actual_device",),
+                condition=(
+                    ~Q(state=5)  # HACK: refers to TestJob.STATE_FINISHED
+                    & Q(actual_device__isnull=False)
+                ),
+            ),
+            models.Index(
+                fields=("requested_device_type", "id"),
+                name="job_queued_per_device_type_idx",
+                condition=Q(state=0),  # HACK: refers to TestJob.STATE_SUBMITTED
+            ),
+            models.Index(
+                name="health_checks_count_idx",
+                fields=("requested_device_type", "-submit_time", "id", "health"),
+                condition=Q(health_check=True),
+            ),
+        )
 
     # Permission strings. Not real permissions.
     VIEW_PERMISSION = "lava_scheduler_app.view_testjob"
@@ -1400,7 +1430,10 @@ class TestJob(models.Model):
     )
 
     submit_time = models.DateTimeField(
-        verbose_name=_("Submit time"), auto_now=False, auto_now_add=True, db_index=True
+        verbose_name=_("Submit time"),
+        auto_now=False,
+        auto_now_add=True,
+        db_index=False,  # Descending index defined in Meta
     )
     start_time = models.DateTimeField(
         verbose_name=_("Start time"),
@@ -1409,6 +1442,7 @@ class TestJob(models.Model):
         null=True,
         blank=True,
         editable=False,
+        db_index=False,  # Descending index defined in Meta
     )
     end_time = models.DateTimeField(
         verbose_name=_("End time"),
@@ -1417,6 +1451,7 @@ class TestJob(models.Model):
         null=True,
         blank=True,
         editable=False,
+        db_index=False,  # Descending index defined in Meta
     )
 
     @property
