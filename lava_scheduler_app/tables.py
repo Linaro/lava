@@ -14,7 +14,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
-from lava_results_app.models import TestCase
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
 
@@ -109,50 +109,56 @@ def visible_jobs_with_custom_sort(user):
 
 
 class JobErrorsTable(LavaTable):
-    job = tables.Column(verbose_name="Job", empty_values=[""])
-    job.orderable = False
-    end_time = tables.DateColumn(format="Nd, g:ia")
-    end_time.orderable = False
-    device = tables.Column(empty_values=[""])
-    device.orderable = False
-    error_type = tables.Column(empty_values=[""])
-    error_type.orderable = False
-    error_msg = tables.Column(empty_values=[""])
-    error_msg.orderable = False
-
-    def render_end_time(self, record):
-        if record.suite.job is None:
-            return ""
-        return record.suite.job.end_time
-
-    def render_device(self, record):
-        if record.suite.job.actual_device is None:
-            return ""
-        else:
-            return format_html(
-                '<a href="{}" title="device details">{}</a>',
-                record.suite.job.actual_device.get_absolute_url(),
-                record.suite.job.actual_device.hostname,
-            )
+    id = tables.Column(
+        verbose_name="Job",
+        orderable=False,
+        linkify=("lava.scheduler.job.detail", (tables.A("pk"),)),
+    )
+    end_time = tables.DateColumn(
+        format="Nd, g:ia",
+        orderable=False,
+        default="",
+    )
+    actual_device_id = tables.Column(
+        verbose_name="Device",
+        orderable=False,
+        linkify=("lava.scheduler.device.detail", (tables.A("actual_device_id"),)),
+        default="",
+    )
+    error_type = tables.Column(
+        accessor="failure_metadata_str",
+        orderable=False,
+    )
+    error_msg = tables.Column(
+        accessor="failure_metadata_str",
+        orderable=False,
+    )
 
     def render_error_type(self, record):
-        return record.action_metadata["error_type"]
+        try:
+            failure_metadata = record.failure_metadata_dict
+        except AttributeError:
+            failure_metadata = record.failure_metadata_dict = yaml_safe_load(
+                record.failure_metadata_str
+            )
+
+        return failure_metadata.get("error_type")
 
     def render_error_msg(self, record):
-        return record.action_metadata["error_msg"]
+        try:
+            failure_metadata = record.failure_metadata_dict
+        except AttributeError:
+            failure_metadata = record.failure_metadata_dict = yaml_safe_load(
+                record.failure_metadata_str
+            )
 
-    def render_job(self, record):
-        return format_html(
-            '<a href="{}">{}</a>',
-            record.suite.job.get_absolute_url(),
-            record.suite.job.pk,
-        )
+        return failure_metadata.get("error_msg")
 
     class Meta(LavaTable.Meta):
-        model = TestCase
+        model = TestJob
         template_name = "lazytables.html"
-        fields = ("job", "end_time", "device", "error_type", "error_msg")
-        sequence = ("job", "end_time", "device", "error_type", "error_msg")
+        fields = ()
+        sequence = ("id", "end_time", "actual_device_id", "error_type", "error_msg")
 
 
 class TagsColumn(tables.Column):
