@@ -17,6 +17,7 @@ from django.db import transaction
 from django.db.models import Count
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_results_app.models import TestCase
 from lava_scheduler_app.dbutils import (
     active_device_types,
     device_type_summary,
@@ -793,6 +794,21 @@ class SchedulerAPI(ExposedV2API):
                 403, "Job '%s' not available to user '%s'." % (job_id, self.user)
             )
 
+        metadata = None
+        try:
+            job_case = TestCase.objects.get(
+                suite__job=job, suite__name="lava", name="job"
+            )
+        except TestCase.DoesNotExist:
+            job_case = None
+        if job_case:
+            metadata = job_case.action_metadata
+        if not metadata:
+            # if job_case exists but metadata is still None due to job error
+            metadata = {}
+
+        job.error_msg = metadata.get("error_msg")
+        job.error_type = metadata.get("error_type")
         job.status = job.get_legacy_status_display()
         job.state = job.get_state_display()
         job.health = job.get_health_display()

@@ -390,6 +390,18 @@ class SchedulerJobsAPI(ExposedV2API):
             visibility = "Group (%s)" % ", ".join(
                 [g.name for g in job.viewing_groups.all()]
             )
+        metadata = None
+        try:
+            job_case = TestCase.objects.get(
+                suite__job=job, suite__name="lava", name="job"
+            )
+        except TestCase.DoesNotExist:
+            job_case = None
+        if job_case:
+            metadata = job_case.action_metadata
+        if not metadata:
+            # if job_case exists but metadata is still None due to job error
+            metadata = {}
 
         return {
             "id": job.display_id,
@@ -407,6 +419,8 @@ class SchedulerJobsAPI(ExposedV2API):
             "tags": [t.name for t in job.tags.all()],
             "visibility": visibility,
             "failure_comment": job.failure_comment,
+            "error_msg": metadata.get("error_msg"),
+            "error_type": metadata.get("error_type"),
         }
 
     def resubmit(self, job_id):
