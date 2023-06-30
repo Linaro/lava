@@ -9,7 +9,6 @@ import django_tables2 as tables
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
-from lava_scheduler_app.tables import RestrictedIDLinkColumn
 from lava_server.lavatable import LavaTable
 
 
@@ -24,15 +23,6 @@ def results_pklink(record):
         '<a href="%s" title="test job summary">%s</a>&nbsp;%s%s'
         % (record.get_absolute_url(), escape(job_id), complete, button)
     )
-
-
-class IndexResultsColumn(RestrictedIDLinkColumn):
-    def render(self, record, table=None):
-        user = table.context.get("request").user
-        if record.job.can_view(user):
-            return results_pklink(record.job)
-        else:
-            return record.job.pk
 
 
 class ResultsTable(LavaTable):
