@@ -317,16 +317,29 @@ class DeviceTableView(JobTableView):
 
 class JobErrorsView(LavaView):
     def get_queryset(self):
-        q = TestCase.objects.filter(
-            suite__name="lava", result=TestCase.RESULT_FAIL
-        ).visible_by_user(self.request.user)
-        q = q.filter(
-            Q(metadata__contains="error_type: Configuration")
-            | Q(metadata__contains="error_type: Infrastructure")
-            | Q(metadata__contains="error_type: Bug")
+        metadata_subquery = Subquery(
+            TestCase.objects.filter(
+                Q(metadata__contains="error_type: Configuration")
+                | Q(metadata__contains="error_type: Infrastructure")
+                | Q(metadata__contains="error_type: Bug"),
+                suite__job=OuterRef("pk"),
+                result=TestCase.RESULT_FAIL,
+                suite__name="lava",
+                name="job",
+            ).values("metadata")[:1]
+            # HACK: Add LIMIT to fix edge case
+            # when job has multiple failure testcases
         )
-        q = q.select_related("suite", "suite__job__actual_device")
-        return q.order_by("-suite__job__id")
+
+        return (
+            visible_jobs_with_custom_sort(self.request.user)
+            .filter(health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED))
+            .annotate(
+                failure_metadata_str=metadata_subquery,
+            )
+            .filter(failure_metadata_str__isnull=False)
+            .order_by("-end_time")
+        )
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
