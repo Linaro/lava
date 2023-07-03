@@ -35,7 +35,7 @@ logging.Formatter.convert = time.gmtime
 LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
-PAT = re.compile(r"\d+\.\d+(\.\d+){0,1}(\.|\+)\d{4}\.g[abcdef\d]+")
+RELEASE_PAT = re.compile(r"^\d+\.\d+(\.\d+){0,1}$")
 
 
 ###########
@@ -180,7 +180,10 @@ class Terminate(RuntimeError):
 
 
 def run(version, options):
-    if PAT.match(version):
+    if RELEASE_PAT.match(version):
+        # released version
+        image = f"lavasoftware/lava-dispatcher:{version}"
+    else:
         # Replace "+" by "." which is not accepted by docker in a tag
         version = version.replace("+", ".")
         # development
@@ -196,9 +199,6 @@ def run(version, options):
             image = f"registry.gitlab.com{suffix}"
         else:
             image = f"hub.lavasoftware.org{suffix}"
-    else:
-        # released version
-        image = f"lavasoftware/lava-dispatcher:{version}"
 
     LOG.info("Using image %s", image)
     rand = "".join(random.choice(string.hexdigits) for c in range(5))
