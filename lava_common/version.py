@@ -28,7 +28,7 @@ def version(ref=None):
             return describe
         else:
             d = m.groupdict()
-            return f"{d['tag']}-dev{int(d['commits']):04}"
+            return f"{d['tag']}.dev{int(d['commits']):04}"
     else:
         return (root / "lava_common" / "VERSION").read_text(encoding="utf-8").rstrip()
 
