@@ -2200,8 +2200,10 @@ def job_log_file_plain(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
     try:
         data = logs_instance.open(job)
+        size = logs_instance.size(job)
         response = FileResponse(data, content_type="application/yaml")
         response["Content-Disposition"] = "attachment; filename=job_%d.log" % job.id
+        response["Content-Length"] = size
         return response
     except OSError:
         raise Http404
