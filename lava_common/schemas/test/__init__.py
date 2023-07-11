@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
 from lava_common.schemas import action
 
 

@@ -37,7 +37,7 @@ class ServerWrapper:
         logger.info(f"Exiting due to {signal}")
 
     async def start(self):
-        logger.info(f"Starting")
+        logger.info("Starting")
         loop = asyncio.get_running_loop()
 
         sd_sockets = os.getenv("LISTEN_FDS")

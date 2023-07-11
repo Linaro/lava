@@ -230,7 +230,7 @@ def main():
         # Create the output directory
         try:
             options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
-        except OSError as exc:
+        except OSError:
             raise InfrastructureError("Unable to create %s" % options.output_dir)
 
         # Parse the definition and create the job object
