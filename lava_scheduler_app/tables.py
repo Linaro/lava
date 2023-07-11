@@ -9,7 +9,6 @@ import random
 
 import django_tables2 as tables
 from django.contrib.admin.models import LogEntry
-from django.db.models import Q
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
@@ -445,54 +444,33 @@ class RunningTable(LavaTable):
     """
     Provide the admins with some information on the activity of the instance.
     Multinode jobs reserve devices whilst still in SUBMITITED
-    Except for dynamic connections, there should not be more active jobs than active devices of
-    any particular DeviceType.
+    Except for dynamic connections, there should not be more active jobs than active
+    devices of any particular DeviceType.
     """
 
     # deprecated: dynamic connections are TestJob without a device
-
-    def render_jobs(self, record):
-        count = TestJob.objects.filter(
-            Q(state=TestJob.STATE_RUNNING),
-            Q(requested_device_type=record.name)
-            | Q(actual_device__in=Device.objects.filter(device_type=record.name)),
-        ).count()
-        return count or ""
-
-    def render_reserved(self, record):
-        count = Device.objects.filter(
-            device_type=record.name, state=Device.STATE_RESERVED
-        ).count()
-        return count or ""
-
-    def render_running(self, record):
-        count = Device.objects.filter(
-            device_type=record.name, state=Device.STATE_RUNNING
-        ).count()
-        return count or ""
 
     name = tables.Column(
         linkify=True,
         verbose_name="Device name",
     )
 
-    reserved = tables.Column(
-        accessor="display", orderable=False, verbose_name="Reserved"
+    reserved_devices = tables.Column(
+        orderable=False, verbose_name="Reserved", default=""
     )
-    running = tables.Column(accessor="display", orderable=False, verbose_name="Running")
-    jobs = tables.Column(accessor="display", orderable=False, verbose_name="Jobs")
+    running_devices = tables.Column(orderable=False, verbose_name="Running", default="")
+    running_jobs = tables.Column(orderable=False, verbose_name="Jobs", default="")
+    health_frequency = tables.Column()
+    health_denominator = tables.Column()
 
     class Meta(LavaTable.Meta):
         model = DeviceType
-        sequence = ["name", "reserved", "running", "jobs"]
-        exclude = [
-            "display",
-            "disable_health_check",
-            "architecture",
-            "processor",
-            "cpu_model",
-            "bits",
-            "cores",
-            "core_count",
-            "description",
-        ]
+        fields = ()
+        sequence = (
+            "name",
+            "reserved_devices",
+            "running_devices",
+            "running_jobs",
+            "health_frequency",
+            "health_denominator",
+        )

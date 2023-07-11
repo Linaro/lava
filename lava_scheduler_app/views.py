@@ -27,7 +27,15 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.core.exceptions import FieldDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, Q, Subquery
+from django.db.models import (
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Prefetch,
+    Q,
+    Subquery,
+)
 from django.db.utils import DatabaseError
 from django.http import (
     FileResponse,
@@ -2756,9 +2764,46 @@ def queue(request):
 
 class RunningView(LavaView):
     def get_queryset(self):
+        reserved_devices_subquery = Subquery(
+            Device.objects.filter(
+                device_type=OuterRef("pk"),
+                state=Device.STATE_RESERVED,
+            )
+            .values("device_type")
+            .annotate(reserved_devices=Count("*"))
+            .values("reserved_devices"),
+            output_field=IntegerField(),
+        )
+
+        running_devices_subquery = Subquery(
+            Device.objects.filter(
+                device_type=OuterRef("pk"), state=Device.STATE_RUNNING
+            )
+            .values("device_type")
+            .annotate(running_devices=Count("*"))
+            .values("running_devices"),
+            output_field=IntegerField(),
+        )
+
+        running_jobs_subquery = Subquery(
+            TestJob.objects.filter(
+                Q(state=TestJob.STATE_RUNNING),
+                Q(requested_device_type=OuterRef("pk")),
+            )
+            .values("requested_device_type")
+            .annotate(running_jobs=Count("*"))
+            .values("running_jobs"),
+            output_field=IntegerField(),
+        )
+
         return (
             DeviceType.objects.filter(display=True)
             .visible_by_user(self.request.user)
+            .annotate(
+                reserved_devices=reserved_devices_subquery,
+                running_devices=running_devices_subquery,
+                running_jobs=running_jobs_subquery,
+            )
             .order_by("name")
         )
 
@@ -2767,15 +2812,24 @@ class RunningView(LavaView):
 def running(request):
     running_data = RunningView(request, model=DeviceType, table_class=RunningTable)
     running_ptable = RunningTable(running_data.get_table_data(), request=request)
-    config = RequestConfig(request, paginate={"per_page": running_ptable.length})
-    config.configure(running_ptable)
+    RequestConfig(request, paginate={"per_page": running_ptable.length}).configure(
+        running_ptable
+    )
 
-    retirements = []
-    for dt in running_data.get_queryset():
-        if not Device.objects.filter(
-            ~Q(health=Device.HEALTH_RETIRED) & Q(device_type=dt)
-        ).visible_by_user(request.user):
-            retirements.append(dt.name)
+    is_admin = request.user.has_perm(DeviceType.CHANGE_PERMISSION)
+    if is_admin:
+        not_retired_devices = Device.objects.filter(
+            ~Q(health=Device.HEALTH_RETIRED) & Q(device_type=OuterRef("pk"))
+        )
+        retirements = list(
+            DeviceType.objects.visible_by_user(request.user)
+            .values("pk")
+            .annotate(has_devices=Exists(not_retired_devices))
+            .filter(has_devices=False)
+            .values_list("pk", flat=True)
+        )
+    else:
+        retirements = []
 
     return render(
         request,
@@ -2783,7 +2837,7 @@ def running(request):
         {
             "running_table": running_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(running),
-            "is_admin": request.user.has_perm(DeviceType.CHANGE_PERMISSION),
+            "is_admin": is_admin,
             "retirements": retirements,
         },
     )
