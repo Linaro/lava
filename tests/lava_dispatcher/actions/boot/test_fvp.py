@@ -60,8 +60,11 @@ class TestCheckFVPVersionAction:
         )
         parsed_command.assert_called_once_with(
             [
-                "sh",
-                "-c",
-                "docker run --rm foundation:11.8 /opt/model/Foundation_Platformpkg/models/Linux64_GCC-6.4/Foundation_Platform --version",
+                "docker",
+                "run",
+                "--rm",
+                "foundation:11.8",
+                "/opt/model/Foundation_Platformpkg/models/Linux64_GCC-6.4/Foundation_Platform",
+                "--version",
             ]
         )

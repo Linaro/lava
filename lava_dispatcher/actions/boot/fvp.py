@@ -8,6 +8,7 @@ import os
 import re
 import shlex
 import time
+from pathlib import Path
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -155,16 +156,45 @@ class BaseFVPAction(Action):
 
         substitutions["ARTIFACT_DIR"] = os.path.join("/", self.container)
         if not self.fvp_license:
-            self.logger.warning("'license_variable' not set, model may not function.")
+            if not self.parameters.get("ubl_license"):
+                self.logger.warning(
+                    "'license_variable' or 'ubl_license' not set, model may not function."
+                )
         else:
             cmd += " -e %s" % self.fvp_license
         fvp_image = self.parameters.get("image")
         cmd += self.extra_options
-        cmd += " %s %s %s" % (docker_image, fvp_image, fvp_arguments)
+
+        # Build the script to start the model
+        script = Path(self.mkdtemp()) / "script.sh"
+        data = "#!/bin/sh\n"
+
+        if self.parameters.get("ubl_license"):
+            armlm = (
+                Path(fvp_image) / "../../../bin/arm_license_management_utilities/armlm"
+            ).resolve()
+            data += f"""set -e
+echo "Activating UBL license"
+{armlm} activate -code {self.parameters['ubl_license']}
+set +e
+"""
+
+        # Substitute in the fvp arguments
         try:
-            cmd = cmd.format(**substitutions)
+            fvp_arguments = " \\\n".join(
+                line.format(**substitutions) for line in fvp_arguments
+            )
         except KeyError as exc:
             raise JobError(f"Key {exc} does not exist, may need escaping")
+
+        self.logger.debug("FVP model arguments:")
+        self.logger.debug("%s\n%s", fvp_image, fvp_arguments)
+
+        data += f"""echo "Starting the FVP model"
+{fvp_image} {fvp_arguments}"""
+        script.write_text(data, encoding="utf-8")
+
+        cmd += f" --volume {script}:/root/script.sh {docker_image} sh /root/script.sh"
         return cmd
 
     def cleanup(self, connection):
@@ -221,10 +251,9 @@ class CheckFVPVersionAction(BaseFVPAction):
         fvp_image = self.parameters.get("image")
         fvp_arguments = self.parameters.get("version_args", "--version")
 
-        fvp_image = shlex.quote(fvp_image)
-        fvp_arguments = shlex.quote(fvp_arguments)
-        cmd = f"docker run --rm {self.docker_image} {fvp_image} {fvp_arguments}"
-        output = self.parsed_command(["sh", "-c", cmd])
+        output = self.parsed_command(
+            ["docker", "run", "--rm", self.docker_image, fvp_image, fvp_arguments]
+        )
         m = re.match(self.fvp_version_string, output)
         matched_version_string = m and m.group(0) or output
         result = {
@@ -269,11 +298,11 @@ class StartFVPAction(BaseFVPAction):
                 self.fvp_feedbacks.add(feedback)
 
     def run(self, connection, max_end_time):
-        fvp_arguments = " ".join(self.parameters.get("arguments"))
-
         # Build the command line
         # The docker image is safe to be included in the command line
-        cmd = self.construct_docker_fvp_command(self.docker_image, fvp_arguments)
+        cmd = self.construct_docker_fvp_command(
+            self.docker_image, self.parameters.get("arguments")
+        )
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
