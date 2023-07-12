@@ -299,7 +299,7 @@ DATABASES:
     ENGINE: "django.db.backends.postgresql"
     NAME: "lavaserver"
     USER: "lavaserver"
-    PASSWORD: "{get_random_string()}"
+    PASSWORD: "{get_random_string(12)}"
     HOST: "localhost"
     PORT: 5432
 """,
