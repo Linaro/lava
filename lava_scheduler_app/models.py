@@ -345,7 +345,7 @@ class Worker(RestrictedObject):
     VIEW_PERMISSION = "lava_scheduler_app.view_worker"
 
     # Only change permission is supported for workers.
-    PERMISSIONS_PRIORITY = [CHANGE_PERMISSION]
+    PERMISSIONS_PRIORITY = [CHANGE_PERMISSION, VIEW_PERMISSION]
 
     objects = RestrictedWorkerQuerySet.as_manager()
 
@@ -462,6 +462,13 @@ class Worker(RestrictedObject):
             action_flag=ADDITION if addition else CHANGE,
             change_message=reason,
         )
+
+    def can_view(self, user):
+        if user.has_perm(self.VIEW_PERMISSION, self):
+            return True
+        if not self.is_permission_restricted(self.VIEW_PERMISSION):
+            return True
+        return False
 
     def can_change(self, user):
         if user.username == "lava-health":

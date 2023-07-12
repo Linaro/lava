@@ -235,14 +235,27 @@ class FailedJobsTableView(JobTableView):
 
 class WorkerView(JobTableView):
     def get_queryset(self):
-        return Worker.objects.exclude(health=Worker.HEALTH_RETIRED).order_by("hostname")
+        return (
+            Worker.objects.exclude(health=Worker.HEALTH_RETIRED)
+            .visible_by_user(self.request.user)
+            .order_by("hostname")
+        )
 
 
 class WorkersLogView(LavaView):
+    def __init__(self, workers, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.workers = workers
+
     def get_queryset(self):
         worker_ct = ContentType.objects.get_for_model(Worker)
         return (
-            LogEntry.objects.filter(content_type=worker_ct)
+            LogEntry.objects.filter(
+                (
+                    Q(content_type=worker_ct)
+                    & Q(object_id__in=self.workers.visible_by_user(self.request.user))
+                )
+            )
             .order_by("-action_time")
             .select_related("user")
         )
@@ -390,8 +403,12 @@ def workers(request):
     RequestConfig(request, paginate={"per_page": worker_ptable.length}).configure(
         worker_ptable
     )
-
-    worker_log_data = WorkersLogView(request, model=LogEntry, table_class=LogEntryTable)
+    worker_list = Worker.objects.accessible_by_user(
+        request.user, Worker.VIEW_PERMISSION
+    )
+    worker_log_data = WorkersLogView(
+        worker_list, request, model=LogEntry, table_class=LogEntryTable
+    )
     worker_log_ptable = LogEntryTable(
         worker_log_data.get_table_data(), prefix="worker_log_"
     )

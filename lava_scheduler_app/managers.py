@@ -162,11 +162,11 @@ class RestrictedWorkerQuerySet(RestrictedObjectQuerySet):
         if user.has_perm(perm):
             # Superusers have all permissions
             return self
-
-        return self.filter_by_perm(perm, user)
-
-    def visible_by_user(self, user):
-        raise NotImplementedError("Not supported for Worker model")
+        return self.filter_by_perm(
+            perm,
+            user,
+            include_objects_without_permissions=((perm == self.model.VIEW_PERMISSION)),
+        )
 
 
 class RestrictedDeviceTypeQuerySet(RestrictedObjectQuerySet):

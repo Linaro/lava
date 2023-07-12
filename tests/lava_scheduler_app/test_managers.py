@@ -30,6 +30,8 @@ User = get_user_model()
 class ManagersTest(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
+        # Delete already existing worker ("example.com"), it messes up the tests
+        Worker.objects.all().delete()
         self.admin_user = User.objects.create(
             username=self.factory.get_unique_user(), is_superuser=True
         )
@@ -1170,7 +1172,42 @@ class ManagersTest(TestCaseWithFactory):
             set(),
         )
 
-    def test_worker_manager_accessible(self):
+    def test_worker_manager_view_accessible(self):
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.VIEW_PERMISSION, self.group1, self.worker1
+        )
+
+        # user1 can view all workers.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.user1, Worker.VIEW_PERMISSION
+                )
+            ),
+            set(Worker.objects.all()),
+        )
+
+        # user2 can view worker2 and worker3.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.user2, Worker.VIEW_PERMISSION
+                )
+            ),
+            {self.worker2, self.worker3},
+        )
+
+        # anonymous can view the same as user2.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    AnonymousUser(), Worker.VIEW_PERMISSION
+                )
+            ),
+            {self.worker2, self.worker3},
+        )
+
+    def test_worker_manager_change_accessible(self):
         GroupWorkerPermission.objects.assign_perm(
             Worker.CHANGE_PERMISSION, self.group1, self.worker1
         )
@@ -1223,7 +1260,18 @@ class ManagersTest(TestCaseWithFactory):
             set(Worker.objects.all()),
         )
 
-    def test_worker_manager_admin(self):
+    def test_worker_manager_view_admin(self):
+        # admin user can view all workers.
+        self.assertEqual(
+            set(
+                Worker.objects.all().accessible_by_user(
+                    self.admin_user, Worker.VIEW_PERMISSION
+                )
+            ),
+            set(Worker.objects.all()),
+        )
+
+    def test_worker_manager_change_admin(self):
         # admin user can change all workers.
         self.assertEqual(
             set(

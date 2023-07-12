@@ -439,3 +439,31 @@ class ModelPermissionsTest(TestCaseWithFactory):
         delattr(self.user2, "_cached_has_perm")
         self.assertTrue(self.worker1.can_change(self.user1))
         self.assertFalse(self.worker1.can_change(self.user2))
+
+    def test_worker_can_view_anonymous(self):
+        self.assertTrue(self.worker1.can_view(AnonymousUser()))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.VIEW_PERMISSION, self.group1, self.worker1
+        )
+        self.assertFalse(self.worker1.can_change(AnonymousUser()))
+
+    def test_worker_can_view_admin(self):
+        self.assertTrue(self.worker1.can_view(self.admin_user))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.VIEW_PERMISSION, self.group1, self.worker1
+        )
+        self.assertTrue(self.worker1.can_view(self.admin_user))
+
+    def test_worker_can_view(self):
+        self.assertTrue(self.worker1.can_view(self.user1))
+        self.assertTrue(self.worker1.can_view(self.user2))
+
+        GroupWorkerPermission.objects.assign_perm(
+            Worker.VIEW_PERMISSION, self.group1, self.worker1
+        )
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user2, "_cached_has_perm")
+        self.assertTrue(self.worker1.can_view(self.user1))
+        self.assertFalse(self.worker1.can_view(self.user2))

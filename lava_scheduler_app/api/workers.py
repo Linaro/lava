@@ -78,9 +78,16 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         # Find the worker in the database
         try:
-            Worker.objects.get(hostname=hostname)
+            worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "Worker '%s' not available to user '%s'."
+                % (worker.hostname, self.user),
+            )
 
         try:
             return xmlrpc.client.Binary(
@@ -123,9 +130,16 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         # Find the worker in the database
         try:
-            Worker.objects.get(hostname=hostname)
+            worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "Worker '%s' not available to user '%s'."
+                % (worker.hostname, self.user),
+            )
 
         try:
             return xmlrpc.client.Binary(File("env", hostname).read().encode("utf-8"))
@@ -164,9 +178,16 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         # Find the worker in the database
         try:
-            Worker.objects.get(hostname=hostname)
+            worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "Worker '%s' not available to user '%s'."
+                % (worker.hostname, self.user),
+            )
 
         try:
             return xmlrpc.client.Binary(
@@ -311,7 +332,7 @@ class SchedulerWorkersAPI(ExposedV2API):
         ------------
         This function returns an XML-RPC array of workers
         """
-        workers = Worker.objects.all()
+        workers = Worker.objects.visible_by_user(self.user)
         if not show_all:
             workers = workers.exclude(health=Worker.HEALTH_RETIRED)
         workers = workers.order_by("hostname")
@@ -341,6 +362,13 @@ class SchedulerWorkersAPI(ExposedV2API):
             worker = Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        if not worker.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403,
+                "Worker '%s' not available to user '%s'."
+                % (worker.hostname, self.user),
+            )
 
         data = {
             "hostname": worker.hostname,
