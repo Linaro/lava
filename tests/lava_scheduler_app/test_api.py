@@ -105,6 +105,53 @@ class TestSchedulerAPI(TestCaseWithFactory):
         retval = {"black": [dt.name for dt in aliases]}
         self.assertEqual(retval, {"black": []})
 
+    def test_set_health_check_permissions(self):
+        test_device_type = self.factory.ensure_device_type("test_device_type")
+
+        user_no_permission = self.factory.ensure_user("test1", "e@mail.invalid", "test")
+        server_no_permission = self.server_proxy(user_no_permission, "test")
+
+        user_global_permission = self.factory.ensure_user(
+            "test2", "e@mail.invalid", "test"
+        )
+        user_global_permission.user_permissions.add(
+            Permission.objects.get(codename="change_devicetype")
+        )
+        user_global_permission.save()
+        server_global_permission = self.server_proxy(user_global_permission, "test")
+
+        user_object_permission = self.factory.ensure_user(
+            "test3", "e@mail.invalid", "test"
+        )
+        user_group = self.factory.make_group("test_group")
+        user_object_permission.groups.add(user_group)
+        user_object_permission.save()
+        server_object_permission = self.server_proxy(user_object_permission, "test")
+
+        with self.assertRaisesRegex(xmlrpc.client.Fault, "No.*permission"):
+            server_no_permission.scheduler.device_types.set_health_check(
+                test_device_type.name, ""
+            )
+
+        server_global_permission.scheduler.device_types.set_health_check(
+            test_device_type.name, ""
+        )
+
+        with self.assertRaisesRegex(xmlrpc.client.Fault, "No.*permission"):
+            server_object_permission.scheduler.device_types.set_health_check(
+                test_device_type.name, ""
+            )
+
+        GroupDeviceTypePermission.objects.assign_perm(
+            DeviceType.CHANGE_PERMISSION,
+            user_group,
+            test_device_type,
+        )
+
+        server_object_permission.scheduler.device_types.set_health_check(
+            test_device_type.name, ""
+        )
+
 
 class TestVoluptuous(unittest.TestCase):
     def test_breakage_detection(self):
@@ -1213,8 +1260,8 @@ def test_device_types_set_health_check(setup, mocker, tmp_path):
         server("admin", "admin").scheduler.device_types.set_health_check(
             "../../passwd", ""
         )
-    assert exc.value.faultCode == 400  # nosec
-    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type '../../passwd' was not found."  # nosec
 
 
 @pytest.mark.django_db
@@ -1234,8 +1281,8 @@ def test_device_types_set_template(setup, mocker, tmp_path):
     # 2. Invalid name
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.device_types.set_template("../../passwd", "")
-    assert exc.value.faultCode == 400  # nosec
-    assert exc.value.faultString == "Invalid device-type '../../passwd'"  # nosec
+    assert exc.value.faultCode == 404  # nosec
+    assert exc.value.faultString == "Device-type '../../passwd' was not found."  # nosec
 
 
 @pytest.mark.django_db
