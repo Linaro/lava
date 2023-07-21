@@ -1,0 +1,6 @@
+{% extends 'imx8m-common.jinja2' %}
+{% set root_device = '/dev/ttymxc2' %}
+{% set console_device = 'ttymxc2,115200 earlycon' %}
+{% set bcu_board_name = bcu_board_name|default('verdin-imx8mp') %}
+{% set bootloader_prompt = bootloader_prompt|default('Verdin iMX8MP #') %}
+{% set use_uboot_env_addr = use_uboot_env_addr | default(false) %}
