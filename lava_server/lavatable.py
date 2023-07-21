@@ -18,7 +18,6 @@ class LavaView(tables.SingleTableView):
     def __init__(self, request, **kwargs):
         super().__init__(**kwargs)
         self.request = request
-        self.search = []
 
     def _time_filter(self, query):
         """
@@ -56,32 +55,17 @@ class LavaView(tables.SingleTableView):
           times - fields which can be searched by a duration
         :return: filtered data
         """
-        distinct = {}
         data = self.get_queryset()
         if not self.table_class or not hasattr(self.table_class, "Meta"):
             return data
 
-        if hasattr(self.table_class.Meta, "queries"):
-            self.search.extend(self.table_class.Meta.queries.values())
-            self.search.sort()
+        distinct = {}
         if hasattr(self.table_class.Meta, "searches"):
             for key in self.table_class.Meta.searches.keys():
-                field = next(f for f in self.model._meta.get_fields() if f.name == key)
-                column = self.table_class.base_columns.get(key)
-                if (
-                    column
-                    and hasattr(column, "verbose_name")
-                    and column.verbose_name is not None
-                ):
-                    self.search.append(column.verbose_name)
-                elif field and hasattr(field, "verbose_name"):
-                    self.search.append(field.verbose_name)
-                else:
-                    self.search.append(field)
                 discrete_key = "%s%s" % (prefix, key) if prefix else key
                 if self.request and self.request.GET.get(discrete_key):
                     distinct[discrete_key] = escape(self.request.GET.get(discrete_key))
-            self.search = sorted(self.search, key=lambda s: s.lower())
+
         if hasattr(self.table_class.Meta, "queries"):
             for func, argument in self.table_class.Meta.queries.items():
                 request_argument = "%s%s" % (prefix, argument) if prefix else argument
@@ -149,14 +133,6 @@ class LavaTable(tables.Table):
         else:
             self.length = settings.DEFAULT_TABLE_LENGTH
         self.empty_text = "No data available in table"
-
-    def prepare_search_data(self, data):
-        if not hasattr(data, "search"):
-            return {}
-        if self.prefix:
-            return {self.prefix: data.search}
-        else:
-            return {"search": data.search}
 
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}

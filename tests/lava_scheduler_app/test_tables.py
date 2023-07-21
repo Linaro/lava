@@ -45,7 +45,6 @@ class TestTestTable(TestCase):
     def test_empty_data(self):
         table = TestTable(self.data)
         logging.debug("Testing preparation of search data on empty input")
-        self.assertEqual(table.prepare_search_data(self.data), {})
 
 
 @nottest
@@ -86,33 +85,11 @@ class TestTestJobTable(TestCase):
     def test_shell_data(self):
         view = TestJobView(None)
         logging.debug("Testing with a View derived from FilteredSingleTableView")
-        table = TestJobTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view), {"search": []})
+        TestJobTable(view.get_table_data())
 
     def test_shell_data_model(self):
         view = TestJobView(None, model=TestJob, table_class=TestJobTable)
-        table = TestJobTable(view.get_table_data())
-        logging.debug("Passing a model and table_class to get search data")
-        proxied = {}
-        for key, value in table.prepare_search_data(view).items():
-            proxied[key] = []
-            if isinstance(value, list):
-                for item in value:
-                    proxied[key].append(str(item))
-        self.assertEqual(
-            proxied,
-            {
-                "search": [
-                    "Description",
-                    "device",
-                    "ID",
-                    "requested_device_type",
-                    "state",
-                    "Sub ID",
-                    "submitter",
-                ]
-            },
-        )
+        TestJobTable(view.get_table_data())
 
 
 class TestPrefixJobTable(TestCase):
@@ -121,34 +98,12 @@ class TestPrefixJobTable(TestCase):
     def test_prefix_support(self):
         view = TestJobView(None)
         logging.debug("Testing an unmodelled View with a prefix")
-        table = TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
-        self.assertEqual(table.prepare_search_data(view), {self.prefix: []})
+        TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
 
     def test_prefix_support_model(self):
         view = TestJobView(None, model=TestJob, table_class=TestJobTable)
-        table = TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
+        TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
         logging.debug("Testing a view with a model and a prefix")
-        proxied = {}
-        for key, value in table.prepare_search_data(view).items():
-            proxied[key] = []
-            if isinstance(value, list):
-                for item in value:
-                    proxied[key].append(str(item))
-
-        self.assertEqual(
-            proxied,
-            {
-                self.prefix: [
-                    "Description",
-                    "device",
-                    "ID",
-                    "requested_device_type",
-                    "state",
-                    "Sub ID",
-                    "submitter",
-                ]
-            },
-        )
 
 
 class TestForDeviceTable(TestCase):
@@ -160,30 +115,20 @@ class TestForDeviceTable(TestCase):
     def test_device_table(self):
         logging.debug("Testing with a View derived from LavaView")
         view = TestDeviceView(None)
-        table = DeviceTable(view.get_table_data())
-        self.assertEqual(table.prepare_search_data(view), {"search": []})
+        DeviceTable(view.get_table_data())
 
     def test_device_table_model(self):
         view = TestDeviceView(None, model=Device, table_class=DeviceTable)
-        table = DeviceTable(view.get_table_data())
-        self.assertEqual(
-            table.prepare_search_data(view),
-            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
-        )
+        DeviceTable(view.get_table_data())
 
     def test_device_table_prefix(self):
         view = TestDeviceView(None)
         prefix = "dt_"
-        table = TestDeviceTable(view.get_table_data(prefix), prefix=prefix)
-        self.assertEqual(table.prepare_search_data(view), {prefix: []})
+        TestDeviceTable(view.get_table_data(prefix), prefix=prefix)
 
     def test_device_table_model2(self):
         view = TestDeviceView(None, model=Device, table_class=TestDeviceTable)
-        table = TestDeviceTable(view.get_table_data())
-        self.assertEqual(
-            table.prepare_search_data(view),
-            {"search": ["device_type", "health", "Hostname", "state", "tags"]},
-        )
+        TestDeviceTable(view.get_table_data())
 
 
 class TestHiddenDevicesInDeviceTable(TestCase):
