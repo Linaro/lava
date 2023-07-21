@@ -19,7 +19,6 @@ class LavaView(tables.SingleTableView):
         super().__init__(**kwargs)
         self.request = request
         self.search = []
-        self.times = []
 
     def _time_filter(self, query):
         """
@@ -65,25 +64,6 @@ class LavaView(tables.SingleTableView):
         if hasattr(self.table_class.Meta, "queries"):
             self.search.extend(self.table_class.Meta.queries.values())
             self.search.sort()
-        if hasattr(self.table_class.Meta, "times"):
-            for key, value in self.table_class.Meta.times.items():
-                field = next(f for f in self.model._meta.get_fields() if f.name == key)
-                column = self.table_class.base_columns.get(key)
-                if (
-                    column
-                    and hasattr(column, "verbose_name")
-                    and column.verbose_name is not None
-                ):
-                    self.times.append("%s (%s)" % (str(column.verbose_name), value))
-                elif (
-                    field
-                    and hasattr(field, "verbose_name")
-                    and field.verbose_name is not None
-                ):
-                    self.times.append("%s (%s)" % (str(field.verbose_name), value))
-                else:
-                    self.times.append("%s (%s)" % (key, value))
-            self.times.sort()
         if hasattr(self.table_class.Meta, "searches"):
             for key in self.table_class.Meta.searches.keys():
                 field = next(f for f in self.model._meta.get_fields() if f.name == key)
@@ -177,14 +157,6 @@ class LavaTable(tables.Table):
             return {self.prefix: data.search}
         else:
             return {"search": data.search}
-
-    def prepare_times_data(self, data):
-        if not hasattr(data, "times"):
-            return {}
-        if self.prefix:
-            return {self.prefix: data.times}
-        else:
-            return {"times": data.times}
 
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}

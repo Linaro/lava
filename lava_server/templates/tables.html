@@ -56,7 +56,7 @@
               {% if table.Meta.times|get_search_data:table.prefix %}
                 <dt>Time based</dt>
                 <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr
-                title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
+                title="add the filter and a number in the query string, e.g. end_time=48 - rows will be filtered where difference between now and filter cannot be larger than passed number of hours.">(?)</abbr></dd>
               {% endif %}
             </dl>
           </div>
