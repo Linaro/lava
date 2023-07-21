@@ -46,7 +46,6 @@ class TestTestTable(TestCase):
         table = TestTable(self.data)
         logging.debug("Testing preparation of search data on empty input")
         self.assertEqual(table.prepare_search_data(self.data), {})
-        self.assertEqual(table.prepare_terms_data(self.data), {})
         self.assertEqual(table.prepare_times_data(self.data), {})
 
 
@@ -90,7 +89,6 @@ class TestTestJobTable(TestCase):
         logging.debug("Testing with a View derived from FilteredSingleTableView")
         table = TestJobTable(view.get_table_data())
         self.assertEqual(table.prepare_search_data(view), {"search": []})
-        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_shell_data_model(self):
@@ -117,7 +115,6 @@ class TestTestJobTable(TestCase):
                 ]
             },
         )
-        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(
             table.prepare_times_data(view),
             {"times": ["End time (hours)", "Submit time (hours)"]},
@@ -132,7 +129,6 @@ class TestPrefixJobTable(TestCase):
         logging.debug("Testing an unmodelled View with a prefix")
         table = TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
         self.assertEqual(table.prepare_search_data(view), {self.prefix: []})
-        self.assertEqual(table.prepare_terms_data(view), {self.prefix: {}})
         self.assertEqual(table.prepare_times_data(view), {self.prefix: []})
 
     def test_prefix_support_model(self):
@@ -160,7 +156,6 @@ class TestPrefixJobTable(TestCase):
                 ]
             },
         )
-        self.assertEqual(table.prepare_terms_data(view), {self.prefix: {}})
         self.assertEqual(
             table.prepare_times_data(view),
             {self.prefix: ["End time (hours)", "Submit time (hours)"]},
@@ -178,7 +173,6 @@ class TestForDeviceTable(TestCase):
         view = TestDeviceView(None)
         table = DeviceTable(view.get_table_data())
         self.assertEqual(table.prepare_search_data(view), {"search": []})
-        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_device_table_model(self):
@@ -188,7 +182,6 @@ class TestForDeviceTable(TestCase):
             table.prepare_search_data(view),
             {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
-        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
 
     def test_device_table_prefix(self):
@@ -196,7 +189,6 @@ class TestForDeviceTable(TestCase):
         prefix = "dt_"
         table = TestDeviceTable(view.get_table_data(prefix), prefix=prefix)
         self.assertEqual(table.prepare_search_data(view), {prefix: []})
-        self.assertEqual(table.prepare_terms_data(view), {prefix: {}})
         self.assertEqual(table.prepare_times_data(view), {prefix: []})
 
     def test_device_table_model2(self):
@@ -206,7 +198,6 @@ class TestForDeviceTable(TestCase):
             table.prepare_search_data(view),
             {"search": ["device_type", "health", "Hostname", "state", "tags"]},
         )
-        self.assertEqual(table.prepare_terms_data(view), {"terms": {}})
         self.assertEqual(table.prepare_times_data(view), {"times": []})
 
 

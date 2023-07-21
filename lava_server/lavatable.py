@@ -18,7 +18,6 @@ class LavaView(tables.SingleTableView):
     def __init__(self, request, **kwargs):
         super().__init__(**kwargs)
         self.request = request
-        self.terms = {}  # complete search term list, passed back to the template.
         self.search = []
         self.times = []
 
@@ -33,7 +32,6 @@ class LavaView(tables.SingleTableView):
                 # check if the request includes the current time filter & get the value
                 match = self.request.GET.get(key)
                 if match and match != "":
-                    self.terms[key] = f"{key} within {match} {value}"
                     # the label for this query in the search list
                     time_queries[key] = value
             for key, value in time_queries.items():
@@ -63,10 +61,7 @@ class LavaView(tables.SingleTableView):
         data = self.get_queryset()
         if not self.table_class or not hasattr(self.table_class, "Meta"):
             return data
-        if prefix:
-            table_search = "%ssearch" % prefix
-        else:
-            table_search = "search"
+
         if hasattr(self.table_class.Meta, "queries"):
             self.search.extend(self.table_class.Meta.queries.values())
             self.search.sort()
@@ -116,7 +111,6 @@ class LavaView(tables.SingleTableView):
             return data
 
         q = Q()
-        self.terms = {}
         # discrete searches
         for key, val in distinct.items():
             if key in self.table_class.Meta.searches:
@@ -131,10 +125,9 @@ class LavaView(tables.SingleTableView):
                 q &= getattr(self, key)(val)
 
         # general OR searches
-        if self.request.GET.get(table_search):
-            self.terms["search"] = escape(self.request.GET.get(table_search))
+        general_search = self.request.GET.get(f"{prefix}search" if prefix else "search")
 
-        if hasattr(self.table_class.Meta, "searches") and "search" in self.terms:
+        if general_search and hasattr(self.table_class.Meta, "searches"):
             for key, val in self.table_class.Meta.searches.items():
                 # this is a little bit of magic - creates an OR clause
                 # in the query based on the iterable search hash
@@ -142,14 +135,14 @@ class LavaView(tables.SingleTableView):
                 # e.g. self.searches = {'id', 'contains'}
                 # so every simple search column in the table
                 # is queried at the same time with OR
-                q |= Q(**{f"{key}__{val}": self.terms["search"]})
+                q |= Q(**{f"{key}__{val}": general_search})
 
             # call explicit handlers as simple text searches of relational fields.
             if hasattr(self.table_class.Meta, "queries"):
                 for key in self.table_class.Meta.queries:
                     # note that this calls the function 'key'
                     # with the argument from the search
-                    q |= getattr(self, key)(self.terms["search"])
+                    q |= getattr(self, key)(general_search)
 
         # now add "class specials" - from an iterable hash
         # datetime uses (start_time__lte=timezone.now()-timedelta(days=3)
@@ -185,14 +178,6 @@ class LavaTable(tables.Table):
         else:
             return {"search": data.search}
 
-    def prepare_terms_data(self, data):
-        if not hasattr(data, "terms"):
-            return {}
-        if self.prefix:
-            return {self.prefix: data.terms}
-        else:
-            return {"terms": data.terms}
-
     def prepare_times_data(self, data):
         if not hasattr(data, "times"):
             return {}
@@ -204,5 +189,4 @@ class LavaTable(tables.Table):
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}
         template_name = "tables.html"
-        terms = {}
         per_page_field = "length"

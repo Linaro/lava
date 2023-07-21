@@ -92,7 +92,7 @@ class GroupChartView(LavaView):
 @BreadCrumb("Charts", parent=index)
 def chart_list(request):
     group_tables = {}
-    terms_data = search_data = {}
+    search_data = {}
     for group in ChartGroup.objects.all():
         if group.chart_set.count():
             prefix = "group_%s_" % group.id
@@ -103,7 +103,6 @@ def chart_list(request):
                 group_view.get_table_data(prefix), request=request, prefix=prefix
             )
             search_data.update(table.prepare_search_data(group_view))
-            terms_data.update(table.prepare_terms_data(group_view))
             group_tables[group.name] = table
             config = RequestConfig(request, paginate={"per_page": table.length})
             config.configure(table)
@@ -116,7 +115,6 @@ def chart_list(request):
     config = RequestConfig(request, paginate={"per_page": other_chart_table.length})
     config.configure(other_chart_table)
     search_data.update(other_chart_table.prepare_search_data(other_view))
-    terms_data.update(other_chart_table.prepare_terms_data(other_view))
 
     if request.user.is_authenticated:
         prefix = "user_"
@@ -127,7 +125,6 @@ def chart_list(request):
         config = RequestConfig(request, paginate={"per_page": user_chart_table.length})
         config.configure(user_chart_table)
         search_data.update(user_chart_table.prepare_search_data(view))
-        terms_data.update(user_chart_table.prepare_terms_data(view))
     else:
         user_chart_table = None
 
@@ -138,7 +135,6 @@ def chart_list(request):
             "user_chart_table": user_chart_table,
             "other_chart_table": other_chart_table,
             "search_data": search_data,
-            "terms_data": terms_data,
             "group_tables": group_tables,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_list),
             "context_help": ["lava-queries-charts"],

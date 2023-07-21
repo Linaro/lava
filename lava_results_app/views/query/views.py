@@ -125,7 +125,7 @@ class QueryResultView(LavaView):
 @BreadCrumb("Queries", parent=index)
 def query_list(request):
     group_tables = {}
-    terms_data = search_data = {}
+    search_data = {}
     for group in QueryGroup.objects.all():
         if group.query_set.count():
             prefix = "group_%s_" % group.id
@@ -136,7 +136,6 @@ def query_list(request):
                 group_view.get_table_data(prefix), request=request, prefix=prefix
             )
             search_data.update(table.prepare_search_data(group_view))
-            terms_data.update(table.prepare_terms_data(group_view))
             group_tables[group.name] = table
             config = RequestConfig(request, paginate={"per_page": table.length})
             config.configure(table)
@@ -149,7 +148,6 @@ def query_list(request):
     config = RequestConfig(request, paginate={"per_page": other_query_table.length})
     config.configure(other_query_table)
     search_data.update(other_query_table.prepare_search_data(other_view))
-    terms_data.update(other_query_table.prepare_terms_data(other_view))
 
     prefix = "user_"
     view = UserQueryView(request, model=Query, table_class=UserQueryTable)
@@ -159,7 +157,6 @@ def query_list(request):
     config = RequestConfig(request, paginate={"per_page": user_query_table.length})
     config.configure(user_query_table)
     search_data.update(user_query_table.prepare_search_data(view))
-    terms_data.update(user_query_table.prepare_terms_data(view))
 
     return render(
         request,
@@ -168,7 +165,6 @@ def query_list(request):
             "user_query_table": user_query_table,
             "other_query_table": other_query_table,
             "search_data": search_data,
-            "terms_data": terms_data,
             "group_tables": group_tables,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(query_list),
             "context_help": ["lava-queries-charts"],
@@ -216,7 +212,6 @@ def query_display(request, username, name):
             "conditions": Query.serialize_conditions(query.querycondition_set.all()),
             "omitted": omitted,
             "query_table": table,
-            "terms_data": table.prepare_terms_data(view),
             "search_data": table.prepare_search_data(view),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
                 query_display, username=username, name=name
@@ -271,7 +266,6 @@ def query_custom(request):
         {
             "query_table": table,
             "conditions": conditions,
-            "terms_data": table.prepare_terms_data(view),
             "search_data": table.prepare_search_data(view),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(query_custom),
             "context_help": ["lava-queries-charts"],

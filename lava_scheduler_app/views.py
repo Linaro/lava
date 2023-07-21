@@ -383,7 +383,6 @@ def index(request):
             "device_type_table": ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(index),
             "context_help": BreadCrumbTrail.leading_to(index),
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
         },
     )
@@ -532,7 +531,6 @@ def failure_report(request):
             "device": request.GET.get("device"),
             "failed_job_table": ptable,
             "sort": "-submit_time",
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(failure_report),
         },
@@ -550,7 +548,6 @@ def device_list(request):
         {
             "devices_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_list),
         },
@@ -568,7 +565,6 @@ def active_device_list(request):
         {
             "active_devices_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(active_device_list),
         },
@@ -595,7 +591,6 @@ def online_device_list(request):
         {
             "online_devices_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(online_device_list),
         },
@@ -623,7 +618,6 @@ def passing_health_checks(request):
         {
             "passing_health_checks_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(passing_health_checks),
         },
@@ -653,7 +647,6 @@ def mydevice_list(request):
         {
             "my_device_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(mydevice_list),
         },
@@ -779,7 +772,6 @@ def maintenance_devices(request):
         {
             "maintenance_devices_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(maintenance_devices),
         },
@@ -959,9 +951,6 @@ def device_type_detail(request, pk):
     search_data = no_dt_ptable.prepare_search_data(no_dt_data)
     search_data.update(dt_jobs_ptable.prepare_search_data(dt_jobs_data))
 
-    terms_data = no_dt_ptable.prepare_terms_data(no_dt_data)
-    terms_data.update(dt_jobs_ptable.prepare_terms_data(dt_jobs_data))
-
     times_data = no_dt_ptable.prepare_times_data(no_dt_data)
     times_data.update(dt_jobs_ptable.prepare_times_data(dt_jobs_data))
 
@@ -1027,7 +1016,6 @@ def device_type_detail(request, pk):
             "available_devices_label": available_devices_label,
             "queued_jobs_count": queued_jobs_count or 0,
             "search_data": search_data,
-            "terms_data": terms_data,
             "times_data": times_data,
             "health_job_summary_table": health_table,
             "device_type_jobs_table": dt_jobs_ptable,
@@ -1129,7 +1117,6 @@ def lab_health(request):
         {
             "device_health_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(lab_health),
         },
@@ -1628,7 +1615,6 @@ def job_list(request):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_list),
             "alljobs_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -1646,7 +1632,6 @@ def job_errors(request):
         {
             "job_errors_table": ptable,
             "sort": "-submit_time",
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_errors),
@@ -1666,7 +1651,6 @@ def active_jobs(request):
         {
             "active_jobs_table": ptable,
             "sort": "-submit_time",
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(active_jobs),
@@ -1932,7 +1916,6 @@ def myjobs(request):
         {
             "bread_crumb_trail": BreadCrumbTrail.leading_to(myjobs),
             "myjobs_table": ptable,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -1952,7 +1935,6 @@ def my_active_jobs(request):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(my_active_jobs),
             "sort": "-submit_time",
             "myjobs_active_table": ptable,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -1972,7 +1954,6 @@ def my_queued_jobs(request):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(my_queued_jobs),
             "sort": "-submit_time",
             "myjobs_queued_table": ptable,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -1992,7 +1973,6 @@ def my_error_jobs(request):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(my_error_jobs),
             "sort": "-submit_time",
             "myjobs_error_table": ptable,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -2011,7 +1991,6 @@ def longest_jobs(request, username=None):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(longest_jobs),
             "longestjobs_table": ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -2034,7 +2013,6 @@ def favorite_jobs(request):
             "bread_crumb_trail": BreadCrumbTrail.leading_to(favorite_jobs),
             "favoritejobs_table": ptable,
             "username": username,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
@@ -2472,7 +2450,6 @@ def device_detail(request, pk):
     request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     search_data = recent_ptable.prepare_search_data(recent_data)
-    terms_data = recent_ptable.prepare_terms_data(recent_data)
     times_data = recent_ptable.prepare_times_data(recent_data)
 
     device_log_data = DeviceLogView(
@@ -2498,7 +2475,6 @@ def device_detail(request, pk):
         {
             "device": device,
             "times_data": times_data,
-            "terms_data": terms_data,
             "search_data": search_data,
             "recent_job_table": recent_ptable,
             "device_log_table": device_log_ptable,
@@ -2659,7 +2635,6 @@ def worker_detail(request, pk):
             "worker_device_table": ptable,
             "worker_log_table": worker_log_ptable,
             "length": ptable.length,
-            "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
             "can_change": worker.can_change(request.user),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(worker_detail, pk=pk),
@@ -2730,7 +2705,6 @@ def healthcheck(request):
         "lava_scheduler_app/health_check_jobs.html",
         {
             "times_data": health_check_ptable.prepare_times_data(health_check_data),
-            "terms_data": health_check_ptable.prepare_terms_data(health_check_data),
             "search_data": health_check_ptable.prepare_search_data(health_check_data),
             "health_check_table": health_check_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(healthcheck),
@@ -2755,7 +2729,6 @@ def queue(request):
         "lava_scheduler_app/queue.html",
         {
             "times_data": queue_ptable.prepare_times_data(queue_data),
-            "terms_data": queue_ptable.prepare_terms_data(queue_data),
             "search_data": queue_ptable.prepare_search_data(queue_data),
             "queue_table": queue_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(queue),
