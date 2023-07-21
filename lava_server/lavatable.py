@@ -21,7 +21,6 @@ class LavaView(tables.SingleTableView):
         self.terms = {}  # complete search term list, passed back to the template.
         self.search = []
         self.times = []
-        self.discrete = []
 
     def _time_filter(self, query):
         """
@@ -105,17 +104,14 @@ class LavaView(tables.SingleTableView):
                 else:
                     self.search.append(field)
                 discrete_key = "%s%s" % (prefix, key) if prefix else key
-                self.discrete.append(discrete_key)
                 if self.request and self.request.GET.get(discrete_key):
                     distinct[discrete_key] = escape(self.request.GET.get(discrete_key))
             self.search = sorted(self.search, key=lambda s: s.lower())
         if hasattr(self.table_class.Meta, "queries"):
             for func, argument in self.table_class.Meta.queries.items():
                 request_argument = "%s%s" % (prefix, argument) if prefix else argument
-                self.discrete.append(request_argument)  # for __and__ queries
                 if self.request and self.request.GET.get(request_argument):
                     distinct[func] = escape(self.request.GET.get(request_argument))
-            self.discrete = sorted(self.discrete, key=lambda s: s.lower())
         if not self.request:
             return data
 
@@ -137,6 +133,7 @@ class LavaView(tables.SingleTableView):
         # general OR searches
         if self.request.GET.get(table_search):
             self.terms["search"] = escape(self.request.GET.get(table_search))
+
         if hasattr(self.table_class.Meta, "searches") and "search" in self.terms:
             for key, val in self.table_class.Meta.searches.items():
                 # this is a little bit of magic - creates an OR clause
@@ -203,21 +200,6 @@ class LavaTable(tables.Table):
             return {self.prefix: data.times}
         else:
             return {"times": data.times}
-
-    def prepare_discrete_data(self, data):
-        """
-        Manages the exposure of exclusive search terms and prefixes.
-        Exclusive terms use __and__, so send an empty dict if
-        __and__ and __or__ would return the same result.
-        :param data: the view data
-        :return: a list of exclusive terms
-        """
-        if not hasattr(data, "discrete") or not isinstance(data.discrete, list):
-            return {}
-        if self.prefix:
-            return {self.prefix: data.discrete} if len(data.discrete) > 1 else {}
-        else:
-            return {"discrete": data.discrete} if len(data.discrete) > 1 else {}
 
     class Meta:
         attrs = {"class": "table table-striped", "width": "100%"}

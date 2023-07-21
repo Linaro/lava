@@ -385,7 +385,6 @@ def index(request):
             "context_help": BreadCrumbTrail.leading_to(index),
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
         },
     )
 
@@ -535,7 +534,6 @@ def failure_report(request):
             "sort": "-submit_time",
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(failure_report),
         },
     )
@@ -554,7 +552,6 @@ def device_list(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_list),
         },
     )
@@ -573,7 +570,6 @@ def active_device_list(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(active_device_list),
         },
     )
@@ -601,7 +597,6 @@ def online_device_list(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(online_device_list),
         },
     )
@@ -630,7 +625,6 @@ def passing_health_checks(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(passing_health_checks),
         },
     )
@@ -661,7 +655,6 @@ def mydevice_list(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(mydevice_list),
         },
     )
@@ -788,7 +781,6 @@ def maintenance_devices(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(maintenance_devices),
         },
     )
@@ -973,9 +965,6 @@ def device_type_detail(request, pk):
     times_data = no_dt_ptable.prepare_times_data(no_dt_data)
     times_data.update(dt_jobs_ptable.prepare_times_data(dt_jobs_data))
 
-    discrete_data = no_dt_ptable.prepare_discrete_data(no_dt_data)
-    discrete_data.update(dt_jobs_ptable.prepare_discrete_data(dt_jobs_data))
-
     if dt.cores.all():
         core_string = "%s x %s" % (
             dt.core_count if dt.core_count else 1,
@@ -1038,7 +1027,6 @@ def device_type_detail(request, pk):
             "available_devices_label": available_devices_label,
             "queued_jobs_count": queued_jobs_count or 0,
             "search_data": search_data,
-            "discrete_data": discrete_data,
             "terms_data": terms_data,
             "times_data": times_data,
             "health_job_summary_table": health_table,
@@ -1143,7 +1131,6 @@ def lab_health(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(lab_health),
         },
     )
@@ -1643,7 +1630,6 @@ def job_list(request):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -1662,7 +1648,6 @@ def job_errors(request):
             "sort": "-submit_time",
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(job_errors),
         },
@@ -1683,7 +1668,6 @@ def active_jobs(request):
             "sort": "-submit_time",
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(active_jobs),
         },
@@ -1950,7 +1934,6 @@ def myjobs(request):
             "myjobs_table": ptable,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -1971,7 +1954,6 @@ def my_active_jobs(request):
             "myjobs_active_table": ptable,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -1992,7 +1974,6 @@ def my_queued_jobs(request):
             "myjobs_queued_table": ptable,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -2013,7 +1994,6 @@ def my_error_jobs(request):
             "myjobs_error_table": ptable,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -2033,7 +2013,6 @@ def longest_jobs(request, username=None):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -2057,7 +2036,6 @@ def favorite_jobs(request):
             "username": username,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "times_data": ptable.prepare_times_data(data),
         },
     )
@@ -2494,7 +2472,6 @@ def device_detail(request, pk):
     request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     search_data = recent_ptable.prepare_search_data(recent_data)
-    discrete_data = recent_ptable.prepare_discrete_data(recent_data)
     terms_data = recent_ptable.prepare_terms_data(recent_data)
     times_data = recent_ptable.prepare_times_data(recent_data)
 
@@ -2523,7 +2500,6 @@ def device_detail(request, pk):
             "times_data": times_data,
             "terms_data": terms_data,
             "search_data": search_data,
-            "discrete_data": discrete_data,
             "recent_job_table": recent_ptable,
             "device_log_table": device_log_ptable,
             "can_change": device_can_change,
@@ -2685,7 +2661,6 @@ def worker_detail(request, pk):
             "length": ptable.length,
             "terms_data": ptable.prepare_terms_data(data),
             "search_data": ptable.prepare_search_data(data),
-            "discrete_data": ptable.prepare_discrete_data(data),
             "can_change": worker.can_change(request.user),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(worker_detail, pk=pk),
         },
@@ -2757,9 +2732,6 @@ def healthcheck(request):
             "times_data": health_check_ptable.prepare_times_data(health_check_data),
             "terms_data": health_check_ptable.prepare_terms_data(health_check_data),
             "search_data": health_check_ptable.prepare_search_data(health_check_data),
-            "discrete_data": health_check_ptable.prepare_discrete_data(
-                health_check_data
-            ),
             "health_check_table": health_check_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(healthcheck),
         },
@@ -2785,7 +2757,6 @@ def queue(request):
             "times_data": queue_ptable.prepare_times_data(queue_data),
             "terms_data": queue_ptable.prepare_terms_data(queue_data),
             "search_data": queue_ptable.prepare_search_data(queue_data),
-            "discrete_data": queue_ptable.prepare_discrete_data(queue_data),
             "queue_table": queue_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(queue),
         },
