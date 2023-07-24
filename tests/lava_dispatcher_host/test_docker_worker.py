@@ -187,9 +187,9 @@ class TestRun:
     def test_get_image_released(self, get_image, Popen, options, mocker):
         mocker.patch("time.sleep")
         mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
-        lava_dispatcher_host.docker_worker.run("2020.07", options)
+        lava_dispatcher_host.docker_worker.start("2020.07", options)
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07")
-        lava_dispatcher_host.docker_worker.run("2020.07.1", options)
+        lava_dispatcher_host.docker_worker.start("2020.07.1", options)
         get_image.assert_called_with("lavasoftware/lava-dispatcher:2020.07.1")
 
     def test_get_image_development(self, get_image, Popen, options, mocker):
@@ -204,7 +204,7 @@ class TestRun:
         has_image = mocker.patch(
             "lava_dispatcher_host.docker_worker.has_image", return_value=False
         )
-        lava_dispatcher_host.docker_worker.run("2020.07.0010.g12371263", options)
+        lava_dispatcher_host.docker_worker.start("2020.07.0010.g12371263", options)
         get_image.assert_called_with(
             f"hub.lavasoftware.org/lava/lava/{arch}/lava-dispatcher:2020.07.0010.g12371263"
         )
@@ -213,7 +213,7 @@ class TestRun:
             manifest=True,
         )
 
-        lava_dispatcher_host.docker_worker.run("2020.07.2.0010.g12371263", options)
+        lava_dispatcher_host.docker_worker.start("2020.07.2.0010.g12371263", options)
         get_image.assert_called_with(
             f"hub.lavasoftware.org/lava/lava/{arch}/lava-dispatcher:2020.07.2.0010.g12371263"
         )

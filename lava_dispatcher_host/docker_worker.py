@@ -173,13 +173,13 @@ def build_customized_image(image, build_dir, use_cache=False):
         sys.exit(1)
 
 
-class Terminate(RuntimeError):
+class Terminate(KeyboardInterrupt):
     @classmethod
     def trigger(cls, *args):
         raise cls()
 
 
-def run(version, options):
+def start(version, options):
     if RELEASE_PAT.match(version):
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"
@@ -236,7 +236,6 @@ def run(version, options):
             m += "," + opts
         service.append(m)
 
-    # TODO handle ctrl-c/SIGINT
     # TODO dev move: provide default values for all options, including
     # TODO           translate localhost -> 172.17.0.1
     # TODO dev move: build and use docker image from local tree
@@ -255,7 +254,6 @@ def run(version, options):
     service.append(image)
 
     try:
-        signal.signal(signal.SIGTERM, Terminate.trigger)
         container = subprocess.Popen(
             service
             + ["lava-worker", "--exit-on-version-mismatch", "--wait-jobs"]
@@ -352,6 +350,7 @@ def main():
     LOG.info("[INIT] Server : %r", options.url)
 
     LOG.info("[INIT] Starting main loop")
+    signal.signal(signal.SIGTERM, Terminate.trigger)
     while True:
         LOG.info("Get server version")
         try:
@@ -363,16 +362,20 @@ def main():
             continue
         LOG.info("=> %s", server_version)
         try:
-            run(server_version, options)
+            start(server_version, options)
         except Exception as exc:
             LOG.exception(exc)
             sentry_sdk.capture_exception(exc)
             time.sleep(5)
 
 
-if __name__ == "__main__":
+def run():
     try:
         main()
     except KeyboardInterrupt:
         LOG.info("[EXIT] Received Ctrl+C")
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    run()
