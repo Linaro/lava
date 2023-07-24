@@ -128,7 +128,7 @@ async def zmq_proxy(app):
                         futures.append(ws.socket.send_json(data))
 
         elif topic.endswith(".worker"):
-            worker = await db(logger, Worker.objects.get, hostname=content["worker"])
+            worker = await db(logger, Worker.objects.get, hostname=content["hostname"])
             for ws in app["websockets"]:
                 # Only forward to users as workers will discard it
                 if ws.kind == "user":
