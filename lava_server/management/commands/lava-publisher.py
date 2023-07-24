@@ -14,6 +14,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import aiohttp
+import django.db
 import zmq
 import zmq.asyncio
 from aiohttp import web
@@ -39,6 +40,14 @@ class Websocket:
 
     def __hash__(self):
         return hash((self.kind, self.name, id(self.socket)))
+
+
+async def db(log, func, *args, **kwargs):
+    try:
+        return await sync_to_async(func)(*args, **kwargs)
+    except django.db.Error as exc:
+        log.error("Database exception raised: %r", exc)
+        raise aiohttp.web.GracefulExit()
 
 
 async def zmq_proxy(app):
@@ -86,23 +95,21 @@ async def zmq_proxy(app):
         topic = data[0]
         content = json.loads(data[4])
         if topic.endswith(".device"):
-            device = await sync_to_async(Device.objects.get)(hostname=content["device"])
+            device = await db(logger, Device.objects.get, hostname=content["device"])
             for ws in set(app["websockets"]):
                 # Only forward to users as workers will discard it
                 if ws.kind == "user":
                     user = AnonymousUser()
                     if ws.name:
                         with contextlib.suppress(User.DoesNotExist):
-                            user = await sync_to_async(User.objects.get)(
-                                username=ws.name
-                            )
-                    if await sync_to_async(device.can_view)(user):
+                            user = await db(logger, User.objects.get, username=ws.name)
+                    if await db(logger, device.can_view, user):
                         futures.append(ws.socket.send_json(data))
 
         elif topic.endswith(".testjob"):
             while True:
                 try:
-                    job = await sync_to_async(TestJob.objects.get)(id=content["job"])
+                    job = await db(logger, TestJob.objects.get, id=content["job"])
                     break
                 except TestJob.DoesNotExist:
                     await asyncio.sleep(1)
@@ -111,10 +118,8 @@ async def zmq_proxy(app):
                     user = AnonymousUser()
                     if ws.name:
                         with contextlib.suppress(User.DoesNotExist):
-                            user = await sync_to_async(User.objects.get)(
-                                username=ws.name
-                            )
-                    if await sync_to_async(job.can_view)(user):
+                            user = await db(logger, User.objects.get, username=ws.name)
+                    if await db(logger, job.can_view, user):
                         futures.append(ws.socket.send_json(data))
                 elif ws.kind == "worker":
                     # Only forward event with the worker specified.
@@ -123,17 +128,15 @@ async def zmq_proxy(app):
                         futures.append(ws.socket.send_json(data))
 
         elif topic.endswith(".worker"):
-            worker = await sync_to_async(Worker.objects.get)(hostname=content["worker"])
+            worker = await db(logger, Worker.objects.get, hostname=content["worker"])
             for ws in app["websockets"]:
                 # Only forward to users as workers will discard it
                 if ws.kind == "user":
                     user = AnonymousUser()
                     if ws.name:
                         with contextlib.suppress(User.DoesNotExist):
-                            user = await sync_to_async(User.objects.get)(
-                                username=ws.name
-                            )
-                    if await sync_to_async(worker.can_view)(user):
+                            user = await db(logger, User.objects.get, username=ws.name)
+                    if await db(logger, worker.can_view, user):
                         futures.append(ws.socket.send_json(data))
 
         await asyncio.gather(*futures)
@@ -208,7 +211,7 @@ async def websocket_handler(request):
             await ws.send_json({"error": "Invalid basic authentication"})
             await ws.close()
             return ws
-        user = await sync_to_async(AuthToken.get_user_for_secret)(name, secret)
+        user = await db(logger, AuthToken.get_user_for_secret, name, secret)
         if user is None:
             await ws.send_json({"error": "Unknown user"})
             await ws.close()
@@ -220,7 +223,7 @@ async def websocket_handler(request):
         name = request.headers.get("LAVA-Host")
 
         try:
-            worker = await sync_to_async(Worker.objects.get)(hostname=name)
+            worker = await db(logger, Worker.objects.get, hostname=name)
         except Worker.DoesNotExist:
             await ws.send_json({"error": "Unknown worker"})
             await ws.close()
