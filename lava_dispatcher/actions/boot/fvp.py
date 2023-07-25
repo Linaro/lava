@@ -77,6 +77,7 @@ class BaseFVPAction(Action):
         self.extra_options = ""
         self.container = ""
         self.fvp_license = None
+        self.ubl_license = None
         self.docker_image = None
         self.local_docker_image = False
 
@@ -118,6 +119,10 @@ class BaseFVPAction(Action):
             self.extra_options += " --volume %s" % volume
         if "license_variable" in self.parameters:
             self.fvp_license = shlex.quote(self.parameters["license_variable"])
+        if options.get("ubl_license"):
+            self.ubl_license = shlex.quote(options["ubl_license"])
+        if "ubl_license" in self.parameters:
+            self.ubl_license = shlex.quote(self.parameters["ubl_license"])
 
     def construct_docker_fvp_command(self, docker_image, fvp_arguments):
         substitutions = {}
@@ -156,7 +161,7 @@ class BaseFVPAction(Action):
 
         substitutions["ARTIFACT_DIR"] = os.path.join("/", self.container)
         if not self.fvp_license:
-            if not self.parameters.get("ubl_license"):
+            if not self.ubl_license:
                 self.logger.warning(
                     "'license_variable' or 'ubl_license' not set, model may not function."
                 )
@@ -169,13 +174,13 @@ class BaseFVPAction(Action):
         script = Path(self.mkdtemp()) / "script.sh"
         data = "#!/bin/sh\n"
 
-        if self.parameters.get("ubl_license"):
+        if self.ubl_license:
             armlm = (
                 Path(fvp_image) / "../../../bin/arm_license_management_utilities/armlm"
             ).resolve()
             data += f"""set -e
 echo "Activating UBL license"
-{armlm} activate -code {self.parameters['ubl_license']}
+{armlm} activate -code {self.ubl_license}
 set +e
 """
 
