@@ -20,6 +20,9 @@ actions:
           cpus: {{ fvp_docker_cpus|default(0.0) }}
           memory: {{ fvp_docker_memory|default(0) }}
           privileged: {{ fvp_docker_privileged|default(False) }}
+{% if fvp_ubl_license %}
+          ubl_license: {{ fvp_ubl_license }}
+{% endif %}
 {% if fvp_docker_devices|default([]) %}
           devices:
 {% for device in fvp_docker_devices %}
