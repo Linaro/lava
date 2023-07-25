@@ -1284,8 +1284,8 @@ class ManagersTest(TestCaseWithFactory):
 
     def test_permissions_duplicate_rows(self):
         # See
-        # https://git.lavasoftware.org/lava/lava/-/issues/612
-        # https://git.lavasoftware.org/lava/lava/-/merge_requests/2121
+        # https://gitlab.com/lava/lava/-/issues/612
+        # https://gitlab.com/lava/lava/-/merge_requests/2121
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
         )

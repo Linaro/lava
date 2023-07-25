@@ -20,8 +20,8 @@ import requests
 #############
 # Constants #
 #############
-GITLAB_API = "https://git.lavasoftware.org/api/v4/projects/2"
-REGISTRY = "hub.lavasoftware.org/lava/lava"
+GITLAB_API = "https://gitlab.com/api/v4/projects/47541627"
+REGISTRY = "registry.gitlab.com/lava/lava"
 COLORS = {
     "blue": "\x1b[1;34;40m",
     "purple": "\x1b[1;35;40m",

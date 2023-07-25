@@ -20,7 +20,7 @@ Available backends are:
 * `lava_scheduler_app.logutils.LogsElasticsearch`
 * `lava_scheduler_app.logutils.LogsFirestore`
 
-The list can be also found in [the source code](https://git.lavasoftware.org/lava/lava/-/blob/master/lava_server/settings/common.py)
+The list can be also found in [the source code](https://gitlab.com/lava/lava/-/blob/master/lava_server/settings/common.py)
 
 ### MongoDB
 
@@ -60,7 +60,7 @@ meaning that incremental read on the job UI will not work properly.
 If the logging database is used from the very first installation of one LAVA
 instance then all the logs will be stored in the said database, but if the
 switch is made at one later point in the life of a LAVA instance, then you
-can use the management command [copy-logs](https://git.lavasoftware.org/lava/lava/-/blob/master/lava_server/management/commands/copy-logs.py) to copy the logs
+can use the management command [copy-logs](https://gitlab.com/lava/lava/-/blob/master/lava_server/management/commands/copy-logs.py) to copy the logs
 from the filesystem to the database of your choosing.
 It is mandatory to have appropriate configuration variables set in LAVA settings in order to properly connect to the database.
 

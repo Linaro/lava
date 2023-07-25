@@ -14,7 +14,7 @@ context:
   # netdevice: tap
 
 metadata:
-  source: https://git.lavasoftware.org/lava/lava.git
+  source: https://gitlab.com/lava/lava.git
   path: doc/v2/examples/test-jobs/qemu-stretch-params.yaml
   readme: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/debian-stretch-amd64-readme.html
   build-log: https://files.lavasoftware.org/components/lava/standard/debian/stretch/amd64/2/vmdebootstrap.log
@@ -45,7 +45,7 @@ actions:
     timeout:
       minutes: 5
     definitions:
-    - repository: https://git.lavasoftware.org/lava/functional-tests.git
+    - repository: https://gitlab.com/lava/functional-tests.git
       from: git
       path: posix/parameters.yaml
       name: parse-params

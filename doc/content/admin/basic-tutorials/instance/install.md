@@ -28,7 +28,7 @@ apt install docker-compose
 Get the **docker-compose** files from [gitlab][lava-docker-compose] and use it.
 
 ```shell
-git clone https://git.lavasoftware.org/lava/pkg/docker-compose
+git clone https://gitlab.com/lava/pkg/docker-compose
 cd docker-compose/
 docker-compose pull
 docker-compose up

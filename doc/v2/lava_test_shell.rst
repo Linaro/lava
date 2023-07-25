@@ -340,12 +340,12 @@ the git-repos action, for example:
 
   install:
       git-repos:
-          - url: https://git.lavasoftware.org/lava/lava.git
+          - url: https://gitlab.com/lava/lava.git
             skip_by_default: False
-          - url: https://git.lavasoftware.org/lava/lava.git
+          - url: https://gitlab.com/lava/lava.git
             destination:  lava-d-r
             branch:       release
-          - url: https://git.lavasoftware.org/lava/lava.git
+          - url: https://gitlab.com/lava/lava.git
             destination:  lava-d-s
             branch:       staging
 

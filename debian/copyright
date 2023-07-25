@@ -1,6 +1,6 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: lava
-Source: https://git.lavasoftware.org/lava/lava
+Source: https://gitlab.com/lava/lava
 
 Files: *
 Copyright: 2010-2019, Linaro Limited

@@ -46,7 +46,7 @@ by replaying a static log against changes in the codebase.
 then checks that the inputs from LAVA are correct for that specific use
 case.
 
-https://git.lavasoftware.org/lava/meta-lava
+https://gitlab.com/lava/meta-lava
 
 ``meta-lava`` is a python script that will:
 

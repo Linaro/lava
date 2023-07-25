@@ -33,14 +33,14 @@ Run the GitLab CI script to build either the `lava-dispatcher` or `lava-server` 
 Images will be tagged with:
 
 ```
-hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher:<VERSION>
-hub.lavasoftware.org/lava/lava/amd64/lava-server:<VERSION>
+registry.gitlab.com/lava/lava/amd64/lava-dispatcher:<VERSION>
+registry.gitlab.com/lava/lava/amd64/lava-server:<VERSION>
 ```
 
 !!! tip "Base images"
     The script will create base images for both `lava-dispatcher` and `lava-server`.
     Bases images will be tagged with
     ```
-    hub.lavasoftware.org/lava/lava/amd64/lava-dispatcher-base:<VERSION>
-    hub.lavasoftware.org/lava/lava/amd64/lava-server-base:<VERSION>
+    registry.gitlab.com/lava/lava/amd64/lava-dispatcher-base:<VERSION>
+    registry.gitlab.com/lava/lava/amd64/lava-server-base:<VERSION>
     ```

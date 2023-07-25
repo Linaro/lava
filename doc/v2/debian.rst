@@ -316,7 +316,7 @@ not committed local changes (e.g. you are on a local branch based on a
 tag) then the short hash can be used to lookup the commit in the master
 branch, omitting the ``g`` prefix, e.g.::
 
-  https://git.lavasoftware.org/lava/lava/commit/b022cde9
+  https://gitlab.com/lava/lava/commit/b022cde9
 
 .. _distribution_differences:
 
@@ -338,7 +338,7 @@ Example
 The helper supports ``lava``::
 
  $ sudo apt install lava-dev
- $ git clone https://git.lavasoftware.org/lava/lava.git
+ $ git clone https://gitlab.com/lava/lava.git
  $ cd lava
  $ ./share/debian-dev-build.sh
 

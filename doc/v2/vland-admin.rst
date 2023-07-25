@@ -37,7 +37,7 @@ Switches must have drivers in vland
 ===================================
 
 Switches which are expected to support a VLAN must have driver
-support in `VLANd <https://git.lavasoftware.org/lava/vland>`_.
+support in `VLANd <https://gitlab.com/lava/vland>`_.
 
 .. index:: network map
 

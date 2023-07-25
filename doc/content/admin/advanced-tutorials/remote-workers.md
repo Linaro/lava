@@ -18,7 +18,7 @@ Location of the settings depends on the way lava-dispatcher is started.
 
 When using standalone installation either from sources or from debian package,
 settings can be found in `/etc/lava-dispatcher/lava-worker` file. In case
-[docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose) is used
+[docker-compose](https://gitlab.com/lava/pkg/docker-compose) is used
 settings should be updated in .env file:
 
 ```shell
@@ -149,7 +149,7 @@ apt install docker.io docker-compose
 You just need to fetch the sources:
 
 ```shell
-git clone https://git.lavasoftware.org/lava/pkg/docker-compose
+git clone https://gitlab.com/lava/pkg/docker-compose
 cd docker-compose
 ```
 

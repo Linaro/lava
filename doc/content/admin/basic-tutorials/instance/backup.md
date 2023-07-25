@@ -18,7 +18,7 @@ sudo -u lavaserver pg_dump lavaserver > lava-server.sql
 ```
 
 ### For the docker-compose solution
-If you run your LAVA instance with [docker-compose](https://git.lavasoftware.org/lava/pkg/docker-compose),
+If you run your LAVA instance with [docker-compose](https://gitlab.com/lava/pkg/docker-compose),
 you can backup the database like this:
 ```shell
 docker exec --user postgres docker-compose_db_1 bash -c \

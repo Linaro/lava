@@ -857,7 +857,7 @@ Sequence
    ``/usr/lib/python3/dist-packages/lava_dispatcher/device/dynamic_vm_keys``
    directory when lava-dispatcher is installed or in the lava-dispatcher `git
    tree
-   <https://git.lavasoftware.org/lava/lava/tree/master/lava_dispatcher/dynamic_vm_keys>`_.
+   <https://gitlab.com/lava/lava/tree/master/lava_dispatcher/dynamic_vm_keys>`_.
 
 #. The test image on the host device starts a test definition over the existing
    (typically serial) connection. At this point, the image file and overlay for

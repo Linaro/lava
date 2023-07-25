@@ -26,7 +26,7 @@ else
   # Current architecture
   [ "$(uname -m)" = "x86_64" ] && ARCH="amd64" || ARCH="$(uname -m)"
   # Default values
-  CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE:-"hub.lavasoftware.org/lava/lava"}
+  CI_REGISTRY_IMAGE=${CI_REGISTRY_IMAGE:-"registry.gitlab.com/lava/lava"}
   IMAGE_NAME=${IMAGE_NAME:-"$CI_REGISTRY_IMAGE/$ARCH/lava-$SERVICE"}
 
   # Build the image name

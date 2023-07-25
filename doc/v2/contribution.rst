@@ -187,7 +187,7 @@ To contribute changes to LAVA, there is a simple process:
 
 .. note:: It is worth checking if someone already has a merge request
    which relates to your proposed changes. Check for open merge
-   requests at https://git.lavasoftware.org/lava/lava/merge_requests
+   requests at https://gitlab.com/lava/lava/merge_requests
 
 .. index:: gitlab account
 
@@ -197,7 +197,7 @@ Creating a GitLab Account
 =========================
 
 To be able to work with the LAVA Software Community Project, start by
-creating an account on https://git.lavasoftware.org/lava/ . Fill in
+creating an account on https://gitlab.com/lava/ . Fill in
 details in your profile, and make sure you add a public SSH key to your
 account. You will need that to be able to push code changes.
 
@@ -210,7 +210,7 @@ Request GitLab Fork Permissions
 
 Next, you will need to be given permissions to create forks of our
 repositories on the LAVA GitLab instance
-(https://git.lavasoftware.org/lava/). This is an unfortunate step that
+(https://gitlab.com/lava/). This is an unfortunate step that
 has only become necessary recently - spammers and trolls are
 everywhere on the Internet and will apparently abuse any resources
 that are not locked down. :-(
@@ -219,7 +219,7 @@ To counter the spam problem, all new accounts are tagged as
 ``external`` by default, which means that they do not have permissions
 to fork projects or create their own new projects. If you are
 genuinely looking to work on LAVA, please `file an issue
-<https://git.lavasoftware.org/lava/lava/issues/new>`_ to ask for
+<https://gitlab.com/lava/lava/issues/new>`_ to ask for
 access once you have created your account. The GitLab admins should
 respond quickly and give you access.
 
@@ -254,7 +254,7 @@ within GitLab, this can **only** be done on a per-project basis rather
 than by user account. It's therefore worth asking for this DinD access
 straight away once you have made your first fork of each
 repository. Please `file an issue
-<https://git.lavasoftware.org/lava/lava/issues/new>`_ to ask for
+<https://gitlab.com/lava/lava/issues/new>`_ to ask for
 access once you have forked. The GitLab admins should respond quickly
 and give you access.
 
@@ -267,7 +267,7 @@ Create a development branch
 
 Clone your fork of the lava software repository::
 
- $ git clone git@git.lavasoftware.org:yourname/lava.git
+ $ git clone git@gitlab.com:yourname/lava.git
 
 We recommend always making a new local branch for your changes::
 
@@ -341,9 +341,9 @@ with the name of the local branch which will be pushed to that fork::
  Total 5 (delta 3), reused 0 (delta 0)
  remote:
  remote: To create a merge request for my_branch, visit:
- remote:   https://git.lavasoftware.org/my_username/lava/merge_requests/new?merge_request%5Bsource_branch%5D=my_branch
+ remote:   https://gitlab.com/my_username/lava/merge_requests/new?merge_request%5Bsource_branch%5D=my_branch
  remote:
- To git.lavasoftware.org:my_username/lava.git
+ To gitlab.com:my_username/lava.git
  * [new branch]          my_branch -> my_branch
  Branch 'my_branch' set up to track remote branch 'my_branch' from 'my_username'.
 

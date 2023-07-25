@@ -1230,7 +1230,7 @@ non-fatal checks and ``command`` for fatal checks.
     }
 
 
-.. seealso:: https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/lava-common
+.. seealso:: https://gitlab.com/lava/functional-tests/blob/master/testdefs/lava-common
 
 Calling shell script
 --------------------
@@ -1321,9 +1321,9 @@ This is an example of using lava-test-raise from a python custom script
 
 https://staging.validation.linaro.org/scheduler/job/246700/definition
 
-https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/arm-probe.yaml
+https://gitlab.com/lava/functional-tests/blob/master/testdefs/arm-probe.yaml
 
-https://git.lavasoftware.org/lava/functional-tests/blob/master/testdefs/aep-parse-output.py
+https://gitlab.com/lava/functional-tests/blob/master/testdefs/aep-parse-output.py
 
 .. index:: test shell - control output
 

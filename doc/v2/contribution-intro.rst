@@ -65,7 +65,7 @@ Issue Tracker
 =============
 
 Get involved by using the LAVA Software Community Project issue
-tracker at https://git.lavasoftware.org/lava/lava/issues. To begin
+tracker at https://gitlab.com/lava/lava/issues. To begin
 with, you might only create bug reports for issues you encounter. As
 you become more comfortable, consider triaging other bug reports.
 

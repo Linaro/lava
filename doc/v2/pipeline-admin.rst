@@ -148,7 +148,7 @@ This git repository holds working examples of a range of different jobs for a
 range of different devices. These jobs are routinely submitted as functional
 tests of upcoming releases of the LAVA software.
 
-https://git.lavasoftware.org/lava/functional-tests
+https://gitlab.com/lava/functional-tests
 
 Not every combination of deployment method or boot method can be expressed for
 all supported devices but we aim to have at least one example of each
@@ -165,7 +165,7 @@ become the default :term:`device type` templates when the packages are built.
 The ``devices`` directory contains working device dictionary examples for these
 device types.
 
-https://git.lavasoftware.org/lava/lava/tree/master/lava_scheduler_app/tests
+https://gitlab.com/lava/lava/tree/master/lava_scheduler_app/tests
 
 .. _extra_device_configuration:
 
