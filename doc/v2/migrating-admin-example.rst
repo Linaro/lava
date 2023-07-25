@@ -63,7 +63,7 @@ Don't worry about running this example yourself at this stage. The files
 themselves may be useful for reference. The device YAML file comes from the
 lava-dispatcher unit tests:
 
-https://gitlab.com/lava/lava/blob/master/lava_scheduler_app/tests/devices/bbb-01.yaml
+https://gitlab.com/lava/lava/-/raw/master/tests/lava_scheduler_app/devices/bbb-01.yaml
 
 The job submission YAML used in the example comes from the lava-team
 refactoring repository of functional tests:
@@ -529,9 +529,9 @@ commands.
 
 The first point of reference with a new template is the ``lava-server``
 `base.jinja2
-<https://gitlab.com/lava/lava/blob/master/lava_scheduler_app/tests/device-types/base.jinja2>`_
+<https://gitlab.com/lava/lava/-/raw/master/etc/dispatcher-config/device-types/base.jinja2>`_
 template and existing examples (e.g. `beaglebone-black
-<https://gitlab.com/lava/lava/blob/master/lava_scheduler_app/tests/device-types/beaglebone-black.jinja2>`_)
+<https://gitlab.com/lava/lava/-/raw/master/etc/dispatcher-config/device-types/beaglebone-black.jinja2>`_)
 - templates live on the server, are populated with data from the database and
 the resulting YAML is sent to the dispatcher.
 
@@ -645,7 +645,7 @@ Creating a device dictionary for the device
 ===========================================
 
 Examples of exported device dictionaries exist in the ``lava-server`` `codebase
-<https://gitlab.com/lava/lava/blob/master/lava_scheduler_app/tests/devices/bbb-01.yaml>`_
+<https://gitlab.com/lava/lava/-/raw/master/tests/lava_scheduler_app/devices/bbb-01.jinja2>`_
 for unit test support. The dictionary extends the new template and provides the
 device-specific values.
 
