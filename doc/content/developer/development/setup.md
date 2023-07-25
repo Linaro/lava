@@ -27,7 +27,7 @@ Fetch the sources somewhere in your home directory.
 
 ```shell
 cd ~/
-git clone https://git.lavasoftware.org/lava/lava
+git clone https://gitlab.com/lava/lava
 cd ~/lava/
 ```
 
@@ -110,7 +110,7 @@ Fetch the sources somewhere in your home directory.
 
 ```shell
 cd ~/
-git clone https://git.lavasoftware.org/lava/lava
+git clone https://gitlab.com/lava/lava
 cd ~/lava/
 ```
 

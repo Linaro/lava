@@ -60,7 +60,7 @@ worker you want to attach to the new container.
 
 .. code-block:: none
 
- $ docker run --net dockernet --ip 172.18.0.5 -it hub.lavasoftware.org/lava/lava/lava-dispatcher:2018.10
+ $ docker run --net dockernet --ip 172.18.0.5 -it registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2023.06
 
 This IP address (or a hostname if you configure local DNS
 appropriately) can then be used in commands to docker run to start a
@@ -80,7 +80,7 @@ Official LAVA Software Docker images
 ####################################
 
 Official LAVA Software Docker images are available via
-``hub.lavasoftware.org`` and ``hub.docker.com``. In each case, two
+``registry.gitlab.com`` and ``hub.docker.com``. In each case, two
 images are built at the same version: ``lava-dispatcher`` and
 ``lava-server``, each image is built for two architectures, ``amd64``
 and ``aarch64``.
@@ -88,10 +88,10 @@ and ``aarch64``.
 Daily builds
 *************
 
-``hub.lavasoftware.org`` hosts CI images regularly built from the
+``registry.gitlab.com`` hosts CI images regularly built from the
 ``master`` branch of ``lava``. Images are listed in GitLab:
 
-https://git.lavasoftware.org/lava/lava/container_registry
+https://gitlab.com/lava/lava/container_registry
 
 .. _official_docker_releases:
 
@@ -100,7 +100,7 @@ Official LAVA Releases using Docker
 
 The ``lavasoftware`` organization on ``hub.docker.com`` hosts releases
 of LAVA (https://hub.docker.com/u/lavasoftware/) by retagging images
-from hub.lavasoftware.org and pushing to hub.docker.com . Users are
+from registry.gitlab.com and pushing to hub.docker.com . Users are
 free to use either hub.
 
 .. note:: Due to naming conventions on hub.docker.com, the architecture
@@ -120,7 +120,7 @@ or
 
 .. code-block:: none
 
- docker pull hub.lavasoftware.org/lava/lava/lava-dispatcher:2019.01
+ docker pull registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2023.06
 
 lava-server
 ===========
@@ -135,7 +135,7 @@ or
 
 .. code-block:: none
 
- docker pull hub.lavasoftware.org/lava/lava/lava-server:2019.01
+ docker pull registry.gitlab.com/lava/lava/amd64/lava-server:2023.06
 
 Command lines
 *************
@@ -162,7 +162,7 @@ Command lines get long, so use wrapper scripts, e.g.:
  -e "LOGGER_URL=tcp://calvin:5555" \
  -e "MASTER_URL=tcp://calvin:5556" \
  --name calvin-docker-88-3 \
- hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
+ registry.gitlab.com/lava/lava/lava-dispatcher/master:2023.06.dev0001
 
 Python
 ======
@@ -271,7 +271,7 @@ external configuration or packaging.
 CI images
 *********
 
-``lava/lava/lava-dispatcher/master`` on ``hub.lavasoftware.org``
+``lava/lava/lava-dispatcher/master`` on ``registry.gitlab.com``
 contains images like 2018.7-101-g5987db8b5
 
 .. seealso:: :ref:`official_docker_releases`
@@ -297,7 +297,7 @@ see :ref:`two_dockers_together`.
 
     /usr/bin/lava-worker --level $LOGLEVEL --log-file $LOGFILE --url $SERVER_URL $DISPATCHER_HOSTNAME
 
-    $ docker run -e "DISPATCHER_HOSTNAME=--name=calvin-2018.7-88" -e "URL=http://calvin/" --name calvin-docker-88-4  hub.lavasoftware.org/lava/lava/lava-dispatcher/master:2018.7-88-ga7b7939dd
+    $ docker run -e "DISPATCHER_HOSTNAME=--name=calvin-2018.7-88" -e "URL=http://calvin/" --name calvin-docker-88-4  registry.gitlab.com/lava/lava/amd64/lava-dispatcher:2023.06.dev0008
     2018-10-03 15:08:32,852    INFO [INIT] LAVA worker has started.
     2018-10-03 15:08:32,852    INFO [INIT] Using protocol version 3
 
@@ -310,7 +310,7 @@ lava-server
 
 .. code-block:: none
 
- $ docker run --net dockernet --ip 172.18.0.5 -it hub.lavasoftware.org/lava/lava/lava-server/master:2018.7-88-ga7b7939dd
+ $ docker run --net dockernet --ip 172.18.0.5 -it registry.gitlab.com/lava/lava/amd64/lava-server:2023.06.dev0008
 
 .. note:: the ``dockernet`` docker network needs to already exist and
    is just an example name - choose your own name according to your own

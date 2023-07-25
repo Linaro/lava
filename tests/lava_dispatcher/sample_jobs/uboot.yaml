@@ -14,7 +14,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.lavasoftware.org/lava/lava.git
+  source: https://gitlab.com/lava/lava.git
   path: tests/lava_dispatcher/sample_jobs/uboot.yaml
 
 actions:

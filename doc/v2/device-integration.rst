@@ -456,7 +456,7 @@ are already supported in LAVA V2.
 
 #. https://lng.validation.linaro.org/scheduler/
 
-#. https://git.lavasoftware.org/lava/lava/tree/master/lava_scheduler_app/tests/device-types
+#. https://gitlab.com/lava/lava/tree/master/lava_scheduler_app/tests/device-types
 
 Check for:
 

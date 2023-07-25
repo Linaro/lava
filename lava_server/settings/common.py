@@ -180,8 +180,8 @@ BRANDING_ICON = "lava_server/images/logo.png"
 BRANDING_URL = "https://lavasoftware.org"
 BRANDING_HEIGHT = 22
 BRANDING_WIDTH = 22
-BRANDING_BUG_URL = "https://git.lavasoftware.org/lava/lava/issues"
-BRANDING_SOURCE_URL = "https://git.lavasoftware.org/lava/lava"
+BRANDING_BUG_URL = "https://gitlab.com/lava/lava/issues"
+BRANDING_SOURCE_URL = "https://gitlab.com/lava/lava"
 BRANDING_MESSAGE = ""
 BRANDING_CSS = ""
 

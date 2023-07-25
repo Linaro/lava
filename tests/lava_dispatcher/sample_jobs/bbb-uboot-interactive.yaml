@@ -12,7 +12,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.lavasoftware.org/lava/lava.git
+  source: https://gitlab.com/lava/lava.git
   path: doc/v2/examples/test-jobs/bbb-uboot-interactive.yaml
 
 actions:

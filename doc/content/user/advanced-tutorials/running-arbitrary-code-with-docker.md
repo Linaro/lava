@@ -533,7 +533,7 @@ remains unchanged.
 ## See also
 
 * LAVA release notes:
-    * [2020.01](https://git.lavasoftware.org/lava/lava/-/wikis/releases/2020.01)
-    * [2020.02](https://git.lavasoftware.org/lava/lava/-/wikis/releases/2020.02)
-    * [2020.04](https://git.lavasoftware.org/lava/lava/-/wikis/releases/2020.04)
+    * [2020.01](https://gitlab.com/lava/lava/-/wikis/releases/2020.01)
+    * [2020.02](https://gitlab.com/lava/lava/-/wikis/releases/2020.02)
+    * [2020.04](https://gitlab.com/lava/lava/-/wikis/releases/2020.04)
 * [Improved Android Testing in LAVA with Docker](https://connect.linaro.org/resources/ltd20/ltd20-304/). Talk at Linaro Tech Days 2020.

@@ -28,7 +28,7 @@ Guidelines
   list archives **first** - somebody else may have already seen and
   solved a similar problem. Also check the list of outstanding issues
   in GitLab to see if someone else has the same problem.
-  https://git.lavasoftware.org/lava/lava/issues
+  https://gitlab.com/lava/lava/issues
 
 * Avoid putting LAVA job output directly into your email to a list or
   IRC channel. Mailing list posts can include a few lines but not IRC.

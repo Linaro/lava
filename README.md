@@ -27,4 +27,4 @@ Bugs should first be discussed by subscribing to the
 mailing list.
 
 Bug reports and new LAVA features are tracked using
-[GitLab](https://git.lavasoftware.org/lava/lava/issues).
+[GitLab](https://gitlab.com/lava/lava/issues).

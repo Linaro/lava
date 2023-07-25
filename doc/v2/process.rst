@@ -7,7 +7,7 @@ Development process
 
 The LAVA development process is based on git. The various source code
 repositories are hosted on `the lavasoftware GitLab instance
-<https://git.lavasoftware.org/>`_.
+<https://gitlab.com/>`_.
 
 The LAVA team is spread geographically around the world, with members
 in multiple countries. We can often be found talking on our IRC

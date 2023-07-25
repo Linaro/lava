@@ -223,7 +223,7 @@ Code locations
 All the code for the ``lava-server`` and ``lava-dispatcher`` support
 exists in the single LAVA repository:
 
-https://git.lavasoftware.org/lava/lava
+https://gitlab.com/lava/lava
 
 Includes:
 
@@ -353,7 +353,7 @@ The LAVA Software Community Project uses GitLab_ for all development
 and planning for new features and concepts. Discussion happens on the
 :ref:`mailing_lists`.
 
-.. _GitLab: https://git.lavasoftware.org/
+.. _GitLab: https://gitlab.com/
 
 Many older git commit messages within the LAVA codebase contain
 references to JIRA issues as ``LAVA-123`` etc., as the LAVA project
@@ -406,7 +406,7 @@ Contributing via your distribution
 
 You are welcome to use the bug tracker of your chosen distribution. The
 maintainer for the packages in that distribution should have an account
-on https://git.lavasoftware.org/lava/lava to be able to forward bug
+on https://gitlab.com/lava/lava to be able to forward bug
 reports and patches into the upstream LAVA systems.
 
 .. seealso:: https://www.debian.org/Bugs/Reporting
@@ -417,7 +417,7 @@ Contributing via GitHub
 GitHub has mirrors of the GitLab repository but merge requests need to
 be run through the GitLab CI tests. This can be done by changing the
 git remote of the GitHub branch and pushing to GitLab. GitHub users can
-create GitLab accounts on https://git.lavasoftware.org using their
+create GitLab accounts on https://gitlab.com using their
 GitHub credentials.
 
 .. seealso:: :ref:`lava_development`.

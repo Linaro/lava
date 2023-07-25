@@ -21,8 +21,8 @@ Build-Depends: debhelper-compat (= 12),
 X-Python3-Version: >=3.6
 Standards-Version: 4.2.1
 Homepage: https://www.lavasoftware.org/
-Vcs-Git: https://git.lavasoftware.org/lava/lava.git
-Vcs-Browser: https://git.lavasoftware.org/lava/lava
+Vcs-Git: https://gitlab.com/lava/lava.git
+Vcs-Browser: https://gitlab.com/lava/lava
 
 Package: lava-dispatcher
 Architecture: all

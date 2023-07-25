@@ -1,10 +1,10 @@
 [bandit]: https://bandit.readthedocs.io/en/latest/
 [black]: https://black.readthedocs.io/en/stable/
 [jinja2]: https://jinja.palletsprojects.com/
-[KissCache]: https://git.lavasoftware.org/ivoire/kisscache/
+[KissCache]: https://gitlab.com/ivoire/kisscache/
 [lava-debian]: https://apt.lavasoftware.org/release/
 [lava-docker-hub]: https://hub.docker.com/u/lavasoftware/
-[lava-docker-compose]: https://git.lavasoftware.org/lava/pkg/docker-compose
+[lava-docker-compose]: https://gitlab.com/lava/pkg/docker-compose
 [lavacli]: https://docs.lavasoftware.org/lavacli/
 [localhost]: http://localhost
 [pgsql-backup]: https://www.postgresql.org/docs/9.1/backup.html
