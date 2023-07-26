@@ -15,11 +15,13 @@ from django.db.models import Q
 from django.utils import timezone
 
 if TYPE_CHECKING:
-    from typing import ClassVar
+    from typing import ClassVar, Iterator
+
+    from django.http import HttpRequest
 
 
 class LavaView(tables.SingleTableView):
-    def __init__(self, request, **kwargs):
+    def __init__(self, request: HttpRequest, **kwargs):
         super().__init__(**kwargs)
         self.request = request
 
@@ -86,9 +88,9 @@ class LavaTable(tables.Table):
     and tables using prefixes, as well as a default page length.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request: HttpRequest = None, prefix: str = "", **kwargs):
         super().__init__(*args, **kwargs)
-        self.request = kwargs.pop("request", None)
+        self.request = request
         if (
             self.request
             and self.request.user.is_authenticated
@@ -99,6 +101,23 @@ class LavaTable(tables.Table):
         else:
             self.length = settings.DEFAULT_TABLE_LENGTH
         self.empty_text = "No data available in table"
+        self.prefix = prefix
+
+    @classmethod
+    def has_searches(cls) -> bool:
+        return any((cls.Meta.searches, cls.Meta.queries, cls.Meta.times))
+
+    def get_simple_text_searches(self) -> Iterator[str]:
+        for field_name in self.Meta.searches.keys():
+            yield self.prefix + field_name
+
+    def get_query_searches(self) -> Iterator[str]:
+        for field_name in self.Meta.queries.values():
+            yield self.prefix + field_name
+
+    def get_time_searches(self) -> Iterator[str]:
+        for field_name in self.Meta.times.keys():
+            yield self.prefix + field_name
 
     class Meta:
         attrs: ClassVar[dict[str, str]] = {

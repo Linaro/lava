@@ -21,17 +21,6 @@ def get_prefix_length(table, string):
 
 
 @register.filter
-def get_search_data(data, prefix):
-    if not data:
-        return []
-    if prefix in data:
-        return data[prefix]
-    if "search" in data:
-        return data["search"]
-    return data
-
-
-@register.filter
 def get_length_select(table, string):
     select = ""
     val = [10, 25, 50, 100]
