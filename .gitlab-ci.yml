@@ -7,6 +7,11 @@ stages:
 include:
   template: SAST.gitlab-ci.yml
 
+variables:
+  # To make sure that latest git tag gets fetched
+  # or version() function will fail
+  GIT_DEPTH: "100"
+
 ###########################
 # Templates               #
 #                         #
