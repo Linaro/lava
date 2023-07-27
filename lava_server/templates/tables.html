@@ -21,9 +21,6 @@
 {%  if table.has_searches %}
   <div class="col-md-5">
     <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
-      {% for key,value in request.GET.dict.items %}
-      <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
-      {% endfor %}
       <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
       <div class="form-group">
         <label>Search</label>
