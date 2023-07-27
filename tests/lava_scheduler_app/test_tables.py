@@ -2,6 +2,7 @@ import logging
 import sys
 
 from django.contrib.auth.models import AnonymousUser
+from django.http import HttpRequest
 from django.test import TestCase
 
 from lava_common.decorators import nottest
@@ -83,12 +84,12 @@ class TestTestJobTable(TestCase):
         self.assertEqual(table.length, 18)
 
     def test_shell_data(self):
-        view = TestJobView(None)
+        view = TestJobView(HttpRequest())
         logging.debug("Testing with a View derived from FilteredSingleTableView")
         TestJobTable(view.get_table_data())
 
     def test_shell_data_model(self):
-        view = TestJobView(None, model=TestJob, table_class=TestJobTable)
+        view = TestJobView(HttpRequest(), model=TestJob, table_class=TestJobTable)
         TestJobTable(view.get_table_data())
 
 
@@ -96,12 +97,12 @@ class TestPrefixJobTable(TestCase):
     prefix = "abc_"
 
     def test_prefix_support(self):
-        view = TestJobView(None)
+        view = TestJobView(HttpRequest())
         logging.debug("Testing an unmodelled View with a prefix")
         TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
 
     def test_prefix_support_model(self):
-        view = TestJobView(None, model=TestJob, table_class=TestJobTable)
+        view = TestJobView(HttpRequest(), model=TestJob, table_class=TestJobTable)
         TestJobTable(view.get_table_data(self.prefix), prefix=self.prefix)
         logging.debug("Testing a view with a model and a prefix")
 
@@ -114,20 +115,20 @@ class TestForDeviceTable(TestCase):
 
     def test_device_table(self):
         logging.debug("Testing with a View derived from LavaView")
-        view = TestDeviceView(None)
+        view = TestDeviceView(HttpRequest())
         DeviceTable(view.get_table_data())
 
     def test_device_table_model(self):
-        view = TestDeviceView(None, model=Device, table_class=DeviceTable)
+        view = TestDeviceView(HttpRequest(), model=Device, table_class=DeviceTable)
         DeviceTable(view.get_table_data())
 
     def test_device_table_prefix(self):
-        view = TestDeviceView(None)
+        view = TestDeviceView(HttpRequest())
         prefix = "dt_"
         TestDeviceTable(view.get_table_data(prefix), prefix=prefix)
 
     def test_device_table_model2(self):
-        view = TestDeviceView(None, model=Device, table_class=TestDeviceTable)
+        view = TestDeviceView(HttpRequest(), model=Device, table_class=TestDeviceTable)
         TestDeviceTable(view.get_table_data())
 
 
@@ -142,5 +143,5 @@ class TestHiddenDevicesInDeviceTable(TestCase):
         device_type.save()
         device = Device(device_type=device_type, hostname="generic1")
         device.save()
-        view = TestDeviceView(None)
+        view = TestDeviceView(HttpRequest())
         self.assertEqual(len(view.get_queryset()), 1)
