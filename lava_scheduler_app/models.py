@@ -2026,7 +2026,6 @@ class TestJob(models.Model):
             "description": self.description,
             "actual_device_id": self.actual_device_id,
             "definition": self.definition,
-            "metadata": self.get_metadata_dict(),
         }
 
         # Logs.
@@ -2188,37 +2187,10 @@ class TestJob(models.Model):
         results = {}
         attributes = [x.strip() for x in attributes.split(",")]
 
-        if hasattr(self, "testdata"):
-            for attr in self.testdata.attributes.all():
-                if attr.name in attributes:
-                    results[attr.name] = {}
-                    results[attr.name]["fail"] = self.health != self.HEALTH_COMPLETE
-                    try:
-                        results[attr.name]["value"] = float(attr.value)
-                    except ValueError:
-                        # Ignore non-float metadata.
-                        del results[attr.name]
-
         return results
 
     def get_end_datetime(self):
         return self.end_time
-
-    def get_xaxis_attribute(self, xaxis_attribute=None):
-        if not xaxis_attribute:
-            return None
-        with contextlib.suppress(Exception):
-            if not hasattr(self, "testdata"):
-                return None
-            data = self.testdata.attributes.filter(name=xaxis_attribute)
-            return data.values_list("value", flat=True)[0]
-
-    def get_metadata_dict(self):
-        retval = []
-        if hasattr(self, "testdata"):
-            for attribute in self.testdata.attributes.all():
-                retval.append({attribute.name: attribute.value})
-        return retval
 
     @transaction.atomic
     def cancel(self, user):

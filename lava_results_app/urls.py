@@ -13,7 +13,6 @@ from django.urls import path, register_converter
 from lava_common.converters import JobIdConverter
 from lava_results_app.views import (
     index,
-    metadata_export,
     suite,
     suite_csv,
     suite_csv_stream,
@@ -190,11 +189,6 @@ urlpatterns = (
         "<job_id:job>/yaml_summary",
         testjob_yaml_summary,
         name="lava.results.testjob_yaml_summary",
-    ),
-    path(
-        "<job_id:job>/metadata",
-        metadata_export,
-        name="lava.results.job.metadata",
     ),
     # TestSuite model
     # primary key: int

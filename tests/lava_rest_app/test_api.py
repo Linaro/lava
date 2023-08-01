@@ -488,14 +488,6 @@ class TestRestApi:
 
         assert response.status_code == 403  # nosec - unit test support
 
-    def test_testjob_metadata(self):
-        data = self.hit(
-            self.userclient,
-            reverse("api-root", args=[self.version])
-            + "jobs/%s/metadata/" % self.public_testjob1.id,
-        )
-        assert data["metadata"] == []  # nosec - unit test support
-
     def test_testjob_csv(self):
         csv_url = (
             f"{reverse('api-root', args=(self.version,))}"

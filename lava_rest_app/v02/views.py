@@ -394,10 +394,6 @@ class TestJobViewSet(viewsets.ModelViewSet):
         response["Content-Disposition"] = f"attachment; filename=job_{job.id}.yaml"
         return response
 
-    @action(detail=True, suffix="metadata")
-    def metadata(self, request, **kwargs):
-        return Response({"metadata": self.get_object().get_metadata_dict()})
-
     @action(
         methods=("post",),
         detail=False,

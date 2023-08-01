@@ -305,54 +305,6 @@ class ResultsAPI(ExposedAPI):
 
         return yaml_safe_dump(yaml_list)
 
-    def get_testjob_metadata(self, job_id):
-        """
-        Name
-        ----
-        `get_testjob_metadata` (`job_id`)
-
-        Description
-        -----------
-        Get the job level metadata which includes entries created by
-        LAVA as well as submitted in the test job definition
-
-        Arguments
-        ---------
-        `job_id`: string
-            Job id for which the results are required.
-
-        Return value
-        ------------
-        This function returns an XML-RPC structures of job results as
-        a list of dictionaries, provided the user is authenticated with
-        a username and token.
-
-        [
-            {name: value},
-            {name: value},
-        ]
-
-        For example:
-        [
-            {'boot.0.hikey-oe.commands': 'fastboot'},
-            {'source': 'https://git.linaro.org/lava-team/refactoring.git'},
-            {'test.0.tlxc.definition.path': 'ubuntu/smoke-tests-basic.yaml'}
-        ]
-        """
-        self._authenticate()
-        if not job_id:
-            raise xmlrpc.client.Fault(400, "Bad request: TestJob id was not specified.")
-        try:
-            job = TestJob.get_by_job_number(job_id)
-            if not job.can_view(self.user):
-                raise xmlrpc.client.Fault(
-                    401, "Permission denied for user to job %s" % job_id
-                )
-        except TestJob.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Specified job not found.")
-
-        return job.get_metadata_dict()
-
     def get_testjob_results_csv(self, job_id):
         """
         Name

@@ -15,7 +15,6 @@ import contextlib
 import csv
 import logging
 import os
-from collections import OrderedDict
 from json import dumps as json_dumps
 
 import yaml
@@ -31,13 +30,7 @@ from django_tables2 import RequestConfig
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import export_testsuite
-from lava_results_app.models import (
-    QueryCondition,
-    TestCase,
-    TestData,
-    TestSet,
-    TestSuite,
-)
+from lava_results_app.models import QueryCondition, TestCase, TestSet, TestSuite
 from lava_results_app.tables import ResultsTable, SuiteTable, TestJobResultsTable
 from lava_results_app.utils import (
     StreamEcho,
@@ -152,11 +145,6 @@ def testjob(request, job):
     suite_table = TestJobResultsTable(
         data.get_table_data().filter(pk=job.id), request=request
     )
-    yaml_dict = OrderedDict()
-
-    if hasattr(job, "testdata"):
-        for data in job.testdata.attributes.all().order_by("name"):
-            yaml_dict[str(data.name)] = str(data.value)
 
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(
         suite_table
@@ -169,7 +157,6 @@ def testjob(request, job):
             "job": job,
             "job_link": pklink(job),
             "suite_table": suite_table,
-            "metadata": yaml_dict,
             "condition_choices": json_dumps(QueryCondition.get_condition_choices(job)),
             "available_content_types": json_dumps(
                 QueryCondition.get_similar_job_content_types()
@@ -332,28 +319,6 @@ def suite_testcase_count(request, job, testsuite_name):
     test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     test_case_count = test_suite.testcase_set.all().count()
     return HttpResponse(test_case_count, content_type="text/plain")
-
-
-def metadata_export(request, job):
-    """
-    Dispatcher adds some metadata,
-    Job submitter can add more.
-    CSV is not supported as the user-supplied metadata can
-    include nested dicts or lists.
-    """
-    job = TestJob.get_restricted_job(job, request.user)
-    # testdata from job & export
-    if not hasattr(job, "testdata"):
-        raise Http404("No TestData present in test job.")
-    response = HttpResponse(content_type="text/yaml")
-    filename = "lava_metadata_%s.yaml" % job.id
-    response["Content-Disposition"] = 'attachment; filename="%s"' % filename
-    yaml_dict = {}
-    # hide internal python objects
-    for data in job.testdata.attributes.all():
-        yaml_dict[str(data.name)] = str(data.value)
-    yaml_safe_dump(yaml_dict, response)
-    return response
 
 
 @BreadCrumb(

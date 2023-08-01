@@ -674,7 +674,6 @@ def _export_query(query_results, content_type, filename):
         "health_check",
         "sub_id",
         "submitter_id",
-        "testdata",
         "testsuite",
         "target_group",
         "notification",

@@ -79,9 +79,6 @@ class Queryable:
     def get_end_datetime(self):
         raise NotImplementedError("Should have implemented this")
 
-    def get_xaxis_attribute(self):
-        raise NotImplementedError("Should have implemented this")
-
 
 @Field.register_lookup
 class NotEqual(Lookup):
@@ -258,9 +255,6 @@ class TestSuite(models.Model, Queryable):
 
     def get_end_datetime(self):
         return self.job.end_time
-
-    def get_xaxis_attribute(self, xaxis_attribute=None):
-        return self.job.get_xaxis_attribute(xaxis_attribute)
 
     def get_absolute_url(self):
         """
@@ -461,9 +455,6 @@ class TestCase(models.Model, Queryable):
     def get_end_datetime(self):
         return self.logged
 
-    def get_xaxis_attribute(self, xaxis_attribute=None):
-        return self.suite.job.get_xaxis_attribute(xaxis_attribute)
-
     def get_absolute_url(self):
         return reverse("lava.results.testcase", args=[self.id])
 
@@ -502,6 +493,7 @@ class TestCase(models.Model, Queryable):
         return self.RESULT_REVERSE[self.result]
 
 
+# TODO: Remove in next LAVA version
 class NamedTestAttribute(models.Model):
     """
     Model for adding named test attributes to arbitrary other model instances.
@@ -528,6 +520,7 @@ class NamedTestAttribute(models.Model):
         verbose_name = "metadata"
 
 
+# TODO: Remove in next LAVA version
 @nottest
 class TestData(models.Model):
     """
@@ -730,64 +723,53 @@ class Query(models.Model):
                 )
                 raise
 
-            if condition.table.model_class() == NamedTestAttribute:
-                # For custom attributes, need two filters since
-                # we're comparing the key(name) and the value.
-                filter_key_name = f"{relation_string}__name"
-                filter_key_value = f"{relation_string}__value"
-                filter_key_value = "{}__{}".format(filter_key_value, condition.operator)
-
-                filters[filter_key_name] = condition.field
-                filters[filter_key_value] = condition.value
-
+            if condition.table == content_type:
+                filter_key = condition.field
             else:
-                if condition.table == content_type:
-                    filter_key = condition.field
+                filter_key = f"{relation_string}__{condition.field}"
+            # Handle conditions through relations.
+            fk_model = _get_foreign_key_model(
+                condition.table.model_class(), condition.field
+            )
+            # FIXME: There might be some other related models which don't
+            # have 'name' as the default search field.
+            if fk_model:
+                if fk_model == User:
+                    filter_key = f"{filter_key}__username"
+                elif fk_model == Device:
+                    filter_key = f"{filter_key}__hostname"
                 else:
-                    filter_key = f"{relation_string}__{condition.field}"
-                # Handle conditions through relations.
-                fk_model = _get_foreign_key_model(
-                    condition.table.model_class(), condition.field
-                )
-                # FIXME: There might be some other related models which don't
-                # have 'name' as the default search field.
-                if fk_model:
-                    if fk_model == User:
-                        filter_key = f"{filter_key}__username"
-                    elif fk_model == Device:
-                        filter_key = f"{filter_key}__hostname"
-                    else:
-                        filter_key = f"{filter_key}__name"
+                    filter_key = f"{filter_key}__name"
 
-                # Handle conditions with choice fields.
-                condition_field_obj = condition.table.model_class()._meta.get_field(
-                    condition.field
-                )
-                if condition_field_obj.choices:
-                    choices_reverse = {
-                        value: key
-                        for key, value in dict(condition_field_obj.choices).items()
-                    }
-                    try:
-                        condition.value = choices_reverse[condition.value]
-                    except KeyError:
-                        logger.error(
-                            'Invalid choice supported for field "%s". Available choices are: "%s"'
-                            % (condition.field, ", ".join(choices_reverse.keys()))
-                        )
-                        condition.value = -1
+            # Handle conditions with choice fields.
+            condition_field_obj = condition.table.model_class()._meta.get_field(
+                condition.field
+            )
+            if condition_field_obj.choices:
+                choices_reverse = {
+                    value: key
+                    for key, value in dict(condition_field_obj.choices).items()
+                }
+                try:
+                    condition.value = choices_reverse[condition.value]
+                except KeyError:
+                    logger.error(
+                        'Invalid choice supported for field "%s". Available choices are: "%s"'
+                        % (condition.field, ", ".join(choices_reverse.keys()))
+                    )
+                    condition.value = -1
 
-                # Handle boolean conditions.
-                if condition_field_obj.__class__ == models.BooleanField:
-                    if condition.value == "False":
-                        condition.value = False
-                    else:
-                        condition.value = True
+            # Handle boolean conditions.
+            if condition_field_obj.__class__ == models.BooleanField:
+                if condition.value == "False":
+                    condition.value = False
+                else:
+                    condition.value = True
 
-                # Add operator.
-                filter_key = f"{filter_key}__{condition.operator}"
+            # Add operator.
+            filter_key = f"{filter_key}__{condition.operator}"
 
-                filters[filter_key] = condition.value
+            filters[filter_key] = condition.value
 
         query_results = (
             content_type.model_class()
@@ -991,19 +973,16 @@ class QueryCondition(models.Model):
             TestJob: None,
             TestSuite: "testsuite",
             TestCase: "testsuite__testcase",
-            NamedTestAttribute: "testdata__attributes",
         },
         TestSuite: {
             TestJob: "job",
             TestCase: "testcase",
             TestSuite: None,
-            NamedTestAttribute: "job__testdata__attributes",
         },
         TestCase: {
             TestCase: None,
             TestJob: "suite__job",
             TestSuite: "suite",
-            NamedTestAttribute: "suite__job__testdata__attributes",
         },
     }
 
@@ -1023,7 +1002,6 @@ class QueryCondition(models.Model):
         ],
         TestSuite: ["name"],
         TestCase: ["name", "result", "measurement"],
-        NamedTestAttribute: [],
     }
 
     query = models.ForeignKey(Query, on_delete=models.CASCADE)
@@ -1080,29 +1058,18 @@ class QueryCondition(models.Model):
             condition_choice["fields"] = {}
             content_type = ContentType.objects.get_for_model(model)
 
-            if job and model == NamedTestAttribute:
-                if hasattr(job, "testdata"):
-                    for attribute in NamedTestAttribute.objects.filter(
-                        object_id=job.testdata.id,
-                        content_type=ContentType.objects.get_for_model(TestData),
-                    ):
-                        condition_choice["fields"][attribute.name] = {}
+            for field_name in cls.FIELD_CHOICES[model]:
+                field = {}
 
-            else:
-                for field_name in cls.FIELD_CHOICES[model]:
-                    field = {}
+                field_object = content_type.model_class()._meta.get_field(field_name)
+                field["operators"] = cls._get_operators_for_field_type(field_object)
+                field["type"] = field_object.__class__.__name__
+                if field_object.choices:
+                    field["choices"] = [
+                        str(x) for x in dict(field_object.choices).values()
+                    ]
 
-                    field_object = content_type.model_class()._meta.get_field(
-                        field_name
-                    )
-                    field["operators"] = cls._get_operators_for_field_type(field_object)
-                    field["type"] = field_object.__class__.__name__
-                    if field_object.choices:
-                        field["choices"] = [
-                            str(x) for x in dict(field_object.choices).values()
-                        ]
-
-                    condition_choice["fields"][field_name] = field
+                condition_choice["fields"][field_name] = field
 
             condition_choices[content_type.id] = condition_choice
             condition_choices["date_format"] = settings.DATETIME_INPUT_FORMATS[0]
@@ -1114,9 +1081,8 @@ class QueryCondition(models.Model):
         # Create a dict with all available content types.
 
         available_content_types = {}
-        for model in [TestJob, NamedTestAttribute]:
-            content_type = ContentType.objects.get_for_model(model)
-            available_content_types[content_type.id] = content_type.name
+        content_type = ContentType.objects.get_for_model(TestJob)
+        available_content_types[content_type.id] = content_type.name
         return available_content_types
 
     @classmethod
@@ -1411,15 +1377,7 @@ class ChartQuery(models.Model):
     def get_chart_passfail_data(self, user, query_results):
         data = []
         for item in query_results:
-            # Set attribute based on xaxis_attribute.
-            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
-            # If xaxis attribute is set and this query item does not have
-            # this specific attribute, ignore it.
-            if self.xaxis_attribute and not attribute:
-                continue
-
             date = str(item.get_end_datetime())
-            attribute = attribute if attribute is not None else date
 
             passfail_results = item.get_passfail_results()
             for result in passfail_results:
@@ -1429,7 +1387,7 @@ class ChartQuery(models.Model):
                         "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
-                        "attribute": attribute,
+                        "attribute": date,
                         "pass": passfail_results[result]["fail"] == 0,
                         "passes": passfail_results[result]["pass"],
                         "failures": passfail_results[result]["fail"],
@@ -1449,15 +1407,7 @@ class ChartQuery(models.Model):
     def get_chart_measurement_data(self, user, query_results):
         data = []
         for item in query_results:
-            # Set attribute based on xaxis_attribute.
-            attribute = item.get_xaxis_attribute(self.xaxis_attribute)
-            # If xaxis attribute is set and this query item does not have
-            # this specific attribute, ignore it.
-            if self.xaxis_attribute and not attribute:
-                continue
-
             date = str(item.get_end_datetime())
-            attribute = attribute if attribute is not None else date
 
             measurement_results = item.get_measurement_results()
             for result in measurement_results:
@@ -1467,7 +1417,7 @@ class ChartQuery(models.Model):
                         "pk": item.id,
                         "link": item.get_absolute_url(),
                         "date": date,
-                        "attribute": attribute,
+                        "attribute": date,
                         "pass": measurement_results[result]["fail"] == 0,
                         "measurement": measurement_results[result]["measurement"],
                     }

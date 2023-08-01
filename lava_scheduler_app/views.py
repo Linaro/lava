@@ -68,13 +68,7 @@ from lava_common.schemas import validate
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import create_metadata_store, map_scanned_results
-from lava_results_app.models import (
-    NamedTestAttribute,
-    Query,
-    QueryCondition,
-    TestCase,
-    TestData,
-)
+from lava_results_app.models import Query, QueryCondition, TestCase
 from lava_results_app.utils import description_data, description_filename
 from lava_scheduler_app.dbutils import (
     device_summary,
@@ -2758,44 +2752,27 @@ def similar_jobs(request, pk):
         table = ContentType.objects.get(pk=value)
         operator = QueryCondition.EXACT
         job_field_value = None
-        if table.model_class() == TestJob:
-            try:
-                field_obj = TestJob._meta.get_field(fields[key])
-                job_field_value = getattr(job, fields[key])
-                # Handle choice fields.
-                if field_obj.choices:
-                    job_field_value = dict(field_obj.choices)[job_field_value]
+        try:
+            field_obj = TestJob._meta.get_field(fields[key])
+            job_field_value = getattr(job, fields[key])
+            # Handle choice fields.
+            if field_obj.choices:
+                job_field_value = dict(field_obj.choices)[job_field_value]
 
-            except FieldDoesNotExist:
-                logger.info("Test job does not contain field '%s'.", fields[key])
-                continue
+        except FieldDoesNotExist:
+            logger.info("Test job does not contain field '%s'.", fields[key])
+            continue
 
-            # Handle Foreign key values and dates
-            if job_field_value.__class__ == User:
-                job_field_value = job_field_value.username
-            elif job_field_value.__class__ == Device:
-                job_field_value = job_field_value.hostname
+        # Handle Foreign key values and dates
+        if job_field_value.__class__ == User:
+            job_field_value = job_field_value.username
+        elif job_field_value.__class__ == Device:
+            job_field_value = job_field_value.hostname
 
-            # For dates, use date of the job, not the exact moment in time.
-            with contextlib.suppress(AttributeError):
-                job_field_value = job_field_value.date()
-                operator = QueryCondition.ICONTAINS
-
-        else:  # NamedTestAttribute
-            try:
-                testdata = TestData.objects.filter(testjob=job).first()
-                job_field_value = NamedTestAttribute.objects.get(
-                    object_id=testdata.id,
-                    content_type=ContentType.objects.get_for_model(TestData),
-                    name=fields[key],
-                ).value
-            except NamedTestAttribute.DoesNotExist:
-                # Ignore this condition.
-                logger.info(
-                    "Named attribute %s does not exist for similar jobs search.",
-                    fields[key],
-                )
-                continue
+        # For dates, use date of the job, not the exact moment in time.
+        with contextlib.suppress(AttributeError):
+            job_field_value = job_field_value.date()
+            operator = QueryCondition.ICONTAINS
 
         if job_field_value:
             condition = QueryCondition()

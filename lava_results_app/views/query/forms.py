@@ -13,7 +13,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.html import escape
 
-from lava_results_app.models import Query, QueryCondition
+from lava_results_app.models import NamedTestAttribute, Query, QueryCondition
 
 
 class QueryForm(forms.ModelForm):
@@ -124,9 +124,10 @@ class QueryConditionForm(forms.ModelForm):
                             "Incorrect format for 'value', try: %s"
                             % settings.DATETIME_INPUT_FORMATS[0],
                         )
-        except KeyError:
+        except KeyError as e:
+            if e.args[0] == NamedTestAttribute:
+                raise ValueError("NamedTestAttribute is deprecated")
             # form_data will pick up the rest of validation errors.
-            pass
 
         return form_data
 
