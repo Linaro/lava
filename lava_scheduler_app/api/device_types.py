@@ -181,7 +181,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to read device-type configuration: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.change_devicetype")
     def set_health_check(self, name, config):
         """
         Name
@@ -210,6 +209,15 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         ------------
         None
         """
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_change(self.user):
+            raise xmlrpc.client.Fault(
+                403, "No 'change' permissions for device-type '%s'." % name
+            )
+
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
@@ -221,7 +229,6 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
                 400, "Unable to write health-check: %s" % exc.strerror
             )
 
-    @check_perm("lava_scheduler_app.change_devicetype")
     def set_template(self, name, config):
         """
         Name
@@ -250,6 +257,15 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         ------------
         None
         """
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_change(self.user):
+            raise xmlrpc.client.Fault(
+                403, "No 'change' permissions for device-type '%s'." % name
+            )
+
         # Filename should not be a path or starting with a dot
         if os.path.basename(name) != name or name[0] == ".":
             raise xmlrpc.client.Fault(400, "Invalid device-type '%s'" % name)
