@@ -800,11 +800,15 @@ class TestJobLimit(TestCase):
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
             )
-        assert TestJob.objects.all().count() == 4
+        self.assertEqual(TestJob.objects.all().count(), 4)
         # Limit the number of jobs that can run
         schedule(self.logger, [], ["worker-01"])
-        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 2
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 2
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count(), 2
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 2
+        )
 
     def test_job_limit_unlimited(self):
         for i in range(0, 4):
@@ -813,13 +817,17 @@ class TestJobLimit(TestCase):
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
             )
-        assert TestJob.objects.all().count() == 4
+        self.assertEqual(TestJob.objects.all().count(), 4)
         # Limit the number of jobs that can run
         self.worker01.job_limit = 0
         self.worker01.save()
         schedule(self.logger, [], ["worker-01"])
-        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 4
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count(), 4
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 0
+        )
 
 
 # test both healthcheck and normal testjobs with joblimit
@@ -837,7 +845,7 @@ class TestJobQueueTimeout(TestCase):
         )
         self.devices = []
         dev = Device.objects.create(
-            hostname=f"qemu0",
+            hostname="qemu0",
             device_type=self.device_type01,
             worker_host=self.worker01,
             health=Device.HEALTH_BAD,
@@ -850,18 +858,24 @@ class TestJobQueueTimeout(TestCase):
             submitter=self.user,
             queue_timeout=int(timedelta(seconds=1).total_seconds()),
         )
-        assert TestJob.objects.all().count() == 1
+        self.assertEqual(TestJob.objects.all().count(), 1)
         # Limit the number of jobs that can run
         schedule(self.logger, [], [])
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 1
-        assert TestJob.objects.filter(state=TestJob.STATE_CANCELING).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 1
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_CANCELING).count(), 0
+        )
         time.sleep(3)
         schedule(self.logger, [], [])
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 0
+        )
         canceling = TestJob.objects.filter(state=TestJob.STATE_CANCELING).count()
         canceled = TestJob.objects.filter(health=TestJob.HEALTH_CANCELED).count()
         if canceling == 0:
-            assert canceled == 1
+            self.assertEqual(canceled, 1)
         else:
-            assert canceling == 1
-            assert canceled == 0
+            self.assertEqual(canceling, 1)
+            self.assertEqual(canceled, 0)
