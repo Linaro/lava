@@ -72,6 +72,9 @@ lava-server:
   pytest-mock:
     name: python3-pytest-mock
     unittests: true
+  pytest-xdist:
+    name: python3-pytest-xdist
+    unittests: true
   pytest:
     name: python3-pytest
     unittests: true
@@ -118,6 +121,9 @@ lava-dispatcher:
     unittests: true
   pytest-mock:
     name: python3-pytest-mock
+    unittests: true
+  pytest-xdist:
+    name: python3-pytest-xdist
     unittests: true
   pyudev:
     name: python3-pyudev

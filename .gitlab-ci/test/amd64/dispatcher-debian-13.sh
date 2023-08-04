@@ -15,6 +15,7 @@ then
 else
   set -x
   python3 -m pytest \
+      --numprocesses=auto \
       --color=yes \
       --pythonwarnings=default \
       -r a \
