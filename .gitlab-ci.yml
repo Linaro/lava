@@ -50,6 +50,8 @@ variables:
 .server:
   extends: .job
   stage: test
+  tags:
+    - saas-linux-medium-amd64  # 4 way parallel tests
   image: registry.gitlab.com/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
