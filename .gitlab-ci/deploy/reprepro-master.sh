@@ -52,6 +52,6 @@ else
         fi
     done
     # cleanup 6 month old snapshots
-    find ${SNAPSHOT} -mtime +180 -delete
+    find ${SNAPSHOT} -type f -mtime +180 -delete
 
 fi
