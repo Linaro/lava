@@ -179,7 +179,9 @@ actions:
           interrupt_char: "{{ interrupt_char }}"
           fastboot:
             commands:
-{% for command in fastboot_deploy_uboot_commands %}              - {{ command }}{% endfor %}
+{% for command in fastboot_deploy_uboot_commands %}
+              - {{ command }}
+{% endfor %}
 {{- fastboot_interrupt_params }}
 {% endif %}
 
