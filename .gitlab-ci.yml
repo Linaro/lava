@@ -229,9 +229,9 @@ reprepro-release:
 
 pages:
   stage: deploy
-  #only:
-    #refs:
-      #- tags
+  only:
+    refs:
+      - tags
   dependencies:
     - doc
   script:
