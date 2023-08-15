@@ -227,17 +227,15 @@ reprepro-release:
     name: reprepro-release
     url: https://apt.lavasoftware.org
 
-doc-deploy:
+pages:
   stage: deploy
-  tags: [deploy]
-  only:
-    refs:
-      - tags
+  #only:
+    #refs:
+      #- tags
   dependencies:
     - doc
   script:
-    - mkdir -p ${HOME}/docs/lava
-    - rsync -av --delete doc/v2/_build/html ${HOME}/docs/lava/
-  environment:
-    name: documentation
-    url: https://docs.lavasoftware.org/lava/
+    - cp -a doc/v2/_build/html public
+  artifacts:
+    paths:
+      - public
