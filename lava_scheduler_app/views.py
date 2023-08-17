@@ -474,20 +474,14 @@ def report_data(start_day, end_day, devices, url_param):
         ),
     )
 
-    url = reverse("lava.scheduler.failure_report")
-    params = "start=%s&end=%s%s" % (start_day, end_day, url_param)
     return (
         {
             "pass": res["health_pass"] or 0,
             "fail": res["health_fail"] or 0,
-            "date": start_date.strftime("%m-%d"),
-            "failure_url": "%s?%s&health_check=1" % (url, params),
         },
         {
             "pass": res["job_pass"] or 0,
             "fail": res["job_fail"] or 0,
-            "date": start_date.strftime("%m-%d"),
-            "failure_url": "%s?%s&health_check=0" % (url, params),
         },
     )
 
