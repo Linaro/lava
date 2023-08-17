@@ -552,6 +552,23 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual(params["fastboot"]["commands"], ["fastboot 0"])
         self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
 
+        rendered = self.render_device_dictionary_file(
+            "x15-01.jinja2",
+            raw=False,
+            job_ctx={
+                "fastboot_deploy_uboot_commands": [
+                    "setenv autoload no",
+                    "dhcp",
+                    "fastboot udp",
+                ]
+            },
+        )
+        params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
+        self.assertEqual(
+            params["fastboot"]["commands"],
+            ["setenv autoload no", "dhcp", "fastboot udp"],
+        )
+
     def test_xilinx_zcu102(self):
         with open(
             os.path.join(os.path.dirname(__file__), "devices", "zcu102.jinja2")

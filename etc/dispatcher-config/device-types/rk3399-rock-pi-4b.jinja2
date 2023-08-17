@@ -19,3 +19,5 @@
 
 {% set bootloader_prompt = bootloader_prompt|default('=>') %}
 {% set console_device = console_device|default('ttyS2') %}
+
+{% set fastboot_deploy_uboot_commands = fastboot_deploy_uboot_commands|default(['setenv autoload no', 'dhcp', 'fastboot udp']) %}
