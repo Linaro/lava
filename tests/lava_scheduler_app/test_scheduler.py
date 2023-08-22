@@ -4,10 +4,12 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import time
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.contrib.auth.models import User
 from django.test import TestCase
@@ -17,7 +19,7 @@ from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_scheduler_app.scheduler import schedule, schedule_health_checks
 
 
-def _minimal_valid_job(self):
+def _minimal_valid_job(self) -> str:
     return """
 job_name: minimal valid job
 visibility: public
@@ -88,16 +90,11 @@ class TestHealthCheckScheduling(TestCase):
         self.device03.last_health_report_job = self.last_hc03
         self.device03.save()
 
-        self.original_health_check = Device.get_health_check
-
-    def tearDown(self):
-        Device.get_health_check = self.original_health_check
-
     def _check_hc_scheduled(self, device):
         device.refresh_from_db()
         self.assertEqual(device.state, Device.STATE_RESERVED)
         job = device.current_job()
-        self.assertNotEqual(job, None)
+        self.assertIsNotNone(job)
         self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
         self.assertEqual(job.health, TestJob.HEALTH_UNKNOWN)
         self.assertEqual(job.actual_device, device)
@@ -105,23 +102,21 @@ class TestHealthCheckScheduling(TestCase):
     def _check_hc_not_scheduled(self, device):
         device.refresh_from_db()
         self.assertEqual(device.state, Device.STATE_IDLE)
-        self.assertEqual(device.current_job(), None)
+        self.assertIsNone(device.current_job())
 
+    @patch.object(Device, "get_health_check", lambda _: None)
     def test_without_health_checks(self):
-        # Make sure that get_health_check does return None
-        Device.get_health_check = lambda cls: None
-        self.assertEqual(self.device01.get_health_check(), None)
-        self.assertEqual(self.device02.get_health_check(), None)
-        self.assertEqual(self.device03.get_health_check(), None)
+        self.assertIsNone(self.device01.get_health_check())
+        self.assertIsNone(self.device02.get_health_check())
+        self.assertIsNone(self.device03.get_health_check())
         # Schedule without health check
         available_devices = schedule_health_checks(
             logging.getLogger(), [], ["worker-01", "worker-03"]
         )
         self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_disabled_hc(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
         self.assertNotEqual(self.device01.get_health_check(), None)
         self.assertNotEqual(self.device02.get_health_check(), None)
         self.assertNotEqual(self.device03.get_health_check(), None)
@@ -133,8 +128,8 @@ class TestHealthCheckScheduling(TestCase):
         )
         self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_no_devicedict(self):
-        Device.get_health_check = _minimal_valid_job
         self.device_type02.disable_health_check = False
         self.device_type02.display = True
         self.device_type02.save()
@@ -150,12 +145,11 @@ class TestHealthCheckScheduling(TestCase):
         self.assertEqual(self.device04.health, Device.HEALTH_BAD)
         self.assertIsNone(self.device04.current_job())
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_without_previous_hc_device_health_unknown(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
 
         available_devices = schedule_health_checks(
             logging.getLogger(), [], ["worker-01", "worker-03"]
@@ -165,12 +159,11 @@ class TestHealthCheckScheduling(TestCase):
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_device_health_good(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
 
         self.device01.health = Device.HEALTH_GOOD
         self.device01.save()
@@ -186,12 +179,11 @@ class TestHealthCheckScheduling(TestCase):
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_device_health_good_worker_maintenance(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
 
         self.worker01.health = Worker.HEALTH_MAINTENANCE
         self.worker01.save()
@@ -209,12 +201,11 @@ class TestHealthCheckScheduling(TestCase):
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_device_health_looping(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
 
         self.device01.health = Device.HEALTH_LOOPING
         self.device01.save()
@@ -230,12 +221,11 @@ class TestHealthCheckScheduling(TestCase):
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_device_health_wrong(self):
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
 
         # HEALTH_(BAD|MAINTENANCE|RETIRED)
         for health in [
@@ -257,14 +247,15 @@ class TestHealthCheckScheduling(TestCase):
             self._check_hc_not_scheduled(self.device02)
             self._check_hc_not_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_health_frequency_hours(self):
         self.device_type01.health_denominator = DeviceType.HEALTH_PER_HOUR
         self.device_type01.health_frequency = 24
         self.device_type01.save()
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
         # Only device03 is available now
         self.device01.health = Device.HEALTH_BAD
         self.device01.save()
@@ -305,16 +296,17 @@ class TestHealthCheckScheduling(TestCase):
         self.assertTrue(current_hc.health_check)
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_health_frequency_jobs(self):
         self.device_type01.health_denominator = DeviceType.HEALTH_PER_JOB
         self.device_type01.health_frequency = 2
         self.device_type01.save()
         self.last_hc03.submit_time = timezone.now() - timedelta(hours=2)
         self.last_hc03.save()
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
         # Only device03 is available now
         self.device01.health = Device.HEALTH_BAD
         self.device01.save()
@@ -395,34 +387,17 @@ class TestVisibility(TestCase):
         self.user = User.objects.create(username="user-01")
         self.device03.save()
 
-        self.original_health_check = Device.get_health_check
-        # Make sure that get_health_check does return something
-        Device.get_health_check = _minimal_valid_job
-
     def tearDown(self):
-        Device.get_health_check = self.original_health_check
         for job in TestJob.objects.filter(
             state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
         ):
             job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
-    def _minimal_personal_job(self):
-        return """
-job_name: minimal valid job
-visibility: personal
-timeouts:
-  job:
-    minutes: 10
-  action:
-    minutes: 5
-actions: []
-"""
-
     def _check_hc_scheduled(self, device):
         device.refresh_from_db()
         self.assertEqual(device.state, Device.STATE_RESERVED)
         job = device.current_job()
-        self.assertNotEqual(job, None)
+        self.assertIsNotNone(job)
         self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
         self.assertEqual(job.health, TestJob.HEALTH_UNKNOWN)
         self.assertEqual(job.actual_device, device)
@@ -433,13 +408,14 @@ actions: []
         self.assertEqual(device.current_job(), None)
 
     def _check_initial_state(self):
-        self.assertNotEqual(self.device01.get_health_check(), None)
-        self.assertNotEqual(self.device02.get_health_check(), None)
-        self.assertNotEqual(self.device03.get_health_check(), None)
+        self.assertIsNotNone(self.device01.get_health_check())
+        self.assertIsNotNone(self.device02.get_health_check())
+        self.assertIsNotNone(self.device03.get_health_check())
         self.assertEqual(self.device01.health, Device.HEALTH_UNKNOWN)
         self.assertEqual(self.device02.health, Device.HEALTH_UNKNOWN)
         self.assertEqual(self.device03.health, Device.HEALTH_UNKNOWN)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_health_visibility(self):
         self._check_initial_state()
 
@@ -452,6 +428,7 @@ actions: []
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_health_visibility_some_restricted(self):
         self._check_initial_state()
 
@@ -465,6 +442,7 @@ actions: []
         # device03 is restricted in setUp
         self._check_hc_scheduled(self.device03)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_health_visibility_all_restricted(self):
         self._check_initial_state()
 
@@ -491,10 +469,6 @@ class TestPriorities(TestCase):
             health=Device.HEALTH_GOOD,
         )
         self.user = User.objects.create(username="user-01")
-        self.original_health_check = Device.get_health_check
-
-    def tearDown(self):
-        Device.get_health_check = self.original_health_check
 
     def _check_job(
         self, job, priorities, state=TestJob.STATE_SUBMITTED, actual_device=None
@@ -524,8 +498,6 @@ class TestPriorities(TestCase):
         self._check_job(current, (current_priority,), TestJob.STATE_FINISHED, device)
 
     def test_low_medium_high_without_hc(self):
-        # Disable health checks
-        Device.get_health_check = lambda cls: None
         for p in [
             TestJob.LOW,
             TestJob.MEDIUM,
@@ -561,13 +533,14 @@ class TestPriorities(TestCase):
         self._check_scheduling(log, self.device01, TestJob.LOW, (TestJob.LOW,))
         self._check_scheduling(log, self.device01, TestJob.LOW, ())
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_low_medium_high_with_hc(self):
         # Enable health checks
         self.device_type01.health_denominator = DeviceType.HEALTH_PER_HOUR
         self.device_type01.health_frequency = 24
         self.device_type01.save()
-        Device.get_health_check = _minimal_valid_job
-        self.assertNotEqual(self.device01.get_health_check(), None)
+
+        self.assertIsNotNone(self.device01.get_health_check())
 
         jobs = []
         for p in [
@@ -618,8 +591,7 @@ class TestJobLimitHc1(TestCase):
         self.device_type01 = DeviceType.objects.create(name="qemu")
         self.devices = []
         self.user = User.objects.create(username="user-01")
-        self.original_health_check = Device.get_health_check
-        Device.get_health_check = _minimal_valid_job
+
         self.device01 = Device.objects.create(
             hostname="qemu01",
             device_type=self.device_type01,
@@ -654,12 +626,12 @@ class TestJobLimitHc1(TestCase):
         self.device04.save()
 
     def tearDown(self):
-        Device.get_health_check = self.original_health_check
         for job in TestJob.objects.filter(
             state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
         ):
             job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_job_limit_hc(self):
         schedule_health_checks(logging.getLogger(), [], ["worker-01"])
 
@@ -699,8 +671,7 @@ class TestJobLimitHc2(TestCase):
         self.device_type01 = DeviceType.objects.create(name="qemu")
         self.devices = []
         self.user = User.objects.create(username="user-01")
-        self.original_health_check = Device.get_health_check
-        Device.get_health_check = _minimal_valid_job
+
         self.device01 = Device.objects.create(
             hostname="qemu01",
             device_type=self.device_type01,
@@ -731,12 +702,12 @@ class TestJobLimitHc2(TestCase):
         self.devices.append(self.device04)
 
     def tearDown(self):
-        Device.get_health_check = self.original_health_check
         for job in TestJob.objects.filter(
             state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
         ):
             job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
+    @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_job_limit_hc2(self):
         schedule_health_checks(logging.getLogger(), [], ["worker-01"])
 
@@ -800,11 +771,15 @@ class TestJobLimit(TestCase):
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
             )
-        assert TestJob.objects.all().count() == 4
+        self.assertEqual(TestJob.objects.all().count(), 4)
         # Limit the number of jobs that can run
         schedule(self.logger, [], ["worker-01"])
-        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 2
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 2
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count(), 2
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 2
+        )
 
     def test_job_limit_unlimited(self):
         for i in range(0, 4):
@@ -813,13 +788,17 @@ class TestJobLimit(TestCase):
                 submitter=self.user,
                 definition=_minimal_valid_job(None),
             )
-        assert TestJob.objects.all().count() == 4
+        self.assertEqual(TestJob.objects.all().count(), 4)
         # Limit the number of jobs that can run
         self.worker01.job_limit = 0
         self.worker01.save()
         schedule(self.logger, [], ["worker-01"])
-        assert TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count() == 4
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SCHEDULED).count(), 4
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 0
+        )
 
 
 # test both healthcheck and normal testjobs with joblimit
@@ -837,7 +816,7 @@ class TestJobQueueTimeout(TestCase):
         )
         self.devices = []
         dev = Device.objects.create(
-            hostname=f"qemu0",
+            hostname="qemu0",
             device_type=self.device_type01,
             worker_host=self.worker01,
             health=Device.HEALTH_BAD,
@@ -850,18 +829,24 @@ class TestJobQueueTimeout(TestCase):
             submitter=self.user,
             queue_timeout=int(timedelta(seconds=1).total_seconds()),
         )
-        assert TestJob.objects.all().count() == 1
+        self.assertEqual(TestJob.objects.all().count(), 1)
         # Limit the number of jobs that can run
         schedule(self.logger, [], [])
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 1
-        assert TestJob.objects.filter(state=TestJob.STATE_CANCELING).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 1
+        )
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_CANCELING).count(), 0
+        )
         time.sleep(3)
         schedule(self.logger, [], [])
-        assert TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count() == 0
+        self.assertEqual(
+            TestJob.objects.filter(state=TestJob.STATE_SUBMITTED).count(), 0
+        )
         canceling = TestJob.objects.filter(state=TestJob.STATE_CANCELING).count()
         canceled = TestJob.objects.filter(health=TestJob.HEALTH_CANCELED).count()
         if canceling == 0:
-            assert canceled == 1
+            self.assertEqual(canceled, 1)
         else:
-            assert canceling == 1
-            assert canceled == 0
+            self.assertEqual(canceling, 1)
+            self.assertEqual(canceled, 0)
