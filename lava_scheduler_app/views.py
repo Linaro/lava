@@ -982,22 +982,36 @@ def device_type_detail(request, pk):
 
     aliases = ", ".join([alias.name for alias in dt.aliases.order_by("name")])
 
-    all_devices = dt.device_set.count()
-    available_devices = dt.device_set.filter(
-        state=Device.STATE_IDLE,
-        health__in=[Device.HEALTH_UNKNOWN, Device.HEALTH_GOOD],
-        worker_host__state=Worker.STATE_ONLINE,
-    ).count()
-    running_devices = dt.device_set.filter(
-        state__in=[Device.STATE_RUNNING, Device.STATE_RESERVED]
-    ).count()
-    if available_devices:
-        if available_devices == all_devices:
+    device_statistics = dt.device_set.aggregate(
+        all_devices_count=Count("*"),
+        available_devices_count=Count(
+            "pk",
+            filter=Q(
+                state=Device.STATE_IDLE,
+                health__in=(Device.HEALTH_UNKNOWN, Device.HEALTH_GOOD),
+                worker_host_id__in=Worker.objects.filter(state=Worker.STATE_ONLINE),
+            ),
+        ),
+        running_devices_count=Count(
+            "pk",
+            filter=Q(state__in=(Device.STATE_RUNNING, Device.STATE_RESERVED)),
+        ),
+        retired_devices_count=Count(
+            "pk",
+            filter=Q(health=Device.HEALTH_RETIRED),
+        ),
+    )
+
+    if device_statistics["available_devices_count"]:
+        if (
+            device_statistics["available_devices_count"]
+            == device_statistics["all_devices_count"]
+        ):
             available_devices_label = "success"
         else:
             available_devices_label = "warning"
     else:
-        if running_devices:
+        if device_statistics["running_devices_count"]:
             available_devices_label = "warning"
         else:
             available_devices_label = "danger"
@@ -1016,13 +1030,8 @@ def device_type_detail(request, pk):
             "dt": dt,
             "cores": core_string,
             "aliases": aliases,
-            "all_devices_count": all_devices,
-            "retired_devices_count": dt.device_set.filter(
-                health=Device.HEALTH_RETIRED
-            ).count(),
-            "available_devices_count": available_devices,
+            **device_statistics,
             "available_devices_label": available_devices_label,
-            "running_devices_count": running_devices,
             "queued_jobs_count": queued_jobs_count or 0,
             "search_data": search_data,
             "discrete_data": discrete_data,
