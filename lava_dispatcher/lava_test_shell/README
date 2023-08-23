@@ -8,4 +8,4 @@ override the ones in the top level directory. For example,
 distro/android/lava-test-runner will be used on Android instead of the
 lava-test-runner script present at the same directory as this README file.
 
-All scripts have to be named using a "lava-" suffix.
+All scripts have to be named using a "lava-" prefix.
