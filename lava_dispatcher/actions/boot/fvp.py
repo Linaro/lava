@@ -175,15 +175,14 @@ class BaseFVPAction(Action):
         data = "#!/bin/sh\n"
 
         if self.ubl_license:
-            armlm = (
-                Path(fvp_image) / "../../../bin/arm_license_management_utilities/armlm"
-            ).resolve()
             data += f"""set -e
+echo "Finding the armlm binary"
+ARMLM="$(find /opt/model -maxdepth 1 -type d | grep -v license_terms | tail -n 1)/bin/arm_license_management_utilities/armlm"
+echo "armlm at $ARMLM"
 echo "Activating UBL license"
-{armlm} activate -code {self.ubl_license}
+$ARMLM activate -code {self.ubl_license}
 set +e
 """
-
         # Substitute in the fvp arguments
         try:
             fvp_arguments = " \\\n".join(
