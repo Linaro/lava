@@ -344,6 +344,8 @@ def get_user_ip(request):
         with contextlib.suppress(IndexError):
             return ips[settings.HTTP_X_FORWARDED_FOR_INDEX]
         return None
+    if "REMOTE_ADDR" in request.META:
+        return request.META["REMOTE_ADDR"]
     return None
 
 
