@@ -25,7 +25,7 @@ class BaseJobTable(LavaTable):
         template_name="lava_scheduler_app/job_actions_field.html"
     )
     actions.orderable = False
-    submit_time = tables.DateColumn(format="Nd, g:ia")
+    submit_time = tables.DateColumn(format=settings.DATETIME_FORMAT)
 
     class Meta(LavaTable.Meta):
         model = TestJob
@@ -124,7 +124,7 @@ class JobSubmitterColumnMixin(LavaTable):
 
 
 class JobEndTimeColumnMixin(LavaTable):
-    end_time = tables.DateColumn(format="Nd, g:ia")
+    end_time = tables.DateColumn(format=settings.DATETIME_FORMAT)
 
 
 class JobDurationColumnMixin(LavaTable):
