@@ -1651,8 +1651,8 @@ def test_tags_add(setup):
         server("admin", "admin").scheduler.tags.add("audio", "audio capture") is None
     )
     assert Tag.objects.count() == 2  # nosec
-    assert Tag.objects.all()[1].name == "audio"  # nosec
-    assert Tag.objects.all()[1].description == "audio capture"  # nosec
+    assert Tag.objects.all().order_by("id")[1].name == "audio"  # nosec
+    assert Tag.objects.all().order_by("id")[1].description == "audio capture"  # nosec
 
     # 5. already used name => exception
     with pytest.raises(xmlrpc.client.Fault) as exc:
