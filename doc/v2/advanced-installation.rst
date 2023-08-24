@@ -154,6 +154,32 @@ there will be a lot of power cables, network cables and serial
 cables. For even a small lab of a handful of devices, a set of shelves
 or a wall-mounted rack is going to make things a lot easier to manage.
 
+.. _mailserver_infrastructure:
+
+Mailserver
+----------
+
+For sending user notifications via email there is additional configuration
+to be done. There needs to be a SMTP server or a mail relay set up (which
+is out of scope for this document) and LAVA configured to use it.
+
+Create a new YAML configuration file for LAVA like
+
+   /etc/lava-server/settings.d/01-mail.yaml
+
+and put in your configuration there. A minimal configuration will most probably
+look like this:
+
+   SERVER_EMAIL: 'lava-noreply@example.net'
+   EMAIL_HOST: 'smtp.example.net'
+
+See `django email settings <https://docs.djangoproject.com/en/3.2/ref/settings/#email-host>`__
+for a full list of all supported configuration, including TLS and authentication.
+
+Don't forget to reload LAVA webserver to set configuration active:
+
+   $ systemctl reload lava-server-gunicorn.service
+
 .. _more_installation_types:
 
 Recommended Installation Types
