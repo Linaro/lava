@@ -198,7 +198,7 @@ class TestRun:
         elif platform.machine() == "aarch64":
             arch = "aarch64"
         else:
-            raise NotImplemented()
+            raise NotImplementedError
         mocker.patch("time.sleep")
         mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
         has_image = mocker.patch(
