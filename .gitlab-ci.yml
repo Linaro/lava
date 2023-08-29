@@ -229,9 +229,9 @@ reprepro-release:
 
 pages:
   stage: deploy
-  only:
-    refs:
-      - tags
+  #only:
+    #refs:
+      #- tags
   dependencies:
     - doc
   script:
@@ -239,3 +239,16 @@ pages:
   artifacts:
     paths:
       - public
+
+publish-docs:
+  stage: deploy
+  #only:
+    #refs:
+      #- tags
+  needs:
+    - pages
+  trigger:
+    project: lava/lava-docs
+  variables:
+    PARENT_PROJECT_NAME: $CI_PROJECT_NAME
+    PARENT_PROJECT_REF: $CI_COMMIT_REF_NAME
