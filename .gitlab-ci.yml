@@ -22,7 +22,7 @@ variables:
 .job: &job
   before_script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
-  dependencies: []
+  needs: []
   except: [schedules]
   script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
@@ -199,7 +199,7 @@ reprepro-master:
   # "This job is creating a deployment to reprepro-master and
   # will overwrite the latest deployment."
   tags: [deploy]
-  dependencies:
+  needs:
     - debian/11
     - debian/12
   except: []
@@ -219,7 +219,7 @@ reprepro-release:
   only:
     refs:
       - tags
-  dependencies:
+  needs:
     - debian/11
     - debian/12
   except: [schedules]
@@ -232,7 +232,7 @@ pages:
   only:
     refs:
       - tags
-  dependencies:
+  needs:
     - doc
   script:
     - cp -a doc/v2/_build/html public
