@@ -59,7 +59,7 @@ class ModelFactory:
             device_type = self.make_device_type()
         if hostname is None:
             hostname = self.getUniqueString()
-        if tags and type(tags) != list:
+        if tags and isinstance(tags, list):
             tags = []
         device = Device(device_type=device_type, hostname=hostname, **kw)
         if tags:

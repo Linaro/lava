@@ -241,7 +241,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test if uuu_otg_path have been updated before populating tasks
         uuu_boot_actions = list(
-            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+            filter(lambda e: isinstance(e, UUUBootRetryAction), job.pipeline.actions)
         )
 
         for uuu_boot_action in uuu_boot_actions:
@@ -314,7 +314,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test if bcu_board_id have been updated before populating tasks
         uuu_boot_actions_for_bcu = list(
-            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+            filter(lambda e: isinstance(e, UUUBootRetryAction), job.pipeline.actions)
         )
 
         for uuu_boot_action_for_bcu in uuu_boot_actions_for_bcu:
@@ -339,7 +339,7 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
 
         # Test if bcu_board_id have been updated before populating tasks
         uuu_boot_actions_for_bcu = list(
-            filter(lambda e: type(e) == UUUBootRetryAction, job.pipeline.actions)
+            filter(lambda e: isinstance(e, UUUBootRetryAction), job.pipeline.actions)
         )
 
         for uuu_boot_action_for_bcu in uuu_boot_actions_for_bcu:
