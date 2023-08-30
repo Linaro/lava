@@ -2000,7 +2000,7 @@ class TestJob(models.Model):
                 sub_data = yaml_safe_load(job.definition)
             except yaml.YAMLError:
                 continue
-            if not "connection" in sub_data:
+            if "connection" not in sub_data:
                 continue
             if role == sub_data.get("host_role"):
                 yield job
