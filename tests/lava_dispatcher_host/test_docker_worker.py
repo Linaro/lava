@@ -38,6 +38,7 @@ def options(tmp_path):
     o.token_file = None
     o.sentry_dsn = None
     o.level = "INFO"
+    o.mount = None
 
     return o
 

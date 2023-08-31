@@ -28,6 +28,13 @@ def get_fqdn() -> str:
         raise ValueError("Your FQDN contains invalid characters")
 
 
+def parse_mount(s: str) -> tuple:
+    parts = tuple(s.split(":"))
+    if len(parts) == 1:
+        parts += (None,)
+    return parts
+
+
 def get_parser(docker_worker=False) -> argparse.ArgumentParser:
     if docker_worker:
         description = "LAVA Docker Worker"
@@ -51,6 +58,14 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
             action="store_true",
             default=False,
             help="Development mode; sets defaults to several options.",
+        )
+        parser.add_argument(
+            "-m",
+            "--mount",
+            metavar="SRC[:DST]",
+            type=parse_mount,
+            nargs="*",
+            help="Bind mount SRC from the host (as DST in the container, if given). Can be given multiple times",
         )
     else:
         parser.add_argument(
