@@ -93,6 +93,7 @@ class ShellCommand(pexpect.spawn):
                     "ShellCommand was passed an invalid window size of %s bytes."
                     % window
                 )
+        searchwindowsize = 2 * window
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
@@ -105,7 +106,7 @@ class ShellCommand(pexpect.spawn):
             logfile=ShellLogger(logger),
             encoding="utf-8",
             # Data before searchwindowsize point is preserved, but not searched.
-            searchwindowsize=4000,  # pattern match in twice the default window size
+            searchwindowsize=searchwindowsize,  # pattern match in twice the window size
             maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors="replace",
         )
@@ -279,7 +280,7 @@ class ShellSession(Connection):
 
     def wait(self, max_end_time=None, max_searchwindowsize=False):
         """
-        Simple wait without sendling blank lines as that causes the menu
+        Simple wait without sending blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
         the menu to exit to an unrecognised prompt.
         """
