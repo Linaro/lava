@@ -279,7 +279,7 @@ def main():
 
     # TODO: change the signal handler
 
-    # Closing the socket. We are now sure that all messages where sent.
+    # Closing the socket. We are now sure that all messages were sent.
     logger.close()
 
     # Save the results file
