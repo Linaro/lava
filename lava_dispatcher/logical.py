@@ -167,7 +167,7 @@ class Deployment:
     @classmethod
     def accepts(cls, device, parameters):
         """
-        Returns True if this deployment strategy can be used the the
+        Returns True if this deployment strategy can be used by the
         given device and details of an image in the parameters.
 
         Must be implemented by subclasses.
@@ -258,7 +258,7 @@ class Boot:
     @classmethod
     def accepts(cls, device, parameters):
         """
-        Returns True if this deployment strategy can be used the the
+        Returns True if this deployment strategy can be used by the
         given device and details of an image in the parameters.
 
         Must be implemented by subclasses.
