@@ -9,6 +9,13 @@ URL=${URL:-http://localhost/}
 LOGLEVEL=${LOGLEVEL:-DEBUG}
 LOGFILE=${LOGFILE:--}
 
+# Add lava-docker-worker directories to PATH
+for d in "/usr/share/lava-docker-worker" "/usr/local/share/lava-docker-worker"; do
+    if [ -d "${d}/bin" ]; then
+        export PATH="${d}/bin:${PATH}"
+    fi
+done
+
 # Import variables
 [ -e /etc/lava-dispatcher/lava-worker ] && . /etc/lava-dispatcher/lava-worker
 

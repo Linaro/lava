@@ -230,6 +230,11 @@ def start(version, options):
     mounts.append(("/var/run/docker.sock", None))
     mounts.append(("/boot", "readonly=true"))
     mounts.append(("/lib/modules", "readonly=true"))
+    for d in ["/usr/share/lava-docker-worker", "/usr/local/share/lava-docker-worker"]:
+        if os.path.exists(d):
+            mounts.append((d, None))
+    if options.mount:
+        mounts += options.mount
     for path, opts in mounts:
         m = f"--mount=type=bind,source={path},destination={path}"
         if opts:

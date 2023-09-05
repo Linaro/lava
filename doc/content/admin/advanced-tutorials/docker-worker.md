@@ -110,3 +110,18 @@ sudo systemctl restart lava-docker-worker.service
     A new `Dockerfile.lava` will be generated with the base image that matches
     your LAVA server version for building your customized image. All the `FROM`
     commands defined in your `Dockerfile` will be ignored.
+
+## 4: provide custom tools in the container
+
+If either of `/usr/share/lava-docker-worker` or
+`/usr/local/share/lava-docker-worker` exists, they are bind monted into the
+container by default, and if there is a `bin` subdirectory in any of then, that
+gets added to the default $PATH.
+
+Additionally, you can mount other host directories inside the container by
+using the --mount option.  Edit `/etc/lava-dispatcher-host/lava-docker-worker`
+and set the MOUNTS option:
+
+```
+MOUNTS="--mount /path/to/tools/bin:/usr/local/bin"
+```
