@@ -390,7 +390,11 @@ class UUUBootAction(OptionalContainerUuuAction):
                 exec_cmd = "{} {} -board={} -id={}".format(
                     self.bcu, cmd, bcu_board_name, bcu_board_id
                 )
-                self.run_cmd(exec_cmd.split(" "))
+                self.run_bcu(
+                    exec_cmd.split(" "),
+                    allow_fail=False,
+                    error_msg=f"Fail UUUBootAction on cmd : {cmd}",
+                )
                 continue
             if "uuu:" in cmd:
                 # uuu can be used in 2 different ways, by using built-in scripts in a single command,
