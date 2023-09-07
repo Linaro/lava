@@ -178,9 +178,13 @@ class BaseFVPAction(Action):
             data += f"""set -e
 echo "Finding the armlm binary"
 ARMLM="$(find /opt/model -maxdepth 1 -type d | grep -v license_terms | tail -n 1)/bin/arm_license_management_utilities/armlm"
+if [ -e $ARMLM ]; then
 echo "armlm at $ARMLM"
 echo "Activating UBL license"
 $ARMLM activate -code {self.ubl_license}
+else
+echo "No armlm binary found, Won't activate UBL license"
+fi
 set +e
 """
         # Substitute in the fvp arguments
