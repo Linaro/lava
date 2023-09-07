@@ -372,6 +372,16 @@ class TestRestApi:
         )
         assert len(data["results"]) == 2  # nosec - unit test support
 
+    def test_testjob_tests_permissions(self):
+        # Test that restricted jobs don't reveal test cases.
+        restricted_tests_url = (
+            reverse("api-root", args=[self.version])
+            + f"jobs/{self.private_testjob1.id}/tests/"
+        )
+        response = self.userclient.get(restricted_tests_url)
+
+        assert response.status_code == 403  # nosec - unit test support
+
     def test_testjob_tests_filter(self):
         data_pass = self.hit(
             self.userclient,
@@ -450,6 +460,16 @@ class TestRestApi:
             data["id"]
             == self.public_testjob1.testsuite_set.first().testcase_set.first().id
         )  # nosec - unit test support
+
+    def test_testjob_suite_permissions(self):
+        # Test that restricted jobs don't reveal test suites.
+        restricted_suites_url = (
+            reverse("api-root", args=[self.version])
+            + f"jobs/{self.private_testjob1.id}/suites/"
+        )
+        response = self.userclient.get(restricted_suites_url)
+
+        assert response.status_code == 403  # nosec - unit test support
 
     def test_testjob_metadata(self):
         data = self.hit(
