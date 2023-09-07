@@ -182,4 +182,5 @@ class DockerDriver(NullDriver):
 
     def validate(self):
         docker = DockerRun.from_parameters(self.params, self.action.job)
+        docker.add_docker_options(*self.docker_options)
         docker.prepare(self.action)
