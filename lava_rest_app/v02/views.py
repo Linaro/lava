@@ -266,6 +266,16 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     serializer_class = serializers.TestSuiteSerializer
     filterset_class = filters.TestSuiteFilter
 
+    def get_queryset(self):
+        job_id = self.kwargs["parent_lookup_job_id"]
+
+        job = TestJob.objects.select_related("submitter").get(id=job_id)
+
+        if not job.can_view(self.request.user):
+            raise PermissionDenied
+
+        return super().get_queryset()
+
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
@@ -310,6 +320,16 @@ class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     queryset = TestCase.objects
     serializer_class = serializers.TestCaseSerializer
     filterset_class = filters.TestCaseFilter
+
+    def get_queryset(self):
+        job_id = self.kwargs["parent_lookup_suite__job_id"]
+
+        job = TestJob.objects.select_related("submitter").get(id=job_id)
+
+        if not job.can_view(self.request.user):
+            raise PermissionDenied
+
+        return super().get_queryset()
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
