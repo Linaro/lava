@@ -539,3 +539,37 @@ class TestUUUActionDriver(unittest.TestCase):
             None,
             None,
         )
+
+    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    def test_docker_uuu_local_validate(self, _, mock_cmd):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "",
+        }
+        action = self.create_action(uuu_device_parameters)
+        action.driver.validate()
+        mock_cmd.assert_called_with(["docker", "pull", "atline/uuu:1.3.191"])
+
+    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    def test_docker_uuu_remote_validate(self, _, mock_cmd):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "--tlsverify --tlscacert=/labScripts/remote_cert/ca.pem --tlscert=/labScripts/remote_cert/cert.pem --tlskey=/labScripts/remote_cert/key.pem -H 10.192.244.5:2376",
+        }
+        action = self.create_action(uuu_device_parameters)
+        action.driver.validate()
+        mock_cmd.assert_called_with(
+            [
+                "docker",
+                "--tlsverify",
+                "--tlscacert=/labScripts/remote_cert/ca.pem",
+                "--tlscert=/labScripts/remote_cert/cert.pem",
+                "--tlskey=/labScripts/remote_cert/key.pem",
+                "-H",
+                "10.192.244.5:2376",
+                "pull",
+                "atline/uuu:1.3.191",
+            ]
+        )
