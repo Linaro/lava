@@ -398,12 +398,14 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         action.parameters["commands"] = [{"bcu": "reset usb"}, {"uuu": "-b sd {boot}"}]
 
         action.run_uuu = MagicMock(return_value=0)
-        action.run_cmd = MagicMock(return_value=0)
+        action.run_bcu = MagicMock(return_value=0)
 
         action.run(connection=None, max_end_time=None)
 
-        action.run_cmd.assert_called_with(
-            ["/bin/bcu", "reset", "usb", "-board=imx8dxlevk", "-id=2-1.3"]
+        action.run_bcu.assert_called_with(
+            ["/bin/bcu", "reset", "usb", "-board=imx8dxlevk", "-id=2-1.3"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : reset usb",
         )
 
         action.run_uuu.assert_called_with(
