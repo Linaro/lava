@@ -18,12 +18,9 @@
     </div>
     </form>
   </div>
-{%  if table.Meta.searches|get_search_data:table.prefix %}
+{%  if table.has_searches %}
   <div class="col-md-5">
     <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
-      {% for key,value in request.GET.dict.items %}
-      <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
-      {% endfor %}
       <input type="hidden" name="{{ table.prefix }}length" value="{{ table|get_prefix_length:request.GET }}">
       <div class="form-group">
         <label>Search</label>
@@ -43,24 +40,20 @@
           <div class="modal-body">
             <p>Available methods and fields</p>
             <dl class="dl-horizontal">
-              {% if table.Meta.searches|get_search_data:table.prefix %}
+              {% if table.Meta.searches %}
                 <dt>Simple text</dt>
-                <dd>{{ table.Meta.searches|get_search_data:table.prefix|join:", " }} <abbr
+                <dd>{{ table.get_simple_text_searches|join:", " }} <abbr
                 title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
               {% endif %}
-              {% if table.Meta.queries|get_search_data:table.prefix %}
+              {% if table.Meta.queries %}
                 <dt>Custom query text</dt>
-                <dd>{{ table.Meta.queries|get_search_data:table.prefix|join:", " }} <abbr
+                <dd>{{ table.get_query_searches|join:", " }} <abbr
                 title="add the filter and a value in the query string, e.g. requested_device_type=qemu - all rows must match">(?)</abbr></dd>
               {% endif %}
-              {% if table.Meta.times|get_search_data:table.prefix %}
+              {% if table.Meta.times %}
                 <dt>Time based</dt>
-                <dd>{{ table.Meta.times|get_search_data:table.prefix|join:", " }} <abbr
-                title="add the filter and a number in the query string, e.g. end_time=48 - all rows must match.">(?)</abbr></dd>
-              {% endif %}
-              {% if table.Meta.terms|get_terms_data:table.prefix %}
-                <dt>Case-sensitive text</dt>
-                <dd>{{ table.Meta.terms|get_terms_data:table.prefix|join:", " }}</dd>
+                <dd>{{ table.get_time_searches|join:", " }} <abbr
+                title="add the filter and a number in the query string, e.g. end_time=48 - rows will be filtered where difference between now and filter cannot be larger than passed number of hours.">(?)</abbr></dd>
               {% endif %}
             </dl>
           </div>
