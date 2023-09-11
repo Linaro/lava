@@ -35,6 +35,7 @@ from django.db.models import (
     Prefetch,
     Q,
     Subquery,
+    Value,
 )
 from django.db.utils import DatabaseError
 from django.http import (
@@ -750,8 +751,9 @@ class DeviceTypeOverView(JobTableView):
                     Q(state=TestJob.STATE_SUBMITTED),
                     Q(requested_device_type=OuterRef("device_type")),
                 )
-                .values("requested_device_type")
-                .annotate(queued_jobs=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(queued_jobs=Count("*"))
                 .values("queued_jobs"),
                 output_field=IntegerField(),
             ),
@@ -850,8 +852,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=1)),
                     health=TestJob.HEALTH_COMPLETE,
                 )
-                .values("requested_device_type")
-                .annotate(daily_complete=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(daily_complete=Count("*"))
                 .values("daily_complete"),
                 output_field=IntegerField(),
             ),
@@ -862,8 +865,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=1)),
                     health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
-                .values("requested_device_type")
-                .annotate(daily_failed=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(daily_failed=Count("*"))
                 .values("daily_failed"),
                 output_field=IntegerField(),
             ),
@@ -874,8 +878,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=7)),
                     health=TestJob.HEALTH_COMPLETE,
                 )
-                .values("requested_device_type")
-                .annotate(weekly_complete=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(weekly_complete=Count("*"))
                 .values("weekly_complete"),
                 output_field=IntegerField(),
             ),
@@ -886,8 +891,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=7)),
                     health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
-                .values("requested_device_type")
-                .annotate(weekly_failed=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(weekly_failed=Count("*"))
                 .values("weekly_failed"),
                 output_field=IntegerField(),
             ),
@@ -898,8 +904,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=30)),
                     health=TestJob.HEALTH_COMPLETE,
                 )
-                .values("requested_device_type")
-                .annotate(monthly_complete=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(monthly_complete=Count("*"))
                 .values("monthly_complete"),
                 output_field=IntegerField(),
             ),
@@ -910,8 +917,9 @@ def device_type_detail(request, pk):
                     submit_time__gte=(now - datetime.timedelta(days=30)),
                     health__in=(TestJob.HEALTH_CANCELED, TestJob.HEALTH_INCOMPLETE),
                 )
-                .values("requested_device_type")
-                .annotate(monthly_failed=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(monthly_failed=Count("*"))
                 .values("monthly_failed"),
                 output_field=IntegerField(),
             ),
@@ -920,8 +928,9 @@ def device_type_detail(request, pk):
                     requested_device_type=OuterRef("pk"),
                     state=TestJob.STATE_SUBMITTED,
                 )
-                .values("requested_device_type")
-                .annotate(queued_jobs_count=Count("pk"))
+                .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                .values("dummy_group_by")
+                .annotate(queued_jobs_count=Count("*"))
                 .values("queued_jobs_count"),
                 output_field=IntegerField(),
             ),
@@ -2795,7 +2804,8 @@ class RunningView(LavaView):
                 device_type=OuterRef("pk"),
                 state=Device.STATE_RESERVED,
             )
-            .values("device_type")
+            .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+            .values("dummy_group_by")
             .annotate(reserved_devices=Count("*"))
             .values("reserved_devices"),
             output_field=IntegerField(),
@@ -2805,7 +2815,8 @@ class RunningView(LavaView):
             Device.objects.filter(
                 device_type=OuterRef("pk"), state=Device.STATE_RUNNING
             )
-            .values("device_type")
+            .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+            .values("dummy_group_by")
             .annotate(running_devices=Count("*"))
             .values("running_devices"),
             output_field=IntegerField(),
@@ -2816,7 +2827,8 @@ class RunningView(LavaView):
                 Q(state=TestJob.STATE_RUNNING),
                 Q(requested_device_type=OuterRef("pk")),
             )
-            .values("requested_device_type")
+            .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+            .values("dummy_group_by")
             .annotate(running_jobs=Count("*"))
             .values("running_jobs"),
             output_field=IntegerField(),

@@ -196,28 +196,16 @@ class DeviceHealthTable(LavaTable):
 
 
 class DeviceTypeOverviewTable(LavaTable):
-    def render_idle(self, record):
-        return record["idle"] or ""
-
-    def render_maintenance(self, record):
-        return record["maintenance"] or ""
-
-    def render_offline(self, record):
-        return record["offline"] or ""
-
-    def render_busy(self, record):
-        return record["busy"] or ""
-
     device_type = tables.Column(
         accessor="device_type",
         verbose_name="Device type",
         linkify=("lava.scheduler.device_type.detail", (tables.A("device_type"),)),
     )
-    idle = tables.Column()
-    maintenance = tables.Column()
-    offline = tables.Column()
-    busy = tables.Column()
-    queued_jobs = tables.Column(verbose_name="Queue", default="")
+    idle = tables.Column(default="", empty_values=(0,))
+    maintenance = tables.Column(default="", empty_values=(0,))
+    offline = tables.Column(default="", empty_values=(0,))
+    busy = tables.Column(default="", empty_values=(0,))
+    queued_jobs = tables.Column(verbose_name="Queue", default="", empty_values=(0,))
 
     class Meta(LavaTable.Meta):
         model = Device

@@ -11,7 +11,7 @@ from django import forms
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, IntegerField, OuterRef, Q, Subquery
+from django.db.models import Count, IntegerField, OuterRef, Q, Subquery, Value
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
@@ -100,8 +100,9 @@ devices_health_check_complete {device_stats['health_checks_complete']}
                 Q(state=TestJob.STATE_SUBMITTED),
                 Q(requested_device_type=OuterRef("device_type")),
             )
-            .values("requested_device_type")
-            .annotate(queued_jobs=Count("pk"))
+            .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+            .values("dummy_group_by")
+            .annotate(queued_jobs=Count("*"))
             .values("queued_jobs"),
             output_field=IntegerField(),
         ),
