@@ -1,3 +1,4 @@
+import datetime
 import unittest
 import xmlrpc.client
 from io import BytesIO as StringIO
@@ -5,10 +6,11 @@ from io import BytesIO as StringIO
 import pytest
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
+from django.utils import timezone
 
 from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_load
-from lava_scheduler_app.dbutils import validate_yaml
+from lava_scheduler_app.dbutils import testjob_submission, validate_yaml
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -16,6 +18,7 @@ from lava_scheduler_app.models import (
     GroupDevicePermission,
     GroupDeviceTypePermission,
     Tag,
+    TestJob,
     Worker,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_submission
@@ -50,6 +53,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         return xmlrpc.client.ServerProxy(
             "http://localhost/RPC2/",
             transport=TestTransport(user=user, password=password),
+            allow_none=True,
         )
 
     def test_submit_job_rejects_anonymous(self):
@@ -151,6 +155,85 @@ class TestSchedulerAPI(TestCaseWithFactory):
         server_object_permission.scheduler.device_types.set_health_check(
             test_device_type.name, ""
         )
+
+    def test_jobs_list(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        definition = self.factory.make_job_data_from_file(
+            "qemu-pipeline-first-job.yaml"
+        )
+        job1 = testjob_submission(definition, user, None)
+        job2 = testjob_submission(definition, user, None)
+        job3 = testjob_submission(definition, user, None)
+        server = self.server_proxy()
+
+        now = timezone.now()
+        job1.start_time = now - datetime.timedelta(minutes=10)
+        job1.state = TestJob.STATE_RUNNING
+        job1.end_time = now
+        job1.state = TestJob.STATE_FINISHED
+        job1.health = TestJob.HEALTH_COMPLETE
+        job1.save()
+        job2.start_time = timezone.now()
+        job2.state = TestJob.STATE_RUNNING
+        job2.save()
+        job3.health = TestJob.HEALTH_CANCELED
+        job3.save()
+
+        # All jobs.
+        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False)
+        self.assertEqual(len(jobs), 3)
+
+        # Limit to 2 jobs.
+        jobs = server.scheduler.jobs.list(None, None, 0, 2, None, False)
+        self.assertEqual(len(jobs), 2)
+
+        # Skip the first two jobs.
+        jobs = server.scheduler.jobs.list(None, None, 2, 100, None, False)
+        self.assertEqual(len(jobs), 1)
+
+        # Job take longer than 9 minutes.
+        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False, 9)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["id"], job1.id)
+
+        # verbose output
+        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, True, 9)
+        self.assertIn("error_msg", jobs[0])
+
+        # Job completed since last 15 minutes.
+        jobs = server.scheduler.jobs.list(None, None, 0, 100, 15, False)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["id"], job1.id)
+
+        # State Running job.
+        jobs = server.scheduler.jobs.list("Running", None, 0, 100, None, False)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["state"], "Running")
+        self.assertEqual(jobs[0]["id"], job2.id)
+
+        # Invalid state.
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list("Finish", None, 0, 100, None, False)
+        f = cm.exception
+        self.assertEqual(f.faultCode, 400)
+        self.assertEqual(f.faultString, "Invalid state 'Finish'")
+
+        # Health Canceled job.
+        jobs = server.scheduler.jobs.list(None, "Canceled", 0, 100, None, False)
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["health"], "Canceled")
+        self.assertEqual(jobs[0]["id"], job3.id)
+
+        # Invalid health.
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list(None, "Completed", 0, 100, None, False)
+        f = cm.exception
+        self.assertEqual(f.faultCode, 400)
+        self.assertEqual(f.faultString, "Invalid health 'Completed'")
 
 
 class TestVoluptuous(unittest.TestCase):
