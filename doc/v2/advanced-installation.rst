@@ -548,6 +548,29 @@ Admin could set if to show full name of submitter in ``/etc/lava-server/settings
 
  "SHOW_SUBMITTER_FULL_NAME": true,
 
+.. _localisation:
+
+Localisation
+============
+
+As LAVA is based on Django framework, localisation is available. To adjust
+date and time to local format (including DST adjustment), configure settings
+accordingly in a new config file, e.g. ``/etc/lava-server/settings.d/02-l10n.yaml``:
+
+.. code-block:: yaml
+
+    TIME_ZONE: "Europe/Berlin"
+    DATETIME_FORMAT: 'Y-m-d H:i:s'
+
+Without this, time will be american format and all times displayed in UTC.
+
+See `django documentation <https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-TIME_ZONE>`__
+for details and a list of possible ``TIME_ZONE`` values.
+
+It is possible to set ``LANGUAGE_CODE`` to another value than the default
+``en-us``, but this will only affect administration interface as LAVA does
+not support translation to other languages.
+
 .. _admin_control:
 
 Controlling the Django Admin Interface

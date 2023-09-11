@@ -8,6 +8,7 @@
 import random
 
 import django_tables2 as tables
+from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -96,7 +97,7 @@ class JobErrorsTable(LavaTable):
         linkify=("lava.scheduler.job.detail", (tables.A("pk"),)),
     )
     end_time = tables.DateColumn(
-        format="Nd, g:ia",
+        format=settings.DATETIME_FORMAT,
         orderable=False,
         default="",
     )
@@ -370,7 +371,7 @@ class WorkerTable(LavaTable):
 
 
 class LogEntryTable(LavaTable):
-    action_time = tables.DateColumn(format="Nd, g:ia")
+    action_time = tables.DateColumn(format=settings.DATETIME_FORMAT)
     object_id = tables.Column(verbose_name="Name")
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False

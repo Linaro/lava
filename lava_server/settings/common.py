@@ -112,6 +112,7 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+DATETIME_FORMAT = "Nd, g:ia"
 
 # Static files (CSS, JavaScript, Images)
 # URL that handles the media served from STATIC_ROOT. Make sure to use a
