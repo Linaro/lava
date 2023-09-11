@@ -438,7 +438,7 @@ class LavaCoordinator:
         messageID = self._getMessageID(json_data)
         if "waitrole" in json_data:
             expected = self.group["roles"][json_data["waitrole"]]
-            expected = expected[0] if type(expected) == list else None
+            expected = expected[0] if isinstance(expected, list) else None
             LOG.debug(
                 "lavaWaitAll waiting for role:%s from %s",
                 json_data["waitrole"],
