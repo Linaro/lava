@@ -141,36 +141,31 @@ def _str_to_bool(string):
 
 class JobTableView(LavaView):
     def device_query(self, term):
-        device = list(
-            Device.objects.filter(hostname__contains=term).visible_by_user(
-                self.request.user
-            )
+        return Q(
+            actual_device__in=Device.objects.filter(
+                hostname__contains=term
+            ).visible_by_user(self.request.user)
         )
-        return Q(actual_device__in=device)
 
     def tags_query(self, term):
-        tagnames = list(Tag.objects.filter(name__icontains=term))
-        return Q(tags__in=tagnames)
+        return Q(tags__in=Tag.objects.filter(name__icontains=term))
 
     def owner_query(self, term):
-        owner = list(User.objects.filter(username__contains=term))
-        return Q(submitter__in=owner)
+        return Q(submitter__in=User.objects.filter(username__contains=term))
 
     def requested_device_type_query(self, term):
-        dt = list(
-            DeviceType.objects.filter(name__contains=term).visible_by_user(
-                self.request.user
-            )
+        return Q(
+            requested_device_type__in=DeviceType.objects.filter(
+                name__contains=term
+            ).visible_by_user(self.request.user)
         )
-        return Q(requested_device_type__in=dt)
 
     def device_type_query(self, term):
-        dt = list(
-            DeviceType.objects.filter(name__contains=term).visible_by_user(
-                self.request.user
-            )
+        return Q(
+            device_type__in=DeviceType.objects.filter(
+                name__contains=term
+            ).visible_by_user(self.request.user)
         )
-        return Q(device_type__in=dt)
 
     def job_state_query(self, term):
         # could use .lower() but that prevents
