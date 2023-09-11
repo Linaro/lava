@@ -225,7 +225,7 @@ class LogsElasticsearch(Logs):
         )
 
         response = json_loads(response.text)
-        if not "hits" in response:
+        if "hits" not in response:
             return []
         result = []
         for res in response["hits"]["hits"]:
