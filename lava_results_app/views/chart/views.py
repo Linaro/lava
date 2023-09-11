@@ -17,7 +17,7 @@ from django.http import (
     HttpResponseRedirect,
     JsonResponse,
 )
-from django.shortcuts import get_object_or_404, loader
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django_tables2 import RequestConfig
 
@@ -133,21 +133,20 @@ def chart_list(request):
         terms_data.update(user_chart_table.prepare_terms_data(view))
     else:
         user_chart_table = None
-    template = loader.get_template("lava_results_app/chart_list.html")
-    return HttpResponse(
-        template.render(
-            {
-                "user_chart_table": user_chart_table,
-                "other_chart_table": other_chart_table,
-                "search_data": search_data,
-                "discrete_data": discrete_data,
-                "terms_data": terms_data,
-                "group_tables": group_tables,
-                "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_list),
-                "context_help": ["lava-queries-charts"],
-            },
-            request=request,
-        )
+
+    return render(
+        request,
+        "lava_results_app/chart_list.html",
+        {
+            "user_chart_table": user_chart_table,
+            "other_chart_table": other_chart_table,
+            "search_data": search_data,
+            "discrete_data": discrete_data,
+            "terms_data": terms_data,
+            "group_tables": group_tables,
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_list),
+            "context_help": ["lava-queries-charts"],
+        },
     )
 
 
@@ -165,19 +164,16 @@ def chart_display(request, name):
         chart.chartquery_set.all().order_by("relative_index")
     ):
         chart_data[index] = chart_query.get_data(request.user)
-    template = loader.get_template("lava_results_app/chart_display.html")
-    return HttpResponse(
-        template.render(
-            {
-                "chart": chart,
-                "chart_data": json_dumps(chart_data),
-                "bread_crumb_trail": BreadCrumbTrail.leading_to(
-                    chart_display, name=name
-                ),
-                "can_admin": chart.can_admin(request.user),
-            },
-            request=request,
-        )
+
+    return render(
+        request,
+        "lava_results_app/chart_display.html",
+        {
+            "chart": chart,
+            "chart_data": json_dumps(chart_data),
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_display, name=name),
+            "can_admin": chart.can_admin(request.user),
+        },
     )
 
 
@@ -218,17 +214,15 @@ def chart_custom(request):
     chart_query.chart_type = chart_type
     chart_data = {}
     chart_data[0] = chart_query.get_data(request.user, content_type, conditions)
-    template = loader.get_template("lava_results_app/chart_display.html")
-    return HttpResponse(
-        template.render(
-            {
-                "chart": chart,
-                "chart_data": json_dumps(chart_data),
-                "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_custom),
-                "can_admin": False,
-            },
-            request=request,
-        )
+    return render(
+        request,
+        "lava_results_app/chart_display.html",
+        {
+            "chart": chart,
+            "chart_data": json_dumps(chart_data),
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_custom),
+            "can_admin": False,
+        },
     )
 
 
@@ -237,19 +231,15 @@ def chart_custom(request):
 @ownership_required
 def chart_detail(request, name):
     chart = get_object_or_404(Chart, name=name)
-    template = loader.get_template("lava_results_app/chart_detail.html")
-    return HttpResponse(
-        template.render(
-            {
-                "chart": chart,
-                "chart_queries": chart.queries.all(),
-                "bread_crumb_trail": BreadCrumbTrail.leading_to(
-                    chart_detail, name=name
-                ),
-                "context_help": ["lava-queries-charts"],
-            },
-            request=request,
-        )
+    return render(
+        request,
+        "lava_results_app/chart_detail.html",
+        {
+            "chart": chart,
+            "chart_queries": chart.queries.all(),
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_detail, name=name),
+            "context_help": ["lava-queries-charts"],
+        },
     )
 
 
@@ -472,11 +462,11 @@ def chart_form(request, bread_crumb_trail, instance=None, query_id=None):
     else:
         form = ChartForm(request.user, instance=instance)
         form.fields["owner"].initial = request.user
-    template = loader.get_template("lava_results_app/chart_form.html")
-    return HttpResponse(
-        template.render(
-            {"bread_crumb_trail": bread_crumb_trail, "form": form}, request=request
-        )
+
+    return render(
+        request,
+        "lava_results_app/chart_form.html",
+        {"bread_crumb_trail": bread_crumb_trail, "form": form},
     )
 
 
@@ -492,14 +482,13 @@ def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
     else:
         form = ChartQueryForm(request.user, instance=instance)
         form.fields["chart"].initial = chart
-    template = loader.get_template("lava_results_app/chart_query_form.html")
-    return HttpResponse(
-        template.render(
-            {
-                "bread_crumb_trail": bread_crumb_trail,
-                "form": form,
-                "instance": instance,
-            },
-            request=request,
-        )
+
+    return render(
+        request,
+        "lava_results_app/chart_query_form.html",
+        {
+            "bread_crumb_trail": bread_crumb_trail,
+            "form": form,
+            "instance": instance,
+        },
     )
