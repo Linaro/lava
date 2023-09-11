@@ -410,7 +410,7 @@ Optional arguments are:
 .. code-block:: none
 
  ./share/requires.py --distribution debian --suite buster --package lava-dispatcher --names
- python3-configobj python3-guestfs python3-jinja2 python3-magic 
+ python3-configobj python3-guestfs python3-jinja2 python3-magic
  python3-netifaces python3-pexpect python3-pyudev
  python3-requests python3-setproctitle python3-tz python3-yaml
  python3-zmq
@@ -476,31 +476,27 @@ Performing the migration
 ========================
 
 Debian gives a notice similar to this when a new version of postgres is
-installed:
+installed or the old one is obsolete:
 
 .. code-block:: none
 
- Default clusters and upgrading
- ------------------------------
- When installing a postgresql-X.Y package from scratch, a default
- cluster 'main' will automatically be created. This operation is
- equivalent to doing 'pg_createcluster X.Y main --start'.
+ Obsolete major version 13
 
- Due to this default cluster, an immediate attempt to upgrade an
- earlier 'main' cluster to a new version will fail and you need to
- remove the newer default cluster first. E. g., if you have
- postgresql-8.2 installed and want to upgrade to 8.3, you first install
- postgresql-8.3:
+ The PostgreSQL version 13 is obsolete, but the server or client packages
+ are still installed. Please install the latest packages
+ (postgresql-15 and postgresql-client-15) and upgrade the existing
+ clusters with pg_upgradecluster (see manpage).
 
-  apt install postgresql-8.3
+ Please be aware that the installation of posgresql-15 will automatically
+ create a default cluster 15/main. If you want to upgrade the 13/main cluster,
+ you need to remove the already existing 15 cluster (pg_dropcluster --stop
+ 15 main, see manpage for details).
 
- Then drop the default 8.3 cluster:
+ The old server and client packages are no longer supported. After the
+ existingt clusters are upgraded, the postgresql-13 and postgresql-client-13
+ packages should be removed.
 
-  pg_dropcluster 8.3 main --stop
-
- And then upgrade the 8.2 cluster to 8.3:
-
-  pg_upgradecluster 8.2 main
+ Please see /usr/share/doc/posgresql-common/README.Debian.gz for details.
 
 .. note:: Upgrading a cluster combines ``pg_dump`` and ``pg_restore`` (making
           two copies of the database at one point). Ensure that you have enough
@@ -509,7 +505,7 @@ installed:
           not harm the system and full rollback will be applied automatically.
 
 See also
-https://askubuntu.com/questions/66194/how-do-i-migrate-my-postgres-data-from-8-4-to-9-1
+https://www.postgresql.org/docs/current/pgupgrade.html#id-1.9.5.12.7
 
 Check your existing clusters::
 
@@ -521,62 +517,94 @@ Stop postgresql (stops both versions)::
 
 Drop the **main** cluster of the **NEW** postgres as this is empty::
 
- $ sudo pg_dropcluster 9.4 main --stop
+ $ sudo pg_dropcluster 15 main --stop
 
 Postgresql knows which version is the current default, so just tell postgresql
 which is the old version to migrate the data into the (empty) new one::
 
- $ sudo pg_upgradecluster 9.3 main
- Disabling connections to the old cluster during upgrade...
+ # sudo pg_upgradecluster 13 main
  Restarting old cluster with restricted connections...
- Creating new cluster 9.4/main ...
-  config /etc/postgresql/9.4/main
-  data   /var/lib/postgresql/9.4/main
-  locale en_GB.UTF-8
-  port   5433
- Disabling connections to the new cluster during upgrade...
+ Notice: extra pg_ctl/postgres options given, bypassing systemctl for start operation
+ Creating new PostgreSQL cluster 15/main ...
+ /usr/lib/postgresql/15/bin/initdb -D /var/lib/postgresql/15/main --auth-local peer --auth-host scram-sha-256 --no-instructions --encoding UTF8 --lc-collate en_US.UTF-8 --lc-ctype en_US.UTF-8
+ The files belonging to this database system will be owned by user "postgres".
+ This user must also own the server process.
+
+ The database cluster will be initialized with locale "en_US.UTF-8".
+ The default text search configuration will be set to "english".
+
+ Data page checksums are disabled.
+
+ fixing permissions on existing directory /var/lib/postgresql/15/main ... ok
+ creating subdirectories ... ok
+ selecting dynamic shared memory implementation ... posix
+ selecting default max_connections ... 100
+ selecting default shared_buffers ... 128MB
+ selecting default time zone ... Europe/Berlin
+ creating configuration files ... ok
+ running bootstrap script ... ok
+ performing post-bootstrap initialization ... ok
+ syncing data to disk ... ok
+
+ Copying old configuration files...
+ Copying old start.conf...
+ Copying old pg_ctl.conf...
+ Starting new cluster...
+ Notice: extra pg_ctl/postgres options given, bypassing systemctl for start operation
  Roles, databases, schemas, ACLs...
- Fixing hardcoded library paths for stored procedures...
- Upgrading database postgres...
- Analyzing database postgres...
- Fixing hardcoded library paths for stored procedures...
- Upgrading database lavaserver...
- Analyzing database lavaserver...
+  set_config
+ ------------
+
+ (1 row)
+
+ [...]
+
  Fixing hardcoded library paths for stored procedures...
  Upgrading database devel...
  Analyzing database devel...
  Fixing hardcoded library paths for stored procedures...
  Upgrading database template1...
  Analyzing database template1...
- Re-enabling connections to the old cluster...
- Re-enabling connections to the new cluster...
- Copying old configuration files...
- Copying old start.conf...
- Copying old pg_ctl.conf...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database lavaserver...
+ Analyzing database lavaserver...
+ Fixing hardcoded library paths for stored procedures...
+ Upgrading database postgres...
+ Analyzing database postgres...
  Stopping target cluster...
  Stopping old cluster...
  Disabling automatic startup of old cluster...
- Configuring old cluster to use a different port (5433)...
- Starting target cluster on the original port...
+
  Success. Please check that the upgraded cluster works. If it does,
  you can remove the old cluster with
+     pg_dropcluster 13 main
 
-  pg_dropcluster 9.3 main
+ Ver Cluster Port Status Owner    Data directory              Log file
+ 13  main    5433 down   postgres /var/lib/postgresql/13/main /var/log/postgresql/postgresql-13-main.log
+ Ver Cluster Port Status Owner    Data directory              Log file
+ 15  main    5432 down   postgres /var/lib/postgresql/15/main /var/log/postgresql/postgresql-15-main.log
+
+Restart postgresql (starts the new version)::
+
+ $ sudo service postgresql start
 
 Check that the instance is still running. Note that the port of the new
 postgresql server will have been upgraded to the port used for the old
 postgresql server automatically. Check that this is the case::
 
- $ grep port /etc/postgresql/9.4/main/postgresql.conf
- port = 5432
+ # sudo pg_lsclusters
+ Ver Cluster Port Status Owner    Data directory              Log file
+ 13  main    5433 down   postgres /var/lib/postgresql/13/main /var/log/postgresql/postgresql-13-main.log
+ 15  main    5432 online postgres /var/lib/postgresql/15/main /var/log/postgresql/postgresql-15-main.log
+
 
 Drop the old cluster::
 
- $ sudo pg_dropcluster 9.3 main
+ $ sudo pg_dropcluster 13 main
 
 Now the old database package can be removed::
 
- $ sudo apt remove postgresql-9.3
+ $ sudo apt remove postgresql-13
 
 .. index:: dependency requirements
 
