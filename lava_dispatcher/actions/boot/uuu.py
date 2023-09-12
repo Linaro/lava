@@ -341,6 +341,7 @@ class UUUBootAction(OptionalContainerUuuAction):
             "has_bcu_commands"
         ]:
             self.bcu = self.which("bcu")
+        self.cleanup_required = False
 
     def validate(self):
         super().validate()
@@ -354,12 +355,12 @@ class UUUBootAction(OptionalContainerUuuAction):
             "usb_otg_path"
         ]
         uuu_cmds = self.parameters["commands"]
-        bcu_board_name = self.job.device["actions"]["boot"]["methods"]["uuu"][
+        self.bcu_board_name = self.job.device["actions"]["boot"]["methods"]["uuu"][
             "options"
         ]["bcu_board_name"]
-        bcu_board_id = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
-            "bcu_board_id"
-        ]
+        self.bcu_board_id = self.job.device["actions"]["boot"]["methods"]["uuu"][
+            "options"
+        ]["bcu_board_id"]
         images_name = self.get_namespace_data(
             action="uuu-deploy", label="uuu-images", key="images_names"
         )
@@ -386,9 +387,10 @@ class UUUBootAction(OptionalContainerUuuAction):
             raise JobError("USB path of the device not set for uuu")
         for cmd in uuu_cmds:
             if "bcu:" in cmd:
+                self.cleanup_required = True
                 cmd = cmd.replace("bcu: ", "")
                 exec_cmd = "{} {} -board={} -id={}".format(
-                    self.bcu, cmd, bcu_board_name, bcu_board_id
+                    self.bcu, cmd, self.bcu_board_name, self.bcu_board_id
                 )
                 self.run_bcu(
                     exec_cmd.split(" "),
@@ -416,3 +418,16 @@ class UUUBootAction(OptionalContainerUuuAction):
             )
 
         return connection
+
+    def cleanup(self, connection):
+        super().cleanup(connection)
+        if self.cleanup_required:
+            exec_cmd = "{} deinit -board={} -id={}".format(
+                self.bcu, self.bcu_board_name, self.bcu_board_id
+            )
+            self.run_bcu(
+                exec_cmd.split(" "),
+                allow_fail=False,
+                error_msg="Fail UUUBootAction on cmd : deinit",
+            )
+            self.cleanup_required = False
