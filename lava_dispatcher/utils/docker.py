@@ -147,6 +147,7 @@ class DockerRun:
             if action.run_cmd(
                 [
                     "docker",
+                    *self.__docker_options__,
                     "image",
                     "inspect",
                     "--format",
@@ -160,7 +161,7 @@ class DockerRun:
                 )
                 pull = True
         if pull:
-            action.run_cmd(["docker", "pull", self.image])
+            action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
         self.__check_image_arch__()
 
     def wait(self, shell=None):
@@ -172,7 +173,13 @@ class DockerRun:
                 if shell and not shell.isalive():
                     raise InfrastructureError("Docker container unexpectedly exited")
                 subprocess.check_call(
-                    ["docker", "inspect", "--format=.", self.__name__],
+                    [
+                        "docker",
+                        *self.__docker_options__,
+                        "inspect",
+                        "--format=.",
+                        self.__name__,
+                    ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
@@ -186,7 +193,15 @@ class DockerRun:
         while True:
             try:
                 subprocess.check_call(
-                    ["docker", "exec", self.__name__, "test", "-e", filename],
+                    [
+                        "docker",
+                        *self.__docker_options__,
+                        "exec",
+                        self.__name__,
+                        "test",
+                        "-e",
+                        filename,
+                    ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
@@ -198,7 +213,7 @@ class DockerRun:
     def destroy(self):
         if self.__name__:
             subprocess.call(
-                ["docker", "rm", "-f", self.__name__],
+                ["docker", *self.__docker_options__, "rm", "-f", self.__name__],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -206,7 +221,14 @@ class DockerRun:
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
         container = subprocess.check_output(
-            ["docker", "inspect", "--format", "{{.Architecture}}", self.image],
+            [
+                "docker",
+                *self.__docker_options__,
+                "inspect",
+                "--format",
+                "{{.Architecture}}",
+                self.image,
+            ],
             text=True,
         ).strip()
         # amd64 = x86_64
@@ -247,7 +269,7 @@ class DockerContainer(DockerRun):
         if self.__started__:
             return
 
-        cmd = ["docker", "run", "--detach"]
+        cmd = ["docker", *self.__docker_options__, "run", "--detach"]
         cmd += self.start_options()
         cmd.append(self.image)
         cmd += ["sleep", "infinity"]
@@ -256,4 +278,4 @@ class DockerContainer(DockerRun):
         self.__started__ = True
 
     def stop(self, action):
-        action.run_cmd(["docker", "stop", self.__name__])
+        action.run_cmd(["docker", *self.__docker_options__, "stop", self.__name__])
