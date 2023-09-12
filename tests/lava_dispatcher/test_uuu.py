@@ -369,6 +369,8 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
         action.parameters["commands"] = [{"uuu": "-b sd {boot}"}]
 
         action.run_uuu = MagicMock(return_value=0)
+        action.run_bcu = MagicMock(return_value=0)
+        action.cleanup_required = False
 
         action.run(connection=None, max_end_time=None)
 
@@ -377,6 +379,9 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             allow_fail=False,
             error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
         )
+
+        action.cleanup(connection=None)
+        action.run_bcu.assert_not_called()
 
     @patch("time.sleep", Mock())
     def test_run_single_path_with_bcu(self):
@@ -412,6 +417,13 @@ class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-meth
             ["/bin/uuu", "-m", "12:123", "-b", "sd", "image.boot"],
             allow_fail=False,
             error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
+        )
+
+        action.cleanup(connection=None)
+        action.run_bcu.assert_called_with(
+            ["/bin/bcu", "deinit", "-board=imx8dxlevk", "-id=2-1.3"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : deinit",
         )
 
     @patch("time.sleep", Mock())
