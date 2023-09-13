@@ -1,0 +1,6 @@
+{# device_type = 'acer-chromebox-cxi5-brask' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Moli...') %}
+{% set bootloader_prompt = bootloader_prompt | default('brask:') %}
+{% set console_device = console_device | default('ttyS0') %}
