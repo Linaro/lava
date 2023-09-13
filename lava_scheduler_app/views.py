@@ -333,7 +333,7 @@ class DeviceTableView(JobTableView):
 
 
 class JobErrorsView(LavaView):
-    def get_queryset(self):
+    def get_job_errors_queryset(self):
         metadata_subquery = Subquery(
             TestCase.objects.filter(
                 Q(metadata__contains="error_type: Configuration")
@@ -349,14 +349,18 @@ class JobErrorsView(LavaView):
         )
 
         return (
-            visible_jobs_with_custom_sort(self.request.user)
-            .filter(health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED))
+            TestJob.objects.filter(
+                health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED)
+            )
             .annotate(
                 failure_metadata_str=metadata_subquery,
             )
             .filter(failure_metadata_str__isnull=False)
             .order_by("-end_time")
         )
+
+    def get_queryset(self):
+        return self.get_job_errors_queryset().visible_by_user(self.request.user)
 
 
 @BreadCrumb("Scheduler", parent=lava_index)
@@ -1544,20 +1548,9 @@ class MyQueuedJobsView(JobTableView):
         return query.select_related("submitter")
 
 
-class MyErrorJobsView(JobTableView):
+class MyErrorJobsView(JobErrorsView):
     def get_queryset(self):
-        q = TestCase.objects.filter(
-            suite__name="lava", result=TestCase.RESULT_FAIL
-        ).visible_by_user(self.request.user)
-        q = q.filter(
-            Q(metadata__contains="error_type: Configuration")
-            | Q(metadata__contains="error_type: Infrastructure")
-            | Q(metadata__contains="error_type: Bug")
-        )
-        q = q.select_related("suite", "suite__job__actual_device")
-        return q.order_by("-suite__job__id").filter(
-            suite__job__submitter=self.request.user
-        )
+        return self.get_job_errors_queryset().filter(submitter=self.request.user)
 
 
 class LongestJobsView(JobTableView):
