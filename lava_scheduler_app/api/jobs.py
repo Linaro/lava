@@ -10,6 +10,8 @@ from datetime import timedelta
 
 import voluptuous
 from django.conf import settings
+from django.db.models import DurationField, ExpressionWrapper, F, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from lava_common import schemas
@@ -135,13 +137,22 @@ class SchedulerJobsAPI(ExposedV2API):
             return job.multinode_definition
         return job.original_definition
 
-    def list(self, state=None, health=None, start=0, limit=25, since=0, verbose=False):
+    def list(
+        self,
+        state=None,
+        health=None,
+        start=0,
+        limit=25,
+        since=0,
+        verbose=False,
+        duration_at_least=None,
+    ):
         """
         Name
         ----
         `scheduler.jobs.list` (
             `state=None`, `health=None`, `start=0`, `limit=25`,
-            `since=None`, `verbose=False`
+            `since=None`, `verbose=False`, `duration_at_least=None`
         )
 
         Description
@@ -169,6 +180,8 @@ class SchedulerJobsAPI(ExposedV2API):
           error_msg and error_type.
           Note: error_msg can contain nested quotes and other escape
           characters, parse with care.
+        `duration_at_least`: int (minutes)
+          Filter by jobs that take longer than N minutes.
 
         Return value
         ------------
@@ -202,6 +215,14 @@ class SchedulerJobsAPI(ExposedV2API):
             # search back in time
             start_time = end_time - timedelta(minutes=since)
             jobs = jobs.filter(end_time__range=[start_time, end_time])
+
+        if duration_at_least is not None:
+            jobs = jobs.annotate(
+                _duration=ExpressionWrapper(
+                    Coalesce("end_time", Value(timezone.now())) - F("start_time"),
+                    output_field=DurationField(),
+                )
+            ).filter(_duration__gt=timedelta(minutes=duration_at_least))
 
         for job in jobs.order_by("-id")[start : start + limit]:
             device_type = None
@@ -363,7 +384,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         Return value
         ------------
-        This function returns a dictionary of details abou the specified test job.
+        This function returns a dictionary of details about the specified test job.
         """
         try:
             job = TestJob.get_by_job_number(job_id)
