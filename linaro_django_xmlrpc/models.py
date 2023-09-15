@@ -98,7 +98,9 @@ class AuthToken(models.Model):
         This also bumps last_used_on if successful
         """
         try:
-            token = cls.objects.get(user__username=username, secret=secret)
+            token = cls.objects.select_related("user").get(
+                user__username=username, secret=secret
+            )
             token.last_used_on = timezone.now()
             token.save()
             return token.user
