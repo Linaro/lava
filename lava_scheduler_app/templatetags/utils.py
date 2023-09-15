@@ -6,7 +6,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import re
-from collections import OrderedDict
 
 from django import template
 from django.conf import settings
@@ -72,30 +71,6 @@ def device_type_timeouts(device_type):
     if not data or "timeouts" not in data:
         return None
     return data["timeouts"]
-
-
-@register.filter()
-def result_url(result_dict, job_id):
-    if not isinstance(result_dict, dict):
-        return None
-    if "test_definition" in result_dict:
-        testdef = result_dict["test_definition"]
-        testcase = None
-        for key, _ in result_dict.items():
-            if key == "test_definition":
-                continue
-            testcase = key
-            break
-        # 8125/singlenode-intermediate/tar-tgz
-        return format_html("/results/{}/{}/{}", job_id, testdef, testcase)
-    elif len(result_dict.keys()) == 1:
-        # action based result
-        testdef = "lava"
-        if isinstance(result_dict.values()[0], OrderedDict):
-            testcase = result_dict.keys()[0]
-            return format_html("/results/{}/{}/{}", job_id, testdef, testcase)
-    else:
-        return None
 
 
 @register.filter()
