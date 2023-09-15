@@ -101,11 +101,15 @@ class AuthToken(models.Model):
             token = cls.objects.select_related("user").get(
                 user__username=username, secret=secret
             )
-            token.last_used_on = timezone.now()
-            token.save()
-            return token.user
         except cls.DoesNotExist:
             return None
+
+        if not token.user.is_active:
+            return None
+
+        token.last_used_on = timezone.now()
+        token.save()
+        return token.user
 
 
 def xml_rpc_signature(*sig):
