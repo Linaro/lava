@@ -227,6 +227,32 @@ reprepro-release:
     name: reprepro-release
     url: https://apt.lavasoftware.org
 
+.publish-packages:
+  stage: deploy
+  needs:
+    - debian/11
+    - debian/12
+  trigger:
+    project: lava/lava-apt-repo
+  variables:
+    PARENT_PROJECT_NAME: $CI_PROJECT_NAME
+    PARENT_PROJECT_REF: $CI_COMMIT_REF_NAME
+
+publish-packages/daily:
+  extends: .publish-packages
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+  variables:
+    LAVA_APT_CHANNEL: daily
+
+publish-packages/release:
+  extends: .publish-packages
+  only:
+    refs:
+      - tags
+  variables:
+    LAVA_APT_CHANNEL: release
+
 pages:
   stage: deploy
   only:
