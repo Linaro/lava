@@ -129,7 +129,7 @@ async def zmq_proxy(app):
 
         elif topic.endswith(".worker"):
             worker = await db(logger, Worker.objects.get, hostname=content["hostname"])
-            for ws in app["websockets"]:
+            for ws in set(app["websockets"]):
                 # Only forward to users as workers will discard it
                 if ws.kind == "user":
                     user = AnonymousUser()
