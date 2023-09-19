@@ -80,7 +80,7 @@ if [ -d './dist/' ]; then
 fi
 
 if [ -d .git ]; then
-  LOG=`git log -n1 --pretty=format:"Last change %h by %an, %ar. %s%n" --no-merges`
+  LOG=`git log -n1 --pretty=format:"Last change %h by %an on %aD (%s)%n" --no-merges`
 fi
 NAME=`dpkg-parsechangelog |grep Source|cut -d" " -f2`
 
