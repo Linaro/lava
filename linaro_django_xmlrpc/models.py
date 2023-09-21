@@ -108,7 +108,7 @@ class AuthToken(models.Model):
             return None
 
         token.last_used_on = timezone.now()
-        token.save()
+        token.save(update_fields=("last_used_on",))
         return token.user
 
 
