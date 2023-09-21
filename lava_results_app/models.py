@@ -170,9 +170,20 @@ class TestSuite(models.Model, Queryable):
     Directly linked to a single TestJob, the job can have multiple TestSets.
     """
 
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=("job", "name"), name="lava_results_app_testsuite_job_name_uniq"
+            ),
+        )
+
     objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
-    job = models.ForeignKey(TestJob, on_delete=models.CASCADE)
+    job = models.ForeignKey(
+        TestJob,
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
+    )
     name = models.CharField(
         verbose_name="Suite name", blank=True, null=True, default=None, max_length=200
     )
@@ -271,6 +282,14 @@ class TestSet(models.Model):
     Not all cases have a TestSet
     """
 
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=("suite", "name"),
+                name="lava_results_app_testset_name_suite_uniq",
+            ),
+        )
+
     id = models.AutoField(primary_key=True)
 
     name = models.CharField(
@@ -278,7 +297,10 @@ class TestSet(models.Model):
     )
 
     suite = models.ForeignKey(
-        TestSuite, related_name="test_sets", on_delete=models.CASCADE
+        TestSuite,
+        related_name="test_sets",
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     def get_absolute_url(self):
@@ -298,6 +320,15 @@ class TestCase(models.Model, Queryable):
     Result of an individual test case.
     lava-test-case or action result
     """
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=("suite",),
+                condition=models.Q(name="job"),
+                name="lava_results_app_testcase_job_uniq",
+            ),
+        )
 
     objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
 
@@ -554,7 +585,11 @@ def TestSuiteViewFactory(query):
 
 
 class Query(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
+    )
 
     group = models.ForeignKey(
         Group, default=None, null=True, blank=True, on_delete=models.SET_NULL
@@ -593,7 +628,12 @@ class Query(models.Model):
         return "~%s/%s" % (self.owner.username, self.name)
 
     class Meta:
-        unique_together = ("owner", "name")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("owner", "name"),
+                name="lava_results_app_query_owner_name_uniq",
+            ),
+        )
         verbose_name = "query"
         verbose_name_plural = "queries"
 
@@ -1127,14 +1167,23 @@ def _get_foreign_key_model(model, fieldname):
 
 
 class QueryOmitResult(models.Model):
-    query = models.ForeignKey(Query, on_delete=models.CASCADE)
+    query = models.ForeignKey(
+        Query,
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
+    )
 
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
     class Meta:
-        unique_together = ("object_id", "query", "content_type")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("query", "content_type", "object_id"),
+                name="lava_results_app_query_omit_result_content_type_object_id_uniq",
+            ),
+        )
 
 
 class ChartGroup(models.Model):
@@ -1454,9 +1503,19 @@ class ChartQuery(models.Model):
 
 class ChartQueryUser(models.Model):
     class Meta:
-        unique_together = ("chart_query", "user")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("chart_query", "user"),
+                name="lava_results_app_chart_query_user_uniq",
+            ),
+        )
 
-    chart_query = models.ForeignKey(ChartQuery, null=False, on_delete=models.CASCADE)
+    chart_query = models.ForeignKey(
+        ChartQuery,
+        null=False,
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
+    )
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
 

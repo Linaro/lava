@@ -159,7 +159,10 @@ class Alias(models.Model):
         editable=True,
     )
     device_type = models.ForeignKey(
-        "DeviceType", related_name="aliases", null=True, on_delete=models.CASCADE
+        "DeviceType",
+        related_name="aliases",
+        null=True,
+        on_delete=models.CASCADE,
     )
 
     def __str__(self):
@@ -1368,14 +1371,6 @@ class TestJob(models.Model):
                 name="device_jobs_index", fields=("actual_device", "-submit_time")
             ),
             models.Index(
-                name="current_job_prefetch_index",
-                fields=("actual_device",),
-                condition=(
-                    ~Q(state=5)  # HACK: refers to TestJob.STATE_FINISHED
-                    & Q(actual_device__isnull=False)
-                ),
-            ),
-            models.Index(
                 fields=("requested_device_type", "id"),
                 name="job_queued_per_device_type_idx",
                 condition=Q(state=0),  # HACK: refers to TestJob.STATE_SUBMITTED
@@ -1384,6 +1379,21 @@ class TestJob(models.Model):
                 name="health_checks_count_idx",
                 fields=("requested_device_type", "-submit_time", "id", "health"),
                 condition=Q(health_check=True),
+            ),
+        )
+        constraints = (
+            models.UniqueConstraint(
+                name="lava_scheduler_app_testjob_current_job_prefetch_uniq",
+                fields=("actual_device",),
+                condition=(
+                    ~Q(state=5)  # HACK: refers to TestJob.STATE_FINISHED
+                    & Q(actual_device__isnull=False)
+                ),
+            ),
+            models.UniqueConstraint(
+                name="lava_scheduler_app_testjob_sub_id_uniq",
+                fields=("sub_id",),
+                condition=(~Q(sub_id="")),
             ),
         )
 
@@ -2294,7 +2304,12 @@ class Notification(models.Model):
 
 class NotificationRecipient(models.Model):
     class Meta:
-        unique_together = ("user", "notification", "method")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("user", "notification", "method"),
+                name="lava_scheduler_app_user_notification_method_uniq",
+            ),
+        )
 
     user = models.ForeignKey(
         User,
@@ -2303,6 +2318,7 @@ class NotificationRecipient(models.Model):
         blank=True,
         on_delete=models.CASCADE,
         verbose_name="Notification user recipient",
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     email = models.TextField(
@@ -2502,11 +2518,21 @@ class NotificationCallback(models.Model):
 @nottest
 class TestJobUser(models.Model):
     class Meta:
-        unique_together = ("test_job", "user")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("test_job", "user"),
+                name="lava_scheduler_app_test_job_user_uniq",
+            ),
+        )
 
     user = models.ForeignKey(User, null=False, on_delete=models.CASCADE)
 
-    test_job = models.ForeignKey(TestJob, null=False, on_delete=models.CASCADE)
+    test_job = models.ForeignKey(
+        TestJob,
+        null=False,
+        on_delete=models.CASCADE,
+        db_index=False,  # UniqueConstraint defined in Meta
+    )
 
     is_favorite = models.BooleanField(default=False, verbose_name="Favorite job")
 
@@ -2518,10 +2544,19 @@ class TestJobUser(models.Model):
 
 class GroupDeviceTypePermission(GroupObjectPermission):
     class Meta:
-        unique_together = ("group", "permission", "devicetype")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("devicetype", "permission", "group"),
+                name="lava_scheduler_app_group_permission_devicetype_uniq",
+            ),
+        )
 
     devicetype = models.ForeignKey(
-        DeviceType, null=False, on_delete=models.CASCADE, related_name="permissions"
+        DeviceType,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name="permissions",
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     def __str__(self):
@@ -2533,10 +2568,19 @@ class GroupDeviceTypePermission(GroupObjectPermission):
 
 class GroupDevicePermission(GroupObjectPermission):
     class Meta:
-        unique_together = ("group", "permission", "device")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("device", "permission", "group"),
+                name="lava_scheduler_app_group_permission_device_uniq",
+            ),
+        )
 
     device = models.ForeignKey(
-        Device, null=False, on_delete=models.CASCADE, related_name="permissions"
+        Device,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name="permissions",
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     def __str__(self):
@@ -2545,10 +2589,19 @@ class GroupDevicePermission(GroupObjectPermission):
 
 class GroupWorkerPermission(GroupObjectPermission):
     class Meta:
-        unique_together = ("group", "permission", "worker")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("worker", "permission", "group"),
+                name="lava_scheduler_app_group_permission_worker_uniq",
+            ),
+        )
 
     worker = models.ForeignKey(
-        Worker, null=False, on_delete=models.CASCADE, related_name="permissions"
+        Worker,
+        null=False,
+        on_delete=models.CASCADE,
+        related_name="permissions",
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     def __str__(self):
@@ -2557,11 +2610,20 @@ class GroupWorkerPermission(GroupObjectPermission):
 
 class RemoteArtifactsAuth(models.Model):
     class Meta:
-        unique_together = ("name", "user")
+        constraints = (
+            models.UniqueConstraint(
+                fields=("user", "name"),
+                name="lava_scheduler_app_remote_artifact_user_and_name_uniq",
+            ),
+        )
         ordering = ["name"]
 
     user = models.ForeignKey(
-        User, null=False, on_delete=models.CASCADE, verbose_name="User"
+        User,
+        null=False,
+        on_delete=models.CASCADE,
+        verbose_name="User",
+        db_index=False,  # UniqueConstraint defined in Meta
     )
 
     name = models.CharField(max_length=100, null=False, verbose_name=_("Token name"))
