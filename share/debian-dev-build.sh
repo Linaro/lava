@@ -81,6 +81,7 @@ fi
 
 if [ -d .git ]; then
   LOG=`git log -n1 --pretty=format:"Last change %h by %an on %aD (%s)%n" --no-merges`
+  DATE=`git log -n1 --pretty=format:%aD --no-merges`
 fi
 NAME=`dpkg-parsechangelog |grep Source|cut -d" " -f2`
 
@@ -105,6 +106,11 @@ BUILD_SUITE="${SUITE}"
 dch --force-distribution -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
+fi
+if [ -n "${DATE}" ]; then
+  # Use the git commit timestamp
+  sed -i -e "0,/^ --/ { s/^ --.*/ -- $DEBFULLNAME <$DEBEMAIL>  $DATE/ }" \
+    debian/changelog
 fi
 
 debuild ${DEBUILD_OPTS}
