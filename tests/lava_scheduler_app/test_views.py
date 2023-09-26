@@ -537,9 +537,8 @@ def test_job_cancel_no_perm(client, setup):
     ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_1.pk]))
     assert ret.status_code == 302  # nosec
     # The job is running: raise an exception (permission denied)
-    job_1.state = TestJob.STATE_RUNNING
-    job_1.save()
-    ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_1.pk]))
+    job_2 = TestJob.objects.get(description="test job 02")
+    ret = client.post(reverse("lava.scheduler.job.cancel", args=[job_2.pk]))
     assert ret.status_code == 403  # nosec
 
 
