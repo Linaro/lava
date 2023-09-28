@@ -598,3 +598,14 @@ class AuthTokenTests(TestCase):
         # Refresh token
         token = AuthToken.objects.get(id=token.id, user=self.user)
         self.assertNotEqual(token.last_used_on, None)
+
+    def test_get_inactivated_user(self):
+        token = AuthToken.objects.create(user=self.user)
+        self.assertIsNotNone(
+            AuthToken.get_user_for_secret(self.user.username, token.secret)
+        )
+        self.user.is_active = False
+        self.user.save()
+        self.assertIsNone(
+            AuthToken.get_user_for_secret(self.user.username, token.secret)
+        )
