@@ -61,6 +61,10 @@ following definitions are supported:
 * `hacking-session-android-host.yaml`_  and `hacking-session-android-target.yaml`_ -
   Run the hacking session over adb, host and target side.
 
+* `hacking-session-busybox.yaml`_ - Run the hacking session on an Busybox device.
+  **ssh server must be installed in the test image**, as it cannot easily be
+  installed afterwards.
+
 * `hacking-session-debian.yaml`_ - Run the hacking session on a Debian or
   Ubuntu filesystem. The package **openssh-server will be installed using the
   package manager** if not already installed in the test image. The test image
@@ -98,6 +102,7 @@ definitions, some optional:
 
 .. _hacking-session-android-host.yaml : https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-android-host.yaml
 .. _hacking-session-android-target.yaml : https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-android-target.yaml
+.. _hacking-session-busybox.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-busybox.yaml
 .. _hacking-session-debian.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-debian.yaml
 .. _hacking-session-fedora.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-fedora.yaml
 .. _hacking-session-oe.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-oe.yaml
