@@ -61,14 +61,12 @@ following definitions are supported:
 * `hacking-session-debian.yaml`_ - Run the hacking session on a Debian or
   Ubuntu filesystem. The package **openssh-server will be installed using the
   package manager** if not already installed in the test image. The test image
-  **must** raise a network interface automatically (this can be done with
-  ``lava_command_run``, see `example`_).
+  **must** raise a network interface automatically.
 
 * `hacking-session-fedora.yaml`_ - Run the hacking session on a Fedora
   filesystem. The package **openssh-server will be installed using the package
   manager** if not already installed in the test image. The test image **must**
-  raise a network interface automatically (this can be done with
-  ``lava_command_run``, see `example`_).
+  raise a network interface automatically.
 
 * `hacking-session-oe.yaml`_ - Run the hacking session on an Open Embedded
   filesystem. **openssh-server must be installed in the test image**, as it
@@ -98,7 +96,6 @@ definitions, some optional:
 .. _hacking-session-debian.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-debian.yaml
 .. _hacking-session-fedora.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-fedora.yaml
 .. _hacking-session-oe.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-oe.yaml
-.. _example: https://staging.validation.linaro.org/scheduler/job/138105/definition
 
 Starting a Hacking Session
 ==========================
