@@ -64,11 +64,11 @@ def check_queue_timeout(logger):
             logger.debug("  |--> [%d] canceling", testjob.id)
             if testjob.is_multinode:
                 for job in testjob.sub_jobs_list:
-                    job.go_state_canceling()
-                    job.save()
+                    fields = job.go_state_canceling()
+                    job.save(update_fields=fields)
             else:
-                testjob.go_state_canceling()
-                testjob.save()
+                fields = testjob.go_state_canceling()
+                testjob.save(update_fields=fields)
     logger.info("done")
 
 
@@ -187,7 +187,7 @@ def schedule_health_checks_for_device_type(logger, dt, workers):
                 "%s → %s (Invalid device configuration)"
                 % (prev_health_display, device.get_health_display()),
             )
-            device.save()
+            device.save(update_fields=["health"])
             logger.debug(
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
@@ -208,7 +208,7 @@ def schedule_health_checks_for_device_type(logger, dt, workers):
                 "%s → %s (Invalid health check)"
                 % (prev_health_display, device.get_health_display()),
             )
-            device.save()
+            device.save(update_fields=["health"])
 
     return available_devices
 
@@ -224,8 +224,8 @@ def schedule_health_check(device, definition):
         orig=definition,
         health_check=True,
     )
-    job.go_state_scheduled(device)
-    job.save()
+    fields = job.go_state_scheduled(device)
+    job.save(update_fields=fields)
 
 
 def schedule_jobs(logger, available_devices, workers):
@@ -285,7 +285,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
                 "%s → %s (Invalid device configuration)"
                 % (prev_health_display, device.get_health_display()),
             )
-            device.save()
+            device.save(update_fields=["health"])
             logger.debug(
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
@@ -330,10 +330,10 @@ def schedule_jobs_for_device(logger, device, print_header):
         logger.debug("  |--> [%d] scheduling", job.id)
         if job.is_multinode:
             # TODO: keep track of the multinode jobs
-            job.go_state_scheduling(device)
+            fields = job.go_state_scheduling(device)
         else:
-            job.go_state_scheduled(device)
-        job.save()
+            fields = job.go_state_scheduled(device)
+        job.save(update_fields=fields)
         return job.id
     return None
 
@@ -375,6 +375,6 @@ def transition_multinode_jobs(logger):
             definition["protocols"]["lava-multinode"]["roles"] = devices
             sub_job.definition = yaml_safe_dump(definition)
             # transition the job and device
-            sub_job.go_state_scheduled()
-            sub_job.save()
+            fields = sub_job.go_state_scheduled()
+            sub_job.save(update_fields=fields)
             logger.debug("--> %d", sub_job.id)
