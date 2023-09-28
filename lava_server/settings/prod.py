@@ -40,12 +40,7 @@ env = environ.Env()
 environ.Env.read_env()
 
 if os.environ.get("DATABASE_URL"):
-    database_dict = env.db()
-    if "CONN_MAX_AGE" not in database_dict:
-        database_dict["CONN_MAX_AGE"] = 600  # Enable persistent database connection
-
-    DATABASES = {"default": database_dict}
-
+    DATABASES = {"default": env.db()}
     INSTANCE_NAME = os.environ.get("INSTANCE_NAME", INSTANCE_NAME)
 else:
     with contextlib.suppress(FileNotFoundError):
@@ -58,9 +53,11 @@ else:
                 "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
                 "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
                 "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
-                "CONN_MAX_AGE": int(getattr(config, "CONN_MAX_AGE", 600)),
             }
         }
+        if conn_max_age_str := getattr(config, "CONN_MAX_AGE", None):
+            DATABASES["default"]["CONN_MAX_AGE"] = int(conn_max_age_str)
+
         INSTANCE_NAME = config.LAVA_INSTANCE
 
 if os.environ.get("SECRET_KEY"):
