@@ -37,10 +37,6 @@ class ChoiceField(serializers.ChoiceField):
             self.fail("invalid_choice", input=data)
 
 
-class TestJobSerializer(base_serializers.TestJobSerializer):
-    pass
-
-
 class TestSuiteResourceUriField(ResourceUriField):
     def get_url(self, obj, view_name, request, format):
         url_kwargs = {"parent_lookup_job_id": obj.job_id, "pk": obj.pk}
@@ -76,10 +72,6 @@ class TestCaseSerializer(base_serializers.TestCaseSerializer):
     class Meta(base_serializers.TestCaseSerializer.Meta):
         exclude = ("units",)
         fields = None
-
-
-class DeviceTypeSerializer(base_serializers.DeviceTypeSerializer):
-    pass
 
 
 class DictionarySerializer(serializers.Serializer):
