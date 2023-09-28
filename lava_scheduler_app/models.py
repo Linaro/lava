@@ -1308,10 +1308,9 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                     parent,
                     node_data["protocols"]["lava-multinode"]["sub_id"],
                 )
-                job.multinode_definition = (
-                    yaml_data  # store complete submission, inc. comments
-                )
-                job.save()
+                # store complete submission, inc. comments
+                job.multinode_definition = yaml_data
+                job.save(update_fields=["multinode_definition", "sub_id"])
                 job_object_list.append(job)
 
         return job_object_list
