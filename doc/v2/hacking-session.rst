@@ -55,20 +55,25 @@ Definitions
 
 There are Lava-Test Test Definition 1.0 test definitions for hacking
 sessions provided by the LAVA developers at
-https://git.linaro.org/lava-team/hacking-session.git . Currently the
+https://gitlab.com/lava/hacking-session.git . Currently the
 following definitions are supported:
+
+* `hacking-session-android-host.yaml`_  and `hacking-session-android-target.yaml`_ -
+  Run the hacking session over adb, host and target side.
+
+* `hacking-session-busybox.yaml`_ - Run the hacking session on an Busybox device.
+  **ssh server must be installed in the test image**, as it cannot easily be
+  installed afterwards.
 
 * `hacking-session-debian.yaml`_ - Run the hacking session on a Debian or
   Ubuntu filesystem. The package **openssh-server will be installed using the
   package manager** if not already installed in the test image. The test image
-  **must** raise a network interface automatically (this can be done with
-  ``lava_command_run``, see `example`_).
+  **must** raise a network interface automatically.
 
 * `hacking-session-fedora.yaml`_ - Run the hacking session on a Fedora
   filesystem. The package **openssh-server will be installed using the package
   manager** if not already installed in the test image. The test image **must**
-  raise a network interface automatically (this can be done with
-  ``lava_command_run``, see `example`_).
+  raise a network interface automatically.
 
 * `hacking-session-oe.yaml`_ - Run the hacking session on an Open Embedded
   filesystem. **openssh-server must be installed in the test image**, as it
@@ -95,10 +100,12 @@ definitions, some optional:
 * ``IRC_SERVER``: (optional) The IRC network to use for notifications, used if
   IRC_USER is also set. This defaults to ``irc.freenode.net``
 
-.. _hacking-session-debian.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-debian.yaml
-.. _hacking-session-fedora.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-fedora.yaml
-.. _hacking-session-oe.yaml: https://git.linaro.org/lava-team/hacking-session.git/tree/hacking-session-oe.yaml
-.. _example: https://staging.validation.linaro.org/scheduler/job/138105/definition
+.. _hacking-session-android-host.yaml : https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-android-host.yaml
+.. _hacking-session-android-target.yaml : https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-android-target.yaml
+.. _hacking-session-busybox.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-busybox.yaml
+.. _hacking-session-debian.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-debian.yaml
+.. _hacking-session-fedora.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-fedora.yaml
+.. _hacking-session-oe.yaml: https://gitlab.com/lava/hacking-session/-/blob/master/hacking-session-oe.yaml
 
 Starting a Hacking Session
 ==========================
@@ -115,7 +122,7 @@ Starting a Hacking Session
         timeout:
           minutes: 5
         definitions:
-         - repository: https://git.linaro.org/lava-team/hacking-session.git
+         - repository: https://gitlab.com/lava/hacking-session.git
            from: git
            path: hacking-session-debian.yaml
            name: hacking

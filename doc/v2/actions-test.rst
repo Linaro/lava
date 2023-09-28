@@ -97,7 +97,7 @@ the test shell, the value is the value of that variable.
 
   - test:
       definitions:
-      - repository: https://git.linaro.org/lava-team/hacking-session.git
+      - repository: https://gitlab.com/lava/hacking-session.git
         from: git
         path: hacking-session-debian.yaml
         name: hacking
