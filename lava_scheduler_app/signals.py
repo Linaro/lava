@@ -226,55 +226,56 @@ def worker_post_handler(sender, **kwargs):
         send_event(".worker", "lavaserver", data)
 
 
-pre_delete.connect(
-    testjob_pre_delete_handler,
-    sender=TestJob,
-    weak=False,
-    dispatch_uid="testjob_pre_delete_handler",
-)
-# This handler is used for the notification and the events
-post_init.connect(
-    testjob_init_handler,
-    sender=TestJob,
-    weak=False,
-    dispatch_uid="testjob_init_handler",
-)
-post_save.connect(
-    testjob_notifications,
-    sender=TestJob,
-    weak=False,
-    dispatch_uid="testjob_notifications",
-)
-
-# Only activate these signals when EVENT_NOTIFICATION is in use
-if settings.EVENT_NOTIFICATION:
-    post_init.connect(
-        device_init_handler,
-        sender=Device,
-        weak=False,
-        dispatch_uid="device_init_handler",
-    )
-    post_save.connect(
-        device_post_handler,
-        sender=Device,
-        weak=False,
-        dispatch_uid="device_post_handler",
-    )
-    post_save.connect(
-        testjob_post_handler,
+def register_scheduler_app_signals():
+    pre_delete.connect(
+        testjob_pre_delete_handler,
         sender=TestJob,
         weak=False,
-        dispatch_uid="testjob_post_handler",
+        dispatch_uid="testjob_pre_delete_handler",
     )
+    # This handler is used for the notification and the events
     post_init.connect(
-        worker_init_handler,
-        sender=Worker,
+        testjob_init_handler,
+        sender=TestJob,
         weak=False,
-        dispatch_uid="worker_init_handler",
+        dispatch_uid="testjob_init_handler",
     )
     post_save.connect(
-        worker_post_handler,
-        sender=Worker,
+        testjob_notifications,
+        sender=TestJob,
         weak=False,
-        dispatch_uid="worker_post_handler",
+        dispatch_uid="testjob_notifications",
     )
+
+    # Only activate these signals when EVENT_NOTIFICATION is in use
+    if settings.EVENT_NOTIFICATION:
+        post_init.connect(
+            device_init_handler,
+            sender=Device,
+            weak=False,
+            dispatch_uid="device_init_handler",
+        )
+        post_save.connect(
+            device_post_handler,
+            sender=Device,
+            weak=False,
+            dispatch_uid="device_post_handler",
+        )
+        post_save.connect(
+            testjob_post_handler,
+            sender=TestJob,
+            weak=False,
+            dispatch_uid="testjob_post_handler",
+        )
+        post_init.connect(
+            worker_init_handler,
+            sender=Worker,
+            weak=False,
+            dispatch_uid="worker_init_handler",
+        )
+        post_save.connect(
+            worker_post_handler,
+            sender=Worker,
+            weak=False,
+            dispatch_uid="worker_post_handler",
+        )
