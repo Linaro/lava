@@ -24,7 +24,7 @@ actions:
       name: hacking
       parameters: {IRC_USER: raffe, PUB_KEY: ssh-rsa AAAAB==}
       path: hacking-session-debian.yaml
-      repository: http://git.linaro.org/lava-team/hacking-session.git
+      repository: https://gitlab.com/lava/hacking-session.git
     role: client
     timeout: {minutes: 60}
 device_type: x86
