@@ -220,3 +220,45 @@ colon. In the YAML, all values containing a colon **must** be quoted:
         type: zimage
       persistent_nfs:
         address: "127.0.0.1:/var/lib/lava/dispatcher/tmp/armhf/stretch"
+
+.. _deploy_to_tftp_extra_files:
+
+extra_files
+===========
+
+Specifies a dictionary of additional files to make available on the TFTP server.
+This may be used to support board specific requirements for additional firmware,
+test scripts, or anything else that does not fit into one of the above file
+types.
+
+For each extra_files entry, a separate subdirectory is created on the TFTP
+server to ensure that no clashes will occur if multiple files with the same
+filename are downloaded. The dictionary key is used as the directory name. For
+example, the following deployment will download `test_scripts.itb` into a
+`test_scripts` subdirectory:
+
+.. code-block:: yaml
+
+  - deploy:
+      to: tftp
+      extra_files:
+        test_scripts:
+          url: http://example.com/test_scripts.itb
+
+.. _deploy_to_tftp_extra_files_url:
+
+url *
+-----
+.. include:: actions-deploy-images-url.rsti
+
+.. _deploy_to_tftp_extra_files_archive:
+
+archive
+-------
+.. include:: actions-deploy-images-archive.rsti
+
+.. _deploy_to_tftp_extra_files_compression:
+
+compression
+-----------
+.. include:: actions-deploy-images-compression.rsti

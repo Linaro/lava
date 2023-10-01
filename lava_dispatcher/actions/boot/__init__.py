@@ -597,6 +597,14 @@ class BootloaderCommandOverlay(Action):
             action="bootloader-from-media", label="uuid", key="boot_part"
         )
 
+        tftp_suffix = self.get_namespace_data(
+            action="tftp-deploy", label="tftp", key="suffix"
+        )
+        if tftp_suffix:
+            substitutions["{EXTRA_FILES_DIR}"] = os.path.join(
+                tftp_suffix, "extra_files"
+            )
+
         # Save the substitutions
         self.set_namespace_data(
             action=self.name,

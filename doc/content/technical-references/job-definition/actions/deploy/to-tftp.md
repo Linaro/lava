@@ -299,6 +299,39 @@ Device boot commands can reference:
 - `{PRESEED_LOCAL}` — file name embedded in the ramdisk root (e.g, `preseed.cfg`)
 
 
+## extra_files
+
+Specifies a dictionary of additional files to make available on the TFTP server.
+This may be used to support board specific requirements for additional firmware,
+test scripts, or anything else that does not fit into one of the above file
+types.
+
+For each extra_files entry, a separate subdirectory is created on the TFTP
+server to ensure that no clashes will occur if multiple files with the same
+filename are downloaded. The dictionary key is used as the directory name. For
+example, the following deployment will download `test_scripts.itb` into a
+`test_scripts` subdirectory:
+
+```yaml
+- deploy:
+    to: tftp
+    extra_files:
+      test_scripts:
+        url: http://example.com/test_scripts.itb
+```
+
+### url
+
+See [url](./index.md#url)
+
+### archive
+
+See [archive](./index.md#archive)
+
+### compression
+
+See [compression](./index.md#compression)
+
 ## Example jobs
 
 * [Booting from ramdisk](../../../../admin/basic-tutorials/device-setup/u-boot.md#booting-from-ramdisk)
