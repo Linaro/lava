@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from voluptuous import Any, Exclusive, Optional, Required
+from voluptuous import Any, Exclusive, Extra, Optional, Required
 
 from lava_common.schemas import deploy
 
@@ -41,5 +41,6 @@ def schema():
             Optional("install_overlay"): bool,
         },
         Optional("tee"): resource,
+        Optional("extra_files"): {Extra: deploy.url()},
     }
     return {**deploy.schema(), **base}
