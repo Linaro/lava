@@ -73,11 +73,9 @@ class TestDefinitionHandlers(StdoutTestCase):
                 testshell = action.pipeline.actions[0]
                 break
         self.assertTrue(testshell.valid)
-        self.assertFalse(testshell.check_patterns("exit", None, ""))
-        self.assertRaises(
-            InfrastructureError, testshell.check_patterns, "eof", None, ""
-        )
-        self.assertTrue(testshell.check_patterns("timeout", None, ""))
+        self.assertFalse(testshell.check_patterns("exit", None))
+        self.assertRaises(InfrastructureError, testshell.check_patterns, "eof", None)
+        self.assertTrue(testshell.check_patterns("timeout", None))
 
 
 class X86Factory(Factory):
