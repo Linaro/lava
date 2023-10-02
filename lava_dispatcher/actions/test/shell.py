@@ -328,9 +328,7 @@ class TestShellAction(Action):
                 # Because of the feedbacks, we use a small value for the
                 # timeout.  This allows to grab feedback regularly.
                 last_check = time.monotonic()
-                while self._keep_running(
-                    test_connection, test_connection.timeout, connection.check_char
-                ):
+                while self._keep_running(test_connection, test_connection.timeout):
                     # Only grab the feedbacks every test_connection.timeout
                     if (
                         feedbacks
@@ -381,8 +379,11 @@ class TestShellAction(Action):
         return True
 
     def signal_start_run(self, params):
-        self.signal_director.test_uuid = params[1]
-        self.definition = params[0]
+        try:
+            self.signal_director.test_uuid = params[1]
+            self.definition = params[0]
+        except IndexError:
+            raise TestError("Invalid signal")
         uuid = params[1]
         self.start = time.monotonic()
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
@@ -422,8 +423,11 @@ class TestShellAction(Action):
             self.current_run.update({"commit_id": testdef_commit})
 
     def signal_end_run(self, params):
-        self.definition = params[0]
-        uuid = params[1]
+        try:
+            self.definition = params[0]
+            uuid = params[1]
+        except IndexError:
+            raise TestError("Invalid signal")
         # remove the pattern for this run from pattern_dict
         self._reset_patterns()
         # catch error in ENDRUN being handled without STARTRUN
@@ -600,7 +604,7 @@ class TestShellAction(Action):
             self.report[res["test_case_id"]] = res["result"]
         return True
 
-    def check_patterns(self, event, test_connection, check_char):
+    def check_patterns(self, event, test_connection):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -665,15 +669,13 @@ class TestShellAction(Action):
             ret_val = self.pattern_test_case_result(test_connection)
         return ret_val
 
-    def _keep_running(self, test_connection, timeout, check_char):
+    def _keep_running(self, test_connection, timeout):
         if "test_case_results" in self.patterns:
             self.logger.info(
                 "Test case result pattern: %r" % self.patterns["test_case_results"]
             )
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
-        return self.check_patterns(
-            list(self.patterns.keys())[retval], test_connection, check_char
-        )
+        return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
 
     class SignalDirector:
         # FIXME: create proxy handlers
