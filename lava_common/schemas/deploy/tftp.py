@@ -15,7 +15,7 @@ def schema():
 
     base = {
         Required("to"): "tftp",
-        Required("kernel", msg="needs a kernel to deploy"): deploy.url(
+        Optional("kernel"): deploy.url(
             {Optional("type"): Any("image", "uimage", "zimage")}
         ),
         Optional("dtb"): resource,
