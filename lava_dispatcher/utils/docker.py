@@ -220,17 +220,20 @@ class DockerRun:
 
     def __check_image_arch__(self):
         host = subprocess.check_output(["arch"], text=True).strip()
-        container = subprocess.check_output(
-            [
-                "docker",
-                *self.__docker_options__,
-                "inspect",
-                "--format",
-                "{{.Architecture}}",
-                self.image,
-            ],
-            text=True,
-        ).strip()
+        try:
+            container = subprocess.check_output(
+                [
+                    "docker",
+                    *self.__docker_options__,
+                    "inspect",
+                    "--format",
+                    "{{.Architecture}}",
+                    self.image,
+                ],
+                text=True,
+            ).strip()
+        except FileNotFoundError:
+            raise InfrastructureError("'docker' command not available on the worker")
         # amd64 = x86_64
         if host == "amd64":
             host = "x86_64"
