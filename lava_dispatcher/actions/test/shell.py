@@ -379,8 +379,11 @@ class TestShellAction(Action):
         return True
 
     def signal_start_run(self, params):
-        self.signal_director.test_uuid = params[1]
-        self.definition = params[0]
+        try:
+            self.signal_director.test_uuid = params[1]
+            self.definition = params[0]
+        except IndexError:
+            raise TestError("Invalid signal")
         uuid = params[1]
         self.start = time.monotonic()
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
@@ -420,8 +423,11 @@ class TestShellAction(Action):
             self.current_run.update({"commit_id": testdef_commit})
 
     def signal_end_run(self, params):
-        self.definition = params[0]
-        uuid = params[1]
+        try:
+            self.definition = params[0]
+            uuid = params[1]
+        except IndexError:
+            raise TestError("Invalid signal")
         # remove the pattern for this run from pattern_dict
         self._reset_patterns()
         # catch error in ENDRUN being handled without STARTRUN
