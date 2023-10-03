@@ -375,6 +375,6 @@ def transition_multinode_jobs(logger):
             definition["protocols"]["lava-multinode"]["roles"] = devices
             sub_job.definition = yaml_safe_dump(definition)
             # transition the job and device
-            fields = sub_job.go_state_scheduled()
+            fields = ["definition"] + sub_job.go_state_scheduled()
             sub_job.save(update_fields=fields)
             logger.debug("--> %d", sub_job.id)
