@@ -357,11 +357,8 @@ and planning for new features and concepts. Discussion happens on the
 
 Many older git commit messages within the LAVA codebase contain
 references to JIRA issues as ``LAVA-123`` etc., as the LAVA project
-used to use Linaro's JIRA instance to track issues. All references
-like this can be appended to a basic URL to find the details of that
-issue: ``https://projects.linaro.org/browse/``. e.g. the addition of
-this section on JIRA relates to ``LAVA-735`` which can be viewed as
-https://projects.linaro.org/browse/LAVA-735
+used to use Linaro's JIRA instance to track issues. All references like this
+are unfortunately now dead links as the Jira instance has been shutdown.
 
 If you have comments or questions about anything visible within the
 LAVA project, please subscribe to one of the :ref:`mailing lists
