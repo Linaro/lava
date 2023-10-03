@@ -1290,28 +1290,31 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         # structural changes done, now create the testjob.
         # track the zero id job as the parent of the group in the sub_id text field
         parent = None
-        for role, role_dict in role_dictionary.items():
-            for node_data in job_dictionary[role]:
-                job = _create_pipeline_job(
-                    node_data,
-                    user,
-                    target_group=target_group,
-                    taglist=role_dict["tags"],
-                    device_type=role_dict.get("device_type"),
-                    orig=None,  # store the dump of the split yaml as the job definition
-                )
-                if not job:
-                    raise SubmissionException("Unable to create job for %s" % node_data)
-                if not parent:
-                    parent = job.id
-                job.sub_id = "%d.%d" % (
-                    parent,
-                    node_data["protocols"]["lava-multinode"]["sub_id"],
-                )
-                # store complete submission, inc. comments
-                job.multinode_definition = yaml_data
-                job.save(update_fields=["multinode_definition", "sub_id"])
-                job_object_list.append(job)
+        with transaction.atomic():
+            for role, role_dict in role_dictionary.items():
+                for node_data in job_dictionary[role]:
+                    job = _create_pipeline_job(
+                        node_data,
+                        user,
+                        target_group=target_group,
+                        taglist=role_dict["tags"],
+                        device_type=role_dict.get("device_type"),
+                        orig=None,  # store the dump of the split yaml as the job definition
+                    )
+                    if not job:
+                        raise SubmissionException(
+                            "Unable to create job for %s" % node_data
+                        )
+                    if not parent:
+                        parent = job.id
+                    job.sub_id = "%d.%d" % (
+                        parent,
+                        node_data["protocols"]["lava-multinode"]["sub_id"],
+                    )
+                    # store complete submission, inc. comments
+                    job.multinode_definition = yaml_data
+                    job.save(update_fields=["multinode_definition", "sub_id"])
+                    job_object_list.append(job)
 
         return job_object_list
 
