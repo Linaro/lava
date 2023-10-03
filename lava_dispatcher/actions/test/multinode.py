@@ -122,11 +122,11 @@ class MultinodeMixin:
         ]
         self.signal_director = self.SignalDirector(self.protocols[0])
 
-    def check_patterns(self, event, test_connection, check_char):
+    def check_patterns(self, event, test_connection):
         """
         Calls the parent check_patterns first, then checks for subclass pattern.
         """
-        ret = super().check_patterns(event, test_connection, check_char)
+        ret = super().check_patterns(event, test_connection)
         if event == "multinode":
             name, params = test_connection.match.groups()
             self.logger.debug("Received Multi_Node API <LAVA_%s>" % name)
