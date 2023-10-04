@@ -29,6 +29,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     NotificationRecipient,
     TestJob,
+    TestJobUser,
     Worker,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_submission
@@ -359,3 +360,13 @@ def get_domain():
         domain = site.domain
 
     return domain
+
+
+def is_testjob_favorite(job, user) -> bool:
+    if not user.is_authenticated:
+        return False
+
+    try:
+        return TestJobUser.objects.get(test_job=job, user=user).is_favorite
+    except TestJobUser.DoesNotExist:
+        return False
