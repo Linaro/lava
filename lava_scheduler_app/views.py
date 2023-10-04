@@ -79,6 +79,7 @@ from lava_scheduler_app.dbutils import (
     device_summary,
     device_type_summary,
     invalid_template,
+    is_testjob_favorite,
     load_devicetype_template,
     testjob_submission,
     validate_job,
@@ -1703,15 +1704,6 @@ def job_submit(request):
 def job_detail(request, pk):
     job = get_restricted_job(request.user, pk, request=request)
 
-    # Is the job favorite?
-    is_favorite = False
-    if request.user.is_authenticated:
-        try:
-            testjob_user = TestJobUser.objects.get(user=request.user, test_job=job)
-            is_favorite = testjob_user.is_favorite
-        except TestJobUser.DoesNotExist:
-            is_favorite = False
-
     pipeline = description_data(job).get("pipeline", {})
 
     # Validate the job definition
@@ -1736,7 +1728,7 @@ def job_detail(request, pk):
         "bread_crumb_trail": BreadCrumbTrail.leading_to(job_detail, pk=pk),
         "change_priority": job.can_change_priority(request.user),
         "context_help": BreadCrumbTrail.leading_to(job_detail, pk="detail"),
-        "is_favorite": is_favorite,
+        "is_favorite": is_testjob_favorite(job, request.user),
         "condition_choices": json_dumps(QueryCondition.get_condition_choices(job)),
         "available_content_types": json_dumps(
             QueryCondition.get_similar_job_content_types()
@@ -1807,6 +1799,7 @@ def job_definition(request, pk):
             "show_fail": job.state == TestJob.STATE_CANCELING
             and request.user.is_superuser,
             "show_resubmit": job.can_resubmit(request.user),
+            "is_favorite": is_testjob_favorite(job, request.user),
         },
     )
 
@@ -1848,6 +1841,7 @@ def multinode_job_definition(request, pk):
             "show_fail": job.state == TestJob.STATE_CANCELING
             and request.user.is_superuser,
             "show_resubmit": job.can_resubmit(request.user),
+            "is_favorite": is_testjob_favorite(job, request.user),
         },
     )
 
