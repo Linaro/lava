@@ -195,6 +195,7 @@ def update_remote_auth(request):
 
 
 @login_required
+@require_POST
 def delete_remote_auth(request, pk):
     token = RemoteArtifactsAuth.objects.get(pk=pk)
     if token.user != request.user:
