@@ -151,13 +151,14 @@
         <div class="panel-heading">
           <h4 class="panel-title">
             <a data-toggle="modal" data-id="{{ token_obj.id }}" data-name="{{ token_obj.name }}" data-token="{{ token_obj.token }}" href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
-            <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="{% url 'lava.delete_remote_auth' token_obj.id %}" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
+            <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="javascript:document.getElementById('delete-token-{{token_obj.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
               <span class="glyphicon glyphicon-trash"></span>
             </a>
           </h4>
         </div>
       </div>
-    {% endfor %}
+      <form hidden id="delete-token-{{token_obj.id}}" action="{% url 'lava.delete_remote_auth' token_obj.id %}" method="post">{% csrf_token %}</form>
+      {% endfor %}
     </div>
     {% else %}
     <p><i>You have no tokens.</i></p>
