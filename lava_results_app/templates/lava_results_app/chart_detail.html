@@ -75,13 +75,13 @@
     <div class="btn-group btn-group-justified">
       {% if chart|check_chart_access:request.user %}
       <div class="btn-group">
-        <a href="{{ chart.get_absolute_url }}/+edit" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+        <a href="{% url 'lava.results.chart_edit' chart.name %}" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>
       <div class="btn-group">
-        <a href="{{ chart.get_absolute_url }}/+delete" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+        <a href="{% url 'lava.results.chart_delete' chart.name %}" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
       </div>
       <div class="btn-group">
-        <a href="{{ chart.get_absolute_url }}/+toggle-published" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
+        <a href="{% url 'lava.results.chart_toggle_published' chart.name %}" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
 	  {% if chart.is_published %}
 	  Unpublish
 	  {% else %}
