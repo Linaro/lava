@@ -710,7 +710,7 @@ def test_change_priority(client, setup):
 
 @pytest.mark.django_db
 def test_job_toggle_favorite_no_auth(client, setup):
-    ret = client.get(
+    ret = client.post(
         reverse(
             "lava.scheduler.job.toggle_favorite",
             args=[TestJob.objects.get(description="test job 01").pk],
@@ -724,7 +724,7 @@ def test_job_toggle_favorite(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     job_1 = TestJob.objects.get(description="test job 01")
     assert job_1.testjobuser_set.count() == 0  # nosec
-    ret = client.get(reverse("lava.scheduler.job.toggle_favorite", args=[job_1.pk]))
+    ret = client.post(reverse("lava.scheduler.job.toggle_favorite", args=[job_1.pk]))
     assert ret.status_code == 302  # nosec
     job_1.refresh_from_db()
     assert job_1.testjobuser_set.count() == 1  # nosec

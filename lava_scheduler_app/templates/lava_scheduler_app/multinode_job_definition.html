@@ -66,13 +66,16 @@
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id|default:job.id }}</a></li>
         {% if user.is_authenticated %}
-        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" class="btn btn-info">
+        <li>
+          <a href="javascript:document.getElementById('lava-toggle-favorite-job').submit();" class="btn btn-info">
             {% if is_favorite %}
               Remove from favorites
             {% else %}
               Add to favorites
             {% endif %}
-        </a></li>
+          </a>
+        </li>
+        <form hidden id="lava-toggle-favorite-job" action="{% url 'lava.scheduler.job.toggle_favorite' job.id %}" method="post">{% csrf_token %}</form>
         {% endif %}
         </ul>
       </div>

@@ -259,20 +259,15 @@
       <a class="btn btn-info" href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a>
       {% endif %}
       {% if show_cancel %}
-        {% if job.is_multinode %}
-      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.id %}">Cancel</a>
-        {% else %}
-      <a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.pk %}">Cancel</a>
-        {% endif %}
+      <a class="btn btn-warning" id="cancel" href="javascript:document.getElementById('lava-cancel-job').submit();">Cancel</a>
+      <form hidden id="lava-cancel-job" action="{% url 'lava.scheduler.job.cancel' job.id %}" method="post">{% csrf_token %}</form>
       {% elif show_fail %}
-        {% if job.is_multinode %}
-      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.id %}">Fail</a>
-        {% else %}
-      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.pk %}">Fail</a>
-        {% endif %}
+      <a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="javascript:document.getElementById('lava-fail-job').submit();">Fail</a>
+      <form hidden id="lava-fail-job" action="{% url 'lava.scheduler.job.fail' job.id %}" method="post">{% csrf_token %}</form>
       {% endif %}
       {% if show_resubmit %}
-      <a class="btn btn-primary" href="{% url 'lava.scheduler.job.resubmit' job.pk %}">Resubmit</a>
+      <a class="btn btn-primary" href="javascript:document.getElementById('lava-resubmit-job').submit();">Resubmit</a>
+      <form hidden id="lava-resubmit-job" action="{% url 'lava.scheduler.job.resubmit' job.id %}" method="post">{% csrf_token %}</form>
       {% endif %}
       <div class="btn-group">
         <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></button>
@@ -284,7 +279,13 @@
           <li><a href="{% url 'lava.scheduler.job.configuration' job.pk %}"><span class="glyphicon glyphicon-book"></span> Configuration</a></li>
           <li><a href="{% url 'lava.scheduler.job.description.yaml' job.pk %}"><span class="glyphicon glyphicon-eye-open"></span> Description</a></li>
           <li role="separator" class="divider"></li>
-          <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}"><span class="glyphicon glyphicon-star{% if not is_favorite %}-empty{% endif %}"></span> {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}</a></li>
+          <li>
+            <a href="javascript:document.getElementById('lava-toggle-favorite-job').submit();">
+              <span class="glyphicon glyphicon-star{% if not is_favorite %}-empty{% endif %}"></span>
+              {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}
+            </a>
+            <form hidden id="lava-toggle-favorite-job" action="{% url 'lava.scheduler.job.toggle_favorite' job.id %}" method="post">{% csrf_token %}</form>
+          </li>
           <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal"><span class="glyphicon glyphicon-search"></span> Similar jobs</a></li>
           {% if show_failure or user.is_superuser %}
           <li role="separator" class="divider"></li>
