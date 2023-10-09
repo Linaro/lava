@@ -272,7 +272,7 @@ def chart_toggle_published(request, name):
     chart.is_published = not chart.is_published
     chart.save()
 
-    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
 
 
 @login_required
@@ -305,7 +305,7 @@ def chart_add_group(request, name):
         if not old_group.chart_set.count():
             old_group.delete()
 
-    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
 
 
 @login_required
@@ -328,7 +328,7 @@ def chart_select_group(request, name):
 
     chart.save()
 
-    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
 
 
 @login_required
@@ -371,7 +371,7 @@ def chart_query_remove(request, name, id):
     chart = chart_query.chart
     chart_query.delete()
 
-    return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
 
 
 @login_required
@@ -444,7 +444,9 @@ def chart_form(request, bread_crumb_trail, instance=None, query_id=None):
                 chart_query = ChartQuery(chart=chart, query=query)
                 chart_query.save()
 
-            return HttpResponseRedirect(chart.get_absolute_url() + "/+detail")
+            return HttpResponseRedirect(
+                reverse("lava.results.chart_detail", args=(chart.name,))
+            )
 
     else:
         form = ChartForm(request.user, instance=instance)
@@ -463,7 +465,7 @@ def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
         if form.is_valid():
             chart_query = form.save()
             return HttpResponseRedirect(
-                chart_query.chart.get_absolute_url() + "/+detail"
+                reverse("lava.results.chart_detail", args=(chart_query.chart.name,))
             )
 
     else:

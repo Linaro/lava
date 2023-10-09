@@ -11,7 +11,7 @@
      {% endif %}>
     <span class="glyphicon glyphicon-signal"></span>
   </a>
-  <a href="{{ record.get_absolute_url }}/+detail" class="btn btn-xs btn-primary pointer-events" title="Edit query settings">
+  <a href="{% url 'lava.results.query_detail' record.owner.username record.name %}" class="btn btn-xs btn-primary pointer-events" title="Edit query settings">
     <span class="glyphicon glyphicon-eye-open"></span>
   </a>
   <a class="btn btn-xs btn-danger {% if not is_accessible %}disabled{% endif %}"
@@ -19,7 +19,7 @@
      {% if not is_accessible %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
-     href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+     href="{% url 'lava.results.query_delete' record.owner.username record.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
      {% endif %}>
     <span class="glyphicon glyphicon-trash"></span>
   </a>

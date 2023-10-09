@@ -103,24 +103,24 @@
       <div class="btn-group">
         <a class="btn btn-primary {% if not is_accessible %}disabled{% endif %}"
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
-           {% else %}href="{{ query.get_absolute_url }}/+edit"
+           {% else %}href="{% url 'lava.results.query_edit' query.owner.username query.name %}"
            {% endif %}>
           <span class="glyphicon glyphicon-pencil"></span> Edit</a>
       </div>
       <div class="btn-group">
         <a class="btn btn-danger {% if not is_accessible %}disabled{% endif %}"
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
-           {% else %}href="{{ query.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+           {% else %}href="{% url 'lava.results.query_delete' query.owner.username query.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
            {% endif %}>
           <span class="glyphicon glyphicon-trash"></span> Delete</a>
       </div>
       <div class="btn-group">
-        <a href="{{ query.get_absolute_url }}/+copy?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
+        <a href="{% url 'lava.results.query_copy' query.owner.username query.name %}?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
       </div>
       <div class="btn-group">
         <a class="btn btn-default {% if not is_accessible %}disabled{% endif %}"
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
-           {% else %}href="{{ query.get_absolute_url }}/+toggle-published"
+           {% else %}href="{% url 'lava.results.query_toggle_published' query.owner.username query.name %}"
            {% endif %}>
           <span class="glyphicon glyphicon-share"></span>
 	  {% if query.is_published %}

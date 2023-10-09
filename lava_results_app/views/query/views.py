@@ -379,7 +379,9 @@ def query_toggle_published(request, username, name):
     query.is_published = not query.is_published
     query.save()
 
-    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(
+        reverse("lava.results.query_detail", args=(username, name))
+    )
 
 
 @BreadCrumb("Copy", parent=query_detail, needs=["username", "name"])
@@ -450,7 +452,9 @@ def query_add_group(request, username, name):
         if not old_group.query_set.count():
             old_group.delete()
 
-    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(
+        reverse("lava.results.query_detail", args=(username, name))
+    )
 
 
 @login_required
@@ -473,7 +477,9 @@ def query_select_group(request, username, name):
 
     query.save()
 
-    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(
+        reverse("lava.results.query_detail", args=(username, name))
+    )
 
 
 @login_required
@@ -507,11 +513,13 @@ def query_edit_condition(request, username, name, id):
 @login_required
 @ownership_required
 def query_remove_condition(request, username, name, id):
-    query = get_object_or_404(Query, owner__username=username, name=name)
+    get_object_or_404(Query, owner__username=username, name=name)
     query_condition = get_object_or_404(QueryCondition, id=id)
     query_condition.delete()
 
-    return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+    return HttpResponseRedirect(
+        reverse("lava.results.query_detail", args=(username, name))
+    )
 
 
 @login_required
@@ -583,7 +591,12 @@ def query_form(request, bread_crumb_trail, instance=None, is_copy=False):
                     condition.query = query
                     condition.save()
 
-            return HttpResponseRedirect(query.get_absolute_url() + "/+detail")
+            return HttpResponseRedirect(
+                reverse(
+                    "lava.results.query_detail",
+                    args=(request.user.username, query.name),
+                )
+            )
 
     else:
         form = QueryForm(request.user, instance=instance, is_copy=is_copy)

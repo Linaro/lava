@@ -110,7 +110,11 @@ urlpatterns = [
         query_toggle_published,
         name="lava.results.query_toggle_published",
     ),
-    url(r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+copy$", query_copy),
+    url(
+        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+copy$",
+        query_copy,
+        name="lava.results.query_copy",
+    ),
     url(
         r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+refresh$",
         query_refresh,

@@ -35,14 +35,14 @@ class UserChartTable(LavaTable):
 
     view = tables.TemplateColumn(
         """
-    <a href="{{ record.get_absolute_url }}/+detail">view</a>
+    <a href="{% url 'lava.results.chart_detail' record.name %}">view</a>
     """
     )
     view.orderable = False
 
     remove = tables.TemplateColumn(
         """
-    <a href="{{ record.get_absolute_url }}/+delete" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?">remove</a>
+    <a href="{% url 'lava.results.chart_delete' record.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?">remove</a>
     """
     )
     remove.orderable = False
