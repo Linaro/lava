@@ -1,4 +1,4 @@
-{% load static %}<!DOCTYPE html>
+{% load server %}{% load static %}<!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}">
 <head>
   <meta charset="utf-8">
@@ -78,5 +78,7 @@
 <script src="{% static "lava_server/js/bootstrap-3.4.1.js" %}"></script>
 {% block scripts %}
 {% endblock scripts %}
+
+{% matomo %}
 </body>
 </html>

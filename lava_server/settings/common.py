@@ -257,6 +257,10 @@ SENTRY_DSN = ""
 # Django debug toolbar
 USE_DEBUG_TOOLBAR = False
 
+# Use matomo tracking
+MATOMO_URL = ""
+MATOMO_SITE_ID = None
+
 # Alternative logging database settings.
 MONGO_DB_URI = "mongodb://user:pass@localhost:27017/"
 MONGO_DB_DATABASE = "lava-logs"
@@ -352,6 +356,8 @@ def update(values):
     MANAGERS = values.get("MANAGERS")
     MIDDLEWARE = values.get("MIDDLEWARE")
     MOUNT_POINT = values.get("MOUNT_POINT")
+    MATOMO_URL = values.get("MATOMO_URL")
+    MATOMO_SITE_ID = values.get("MATOMO_SITE_ID")
     SENTRY_DSN = values.get("SENTRY_DSN")
     STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
     SYNC_GITHUB_TEAMS = values.get("SYNC_GITHUB_TEAMS")
@@ -589,6 +595,9 @@ def update(values):
                 },
             },
         }
+
+    if MATOMO_URL and MATOMO_SITE_ID:
+        INSTALLED_APPS.append("matomo")
 
     if SENTRY_DSN:
         import sentry_sdk
