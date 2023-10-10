@@ -201,7 +201,9 @@ class Factory:
         rendered = self.render_device_dictionary(hostname, data, job_ctx)
         return (rendered, data)
 
-    def create_custom_job(self, template, job_data, job_ctx=None, validate=True):
+    def create_custom_job(
+        self, template, job_data, job_ctx=None, validate=True, dispatcher_config=None
+    ):
         if validate:
             validate_job(job_data, strict=self.validate_job_strict)
         if job_ctx:
@@ -212,7 +214,9 @@ class Factory:
         device = NewDevice(yaml_safe_load(data))
         try:
             parser = JobParser()
-            job = parser.parse(yaml_safe_dump(job_data), device, "4999", None, "")
+            job = parser.parse(
+                yaml_safe_dump(job_data), device, "4999", None, dispatcher_config
+            )
         except (ConfigurationError, TypeError) as exc:
             print("####### Parser exception ########")
             print(device)
@@ -221,11 +225,15 @@ class Factory:
         job.logger = DummyLogger()
         return job
 
-    def create_job(self, template, filename, job_ctx=None, validate=True):
+    def create_job(
+        self, template, filename, job_ctx=None, validate=True, dispatcher_config=None
+    ):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
             job_data = yaml_safe_load(sample_job_data.read())
-        return self.create_custom_job(template, job_data, job_ctx, validate)
+        return self.create_custom_job(
+            template, job_data, job_ctx, validate, dispatcher_config
+        )
 
     def create_kvm_job(self, filename, validate=False):
         """

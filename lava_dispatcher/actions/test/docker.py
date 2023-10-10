@@ -155,6 +155,13 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         ).strip("/")
 
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
+        prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
+        if prefix:
+            container = "lava-docker-test-shell-%s-%s-%s" % (
+                prefix,
+                self.job.job_id,
+                self.level,
+            )
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
         docker.prepare(action=self)

@@ -7,6 +7,7 @@
 import re
 import time
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -24,6 +25,15 @@ def factory():
 def job(factory):
     return factory.create_job(
         "hi6220-hikey-r2-01.jinja2", "sample_jobs/docker-test.yaml"
+    )
+
+
+@pytest.fixture
+def job_prefix(factory):
+    return factory.create_job(
+        "hi6220-hikey-r2-01.jinja2",
+        "sample_jobs/docker-test.yaml",
+        dispatcher_config="{'prefix': 'prefix'}",
     )
 
 
@@ -200,3 +210,71 @@ def test_multinode_docker_test_shell(action, multinode_action):
 
     # docker test shell job with multinode
     assert isinstance(multinode_action.pipeline.actions[2], MultinodeMixin)
+
+
+def test_docker_test_shell_run(first_test_action, mocker):
+    mocker.patch(
+        "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
+        return_value="lava-4999",
+    )
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
+    shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
+    mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
+    mocker.patch(
+        "lava_dispatcher.actions.test.docker.DockerTestShell.add_device_container_mappings"
+    )
+    mocker.patch("lava_dispatcher.utils.udev.get_udev_devices", return_value=[])
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
+    mocker.patch("lava_dispatcher.actions.test.shell.TestShellAction.run")
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
+
+    connection = MagicMock()
+    connection.timeout = MagicMock()
+
+    action = [
+        action
+        for action in first_test_action.pipeline.actions
+        if action.name == "lava-docker-test-shell"
+    ][0]
+
+    action.test_docker_bind_mounts = []
+    action.run(connection, 0)
+    shell_cmd.assert_called_with(
+        "docker run --interactive --tty --rm --init --name=lava-docker-test-shell-4999-3.3 --mount=type=bind,source=lava-4999/lava-4999,destination=/lava-4999 '--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
+        action.timeout,
+        logger=action.logger,
+    )
+
+
+def test_docker_test_shell_run_prefix(job_prefix, mocker):
+    mocker.patch(
+        "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
+        return_value="lava-4999",
+    )
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
+    shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
+    mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
+    mocker.patch(
+        "lava_dispatcher.actions.test.docker.DockerTestShell.add_device_container_mappings"
+    )
+    mocker.patch("lava_dispatcher.utils.udev.get_udev_devices", return_value=[])
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
+    mocker.patch("lava_dispatcher.actions.test.shell.TestShellAction.run")
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
+
+    connection = MagicMock()
+    connection.timeout = MagicMock()
+
+    action = [
+        action
+        for action in job_prefix.pipeline.actions[2].pipeline.actions
+        if action.name == "lava-docker-test-shell"
+    ][0]
+
+    action.test_docker_bind_mounts = []
+    action.run(connection, 0)
+    shell_cmd.assert_called_with(
+        "docker run --interactive --tty --rm --init --name=lava-docker-test-shell-prefix-4999-3.3 --mount=type=bind,source=lava-4999/lava-4999,destination=/lava-4999 '--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
+        action.timeout,
+        logger=action.logger,
+    )
