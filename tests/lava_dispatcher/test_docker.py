@@ -17,8 +17,10 @@ class DockerFactory(Factory):
     of any database objects.
     """
 
-    def create_docker_job(self, filename):
-        return self.create_job("docker-01.jinja2", filename)
+    def create_docker_job(self, filename, dispatcher_config=None):
+        return self.create_job(
+            "docker-01.jinja2", filename, dispatcher_config=dispatcher_config
+        )
 
 
 class TestDocker(StdoutTestCase):
@@ -96,6 +98,50 @@ class TestDocker(StdoutTestCase):
         call.run(connection, 0)
         shell_command.assert_called_with(
             f"docker run --rm --interactive --tty --hostname lava --name lava-4999-2.1 --volume foo/bar/foo/bar:foo/bar --volume {self.job.tmp_dir}/downloads/common:/lava-downloads foo/bar bash",
+            call.timeout,
+            logger=call.logger,
+        )
+
+
+class TestDockerDispatcherPrefix(StdoutTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = DockerFactory()
+        self.job = self.factory.create_docker_job(
+            "sample_jobs/docker-interactive.yaml",
+            dispatcher_config="{'prefix': 'prefix'}",
+        )
+
+    @patch(
+        "lava_dispatcher.actions.deploy.docker.which",
+        return_value="/bin/test_docker",
+    )
+    @patch("subprocess.check_output")
+    @patch("lava_dispatcher.actions.deploy.docker.DockerAction.run_cmd")
+    @patch(
+        "lava_dispatcher.actions.boot.docker.CallDockerAction.get_namespace_data",
+        return_value="foo/bar",
+    )
+    @patch("lava_dispatcher.actions.boot.docker.ShellSession")
+    @patch("lava_dispatcher.actions.boot.docker.ShellCommand")
+    def test_boot(self, shell_command, *args):
+        self.job.validate()
+
+        boot = [
+            action
+            for action in self.job.pipeline.actions
+            if action.name == "boot-docker"
+        ][0]
+        call = [
+            action for action in boot.pipeline.actions if action.name == "docker-run"
+        ][0]
+
+        connection = MagicMock()
+        connection.timeout = MagicMock()
+
+        call.run(connection, 0)
+        shell_command.assert_called_with(
+            "docker run --rm --interactive --tty --hostname lava --name lava-prefix-4999-2.1 --volume foo/bar/foo/bar:foo/bar foo/bar bash",
             call.timeout,
             logger=call.logger,
         )
