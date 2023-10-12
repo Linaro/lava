@@ -15,6 +15,7 @@ from django.http import Http404
 from django.http.response import HttpResponse
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import (
@@ -56,14 +57,6 @@ from lava_scheduler_app.views import __set_device_health__
 from lava_server.files import File
 
 from . import serializers
-
-try:
-    from rest_framework.decorators import action, detail_route
-except ImportError:
-    from rest_framework.decorators import action
-
-    def detail_route(methods, suffix, url_path=None):
-        return action(detail=True, methods=methods, suffix=suffix)
 
 
 class TestJobViewSet(base_views.TestJobViewSet):
@@ -108,7 +101,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
     def tests(self, request, **kwargs):
         raise NotImplementedError()
 
-    @detail_route(methods=["get"], suffix="csv")
+    @action(detail=True, suffix="csv")
     def csv(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
@@ -131,7 +124,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
         )
         return response
 
-    @detail_route(methods=["get"], suffix="yaml")
+    @action(detail=True, suffix="yaml")
     def yaml(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
@@ -149,12 +142,15 @@ class TestJobViewSet(base_views.TestJobViewSet):
         )
         return response
 
-    @detail_route(methods=["get"], suffix="metadata")
+    @action(detail=True, suffix="metadata")
     def metadata(self, request, **kwargs):
         return Response({"metadata": self.get_object().get_metadata_dict()})
 
     @action(
-        methods=["post"], detail=False, suffix="validate", permission_classes=[AllowAny]
+        methods=("post",),
+        detail=False,
+        suffix="validate",
+        permission_classes=(AllowAny,),
     )
     def validate(self, request, **kwargs):
         definition = request.data.get("definition", None)
@@ -176,10 +172,10 @@ class TestJobViewSet(base_views.TestJobViewSet):
             )
 
     @action(
-        methods=["post"],
+        methods=("post",),
         detail=False,
         suffix="validate-testdef",
-        permission_classes=[AllowAny],
+        permission_classes=(AllowAny,),
     )
     def validate_testdef(self, request, **kwargs):
         definition = request.data.get("definition", None)
@@ -198,7 +194,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
                 status=status.HTTP_200_OK,
             )
 
-    @action(methods=["post"], detail=True, suffix="resubmit")
+    @action(methods=("post",), detail=True, suffix="resubmit")
     def resubmit(self, request, **kwargs):
         if self.get_object().is_multinode:
             definition = self.get_object().multinode_definition
@@ -238,7 +234,7 @@ class TestJobViewSet(base_views.TestJobViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @detail_route(methods=["get"], suffix="cancel")
+    @action(detail=True, suffix="cancel")
     def cancel(self, request, **kwargs):
         # django-rest-framework will allow anyone to call this method.
         # Permissions on who can cancel the job are handled by LAVA internally.
@@ -276,7 +272,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         return super().get_queryset()
 
-    @detail_route(methods=["get"], suffix="csv")
+    @action(detail=True, suffix="csv")
     def csv(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
@@ -298,7 +294,7 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
         )
         return response
 
-    @detail_route(methods=["get"], suffix="yaml")
+    @action(detail=True, suffix="yaml")
     def yaml(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
@@ -333,7 +329,7 @@ class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
 
 class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
-    @detail_route(methods=["get", "post"], suffix="health-check")
+    @action(detail=True, methods=("get", "post"), suffix="health-check")
     def health_check(self, request, **kwargs):
         if request.method == "GET":
             if not self.get_object().can_view(request.user):
@@ -382,7 +378,7 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
                     "Unable to write health check configuration: %s" % exc.strerror
                 )
 
-    @detail_route(methods=["get", "post"], suffix="template")
+    @action(detail=True, methods=("get", "post"), suffix="template")
     def template(self, request, **kwargs):
         if request.method == "GET":
             if not self.get_object().can_view(request.user):
@@ -441,7 +437,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
         else:
             return serializers.DeviceSerializer
 
-    @detail_route(methods=["post"], suffix="set_health")
+    @action(detail=True, methods=("post",), suffix="set_health")
     def set_health(self, request, **kwargs):
         if not request.user.has_perm("lava_scheduler_app.change_device"):
             raise PermissionDenied(
@@ -460,7 +456,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             data = {"message": response.content}
             return Response(data, status=response.status_code)
 
-    @detail_route(methods=["get", "post"], suffix="dictionary")
+    @action(detail=True, methods=("get", "post"), suffix="dictionary")
     def dictionary(self, request, **kwargs):
         if request.method == "GET":
             job_ctx = None
@@ -583,7 +579,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
                 f"Error updating '{kind}' for worker {self.get_object().hostname}: {e}"
             )
 
-    @detail_route(methods=["get", "post"], suffix="env")
+    @action(detail=True, methods=("get", "post"), suffix="env")
     def env(self, request, **kwargs):
         if request.method == "GET":
             return self._get_file(request, "env", "env.yaml")
@@ -600,7 +596,7 @@ class WorkerViewSet(base_views.WorkerViewSet, viewsets.ModelViewSet):
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=["get", "post"], suffix="config")
+    @action(detail=True, methods=("get", "post"), suffix="config")
     def config(self, request, **kwargs):
         if request.method == "GET":
             return self._get_file(request, "dispatcher", "dispatcher.yaml")
@@ -699,7 +695,7 @@ class SystemViewSet(viewsets.ViewSet):
     def list(self, request, **kwargs):
         return Response()
 
-    @action(detail=False, methods=["get"], suffix="master_config")
+    @action(detail=False, suffix="master_config")
     def master_config(self, request, **kwargs):
         """
         Description
@@ -728,7 +724,7 @@ class SystemViewSet(viewsets.ViewSet):
         }
         return Response(data=ret_dict)
 
-    @action(detail=False, methods=["get"], suffix="version")
+    @action(detail=False, suffix="version")
     def version(self, request, **kwargs):
         """
         Description
@@ -747,7 +743,7 @@ class SystemViewSet(viewsets.ViewSet):
         """
         return Response(data={"version": __version__})
 
-    @action(detail=False, methods=["get"], suffix="whoami")
+    @action(detail=False, suffix="whoami")
     def whoami(self, request, **kwargs):
         """
         Description

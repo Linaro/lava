@@ -10,9 +10,14 @@ import junit_xml
 import tap
 from django.http.response import FileResponse, HttpResponse
 from rest_framework import status, viewsets
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.decorators import action
+from rest_framework.exceptions import AuthenticationFailed, NotFound
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import BasePermission
+from rest_framework.response import Response
 
-import lava_server.compat  # pylint: disable=unused-import
+from lava_rest_app import filters
 from lava_results_app.models import TestCase
 from lava_scheduler_app.dbutils import testjob_submission
 from lava_scheduler_app.logutils import logs_instance
@@ -25,22 +30,6 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.schema import SubmissionException
 from linaro_django_xmlrpc.models import AuthToken
-
-try:
-    from rest_framework.decorators import detail_route
-except ImportError:
-    from rest_framework.decorators import action
-
-    def detail_route(methods, suffix):
-        return action(detail=True, methods=methods, suffix=suffix)
-
-
-from rest_framework.authtoken.views import ObtainAuthToken
-from rest_framework.exceptions import AuthenticationFailed, NotFound
-from rest_framework.pagination import PageNumberPagination
-from rest_framework.response import Response
-
-from lava_rest_app import filters
 
 from . import serializers
 
@@ -141,7 +130,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             self.permission_classes = [IsSuperUser]
         return super().get_permissions()
 
-    @detail_route(methods=["get"], suffix="junit")
+    @action(detail=True, suffix="junit")
     def junit(self, request, **kwargs):
         suites = []
         classname_prefix = request.query_params.get("classname_prefix", "")
@@ -194,7 +183,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
         return response
 
-    @detail_route(methods=["get"], suffix="logs")
+    @action(detail=True, suffix="logs")
     def logs(self, request, **kwargs):
         start = safe_str2int(request.query_params.get("start", 0))
         end = safe_str2int(request.query_params.get("end", None))
@@ -217,7 +206,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         except FileNotFoundError:
             raise NotFound()
 
-    @detail_route(methods=["get"], suffix="suites")
+    @action(detail=True, suffix="suites")
     def suites(self, request, **kwargs):
         suites = self.get_object().testsuite_set.all().order_by("id")
         paginator = PageNumberPagination()
@@ -227,7 +216,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
         return paginator.get_paginated_response(serializer.data)
 
-    @detail_route(methods=["get"], suffix="tap13")
+    @action(detail=True, suffix="tap13")
     def tap13(self, request, **kwargs):
         stream = io.StringIO()
         count = TestCase.objects.filter(suite__job=self.get_object()).count()
@@ -265,7 +254,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
         return response
 
-    @detail_route(methods=["get"], suffix="tests")
+    @action(detail=True, suffix="tests")
     def tests(self, request, **kwargs):
         tests = TestCase.objects.filter(suite__job=self.get_object()).order_by("id")
         paginator = PageNumberPagination()
