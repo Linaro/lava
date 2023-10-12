@@ -428,7 +428,7 @@ class DeviceTypeViewSet(base_views.DeviceTypeViewSet):
 
 
 class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
-    parser_classes = [JSONParser, FormParser, MultiPartParser, PlainTextParser]
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
 
     lookup_value_regex = r"[\_\w0-9.-]+"
     serializer_class = serializers.DeviceSerializer
@@ -515,7 +515,11 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
-        methods=["post"], detail=False, suffix="validate", permission_classes=[AllowAny]
+        methods=("post",),
+        detail=False,
+        suffix="validate",
+        permission_classes=(AllowAny,),
+        parser_classes=(PlainTextParser,),
     )
     def validate(self, request, **kwargs):
         """
