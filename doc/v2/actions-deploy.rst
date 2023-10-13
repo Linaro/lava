@@ -95,6 +95,7 @@ Parameter List
 .. include:: actions-deploy-to-sata.rsti
 .. include:: actions-deploy-to-ssh.rsti
 .. include:: actions-deploy-to-tftp.rsti
+.. include:: actions-deploy-to-tmpfs.rsti
 .. include:: actions-deploy-to-usb.rsti
 .. include:: actions-deploy-to-vemsd.rsti
 .. include:: actions-deploy-to-uuu.rsti
