@@ -105,11 +105,18 @@ class QueryTestJobTable(AllJobsTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form
+          hidden
+          id="query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}"
+          action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+          method="post">
+          {% csrf_token %}
+        </form>
     {% endif %}
     """,
         orderable=False,
@@ -138,15 +145,22 @@ class QueryTestCaseTable(SuiteTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form
+          hidden
+          id="query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}"
+          action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+          method="post">
+          {% csrf_token %}
+        </form>
     {% endif %}
-    """
+    """,
+        orderable=False,
     )
-    omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -196,11 +210,18 @@ class QueryTestSuiteTable(LavaTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form
+          hidden
+          id="query-omit-result-{{query.owner.username}}-{{query.name}}-{{record.id}}"
+          action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+          method="post">
+          {% csrf_token %}
+        </form>
     {% endif %}
     """,
         orderable=False,

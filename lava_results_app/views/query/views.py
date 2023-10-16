@@ -321,6 +321,7 @@ def query_edit(request, username, name):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_delete(request, username, name):
@@ -531,6 +532,7 @@ def query_remove_condition(request, username, name, id):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_omit_result(request, username, name, id):
@@ -546,6 +548,7 @@ def query_omit_result(request, username, name, id):
     return HttpResponseRedirect(query.get_absolute_url())
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_include_result(request, username, name, id):

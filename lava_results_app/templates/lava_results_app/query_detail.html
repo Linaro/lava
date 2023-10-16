@@ -109,10 +109,11 @@
       </div>
       <div class="btn-group">
         <a class="btn btn-danger {% if not is_accessible %}disabled{% endif %}"
-           {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
-           {% else %}href="{% url 'lava.results.query_delete' query.owner.username query.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+           {% if not is_accessible %} onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
+           {% else %} href="javascript:document.getElementById('delete-query-{{query.owner.username}}-{{query.name}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
            {% endif %}>
           <span class="glyphicon glyphicon-trash"></span> Delete</a>
+          <form hidden id="delete-query-{{query.owner.username}}-{{query.name}}" action="{% url 'lava.results.query_delete' query.owner.username query.name %}" method="post">{% csrf_token %}</form>
       </div>
       <div class="btn-group">
         <a href="{% url 'lava.results.query_copy' query.owner.username query.name %}?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
