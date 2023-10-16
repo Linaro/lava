@@ -112,6 +112,15 @@ class TestJobViewSet(base_views.TestJobViewSet):
     def csv(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
+        if limit is not None:
+            limit = int(limit)
+        if offset is not None:
+            offset = int(offset)
+
+        job = self.get_object()
+        testcases = TestCase.objects.filter(suite__job_id=job).order_by("id")[offset:][
+            :limit
+        ]
 
         output = io.StringIO()
         writer = csv.DictWriter(
@@ -121,32 +130,35 @@ class TestJobViewSet(base_views.TestJobViewSet):
             fieldnames=testcase_export_fields(),
         )
         writer.writeheader()
-        for test_suite in self.get_object().testsuite_set.all():
-            for row in test_suite.testcase_set.all():
-                writer.writerow(export_testcase(row))
+        for row in testcases:
+            writer.writerow(export_testcase(row))
 
         response = HttpResponse(output.getvalue(), content_type="application/csv")
-        response["Content-Disposition"] = (
-            "attachment; filename=job_%d.csv" % self.get_object().id
-        )
+        response["Content-Disposition"] = f"attachment; filename=job_{job.id}.csv"
         return response
 
     @detail_route(methods=["get"], suffix="yaml")
     def yaml(self, request, **kwargs):
         limit = request.query_params.get("limit", None)
         offset = request.query_params.get("offset", None)
+        if limit is not None:
+            limit = int(limit)
+        if offset is not None:
+            offset = int(offset)
+
+        job = self.get_object()
+        testcases = TestCase.objects.filter(suite__job_id=job).order_by("id")[offset:][
+            :limit
+        ]
 
         yaml_list = []
-        for test_suite in self.get_object().testsuite_set.all():
-            for test_case in test_suite.testcase_set.all():
-                yaml_list.append(export_testcase(test_case))
+        for test_case in testcases:
+            yaml_list.append(export_testcase(test_case))
 
         response = HttpResponse(
             yaml_safe_dump(yaml_list), content_type="application/yaml"
         )
-        response["Content-Disposition"] = (
-            "attachment; filename=job_%d.yaml" % self.get_object().id
-        )
+        response["Content-Disposition"] = f"attachment; filename=job_{job.id}.yaml"
         return response
 
     @detail_route(methods=["get"], suffix="metadata")

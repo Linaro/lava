@@ -481,26 +481,58 @@ class TestRestApi:
         assert data["metadata"] == []  # nosec - unit test support
 
     def test_testjob_csv(self):
+        csv_url = (
+            f"{reverse('api-root', args=(self.version,))}"
+            f"jobs/{self.public_testjob1.id}/csv/"
+        )
         data = self.hit(
             self.userclient,
-            reverse("api-root", args=[self.version])
-            + "jobs/%s/csv/" % self.public_testjob1.id,
+            csv_url,
         )
         csv_data = csv.reader(data.splitlines())
         assert list(csv_data)[1][0] == str(
             self.public_testjob1.id
         )  # nosec - unit test support
 
+        # Test limit
+        data_with_limit = self.hit(
+            self.userclient,
+            f"{csv_url}?limit=1",
+        )
+        assert len(data_with_limit.splitlines()) == 2  # nosec - unit test support
+        # Test offset
+        data_with_offset = self.hit(
+            self.userclient,
+            f"{csv_url}?offset=1",
+        )
+        assert len(data_with_offset.splitlines()) == 2  # nosec - unit test support
+
     def test_testjob_yaml(self):
+        yaml_url = (
+            f"{reverse('api-root', args=(self.version,))}"
+            f"jobs/{self.public_testjob1.id}/yaml/"
+        )
         data = self.hit(
             self.userclient,
-            reverse("api-root", args=[self.version])
-            + "jobs/%s/yaml/" % self.public_testjob1.id,
+            yaml_url,
         )
         data = yaml_safe_load(data)
         assert data[0]["job"] == str(
             self.public_testjob1.id
         )  # nosec - unit test support
+
+        # Test limit
+        data_with_limit = self.hit(
+            self.userclient,
+            f"{yaml_url}?limit=1",
+        )
+        assert len(yaml_safe_load(data_with_limit)) == 1  # nosec - unit test support
+        # Test offset
+        data_with_offset = self.hit(
+            self.userclient,
+            f"{yaml_url}?offset=1",
+        )
+        assert len(yaml_safe_load(data_with_offset)) == 1  # nosec - unit test support
 
     def test_testjob_junit(self):
         data = self.hit(
