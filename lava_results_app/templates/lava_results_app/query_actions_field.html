@@ -19,9 +19,10 @@
      {% if not is_accessible %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
-     href="{% url 'lava.results.query_delete' record.owner.username record.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+     href="javascript:document.getElementById('delete-query-{{record.owner.username}}-{{record.name}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
      {% endif %}>
     <span class="glyphicon glyphicon-trash"></span>
   </a>
+  <form hidden id="delete-query-{{record.owner.username}}-{{record.name}}" action="{% url 'lava.results.query_delete' record.owner.username record.name %}" method="post">{% csrf_token %}</form>
 </div>
 

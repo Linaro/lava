@@ -48,7 +48,12 @@
                   <a href="{{ result.get_absolute_url }}" target="_blank">{{ result }}</a>
                 </td>
                 <td>{{ result.get_end_datetime }}</td>
-                <td><a href="{% url 'lava.results.query_include_result' query.owner.username query.name result.id %}"><span class="glyphicon glyphicon-plus"></span></a></td>
+                <td>
+                  <a href="javascript:document.getElementById('include-result-{{query.owner.username}}-{{query.name}}-{{result.id}}').submit();">
+                    <span class="glyphicon glyphicon-plus"></span>
+                  </a>
+                  <form hidden id="include-result-{{query.owner.username}}-{{query.name}}-{{result.id}}" action="{% url 'lava.results.query_include_result' query.owner.username query.name result.id %}" method="post">{% csrf_token %}</form>
+                </td>
               </tr>
               {% endfor %}
             </tbody>

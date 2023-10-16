@@ -20,6 +20,7 @@ from django.http import (
 )
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from lava_results_app.models import (
@@ -263,6 +264,7 @@ def chart_edit(request, name):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def chart_delete(request, name):
@@ -272,6 +274,7 @@ def chart_delete(request, name):
     return HttpResponseRedirect(reverse("lava.results.chart_list"))
 
 
+@require_POST
 @login_required
 @ownership_required
 def chart_toggle_published(request, name):
@@ -372,11 +375,11 @@ def chart_query_edit(request, name, id):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def chart_query_remove(request, name, id):
     chart_query = get_object_or_404(ChartQuery, id=id)
-    chart = chart_query.chart
     chart_query.delete()
 
     return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
