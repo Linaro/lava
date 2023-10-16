@@ -65,6 +65,7 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
             metavar="SRC[:DST]",
             type=parse_mount,
             nargs="*",
+            action="extend",
             help="Bind mount SRC from the host (as DST in the container, if given). Can be given multiple times",
         )
     else:
