@@ -4,31 +4,11 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import rest_framework_filters as filters
 from django_tables2.paginators import LazyPaginator
-
-# Handles compatibility for django_restframework_filters
-try:
-    from rest_framework_filters.backends import RestFrameworkFilterBackend  # noqa
-
-    # RelatedFilter argument "name" as been renamed "field_name"
-    def RelatedFilter(cls, name, queryset):
-        return filters.RelatedFilter(cls, field_name=name, queryset=queryset)
-
-except ImportError:
-    from rest_framework_filters.backends import (  # noqa
-        DjangoFilterBackend as RestFrameworkFilterBackend,
-    )
-
-    # Keep the original version
-    def RelatedFilter(cls, name, queryset):
-        return filters.RelatedFilter(cls, name=name, queryset=queryset)
+from rest_framework_filters.backends import RestFrameworkFilterBackend
 
 
-FilterBackend = RestFrameworkFilterBackend
-
-
-class NoMarkupFilterBackend(FilterBackend):
+class NoMarkupFilterBackend(RestFrameworkFilterBackend):
     def to_html(self, request, queryset, view):
         # In order to prevent a huge performance issue when rendering the
         # browsable API, do not render the choice fields.
