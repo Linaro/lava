@@ -7,7 +7,9 @@
 import rest_framework_filters as filters
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
+from django.forms import NumberInput
 from django_filters.filters import CharFilter
+from rest_framework_filters.filters import RelatedFilter
 
 from lava_results_app.models import TestCase, TestSet, TestSuite
 from lava_scheduler_app.models import (
@@ -25,7 +27,6 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
-from lava_server.compat import RelatedFilter
 
 
 class GroupFilter(filters.FilterSet):
@@ -37,7 +38,9 @@ class GroupFilter(filters.FilterSet):
 
 
 class UserFilter(filters.FilterSet):
-    group = RelatedFilter(GroupFilter, name="groups", queryset=Group.objects.all())
+    group = RelatedFilter(
+        GroupFilter, field_name="groups", queryset=Group.objects.all()
+    )
 
     class Meta:
         model = User
@@ -198,14 +201,22 @@ class WorkerFilter(filters.FilterSet):
 
 class DeviceTypeFilter(filters.FilterSet):
     architecture = RelatedFilter(
-        ArchitectureFilter, name="architecture", queryset=Architecture.objects.all()
+        ArchitectureFilter,
+        field_name="architecture",
+        queryset=Architecture.objects.all(),
     )
     processor = RelatedFilter(
-        ProcessorFamilyFilter, name="processor", queryset=ProcessorFamily.objects.all()
+        ProcessorFamilyFilter,
+        field_name="processor",
+        queryset=ProcessorFamily.objects.all(),
     )
-    alias = RelatedFilter(AliasFilter, name="aliases", queryset=Alias.objects.all())
-    bits = RelatedFilter(BitWidthFilter, name="bits", queryset=BitWidth.objects.all())
-    cores = RelatedFilter(CoreFilter, name="cores", queryset=Core.objects.all())
+    alias = RelatedFilter(
+        AliasFilter, field_name="aliases", queryset=Alias.objects.all()
+    )
+    bits = RelatedFilter(
+        BitWidthFilter, field_name="bits", queryset=BitWidth.objects.all()
+    )
+    cores = RelatedFilter(CoreFilter, field_name="cores", queryset=Core.objects.all())
     health_denominator = CharFilter(method="filter_health_denominator")
 
     def filter_health_denominator(self, queryset, name, value):
@@ -248,22 +259,23 @@ class DeviceTypeFilter(filters.FilterSet):
 
 class DeviceFilter(filters.FilterSet):
     device_type = RelatedFilter(
-        DeviceTypeFilter, name="device_type", queryset=DeviceType.objects.all()
+        DeviceTypeFilter, field_name="device_type", queryset=DeviceType.objects.all()
     )
     physical_owner = RelatedFilter(
-        UserFilter, name="physical_owner", queryset=User.objects.all()
+        UserFilter, field_name="physical_owner", queryset=User.objects.all()
     )
     physical_group = RelatedFilter(
-        GroupFilter, name="physical_group", queryset=Group.objects.all()
+        GroupFilter, field_name="physical_group", queryset=Group.objects.all()
     )
-    tags = RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
+    tags = RelatedFilter(TagFilter, field_name="tags", queryset=Tag.objects.all())
     last_health_report_job = RelatedFilter(
         "TestJobFilter",
-        name="last_health_report_job",
+        field_name="last_health_report_job",
         queryset=TestJob.objects.filter(health_check=True),
+        widget=NumberInput,
     )
     worker_host = RelatedFilter(
-        WorkerFilter, name="worker_host", queryset=Worker.objects.all()
+        WorkerFilter, field_name="worker_host", queryset=Worker.objects.all()
     )
     health = CharFilter(method="filter_health")
     state = CharFilter(method="filter_state")
@@ -325,19 +337,23 @@ class DeviceFilter(filters.FilterSet):
 class TestJobFilter(filters.FilterSet):
     requested_device_type = RelatedFilter(
         DeviceTypeFilter,
-        name="requested_device_type",
+        field_name="requested_device_type",
         queryset=DeviceType.objects.all(),
     )
     actual_device = RelatedFilter(
-        DeviceFilter, name="actual_device", queryset=Device.objects.all()
+        DeviceFilter, field_name="actual_device", queryset=Device.objects.all()
     )
-    tags = RelatedFilter(TagFilter, name="tags", queryset=Tag.objects.all())
+    tags = RelatedFilter(TagFilter, field_name="tags", queryset=Tag.objects.all())
     viewing_groups = RelatedFilter(
-        GroupFilter, name="viewing_groups", queryset=Group.objects.all()
+        GroupFilter, field_name="viewing_groups", queryset=Group.objects.all()
     )
-    submitter = RelatedFilter(UserFilter, name="submitter", queryset=User.objects.all())
+    submitter = RelatedFilter(
+        UserFilter, field_name="submitter", queryset=User.objects.all()
+    )
     failure_tags = RelatedFilter(
-        JobFailureTagFilter, name="failure_tags", queryset=JobFailureTag.objects.all()
+        JobFailureTagFilter,
+        field_name="failure_tags",
+        queryset=JobFailureTag.objects.all(),
     )
     health = CharFilter(method="filter_health")
     health__in = CharFilter(method="filter_health_in")
@@ -458,7 +474,7 @@ class TestSuiteFilter(filters.FilterSet):
 
 class TestSetFilter(filters.FilterSet):
     suite = RelatedFilter(
-        "TestSuiteFilter", name="suite", queryset=TestSuite.objects.all()
+        "TestSuiteFilter", field_name="suite", queryset=TestSuite.objects.all()
     )
 
     class Meta:
@@ -472,10 +488,10 @@ class TestSetFilter(filters.FilterSet):
 class TestCaseFilter(filters.FilterSet):
     result = CharFilter(method="filter_result")
     suite = RelatedFilter(
-        "TestSuiteFilter", name="suite", queryset=TestSuite.objects.all()
+        "TestSuiteFilter", field_name="suite", queryset=TestSuite.objects.all()
     )
     test_set = RelatedFilter(
-        "TestSetFilter", name="test_set", queryset=TestSet.objects.all()
+        "TestSetFilter", field_name="test_set", queryset=TestSet.objects.all()
     )
 
     def filter_result(self, queryset, name, value):
@@ -512,11 +528,11 @@ class TestCaseFilter(filters.FilterSet):
 
 class GroupDeviceTypePermissionFilter(filters.FilterSet):
     device_type = RelatedFilter(
-        DeviceTypeFilter, name="devicetype", queryset=DeviceType.objects.all()
+        DeviceTypeFilter, field_name="devicetype", queryset=DeviceType.objects.all()
     )
-    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+    group = RelatedFilter(GroupFilter, field_name="group", queryset=Group.objects.all())
     permission = RelatedFilter(
-        PermissionFilter, name="permission", queryset=Permission.objects.all()
+        PermissionFilter, field_name="permission", queryset=Permission.objects.all()
     )
 
     class Meta:
@@ -526,11 +542,11 @@ class GroupDeviceTypePermissionFilter(filters.FilterSet):
 
 class GroupDevicePermissionFilter(filters.FilterSet):
     device = RelatedFilter(
-        DeviceFilter, name="device", queryset=DeviceType.objects.all()
+        DeviceFilter, field_name="device", queryset=DeviceType.objects.all()
     )
-    group = RelatedFilter(GroupFilter, name="group", queryset=Group.objects.all())
+    group = RelatedFilter(GroupFilter, field_name="group", queryset=Group.objects.all())
     permission = RelatedFilter(
-        PermissionFilter, name="permission", queryset=Permission.objects.all()
+        PermissionFilter, field_name="permission", queryset=Permission.objects.all()
     )
 
     class Meta:

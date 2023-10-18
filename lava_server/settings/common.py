@@ -304,7 +304,7 @@ REST_FRAMEWORK = {
     "DEFAULT_VERSIONING_CLASS": "rest_framework.versioning.URLPathVersioning",
     "ALLOWED_VERSIONS": REST_VERSIONS,
     "DEFAULT_FILTER_BACKENDS": (
-        "lava_server.compat.NoMarkupFilterBackend",
+        "rest_framework_filters.backends.RestFrameworkFilterBackend",
         "rest_framework.filters.OrderingFilter",
         "rest_framework.filters.SearchFilter",
     ),
