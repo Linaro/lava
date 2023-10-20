@@ -51,8 +51,8 @@ class GitHelper(VCSHelper):
             cmd_args[-2] = os.path.expandvars(cmd_args[-2])
 
             try:
-                subprocess.check_output(  # nosec - internal use.
-                    cmd_args, stderr=subprocess.STDOUT
+                subprocess.run(  # nosec - internal use.
+                    cmd_args, check=True, stderr=subprocess.STDOUT
                 )
             except subprocess.CalledProcessError as exc:
                 if (
@@ -64,23 +64,23 @@ class GitHelper(VCSHelper):
                         "Tried shallow clone, but server doesn't support it. Retrying without..."
                     )
                     cmd_args.remove("--depth=1")
-                    subprocess.check_output(  # nosec - internal use.
-                        cmd_args, stderr=subprocess.STDOUT
+                    subprocess.run(  # nosec - internal use.
+                        cmd_args, check=True, stderr=subprocess.STDOUT
                     )
                 else:
                     raise
 
             if revision is not None:
                 logger.debug("Running '%s checkout %s", self.binary, str(revision))
-                subprocess.check_output(  # nosec - internal use.
+                subprocess.run(  # nosec - internal use.
                     [self.binary, "-C", dest_path, "checkout", str(revision)],
-                    stderr=subprocess.STDOUT,
+                    check=True, stderr=subprocess.STDOUT
                 )
 
-            commit_id = subprocess.check_output(  # nosec - internal use.
+            commit_id = subprocess.run(  # nosec - internal use.
                 [self.binary, "-C", dest_path, "log", "-1", "--pretty=%H"],
-                stderr=subprocess.STDOUT,
-            ).strip()
+                check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+            ).stdout.strip()
 
             if not history:
                 logger.debug("Removing '.git' directory in %s", dest_path)
