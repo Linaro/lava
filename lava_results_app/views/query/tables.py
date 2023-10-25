@@ -5,9 +5,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import django_tables2 as tables
+from django.conf import settings
 
-from lava_results_app.models import Query, TestCase, TestSuite
-from lava_results_app.tables import ResultsTable, SuiteTable
+from lava_results_app.models import Query, TestCase
+from lava_results_app.tables import SuiteTable
 from lava_scheduler_app.tables_jobs import AllJobsTable
 from lava_server.lavatable import LavaTable
 
@@ -149,19 +150,43 @@ class QueryTestCaseTable(SuiteTable):
         exclude = ["metadata"]
 
 
-class QueryTestSuiteTable(ResultsTable):
-    name = tables.TemplateColumn(
-        """
-    <a href="{{ record.get_absolute_url }}">{{ record.name }}</a>
-    """
+class QueryTestSuiteTable(LavaTable):
+    job_id = tables.Column(verbose_name="Job ID")
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/query_suites_actions_field.html",
+        orderable=False,
     )
+    submitter = tables.Column(accessor="job.submitter.username", orderable=False)
+    name = tables.TemplateColumn(
+        "<a href='{{ record.get_absolute_url }}'>{{ record.name }}</a>",
+        orderable=False,
+    )
+    passes = tables.Column(accessor="pk", verbose_name="Passes", orderable=False)
 
+    def render_passes(self, record):
+        return record.testcase_count("pass")
+
+    fails = tables.Column(accessor="pk", verbose_name="Fails", orderable=False)
+
+    def render_fails(self, record):
+        return record.testcase_count("fail")
+
+    total = tables.Column(accessor="pk", verbose_name="Totals", orderable=False)
+
+    def render_total(self, record):
+        return record.testcase_count()
+
+    logged = tables.DateColumn(
+        format=settings.DATETIME_FORMAT,
+        accessor="job.start_time",
+        verbose_name="Logged",
+    )
     omit = tables.TemplateColumn(
         """
     <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?"><span class="glyphicon glyphicon-remove"></span></a>
-    """
+    """,
+        orderable=False,
     )
-    omit.orderable = False
 
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -170,7 +195,7 @@ class QueryTestSuiteTable(ResultsTable):
         else:
             self.base_columns["omit"].visible = False
 
-    class Meta(ResultsTable.Meta):
-        model = TestSuite
+    class Meta(LavaTable.Meta):
+        template_name = "lazytables.html"
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"

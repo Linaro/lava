@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import django_tables2 as tables
+from django.conf import settings
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 
@@ -30,68 +31,25 @@ class ResultsTable(LavaTable):
     List of LAVA TestSuite results
     """
 
-    def _check_job(self, record, table=None):
-        """
-        Slightly different purpose to RestrictedIDLinkColumn.render
-        """
-        user = table.context.get("request").user
-        attr = f"_can_view_{user.id}"
-        if hasattr(record, attr):
-            return getattr(record, attr)
-        ret = bool(record.job.can_view(user))
-        setattr(record, attr, ret)
-        return ret
-
-    def render_submitter(self, record, table=None):
-        if not self._check_job(record, table):
-            return "Unavailable"
-        return record.job.submitter
-
-    def render_passes(self, record, table=None):
-        if not self._check_job(record, table):
-            return ""
-        return record.testcase_count("pass")
-
-    def render_fails(self, record, table=None):
-        if not self._check_job(record, table):
-            return ""
-        return record.testcase_count("fail")
-
-    def render_total(self, record, table=None):
-        if not self._check_job(record, table):
-            return ""
-        return record.testcase_count()
-
-    def render_logged(self, record, table=None):
-        if not self._check_job(record, table):
-            return ""
-        return record.job.start_time
-
-    job_id = tables.Column(verbose_name="Job ID")
-    actions = tables.TemplateColumn(
-        template_name="lava_results_app/results_actions_field.html"
+    job_id = tables.Column(
+        accessor="pk",
+        verbose_name="Job ID",
+        linkify=("lava.scheduler.job.detail", (tables.A("pk"),)),
     )
-    actions.orderable = False
-    submitter = tables.Column(accessor="job__submitter")
-    name = tables.Column(verbose_name="Test Suite")
-    passes = tables.Column(accessor="job", verbose_name="Passes")
-    fails = tables.Column(accessor="job", verbose_name="Fails")
-    total = tables.Column(accessor="job", verbose_name="Totals")
-    logged = tables.Column(accessor="job", verbose_name="Logged")
-
-    class Meta(LavaTable.Meta):
-        searches = {"name": "contains"}
-        sequence = {"job_id", "actions"}
-
-
-class ResultsIndexTable(ResultsTable):
-    job_id = tables.Column(verbose_name="Job ID")
-    submitter = tables.Column(accessor="job__submitter")
-    name = tables.Column(verbose_name="Test Suite")
-    passes = tables.Column(accessor="job", verbose_name="Passes")
-    fails = tables.Column(accessor="job", verbose_name="Fails")
-    total = tables.Column(accessor="job", verbose_name="Totals")
-    logged = tables.Column(accessor="job", verbose_name="Logged")
+    actions = tables.TemplateColumn(
+        template_name="lava_results_app/results_actions_field.html",
+        orderable=False,
+    )
+    submitter = tables.Column(accessor="submitter__username", orderable=False)
+    name = tables.Column(
+        accessor="testsuite__name", verbose_name="Test Suite", orderable=False
+    )
+    passes = tables.Column(accessor="passes", verbose_name="Passes", orderable=False)
+    fails = tables.Column(accessor="fails", verbose_name="Fails", orderable=False)
+    total = tables.Column(accessor="totals", verbose_name="Totals", orderable=False)
+    logged = tables.DateColumn(
+        format=settings.DATETIME_FORMAT, accessor="start_time", verbose_name="Logged"
+    )
 
     class Meta(LavaTable.Meta):
         template_name = "lazytables.html"
@@ -99,20 +57,13 @@ class ResultsIndexTable(ResultsTable):
 
 
 class TestJobResultsTable(ResultsTable):
-    job_id = tables.Column(verbose_name="Job ID")
     actions = tables.TemplateColumn(
-        template_name="lava_results_app/suite_actions_field.html"
+        template_name="lava_results_app/suite_actions_field.html",
+        orderable=False,
     )
-    actions.orderable = False
-    submitter = tables.Column(accessor="job__submitter")
-    name = tables.Column(verbose_name="Test Suite")
-    passes = tables.Column(accessor="job", verbose_name="Passes")
-    fails = tables.Column(accessor="job", verbose_name="Fails")
-    total = tables.Column(accessor="job", verbose_name="Totals")
-    logged = tables.Column(accessor="job", verbose_name="Logged")
 
-    class Meta(LavaTable.Meta):
-        searches = {"name": "contains"}
+    class Meta(ResultsTable.Meta):
+        ...
 
 
 class SuiteTable(LavaTable):
