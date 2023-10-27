@@ -655,6 +655,7 @@ def _export_query(query_results, content_type, filename):
     # Remove non-relevant columns for CSV file.
     removed_fields = [
         # TestJob fields:
+        "token",
         "user_id",
         "actual_device_id",
         "definition",
