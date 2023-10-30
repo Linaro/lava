@@ -22,6 +22,7 @@ import yaml
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, render
@@ -37,12 +38,7 @@ from lava_results_app.models import (
     TestSet,
     TestSuite,
 )
-from lava_results_app.tables import (
-    ResultsIndexTable,
-    ResultsTable,
-    SuiteTable,
-    TestJobResultsTable,
-)
+from lava_results_app.tables import ResultsTable, SuiteTable, TestJobResultsTable
 from lava_results_app.utils import (
     StreamEcho,
     check_request_auth,
@@ -66,14 +62,52 @@ class ResultsView(LavaView):
 
     def get_queryset(self):
         return (
-            TestSuite.objects.all()
-            .select_related(
-                "job",
-                "job__actual_device",
-                "job__actual_device__device_type",
-                "job__submitter",
+            TestJob.objects.visible_by_user(self.request.user)
+            .order_by("-submit_time")
+            .select_related("user")
+            .annotate(
+                passes=Subquery(
+                    TestCase.objects.filter(
+                        result=TestCase.RESULT_PASS,
+                        suite=OuterRef("testsuite"),
+                    )
+                    .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                    .values("dummy_group_by")
+                    .annotate(passes=Count("*"))
+                    .values("passes"),
+                    output_field=IntegerField(),
+                ),
+                fails=Subquery(
+                    TestCase.objects.filter(
+                        result=TestCase.RESULT_FAIL,
+                        suite=OuterRef("testsuite"),
+                    )
+                    .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                    .values("dummy_group_by")
+                    .annotate(fails=Count("*"))
+                    .values("fails"),
+                    output_field=IntegerField(),
+                ),
+                totals=Subquery(
+                    TestCase.objects.filter(
+                        suite=OuterRef("testsuite"),
+                    )
+                    .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
+                    .values("dummy_group_by")
+                    .annotate(totals=Count("*"))
+                    .values("totals"),
+                    output_field=IntegerField(),
+                ),
             )
-            .prefetch_related("job__viewing_groups")
+            .values(
+                "pk",
+                "submitter__username",
+                "testsuite__name",
+                "passes",
+                "fails",
+                "totals",
+                "start_time",
+            )
         )
 
 
@@ -89,7 +123,7 @@ class SuiteView(LavaView):
 @BreadCrumb("Results", parent=lava_index)
 def index(request):
     data = ResultsView(request, model=TestSuite, table_class=ResultsTable)
-    result_table = ResultsIndexTable(data.get_table_data())
+    result_table = ResultsTable(data.get_table_data())
     RequestConfig(
         request, paginate={"per_page": result_table.length, **djt2_paginator_class()}
     ).configure(result_table)
@@ -118,9 +152,8 @@ def testjob(request, job):
     job = get_restricted_job(request.user, pk=job, request=request)
     data = ResultsView(request, model=TestSuite, table_class=TestJobResultsTable)
     suite_table = TestJobResultsTable(
-        data.get_table_data().filter(job=job), request=request
+        data.get_table_data().filter(pk=job.id), request=request
     )
-    failed_definitions = []
     yaml_dict = OrderedDict()
 
     if hasattr(job, "testdata"):
