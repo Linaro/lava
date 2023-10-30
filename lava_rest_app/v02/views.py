@@ -102,11 +102,9 @@ class TestJobViewSet(base_views.TestJobViewSet):
     * `/jobs/<job_id>/yaml/`
     """
 
-    def suites(self, request, **kwargs):
-        raise NotImplementedError()
-
-    def tests(self, request, **kwargs):
-        raise NotImplementedError()
+    # Disable v0.1 API endpoints
+    suites = ...
+    tests = ...
 
     @detail_route(methods=["get"], suffix="csv")
     def csv(self, request, **kwargs):
