@@ -21,6 +21,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.template import defaultfilters
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 from django_tables2 import RequestConfig
 
 from lava_results_app.models import (
@@ -40,6 +41,7 @@ from lava_results_app.views.query.forms import QueryConditionForm, QueryForm
 from lava_results_app.views.query.tables import (
     GroupQueryTable,
     OtherQueryTable,
+    QueryConditionsTable,
     QueryTestCaseTable,
     QueryTestJobTable,
     QueryTestSuiteTable,
@@ -270,13 +272,17 @@ def query_custom(request):
 @login_required
 def query_detail(request, username, name):
     query = get_object_or_404(Query, owner__username=username, name=name)
-    query_conditions = Query.serialize_conditions(query.querycondition_set.all())
+    query_conditions_table = QueryConditionsTable(
+        query.querycondition_set.select_related("table").all(), request=request
+    )
+    config = RequestConfig(request)
+    config.configure(query_conditions_table)
     return render(
         request,
         "lava_results_app/query_detail.html",
         {
             "query": query,
-            "query_conditions": query_conditions,
+            "query_conditions_table": query_conditions_table,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name
             ),
@@ -510,6 +516,7 @@ def query_edit_condition(request, username, name, id):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_remove_condition(request, username, name, id):
