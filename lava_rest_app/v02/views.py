@@ -486,7 +486,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
-    @action(detail=True, suffix="cancel")
+    @action(detail=True, methods=("post",), suffix="cancel")
     def cancel(self, request, **kwargs):
         # django-rest-framework will allow anyone to call this method.
         # Permissions on who can cancel the job are handled by LAVA internally.

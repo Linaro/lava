@@ -1594,7 +1594,7 @@ ok 2 bar
 
     def test_cancel(self, mocker):
         mocker.patch("lava_scheduler_app.models.TestJob.cancel")
-        response = self.adminclient.get(
+        response = self.adminclient.post(
             reverse("api-root", args=[self.version])
             + "jobs/%s/cancel/" % self.public_testjob1.id
         )
