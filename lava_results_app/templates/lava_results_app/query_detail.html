@@ -157,48 +157,7 @@
 <dl class="dl-horizontal">
 
 <div class="fields-container">
-  <table id="conditions_container" class="table table-bordered table-striped">
-    <thead>
-        <tr>
-            <th>Entity</th>
-            <th>Field</th>
-            <th>Operator</th>
-            <th>Value</th>
-            {% if is_accessible %}
-            <th>Edit</th>
-            <th>Remove</th>
-            {% endif %}
-        </tr>
-    </thead>
-    <tbody>
-    {% for condition in query.querycondition_set.all %}
-    <tr id="condition_row_{{ condition.id }}">
-      <td>
-	{{ condition.table.model }}
-      </td>
-      <td>
-	{{ condition.field }}
-      </td>
-      <td>
-	{{ condition.operator }}
-      </td>
-      <td>
-	{{ condition.value|safe }}
-      </td>
-      {% if is_accessible %}
-      <td>
-	<a class="glyphicon glyphicon-edit" aria-hidden="true" href="javascript: void(0);" onclick="open_condition_modal('{{ query.name }}','{{ condition.id }}','{{ condition.table.id }}','{{ condition.field }}','{{ condition.operator }}','{{ condition.value }}');">
-	</a>
-      </td>
-      <td>
-	<a class="glyphicon glyphicon-remove" aria-hidden="true" href="{% url 'lava.results.query_remove_condition' query.owner.username query.name condition.id %}">
-	</a>
-      </td>
-      {% endif %}
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  {% render_table query_conditions_table %}
   <a onclick="open_condition_modal('{{ query.name }}');" class="btn btn-sm btn-primary {% if not is_accessible%}disabled{% endif %}" href="javascript: void(0);" >
     Add new condition
   </a>

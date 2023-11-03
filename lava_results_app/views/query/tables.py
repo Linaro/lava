@@ -199,3 +199,35 @@ class QueryTestSuiteTable(LavaTable):
         template_name = "lazytables.html"
         attrs = {"class": "table table-hover", "id": "query-results-table"}
         per_page_field = "length"
+
+
+class QueryConditionsTable(LavaTable):
+    table_model = tables.Column(accessor="table.model", verbose_name="Entity")
+    field = tables.Column(verbose_name="Field")
+    operator = tables.Column(verbose_name="Operator")
+    value = tables.Column(verbose_name="Value")
+    edit = tables.TemplateColumn(
+        (
+            '<a class="glyphicon glyphicon-edit" aria-hidden="true" '
+            'href="javascript: void(0);" '
+            "onclick=\"open_condition_modal('{{ query.name }}','{{ record.id }}',"
+            "'{{ record.table.id }}','{{ record.field }}',"
+            "'{{ record.operator }}','{{ record.value }}');\"></a>"
+        ),
+        orderable=False,
+    )
+    remove = tables.TemplateColumn(
+        (
+            '<a class="glyphicon glyphicon-remove" aria-hidden="true" '
+            'href="javascript:document.getElementById('
+            "'query-remove-condition-{{record.id}}').submit();\"></a>"
+            '<form hidden id="query-remove-condition-{{record.id}}"'
+            "action=\"{% url 'lava.results.query_remove_condition' "
+            'query.owner.username query.name record.id %}" '
+            'method="post">{% csrf_token %}</form>'
+        ),
+        orderable=False,
+    )
+
+    class Meta(LavaTable.Meta):
+        ...

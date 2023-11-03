@@ -160,42 +160,7 @@ $(document).ready(function () {
                     $("#condition_errors").html(error_msg);
                     return false;
                 } else {
-                    condition = data[0].fields;
-
-                    condition_row_html =
-                        '<td>' + data[1].fields.model + '</td>' +
-                        '<td>' + condition.field + '</td>' +
-                        '<td>' + condition.operator + '</td>' +
-                        '<td>' + condition.value + '</td>' +
-			'<td><a class="glyphicon glyphicon-edit" ' +
-                        'aria-hidden="true" href="javascript: void(0);" ' +
-                        'onclick="open_condition_modal(\'' +
-                        query_name + '\',\'' + data[0].pk + '\',\'' +
-                        condition.table + '\',\'' + condition.field + '\',\'' +
-                        condition.operator + '\',\'' +
-			$("<textarea/>").text(condition.value).html() +
-			'\');"></a></td>' +
-                        '<td><a class="glyphicon glyphicon-remove" ' +
-                        'aria-hidden="true" href="/results/query/~' +
-                        query_user + '/' + query_name + '/' +
-                        data[0].pk + '/+remove-condition"></a></td>';
-
-                    if ($("#condition_id").val() != "") {
-                        $("#condition_row_" + $("#condition_id").val()).html(
-                            condition_row_html);
-                    } else {
-                        $("#conditions_container").find("tbody").append(
-                            '<tr id="condition_row_' + data[0].pk + '">' +
-                                condition_row_html + '</tr>'
-                        );
-                        if (is_live == "False") {
-                            // Enable 'Run query' button.
-                            $("#query_refresh").removeClass('disabled');
-                            $("#query_refresh").attr('title', '');
-                            add_refresh_click_event();
-                        }
-                    }
-                    $(dialog_selector).modal('hide');
+                    location.reload();
                 }
             },
         });
