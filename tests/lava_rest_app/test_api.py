@@ -1616,7 +1616,7 @@ ok 2 bar
 
     def test_cancel(self, mocker):
         mocker.patch("lava_scheduler_app.models.TestJob.cancel")
-        response = self.adminclient.get(
+        response = self.adminclient.post(
             reverse("api-root", args=[self.version])
             + "jobs/%s/cancel/" % self.public_testjob1.id
         )
@@ -1625,7 +1625,7 @@ ok 2 bar
         assert msg["message"] == "Job cancel signal sent."  # nosec - unit test support
 
     def test_cancel_404(self):
-        response = self.adminclient.get(
+        response = self.adminclient.post(
             reverse("api-root", args=[self.version]) + "jobs/52022/cancel/"
         )
         assert response.status_code == 404
