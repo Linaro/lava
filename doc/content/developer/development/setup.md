@@ -118,8 +118,10 @@ Install `lava-dispatcher` and  `lava-server` dependencies:
 
 ```shell
 apt-get install \
+    $(python3 share/requires.py  -p lava-common -d debian -s bullseye -n) \
     $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n) \
     $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n -u) \
+    $(python3 share/requires.py  -p lava-dispatcher-host -d debian -s bullseye -n) \
     $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n) \
     $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n -u)
 ```
