@@ -119,6 +119,7 @@ DISPATCHER_HOST = {
             "/usr/lib/systemd/system/",
             [
                 "etc/lava-docker-worker.service",
+                "etc/lava-docker-worker@.service",
                 "etc/lava-dispatcher-host.socket",
                 "etc/lava-dispatcher-host.service",
             ],
