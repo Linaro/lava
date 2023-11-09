@@ -70,11 +70,7 @@ from lava_results_app.models import (
     TestCase,
     TestData,
 )
-from lava_results_app.utils import (
-    check_request_auth,
-    description_data,
-    description_filename,
-)
+from lava_results_app.utils import description_data, description_filename
 from lava_scheduler_app.dbutils import (
     device_summary,
     device_type_summary,
@@ -673,20 +669,6 @@ def mydevices_health_history_log(request):
             ),
         },
     )
-
-
-def get_restricted_job(user, pk, request=None, for_update=False):
-    """Returns JOB which is a TestJob object after checking for USER
-    accessibility to the object via the UI login AND via the REST API.
-    """
-    try:
-        job = TestJob.get_by_job_number(pk, for_update)
-    except TestJob.DoesNotExist:
-        raise Http404("No TestJob matches the given query.")
-    # handle REST API querystring as well as UI logins
-    if request:
-        check_request_auth(request, job)
-    return job
 
 
 class ActiveDeviceView(DeviceTableView):
@@ -1702,7 +1684,7 @@ def job_submit(request):
 
 @BreadCrumb("{pk}", parent=job_list, needs=["pk"])
 def job_detail(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
 
     pipeline = description_data(job).get("pipeline", {})
 
@@ -1788,7 +1770,7 @@ def job_detail(request, pk):
 
 @BreadCrumb("Definition", parent=job_detail, needs=["pk"])
 def job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     return render(
         request,
         "lava_scheduler_app/job_definition.html",
@@ -1805,7 +1787,7 @@ def job_definition(request, pk):
 
 
 def job_description_yaml(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     filename = description_filename(job)
     if not filename:
         raise Http404()
@@ -1819,7 +1801,7 @@ def job_description_yaml(request, pk):
 
 
 def job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     response = HttpResponse(job.display_definition, content_type="text/plain")
     filename = "job_%d.yaml" % job.id
     response["Content-Disposition"] = "attachment; filename=%s" % filename
@@ -1828,7 +1810,7 @@ def job_definition_plain(request, pk):
 
 @BreadCrumb("Multinode definition", parent=job_detail, needs=["pk"])
 def multinode_job_definition(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     return render(
         request,
         "lava_scheduler_app/multinode_job_definition.html",
@@ -1847,7 +1829,7 @@ def multinode_job_definition(request, pk):
 
 
 def multinode_job_definition_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     response = HttpResponse(job.multinode_definition, content_type="text/plain")
     filename = "job_%d.yaml" % job.id
     response["Content-Disposition"] = "attachment; filename=multinode_%s" % filename
@@ -1855,7 +1837,7 @@ def multinode_job_definition_plain(request, pk):
 
 
 def job_fetch_data(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     if job.state != TestJob.STATE_FINISHED:
         raise Http404()
     path = os.path.join(job.output_dir, "job_data.gz")
@@ -1976,7 +1958,7 @@ def favorite_jobs(request):
 
 
 def job_status(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     response_dict = {
         "actual_device": "<i>...</i>",
         "duration": "<i>...</i>",
@@ -2023,7 +2005,7 @@ def job_status(request, pk):
 
 
 def job_timing(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     try:
         data = logs_instance.read(job)
         logs = yaml_safe_load(data)
@@ -2123,7 +2105,7 @@ def job_configuration(request, pk):
         with contextlib.suppress(OSError):
             tar.add(filename)
 
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     data = ""
     pwd = os.getcwd()
     try:
@@ -2147,7 +2129,7 @@ def job_configuration(request, pk):
 
 
 def job_log_file_plain(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     try:
         data = logs_instance.open(job)
         size = logs_instance.size(job)
@@ -2160,7 +2142,7 @@ def job_log_file_plain(request, pk):
 
 
 def job_log_incremental(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     # Start from this line
     try:
         first_line = int(request.GET.get("line", 0))
@@ -2205,7 +2187,7 @@ def job_log_incremental(request, pk):
 
 @transaction.atomic
 def job_cancel(request, pk):
-    job = get_restricted_job(request.user, pk, request=request, for_update=True)
+    job = TestJob.get_restricted_job(pk, request.user, for_update=True)
     try:
         job.cancel(request.user)
         return redirect(job)
@@ -2222,7 +2204,7 @@ def job_fail(request, pk):
         )
 
     with transaction.atomic():
-        job = get_restricted_job(request.user, pk, request=request, for_update=True)
+        job = TestJob.get_restricted_job(pk, request.user, for_update=True)
         if job.state != TestJob.STATE_CANCELING:
             return HttpResponseForbidden(
                 "Job should be canceled before being failed", content_type="text/plain"
@@ -2240,7 +2222,7 @@ def job_resubmit(request, pk):
         "bread_crumb_trail": BreadCrumbTrail.leading_to(job_list),
     }
 
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     if job.can_resubmit(request.user):
         response_data["is_authorized"] = True
 
@@ -2314,7 +2296,7 @@ class FailureForm(forms.ModelForm):
 
 @require_POST
 def job_change_priority(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     if not job.can_change_priority(request.user):
         raise PermissionDenied()
     requested_priority = request.POST["priority"]
@@ -2337,7 +2319,7 @@ def job_toggle_favorite(request, pk):
 
 
 def job_annotate_failure(request, pk):
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
     if not job.can_annotate(request.user):
         raise PermissionDenied()
 
@@ -2784,7 +2766,7 @@ def download_device_type_template(request, pk):
 @require_POST
 def similar_jobs(request, pk):
     logger = logging.getLogger("lava-scheduler")
-    job = get_restricted_job(request.user, pk, request=request)
+    job = TestJob.get_restricted_job(pk, request.user)
 
     entity = ContentType.objects.get_for_model(TestJob).model
 

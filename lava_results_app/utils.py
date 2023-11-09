@@ -10,12 +10,10 @@ import logging
 import os
 
 import yaml
-from django.core.exceptions import PermissionDenied
 from django.db import DataError
 from django.utils.translation import ngettext_lazy
 
 from lava_common.yaml import yaml_safe_load
-from linaro_django_xmlrpc.models import AuthToken
 
 
 def help_max_length(max_length):
@@ -53,28 +51,6 @@ def description_data(job):
         logger.exception(exc)
     # This should be a dictionary, None is not acceptable
     return data if data else {}
-
-
-# FIXME: relocate these two functions into dbutils to avoid needing django settings here.
-# other functions in utils can be run outside django. Remove import of AuthToken.
-def anonymous_token(request, job):
-    querydict = request.GET
-    user = querydict.get("user", default=None)
-    token = querydict.get("token", default=None)
-    # safe to call with (None, None) - returns None
-    auth_user = AuthToken.get_user_for_secret(username=user, secret=token)
-    return auth_user
-
-
-def check_request_auth(request, job):
-    if not request.user.is_authenticated:
-        if not job.can_view(request.user):
-            # handle anonymous access
-            auth_user = anonymous_token(request, job)
-            if not auth_user or not job.can_view(auth_user):
-                raise PermissionDenied()
-    elif not job.can_view(request.user):
-        raise PermissionDenied()
 
 
 def get_testcases_with_limit(testsuite, limit=None, offset=None):
