@@ -568,7 +568,10 @@ class Action:
         self.logger.debug("%s", " ".join(command_list))
         try:
             log = subprocess.check_output(  # nosec - internal
-                command_list, stderr=subprocess.STDOUT, cwd=cwd
+                command_list,
+                stderr=subprocess.STDOUT,
+                cwd=cwd,
+                timeout=self.timeout.duration,
             )
             log = log.decode("utf-8", errors="replace")
             if allow_fail:
@@ -578,7 +581,7 @@ class Action:
                     "Parsed command exited zero with allow_fail set, returning %s bytes."
                     % len(log)
                 )
-        except subprocess.CalledProcessError as exc:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             # the errors property doesn't support removing errors
             errors = []
             retcode = exc.returncode
