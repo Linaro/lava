@@ -80,7 +80,9 @@ class DDAction(Action):
 
     def __init__(self):
         super().__init__()
-        self.timeout = Timeout(self.name, 600, exception=self.timeout_exception)
+        self.timeout = Timeout(
+            self.name, self, duration=600, exception=self.timeout_exception
+        )
         self.boot_params = None
         self.tool_prompts = None
         self.tool_flags = None

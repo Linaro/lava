@@ -348,13 +348,15 @@ class Action:
         self.job = None
         self.logger = logging.getLogger("dispatcher")
         self.__results__ = {}
-        self.timeout = Timeout(self.name, exception=self.timeout_exception)
+        self.timeout = Timeout(self.name, self, exception=self.timeout_exception)
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
         self.diagnostics = []
         # list of protocol objects supported by this action, full list in job.protocols
         self.protocols = []
-        self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
+        self.connection_timeout = Timeout(
+            self.name, self, exception=self.timeout_exception
+        )
         self.character_delay = 0
         self.force_prompt = False
 
@@ -499,6 +501,9 @@ class Action:
             if key in self.parameters["deployment_data"]:
                 return self.parameters["deployment_data"][key]
         return self.job.device.get_constant(key, prefix=prefix)
+
+    def on_timeout(self):
+        ...
 
     def validate(self):
         """

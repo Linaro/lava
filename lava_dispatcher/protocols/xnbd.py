@@ -27,7 +27,7 @@ class XnbdProtocol(Protocol):
     def __init__(self, parameters, job_id):
         super().__init__(parameters, job_id)
         # timeout in utils.constants, default 10000
-        self.system_timeout = Timeout("system", XNBD_SYSTEM_TIMEOUT)
+        self.system_timeout = Timeout("system", None, duration=XNBD_SYSTEM_TIMEOUT)
         self.logger = logging.getLogger("dispatcher")
         self.parameters = parameters
         self.port = None

@@ -80,7 +80,7 @@ def test_parsing():
 
 def test_exception_raised(monkeypatch):
     # 1/ default case
-    t = Timeout("name", 12)
+    t = Timeout("name", None, 12)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([12, 0]))
     with pytest.raises(JobError):
@@ -88,7 +88,7 @@ def test_exception_raised(monkeypatch):
             t._timed_out(None, None)
 
     # 2/ another exception
-    t = Timeout("name", 12, InfrastructureError)
+    t = Timeout("name", None, 12, InfrastructureError)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([12, 0]))
     with pytest.raises(InfrastructureError):
@@ -99,7 +99,7 @@ def test_exception_raised(monkeypatch):
 def test_without_raising(monkeypatch):
     # 1/ without parent
     # 1.1/ without max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -113,7 +113,7 @@ def test_without_raising(monkeypatch):
     assert t.elapsed_time == 23  # nosec - assert is part of the test process.
 
     # 1.1/ with a smaller max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([125, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -126,7 +126,7 @@ def test_without_raising(monkeypatch):
     assert t.elapsed_time == 109  # nosec - assert is part of the test process.
 
     # 1.2/ with a larger max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -140,9 +140,9 @@ def test_without_raising(monkeypatch):
 
     # 2/ with a parent
     # 2.1/ with a larger max_end_time
-    t0 = Timeout("timeout-parent", 200)
+    t0 = Timeout("timeout-parent", None, 200)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([100, 177]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -157,9 +157,9 @@ def test_without_raising(monkeypatch):
     assert t1.elapsed_time == 23  # nosec - assert is part of the test process.
 
     # 2.2/ with a smaller max_end_time
-    t0 = Timeout("timeout-parent", 50)
+    t0 = Timeout("timeout-parent", None, 50)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 27]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -177,7 +177,7 @@ def test_without_raising(monkeypatch):
 def test_with_raising(monkeypatch):
     # 1/ without parent
     # 1.1/ without max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -196,7 +196,7 @@ def test_with_raising(monkeypatch):
     assert t.elapsed_time == 200  # nosec - assert is part of the test process.
 
     # 1.1/ with a smaller max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([125, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -215,7 +215,7 @@ def test_with_raising(monkeypatch):
     assert t.elapsed_time == 126  # nosec - assert is part of the test process.
 
     # 1.2/ with a larger max_end_time
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([200, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -230,7 +230,7 @@ def test_with_raising(monkeypatch):
     assert t.elapsed_time == 200  # nosec - assert is part of the test process.
 
     # 1.3/ with max_end_time <= 0
-    t = Timeout("timeout-name", 200)
+    t = Timeout("timeout-name", None, 200)
     monkeypatch.setattr(signal, "signal", DummySignal([t._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -243,9 +243,9 @@ def test_with_raising(monkeypatch):
 
     # 2/ with a parent
     # 2.1/ with a larger max_end_time
-    t0 = Timeout("timeout-parent", 200)
+    t0 = Timeout("timeout-parent", None, 200)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([100, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -261,9 +261,9 @@ def test_with_raising(monkeypatch):
     assert t1.elapsed_time == 100  # nosec - assert is part of the test process.
 
     # 2.2/ with a smaller max_end_time
-    t0 = Timeout("timeout-parent", 50)
+    t0 = Timeout("timeout-parent", None, 50)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -279,9 +279,9 @@ def test_with_raising(monkeypatch):
     assert t1.elapsed_time == 23  # nosec - assert is part of the test process.
 
     # 2.3/ with max_end_time <= 0
-    t0 = Timeout("timeout-parent", 1)
+    t0 = Timeout("timeout-parent", None, 1)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)
@@ -293,9 +293,9 @@ def test_with_raising(monkeypatch):
     assert t1.elapsed_time == 0  # nosec - assert is part of the test process.
 
     # 2.4/ raising parent timeout
-    t0 = Timeout("timeout-parent", 50, InfrastructureError)
+    t0 = Timeout("timeout-parent", None, 50, InfrastructureError)
     parent = ParentAction(t0)
-    t1 = Timeout("timeout-child", 100)
+    t1 = Timeout("timeout-child", None, 100)
     monkeypatch.setattr(signal, "signal", DummySignal([t1._timed_out, t0._timed_out]))
     monkeypatch.setattr(signal, "alarm", DummyAlarm([50, 0, 0]))
     monkeypatch.setattr(time, "monotonic", lambda: 0)

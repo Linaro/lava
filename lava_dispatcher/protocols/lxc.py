@@ -34,7 +34,7 @@ class LxcProtocol(Protocol):
 
     def __init__(self, parameters, job_id):
         super().__init__(parameters, job_id)
-        self.system_timeout = Timeout("system", LAVA_LXC_TIMEOUT)
+        self.system_timeout = Timeout("system", None, duration=LAVA_LXC_TIMEOUT)
         self.persistence = parameters["protocols"][self.name].get("persist", False)
         if self.persistence:
             self.lxc_name = parameters["protocols"][self.name]["name"]

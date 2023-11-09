@@ -39,7 +39,9 @@ class MultinodeProtocol(Protocol):
         super().__init__(parameters, job_id)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
-        self.system_timeout = Timeout("system", LAVA_MULTINODE_SYSTEM_TIMEOUT)
+        self.system_timeout = Timeout(
+            "system", None, duration=LAVA_MULTINODE_SYSTEM_TIMEOUT
+        )
         self.settings = None
         self.sock = None
         self.base_message = None
