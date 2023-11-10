@@ -53,10 +53,10 @@
     pipeline:
     - {class: connections.serial.ConnectDevice, description: use the configured command
         to connect serial to the device, level: 2.4.1, max_retries: 1, name: connect-device,
-      summary: run connection command, timeout: 600}
+      summary: run connection command, timeout: 240}
     - {class: actions.boot.BootloaderCommandOverlay, description: substitute job data
         into bootloader command list, level: 2.4.2, max_retries: 1, name: bootloader-overlay,
-      summary: replace placeholders with job data, timeout: 600}
+      summary: replace placeholders with job data, timeout: 240}
     - class: actions.boot.bootloader.BootBootloaderAction
       description: boot to bootloader
       level: 2.4.3
@@ -65,7 +65,7 @@
       pipeline:
       - {class: connections.serial.ConnectDevice, description: use the configured
           command to connect serial to the device, level: 2.4.3.1, max_retries: 1,
-        name: connect-device, summary: run connection command, timeout: 600}
+        name: connect-device, summary: run connection command, timeout: 240}
       - class: power.ResetDevice
         description: reboot or power-cycle the device
         level: 2.4.3.2
@@ -82,12 +82,12 @@
           bootloader to get an interactive shell, timeout: 240}
       - {class: actions.boot.BootloaderCommandsAction, description: send commands
           to bootloader, level: 2.4.3.4, max_retries: 1, name: bootloader-commands,
-        summary: interactive bootloader, timeout: 180}
+        summary: interactive bootloader, timeout: 240}
       summary: boot bootloader
-      timeout: 600
+      timeout: 240
     - {class: connections.serial.DisconnectDevice, description: disconnect from console,
       level: 2.4.4, max_retries: 1, name: disconnect-device, summary: disconnect from
-        console, timeout: 600}
+        console, timeout: 240}
     summary: boot bootloader
     timeout: 240
   - class: power.ResetDevice

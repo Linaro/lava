@@ -148,7 +148,9 @@ class BootBootloaderCorruptBootMediaAction(Action):
             "commands": SD_ERASE_CMDS,
             "prompts": ["=>"],
         }
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=u_boot_params)
+        self.pipeline = Pipeline(
+            parent=self, job=self.job, parameters={**parameters, **u_boot_params}
+        )
         if power_off:
             self.pipeline.add_action(PowerOff())
         self.pipeline.add_action(ConnectDevice())
