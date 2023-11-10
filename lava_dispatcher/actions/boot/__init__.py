@@ -876,7 +876,10 @@ class BootloaderCommandsActionAltBank(Action):
         super().__init__()
         self.params = None
         self.timeout = Timeout(
-            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+            self.name,
+            self,
+            duration=BOOTLOADER_DEFAULT_CMD_TIMEOUT,
+            exception=self.timeout_exception,
         )
         self.method = method
         self.expect_final = expect_final
@@ -939,7 +942,10 @@ class BootloaderCommandsAction(Action):
         super().__init__()
         self.params = None
         self.timeout = Timeout(
-            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+            self.name,
+            self,
+            duration=BOOTLOADER_DEFAULT_CMD_TIMEOUT,
+            exception=self.timeout_exception,
         )
         self.method = method
         self.expect_final = expect_final

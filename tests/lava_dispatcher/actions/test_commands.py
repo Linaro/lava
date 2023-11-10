@@ -23,7 +23,7 @@ def device():
 def action(device, mocker):
     a = CommandAction()
     a.job = Job(42, {}, None)
-    a.job.timeout = Timeout("job")
+    a.job.timeout = Timeout("job", a)
     a.job.device = device
     a.run_cmd = mocker.MagicMock()
     return a

@@ -348,13 +348,15 @@ class Action:
         self.job = None
         self.logger = logging.getLogger("dispatcher")
         self.__results__ = {}
-        self.timeout = Timeout(self.name, exception=self.timeout_exception)
+        self.timeout = Timeout(self.name, self, exception=self.timeout_exception)
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
         self.diagnostics = []
         # list of protocol objects supported by this action, full list in job.protocols
         self.protocols = []
-        self.connection_timeout = Timeout(self.name, exception=self.timeout_exception)
+        self.connection_timeout = Timeout(
+            self.name, self, exception=self.timeout_exception
+        )
         self.character_delay = 0
         self.force_prompt = False
 
@@ -500,6 +502,9 @@ class Action:
                 return self.parameters["deployment_data"][key]
         return self.job.device.get_constant(key, prefix=prefix)
 
+    def on_timeout(self):
+        ...
+
     def validate(self):
         """
         This method needs to validate the parameters to the action. For each
@@ -568,7 +573,10 @@ class Action:
         self.logger.debug("%s", " ".join(command_list))
         try:
             log = subprocess.check_output(  # nosec - internal
-                command_list, stderr=subprocess.STDOUT, cwd=cwd
+                command_list,
+                stderr=subprocess.STDOUT,
+                cwd=cwd,
+                timeout=self.timeout.duration,
             )
             log = log.decode("utf-8", errors="replace")
             if allow_fail:
@@ -578,7 +586,7 @@ class Action:
                     "Parsed command exited zero with allow_fail set, returning %s bytes."
                     % len(log)
                 )
-        except subprocess.CalledProcessError as exc:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
             # the errors property doesn't support removing errors
             errors = []
             retcode = exc.returncode

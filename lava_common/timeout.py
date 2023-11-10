@@ -25,7 +25,8 @@ class Timeout:
     If a connection is not set, this timeout applies for the entire run function of the action.
     """
 
-    def __init__(self, name, duration=ACTION_TIMEOUT, exception=JobError):
+    def __init__(self, name, action, duration=ACTION_TIMEOUT, exception=JobError):
+        self.action = action
         self.name = name
         self.start = 0
         self.elapsed_time = -1
@@ -58,6 +59,10 @@ class Timeout:
         return parameters.get("timeout", {}).get("skip", False)
 
     def _timed_out(self, signum, frame):
+        # Call on_timeout action function
+        if self.action is not None:
+            self.action.on_timeout()
+        # Raise the exception
         duration = int(time.monotonic() - self.start)
         raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 

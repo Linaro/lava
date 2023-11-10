@@ -192,7 +192,7 @@ class Protocol:
 
     def __init__(self, parameters, job_id):
         self.logger = logging.getLogger("dispatcher")
-        self.poll_timeout = Timeout(self.name)
+        self.poll_timeout = Timeout(self.name, None)
         self.__errors__ = []
         self.parameters = parameters
         self.configured = False

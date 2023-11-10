@@ -204,7 +204,10 @@ class DepthchargeStart(Action):
         super().__init__()
         self.start_message = None
         self.timeout = Timeout(
-            self.name, BOOTLOADER_DEFAULT_CMD_TIMEOUT, exception=self.timeout_exception
+            self.name,
+            self,
+            duration=BOOTLOADER_DEFAULT_CMD_TIMEOUT,
+            exception=self.timeout_exception,
         )
 
     def validate(self):

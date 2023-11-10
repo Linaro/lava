@@ -480,7 +480,7 @@ class TestTimeout(StdoutTestCase):
         seconds = 2
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()
-        action.timeout = Timeout(action.name, duration=seconds)
+        action.timeout = Timeout(action.name, action=action, duration=seconds)
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -492,7 +492,7 @@ class TestTimeout(StdoutTestCase):
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()
         action.timeout = Timeout(
-            action.name, duration=seconds, exception=InfrastructureError
+            action.name, action=action, duration=seconds, exception=InfrastructureError
         )
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
@@ -505,7 +505,7 @@ class TestTimeout(StdoutTestCase):
         seconds = 2
         pipeline = TestTimeout.FakePipeline(job=self.fakejob)
         action = TestTimeout.SafeAction()
-        action.timeout = Timeout(action.name, duration=seconds)
+        action.timeout = Timeout(action.name, action=action, duration=seconds)
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
