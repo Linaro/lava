@@ -22,8 +22,8 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    TestJob,
 )
-from lava_scheduler_app.views import get_restricted_job
 from linaro_django_xmlrpc.models import Mapper, SystemAPI, errors
 
 
@@ -213,11 +213,11 @@ class LavaSystemAPI(SystemAPI):
             raise xmlrpc.client.Fault(
                 errors.BAD_REQUEST, "job list argument must be a list"
             )
-        username = self._switch_user(username)
+        user = self._switch_user(username)
         retval = {}
         for job_id in job_list:
             try:
-                get_restricted_job(username, job_id)
+                TestJob.get_restricted_job(job_id, user)
             except Http404:
                 continue
             except PermissionDenied:

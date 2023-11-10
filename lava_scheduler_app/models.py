@@ -4,6 +4,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -28,6 +29,7 @@ from django.core.exceptions import (
 )
 from django.db import models, transaction
 from django.db.models import Q
+from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
@@ -2071,6 +2073,18 @@ class TestJob(models.Model):
             job = query.get(sub_id=job_id)
         else:
             job = query.get(pk=job_id)
+        return job
+
+    @classmethod
+    def get_restricted_job(cls, job_id, user, for_update: bool = False) -> TestJob:
+        try:
+            job = TestJob.get_by_job_number(job_id, for_update)
+        except TestJob.DoesNotExist as exc:
+            raise Http404(*exc.args)
+
+        if not job.can_view(user):
+            raise PermissionDenied()
+
         return job
 
     @property

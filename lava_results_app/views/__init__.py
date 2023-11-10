@@ -41,14 +41,12 @@ from lava_results_app.models import (
 from lava_results_app.tables import ResultsTable, SuiteTable, TestJobResultsTable
 from lava_results_app.utils import (
     StreamEcho,
-    check_request_auth,
     export_testcase,
     get_testcases_with_limit,
     testcase_export_fields,
 )
 from lava_scheduler_app.models import TestJob
 from lava_scheduler_app.tables import pklink
-from lava_scheduler_app.views import get_restricted_job
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class
 from lava_server.lavatable import LavaView
@@ -149,7 +147,7 @@ def query(request):
 
 @BreadCrumb("Test job {job}", parent=index, needs=["job"])
 def testjob(request, job):
-    job = get_restricted_job(request.user, pk=job, request=request)
+    job = TestJob.get_restricted_job(job, request.user)
     data = ResultsView(request, model=TestSuite, table_class=TestJobResultsTable)
     suite_table = TestJobResultsTable(
         data.get_table_data().filter(pk=job.id), request=request
@@ -181,8 +179,7 @@ def testjob(request, job):
 
 
 def testjob_csv(request, job):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
 
     def testjob_stream(test_cases, pseudo_buffer):
         fieldnames = testcase_export_fields()
@@ -206,8 +203,7 @@ def testjob_csv(request, job):
 
 
 def testjob_yaml(request, job):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
 
     test_cases = TestCase.objects.filter(suite__job=job).select_related("suite")
 
@@ -222,8 +218,7 @@ def testjob_yaml(request, job):
 
 
 def testjob_yaml_summary(request, job):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
     suites = job.testsuite_set.all()
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s_summary.yaml" % job.id
@@ -237,7 +232,7 @@ def testjob_yaml_summary(request, job):
 
 @BreadCrumb("Suite {pk}", parent=testjob, needs=["job", "pk"])
 def suite(request, job, pk):
-    job = get_restricted_job(request.user, pk=job, request=request)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
@@ -264,8 +259,7 @@ def suite(request, job, pk):
 
 
 def suite_csv(request, job, pk):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
@@ -296,9 +290,8 @@ def suite_csv_stream(request, job, pk):
     https://docs.djangoproject.com/en/3.2/ref/request-response/#django.http.StreamingHttpResponse
     https://docs.djangoproject.com/en/3.2/howto/outputting-csv/
     """
-    job = get_object_or_404(TestJob, pk=job)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
-    check_request_auth(request, job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
     limit = int(querydict.get("limit", default=0))
@@ -316,8 +309,7 @@ def suite_csv_stream(request, job, pk):
 
 
 def suite_yaml(request, job, pk):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
@@ -334,8 +326,7 @@ def suite_yaml(request, job, pk):
 
 
 def suite_testcase_count(request, job, pk):
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     test_case_count = test_suite.testcase_set.all().count()
     return HttpResponse(test_case_count, content_type="text/plain")
@@ -348,8 +339,7 @@ def metadata_export(request, job):
     CSV is not supported as the user-supplied metadata can
     include nested dicts or lists.
     """
-    job = get_object_or_404(TestJob, pk=job)
-    check_request_auth(request, job)
+    job = TestJob.get_restricted_job(job, request.user)
     # testdata from job & export
     if not hasattr(job, "testdata"):
         raise Http404("No TestData present in test job.")
@@ -366,7 +356,7 @@ def metadata_export(request, job):
 
 @BreadCrumb("TestSet {case}", parent=testjob, needs=["job", "pk", "ts", "case"])
 def testset(request, job, ts, pk, case):
-    job = get_restricted_job(request.user, pk=job, request=request)
+    job = TestJob.get_restricted_job(job, request.user)
     test_suite = get_object_or_404(TestSuite, name=pk, job=job)
     test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
     test_cases = TestCase.objects.filter(name=case, test_set=test_set)
@@ -412,9 +402,9 @@ def testcase(request, case_id, job=None, pk=None):
     if not job:
         job = case.suite.job
         # Auth check purposes only.
-        job = get_restricted_job(request.user, pk=job.id, request=request)
+        job = TestJob.get_restricted_job(job.id, request.user)
     else:
-        job = get_restricted_job(request.user, pk=job, request=request)
+        job = TestJob.get_restricted_job(job, request.user)
     if not pk:
         test_suite = case.suite
     else:
@@ -469,7 +459,8 @@ def testcase(request, case_id, job=None, pk=None):
 
 def testcase_yaml(request, pk):
     testcase = get_object_or_404(TestCase, pk=pk)
-    check_request_auth(request, testcase.suite.job)
+    # Check that user allowed to view job
+    TestJob.get_restricted_job(testcase.suite.job, request.user)
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename

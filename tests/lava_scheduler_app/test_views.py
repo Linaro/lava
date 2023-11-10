@@ -28,7 +28,6 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.views import (
     device_report_data,
-    get_restricted_job,
     job_report_data,
     type_report_data,
 )
@@ -1247,24 +1246,19 @@ def test_running(client, setup):
     assert ret.context["running_table"].data[1].name == "qemu"  # nosec
 
 
-@pytest.fixture
-def check_request_auth_patched(monkeypatch):
-    monkeypatch.setattr(
-        "lava_scheduler_app.views.check_request_auth", lambda request, job: None
-    )
-
-
 @pytest.mark.django_db
-def test_get_restricted_job_non_existing(client, check_request_auth_patched, setup):
+def test_get_restricted_job_non_existing(client, setup):
     user = User.objects.get(username="tester")
     with pytest.raises(Http404):
-        get_restricted_job(user, -1)
+        TestJob.get_restricted_job(-1, user)
 
 
 @pytest.mark.django_db
-def test_get_restricted_job(client, check_request_auth_patched, setup):
+def test_get_restricted_job(client, setup):
     user = User.objects.get(username="tester")
-    job = get_restricted_job(user, TestJob.objects.get(description="test job 01").pk)
+    job = TestJob.get_restricted_job(
+        TestJob.objects.get(description="test job 01").pk, user
+    )
     assert job.description == "test job 01"  # nosec
 
 
