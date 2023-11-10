@@ -150,6 +150,9 @@ async def zmq_proxy(app):
             except zmq.error.ZMQError as exc:
                 logger.error("[PROXY] Received a ZMQ error: %s", exc)
                 break
+            except OSError as exc:
+                logger.error("[PROXY] Received an I/O error: %s", exc)
+                break
 
     # Carefully close the logging socket as we don't want to lose messages
     logger.info("[EXIT] Disconnect pull socket and process messages")
