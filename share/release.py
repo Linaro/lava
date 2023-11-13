@@ -146,20 +146,6 @@ def handle_publish(options):
         wait_pipeline(options, commit)
     print("done\n")
 
-    connection_string = "git.lavasoftware.org"
-    if options.lavasoftware_username:
-        connection_string = "%s@%s" % (
-            options.lavasoftware_username,
-            connection_string,
-        )
-
-    print("%s# publish the new repository%s" % (COLORS["purple"], COLORS["reset"]))
-    run(
-        "ssh -t %s 'cd /home/gitlab-runner/repository && sudo ln -snf current-release release'"
-        % connection_string,
-        options,
-    )
-
     # Login to the docker service.
     run("docker login", options)
 
@@ -236,11 +222,6 @@ def main():
     )
     parser.add_argument("--skip", type=int, default=0, help="Skip some steps")
     parser.add_argument("version", type=str, help="new version")
-    parser.add_argument(
-        "--lavasoftware-username",
-        default=None,
-        help="username for lavasoftware.org SSH login",
-    )
 
     # Parse the command line
     options = parser.parse_args()
