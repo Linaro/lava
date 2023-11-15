@@ -186,6 +186,7 @@ LAVA administration guide
    pipeline-debug
    docker-admin
    fvp
+   avh
 
 .. _contents_contribution_guide:
 
