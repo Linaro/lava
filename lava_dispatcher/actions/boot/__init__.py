@@ -57,6 +57,10 @@ class LoginAction(Action):
         " actual prompt string more closely."
     )
 
+    def __init__(self):
+        super().__init__()
+        self.force_prompt = True  # Kernel logs may overlap with login prompt on boot
+
     def check_kernel_messages(
         self, connection, max_end_time, fail_msg, auto_login=False
     ):
