@@ -108,6 +108,9 @@
     summary: run connection command, timeout: 240 }
   - {class: actions.boot.uuu.UUUBootAction, description: interactive uuu action, level: '2.7',
     max_retries: 1, name: uuu-boot, summary: uuu commands, timeout: 240}
+  - {class: connections.serial.DisconnectDevice, description: disconnect from console,
+    level: '2.8', max_retries: 1, name: disconnect-device, summary: disconnect from
+      console, timeout: 240}
   summary: Pass uuu commands
   timeout: 240
 - class: actions.boot.bootloader.BootBootloaderRetry

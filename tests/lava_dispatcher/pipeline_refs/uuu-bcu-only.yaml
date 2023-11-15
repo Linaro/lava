@@ -66,6 +66,13 @@
       description: interactive uuu action
       summary: uuu commands
       timeout: 120
+    - class: connections.serial.DisconnectDevice
+      name: disconnect-device
+      level: "2.5"
+      max_retries: 1
+      description: disconnect from console
+      summary: disconnect from console
+      timeout: 120
 - class: actions.boot.bootloader.BootBootloaderRetry
   name: boot-bootloader-retry
   level: "3"
