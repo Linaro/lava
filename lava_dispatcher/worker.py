@@ -559,11 +559,11 @@ def start(
             return
 
         LOG.info("[%d] Starting job", job_id)
-        LOG.debug("[%d]         : %s", job_id, yaml_safe_load(definition))
-        LOG.debug("[%d] device  : %s", job_id, yaml_safe_load(device))
-        LOG.debug("[%d] dispatch: %s", job_id, yaml_safe_load(dispatcher))
-        LOG.debug("[%d] env     : %s", job_id, yaml_safe_load(env))
-        LOG.debug("[%d] env-dut : %s", job_id, yaml_safe_load(env_dut))
+        LOG.debug("[%d]         : %r", job_id, definition)
+        LOG.debug("[%d] device  : %r", job_id, device)
+        LOG.debug("[%d] dispatch: %r", job_id, dispatcher)
+        LOG.debug("[%d] env     : %r", job_id, env)
+        LOG.debug("[%d] env-dut : %r", job_id, env_dut)
 
         # Start the job, grab the pid and create it in the dabatase
         pid = start_job(
