@@ -14,7 +14,6 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
-from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
 
@@ -108,33 +107,13 @@ class JobErrorsTable(LavaTable):
         default="",
     )
     error_type = tables.Column(
-        accessor="failure_metadata_str",
+        accessor=tables.A("failure_metadata.error_type"),
         orderable=False,
     )
     error_msg = tables.Column(
-        accessor="failure_metadata_str",
+        accessor=tables.A("failure_metadata.error_msg"),
         orderable=False,
     )
-
-    def render_error_type(self, record):
-        try:
-            failure_metadata = record.failure_metadata_dict
-        except AttributeError:
-            failure_metadata = record.failure_metadata_dict = yaml_safe_load(
-                record.failure_metadata_str
-            )
-
-        return failure_metadata.get("error_type")
-
-    def render_error_msg(self, record):
-        try:
-            failure_metadata = record.failure_metadata_dict
-        except AttributeError:
-            failure_metadata = record.failure_metadata_dict = yaml_safe_load(
-                record.failure_metadata_str
-            )
-
-        return failure_metadata.get("error_msg")
 
     class Meta(LavaTable.Meta):
         model = TestJob

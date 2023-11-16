@@ -118,7 +118,7 @@ from lava_scheduler_app.templatetags.utils import udecode
 from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class, is_ajax
-from lava_server.dbutils import annotate_int_field_verbose
+from lava_server.dbutils import YamlField, annotate_int_field_verbose
 from lava_server.files import File
 from lava_server.lavatable import LavaView
 from lava_server.views import index as lava_index
@@ -340,9 +340,10 @@ class JobErrorsView(LavaView):
                 result=TestCase.RESULT_FAIL,
                 suite__name="lava",
                 name="job",
-            ).values("metadata")[:1]
+            ).values("metadata")[:1],
             # HACK: Add LIMIT to fix edge case
             # when job has multiple failure testcases
+            output_field=YamlField(),
         )
 
         return (
@@ -350,9 +351,9 @@ class JobErrorsView(LavaView):
                 health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED)
             )
             .annotate(
-                failure_metadata_str=metadata_subquery,
+                failure_metadata=metadata_subquery,
             )
-            .filter(failure_metadata_str__isnull=False)
+            .filter(failure_metadata__isnull=False)
             .order_by("-end_time")
         )
 
