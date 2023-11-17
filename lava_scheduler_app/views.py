@@ -336,9 +336,8 @@ class JobErrorsView(LavaView):
                 Q(metadata__contains="error_type: Configuration")
                 | Q(metadata__contains="error_type: Infrastructure")
                 | Q(metadata__contains="error_type: Bug"),
-                suite__job=OuterRef("pk"),
+                suite=OuterRef("testsuite"),
                 result=TestCase.RESULT_FAIL,
-                suite__name="lava",
                 name="job",
             ).values("metadata")[:1]
             # HACK: Add LIMIT to fix edge case
@@ -347,7 +346,8 @@ class JobErrorsView(LavaView):
 
         return (
             TestJob.objects.filter(
-                health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED)
+                health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED),
+                testsuite__name="lava",
             )
             .annotate(
                 failure_metadata_str=metadata_subquery,
