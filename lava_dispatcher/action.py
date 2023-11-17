@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import copy
 import logging
@@ -36,6 +37,33 @@ class InternalObject:
     """
 
     pass
+
+
+_NOT_FOUND = object()
+
+
+def get_lastest_dict_value(list_of_dictionaries: list[dict], key: str):
+    for d in reversed(list_of_dictionaries):
+        value = d.get(key, _NOT_FOUND)
+        if value is not _NOT_FOUND:
+            return value
+
+    return None
+
+
+def get_lastest_subdict_value(
+    list_of_dictionaries: list[dict[str, dict]], key: str, subkey: str
+):
+    for d in reversed(list_of_dictionaries):
+        sub_dict = d.get(key, _NOT_FOUND)
+        if sub_dict is _NOT_FOUND:
+            continue
+
+        value = sub_dict.get(subkey, _NOT_FOUND)
+        if value is not _NOT_FOUND:
+            return value
+
+    return None
 
 
 class Pipeline:
@@ -91,47 +119,37 @@ class Pipeline:
         action.populate(parameters)
 
         # Compute the timeout
-        timeouts = []
+        global_timeouts = []
         # FIXME: Only needed for the auto-tests
         if self.job is not None:
             if self.job.device is not None:
                 # First, the device level overrides
-                timeouts.append(self.job.device.get("timeouts", {}))
+                global_timeouts.append(self.job.device.get("timeouts", {}))
             # Then job level overrides
-            timeouts.append(self.job.parameters.get("timeouts", {}))
-
-        def dict_merge_get(dicts, key):
-            value = None
-            for d in dicts:
-                value = d.get(key, value)
-            return value
-
-        def subdict_merge_get(dicts, key, subkey):
-            value = None
-            for d in dicts:
-                value = d.get(key, {}).get(subkey, value)
-            return value
+            global_timeouts.append(self.job.parameters.get("timeouts", {}))
 
         # Set the timeout. The order is:
-        # 1/ the global action timeout
-        # 2/ the individual action timeout
-        # 3/ the action block timeout
-        # 4/ the individual action block timeout
-
-        action._override_action_timeout(dict_merge_get(timeouts, "action"))
+        # 1. global action timeout
         action._override_action_timeout(
-            subdict_merge_get(timeouts, "actions", action.name)
+            get_lastest_dict_value(global_timeouts, "action")
         )
+        # 2. global named action timeout
+        action._override_action_timeout(
+            get_lastest_subdict_value(global_timeouts, "actions", action.name)
+        )
+        # 3. action block timeout
         action._override_action_timeout(parameters.get("timeout"))
-
-        if parameters.get("timeouts"):
+        # 4. action block named action timeout
+        if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(
-                dict_merge_get([parameters.get("timeouts")], action.name)
+                action_block_timeouts.get(action.name),
             )
 
-        action._override_connection_timeout(dict_merge_get(timeouts, "connection"))
         action._override_connection_timeout(
-            subdict_merge_get(timeouts, "connections", action.name)
+            get_lastest_dict_value(global_timeouts, "connection")
+        )
+        action._override_connection_timeout(
+            get_lastest_subdict_value(global_timeouts, "connections", action.name)
         )
 
         action.parameters = parameters
