@@ -25,6 +25,7 @@ from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
 
 #########
@@ -298,7 +299,11 @@ def get_server_version(options):
     http = requests.Session()
     http.mount("http://", adapter)
     http.mount("https://", adapter)
-    server_version = http.get(server_version_url, timeout=10).json()
+    server_version = http.get(
+        server_version_url,
+        headers={"User-Agent": f"lava-docker-worker {__version__}"},
+        timeout=10,
+    ).json()
     return server_version["version"]
 
 
