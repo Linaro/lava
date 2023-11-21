@@ -20,7 +20,9 @@ from __future__ import annotations
 from functools import cache
 from typing import TYPE_CHECKING
 
-from django.db.models import Case, TextField, Value, When
+from django.db.models import Case, Field, TextField, Value, When
+
+from lava_common.yaml import yaml_safe_load
 
 if TYPE_CHECKING:
     from django.db.models import IntegerField
@@ -36,3 +38,10 @@ def annotate_int_field_verbose(field: IntegerField):
         default=Value("Undefined"),
         output_field=TextField(),
     )
+
+
+class YamlField(Field):
+    def from_db_value(self, value, expression, connection):
+        if value is None:
+            return value
+        return yaml_safe_load(value)
