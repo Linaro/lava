@@ -6,7 +6,7 @@
 
 import unittest
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
 
@@ -15,7 +15,7 @@ class UBootDFUFactory(Factory):
         return self.create_job("rzn1d-01.jinja2", filename)
 
 
-class TestUbootDFUAction(StdoutTestCase):
+class TestUbootDFUAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootDFUFactory()

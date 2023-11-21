@@ -12,7 +12,7 @@ from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.udev import allow_fs_label
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error_multi_paths
 
 
@@ -96,7 +96,7 @@ class UBootFactory(Factory):
         return job
 
 
-class TestRecoveryMode(StdoutTestCase):
+class TestRecoveryMode(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.fastboot_factory = FastBootFactory()

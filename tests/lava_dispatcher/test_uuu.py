@@ -16,7 +16,7 @@ from lava_dispatcher.actions.boot.uuu import (
 )
 from lava_dispatcher.utils.containers import DockerDriver, NullDriver
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
@@ -47,7 +47,7 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
 @patch(
     "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which", Mock("/bin/test_uuu")
 )
-class TestCheckSerialDownloadMode(StdoutTestCase):
+class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()
@@ -196,7 +196,9 @@ class TestCheckSerialDownloadMode(StdoutTestCase):
 @patch(
     "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which", Mock("/bin/test_uuu")
 )
-class TestUUUbootAction(StdoutTestCase):  # pylint: disable=too-many-public-methods
+class TestUUUbootAction(
+    LavaDispatcherTestCase
+):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()

@@ -12,7 +12,7 @@ from lava_dispatcher.actions.deploy.musca import (
     CheckMuscaFlashAction,
     DeployMuscaAutomationAction,
 )
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class MuscaFactory(Factory):
@@ -20,7 +20,7 @@ class MuscaFactory(Factory):
         return self.create_job("musca-01.jinja2", filename)
 
 
-class TestMusca(StdoutTestCase):
+class TestMusca(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = MuscaFactory()

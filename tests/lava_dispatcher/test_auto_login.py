@@ -8,10 +8,10 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.job import Job
-from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
-class AutoLoginTestCase(StdoutTestCase):
+class AutoLoginTestCase(LavaDispatcherTestCase):
     def _make_pipeline(self, params):
         job = Job(1234, {}, None)
         job.device = {"actions": {"boot": {"methods": []}}}

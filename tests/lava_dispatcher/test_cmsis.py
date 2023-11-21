@@ -6,7 +6,7 @@
 
 
 from lava_common.exceptions import JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class Cmsis_Factory(Factory):
@@ -23,7 +23,7 @@ class Cmsis_Factory(Factory):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestCMSISAction(StdoutTestCase):
+class TestCMSISAction(LavaDispatcherTestCase):
     def test_usb_mass_exists(self):
         factory = Cmsis_Factory()
         job = factory.create_k64f_job(

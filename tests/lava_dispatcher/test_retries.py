@@ -13,11 +13,11 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.logical import DiagnosticAction, RetryAction
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
-from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
-class TestAction(StdoutTestCase):
+class TestAction(LavaDispatcherTestCase):
     class FakeJob(Job):
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)
@@ -338,7 +338,7 @@ class TestAction(StdoutTestCase):
         self.assertEqual(action.sleep, 2)
 
 
-class TestTimeout(StdoutTestCase):
+class TestTimeout(LavaDispatcherTestCase):
     class FakeJob(Job):
         def __init__(self, parameters):
             super().__init__(4212, parameters, None)

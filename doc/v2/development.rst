@@ -577,10 +577,10 @@ test.
 .. code-block:: python
 
     import unittest
-    from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+    from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
     from tests.lava_dispatcher.utils import infrastructure_error_multi_paths
 
-    class TestFastbootDeploy(StdoutTestCase):  # pylint: disable=too-many-public-methods
+    class TestFastbootDeploy(LavaDispatcherTestCase):  # pylint: disable=too-many-public-methods
 
         def setUp(self):
             super().setUp()

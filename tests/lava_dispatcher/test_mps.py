@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class MpsFactory(Factory):
@@ -12,7 +12,7 @@ class MpsFactory(Factory):
         return self.create_job("mps2plus-01.jinja2", filename)
 
 
-class TestMps(StdoutTestCase):
+class TestMps(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = MpsFactory()

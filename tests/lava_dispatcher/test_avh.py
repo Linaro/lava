@@ -7,7 +7,7 @@ from unittest import SkipTest
 from unittest.mock import ANY, call, patch
 
 from lava_common.exceptions import JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 try:
     from avh_api.model.image import Image
@@ -72,7 +72,7 @@ def test_accepts_boot():
     )
 
 
-class TestAvhActions(StdoutTestCase):
+class TestAvhActions(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/avh-rpi4b.yaml"):
         super().setUp()
         self.factory = Factory()

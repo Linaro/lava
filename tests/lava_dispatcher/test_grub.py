@@ -22,7 +22,7 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
 
@@ -43,7 +43,7 @@ class GrubFactory(Factory):
         return self.create_job("hi960-hikey-01.jinja2", filename)
 
 
-class TestGrubAction(StdoutTestCase):
+class TestGrubAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = GrubFactory()

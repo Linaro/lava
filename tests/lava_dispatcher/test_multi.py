@@ -14,12 +14,12 @@ from lava_dispatcher.action import Action, Pipeline, Timeout
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
 from tests.utils import DummyLogger
 
 
-class TestMultiDeploy(StdoutTestCase):
+class TestMultiDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.parameters = {}
@@ -140,7 +140,7 @@ class TestMultiDeploy(StdoutTestCase):
         )
 
 
-class TestMultiDefinition(StdoutTestCase):
+class TestMultiDefinition(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
@@ -192,7 +192,7 @@ class TestMultiDefinition(StdoutTestCase):
         self.assertIn("Test definition names need to be unique.", runscript.errors)
 
 
-class TestMultiUBoot(StdoutTestCase):
+class TestMultiUBoot(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = UBootFactory()

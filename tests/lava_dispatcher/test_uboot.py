@@ -26,7 +26,7 @@ from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 
@@ -50,7 +50,7 @@ class UBootFactory(Factory):
         return self.create_job("zcu102.jinja2", filename)
 
 
-class TestUbootAction(StdoutTestCase):
+class TestUbootAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()
@@ -855,7 +855,7 @@ class TestUbootAction(StdoutTestCase):
         self.assertEqual("u-boot", bootloader.method)
 
 
-class TestKernelConversion(StdoutTestCase):
+class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
         data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
         self.device = NewDevice(data)
@@ -1005,7 +1005,7 @@ class TestKernelConversion(StdoutTestCase):
         self.assertTrue(uboot_prepare.mkimage_conversion)
 
 
-class TestOverlayCommands(StdoutTestCase):
+class TestOverlayCommands(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()

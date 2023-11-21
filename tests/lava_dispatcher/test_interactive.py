@@ -19,7 +19,7 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class InteractiveFactory(Factory):
@@ -33,7 +33,7 @@ def test_pipeline():
         "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
     )
     job.validate()
-    description_ref = StdoutTestCase.pipeline_reference(
+    description_ref = LavaDispatcherTestCase.pipeline_reference(
         "b2260-interactive.yaml", job=job
     )
     assert description_ref == job.pipeline.describe()  # nosec
@@ -45,7 +45,7 @@ def test_bbb():
         "bbb-01.jinja2", "sample_jobs/bbb-uboot-interactive.yaml"
     )
     job.validate()
-    description_ref = StdoutTestCase.pipeline_reference(
+    description_ref = LavaDispatcherTestCase.pipeline_reference(
         "bbb-uboot-interactive.yaml", job=job
     )
     assert description_ref == job.pipeline.describe()  # nosec
@@ -61,7 +61,7 @@ def test_stages(monkeypatch):
         "docker-01.jinja2", "sample_jobs/docker-interactive.yaml"
     )
     job.validate()
-    description_ref = StdoutTestCase.pipeline_reference(
+    description_ref = LavaDispatcherTestCase.pipeline_reference(
         "docker-interactive.yaml", job=job
     )
     assert description_ref == job.pipeline.describe()  # nosec

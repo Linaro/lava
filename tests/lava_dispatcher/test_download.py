@@ -7,11 +7,11 @@
 import unittest
 
 from lava_common.exceptions import JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error_multi_paths
 
 
-class TestDownloadDeploy(StdoutTestCase):
+class TestDownloadDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()

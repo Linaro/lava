@@ -6,7 +6,7 @@
 
 import unittest
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
 
@@ -21,7 +21,7 @@ class UBootUMSFactory(Factory):
         return self.create_job("imx7s-warp-01.jinja2", filename)
 
 
-class TestUbootUMSAction(StdoutTestCase):
+class TestUbootUMSAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootUMSFactory()

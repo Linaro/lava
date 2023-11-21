@@ -6,7 +6,7 @@
 
 from unittest.mock import patch
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class UserCommandFactory(Factory):
@@ -14,7 +14,7 @@ class UserCommandFactory(Factory):
         return self.create_job("b2260-01.jinja2", filename)
 
 
-class TestUserCommand(StdoutTestCase):
+class TestUserCommand(LavaDispatcherTestCase):
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )

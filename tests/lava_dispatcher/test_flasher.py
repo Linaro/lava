@@ -16,7 +16,7 @@ from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.job import Job
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
@@ -27,7 +27,7 @@ class FlasherFactory(Factory):
         return job
 
 
-class TestFlasher(StdoutTestCase):
+class TestFlasher(LavaDispatcherTestCase):
     def test_pipeline(self):
         factory = FlasherFactory()
         job = factory.create_b2260_job("sample_jobs/b2260-flasher.yaml")

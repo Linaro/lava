@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from lava_common.exceptions import InfrastructureError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class BootloaderFactory(Factory):
@@ -13,7 +13,7 @@ class BootloaderFactory(Factory):
         return self.create_job("b2260-01.jinja2", filename)
 
 
-class TestBootBootloader(StdoutTestCase):
+class TestBootBootloader(LavaDispatcherTestCase):
     def test_pipeline(self):
         factory = BootloaderFactory()
         job = factory.create_bootloader_job("sample_jobs/b2260-bootloader.yaml")

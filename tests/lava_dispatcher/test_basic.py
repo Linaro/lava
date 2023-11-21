@@ -30,7 +30,7 @@ from lava_dispatcher.parser import JobParser
 from tests.utils import DummyLogger
 
 
-class StdoutTestCase(unittest.TestCase):
+class LavaDispatcherTestCase(unittest.TestCase):
     # set to True to update pipeline_references automatically.
     update_ref = False
 
@@ -47,7 +47,7 @@ class StdoutTestCase(unittest.TestCase):
             return yaml_safe_load(f_ref)
 
 
-class TestAction(StdoutTestCase):
+class TestAction(LavaDispatcherTestCase):
     def test_references_a_device(self):
         device = object()
         cmd = Action()
@@ -55,7 +55,7 @@ class TestAction(StdoutTestCase):
         self.assertIs(cmd.device, device)
 
 
-class TestPipelineInit(StdoutTestCase):
+class TestPipelineInit(LavaDispatcherTestCase):
     class FakeAction(Action):
         def __init__(self):
             self.ran = False
@@ -109,7 +109,7 @@ class TestPipelineInit(StdoutTestCase):
         )
 
 
-class TestValidation(StdoutTestCase):
+class TestValidation(LavaDispatcherTestCase):
     def test_action_is_valid_if_there_are_not_errors(self):
         action = Action()
         action.__errors__ = [1]
@@ -263,7 +263,7 @@ class Factory:
         return job
 
 
-class TestPipeline(StdoutTestCase):
+class TestPipeline(LavaDispatcherTestCase):
     class FakeAction(Action):
         name = "fake-action"
 
@@ -468,7 +468,7 @@ class TestPipeline(StdoutTestCase):
         )
 
 
-class TestFakeActions(StdoutTestCase):
+class TestFakeActions(LavaDispatcherTestCase):
     class KeepConnection(Action):
         name = "keep-connection"
 
@@ -520,7 +520,7 @@ class TestFakeActions(StdoutTestCase):
         self.assertIsNot(conn, pipe.run_actions(conn, None))
 
 
-class TestStrategySelector(StdoutTestCase):
+class TestStrategySelector(LavaDispatcherTestCase):
     """
     Check the lambda operation
     """

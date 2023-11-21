@@ -10,7 +10,7 @@ import re
 
 from lava_common.exceptions import JobError, LAVATimeoutError, TestError
 from lava_common.yaml import yaml_safe_load
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_multi import DummyLogger
 
 
@@ -19,7 +19,7 @@ class FakeConnection:
         self.match = match
 
 
-class TestSkipTimeouts(StdoutTestCase):
+class TestSkipTimeouts(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.testdef = os.path.join(
@@ -69,7 +69,7 @@ class TestSkipTimeouts(StdoutTestCase):
         self.assertFalse(self.fatal_shell.timeout.can_skip(self.fatal_shell.parameters))
 
 
-class TestPatterns(StdoutTestCase):
+class TestPatterns(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.testdef = os.path.join(

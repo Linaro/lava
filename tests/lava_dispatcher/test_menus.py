@@ -14,11 +14,11 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.menus.menus import SelectorMenu
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.strings import substitute
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
-class TestSelectorMenu(StdoutTestCase):
+class TestSelectorMenu(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.menu = SelectorMenu()
@@ -67,7 +67,7 @@ class MenuFactory(Factory):
         return job
 
 
-class TestUefi(StdoutTestCase):
+class TestUefi(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = MenuFactory()

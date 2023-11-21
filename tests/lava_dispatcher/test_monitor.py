@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from lava_dispatcher.actions.boot import AutoLoginAction
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 def find_autologin(job):
@@ -18,7 +18,7 @@ def find_autologin(job):
     return False
 
 
-class TestMonitorPipeline(StdoutTestCase):
+class TestMonitorPipeline(LavaDispatcherTestCase):
     def test_autologin_normal_kvm(self):
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")

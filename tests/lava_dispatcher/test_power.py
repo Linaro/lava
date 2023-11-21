@@ -5,10 +5,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
-class TestPowerAction(StdoutTestCase):
+class TestPowerAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
