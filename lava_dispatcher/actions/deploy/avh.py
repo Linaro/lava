@@ -21,6 +21,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.utils.network import retry
 
 
 class Avh(Deployment):
@@ -120,35 +121,48 @@ class AvhDeploy(Action):
                     ApplyOverlayImage(image_key=image, use_root_partition=True)
                 )
 
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_auth_login(self, api_instance):
+        return api_instance.v1_auth_login({"api_token": self.avh["api_token"]})
+
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_get_models(self, api_instance):
+        return api_instance.v1_get_models()
+
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_get_projects(self, api_instance):
+        return api_instance.v1_get_projects()
+
+    @retry(exception=AvhApi.ApiException, retries=6, delay=5)
+    def v1_create_image(self, api_instance, **kwargs):
+        return api_instance.v1_create_image(**kwargs)
+
+    @retry(
+        exception=AvhApi.ApiException, expected=NotFoundException, retries=6, delay=5
+    )
+    def v1_delete_image(self, api_instance):
+        return api_instance.v1_delete_image(self.image_id)
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         self.api_config = AvhApi.Configuration(self.avh["api_endpoint"])
         with AvhApi.ApiClient(self.api_config) as api_client:
             api_instance = arm_api.ArmApi(api_client)
-            try:
-                token_response = api_instance.v1_auth_login(
-                    {"api_token": self.avh["api_token"]}
-                )
-                self.api_config.access_token = token_response.token
-                self.logger.info("AVH API session created")
-            except AvhApi.ApiException as exc:
-                raise JobError(f"AVH API exception when calling v1_auth_login: {exc}")
+            token_response = self.v1_auth_login(api_instance)
+            self.api_config.access_token = token_response.token
+            self.logger.info("AVH API session created")
+
             # Check if the specified model is supported
-            try:
-                models = api_instance.v1_get_models()
-            except AvhApi.ApiException as exc:
-                raise JobError(f"AVH API exception when calling v1_get_models: {exc}")
+            models = self.v1_get_models(api_instance)
             model_list = [model.flavor for model in models]
             if self.avh["model"] not in model_list:
                 raise JobError(
                     f"{self.avh['model']} is not a supported model! Supported AVH models are: {', '.join(model_list)}"
                 )
+
             # Find project ID
-            try:
-                projects = api_instance.v1_get_projects()
-            except AvhApi.ApiException as exc:
-                raise JobError(f"AVH API exception when calling v1_get_projects: {exc}")
+            projects = self.v1_get_projects(api_instance)
             for project in projects:
                 if project.name == self.avh["project_name"]:
                     self.avh["project_id"] = project.id
@@ -202,20 +216,17 @@ class AvhDeploy(Action):
             api_instance = arm_api.ArmApi(api_client)
             self.logger.info(f"Uploading: {fw_path}")
             with open(fw_path, "rb") as f:
-                try:
-                    image = api_instance.v1_create_image(
-                        type="fwpackage",
-                        encoding="plain",
-                        name=fw_name,
-                        project=self.avh["project_id"],
-                        file=f,
-                    )
-                    self.image_id = image.id
-                    self.avh["image_id"] = self.image_id
-                except AvhApi.ApiException as exc:
-                    raise JobError(
-                        f"AVH API exception when calling v1_create_image: {exc}"
-                    )
+                uploaded_image = self.v1_create_image(
+                    api_instance,
+                    type="fwpackage",
+                    encoding="plain",
+                    name=fw_name,
+                    project=self.avh["project_id"],
+                    file=f,
+                )
+                self.image_id = uploaded_image.id
+                self.avh["image_id"] = self.image_id
+
             self.logger.info(f"AVH image ID: {self.avh['image_id']}")
 
         self.set_namespace_data(
@@ -232,13 +243,4 @@ class AvhDeploy(Action):
             self.logger.info(f"Deleting AVH image {self.image_id}")
             with AvhApi.ApiClient(self.api_config) as api_client:
                 api_instance = arm_api.ArmApi(api_client)
-                try:
-                    api_instance.v1_delete_image(self.image_id)
-                except NotFoundException:
-                    self.logger.debug(
-                        f"Image {self.image_id} not found. This is expected if the image is consumed by a instance already."
-                    )
-                except AvhApi.ApiException as exc:
-                    raise JobError(
-                        f"AVH API exception when calling v1_delete_image: {exc}"
-                    )
+                self.v1_delete_image(api_instance)

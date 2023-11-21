@@ -179,14 +179,6 @@ class TestAvhActions(StdoutTestCase):
         ),
     )
     @patch(
-        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance",
-        return_value=Instance(
-            id="7f4f241c-821f-4219-905f-c3b50b0db5dd",
-            name="lava-avh-rpi4b-1.1-4-6A2cA",
-            flavor="rpi4b",
-        ),
-    )
-    @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance_state",
         side_effect=[InstanceState("creating"), InstanceState("on")],
     )
@@ -220,7 +212,6 @@ class TestAvhActions(StdoutTestCase):
         v1_auth_login,
         v1_create_instance,
         v1_get_instance_state,
-        v1_get_instance,
         v1_get_instance_console,
         *args,
     ):
@@ -256,8 +247,6 @@ class TestAvhActions(StdoutTestCase):
                 call("7f4f241c-821f-4219-905f-c3b50b0db5dd"),
             ]
         )
-
-        v1_get_instance.assert_called_once_with("7f4f241c-821f-4219-905f-c3b50b0db5dd")
 
         v1_get_instance_console.assert_called_once_with(
             "7f4f241c-821f-4219-905f-c3b50b0db5dd"

@@ -18,6 +18,7 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.network import retry
 
 
 class BootAvh(Boot):
@@ -72,6 +73,32 @@ class CallAvhAction(Action):
         if self.bootargs and not isinstance(self.bootargs, dict):
             raise JobError("'boot.bootargs' should be a dictionary")
 
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_auth_login(self, api_instance):
+        return api_instance.v1_auth_login({"api_token": self.avh["api_token"]})
+
+    @retry(exception=AvhApi.ApiException, retries=6, delay=5)
+    def v1_create_instance(self, api_instance, instance_options):
+        return api_instance.v1_create_instance(instance_options)
+
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_get_instance_state(self, api_instance):
+        return api_instance.v1_get_instance_state(self.instance_id)
+
+    @retry(exception=AvhApi.ApiException, retries=3, delay=1)
+    def v1_get_instance(self, api_instance):
+        return api_instance.v1_get_instance(self.instance_id)
+
+    @retry(exception=AvhApi.ApiException, retries=6, delay=5)
+    def v1_get_instance_console(self, api_instance):
+        return api_instance.v1_get_instance_console(self.instance_id)
+
+    @retry(
+        exception=AvhApi.ApiException, expected=NotFoundException, retries=6, delay=5
+    )
+    def v1_delete_instance(self, api_instance):
+        return api_instance.v1_delete_instance(self.instance_id)
+
     def run(self, connection, max_end_time):
         self.avh = self.get_namespace_data(
             action="deploy-avh", label="deploy-avh", key="avh"
@@ -86,14 +113,9 @@ class CallAvhAction(Action):
         with AvhApi.ApiClient(self.api_config) as api_client:
             api_instance = arm_api.ArmApi(api_client)
             # Log in
-            try:
-                token_response = api_instance.v1_auth_login(
-                    {"api_token": self.avh["api_token"]}
-                )
-                self.api_config.access_token = token_response.token
-                self.logger.info("AVH API session created")
-            except AvhApi.ApiException as exc:
-                raise JobError(f"AVH API exception when calling v1_auth_login: {exc}")
+            token_response = self.v1_auth_login(api_instance)
+            self.api_config.access_token = token_response.token
+            self.logger.info("AVH API session created")
 
             # Assemble instance create options
             instance_options = {
@@ -112,48 +134,20 @@ class CallAvhAction(Action):
                     boot_options["restore_boot_args"] = self.bootargs.get("restore")
                 instance_options["boot_options"] = boot_options
             # Create instance
-            try:
-                self.logger.info(
-                    f"Creating AVH instance with options: {instance_options}"
-                )
-                instance_return = api_instance.v1_create_instance(instance_options)
-                self.instance_id = instance_return.id
-            except AvhApi.ApiException as exc:
-                raise JobError(
-                    f"AVH API exception when calling v1_create_instance: {exc}"
-                )
+            self.logger.info(f"Creating AVH instance with options: {instance_options}")
+            instance_return = self.v1_create_instance(api_instance, instance_options)
+            self.instance_id = instance_return.id
             # Wait for device ready
-            try:
-                instance_state = api_instance.v1_get_instance_state(self.instance_id)
-                while instance_state != InstanceState("on"):
-                    time.sleep(3)
-                    instance_state = api_instance.v1_get_instance_state(
-                        self.instance_id
-                    )
-                    self.logger.info(f"Instance state: {instance_state}")
-                    if instance_state == InstanceState("error"):
-                        raise Exception("Instance entered error state")
-            except AvhApi.ApiException as exc:
-                raise JobError(
-                    f"AVH API exception when calling v1_get_instance_state: {exc}"
-                )
-            finally:
-                try:
-                    instance = api_instance.v1_get_instance(self.instance_id)
-                    self.logger.info(f"AVH instance attributes:\n{instance.to_str()}")
-                except AvhApi.ApiException as exc:
-                    raise JobError(
-                        f"AVH API exception when calling v1_get_instance: {exc}"
-                    )
+            instance_state = self.v1_get_instance_state(api_instance)
+            while instance_state != InstanceState("on"):
+                time.sleep(3)
+                instance_state = self.v1_get_instance_state(api_instance)
+                self.logger.info(f"Instance state: {instance_state}")
+                if instance_state == InstanceState("error"):
+                    raise Exception("Instance entered error state")
 
             # Get device console websocket url
-            time.sleep(3)
-            try:
-                console_ws = api_instance.v1_get_instance_console(self.instance_id)
-            except AvhApi.ApiException as exc:
-                raise JobError(
-                    f"AVH API exception when calling v1_get_instance_console: {exc}"
-                )
+            console_ws = self.v1_get_instance_console(api_instance)
 
         # Connect to device
         if "docker" in self.parameters:
@@ -193,15 +187,7 @@ class CallAvhAction(Action):
             self.logger.info(f"Deleting AVH instance {self.instance_id}")
             with AvhApi.ApiClient(self.api_config) as api_client:
                 api_instance = arm_api.ArmApi(api_client)
-                try:
-                    api_instance.v1_delete_instance(self.instance_id)
-                except NotFoundException as exc:
-                    self.logger.info(f"Instance {self.instance_id} not found.")
-                    self.logger.debug(str(exc))
-                except AvhApi.ApiException as exc:
-                    raise JobError(
-                        f"AVH API exception when calling v1_delete_instance: {exc}"
-                    )
+                self.v1_delete_instance(api_instance)
 
         if self.docker_cleanup_required:
             self.logger.info(f"Stopping the websocat container {self.docker.__name__}")
