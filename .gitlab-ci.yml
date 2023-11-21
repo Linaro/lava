@@ -190,43 +190,6 @@ docker-aarch64-server: *docker_aarch64
 ##########
 # Deploy #
 ##########
-
-reprepro-master:
-  <<: *job
-  stage: deploy
-  # Environments and therefore runners are tied to
-  # a specific branch. You'll see this message:
-  # "This job is creating a deployment to reprepro-master and
-  # will overwrite the latest deployment."
-  tags: [deploy]
-  needs:
-    - debian/11
-    - debian/12
-  except: []
-  only: [schedules]
-  environment:
-    name: reprepro-master
-    url: https://apt.lavasoftware.org
-
-reprepro-release:
-  <<: *job
-  stage: deploy
-  # Environments and therefore runners are tied to
-  # a specific branch. You'll see this message:
-  # "This job is creating a deployment to reprepro-release and
-  # will overwrite the latest deployment."
-  tags: [deploy]
-  only:
-    refs:
-      - tags
-  needs:
-    - debian/11
-    - debian/12
-  except: [schedules]
-  environment:
-    name: reprepro-release
-    url: https://apt.lavasoftware.org
-
 .publish-packages:
   stage: deploy
   needs:
