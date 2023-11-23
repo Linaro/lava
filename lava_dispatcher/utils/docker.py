@@ -66,7 +66,7 @@ class DockerRun:
         self.__workdir__ = workdir
 
     def init(self, init):
-        self.__init__ = init
+        self.__init = init
 
     def add_device(self, device, skip_missing=False):
         if not Path(device).exists() and skip_missing:
@@ -115,7 +115,7 @@ class DockerRun:
 
     def start_options(self):
         cmd = ["--rm"]
-        if self.__init__:
+        if self.__init:
             cmd.append("--init")
         if self.__name__:
             cmd.append(f"--name={self.__name__}")
