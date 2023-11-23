@@ -13,6 +13,7 @@ import time
 import traceback
 import warnings
 from functools import reduce
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -28,6 +29,9 @@ from lava_common.exceptions import (
 from lava_common.log import YAMLLogger
 from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
+
+if TYPE_CHECKING:
+    from .job import Job
 
 
 class InternalObject:
@@ -75,7 +79,7 @@ class Pipeline:
     of the per-action log handler.
     """
 
-    def __init__(self, parent=None, job=None, parameters=None):
+    def __init__(self, job: Job, parent=None, parameters=None):
         self.actions = []
         self.parent = None
         self.parameters = {} if parameters is None else parameters
@@ -120,13 +124,10 @@ class Pipeline:
 
         # Compute the timeout
         global_timeouts = []
-        # FIXME: Only needed for the auto-tests
-        if self.job is not None:
-            if self.job.device is not None:
-                # First, the device level overrides
-                global_timeouts.append(self.job.device.get("timeouts", {}))
-            # Then job level overrides
-            global_timeouts.append(self.job.parameters.get("timeouts", {}))
+        # First, the device level overrides
+        global_timeouts.append(self.job.device.get("timeouts", {}))
+        # Then job level overrides
+        global_timeouts.append(self.job.parameters.get("timeouts", {}))
 
         # Set the timeout. The order is:
         # 1. global action timeout

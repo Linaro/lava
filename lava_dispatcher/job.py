@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import datetime
 import errno
@@ -11,6 +12,7 @@ import shutil
 import tempfile
 import time
 import traceback
+from typing import TYPE_CHECKING
 
 import pytz
 
@@ -22,6 +24,14 @@ from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
+
+if TYPE_CHECKING:
+    from logging import Logger
+    from typing import Any
+
+    from lava_common.timeout import Timeout
+
+    from .device import Device
 
 
 class Job:
@@ -40,17 +50,24 @@ class Job:
     device for this job - one job, one device.
     """
 
-    def __init__(self, job_id, parameters, logger):
+    def __init__(
+        self,
+        job_id: int,
+        parameters: dict[str, Any],
+        logger: Logger,
+        device: Device,
+        timeout: Timeout,
+    ):
         self.job_id = job_id
         self.logger = logger
-        self.device = None
+        self.device = device
         self.parameters = parameters
         self.__context__ = PipelineContext()
         self.pipeline = None
         self.connection = None
         self.triggers = []  # actions can add trigger strings to the run a diagnostic
         self.diagnostics = [DiagnoseNetwork]
-        self.timeout = None
+        self.timeout = timeout
         self.protocols = []
         self.compatibility = 2
         # Was the job cleaned

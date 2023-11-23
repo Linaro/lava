@@ -15,7 +15,6 @@ from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.ipxe import BootloaderAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
@@ -151,8 +150,10 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         }
         (rendered, _) = self.factory.create_device("x86-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = Job(4212, parameters, None)
-        job.device = device
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
@@ -162,17 +163,20 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         ramdisk = parameters["actions"]["deploy"]["ramdisk"]
 
         overlay.validate()
-        assert overlay.method == "ipxe"
-        assert overlay.commands == [
-            "dhcp net0",
-            "set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}",
-            "set extraargs  ip=dhcp",
-            "kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}",
-            "initrd tftp://{SERVER_IP}/{RAMDISK}",
-            "boot",
-        ]
-        assert overlay.use_bootscript is False
-        assert overlay.lava_mac == "00:90:05:af:00:7d"
+        self.assertEqual(overlay.method, "ipxe")
+        self.assertEqual(
+            overlay.commands,
+            [
+                "dhcp net0",
+                "set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}",
+                "set extraargs  ip=dhcp",
+                "kernel tftp://{SERVER_IP}/{KERNEL} ${extraargs} ${console}",
+                "initrd tftp://{SERVER_IP}/{RAMDISK}",
+                "boot",
+            ],
+        )
+        self.assertIs(overlay.use_bootscript, False)
+        self.assertEqual(overlay.lava_mac, "00:90:05:af:00:7d")
 
         substitution_dictionary = {
             "{SERVER_IP}": ip_addr,

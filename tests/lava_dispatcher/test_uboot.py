@@ -20,7 +20,6 @@ from lava_dispatcher.actions.boot.u_boot import (
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
@@ -291,10 +290,11 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
-        job = Job(4212, parameters, None)
-        job.device = device
+        device = NewDevice(yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0]))
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()

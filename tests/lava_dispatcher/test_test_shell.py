@@ -9,9 +9,9 @@ import os
 import re
 
 from lava_common.exceptions import JobError, LAVATimeoutError, TestError
+from lava_common.log import YAMLLogger
 from lava_common.yaml import yaml_safe_load
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.lava_dispatcher.test_multi import DummyLogger
 
 
 class FakeConnection:
@@ -30,7 +30,6 @@ class TestSkipTimeouts(LavaDispatcherTestCase):
         )
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/qemu-reboot.yaml", validate=True)
-        self.job.logger = DummyLogger()
         self.job.validate()
         self.ret = False
         test_retry = [
@@ -44,7 +43,7 @@ class TestSkipTimeouts(LavaDispatcherTestCase):
             if action.name == "lava-test-shell"
         ][0]
         print(self.skipped_shell.parameters["timeout"])
-        self.skipped_shell.logger = DummyLogger()
+        self.skipped_shell.logger = YAMLLogger("dispatcher")
         test_retry = [
             action
             for action in self.job.pipeline.actions
@@ -80,7 +79,6 @@ class TestPatterns(LavaDispatcherTestCase):
         )
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        self.job.logger = DummyLogger()
         self.job.validate()
         self.ret = False
         test_retry = [
@@ -93,7 +91,7 @@ class TestPatterns(LavaDispatcherTestCase):
             for action in test_retry.pipeline.actions
             if action.name == "lava-test-shell"
         ][0]
-        self.test_shell.logger = DummyLogger()
+        self.test_shell.logger = YAMLLogger("dispatcher")
 
     def test_case_result(self):
         self.assertEqual([], self.job.pipeline.errors)

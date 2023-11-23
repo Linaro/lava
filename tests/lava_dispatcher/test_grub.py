@@ -18,7 +18,6 @@ from lava_dispatcher.actions.boot import (
 from lava_dispatcher.actions.boot.grub import GrubMainAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
@@ -164,8 +163,10 @@ class TestGrubAction(LavaDispatcherTestCase):
         }
         (rendered, _) = self.factory.create_device("d02-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = Job(4212, parameters, None)
-        job.device = device
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()

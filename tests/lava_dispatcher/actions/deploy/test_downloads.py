@@ -4,123 +4,115 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
-import pytest
+from unittest.mock import ANY as MOCK_ANY
+from unittest.mock import MagicMock, patch
 
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.downloads import (
     DownloadsAction,
     PostprocessWithDocker,
 )
-from lava_dispatcher.job import Job
-from tests.lava_dispatcher.test_basic import Factory
+
+from ...test_basic import Factory, LavaDispatcherTestCase
 
 
-@pytest.fixture
-def job(tmp_path):
-    job = Job(1234, {}, None)
-    return job
+class TestDownloads(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.job = self.create_simple_job()
 
-
-def test_downloads_action(job):
-    action = DownloadsAction()
-    action.level = 2
-    action.job = job
-    action.populate(
-        {
-            "images": {"rootfs": {"url": "https://example.com/image.img"}},
-            "namespace": "common",
-        }
-    )
-    download = action.pipeline.actions[0]
-    assert isinstance(download, DownloaderAction)
-    assert download.key == "rootfs"
-    assert str(download.path) == f"{job.tmp_dir}/downloads/common"
-    assert download.params == {"url": "https://example.com/image.img"}
-    assert not download.uniquify
-
-
-def test_uniquify(job):
-    action = DownloadsAction()
-    action.level = 2
-    action.job = job
-    action.populate(
-        {
-            "uniquify": True,
-            "images": {
-                "rootfs": {"url": "https://example.com/rootfs/image"},
-                "boot": {"url": "https://example.com/boot/image"},
-            },
-            "namespace": "common",
-        }
-    )
-    download_rootfs = action.pipeline.actions[0].pipeline.actions[0]
-    download_boot = action.pipeline.actions[1].pipeline.actions[0]
-
-    assert download_rootfs.path != download_boot.path
-
-
-def test_downloads_action_adds_docker_action():
-    factory = Factory()
-    factory.validate_job_strict = True
-    job = factory.create_job(
-        "qemu01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
-    )
-
-    deploy = job.pipeline.actions[0]
-    action = deploy.pipeline.actions[-1]
-    assert isinstance(action, PostprocessWithDocker)
-    assert str(action.path) == f"{job.tmp_dir}/downloads/common"
-
-
-@pytest.fixture
-def action(tmp_path):
-    action = PostprocessWithDocker(tmp_path)
-    action.populate(
-        {
-            "postprocess": {
-                "docker": {"image": "foo", "steps": ["date", "echo HELLO WORLD"]}
+    def test_downloads_action(self):
+        action = DownloadsAction()
+        action.level = 2
+        action.job = self.job
+        action.populate(
+            {
+                "images": {"rootfs": {"url": "https://example.com/image.img"}},
+                "namespace": "common",
             }
-        }
-    )
-    return action
+        )
+        download = action.pipeline.actions[0]
+        self.assertIsInstance(download, DownloaderAction)
+        self.assertEqual(download.key, "rootfs")
+        self.assertEqual(str(download.path), f"{self.job.tmp_dir}/downloads/common")
+        self.assertEqual(download.params, {"url": "https://example.com/image.img"})
+        self.assertFalse(download.uniquify)
+
+    def test_uniquify(self):
+        action = DownloadsAction()
+        action.level = 2
+        action.job = self.job
+        action.populate(
+            {
+                "uniquify": True,
+                "images": {
+                    "rootfs": {"url": "https://example.com/rootfs/image"},
+                    "boot": {"url": "https://example.com/boot/image"},
+                },
+                "namespace": "common",
+            }
+        )
+        download_rootfs = action.pipeline.actions[0].pipeline.actions[0]
+        download_boot = action.pipeline.actions[1].pipeline.actions[0]
+
+        self.assertNotEqual(download_rootfs.path, download_boot.path)
+
+    def test_downloads_action_adds_docker_action(self):
+        factory = Factory()
+        factory.validate_job_strict = True
+        job = factory.create_job(
+            "qemu01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+        )
+
+        deploy = job.pipeline.actions[0]
+        action = deploy.pipeline.actions[-1]
+        self.assertIsInstance(action, PostprocessWithDocker)
+        self.assertEqual(str(action.path), f"{job.tmp_dir}/downloads/common")
+
+    def test_postprocess_with_docker_populate_missing_data(self):
+        action = PostprocessWithDocker(self.create_temporary_directory())
+        action.populate({})
+
+    def test_postprocess_with_docker_validate(self):
+        action = PostprocessWithDocker(self.create_temporary_directory())
+        self.assertFalse(action.validate())
+        self.assertIn("postprocessing steps missing", action.errors)
+        action.steps = ["date"]
+        action.errors.clear()
+        self.assertTrue(action.validate())
+        self.assertEqual(len(action.errors), 0)
 
 
-def test_postprocess_with_docker_populate(action):
-    assert action.docker_parameters["image"] == "foo"
-    assert "date" in action.steps
-    assert "echo HELLO WORLD" in action.steps
+class TestPostprocessDocker(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.job = self.create_simple_job()
+        self.action = PostprocessWithDocker(self.create_temporary_directory())
+        self.action.job = self.job
+        self.action.populate(
+            {
+                "postprocess": {
+                    "docker": {"image": "foo", "steps": ["date", "echo HELLO WORLD"]}
+                }
+            }
+        )
 
+    def test_postprocess_with_docker_populate(self):
+        self.assertEqual(self.action.docker_parameters["image"], "foo")
+        self.assertIn("date", self.action.steps)
+        self.assertIn("echo HELLO WORLD", self.action.steps)
 
-def test_postprocess_with_docker_populate_missing_data(tmp_path):
-    action = PostprocessWithDocker(tmp_path)
-    action.populate({})
+    def test_postprocess_with_docker_run(self):
+        origconn = MagicMock()
+        with patch("lava_dispatcher.utils.docker.DockerRun.run") as docker_run_mock:
+            conn = self.action.run(origconn, 4242)
 
+        self.assertIs(conn, origconn)
 
-def test_postprocess_with_docker_validate(tmp_path):
-    action = PostprocessWithDocker(tmp_path)
-    assert not action.validate()
-    assert "postprocessing steps missing" in action.errors
-    action.steps = ["date"]
-    action.errors.clear()
-    assert action.validate()
-    assert len(action.errors) == 0
+        script = self.action.path / "postprocess.sh"
+        self.assertTrue(script.exists())
+        script_text = script.read_text()
+        self.assertIn("date\n", script_text)
+        self.assertIn("echo HELLO WORLD\n", script_text)
 
-
-def test_postprocess_with_docker_run(action, job, mocker):
-    action.job = job
-
-    run = mocker.patch("lava_dispatcher.utils.docker.DockerRun.run")
-
-    origconn = mocker.MagicMock()
-    conn = action.run(origconn, 4242)
-
-    assert conn is origconn
-
-    script = action.path / "postprocess.sh"
-    assert script.exists()
-    script_text = script.read_text()
-    assert "date\n" in script_text
-    assert "echo HELLO WORLD\n" in script_text
-
-    run.assert_called_with(mocker.ANY, action=action)
+        docker_run_mock.assert_called_with(MOCK_ANY, action=self.action)

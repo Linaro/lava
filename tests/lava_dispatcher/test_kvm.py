@@ -36,7 +36,7 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         """
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        pipe = Pipeline()
+        pipe = Pipeline(job=job)
         action = Action()
         action.name = "deploy_linaro_image"
         action.description = "deploy action using preset subactions in an internal pipe"
@@ -47,7 +47,7 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         action.parameters = {"image": "file:///none/images/bad-kvm-debian-wheezy.img"}
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
-        deploy_pipe = Pipeline(action)
+        deploy_pipe = Pipeline(job=job, parent=action)
         action = Action()
         action.name = "downloader"
         action.description = "download image wrapper, including an internal retry pipe"
@@ -55,8 +55,9 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.1")
-        # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
-        retry_pipe = Pipeline(action)
+        # a formal RetryAction would contain a pre-built pipeline which can be
+        # inserted directly
+        retry_pipe = Pipeline(job=job, parent=action)
         action = Action()
         action.name = "wget"
         action.description = "do the download with retries"
