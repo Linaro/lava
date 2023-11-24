@@ -138,18 +138,19 @@ class CallQemuAction(Action):
     def get_raw_version(self, architecture):
         if "docker" in self.parameters:
             docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
-            docker.run(
+            ver_strs = docker.run(
                 *shlex.split(
                     "qemu-system-%s --version" % self.get_qemu_arch(architecture)
                 ),
-                action=self
+                action=self,
+                capture=True
             )
-            return True
-        ver_strs = subprocess.check_output(
-            ("qemu-system-%s" % architecture, "--version")
-        )
+        else:
+            ver_strs = subprocess.check_output(
+                ("qemu-system-%s" % architecture, "--version")
+            ).decode("utf-8", errors="replace")
         # line is QEMU emulator version xxxx
-        ver_str = ver_strs.split()[3].decode("utf-8", errors="replace")
+        ver_str = ver_strs.split()[3]
         arch_str = (
             subprocess.check_output(("uname", "-m"))
             .strip()
