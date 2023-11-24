@@ -2195,7 +2195,7 @@ class Notification(models.Model):
 
     QUERY_LIMIT = 5
 
-    test_job = models.OneToOneField(TestJob, null=False, on_delete=models.CASCADE)
+    test_job = models.OneToOneField(TestJob, on_delete=models.CASCADE, primary_key=True)
 
     REGRESSION = 0
     PROGRESSION = 1
