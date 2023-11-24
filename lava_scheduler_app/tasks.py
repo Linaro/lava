@@ -16,7 +16,7 @@ def async_send_notifications(
     job_id: int, state: int, health: int, old_health: int
 ) -> None:
     try:
-        job = TestJob.objects.get(id=job_id)
+        job = TestJob.objects.select_related("notification").get(id=job_id)
     except TestJob.DoesNotExist:
         return
 
