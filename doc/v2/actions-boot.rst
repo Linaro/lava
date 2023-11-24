@@ -442,6 +442,59 @@ method
 The boot ``method`` determines how the device is booted and which commands and
 prompts are used to determine a successful boot.
 
+.. index:: boot method avh
+
+.. _boot_method_avh:
+
+avh
+===
+
+The ``avh`` boot method allows you to create and boot Arm Virtual Hardware
+models. Example definition:
+
+.. code-block:: yaml
+
+  - boot:
+      method: avh
+      bootargs:
+        normal: earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M
+        restore: earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 console=tty0 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M init=/usr/lib/raspi-config/init_resize.sh
+      timeout:
+        minutes: 20
+      docker:
+        image: ghcr.io/vi/websocat:1.12.0
+        local: true
+      prompts:
+      - "pi@raspberrypi:"
+      - "root@raspberrypi:"
+      auto_login:
+        login_prompt: "login:"
+        username: pi
+        password_prompt: 'Password:'
+        password: raspberry
+        login_commands:
+        - sudo su
+
+bootargs
+--------
+The ``bootargs`` dictionary allows you to override the default Kernel bootargs
+provided by the AVH model. The ``normal`` key is used for every regular boot.
+The ``restore`` key, if present, is used for a first boot prior to the device
+being declared ready. It is expected that the device will reboot itself to
+indicate that this phase is complete. It is used, for example, on the Raspberry
+Pi 4 to expand the root FS.
+
+docker
+------
+``avh`` boot method uses `websocat <https://github.com/vi/websocat>`_ for
+connecting to AVH device serial console. `ghcr.io/vi/websocat:1.12.0 <https://github.com/vi/websocat/pkgs/container/websocat>`_
+docker image is used by default. A docker image specified here overrides the
+default image.
+
+.. note:: Running an ``avh`` deploy before running an ``avh`` boot is required.
+  The boot method depends on the image ID provided by the deploy method to
+  create AVH instance.
+
 .. index:: boot method bootloader
 
 .. _boot_method_bootloader:
@@ -1533,7 +1586,7 @@ Example definition :
 .. note::
     Serial availability check and bootloader corruption actions are skipped when:
         - First item in ``commands`` block is ``bcu: reset usb``
-    Or 
+    Or
         - ``commands`` block contain ``bcu`` commands only
 
     This behavior is useful to recover bricked devices or to use bcu as a standalone action.

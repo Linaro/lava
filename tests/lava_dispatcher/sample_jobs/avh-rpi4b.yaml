@@ -1,0 +1,68 @@
+device_type: avh
+job_name: avh-rpi4b
+
+timeouts:
+  job:
+    minutes: 60
+
+priority: medium
+visibility: public
+
+secrets:
+  avh_api_token: avh_api_token
+
+actions:
+- deploy:
+    to: avh
+    avh:
+      model: rpi4b
+      api_endpoint: https://app.avh.arm.com/api
+      project_name: "Default Project"
+    timeout:
+      minutes: 30
+    images:
+      rootfs:
+        url: https://example.com/rpi4b/nand
+        format: ext4
+        root_partition: 1
+      kernel:
+        url: https://example.com/rpi4b/kernel
+      dtb:
+        url: https://example.com/rpi4b/devicetree
+
+- boot:
+    method: avh
+    bootargs:
+      normal: earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M log_buf_len=1M
+      restore: earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 console=tty0 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M log_buf_len=1M init=/usr/lib/raspi-config/init_resize.sh
+    timeout:
+      minutes: 20
+    docker:
+      image: ghcr.io/vi/websocat:1.12.0
+      local: true
+    prompts:
+    - "pi@raspberrypi:"
+    - "root@raspberrypi:"
+    auto_login:
+      login_prompt: "login:"
+      username: pi
+      password_prompt: 'Password:'
+      password: raspberry
+      login_commands:
+      - sudo su
+
+- test:
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: health checks
+        run:
+          steps:
+          - lava-test-case kernel-info --shell uname -a
+          - lava-test-case network-info --shell ip a
+      name: health-checks
+      path: inline/health-checks.yaml

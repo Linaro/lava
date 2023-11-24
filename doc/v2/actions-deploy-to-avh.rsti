@@ -1,0 +1,118 @@
+.. index:: deploy to avh
+
+.. _deploy_to_avh:
+
+to: avh
+*******
+
+This deployment method handles the following tasks in serial.
+
+* Download the ``kernel``, ``dtb`` and ``rootfs`` images required by AVH custom firmware.
+* Generate a ``Info.plist`` file for the meta information about firmware version, type, build, unique identifier, and device identifier.
+* Create a zip package that contains the images and the ``Info.plist`` file.
+* Upload the zip package to AVH and save the image ID for the following avh boot method to consume.
+
+Example definition:
+
+.. code-block:: yaml
+
+  - deploy:
+      to: avh
+      avh:
+        model: rpi4b
+        api_endpoint: https://app.avh.arm.com/api
+        project_name: "Default Project"
+      timeout:
+        minutes: 30
+      images:
+        rootfs:
+          url: https://example.com/rpi4b/nand
+          format: ext4
+          # root partition for LAVA test overlay
+          root_partition: 1
+          # partition for custom overlays
+          partition: 1
+          overlays:
+            modules:
+              compression: xz
+              format: tar
+              path: /
+              url: https://example.com/rpi4b/modules.tar.xz
+        kernel:
+          url: https://example.com/rpi4b/kernel
+        dtb:
+          url: https://example.com/rpi4b/devicetree
+
+avh
+===
+
+A dictionary of AVH configuration.
+
+model
+-----
+
+This ``model`` key is crucial and mandatory. ``avh`` deploy action needs it to
+generate ``Info.plist`` file. ``avh`` boot action needs it to create instance.
+
+Here are the tested models in LAVA.
+
+* rpi4b
+* imx93
+
+Other models that capable to run Linux should work too.
+
+api_endpoint
+------------
+
+(optional): AVH API endpoint defaults to https://app.avh.arm.com/api.
+
+project_name
+------------
+
+(optional): AVH project name defaults to ``Default Project``.
+
+images
+======
+
+A dictionary of images to provide the images needed for creating AVH Linux
+firmware zip package.
+
+rootfs
+------
+
+OS disk image file.
+
+url
+^^^
+
+.. include:: actions-deploy-images-url.rsti
+
+format
+^^^^^^
+
+Specify disk image format for LAVA to apply overlay. ``ext4`` is the only
+supported format now.
+
+root_partition
+^^^^^^^^^^^^^^
+
+Specify disk image root partition index for LAVA to apply overlay. Disk image
+partition index 0 usually is the boot partition, while index 1 usually is the
+root partition.
+
+overlays
+^^^^^^^^
+
+AVH doesn't support adding custom Kernel modules to custom Linux firmware
+package yet. Fortunately, this is supported in LAVA by applying custom
+``overlays.modules`` into the ``rootfs`` image.
+
+kernel
+------
+
+The Linux kernel in the ``Image`` format.
+
+dtb
+---
+
+The device tree for Linux in binary ``.dtb`` format.

@@ -14,6 +14,7 @@ import os
 import random
 import socket
 import subprocess  # nosec - internal use.
+import time
 from contextvars import ContextVar
 
 import netifaces
@@ -26,7 +27,7 @@ from lava_common.constants import (
     XNBD_PORT_RANGE_MAX,
     XNBD_PORT_RANGE_MIN,
 )
-from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 
 
 def dispatcher_gateway():
@@ -164,3 +165,37 @@ def requests_retry():
     session.mount("https://", adapter)
     requests_session.set(session)
     return session
+
+
+def retry(
+    exception: Exception = Exception,
+    expected: Exception = Exception,
+    retries: int = 3,
+    delay: int = 1,
+):
+    """
+    Retry the wrapped function `retires` times if the `exception` is thrown
+    :param exception: exception that trigger a retry attempt
+    :param: expected: expected exception
+    :param retries: the number of times to retry
+    :param delay: wait time after each attempt in seconds
+    """
+
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            for attempt in range(retries):
+                try:
+                    return func(*args, **kwargs)
+                except expected:
+                    pass
+                except exception as exc:
+                    if attempt == int(retries) - 1:
+                        raise JobError(
+                            f"Exception thrown when calling {func.__name__}: {exc}"
+                        )
+                    attempt += 1
+                    time.sleep(delay)
+
+        return wrapper
+
+    return decorator

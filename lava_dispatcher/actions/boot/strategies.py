@@ -9,6 +9,7 @@
 
 # pylint: disable=unused-import
 
+from lava_dispatcher.actions.boot.avh import BootAvh
 from lava_dispatcher.actions.boot.barebox import Barebox
 from lava_dispatcher.actions.boot.bootloader import BootBootloader
 from lava_dispatcher.actions.boot.cmsis_dap import CMSIS
