@@ -9,7 +9,6 @@
 
 # pylint: disable=unused-import
 
-from lava_dispatcher.actions.deploy.avh import Avh
 from lava_dispatcher.actions.deploy.docker import Docker
 from lava_dispatcher.actions.deploy.download import Download
 from lava_dispatcher.actions.deploy.downloads import Downloads
@@ -31,3 +30,8 @@ from lava_dispatcher.actions.deploy.tftp import Tftp
 from lava_dispatcher.actions.deploy.uboot_ums import UBootUMS
 from lava_dispatcher.actions.deploy.uuu import UUU
 from lava_dispatcher.actions.deploy.vemsd import VExpressMsd
+
+try:
+    from lava_dispatcher.actions.deploy.avh import Avh
+except ImportError:
+    ...

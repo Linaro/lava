@@ -9,7 +9,6 @@
 
 # pylint: disable=unused-import
 
-from lava_dispatcher.actions.boot.avh import BootAvh
 from lava_dispatcher.actions.boot.barebox import Barebox
 from lava_dispatcher.actions.boot.bootloader import BootBootloader
 from lava_dispatcher.actions.boot.cmsis_dap import CMSIS
@@ -38,3 +37,8 @@ from lava_dispatcher.actions.boot.u_boot import UBoot
 from lava_dispatcher.actions.boot.uefi import UefiShell
 from lava_dispatcher.actions.boot.uefi_menu import UefiMenu
 from lava_dispatcher.actions.boot.uuu import UUUBoot
+
+try:
+    from lava_dispatcher.actions.boot.avh import BootAvh
+except ImportError:
+    ...
