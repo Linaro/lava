@@ -17,6 +17,7 @@ else
       --pythonwarnings=default \
       --cache-clear --verbose \
       --junitxml=server.xml \
+      --random-order --random-order-bucket=global \
     tests/lava_common \
     tests/lava_scheduler_app \
     tests/lava_results_app \
