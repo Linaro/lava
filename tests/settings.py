@@ -17,5 +17,6 @@ tests_settings["DEVICES_PATH"] = str(base_tests_path / "lava_scheduler_app/devic
 tests_settings["HEALTH_CHECKS_PATH"] = str(
     base_tests_path / "lava_scheduler_app/health-checks"
 )
+tests_settings["PASSWORD_HASHERS"] = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 globals().update(**tests_settings)
