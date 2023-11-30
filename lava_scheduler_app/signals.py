@@ -49,6 +49,8 @@ def send_event(topic, user, data):
         # Create the context and socket
         context = zmq.Context.instance()
         socket = context.socket(zmq.PUSH)
+        if settings.EVENT_IPV6:
+            socket.setsockopt(zmq.IPV6, 1)
         socket.connect(settings.INTERNAL_EVENT_SOCKET)
 
         zmq_context.set(context)
