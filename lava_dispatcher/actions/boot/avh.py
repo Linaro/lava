@@ -153,10 +153,7 @@ class CallAvhAction(Action):
         if "docker" in self.parameters:
             docker_params = self.parameters["docker"]
         else:
-            docker_params = {
-                "image": self.websocat_docker_image,
-                "local": True,
-            }
+            docker_params = {"image": self.websocat_docker_image}
         self.docker = DockerRun.from_parameters(docker_params, self.job)
         if not docker_params.get("container_name"):
             self.docker.name(
