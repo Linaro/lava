@@ -282,6 +282,7 @@ INTERNAL_EVENT_SOCKET = "ipc:///tmp/lava.events"
 EVENT_SOCKET = "tcp://*:5500"
 EVENT_ADDITIONAL_SOCKETS = []
 EVENT_TOPIC = "org.lavasoftware"
+EVENT_IPV6 = False
 
 ###################
 # Celerey setting #

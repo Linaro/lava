@@ -57,6 +57,8 @@ async def zmq_proxy(app):
 
     logger.info("[INIT] Create input socket at %r", settings.INTERNAL_EVENT_SOCKET)
     pull = context.socket(zmq.PULL)
+    if settings.EVENT_IPV6:
+        pull.setsockopt(zmq.IPV6, 1)
     pull.bind(settings.INTERNAL_EVENT_SOCKET)
 
     logger.info("[INIT] Create the pub socket at %r", settings.EVENT_SOCKET)
@@ -64,6 +66,9 @@ async def zmq_proxy(app):
     pub.setsockopt(zmq.HEARTBEAT_IVL, 5000)
     pub.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
     pub.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+    if settings.EVENT_IPV6:
+        logger.info("[INIT] -> enable IPv6")
+        pub.setsockopt(zmq.IPV6, 1)
     pub.bind(settings.EVENT_SOCKET)
 
     if settings.EVENT_ADDITIONAL_SOCKETS:
@@ -79,6 +84,9 @@ async def zmq_proxy(app):
         sock.setsockopt(zmq.HEARTBEAT_IVL, 5000)
         sock.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
         sock.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+        if settings.EVENT_IPV6:
+            logger.info("[INIT] -> enable IPv6")
+            sock.setsockopt(zmq.IPV6, 1)
         # connect
         sock.connect(url)
         additional_sockets.append(sock)

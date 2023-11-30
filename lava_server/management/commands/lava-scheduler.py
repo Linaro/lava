@@ -89,7 +89,7 @@ class Command(LAVADaemonCommand):
         self.sub = self.context.socket(zmq.SUB)
         self.logger.debug("[INIT] -> %r", settings.EVENT_TOPIC)
         self.sub.setsockopt(zmq.SUBSCRIBE, settings.EVENT_TOPIC.encode())
-        if options["ipv6"]:
+        if options["ipv6"] or settings.EVENT_IPV6:
             self.logger.info("[INIT] -> enable IPv6")
             self.sub.setsockopt(zmq.IPV6, 1)
         self.sub.connect(options["event_url"])
