@@ -3,20 +3,25 @@
 # Author: Dean Birch <dean.birch@arm.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from unittest import SkipTest
 from unittest.mock import ANY, call, patch
 
-from avh_api.model.api_token import ApiToken
-from avh_api.model.image import Image
-from avh_api.model.instance_console_endpoint import InstanceConsoleEndpoint
-from avh_api.model.instance_return import InstanceReturn
-from avh_api.model.instance_state import InstanceState
-from avh_api.model.model import Model
-from avh_api.model.project import Project
-
 from lava_common.exceptions import JobError
-from lava_dispatcher.actions.boot.avh import BootAvh
-from lava_dispatcher.actions.deploy.avh import Avh
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+
+try:
+    from avh_api.model.api_token import ApiToken
+    from avh_api.model.image import Image
+    from avh_api.model.instance_console_endpoint import InstanceConsoleEndpoint
+    from avh_api.model.instance_return import InstanceReturn
+    from avh_api.model.instance_state import InstanceState
+    from avh_api.model.model import Model
+    from avh_api.model.project import Project
+
+    from lava_dispatcher.actions.boot.avh import BootAvh
+    from lava_dispatcher.actions.deploy.avh import Avh
+except ImportError:
+    raise SkipTest("AVH is not installed.")
 
 
 def test_accepts_deploy():
