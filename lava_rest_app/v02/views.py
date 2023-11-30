@@ -524,7 +524,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
         methods=("post",),
         detail=False,
         suffix="validate",
-        permission_classes=(AllowAny,),
+        permission_classes=(DjangoModelPermissions,),
         parser_classes=(PlainTextParser,),
     )
     def validate(self, request, **kwargs):

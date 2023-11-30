@@ -918,8 +918,18 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
     def test_devices_validate(self):
-        response = self.userclient.post(
-            reverse("api-root", args=[self.version]) + "devices/validate/",
+        device_validate_url = (
+            f"{reverse('api-root', args=[self.version])}devices/validate/"
+        )
+        not_allowed_response = self.userclient.post(
+            device_validate_url,
+            data=EXAMPLE_DEVICE,
+            content_type="text/plain",
+        )
+        assert not_allowed_response.status_code == 403  # nosec - unit test support
+
+        response = self.adminclient.post(
+            device_validate_url,
             data=EXAMPLE_DEVICE,
             content_type="text/plain",
         )
