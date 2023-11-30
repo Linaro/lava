@@ -439,6 +439,7 @@ class Command(BaseCommand):
         # job.output_dir uses job.submit_time
         jobs = jobs.values("pk", "end_time", "submit_time")
         # Loop on all jobs
+        index = -1
         for index, job_data in enumerate(jobs.iterator(chunk_size=100)):
             job = TestJob(**job_data)
             base = pathlib.Path(job.output_dir)
