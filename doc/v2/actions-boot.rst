@@ -492,8 +492,8 @@ docker image is used by default. A docker image specified here overrides the
 default image.
 
 .. note:: Running an ``avh`` deploy before running an ``avh`` boot is required.
-  The boot method depends on the image ID provided by the deploy method to
-  create AVH instance.
+  The boot method depends on the image path provided by the deploy method to
+  upload the image that needed by AVH instance creating.
 
 .. index:: boot method bootloader
 

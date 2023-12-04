@@ -7,13 +7,13 @@
 import os
 import plistlib
 import random
+import shutil
 import string
 import zipfile
 from pathlib import Path
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
-from avh_api.exceptions import NotFoundException
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -66,7 +66,6 @@ class AvhDeploy(Action):
             "rootfs",
         ]
         self.api_config = None
-        self.image_id = None
 
     def validate(self):
         super().validate()
@@ -132,16 +131,6 @@ class AvhDeploy(Action):
     @retry(exception=AvhApi.ApiException, retries=3, delay=1)
     def v1_get_projects(self, api_instance):
         return api_instance.v1_get_projects()
-
-    @retry(exception=AvhApi.ApiException, retries=6, delay=5)
-    def v1_create_image(self, api_instance, **kwargs):
-        return api_instance.v1_create_image(**kwargs)
-
-    @retry(
-        exception=AvhApi.ApiException, expected=NotFoundException, retries=6, delay=5
-    )
-    def v1_delete_image(self, api_instance):
-        return api_instance.v1_delete_image(self.image_id)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -211,24 +200,7 @@ class AvhDeploy(Action):
             self.logger.info(f"Adding: nand")
             zf.write(downloaded_images["rootfs"], arcname="nand")
 
-        # Upload firmware package
-        with AvhApi.ApiClient(self.api_config) as api_client:
-            api_instance = arm_api.ArmApi(api_client)
-            self.logger.info(f"Uploading: {fw_path}")
-            with open(fw_path, "rb") as f:
-                uploaded_image = self.v1_create_image(
-                    api_instance,
-                    type="fwpackage",
-                    encoding="plain",
-                    name=fw_name,
-                    project=self.avh["project_id"],
-                    file=f,
-                )
-                self.image_id = uploaded_image.id
-                self.avh["image_id"] = self.image_id
-
-            self.logger.info(f"AVH image ID: {self.avh['image_id']}")
-
+        self.avh["image_path"] = fw_path
         self.set_namespace_data(
             action=self.name, label=self.name, key="avh", value=self.avh
         )
@@ -239,8 +211,6 @@ class AvhDeploy(Action):
     def cleanup(self, connection):
         super().cleanup(connection)
 
-        if self.image_id:
-            self.logger.info(f"Deleting AVH image {self.image_id}")
-            with AvhApi.ApiClient(self.api_config) as api_client:
-                api_instance = arm_api.ArmApi(api_client)
-                self.v1_delete_image(api_instance)
+        if os.path.exists(self.path):
+            self.logger.debug(f"Cleaning up AVH deploy directory {self.path}")
+            shutil.rmtree(self.path)

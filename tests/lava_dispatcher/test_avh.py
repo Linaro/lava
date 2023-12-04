@@ -93,14 +93,9 @@ class TestAvhActions(StdoutTestCase):
     # Test deploy run.
     @patch("lava_dispatcher.actions.deploy.avh.Action.run")
     @patch("lava_dispatcher.actions.deploy.avh.random.choice", return_value="r")
-    @patch(
-        "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_create_image",
-        return_value=Image("active", id="18af26fe-8a5a-479a-80ec-013c54176d6f"),
-    )
     @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile.write")
     @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile")
     @patch("lava_dispatcher.actions.deploy.avh.plistlib.dump")
-    @patch("lava_dispatcher.actions.deploy.avh.open")
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_projects",
         return_value=[
@@ -122,11 +117,9 @@ class TestAvhActions(StdoutTestCase):
         v1_auth_login,
         v1_get_models,
         v1_get_projects,
-        file_open,
         plist_dump,
         zip_file,
         zf_write,
-        v1_create_image,
         *args,
     ):
         self.job.validate()
@@ -138,7 +131,6 @@ class TestAvhActions(StdoutTestCase):
         v1_get_models.assert_called_once_with()
         v1_get_projects.assert_called_once_with()
 
-        file_open.has_calls([call(ANY, "wb")])
         # ANY: Info.plist file path with random string inside.
         plist_dump.assert_called_with(
             {
@@ -164,15 +156,6 @@ class TestAvhActions(StdoutTestCase):
             any_order=True,
         )
 
-        file_open.has_calls([call(ANY, "rb")])
-        v1_create_image.assert_called_once_with(
-            type="fwpackage",
-            encoding="plain",
-            name="lava-avh-rpi4b-1.1-4999-rrrrr",
-            project="d59db33d-27bd-4b22-878d-49e4758a648e",
-            file=ANY,
-        )
-
     # Test boot run.
     @patch("lava_dispatcher.actions.boot.avh.ShellSession")
     @patch("lava_dispatcher.actions.boot.avh.ShellCommand")
@@ -194,6 +177,11 @@ class TestAvhActions(StdoutTestCase):
         ),
     )
     @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_create_image",
+        return_value=Image("active", id="18af26fe-8a5a-479a-80ec-013c54176d6f"),
+    )
+    @patch("lava_dispatcher.actions.boot.avh.open")
+    @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_auth_login",
         return_value=ApiToken("avhapitoken"),
     )
@@ -206,6 +194,7 @@ class TestAvhActions(StdoutTestCase):
             "api_token": "avh_api_token",
             "project_id": "d59db33d-27bd-4b22-878d-49e4758a648e",
             "image_name": "lava-avh-rpi4b-1.1-4-6A2cA",
+            "image_path": "/var/lib/lava/dispatcher/tmp/4/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
             "image_version": "1.1",
             "image_build": "4",
             "image_id": "18af26fe-8a5a-479a-80ec-013c54176d6f",
@@ -215,6 +204,8 @@ class TestAvhActions(StdoutTestCase):
         self,
         get_namespace_data,
         v1_auth_login,
+        image_open,
+        v1_create_image,
         v1_create_instance,
         v1_get_instance_state,
         v1_get_instance_console,
@@ -230,6 +221,18 @@ class TestAvhActions(StdoutTestCase):
         )
 
         v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
+
+        image_open.assert_called_once_with(
+            "/var/lib/lava/dispatcher/tmp/4/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
+            "rb",
+        )
+        v1_create_image.assert_called_once_with(
+            type="fwpackage",
+            encoding="plain",
+            name="lava-avh-rpi4b-1.1-4-6A2cA",
+            project="d59db33d-27bd-4b22-878d-49e4758a648e",
+            file=ANY,
+        )
 
         v1_create_instance.assert_called_once_with(
             {

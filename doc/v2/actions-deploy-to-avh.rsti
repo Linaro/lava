@@ -10,7 +10,6 @@ This deployment method handles the following tasks in serial.
 * Download the ``kernel``, ``dtb`` and ``rootfs`` images required by AVH custom firmware.
 * Generate a ``Info.plist`` file for the meta information about firmware version, type, build, unique identifier, and device identifier.
 * Create a zip package that contains the images and the ``Info.plist`` file.
-* Upload the zip package to AVH and save the image ID for the following avh boot method to consume.
 
 Example definition:
 
