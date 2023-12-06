@@ -6,9 +6,11 @@
 from __future__ import annotations
 
 from contextvars import ContextVar
+from shlex import quote as shlex_quote
 
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from lava_common.yaml import yaml_quote
 from lava_server.files import File
 
 devices_jinja_env: ContextVar[JinjaSandboxEnv] = ContextVar("devices_jinja_env")
@@ -24,6 +26,8 @@ def devices():
             trim_blocks=True,
             cache_size=-1,
         )
+        devices_env.filters["shlex_quote"] = shlex_quote
+        devices_env.filters["yaml_quote"] = yaml_quote
         devices_jinja_env.set(devices_env)
         return devices_env
 
@@ -43,5 +47,7 @@ def device_types():
             trim_blocks=True,
             cache_size=-1,
         )
+        device_types_env.filters["shlex_quote"] = shlex_quote
+        device_types_env.filters["yaml_quote"] = yaml_quote
         device_types_jinja_env.set(device_types_env)
         return device_types_env
