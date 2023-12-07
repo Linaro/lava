@@ -81,7 +81,7 @@ def rpcinfo_nfs(server, version=3):
     """
     with open(os.devnull, "w") as devnull:
         proc = subprocess.Popen(  # nosec - internal use.
-            ["/usr/sbin/rpcinfo", "-u", server, "nfs", "%s" % version],
+            ["/usr/sbin/rpcinfo", "-t", server, "nfs", "%s" % version],
             stdout=devnull,
             stderr=subprocess.PIPE,
         )
