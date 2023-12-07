@@ -177,6 +177,11 @@ class TestRestApi:
             device_type=self.restricted_device_type1,
             worker_host=self.worker1,
         )
+        self.device_with_template = Device.objects.create(
+            hostname="x86-01",
+            device_type=self.public_device_type1,
+            worker_host=self.worker1,
+        )
         GroupDevicePermission.objects.assign_perm(
             Device.VIEW_PERMISSION, self.group1, self.restricted_device1
         )
@@ -750,7 +755,7 @@ ok 2 bar
             self.userclient,
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
         assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
         assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
 
@@ -759,7 +764,7 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
         assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
         assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
         assert (
@@ -853,7 +858,7 @@ ok 2 bar
         assert logentry.user == self.admin
         assert logentry.change_message == "Unknown → Good"
 
-    def test_devices_get_dictionary(self, monkeypatch, tmp_path):
+    def test_devices_get_dictionary(self, tmp_path):
         # invalid context
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
@@ -862,26 +867,32 @@ ok 2 bar
         assert response.status_code == 400  # nosec
 
         # no device dict
-        monkeypatch.setattr(
-            Device, "load_configuration", (lambda self, job_ctx, output_format: None)
-        )
         response = self.userclient.get(
             reverse("api-root", args=[self.version]) + "devices/public01/dictionary/"
         )
         assert response.status_code == 400  # nosec
 
         # success
-        monkeypatch.setattr(
-            Device,
-            "load_configuration",
-            (lambda self, job_ctx, output_format: "device: dict"),
+        url_for_device_with_template = (
+            reverse("api-root", args=[self.version])
+            + f"devices/{self.device_with_template.hostname}/dictionary/"
         )
-        data = self.hit(
+        raw_template_data = self.hit(
             self.userclient,
-            reverse("api-root", args=[self.version]) + "devices/public01/dictionary/",
+            url_for_device_with_template,  # Without HTTP query returns raw template
         )
-        data = yaml_safe_load(data)
-        assert data == {"device": "dict"}  # nosec
+        assert raw_template_data == self.device_with_template.load_configuration(
+            output_format="raw"
+        )
+        yaml_data = self.hit(
+            self.userclient,
+            url_for_device_with_template
+            + "?render=yes",  # render HTTP query must be added to return rendered YAML
+        )
+        device_dict = yaml_safe_load(yaml_data)
+        assert device_dict == self.device_with_template.load_configuration(
+            output_format="dict"
+        )
 
     def test_devices_set_health(self):
         response = self.adminclient.post(
@@ -942,7 +953,7 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devices/?state=Idle",
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,

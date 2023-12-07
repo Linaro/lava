@@ -100,20 +100,20 @@ def setup(db):
     worker_02 = Worker.objects.create(hostname="worker-02", state=Worker.STATE_ONLINE)
 
     qemu_01 = Device.objects.create(
-        hostname="qemu-01",
+        hostname="qemu01",
         device_type=dt_qemu,
         health=Device.HEALTH_MAINTENANCE,
         worker_host=worker_01,
     )
     juno_01 = Device.objects.create(
-        hostname="juno-01",
+        hostname="juno-uboot-01",
         device_type=dt_juno,
         state=Device.STATE_RUNNING,
         health=Device.HEALTH_GOOD,
         worker_host=worker_02,
     )
     juno_02 = Device.objects.create(
-        hostname="juno-02",
+        hostname="juno-uefi-01",
         device_type=dt_juno,
         state=Device.STATE_IDLE,
         health=Device.HEALTH_GOOD,
@@ -198,9 +198,9 @@ def test_devices(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/alldevices.html"  # nosec
     assert len(ret.context["devices_table"].data) == 3  # nosec
-    assert ret.context["devices_table"].data[0].hostname == "juno-01"  # nosec
-    assert ret.context["devices_table"].data[1].hostname == "juno-02"  # nosec
-    assert ret.context["devices_table"].data[2].hostname == "qemu-01"  # nosec
+    assert ret.context["devices_table"].data[0].hostname == "juno-uboot-01"  # nosec
+    assert ret.context["devices_table"].data[1].hostname == "juno-uefi-01"  # nosec
+    assert ret.context["devices_table"].data[2].hostname == "qemu01"  # nosec
 
 
 @pytest.mark.django_db
@@ -209,9 +209,13 @@ def test_devices_active(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/activedevices.html"  # nosec
     assert len(ret.context["active_devices_table"].data) == 3  # nosec
-    assert ret.context["active_devices_table"].data[0].hostname == "juno-01"  # nosec
-    assert ret.context["active_devices_table"].data[1].hostname == "juno-02"  # nosec
-    assert ret.context["active_devices_table"].data[2].hostname == "qemu-01"  # nosec
+    assert (
+        ret.context["active_devices_table"].data[0].hostname == "juno-uboot-01"
+    )  # nosec
+    assert (
+        ret.context["active_devices_table"].data[1].hostname == "juno-uefi-01"
+    )  # nosec
+    assert ret.context["active_devices_table"].data[2].hostname == "qemu01"  # nosec
 
 
 @pytest.mark.django_db
@@ -220,25 +224,24 @@ def test_devices_online(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/onlinedevices.html"  # nosec
     assert len(ret.context["online_devices_table"].data) == 2  # nosec
-    assert ret.context["online_devices_table"].data[0].hostname == "juno-01"  # nosec
-    assert ret.context["online_devices_table"].data[1].hostname == "juno-02"  # nosec
+    assert (
+        ret.context["online_devices_table"].data[0].hostname == "juno-uboot-01"
+    )  # nosec
+    assert (
+        ret.context["online_devices_table"].data[1].hostname == "juno-uefi-01"
+    )  # nosec
 
 
 @pytest.mark.django_db
-def test_device_dictionary(client, monkeypatch, setup):
-    monkeypatch.setattr(
-        Device, "load_configuration", lambda job_ctx, output_format: "data"
-    )
-    ret = client.get(reverse("lava.scheduler.device.dictionary", args=["qemu-01"]))
+def test_device_dictionary(client, setup):
+    ret = client.get(reverse("lava.scheduler.device.dictionary", args=["qemu01"]))
     assert ret.status_code == 200  # nosec
     assert ret.content != ""  # nosec
 
 
 @pytest.mark.django_db
 def test_device_dictionary_plain(client, setup):
-    ret = client.get(
-        reverse("lava.scheduler.device.dictionary.plain", args=["qemu-01"])
-    )
+    ret = client.get(reverse("lava.scheduler.device.dictionary.plain", args=["qemu01"]))
     assert ret.status_code == 200  # nosec
     assert ret.content != ""  # nosec
 
@@ -252,13 +255,13 @@ def test_devices_passing_health_check(client, setup):
     )
     assert len(ret.context["passing_health_checks_table"].data) == 3  # nosec
     assert (  # nosec
-        ret.context["passing_health_checks_table"].data[0].hostname == "qemu-01"
+        ret.context["passing_health_checks_table"].data[0].hostname == "qemu01"
     )
     assert (  # nosec
-        ret.context["passing_health_checks_table"].data[1].hostname == "juno-01"
+        ret.context["passing_health_checks_table"].data[1].hostname == "juno-uboot-01"
     )
     assert (  # nosec
-        ret.context["passing_health_checks_table"].data[2].hostname == "juno-02"
+        ret.context["passing_health_checks_table"].data[2].hostname == "juno-uefi-01"
     )
 
 
@@ -273,7 +276,7 @@ def test_mydevice_list(client, setup):
     ret = client.get(reverse("lava.scheduler.mydevice_list"))
     assert ret.status_code == 200  # nosec
     assert len(ret.context["my_device_table"].data) == 1  # nosec
-    assert ret.context["my_device_table"].data[0].hostname == "juno-01"  # nosec
+    assert ret.context["my_device_table"].data[0].hostname == "juno-uboot-01"  # nosec
 
 
 @pytest.mark.django_db
@@ -300,16 +303,16 @@ def test_devices_maintenance(client, setup):
     )
     assert len(ret.context["maintenance_devices_table"].data) == 1  # nosec
     assert (  # nosec
-        ret.context["maintenance_devices_table"].data[0].hostname == "qemu-01"
+        ret.context["maintenance_devices_table"].data[0].hostname == "qemu01"
     )
 
 
 @pytest.mark.django_db
 def test_device_reports(client, setup):
-    ret = client.get(reverse("lava.scheduler.device_report", args=["juno-01"]))
+    ret = client.get(reverse("lava.scheduler.device_report", args=["juno-uboot-01"]))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/device_reports.html"  # nosec
-    assert ret.context["device"].hostname == "juno-01"  # nosec
+    assert ret.context["device"].hostname == "juno-uboot-01"  # nosec
     assert len(ret.context["health_week_report"]) == 10  # nosec
     assert len(ret.context["job_week_report"]) == 10  # nosec
     assert len(ret.context["health_day_report"]) == 7  # nosec
@@ -388,7 +391,7 @@ def test_device_type_detail(client, setup):
 
 
 @pytest.mark.django_db
-def test_longest_jobs(client, monkeypatch, setup):
+def test_longest_jobs(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.post(reverse("lava.scheduler.longest_jobs"))
     assert ret.status_code == 200  # nosec
@@ -406,7 +409,7 @@ def test_longest_jobs(client, monkeypatch, setup):
 
 
 @pytest.mark.django_db
-def test_favorite_jobs_other_user(client, monkeypatch, setup):
+def test_favorite_jobs_other_user(client, setup):
     job_1 = TestJob.objects.get(description="test job 01")
     user = User.objects.get(username="tester")
     TestJobUser.objects.create(user=user, test_job=job_1, is_favorite=True)
@@ -420,7 +423,7 @@ def test_favorite_jobs_other_user(client, monkeypatch, setup):
 
 
 @pytest.mark.django_db
-def test_favorite_jobs(client, monkeypatch, setup):
+def test_favorite_jobs(client, setup):
     job_1 = TestJob.objects.get(description="test job 01")
     user = User.objects.get(username="tester")
     TestJobUser.objects.create(user=user, test_job=job_1, is_favorite=True)
@@ -444,7 +447,7 @@ def test_job_status(client, setup):
     assert response["started"] == "now"  # nosec
     assert (
         response["actual_device"]
-        == '<a href="/scheduler/device/juno-01">juno-01</a> <a href="/scheduler/reports/device/juno-01"><span class="glyphicon glyphicon-stats"></span></a>'
+        == '<a href="/scheduler/device/juno-uboot-01">juno-uboot-01</a> <a href="/scheduler/reports/device/juno-uboot-01"><span class="glyphicon glyphicon-stats"></span></a>'
     )  # nosec
 
 
@@ -471,7 +474,7 @@ def test_job_configuration(client, monkeypatch, setup):
 
 
 @pytest.mark.django_db
-def test_job_log_file_plain_no_log_file(client, monkeypatch, setup):
+def test_job_log_file_plain_no_log_file(client, setup):
     job_1 = TestJob.objects.get(description="test job 01")
     ret = client.post(reverse("lava.scheduler.job.log_file.plain", args=[job_1.pk]))
     assert ret.status_code == 404  # nosec
@@ -761,16 +764,15 @@ def test_device_detail_non_existing(client, setup):
 
 
 @pytest.mark.django_db
-def test_device_detail(client, monkeypatch, setup):
-    monkeypatch.setattr(Device, "load_configuration", lambda job_ctx: True)
-    ret = client.get(reverse("lava.scheduler.device.detail", args=["juno-01"]))
+def test_device_detail(client, setup):
+    ret = client.get(reverse("lava.scheduler.device.detail", args=["juno-uboot-01"]))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/device.html"  # nosec
 
-    assert ret.context["device"].hostname == "juno-01"  # nosec
+    assert ret.context["device"].hostname == "juno-uboot-01"  # nosec
     assert ret.context["can_change"] is False  # nosec
     assert ret.context["previous_device"] is None  # nosec
-    assert ret.context["next_device"] == "juno-02"  # nosec
+    assert ret.context["next_device"] == "juno-uefi-01"  # nosec
     assert ret.context["template_mismatch"] is False  # nosec
 
 
@@ -782,19 +784,19 @@ def test_failure_report(client, setup):
     assert ret.context["device_type"] is None  # nosec
     assert ret.context["device"] is None  # nosec
 
-    ret = client.get(reverse("lava.scheduler.failure_report") + "?device=juno-01")
+    ret = client.get(reverse("lava.scheduler.failure_report") + "?device=juno-uboot-01")
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
     assert ret.context["device_type"] is None  # nosec
-    assert ret.context["device"] == "juno-01"  # nosec
+    assert ret.context["device"] == "juno-uboot-01"  # nosec
 
 
 @pytest.mark.django_db
 def test_health_job_list(client, setup):
-    ret = client.get(reverse("lava.scheduler.labhealth.detail", args=["qemu-01"]))
+    ret = client.get(reverse("lava.scheduler.labhealth.detail", args=["qemu01"]))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/health_jobs.html"  # nosec
-    assert ret.context["device"].hostname == "qemu-01"  # nosec
+    assert ret.context["device"].hostname == "qemu01"  # nosec
     assert len(ret.context["health_job_table"].data) == 1  # nosec
     assert ret.context["health_job_table"].data[0].description == "test job 06"  # nosec
 
@@ -1052,9 +1054,13 @@ def test_lab_health(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"  # nosec
     assert len(ret.context["device_health_table"].data) == 3  # nosec
-    assert ret.context["device_health_table"].data[0]["hostname"] == "juno-01"  # nosec
-    assert ret.context["device_health_table"].data[1]["hostname"] == "juno-02"  # nosec
-    assert ret.context["device_health_table"].data[2]["hostname"] == "qemu-01"  # nosec
+    assert (
+        ret.context["device_health_table"].data[0]["hostname"] == "juno-uboot-01"
+    )  # nosec
+    assert (
+        ret.context["device_health_table"].data[1]["hostname"] == "juno-uefi-01"
+    )  # nosec
+    assert ret.context["device_health_table"].data[2]["hostname"] == "qemu01"  # nosec
 
 
 @pytest.mark.django_db
@@ -1086,7 +1092,7 @@ def test_worker_detail(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/worker.html"  # nosec
     assert ret.context["worker"].hostname == "worker-01"  # nosec
     assert len(ret.context["worker_device_table"].data) == 1  # nosec
-    assert ret.context["worker_device_table"].data[0].hostname == "qemu-01"  # nosec
+    assert ret.context["worker_device_table"].data[0].hostname == "qemu01"  # nosec
     assert ret.context["can_change"] is False  # nosec
 
 
@@ -1109,7 +1115,7 @@ def test_type_report_data(client, setup):
 
 @pytest.mark.django_db
 def test_device_report_data_start_day_after_end_day(client, setup):
-    juno = Device.objects.get(hostname="juno-01")
+    juno = Device.objects.get(hostname="juno-uboot-01")
     result = device_report_data(5, 3, juno)
     # Assure there's no result for disambigous dates
     assert result[1]["fail"] == 0  # nosec
@@ -1118,7 +1124,7 @@ def test_device_report_data_start_day_after_end_day(client, setup):
 
 @pytest.mark.django_db
 def test_device_report_data(client, setup):
-    juno = Device.objects.get(hostname="juno-01")
+    juno = Device.objects.get(hostname="juno-uboot-01")
     result = device_report_data(-1, 1, juno)
     assert result[1]["fail"] == 1  # nosec
     assert result[1]["pass"] == 1  # nosec
@@ -1141,7 +1147,7 @@ def test_job_report(client, setup):
 
 @pytest.mark.django_db
 def test_device_health_no_perm(client, setup):
-    device = Device.objects.get(hostname="qemu-01")
+    device = Device.objects.get(hostname="qemu01")
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.post(
         reverse("lava.scheduler.device.health", kwargs={"pk": device.hostname}),
@@ -1152,7 +1158,7 @@ def test_device_health_no_perm(client, setup):
 
 @pytest.mark.django_db
 def test_device_health_incorrect_health(client, setup):
-    device = Device.objects.get(hostname="qemu-01")
+    device = Device.objects.get(hostname="qemu01")
     assert client.login(username="admin", password="admin") is True  # nosec
     ret = client.post(
         reverse("lava.scheduler.device.health", kwargs={"pk": device.hostname}),
@@ -1163,7 +1169,7 @@ def test_device_health_incorrect_health(client, setup):
 
 @pytest.mark.django_db
 def test_device_health(client, setup):
-    device = Device.objects.get(hostname="qemu-01")
+    device = Device.objects.get(hostname="qemu01")
     assert device.health == 4  # nosec
     assert client.login(username="admin", password="admin") is True  # nosec
     ret = client.post(
@@ -1297,7 +1303,7 @@ def test_similar_jobs(client, setup):
     assert ret.status_code == 302  # nosec
     assert (
         ret.url
-        == "/results/query/+custom?entity=testjob&conditions=testjob__actual_device__exact__juno-01"
+        == "/results/query/+custom?entity=testjob&conditions=testjob__actual_device__exact__juno-uboot-01"
     )  # nosec
 
 
