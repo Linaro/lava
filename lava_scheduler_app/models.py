@@ -455,10 +455,12 @@ class Worker(RestrictedObject):
 
     def go_state_offline(self):
         self.state = Worker.STATE_OFFLINE
+        self.log_admin_entry(None, "Online → Offline")
         return ["state"]
 
     def go_state_online(self):
         self.state = Worker.STATE_ONLINE
+        self.log_admin_entry(None, "Offline → Online")
         return ["state"]
 
     def log_admin_entry(self, user, reason, addition=False):
