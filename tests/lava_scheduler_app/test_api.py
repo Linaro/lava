@@ -797,7 +797,7 @@ def test_devices_delete(setup):
 
 
 @pytest.mark.django_db
-def test_devices_get_dictionary(setup, monkeypatch):
+def test_devices_get_dictionary(setup):
     # 1. no device
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
@@ -807,6 +807,8 @@ def test_devices_get_dictionary(setup, monkeypatch):
     # 2. device is not visible to anonymous
     dt = DeviceType.objects.create(name="black")
     device = Device.objects.create(hostname="device01", device_type=dt)
+    device_with_template_hostname = "x86-01"
+    Device.objects.create(hostname=device_with_template_hostname, device_type=dt)
     group = Group.objects.create(name="group1")
     GroupDevicePermission.objects.assign_perm("view_device", group, device)
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -825,9 +827,6 @@ def test_devices_get_dictionary(setup, monkeypatch):
     assert exc.value.faultString.startswith("Job Context '{{' is not valid: ")  # nosec
 
     # 4. no device dict
-    monkeypatch.setattr(
-        Device, "load_configuration", (lambda self, job_ctx, output_format: None)
-    )
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server().scheduler.devices.get_dictionary("device01")
     assert exc.value.faultCode == 404  # nosec
@@ -836,13 +835,9 @@ def test_devices_get_dictionary(setup, monkeypatch):
     )
 
     # 5. success
-    monkeypatch.setattr(
-        Device,
-        "load_configuration",
-        (lambda self, job_ctx, output_format: "device: dict"),
-    )
     assert (  # nosec
-        str(server().scheduler.devices.get_dictionary("device01")) == "device: dict"
+        server().scheduler.devices.get_dictionary(device_with_template_hostname)
+        is not None
     )
 
 
