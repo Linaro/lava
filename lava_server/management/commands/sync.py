@@ -13,9 +13,9 @@ from jinja2 import TemplateError as JinjaTemplateError
 from jinja2.nodes import Assign as JinjaNodesAssign
 from jinja2.nodes import Const as JinjaNodesConst
 from jinja2.nodes import List as JinjaNodesList
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.exceptions import PermissionNameError
+from lava_common.jinja import create_device_templates_env
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app import environment
 from lava_scheduler_app.models import (
@@ -58,7 +58,7 @@ class Command(BaseCommand):
         # Will raise jinja2.TemplateError if the template cannot be parsed.
         jinja_config = File("device", hostname).read()
 
-        env = JinjaSandboxEnv(autoescape=False)
+        env = create_device_templates_env()
         ast = env.parse(jinja_config)
         return ast
 

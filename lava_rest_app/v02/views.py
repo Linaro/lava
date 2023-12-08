@@ -13,7 +13,6 @@ from django.conf import settings
 from django.db import transaction
 from django.http import Http404
 from django.http.response import HttpResponse
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError, PermissionDenied, ValidationError
@@ -42,6 +41,7 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_scheduler_app.dbutils import testjob_submission
+from lava_scheduler_app.environment import devices as devices_template_env
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -537,9 +537,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             raise ValidationError({"device": "Device dictionary is required."})
 
         try:
-            template = JinjaSandboxEnv(
-                loader=File("device").loader(), autoescape=False, trim_blocks=True
-            ).from_string(devicedict)
+            template = devices_template_env().from_string(devicedict)
             yaml_safe_load(template.render())
             return Response(
                 {"message": "Device dictionary valid."}, status=status.HTTP_200_OK
