@@ -3,11 +3,12 @@
 set -e
 
 export DOCKER_BUILDKIT=1
+export RUNTIME=${RUNTIME:-docker}
 
 if [ "$1" = "setup" ]
 then
   set -x
-  docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
+  $RUNTIME login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
   apk add git python3
 else
   # image to build
@@ -41,26 +42,26 @@ else
   # Pull the base image from cache (local or remote) or build it
   echo "Base images:"
   echo "* old: $BASE_IMAGE"
-  docker inspect "$BASE_IMAGE" 2>/dev/null >/dev/null || docker pull "$BASE_IMAGE" 2>/dev/null || true
+  $RUNTIME inspect "$BASE_IMAGE" 2>/dev/null >/dev/null || $RUNTIME pull "$BASE_IMAGE" 2>/dev/null || true
   # Rebuild without cache on master and when tagging
   if [ "$CI_COMMIT_REF_SLUG" = "master" ] || [ -n "$CI_COMMIT_TAG" ]
   then
     NO_CACHE="--no-cache"
   fi
-  docker build $NO_CACHE -t "$BASE_IMAGE" docker/lava-"$SERVICE"-base
+  $RUNTIME build $NO_CACHE -t "$BASE_IMAGE" docker/lava-"$SERVICE"-base
   # Create a tag with the current version tag
   echo "* new: $BASE_IMAGE_NEW"
-  docker tag "$BASE_IMAGE" "$BASE_IMAGE_NEW"
+  $RUNTIME tag "$BASE_IMAGE" "$BASE_IMAGE_NEW"
 
   # Build the image
   echo "Build $IMAGE"
-  docker build -t "$IMAGE" --build-arg base_image="$BASE_IMAGE_NEW" --build-arg lava_version="$IMAGE_TAG" -f docker/lava-"$SERVICE"/Dockerfile .
+  $RUNTIME build -t "$IMAGE" --build-arg base_image="$BASE_IMAGE_NEW" --build-arg lava_version="$IMAGE_TAG" -f docker/lava-"$SERVICE"/Dockerfile .
 
   # Push only for tags or master
   if [ "$CI_COMMIT_REF_SLUG" = "master" ] || [ -n "$CI_COMMIT_TAG" ]
   then
-    docker push "$BASE_IMAGE"
-    docker push "$BASE_IMAGE_NEW"
-    docker push "$IMAGE"
+    $RUNTIME push "$BASE_IMAGE"
+    $RUNTIME push "$BASE_IMAGE_NEW"
+    $RUNTIME push "$IMAGE"
   fi
 fi
