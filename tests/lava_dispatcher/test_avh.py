@@ -10,13 +10,13 @@ from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 try:
-    from avh_api.model.api_token import ApiToken
     from avh_api.model.image import Image
     from avh_api.model.instance_console_endpoint import InstanceConsoleEndpoint
     from avh_api.model.instance_return import InstanceReturn
     from avh_api.model.instance_state import InstanceState
     from avh_api.model.model import Model
     from avh_api.model.project import Project
+    from avh_api.model.token import Token
 
     from lava_dispatcher.actions.boot.avh import BootAvh
     from lava_dispatcher.actions.deploy.avh import Avh
@@ -110,7 +110,7 @@ class TestAvhActions(StdoutTestCase):
     )
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_auth_login",
-        return_value=ApiToken("avhapitoken"),
+        return_value=Token("avhapitoken"),
     )
     def test_deploy(
         self,
@@ -183,7 +183,7 @@ class TestAvhActions(StdoutTestCase):
     @patch("lava_dispatcher.actions.boot.avh.open")
     @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_auth_login",
-        return_value=ApiToken("avhapitoken"),
+        return_value=Token("avhapitoken"),
     )
     @patch(
         "lava_dispatcher.actions.boot.avh.CallAvhAction.get_namespace_data",

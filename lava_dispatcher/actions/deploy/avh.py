@@ -14,6 +14,7 @@ from pathlib import Path
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
+from avh_api.model.token import Token
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -70,17 +71,16 @@ class AvhDeploy(Action):
     def validate(self):
         super().validate()
 
-        self.avh = self.parameters.get("avh")
-        if not self.avh:
-            raise JobError("No 'avh' specified for AVH deploy")
-        if not isinstance(self.avh, dict):
-            raise JobError("'deploy.avh' should be a dictionary")
+        self.avh = self.job.device["actions"]["deploy"]["methods"]["avh"]["options"]
+        job_options = self.parameters.get("options")
+        if job_options:
+            if not isinstance(job_options, dict):
+                raise JobError("'deploy.options' should be a dictionary")
+            self.avh.update(job_options)
         if self.avh.get("model") is None:
-            raise JobError("Unable to deploy AVH without 'avh.model'")
-        self.avh["api_endpoint"] = self.avh.get(
-            "api_endpoint", "https://app.avh.arm.com/api"
-        )
-        self.avh["project_name"] = self.avh.get("project_name", "Default Project")
+            raise JobError(
+                "avh 'options.model' not provided in either device dictionary or job definition"
+            )
 
         secrets = self.job.parameters.get("secrets")
         if "avh_api_token" not in secrets:
@@ -139,6 +139,10 @@ class AvhDeploy(Action):
         with AvhApi.ApiClient(self.api_config) as api_client:
             api_instance = arm_api.ArmApi(api_client)
             token_response = self.v1_auth_login(api_instance)
+            if not isinstance(token_response, Token):
+                raise JobError(
+                    f"'ArmApi->v1_auth_login' expected a 'Token' but got '{type(token_response).__name__}'. API login failed!"
+                )
             self.api_config.access_token = token_response.token
             self.logger.info("AVH API session created")
 
@@ -156,7 +160,7 @@ class AvhDeploy(Action):
                 if project.name == self.avh["project_name"]:
                     self.avh["project_id"] = project.id
             if self.avh.get("project_id") is None:
-                raise JobError(f"AVH project {self.avh['project_name']} NOT found!")
+                raise JobError(f"AVH project '{self.avh['project_name']}' NOT found!")
             self.logger.info(f"AVH project ID: {self.avh['project_id']}")
 
         # Create Info.plist
