@@ -19,8 +19,8 @@ def schema():
     }
     base = {
         Required("to"): "avh",
-        Required("avh"): {
-            Required("model"): str,
+        Optional("options"): {
+            Optional("model"): str,
             Optional("api_endpoint"): str,
             Optional("project_name"): str,
         },

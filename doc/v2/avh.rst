@@ -59,6 +59,24 @@ The following steps are required to authorize LAVA for API access to AVH.
    be replaced with the token string by LAVA server. This is mainly for hiding
    the real token in a public LAVA job.
 
+Limitation
+**********
+
+Concurrent uploads of AVH firmware images could be only 5 at a time. The
+limitation is per AVH project. After 5 images uploaded to the same project,
+when another one is uploaded it overrides the first. Trying to run more than 5
+AVH LAVA jobs using the same AVH project may hit instance creating error as the
+image uploaded could be overridden by another one at any time.
+
+Multiple projects are possible but only in enterprise/domain accounts so far.
+For these accounts, lab admin could extend the base AVH device type by setting
+the ``avh_project_name`` variable to a different AVH project name to create
+another device type. The variable defaults to ``Default Project``. The number
+of devices for these device types should be always equal to or less than 5.
+
+LAVA users also could overwrite the AVH project name in the device dictionary
+or in job definition using the ``deploy.options.project_name`` key.
+
 Job Example
 ***********
 
@@ -80,7 +98,7 @@ Job Example
    actions:
    - deploy:
        to: avh
-       avh:
+       options:
          model: rpi4b
        timeout:
          minutes: 30

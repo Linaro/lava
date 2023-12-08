@@ -9,6 +9,7 @@ import time
 import avh_api as AvhApi
 from avh_api.api import arm_api
 from avh_api.exceptions import NotFoundException
+from avh_api.model.image import Image
 from avh_api.model.instance_state import InstanceState
 
 from lava_common.exceptions import JobError
@@ -140,9 +141,9 @@ class CallAvhAction(Action):
                     project=self.avh["project_id"],
                     file=f,
                 )
-                if uploaded_image is None:
+                if not isinstance(uploaded_image, Image):
                     raise JobError(
-                        f"ArmApi->v1_create_image returned 'None'. Failed to upload {image_path}"
+                        f"'ArmApi->v1_create_image' expected an 'Image' but got '{type(uploaded_image).__name__}' . Failed to upload {image_path}"
                     )
                 self.image_id = uploaded_image.id
             self.logger.info(f"AVH image ID: {self.image_id}")

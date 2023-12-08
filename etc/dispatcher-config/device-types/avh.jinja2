@@ -7,6 +7,10 @@ actions:
   deploy:
     methods:
       avh:
+        options:
+          api_endpoint: {{ avh_api_end_point|default('https://app.avh.arm.com/api') }}
+          project_name: {{ avh_project_name|default('Default Project') }}
+          model: {{ avh_model|default('') }}
   boot:
     connections:
       serial:
