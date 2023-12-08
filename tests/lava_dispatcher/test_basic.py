@@ -11,7 +11,6 @@ import unittest
 
 import voluptuous
 from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.exceptions import (
     ConfigurationError,
@@ -20,6 +19,7 @@ from lava_common.exceptions import (
     LAVABug,
     LAVAError,
 )
+from lava_common.jinja import create_device_templates_env
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -152,10 +152,8 @@ class Factory:
     def prepare_jinja_template(self, hostname, jinja_data):
         string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
         type_loader = FileSystemLoader([self.DEVICE_TYPES_PATH])
-        env = JinjaSandboxEnv(
+        env = create_device_templates_env(
             loader=ChoiceLoader([string_loader, type_loader]),
-            trim_blocks=True,
-            autoescape=False,
         )
         return env.get_template("%s.jinja2" % hostname)
 

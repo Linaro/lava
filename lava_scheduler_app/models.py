@@ -41,6 +41,7 @@ from jinja2.nodes import Extends as JinjaNodesExtends
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from lava_common.decorators import nottest
+from lava_common.jinja import create_device_templates_env
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.utils import export_testcase
@@ -922,7 +923,7 @@ class Device(RestrictedObject):
         if not jinja_config:
             return None
 
-        env = JinjaSandboxEnv(autoescape=False)
+        env = create_device_templates_env()
         try:
             ast = env.parse(jinja_config)
             extends = list(ast.find_all(JinjaNodesExtends))

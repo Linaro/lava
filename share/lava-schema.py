@@ -16,8 +16,8 @@ from jinja2 import FileSystemLoader
 from jinja2.exceptions import TemplateError as JinjaTemplateError
 from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
 from jinja2.exceptions import TemplateSyntaxError as JinjaTemplateSyntaxError
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from lava_common.jinja import create_device_templates_env
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
 
@@ -171,8 +171,8 @@ def main():
                     "/usr/share/lava-server/device-types",
                 ]
             # create the jinja2 environment once as this is a slow operation
-            options.env = JinjaSandboxEnv(  # nosec - used to render yaml
-                autoescape=False, loader=FileSystemLoader(options.path)
+            options.env = create_device_templates_env(
+                loader=FileSystemLoader(options.path),
             )
             glob = "*.jinja2"
         else:

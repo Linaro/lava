@@ -12,8 +12,8 @@ import sys
 
 import yaml
 from jinja2 import FileSystemLoader
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from lava_common.jinja import create_device_templates_env
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 
@@ -41,7 +41,7 @@ def main():
         ]
 
     # Rendre the device template
-    env = JinjaSandboxEnv(autoescape=False, loader=FileSystemLoader(options.path))
+    env = create_device_templates_env(loader=FileSystemLoader(options.path))
     # Load the device configuration
     data = env.from_string(options.device.read()).render()
     device = NewDevice(yaml.safe_load(data))

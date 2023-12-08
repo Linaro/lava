@@ -4,8 +4,8 @@ import unittest
 from jinja2 import ChoiceLoader, DictLoader
 from jinja2.nodes import Assign as JinjaNodesAssign
 from jinja2.nodes import Const as JinjaNodesConst
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from lava_common.jinja import create_device_templates_env
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.files import File
@@ -16,10 +16,8 @@ def prepare_jinja_template(hostname, jinja_data, job_ctx=None, raw=True):
         job_ctx = {}
     string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
     type_loader = File("device-type").loader()
-    env = JinjaSandboxEnv(
+    env = create_device_templates_env(
         loader=ChoiceLoader([string_loader, type_loader]),
-        trim_blocks=True,
-        autoescape=False,
     )
     test_template = env.get_template("%s.jinja2" % hostname)
     if raw:
@@ -82,9 +80,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        env = JinjaSandboxEnv(
-            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
-        )
+        env = create_device_templates_env(loader=File("device-type").loader())
 
         for template in templates:
             data = "{%% extends '%s' %%}" % os.path.basename(template)
@@ -101,9 +97,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
         self.assertNotEqual([], templates)
 
         # keep this out of the loop, as creating the environment is slow.
-        env = JinjaSandboxEnv(
-            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
-        )
+        env = create_device_templates_env(loader=File("device-type").loader())
 
         for template in templates:
             name = os.path.basename(template)
@@ -139,7 +133,7 @@ class TestBaseTemplates(BaseTemplate.BaseTemplateCases):
             os.path.join(os.path.dirname(__file__), "devices", "db410c.jinja2")
         ) as hikey:
             data = hikey.read()
-        env = JinjaSandboxEnv(autoescape=False)
+        env = create_device_templates_env()
         ast = env.parse(data)
         device_dict = {}
         count = 0

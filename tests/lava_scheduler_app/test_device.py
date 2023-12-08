@@ -3,8 +3,8 @@ from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
 from django.test import TestCase
 from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
-from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from lava_common.jinja import create_device_templates_env
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.dbutils import (
     active_device_types,
@@ -132,9 +132,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         """
         Ensure each template renders valid YAML
         """
-        env = JinjaSandboxEnv(
-            loader=File("device-type").loader(), trim_blocks=True, autoescape=False
-        )
+        env = create_device_templates_env(loader=File("device-type").loader())
 
         for template_name in File("device-type").list("*.jinja2"):
             try:
