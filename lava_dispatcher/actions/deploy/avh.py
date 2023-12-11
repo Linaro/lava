@@ -14,7 +14,6 @@ from pathlib import Path
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
-from avh_api.model.token import Token
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -139,10 +138,6 @@ class AvhDeploy(Action):
         with AvhApi.ApiClient(self.api_config) as api_client:
             api_instance = arm_api.ArmApi(api_client)
             token_response = self.v1_auth_login(api_instance)
-            if not isinstance(token_response, Token):
-                raise JobError(
-                    f"'ArmApi->v1_auth_login' expected a 'Token' but got '{type(token_response).__name__}'. API login failed!"
-                )
             self.api_config.access_token = token_response.token
             self.logger.info("AVH API session created")
 
