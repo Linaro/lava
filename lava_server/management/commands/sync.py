@@ -17,7 +17,7 @@ from jinja2.nodes import List as JinjaNodesList
 from lava_common.exceptions import PermissionNameError
 from lava_common.jinja import create_device_templates_env
 from lava_common.yaml import yaml_safe_load
-from lava_scheduler_app import environment
+from lava_scheduler_app.environment import DEVICES_JINJA_ENV
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -101,7 +101,7 @@ class Command(BaseCommand):
             sync_dict = self._parse_sync_dict(sync_dict)
 
             try:
-                template = environment.devices().get_template(name)
+                template = DEVICES_JINJA_ENV.get_template(name)
                 yaml_safe_load(template.render())
             except JinjaTemplateError as exc:
                 self.stdout.write(f"* {hostname} [SKIP]")

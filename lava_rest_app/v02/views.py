@@ -41,7 +41,7 @@ from lava_results_app.utils import (
     testcase_export_fields,
 )
 from lava_scheduler_app.dbutils import testjob_submission
-from lava_scheduler_app.environment import devices as devices_template_env
+from lava_scheduler_app.environment import DEVICES_JINJA_ENV
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -537,7 +537,7 @@ class DeviceViewSet(base_views.DeviceViewSet, viewsets.ModelViewSet):
             raise ValidationError({"device": "Device dictionary is required."})
 
         try:
-            template = devices_template_env().from_string(devicedict)
+            template = DEVICES_JINJA_ENV.from_string(devicedict)
             yaml_safe_load(template.render())
             return Response(
                 {"message": "Device dictionary valid."}, status=status.HTTP_200_OK
