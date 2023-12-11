@@ -404,7 +404,7 @@ def testcase(request, case_id, job=None, pk=None):
         # Auth check purposes only.
         job = TestJob.get_restricted_job(job.id, request.user)
     else:
-        job = TestJob.get_restricted_job(job, request.user)
+        job = TestJob.get_restricted_job(job.id, request.user)
     if not pk:
         test_suite = case.suite
     else:
@@ -460,7 +460,7 @@ def testcase(request, case_id, job=None, pk=None):
 def testcase_yaml(request, pk):
     testcase = get_object_or_404(TestCase, pk=pk)
     # Check that user allowed to view job
-    TestJob.get_restricted_job(testcase.suite.job, request.user)
+    TestJob.get_restricted_job(testcase.suite.job.id, request.user)
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
