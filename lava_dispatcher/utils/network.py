@@ -169,7 +169,7 @@ def requests_retry():
 
 def retry(
     exception: Exception = Exception,
-    expected: Exception = Exception,
+    expected: Exception = None,
     retries: int = 3,
     delay: int = 1,
 ):
@@ -183,11 +183,19 @@ def retry(
 
     def decorator(func):
         def wrapper(*args, **kwargs):
+            if expected is not None and issubclass(exception, expected):
+                raise Exception(
+                    "'exception' shouldn't be a subclass of 'expected' exception"
+                )
             for attempt in range(retries):
                 try:
-                    return func(*args, **kwargs)
-                except expected:
-                    pass
+                    if expected is not None:
+                        try:
+                            return func(*args, **kwargs)
+                        except expected:
+                            return None
+                    else:
+                        return func(*args, **kwargs)
                 except exception as exc:
                     if attempt == int(retries) - 1:
                         raise JobError(
