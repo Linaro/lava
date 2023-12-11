@@ -23,7 +23,7 @@ from jinja2 import TemplateError as JinjaTemplateError
 from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_load
 from lava_results_app.models import Query
-from lava_scheduler_app import environment
+from lava_scheduler_app.environment import DEVICE_TYPES_JINJA_ENV
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -235,9 +235,7 @@ def load_devicetype_template(device_type_name, raw=False):
     :return: None or a dictionary of the device type template.
     """
     try:
-        template = environment.device_types().get_template(
-            "%s.jinja2" % device_type_name
-        )
+        template = DEVICE_TYPES_JINJA_ENV.get_template(f"{device_type_name}.jinja2")
         data = template.render()
         if not data:
             return None

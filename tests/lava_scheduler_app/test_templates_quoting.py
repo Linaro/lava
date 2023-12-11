@@ -10,7 +10,7 @@ from shlex import split as shlex_split
 from unittest import TestCase
 
 from lava_common.yaml import yaml_safe_load
-from lava_scheduler_app.environment import devices
+from lava_scheduler_app.environment import DEVICES_JINJA_ENV
 
 # Based on base-uboot.jinja2
 SAMPLE_FILTER_SECTIONS_TEMPLATE = """---
@@ -29,7 +29,7 @@ commands: {{ uboot_commands|yaml_quote }}
 
 class TestTemplateQuoting(TestCase):
     def test_template_quoting_filters_sections(self) -> None:
-        template = devices().from_string(SAMPLE_FILTER_SECTIONS_TEMPLATE)
+        template = DEVICES_JINJA_ENV.from_string(SAMPLE_FILTER_SECTIONS_TEMPLATE)
         dyndbg_fragment = 'dyndbg="file dd.c +p"'
         base_kernel_args = (
             "'console_msg_format=syslog' earlycon"
@@ -69,6 +69,6 @@ class TestTemplateQuoting(TestCase):
             "tfpt {KERNEL_ADDR} {KERNEL}",
             f"setenv bootargs {shlex_quote(bootargs)}",
         ]
-        template = devices().from_string(SAMPLE_CONTAINER_QUOTING_TEMPLATE)
+        template = DEVICES_JINJA_ENV.from_string(SAMPLE_CONTAINER_QUOTING_TEMPLATE)
         rendered_template = template.render(uboot_commands=uboot_commands)
         self.assertEqual(uboot_commands, yaml_safe_load(rendered_template)["commands"])

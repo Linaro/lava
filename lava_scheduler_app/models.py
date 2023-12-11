@@ -45,7 +45,8 @@ from lava_common.jinja import create_device_templates_env
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.utils import export_testcase
-from lava_scheduler_app import environment, utils
+from lava_scheduler_app import utils
+from lava_scheduler_app.environment import DEVICES_JINJA_ENV
 from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.managers import (
     GroupObjectPermissionManager,
@@ -866,7 +867,7 @@ class Device(RestrictedObject):
             return None
 
         try:
-            template = environment.devices().get_template("%s.jinja2" % self.hostname)
+            template = DEVICES_JINJA_ENV.get_template("%s.jinja2" % self.hostname)
             device_template = template.render(**job_ctx)
         except JinjaTemplateError:
             return None
