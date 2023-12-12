@@ -1,3 +1,9 @@
+# Copyright (C) 2020 Linaro Limited
+#
+# Author: Stevan Radakovic <stevan.radakovic@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from lava_dispatcher.utils.strings import (
     indices,
     map_kernel_uboot,

@@ -1,3 +1,9 @@
+# Copyright (C) 2022 Collabora Limited
+#
+# Author: Sjoerd Simons <sjoerd@collabora.com>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 import logging
 
 from mozilla_django_oidc.auth import OIDCAuthenticationBackend

@@ -1,3 +1,9 @@
+# Copyright (C) 2023 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from lava_scheduler_app.utils import get_user_ip
 
 

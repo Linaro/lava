@@ -1,3 +1,9 @@
+# Copyright (C) 2019 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 import yaml
 from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q

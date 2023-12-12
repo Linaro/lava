@@ -1,3 +1,9 @@
+# Copyright (C) 2019 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 # unit tests for primary and secondary connections
 import os
 

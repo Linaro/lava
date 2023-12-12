@@ -1,3 +1,9 @@
+# Copyright (C) 2020 Linaro Limited
+#
+# Author: Rémi Duraffort <remi.duraffort@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from celery import shared_task
 from django.core.exceptions import ObjectDoesNotExist
 

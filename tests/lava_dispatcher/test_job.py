@@ -1,3 +1,9 @@
+# Copyright (C) 2020 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from pathlib import Path
 
 import pytest
