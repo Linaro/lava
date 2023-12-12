@@ -1,3 +1,10 @@
+# Copyright (C) 2022 Linaro
+#
+# Author: Rémi Duraffort <remi.duraffort@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
+
 def test_settings(mocker, monkeypatch):
     def __read_text(file, *args, **kwargs):
         if str(file).startswith("/etc/lava-server/settings"):

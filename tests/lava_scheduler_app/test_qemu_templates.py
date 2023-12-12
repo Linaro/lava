@@ -1,3 +1,9 @@
+# Copyright (C) 2019 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from lava_common.yaml import yaml_safe_load
 from tests.lava_scheduler_app.test_base_templates import (
     BaseTemplate,

@@ -1,3 +1,9 @@
+# Copyright (C) 2019 Linaro Limited
+#
+# Author: Antonio Terceiro <antonio.terceiro@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
+
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
