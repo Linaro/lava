@@ -15,24 +15,24 @@
 'xtensa', 'xtensaeb'] %}
 
 available_architectures:
-- arm64
-- arm
-- aarch64
-- amd64
-- x86_64
-- hppa
-- i386
-- mips
-- mipsel
-- mips64
-- nios2
-- ppc
-- ppc64
-- riscv64
-- sparc
-- sparc64
+  - arm64
+  - arm
+  - aarch64
+  - amd64
+  - x86_64
+  - hppa
+  - i386
+  - mips
+  - mipsel
+  - mips64
+  - nios2
+  - ppc
+  - ppc64
+  - riscv64
+  - sparc
+  - sparc64
 {% for arch in qemu_misc_architectures %}
-- {{ arch }}
+  - {{ arch }}
 {% endfor %}
 
 actions:
@@ -112,69 +112,51 @@ actions:
 {% block qemu_options %}
 {# arch cpu #}
 {% if arch == 'hppa' %}
-          - -machine {{ machine|default('hppa') }}
+            - -machine {{ machine|default('hppa') }}
+{% elif arch == 'm68k' %}
+            - -machine {{ machine|default('mcf5208evb') }}
+{% elif arch == 'mips' %}
+            - -machine {{ machine|default('malta') }}
+{% elif arch == 'mips64' %}
+            - -machine {{ machine|default('malta') }}
+{% elif arch == 'nios2' %}
+            - -machine {{ machine|default('10m50-ghrd') }}
+{% elif arch == 'ppc' %}
+            - -machine {{ machine|default('g3beige') }}
+{% elif arch == 'ppc64' %}
+            - -machine {{ machine|default('pseries') }}
+{% elif arch == 'riscv64' %}
+            - -machine {{ machine|default('virt') }}
+            - -cpu {{ cpu|default('rv64') }}
+{% elif arch == 'sparc' %}
+            - -machine {{ machine|default('SS-5') }}
+{% elif arch == 'sparc64' %}
+            - -machine {{ machine|default('sun4u') }}
+{% elif arch == 'xtensa' %}
+            - -machine {{ machine|default('sim') }}
+{% elif arch == 'i386' %}
+            - -cpu {{ cpu|default('core2duo') }}
+            - -machine {{ machine|default('pc') }}
+{% elif arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
+            - -cpu {{ cpu|default('cortex-a57') }}
+            - -machine {{ machine|default('virt') }}
 {% endif %}
-{% if arch == 'm68k' %}
-          - -machine {{ machine|default('mcf5208evb') }}
-{% endif %}
-{% if arch == 'mips' %}
-          - -machine {{ machine|default('malta') }}
-{% endif %}
-{% if arch == 'mips64' %}
-          - -machine {{ machine|default('malta') }}
-{% endif %}
-{% if arch == 'nios2' %}
-          - -machine {{ machine|default('10m50-ghrd') }}
-{% endif %}
-{% if arch == 'ppc' %}
-          - -machine {{ machine|default('g3beige') }}
-{% endif %}
-{% if arch == 'ppc64' %}
-          - -machine {{ machine|default('pseries') }}
-{% endif %}
-{% if arch == 'riscv64' %}
-          - -machine {{ machine|default('virt') }}
-          - -cpu {{ cpu|default('rv64') }}
-{% endif %}
-{% if arch == 'sparc' %}
-          - -machine {{ machine|default('SS-5') }}
-{% endif %}
-{% if arch == 'sparc64' %}
-          - -machine {{ machine|default('sun4u') }}
-{% endif %}
-{% if arch == 'xtensa' %}
-          - -machine {{ machine|default('sim') }}
-{% endif %}
-{% if arch == 'i386' %}
-          - -cpu {{ cpu|default('core2duo') }}
-          - -machine {{ machine|default('pc') }}
-{% endif %}
-{% if arch == 'arm64' or arch == 'aarch64' or arch == 'arm' %}
-          - -cpu {{ cpu|default('cortex-a57') }}
-          - -machine {{ machine|default('virt') }}
-{# arch cpu + vga #}
 {% if vga %}
-          - {{ vga }}
+            - -vga {{ vga }}
 {% endif %}
-{# arch cpu #}
-{# arch cpu + serial #}
 {% if serial %}
-          - {{ serial }}
+            - -serial {{ serial }}
 {% endif %}
-{# arch cpu #}
-{% else %}
-{# not arch cpu #}
-{% if not no_kvm %}
-          - -cpu host
-          - -enable-kvm
-{% endif %}
-{# end no_kvm #}
+{% set qemu_host_kvm_arch_supported = qemu_host_kvm_arch_supported|default(['amd64', 'x86_64', 'i386']) %}
+{% if (not no_kvm) and (arch in qemu_host_kvm_arch_supported) %}
+            - -cpu host
+            - -enable-kvm
 {% endif %}
 {# end arch cpu #}
-          - -nographic
-          - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
-          - -m {{ memory|default(512) }}
-          - -monitor {{ monitor|default('none') }}
+            - -nographic
+            - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
+            - -m {{ memory|default(512) }}
+            - -monitor {{ monitor|default('none') }}
 {# If you need to pass -soundhw in extra_options, then see doc/v2/qemu_options.rst for how to set the environment var QEMU_AUDIO_DRV=none #}
 {% if extra_options %}
           extra: {{ extra_options }}
