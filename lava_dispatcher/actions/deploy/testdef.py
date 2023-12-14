@@ -663,13 +663,13 @@ class TestOverlayAction(Action):
         if "params" in testdef:
             raise_if_not_dict(testdef, "params")
             for def_param_name, def_param_value in list(testdef["params"].items()):
-                if not def_param_value:
+                if def_param_value is None:
                     def_param_value = ""
                 ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
         if "parameters" in testdef:
             raise_if_not_dict(testdef, "parameters")
             for def_param_name, def_param_value in list(testdef["parameters"].items()):
-                if not def_param_value:
+                if def_param_value is None:
                     def_param_value = ""
                 ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
         ret_val.append("######\n")
@@ -679,7 +679,7 @@ class TestOverlayAction(Action):
             raise_if_not_dict(self.parameters, "parameters")
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters["parameters"].items()):
-                if not param_value:
+                if param_value is None:
                     param_value = ""
                 ret_val.append("%s='%s'\n" % (param_name, param_value))
                 self.logger.debug("%s='%s'", param_name, param_value)
@@ -687,7 +687,7 @@ class TestOverlayAction(Action):
             raise_if_not_dict(self.parameters, "params")
             # turn a string into a local variable.
             for param_name, param_value in list(self.parameters["params"].items()):
-                if not param_value:
+                if param_value is None:
                     param_value = ""
                 ret_val.append("%s='%s'\n" % (param_name, param_value))
                 self.logger.debug("%s='%s'", param_name, param_value)
