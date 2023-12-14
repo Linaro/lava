@@ -22,6 +22,7 @@ def url(extra=None):
         Optional("md5sum"): str,
         Optional("sha256sum"): str,
         Optional("sha512sum"): str,
+        Optional("use_cache"): bool,
     }
     return Any(
         {**base_url, **extra},
