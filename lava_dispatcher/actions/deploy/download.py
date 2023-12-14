@@ -562,7 +562,12 @@ class HttpDownloadAction(DownloadHandler):
             http_cache = self.job.parameters["dispatcher"].get(
                 "http_url_format_string", ""
             )
-            if http_cache:
+
+            use_cache = True
+            if self.params:
+                use_cache = self.params.get("use_cache", True)
+
+            if http_cache and use_cache:
                 self.logger.info("Using caching service: '%s'", http_cache)
                 try:
                     self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
