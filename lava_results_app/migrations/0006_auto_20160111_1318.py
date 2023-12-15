@@ -1,3 +1,8 @@
+# Copyright (C) 2016 Linaro Limited
+#
+# Author: Stevan Radaković <stevan.radakovic@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import django.core.validators
 import django.db.models.deletion
 from django.conf import settings

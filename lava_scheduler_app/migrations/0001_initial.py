@@ -1,3 +1,8 @@
+# Copyright (C) 2011 Linaro Limited
+#
+# Author: Michael-Doyle Hudson <michael.hudson@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import django.db.models.deletion
 from django.conf import settings
 from django.db import DEFAULT_DB_ALIAS, connections, migrations, models
