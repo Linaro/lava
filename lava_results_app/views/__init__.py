@@ -404,7 +404,7 @@ def testcase(request, case_id, job=None, pk=None):
         # Auth check purposes only.
         job = TestJob.get_restricted_job(job.id, request.user)
     else:
-        job = TestJob.get_restricted_job(job.id, request.user)
+        job = TestJob.get_restricted_job(job, request.user)
     if not pk:
         test_suite = case.suite
     else:
