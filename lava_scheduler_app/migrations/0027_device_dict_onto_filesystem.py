@@ -1,3 +1,8 @@
+# Copyright (C) 2017 Linaro Limited
+#
+# Author: Rémi Duraffort <remi.duraffort@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import base64
 import errno
 import os

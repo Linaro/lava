@@ -1,3 +1,8 @@
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 from django.db import migrations, transaction
 
 

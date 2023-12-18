@@ -1,3 +1,8 @@
+# Copyright (C) 2014 Linaro Limited
+#
+# Author: Neil Williams <neil.williams@linaro.org>
+#
+# SPDX-License-Identifier: GPL-2.0-or-later
 import uuid
 
 from django.db import IntegrityError, migrations, transaction
