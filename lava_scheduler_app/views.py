@@ -2465,12 +2465,12 @@ def device_reports(request, pk):
     job_day_report = []
     job_week_report = []
     for day in reversed(range(7)):
-        data = device_report_data(day * -1 - 1, day * -1, device)
+        data = device_report_data(day * -1 - 1, day * -1, device.pk)
         health_day_report.append(data[0])
         job_day_report.append(data[1])
 
     for week in reversed(range(10)):
-        data = device_report_data(week * -7 - 7, week * -7, device)
+        data = device_report_data(week * -7 - 7, week * -7, device.pk)
         health_week_report.append(data[0])
         job_week_report.append(data[1])
 
