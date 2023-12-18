@@ -1119,11 +1119,9 @@ def test_workers(client, setup):
     ret = client.get(reverse("lava.scheduler.workers"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/allworkers.html"  # nosec
-    assert len(ret.context["worker_table"].data) == 4  # nosec
+    assert len(ret.context["worker_table"].data) == 3  # nosec
     workers = {x.hostname for x in ret.context["worker_table"].data}
-    assert workers == set(
-        ["worker_:')-,;~", "example.com", "worker-01", "worker-02"]
-    )  # nosec
+    assert workers == {"worker_:')-,;~", "worker-01", "worker-02"}  # nosec
 
 
 @pytest.mark.django_db
