@@ -1214,24 +1214,21 @@ ok 2 bar
         )
         # We get 3 workers because the default one (example.com) is always
         # created by the migrations
-        assert len(data["results"]) == 4  # nosec - unit test support
-        assert (  # nosec - unit test support
-            data["results"][0]["hostname"] == "example.com"
-        )
+        assert len(data["results"]) == 3  # nosec - unit test support
         assert (
-            data["results"][1]["hostname"] == "worker!~`@[].'"
+            data["results"][0]["hostname"] == "worker!~`@[].'"
         )  # nosec - unit test support
+        assert data["results"][0]["health"] == "Active"  # nosec - unit test support
+        assert data["results"][0]["state"] == "Online"  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "worker1"  # nosec - unit test support
         assert data["results"][1]["health"] == "Active"  # nosec - unit test support
         assert data["results"][1]["state"] == "Online"  # nosec - unit test support
-        assert data["results"][2]["hostname"] == "worker1"  # nosec - unit test support
-        assert data["results"][2]["health"] == "Active"  # nosec - unit test support
-        assert data["results"][2]["state"] == "Online"  # nosec - unit test support
 
-        assert data["results"][3]["hostname"] == "worker2"  # nosec - unit test support
+        assert data["results"][2]["hostname"] == "worker2"  # nosec - unit test support
         assert (  # nosec - unit test support
-            data["results"][3]["health"] == "Maintenance"
+            data["results"][2]["health"] == "Maintenance"
         )
-        assert data["results"][3]["state"] == "Offline"  # nosec - unit test support
+        assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
 
     def test_workers_retrieve(self):
         data = self.hit(
@@ -1254,6 +1251,11 @@ ok 2 bar
         assert data["health"] == "Active"  # nosec - unit test support
 
     def test_workers_retrieve_with_dot(self):
+        Worker.objects.create(
+            hostname="example.com",
+            state=Worker.STATE_OFFLINE,
+            health=Worker.HEALTH_ACTIVE,
+        )
         data = self.hit(
             self.userclient,
             reverse("api-root", args=[self.version]) + "workers/example.com/",
@@ -1443,7 +1445,7 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "workers/?health=Active",
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
