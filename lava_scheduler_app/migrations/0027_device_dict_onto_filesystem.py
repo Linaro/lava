@@ -76,7 +76,9 @@ def migrate_device_dict_to_filesystem(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("lava_scheduler_app", "0026_devicetype_disable_health_check")]
+    dependencies = [
+        ("lava_scheduler_app", "0001_squashed_0026_devicetype_disable_health_check")
+    ]
 
     operations = [
         migrations.RunPython(
