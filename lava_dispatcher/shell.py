@@ -40,7 +40,6 @@ class ShellLogger:
         replacements = {
             "\n\n": "\n",  # double lines to single
             "\r": "",
-            '"': '\\"',  # escape double quotes for YAML syntax
             "\x1b": "",  # remove escape control characters
         }
         for key, value in replacements.items():
