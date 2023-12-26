@@ -137,7 +137,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '3.1'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -148,7 +148,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '3.2'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -159,7 +159,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '3.3'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -170,7 +170,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '3.4'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -181,7 +181,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '3.5'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -257,7 +257,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '7.3'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -268,7 +268,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '7.4'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -279,7 +279,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '7.5'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -290,7 +290,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '7.6'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -301,7 +301,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '7.7'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -477,7 +477,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '10.4'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -491,7 +491,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '10.6'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -505,7 +505,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '10.8'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to

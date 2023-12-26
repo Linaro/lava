@@ -29,7 +29,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '2.1'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -40,7 +40,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '2.2'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -51,7 +51,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '2.3'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -62,7 +62,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '2.4'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
