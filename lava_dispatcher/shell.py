@@ -8,6 +8,7 @@ import contextlib
 import logging
 import time
 from re import error as re_error
+from re import split as re_split
 
 import pexpect
 
@@ -38,20 +39,18 @@ class ShellLogger:
 
     def write(self, new_line):
         replacements = {
-            "\n\n": "\n",  # double lines to single
-            "\r": "",
             "\x1b": "",  # remove escape control characters
         }
-        for key, value in replacements.items():
-            new_line = new_line.replace(key, value)
         lines = self.line + new_line
 
         # Print one full line at a time. A partial line is kept in memory.
         if "\n" in lines:
             last_ret = lines.rindex("\n")
             self.line = lines[last_ret + 1 :]
-            lines = lines[:last_ret]
-            for line in lines.split("\n"):
+            lines = lines[: last_ret + 1]
+            for line in re_split("\r\r\n|\r\n", lines)[:-1]:
+                for key, value in replacements.items():
+                    line = line.replace(key, value)
                 if self.is_feedback:
                     if self.namespace:
                         self.logger.feedback(line, namespace=self.namespace)
