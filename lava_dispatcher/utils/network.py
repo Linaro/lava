@@ -10,6 +10,7 @@
 # imported by the parser to populate the list of subclasses.
 
 import contextlib
+import logging
 import os
 import random
 import socket
@@ -27,7 +28,7 @@ from lava_common.constants import (
     XNBD_PORT_RANGE_MAX,
     XNBD_PORT_RANGE_MIN,
 )
-from lava_common.exceptions import InfrastructureError, JobError, LAVABug
+from lava_common.exceptions import InfrastructureError, LAVABug
 
 
 def dispatcher_gateway():
@@ -174,15 +175,16 @@ def retry(
     delay: int = 1,
 ):
     """
-    Retry the wrapped function `retires` times if the `exception` is thrown
+    Retry the wrapped function `retries` times if the `exception` is thrown
     :param exception: exception that trigger a retry attempt
-    :param: expected: expected exception
+    :param expected: expected exception
     :param retries: the number of times to retry
     :param delay: wait time after each attempt in seconds
     """
 
     def decorator(func):
         def wrapper(*args, **kwargs):
+            logger = logging.getLogger("dispatcher")
             if expected is not None and issubclass(exception, expected):
                 raise Exception(
                     "'exception' shouldn't be a subclass of 'expected' exception"
@@ -197,10 +199,9 @@ def retry(
                     else:
                         return func(*args, **kwargs)
                 except exception as exc:
+                    logger.error(f"{str(exc)}: {attempt + 1} of {retries} attempts.")
                     if attempt == int(retries) - 1:
-                        raise JobError(
-                            f"Exception thrown when calling {func.__name__}: {exc}"
-                        )
+                        raise
                     attempt += 1
                     time.sleep(delay)
 
