@@ -10,6 +10,7 @@ import shutil
 import subprocess  # nosec - internal use.
 
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.utils.network import retry
 
 
 class VCSHelper:
@@ -36,8 +37,14 @@ class GitHelper(VCSHelper):
         super().__init__(url)
         self.binary = "/usr/bin/git"
 
+    @retry(retries=6, delay=5)
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
         logger = logging.getLogger("dispatcher")
+
+        # Clear the data
+        if os.path.exists(dest_path):
+            shutil.rmtree(dest_path)
+
         try:
             cmd_args = [self.binary, "clone"]
             if branch is not None:
