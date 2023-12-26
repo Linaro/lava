@@ -116,6 +116,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         "failure_comment",
     )
     ordering_fields = ("id", "start_time", "end_time", "submit_time")
+    ordering = ("-id",)
     filterset_class = filters.TestJobFilter
 
     def get_queryset(self):
