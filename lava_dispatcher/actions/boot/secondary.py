@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
@@ -29,16 +28,8 @@ class SecondaryShell(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
         if parameters["method"] != "new_connection":
             return False, "new_connection not in method"
-        if "actions" not in device:
-            raise ConfigurationError("Invalid device configuration")
-        if "boot" not in device["actions"]:
-            return False, "boot not in device actions"
-        if "methods" not in device["actions"]["boot"]:
-            raise ConfigurationError("Device misconfiguration")
         if "method" not in parameters:
             return False, "no boot method"
         return True, "accepted"

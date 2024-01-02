@@ -53,10 +53,10 @@ class BootFastboot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" in parameters:
-            if parameters["method"] == "fastboot":
-                return True, "accepted"
-        return False, 'boot "method" was not "fastboot"'
+        if parameters["method"] != "fastboot":
+            return False, 'boot "method" was not "fastboot"'
+
+        return True, "accepted"
 
 
 class BootFastbootCommands(OptionalContainerFastbootAction):

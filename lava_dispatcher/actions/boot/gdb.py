@@ -30,8 +30,6 @@ class GDB(Boot):
         methods = device["actions"]["boot"]["methods"]
         if "gdb" not in methods:
             return False, '"gdb" is not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" not in parameters'
         if parameters["method"] != "gdb":
             return False, '"method" was not "gdb"'
         if "commands" not in parameters:

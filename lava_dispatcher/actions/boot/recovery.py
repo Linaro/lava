@@ -20,10 +20,10 @@ class RecoveryBoot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" in parameters:
-            if parameters["method"] == "recovery":
-                return True, "accepted"
-        return False, 'boot "method" was not "recovery"'
+        if parameters["method"] != "recovery":
+            return False, 'boot "method" was not "recovery"'
+
+        return True, "accepted"
 
 
 class RecoveryBootAction(Action):

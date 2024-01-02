@@ -29,8 +29,6 @@ class Musca(Boot):
     def accepts(cls, device, parameters):
         if "musca" not in device["actions"]["boot"]["methods"]:
             return False, '"musca" was not in device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if parameters["method"] != "musca":
             return False, '"method" was not "musca"'
         if "board_id" not in device:

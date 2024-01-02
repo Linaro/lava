@@ -25,8 +25,6 @@ class JLink(Boot):
     def accepts(cls, device, parameters):
         if "jlink" not in device["actions"]["boot"]["methods"]:
             return False, '"jlink" was not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if parameters["method"] != "jlink":
             return False, '"method" was not "jlink"'
         if "board_id" not in device:

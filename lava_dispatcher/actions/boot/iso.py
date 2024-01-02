@@ -27,10 +27,14 @@ class BootIsoInstaller(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "media" in parameters and parameters["media"] == "img":
-            if "method" in parameters and parameters["method"] == "qemu-iso":
-                return True, "accepted"
-        return False, '"media" was not in parameters or "media" was not "img"'
+        if parameters["method"] != "qemu-iso":
+            return False, '"method" was not "qemu-iso"'
+        if "media" not in parameters:
+            return False, '"media" was not in parameters'
+        if parameters["media"] != "img":
+            return False, '"media" was not "img"'
+
+        return True, "accepted"
 
 
 class BootIsoInstallerAction(RetryAction):

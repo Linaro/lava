@@ -47,8 +47,6 @@ class BootQEMU(Boot):
                 False,
                 '"qemu" or "qemu-nfs" was not in the device configuration boot methods',
             )
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if parameters["method"] not in ["qemu", "qemu-nfs", "monitor"]:
             return False, '"method" was not "qemu" or "qemu-nfs"'
         return True, "accepted"

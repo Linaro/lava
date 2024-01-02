@@ -7,7 +7,6 @@
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
 
-from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -36,16 +35,9 @@ class GrubSequence(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
-        if "actions" not in device:
-            raise ConfigurationError("Invalid device configuration")
-        if "boot" not in device["actions"]:
-            return False, '"boot" was not in the device configuration actions'
-        if "methods" not in device["actions"]["boot"]:
-            raise ConfigurationError("Device misconfiguration")
+
         params = device["actions"]["boot"]["methods"]
         if "grub" not in params:
             return False, '"grub" was not in the device configuration boot methods'
@@ -65,16 +57,9 @@ class Grub(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
-        if "actions" not in device:
-            raise ConfigurationError("Invalid device configuration")
-        if "boot" not in device["actions"]:
-            return False, '"boot" was not in the device configuration actions'
-        if "methods" not in device["actions"]["boot"]:
-            raise ConfigurationError("Device misconfiguration")
+
         params = device["actions"]["boot"]["methods"]
         if "grub" in params and "sequence" in params["grub"]:
             return False, '"sequence" was in "grub" parameters'
