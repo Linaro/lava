@@ -144,6 +144,33 @@ class Deployment:
     priority = 0
     section = "deploy"
 
+    TO_NAME_TO_MODULE: dict[str, str] = {
+        "docker": "lava_dispatcher.actions.deploy.docker",
+        "download": "lava_dispatcher.actions.deploy.download",
+        "downloads": "lava_dispatcher.actions.deploy.downloads",
+        "fastboot": "lava_dispatcher.actions.deploy.fastboot",
+        "flasher": "lava_dispatcher.actions.deploy.flasher",
+        "fvp": "lava_dispatcher.actions.deploy.fvp",
+        "tmpfs": "lava_dispatcher.actions.deploy.image",
+        "iso-installer": "lava_dispatcher.actions.deploy.iso",
+        "lxc": "lava_dispatcher.actions.deploy.lxc",
+        "mps": "lava_dispatcher.actions.deploy.mps",
+        "musca": "lava_dispatcher.actions.deploy.musca",
+        "nbd": "lava_dispatcher.actions.deploy.nbd",
+        "nfs": "lava_dispatcher.actions.deploy.nfs",
+        "overlay": "lava_dispatcher.actions.deploy.overlay",
+        "recovery": "lava_dispatcher.actions.deploy.recovery",
+        "sata": "lava_dispatcher.actions.deploy.removable",
+        "sd": "lava_dispatcher.actions.deploy.removable",
+        "usb": "lava_dispatcher.actions.deploy.removable",
+        "ssh": "lava_dispatcher.actions.deploy.ssh",
+        "tftp": "lava_dispatcher.actions.deploy.tftp",
+        "u-boot-ums": "lava_dispatcher.actions.deploy.uboot_ums",
+        "uuu": "lava_dispatcher.actions.deploy.uuu",
+        "vemsd": "lava_dispatcher.actions.deploy.vemsd",
+        "avh": "lava_dispatcher.actions.deploy.avh",
+    }
+
     @property
     def parameters(self):
         """
@@ -201,6 +228,15 @@ class Deployment:
     @classmethod
     def select(cls, device, parameters):
         cls.deploy_check(device, parameters)
+
+        to_name = parameters["to"]
+        try:
+            to_module_name = cls.TO_NAME_TO_MODULE[to_name]
+        except KeyError:
+            raise JobError("Unknown deployment method:", to_name)
+
+        import_module(to_module_name)
+
         candidates = cls.__subclasses__()
         replies = {}
         willing = []

@@ -8,7 +8,6 @@
 # pylint: disable=unused-import
 from __future__ import annotations
 
-import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.test.strategies
 import lava_dispatcher.protocols.strategies
 from lava_common.yaml import yaml_safe_load
