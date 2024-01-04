@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from importlib import import_module
 
 from lava_common.exceptions import (
     ConfigurationError,
@@ -234,6 +236,42 @@ class Boot:
     priority = 0
     section = "boot"
 
+    METHOD_NAME_TO_MODULE: dict[str, str] = {
+        "barebox": "lava_dispatcher.actions.boot.barebox",
+        "bootloader": "lava_dispatcher.actions.boot.bootloader",
+        "cmsis-dap": "lava_dispatcher.actions.boot.cmsis_dap",
+        "depthcharge": "lava_dispatcher.actions.boot.depthcharge",
+        "dfu": "lava_dispatcher.actions.boot.dfu",
+        "docker": "lava_dispatcher.actions.boot.docker",
+        "fastboot": "lava_dispatcher.actions.boot.fastboot",
+        "fvp": "lava_dispatcher.actions.boot.fvp",
+        "gdb": "lava_dispatcher.actions.boot.gdb",
+        "grub-efi": "lava_dispatcher.actions.boot.grub",
+        "grub": "lava_dispatcher.actions.boot.grub",
+        "ipxe": "lava_dispatcher.actions.boot.ipxe",
+        "qemu-iso": "lava_dispatcher.actions.boot.iso",
+        "jlink": "lava_dispatcher.actions.boot.jlink",
+        "kexec": "lava_dispatcher.actions.boot.kexec",
+        "lxc": "lava_dispatcher.actions.boot.lxc",
+        "minimal": "lava_dispatcher.actions.boot.minimal",
+        "musca": "lava_dispatcher.actions.boot.musca",
+        "nodebooter": "lava_dispatcher.actions.boot.nodebooter",
+        "openocd": "lava_dispatcher.actions.boot.openocd",
+        "pyocd": "lava_dispatcher.actions.boot.pyocd",
+        "qemu": "lava_dispatcher.actions.boot.qemu",
+        "qemu-nfs": "lava_dispatcher.actions.boot.qemu",
+        "monitor": "lava_dispatcher.actions.boot.qemu",
+        "recovery": "lava_dispatcher.actions.boot.recovery",
+        "new_connection": "lava_dispatcher.actions.boot.secondary",
+        "schroot": "lava_dispatcher.actions.boot.ssh",
+        "ssh": "lava_dispatcher.actions.boot.ssh",
+        "u-boot": "lava_dispatcher.actions.boot.u_boot",
+        "uefi": "lava_dispatcher.actions.boot.uefi",
+        "uefi-menu": "lava_dispatcher.actions.boot.uefi_menu",
+        "uuu": "lava_dispatcher.actions.boot.uuu",
+        "avh": "lava_dispatcher.actions.boot.avh",
+    }
+
     @classmethod
     def boot_check(cls, device, parameters):
         if not device:
@@ -266,6 +304,15 @@ class Boot:
     @classmethod
     def select(cls, device, parameters):
         cls.boot_check(device, parameters)
+
+        method_name = parameters["method"]
+        try:
+            methods_module_name = cls.METHOD_NAME_TO_MODULE[method_name]
+        except KeyError:
+            raise JobError("Unknown boot method:", method_name)
+
+        import_module(methods_module_name)
+
         candidates = cls.__subclasses__()
         replies = {}
         willing = []
