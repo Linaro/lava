@@ -1,0 +1,12 @@
+{% extends 'meson-g12-common.jinja2' %}
+
+{% set uboot_tftp_commands = [
+    "tftpboot {KERNEL_ADDR} {KERNEL}",
+    "tftpboot {RAMDISK_ADDR} {RAMDISK}",
+    "tftpboot {DTB_ADDR} {DTB}"]
+-%}
+
+{% set booti_kernel_addr = bootm_kernel_addr %}
+{% set booti_ramdisk_addr = bootm_ramdisk_addr %}
+{% set booti_dtb_addr = bootm_dtb_addr %}
+
