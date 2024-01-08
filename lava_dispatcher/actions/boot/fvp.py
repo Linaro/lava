@@ -311,6 +311,8 @@ class StartFVPAction(BaseFVPAction):
         cmd = self.construct_docker_fvp_command(
             self.docker_image, self.parameters.get("arguments")
         )
+        # Prefix by lava-outerr to add buffering to stdout and err
+        cmd = "lava-outerr " + cmd
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
@@ -434,7 +436,7 @@ class GetFVPSerialAction(Action):
                 parameters={"namespace": feedback_name},
             )
 
-        cmd = "docker exec --interactive --tty %s telnet localhost %s" % (
+        cmd = "lava-outerr docker exec --interactive --tty %s telnet localhost %s" % (
             container,
             serial_port,
         )
