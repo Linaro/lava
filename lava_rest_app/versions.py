@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-versions = ("v0.1", "v0.2")
+versions = ("v0.2",)
 
 
 def urlpattern():

@@ -21,7 +21,7 @@ from rest_framework.test import APIClient
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_load
 from lava_rest_app import versions
-from lava_rest_app.base import serializers
+from lava_rest_app.v02 import serializers
 from lava_results_app import models as result_models
 from lava_scheduler_app.models import (
     Alias,

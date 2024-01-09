@@ -4,13 +4,14 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
 from django.contrib.auth.models import Group, Permission
+from django.db import transaction
 from rest_framework import serializers
 from rest_framework.reverse import reverse as rest_reverse
 from rest_framework_extensions.fields import ResourceUriField
+from rest_framework_extensions.serializers import PartialUpdateSerializerMixin
 
-from lava_rest_app.base import serializers as base_serializers
+from lava_results_app.models import TestCase, TestSuite
 from lava_scheduler_app.models import (
     Alias,
     Device,
@@ -18,6 +19,7 @@ from lava_scheduler_app.models import (
     GroupDevicePermission,
     GroupDeviceTypePermission,
     Tag,
+    TestJob,
     Worker,
 )
 
@@ -45,10 +47,76 @@ class TestSuiteResourceUriField(ResourceUriField):
         )
 
 
-class TestSuiteSerializer(base_serializers.TestSuiteSerializer):
+class TestJobSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
+    health = serializers.CharField(source="get_health_display", read_only=True)
+    state = serializers.CharField(source="get_state_display", read_only=True)
+    submitter = serializers.CharField(source="submitter.username", read_only=True)
+    definition = serializers.CharField(style={"base_template": "textarea.html"})
+
+    class Meta:
+        model = TestJob
+        fields = (
+            "id",
+            "submitter",
+            "viewing_groups",
+            "description",
+            "health_check",
+            "requested_device_type",
+            "tags",
+            "actual_device",
+            "submit_time",
+            "start_time",
+            "end_time",
+            "state",
+            "health",
+            "priority",
+            "definition",
+            "original_definition",
+            "multinode_definition",
+            "failure_tags",
+            "failure_comment",
+            "token",
+        )
+        extra_kwargs = {
+            "id": {"read_only": True},
+            "submitter": {"read_only": True},
+            "viewing_groups": {"read_only": True},
+            "description": {"read_only": True},
+            "health_check": {"read_only": True},
+            "requested_device_type": {"read_only": True},
+            "tags": {"read_only": True},
+            "actual_device": {"read_only": True},
+            "submit_time": {"read_only": True},
+            "start_time": {"read_only": True},
+            "end_time": {"read_only": True},
+            "state": {"read_only": True},
+            "health": {"read_only": True},
+            "priority": {"read_only": True},
+            "original_definition": {"read_only": True},
+            "multinode_definition": {"read_only": True},
+            "failure_tags": {"read_only": True},
+            "failure_comment": {"read_only": True},
+        }
+
+    def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
+        super().__init__(*args, **kwargs)
+
+    def get_fields(self, *args, **kwargs):
+        fields = super().get_fields(*args, **kwargs)
+        if not self.context.get("request").user.is_superuser:
+            del fields["token"]
+        return fields
+
+
+class TestSuiteSerializer(serializers.ModelSerializer):
     resource_uri = TestSuiteResourceUriField(
         view_name="jobs-suite-detail", read_only=True
     )
+
+    class Meta:
+        model = TestSuite
+        fields = "__all__"
 
 
 class TestCaseResourceUriField(ResourceUriField):
@@ -63,13 +131,15 @@ class TestCaseResourceUriField(ResourceUriField):
         )
 
 
-class TestCaseSerializer(base_serializers.TestCaseSerializer):
+class TestCaseSerializer(serializers.ModelSerializer):
+    result = serializers.CharField(source="result_code", read_only=True)
     resource_uri = TestCaseResourceUriField(
         view_name="suites-test-detail", read_only=True
     )
     unit = serializers.CharField(source="units")
 
-    class Meta(base_serializers.TestCaseSerializer.Meta):
+    class Meta:
+        model = TestCase
         exclude = ("units",)
         fields = None
 
@@ -78,8 +148,33 @@ class DictionarySerializer(serializers.Serializer):
     dictionary = serializers.CharField(style={"base_template": "textarea.html"})
 
 
-class DeviceSerializer(base_serializers.DeviceSerializer):
+class DeviceTypeSerializer(serializers.ModelSerializer):
+    health_denominator = serializers.ReadOnlyField(
+        source="get_health_denominator_display"
+    )
+
+    class Meta:
+        model = DeviceType
+        fields = (
+            "name",
+            "architecture",
+            "processor",
+            "cpu_model",
+            "aliases",
+            "bits",
+            "cores",
+            "core_count",
+            "description",
+            "health_frequency",
+            "disable_health_check",
+            "health_denominator",
+            "display",
+        )
+
+
+class DeviceSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
         super().__init__(*args, **kwargs)
         if "view" in self.context and self.context["view"].action in [
             "update",
@@ -88,10 +183,40 @@ class DeviceSerializer(base_serializers.DeviceSerializer):
             # Hostname becomes read-only after device is created.
             self.fields.pop("hostname", None)
 
+    def update(self, instance, validated_data):
+        old_health_display = None
+        if validated_data.get("health") is not None:
+            # Log entry if the health changed
+            if validated_data["health"] != instance.health:
+                old_health_display = instance.get_health_display()
+
+        device = super().update(instance, validated_data)
+        if old_health_display is not None:
+            device.log_admin_entry(
+                self.context["request"].user,
+                "%s → %s" % (old_health_display, device.get_health_display()),
+            )
+        return device
+
     state = serializers.CharField(source="get_state_display", read_only=True)
     health = ChoiceField(choices=Device.HEALTH_CHOICES)
 
-    class Meta(base_serializers.DeviceSerializer.Meta):
+    class Meta:
+        model = Device
+        fields = (
+            "hostname",
+            "device_type",
+            "device_version",
+            "physical_owner",
+            "physical_group",
+            "description",
+            "tags",
+            "state",
+            "health",
+            "last_health_report_job",
+            "worker_host",
+            "is_synced",
+        )
         read_only_fields = ("last_health_report_job", "state")
 
 
@@ -103,11 +228,39 @@ class EnvironmentSerializer(serializers.Serializer):
     env = serializers.CharField(style={"base_template": "textarea.html"})
 
 
-class WorkerSerializer(base_serializers.WorkerSerializer):
+class WorkerSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer):
     state = serializers.CharField(source="get_state_display", read_only=True)
     health = ChoiceField(choices=Worker.HEALTH_CHOICES, required=False)
 
-    class Meta(base_serializers.WorkerSerializer.Meta):
+    def __init__(self, *args, **kwargs):
+        kwargs["partial"] = True
+        super().__init__(*args, **kwargs)
+
+    def get_fields(self, *args, **kwargs):
+        fields = super().get_fields(*args, **kwargs)
+        if not self.context.get("request").user.is_superuser:
+            del fields["token"]
+        return fields
+
+    def update(self, instance, validated_data):
+        if validated_data.get("health") is not None:
+            health = validated_data["health"]
+            user = self.context["request"].user
+            with transaction.atomic():
+                # Use the worker helpers
+                if health == Worker.HEALTH_ACTIVE:
+                    instance.go_health_active(user)
+                elif health == Worker.HEALTH_MAINTENANCE:
+                    instance.go_health_maintenance(user)
+                elif health == Worker.HEALTH_RETIRED:
+                    instance.go_health_retired(user)
+            # "health" was already updated, drop it
+            del validated_data["health"]
+        return super().update(instance, validated_data)
+
+    class Meta:
+        model = Worker
+        fields = "__all__"
         read_only_fields = ("last_ping", "state")
 
 
