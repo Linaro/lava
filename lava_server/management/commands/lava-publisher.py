@@ -200,6 +200,9 @@ async def zmq_proxy(app):
         except asyncio.TimeoutError:
             logger.info("[EXIT] Timing out")
             break
+        except OSError as exc:
+            logger.error("[EXIT] Received an I/O error: %s", exc)
+            break
 
     logger.info("[EXIT] Closing the sockets: the queue is empty")
     pull.close(linger=1)
