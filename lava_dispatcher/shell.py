@@ -64,7 +64,7 @@ class ShellLogger:
 
     def flush(self, force=False):
         if force and self.line:
-            self.write("\n")
+            self.write("\r\n")
 
 
 class ShellCommand(pexpect.spawn):
