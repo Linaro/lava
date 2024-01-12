@@ -173,6 +173,9 @@ lava-dispatcher:
   qemu-system-aarch64:
     name: qemu-system-arm
     unittests: true
+  python-responses:
+    name: python3-responses
+    unittests: true
 
 lava-common:
   PyYAML:

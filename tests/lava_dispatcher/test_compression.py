@@ -3,30 +3,65 @@
 # Author: Matt Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import copy
 import hashlib
 import os
+from pathlib import Path
+
+import responses
+from responses import RequestsMock
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
 from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
 
 
+def setup_responses() -> RequestsMock:
+    download_artifacts_dir = Path(__file__).parent / "download_artifacts"
+    requests_mock = RequestsMock(assert_all_requests_are_fired=True)
+
+    for compression_postfix in ("gz", "xz", "zip", "bz2"):
+        compression_file_path = download_artifacts_dir / f"10MB.{compression_postfix}"
+        compression_file_contents = compression_file_path.read_bytes()
+        download_url = (
+            "http://example.com/functional-test-images/"
+            f"compression/10MB.{compression_postfix}"
+        )
+        requests_mock.add(
+            responses.GET,
+            url=download_url,
+            body=compression_file_contents,
+        )
+        requests_mock.add(
+            responses.HEAD,
+            url=download_url,
+            headers={"Content-Length": str(len(compression_file_contents))},
+        )
+
+    return requests_mock
+
+
 class TestDecompression(StdoutTestCase):
     def setUp(self):
         super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job("sample_jobs/compression.yaml")
-        self.job.validate()
+        self.factory = Factory()
+        self.requests_mock = setup_responses()
+        self.requests_mock.start()
+
+    def tearDown(self):
+        self.requests_mock.stop()
+        self.requests_mock.reset()
 
     def test_download_decompression(self):
-        self.assertEqual(len(self.job.pipeline.describe()), 2)
+        job = self.factory.create_kvm_job("sample_jobs/compression.yaml")
+        job.validate()
+
+        self.assertEqual(len(job.pipeline.describe()), 2)
 
         deployaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
+            action for action in job.pipeline.actions if action.name == "deployimages"
         ][0]
         downloadactions = [
             action
@@ -81,34 +116,12 @@ class TestDecompression(StdoutTestCase):
                 self.assertEqual(outputsize, filesize)
                 self.assertEqual(outputfile, "10MB")
 
-    def test_multiple_decompressions(self):
-        """
-        Previously had an issue with decompress_command_map being modified.
-        This should be a constant. If this is modified during calling decompress_file
-        then a regression has occurred.
-        :return:
-        """
-        # Take a complete copy of decompress_command_map before it has been modified
-        copy_of_command_map = copy.deepcopy(decompress_command_map)
-        # Call decompress_file, we only need it to create the command required,
-        # it doesn't need to complete successfully.
-        with self.assertRaises(InfrastructureError):
-            decompress_file("/tmp/test.xz", "zip")  # nosec - unit test only.
-        self.assertEqual(copy_of_command_map, decompress_command_map)
-
-
-class TestBadDecompression(StdoutTestCase):
-    def setUp(self):
-        super().setUp()
-        factory = Factory()
-        self.job = factory.create_kvm_job("sample_jobs/compression_bad.yaml")
-        self.job.validate()
-
     def test_bad_download_decompression(self):
+        job = self.factory.create_kvm_job("sample_jobs/compression_bad.yaml")
+        job.validate()
+
         deploy_actions = (
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
+            action for action in job.pipeline.actions if action.name == "deployimages"
         )
         download_actions = (
             action
@@ -159,3 +172,20 @@ class TestBadDecompression(StdoutTestCase):
         ):
             test_multiple_bad_checksums.validate()
             test_multiple_bad_checksums.run(None, None)
+
+
+class TestDownloadDecompressionMap(StdoutTestCase):
+    def test_download_decompression_map(self):
+        """
+        Previously had an issue with decompress_command_map being modified.
+        This should be a constant. If this is modified during calling decompress_file
+        then a regression has occurred.
+        :return:
+        """
+        # Take a complete copy of decompress_command_map before it has been modified
+        copy_of_command_map = copy.deepcopy(decompress_command_map)
+        # Call decompress_file, we only need it to create the command required,
+        # it doesn't need to complete successfully.
+        with self.assertRaises(InfrastructureError):
+            decompress_file("/dev/null/test", "zip")  # nosec - unit test only.
+        self.assertEqual(copy_of_command_map, decompress_command_map)
