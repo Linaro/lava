@@ -247,6 +247,175 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertEqual(description_ref, job.pipeline.describe())
 
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_overlay_without_dtbo(self, which_mock):
+        parameters = {
+            "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
+            "device_type": "imx8mq-evk",
+            "job_name": "uboot-pipeline",
+            "job_timeout": "15m",
+            "action_timeout": "5m",
+            "priority": "medium",
+            "actions": {
+                "boot": {
+                    "namespace": "common",
+                    "method": "u-boot",
+                    "commands": "nfs",
+                    "prompts": ["linaro-test", "root@debian:~#"],
+                },
+                "deploy": {
+                    "namespace": "common",
+                    "ramdisk": {"url": "initrd.gz", "compression": "gz"},
+                    "kernel": {"url": "zImage", "type": "zimage"},
+                    "dtb": {"url": "dtb"},
+                },
+            },
+        }
+        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
+        device = NewDevice(data)
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
+        pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
+        job.pipeline = pipeline
+        overlay = BootloaderCommandOverlay(job)
+        connection = MagicMock()
+        connection.timeout = MagicMock()
+        pipeline.add_action(overlay)
+        overlay.set_namespace_data(
+            action="uboot-prepare-kernel",
+            label="bootcommand",
+            key="bootcommand",
+            value="bootz",
+        )
+        overlay.set_namespace_data(
+            action="download-action", label="file", key="kernel", value="zImage"
+        )
+        overlay.set_namespace_data(
+            action="download-action", label="file", key="dtb", value="dtb"
+        )
+        overlay.validate()
+        overlay.run(connection, 100)
+
+        assert overlay.commands == [
+            "setenv autoload no",
+            "dhcp",
+            "setenv serverip {SERVER_IP}",
+            "tftp {KERNEL_ADDR} {KERNEL}",
+            "tftp {RAMDISK_ADDR} {RAMDISK}",
+            "tftp {TEE_ADDR} {TEE}",
+            "setenv initrd_size ${filesize}",
+            "tftp {DTB_ADDR} {DTB}",
+            "fdt addr {DTB_BASE_ADDR}",
+            "fdt resize {DTB_BASE_RESIZE}",
+            "{APPLY_DTBO_COMMANDS}",
+            "setenv bootargs 'console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,v3  ip=dhcp'",
+            "{BOOTX}",
+        ]
+
+        assert overlay.get_namespace_data(
+            action="bootloader-overlay", label="u-boot", key="commands"
+        ) == [
+            "setenv autoload no",
+            "dhcp",
+            "setenv serverip 192.168.0.2",
+            "tftp ${loadaddr} zImage",
+            "setenv initrd_size ${filesize}",
+            "tftp ${fdt_addr} dtb",
+            "setenv bootargs 'console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,v3  ip=dhcp'",
+            "bootz ${loadaddr} - ${fdt_addr}",
+        ]
+
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
+    def test_overlay_with_dtbo(self, which_mock):
+        parameters = {
+            "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
+            "device_type": "imx8mq-evk",
+            "job_name": "uboot-pipeline",
+            "job_timeout": "15m",
+            "action_timeout": "5m",
+            "priority": "medium",
+            "actions": {
+                "boot": {
+                    "namespace": "common",
+                    "method": "u-boot",
+                    "commands": "nfs",
+                    "prompts": ["linaro-test", "root@debian:~#"],
+                },
+                "deploy": {
+                    "namespace": "common",
+                    "ramdisk": {"url": "initrd.gz", "compression": "gz"},
+                    "kernel": {"url": "zImage", "type": "zimage"},
+                    "dtb": {"url": "dtb"},
+                },
+            },
+        }
+        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
+        device = NewDevice(data)
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
+        pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
+        job.pipeline = pipeline
+        overlay = BootloaderCommandOverlay(job)
+        connection = MagicMock()
+        connection.timeout = MagicMock()
+        pipeline.add_action(overlay)
+        overlay.set_namespace_data(
+            action="uboot-prepare-kernel",
+            label="bootcommand",
+            key="bootcommand",
+            value="bootz",
+        )
+        overlay.set_namespace_data(
+            action="download-action", label="file", key="kernel", value="zImage"
+        )
+        overlay.set_namespace_data(
+            action="download-action", label="file", key="dtb", value="dtb"
+        )
+        overlay.set_namespace_data(
+            action="download-action", label="file", key="dtbo0", value="dtbo0"
+        )
+        overlay.validate()
+        overlay.run(connection, 100)
+
+        assert overlay.commands == [
+            "setenv autoload no",
+            "dhcp",
+            "setenv serverip {SERVER_IP}",
+            "tftp {KERNEL_ADDR} {KERNEL}",
+            "tftp {RAMDISK_ADDR} {RAMDISK}",
+            "tftp {TEE_ADDR} {TEE}",
+            "setenv initrd_size ${filesize}",
+            "tftp {DTB_ADDR} {DTB}",
+            "fdt addr {DTB_BASE_ADDR}",
+            "fdt resize {DTB_BASE_RESIZE}",
+            "{APPLY_DTBO_COMMANDS}",
+            "tftp {DTBO_ADDR} {DTBO0}",
+            "fdt apply {DTBO_ADDR}",
+            "setenv bootargs 'console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,v3  ip=dhcp'",
+            "{BOOTX}",
+        ]
+
+        assert overlay.get_namespace_data(
+            action="bootloader-overlay", label="u-boot", key="commands"
+        ) == [
+            "setenv autoload no",
+            "dhcp",
+            "setenv serverip 192.168.0.2",
+            "tftp ${loadaddr} zImage",
+            "setenv initrd_size ${filesize}",
+            "tftp ${fdt_addr} dtb",
+            "fdt addr ${fdt_addr}",
+            "fdt resize 1048576",
+            "tftp 0x93c00000 dtbo0",
+            "fdt apply 0x93c00000",
+            "setenv bootargs 'console=ttymxc0,115200 earlycon=ec_imx6q,0x30860000,115200n8 root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard,v3  ip=dhcp'",
+            "bootz ${loadaddr} - ${fdt_addr}",
+        ]
+
+    @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
     def test_overlay_action(self, which_mock):
         parameters = {
             "dispatcher": {},  # fake dispatcher parameter. Normally added by parser
