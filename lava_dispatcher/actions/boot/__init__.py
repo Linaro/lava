@@ -450,6 +450,9 @@ class BootloaderCommandOverlay(Action):
             "{TEE}": self.get_namespace_data(
                 action="download-action", label="file", key="tee"
             ),
+            "{DTB_BASE_ADDR}": None,
+            "{DTB_BASE_RESIZE}": None,
+            "{APPLY_DTBO_COMMANDS}": None,
         }
         self.bootcommand = self.get_namespace_data(
             action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
@@ -469,6 +472,35 @@ class BootloaderCommandOverlay(Action):
             dtb_addr = self.job.device["parameters"][self.bootcommand]["dtb"]
             ramdisk_addr = self.job.device["parameters"][self.bootcommand]["ramdisk"]
             tee_addr = self.job.device["parameters"][self.bootcommand].get("tee")
+            dtbo_addr = self.job.device["parameters"][self.bootcommand].get("dtbo")
+            dtb_base_resize = self.job.device["parameters"].get("dtb_base_resize")
+            apply_dtbo_commands = self.job.device["actions"]["boot"]["methods"][
+                self.method
+            ]["parameters"].get("apply_dtbo_commands", [])
+            with contextlib.suppress(ValueError):
+                dtbo_pos = self.commands.index("{APPLY_DTBO_COMMANDS}")
+                index = 0
+                while True:
+                    file = self.get_namespace_data(
+                        action="download-action", label="file", key=f"dtbo{index}"
+                    )
+                    if file:
+                        for apply_dtbo_command in apply_dtbo_commands:
+                            dtbo_pos += 1
+                            self.commands.insert(
+                                dtbo_pos,
+                                apply_dtbo_command.replace(
+                                    "{DTBO}", f"{{DTBO{index}}}"
+                                ),
+                            )
+                            substitutions[f"{{DTBO{index}}}"] = file
+                    else:
+                        break
+                    index += 1
+                if index > 0:
+                    substitutions["{DTB_BASE_ADDR}"] = dtb_addr
+                    substitutions["{DTB_BASE_RESIZE}"] = str(dtb_base_resize)
+                    substitutions["{DTBO_ADDR}"] = dtbo_addr
 
             if (
                 not self.get_namespace_data(

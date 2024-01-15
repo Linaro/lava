@@ -100,21 +100,33 @@ class TftpAction(Action):
             "modules",
             "preseed",
             "tee",
+            "dtbo",
         ]:
             if key in parameters:
-                self.pipeline.add_action(
-                    DownloaderAction(
-                        self.job, key, path=self.tftp_dir, params=parameters[key]
+                if key == "dtbo":
+                    for index, parameter in enumerate(parameters[key]):
+                        self.pipeline.add_action(
+                            DownloaderAction(
+                                self.job,
+                                f"{key}{index}",
+                                path=self.tftp_dir,
+                                params=parameter,
+                            )
+                        )
+                else:
+                    self.pipeline.add_action(
+                        DownloaderAction(
+                            self.job, key, path=self.tftp_dir, params=parameters[key]
+                        )
                     )
-                )
-                if key == "ramdisk":
-                    self.set_namespace_data(
-                        action=self.name,
-                        label="tftp",
-                        key="ramdisk",
-                        value=True,
-                        parameters=parameters,
-                    )
+                    if key == "ramdisk":
+                        self.set_namespace_data(
+                            action=self.name,
+                            label="tftp",
+                            key="ramdisk",
+                            value=True,
+                            parameters=parameters,
+                        )
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.pipeline.add_action(PrepareOverlayTftp(self.job))

@@ -19,6 +19,7 @@ def schema():
             {Optional("type"): Any("image", "uimage", "zimage")}
         ),
         Optional("dtb"): resource,
+        Optional("dtbo"): [resource],
         Optional("modules"): resource,
         Optional("preseed"): resource,
         Optional("ramdisk"): deploy.url(
