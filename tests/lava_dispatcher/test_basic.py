@@ -81,7 +81,10 @@ class TestPipelineInit(StdoutTestCase):
     def test_parsed_commands(self):
         command_list = ["false"]
         self.assertRaises(JobError, self.sub0.parsed_command, command_list)
-        self.assertEqual("", self.sub0.parsed_command(command_list, allow_fail=True))
+        self.assertEqual(
+            "Command '['false']' returned non-zero exit status 1.",
+            self.sub0.parsed_command(command_list, allow_fail=True),
+        )
         self.sub1.command_exception = InfrastructureError
         self.assertRaises(InfrastructureError, self.sub1.parsed_command, command_list)
         command_list = ["true"]
