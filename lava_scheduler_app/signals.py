@@ -15,7 +15,7 @@ from json import dumps as json_dumps
 import zmq
 from django.conf import settings
 from django.db import transaction
-from django.db.models.signals import post_init, post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete
 
 from lava_scheduler_app.models import Device, TestJob, Worker
 from lava_scheduler_app.tasks import async_send_notifications
@@ -74,15 +74,6 @@ def send_event(topic, user, data):
 
 
 @log_exception
-def device_init_handler(sender, **kwargs):
-    # This function is called for every Device object created
-    # Save the old states
-    instance = kwargs["instance"]
-    instance._old_health = instance.health
-    instance._old_state = instance.state
-
-
-@log_exception
 def device_post_handler(sender, **kwargs):
     # Called only when a Device is saved into the database
     instance = kwargs["instance"]
@@ -115,15 +106,6 @@ def device_post_handler(sender, **kwargs):
 
         # Send the event
         send_event(".device", "lavaserver", data)
-
-
-@log_exception
-def testjob_init_handler(sender, **kwargs):
-    # This function is called for every testJob object created
-    # Save the old states
-    instance = kwargs["instance"]
-    instance._old_health = instance.health
-    instance._old_state = instance.state
 
 
 @log_exception
@@ -195,15 +177,6 @@ def testjob_pre_delete_handler(sender, **kwargs):
 
 
 @log_exception
-def worker_init_handler(sender, **kwargs):
-    # This function is called for every testJob object created
-    # Save the old states
-    instance = kwargs["instance"]
-    instance._old_health = instance.health
-    instance._old_state = instance.state
-
-
-@log_exception
 def worker_post_handler(sender, **kwargs):
     # Called only when a Worker is saved into the database
     instance = kwargs["instance"]
@@ -236,12 +209,6 @@ def register_scheduler_app_signals():
         dispatch_uid="testjob_pre_delete_handler",
     )
     # This handler is used for the notification and the events
-    post_init.connect(
-        testjob_init_handler,
-        sender=TestJob,
-        weak=False,
-        dispatch_uid="testjob_init_handler",
-    )
     post_save.connect(
         testjob_notifications,
         sender=TestJob,
@@ -251,12 +218,6 @@ def register_scheduler_app_signals():
 
     # Only activate these signals when EVENT_NOTIFICATION is in use
     if settings.EVENT_NOTIFICATION:
-        post_init.connect(
-            device_init_handler,
-            sender=Device,
-            weak=False,
-            dispatch_uid="device_init_handler",
-        )
         post_save.connect(
             device_post_handler,
             sender=Device,
@@ -268,12 +229,6 @@ def register_scheduler_app_signals():
             sender=TestJob,
             weak=False,
             dispatch_uid="testjob_post_handler",
-        )
-        post_init.connect(
-            worker_init_handler,
-            sender=Worker,
-            weak=False,
-            dispatch_uid="worker_init_handler",
         )
         post_save.connect(
             worker_post_handler,
