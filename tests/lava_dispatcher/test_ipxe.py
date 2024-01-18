@@ -198,24 +198,25 @@ class TestBootloaderAction(StdoutTestCase):
         self.assertNotIn("initrd tftp://{SERVER_IP}/{RAMDISK}", commands)
         self.assertIn("boot", commands)
 
-    @unittest.skipIf(infrastructure_error("nbd-server"), "nbd-server not installed")
     def test_nbd_boot(self):
         job = self.factory.create_job(
             "x86-01.jinja2", "sample_jobs/up2-initrd-nbd.yaml"
         )
-        job.validate()
+        with patch("lava_dispatcher.actions.deploy.nbd.which") as which_mock:
+            job.validate()
+
+        which_mock.assert_any_call("nbd-server")
+        which_mock.assert_any_call("in.tftpd")
+
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-initrd-nbd.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        # Fixme: more asserts
         self.assertIn("ipxe", job.device["actions"]["boot"]["methods"])
-        params = job.device["actions"]["boot"]["methods"]["ipxe"]["parameters"]
         for action in job.pipeline.actions:
-            action.validate()
             if isinstance(action, BootloaderAction):
                 self.assertIn("method", action.parameters)
                 self.assertEqual("ipxe", action.parameters["method"])
-            if isinstance(action, TftpAction):
+            elif isinstance(action, TftpAction):
                 self.assertIn("initrd", action.parameters)
                 self.assertIn("kernel", action.parameters)
                 self.assertIn("nbdroot", action.parameters)

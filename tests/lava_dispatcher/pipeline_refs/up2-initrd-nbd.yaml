@@ -1,40 +1,109 @@
 - class: actions.deploy.nbd.NbdAction
+  description: download files and deploy for using tftp+initrd+nbd
+  level: '1'
+  max_retries: 2
   name: nbd-deploy
   pipeline:
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.1'
+    max_retries: 2
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.1.1, max_retries: 2, name: http-download, summary: http
+        download, timeout: 900, url: 'https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/initramfs.cpio.gz'}
+    summary: download-retry
+    timeout: 900
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.2'
+    max_retries: 2
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.2.1, max_retries: 2, name: http-download, summary: http
+        download, timeout: 900, url: 'https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/vmlinuz'}
+    summary: download-retry
+    timeout: 900
   - class: actions.deploy.download.DownloaderAction
+    description: download with retry
+    level: '1.3'
+    max_retries: 2
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, name: http-download}
-  - {class: actions.deploy.overlay.OverlayAction, name: lava-overlay}
-  - {class: actions.deploy.nbd.XnbdAction, name: xnbd-server-deploy}
+    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+        download the file, level: 1.3.1, max_retries: 2, name: http-download, summary: http
+        download, timeout: 900, url: 'https://files.lavasoftware.org/components/lava/standard/debian/stretch/armhf/3/stretch-armhf-nfs.tar.gz'}
+    summary: download-retry
+    timeout: 900
+  - {class: actions.deploy.overlay.OverlayAction, description: add lava scripts during
+      deployment for test shell use, level: '1.4', max_retries: 2, name: lava-overlay,
+    summary: overlay the lava support scripts, timeout: 900}
+  - {class: actions.deploy.nbd.XnbdAction, description: nbd daemon, level: '1.5',
+    max_retries: 2, name: xnbd-server-deploy, summary: nbd daemon, timeout: 900}
+  summary: nbd deployment
+  timeout: 900
 - class: actions.boot.ipxe.BootloaderAction
+  description: interactive bootloader action
+  level: '2'
+  max_retries: 1
   name: bootloader-action
   pipeline:
-  - {class: actions.boot.BootloaderCommandOverlay, name: bootloader-overlay}
-  - {class: connections.serial.ConnectDevice, name: connect-device}
+  - {class: actions.boot.BootloaderCommandOverlay, description: substitute job data
+      into bootloader command list, level: '2.1', max_retries: 1, name: bootloader-overlay,
+    summary: replace placeholders with job data, timeout: 480}
+  - {class: connections.serial.ConnectDevice, description: use the configured command
+      to connect serial to the device, level: '2.2', max_retries: 1, name: connect-device,
+    summary: run connection command, timeout: 480}
   - class: actions.boot.ipxe.BootloaderRetry
+    description: interactive uboot retry action
+    level: '2.3'
+    max_retries: 1
     name: bootloader-retry
     pipeline:
     - class: power.ResetDevice
+      description: reboot or power-cycle the device
+      level: 2.3.1
+      max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, name: pdu-reboot}
-    - {class: actions.boot.BootloaderInterruptAction, name: bootloader-interrupt}
-    - {class: actions.boot.BootloaderCommandsAction, name: bootloader-commands}
+      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
+          a device, level: 2.3.1.1, max_retries: 1, name: pdu-reboot, summary: hard
+          reboot using PDU, timeout: 480}
+      summary: reboot the device
+      timeout: 480
+    - {class: actions.boot.BootloaderInterruptAction, description: interrupt bootloader,
+      level: 2.3.2, max_retries: 1, name: bootloader-interrupt, summary: interrupt
+        bootloader to get an interactive shell, timeout: 480}
+    - {class: actions.boot.BootloaderCommandsAction, description: send commands to
+        bootloader, level: 2.3.3, max_retries: 1, name: bootloader-commands, summary: interactive
+        bootloader, timeout: 480}
     - class: actions.boot.AutoLoginAction
+      description: automatically login after boot using job parameters and checking
+        for messages.
+      level: 2.3.4
+      max_retries: 1
       name: auto-login-action
       pipeline:
-      - {class: actions.boot.LoginAction, name: login-action}
+      - {class: actions.boot.LoginAction, description: Real login action., level: 2.3.4.1,
+        max_retries: 1, name: login-action, summary: Login after boot., timeout: 480}
+      summary: Auto-login after boot with support for kernel messages.
+      timeout: 480
+    summary: uboot commands with retry
+    timeout: 480
+  summary: pass boot commands
+  timeout: 480
 - class: power.FinalizeAction
+  description: finish the process and cleanup
+  level: '3'
+  max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, name: power-off}
-  - {class: power.ReadFeedback, name: read-feedback}
+  - {class: power.PowerOff, description: discontinue power to device, level: '3.1',
+    max_retries: 1, name: power-off, summary: send power_off command, timeout: 300}
+  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    level: '3.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
+    timeout: 300}
+  summary: finalize the job
+  timeout: 300
