@@ -48,7 +48,7 @@ class ShellLogger:
             last_ret = lines.rindex("\n")
             self.line = lines[last_ret + 1 :]
             lines = lines[: last_ret + 1]
-            for line in re_split("\r\r\n|\r\n", lines)[:-1]:
+            for line in re_split("\r\r\n|\r\n|\n", lines)[:-1]:
                 for key, value in replacements.items():
                     line = line.replace(key, value)
                 if self.is_feedback:
@@ -64,7 +64,7 @@ class ShellLogger:
 
     def flush(self, force=False):
         if force and self.line:
-            self.write("\r\n")
+            self.write("\n")
 
 
 class ShellCommand(pexpect.spawn):
