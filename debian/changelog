@@ -1,3 +1,9 @@
+lava (2024.01-1) unstable; urgency=medium
+
+  * LAVA Software 2024.01 release
+
+ -- Chase Qi <chase.qi@linaro.org>  Mon, 22 Jan 2024 13:21:05 +0800
+
 lava (2023.10-1) unstable; urgency=medium
 
   * LAVA Software 2023.10 release
