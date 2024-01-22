@@ -581,51 +581,58 @@ class Action:
         """
         if not isinstance(command_list, list):
             raise LAVABug("commands to parsed_command need to be a list")
-        log = ""
+        output = ""
         command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            log = subprocess.check_output(  # nosec - internal
+            output = subprocess.check_output(  # nosec - internal
                 command_list,
                 stderr=subprocess.STDOUT,
                 cwd=cwd,
                 timeout=self.timeout.duration,
             )
-            log = log.decode("utf-8", errors="replace")
+            output = output.decode("utf-8", errors="replace")
             if allow_fail:
                 self.results = {"returncode": "0"}
-                self.results = {"output_len": len(log)}
+                self.results = {"output_len": len(output)}
                 self.logger.info(
                     "Parsed command exited zero with allow_fail set, returning %s bytes."
-                    % len(log)
+                    % len(output)
                 )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        except (
+            FileNotFoundError,
+            subprocess.CalledProcessError,
+            subprocess.TimeoutExpired,
+        ) as exc:
             # the errors property doesn't support removing errors
             errors = []
-            retcode = exc.returncode
-            if exc.output:
+
+            # Extract some data about the exception
+            # Have sane default for some exceptions
+            returncode = getattr(exc, "returncode", 127)
+            if getattr(exc, "output", None):
                 output = exc.output.strip().decode("utf-8", errors="replace")
             else:
                 output = str(exc)
+
             errors.append(output)
-            self.results = {"returncode": "%s" % exc.returncode}
-            self.logger.info("Parsed command exited %s." % retcode)
+            self.results = {"returncode": "%s" % returncode}
+            self.logger.info("Parsed command exited %s." % returncode)
             base = (
                 "action: {0}\ncommand: {1}\nmessage: {2}\noutput: {3}\nreturn code: {4}"
             )
             msg = base.format(
                 self.name,
-                [i.strip() for i in exc.cmd],
+                [i.strip() for i in command_list],
                 str(exc),
                 "\n".join(errors),
-                retcode,
+                returncode,
             )
             self.results = {"output": output}
 
-            # the exception is raised due to a non-zero exc.returncode
+            # the exception is raised due to a non-zero returncode
             if allow_fail:
                 self.logger.info(msg)
-                log = exc.output.strip().decode("utf-8", errors="replace")
             else:
                 for error in errors:
                     self.errors = error
@@ -633,9 +640,9 @@ class Action:
                 # if not allow_fail, fail the command with the specified exception.
                 raise self.command_exception(exc) from exc
 
-        for line in log.split("\n"):
+        for line in output.split("\n"):
             self.logger.debug("output: %s", line)
-        return log
+        return output
 
     def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
         """
