@@ -29,10 +29,10 @@ class BootLxc(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" in parameters:
-            if parameters["method"] == "lxc":
-                return True, "accepted"
-        return False, '"method" was not in parameters or "method" was not "lxc"'
+        if parameters["method"] != "lxc":
+            return False, '"method" was not "lxc"'
+
+        return True, "accepted"
 
 
 class BootLxcAction(RetryAction):

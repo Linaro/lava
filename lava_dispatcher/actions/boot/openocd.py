@@ -27,8 +27,6 @@ class OpenOCD(Boot):
     def accepts(cls, device, parameters):
         if "openocd" not in device["actions"]["boot"]["methods"]:
             return False, '"openocd" was not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if parameters["method"] != "openocd":
             return False, '"method" was not "openocd"'
         if "board_id" not in device:

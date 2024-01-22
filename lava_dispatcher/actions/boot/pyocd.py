@@ -25,8 +25,6 @@ class PyOCD(Boot):
     def accepts(cls, device, parameters):
         if "pyocd" not in device["actions"]["boot"]["methods"]:
             return False, '"pyocd" was not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if parameters["method"] != "pyocd":
             return False, '"method" was not "pyocd"'
         if "board_id" not in device:

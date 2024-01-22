@@ -28,8 +28,6 @@ class CMSIS(Boot):
     def accepts(cls, device, parameters):
         if "cmsis-dap" not in device["actions"]["boot"]["methods"]:
             return False, '"cmsis-dap" is not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" not in parameters'
         if parameters["method"] != "cmsis-dap":
             return False, '"method" was not "cmsis-dap"'
         if "board_id" not in device:

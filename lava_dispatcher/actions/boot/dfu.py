@@ -26,8 +26,6 @@ class DFU(Boot):
     def accepts(cls, device, parameters):
         if "dfu" not in device["actions"]["boot"]["methods"]:
             return False, '"dfu" was not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was in the parameters'
         if parameters["method"] != "dfu":
             return False, '"method" was not "dfu"'
         if "board_id" not in device:

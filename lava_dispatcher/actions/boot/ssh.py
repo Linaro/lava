@@ -269,14 +269,8 @@ class Schroot(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "actions" not in device or "boot" not in device["actions"]:
-            return False, '"boot" was not in the device configuration actions'
-        if "methods" not in device["actions"]["boot"]:
-            return False, '"methods" was not in the device config'
         if "schroot" not in device["actions"]["boot"]["methods"]:
             return False, '"schroot" was not in the device configuration boot methods'
-        if "method" not in parameters:
-            return False, '"method" was not in parameters'
         if "schroot" not in parameters["method"]:
             return False, '"method" was not "schroot"'
         return True, "accepted"

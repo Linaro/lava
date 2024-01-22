@@ -29,10 +29,10 @@ class BootKExec(Boot):
 
     @classmethod
     def accepts(cls, device, parameters):
-        if "method" in parameters:
-            if parameters["method"] == "kexec":
-                return True, "accepted"
-        return False, '"method" was not in parameters, or "method" was not "kexec"'
+        if parameters["method"] != "kexec":
+            return False, '"method" was not "kexec"'
+
+        return True, "accepted"
 
 
 class BootKexecAction(RetryAction):
