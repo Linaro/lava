@@ -468,9 +468,11 @@ class Action:
             if self.job:
                 if self.job.device and type(self.job.device).__name__ != "dict":
                     if "constants" in self.job.device:
-                        max_retry = self.get_constant("failure_retry", "")
-                        if max_retry:
-                            self.max_retries = int(max_retry)
+                        device_max_retry = self.get_constant("failure_retry", "")
+                        if device_max_retry:
+                            device_max_retry = int(device_max_retry)
+                            if device_max_retry > self.max_retries:
+                                self.max_retries = device_max_retry
                             # In case of a boot section, used boot_retry if it exists
                             boot_retry = self.get_constant("boot_retry", "")
                             if self.section == "boot" and boot_retry:

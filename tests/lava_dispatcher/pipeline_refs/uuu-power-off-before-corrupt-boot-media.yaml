@@ -7,7 +7,7 @@
   - class: actions.deploy.download.DownloaderAction
     description: download with retry
     level: '1.1'
-    max_retries: 1
+    max_retries: 3
     name: download-retry
     pipeline:
     - {class: actions.deploy.download.HttpDownloadAction, description: use http to
@@ -23,13 +23,9 @@
   max_retries: 1
   name: uuu-boot-retry
   pipeline:
-  - class: connections.serial.DisconnectDevice
-    name: disconnect-device
-    level: "2.1"
-    max_retries: 1
-    description: disconnect from console
-    summary: disconnect from console
-    timeout: 240
+  - {class: connections.serial.DisconnectDevice, description: disconnect from console,
+    level: '2.1', max_retries: 1, name: disconnect-device, summary: disconnect from
+      console, timeout: 240}
   - class: power.ResetDevice
     description: reboot or power-cycle the device
     level: '2.2'
@@ -104,8 +100,8 @@
     summary: reboot the device
     timeout: 240
   - {class: connections.serial.ConnectDevice, description: use the configured command
-    to connect serial to the device, level: '2.6', max_retries: 1, name: connect-device,
-    summary: run connection command, timeout: 240 }
+      to connect serial to the device, level: '2.6', max_retries: 1, name: connect-device,
+    summary: run connection command, timeout: 240}
   - {class: actions.boot.uuu.UUUBootAction, description: interactive uuu action, level: '2.7',
     max_retries: 1, name: uuu-boot, summary: uuu commands, timeout: 240}
   - {class: connections.serial.DisconnectDevice, description: disconnect from console,
