@@ -517,10 +517,14 @@ class TestUbootAction(StdoutTestCase):
             ["a list", "of commands", "with a {KERNEL_ADDR} substitution"],
         )
 
-    @unittest.skipIf(infrastructure_error("nbd-server"), "nbd-server not installed")
     def test_nbd_boot(self):
         job = self.factory.create_bbb_job("sample_jobs/bbb-initrd-nbd.yaml")
-        job.validate()
+        with patch("lava_dispatcher.actions.deploy.nbd.which") as which_mock:
+            job.validate()
+
+        which_mock.assert_any_call("nbd-server")
+        which_mock.assert_any_call("in.tftpd")
+
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("bbb-initrd-nbd.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
@@ -529,7 +533,6 @@ class TestUbootAction(StdoutTestCase):
         params = job.device["actions"]["deploy"]["parameters"]
         self.assertIsNotNone(params)
         for action in job.pipeline.actions:
-            action.validate()
             if isinstance(action, UBootAction):
                 self.assertIn("method", action.parameters)
                 self.assertEqual("u-boot", action.parameters["method"])
