@@ -68,7 +68,7 @@ from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
 
 from . import serializers
-from .pasers import PlainTextParser
+from .parsers import PlainTextParser
 
 
 def safe_str2int(in_value):
