@@ -7,7 +7,7 @@
 import xmlrpc.client
 
 import yaml
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
@@ -383,7 +383,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         `worker_hostname`: string
           Worker hostname
         `user_name`: string
-          DEPRECATED: This field is not used any more
+          Device owner, User with physical access
         `group_name`: string
           DEPRECATED: This field is not used any more
         `public`: boolean
@@ -420,6 +420,14 @@ class SchedulerDevicesAPI(ExposedV2API):
                     except Worker.DoesNotExist:
                         raise xmlrpc.client.Fault(
                             404, "Unable to find worker '%s'" % worker_hostname
+                        )
+
+                if user_name is not None:
+                    try:
+                        device.physical_owner = User.objects.get(username=user_name)
+                    except User.DoesNotExist:
+                        raise xmlrpc.client.Fault(
+                            404, "Unable to find username '%s'" % user_name
                         )
 
                 try:
