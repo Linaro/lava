@@ -5,4 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from rest_framework.routers import DefaultRouter
 
+from .testjob import TestJobViewset
+
 router = DefaultRouter()
+
+router.register(r"jobs", TestJobViewset)
