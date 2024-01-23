@@ -53,163 +53,180 @@ async def db(log, func, *args, **kwargs):
 async def zmq_proxy(app):
     logger = app["logger"]
 
-    context = zmq.asyncio.Context()
+    interval = 1
+    while True:
+        context = zmq.asyncio.Context()
 
-    logger.info("[INIT] Create input socket at %r", settings.INTERNAL_EVENT_SOCKET)
-    pull = context.socket(zmq.PULL)
-    if settings.EVENT_IPV6:
-        pull.setsockopt(zmq.IPV6, 1)
-    pull.bind(settings.INTERNAL_EVENT_SOCKET)
+        logger.info("[INIT] Create input socket at %r", settings.INTERNAL_EVENT_SOCKET)
+        pull = context.socket(zmq.PULL)
+        if settings.EVENT_IPV6:
+            pull.setsockopt(zmq.IPV6, 1)
+        pull.bind(settings.INTERNAL_EVENT_SOCKET)
 
-    logger.info("[INIT] Create the pub socket at %r", settings.EVENT_SOCKET)
-    pub = context.socket(zmq.PUB)
-    pub.setsockopt(zmq.HEARTBEAT_IVL, 5000)
-    pub.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
-    pub.setsockopt(zmq.HEARTBEAT_TTL, 15000)
-    if settings.EVENT_IPV6:
-        logger.info("[INIT] -> enable IPv6")
-        pub.setsockopt(zmq.IPV6, 1)
-    pub.bind(settings.EVENT_SOCKET)
-
-    if settings.EVENT_ADDITIONAL_SOCKETS:
-        logger.info("[INIT] Creating the additional sockets:")
-    additional_sockets = []
-    for url in settings.EVENT_ADDITIONAL_SOCKETS:
-        logger.info("[INIT]  * %r", url)
-        sock = context.socket(zmq.PUSH)
-        # Allow zmq to keep 10000 pending messages in each queue
-        sock.setsockopt(zmq.SNDHWM, 10000)
-        # Ask zmq to send heart beats
-        # See api.zeromq.org/4-2:zmq-setsockopt#toc17
-        sock.setsockopt(zmq.HEARTBEAT_IVL, 5000)
-        sock.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
-        sock.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+        logger.info("[INIT] Create the pub socket at %r", settings.EVENT_SOCKET)
+        pub = context.socket(zmq.PUB)
+        pub.setsockopt(zmq.HEARTBEAT_IVL, 5000)
+        pub.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
+        pub.setsockopt(zmq.HEARTBEAT_TTL, 15000)
         if settings.EVENT_IPV6:
             logger.info("[INIT] -> enable IPv6")
-            sock.setsockopt(zmq.IPV6, 1)
-        # connect
-        sock.connect(url)
-        additional_sockets.append(sock)
+            pub.setsockopt(zmq.IPV6, 1)
+        pub.bind(settings.EVENT_SOCKET)
 
-    async def forward_event(msg):
-        logger.debug("[PROXY] Forwarding: %s", msg)
-        data = [s.decode("utf-8") for s in msg]
-        futures = [
-            pub.send_multipart(msg),
-            *[s.send_multipart(msg, flags=zmq.DONTWAIT) for s in additional_sockets],
-        ]
+        if settings.EVENT_ADDITIONAL_SOCKETS:
+            logger.info("[INIT] Creating the additional sockets:")
+        additional_sockets = []
+        for url in settings.EVENT_ADDITIONAL_SOCKETS:
+            logger.info("[INIT]  * %r", url)
+            sock = context.socket(zmq.PUSH)
+            # Allow zmq to keep 10000 pending messages in each queue
+            sock.setsockopt(zmq.SNDHWM, 10000)
+            # Ask zmq to send heart beats
+            # See api.zeromq.org/4-2:zmq-setsockopt#toc17
+            sock.setsockopt(zmq.HEARTBEAT_IVL, 5000)
+            sock.setsockopt(zmq.HEARTBEAT_TIMEOUT, 15000)
+            sock.setsockopt(zmq.HEARTBEAT_TTL, 15000)
+            if settings.EVENT_IPV6:
+                logger.info("[INIT] -> enable IPv6")
+                sock.setsockopt(zmq.IPV6, 1)
+            # connect
+            sock.connect(url)
+            additional_sockets.append(sock)
 
-        # Filter on permissions
-        topic = data[0]
-        content = json.loads(data[4])
-        if topic.endswith(".device"):
+        async def forward_event(msg):
+            logger.debug("[PROXY] Forwarding: %s", msg)
+            data = [s.decode("utf-8") for s in msg]
+            futures = [
+                pub.send_multipart(msg),
+                *[
+                    s.send_multipart(msg, flags=zmq.DONTWAIT)
+                    for s in additional_sockets
+                ],
+            ]
+
+            # Filter on permissions
+            topic = data[0]
+            content = json.loads(data[4])
+            if topic.endswith(".device"):
+                while True:
+                    try:
+                        device = await db(
+                            logger, Device.objects.get, hostname=content["device"]
+                        )
+                        break
+                    except Device.DoesNotExist:
+                        await asyncio.sleep(1)
+                for ws in set(app["websockets"]):
+                    # Only forward to users as workers will discard it
+                    if ws.kind == "user":
+                        user = AnonymousUser()
+                        if ws.name:
+                            with contextlib.suppress(User.DoesNotExist):
+                                user = await db(
+                                    logger, User.objects.get, username=ws.name
+                                )
+                        if await db(logger, device.can_view, user):
+                            futures.append(ws.socket.send_json(data))
+
+            elif topic.endswith(".testjob"):
+                while True:
+                    try:
+                        job = await db(logger, TestJob.objects.get, id=content["job"])
+                        break
+                    except TestJob.DoesNotExist:
+                        await asyncio.sleep(1)
+                for ws in set(app["websockets"]):
+                    if ws.kind == "user":
+                        user = AnonymousUser()
+                        if ws.name:
+                            with contextlib.suppress(User.DoesNotExist):
+                                user = await db(
+                                    logger, User.objects.get, username=ws.name
+                                )
+                        if await db(logger, job.can_view, user):
+                            futures.append(ws.socket.send_json(data))
+                    elif ws.kind == "worker":
+                        # Only forward event with the worker specified.
+                        # Anyway other events are discarded by workers.
+                        if ws.name == content.get("worker"):
+                            futures.append(ws.socket.send_json(data))
+
+            elif topic.endswith(".worker"):
+                while True:
+                    try:
+                        worker = await db(
+                            logger, Worker.objects.get, hostname=content["hostname"]
+                        )
+                        break
+                    except Worker.DoesNotExist:
+                        await asyncio.sleep(1)
+                for ws in set(app["websockets"]):
+                    # Only forward to users as workers will discard it
+                    if ws.kind == "user":
+                        user = AnonymousUser()
+                        if ws.name:
+                            with contextlib.suppress(User.DoesNotExist):
+                                user = await db(
+                                    logger, User.objects.get, username=ws.name
+                                )
+                        if await db(logger, worker.can_view, user):
+                            futures.append(ws.socket.send_json(data))
+
+            await asyncio.gather(*futures)
+
+        with contextlib.suppress(asyncio.CancelledError):
+            logger.info("[PROXY] waiting for events")
             while True:
                 try:
-                    device = await db(
-                        logger, Device.objects.get, hostname=content["device"]
-                    )
+                    msg = await pull.recv_multipart()
+                    await forward_event(msg)
+                    interval = 1
+                except zmq.error.ZMQError as exc:
+                    logger.error("[PROXY] Received a ZMQ error: %s", exc)
                     break
-                except Device.DoesNotExist:
-                    await asyncio.sleep(1)
-            for ws in set(app["websockets"]):
-                # Only forward to users as workers will discard it
-                if ws.kind == "user":
-                    user = AnonymousUser()
-                    if ws.name:
-                        with contextlib.suppress(User.DoesNotExist):
-                            user = await db(logger, User.objects.get, username=ws.name)
-                    if await db(logger, device.can_view, user):
-                        futures.append(ws.socket.send_json(data))
-
-        elif topic.endswith(".testjob"):
-            while True:
-                try:
-                    job = await db(logger, TestJob.objects.get, id=content["job"])
+                except OSError as exc:
+                    logger.error("[PROXY] Received an I/O error: %s", exc)
                     break
-                except TestJob.DoesNotExist:
-                    await asyncio.sleep(1)
-            for ws in set(app["websockets"]):
-                if ws.kind == "user":
-                    user = AnonymousUser()
-                    if ws.name:
-                        with contextlib.suppress(User.DoesNotExist):
-                            user = await db(logger, User.objects.get, username=ws.name)
-                    if await db(logger, job.can_view, user):
-                        futures.append(ws.socket.send_json(data))
-                elif ws.kind == "worker":
-                    # Only forward event with the worker specified.
-                    # Anyway other events are discarded by workers.
-                    if ws.name == content.get("worker"):
-                        futures.append(ws.socket.send_json(data))
 
-        elif topic.endswith(".worker"):
-            while True:
-                try:
-                    worker = await db(
-                        logger, Worker.objects.get, hostname=content["hostname"]
-                    )
-                    break
-                except Worker.DoesNotExist:
-                    await asyncio.sleep(1)
-            for ws in set(app["websockets"]):
-                # Only forward to users as workers will discard it
-                if ws.kind == "user":
-                    user = AnonymousUser()
-                    if ws.name:
-                        with contextlib.suppress(User.DoesNotExist):
-                            user = await db(logger, User.objects.get, username=ws.name)
-                    if await db(logger, worker.can_view, user):
-                        futures.append(ws.socket.send_json(data))
+        # Carefully close the logging socket as we don't want to lose messages
+        logger.info("[EXIT] Disconnect pull socket and process messages")
+        endpoint = pull.getsockopt(zmq.LAST_ENDPOINT).decode("utf-8")
+        logger.debug("[EXIT] unbinding from %r", endpoint)
+        pull.unbind(endpoint)
 
-        await asyncio.gather(*futures)
+        # UNIX signals
+        def signal_handler(*_):
+            logger.debug("[EXIT] Signal already handled, wait for the process to exit")
 
-    with contextlib.suppress(asyncio.CancelledError):
-        logger.info("[PROXY] waiting for events")
+        loop = asyncio.get_event_loop()
+        loop.add_signal_handler(signal.SIGINT, signal_handler)
+        loop.add_signal_handler(signal.SIGTERM, signal_handler)
+
         while True:
             try:
-                msg = await pull.recv_multipart()
+                msg = await asyncio.wait_for(pull.recv_multipart(), TIMEOUT)
                 await forward_event(msg)
             except zmq.error.ZMQError as exc:
-                logger.error("[PROXY] Received a ZMQ error: %s", exc)
+                logger.error("[EXIT] Received a ZMQ error: %s", exc)
+                break
+            except asyncio.TimeoutError:
+                logger.info("[EXIT] Timing out")
                 break
             except OSError as exc:
-                logger.error("[PROXY] Received an I/O error: %s", exc)
+                logger.error("[EXIT] Received an I/O error: %s", exc)
                 break
 
-    # Carefully close the logging socket as we don't want to lose messages
-    logger.info("[EXIT] Disconnect pull socket and process messages")
-    endpoint = pull.getsockopt(zmq.LAST_ENDPOINT).decode("utf-8")
-    logger.debug("[EXIT] unbinding from %r", endpoint)
-    pull.unbind(endpoint)
+        logger.info("[EXIT] Closing the sockets: the queue is empty")
+        pull.close(linger=1)
+        pub.close(linger=1)
+        for socket in additional_sockets:
+            socket.close(linger=1)
+        context.term()
 
-    # UNIX signals
-    def signal_handler(*_):
-        logger.debug("[EXIT] Signal already handled, wait for the process to exit")
-
-    loop = asyncio.get_event_loop()
-    loop.add_signal_handler(signal.SIGINT, signal_handler)
-    loop.add_signal_handler(signal.SIGTERM, signal_handler)
-
-    while True:
-        try:
-            msg = await asyncio.wait_for(pull.recv_multipart(), TIMEOUT)
-            await forward_event(msg)
-        except zmq.error.ZMQError as exc:
-            logger.error("[EXIT] Received a ZMQ error: %s", exc)
-            break
-        except asyncio.TimeoutError:
-            logger.info("[EXIT] Timing out")
-            break
-        except OSError as exc:
-            logger.error("[EXIT] Received an I/O error: %s", exc)
-            break
-
-    logger.info("[EXIT] Closing the sockets: the queue is empty")
-    pull.close(linger=1)
-    pub.close(linger=1)
-    for socket in additional_sockets:
-        socket.close(linger=1)
-    context.term()
+        logger.info("[RETRY] after %s seconds", interval)
+        await asyncio.sleep(interval)
+        if interval < 30:
+            interval = interval * 2
 
 
 async def websocket_handler(request):
