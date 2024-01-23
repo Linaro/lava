@@ -174,7 +174,8 @@ async def zmq_proxy(app):
 
             await asyncio.gather(*futures)
 
-        with contextlib.suppress(asyncio.CancelledError):
+        exit = False
+        try:
             logger.info("[PROXY] waiting for events")
             while True:
                 try:
@@ -187,6 +188,8 @@ async def zmq_proxy(app):
                 except OSError as exc:
                     logger.error("[PROXY] Received an I/O error: %s", exc)
                     break
+        except asyncio.CancelledError:
+            exit = True
 
         # Carefully close the logging socket as we don't want to lose messages
         logger.info("[EXIT] Disconnect pull socket and process messages")
@@ -222,6 +225,12 @@ async def zmq_proxy(app):
         for socket in additional_sockets:
             socket.close(linger=1)
         context.term()
+
+        loop.remove_signal_handler(signal.SIGINT)
+        loop.remove_signal_handler(signal.SIGTERM)
+
+        if exit:
+            break
 
         logger.info("[RETRY] after %s seconds", interval)
         await asyncio.sleep(interval)
