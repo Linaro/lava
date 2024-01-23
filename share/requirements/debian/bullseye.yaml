@@ -97,6 +97,9 @@ lava-server:
   mkimage:  # Multinode tests
     name: u-boot-tools
     unittests: true
+  pytest-random-order:
+    name: python3-pytest-random-order
+    unittests: true
 
 lava-dispatcher:
   aiohttp:
