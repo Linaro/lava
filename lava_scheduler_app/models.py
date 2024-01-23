@@ -406,6 +406,17 @@ class Worker(RestrictedObject):
         max_length=32, default=auth_token, help_text=_("Authorization token")
     )
 
+    # Add default values for _old values
+    _old_health: int | None = None
+    _old_state: int | None = None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        obj = super().from_db(db, field_names, values)
+        obj._old_health = obj.__dict__.get("health")
+        obj._old_state = obj.__dict__.get("state")
+        return obj
+
     def __str__(self):
         return self.hostname
 
@@ -641,6 +652,17 @@ class Device(RestrictedObject):
             self.get_state_display(),
             self.get_health_display(),
         )
+
+    # Add default values for _old values
+    _old_health: int | None = None
+    _old_state: int | None = None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        obj = super().from_db(db, field_names, values)
+        obj._old_health = obj.__dict__.get("health")
+        obj._old_state = obj.__dict__.get("state")
+        return obj
 
     def current_job(self):
         # This method will use the 'running_jobs' attribute if present which
@@ -1436,6 +1458,18 @@ class TestJob(models.Model):
         blank=True,
         on_delete=models.CASCADE,
     )
+
+    # Add default values for _old values
+    _old_health: int | None = None
+    _old_state: int | None = None
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        # Call TestJob.__init__ function to add default _old values
+        obj = super().from_db(db, field_names, values)
+        obj._old_health = obj.__dict__.get("health")
+        obj._old_state = obj.__dict__.get("state")
+        return obj
 
     @property
     def dynamic_connection(self):
