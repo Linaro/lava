@@ -20,7 +20,6 @@ from rest_framework.test import APIClient
 
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_load
-from lava_rest_app import versions
 from lava_rest_app.v02 import serializers
 from lava_results_app import models as result_models
 from lava_scheduler_app.models import (
@@ -90,7 +89,7 @@ EXAMPLE_DEVICE = """
 class TestRestApi:
     @pytest.fixture(autouse=True)
     def setUp(self, db):
-        self.version = versions.versions[-1]  # use latest version by default
+        self.version = "v0.2"  # use v0.2 API
 
         # create users
         self.admin = User.objects.create(username="admin", is_superuser=True)
@@ -1767,38 +1766,31 @@ ok 2 bar
         )
         assert response.status_code == 403  # nosec
 
+    def test_view_root(self, client):
+        ret = client.get(reverse("api-root", args=(self.version,)) + "?format=api")
+        assert ret.status_code == 200
 
-def test_view_root(client):
-    ret = client.get(reverse("api-root", args=[versions.versions[-1]]) + "?format=api")
-    assert ret.status_code == 200
+    def test_view_devices(self, client, db):
+        ret = client.get(
+            reverse("api-root", args=(self.version,)) + "devices/?format=api"
+        )
+        assert ret.status_code == 200
 
+    def test_view_devicetypes(self, client, db):
+        ret = client.get(
+            reverse("api-root", args=(self.version,)) + "devicetypes/?format=api"
+        )
+        assert ret.status_code == 200
 
-def test_view_devices(client, db):
-    ret = client.get(
-        reverse("api-root", args=[versions.versions[-1]]) + "devices/?format=api"
-    )
-    assert ret.status_code == 200
+    def test_view_jobs(self, client, db):
+        ret = client.get(reverse("api-root", args=(self.version,)) + "jobs/?format=api")
+        assert ret.status_code == 200
 
-
-def test_view_devicetypes(client, db):
-    ret = client.get(
-        reverse("api-root", args=[versions.versions[-1]]) + "devicetypes/?format=api"
-    )
-    assert ret.status_code == 200
-
-
-def test_view_jobs(client, db):
-    ret = client.get(
-        reverse("api-root", args=[versions.versions[-1]]) + "jobs/?format=api"
-    )
-    assert ret.status_code == 200
-
-
-def test_view_workers(client, db):
-    ret = client.get(
-        reverse("api-root", args=[versions.versions[-1]]) + "workers/?format=api"
-    )
-    assert ret.status_code == 200
+    def test_view_workers(self, client, db):
+        ret = client.get(
+            reverse("api-root", args=(self.version,)) + "workers/?format=api"
+        )
+        assert ret.status_code == 200
 
 
 def test_serializers_partial():
