@@ -2162,6 +2162,17 @@ def test_workers_set_config_exceptions(setup, mocker, tmp_path):
         == "User 'user' is missing permission lava_scheduler_app.change_worker."
     )
 
+    # 4. Invalid yaml syntax.
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.set_config(
+            "example.com", "Comment line without #\nkey: value"
+        )
+    assert exc.value.faultCode == 400
+    assert (
+        exc.value.faultString
+        == "Invalid YAML syntax in 'example.com' config: Comment line without #\nkey: value"
+    )
+
 
 @pytest.mark.django_db
 def test_workers_set_env(setup, mocker, tmp_path):
@@ -2208,6 +2219,17 @@ def test_workers_set_env_exceptions(setup, mocker, tmp_path):
     assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.change_worker."
+    )
+
+    # 4. Invalid yaml syntax.
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.set_env(
+            "example.com", "Comment line without #\nkey: value"
+        )
+    assert exc.value.faultCode == 400
+    assert (
+        exc.value.faultString
+        == "Invalid YAML syntax in 'example.com' env: Comment line without #\nkey: value"
     )
 
 
@@ -2270,6 +2292,17 @@ def test_workers_set_env_dut_exceptions(setup, mocker, tmp_path):
     assert (  # nosec
         exc.value.faultString
         == "User 'user' is missing permission lava_scheduler_app.change_worker."
+    )
+
+    # 4. Invalid yaml syntax.
+    with pytest.raises(xmlrpc.client.Fault) as exc:
+        server("admin", "admin").scheduler.workers.set_env_dut(
+            "example.com", "Comment line without #\nkey: value"
+        )
+    assert exc.value.faultCode == 400
+    assert (
+        exc.value.faultString
+        == "Invalid YAML syntax in 'example.com' DUT env: Comment line without #\nkey: value"
     )
 
 

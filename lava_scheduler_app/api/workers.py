@@ -9,7 +9,9 @@ import pathlib
 import xmlrpc.client
 
 from django.db import IntegrityError, transaction
+from yaml import YAMLError
 
+from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.models import Worker
 from lava_server.files import File
@@ -233,6 +235,13 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
+        try:
+            yaml_safe_load(config)
+        except YAMLError:
+            raise xmlrpc.client.Fault(
+                400, f"Invalid YAML syntax in '{hostname}' config: {config}"
+            )
+
         with contextlib.suppress(OSError):
             File("dispatcher", hostname).write(config)
             return True
@@ -270,6 +279,13 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
+        try:
+            yaml_safe_load(env)
+        except YAMLError:
+            raise xmlrpc.client.Fault(
+                400, f"Invalid YAML syntax in '{hostname}' env: {env}"
+            )
+
         with contextlib.suppress(OSError):
             File("env", hostname).write(env)
             return True
@@ -306,6 +322,13 @@ class SchedulerWorkersAPI(ExposedV2API):
             Worker.objects.get(hostname=hostname)
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
+
+        try:
+            yaml_safe_load(env)
+        except YAMLError:
+            raise xmlrpc.client.Fault(
+                400, f"Invalid YAML syntax in '{hostname}' DUT env: {env}"
+            )
 
         with contextlib.suppress(OSError):
             File("env-dut", hostname).write(env)
