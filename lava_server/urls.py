@@ -7,6 +7,7 @@
 from django.conf import settings
 from django.conf.urls import include
 from django.contrib import admin
+from django.urls import re_path
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 
@@ -24,7 +25,6 @@ from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 from lava_server.api import LavaMapper
 from lava_server.api.groups import GroupsAPI, GroupsPermissionsAPI
 from lava_server.api.users import UsersAPI, UsersGroupsAPI, UsersPermissionsAPI
-from lava_server.compat import url
 from lava_server.views import (
     delete_remote_auth,
     healthz,
@@ -65,7 +65,7 @@ mapper.register(UsersPermissionsAPI, "auth.users.perms")
 
 # Auth backends
 auth_urls = [
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}accounts/",
         include("django.contrib.auth.urls"),
     )
@@ -76,7 +76,7 @@ if (
     in settings.AUTHENTICATION_BACKENDS
 ):
     auth_urls.append(
-        url(
+        re_path(
             rf"^{settings.MOUNT_POINT}accounts/",
             include("allauth.urls"),
         )
@@ -84,49 +84,49 @@ if (
 
 # Root URL patterns
 urlpatterns = [
-    url(
+    re_path(
         r"^robots\.txt$",
         TemplateView.as_view(template_name="robots.txt"),
         name="robots",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}v1/healthz/$",
         healthz,
         name="lava.healthz",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}v1/prometheus/$",
         prometheus,
         name="lava.prometheus",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}$",
         index,
         name="lava.home",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}me/$",
         me,
         name="lava.me",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}update-irc-settings/$",
         update_irc_settings,
         name="lava.update_irc_settings",
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}update-remote-auth/$",
         update_remote_auth,
         name="lava.update_remote_auth",
     ),
-    url(
+    re_path(
         r"^{mount_point}delete-remote-auth/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/$".format(
             mount_point=settings.MOUNT_POINT
         ),
         delete_remote_auth,
         name="lava.delete_remote_auth",
     ),
-    url(
+    re_path(
         r"^{mount_point}update-table-length-setting/$".format(
             mount_point=settings.MOUNT_POINT
         ),
@@ -134,38 +134,38 @@ urlpatterns = [
         name="lava.update_table_length_setting",
     ),
     *auth_urls,
-    url(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
-    url(
+    re_path(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
+    re_path(
         rf"^{settings.MOUNT_POINT}admin/",
         admin.site.urls,
     ),
     # RPC endpoints
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}RPC2/?",
         linaro_django_xmlrpc_views_handler,
         name="lava.api_handler",
         kwargs={"mapper": mapper, "help_view": "lava.api_help"},
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}api/help/$",
         linaro_django_xmlrpc_views_help,
         name="lava.api_help",
         kwargs={"mapper": mapper},
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}api/",
         include("linaro_django_xmlrpc.urls"),
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}results/",
         include("lava_results_app.urls"),
     ),
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}scheduler/",
         include("lava_scheduler_app.urls"),
     ),
     # REST API
-    url(
+    re_path(
         rf"^{settings.MOUNT_POINT}api/",
         include("lava_rest_app.urls"),
     ),
@@ -173,7 +173,7 @@ urlpatterns = [
 
 if settings.OIDC_ENABLED:
     urlpatterns.append(
-        url(
+        re_path(
             rf"^{settings.MOUNT_POINT}oidc/",
             include("mozilla_django_oidc.urls"),
         )
@@ -182,4 +182,4 @@ if settings.OIDC_ENABLED:
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
 
-    urlpatterns.append(url(r"^__debug__/", include(debug_toolbar.urls)))
+    urlpatterns.append(re_path(r"^__debug__/", include(debug_toolbar.urls)))

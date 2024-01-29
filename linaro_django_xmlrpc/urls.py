@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-from lava_server.compat import url
+from django.urls import re_path
+
 from linaro_django_xmlrpc.views import (
     create_token,
     delete_token,
@@ -15,23 +16,23 @@ from linaro_django_xmlrpc.views import (
 )
 
 urlpatterns = [
-    url(r"^tokens/$", tokens, name="linaro_django_xmlrpc_tokens"),
-    url(
+    re_path(r"^tokens/$", tokens, name="linaro_django_xmlrpc_tokens"),
+    re_path(
         r"^tokens/create/$",
         create_token,
         name="linaro_django_xmlrpc.views.create_token",
     ),
-    url(
+    re_path(
         r"^tokens/(?P<object_id>\d+)/delete/$",
         delete_token,
         name="linaro_django_xmlrpc.views.delete_token",
     ),
-    url(
+    re_path(
         r"^tokens/delete_unused/$",
         delete_unused_tokens,
         name="linaro_django_xmlrpc.views.delete_unused_tokens",
     ),
-    url(
+    re_path(
         r"^tokens/(?P<object_id>\d+)/edit/$",
         edit_token,
         name="linaro_django_xmlrpc.views.edit_token",

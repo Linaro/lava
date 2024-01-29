@@ -5,6 +5,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from django.urls import re_path
+
 from lava_scheduler_app.views import (
     active_device_list,
     active_jobs,
@@ -68,227 +70,228 @@ from lava_scheduler_app.views import (
     worker_health,
     workers,
 )
-from lava_server.compat import url
 
 urlpatterns = [
-    url(r"^$", index, name="lava.scheduler"),
-    url(r"^reports$", reports, name="lava.scheduler.reports"),
-    url(r"^reports/failures$", failure_report, name="lava.scheduler.failure_report"),
-    url(r"^activejobs$", active_jobs, name="lava.scheduler.job.active"),
-    url(r"^alljobs$", job_list, name="lava.scheduler.job.list"),
-    url(r"joberrors$", job_errors, name="lava.scheduler.job.errors"),
-    url(r"^jobsubmit$", job_submit, name="lava.scheduler.job.submit"),
-    url(r"^device_types$", all_device_types, name="lava.scheduler.device_types"),
-    url(
+    re_path(r"^$", index, name="lava.scheduler"),
+    re_path(r"^reports$", reports, name="lava.scheduler.reports"),
+    re_path(
+        r"^reports/failures$", failure_report, name="lava.scheduler.failure_report"
+    ),
+    re_path(r"^activejobs$", active_jobs, name="lava.scheduler.job.active"),
+    re_path(r"^alljobs$", job_list, name="lava.scheduler.job.list"),
+    re_path(r"joberrors$", job_errors, name="lava.scheduler.job.errors"),
+    re_path(r"^jobsubmit$", job_submit, name="lava.scheduler.job.submit"),
+    re_path(r"^device_types$", all_device_types, name="lava.scheduler.device_types"),
+    re_path(
         r"^device_type/(?P<pk>[-_a-zA-Z0-9]+)$",
         device_type_detail,
         name="lava.scheduler.device_type.detail",
     ),
-    url(r"^alldevices$", device_list, name="lava.scheduler.alldevices"),
-    url(
+    re_path(r"^alldevices$", device_list, name="lava.scheduler.alldevices"),
+    re_path(
         r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)$",
         device_detail,
         name="lava.scheduler.device.detail",
     ),
-    url(
+    re_path(
         r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/devicedict$",
         device_dictionary,
         name="lava.scheduler.device.dictionary",
     ),
-    url(
+    re_path(
         r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/devicedict/plain$",
         device_dictionary_plain,
         name="lava.scheduler.device.dictionary.plain",
     ),
-    url(r"^allworkers$", workers, name="lava.scheduler.workers"),
-    url(
+    re_path(r"^allworkers$", workers, name="lava.scheduler.workers"),
+    re_path(
         r"^worker/(?P<pk>[-_a-zA-Z0-9.@]+)$",
         worker_detail,
         name="lava.scheduler.worker.detail",
     ),
-    url(
+    re_path(
         r"^worker/(?P<pk>[-_a-zA-Z0-9.@]+)/health$",
         worker_health,
         name="lava.scheduler.worker.health",
     ),
-    url(r"^labhealth/$", lab_health, name="lava.scheduler.labhealth"),
-    url(
+    re_path(r"^labhealth/$", lab_health, name="lava.scheduler.labhealth"),
+    re_path(
         r"^labhealth/device/(?P<pk>[-_a-zA-Z0-9.@]+)$",
         health_job_list,
         name="lava.scheduler.labhealth.detail",
     ),
-    url(r"^longestjobs$", longest_jobs, name="lava.scheduler.longest_jobs"),
-    url(
+    re_path(r"^longestjobs$", longest_jobs, name="lava.scheduler.longest_jobs"),
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)$",
         job_detail,
         name="lava.scheduler.job.detail",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/definition$",
         job_definition,
         name="lava.scheduler.job.definition",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/definition/plain$",
         job_definition_plain,
         name="lava.scheduler.job.definition.plain",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/description$",
         job_description_yaml,
         name="lava.scheduler.job.description.yaml",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/multinode_definition$",
         multinode_job_definition,
         name="lava.scheduler.job.multinode_definition",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/multinode_definition/plain$",
         multinode_job_definition_plain,
         name="lava.scheduler.job.multinode_definition.plain",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/configuration$",
         job_configuration,
         name="lava.scheduler.job.configuration",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/log_file/plain$",
         job_log_file_plain,
         name="lava.scheduler.job.log_file.plain",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/timing$",
         job_timing,
         name="lava.scheduler.job.timing",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/job_status$",
         job_status,
         name="lava.scheduler.job_status",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/cancel$",
         job_cancel,
         name="lava.scheduler.job.cancel",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/fail$",
         job_fail,
         name="lava.scheduler.job.fail",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/resubmit$",
         job_resubmit,
         name="lava.scheduler.job.resubmit",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/annotate_failure$",
         job_annotate_failure,
         name="lava.scheduler.job.annotate_failure",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/toggle_favorite$",
         job_toggle_favorite,
         name="lava.scheduler.job.toggle_favorite",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/log_pipeline_incremental$",
         job_log_incremental,
         name="lava.scheduler.job.log_incremental",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/job_data$",
         job_fetch_data,
         name="lava.scheduler.job.fetch_data",
     ),
-    url(r"^myjobs$", myjobs, name="lava.scheduler.myjobs"),
-    url(r"^myactivejobs$", my_active_jobs, name="lava.scheduler.myjobs.active"),
-    url(r"^myqueuedjobs$", my_queued_jobs, name="lava.scheduler.myjobs.queued"),
-    url(r"^myerrorjobs$", my_error_jobs, name="lava.scheduler.myjobs.error"),
-    url(r"^favorite-jobs$", favorite_jobs, name="lava.scheduler.favorite_jobs"),
-    url(
+    re_path(r"^myjobs$", myjobs, name="lava.scheduler.myjobs"),
+    re_path(r"^myactivejobs$", my_active_jobs, name="lava.scheduler.myjobs.active"),
+    re_path(r"^myqueuedjobs$", my_queued_jobs, name="lava.scheduler.myjobs.queued"),
+    re_path(r"^myerrorjobs$", my_error_jobs, name="lava.scheduler.myjobs.error"),
+    re_path(r"^favorite-jobs$", favorite_jobs, name="lava.scheduler.favorite_jobs"),
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/priority$",
         job_change_priority,
         name="lava.scheduler.job.priority",
     ),
-    url(
+    re_path(
         r"^device/(?P<pk>[-_a-zA-Z0-9.@]+)/health$",
         device_health,
         name="lava.scheduler.device.health",
     ),
-    url(
+    re_path(
         r"^alldevices/active$", active_device_list, name="lava.scheduler.active_devices"
     ),
-    url(
+    re_path(
         r"^alldevices/online$", online_device_list, name="lava.scheduler.online_devices"
     ),
-    url(
+    re_path(
         r"^alldevices/passinghealthchecks$",
         passing_health_checks,
         name="lava.scheduler.passing_health_checks",
     ),
-    url(
+    re_path(
         r"^alldevices/maintenance$",
         maintenance_devices,
         name="lava.scheduler.maintenance_devices",
     ),
-    url(
+    re_path(
         r"^reports/device/(?P<pk>[-_a-zA-Z0-9.@]+)",
         device_reports,
         name="lava.scheduler.device_report",
     ),
-    url(
+    re_path(
         r"^reports/device_type/(?P<pk>[-_a-zA-Z0-9]+)",
         device_type_reports,
         name="lava.scheduler.device_type_report",
     ),
-    url(r"^mydevices$", mydevice_list, name="lava.scheduler.mydevice_list"),
-    url(
+    re_path(r"^mydevices$", mydevice_list, name="lava.scheduler.mydevice_list"),
+    re_path(
         r"^username-list-json$",
         username_list_json,
         name="lava.scheduler.username_list_json",
     ),
-    url(r"^queue$", queue, name="lava.scheduler.queue"),
-    url(r"^healthcheck$", healthcheck, name="lava.scheduler.healthcheck"),
-    url(r"^running$", running, name="lava.scheduler.running"),
-    url(
+    re_path(r"^queue$", queue, name="lava.scheduler.queue"),
+    re_path(r"^healthcheck$", healthcheck, name="lava.scheduler.healthcheck"),
+    re_path(r"^running$", running, name="lava.scheduler.running"),
+    re_path(
         r"^dthealthhistory/device_type/(?P<pk>[-_a-zA-Z0-9]+)",
         device_type_health_history_log,
         name="lava.scheduler.device_type_health_history_log",
     ),
-    url(
+    re_path(
         r"^mydevicetypehealthhistory$",
         mydevices_health_history_log,
         name="lava.scheduler.mydevices_health_history_log",
     ),
-    url(
+    re_path(
         r"^devicetypeyaml/(?P<pk>[-_a-zA-Z0-9]+)",
         download_device_type_template,
         name="lava_scheduler_download_device_type_yaml",
     ),
-    url(
+    re_path(
         r"^job/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/similarjobs$",
         similar_jobs,
         name="lava.scheduler.job.similar_jobs",
     ),
-    url(
+    re_path(
         r"internal/v1/jobs/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/$",
         internal_v1_jobs,
         name="lava.scheduler.internal.v1.jobs",
     ),
-    url(
+    re_path(
         r"internal/v1/jobs/(?P<pk>[0-9]+|[0-9]+.[0-9]+)/logs/$",
         internal_v1_jobs_logs,
         name="lava.scheduler.internal.v1.jobs.logs",
     ),
-    url(
+    re_path(
         r"internal/v1/workers/$",
         internal_v1_workers,
         name="lava.scheduler.internal.v1.workers",
     ),
-    url(
+    re_path(
         r"internal/v1/workers/(?P<pk>[-_a-zA-Z0-9.@]+)/$",
         internal_v1_workers,
         name="lava.scheduler.internal.v1.workers",
