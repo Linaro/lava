@@ -14,13 +14,13 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 
 
-class TestDeviceParser(StdoutTestCase):
+class TestDeviceParser(LavaDispatcherTestCase):
     def test_new_device(self):
         factory = Factory()
         (rendered, _) = factory.create_device("kvm01.jinja2")
@@ -47,7 +47,7 @@ class FakeAction(Action):
     summary = "fake action"
 
 
-class TestJobDeviceParameters(StdoutTestCase):
+class TestJobDeviceParameters(LavaDispatcherTestCase):
     """
     Test parsing of device configuration into job parameters
     """
@@ -137,7 +137,7 @@ class TestJobDeviceParameters(StdoutTestCase):
         )
 
 
-class TestDeviceEnvironment(StdoutTestCase):
+class TestDeviceEnvironment(LavaDispatcherTestCase):
     """
     Test parsing of device environment support
     """
@@ -232,7 +232,7 @@ overrides:
         self.assertTrue(found)
 
 
-class TestCommand(StdoutTestCase):
+class TestCommand(LavaDispatcherTestCase):
     def test_silent(self):
         fake = FakeAction()
         command = "true"

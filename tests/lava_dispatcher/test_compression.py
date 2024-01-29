@@ -15,7 +15,7 @@ from responses import RequestsMock
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 def setup_responses() -> RequestsMock:
@@ -43,7 +43,7 @@ def setup_responses() -> RequestsMock:
     return requests_mock
 
 
-class TestDecompression(StdoutTestCase):
+class TestDecompression(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -174,7 +174,7 @@ class TestDecompression(StdoutTestCase):
             test_multiple_bad_checksums.run(None, None)
 
 
-class TestDownloadDecompressionMap(StdoutTestCase):
+class TestDownloadDecompressionMap(LavaDispatcherTestCase):
     def test_download_decompression_map(self):
         """
         Previously had an issue with decompress_command_map being modified.

@@ -20,13 +20,13 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
 from tests.lava_dispatcher.test_messages import FakeConnection
 from tests.utils import DummyLogger, infrastructure_error
 
 
-class TestKVMSimulation(StdoutTestCase):
+class TestKVMSimulation(LavaDispatcherTestCase):
     def test_kvm_simulation(self):
         """
         Build a pipeline which simulates a KVM LAVA job
@@ -36,7 +36,7 @@ class TestKVMSimulation(StdoutTestCase):
         """
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        pipe = Pipeline()
+        pipe = Pipeline(job=job)
         action = Action()
         action.name = "deploy_linaro_image"
         action.description = "deploy action using preset subactions in an internal pipe"
@@ -47,7 +47,7 @@ class TestKVMSimulation(StdoutTestCase):
         action.parameters = {"image": "file:///none/images/bad-kvm-debian-wheezy.img"}
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
-        deploy_pipe = Pipeline(action)
+        deploy_pipe = Pipeline(job=job, parent=action)
         action = Action()
         action.name = "downloader"
         action.description = "download image wrapper, including an internal retry pipe"
@@ -55,8 +55,9 @@ class TestKVMSimulation(StdoutTestCase):
         action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.1")
-        # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
-        retry_pipe = Pipeline(action)
+        # a formal RetryAction would contain a pre-built pipeline which can be
+        # inserted directly
+        retry_pipe = Pipeline(job=job, parent=action)
         action = Action()
         action.name = "wget"
         action.description = "do the download with retries"
@@ -118,7 +119,7 @@ class TestKVMSimulation(StdoutTestCase):
         self.assertEqual(len(pipe.describe()), 4)
 
 
-class TestKVMBasicDeploy(StdoutTestCase):
+class TestKVMBasicDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -213,7 +214,7 @@ class TestKVMBasicDeploy(StdoutTestCase):
                 self.assertEqual(len(action.parameters["definitions"]), 2)
 
 
-class TestKVMPortable(StdoutTestCase):
+class TestKVMPortable(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -239,7 +240,7 @@ class TestKVMPortable(StdoutTestCase):
             self.assertEqual([], action.errors)
 
 
-class TestKVMQcow2Deploy(StdoutTestCase):
+class TestKVMQcow2Deploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -260,7 +261,7 @@ class TestKVMQcow2Deploy(StdoutTestCase):
             self.assertEqual([], action.errors)
 
 
-class TestKVMMultiTests(StdoutTestCase):
+class TestKVMMultiTests(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -271,7 +272,7 @@ class TestKVMMultiTests(StdoutTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
-class TestKVMDownloadLocalDeploy(StdoutTestCase):
+class TestKVMDownloadLocalDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -282,7 +283,7 @@ class TestKVMDownloadLocalDeploy(StdoutTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
-class TestKVMDeployOverlays(StdoutTestCase):
+class TestKVMDeployOverlays(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -304,7 +305,7 @@ def prepare_test_connection(failure=False):
     return FakeConnection(logfile, message_list)
 
 
-class TestKVMInlineTestDeploy(StdoutTestCase):
+class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -436,7 +437,7 @@ class TestKVMInlineTestDeploy(StdoutTestCase):
         self.assertEqual(set(testdef), set(expected_testdef))
 
 
-class TestKvmConnection(StdoutTestCase):
+class TestKvmConnection(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -482,7 +483,7 @@ class TestKvmConnection(StdoutTestCase):
         self.assertEqual(call_qemu.session_class, QemuSession)
 
 
-class TestAutoLogin(StdoutTestCase):
+class TestAutoLogin(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -732,7 +733,7 @@ class TestAutoLogin(StdoutTestCase):
         self.assertIn("2 retries failed for auto-login-action", autologinaction.errors)
 
 
-class TestKvmGuest(StdoutTestCase):
+class TestKvmGuest(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -751,7 +752,7 @@ class TestKvmGuest(StdoutTestCase):
         )
 
 
-class TestKvmUefi(StdoutTestCase):
+class TestKvmUefi(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -821,7 +822,7 @@ class TestKvmUefi(StdoutTestCase):
         )
 
 
-class TestQemuNFS(StdoutTestCase):
+class TestQemuNFS(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -884,7 +885,7 @@ class TestQemuNFS(StdoutTestCase):
         self.assertIn("{NFSROOTFS}", args)
 
 
-class TestMonitor(StdoutTestCase):
+class TestMonitor(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()

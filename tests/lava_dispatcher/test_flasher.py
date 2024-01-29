@@ -5,18 +5,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import shlex
+from unittest.mock import patch
 
 import pexpect
 
-import lava_dispatcher.actions.deploy.docker  # pylint: disable=unused-import
-
-# This will be monkey patched
-import lava_dispatcher.utils.shell  # pylint: disable=unused-import
-from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
-from lava_dispatcher.device import PipelineDevice
-from lava_dispatcher.job import Job
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
@@ -27,7 +21,7 @@ class FlasherFactory(Factory):
         return job
 
 
-class TestFlasher(StdoutTestCase):
+class TestFlasher(LavaDispatcherTestCase):
     def test_pipeline(self):
         factory = FlasherFactory()
         job = factory.create_b2260_job("sample_jobs/b2260-flasher.yaml")
@@ -35,79 +29,70 @@ class TestFlasher(StdoutTestCase):
         description_ref = self.pipeline_reference("b2260-flasher.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
+    def test_run(self):
+        class Proc:
+            # pylint: disable=no-self-argument
+            def wait(self_):
+                return 0
 
-def test_run(monkeypatch):
-    class Proc:
-        def wait(self):
-            return 0
+            def expect(self_, arg):
+                self.assertEqual(arg, pexpect.EOF)
 
-        def expect(self, arg):
-            assert arg == pexpect.EOF
+        commands = [
+            ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
+            ["touch"],
+        ]
 
-    commands = [
-        ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
-        ["touch"],
-    ]
-
-    def spawn(cmd, cwd, encoding, codec_errors, logfile, timeout, searchwindowsize):
-        command = commands.pop(0)
-        assert cmd == shlex.join(command)
-        assert encoding == "utf-8"
-        assert codec_errors == "replace"
-        assert searchwindowsize == 10
-        return Proc()
-
-    monkeypatch.setattr(pexpect, "spawn", spawn)
-
-    action = FlasherAction()
-    device = PipelineDevice(
-        {
-            "actions": {
-                "deploy": {
-                    "methods": {
-                        "flasher": {"commands": ["{HARD_RESET_COMMAND}", "touch"]}
+        action = FlasherAction()
+        action.job = self.create_simple_job(
+            device_dict={
+                "actions": {
+                    "deploy": {
+                        "methods": {
+                            "flasher": {"commands": ["{HARD_RESET_COMMAND}", "touch"]}
+                        }
                     }
-                }
-            },
-            "commands": {"hard_reset": "/home/lava/bin/PiCtrl.py PowerPlug 0 off"},
-        }
-    )
-    action.job = Job(1234, {}, None)
-    action.job.device = device
-    action.parameters = {"namespace": "common", "images": {}}
-    action.section = Flasher.section
+                },
+                "commands": {"hard_reset": "/home/lava/bin/PiCtrl.py PowerPlug 0 off"},
+            }
+        )
+        action.parameters = {"namespace": "common", "images": {}}
+        action.section = Flasher.section
 
-    # self.commands is populated by validate
-    action.validate()
-    assert action.errors == []  # nosec - unit test
+        # self.commands is populated by validate
+        action.validate()
+        self.assertFalse(action.errors)
 
-    # Run the action
-    action.run(None, 10)
-    assert commands == []  # nosec - unit test
+        # Run the action
+        with patch("pexpect.spawn", return_value=Proc()) as mock_spawn:
+            action.run(None, 10)
 
+        self.assertEqual(mock_spawn.call_count, 2)
 
-def test_accepts():
-    pipe = Pipeline(job=Job(1234, {}, None))
-    pipe.add_action = lambda a, b: None
-    flasher = Flasher
+        for i, call in enumerate(mock_spawn.mock_calls):
+            self.assertEqual(call.args, (shlex.join(commands[i]),))
 
-    # Normal case
-    device = {"actions": {"deploy": {"methods": "flasher"}}}
-    params = {"to": "flasher"}
-    assert flasher.accepts(device, params) == (True, "accepted")  # nosec - unit test
+            self.assertEqual(call.kwargs["encoding"], "utf-8")
+            self.assertEqual(call.kwargs["codec_errors"], "replace")
+            self.assertEqual(call.kwargs["searchwindowsize"], 10)
 
-    # Flasher is not defined
-    device = {"actions": {"deploy": {"methods": "tftp"}}}
-    params = {"to": "flasher"}
-    assert flasher.accepts(device, params) == (  # nosec - unit test
-        False,
-        "'flasher' not in the device configuration deploy methods",
-    )
+    def test_accepts(self):
+        # Normal case
+        device = {"actions": {"deploy": {"methods": "flasher"}}}
+        params = {"to": "flasher"}
+        self.assertEqual(Flasher.accepts(device, params), (True, "accepted"))
 
-    # Flasher is not requested
-    device = {"actions": {"deploy": {"methods": "flasher"}}}
-    params = {"to": "tftp"}
-    assert flasher.accepts(device, params) == (  # nosec - unit test
-        False,
-        '"to" parameter is not "flasher"',
-    )
+        # Flasher is not defined
+        device = {"actions": {"deploy": {"methods": "tftp"}}}
+        params = {"to": "flasher"}
+        self.assertEqual(
+            Flasher.accepts(device, params),
+            (False, "'flasher' not in the device configuration deploy methods"),
+        )
+
+        # Flasher is not requested
+        device = {"actions": {"deploy": {"methods": "flasher"}}}
+        params = {"to": "tftp"}
+        self.assertEqual(
+            Flasher.accepts(device, params), (False, '"to" parameter is not "flasher"')
+        )

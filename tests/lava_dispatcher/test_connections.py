@@ -16,7 +16,7 @@ from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.boot.ssh import SchrootAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
 
@@ -34,7 +34,7 @@ class ConnectionFactory(Factory):
         return self.create_job("bbb-02.jinja2", filename, validate=False)
 
 
-class TestConnection(StdoutTestCase):
+class TestConnection(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = ConnectionFactory()
@@ -438,7 +438,7 @@ class TestConnection(StdoutTestCase):
         self.assertEqual(description_ref, self.guest_job.pipeline.describe())
 
 
-class TestConsoleConnections(StdoutTestCase):
+class TestConsoleConnections(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = ConnectionFactory()
@@ -500,7 +500,7 @@ commands:
         self.assertEqual(["primary", "telnet"], connect.tag_dict[connect.hardware])
 
 
-class TestTimeouts(StdoutTestCase):
+class TestTimeouts(LavaDispatcherTestCase):
     """
     Test action and connection timeout parsing.
     """
@@ -639,7 +639,7 @@ class TestTimeouts(StdoutTestCase):
         self.assertEqual(retry.connection_timeout.duration, 45)
 
 
-class TestDisconnect(StdoutTestCase):
+class TestDisconnect(LavaDispatcherTestCase):
     """
     Test disconnect action
     """

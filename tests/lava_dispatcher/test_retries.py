@@ -9,20 +9,13 @@ import time
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.job import Job
 from lava_dispatcher.logical import DiagnosticAction, RetryAction
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
-from tests.lava_dispatcher.test_basic import StdoutTestCase
-from tests.utils import DummyLogger
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
-class TestAction(StdoutTestCase):
-    class FakeJob(Job):
-        def __init__(self, parameters):
-            super().__init__(4212, parameters, None)
-            self.logger = DummyLogger()
-
+class TestAction(LavaDispatcherTestCase):
     class FakeDeploy:
         """
         Derived from object, *not* Deployment as this confuses python -m unittest discover
@@ -45,8 +38,8 @@ class TestAction(StdoutTestCase):
             self.action.job = self.job
 
     class FakePipeline(Pipeline):
-        def __init__(self, parent=None, job=None):
-            super().__init__(parent, job)
+        def __init__(self, job):
+            super().__init__(job)
             job.pipeline = self
 
     class FakeAction(Action):
@@ -132,8 +125,8 @@ class TestAction(StdoutTestCase):
                 }
             ],
         }
-        self.fakejob = TestAction.FakeJob(self.parameters)
-        JobParser._timeouts(None, self.parameters, self.fakejob)
+        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
+        self.fakejob.timeout = JobParser._parse_job_timeout(self.parameters)
 
     def lookup_deploy(self, params):
         actions = iter(params)
@@ -324,8 +317,7 @@ class TestAction(StdoutTestCase):
                 }
             ],
         }
-        self.fakejob = TestAction.FakeJob(self.parameters)
-        JobParser._timeouts(None, self.parameters, self.fakejob)
+        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestAction.InternalRetryAction()
         for actions in self.lookup_deploy(self.parameters["actions"]):
@@ -338,25 +330,13 @@ class TestAction(StdoutTestCase):
         self.assertEqual(action.sleep, 2)
 
 
-class TestTimeout(StdoutTestCase):
-    class FakeJob(Job):
-        def __init__(self, parameters):
-            super().__init__(4212, parameters, None)
-            self.logger = DummyLogger()
-
-        def validate(self, simulate=False):
-            self.pipeline.validate_actions()
-
+class TestTimeout(LavaDispatcherTestCase):
     class FakeDevice(dict):
         def __init__(self):
             self.update({"parameters": {}, "commands": {}})
 
         def __get_item__(self):
             return {}
-
-    class FakePipeline(Pipeline):
-        def __init__(self, parent=None, job=None):
-            super().__init__(parent, job)
 
     class FakeAction(Action):
         """
@@ -468,8 +448,8 @@ class TestTimeout(StdoutTestCase):
                 }
             ],
         }
-        self.fakejob = TestTimeout.FakeJob(self.parameters)
-        JobParser._timeouts(None, self.parameters, self.fakejob)
+        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
+        self.fakejob.timeout = JobParser._parse_job_timeout(self.parameters)
 
     def test_action_timeout(self):
         """
@@ -478,18 +458,17 @@ class TestTimeout(StdoutTestCase):
         """
         self.assertIsNotNone(self.fakejob.timeout)
         seconds = 2
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()
-        action.timeout = Timeout(action.name, action=action, duration=seconds)
         pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
+        action.timeout = Timeout(action.name, action=action, duration=seconds)
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.run()
 
     def test_action_timout_custom_exception(self):
         seconds = 2
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestTimeout.FakeAction()
         action.timeout = Timeout(
             action.name, action=action, duration=seconds, exception=InfrastructureError
@@ -503,7 +482,7 @@ class TestTimeout(StdoutTestCase):
     def test_action_complete(self):
         self.assertIsNotNone(self.fakejob.timeout)
         seconds = 2
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestTimeout.SafeAction()
         action.timeout = Timeout(action.name, action=action, duration=seconds)
         pipeline.add_action(action)
@@ -513,14 +492,13 @@ class TestTimeout(StdoutTestCase):
 
     def test_job_timeout(self):
         self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestTimeout.LongAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
         finalize = FinalizeAction()
         finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
-        self.fakejob.pipeline = pipeline
         self.fakejob.device = TestTimeout.FakeDevice()
         with self.assertRaises(JobError):
             self.fakejob.run()
@@ -530,7 +508,7 @@ class TestTimeout(StdoutTestCase):
 
         class LongRetryAction(RetryAction):
             def populate(self, parameters):
-                self.pipeline = TestTimeout.FakePipeline(job=fakejob)
+                self.pipeline = TestAction.FakePipeline(job=fakejob)
                 self.pipeline.add_action(TestTimeout.LongAction())
 
                 finalize = FinalizeAction()
@@ -538,7 +516,7 @@ class TestTimeout(StdoutTestCase):
                 self.pipeline.add_action(finalize)
 
         self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = LongRetryAction()
         action.max_retries = 10
         pipeline.add_action(action)
@@ -561,7 +539,7 @@ class TestTimeout(StdoutTestCase):
 
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         action = TestTimeout.SafeAction()
         pipeline.add_action(action)
         pipeline.add_action(TestTimeout.SafeAction())
@@ -576,7 +554,7 @@ class TestTimeout(StdoutTestCase):
     def test_long_job_safe(self):
         self.fakejob.timeout.duration = 8
         self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestTimeout.FakePipeline(job=self.fakejob)
+        pipeline = TestAction.FakePipeline(job=self.fakejob)
         self.fakejob.pipeline = pipeline
         action = TestTimeout.SafeAction()
         action.timeout.duration = 2

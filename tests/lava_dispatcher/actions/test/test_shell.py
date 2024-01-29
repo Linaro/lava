@@ -4,15 +4,12 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import logging
-import time
-
-import pytest
+from unittest.mock import MagicMock, patch
 
 from lava_common.exceptions import ConnectionClosedError, TestError
 from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
-from lava_dispatcher.job import Job
-from tests.utils import RecordingLogger
+
+from ...test_basic import LavaDispatcherTestCase
 
 
 class Mockmatch:
@@ -28,119 +25,124 @@ class MockConnection:
         self.match = Mockmatch(data)
 
 
-def test_accepts():
-    assert TestShell.accepts(None, {}) == (False, '"definitions" not in parameters')
-    assert TestShell.accepts(None, {"definitions": {}}) == (True, "accepted")
+class TestTestShell(LavaDispatcherTestCase):
+    def test_accepts(self):
+        self.assertEqual(
+            TestShell.accepts(None, {}), (False, '"definitions" not in parameters')
+        )
+        self.assertEqual(
+            TestShell.accepts(None, {"definitions": {}}), (True, "accepted")
+        )
 
+    def test_check_patterns(self):
+        # "exit"
+        action = TestShellAction()
+        with self.assertLogs(action.logger) as action_logs:
+            self.assertIs(action.check_patterns("exit", None), False)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [("INFO", "ok: lava_test_shell seems to have completed")],
+        )
 
-def test_check_patterns():
-    # "exit"
-    action = TestShellAction()
-    action.logger = RecordingLogger()
-    assert action.check_patterns("exit", None) is False
-    assert action.logger.logs == [
-        ("info", "ok: lava_test_shell seems to have completed", {})
-    ]
+        # "eof"
+        action = TestShellAction()
+        with self.assertRaises(ConnectionClosedError):
+            action.check_patterns("eof", None)
 
-    # "eof"
-    action = TestShellAction()
-    action.logger = RecordingLogger()
-    with pytest.raises(ConnectionClosedError):
-        action.check_patterns("eof", None)
+        # "timeout"
+        action = TestShellAction()
+        with self.assertRaisesRegex(AssertionError, "no logs"), self.assertLogs(
+            action.logger
+        ) as action_logs:
+            self.assertIs(action.check_patterns("timeout", None), True)
 
-    # "timeout"
-    action = TestShellAction()
-    action.logger = RecordingLogger()
-    assert action.check_patterns("timeout", None) is True
-    assert action.logger.logs == []
+    def test_signal_start_run(self):
+        job = self.create_simple_job()
 
+        # "signal.STARTRUN"
+        action = TestShellAction()
+        action.job = job
+        action.parameters = {"namespace": "common"}
+        action.data = {}
+        action.set_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="testdef_index",
+            value=["DEFINITION"],
+        )
+        action.set_namespace_data(
+            action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
+        )
 
-def test_signal_start_run():
-    job = Job(1234, {}, None)
+        data = ("STARTRUN", "0_DEFINITION UUID")
+        with self.assertLogs(action.logger, level="DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <STARTRUN> 0_DEFINITION UUID"),
+                ("INFO", "Starting test lava.0_DEFINITION (UUID)"),
+                ("INFO", "Skipping test definition patterns."),
+            ],
+        )
+        self.assertEqual(
+            action.current_run,
+            {
+                "case": "0_DEFINITION",
+                "definition": "lava",
+                "result": "fail",
+                "uuid": "UUID",
+            },
+        )
+        self.assertEqual(action.patterns, {})
 
-    # "signal.STARTRUN"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.parameters = {"namespace": "common"}
-    action.data = {}
-    action.set_namespace_data(
-        action="test-definition",
-        label="test-definition",
-        key="testdef_index",
-        value=["DEFINITION"],
-    )
-    action.set_namespace_data(
-        action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
-    )
+        # "signal.STARTRUN exception"
+        action = TestShellAction()
 
-    data = ("STARTRUN", "0_DEFINITION UUID")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <STARTRUN> 0_DEFINITION UUID", {}),
-        ("info", "Starting test lava.%s (%s)", "0_DEFINITION", "UUID", {}),
-        ("info", "Skipping test definition patterns.", {}),
-    ]
-    assert action.current_run == {
-        "case": "0_DEFINITION",
-        "definition": "lava",
-        "result": "fail",
-        "uuid": "UUID",
-    }
-    assert action.patterns == {}
+        data = ("STARTRUN", "0_DEFINITIO")
+        with self.assertRaises(TestError):
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
 
-    # "signal.STARTRUN exception"
-    action = TestShellAction()
-    action.logger = RecordingLogger()
+    def test_signal_end_run(self):
+        counts = 0
 
-    data = ("STARTRUN", "0_DEFINITIO")
-    with pytest.raises(TestError):
-        action.check_patterns("signal", MockConnection(data)) is True
+        def monotonic():
+            nonlocal counts
+            counts += 1
+            return counts
 
+        job = self.create_simple_job()
 
-def test_signal_end_run(monkeypatch):
-    counts = 0
+        # "signal.ENDRUN"
+        action = TestShellAction()
+        action.job = job
+        action.logger.results = MagicMock()
+        action.parameters = {"namespace": "common"}
+        action.data = {}
+        action.set_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="testdef_index",
+            value=["DEFINITION"],
+        )
+        action.set_namespace_data(
+            action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
+        )
 
-    def monotonic():
-        nonlocal counts
-        counts += 1
-        return counts
-
-    monkeypatch.setattr(time, "monotonic", monotonic)
-
-    job = Job(1234, {}, None)
-
-    # "signal.ENDRUN"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.parameters = {"namespace": "common"}
-    action.data = {}
-    action.set_namespace_data(
-        action="test-definition",
-        label="test-definition",
-        key="testdef_index",
-        value=["DEFINITION"],
-    )
-    action.set_namespace_data(
-        action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
-    )
-
-    data = ("ENDRUN", "0_DEFINITION UUID")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <ENDRUN> 0_DEFINITION UUID", {}),
-        ("info", "Ending use of test pattern.", {}),
-        (
-            "info",
-            "Ending test lava.%s (%s), duration %.02f",
-            "0_DEFINITION",
-            "UUID",
-            1,
-            {},
-        ),
-        (
-            "results",
+        data = ("ENDRUN", "0_DEFINITION UUID")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs, patch(
+            "time.monotonic", monotonic
+        ):
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <ENDRUN> 0_DEFINITION UUID"),
+                ("INFO", "Ending use of test pattern."),
+                ("INFO", "Ending test lava.0_DEFINITION (UUID), duration 1.00"),
+            ],
+        )
+        action.logger.results.assert_called_once_with(
             {
                 "definition": "lava",
                 "case": "0_DEFINITION",
@@ -152,239 +154,293 @@ def test_signal_end_run(monkeypatch):
                 "revision": "unspecified",
                 "namespace": "common",
             },
-            {},
-        ),
-    ]
-    assert action.current_run is None
+        )
+        self.assertIsNone(action.current_run)
 
-    # "signal.ENDRUN exception"
-    action = TestShellAction()
-    action.logger = RecordingLogger()
+        # "signal.ENDRUN exception"
+        action = TestShellAction()
 
-    data = ("ENDRUN", "0_DEFINITIO")
-    with pytest.raises(TestError):
-        action.check_patterns("signal", MockConnection(data)) is True
+        data = ("ENDRUN", "0_DEFINITIO")
+        with self.assertRaises(TestError):
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
 
+    def test_signal_start_end_tc(self):
+        job = self.create_simple_job()
 
-def test_signal_start_end_tc():
-    job = Job(1234, {}, None)
+        # "signal.STARTTC"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
 
-    # "signal.STARTTC"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
+        data = ("STARTTC", "TESTCASE")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [("DEBUG", "Received signal: <STARTTC> TESTCASE")],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "TESTCASE", "type": "start_test_case"}
+        )
 
-    data = ("STARTTC", "TESTCASE")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <STARTTC> TESTCASE", {}),
-        ("marker", {"case": "TESTCASE", "type": "start_test_case"}, {}),
-    ]
+        # "signal.ENDTC"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
 
-    # "signal.ENDTC"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
+        data = ("ENDTC", "TESTCASE")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [("DEBUG", "Received signal: <ENDTC> TESTCASE")],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "TESTCASE", "type": "end_test_case"}
+        )
 
-    data = ("ENDTC", "TESTCASE")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <ENDTC> TESTCASE", {}),
-        ("marker", {"case": "TESTCASE", "type": "end_test_case"}, {}),
-    ]
+    def test_signal_testcase(self):
+        job = self.create_simple_job()
 
+        # "signal.TESTCASE without test_uuid"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
 
-def test_signal_testcase():
-    job = Job(1234, {}, None)
+        data = ("TESTCASE", "hello")
+        with self.assertRaises(TestError), self.assertLogs(
+            action.logger, "DEBUG"
+        ) as action_logs:
+            action.check_patterns("signal", MockConnection(data))
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTCASE> hello"),
+                (
+                    "ERROR",
+                    "Unknown test uuid. The STARTRUN signal for this test action was not received correctly.",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "hello", "type": "test_case"}
+        )
 
-    # "signal.TESTCASE without test_uuid"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
+        # "signal.TESTCASE malformed parameters"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "hello")
-    with pytest.raises(TestError):
-        action.check_patterns("signal", MockConnection(data))
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTCASE> hello", {}),
-        ("marker", {"case": "hello", "type": "test_case"}, {}),
-        (
-            "error",
-            "Unknown test uuid. The STARTRUN signal for this test action was not received correctly.",
-            {},
-        ),
-    ]
+        data = ("TESTCASE", "hello")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTCASE> hello"),
+                ("ERROR", 'Ignoring malformed parameter for signal: "hello". '),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "hello", "type": "test_case"}
+        )
 
-    # "signal.TESTCASE malformed parameters"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
+        # "signal.TESTCASE missing TEST_CASE_ID"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "hello")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTCASE> hello", {}),
-        ("marker", {"case": "hello", "type": "test_case"}, {}),
-        ("error", 'Ignoring malformed parameter for signal: "hello". ', {}),
-    ]
+        data = ("TESTCASE", "TEST_CASE=e")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE=e"),
+                (
+                    "ERROR",
+                    "Test case results without test_case_id (probably a sign of an incorrect parsing pattern being used): {'test_case': 'e'}",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "TEST_CASE=e", "type": "test_case"}
+        )
 
-    # "signal.TESTCASE missing TEST_CASE_ID"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
+        # "signal.TESTCASE missing RESULT"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "TEST_CASE=e")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTCASE> TEST_CASE=e", {}),
-        ("marker", {"case": "TEST_CASE=e", "type": "test_case"}, {}),
-        (
-            "error",
-            "Test case results without test_case_id (probably a sign of an incorrect parsing pattern being used): {'test_case': 'e'}",
-            {},
-        ),
-    ]
+        data = ("TESTCASE", "TEST_CASE_ID=case-id")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE_ID=case-id"),
+                (
+                    "ERROR",
+                    "Test case results without result (probably a sign of an incorrect parsing pattern being used): {'test_case_id': 'case-id', 'result': 'unknown'}",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "case-id", "type": "test_case"}
+        )
 
-    # "signal.TESTCASE missing RESULT"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
+        # "signal.TESTCASE"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.logger.results = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "TEST_CASE_ID=case-id")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTCASE> TEST_CASE_ID=case-id", {}),
-        ("marker", {"case": "case-id", "type": "test_case"}, {}),
-        (
-            "error",
-            "Test case results without result (probably a sign of an incorrect parsing pattern being used): {'test_case_id': 'case-id', 'result': 'unknown'}",
-            {},
-        ),
-    ]
+        data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                (
+                    "DEBUG",
+                    "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "RESULT=pass", "type": "test_case"}
+        )
+        action.logger.results.assert_called_once_with(
+            {"definition": None, "case": "case_id", "result": "pass"}
+        )
 
-    # "signal.TESTCASE"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
+        # "signal.TESTCASE with measurement"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.logger.results = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id", {}),
-        ("marker", {"case": "RESULT=pass", "type": "test_case"}, {}),
-        ("results", {"definition": None, "case": "case_id", "result": "pass"}, {}),
-    ]
-
-    # "signal.TESTCASE with measurement"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
-
-    data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        (
-            "debug",
-            "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234",
-            {},
-        ),
-        ("marker", {"case": "RESULT=pass", "type": "test_case"}, {}),
-        (
-            "results",
+        data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                (
+                    "DEBUG",
+                    "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "RESULT=pass", "type": "test_case"}
+        )
+        action.logger.results.assert_called_once_with(
             {
                 "definition": None,
                 "case": "case_id",
                 "result": "pass",
                 "measurement": 1234.0,
             },
-            {},
-        ),
-    ]
+        )
 
-    # "signal.TESTCASE with measurement and unit"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-    action.signal_director.test_uuid = "UUID"
+        # "signal.TESTCASE with measurement and unit"
+        action = TestShellAction()
+        action.job = job
+        action.logger.marker = MagicMock()
+        action.logger.results = MagicMock()
+        action.signal_director.test_uuid = "UUID"
 
-    data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        (
-            "debug",
-            "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s",
-            {},
-        ),
-        ("marker", {"case": "RESULT=pass", "type": "test_case"}, {}),
-        (
-            "results",
+        data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                (
+                    "DEBUG",
+                    "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s",
+                ),
+            ],
+        )
+        action.logger.marker.assert_called_once_with(
+            {"case": "RESULT=pass", "type": "test_case"}
+        )
+        action.logger.results.assert_called_once_with(
             {
                 "definition": None,
                 "case": "case_id",
                 "result": "pass",
                 "measurement": 1234.0,
                 "units": "s",
-            },
-            {},
-        ),
-    ]
+            }
+        )
 
+    def test_signal_test_feedback(self):
+        job = self.create_simple_job()
 
-def test_signal_test_feedback():
-    job = Job(1234, {}, None)
+        # "signal.TESTFEEDBACK missing ns"
+        action = TestShellAction()
+        action.job = job
 
-    # "signal.TESTFEEDBACK missing ns"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
+        data = ("TESTFEEDBACK", "FEED1")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTFEEDBACK> FEED1"),
+                ("ERROR", "%s is not a valid namespace"),
+            ],
+        )
 
-    data = ("TESTFEEDBACK", "FEED1")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        ("debug", "Received signal: <TESTFEEDBACK> FEED1", {}),
-        ("error", "%s is not a valid namespace", {}),
-    ]
+    def test_signal_test_reference(self):
+        job = self.create_simple_job()
 
+        # "signal.TESTREFERENCE missing parameters"
+        action = TestShellAction()
+        action.job = job
 
-def test_signal_test_reference():
-    job = Job(1234, {}, None)
+        data = ("TESTREFERENCE", "")
+        with self.assertRaises(TestError), self.assertLogs(
+            action.logger, "DEBUG"
+        ) as action_logs:
+            action.check_patterns("signal", MockConnection(data))
 
-    # "signal.TESTREFERENCE missing parameters"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <TESTREFERENCE> "),
+            ],
+        )
 
-    data = ("TESTREFERENCE", "")
-    with pytest.raises(TestError):
-        action.check_patterns("signal", MockConnection(data))
-    assert action.logger.logs == [("debug", "Received signal: <TESTREFERENCE> ", {})]
+        # "signal.TESTREFERENCE"
+        action = TestShellAction()
+        action.job = job
+        action.logger.results = MagicMock()
 
-    # "signal.TESTREFERENCE"
-    action = TestShellAction()
-    action.job = job
-    action.logger = RecordingLogger()
-
-    data = ("TESTREFERENCE", "case-id pass http://example.com")
-    assert action.check_patterns("signal", MockConnection(data)) is True
-    assert action.logger.logs == [
-        (
-            "debug",
-            "Received signal: <TESTREFERENCE> case-id pass http://example.com",
-            {},
-        ),
-        (
-            "results",
+        data = ("TESTREFERENCE", "case-id pass http://example.com")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                (
+                    "DEBUG",
+                    "Received signal: <TESTREFERENCE> case-id pass http://example.com",
+                ),
+            ],
+        )
+        action.logger.results.assert_called_once_with(
             {
                 "case": "case-id",
                 "definition": None,
                 "result": "pass",
                 "reference": "http://example.com",
-            },
-            {},
-        ),
-    ]
+            }
+        )

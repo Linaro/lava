@@ -10,16 +10,14 @@ from unittest.mock import patch
 
 from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.action import Action, Pipeline, Timeout
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from tests.utils import DummyLogger
 
 
-class TestMultiDeploy(StdoutTestCase):
+class TestMultiDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.parameters = {}
@@ -79,23 +77,16 @@ class TestMultiDeploy(StdoutTestCase):
             self.data[self.name] = self.parameters
             return connection  # no actual connection during this fake job
 
-    @nottest
-    class TestJob(Job):
-        def __init__(self):
-            super().__init__(4122, 0, self.parameters)
-
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_multi_deploy(self, which_mock):
         self.assertIsNotNone(self.parsed_data)
-        job = Job(4212, self.parsed_data, None)
-        job.timeout = Timeout("Job", Timeout.parse({"minutes": 2}))
+        job = self.create_simple_job(
+            device_dict=TestMultiDeploy.FakeDevice(),
+            job_parameters=self.parsed_data,
+        )
         pipeline = Pipeline(job=job)
-        device = TestMultiDeploy.FakeDevice()
-        self.assertIsNotNone(device)
-        job.device = device
-        job.logger = DummyLogger()
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data["actions"]:
@@ -140,7 +131,7 @@ class TestMultiDeploy(StdoutTestCase):
         )
 
 
-class TestMultiDefinition(StdoutTestCase):
+class TestMultiDefinition(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
@@ -192,7 +183,7 @@ class TestMultiDefinition(StdoutTestCase):
         self.assertIn("Test definition names need to be unique.", runscript.errors)
 
 
-class TestMultiUBoot(StdoutTestCase):
+class TestMultiUBoot(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = UBootFactory()

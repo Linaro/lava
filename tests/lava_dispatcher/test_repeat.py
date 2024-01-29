@@ -4,29 +4,35 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import time
+from unittest.mock import patch
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import RetryAction
 
-
-class DummyAction(Action):
-    def __init__(self):
-        super().__init__()
-        self.ran = 0
-
-    def run(self, connection, max_end_time):
-        assert connection is None  # nosec - unit test support.
-        assert max_end_time == 1  # nosec - unit test support.
-        self.ran += 1
+from .test_basic import LavaDispatcherTestCase
 
 
-def test_repeat_action(monkeypatch):
-    monkeypatch.setattr(time, "monotonic", lambda: 0)
-    ra = RetryAction()
-    ra.parameters = {"repeat": 5}
-    ra.level = "1"
-    ra.pipeline = Pipeline(parent=ra)
-    ra.pipeline.add_action(DummyAction())
-    ra.run(None, 1)
-    assert ra.pipeline.actions[0].ran == 5  # nosec - unit test support.
+class TestRepeatAction(LavaDispatcherTestCase):
+    def test_repeat_action(self):
+        class DummyAction(Action):
+            # pylint: disable=no-self-argument
+            def __init__(self_):
+                super().__init__()
+                self_.ran = 0
+
+            def run(self_, connection, max_end_time):
+                self.assertIsNone(connection)
+                self.assertEqual(max_end_time, 1)
+                self_.ran += 1
+
+        ra = RetryAction()
+        ra.parameters = {"repeat": 5}
+        ra.level = "1"
+        ra.pipeline = Pipeline(job=self.create_simple_job(), parent=ra)
+        ra.pipeline.add_action(DummyAction())
+        with patch("time.monotonic", return_value=0.0):
+            ra.run(None, 1)
+        self.assertEqual(
+            ra.pipeline.actions[0].ran,
+            5,
+        )

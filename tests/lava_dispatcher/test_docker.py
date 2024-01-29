@@ -7,7 +7,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class DockerFactory(Factory):
@@ -23,7 +23,7 @@ class DockerFactory(Factory):
         )
 
 
-class TestDocker(StdoutTestCase):
+class TestDocker(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = DockerFactory()
@@ -103,7 +103,7 @@ class TestDocker(StdoutTestCase):
         )
 
 
-class TestDockerDispatcherPrefix(StdoutTestCase):
+class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = DockerFactory()
@@ -158,7 +158,7 @@ class DockerDb410cFactory(Factory):
         return self.create_job("db410c-01.jinja2", filename)
 
 
-class TestDockerDb410c(StdoutTestCase):
+class TestDockerDb410c(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = DockerDb410cFactory()

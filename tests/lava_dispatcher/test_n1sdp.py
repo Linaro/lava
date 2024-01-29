@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class N1sdpFactory(Factory):
@@ -12,7 +12,7 @@ class N1sdpFactory(Factory):
         return self.create_job("n1sdp-01.jinja2", filename)
 
 
-class TestN1sdp(StdoutTestCase):
+class TestN1sdp(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = N1sdpFactory()

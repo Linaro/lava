@@ -6,7 +6,7 @@
 
 
 from lava_common.exceptions import JobError
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class JLinkFactory(Factory):
@@ -23,7 +23,7 @@ class JLinkFactory(Factory):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestJLinkAction(StdoutTestCase):
+class TestJLinkAction(LavaDispatcherTestCase):
     def test_jlink_pipeline(self):
         factory = JLinkFactory()
         job = factory.create_k64f_job(

@@ -4,10 +4,10 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from lava_dispatcher.action import Action
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
-class TestFVPActions(StdoutTestCase):
+class TestFVPActions(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/fvp_foundation.yaml"):
         super().setUp()
         self.factory = Factory()

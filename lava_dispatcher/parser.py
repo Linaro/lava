@@ -6,6 +6,8 @@
 
 # Bring in the strategy subclass lists, ignore pylint warnings.
 # pylint: disable=unused-import
+from __future__ import annotations
+
 import lava_dispatcher.actions.boot.strategies
 import lava_dispatcher.actions.deploy.strategies
 import lava_dispatcher.actions.test.strategies
@@ -81,16 +83,22 @@ class JobParser:
 
     # FIXME: needs a Schema and a check routine
 
-    def _timeouts(self, data, job):
-        if "job" in data.get("timeouts", {}):
-            duration = Timeout.parse(data["timeouts"]["job"])
-            job.timeout = Timeout("job", None, duration=duration)
+    @classmethod
+    def _parse_job_timeout(cls, data: dict) -> Timeout:
+        timeouts_dict = data["timeouts"]
+        duration = Timeout.parse(timeouts_dict["job"])
+        return Timeout("job", None, duration=duration)
 
     def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
         data = yaml_safe_load(content)
-        job = Job(job_id, data, logger)
+        job = Job(
+            job_id=job_id,
+            parameters=data,
+            logger=logger,
+            device=device,
+            timeout=self._parse_job_timeout(data),
+        )
         test_counts = {}
-        job.device = device
         job.parameters["env_dut"] = env_dut
         # Load the dispatcher config
         job.parameters["dispatcher"] = {}
@@ -106,7 +114,6 @@ class JobParser:
             for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])
         ]
         pipeline = Pipeline(job=job)
-        self._timeouts(data, job)
 
         # deploy and boot classes can populate the pipeline differently depending
         # on the test action type they are linked with (via namespacing).

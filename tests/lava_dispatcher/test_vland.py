@@ -16,11 +16,11 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
-class TestVland(StdoutTestCase):
+class TestVland(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.filename = os.path.join(

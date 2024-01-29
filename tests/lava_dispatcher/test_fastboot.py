@@ -16,7 +16,7 @@ from lava_dispatcher.utils.adb import OptionalContainerAdbAction
 from lava_dispatcher.utils.containers import DockerDriver, LxcDriver, NullDriver
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
 
@@ -252,7 +252,7 @@ class TestDockerDriver(unittest.TestCase):
         assert run_cmd.mock_calls[3].args[0][0:2] == ["docker", "stop"]
 
 
-class TestFastbootDeploy(StdoutTestCase):
+class TestFastbootDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = FastBootFactory()

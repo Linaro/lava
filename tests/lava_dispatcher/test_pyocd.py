@@ -7,7 +7,7 @@
 
 import unittest
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
 
@@ -31,7 +31,7 @@ class PyocdFactory(Factory):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)
 
 
-class TestPyocdAction(StdoutTestCase):
+class TestPyocdAction(LavaDispatcherTestCase):
     def test_pyocd_pipeline(self):
         factory = PyocdFactory()
         job = factory.create_k64f_job(

@@ -13,7 +13,7 @@ from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.strings import substitute
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
@@ -31,7 +31,7 @@ class InstallerFactory(Factory):
         return job
 
 
-class TestIsoJob(StdoutTestCase):
+class TestIsoJob(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = InstallerFactory()

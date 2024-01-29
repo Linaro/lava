@@ -8,7 +8,7 @@ import unittest
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.shell import which
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 def check_docker():
@@ -35,7 +35,7 @@ class GDBFactory(Factory):
         return self.create_job("cc3220SF-docker-01.jinja2", filename)
 
 
-class TestGDB(StdoutTestCase):
+class TestGDB(LavaDispatcherTestCase):
     @unittest.skipIf(check_docker(), "docker not available")
     @unittest.skipIf(check_gdb_multipart(), "gdb-multiarch not available")
     def test_validate_errors(self):

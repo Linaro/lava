@@ -25,7 +25,7 @@ or just
 The name of the pipeline_ref file should match the name of the equivalent file in sample_jobs.
 
 To change multiple pipeline references at the same time, change
-self.update_ref to True in test_basic.StdoutTestCase - always check all changes to
+self.update_ref to True in test_basic.LavaDispatcherTestCase - always check all changes to
 the pipeline reference files *carefully* before sending for review.
 
 Once you have a new unit test function with the pipeline_reference check in place,

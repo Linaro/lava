@@ -9,7 +9,7 @@ import unittest
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.shell import which
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
 
@@ -33,7 +33,7 @@ class OpenOCDFactory(Factory):
         return self.create_job("cc3220SF-02.jinja2", filename)
 
 
-class TestOpenOCDAction(StdoutTestCase):
+class TestOpenOCDAction(LavaDispatcherTestCase):
     @unittest.skipIf(check_openocd(), "openocd not available")
     def test_openocd_pipeline(self):
         factory = OpenOCDFactory()

@@ -19,12 +19,12 @@ from lava_dispatcher.actions.deploy.overlay import MultinodeOverlayAction, Overl
 from lava_dispatcher.actions.test.multinode import MultinodeTestAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from tests.lava_dispatcher.fake_coordinator import TestCoordinator
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path
 from tests.utils import DummyLogger
 
 
-class TestMultinode(StdoutTestCase):
+class TestMultinode(LavaDispatcherTestCase):
     def setUp(self):
         """
         Attempt to setup a valid group with clients and test the protocol
@@ -596,7 +596,7 @@ class TestMultinode(StdoutTestCase):
         )
 
 
-class TestProtocol(StdoutTestCase):
+class TestProtocol(LavaDispatcherTestCase):
     coord = None
 
     def setUp(self):
@@ -746,7 +746,7 @@ class TestProtocol(StdoutTestCase):
             self.protocol(msg)
 
 
-class TestDelayedStart(StdoutTestCase):
+class TestDelayedStart(LavaDispatcherTestCase):
     coord = None
 
     def setUp(self):

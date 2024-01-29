@@ -9,7 +9,7 @@
 import unittest
 from unittest.mock import patch
 
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 
@@ -26,7 +26,7 @@ class DepthchargeFactory(Factory):
         return job
 
 
-class TestDepthchargeAction(StdoutTestCase):
+class TestDepthchargeAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = DepthchargeFactory()

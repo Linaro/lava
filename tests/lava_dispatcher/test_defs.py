@@ -32,7 +32,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 from lava_dispatcher.actions.test.shell import PatternFixup
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
 from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
@@ -53,7 +53,7 @@ def check_missing_path(testcase, exception, path):
             testcase.fail(exception)
 
 
-class TestDefinitionHandlers(StdoutTestCase):
+class TestDefinitionHandlers(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -246,7 +246,7 @@ class TestDefinitionHandlers(StdoutTestCase):
         )
 
 
-class TestDefinitionSimple(StdoutTestCase):
+class TestDefinitionSimple(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -273,7 +273,7 @@ class TestDefinitionSimple(StdoutTestCase):
         )  # deploy without test only needs DownloaderAction
 
 
-class TestDefinitionParams(StdoutTestCase):
+class TestDefinitionParams(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -394,7 +394,7 @@ class TestDefinitionParams(StdoutTestCase):
         shutil.rmtree(runner_path)
 
 
-class TestSkipInstall(StdoutTestCase):
+class TestSkipInstall(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = UBootFactory()
@@ -468,7 +468,7 @@ def check_rpcinfo(server="127.0.0.1"):
     return False
 
 
-class TestDefinitions(StdoutTestCase):
+class TestDefinitions(LavaDispatcherTestCase):
     """
     For compatibility until the V1 code is removed and we can start
     cleaning up Lava Test Shell.

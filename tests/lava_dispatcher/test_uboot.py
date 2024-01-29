@@ -20,13 +20,12 @@ from lava_dispatcher.actions.boot.u_boot import (
 from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 
@@ -50,7 +49,7 @@ class UBootFactory(Factory):
         return self.create_job("zcu102.jinja2", filename)
 
 
-class TestUbootAction(StdoutTestCase):
+class TestUbootAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()
@@ -291,10 +290,11 @@ class TestUbootAction(StdoutTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
-        job = Job(4212, parameters, None)
-        job.device = device
+        device = NewDevice(yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0]))
+        job = self.create_simple_job(
+            device_dict=device,
+            job_parameters=parameters,
+        )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay()
@@ -855,7 +855,7 @@ class TestUbootAction(StdoutTestCase):
         self.assertEqual("u-boot", bootloader.method)
 
 
-class TestKernelConversion(StdoutTestCase):
+class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
         data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
         self.device = NewDevice(data)
@@ -1005,7 +1005,7 @@ class TestKernelConversion(StdoutTestCase):
         self.assertTrue(uboot_prepare.mkimage_conversion)
 
 
-class TestOverlayCommands(StdoutTestCase):
+class TestOverlayCommands(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UBootFactory()

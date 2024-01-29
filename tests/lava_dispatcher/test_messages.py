@@ -12,7 +12,7 @@ import pexpect
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.messages import LinuxKernelMessages
-from tests.lava_dispatcher.test_basic import StdoutTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class FakeConnection:
@@ -47,7 +47,7 @@ class FakeConnection:
             return self.raw_connection.expect(self.prompt_str, timeout=self.faketimeout)
 
 
-class TestBootMessages(StdoutTestCase):
+class TestBootMessages(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.max_end_time = time.monotonic() + 30

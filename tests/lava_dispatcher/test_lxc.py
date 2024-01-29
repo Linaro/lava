@@ -12,7 +12,7 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
 
@@ -38,7 +38,7 @@ class LxcFactory(Factory):
         return job
 
 
-class TestLxcDeploy(StdoutTestCase):
+class TestLxcDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = LxcFactory()
@@ -93,7 +93,7 @@ class TestLxcDeploy(StdoutTestCase):
                 self.assertEqual(len(action.parameters["definitions"]), 2)
 
 
-class TestLxcWithDevices(StdoutTestCase):
+class TestLxcWithDevices(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = LxcFactory()

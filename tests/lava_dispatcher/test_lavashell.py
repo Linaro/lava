@@ -18,11 +18,11 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 
 
-class TestDefinitionHandlers(StdoutTestCase):
+class TestDefinitionHandlers(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
@@ -83,7 +83,7 @@ class X86Factory(Factory):
         return self.create_job(device, filename, validate=validate)
 
 
-class TestMultiNodeOverlay(StdoutTestCase):
+class TestMultiNodeOverlay(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = X86Factory()
@@ -131,7 +131,7 @@ class TestMultiNodeOverlay(StdoutTestCase):
         self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
 
 
-class TestShellResults(StdoutTestCase):
+class TestShellResults(LavaDispatcherTestCase):
     class FakeJob(Job):
         pass
 

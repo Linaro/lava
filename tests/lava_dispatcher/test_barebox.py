@@ -15,7 +15,7 @@ from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils import filesystem
-from tests.lava_dispatcher.test_basic import Factory, StdoutTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class BareboxFactory(Factory):
@@ -29,7 +29,7 @@ class BareboxFactory(Factory):
         return self.create_job("bbb-03-barebox.jinja2", filename)
 
 
-class TestBareboxAction(StdoutTestCase):
+class TestBareboxAction(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = BareboxFactory()
@@ -178,7 +178,7 @@ class TestBareboxAction(StdoutTestCase):
         self.assertEqual(extract.timeout.duration, 240)
 
 
-class TestKernelConversion(StdoutTestCase):
+class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
         self.device = NewDevice(
             os.path.join(os.path.dirname(__file__), "devices/bbb-01-barebox.yaml")

@@ -3,11 +3,17 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import sys
 import time
 import unittest
+from pathlib import Path
+from random import randint
+from tempfile import TemporaryDirectory
+from time import monotonic
+from typing import TYPE_CHECKING
 
 import voluptuous
 from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
@@ -20,19 +26,52 @@ from lava_common.exceptions import (
     LAVAError,
 )
 from lava_common.jinja import create_device_templates_env
+from lava_common.log import YAMLLogger
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
+from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.image import DeployImages
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import NewDevice, PipelineDevice
+from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
-from tests.utils import DummyLogger
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
-class StdoutTestCase(unittest.TestCase):
+class LavaDispatcherTestCase(unittest.TestCase):
     # set to True to update pipeline_references automatically.
     update_ref = False
+
+    def create_temporary_directory(self) -> Path:
+        tmp_dir = TemporaryDirectory(prefix=self.__call__.__name__)
+        self.addCleanup(tmp_dir.cleanup)
+        return Path(tmp_dir.name)
+
+    TESTCASE_JOB_LOGGER = YAMLLogger("lava_dispatcher_testcase_job_logger")
+
+    def create_simple_job(
+        self, device_dict: Optional[dict] = None, job_parameters: Optional[dict] = None
+    ) -> Job:
+        if device_dict is None:
+            device_dict = {}
+
+        if job_parameters is None:
+            job_parameters = {}
+
+        new_job = Job(
+            job_id=randint(0, 2**32 - 1),
+            parameters=job_parameters,
+            logger=LavaDispatcherTestCase.TESTCASE_JOB_LOGGER,
+            device=PipelineDevice(device_dict),
+            timeout=Timeout(
+                f"unittest-timeout-{self.__class__.__name__}",
+                None,
+            ),
+        )
+        return new_job
 
     @classmethod
     def pipeline_reference(cls, filename, job=None):
@@ -47,7 +86,7 @@ class StdoutTestCase(unittest.TestCase):
             return yaml_safe_load(f_ref)
 
 
-class TestAction(StdoutTestCase):
+class TestAction(LavaDispatcherTestCase):
     def test_references_a_device(self):
         device = object()
         cmd = Action()
@@ -55,7 +94,7 @@ class TestAction(StdoutTestCase):
         self.assertIs(cmd.device, device)
 
 
-class TestPipelineInit(StdoutTestCase):
+class TestPipelineInit(LavaDispatcherTestCase):
     class FakeAction(Action):
         def __init__(self):
             self.ran = False
@@ -109,7 +148,7 @@ class TestPipelineInit(StdoutTestCase):
         )
 
 
-class TestValidation(StdoutTestCase):
+class TestValidation(LavaDispatcherTestCase):
     def test_action_is_valid_if_there_are_not_errors(self):
         action = Action()
         action.__errors__ = [1]
@@ -125,7 +164,7 @@ class TestValidation(StdoutTestCase):
         sub2.name = "sub2"
         sub2.__errors__ = [2]
 
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         sub1.name = "sub1"
         pipe.add_action(sub1)
         pipe.add_action(sub2)
@@ -216,14 +255,18 @@ class Factory:
         try:
             parser = JobParser()
             job = parser.parse(
-                yaml_safe_dump(job_data), device, "4999", None, dispatcher_config
+                yaml_safe_dump(job_data),
+                device,
+                "4999",
+                YAMLLogger("lava_dispatcher_testcase_job_logger"),
+                dispatcher_config,
             )
         except (ConfigurationError, TypeError) as exc:
             print("####### Parser exception ########")
             print(device)
             print("#######")
             raise ConfigurationError("Invalid device: %s" % exc)
-        job.logger = DummyLogger()
+
         return job
 
     def create_job(
@@ -255,15 +298,20 @@ class Factory:
         if validate:
             validate_job(job_data, strict=False)
         try:
-            job = parser.parse(yaml_safe_dump(job_data), device, 4212, None, "")
-            job.logger = DummyLogger()
+            job = parser.parse(
+                yaml_safe_dump(job_data),
+                device,
+                4212,
+                YAMLLogger("lava_dispatcher_testcase_job_logger"),
+                "",
+            )
         except LAVAError as exc:
             print(exc)
             return None
         return job
 
 
-class TestPipeline(StdoutTestCase):
+class TestPipeline(LavaDispatcherTestCase):
     class FakeAction(Action):
         name = "fake-action"
 
@@ -272,11 +320,11 @@ class TestPipeline(StdoutTestCase):
             super().__init__()
 
         def run(self, connection, max_end_time):
-            time.sleep(1)
+            time.sleep(0.01)
             self.ran = True
 
     def test_create_empty_pipeline(self):
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         self.assertEqual(pipe.actions, [])
 
     def test_add_action_to_pipeline(self):
@@ -288,8 +336,8 @@ class TestPipeline(StdoutTestCase):
         self.assertEqual(action.summary, "starter")
         # action needs to be added to a top level pipe first
         with self.assertRaises(LAVABug):
-            Pipeline(action)
-        pipe = Pipeline()
+            Pipeline(job=self.create_simple_job(), parent=action)
+        pipe = Pipeline(job=self.create_simple_job())
         with self.assertRaises(LAVABug):
             pipe.add_action(None)
         with self.assertRaises(LAVABug):
@@ -314,7 +362,7 @@ class TestPipeline(StdoutTestCase):
         action.name = "internal_pipe"
         action.description = "test action only"
         action.summary = "starter"
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(action)
         self.assertEqual(len(pipe.actions), 1)
         self.assertEqual(action.level, "1")
@@ -323,12 +371,13 @@ class TestPipeline(StdoutTestCase):
         action.summary = "child"
         action.description = "action implementing an internal pipe"
         with self.assertRaises(LAVABug):
-            Pipeline(action)
+            Pipeline(job=self.create_simple_job(), parent=action)
         pipe.add_action(action)
         self.assertEqual(action.level, "2")
         self.assertEqual(len(pipe.actions), 2)
-        # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
-        retry_pipe = Pipeline(action)
+        # a formal RetryAction would contain a pre-built pipeline
+        # which can be inserted directly
+        retry_pipe = Pipeline(job=self.create_simple_job(), parent=action)
         action = Action()
         action.name = "inside_action"
         action.description = "action inside the internal pipe"
@@ -342,7 +391,7 @@ class TestPipeline(StdoutTestCase):
         action.name = "starter_action"
         action.description = "test action only"
         action.summary = "starter"
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
         action = Action()
@@ -351,8 +400,9 @@ class TestPipeline(StdoutTestCase):
         action.summary = "child"
         pipe.add_action(action)
         self.assertEqual(action.level, "2")
-        # a formal RetryAction would contain a pre-built pipeline which can be inserted directly
-        retry_pipe = Pipeline(action)
+        # a formal RetryAction would contain a pre-built pipeline
+        # which can be inserted directly
+        retry_pipe = Pipeline(job=self.create_simple_job(), parent=action)
         action = Action()
         action.name = "child_action"
         action.description = "action inside the internal pipe"
@@ -371,7 +421,7 @@ class TestPipeline(StdoutTestCase):
         action.summary = "baby"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.3")
-        inner_pipe = Pipeline(action)
+        inner_pipe = Pipeline(job=self.create_simple_job(), parent=action)
         action = Action()
         action.name = "single_action"
         action.description = "single line action"
@@ -468,7 +518,7 @@ class TestPipeline(StdoutTestCase):
         )
 
 
-class TestFakeActions(StdoutTestCase):
+class TestFakeActions(LavaDispatcherTestCase):
     class KeepConnection(Action):
         name = "keep-connection"
 
@@ -491,36 +541,36 @@ class TestFakeActions(StdoutTestCase):
         self.sub1 = TestPipeline.FakeAction()
 
     def test_list_of_subcommands(self):
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
         self.assertIs(pipe.actions[0], self.sub0)
         self.assertIs(pipe.actions[1], self.sub1)
 
     def test_runs_subaction(self):
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
-        pipe.run_actions(None, None)
+        pipe.run_actions(None, monotonic() + 1.0)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
         self.assertNotEqual(self.sub0.timeout.elapsed_time, 0)
         self.assertNotEqual(self.sub1.timeout.elapsed_time, 0)
 
     def test_keep_connection(self):
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(TestFakeActions.KeepConnection())
         conn = object()
-        self.assertIs(conn, pipe.run_actions(conn, None))
+        self.assertIs(conn, pipe.run_actions(conn, monotonic() + 1.0))
 
     def test_change_connection(self):
-        pipe = Pipeline()
+        pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
-        self.assertIsNot(conn, pipe.run_actions(conn, None))
+        self.assertIsNot(conn, pipe.run_actions(conn, monotonic() + 1.0))
 
 
-class TestStrategySelector(StdoutTestCase):
+class TestStrategySelector(LavaDispatcherTestCase):
     """
     Check the lambda operation
     """

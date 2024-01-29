@@ -6,47 +6,42 @@
 
 from pathlib import Path
 
-import pytest
-
-from lava_dispatcher.job import Job
+from .test_basic import LavaDispatcherTestCase
 
 
-@pytest.fixture
-def job():
-    return Job(42, {}, None)
+class TestJob(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.job = self.create_simple_job()
 
+    def test_tmp_dir(self):
+        self.assertIsNotNone(self.job.tmp_dir)
+        tmp_dir = Path(self.job.tmp_dir)
+        self.assertFalse(tmp_dir.exists())
+        self.assertEqual(tmp_dir.name, str(self.job.job_id))
 
-def test_tmp_dir(job):
-    assert job.tmp_dir is not None
-    tmp_dir = Path(job.tmp_dir)
-    assert not tmp_dir.exists()
-    assert tmp_dir.name == "42"
+    def test_tmp_dir_with_prefix(self):
+        self.job.parameters["dispatcher"] = {"prefix": "FOOBAR-"}
+        tmp_dir = Path(self.job.tmp_dir)
+        self.assertEqual(tmp_dir.name, f"FOOBAR-{self.job.job_id}")
 
+    def test_mkdtemp(self):
+        d = self.job.mkdtemp("my-action")
+        self.assertTrue(Path(d).exists())
+        self.assertIn("my-action", d)
 
-def test_tmp_dir_with_prefix(job):
-    job.parameters["dispatcher"] = {"prefix": "FOOBAR-"}
-    tmp_dir = Path(job.tmp_dir)
-    assert tmp_dir.name == "FOOBAR-42"
+    def test_mkdtemp_with_prefix(self):
+        self.job.parameters["dispatcher"] = {"prefix": "FOOBAR-"}
+        d = Path(self.job.mkdtemp("my-action"))
+        self.assertEqual(d.parent.name, f"FOOBAR-{self.job.job_id}")
 
-
-def test_mkdtemp(job):
-    d = job.mkdtemp("my-action")
-    assert Path(d).exists()
-    assert "my-action" in d
-
-
-def test_mkdtemp_with_prefix(job):
-    job.parameters["dispatcher"] = {"prefix": "FOOBAR-"}
-    d = Path(job.mkdtemp("my-action"))
-    assert d.parent.name == "FOOBAR-42"
-
-
-def test_mktemp_with_override(job, tmp_path):
-    override = tmp_path / "override"
-    first = Path(job.mkdtemp("my-action", override=override))
-    second = Path(job.mkdtemp("my-assert", override=override))
-    assert first.exists()
-    assert second.exists()
-    assert first != second
-    assert first.parent == second.parent
-    assert first.parent.name == str(job.job_id)
+    def test_mktemp_with_override(self):
+        tmp_dir_path = self.create_temporary_directory()
+        override = tmp_dir_path / "override"
+        first = Path(self.job.mkdtemp("my-action", override=override))
+        second = Path(self.job.mkdtemp("my-assert", override=override))
+        self.assertTrue(first.exists())
+        self.assertTrue(second.exists())
+        self.assertNotEqual(first, second)
+        self.assertEqual(first.parent, second.parent)
+        self.assertEqual(first.parent.name, str(self.job.job_id))
