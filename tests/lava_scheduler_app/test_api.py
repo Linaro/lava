@@ -746,10 +746,11 @@ def test_devices_add(setup):
     )
 
     Device.objects.count() == 2
-    Device.objects.all()[1].hostname == "black02"
-    Device.objects.all()[1].device_type.name == "black"
-    Device.objects.all()[1].worker_host.hostname == "worker01"
-    Device.objects.all()[1].get_health_display() == "Maintenance"
+    # Should be ordered as black01, black02
+    Device.objects.all().order_by("hostname")[1].hostname == "black02"
+    Device.objects.all().order_by("hostname")[1].device_type.name == "black"
+    Device.objects.all().order_by("hostname")[1].worker_host.hostname == "worker01"
+    Device.objects.all().order_by("hostname")[1].get_health_display() == "Maintenance"
 
     # 3. wrong health
     with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -1244,12 +1245,14 @@ def test_device_types_add(setup):
         "b2260", None, True, None, 12, "jobs"
     )
     assert DeviceType.objects.count() == 2  # nosec
-    assert DeviceType.objects.all()[1].name == "b2260"  # nosec
-    assert DeviceType.objects.all()[1].display  # nosec
-    assert DeviceType.objects.all()[1].description is None  # nosec
-    assert DeviceType.objects.all()[1].health_frequency == 12  # nosec
+    # Should be ordered b2260, qemu
+    assert DeviceType.objects.all().order_by("name")[0].name == "b2260"  # nosec
+    assert DeviceType.objects.all().order_by("name")[0].display  # nosec
+    assert DeviceType.objects.all().order_by("name")[0].description is None  # nosec
+    assert DeviceType.objects.all().order_by("name")[0].health_frequency == 12  # nosec
     assert (  # nosec
-        DeviceType.objects.all()[1].health_denominator == DeviceType.HEALTH_PER_JOB
+        DeviceType.objects.all().order_by("name")[0].health_denominator
+        == DeviceType.HEALTH_PER_JOB
     )
 
     # 2. Invalid health_denominator
