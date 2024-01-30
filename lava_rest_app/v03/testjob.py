@@ -9,6 +9,8 @@ from django.contrib.auth.models import Group
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.db.models import F, OuterRef, Subquery, Value
 from django.db.models.functions import Coalesce
+from django_filters import rest_framework as filters
+from rest_framework import filters as drf_filters
 from rest_framework import serializers, viewsets
 from rest_framework.pagination import CursorPagination
 
@@ -66,6 +68,10 @@ class TestJobSerializer(serializers.Serializer):
     )
 
 
+class TestJobFilters(filters.FilterSet):
+    submit_time = filters.IsoDateTimeFromToRangeFilter()
+
+
 class TestJobPaginator(CursorPagination):
     page_size_query_param = "page_size"
     max_page_size = 1000
@@ -77,7 +83,12 @@ class TestJobViewset(viewsets.ReadOnlyModelViewSet):
     queryset = TestJob.objects.all()
 
     ordering_fields = ("id", "submit_time")
-    ordering = ("-id",)
+    ordering = ("-submit_time",)
+
+    filterset_class = TestJobFilters
+    # TODO: When v0.2 API gets removed replace the NoMarkupFilterBackend
+    # with DjangoFilterBackend.
+    filter_backends = (filters.DjangoFilterBackend, drf_filters.OrderingFilter)
 
     def get_queryset(self):
         return (
