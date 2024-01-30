@@ -694,7 +694,7 @@ class Action:
             )
             proc.terminate()
             proc.wait()
-        except pexpect.ExceptionPexpect as exc:
+        except (OSError, pexpect.ExceptionPexpect) as exc:
             self.logger.error("Unable to run: %s", exc)
 
         cmd_logger.flush(force=True)
