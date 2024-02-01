@@ -280,9 +280,6 @@ class Command(BaseCommand):
         if not older_than and not submitter:
             raise CommandError("You should specify at least one filtering option")
 
-        if simulate:
-            transaction.set_autocommit(False)
-
         jobs = TestJob.objects.all().order_by("id")
         jobs = jobs.filter(state=TestJob.STATE_FINISHED)
 
@@ -311,38 +308,31 @@ class Command(BaseCommand):
         self.stdout.write("Removing %d jobs:" % jobs.count())
 
         media_root = pathlib.Path(settings.MEDIA_ROOT)
-        while True:
-            count = 0
-            for job in jobs[0:100]:
-                count += 1
-                self.stdout.write(
-                    "* %d (%s): %s" % (job.id, job.end_time, job.output_dir)
-                )
-                try:
-                    if not simulate:
-                        rmtree(job.output_dir)
-                        # delete parents directories (if empty)
-                        with contextlib.suppress(OSError, ValueError):
-                            for parent in pathlib.Path(job.output_dir).parents:
-                                parent.relative_to(media_root)
-                                if parent == media_root:
-                                    break
-                                parent.rmdir()
-                                self.stdout.write("  -> rmdir %s" % (parent))
-                except OSError as exc:
-                    self.stderr.write(
-                        "  -> Unable to remove the directory: %s" % str(exc)
-                    )
+        jobs = jobs.values("id", "end_time", "submit_time")
+        index = None
+        for index, job_data in enumerate(jobs.iterator(chunk_size=100)):
+            job = TestJob(**job_data)
+            self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+            try:
+                if not simulate:
+                    rmtree(job.output_dir)
+                    # delete parents directories (if empty)
+                    with contextlib.suppress(OSError, ValueError):
+                        for parent in pathlib.Path(job.output_dir).parents:
+                            parent.relative_to(media_root)
+                            if parent == media_root:
+                                break
+                            parent.rmdir()
+                            self.stdout.write("  -> rmdir %s" % (parent))
+            except OSError as exc:
+                self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
+
+            if not simulate:
                 job.delete()
 
-            if count == 0:
-                break
-            if slow:
+            if slow and index and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
-
-        if simulate:
-            transaction.rollback()
 
     def handle_validate(self, newer_than, submitter, strict, should_mail_admins):
         jobs = TestJob.objects.all().order_by("id")
