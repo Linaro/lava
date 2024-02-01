@@ -124,6 +124,12 @@ class Command(BaseCommand):
             action="store_true",
             help="Be nice with the system by sleeping regularly",
         )
+        rm.add_argument(
+            "--logs-only",
+            default=False,
+            action="store_true",
+            help="Only remove job logs and not database objects",
+        )
 
         valid = sub.add_parser(
             "validate",
@@ -203,6 +209,7 @@ class Command(BaseCommand):
                 options["submitter"],
                 options["dry_run"],
                 options["slow"],
+                options["logs_only"],
             )
         elif options["sub_command"] == "fail":
             self.handle_fail(options["job_id"])
@@ -276,7 +283,7 @@ class Command(BaseCommand):
                     f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
                 )
 
-    def handle_rm(self, older_than, submitter, simulate, slow):
+    def handle_rm(self, older_than, submitter, simulate, slow, logs_only):
         if not older_than and not submitter:
             raise CommandError("You should specify at least one filtering option")
 
@@ -327,7 +334,7 @@ class Command(BaseCommand):
             except OSError as exc:
                 self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
 
-            if not simulate:
+            if not simulate and not logs_only:
                 job.delete()
 
             if slow and index and index % 100 == 99:

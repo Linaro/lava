@@ -114,3 +114,14 @@ def test_jobs_rm_slow(mocker):
     mocker.patch("lava_server.management.commands.jobs.time.sleep")
     call_command("jobs", "rm", "--submitter", "user1", "--slow", stdout=out101)
     assert "sleeping 2s..." in out101.getvalue()
+
+
+@pytest.mark.django_db
+def test_jobs_rm_logs_only(job1, job2):
+    call_command("jobs", "rm", "--older-than", "10d", "--logs-only")
+
+    assert TestJob.objects.filter(id=job1.id).exists()
+    assert not Path(job1.output_dir).exists()
+
+    assert TestJob.objects.filter(id=job2.id).exists()
+    assert not Path(job2.output_dir).exists()
