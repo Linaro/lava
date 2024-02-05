@@ -174,12 +174,6 @@ class ShellCommand(pexpect.spawn):
             raise ConnectionClosedError("Connection closed")
         return proc
 
-    def empty_buffer(self):
-        """Make sure there is nothing in the pexpect buffer."""
-        index = 0
-        while index == 0:
-            index = self.expect([".+", pexpect.EOF, pexpect.TIMEOUT], timeout=1)
-
     def flush(self):
         """Will be called by pexpect itself when closing the connection"""
         self.logfile.flush(force=True)
