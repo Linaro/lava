@@ -51,7 +51,7 @@ nav:
   - F.A.Q: introduction/faq.md
   - Contact: introduction/contact.md
 
-- User guide: 
+- User guide:
   - First steps: user/first-steps.md
   - Basic tutorials:
     - Submit a job: user/basic-tutorials/submit.md
@@ -67,6 +67,7 @@ nav:
     - Notifications: user/advanced-tutorials/notifications.md
     - Running arbitrary code with docker: user/advanced-tutorials/running-arbitrary-code-with-docker.md
     - Secondary connection: user/advanced-tutorials/secondary-connection.md
+    - tmate-baswed hacking session: user/advanced-tutorials/tmate-based-hacking-session.md
 
 - Admin guide:
   - First steps: admin/first-steps.md
