@@ -67,7 +67,7 @@ nav:
     - Notifications: user/advanced-tutorials/notifications.md
     - Running arbitrary code with docker: user/advanced-tutorials/running-arbitrary-code-with-docker.md
     - Secondary connection: user/advanced-tutorials/secondary-connection.md
-    - tmate-baswed hacking session: user/advanced-tutorials/tmate-based-hacking-session.md
+    - tmate-based hacking session: user/advanced-tutorials/tmate-based-hacking-session.md
 
 - Admin guide:
   - First steps: admin/first-steps.md
