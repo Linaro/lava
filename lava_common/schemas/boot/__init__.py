@@ -37,7 +37,6 @@ def transfer_overlay():
 
 
 def prompts():
-    # FIXME: prompts should only accept a list
     return Any(All(str, Length(min=1)), [All(str, Length(min=1))])
 
 

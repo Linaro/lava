@@ -128,8 +128,8 @@ class TestInteractiveAction(Action):
         for script in self.parameters["interactive"]:
             start = time.monotonic()
 
-            # Set the connection prompts
-            connection.prompt_str = script["prompts"]
+            # Set the connection expect patterns
+            connection.set_spawn_expect_patterns(script["prompts"])
 
             result = {
                 "definition": "lava",

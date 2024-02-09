@@ -80,7 +80,7 @@ class UEFIMenuInterrupt(MenuInterrupt):
             self.logger.debug("%s called without active connection", self.name)
             return
         connection = super().run(connection, max_end_time)
-        connection.prompt_str = self.params["interrupt_prompt"]
+        connection.set_spawn_expect_patterns(self.params["interrupt_prompt"])
         self.wait(connection)
         connection.raw_connection.send(self.params["interrupt_string"])
         return connection
@@ -187,14 +187,14 @@ class UefiMenuSelector(SelectorMenuAction):
         if not connection:
             self.logger.debug("Existing connection in %s", self.name)
             return connection
-        connection.prompt_str = self.selector.prompt
+        connection.set_spawn_expect_patterns(self.selector.prompt)
         connection.raw_connection.linesep = self.line_sep
         self.logger.debug("Looking for %s", self.selector.prompt)
         self.wait(connection)
         connection = super().run(connection, max_end_time)
         if self.boot_message:
             self.logger.debug("Looking for %s", self.boot_message)
-            connection.prompt_str = self.boot_message
+            connection.set_spawn_expect_patterns(self.boot_message)
             self.wait(connection)
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection

@@ -24,7 +24,7 @@ class ConnectDevice(Action):
     summary = "run connection command"
     timeout_exception = InfrastructureError
 
-    # wraps the pexpect and provides prompt_str access
+    # wraps the pexpect and provides spawn_expect_patterns access
     session_class = ShellSession
     # runs the command to initiate the connection
     shell_class = ShellCommand
@@ -169,10 +169,10 @@ class ConnectDevice(Action):
         if self.hardware:
             connection.tags = self.tag_dict[self.hardware]
         connection = super().run(connection, max_end_time)
-        if not connection.prompt_str:
-            connection.prompt_str = [
+        if not connection.spawn_expect_patterns:
+            connection.set_spawn_expect_patterns(
                 self.job.device.get_constant("default-shell-prompt")
-            ]
+            )
         if connection_namespace:
             self.set_namespace_data(
                 action="shared",
@@ -193,7 +193,7 @@ class ConnectShell(ConnectDevice):
     kernel console, e.g. using ser2net
     """
 
-    # wraps the pexpect and provides prompt_str access
+    # wraps the pexpect and provides spawn_expect_patterns access
     session_class = ShellSession
     # runs the command to initiate the connection
     shell_class = ShellCommand

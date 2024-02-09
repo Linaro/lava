@@ -219,22 +219,21 @@ class EnterVExpressMCC(Action):
 
         # Get possible prompts from device config
         prompt_list = [self.autorun_prompt, self.mcc_prompt, self.mcc_reset_msg]
-        connection.prompt_str = prompt_list
+        connection.set_spawn_expect_patterns(prompt_list)
 
-        self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
         index = self.wait(connection)
 
         # Interrupt autorun if enabled
-        if connection.prompt_str[index] == self.autorun_prompt:
+        if connection.spawn_expect_patterns[index] == self.autorun_prompt:
             self.logger.debug("Autorun enabled: interrupting..")
             connection.sendline(self.interrupt_char)
-            connection.prompt_str = [self.mcc_prompt, self.mcc_reset_msg]
+            connection.set_spawn_expect_patterns([self.mcc_prompt, self.mcc_reset_msg])
             index = self.wait(connection)
-        elif connection.prompt_str[index] == self.mcc_prompt:
+        elif connection.spawn_expect_patterns[index] == self.mcc_prompt:
             self.logger.debug("Already at MCC prompt: autorun looks to be disabled")
 
         # Check that mcc_reset_msg hasn't been received
-        if connection.prompt_str[index] == self.mcc_reset_msg:
+        if connection.spawn_expect_patterns[index] == self.mcc_reset_msg:
             raise InfrastructureError("MCC: Unable to interrupt auto-run")
         return connection
 
@@ -273,7 +272,7 @@ class EnableVExpressMassStorage(Action):
         # Issue command and check that you are returned to the prompt again
         connection.sendline(self.mcc_cmd)
         self.logger.debug("Changing prompt to '%s'", self.mcc_prompt)
-        connection.prompt_str = self.mcc_prompt
+        connection.set_spawn_expect_patterns(self.mcc_prompt)
         self.wait(connection)
         return connection
 
@@ -501,24 +500,20 @@ class VExpressFlashErase(Action):
 
         # From Versatile Express MCC, enter flash menu
         connection.sendline(self.flash_enter_cmd)
-        self.logger.debug("Changing prompt to '%s'", self.flash_prompt)
-        connection.prompt_str = self.flash_prompt
+        connection.set_spawn_expect_patterns(self.flash_prompt)
         self.wait(connection)
 
         # Issue flash erase command
         connection.sendline(self.flash_erase_cmd)
-        self.logger.debug("Changing prompt to '%s'", self.flash_erase_msg)
-        connection.prompt_str = self.flash_erase_msg
+        connection.set_spawn_expect_patterns(self.flash_erase_msg)
         self.wait(connection)
 
         # Once we know the erase is underway.. wait for the prompt
-        self.logger.debug("Changing prompt to '%s'", self.flash_prompt)
-        connection.prompt_str = self.flash_prompt
+        connection.set_spawn_expect_patterns(self.flash_prompt)
         self.wait(connection)
 
         # If flash erase command has completed, return to MCC main menu
         connection.sendline(self.flash_exit_cmd)
-        self.logger.debug("Changing prompt to '%s'", self.mcc_prompt)
-        connection.prompt_str = self.mcc_prompt
+        connection.set_spawn_expect_patterns(self.mcc_prompt)
         self.wait(connection)
         return connection

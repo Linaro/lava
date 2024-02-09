@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import logging
@@ -188,9 +189,8 @@ class ShellSession(Connection):
         a percentage of the timeout.
         """
         super().__init__(job, shell_command)
-        # FIXME: rename __prompt_str__ to indicate it can be a list or str
-        self.__prompt_str__ = None
         self.spawn = shell_command
+        self._spawn_expect_patterns: list[str] = []
         self.__runner__ = None
         self.timeout = shell_command.lava_timeout
         self.__logger__ = None
@@ -202,21 +202,24 @@ class ShellSession(Connection):
             self.__logger__ = logging.getLogger("dispatcher")
         return self.__logger__
 
-    # FIXME: rename prompt_str to indicate it can be a list or str
     @property
-    def prompt_str(self):
-        return self.__prompt_str__
+    def spawn_expect_patterns(self):
+        return self._spawn_expect_patterns
 
-    @prompt_str.setter
-    def prompt_str(self, string):
+    def set_spawn_expect_patterns(self, new_patterns: str | list[str] | None) -> None:
         """
         pexpect allows the prompt to be a single string or a list of strings
         this property simply replaces the previous value with the new one
         whether that is a string or a list of strings.
-        To use + the instance of the existing prompt_str must be checked.
+        To use + the instance of the existing spawn_expect_patterns must be checked.
         """
-        self.logger.debug("Setting prompt string to %r" % string)
-        self.__prompt_str__ = string
+        self.logger.debug("Setting spawn expect patterns to: %r", new_patterns)
+        if new_patterns is None:
+            self._spawn_expect_patterns = []
+        elif isinstance(new_patterns, str):
+            self._spawn_expect_patterns = [new_patterns]
+        else:
+            self._spawn_expect_patterns = new_patterns
 
     @contextlib.contextmanager
     def test_connection(self):
@@ -232,7 +235,7 @@ class ShellSession(Connection):
         we send a newline along to maybe provoke a new prompt.  We wait for
         half the timeout period and then wait for one tenth of the timeout
         6 times (so we wait for 1.1 times the timeout period overall).
-        :return: the index into the connection.prompt_str list
+        :return: the index into the connection.spawn_expect_patterns list
         """
         prompt_wait_count = 0
         if not remaining:
@@ -246,7 +249,7 @@ class ShellSession(Connection):
         while True:
             try:
                 return self.raw_connection.expect(
-                    self.prompt_str, timeout=partial_timeout
+                    self.spawn_expect_patterns, timeout=partial_timeout
                 )
             except (pexpect.TIMEOUT, TestError) as exc:
                 if prompt_wait_count < 6:
@@ -257,7 +260,9 @@ class ShellSession(Connection):
                         seconds_to_str(remaining),
                         seconds_to_str(partial_timeout),
                     )
-                    self.logger.debug("pattern: %s", self.prompt_str)
+                    self.logger.debug(
+                        "spawn expect patterns: %s", self.spawn_expect_patterns
+                    )
                     prompt_wait_count += 1
                     partial_timeout = remaining / 10
                     self.sendline(self.check_char)
@@ -284,10 +289,12 @@ class ShellSession(Connection):
         try:
             if max_searchwindowsize:
                 return self.raw_connection.expect(
-                    self.prompt_str, timeout=timeout, searchwindowsize=None
+                    self.spawn_expect_patterns, timeout=timeout, searchwindowsize=None
                 )
             else:
-                return self.raw_connection.expect(self.prompt_str, timeout=timeout)
+                return self.raw_connection.expect(
+                    self.spawn_expect_patterns, timeout=timeout
+                )
         except (TestError, pexpect.TIMEOUT):
             raise JobError("wait for prompt timed out")
         except ConnectionClosedError as exc:
@@ -344,10 +351,10 @@ class ExpectShellSession(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
-        connection.prompt_str = self.parameters["prompts"]
+        connection.set_spawn_expect_patterns(self.parameters["prompts"])
         connection.timeout = self.connection_timeout
         self.logger.debug(
-            "Forcing a shell prompt, looking for %s", connection.prompt_str
+            "Forcing a shell prompt, looking for %s", connection.spawn_expect_patterns
         )
         connection.sendline("")
         self.wait(connection)

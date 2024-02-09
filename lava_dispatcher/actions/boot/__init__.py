@@ -82,7 +82,7 @@ class LoginAction(Action):
                 connection.wait(max_end_time)
             return
         self.logger.info("Parsing kernel messages")
-        self.logger.debug(connection.prompt_str)
+        self.logger.debug(connection.spawn_expect_patterns)
         parsed = LinuxKernelMessages.parse_failures(
             connection,
             self,
@@ -117,17 +117,17 @@ class LoginAction(Action):
         for prompt in prompts:
             self._check_prompt_characters(prompt)
 
-        connection.prompt_str = []
+        connection.set_spawn_expect_patterns([])
         if not self.parameters.get("ignore_kernel_messages", False):
-            connection.prompt_str = LinuxKernelMessages.get_init_prompts()
-        connection.prompt_str.extend(prompts)
+            connection.set_spawn_expect_patterns(LinuxKernelMessages.get_init_prompts())
+        connection.spawn_expect_patterns.extend(prompts)
 
         # Needs to be added after the standard kernel message matches
         # FIXME: check behaviour if boot_message is defined too.
         failure = self.parameters.get("failure_message")
         if failure:
             self.logger.info("Checking for user specified failure message: %s", failure)
-            connection.prompt_str.append(failure)
+            connection.spawn_expect_patterns.append(failure)
 
         # linesep should come from deployment_data as from now on it is OS dependent
         linesep = self.get_namespace_data(
@@ -144,8 +144,8 @@ class LoginAction(Action):
             self.logger.debug("No login prompt set.")
             # If auto_login is not enabled, login will time out if login
             # details are requested.
-            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
-            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
+            connection.spawn_expect_patterns.append(LOGIN_TIMED_OUT_MSG)
+            connection.spawn_expect_patterns.append(LOGIN_INCORRECT_MSG)
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time, failure)
             if "success" in self.results:
@@ -155,12 +155,12 @@ class LoginAction(Action):
                         "auto_login not enabled but image requested login details."
                     )
             # clear kernel message prompt patterns
-            connection.prompt_str = list(self.parameters.get("prompts", []))
+            connection.set_spawn_expect_patterns(self.parameters.get("prompts"))
             # already matched one of the prompts
         else:
             self.logger.info("Waiting for the login prompt")
-            connection.prompt_str.append(params["login_prompt"])
-            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
+            connection.spawn_expect_patterns.append(params["login_prompt"])
+            connection.spawn_expect_patterns.append(LOGIN_INCORRECT_MSG)
 
             # wait for a prompt or kernel messages
             self.check_kernel_messages(
@@ -175,42 +175,46 @@ class LoginAction(Action):
             self.logger.debug("Sending username %s", params["username"])
             connection.sendline(params["username"], delay=self.character_delay)
             # clear the kernel_messages patterns
-            connection.prompt_str = list(self.parameters.get("prompts", []))
+            connection.set_spawn_expect_patterns(self.parameters.get("prompts"))
 
             if "password_prompt" in params:
                 self.logger.info("Waiting for password prompt")
-                connection.prompt_str.append(params["password_prompt"])
+                connection.spawn_expect_patterns.append(params["password_prompt"])
                 # This can happen if password_prompt is misspelled.
-                connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+                connection.spawn_expect_patterns.append(LOGIN_TIMED_OUT_MSG)
 
                 # wait for the password prompt
                 index = self.wait(connection, max_end_time)
                 if index:
                     self.logger.debug(
-                        "Matched prompt #%s: %s", index, connection.prompt_str[index]
+                        "Matched prompt #%s: %s",
+                        index,
+                        connection.spawn_expect_patterns[index],
                     )
-                    if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                    if connection.spawn_expect_patterns[index] == LOGIN_TIMED_OUT_MSG:
                         raise JobError(
                             "Password prompt not matched, please update the job definition with the correct one."
                         )
                 self.logger.debug("Sending password %s", params["password"])
                 connection.sendline(params["password"], delay=self.character_delay)
                 # clear the Password pattern
-                connection.prompt_str = list(self.parameters.get("prompts", []))
+                connection.set_spawn_expect_patterns(self.parameters.get("prompts"))
 
-            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
-            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
+            connection.spawn_expect_patterns.append(LOGIN_INCORRECT_MSG)
+            connection.spawn_expect_patterns.append(LOGIN_TIMED_OUT_MSG)
             # wait for the login process to provide the prompt
             index = self.wait(connection, max_end_time)
             if index:
-                self.logger.debug("Matched %s %s", index, connection.prompt_str[index])
-                if connection.prompt_str[index] == LOGIN_INCORRECT_MSG:
+                self.logger.debug(
+                    "Matched %s %s", index, connection.spawn_expect_patterns[index]
+                )
+                if connection.spawn_expect_patterns[index] == LOGIN_INCORRECT_MSG:
                     raise JobError(LOGIN_INCORRECT_MSG)
-                if connection.prompt_str[index] == LOGIN_TIMED_OUT_MSG:
+                if connection.spawn_expect_patterns[index] == LOGIN_TIMED_OUT_MSG:
                     raise JobError(LOGIN_TIMED_OUT_MSG)
 
             # clear the login patterns
-            connection.prompt_str = list(self.parameters.get("prompts", []))
+            connection.set_spawn_expect_patterns(self.parameters.get("prompts"))
 
             login_commands = params.get("login_commands")
             if login_commands is not None:
@@ -305,26 +309,26 @@ class AutoLoginAction(RetryAction):
                 self.job.device.get_constant("kernel-start-message"),
             )
             if kernel_start_message:
-                connection.prompt_str = [kernel_start_message]
+                connection.set_spawn_expect_patterns(kernel_start_message)
 
             if self.params and self.params.get("boot_message"):
                 self.logger.warning(
                     "boot_message is being deprecated in favour of kernel-start-message in constants"
                 )
-                connection.prompt_str = [self.params.get("boot_message")]
+                connection.set_spawn_expect_patterns(self.params["boot_message"])
 
             error_messages = self.job.device.get_constant(
                 "error-messages", prefix=self.method, missing_ok=True
             )
             if error_messages:
-                if isinstance(connection.prompt_str, str):
-                    connection.prompt_str = [connection.prompt_str]
-                connection.prompt_str = connection.prompt_str + error_messages
+                connection.set_spawn_expect_patterns(
+                    connection.spawn_expect_patterns + error_messages
+                )
             if kernel_start_message:
                 res = self.wait(connection)
                 if res != 0:
                     msg = "matched a bootloader error message: '%s' (%d)" % (
-                        connection.prompt_str[res],
+                        connection.spawn_expect_patterns[res],
                         res,
                     )
                     raise InfrastructureError(msg)
@@ -843,7 +847,7 @@ class BootloaderInterruptAction(Action):
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super().run(connection, max_end_time)
         if self.needs_interrupt:
-            connection.prompt_str = [self.interrupt_prompt]
+            connection.set_spawn_expect_patterns(self.interrupt_prompt)
             self.wait(connection)
             if self.interrupt_control_chars:
                 for char in self.interrupt_control_chars:
@@ -857,7 +861,7 @@ class BootloaderInterruptAction(Action):
             self.logger.info(
                 "Not interrupting bootloader, waiting for bootloader prompt"
             )
-            connection.prompt_str = [self.bootloader_prompt]
+            connection.set_spawn_expect_patterns(self.bootloader_prompt)
             self.wait(connection)
             self.set_namespace_data(
                 action="interrupt",
@@ -906,7 +910,7 @@ class BootloaderCommandsActionAltBank(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
-        connection.prompt_str = [self.params["bootloader_prompt"]]
+        connection.set_spawn_expect_patterns(self.params["bootloader_prompt"])
         at_bootloader_prompt = self.get_namespace_data(
             action="interrupt", label="interrupt", key="at_bootloader_prompt"
         )
@@ -919,13 +923,13 @@ class BootloaderCommandsActionAltBank(Action):
             "final-message", prefix=self.method, missing_ok=True
         )
         if error_messages:
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
-            connection.prompt_str = connection.prompt_str + error_messages
+            connection.set_spawn_expect_patterns(
+                connection.spawn_expect_patterns + error_messages
+            )
         command = self.params.get("uboot_altbank_cmd")
         connection.sendline(command, delay=self.character_delay)
         if final_message and self.expect_final:
-            connection.prompt_str = [final_message]
+            connection.set_spawn_expect_patterns(final_message)
             self.wait(connection, max_end_time)
 
         self.set_namespace_data(
@@ -972,7 +976,7 @@ class BootloaderCommandsAction(Action):
             self.errors = "%s started without a connection already in use" % self.name
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
-        connection.prompt_str = [self.params["bootloader_prompt"]]
+        connection.set_spawn_expect_patterns(self.params["bootloader_prompt"])
         at_bootloader_prompt = self.get_namespace_data(
             action="interrupt", label="interrupt", key="at_bootloader_prompt"
         )
@@ -988,16 +992,16 @@ class BootloaderCommandsAction(Action):
             "final-message", prefix=self.method, missing_ok=True
         )
         if error_messages:
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
-            connection.prompt_str = connection.prompt_str + error_messages
+            connection.set_spawn_expect_patterns(
+                connection.spawn_expect_patterns + error_messages
+            )
 
         for index, line in enumerate(commands):
             connection.sendline(line, delay=self.character_delay)
             if index + 1 == len(commands):
                 if not final_message or not self.expect_final:
                     break
-                connection.prompt_str = (
+                connection.set_spawn_expect_patterns(
                     [final_message] + error_messages
                     if error_messages
                     else [final_message]
@@ -1005,7 +1009,7 @@ class BootloaderCommandsAction(Action):
             res = self.wait(connection, max_end_time)
             if res != 0:
                 msg = "matched a bootloader error message: '%s' (%d)" % (
-                    connection.prompt_str[res],
+                    connection.spawn_expect_patterns[res],
                     res,
                 )
                 raise InfrastructureError(msg)

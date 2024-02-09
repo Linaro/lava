@@ -135,7 +135,9 @@ class LinuxKernelMessages:
 
             if index:
                 action.logger.debug(
-                    "Matched prompt #%s: %s", index, connection.prompt_str[index]
+                    "Matched prompt #%s: %s",
+                    index,
+                    connection.spawn_expect_patterns[index],
                 )
             message = connection.raw_connection.after
             if index is None:
@@ -151,10 +153,11 @@ class LinuxKernelMessages:
                     message = connection.raw_connection.before + message
 
                 # Capture the end of the kernel message
-                previous_prompts = connection.prompt_str
-                connection.prompt_str = [
-                    KERNEL_MESSAGES[index]["end"]
-                ] + previous_prompts[len(KERNEL_MESSAGES) :]
+                original_spawn_expect_patterns = connection.spawn_expect_patterns
+                connection.set_spawn_expect_patterns(
+                    [KERNEL_MESSAGES[index]["end"]]
+                    + original_spawn_expect_patterns[len(KERNEL_MESSAGES) :]
+                )
                 try:
                     sub_index = connection.wait(max_end_time, max_searchwindowsize=True)
                 except (pexpect.EOF, TestError):
@@ -170,7 +173,7 @@ class LinuxKernelMessages:
                     + connection.raw_connection.before
                     + connection.raw_connection.after[:-1]  # Remove ending "\r"
                 )
-                connection.prompt_str = previous_prompts
+                connection.set_spawn_expect_patterns(original_spawn_expect_patterns)
 
                 # Classify the errors
                 kind = KERNEL_MESSAGES[index]["kind"]
@@ -205,7 +208,11 @@ class LinuxKernelMessages:
                     break
                 else:
                     continue
-            elif fail_msg and index and fail_msg == connection.prompt_str[index]:
+            elif (
+                fail_msg
+                and index
+                and fail_msg == connection.spawn_expect_patterns[index]
+            ):
                 result = "fail"
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg

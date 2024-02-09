@@ -219,26 +219,22 @@ class DDAction(Action):
 
         cmd_line = " ".join([download_cmd, "|", cmd]) if download_cmd else cmd
 
-        # set prompt to either `download' or `writer' prompt to ensure that the
+        # set expect patterns to either `download' or `writer' prompt to ensure that the
         # secondary deployment has started
-        prompt_string = connection.prompt_str
+        original_spawn_expect_patterns = connection.spawn_expect_patterns
         prompt_param = download_params or writer_params
-        connection.prompt_str = prompt_param["prompt"]
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        connection.set_spawn_expect_patterns(prompt_param["prompt"])
 
         connection.sendline(cmd_line)
         self.wait(connection)
         if not self.valid:
             self.logger.error(self.errors)
 
-        # change prompt string to list of dd outputs
-        connection.prompt_str = self.tool_prompts
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        connection.set_spawn_expect_patterns(self.tool_prompts)
         self.wait(connection)
 
-        # set prompt back once secondary deployment is complete
-        connection.prompt_str = prompt_string
-        self.logger.debug("Changing prompt to %s", connection.prompt_str)
+        # set expect patterns back once secondary deployment is complete
+        connection.set_spawn_expect_patterns(original_spawn_expect_patterns)
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )

@@ -145,6 +145,6 @@ class KexecAction(Action):
         connection.sendline(self.load_command, delay=self.character_delay)
         self.wait(connection)
         connection.sendline(self.command, delay=self.character_delay)
-        connection.prompt_str = self.parameters["boot_message"]
+        connection.set_spawn_expect_patterns(self.parameters["boot_message"])
         connection.wait()
         return connection

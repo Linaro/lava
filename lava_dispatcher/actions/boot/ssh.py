@@ -329,7 +329,7 @@ class SchrootAction(Action):
         if not connection:
             return connection
         self.logger.info("Entering %s schroot", self.schroot)
-        connection.prompt_str = "(%s)" % self.schroot
+        connection.set_spawn_expect_patterns("(%s)" % self.schroot)
         connection.sendline(self.command)
         self.wait(connection)
         # TODO: not calling super?

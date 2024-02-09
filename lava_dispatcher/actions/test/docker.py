@@ -223,7 +223,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = "docker-test-shell:"
+        shell_connection.set_spawn_expect_patterns("docker-test-shell:")
         self.parameters["connection-namespace"] = "docker-test-shell"
         self.set_namespace_data(
             action="shared",

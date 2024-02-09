@@ -221,7 +221,6 @@ class DepthchargeStart(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        connection.prompt_str = self.start_message
-        self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+        connection.set_spawn_expect_patterns(self.start_message)
         self.wait(connection)
         return connection

@@ -99,7 +99,7 @@ class TestMonitorAction(Action):
 
             # Find the start string before parsing any output.
             self.logger.info("Waiting for start message: %s", monitor["start"])
-            connection.prompt_str = monitor["start"]
+            connection.set_spawn_expect_patterns(monitor["start"])
             connection.wait()
             self.logger.info("ok: start string found, lava test monitoring started")
 

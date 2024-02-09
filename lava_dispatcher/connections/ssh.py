@@ -194,7 +194,7 @@ class ConnectSsh(Action):
         # SshSession monitors the pexpect
         connection = SShSession(self.job, shell)
         connection = super().run(connection, max_end_time)
-        connection.prompt_str = list(self.parameters.get("prompts", []))
+        connection.set_spawn_expect_patterns(self.parameters.get("prompts", []))
         connection.connected = True
         self.wait(connection)
         self.set_namespace_data(

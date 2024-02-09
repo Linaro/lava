@@ -199,7 +199,7 @@ class GrubMenuSelector(UefiMenuSelector):
             self.job.device.get_constant("interrupt-prompt", prefix="grub"),
         )
         self.logger.debug("Adding '%s' to prompt", interrupt_prompt)
-        connection.prompt_str = interrupt_prompt
+        connection.set_spawn_expect_patterns(interrupt_prompt)
         # override base class behaviour to interact with grub.
         self.boot_message = None
         connection = super().run(connection, max_end_time)
@@ -231,7 +231,7 @@ class InstallerWait(Action):
         self.logger.debug(
             "Not expecting a shell, so waiting for boot_finished: %s", msg
         )
-        connection.prompt_str = wait_string
+        connection.set_spawn_expect_patterns(wait_string)
         self.wait(connection)
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection

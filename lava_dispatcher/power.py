@@ -60,8 +60,10 @@ class SendRebootCommands(Action):
         if isinstance(commands, str):
             commands = [commands]
 
-        connection.prompt_str = self.parameters.get("parameters", {}).get(
-            "shutdown-message", self.job.device.get_constant("shutdown-message")
+        connection.set_spawn_expect_patterns(
+            self.parameters.get("parameters", {}).get(
+                "shutdown-message", self.job.device.get_constant("shutdown-message")
+            )
         )
         connection.timeout = self.connection_timeout
         for cmd in commands:

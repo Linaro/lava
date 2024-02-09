@@ -238,14 +238,11 @@ class TestShellAction(Action):
                 "Using a character delay of %i (ms)", self.character_delay
             )
 
-        if not connection.prompt_str:
-            connection.prompt_str = [
+        if not connection.spawn_expect_patterns:
+            connection.set_spawn_expect_patterns(
                 self.job.device.get_constant("default-shell-prompt")
-            ]
-            # FIXME: This should be logged whenever prompt_str is changed, by the connection object.
-            self.logger.debug(
-                "Setting default test shell prompt %s", connection.prompt_str
             )
+
         connection.timeout = self.connection_timeout
         # force an initial prompt - not all shells will respond without an excuse.
         connection.sendline(connection.check_char)

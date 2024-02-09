@@ -178,8 +178,7 @@ class WaitFastBootInterrupt(Action):
             raise LAVABug("%s started without a connection already in use" % self.name)
         connection = super().run(connection, max_end_time)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
-        connection.prompt_str = self.prompt
-        self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+        connection.set_spawn_expect_patterns(self.prompt)
         self.wait(connection)
         self.logger.debug("Sending '%s' to interrupt fastboot.", self.string)
         connection.sendline(self.string)

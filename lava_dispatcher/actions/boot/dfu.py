@@ -139,11 +139,11 @@ class FlashDFUAction(Action):
         reset_works = dfu.get("reset_works", True)
         implementation = dfu.get("implementation", "hardware")
 
-        # Store the previous prompt_str to restore it afterward
-        prompt_str = connection.prompt_str
+        # Store the previous expect patterns to restore them afterward
+        original_spawn_expect_patterns = connection.spawn_expect_patterns
         if implementation != "hardware":
-            connection.prompt_str = self.job.device.get_constant(
-                "dfu-download", prefix=implementation
+            connection.set_spawn_expect_patterns(
+                self.job.device.get_constant("dfu-download", prefix=implementation)
             )
 
         for index, dfu_command in enumerate(self.exec_list):
@@ -165,6 +165,6 @@ class FlashDFUAction(Action):
             if implementation != "hardware":
                 connection.wait()
 
-        # Restore the prompts
-        connection.prompt_str = prompt_str
+        # Restore the expect patterns
+        connection.set_spawn_expect_patterns(original_spawn_expect_patterns)
         return connection

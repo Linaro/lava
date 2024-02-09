@@ -339,9 +339,8 @@ class StartFVPAction(BaseFVPAction):
         shell_connection = super().run(shell_connection, max_end_time)
 
         # Wait for the console string
-        # shell_connection.prompt_str = self.fvp_console_string
         for str_index in range(len(self.fvp_feedbacks)):
-            shell_connection.prompt_str = list(self.fvp_feedbacks)
+            shell_connection.set_spawn_expect_patterns(list(self.fvp_feedbacks))
             self.wait(shell_connection)
             self.logger.debug(
                 "Connection group(0) %s"

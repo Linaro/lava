@@ -238,8 +238,7 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
             action=self.name, label="interrupt", key="reboot"
         )
         if self.interrupt_prompt and reboot:
-            connection.prompt_str = self.interrupt_prompt
-            self.logger.debug("Changing prompt to '%s'", connection.prompt_str)
+            connection.set_spawn_expect_patterns(self.interrupt_prompt)
             self.wait(connection)
 
         self.run_fastboot(["flash", self.command, src])

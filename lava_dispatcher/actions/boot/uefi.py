@@ -150,7 +150,7 @@ class UefiShellInterrupt(MenuInterrupt):
         connection = super().run(connection, max_end_time)
         # param keys already checked in accepts() classmethod
         params = self.job.device["actions"]["boot"]["methods"]["uefi"]["parameters"]
-        connection.prompt_str = params["shell_interrupt_prompt"]
+        connection.set_spawn_expect_patterns(params["shell_interrupt_prompt"])
         self.wait(connection)
         connection.raw_connection.send(params["shell_interrupt_string"])
         # now move on to bootloader prompt match

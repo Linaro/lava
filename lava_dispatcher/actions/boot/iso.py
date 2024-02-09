@@ -114,8 +114,12 @@ class IsoCommandLine(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.get_namespace_data(
-            action="prepare-qemu-commands", label="prepare-qemu-commands", key="prompts"
+        shell_connection.set_spawn_expect_patterns(
+            self.get_namespace_data(
+                action="prepare-qemu-commands",
+                label="prepare-qemu-commands",
+                key="prompts",
+            )
         )
         shell_connection = super().run(shell_connection, max_end_time)
         return shell_connection
@@ -143,7 +147,9 @@ class MonitorInstallerSession(Action):
 
     def run(self, connection, max_end_time):
         self.logger.debug(
-            "%s: Waiting for prompt %s", self.name, " ".join(connection.prompt_str)
+            "%s: Waiting for prompt %s",
+            self.name,
+            " ".join(connection.spawn_expect_patterns),
         )
         self.wait(connection, max_end_time)
         return connection
@@ -217,7 +223,7 @@ class IsoRebootAction(Action):
 
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
-        shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
+        shell_connection.set_spawn_expect_patterns(INSTALLER_QUIET_MSG)
         self.wait(shell_connection)
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=shell_connection

@@ -80,7 +80,7 @@ class MenuSession(ShellSession):
         while True:
             try:
                 self.raw_connection.expect(
-                    self.prompt_str, timeout=self.timeout.duration
+                    self.spawn_expect_patterns, timeout=self.timeout.duration
                 )
             except pexpect.TIMEOUT:
                 raise JobError("wait for prompt timed out")
@@ -110,7 +110,7 @@ class MenuConnect(ConnectDevice):
             raise LAVABug("%s needs a Connection")
         connection.check_char = "\n"
         connection.sendline("\n")  # to catch the first prompt (remove for PDU?)
-        connection.prompt_str = self.parameters["prompts"]
+        connection.set_spawn_expect_patterns(self.parameters["prompts"])
         if hasattr(
             self.job.device, "power_state"
         ) and self.job.device.power_state not in ["on", "off"]:
@@ -169,7 +169,9 @@ class SelectorMenuAction(Action):
 
     def _change_prompt(self, connection, change):
         if change:
-            self.logger.debug("Changing menu prompt to '%s'", connection.prompt_str)
+            self.logger.debug(
+                "Changing menu prompt to '%s'", connection.spawn_expect_patterns
+            )
             connection.wait()  # call MenuSession::wait directly for a tighter loop
 
     def run(self, connection, max_end_time):
@@ -192,9 +194,10 @@ class SelectorMenuAction(Action):
         for block in self.items:
             if "select" in block:
                 change_prompt = False
-                # ensure the prompt is changed just before sending the action to allow it to be matched.
+                # ensure the prompt is changed just before sending the action
+                # to allow it to be matched.
                 if "wait" in block["select"]:
-                    connection.prompt_str = block["select"]["wait"]
+                    connection.set_spawn_expect_patterns(block["select"]["wait"])
                     change_prompt = True
                 if "items" in block["select"]:
                     for selector in block["select"]["items"]:

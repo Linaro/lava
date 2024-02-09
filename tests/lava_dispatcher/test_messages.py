@@ -20,6 +20,13 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
+class ShellSessionExpectsEof(ShellSession):
+    def set_spawn_expect_patterns(self, *args, **kwargs) -> None:
+        super().set_spawn_expect_patterns(*args, **kwargs)
+        if pexpect_eof not in self._spawn_expect_patterns:
+            self._spawn_expect_patterns.append(pexpect_eof)
+
+
 def create_shell_session_cat_file(
     file_to_cat: str, pexpect_patterns: list[str]
 ) -> ShellSession:
@@ -29,9 +36,8 @@ def create_shell_session_cat_file(
         logger=MagicMock(),
     )
 
-    shell_session = ShellSession(MagicMock(), shell_command)
-    pexpect_patterns.append(pexpect_eof)
-    shell_session.prompt_str = pexpect_patterns
+    shell_session = ShellSessionExpectsEof(MagicMock(), shell_command)
+    shell_session.set_spawn_expect_patterns(pexpect_patterns)
 
     return shell_session
 

@@ -65,7 +65,7 @@ class ConnectAdb(Action):
         connection = self.session_class(self.job, shell)
         connection.connected = True
         connection = super().run(connection, max_end_time)
-        connection.prompt_str = self.parameters["prompts"]
+        connection.set_spawn_expect_patterns(self.parameters["prompts"])
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection
         )
