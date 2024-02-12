@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import os
@@ -101,19 +102,20 @@ class LoginAction(Action):
             self.results = {"fail": parsed}
             self.logger.warning("Kernel warnings or errors detected.")
 
-    def run(self, connection, max_end_time):
-        def check_prompt_characters(chk_prompt):
-            if not any(
-                [True for c in DISTINCTIVE_PROMPT_CHARACTERS if c in chk_prompt]
-            ):
-                self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
+    def _check_prompt_characters(self, chk_prompt: str | type) -> None:
+        if not isinstance(chk_prompt, str):
+            return
 
+        if not any(c in chk_prompt for c in DISTINCTIVE_PROMPT_CHARACTERS):
+            self.logger.warning(self.check_prompt_characters_warning, chk_prompt)
+
+    def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         if not connection:
             return connection
         prompts = self.parameters.get("prompts")
         for prompt in prompts:
-            check_prompt_characters(prompt)
+            self._check_prompt_characters(prompt)
 
         connection.prompt_str = []
         if not self.parameters.get("ignore_kernel_messages", False):

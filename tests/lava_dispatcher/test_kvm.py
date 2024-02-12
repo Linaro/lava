@@ -11,6 +11,8 @@ import sys
 import time
 import unittest
 
+from pexpect import EOF as pexpect_eof
+
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -22,7 +24,7 @@ from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
-from tests.lava_dispatcher.test_messages import FakeConnection
+from tests.lava_dispatcher.test_messages import create_shell_session_cat_file
 from tests.utils import DummyLogger, infrastructure_error
 
 
@@ -302,7 +304,7 @@ def prepare_test_connection(failure=False):
     if not os.path.exists(logfile):
         raise OSError("Missing test support file.")
     message_list = LinuxKernelMessages.get_init_prompts()
-    return FakeConnection(logfile, message_list)
+    return create_shell_session_cat_file(logfile, message_list)
 
 
 class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
@@ -509,9 +511,11 @@ class TestAutoLogin(LavaDispatcherTestCase):
         autologinaction.parameters.update(
             {
                 "auto_login": {"login_prompt": "login:", "username": "root"},
-                "prompts": ["root@debian:~#"],
+                "prompts": ["root@debian:~#", pexpect_eof],
             }
         )
+        # Propagate parameters update
+        autologinaction.populate(autologinaction.parameters)
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
@@ -523,6 +527,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         )
 
         # Test the AutoLoginAction directly
+        autologinaction.timeout.start = time.monotonic()
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
         self.assertEqual(shell_connection.raw_connection.linesep, "testsep")
 
@@ -631,14 +636,17 @@ class TestAutoLogin(LavaDispatcherTestCase):
             if action.name == "auto-login-action"
         ][0]
 
-        autologinaction.parameters.update({"prompts": ["root@debian:~#"]})
+        autologinaction.parameters.update({"prompts": ["root@debian:~#", pexpect_eof]})
         autologinaction.parameters.update({"method": "qemu"})
+        # Propagate parameters update
+        autologinaction.populate(autologinaction.parameters)
         autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
+        autologinaction.timeout.start = time.monotonic()
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn("root@debian:~#", conn.prompt_str)
@@ -677,14 +685,17 @@ class TestAutoLogin(LavaDispatcherTestCase):
             if action.name == "auto-login-action"
         ][0]
 
-        autologinaction.parameters.update({"prompts": ["root@debian:~#"]})
+        autologinaction.parameters.update({"prompts": ["root@debian:~#", pexpect_eof]})
         autologinaction.parameters.update({"method": "qemu"})
+        # Propagate parameters update
+        autologinaction.populate(autologinaction.parameters)
         autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
 
         # Test the AutoLoginAction directly
+        autologinaction.timeout.start = time.monotonic()
         conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
 
         self.assertIn("root@debian:~#", conn.prompt_str)
@@ -721,12 +732,10 @@ class TestAutoLogin(LavaDispatcherTestCase):
         shell_connection = prepare_test_connection(True)
 
         # Test the AutoLoginAction directly
-        try:
-            conn = autologinaction.run(shell_connection, max_end_time=self.max_end_time)
-        except JobError as exc:
-            self.assertEqual(str(exc), "Login incorrect")
-        else:
-            self.assertFalse("Should raise a JobError")
+        with self.assertRaisesRegex(JobError, "Login incorrect"):
+            autologinaction.timeout.start = time.monotonic()
+            autologinaction.run(shell_connection, max_end_time=self.max_end_time)
+
         self.assertIn("root@debian:~#", shell_connection.prompt_str)
         self.assertIn("Login incorrect", shell_connection.prompt_str)
         self.assertIn("Login timed out", shell_connection.prompt_str)
