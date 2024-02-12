@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import shlex
 from unittest.mock import patch
 
 import pexpect
@@ -70,8 +69,9 @@ class TestFlasher(LavaDispatcherTestCase):
         self.assertEqual(mock_spawn.call_count, 2)
 
         for i, call in enumerate(mock_spawn.mock_calls):
-            self.assertEqual(call.args, (shlex.join(commands[i]),))
-
+            spawn_command, *spawn_args = commands[i]
+            self.assertEqual(call.kwargs["command"], spawn_command)
+            self.assertEqual(call.kwargs["args"], spawn_args)
             self.assertEqual(call.kwargs["encoding"], "utf-8")
             self.assertEqual(call.kwargs["codec_errors"], "replace")
             self.assertEqual(call.kwargs["searchwindowsize"], 10)
