@@ -96,8 +96,7 @@ class ShellCommand(pexpect.spawn):
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
             raise LAVABug("ShellCommand needs a logger")
-        pexpect.spawn.__init__(
-            self,
+        super().__init__(
             command,
             timeout=lava_timeout.duration,
             cwd=cwd,
