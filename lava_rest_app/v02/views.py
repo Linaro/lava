@@ -63,7 +63,6 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.schema import SubmissionException
-from lava_scheduler_app.views import __set_device_health__
 from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -791,22 +790,25 @@ class DeviceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=("post",), suffix="set_health")
     def set_health(self, request, **kwargs):
-        if not request.user.has_perm("lava_scheduler_app.change_device"):
-            raise PermissionDenied(
-                "Insufficient permissions. Please contact system administrator."
-            )
-        device = self.get_object()
         reason = request.data.get("reason", None)
         health = request.data.get("health", None)
         if health is not None:
             health = health.upper()
-        response = __set_device_health__(device, request.user, health, reason)
-        if response is None:
-            data = {"message": "OK"}
-            return Response(data, status=status.HTTP_202_ACCEPTED)
-        else:
-            data = {"message": response.content}
-            return Response(data, status=response.status_code)
+
+        if health not in Device.HEALTH_REVERSE:
+            return Response(
+                {"message": f"Wrong device health {health!r}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            device = self.get_object()
+            device.set_health(request.user, health, reason)
+
+        return Response(
+            {"message": f"Changed {device.hostname!r} health to {health!r}"},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     @action(detail=True, methods=("get", "post"), suffix="dictionary")
     def dictionary(self, request, **kwargs):

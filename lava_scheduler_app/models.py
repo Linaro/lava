@@ -995,6 +995,21 @@ class Device(RestrictedObject):
         except OSError:
             return None
 
+    def set_health(self, user: User, health: str, reason: str) -> None:
+        if not self.can_change(user):
+            raise PermissionDenied()
+
+        old_health_display = self.get_health_display()
+        self.health = Device.HEALTH_REVERSE[health]
+        self.save(update_fields=("health",))
+
+        self.log_admin_entry(
+            user,
+            f"{old_health_display} → {self.get_health_display()} ({reason})"
+            if reason
+            else f"{old_health_display} → {self.get_health_display()}",
+        )
+
     def save(self, *args, **kwargs):
         super().full_clean()
         super().save(*args, **kwargs)

@@ -2475,44 +2475,22 @@ def device_reports(request, pk):
     )
 
 
-def __set_device_health__(device, user, health, reason):
-    with transaction.atomic():
-        if not device.can_change(user):
-            return HttpResponseForbidden("Permission denied")
-
-        if health not in Device.HEALTH_REVERSE:
-            return HttpResponseBadRequest("Wrong device health %s" % health)
-
-        old_health_display = device.get_health_display()
-        if health.title() != old_health_display:
-            device.health = Device.HEALTH_REVERSE[health]
-            device.save(update_fields=["health"])
-        if reason:
-            device.log_admin_entry(
-                user,
-                "%s → %s (%s)"
-                % (old_health_display, device.get_health_display(), reason),
-            )
-        else:
-            device.log_admin_entry(
-                user, "%s → %s" % (old_health_display, device.get_health_display())
-            )
-
-
 @require_POST
 def device_health(request, pk):
     try:
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
-            health = request.POST.get("health").upper()
-            reason = escape(request.POST.get("reason"))
-            response = __set_device_health__(device, request.user, health, reason)
-            if response is None:
-                return HttpResponseRedirect(
-                    reverse("lava.scheduler.device.detail", args=[device.pk])
-                )
-            else:
-                return response
+            health = request.POST.get("health", "").upper()
+            reason = request.POST.get("reason")
+
+            if health not in device.HEALTH_REVERSE:
+                return HttpResponseBadRequest(f"Wrong device health {health!r}")
+
+            device.set_health(request.user, health, reason)
+
+            return HttpResponseRedirect(
+                reverse("lava.scheduler.device.detail", args=(device.pk,))
+            )
     except Device.DoesNotExist:
         raise Http404("Device %s not found" % pk)
 
