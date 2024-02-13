@@ -70,6 +70,16 @@ class TestJobSerializer(serializers.Serializer):
 
 class TestJobFilters(filters.FilterSet):
     submit_time = filters.IsoDateTimeFromToRangeFilter()
+    state = filters.TypedMultipleChoiceFilter(
+        # Use verbose names (i.e. "Running") and convert them
+        # to original integers when filtering.
+        choices=tuple(
+            (state_display, state_display)
+            for state_value, state_display in TestJob.STATE_CHOICES
+        ),
+        coerce=TestJob.STATE_REVERSE.__getitem__,
+        distinct=False,
+    )
 
 
 class TestJobPaginator(CursorPagination):
