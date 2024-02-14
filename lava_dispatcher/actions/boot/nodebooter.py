@@ -115,7 +115,7 @@ class RunNodebooterContainer(Action):
                 f.write(f"{key}={value}\n")
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
-        docker.network = "host"
+        docker.set_network_name("host")
 
         for vol, mnt in volumes.items():
             os.makedirs(vol, exist_ok=True)
@@ -128,9 +128,9 @@ class RunNodebooterContainer(Action):
         docker.add_docker_run_options("-d")
         docker.add_docker_run_options("--network=host")
         self.logger.info(docker.cmdline())
-        docker.local(True)
-        docker.name(self.container)
-        docker.init(False)
+        docker.enale_local_image()
+        docker.set_container_name(self.container)
+        docker.disable_init()
 
         try:
             docker.run(init_exec)

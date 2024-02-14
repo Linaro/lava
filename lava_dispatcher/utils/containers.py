@@ -112,7 +112,9 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
 
         if isinstance(self.driver, DockerDriver):
             for container in self.containers:
-                self.logger.debug(f"Destroying docker container {container.__name__}")
+                self.logger.debug(
+                    f"Destroying docker container {container.container_name}"
+                )
                 container.destroy()
 
 
@@ -184,7 +186,7 @@ class DockerDriver(NullDriver):
 
         if not self.docker_options:
             for f in self.copied_files:
-                docker.bind_mount(f)
+                docker.add_bind_mount(f)
         return docker
 
     def get_command_prefix(self):
@@ -194,7 +196,7 @@ class DockerDriver(NullDriver):
     def run(self, cmd):
         docker = self.build(DockerContainer)
         name = self.get_container_name()
-        docker.name(name)
+        docker.set_container_name(name)
         self.action.containers.append(docker)
         docker_test_method_conf = (
             self.action.job.device["actions"]
@@ -216,7 +218,7 @@ class DockerDriver(NullDriver):
         # FIXME duplicates most of run()
         docker = self.build(DockerContainer)
         name = self.get_container_name()
-        docker.name(name)
+        docker.set_container_name(name)
         self.action.containers.append(docker)
         docker_test_method_conf = (
             self.action.job.device["actions"]
@@ -249,16 +251,16 @@ class DockerDriver(NullDriver):
         """
         action.trigger_share_device_with_container(dev)
         action.logger.debug(
-            f"Waiting for device '{dev}' to appear in docker container {docker.__name__} ..."
+            f"Waiting for device '{dev}' to appear in docker container {docker.container_name} ..."
         )
         try:
             docker.wait_file(dev, 60)
         except CalledProcessError:
             raise LAVABug(
-                f"Failed to share device '{dev}' to docker container {docker.__name__}"
+                f"Failed to share device '{dev}' to docker container {docker.container_name}"
             )
         action.logger.info(
-            f"Shared device '{dev}' to docker container {docker.__name__}"
+            f"Shared device '{dev}' to docker container {docker.container_name}"
         )
 
     def __map_devices__(self, container_name, docker):

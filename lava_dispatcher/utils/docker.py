@@ -15,26 +15,28 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import InfrastructureError
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional
+    from typing import Iterable
+
+    from lava_dispatcher.action import Action
 
 
 class DockerRun:
-    def __init__(self, image):
+    def __init__(self, image: str):
         self.image = image
-        self.__local__ = False
-        self.__name__ = None
-        self.__network__ = None
-        self.__suffix__ = ""
-        self.__hostname__ = None
-        self.__workdir__ = None
-        self.__devices__ = []
-        self.__bind_mounts__ = []
-        self.__environment__ = []
-        self.__interactive__ = False
-        self.__tty__ = False
-        self.__init = True
-        self.__docker_options__ = []
-        self.__docker_run_options__ = []
+        self._local_image_enabled = False
+        self._container_name: str | None = None
+        self._network_name: str | None = None
+        self._suffix = ""
+        self._hostname: str | None = None
+        self._workdir_path: str | None = None
+        self._devices_paths: list[str] = []
+        self._bind_mounts: list[tuple[str, str, bool]] = []
+        self._environment_variables: list[tuple[str, str]] = []
+        self._interactive_enabled = False
+        self._tty_enabled = False
+        self._init_enabled = True
+        self._docker_options: list[str] = []
+        self._docker_run_options: list[str] = []
 
     @classmethod
     def from_parameters(cls, params, job):
@@ -42,51 +44,62 @@ class DockerRun:
         run = cls(image)
         suffix = "-lava-" + str(job.job_id)
         if "container_name" in params:
-            run.name(params["container_name"] + suffix)
-        run.suffix(suffix)
-        run.network(params.get("network_from", None))
-        run.local(params.get("local", False))
+            run.set_container_name(params["container_name"] + suffix)
+        run.set_suffix(suffix)
+        run.set_network_name(params.get("network_from", None))
+        if params.get("local"):
+            run.enale_local_image()
         for device in params.get("devices", list()):
             run.add_device(device)
         return run
 
-    def local(self, local):
-        self.__local__ = local
+    def enale_local_image(self) -> None:
+        self._local_image_enabled = True
 
-    def name(self, name, random_suffix=False):
+    def disable_local_image(self) -> None:
+        self._local_image_enabled = False
+
+    @property
+    def container_name(self) -> str | None:
+        return self._container_name
+
+    def set_container_name(self, name: str, random_suffix: bool = False):
         suffix = ""
         if random_suffix:
             CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
             suffix = "".join(random.SystemRandom().choice(CHARS) for i in range(10))
-        self.__name__ = name + suffix
+        self._container_name = name + suffix
 
-    def network(self, network):
-        self.__network__ = network
+    def set_network_name(self, network_name: str | None) -> None:
+        self._network_name = network_name
 
-    def suffix(self, suffix):
-        self.__suffix__ = suffix
+    def set_suffix(self, new_suffix: str) -> None:
+        self._suffix = new_suffix
 
-    def hostname(self, hostname):
-        self.__hostname__ = hostname
+    def set_hostname(self, new_hostname: str) -> None:
+        self._hostname = new_hostname
 
-    def workdir(self, workdir):
-        self.__workdir__ = workdir
+    def set_workdir_path(self, new_workdir_path: str) -> None:
+        self._workdir_path = new_workdir_path
 
-    def init(self, init):
-        self.__init = init
+    def enable_init(self) -> None:
+        self._init_enabled = True
 
-    def add_device(self, device, skip_missing=False):
+    def disable_init(self) -> None:
+        self._init_enabled = False
+
+    def add_device(self, device: str, skip_missing: bool = False) -> None:
         if not Path(device).exists() and skip_missing:
             return
         if ":" in device:
             return
-        self.__devices__.append(device)
+        self._devices_paths.append(device)
 
-    def add_docker_options(self, *options):
-        self.__docker_options__ += options
+    def add_docker_options(self, *options: str) -> None:
+        self._docker_options.extend(options)
 
-    def add_docker_run_options(self, *options):
-        self.__docker_run_options__ += options
+    def add_docker_run_options(self, *options: str) -> None:
+        self._docker_run_options.extend(options)
 
     def add_device_docker_method_options(
         self, docker_method_conf: dict[str, Iterable[None | list[str] | str]]
@@ -114,62 +127,71 @@ class DockerRun:
         if "options" in docker_method_conf:
             self.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
 
-    def interactive(self):
-        self.__interactive__ = True
+    def enable_interactive(self) -> None:
+        self._interactive_enabled = True
 
-    def tty(self):
-        self.__tty__ = True
+    def enable_tty(self) -> None:
+        self._tty_enabled = True
 
-    def bind_mount(self, source, destination=None, read_only=False):
+    def add_bind_mount(
+        self,
+        source: Path | str,
+        destination: Path | str | None = None,
+        read_only: bool = False,
+    ) -> None:
         if not destination:
             destination = source
-        self.__bind_mounts__.append((source, destination, read_only))
+        self._bind_mounts.append((str(source), str(destination), read_only))
 
-    def environment(self, variable, value):
-        self.__environment__.append((variable, value))
+    def add_environment_variable(self, variable: str, value: str) -> None:
+        self._environment_variables.append((variable, value))
 
-    def cmdline(self, *args):
-        cmd = (
-            ["docker"] + self.__docker_options__ + ["run"] + self.__docker_run_options__
-        )
+    def cmdline(self, *args: str) -> list[str]:
+        cmd = ["docker"] + self._docker_options + ["run"] + self._docker_run_options
         cmd += self.interaction_options()
         cmd += self.start_options()
         cmd.append(self.image)
         cmd += args
         return cmd
 
-    def interaction_options(self):
+    def interaction_options(self) -> list[str]:
         cmd = []
-        if self.__interactive__:
+        if self._interactive_enabled:
             cmd.append("--interactive")
-        if self.__tty__:
+        if self._tty_enabled:
             cmd.append("--tty")
         return cmd
 
-    def start_options(self):
+    def start_options(self) -> list[str]:
         cmd = ["--rm"]
-        if self.__init:
+        if self._init_enabled:
             cmd.append("--init")
-        if self.__name__:
-            cmd.append(f"--name={self.__name__}")
-        if self.__network__:
-            cmd.append(f"--network=container:{self.__network__}{self.__suffix__}")
-        if self.__hostname__:
-            cmd.append(f"--hostname={self.__hostname__}")
-        if self.__workdir__:
-            cmd.append(f"--workdir={self.__workdir__}")
-        for dev in self.__devices__:
+        if self._container_name:
+            cmd.append(f"--name={self._container_name}")
+        if self._network_name:
+            cmd.append(f"--network=container:{self._network_name}{self._suffix}")
+        if self._hostname:
+            cmd.append(f"--hostname={self._hostname}")
+        if self._workdir_path:
+            cmd.append(f"--workdir={self._workdir_path}")
+        for dev in self._devices_paths:
             cmd.append(f"--device={dev}")
-        for src, dest, read_only in self.__bind_mounts__:
-            opt = f"--mount=type=bind,source={src},destination={dest}"
+        for src, dest, read_only in self._bind_mounts:
+            bind_mount_opt = f"--mount=type=bind,source={src},destination={dest}"
             if read_only:
-                opt += ",readonly=true"
-            cmd.append(opt)
-        for variable, value in self.__environment__:
+                bind_mount_opt += ",readonly=true"
+            cmd.append(bind_mount_opt)
+        for variable, value in self._environment_variables:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
-    def run(self, *args, action, capture=False, error_msg=None):
+    def run(
+        self,
+        *args: str,
+        action: Action,
+        capture: bool = False,
+        error_msg: str | None = None,
+    ) -> str | int | None:
         self.prepare(action)
         cmd = self.cmdline(*args)
         if capture:
@@ -179,13 +201,13 @@ class DockerRun:
         else:
             return action.run_cmd(cmd, error_msg=error_msg)
 
-    def prepare(self, action):
-        pull = not self.__local__
-        if self.__local__:
+    def prepare(self, action: Action) -> None:
+        pull = not self._local_image_enabled
+        if self._local_image_enabled:
             if action.run_cmd(
                 [
                     "docker",
-                    *self.__docker_options__,
+                    *self._docker_options,
                     "image",
                     "inspect",
                     "--format",
@@ -199,10 +221,10 @@ class DockerRun:
                 )
                 pull = True
         if pull:
-            action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
-        self.__check_image_arch__()
+            action.run_cmd(["docker", *self._docker_options, "pull", self.image])
+        self._check_image_arch()
 
-    def wait(self, shell=None):
+    def wait(self, shell=None) -> None:
         delay = 1
         while True:
             try:
@@ -213,10 +235,10 @@ class DockerRun:
                 subprocess.check_call(
                     [
                         "docker",
-                        *self.__docker_options__,
+                        *self._docker_options,
                         "inspect",
                         "--format=.",
-                        self.__name__,
+                        self._container_name,
                     ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
@@ -226,7 +248,7 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
-    def wait_file(self, filename: str, timeout: Optional[int] = None) -> None:
+    def wait_file(self, filename: str, timeout: int | None = None) -> None:
         delay = 1
         start = time.monotonic()
         while True:
@@ -234,9 +256,9 @@ class DockerRun:
                 subprocess.check_call(
                     [
                         "docker",
-                        *self.__docker_options__,
+                        *self._docker_options,
                         "exec",
-                        self.__name__,
+                        self._container_name,
                         "test",
                         "-e",
                         filename,
@@ -251,21 +273,21 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
-    def destroy(self):
-        if self.__name__:
+    def destroy(self) -> None:
+        if self._container_name:
             subprocess.call(
-                ["docker", *self.__docker_options__, "rm", "-f", self.__name__],
+                ["docker", *self._docker_options, "rm", "-f", self._container_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
 
-    def __check_image_arch__(self):
+    def _check_image_arch(self) -> None:
         host = subprocess.check_output(["arch"], text=True).strip()
         try:
             container = subprocess.check_output(
                 [
                     "docker",
-                    *self.__docker_options__,
+                    *self._docker_options,
                     "inspect",
                     "--format",
                     "{{.Architecture}}",
@@ -287,41 +309,44 @@ class DockerRun:
         if host != container:
             logger = logging.getLogger("dispatcher")
             logger.warning(
-                f"Architecture mismatch: host is {host}, container is {container}. This *might* work, but if it does, will probably be a lot slower than if the container image architecture matches the host."
+                f"Architecture mismatch: host is {host}, "
+                f"container is {container}. This *might* work, but if it does, "
+                "will probably be a lot slower than if the container "
+                "image architecture matches the host."
             )
 
 
 class DockerContainer(DockerRun):
-    __started__ = False
+    _started = False
 
-    def run(self, args, action):
+    def run(self, args: list[str], action: Action) -> None:
         self.start(action)
-        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
-        cmd.append(self.__name__)
+        cmd.append(self._container_name)
         cmd += args
         action.run_cmd(cmd)
 
-    def get_output(self, args, action):
+    def get_output(self, args: list[str], action: Action) -> str:
         self.start(action)
-        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
-        cmd.append(self.__name__)
+        cmd.append(self._container_name)
         cmd += args
         return action.parsed_command(cmd)
 
-    def check_output(self, cmd):
+    def check_output(self, cmd: list[str]) -> str:
         return subprocess.check_output(cmd).decode("utf-8")
 
-    def start(self, action):
-        if self.__started__:
+    def start(self, action: Action) -> None:
+        if self._started:
             return
 
         cmd = [
             "docker",
-            *self.__docker_options__,
+            *self._docker_options,
             "run",
-            *self.__docker_run_options__,
+            *self._docker_run_options,
             "--detach",
         ]
         cmd += self.start_options()
@@ -329,7 +354,7 @@ class DockerContainer(DockerRun):
         cmd += ["sleep", "infinity"]
         action.run_cmd(cmd)
         self.wait()
-        self.__started__ = True
+        self._started = True
 
-    def stop(self, action):
-        action.run_cmd(["docker", *self.__docker_options__, "stop", self.__name__])
+    def stop(self, action: Action) -> None:
+        action.run_cmd(["docker", *self._docker_options, "stop", self._container_name])

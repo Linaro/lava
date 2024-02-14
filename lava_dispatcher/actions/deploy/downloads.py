@@ -117,7 +117,7 @@ class PostprocessWithDocker(Action):
 
         docker = DockerRun.from_parameters(self.docker_parameters, self.job)
         docker.add_device("/dev/kvm", skip_missing=True)
-        docker.bind_mount(self.path, LAVA_DOWNLOADS)
+        docker.add_bind_mount(self.path, LAVA_DOWNLOADS)
         docker_test_method_conf = (
             self.job.device["actions"]
             .get("test", {})
@@ -126,7 +126,7 @@ class PostprocessWithDocker(Action):
         )
         docker.add_device_docker_method_options(docker_test_method_conf)
 
-        docker.workdir(LAVA_DOWNLOADS)
+        docker.set_workdir_path(LAVA_DOWNLOADS)
 
         docker.run(
             f"{LAVA_DOWNLOADS}/postprocess.sh",

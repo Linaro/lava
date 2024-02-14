@@ -22,34 +22,34 @@ def test_basic(run):
 
 
 def test_name(run):
-    run.name("blah")
+    run.set_container_name("blah")
     assert "--name=blah" in run.cmdline()
 
 
 def test_network(run):
-    run.network("foo")
+    run.set_network_name("foo")
     assert "--network=container:foo" in run.cmdline()
 
 
 def test_network_with_suffix(run):
-    run.network("foo")
-    run.suffix("bar")
+    run.set_network_name("foo")
+    run.set_suffix("bar")
     assert "--network=container:foobar" in run.cmdline()
 
 
 def test_workdir(run):
-    run.workdir("/path/to/workdir")
+    run.set_workdir_path("/path/to/workdir")
     assert "--workdir=/path/to/workdir" in run.cmdline()
 
 
 def test_interactive(run):
-    run.interactive()
+    run.enable_interactive()
     cmdline = run.cmdline()
     assert "--interactive" in cmdline
 
 
 def test_tty(run):
-    run.tty()
+    run.enable_tty()
     cmdline = run.cmdline()
     assert "--tty" in cmdline
 
@@ -74,25 +74,25 @@ def test_device_skip_with_colon(run, mocker):
 
 def test_bind_mount(run):
     p = "/path/to/data"
-    run.bind_mount(p)
+    run.add_bind_mount(p)
     opt = f"--mount=type=bind,source={p},destination={p}"
     assert opt in run.cmdline()
 
 
 def test_bind_mount_source_destination(run):
-    run.bind_mount("/foo", "/bar")
-    opt = f"--mount=type=bind,source=/foo,destination=/bar"
+    run.add_bind_mount("/foo", "/bar")
+    opt = "--mount=type=bind,source=/foo,destination=/bar"
     assert opt in run.cmdline()
 
 
 def test_bind_mount_read_only(run):
-    run.bind_mount("/foo", None, True)
-    opt = f"--mount=type=bind,source=/foo,destination=/foo,readonly=true"
+    run.add_bind_mount("/foo", None, True)
+    opt = "--mount=type=bind,source=/foo,destination=/foo,readonly=true"
     assert opt in run.cmdline()
 
 
 def test_environment(run):
-    run.environment("FOO", "BAR")
+    run.add_environment_variable("FOO", "BAR")
     cmdline = run.cmdline()
     assert "--env=FOO=BAR" in cmdline
 
@@ -157,7 +157,7 @@ def test_run_architecture_check_success(mocker):
 
 def test_run_with_action(mocker):
     check_arch = mocker.patch(
-        "lava_dispatcher.utils.docker.DockerRun.__check_image_arch__"
+        "lava_dispatcher.utils.docker.DockerRun._check_image_arch"
     )
     action = mocker.MagicMock()
 
@@ -176,9 +176,9 @@ def test_run_with_action(mocker):
 
 
 def test_run_with_local_image_does_not_pull(mocker):
-    mocker.patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun._check_image_arch")
     docker = DockerRun("myimage")
-    docker.local(True)
+    docker.enale_local_image()
     action = mocker.MagicMock()
     action.run_cmd.return_value = 0
     docker.run("date", action=action)
@@ -203,9 +203,9 @@ def test_run_with_local_image_does_not_pull(mocker):
 
 
 def test_run_with_local_image_does_not_pull_when_missing(mocker):
-    mocker.patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    mocker.patch("lava_dispatcher.utils.docker.DockerRun._check_image_arch")
     docker = DockerRun("myimage")
-    docker.local(True)
+    docker.enale_local_image()
     action = mocker.MagicMock()
     action.run_cmd.return_value = 1
     docker.run("date", action=action)
@@ -233,15 +233,17 @@ def test_run_with_local_image_does_not_pull_when_missing(mocker):
 def test_from_parameters_image(mocker):
     job = mocker.MagicMock()
     assert DockerRun.from_parameters({"image": "foo"}, job).image == "foo"
-    assert not DockerRun.from_parameters({"image": "foo"}, job).__local__
-    assert DockerRun.from_parameters({"image": "foo", "local": True}, job).__local__
+    assert not DockerRun.from_parameters({"image": "foo"}, job)._local_image_enabled
+    assert DockerRun.from_parameters(
+        {"image": "foo", "local": True}, job
+    )._local_image_enabled
 
 
 def test_from_parameters_suffix(mocker):
     job = mocker.MagicMock()
     job.job_id = "123"
     docker_run = DockerRun.from_parameters({"image": "foo"}, job)
-    assert docker_run.__suffix__ == "-lava-123"
+    assert docker_run._suffix == "-lava-123"
 
 
 def test_from_parameters_name_network(mocker):
@@ -255,13 +257,13 @@ def test_from_parameters_name_network(mocker):
         },
         job,
     )
-    assert docker_run.__name__ == "foocontainer-lava-123"
-    assert docker_run.__network__ == "othercontainer"
+    assert docker_run.container_name == "foocontainer-lava-123"
+    assert docker_run._network_name == "othercontainer"
 
 
 def test_wait(mocker):
     docker = DockerRun("myimage")
-    docker.name("foobar")
+    docker.set_container_name("foobar")
 
     sleep = mocker.patch("time.sleep")
     inspect = mocker.patch(
@@ -291,8 +293,8 @@ def test_add_device_method_options():
             "options": ["--cap-add=NET_ADMIN"],
         }
     )
-    assert "--debug" in docker.__docker_options__
-    assert "--cap-add=NET_ADMIN" in docker.__docker_run_options__
+    assert "--debug" in docker._docker_options
+    assert "--cap-add=NET_ADMIN" in docker._docker_run_options
 
 
 def test_add_device_method_options_none():
@@ -303,8 +305,8 @@ def test_add_device_method_options_none():
             "options": [None],
         }
     )
-    assert None not in docker.__docker_options__
-    assert None not in docker.__docker_run_options__
+    assert None not in docker._docker_options
+    assert None not in docker._docker_run_options
 
 
 def test_add_device_method_options_sublist():
@@ -315,5 +317,5 @@ def test_add_device_method_options_sublist():
         }
     )
 
-    assert "--network" in docker.__docker_run_options__
-    assert "host" in docker.__docker_run_options__
+    assert "--network" in docker._docker_run_options
+    assert "host" in docker._docker_run_options

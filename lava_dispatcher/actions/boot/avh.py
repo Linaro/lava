@@ -223,13 +223,13 @@ class CallAvhAction(Action):
             docker_params = {"image": self.websocat_docker_image}
         self.docker = DockerRun.from_parameters(docker_params, self.job)
         if not docker_params.get("container_name"):
-            self.docker.name(
+            self.docker.set_container_name(
                 f"lava-docker-avh-websocat-{self.job.job_id}-{self.level}",
                 random_suffix=True,
             )
-        self.docker.init(False)
-        self.docker.tty()
-        self.docker.interactive()
+        self.docker.disable_init()
+        self.docker.enable_tty()
+        self.docker.enable_interactive()
         docker_cmdline_args = ["-b", console_ws]
         console_cmd = " ".join(self.docker.cmdline(*docker_cmdline_args))
         self.docker.prepare(action=self)
@@ -260,5 +260,7 @@ class CallAvhAction(Action):
                 self.v1_delete_instance(api_instance)
 
         if self.docker_cleanup_required:
-            self.logger.info(f"Stopping the websocat container {self.docker.__name__}")
+            self.logger.info(
+                f"Stopping the websocat container {self.docker.container_name}"
+            )
             self.docker.destroy()
