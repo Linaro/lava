@@ -17,7 +17,7 @@
 # WS_URL="--ws-url http://localhost/ws/"
 # HTTP_TIMEOUT="--http-timeout 600"
 # JOB_LOG_INTERVAL="--job-log-interval 5"
-# MOUNTS="--mount /path/to/directory --mount /path/on/host:/path/on/container"
+# MOUNTS="--mount /path/to/directory --mount /path/on/host:/path/on/container --mount /path/host:/path/container:ro"
 
 # Docker build directory
 # Should be set to a directory with a Dockerfile inside.

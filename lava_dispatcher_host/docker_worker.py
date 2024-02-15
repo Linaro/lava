@@ -217,27 +217,27 @@ def start(version, options):
     ]
 
     mounts = []
-    mounts.append((DISPATCHER_DOWNLOAD_DIR, None))
+    mounts.append((DISPATCHER_DOWNLOAD_DIR, None, None))
 
     tftp_dir = pathlib.Path("/srv/tftp")
     if tftp_dir.exists():
-        mounts.append((str(tftp_dir), None))
+        mounts.append((str(tftp_dir), None, None))
 
     worker_dir = options.worker_dir.absolute()
     worker_dir.mkdir(parents=True, exist_ok=True)
-    mounts.append((worker_dir, None))
-    mounts.append(("/run/udev", None))
-    mounts.append(("/dev", None))
-    mounts.append(("/var/run/docker.sock", None))
-    mounts.append(("/boot", "readonly=true"))
-    mounts.append(("/lib/modules", "readonly=true"))
+    mounts.append((worker_dir, None, None))
+    mounts.append(("/run/udev", None, None))
+    mounts.append(("/dev", None, None))
+    mounts.append(("/var/run/docker.sock", None, None))
+    mounts.append(("/boot", None, "readonly=true"))
+    mounts.append(("/lib/modules", None, "readonly=true"))
     for d in ["/usr/share/lava-docker-worker", "/usr/local/share/lava-docker-worker"]:
         if os.path.exists(d):
-            mounts.append((d, None))
+            mounts.append((d, None, None))
     if options.mount:
         mounts += options.mount
-    for path, opts in mounts:
-        m = f"--mount=type=bind,source={path},destination={path}"
+    for src, dst, opts in mounts:
+        m = f"--mount=type=bind,source={src},destination={dst or src}"
         if opts:
             m += "," + opts
         service.append(m)

@@ -29,10 +29,13 @@ def get_fqdn() -> str:
 
 
 def parse_mount(s: str) -> tuple:
-    parts = tuple(s.split(":"))
-    if len(parts) == 1:
-        parts += (None,)
-    return parts
+    # Split at ':' and accept one, two or three parameters
+    src, dst, opts, *extra = *s.split(":"), *(None, None)
+    if not src or len(extra) > 2:
+        raise argparse.ArgumentTypeError(
+            "mount should have 1, 2 or 3 parts (separated by ':')"
+        )
+    return (src, dst, opts)
 
 
 def get_parser(docker_worker=False) -> argparse.ArgumentParser:
