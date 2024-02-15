@@ -101,9 +101,6 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
             self.assertTrue(repo_action.valid)
             # FIXME: needs deployment_data to be visible during validation
             # self.assertNotEqual(repo_action.runner, None)
-        self.assertIsNotNone(
-            testdef.parameters["deployment_data"]["lava_test_results_dir"]
-        )
 
     def test_name(self):
         deploy = [

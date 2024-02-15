@@ -7,106 +7,48 @@
 
 
 android = {
-    "TESTER_PS1": "root@linaro# ",
-    "TESTER_PS1_PATTERN": "root@linaro# ",
-    "TESTER_PS1_INCLUDES_RC": False,
-    "boot_cmds": "boot_cmds_android",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "android",
-    "lava_test_sh_cmd": "/system/bin/sh",
-    "lava_test_dir": "/data/local/tmp/lava-%s",
-    "lava_test_results_part_attr": "data_part_android_org",
-    "lava_test_results_dir": "/data/local/tmp/lava-%s",
-    "lava_test_shell_file": None,
 }
 
 apertis = {
-    "TESTER_PS1": r"apertis-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"apertis-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "apertis",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/sh",
-    "lava_test_dir": "/var/lib/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/var/lib/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 archlinux = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "archlinux",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 centos = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "centos",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 centos_installer = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     "installer_extra_cmd": "curl {OVERLAY_URL} > /lava-overlay.tar.gz\ntar -zxvf /lava-overlay.tar.gz -C /",
     "preseed_to_ramdisk": "preseed.cfg",
     # for lava-test-shell
     "distro": "centos",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 debian = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "debian",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 debian_installer = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     "installer_extra_cmd": "cp -r /lava-* /target/ || true",
     # DEBIAN_INSTALLER preseeeding
@@ -122,105 +64,46 @@ debian_installer = {
     ],
     # for lava-test-shell
     "distro": "debian",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 fedora = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "fedora",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 lede = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds_lede",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "lede",
-    "lava_test_sh_cmd": "/bin/sh",
-    "lava_test_dir": "/tmp/lava-%s",  # nosec - on the DUT
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/tmp/lava-results-%s",  # nosec - on the DUT
-    "lava_test_shell_file": None,
 }
 
 oe = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds_oe",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "oe",
-    "lava_test_sh_cmd": "/bin/sh",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 qnx = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "qnx",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/sh",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 slackware = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "slackware",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/bash",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 ubuntu = {
-    "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
-    "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
-    "TESTER_PS1_INCLUDES_RC": True,
-    "boot_cmds": "boot_cmds",
     "line_separator": "\n",
     # for lava-test-shell
     "distro": "ubuntu",
     "tar_flags": "--warning no-timestamp",
-    "lava_test_sh_cmd": "/bin/sh",
-    "lava_test_dir": "/lava-%s",
-    "lava_test_results_part_attr": "root_part",
-    "lava_test_results_dir": "/lava-%s",
-    "lava_test_shell_file": "~/.bashrc",
 }
 
 deployments = {

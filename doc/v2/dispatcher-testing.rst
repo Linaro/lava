@@ -157,10 +157,7 @@ Sample pipeline description output
         level: '1'
         name: deployimage
         parameters:
-          deployment_data: &id001 {TESTER_PS1: 'linaro-test [rc=$(echo \$?)]# ', TESTER_PS1_INCLUDES_RC: true,
-            TESTER_PS1_PATTERN: 'linaro-test \[rc=(\d+)\]# ', boot_cmds: boot_cmds,
-            distro: debian, lava_test_dir: /lava-%s, lava_test_results_dir: /lava-%s,
-            lava_test_results_part_attr: root_part, lava_test_sh_cmd: /bin/bash}
+          deployment_data: &id001 {distro: debian}
         summary: deploy image
         valid: true
         yaml_line: 12
@@ -303,7 +300,6 @@ Sample pipeline description output
   - - '1.6'
     - content:
         description: add lava scripts during deployment for test shell use
-        lava_test_dir: /usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell
         level: '1.6'
         name: lava-overlay
         parameters:

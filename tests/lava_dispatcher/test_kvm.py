@@ -185,14 +185,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertNotIn("lava_multi_node_cache_file", dir(overlay))
         self.assertNotIn("lava_lmp_test_dir", dir(overlay))
         self.assertNotIn("lava_lmp_cache_file", dir(overlay))
-        self.assertIsNotNone(
-            overlay.parameters["deployment_data"]["lava_test_results_dir"]
-        )
-        self.assertIsNotNone(overlay.parameters["deployment_data"]["lava_test_sh_cmd"])
         self.assertEqual(overlay.parameters["deployment_data"]["distro"], "debian")
-        self.assertIsNotNone(
-            overlay.parameters["deployment_data"]["lava_test_results_part_attr"]
-        )
         self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, "lava-*")))
 
     def test_boot(self):
