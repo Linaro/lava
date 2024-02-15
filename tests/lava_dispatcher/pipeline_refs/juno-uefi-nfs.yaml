@@ -1,159 +1,156 @@
-- class: actions.deploy.vemsd.VExpressMsdRetry
+- class: VExpressMsdRetry
   description: deploy vexpress board recovery image with retry
   level: '1'
   max_retries: 1
   name: vexpress-fw-deploy-retry
   pipeline:
-  - class: actions.deploy.vemsd.VExpressMsdAction
+  - class: VExpressMsdAction
     description: deploy vexpress board recovery image
     level: '1.1'
     max_retries: 1
     name: vexpress-fw-deploy
     pipeline:
-    - class: actions.deploy.download.DownloaderAction
+    - class: DownloaderAction
       description: download with retry
       level: 1.1.1
       max_retries: 3
       name: download-retry
       pipeline:
-      - {class: actions.deploy.download.HttpDownloadAction, description: use http
-          to download the file, level: 1.1.1.1, max_retries: 1, name: http-download,
-        summary: http download, timeout: 600, url: 'https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip'}
+      - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1.1,
+        max_retries: 1, name: http-download, summary: http download, timeout: 600,
+        url: 'https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip'}
       summary: download-retry
       timeout: 600
-    - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, description: create lxc
-        udev rule action, level: 1.1.2, max_retries: 1, name: lxc-create-udev-rule-action,
-      summary: create lxc udev rule, timeout: 600}
-    - {class: connections.serial.ConnectDevice, description: use the configured command
-        to connect serial to the device, level: 1.1.3, max_retries: 1, name: connect-device,
-      summary: run connection command, timeout: 600}
-    - class: power.ResetDevice
+    - {class: LxcCreateUdevRuleAction, description: create lxc udev rule action, level: 1.1.2,
+      max_retries: 1, name: lxc-create-udev-rule-action, summary: create lxc udev
+        rule, timeout: 600}
+    - {class: ConnectDevice, description: use the configured command to connect serial
+        to the device, level: 1.1.3, max_retries: 1, name: connect-device, summary: run
+        connection command, timeout: 600}
+    - class: ResetDevice
       description: reboot or power-cycle the device
       level: 1.1.4
       max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-          a device, level: 1.1.4.1, max_retries: 1, name: pdu-reboot, summary: hard
-          reboot using PDU, timeout: 600}
+      - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+        level: 1.1.4.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using
+          PDU, timeout: 600}
       summary: reboot the device
       timeout: 600
-    - {class: actions.deploy.vemsd.ExtractVExpressRecoveryImage, description: unpack
-        versatile express recovery image, level: 1.1.5, max_retries: 1, name: extract-vexpress-recovery-image,
+    - {class: ExtractVExpressRecoveryImage, description: unpack versatile express
+        recovery image, level: 1.1.5, max_retries: 1, name: extract-vexpress-recovery-image,
       summary: unpack versatile express recovery image ready for deployment, timeout: 600}
-    - {class: actions.deploy.vemsd.EnterVExpressMCC, description: enter Versatile
-        Express MCC, level: 1.1.6, max_retries: 1, name: enter-vexpress-mcc, summary: 'enter
-        Versatile Express MCC, interrupting autorun if needed', timeout: 600}
-    - {class: actions.deploy.vemsd.EnableVExpressMassStorage, description: enable
-        vexpress usb msd, level: 1.1.7, max_retries: 1, name: enable-vexpress-usbmsd,
-      summary: enable vexpress usb mass storage device, timeout: 600}
-    - {class: utils.udev.WaitUSBMassStorageDeviceAction, description: wait for USB
-        mass storage device, level: 1.1.8, max_retries: 1, name: wait-usb-mass-storage-device,
+    - {class: EnterVExpressMCC, description: enter Versatile Express MCC, level: 1.1.6,
+      max_retries: 1, name: enter-vexpress-mcc, summary: 'enter Versatile Express
+        MCC, interrupting autorun if needed', timeout: 600}
+    - {class: EnableVExpressMassStorage, description: enable vexpress usb msd, level: 1.1.7,
+      max_retries: 1, name: enable-vexpress-usbmsd, summary: enable vexpress usb mass
+        storage device, timeout: 600}
+    - {class: WaitUSBMassStorageDeviceAction, description: wait for USB mass storage
+        device, level: 1.1.8, max_retries: 1, name: wait-usb-mass-storage-device,
       summary: wait for USB mass storage device, timeout: 600}
-    - {class: actions.deploy.vemsd.MountVExpressMassStorageDevice, description: mount
-        vexpress usb msd, level: 1.1.9, max_retries: 1, name: mount-vexpress-usbmsd,
-      summary: mount vexpress usb mass storage device on the dispatcher, timeout: 600}
-    - {class: actions.deploy.vemsd.DeployVExpressRecoveryImage, description: deploy
-        vexpress recovery image to usb msd, level: 1.1.10, max_retries: 1, name: deploy-vexpress-recovery-image,
+    - {class: MountVExpressMassStorageDevice, description: mount vexpress usb msd,
+      level: 1.1.9, max_retries: 1, name: mount-vexpress-usbmsd, summary: mount vexpress
+        usb mass storage device on the dispatcher, timeout: 600}
+    - {class: DeployVExpressRecoveryImage, description: deploy vexpress recovery image
+        to usb msd, level: 1.1.10, max_retries: 1, name: deploy-vexpress-recovery-image,
       summary: copy recovery image contents to vexpress usb mass storage device, timeout: 600}
-    - {class: actions.deploy.vemsd.UnmountVExpressMassStorageDevice, description: unmount
-        vexpress usb msd, level: 1.1.11, max_retries: 1, name: unmount-vexpress-usbmsd,
-      summary: unmount vexpress usb mass storage device, timeout: 600}
-    - {class: actions.deploy.vemsd.VExpressFlashErase, description: erase vexpress
-        flash, level: 1.1.12, max_retries: 1, name: erase-vexpress-flash, summary: erase
-        vexpress flash using the commands set by the user, timeout: 600}
+    - {class: UnmountVExpressMassStorageDevice, description: unmount vexpress usb
+        msd, level: 1.1.11, max_retries: 1, name: unmount-vexpress-usbmsd, summary: unmount
+        vexpress usb mass storage device, timeout: 600}
+    - {class: VExpressFlashErase, description: erase vexpress flash, level: 1.1.12,
+      max_retries: 1, name: erase-vexpress-flash, summary: erase vexpress flash using
+        the commands set by the user, timeout: 600}
     summary: VExpress FW deployment
     timeout: 600
   summary: VExpress FW deployment with retry
   timeout: 600
-- class: actions.deploy.nfs.NfsAction
+- class: NfsAction
   description: deploy nfsrootfs
   level: '2'
   max_retries: 1
   name: nfs-deploy
   pipeline:
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '2.1'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 2.1.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 120, url: 'https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 2.1.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 120, url: 'https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz'}
     summary: download-retry
     timeout: 120
-  - {class: actions.deploy.apply_overlay.ExtractNfsRootfs, description: unpack nfsrootfs,
-    level: '2.2', max_retries: 1, name: extract-nfsrootfs, summary: 'unpack nfsrootfs,
-      ready to apply lava overlay', timeout: 120}
-  - {class: actions.deploy.overlay.OverlayAction, description: add lava scripts during
-      deployment for test shell use, level: '2.3', max_retries: 1, name: lava-overlay,
-    summary: overlay the lava support scripts, timeout: 120}
-  - {class: actions.deploy.apply_overlay.ExtractModules, description: extract supplied
-      kernel modules, level: '2.4', max_retries: 1, name: extract-modules, summary: extract
-      kernel modules, timeout: 120}
-  - {class: actions.deploy.apply_overlay.ApplyOverlayTftp, description: unpack the
-      overlay into the nfsrootfs or ramdisk, level: '2.5', max_retries: 1, name: apply-overlay-tftp,
-    summary: apply lava overlay test files, timeout: 120}
+  - {class: ExtractNfsRootfs, description: unpack nfsrootfs, level: '2.2', max_retries: 1,
+    name: extract-nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava overlay',
+    timeout: 120}
+  - {class: OverlayAction, description: add lava scripts during deployment for test
+      shell use, level: '2.3', max_retries: 1, name: lava-overlay, summary: overlay
+      the lava support scripts, timeout: 120}
+  - {class: ExtractModules, description: extract supplied kernel modules, level: '2.4',
+    max_retries: 1, name: extract-modules, summary: extract kernel modules, timeout: 120}
+  - {class: ApplyOverlayTftp, description: unpack the overlay into the nfsrootfs or
+      ramdisk, level: '2.5', max_retries: 1, name: apply-overlay-tftp, summary: apply
+      lava overlay test files, timeout: 120}
   summary: NFS deployment
   timeout: 120
-- class: actions.boot.uefi.UefiShellAction
+- class: UefiShellAction
   description: UEFI shell boot action
   level: '3'
   max_retries: 1
   name: uefi-shell-main-action
   pipeline:
-  - {class: actions.boot.BootloaderCommandOverlay, description: substitute job data
-      into bootloader command list, level: '3.1', max_retries: 1, name: bootloader-overlay,
-    summary: replace placeholders with job data, timeout: 360}
-  - {class: menus.menus.MenuConnect, description: change into a menu session, level: '3.2',
-    max_retries: 1, name: menu-connect, summary: Customise connection for menu operations,
-    timeout: 360}
-  - class: power.ResetDevice
+  - {class: BootloaderCommandOverlay, description: substitute job data into bootloader
+      command list, level: '3.1', max_retries: 1, name: bootloader-overlay, summary: replace
+      placeholders with job data, timeout: 360}
+  - {class: MenuConnect, description: change into a menu session, level: '3.2', max_retries: 1,
+    name: menu-connect, summary: Customise connection for menu operations, timeout: 360}
+  - class: ResetDevice
     description: reboot or power-cycle the device
     level: '3.3'
     max_retries: 1
     name: reset-device
     pipeline:
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-        a device, level: 3.3.1, max_retries: 1, name: pdu-reboot, summary: hard reboot
-        using PDU, timeout: 30}
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+      level: 3.3.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
+      timeout: 30}
     summary: reboot the device
     timeout: 30
-  - {class: actions.boot.uefi.UefiShellMenuInterrupt, description: interrupt default
-      boot and to menu, level: '3.4', max_retries: 1, name: uefi-shell-menu-interrupt,
-    summary: interrupt default boot and to menu, timeout: 360}
-  - {class: actions.boot.uefi.UefiShellMenuSelector, description: select uefi menu
-      items to drop to a uefi shell, level: '3.5', max_retries: 1, name: uefi-shell-menu-selector,
+  - {class: UefiShellMenuInterrupt, description: interrupt default boot and to menu,
+    level: '3.4', max_retries: 1, name: uefi-shell-menu-interrupt, summary: interrupt
+      default boot and to menu, timeout: 360}
+  - {class: UefiShellMenuSelector, description: select uefi menu items to drop to
+      a uefi shell, level: '3.5', max_retries: 1, name: uefi-shell-menu-selector,
     summary: use uefi menu to drop to shell, timeout: 360}
-  - {class: actions.boot.uefi.UefiShellInterrupt, description: interrupt uefi menu
-      to get to a shell, level: '3.6', max_retries: 1, name: uefi-shell-interrupt,
-    summary: first uefi interrupt, timeout: 360}
-  - {class: actions.boot.uefi.UefiBootloaderCommandsAction, description: send commands
-      to bootloader, level: '3.7', max_retries: 1, name: bootloader-commands, summary: interactive
+  - {class: UefiShellInterrupt, description: interrupt uefi menu to get to a shell,
+    level: '3.6', max_retries: 1, name: uefi-shell-interrupt, summary: first uefi
+      interrupt, timeout: 360}
+  - {class: UefiBootloaderCommandsAction, description: send commands to bootloader,
+    level: '3.7', max_retries: 1, name: bootloader-commands, summary: interactive
       bootloader, timeout: 180}
-  - class: actions.boot.AutoLoginAction
+  - class: AutoLoginAction
     description: automatically login after boot using job parameters and checking
       for messages.
     level: '3.8'
     max_retries: 1
     name: auto-login-action
     pipeline:
-    - {class: actions.boot.LoginAction, description: Real login action., level: 3.8.1,
-      max_retries: 1, name: login-action, summary: Login after boot., timeout: 360}
+    - {class: LoginAction, description: Real login action., level: 3.8.1, max_retries: 1,
+      name: login-action, summary: Login after boot., timeout: 360}
     summary: Auto-login after boot with support for kernel messages.
     timeout: 300
   summary: run UEFI shell to system
   timeout: 360
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '4'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '4.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 35}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '4.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 35}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 360}
   summary: finalize the job

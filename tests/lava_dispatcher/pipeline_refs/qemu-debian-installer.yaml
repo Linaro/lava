@@ -1,144 +1,137 @@
-- class: actions.deploy.iso.DeployIsoAction
+- class: DeployIsoAction
   description: setup deployment for emulated installer
   level: '1'
   max_retries: 1
   name: deploy-iso-installer
   pipeline:
-  - {class: actions.deploy.iso.IsoEmptyImage, description: create empty image of specified
-      size, level: '1.1', max_retries: 1, name: prepare-empty-image, summary: create
-      destination image, timeout: 240}
-  - class: actions.deploy.download.DownloaderAction
+  - {class: IsoEmptyImage, description: create empty image of specified size, level: '1.1',
+    max_retries: 1, name: prepare-empty-image, summary: create destination image,
+    timeout: 240}
+  - class: DownloaderAction
     description: download with retry
     level: '1.2'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 1.2.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 240, url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-cd1-preseed.cfg'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 1.2.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 240, url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-cd1-preseed.cfg'}
     summary: download-retry
     timeout: 240
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.3'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 1.3.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 240, url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-amd64-CD-1.iso'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 1.3.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 240, url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-amd64-CD-1.iso'}
     summary: download-retry
     timeout: 240
-  - {class: actions.deploy.iso.IsoPullInstaller, description: pull kernel and initrd
-      out of iso, level: '1.4', max_retries: 1, name: pull-installer-files, summary: copy
-      files out of installer iso, timeout: 240}
-  - {class: actions.deploy.iso.QemuCommandLine, description: prepare qemu command
-      and options to append to kernel command line, level: '1.5', max_retries: 1,
-    name: prepare-qemu-commands, summary: build qemu command line with kernel command
-      string, timeout: 240}
-  - class: actions.deploy.overlay.OverlayAction
+  - {class: IsoPullInstaller, description: pull kernel and initrd out of iso, level: '1.4',
+    max_retries: 1, name: pull-installer-files, summary: copy files out of installer
+      iso, timeout: 240}
+  - {class: QemuCommandLine, description: prepare qemu command and options to append
+      to kernel command line, level: '1.5', max_retries: 1, name: prepare-qemu-commands,
+    summary: build qemu command line with kernel command string, timeout: 240}
+  - class: OverlayAction
     description: add lava scripts during deployment for test shell use
     level: '1.6'
     max_retries: 1
     name: lava-overlay
     pipeline:
-    - {class: actions.deploy.overlay.VlandOverlayAction, description: Populate specific
-        vland scripts for tests to lookup vlan data., level: 1.6.1, max_retries: 1,
-      name: lava-vland-overlay, summary: Add files detailing vlan configuration.,
-      timeout: 240}
-    - {class: actions.deploy.overlay.MultinodeOverlayAction, description: add lava
-        scripts during deployment for multinode test shell use, level: 1.6.2, max_retries: 1,
-      name: lava-multinode-overlay, summary: overlay the lava multinode scripts, timeout: 240}
-    - class: actions.deploy.testdef.TestDefinitionAction
+    - {class: VlandOverlayAction, description: Populate specific vland scripts for
+        tests to lookup vlan data., level: 1.6.1, max_retries: 1, name: lava-vland-overlay,
+      summary: Add files detailing vlan configuration., timeout: 240}
+    - {class: MultinodeOverlayAction, description: add lava scripts during deployment
+        for multinode test shell use, level: 1.6.2, max_retries: 1, name: lava-multinode-overlay,
+      summary: overlay the lava multinode scripts, timeout: 240}
+    - class: TestDefinitionAction
       description: load test definitions into image
       level: 1.6.3
       max_retries: 1
       name: test-definition
       pipeline:
-      - {class: actions.deploy.testdef.GitRepoAction, description: apply git repository
-          of tests to the test image, level: 1.6.3.1, max_retries: 1, name: git-repo-action,
-        summary: clone git test repo, timeout: 240}
-      - {class: actions.deploy.testdef.TestOverlayAction, description: overlay test
-          support files onto image, level: 1.6.3.2, max_retries: 1, name: test-overlay,
-        summary: applying LAVA test overlay, timeout: 240}
-      - {class: actions.deploy.testdef.TestInstallAction, description: overlay dependency
-          installation support files onto image, level: 1.6.3.3, max_retries: 1, name: test-install-overlay,
+      - {class: GitRepoAction, description: apply git repository of tests to the test
+          image, level: 1.6.3.1, max_retries: 1, name: git-repo-action, summary: clone
+          git test repo, timeout: 240}
+      - {class: TestOverlayAction, description: overlay test support files onto image,
+        level: 1.6.3.2, max_retries: 1, name: test-overlay, summary: applying LAVA
+          test overlay, timeout: 240}
+      - {class: TestInstallAction, description: overlay dependency installation support
+          files onto image, level: 1.6.3.3, max_retries: 1, name: test-install-overlay,
         summary: applying LAVA test install scripts, timeout: 240}
-      - {class: actions.deploy.testdef.TestRunnerAction, description: overlay run
-          script onto image, level: 1.6.3.4, max_retries: 1, name: test-runscript-overlay,
-        summary: applying LAVA test run script, timeout: 240}
+      - {class: TestRunnerAction, description: overlay run script onto image, level: 1.6.3.4,
+        max_retries: 1, name: test-runscript-overlay, summary: applying LAVA test
+          run script, timeout: 240}
       summary: loading test definitions
       timeout: 240
-    - {class: actions.deploy.overlay.CompressOverlay, description: Create a lava overlay
-        tarball and store alongside the job, level: 1.6.4, max_retries: 1, name: compress-overlay,
-      summary: Compress the lava overlay files, timeout: 240}
-    - {class: actions.deploy.overlay.PersistentNFSOverlay, description: unpack overlay
-        into persistent NFS, level: 1.6.5, max_retries: 1, name: persistent-nfs-overlay,
-      summary: add test overlay to NFS, timeout: 240}
+    - {class: CompressOverlay, description: Create a lava overlay tarball and store
+        alongside the job, level: 1.6.4, max_retries: 1, name: compress-overlay, summary: Compress
+        the lava overlay files, timeout: 240}
+    - {class: PersistentNFSOverlay, description: unpack overlay into persistent NFS,
+      level: 1.6.5, max_retries: 1, name: persistent-nfs-overlay, summary: add test
+        overlay to NFS, timeout: 240}
     summary: overlay the lava support scripts
     timeout: 240
-  - {class: actions.deploy.apply_overlay.ApplyOverlayGuest, description: prepare a
-      qcow2 drive containing the overlay, level: '1.7', max_retries: 1, name: apply-overlay-guest,
-    summary: build a guest filesystem with the overlay, timeout: 240}
-  - {class: actions.deploy.environment.DeployDeviceEnvironment, description: deploy
-      device environment, level: '1.8', max_retries: 1, name: deploy-device-env, summary: deploy
-      device environment, timeout: 240}
+  - {class: ApplyOverlayGuest, description: prepare a qcow2 drive containing the overlay,
+    level: '1.7', max_retries: 1, name: apply-overlay-guest, summary: build a guest
+      filesystem with the overlay, timeout: 240}
+  - {class: DeployDeviceEnvironment, description: deploy device environment, level: '1.8',
+    max_retries: 1, name: deploy-device-env, summary: deploy device environment, timeout: 240}
   summary: pull kernel and initrd out of iso
   timeout: 240
-- class: actions.boot.iso.BootIsoInstallerAction
+- class: BootIsoInstallerAction
   description: boot installer with preseed
   level: '2'
   max_retries: 1
   name: boot-installer-iso
   pipeline:
-  - {class: actions.boot.iso.IsoCommandLine, description: add dynamic data values
-      to command line and execute, level: '2.1', max_retries: 1, name: execute-installer-command,
-    summary: include downloaded locations and call qemu, timeout: 1200}
-  - {class: actions.boot.iso.MonitorInstallerSession, description: Monitor installer
-      operation, level: '2.2', max_retries: 1, name: monitor-installer-connection,
-    summary: Watch for error strings or end of install, timeout: 1200}
-  - {class: actions.boot.iso.IsoRebootAction, description: reboot and login to the
-      new system, level: '2.3', max_retries: 1, name: reboot-into-installed, summary: reboot
-      into installed image, timeout: 1200}
-  - class: actions.boot.AutoLoginAction
+  - {class: IsoCommandLine, description: add dynamic data values to command line and
+      execute, level: '2.1', max_retries: 1, name: execute-installer-command, summary: include
+      downloaded locations and call qemu, timeout: 1200}
+  - {class: MonitorInstallerSession, description: Monitor installer operation, level: '2.2',
+    max_retries: 1, name: monitor-installer-connection, summary: Watch for error strings
+      or end of install, timeout: 1200}
+  - {class: IsoRebootAction, description: reboot and login to the new system, level: '2.3',
+    max_retries: 1, name: reboot-into-installed, summary: reboot into installed image,
+    timeout: 1200}
+  - class: AutoLoginAction
     description: automatically login after boot using job parameters and checking
       for messages.
     level: '2.4'
     max_retries: 1
     name: auto-login-action
     pipeline:
-    - {class: actions.boot.LoginAction, description: Real login action., level: 2.4.1,
-      max_retries: 1, name: login-action, summary: Login after boot., timeout: 1200}
+    - {class: LoginAction, description: Real login action., level: 2.4.1, max_retries: 1,
+      name: login-action, summary: Login after boot., timeout: 1200}
     summary: Auto-login after boot with support for kernel messages.
     timeout: 1200
-  - {class: shell.ExpectShellSession, description: Wait for a shell, level: '2.5',
-    max_retries: 1, name: expect-shell-connection, summary: Expect a shell prompt,
-    timeout: 1200}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, description: Exports
-      environment variables to the device, level: '2.6', max_retries: 1, name: export-device-env,
-    summary: Exports environment variables action, timeout: 1200}
+  - {class: ExpectShellSession, description: Wait for a shell, level: '2.5', max_retries: 1,
+    name: expect-shell-connection, summary: Expect a shell prompt, timeout: 1200}
+  - {class: ExportDeviceEnvironment, description: Exports environment variables to
+      the device, level: '2.6', max_retries: 1, name: export-device-env, summary: Exports
+      environment variables action, timeout: 1200}
   summary: boot installer iso image
   timeout: 1200
-- class: actions.test.shell.TestShellRetry
+- class: TestShellRetry
   description: Retry wrapper for lava-test-shell
   level: '3'
   max_retries: 1
   name: lava-test-retry
   pipeline:
-  - {class: actions.test.shell.TestShellAction, description: Executing lava-test-runner,
-    level: '3.1', max_retries: 1, name: lava-test-shell, summary: Lava Test Shell,
-    timeout: 1080}
+  - {class: TestShellAction, description: Executing lava-test-runner, level: '3.1',
+    max_retries: 1, name: lava-test-shell, summary: Lava Test Shell, timeout: 1080}
   summary: Retry support for Lava Test Shell
   timeout: 1080
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '4'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '4.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '4.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 600}
   summary: finalize the job

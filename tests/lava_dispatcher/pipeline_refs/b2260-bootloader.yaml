@@ -1,51 +1,51 @@
-- class: actions.boot.bootloader.BootBootloaderRetry
+- class: BootBootloaderRetry
   description: boot to bootloader with retry
   level: '1'
   max_retries: 1
   name: boot-bootloader-retry
   pipeline:
-  - {class: actions.boot.BootloaderCommandOverlay, description: substitute job data
-      into bootloader command list, level: '1.1', max_retries: 1, name: bootloader-overlay,
-    summary: replace placeholders with job data, timeout: 30}
-  - class: actions.boot.bootloader.BootBootloaderAction
+  - {class: BootloaderCommandOverlay, description: substitute job data into bootloader
+      command list, level: '1.1', max_retries: 1, name: bootloader-overlay, summary: replace
+      placeholders with job data, timeout: 30}
+  - class: BootBootloaderAction
     description: boot to bootloader
     level: '1.2'
     max_retries: 1
     name: boot-bootloader
     pipeline:
-    - {class: connections.serial.ConnectDevice, description: use the configured command
-        to connect serial to the device, level: 1.2.1, max_retries: 1, name: connect-device,
-      summary: run connection command, timeout: 30}
-    - class: power.ResetDevice
+    - {class: ConnectDevice, description: use the configured command to connect serial
+        to the device, level: 1.2.1, max_retries: 1, name: connect-device, summary: run
+        connection command, timeout: 30}
+    - class: ResetDevice
       description: reboot or power-cycle the device
       level: 1.2.2
       max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-          a device, level: 1.2.2.1, max_retries: 1, name: pdu-reboot, summary: hard
-          reboot using PDU, timeout: 30}
+      - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+        level: 1.2.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using
+          PDU, timeout: 30}
       summary: reboot the device
       timeout: 30
-    - {class: actions.boot.BootloaderInterruptAction, description: interrupt bootloader,
-      level: 1.2.3, max_retries: 1, name: bootloader-interrupt, summary: interrupt
-        bootloader to get an interactive shell, timeout: 30}
-    - {class: actions.boot.BootloaderCommandsAction, description: send commands to
-        bootloader, level: 1.2.4, max_retries: 1, name: bootloader-commands, summary: interactive
+    - {class: BootloaderInterruptAction, description: interrupt bootloader, level: 1.2.3,
+      max_retries: 1, name: bootloader-interrupt, summary: interrupt bootloader to
+        get an interactive shell, timeout: 30}
+    - {class: BootloaderCommandsAction, description: send commands to bootloader,
+      level: 1.2.4, max_retries: 1, name: bootloader-commands, summary: interactive
         bootloader, timeout: 180}
     summary: boot bootloader
     timeout: 30
   summary: boot bootloader retry
   timeout: 30
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '2'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '2.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 15}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '2.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 15}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '2.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 30}
   summary: finalize the job
