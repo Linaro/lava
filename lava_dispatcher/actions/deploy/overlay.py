@@ -11,7 +11,7 @@ import shutil
 import stat
 import tarfile
 
-from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.logical import Deployment
@@ -88,7 +88,10 @@ class CreateOverlay(Action):
         )
 
         lava_test_results_dir = self.get_constant("lava_test_results_dir", "posix")
-        lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        try:
+            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+        except ValueError:
+            raise JobError("Invalid lava_test_results_dir, should include '%s'")
         self.set_namespace_data(
             action="test",
             label="results",
