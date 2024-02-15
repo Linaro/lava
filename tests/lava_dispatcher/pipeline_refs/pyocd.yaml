@@ -1,64 +1,61 @@
-- class: actions.deploy.image.DeployImagesAction
+- class: DeployImagesAction
   description: deploy images using guestfs
   level: '1'
   max_retries: 1
   name: deployimages
   pipeline:
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.1'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 1.1.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 180, url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 180, url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
     summary: download-retry
     timeout: 180
   summary: deploy images
   timeout: 180
-- class: actions.boot.pyocd.BootPyOCD
+- class: BootPyOCD
   description: boot pyocd image with retry
   level: '2'
   max_retries: 1
   name: boot-pyocd-image
   pipeline:
-  - class: actions.boot.pyocd.BootPyOCDRetry
+  - class: BootPyOCDRetry
     description: boot pyocd image using the command line interface
     level: '2.1'
     max_retries: 1
     name: boot-pyocd-image
     pipeline:
-    - {class: actions.boot.pyocd.FlashPyOCDAction, description: flash pyocd to boot
-        the image, level: 2.1.1, max_retries: 1, name: flash-pyocd, summary: flash
-        pyocd to boot the image, timeout: 600}
-    - {class: connections.serial.ConnectDevice, description: use the configured command
-        to connect serial to the device, level: 2.1.2, max_retries: 1, name: connect-device,
-      summary: run connection command, timeout: 600}
+    - {class: FlashPyOCDAction, description: flash pyocd to boot the image, level: 2.1.1,
+      max_retries: 1, name: flash-pyocd, summary: flash pyocd to boot the image, timeout: 600}
+    - {class: ConnectDevice, description: use the configured command to connect serial
+        to the device, level: 2.1.2, max_retries: 1, name: connect-device, summary: run
+        connection command, timeout: 600}
     summary: boot pyocd image
     timeout: 600
   summary: boot pyocd image with retry
   timeout: 600
-- class: actions.test.monitor.TestMonitorRetry
+- class: TestMonitorRetry
   description: Retry wrapper for lava-test-monitor
   level: '3'
   max_retries: 1
   name: lava-test-monitor-retry
   pipeline:
-  - {class: actions.test.monitor.TestMonitorAction, description: Executing lava-test-monitor,
-    level: '3.1', max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor,
-    timeout: 180}
+  - {class: TestMonitorAction, description: Executing lava-test-monitor, level: '3.1',
+    max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor, timeout: 180}
   summary: Retry support for Lava Test Monitoring
   timeout: 180
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '4'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '4.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '4.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 180}
   summary: finalize the job

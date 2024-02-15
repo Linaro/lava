@@ -163,9 +163,8 @@ class Pipeline:
         """
         desc = []
         for action in self.actions:
-            cls = str(type(action))[8:-2].replace("lava_dispatcher.", "")
             current = {
-                "class": cls,
+                "class": type(action).__name__,
                 "name": action.name,
                 "level": action.level,
                 "max_retries": action.max_retries,

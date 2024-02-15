@@ -1,94 +1,91 @@
-- class: actions.deploy.musca.MuscaAction
+- class: MuscaAction
   description: deploy image to Musca device
   level: '1'
   max_retries: 1
   name: musca-deploy
   pipeline:
-  - {class: connections.serial.DisconnectDevice, description: disconnect from console,
-    level: '1.1', max_retries: 1, name: disconnect-device, summary: disconnect from
-      console, timeout: 30}
-  - class: actions.deploy.download.DownloaderAction
+  - {class: DisconnectDevice, description: disconnect from console, level: '1.1',
+    max_retries: 1, name: disconnect-device, summary: disconnect from console, timeout: 30}
+  - class: DownloaderAction
     description: download with retry
     level: '1.2'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 1.2.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 300, url: 'https://community.arm.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-10/MuscaBlinky_5F00_v002.hex'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 1.2.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 300, url: 'https://community.arm.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-10/MuscaBlinky_5F00_v002.hex'}
     summary: download-retry
     timeout: 300
-  - class: power.ResetDevice
+  - class: ResetDevice
     description: reboot or power-cycle the device
     level: '1.3'
     max_retries: 1
     name: reset-device
     pipeline:
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-        a device, level: 1.3.1, max_retries: 1, name: pdu-reboot, summary: hard reboot
-        using PDU, timeout: 60}
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+      level: 1.3.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
+      timeout: 60}
     summary: reboot the device
     timeout: 60
-  - {class: actions.deploy.musca.WaitMuscaMassStorageAction, description: wait for
-      musca mass storage, level: '1.4', max_retries: 1, name: wait-musca-path, summary: wait
-      for musca mass storage, timeout: 30}
-  - {class: actions.deploy.musca.MountMuscaMassStorageDevice, description: mount musca
-      usb msd, level: '1.5', max_retries: 1, name: mount-musca-usbmsd, summary: mount
-      musca usb mass storage device on the dispatcher, timeout: 30}
-  - {class: actions.deploy.musca.DeployMuscaTestBinary, description: deploy test binary
-      to usb msd, level: '1.6', max_retries: 1, name: deploy-musca-test-binary, summary: copy
-      test binary to Musca device, timeout: 30}
-  - {class: actions.deploy.musca.UnmountMuscaMassStorageDevice, description: unmount
-      musca usb msd, level: '1.7', max_retries: 1, name: unmount-musca-usbmsd, summary: unmount
-      musca usb mass storage device, timeout: 30}
-  - {class: actions.deploy.musca.WaitMuscaMassStorageAction, description: wait for
-      musca mass storage, level: '1.8', max_retries: 1, name: wait-musca-path, summary: wait
-      for musca mass storage, timeout: 30}
-  - {class: actions.deploy.musca.MountMuscaMassStorageDevice, description: mount musca
-      usb msd, level: '1.9', max_retries: 1, name: mount-musca-usbmsd, summary: mount
-      musca usb mass storage device on the dispatcher, timeout: 30}
-  - {class: actions.deploy.musca.CheckMuscaFlashAction, description: checks if software
-      flashed to the musca correctly, level: '1.10', max_retries: 1, name: check-musca-flash,
-    summary: check for FAIL.TXT on musca, timeout: 30}
-  - {class: actions.deploy.musca.UnmountMuscaMassStorageDevice, description: unmount
-      musca usb msd, level: '1.11', max_retries: 1, name: unmount-musca-usbmsd, summary: unmount
-      musca usb mass storage device, timeout: 30}
+  - {class: WaitMuscaMassStorageAction, description: wait for musca mass storage,
+    level: '1.4', max_retries: 1, name: wait-musca-path, summary: wait for musca mass
+      storage, timeout: 30}
+  - {class: MountMuscaMassStorageDevice, description: mount musca usb msd, level: '1.5',
+    max_retries: 1, name: mount-musca-usbmsd, summary: mount musca usb mass storage
+      device on the dispatcher, timeout: 30}
+  - {class: DeployMuscaTestBinary, description: deploy test binary to usb msd, level: '1.6',
+    max_retries: 1, name: deploy-musca-test-binary, summary: copy test binary to Musca
+      device, timeout: 30}
+  - {class: UnmountMuscaMassStorageDevice, description: unmount musca usb msd, level: '1.7',
+    max_retries: 1, name: unmount-musca-usbmsd, summary: unmount musca usb mass storage
+      device, timeout: 30}
+  - {class: WaitMuscaMassStorageAction, description: wait for musca mass storage,
+    level: '1.8', max_retries: 1, name: wait-musca-path, summary: wait for musca mass
+      storage, timeout: 30}
+  - {class: MountMuscaMassStorageDevice, description: mount musca usb msd, level: '1.9',
+    max_retries: 1, name: mount-musca-usbmsd, summary: mount musca usb mass storage
+      device on the dispatcher, timeout: 30}
+  - {class: CheckMuscaFlashAction, description: checks if software flashed to the
+      musca correctly, level: '1.10', max_retries: 1, name: check-musca-flash, summary: check
+      for FAIL.TXT on musca, timeout: 30}
+  - {class: UnmountMuscaMassStorageDevice, description: unmount musca usb msd, level: '1.11',
+    max_retries: 1, name: unmount-musca-usbmsd, summary: unmount musca usb mass storage
+      device, timeout: 30}
   summary: Musca device image deployment
   timeout: 180
-- class: actions.boot.musca.MuscaBoot
+- class: MuscaBoot
   description: power device and trigger software to run
   level: '2'
   max_retries: 1
   name: musca-boot
   pipeline:
-  - class: power.ResetDevice
+  - class: ResetDevice
     description: reboot or power-cycle the device
     level: '2.1'
     max_retries: 1
     name: reset-device
     pipeline:
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-        a device, level: 2.1.1, max_retries: 1, name: pdu-reboot, summary: hard reboot
-        using PDU, timeout: 60}
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+      level: 2.1.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
+      timeout: 60}
     summary: reboot the device
     timeout: 60
-  - {class: utils.udev.WaitUSBSerialDeviceAction, description: wait for USB serial
-      device, level: '2.2', max_retries: 1, name: wait-usb-serial, summary: wait for
-      USB serial device, timeout: 30}
-  - {class: connections.serial.ConnectDevice, description: use the configured command
-      to connect serial to the device, level: '2.3', max_retries: 1, name: connect-device,
-    summary: run connection command, timeout: 30}
+  - {class: WaitUSBSerialDeviceAction, description: wait for USB serial device, level: '2.2',
+    max_retries: 1, name: wait-usb-serial, summary: wait for USB serial device, timeout: 30}
+  - {class: ConnectDevice, description: use the configured command to connect serial
+      to the device, level: '2.3', max_retries: 1, name: connect-device, summary: run
+      connection command, timeout: 30}
   summary: power device and trigger software to run
   timeout: 60
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '3'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '3.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 35}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '3.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 35}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '3.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 30}
   summary: finalize the job

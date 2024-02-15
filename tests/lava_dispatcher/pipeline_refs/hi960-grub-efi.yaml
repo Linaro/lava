@@ -1,175 +1,171 @@
-- class: actions.deploy.lxc.LxcAction
+- class: LxcAction
   description: download files and deploy using lxc
   level: '1'
   max_retries: 1
   name: lxc-deploy
   pipeline:
-  - {class: actions.deploy.lxc.LxcCreateAction, description: create lxc action, level: '1.1',
-    max_retries: 1, name: lxc-create-action, summary: create lxc, timeout: 900}
-  - {class: actions.deploy.lxc.LxcCreateUdevRuleAction, description: create lxc udev
-      rule action, level: '1.2', max_retries: 1, name: lxc-create-udev-rule-action,
-    summary: create lxc udev rule, timeout: 900}
-  - {class: actions.boot.lxc.LxcStartAction, description: boot into lxc container,
-    level: '1.3', max_retries: 1, name: boot-lxc, summary: attempt to boot, timeout: 900}
-  - {class: actions.deploy.lxc.LxcAptUpdateAction, description: lxc apt update action,
-    level: '1.4', max_retries: 1, name: lxc-apt-update, summary: lxc apt update, timeout: 900}
-  - {class: actions.deploy.lxc.LxcAptInstallAction, description: lxc apt install packages
-      action, level: '1.5', max_retries: 1, name: lxc-apt-install, summary: lxc apt
-      install, timeout: 900}
-  - {class: actions.boot.lxc.LxcStopAction, description: stop the lxc container, level: '1.6',
-    max_retries: 1, name: lxc-stop, summary: stop lxc, timeout: 900}
+  - {class: LxcCreateAction, description: create lxc action, level: '1.1', max_retries: 1,
+    name: lxc-create-action, summary: create lxc, timeout: 900}
+  - {class: LxcCreateUdevRuleAction, description: create lxc udev rule action, level: '1.2',
+    max_retries: 1, name: lxc-create-udev-rule-action, summary: create lxc udev rule,
+    timeout: 900}
+  - {class: LxcStartAction, description: boot into lxc container, level: '1.3', max_retries: 1,
+    name: boot-lxc, summary: attempt to boot, timeout: 900}
+  - {class: LxcAptUpdateAction, description: lxc apt update action, level: '1.4',
+    max_retries: 1, name: lxc-apt-update, summary: lxc apt update, timeout: 900}
+  - {class: LxcAptInstallAction, description: lxc apt install packages action, level: '1.5',
+    max_retries: 1, name: lxc-apt-install, summary: lxc apt install, timeout: 900}
+  - {class: LxcStopAction, description: stop the lxc container, level: '1.6', max_retries: 1,
+    name: lxc-stop, summary: stop lxc, timeout: 900}
   summary: lxc deployment
   timeout: 900
-- class: actions.boot.lxc.BootLxcAction
+- class: BootLxcAction
   description: lxc boot into the system
   level: '2'
   max_retries: 1
   name: lxc-boot
   pipeline:
-  - {class: actions.boot.lxc.LxcStartAction, description: boot into lxc container,
-    level: '2.1', max_retries: 1, name: boot-lxc, summary: attempt to boot, timeout: 300}
-  - {class: actions.boot.lxc.LxcAddStaticDevices, description: Add devices which are
-      permanently powered by the worker to the LXC, level: '2.2', max_retries: 1,
-    name: lxc-add-static, summary: Add static devices to the LXC, timeout: 300}
-  - {class: connections.lxc.ConnectLxc, description: connect to the lxc container,
-    level: '2.3', max_retries: 1, name: connect-lxc, summary: run connection command,
-    timeout: 300}
-  - {class: shell.ExpectShellSession, description: Wait for a shell, level: '2.4',
-    max_retries: 1, name: expect-shell-connection, summary: Expect a shell prompt,
-    timeout: 300}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, description: Exports
-      environment variables to the device, level: '2.5', max_retries: 1, name: export-device-env,
-    summary: Exports environment variables action, timeout: 300}
+  - {class: LxcStartAction, description: boot into lxc container, level: '2.1', max_retries: 1,
+    name: boot-lxc, summary: attempt to boot, timeout: 300}
+  - {class: LxcAddStaticDevices, description: Add devices which are permanently powered
+      by the worker to the LXC, level: '2.2', max_retries: 1, name: lxc-add-static,
+    summary: Add static devices to the LXC, timeout: 300}
+  - {class: ConnectLxc, description: connect to the lxc container, level: '2.3', max_retries: 1,
+    name: connect-lxc, summary: run connection command, timeout: 300}
+  - {class: ExpectShellSession, description: Wait for a shell, level: '2.4', max_retries: 1,
+    name: expect-shell-connection, summary: Expect a shell prompt, timeout: 300}
+  - {class: ExportDeviceEnvironment, description: Exports environment variables to
+      the device, level: '2.5', max_retries: 1, name: export-device-env, summary: Exports
+      environment variables action, timeout: 300}
   summary: lxc boot
   timeout: 300
-- class: actions.deploy.fastboot.FastbootAction
+- class: FastbootAction
   description: download files and deploy using fastboot
   level: '3'
   max_retries: 1
   name: fastboot-deploy
   pipeline:
-  - {class: connections.serial.ConnectDevice, description: use the configured command
-      to connect serial to the device, level: '3.1', max_retries: 1, name: connect-device,
-    summary: run connection command, timeout: 1200}
-  - class: power.ResetDevice
+  - {class: ConnectDevice, description: use the configured command to connect serial
+      to the device, level: '3.1', max_retries: 1, name: connect-device, summary: run
+      connection command, timeout: 1200}
+  - class: ResetDevice
     description: reboot or power-cycle the device
     level: '3.2'
     max_retries: 1
     name: reset-device
     pipeline:
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-        a device, level: 3.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot
-        using PDU, timeout: 1200}
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+      level: 3.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
+      timeout: 1200}
     summary: reboot the device
     timeout: 1200
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '3.3'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 3.3.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 1200, url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 3.3.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 1200,
+      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img'}
     summary: download-retry
     timeout: 1200
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '3.4'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 3.4.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 1200, url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 3.4.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 1200,
+      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img'}
     summary: download-retry
     timeout: 1200
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '3.5'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
-        download the file, level: 3.5.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 1200, url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz'}
+    - {class: HttpDownloadAction, description: use http to download the file, level: 3.5.1,
+      max_retries: 1, name: http-download, summary: http download, timeout: 1200,
+      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz'}
     summary: download-retry
     timeout: 1200
-  - class: actions.deploy.fastboot.FastbootFlashOrderAction
+  - class: FastbootFlashOrderAction
     description: Determine support for each flash operation
     level: '3.6'
     max_retries: 1
     name: fastboot-flash-order-action
     pipeline:
-    - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    - {class: ReadFeedback, description: Check for messages on all other namespaces,
       level: 3.6.1, max_retries: 1, name: read-feedback, summary: Read from other
         namespaces, timeout: 1200}
-    - {class: utils.udev.WaitDeviceBoardID, description: wait for udev device with
-        board ID, level: 3.6.2, max_retries: 1, name: wait-device-boardid, summary: wait
-        for udev device with board ID, timeout: 1200}
-    - {class: actions.deploy.fastboot.FastbootFlashAction, description: Run a specified
-        flash command, level: 3.6.3, max_retries: 1, name: fastboot-flash-action,
-      summary: Execute fastboot flash command, timeout: 1200}
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
-        a device, level: 3.6.4, max_retries: 1, name: pdu-reboot, summary: hard reboot
-        using PDU, timeout: 1200}
-    - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    - {class: WaitDeviceBoardID, description: wait for udev device with board ID,
+      level: 3.6.2, max_retries: 1, name: wait-device-boardid, summary: wait for udev
+        device with board ID, timeout: 1200}
+    - {class: FastbootFlashAction, description: Run a specified flash command, level: 3.6.3,
+      max_retries: 1, name: fastboot-flash-action, summary: Execute fastboot flash
+        command, timeout: 1200}
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
+      level: 3.6.4, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
+      timeout: 1200}
+    - {class: ReadFeedback, description: Check for messages on all other namespaces,
       level: 3.6.5, max_retries: 1, name: read-feedback, summary: Read from other
         namespaces, timeout: 1200}
-    - {class: utils.udev.WaitDeviceBoardID, description: wait for udev device with
-        board ID, level: 3.6.6, max_retries: 1, name: wait-device-boardid, summary: wait
-        for udev device with board ID, timeout: 1200}
-    - {class: actions.deploy.fastboot.FastbootFlashAction, description: Run a specified
-        flash command, level: 3.6.7, max_retries: 1, name: fastboot-flash-action,
-      summary: Execute fastboot flash command, timeout: 1200}
-    - {class: actions.deploy.fastboot.FastbootReboot, description: Reset a device
-        between flash operations using fastboot reboot., level: 3.6.8, max_retries: 1,
-      name: fastboot-reboot, summary: execute a reboot using fastboot, timeout: 1200}
-    - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+    - {class: WaitDeviceBoardID, description: wait for udev device with board ID,
+      level: 3.6.6, max_retries: 1, name: wait-device-boardid, summary: wait for udev
+        device with board ID, timeout: 1200}
+    - {class: FastbootFlashAction, description: Run a specified flash command, level: 3.6.7,
+      max_retries: 1, name: fastboot-flash-action, summary: Execute fastboot flash
+        command, timeout: 1200}
+    - {class: FastbootReboot, description: Reset a device between flash operations
+        using fastboot reboot., level: 3.6.8, max_retries: 1, name: fastboot-reboot,
+      summary: execute a reboot using fastboot, timeout: 1200}
+    - {class: ReadFeedback, description: Check for messages on all other namespaces,
       level: 3.6.9, max_retries: 1, name: read-feedback, summary: Read from other
         namespaces, timeout: 1200}
-    - {class: utils.udev.WaitDeviceBoardID, description: wait for udev device with
-        board ID, level: 3.6.10, max_retries: 1, name: wait-device-boardid, summary: wait
-        for udev device with board ID, timeout: 1200}
-    - {class: actions.deploy.fastboot.FastbootFlashAction, description: Run a specified
-        flash command, level: 3.6.11, max_retries: 1, name: fastboot-flash-action,
-      summary: Execute fastboot flash command, timeout: 1200}
+    - {class: WaitDeviceBoardID, description: wait for udev device with board ID,
+      level: 3.6.10, max_retries: 1, name: wait-device-boardid, summary: wait for
+        udev device with board ID, timeout: 1200}
+    - {class: FastbootFlashAction, description: Run a specified flash command, level: 3.6.11,
+      max_retries: 1, name: fastboot-flash-action, summary: Execute fastboot flash
+        command, timeout: 1200}
     summary: Handle reset and options for each flash url.
     timeout: 1200
   summary: fastboot deployment
   timeout: 1200
-- class: actions.boot.grub.GrubSequenceAction
+- class: GrubSequenceAction
   description: grub boot sequence
   level: '4'
   max_retries: 1
   name: grub-sequence-action
   pipeline:
-  - {class: actions.boot.fastboot.WaitFastBootInterrupt, description: Check for prompt
-      and pass the interrupt string to exit fastboot., level: '4.1', max_retries: 1,
-    name: wait-fastboot-interrupt, summary: watch output and try to interrupt fastboot,
-    timeout: 300}
-  - class: actions.boot.AutoLoginAction
+  - {class: WaitFastBootInterrupt, description: Check for prompt and pass the interrupt
+      string to exit fastboot., level: '4.1', max_retries: 1, name: wait-fastboot-interrupt,
+    summary: watch output and try to interrupt fastboot, timeout: 300}
+  - class: AutoLoginAction
     description: automatically login after boot using job parameters and checking
       for messages.
     level: '4.2'
     max_retries: 1
     name: auto-login-action
     pipeline:
-    - {class: actions.boot.LoginAction, description: Real login action., level: 4.2.1,
-      max_retries: 1, name: login-action, summary: Login after boot., timeout: 300}
+    - {class: LoginAction, description: Real login action., level: 4.2.1, max_retries: 1,
+      name: login-action, summary: Login after boot., timeout: 300}
     summary: Auto-login after boot with support for kernel messages.
     timeout: 300
   summary: run grub boot using specified sequence of actions
   timeout: 300
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '5'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '5.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: PowerOff, description: discontinue power to device, level: '5.1', max_retries: 1,
+    name: power-off, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '5.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 600}
   summary: finalize the job

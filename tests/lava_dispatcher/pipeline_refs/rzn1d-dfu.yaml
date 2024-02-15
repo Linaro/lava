@@ -1,226 +1,226 @@
-- class: actions.deploy.image.DeployImagesAction
+- class: DeployImagesAction
   description: deploy images using guestfs
   level: '1'
   max_retries: 1
   name: deployimages
   pipeline:
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.1'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+    - {class: HttpDownloadAction, description: use http to
         download the file, level: 1.1.1, max_retries: 1, name: http-download, summary: http
         download, timeout: 300, url: 'http://.../fitImage-1.0-r0-rzn1-snarc.itb'}
     summary: download-retry
     timeout: 300
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.2'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+    - {class: HttpDownloadAction, description: use http to
         download the file, level: 1.2.1, max_retries: 1, name: http-download, summary: http
         download, timeout: 300, url: 'http://.../rzn1d-snarc-fsbl-secmon.img'}
     summary: download-retry
     timeout: 300
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.3'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+    - {class: HttpDownloadAction, description: use http to
         download the file, level: 1.3.1, max_retries: 1, name: http-download, summary: http
         download, timeout: 300, url: 'http://.../u-boot-lces2-ddr.itb'}
     summary: download-retry
     timeout: 300
-  - class: actions.deploy.download.DownloaderAction
+  - class: DownloaderAction
     description: download with retry
     level: '1.4'
     max_retries: 3
     name: download-retry
     pipeline:
-    - {class: actions.deploy.download.HttpDownloadAction, description: use http to
+    - {class: HttpDownloadAction, description: use http to
         download the file, level: 1.4.1, max_retries: 1, name: http-download, summary: http
         download, timeout: 300, url: 'http://.../u-boot-lces2-ddr.itb'}
     summary: download-retry
     timeout: 300
   summary: deploy images
   timeout: 300
-- {class: actions.commands.CommandAction, description: execute one of the commands
+- {class: CommandAction, description: execute one of the commands
     listed by the admin, level: '2', max_retries: 1, name: user-command, summary: execute
     commands, timeout: 300}
-- class: actions.boot.dfu.BootDFURetry
+- class: BootDFURetry
   description: boot dfu image using the command line interface
   level: '3'
   max_retries: 1
   name: boot-dfu-retry
   pipeline:
-  - {class: connections.serial.ConnectDevice, description: use the configured command
+  - {class: ConnectDevice, description: use the configured command
       to connect serial to the device, level: '3.1', max_retries: 1, name: connect-device,
     summary: run connection command, timeout: 300}
-  - class: power.ResetDevice
+  - class: ResetDevice
     description: reboot or power-cycle the device
     level: '3.2'
     max_retries: 1
     name: reset-device
     pipeline:
-    - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
+    - {class: PDUReboot, description: issue commands to a PDU to power cycle
         a device, level: 3.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot
         using PDU, timeout: 600}
     summary: reboot the device
     timeout: 600
-  - {class: actions.boot.BootloaderInterruptAction, description: interrupt bootloader,
+  - {class: BootloaderInterruptAction, description: interrupt bootloader,
     level: '3.3', max_retries: 1, name: bootloader-interrupt, summary: interrupt bootloader
       to get an interactive shell, timeout: 600}
-  - {class: actions.boot.dfu.EnterDFU, description: enter software dfu mode, level: '3.4',
+  - {class: EnterDFU, description: enter software dfu mode, level: '3.4',
     max_retries: 1, name: enter-dfu, summary: enter software dfu mode, timeout: 300}
-  - {class: utils.udev.WaitDFUDeviceAction, description: wait for DFU device, level: '3.5',
+  - {class: WaitDFUDeviceAction, description: wait for DFU device, level: '3.5',
     max_retries: 1, name: wait-dfu-device, summary: wait for DFU device, timeout: 300}
-  - {class: actions.boot.dfu.FlashDFUAction, description: use dfu to flash the images,
+  - {class: FlashDFUAction, description: use dfu to flash the images,
     level: '3.6', max_retries: 1, name: flash-dfu, summary: use dfu to flash the images,
     timeout: 300}
   summary: boot dfu image
   timeout: 600
-- {class: actions.commands.CommandAction, description: execute one of the commands
+- {class: CommandAction, description: execute one of the commands
     listed by the admin, level: '4', max_retries: 1, name: user-command, summary: execute
     commands, timeout: 300}
-- class: actions.deploy.overlay.OverlayAction
+- class: OverlayAction
   description: add lava scripts during deployment for test shell use
   level: '5'
   max_retries: 1
   name: lava-overlay
   pipeline:
-  - {class: actions.deploy.overlay.SshAuthorize, description: include public key in
+  - {class: SshAuthorize, description: include public key in
       overlay and authorize root user, level: '5.1', max_retries: 1, name: ssh-authorize,
     summary: add public key to authorized_keys, timeout: 300}
-  - {class: actions.deploy.overlay.VlandOverlayAction, description: Populate specific
+  - {class: VlandOverlayAction, description: Populate specific
       vland scripts for tests to lookup vlan data., level: '5.2', max_retries: 1,
     name: lava-vland-overlay, summary: Add files detailing vlan configuration., timeout: 300}
-  - {class: actions.deploy.overlay.MultinodeOverlayAction, description: add lava scripts
+  - {class: MultinodeOverlayAction, description: add lava scripts
       during deployment for multinode test shell use, level: '5.3', max_retries: 1,
     name: lava-multinode-overlay, summary: overlay the lava multinode scripts, timeout: 300}
-  - class: actions.deploy.testdef.TestDefinitionAction
+  - class: TestDefinitionAction
     description: load test definitions into image
     level: '5.4'
     max_retries: 1
     name: test-definition
     pipeline:
-    - {class: actions.deploy.testdef.GitRepoAction, description: apply git repository
+    - {class: GitRepoAction, description: apply git repository
         of tests to the test image, level: 5.4.1, max_retries: 1, name: git-repo-action,
       summary: clone git test repo, timeout: 300}
-    - {class: actions.deploy.testdef.TestOverlayAction, description: overlay test
+    - {class: TestOverlayAction, description: overlay test
         support files onto image, level: 5.4.2, max_retries: 1, name: test-overlay,
       summary: applying LAVA test overlay, timeout: 300}
-    - {class: actions.deploy.testdef.TestInstallAction, description: overlay dependency
+    - {class: TestInstallAction, description: overlay dependency
         installation support files onto image, level: 5.4.3, max_retries: 1, name: test-install-overlay,
       summary: applying LAVA test install scripts, timeout: 300}
-    - {class: actions.deploy.testdef.TestRunnerAction, description: overlay run script
+    - {class: TestRunnerAction, description: overlay run script
         onto image, level: 5.4.4, max_retries: 1, name: test-runscript-overlay, summary: applying
         LAVA test run script, timeout: 300}
     summary: loading test definitions
     timeout: 300
-  - {class: actions.deploy.overlay.CompressOverlay, description: Create a lava overlay
+  - {class: CompressOverlay, description: Create a lava overlay
       tarball and store alongside the job, level: '5.5', max_retries: 1, name: compress-overlay,
     summary: Compress the lava overlay files, timeout: 300}
-  - {class: actions.deploy.overlay.PersistentNFSOverlay, description: unpack overlay
+  - {class: PersistentNFSOverlay, description: unpack overlay
       into persistent NFS, level: '5.6', max_retries: 1, name: persistent-nfs-overlay,
     summary: add test overlay to NFS, timeout: 300}
   summary: overlay the lava support scripts
   timeout: 300
-- class: actions.boot.bootloader.BootBootloaderRetry
+- class: BootBootloaderRetry
   description: boot to bootloader with retry
   level: '6'
   max_retries: 1
   name: boot-bootloader-retry
   pipeline:
-  - {class: actions.boot.BootloaderCommandOverlay, description: substitute job data
+  - {class: BootloaderCommandOverlay, description: substitute job data
       into bootloader command list, level: '6.1', max_retries: 1, name: bootloader-overlay,
     summary: replace placeholders with job data, timeout: 300}
-  - class: actions.boot.bootloader.BootBootloaderAction
+  - class: BootBootloaderAction
     description: boot to bootloader
     level: '6.2'
     max_retries: 1
     name: boot-bootloader
     pipeline:
-    - {class: connections.serial.ConnectDevice, description: use the configured command
+    - {class: ConnectDevice, description: use the configured command
         to connect serial to the device, level: 6.2.1, max_retries: 1, name: connect-device,
       summary: run connection command, timeout: 300}
-    - class: power.ResetDevice
+    - class: ResetDevice
       description: reboot or power-cycle the device
       level: 6.2.2
       max_retries: 1
       name: reset-device
       pipeline:
-      - {class: power.PDUReboot, description: issue commands to a PDU to power cycle
+      - {class: PDUReboot, description: issue commands to a PDU to power cycle
           a device, level: 6.2.2.1, max_retries: 1, name: pdu-reboot, summary: hard
           reboot using PDU, timeout: 30}
       summary: reboot the device
       timeout: 30
-    - {class: actions.boot.BootloaderInterruptAction, description: interrupt bootloader,
+    - {class: BootloaderInterruptAction, description: interrupt bootloader,
       level: 6.2.3, max_retries: 1, name: bootloader-interrupt, summary: interrupt
         bootloader to get an interactive shell, timeout: 30}
-    - {class: actions.boot.BootloaderCommandsAction, description: send commands to
+    - {class: BootloaderCommandsAction, description: send commands to
         bootloader, level: 6.2.4, max_retries: 1, name: bootloader-commands, summary: interactive
         bootloader, timeout: 180}
     summary: boot bootloader
     timeout: 300
   summary: boot bootloader retry
   timeout: 300
-- class: actions.boot.minimal.MinimalBoot
+- class: MinimalBoot
   description: connect and reset device
   level: '7'
   max_retries: 1
   name: minimal-boot
   pipeline:
-  - {class: connections.serial.ConnectDevice, description: use the configured command
+  - {class: ConnectDevice, description: use the configured command
       to connect serial to the device, level: '7.1', max_retries: 1, name: connect-device,
     summary: run connection command, timeout: 300}
-  - class: actions.boot.AutoLoginAction
+  - class: AutoLoginAction
     description: automatically login after boot using job parameters and checking
       for messages.
     level: '7.2'
     max_retries: 1
     name: auto-login-action
     pipeline:
-    - {class: actions.boot.LoginAction, description: Real login action., level: 7.2.1,
+    - {class: LoginAction, description: Real login action., level: 7.2.1,
       max_retries: 1, name: login-action, summary: Login after boot., timeout: 300}
     summary: Auto-login after boot with support for kernel messages.
     timeout: 300
-  - {class: shell.ExpectShellSession, description: Wait for a shell, level: '7.3',
+  - {class: ExpectShellSession, description: Wait for a shell, level: '7.3',
     max_retries: 1, name: expect-shell-connection, summary: Expect a shell prompt,
     timeout: 300}
-  - {class: actions.boot.OverlayUnpack, description: transfer and unpack overlay to
+  - {class: OverlayUnpack, description: transfer and unpack overlay to
       persistent rootfs after login, level: '7.4', max_retries: 1, name: overlay-unpack,
     summary: transfer and unpack overlay, timeout: 300}
-  - {class: actions.boot.environment.ExportDeviceEnvironment, description: Exports
+  - {class: ExportDeviceEnvironment, description: Exports
       environment variables to the device, level: '7.5', max_retries: 1, name: export-device-env,
     summary: Exports environment variables action, timeout: 300}
   summary: connect and reset device
   timeout: 300
-- class: actions.test.shell.TestShellRetry
+- class: TestShellRetry
   description: Retry wrapper for lava-test-shell
   level: '8'
   max_retries: 1
   name: lava-test-retry
   pipeline:
-  - {class: actions.test.shell.TestShellAction, description: Executing lava-test-runner,
+  - {class: TestShellAction, description: Executing lava-test-runner,
     level: '8.1', max_retries: 1, name: lava-test-shell, summary: Lava Test Shell,
     timeout: 300}
   summary: Retry support for Lava Test Shell
   timeout: 300
-- class: power.FinalizeAction
+- class: FinalizeAction
   description: finish the process and cleanup
   level: '9'
   max_retries: 1
   name: finalize
   pipeline:
-  - {class: power.PowerOff, description: discontinue power to device, level: '9.1',
+  - {class: PowerOff, description: discontinue power to device, level: '9.1',
     max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
-  - {class: power.ReadFeedback, description: Check for messages on all other namespaces,
+  - {class: ReadFeedback, description: Check for messages on all other namespaces,
     level: '9.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
     timeout: 300}
   summary: finalize the job
