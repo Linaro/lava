@@ -72,8 +72,6 @@ def check_ssh_identity_file(params):
         )
     if not os.path.exists(identity_file):
         return "Cannot find SSH private key %s" % identity_file, None
-    if not os.path.exists("%s.pub" % identity_file):
-        return "Cannot find SSH public key %s.pub" % identity_file, None
     return None, identity_file
 
 
