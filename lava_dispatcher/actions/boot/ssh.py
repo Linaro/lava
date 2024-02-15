@@ -50,8 +50,7 @@ class SshAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        scp = Scp("overlay")
-        self.pipeline.add_action(scp)
+        self.pipeline.add_action(Scp("overlay"))
         self.pipeline.add_action(PrepareSsh())
         self.pipeline.add_action(ConnectSsh())
         self.pipeline.add_action(AutoLoginAction(booting=False))
@@ -158,10 +157,10 @@ class Scp(ConnectSsh):
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
-        destination = self.get_namespace_data(
+        lava_test_results_dir = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
-        destination = "%s-%s" % (destination, os.path.basename(path))
+        destination = os.path.join(lava_test_results_dir, os.path.basename(path))
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
         command.extend(self.scp_port)
@@ -172,6 +171,11 @@ class Scp(ConnectSsh):
         command.extend(
             ["-o", "UserKnownHostsFile=/dev/null", "-o", "StrictHostKeyChecking=no"]
         )
+
+        self.logger.debug("Create the remote directory %s", lava_test_results_dir)
+        connection.sendline("mkdir -p %s" % lava_test_results_dir)
+        connection.wait()
+
         # add the local file as source
         command.append(path)
         command_str = " ".join(str(item) for item in command)
@@ -256,7 +260,16 @@ class ScpOverlayUnpack(Action):
         tar_flags = self.get_namespace_data(
             action="scp-overlay", label="scp-overlay", key="tar_flags"
         )
-        cmd = "tar %s -C / -xzf %s" % (tar_flags, filename)
+
+        lava_test_results_dir = self.get_namespace_data(
+            action="test", label="results", key="lava_test_results_dir"
+        )
+
+        cmd = "tar %s -C %s -xzf %s" % (
+            tar_flags,
+            os.path.dirname(lava_test_results_dir),
+            filename,
+        )
         connection.sendline(cmd)
         self.wait(connection)
         return connection
