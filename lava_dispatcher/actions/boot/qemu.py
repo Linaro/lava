@@ -14,7 +14,7 @@ from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
+from lava_dispatcher.actions.boot import OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.logical import Boot, RetryAction
@@ -23,6 +23,8 @@ from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -55,7 +57,7 @@ class BootQEMU(Boot):
         return True, "accepted"
 
 
-class BootQEMUImageAction(BootHasMixin, RetryAction):
+class BootQEMUImageAction(RetryAction):
     name = "boot-image-retry"
     description = "boot image with retry"
     summary = "boot with retry"
@@ -63,7 +65,7 @@ class BootQEMUImageAction(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(BootQemuRetry(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

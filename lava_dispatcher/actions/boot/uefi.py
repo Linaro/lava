@@ -10,8 +10,6 @@ from typing import TYPE_CHECKING
 from lava_common.constants import UEFI_LINE_SEPARATOR
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     OverlayUnpack,
@@ -22,6 +20,8 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.menus.menus import MenuConnect, MenuInterrupt
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.action import Action
@@ -57,7 +57,7 @@ class UefiShell(Boot):
         )
 
 
-class UefiShellAction(BootHasMixin, RetryAction):
+class UefiShellAction(RetryAction):
     name = "uefi-shell-main-action"
     description = "UEFI shell boot action"
     summary = "run UEFI shell to system"
@@ -94,7 +94,7 @@ class UefiShellAction(BootHasMixin, RetryAction):
             self.pipeline.add_action(UefiShellMenuSelector(self.job))
         self.pipeline.add_action(UefiShellInterrupt(self.job))
         self.pipeline.add_action(UefiBootloaderCommandsAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

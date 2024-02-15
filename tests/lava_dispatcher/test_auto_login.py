@@ -6,7 +6,7 @@
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 

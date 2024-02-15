@@ -13,11 +13,8 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
-    BootloaderCommandsActionAltBank,
     BootloaderInterruptAction,
     BootloaderSecondaryMedia,
     OverlayUnpack,
@@ -31,6 +28,8 @@ from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.storage import FlashUBootUMSAction
 from lava_dispatcher.utils.strings import map_kernel_uboot
 from lava_dispatcher.utils.udev import WaitDevicePathAction
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -88,7 +87,7 @@ class UBootAction(RetryAction):
         self.pipeline.add_action(UBootCommandsAction(self.job))
 
 
-class UBootCommandsAction(BootHasMixin, Action):
+class UBootCommandsAction(Action):
     name = "uboot-commands"
     description = "interactive uboot commands action"
     summary = "uboot commands"
@@ -126,7 +125,7 @@ class UBootCommandsAction(BootHasMixin, Action):
             self.pipeline.add_action(BootloaderCommandsAction(self.job))
         else:
             self.pipeline.add_action(BootloaderCommandsAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))
@@ -265,4 +264,46 @@ class UBootEnterFastbootAction(RetryAction):
             if index + 1 < len(commands):
                 self.wait(connection)
 
+        return connection
+
+
+class BootloaderCommandsActionAltBank(BootloaderCommandsAction):
+    """
+    Send the "uboot_altbank_cmd" command to the bootloader
+    """
+
+    name = "bootloader-commands-altbank"
+    description = "send commands to bootloader altbank"
+    summary = "interactive bootloader altbank"
+
+    def run(self, connection, max_end_time):
+        if not connection:
+            self.errors = "%s started without a connection already in use" % self.name
+        connection = super().run(connection, max_end_time)
+        connection.raw_connection.linesep = self.line_separator()
+        connection.prompt_str = [self.params["bootloader_prompt"]]
+        at_bootloader_prompt = self.get_namespace_data(
+            action="interrupt", label="interrupt", key="at_bootloader_prompt"
+        )
+        if not at_bootloader_prompt:
+            self.wait(connection, max_end_time)
+        error_messages = self.job.device.get_constant(
+            "error-messages", prefix=self.method, missing_ok=True
+        )
+        final_message = self.job.device.get_constant(
+            "final-message", prefix=self.method, missing_ok=True
+        )
+        if error_messages:
+            if isinstance(connection.prompt_str, str):
+                connection.prompt_str = [connection.prompt_str]
+            connection.prompt_str = connection.prompt_str + error_messages
+        command = self.params.get("uboot_altbank_cmd")
+        connection.sendline(command, delay=self.character_delay)
+        if final_message and self.expect_final:
+            connection.prompt_str = [final_message]
+            self.wait(connection, max_end_time)
+
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
         return connection

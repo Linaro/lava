@@ -11,9 +11,10 @@ from pathlib import Path
 from unittest.mock import ANY, PropertyMock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.actions.boot import AutoLoginAction, BootloaderInterruptAction
+from lava_dispatcher.actions.boot import BootloaderInterruptAction
 from lava_dispatcher.actions.boot.fastboot import BootFastbootAction
 from lava_dispatcher.actions.boot.grub import GrubSequenceAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootAction, FastbootFlashAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction

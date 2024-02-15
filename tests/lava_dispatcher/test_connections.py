@@ -13,7 +13,7 @@ import lava_dispatcher
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from lava_dispatcher.actions.boot.ssh import PrepareSsh, SchrootAction, Scp, SshAction
 from lava_dispatcher.actions.boot.u_boot import UBootCommandsAction
 from lava_dispatcher.actions.deploy.overlay import SshAuthorize

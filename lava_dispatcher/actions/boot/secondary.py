@@ -8,11 +8,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
+from lava_dispatcher.actions.boot import OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.action import Action
@@ -40,7 +42,7 @@ class SecondaryShell(Boot):
         return True, "accepted"
 
 
-class SecondaryShellAction(BootHasMixin, RetryAction):
+class SecondaryShellAction(RetryAction):
     name = "secondary-shell-action"
     description = "Connect to a secondary shell on specified hardware"
     summary = "connect to a specified second shell"
@@ -49,7 +51,7 @@ class SecondaryShellAction(BootHasMixin, RetryAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         name = parameters["connection"]
         self.pipeline.add_action(ConnectShell(self.job, name=name))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job, booting=False))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

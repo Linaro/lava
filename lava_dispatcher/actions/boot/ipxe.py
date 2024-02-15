@@ -12,8 +12,6 @@ from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     BootloaderInterruptAction,
@@ -24,6 +22,8 @@ from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -71,7 +71,7 @@ class BootloaderAction(Action):
         self.pipeline.add_action(BootloaderRetry(self.job))
 
 
-class BootloaderRetry(BootHasMixin, RetryAction):
+class BootloaderRetry(RetryAction):
     name = "bootloader-retry"
     description = "interactive uboot retry action"
     summary = "uboot commands with retry"
@@ -88,7 +88,7 @@ class BootloaderRetry(BootHasMixin, RetryAction):
         self.pipeline.add_action(BootloaderInterruptAction(self.job))
         # need to look for Hit any key to stop autoboot
         self.pipeline.add_action(BootloaderCommandsAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

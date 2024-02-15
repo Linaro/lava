@@ -15,12 +15,13 @@ from avh_api.model.instance_state import InstanceState
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.network import retry
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -40,7 +41,7 @@ class BootAvh(Boot):
         return True, "accepted"
 
 
-class BootAvhAction(BootHasMixin, RetryAction):
+class BootAvhAction(RetryAction):
     name = "boot-avh"
     description = "boot avh device"
     summary = "boot avh device"
@@ -48,7 +49,7 @@ class BootAvhAction(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(CallAvhAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

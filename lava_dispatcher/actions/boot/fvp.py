@@ -14,10 +14,12 @@ from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
+from lava_dispatcher.actions.boot import OverlayUnpack
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -39,7 +41,7 @@ class BootFVP(Boot):
         return True, "accepted"
 
 
-class BootFVPAction(BootHasMixin, RetryAction):
+class BootFVPAction(RetryAction):
     name = "boot-fvp"
     description = "boot fvp"
     summary = "boot fvp"
@@ -47,7 +49,7 @@ class BootFVPAction(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(BootFVPMain(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(ReadFeedback(self.job))
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):

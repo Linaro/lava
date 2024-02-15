@@ -13,8 +13,6 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     BootloaderInterruptAction,
@@ -25,6 +23,8 @@ from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -73,7 +73,7 @@ class BareboxAction(Action):
         self.pipeline.add_action(BareboxRetry(self.job))
 
 
-class BareboxRetry(BootHasMixin, RetryAction):
+class BareboxRetry(RetryAction):
     name = "barebox-retry"
     description = "interactive barebox retry action"
     summary = "barebox commands with retry"
@@ -84,7 +84,7 @@ class BareboxRetry(BootHasMixin, RetryAction):
         self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(BootloaderInterruptAction(self.job))
         self.pipeline.add_action(BootloaderCommandsAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

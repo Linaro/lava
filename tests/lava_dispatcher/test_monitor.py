@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 

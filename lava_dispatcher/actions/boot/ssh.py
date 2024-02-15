@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import ConnectSsh
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job

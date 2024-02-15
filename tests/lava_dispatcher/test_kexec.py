@@ -6,9 +6,9 @@
 
 from unittest.mock import patch
 
-from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.kexec import BootKexecAction, KexecAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
 from lava_dispatcher.shell import ExpectShellSession
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase

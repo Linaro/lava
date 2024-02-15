@@ -15,7 +15,7 @@ from pexpect import EOF as pexpect_eof
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, LoginAction
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction, LoginAction
 from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction, CallQemuAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction

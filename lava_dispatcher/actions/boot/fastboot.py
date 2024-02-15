@@ -6,16 +6,12 @@
 from __future__ import annotations
 
 import shlex
+from os.path import join as os_path_join
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import (
-    AdbOverlayUnpack,
-    AutoLoginAction,
-    BootHasMixin,
-    OverlayUnpack,
-)
+from lava_dispatcher.actions.boot import OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.connections.adb import ConnectAdb
@@ -24,8 +20,11 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import PreOs, ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
+from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -75,7 +74,7 @@ class BootFastbootCommands(OptionalContainerFastbootAction):
             self.run_fastboot(shlex.split(command))
 
 
-class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAction):
+class BootFastbootAction(RetryAction, OptionalContainerFastbootAction):
     """
     Provide for auto_login parameters in this boot stanza and re-establish the
     connection after boot.
@@ -131,7 +130,7 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         if self.job.device.hard_reset_command:
             if not self.is_container():
                 self.pipeline.add_action(PreOs(self.job))
-            if self.has_prompts(parameters):
+            if AutoLoginAction.params_have_prompts(parameters):
                 self.pipeline.add_action(AutoLoginAction(self.job))
                 if self.test_has_shell(parameters):
                     self.pipeline.add_action(ExpectShellSession(self.job))
@@ -335,4 +334,52 @@ class EnterFastbootAction(OptionalContainerFastbootAction, OptionalContainerAdbA
                     self.results = {"status": lines[0].strip()}
                 else:
                     self.results = {"fail": self.name}
+        return connection
+
+
+class AdbOverlayUnpack(Action):
+    name = "adb-overlay-unpack"
+    summary = "unpack the overlay on the remote device"
+    description = "unpack the overlay over adb"
+
+    def validate(self):
+        super().validate()
+        if "adb_serial_number" not in self.job.device:
+            self.errors = "device adb serial number missing"
+            if self.job.device["adb_serial_number"] == "0000000000":
+                self.errors = "device adb serial number unset"
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        if not connection:
+            raise LAVABug("Cannot transfer overlay, no connection available.")
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
+        if not overlay_file:
+            raise JobError("No overlay file identified for the transfer.")
+        serial_number = self.job.device["adb_serial_number"]
+        host_dir = self.mkdtemp()
+        target_dir = "/data/local"
+        untar_file(overlay_file, host_dir)
+        host_dir = os_path_join(host_dir, "data/local/tmp")
+        adb_cmd = ["adb", "-s", serial_number, "push", host_dir, target_dir]
+        command_output = self.run_command(adb_cmd)
+        if command_output and "pushed" not in command_output.lower():
+            raise JobError("Unable to push overlay files with adb: %s" % command_output)
+        adb_cmd = [
+            "adb",
+            "-s",
+            serial_number,
+            "shell",
+            "/system/bin/chmod",
+            "-R",
+            "0777",
+            os_path_join(target_dir, "tmp"),
+        ]
+        command_output = self.run_command(adb_cmd)
+        if command_output and "pushed" not in command_output.lower():
+            raise JobError(
+                "Unable to chmod overlay files with adb: %s" % command_output
+            )
         return connection

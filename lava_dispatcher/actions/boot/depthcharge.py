@@ -14,8 +14,6 @@ from lava_common.exceptions import ConfigurationError, InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
     BootloaderCommandOverlay,
     BootloaderCommandsAction,
     OverlayUnpack,
@@ -27,6 +25,8 @@ from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -174,7 +174,7 @@ class DepthchargeAction(Action):
         self.pipeline.add_action(DepthchargeRetry(self.job))
 
 
-class DepthchargeRetry(BootHasMixin, RetryAction):
+class DepthchargeRetry(RetryAction):
     name = "depthcharge-retry"
     description = "interactive depthcharge retry action"
     summary = "depthcharge commands with retry"
@@ -185,7 +185,7 @@ class DepthchargeRetry(BootHasMixin, RetryAction):
         self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(DepthchargeStart(self.job))
         self.pipeline.add_action(BootloaderCommandsAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))

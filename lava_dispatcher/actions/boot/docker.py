@@ -12,11 +12,12 @@ from typing import TYPE_CHECKING
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -38,7 +39,7 @@ class BootDocker(Boot):
         return True, "accepted"
 
 
-class BootDockerAction(BootHasMixin, RetryAction):
+class BootDockerAction(RetryAction):
     name = "boot-docker"
     description = "boot docker image"
     summary = "boot docker image"
@@ -46,7 +47,7 @@ class BootDockerAction(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(CallDockerAction(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             if self.test_has_shell(parameters):
                 self.pipeline.add_action(ExpectShellSession(self.job))
                 self.pipeline.add_action(ExportDeviceEnvironment(self.job))

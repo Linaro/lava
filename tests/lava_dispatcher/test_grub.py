@@ -12,7 +12,6 @@ from lava_common.exceptions import JobError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderInterruptAction,
 )
@@ -21,6 +20,7 @@ from lava_dispatcher.actions.boot.grub import (
     GrubMenuSelector,
     GrubSequenceAction,
 )
+from lava_dispatcher.actions.boot.login_subactions import AutoLoginAction
 from lava_dispatcher.actions.boot.secondary import SecondaryShellAction
 from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt
 from lava_dispatcher.actions.deploy.apply_overlay import (

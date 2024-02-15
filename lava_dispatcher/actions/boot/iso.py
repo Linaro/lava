@@ -11,12 +11,13 @@ from typing import TYPE_CHECKING
 from lava_common.constants import INSTALLER_QUIET_MSG
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job

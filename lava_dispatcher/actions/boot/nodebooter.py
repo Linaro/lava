@@ -16,10 +16,12 @@ import requests
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
+from lava_dispatcher.actions.boot import OverlayUnpack
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.docker import DockerRun
+
+from .login_subactions import AutoLoginAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -47,7 +49,7 @@ class BootNodebooter(Boot):
         return True, "accepted"
 
 
-class BootNodebooterAction(BootHasMixin, RetryAction):
+class BootNodebooterAction(RetryAction):
     name = "boot-nodebooter"
     description = "boot nodebooter"
     summary = "boot nodebooter"
@@ -60,7 +62,7 @@ class BootNodebooterAction(BootHasMixin, RetryAction):
         self.pipeline.add_action(ConfigureNodebooter(self.job))
 
         self.pipeline.add_action(ResetDevice(self.job))
-        if self.has_prompts(parameters):
+        if AutoLoginAction.params_have_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
         if "transfer_overlay" in parameters:
             self.pipeline.add_action(OverlayUnpack(self.job))
