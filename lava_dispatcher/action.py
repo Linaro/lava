@@ -663,13 +663,8 @@ class Action:
             raise LAVABug("commands to run_cmd need to be a list or a string")
         command_list = [str(s) for s in command_list]
 
-        # Build the error message
-        log_error_msg = "Unable to run '%s'" % "' '".join(command_list)
-        if error_msg is None:
-            error_msg = log_error_msg
-
         # Start the subprocess
-        self.logger.debug("Calling: '%s'", "' '".join(command_list))
+        self.logger.debug("Calling: %r", command_list)
         start = time.monotonic()
 
         cmd_logger = CommandLogger(self.logger)
@@ -706,7 +701,9 @@ class Action:
 
         # Check the return value
         if ret != 0 and not allow_fail:
-            self.logger.error("Unable to run '%s'", command_list)
+            self.logger.error("Unable to run: %r", command_list)
+            if error_msg is None:
+                error_msg = f"Unable to run: {command_list!r}"
             raise self.command_exception(error_msg)
         return ret
 
