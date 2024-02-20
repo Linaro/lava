@@ -18,8 +18,6 @@ from lava_dispatcher.utils.network import dispatcher_ip
 
 
 class BootDocker(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootDockerAction()

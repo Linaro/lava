@@ -21,8 +21,6 @@ class BootLxc(Boot):
     Attaches to the lxc container.
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return BootLxcAction()

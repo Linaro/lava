@@ -19,8 +19,6 @@ from lava_dispatcher.utils.strings import substitute
 
 
 class BootIsoInstaller(Boot):
-    compatibility = 3
-
     @classmethod
     def action(cls):
         return BootIsoInstallerAction()
@@ -130,7 +128,6 @@ class MonitorInstallerSession(Action):
     all that is needed is a prompt.
     """
 
-    compatibility = 3
     name = "monitor-installer-connection"
     description = "Monitor installer operation"
     summary = "Watch for error strings or end of install"

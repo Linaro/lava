@@ -19,8 +19,6 @@ from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 
 class BootFVP(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootFVPAction()

@@ -22,8 +22,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class UefiShell(Boot):
-    compatibility = 3
-
     @classmethod
     def action(cls):
         return UefiShellAction()

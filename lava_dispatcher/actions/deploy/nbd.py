@@ -33,7 +33,6 @@ class Nbd(Deployment):
     rootfs deployments would format the device and create a single partition for the rootfs.
     """
 
-    compatibility = 1
     name = "nbd"
 
     @classmethod

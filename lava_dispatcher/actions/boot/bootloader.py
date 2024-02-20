@@ -16,8 +16,6 @@ from lava_dispatcher.power import ResetDevice
 
 
 class BootBootloader(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootBootloaderRetry()

@@ -16,8 +16,6 @@ from lava_dispatcher.utils.udev import WaitDFUDeviceAction
 
 
 class DFU(Boot):
-    compatibility = 4  # FIXME: change this to 5 and update test cases
-
     @classmethod
     def action(cls):
         return BootDFURetry()

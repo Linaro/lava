@@ -19,8 +19,6 @@ from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 
 class GDB(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootGDB()

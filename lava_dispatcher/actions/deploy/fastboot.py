@@ -31,7 +31,6 @@ class Fastboot(Deployment):
     Downloads the relevant parts, copies to the locations using fastboot.
     """
 
-    compatibility = 1
     name = "fastboot"
 
     @classmethod

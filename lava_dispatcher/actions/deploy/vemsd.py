@@ -33,7 +33,6 @@ class VExpressMsd(Deployment):
     to target device
     """
 
-    compatibility = 1
     name = "vemsd"
 
     @classmethod

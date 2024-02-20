@@ -21,8 +21,6 @@ class BootKExec(Boot):
     prepares the arguments to run kexec,
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return BootKexecAction()

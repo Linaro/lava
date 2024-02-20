@@ -33,8 +33,6 @@ class IPXE(Boot):
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return BootloaderAction()

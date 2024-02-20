@@ -100,7 +100,6 @@ class FlasherAction(Action):
 
 
 class Flasher(Deployment):
-    compatibility = 4
     name = "flasher"
 
     @classmethod

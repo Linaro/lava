@@ -33,8 +33,6 @@ class BootQEMU(Boot):
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootQEMUImageAction()

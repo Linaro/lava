@@ -71,7 +71,6 @@ class DeployIsoAction(Action):
 
 
 class DeployIso(Deployment):
-    compatibility = 3
     name = "iso"
 
     @classmethod

@@ -19,8 +19,6 @@ from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 
 class Musca(Boot):
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return MuscaBoot()

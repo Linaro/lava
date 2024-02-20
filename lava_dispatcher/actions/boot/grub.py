@@ -27,8 +27,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class GrubSequence(Boot):
-    compatibility = 3
-
     @classmethod
     def action(cls):
         return GrubSequenceAction()
@@ -49,8 +47,6 @@ class GrubSequence(Boot):
 
 
 class Grub(Boot):
-    compatibility = 3
-
     @classmethod
     def action(cls):
         return GrubMainAction()

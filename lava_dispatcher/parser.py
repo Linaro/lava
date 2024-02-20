@@ -58,7 +58,6 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
 
     action.section = cls.section
     pipeline.add_action(action, parameters)
-    pipeline.job.compatibility = max(cls.compatibility, pipeline.job.compatibility)
     return cls
 
 
@@ -169,15 +168,5 @@ class JobParser:
         pipeline.add_action(finalize)
         finalize.populate(None)
         job.pipeline = pipeline
-        if "compatibility" in data:
-            try:
-                job_c = int(job.compatibility)
-                data_c = int(data["compatibility"])
-            except ValueError as exc:
-                raise JobError("invalid compatibility value: %s" % exc)
-            if job_c < data_c:
-                raise JobError(
-                    "Dispatcher unable to meet job compatibility requirement. %d > %d"
-                    % (job_c, data_c)
-                )
+
         return job

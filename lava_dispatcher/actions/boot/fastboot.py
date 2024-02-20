@@ -45,8 +45,6 @@ class BootFastboot(Boot):
     Expects fastboot bootloader, and boots.
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return BootFastbootAction()

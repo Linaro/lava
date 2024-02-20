@@ -14,8 +14,6 @@ from lava_dispatcher.shell import ExpectShellSession
 
 
 class Minimal(Boot):
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return MinimalBoot()

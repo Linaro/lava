@@ -22,7 +22,6 @@ class UUU(Deployment):
     Downloads images and apply overlay if needed.
     """
 
-    compatibility = 1
     name = "uuu"
 
     @classmethod

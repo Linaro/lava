@@ -22,8 +22,6 @@ from lava_dispatcher.utils.network import retry
 
 
 class BootAvh(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootAvhAction()

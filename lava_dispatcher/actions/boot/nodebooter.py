@@ -25,8 +25,6 @@ NIC_NO_OF_SUPPORTED = 4
 
 
 class BootNodebooter(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return BootNodebooterAction()

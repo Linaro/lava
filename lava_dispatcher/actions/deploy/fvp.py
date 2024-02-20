@@ -12,7 +12,6 @@ from lava_dispatcher.logical import Deployment
 
 
 class FVP(Deployment):
-    compatibility = 1
     name = "fvp"
 
     @classmethod

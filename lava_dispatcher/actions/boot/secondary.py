@@ -20,8 +20,6 @@ class SecondaryShell(Boot):
     It is also the updated way to connect to the primary console.
     """
 
-    compatibility = 6
-
     @classmethod
     def action(cls):
         return SecondaryShellAction()

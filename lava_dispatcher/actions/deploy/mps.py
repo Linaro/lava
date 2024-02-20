@@ -31,7 +31,6 @@ class Mps(Deployment):
     Downloads board recovery image and deploys to target
     """
 
-    compatibility = 1
     name = "mps"
 
     @classmethod

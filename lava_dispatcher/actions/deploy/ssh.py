@@ -29,7 +29,6 @@ class Ssh(Deployment):
     typically the overlay.
     """
 
-    compatibility = 1
     name = "ssh"
 
     @classmethod

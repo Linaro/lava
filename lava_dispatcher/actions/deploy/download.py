@@ -879,7 +879,6 @@ class Download(Deployment):
     Downloads the relevant parts, copies to LXC if available.
     """
 
-    compatibility = 1
     name = "download"
 
     @classmethod

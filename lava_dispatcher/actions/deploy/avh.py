@@ -25,7 +25,6 @@ from lava_dispatcher.utils.network import retry
 
 
 class Avh(Deployment):
-    compatibility = 4
     name = "avh"
 
     @classmethod

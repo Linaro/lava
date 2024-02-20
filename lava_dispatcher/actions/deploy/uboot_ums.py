@@ -18,7 +18,6 @@ class UBootUMS(Deployment):
     Downloads the relevant parts, and applies the test overlay into the image.
     """
 
-    compatibility = 1
     name = "uboot-ums"
 
     @classmethod

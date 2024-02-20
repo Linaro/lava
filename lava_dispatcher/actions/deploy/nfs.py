@@ -25,7 +25,6 @@ class Nfs(Deployment):
     Downloads rootfs and deploys to NFS server on dispatcher
     """
 
-    compatibility = 1
     name = "nfs"
 
     @classmethod

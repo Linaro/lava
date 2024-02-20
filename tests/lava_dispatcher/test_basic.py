@@ -32,7 +32,6 @@ from lava_common.schemas.device import validate as validate_device
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.image import DeployImages
 from lava_dispatcher.device import NewDevice, PipelineDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
@@ -453,36 +452,6 @@ class TestPipeline(LavaDispatcherTestCase):
             if "pipeline" in item:
                 for element in item["pipeline"]:
                     self.assertNotIn("match", element)
-
-    def test_compatibility(self):
-        """
-        Test compatibility support.
-
-        The class to use in the comparison will change according to which class
-        is related to the change which caused the compatibility to be modified.
-        """
-        factory = Factory()
-        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        self.assertIsNotNone(job)
-        pipe = job.describe()
-        self.assertEqual(pipe["compatibility"], DeployImages.compatibility)
-        self.assertEqual(job.compatibility, DeployImages.compatibility)
-        kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
-        with open(kvm_yaml) as kvm_yaml:
-            job_def = yaml_safe_load(kvm_yaml)
-        job_def["compatibility"] = job.compatibility
-        parser = JobParser()
-        (rendered, data) = factory.create_device("kvm01.jinja2")
-        device = yaml_safe_load(rendered)
-        job = parser.parse(yaml_safe_dump(job_def), device, 4212, None, "")
-        self.assertIsNotNone(job)
-        job_def["compatibility"] = job.compatibility + 1
-        self.assertRaises(
-            JobError, parser.parse, yaml_safe_dump(job_def), device, 4212, None, ""
-        )
-        job_def["compatibility"] = 0
-        job = parser.parse(yaml_safe_dump(job_def), device, 4212, None, "")
-        self.assertIsNotNone(job)
 
     def test_pipeline_actions(self):
         factory = Factory()
