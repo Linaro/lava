@@ -367,7 +367,7 @@ class Command(BaseCommand):
             if job.is_multinode:
                 definition = job.multinode_definition
             else:
-                definition = job.original_definition
+                definition = job.definition
             data = yaml_safe_load(definition)
             try:
                 validate(data, strict, settings.EXTRA_CONTEXT_VARIABLES)

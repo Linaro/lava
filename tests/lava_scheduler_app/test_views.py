@@ -676,7 +676,7 @@ def test_job_resubmit(client, monkeypatch, setup):
     job_6 = TestJob.objects.get(description="test job 06")
     monkeypatch.setattr(
         "lava_scheduler_app.views.testjob_submission",
-        lambda job_definition, user, original_job: job_6,
+        lambda job_definition, user: job_6,
     )
     job_1 = TestJob.objects.get(description="test job 01")
     assert client.login(username="tester", password="tester") is True  # nosec

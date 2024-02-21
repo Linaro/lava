@@ -419,14 +419,6 @@ class TestJobFilter(filters.FilterSet):
                 "startswith",
                 "endswith",
             ],
-            "original_definition": [
-                "exact",
-                "in",
-                "contains",
-                "icontains",
-                "startswith",
-                "endswith",
-            ],
             "multinode_definition": [
                 "exact",
                 "in",

@@ -779,7 +779,7 @@ class SchedulerAPI(ExposedV2API):
         The elements available in XML-RPC structure include:
         _state, submitter_id, is_pipeline, id, failure_comment,
         multinode_definition, priority, _actual_device_cache,
-        original_definition, status, health_check, description,
+        status, health_check, description,
         start_time, target_group, submit_time,
         is_public, _old_status, actual_device_id, definition, sub_id,
         requested_device_type_id, end_time, absolute_url, submitter_username

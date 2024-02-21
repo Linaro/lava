@@ -165,7 +165,6 @@ class TestJobViewSet(viewsets.ModelViewSet):
         "health",
         "priority",
         "definition",
-        "original_definition",
         "multinode_definition",
         "failure_tags",
         "failure_comment",

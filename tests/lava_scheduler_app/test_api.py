@@ -171,9 +171,9 @@ class TestSchedulerAPI(TestCaseWithFactory):
         definition = self.factory.make_job_data_from_file(
             "qemu-pipeline-first-job.yaml"
         )
-        job1 = testjob_submission(definition, user, None)
-        job2 = testjob_submission(definition, user, None)
-        job3 = testjob_submission(definition, user, None)
+        job1 = testjob_submission(definition, user)
+        job2 = testjob_submission(definition, user)
+        job3 = testjob_submission(definition, user)
         server = self.server_proxy()
 
         now = timezone.now()

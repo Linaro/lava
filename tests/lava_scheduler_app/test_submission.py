@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import json
 import logging
 import os
 from pathlib import Path
@@ -153,7 +152,7 @@ class TestCaseWithFactory(TestCase):
 class TestTestJob(TestCaseWithFactory):
     def test_preserve_comments(self):
         """
-        TestJob.original_definition must preserve comments, if supplied.
+        TestJob.definition must preserve comments, if supplied.
         """
         definition = self.factory.make_job_data_from_file(
             "qemu-pipeline-first-job.yaml"
@@ -168,7 +167,7 @@ class TestTestJob(TestCaseWithFactory):
         job = TestJob.from_yaml_and_user(definition, user)
         job.refresh_from_db()
         self.assertEqual(user, job.submitter)
-        for line in job.original_definition.split():
+        for line in job.definition.split():
             if line.startswith("#"):
                 break
             self.fail("Comments have not been preserved after submission")
@@ -187,23 +186,6 @@ class TestTestJob(TestCaseWithFactory):
         )
         self.assertTrue(user.has_perm("lava_scheduler_app.change_device"))
 
-    def test_json_yaml(self):
-        self.factory.cleanup()
-        user = self.factory.make_user()
-        dt = self.factory.make_device_type(name="qemu")
-        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
-        device.save()
-        definition = self.factory.make_job_data_from_file(
-            "qemu-pipeline-first-job.yaml"
-        )
-        # convert content of file to JSON string
-        json_def = json.dumps(yaml_safe_load(definition))
-        job = testjob_submission(json_def, user, None)
-        # check that submitted JSON is now YAML
-        self.assertRaises(json.decoder.JSONDecodeError, json.loads, job.definition)
-        yaml_safe_load(job.definition)
-        self.assertIsInstance(job.definition, str)
-
     def test_job_data(self):
         self.factory.cleanup()
         user = self.factory.make_user()
@@ -213,7 +195,7 @@ class TestTestJob(TestCaseWithFactory):
         definition = self.factory.make_job_data_from_file(
             "qemu-pipeline-first-job.yaml"
         )
-        job = testjob_submission(definition, user, None)
+        job = testjob_submission(definition, user)
         data = job.create_job_data()
         self.assertIsNotNone(data)
         self.assertIn("start_time", data)
@@ -232,7 +214,7 @@ class TestTestJob(TestCaseWithFactory):
         alias_name = "qemu_foo"
         alias = self.factory.make_device_type_alias(dt, name=alias_name)
         definition = self.factory.make_job_data_from_file("qemu-foo.yaml")
-        job = testjob_submission(definition, user, None)
+        job = testjob_submission(definition, user)
         self.assertEqual(job.requested_device_type, dt)
 
     def test_nonexisting_device_type_alias(self):
@@ -245,7 +227,7 @@ class TestTestJob(TestCaseWithFactory):
         alias = self.factory.make_device_type_alias(dt, name=alias_name)
         definition = self.factory.make_job_data_from_file("qemu-foo-nonexisting.yaml")
         self.assertRaises(
-            DevicesUnavailableException, testjob_submission, definition, user, None
+            DevicesUnavailableException, testjob_submission, definition, user
         )
 
 

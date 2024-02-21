@@ -670,6 +670,7 @@ def _export_query(query_results, content_type, filename):
         "definition",
         "group_id",
         "multinode_definition",
+        # TODO: Remove once TestJob.original_definition gets removed
         "original_definition",
         "health_check",
         "sub_id",

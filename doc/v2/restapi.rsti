@@ -140,13 +140,6 @@ TestJob object
     * icontains
     * startswith
     * endswith
-- original_definition (text field)
-    * exact
-    * in
-    * contains
-    * icontains
-    * startswith
-    * endswith
 - multinode_definition (text field)
     * exact
     * in

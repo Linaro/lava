@@ -133,9 +133,7 @@ class SchedulerJobsAPI(ExposedV2API):
                 403, "Job '%s' not available to user '%s'." % (job_id, self.user)
             )
 
-        if job.is_multinode:
-            return job.multinode_definition
-        return job.original_definition
+        return job.definition if not job.is_multinode else job.multinode_definition
 
     def list(
         self,

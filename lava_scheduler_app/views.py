@@ -1696,9 +1696,7 @@ def job_detail(request, pk):
     # Validate the job definition
     validation_errors = ""
     try:
-        job_def = (
-            job.multinode_definition if job.is_multinode else job.original_definition
-        )
+        job_def = job.multinode_definition if job.is_multinode else job.definition
         validate(
             yaml_safe_load(job_def),
             extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
@@ -2207,11 +2205,9 @@ def job_resubmit(request, pk):
 
         if is_resubmit:
             try:
-                original = job
                 job = testjob_submission(
                     request.POST.get("definition-input"),
                     request.user,
-                    original_job=original,
                 )
                 if isinstance(job, list):
                     response_data["job_list"] = [j.sub_id for j in job]

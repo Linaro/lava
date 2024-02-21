@@ -214,14 +214,12 @@ def schedule_health_checks_for_device_type(logger, dt, workers):
 
 
 def schedule_health_check(device, definition):
-    user = User.objects.get(username="lava-health")
     job = _create_pipeline_job(
-        yaml_safe_load(definition),
-        user,
-        [],
+        job_definition_dict=yaml_safe_load(definition),
+        job_definition_yaml_str=definition,
+        user=User.objects.get(username="lava-health"),
         device=device,
         device_type=device.device_type,
-        orig=definition,
         health_check=True,
     )
     fields = job.go_state_scheduled(device)

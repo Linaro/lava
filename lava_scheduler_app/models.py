@@ -13,6 +13,7 @@ import logging
 import os
 import uuid
 from json import dump as json_dump
+from typing import TYPE_CHECKING
 
 import requests
 import yaml
@@ -21,12 +22,7 @@ from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.sites.models import Site
-from django.core.exceptions import (
-    ImproperlyConfigured,
-    PermissionDenied,
-    ValidationError,
-)
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 from django.db.models import Q
 from django.http import Http404
@@ -57,6 +53,9 @@ from lava_scheduler_app.managers import (
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_server.files import File
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def auth_token():
@@ -1128,32 +1127,32 @@ def _get_device_type(user, name):
 
 
 def _create_pipeline_job(
-    job_data,
-    user,
-    taglist,
-    device=None,
-    device_type=None,
-    target_group=None,
-    orig=None,
-    health_check=False,
-):
-    if not isinstance(job_data, dict):
+    job_definition_dict: dict[str, Any],
+    job_definition_yaml_str: str,
+    user: User,
+    tag_list: list[Tag] | None = None,
+    device: Device | None = None,
+    device_type: DeviceType | None = None,
+    target_group: str | None = None,
+    health_check: bool = False,
+) -> TestJob | None:
+    if not isinstance(job_definition_dict, dict):
         # programming error
-        raise RuntimeError("Invalid job data %s" % job_data)
+        raise RuntimeError(f"Invalid job data: {job_definition_dict!r}")
 
-    if "connection" in job_data:
+    if "connection" in job_definition_dict:
         device_type = None
     elif not device and not device_type:
         # programming error
         return None
 
-    if not taglist:
-        taglist = []
+    if tag_list is None:
+        tag_list = []
 
     # Handle priority
     priority = TestJob.MEDIUM
-    if "priority" in job_data:
-        key = job_data["priority"]
+    if "priority" in job_definition_dict:
+        key = job_definition_dict["priority"]
         if isinstance(key, int):
             priority = int(key)
             if priority < TestJob.LOW or priority > TestJob.HIGH:
@@ -1168,12 +1167,9 @@ def _create_pipeline_job(
             if priority is None:
                 raise SubmissionException("Invalid job priority: %r" % key)
 
-    if not orig:
-        orig = yaml_safe_dump(job_data)
-
     is_public = False
     viewing_groups = []
-    param = job_data["visibility"]
+    param = job_definition_dict["visibility"]
     if isinstance(param, str):
         if param == "public":
             is_public = True
@@ -1190,17 +1186,16 @@ def _create_pipeline_job(
 
     # handle queue timeout.
     queue_timeout = None
-    if "timeouts" in job_data and "queue" in job_data["timeouts"]:
-        queue_timeout = Timeout.parse(job_data["timeouts"]["queue"])
+    if "timeouts" in job_definition_dict and "queue" in job_definition_dict["timeouts"]:
+        queue_timeout = Timeout.parse(job_definition_dict["timeouts"]["queue"])
 
     with transaction.atomic():
         job = TestJob(
-            definition=yaml_safe_dump(job_data),
-            original_definition=orig,
+            definition=job_definition_yaml_str,
             submitter=user,
             requested_device_type=device_type,
             target_group=target_group,
-            description=job_data["job_name"],
+            description=job_definition_dict["job_name"],
             health_check=health_check,
             priority=priority,
             is_public=is_public,
@@ -1210,7 +1205,7 @@ def _create_pipeline_job(
 
         # need a valid job (with a primary_key) before tags and groups can be
         # assigned
-        job.tags.add(*taglist)
+        job.tags.add(*tag_list)
         job.viewing_groups.add(*viewing_groups)
 
     return job
@@ -1322,12 +1317,13 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
             for role, role_dict in role_dictionary.items():
                 for node_data in job_dictionary[role]:
                     job = _create_pipeline_job(
-                        node_data,
-                        user,
+                        job_definition_dict=node_data,
+                        # store the dump of the split yaml as the job definition
+                        job_definition_yaml_str=yaml_safe_dump(node_data),
+                        user=user,
                         target_group=target_group,
-                        taglist=role_dict["tags"],
+                        tag_list=role_dict["tags"],
                         device_type=role_dict.get("device_type"),
-                        orig=None,  # store the dump of the split yaml as the job definition
                     )
                     if not job:
                         raise SubmissionException(
@@ -1745,6 +1741,7 @@ class TestJob(models.Model):
 
     definition = models.TextField(editable=False)
 
+    # TODO: Remove in next version
     original_definition = models.TextField(editable=False, blank=True)
 
     multinode_definition = models.TextField(editable=False, blank=True)
@@ -1835,7 +1832,7 @@ class TestJob(models.Model):
         return reverse("lava.scheduler.job.detail", args=[self.display_id])
 
     @classmethod
-    def from_yaml_and_user(cls, yaml_data, user, original_job=None):
+    def from_yaml_and_user(cls, yaml_data, user):
         """
         Runs the submission checks on incoming jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
@@ -1871,22 +1868,13 @@ class TestJob(models.Model):
         if taglist:
             supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
-        if original_job:
-            # Add old job absolute url to metadata
-            job_url = str(original_job.get_absolute_url())
-            with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
-                site = Site.objects.get_current()
-                job_url = "http://%s%s" % (site.domain, job_url)
-
-            job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
         return _create_pipeline_job(
-            job_data,
-            user,
-            taglist,
-            device=None,
+            job_definition_dict=job_data,
+            job_definition_yaml_str=yaml_data,
+            user=user,
+            tag_list=taglist,
             device_type=device_type,
-            orig=yaml_data,
         )
 
     def can_view(self, user):
@@ -2131,10 +2119,7 @@ class TestJob(models.Model):
         which do not have ORIGINAL_DEFINITION ie., jobs that were submitted
         before this attribute was introduced, return the DEFINITION.
         """
-        if self.original_definition and not self.is_multinode:
-            return self.original_definition
-        else:
-            return self.definition
+        return self.definition
 
     def get_passfail_results(self):
         # Get pass fail results per lava_scheduler_app.testjob.
