@@ -97,8 +97,9 @@ class AvhDeploy(Action):
             if image not in images.keys():
                 raise JobError(f"No '{image}' image specified for AVH deploy")
 
-        if self.test_needs_overlay(self.parameters) and not images["rootfs"].get(
-            "root_partition"
+        if (
+            self.test_needs_overlay(self.parameters)
+            and images["rootfs"].get("root_partition") is None
         ):
             raise JobError("Unable to apply overlay without 'root_partition'")
 
