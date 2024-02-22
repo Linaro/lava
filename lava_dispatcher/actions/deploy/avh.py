@@ -14,6 +14,7 @@ from pathlib import Path
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
+from avh_api.exceptions import ForbiddenException
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -97,8 +98,9 @@ class AvhDeploy(Action):
             if image not in images.keys():
                 raise JobError(f"No '{image}' image specified for AVH deploy")
 
-        if self.test_needs_overlay(self.parameters) and not images["rootfs"].get(
-            "root_partition"
+        if (
+            self.test_needs_overlay(self.parameters)
+            and images["rootfs"].get("root_partition") is None
         ):
             raise JobError("Unable to apply overlay without 'root_partition'")
 
@@ -137,7 +139,10 @@ class AvhDeploy(Action):
         self.api_config = AvhApi.Configuration(self.avh["api_endpoint"])
         with AvhApi.ApiClient(self.api_config) as api_client:
             api_instance = arm_api.ArmApi(api_client)
-            token_response = self.v1_auth_login(api_instance)
+            try:
+                token_response = self.v1_auth_login(api_instance)
+            except ForbiddenException as exc:
+                raise JobError(str(exc))
             self.api_config.access_token = token_response.token
             self.logger.info("AVH API session created")
 
