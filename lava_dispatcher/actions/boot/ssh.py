@@ -24,8 +24,6 @@ class SshLogin(Boot):
     but still needs AutoLoginAction.
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return SshAction()

@@ -17,7 +17,6 @@ from jinja2 import TemplateError as JinjaTemplateError
 from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.actions.boot.qemu import BootQEMU
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -467,7 +466,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         parser_device = device_object
         try:
-            pipeline_job = parser.parse(job.definition, parser_device, job.id, None, "")
+            parser.parse(job.definition, parser_device, job.id, None, "")
         except (
             AttributeError,
             JobError,
@@ -476,9 +475,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
             TypeError,
         ) as exc:
             self.fail("[%s] parser error: %s" % (job.sub_id, exc))
-        description = pipeline_job.describe()
-        self.assertIn("compatibility", description)
-        self.assertGreaterEqual(description["compatibility"], BootQEMU.compatibility)
 
     def reset_job_device(
         self,

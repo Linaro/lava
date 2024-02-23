@@ -327,7 +327,6 @@ class ExpectShellSession(Action):
     all that is needed is a prompt.
     """
 
-    compatibility = 2
     name = "expect-shell-connection"
     description = "Wait for a shell"
     summary = "Expect a shell prompt"

@@ -69,7 +69,6 @@ class Job:
         self.diagnostics = [DiagnoseNetwork]
         self.timeout = timeout
         self.protocols = []
-        self.compatibility = 2
         # Was the job cleaned
         self.cleaned = False
         # override in use
@@ -98,7 +97,6 @@ class Job:
 
     def describe(self):
         return {
-            "compatibility": self.compatibility,
             "pipeline": self.pipeline.describe(),
         }
 

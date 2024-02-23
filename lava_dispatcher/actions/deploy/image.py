@@ -64,7 +64,6 @@ class DeployQemuNfs(Deployment):
     Does not use GuestFS, adds overlay to the NFS
     """
 
-    compatibility = 5
     name = "qemu-nfs"
 
     @classmethod
@@ -207,7 +206,6 @@ class DeployImages(Deployment):
         test-definitions-action
     """
 
-    compatibility = 4
     name = "images"
 
     @classmethod

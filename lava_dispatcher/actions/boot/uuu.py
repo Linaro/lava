@@ -100,8 +100,6 @@ class UUUBoot(Boot):
 
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return UUUBootRetryAction()

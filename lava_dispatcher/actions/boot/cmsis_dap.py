@@ -18,8 +18,6 @@ from lava_dispatcher.utils.udev import WaitDevicePathAction, WaitUSBSerialDevice
 
 
 class CMSIS(Boot):
-    compatibility = 4  # FIXME: change this to 5 and update test cases
-
     @classmethod
     def action(cls):
         return BootCMSISRetry()

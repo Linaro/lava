@@ -40,8 +40,6 @@ class UBoot(Boot):
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
-    compatibility = 1
-
     @classmethod
     def action(cls):
         return UBootAction()

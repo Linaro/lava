@@ -33,7 +33,6 @@ class Removable(Deployment):
 
     """
 
-    compatibility = 1
     name = "removable"
 
     @classmethod

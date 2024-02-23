@@ -141,7 +141,6 @@ class Deployment:
 
     priority = 0
     section = "deploy"
-    compatibility = 0
 
     @property
     def parameters(self):
@@ -234,7 +233,6 @@ class Boot:
 
     priority = 0
     section = "boot"
-    compatibility = 0
 
     @classmethod
     def boot_check(cls, device, parameters):
@@ -303,7 +301,6 @@ class LavaTest:
 
     priority = 1
     section = "test"
-    compatibility = 1  # used directly
 
     @classmethod
     def accepts(cls, device, parameters):

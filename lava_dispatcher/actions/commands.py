@@ -9,7 +9,6 @@ from lava_dispatcher.action import Action
 
 
 class CommandAction(Action):
-    compatibility = 1
     name = "user-command"
     description = "execute one of the commands listed by the admin"
     summary = "execute commands"

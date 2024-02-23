@@ -24,7 +24,6 @@ from lava_dispatcher.utils.shell import which
 
 
 class Overlay(Deployment):
-    compatibility = 4
     name = "overlay"
 
     @classmethod

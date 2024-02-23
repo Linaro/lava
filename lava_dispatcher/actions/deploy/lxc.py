@@ -32,7 +32,6 @@ class Lxc(Deployment):
     Downloads the relevant parts, copies to the locations using lxc.
     """
 
-    compatibility = 1
     name = "lxc"
 
     @classmethod

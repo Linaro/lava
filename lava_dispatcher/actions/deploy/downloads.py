@@ -20,7 +20,6 @@ class Downloads(Deployment):
     Just downloads files, and that's it.
     """
 
-    compatibility = 1
     name = "downloads"
 
     @classmethod

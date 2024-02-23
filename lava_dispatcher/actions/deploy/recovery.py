@@ -38,7 +38,6 @@ class RecoveryModeAction(Action):
 
 
 class RecoveryMode(Deployment):
-    compatibility = 4
     name = "recovery-mode"
 
     @classmethod

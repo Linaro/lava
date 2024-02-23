@@ -12,8 +12,6 @@ from lava_dispatcher.power import PowerOff, PowerOn
 
 
 class RecoveryBoot(Boot):
-    compatibility = 4
-
     @classmethod
     def action(cls):
         return RecoveryBootAction()

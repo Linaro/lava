@@ -29,7 +29,6 @@ class Musca(Deployment):
     Downloads an image and deploys to the board.
     """
 
-    compatibility = 1
     name = "musca"
 
     @classmethod

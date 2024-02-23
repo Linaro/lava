@@ -104,7 +104,6 @@ class DockerAction(Action):
 
 
 class Docker(Deployment):
-    compatibility = 4
     name = "docker"
 
     @classmethod
