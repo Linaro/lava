@@ -678,6 +678,7 @@ def _export_query(query_results, content_type, filename):
         "notification",
         "testjobmaterializedview",
         "testjobuser",
+        # TODO: Remove once pipeline_compatibility gets removed
         "pipeline_compatibility",
         # TestSuite fields:
         "job_id",

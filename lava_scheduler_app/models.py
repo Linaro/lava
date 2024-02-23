@@ -1749,7 +1749,7 @@ class TestJob(models.Model):
 
     multinode_definition = models.TextField(editable=False, blank=True)
 
-    # calculated by the master validation process.
+    # TODO: Remove. No longer functional since LAVA 2020.09
     pipeline_compatibility = models.IntegerField(default=0, editable=False)
 
     queue_timeout = models.BigIntegerField(

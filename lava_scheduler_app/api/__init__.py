@@ -780,7 +780,7 @@ class SchedulerAPI(ExposedV2API):
         _state, submitter_id, is_pipeline, id, failure_comment,
         multinode_definition, priority, _actual_device_cache,
         original_definition, status, health_check, description,
-        start_time, target_group, pipeline_compatibility, submit_time,
+        start_time, target_group, submit_time,
         is_public, _old_status, actual_device_id, definition, sub_id,
         requested_device_type_id, end_time, absolute_url, submitter_username
         """

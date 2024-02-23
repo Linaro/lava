@@ -430,8 +430,6 @@ class TestPipelineSubmit(TestCaseWithFactory):
         yaml_data = yaml_safe_load(yaml_str)
         job = TestJob.from_yaml_and_user(yaml_str, user)
         self.assertTrue(job.can_view(user))
-        # initial state prior to validation
-        self.assertEqual(job.pipeline_compatibility, 0)
         self.assertNotIn("compatibility", yaml_data)
         # FIXME: dispatcher master needs to make this kind of test more accessible.
         definition = yaml_safe_load(job.definition)

@@ -1135,8 +1135,6 @@ def internal_v1_jobs(request, pk):
 
     if request.method == "GET":
         job_def = yaml_safe_load(job.definition)
-        job_def["compatibility"] = job.pipeline_compatibility
-        job_def_str_safe = yaml_safe_dump(job_def)
 
         tokens = {
             x["name"]: x["token"]
@@ -1169,7 +1167,6 @@ def internal_v1_jobs(request, pk):
                 if v in tokens.keys():
                     job_def["secrets"][k] = tokens[v]
 
-        job_def_str = yaml_safe_dump(job_def)
         job_ctx = job_def.get("context", {})
 
         if job.dynamic_connection:
@@ -1204,7 +1201,7 @@ def internal_v1_jobs(request, pk):
         # Save the configuration
         path = Path(job.output_dir)
         path.mkdir(mode=0o755, parents=True, exist_ok=True)
-        (path / "job.yaml").write_text(job_def_str_safe, encoding="utf-8")
+        (path / "job.yaml").write_text(job.definition, encoding="utf-8")
         (path / "device.yaml").write_text(device_cfg_str, encoding="utf-8")
         if dispatcher_cfg:
             (path / "dispatcher.yaml").write_text(dispatcher_cfg, encoding="utf-8")
@@ -1215,7 +1212,7 @@ def internal_v1_jobs(request, pk):
 
         return JsonResponse(
             {
-                "definition": job_def_str,
+                "definition": yaml_safe_dump(job_def),
                 "device": device_cfg_str,
                 "dispatcher": dispatcher_cfg,
                 "env": env_str,
