@@ -7,12 +7,12 @@ from __future__ import annotations
 
 import copy
 import logging
+import shlex
 import subprocess  # nosec - internal
 import time
 import traceback
 import warnings
 from functools import reduce
-from shlex import split as shlex_split
 from typing import TYPE_CHECKING
 
 import pexpect
@@ -658,7 +658,7 @@ class Action:
         """
         # Build the command list
         if isinstance(command_list, str):
-            command_list = shlex_split(command_list)
+            command_list = shlex.split(command_list)
         elif not isinstance(command_list, list):
             raise LAVABug("commands to run_cmd need to be a list or a string")
         command_list = [str(s) for s in command_list]
@@ -669,11 +669,9 @@ class Action:
 
         cmd_logger = CommandLogger(self.logger)
         ret = None
-        spawn_command, *spawn_args = command_list
         try:
             proc = pexpect.spawn(
-                command=spawn_command,
-                args=spawn_args,
+                shlex.join(command_list),
                 cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",
