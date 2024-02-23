@@ -16,52 +16,52 @@ from lava_dispatcher.utils.strings import seconds_to_str
 KERNEL_MESSAGES = [
     {
         "start": r"-\[ cut here \]",
-        "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
+        "end": r"-+\[ end trace \w* \]-+[^\n]*\n",
         "kind": None,
     },
     {
         "start": r"Unhandled fault",
-        "end": r"\r",
+        "end": r"\n",
         "kind": "fault",
     },
     {
         "start": r"BUG: KCSAN:",
-        "end": r"=+\r",
+        "end": r"=+\n",
         "kind": "kcsan",
     },
     {
         "start": r"BUG: KASAN:",
-        "end": r"=+\r",
+        "end": r"=+\n",
         "kind": "kasan",
     },
     {
         "start": r"BUG: KFENCE:",
-        "end": r"=+\r",
+        "end": r"=+\n",
         "kind": "kfence",
     },
     {
         "start": r"Oops(?: -|:)",
-        "end": r"\r",
+        "end": r"\n",
         "kind": "oops",
     },
     {
         "start": r"WARNING:",
-        "end": r"end trace[^\r]*\r",
+        "end": r"end trace[^\n]*\n",
         "kind": "warning",
     },
     {
         "start": r"(kernel BUG at|BUG:)",
-        "end": r"\r",
+        "end": r"\n",
         "kind": "bug",
     },
     {
         "start": r"invalid opcode:",
-        "end": r"\r",
+        "end": r"\n",
         "kind": "invalid opcode",
     },
     {
         "start": r"Kernel panic - not syncing",
-        "end": r"end Kernel panic[^\r]*\r",
+        "end": r"end Kernel panic[^\n]*\n",
         "kind": "panic",
         "fatal": True,
     },

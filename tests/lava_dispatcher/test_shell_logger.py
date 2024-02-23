@@ -39,11 +39,8 @@ class TestShellLogger(TestCase):
         with self.subTest("Check target logs"):
             target_mock.assert_has_calls([call(x) for x in target_logs])
 
-    # Because pexpect runs commands in pseudo TTY
-    # it will mangle the output of commands.
-    # \n -> \r\n
-    # \r\n -> \r\r\n
-    # ShellLogger is expected to split on both \r\n and \r\r\n
+    # The pseudo TTY line mangling should be disabled
+    # by preexec_fn. Only \r\n and \n will be split.
     def test_shell_output_newline(self) -> None:
         command = self.create_shell_command(r"printf 'foo\nbar'")
         command.expect(pexpect_eof)
@@ -58,10 +55,8 @@ class TestShellLogger(TestCase):
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls([], ["foo", "bar"])
 
-    # Because of pseudo TTY all input will be echoed to output.
-    # Also pexpect will log the input as well.
-    # This means all input is double logged.
-    # The pexpect input log will not mangle lines but pseudo TTY echo would.
+    # Pseudo TTY echo mode should be disabled by preexec_fn.
+    # Input should not be echoed back.
     def test_shell_input(self) -> None:
         command = self.create_shell_command(
             "sh -c 'read ONE TWO; echo \"$ONE, $TWO!\"'"
@@ -73,7 +68,6 @@ class TestShellLogger(TestCase):
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [
-                "Hello World",  # Echo
                 "Hello, World!",  # Actual output
             ],
         )
@@ -90,8 +84,6 @@ class TestShellLogger(TestCase):
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [
-                "Hello",  # Echo
-                "World",
                 "Hello, World!",  # Actual output
             ],
         )

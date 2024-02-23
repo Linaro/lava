@@ -22,6 +22,7 @@ from lava_common.exceptions import (
     LAVABug,
     TestError,
 )
+from lava_common.log import disable_tty_line_mangling
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
 from lava_dispatcher.connection import Connection
@@ -54,7 +55,7 @@ class ShellLogger:
             last_ret = lines.rindex("\n")
             self.line = lines[last_ret + 1 :]
             lines = lines[: last_ret + 1]
-            for line in re_split("\r\r\n|\r\n|\n", lines)[:-1]:
+            for line in re_split("\r\n|\n", lines)[:-1]:
                 for key, value in replacements.items():
                     line = line.replace(key, value)
                 if self.is_feedback:
@@ -114,6 +115,7 @@ class ShellCommand(pexpect.spawn):
             searchwindowsize=searchwindowsize,  # pattern match in twice the window size
             maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors="replace",
+            preexec_fn=disable_tty_line_mangling,
         )
         self.logfile_read = ShellLogger(logger)
         self.logfile_send = ShellLogger(logger, is_input=True)

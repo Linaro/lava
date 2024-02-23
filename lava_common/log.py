@@ -252,3 +252,12 @@ class YAMLLogger(logging.Logger):
             del self.markers[case]
 
         self.log_message(logging.INFO, "results", results, *args, **kwargs)
+
+
+def disable_tty_line_mangling() -> None:
+    from termios import ECHO, ONLCR, OPOST, TCSANOW, tcgetattr, tcsetattr
+
+    tc_attrs = tcgetattr(1)
+    tc_attrs[1] = tc_attrs[1] & ~ONLCR & ~OPOST
+    tc_attrs[3] = tc_attrs[3] & ~ECHO
+    tcsetattr(1, TCSANOW, tc_attrs)
