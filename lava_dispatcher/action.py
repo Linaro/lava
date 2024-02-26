@@ -7,15 +7,16 @@ from __future__ import annotations
 
 import copy
 import logging
-import shlex
 import subprocess  # nosec - internal
 import time
 import traceback
 import warnings
 from functools import reduce
+from shlex import split as shlex_split
 from typing import TYPE_CHECKING
 
 import pexpect
+from pexpect.popen_spawn import PopenSpawn as PexpectPopenSpawn
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
@@ -646,6 +647,22 @@ class Action:
             self.logger.debug("output: %s", line)
         return output
 
+    def _run_pexpect_popen(
+        self,
+        pexpect_popen: PexpectPopenSpawn,
+        start: float,
+    ) -> int:
+        with pexpect_popen.proc:
+            try:
+                pexpect_popen.expect(pexpect.EOF)
+                # wait for the process and record the return value
+                return pexpect_popen.wait()
+            except pexpect.TIMEOUT:
+                self.logger.error(
+                    "Timed out after %s seconds", int(time.monotonic() - start)
+                )
+                pexpect_popen.proc.terminate()
+
     def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
         """
         Run the given command on the dispatcher. If the command fail, a
@@ -660,7 +677,7 @@ class Action:
         """
         # Build the command list
         if isinstance(command_list, str):
-            command_list = shlex.split(command_list)
+            command_list = shlex_split(command_list)
         elif not isinstance(command_list, list):
             raise LAVABug("commands to run_cmd need to be a list or a string")
         command_list = [str(s) for s in command_list]
@@ -672,8 +689,8 @@ class Action:
         cmd_logger = CommandLogger(self.logger)
         ret = None
         try:
-            proc = pexpect.spawn(
-                shlex.join(command_list),
+            proc = PexpectPopenSpawn(
+                cmd=command_list,
                 cwd=cwd,
                 encoding="utf-8",
                 codec_errors="replace",
@@ -681,15 +698,7 @@ class Action:
                 timeout=self.timeout.duration,
                 searchwindowsize=10,
             )
-            proc.expect(pexpect.EOF)
-            # wait for the process and record the return value
-            ret = proc.wait()
-        except pexpect.TIMEOUT:
-            self.logger.error(
-                "Timed out after %s seconds", int(time.monotonic() - start)
-            )
-            proc.terminate()
-            proc.wait()
+            ret = self._run_pexpect_popen(proc, start)
         except (OSError, pexpect.ExceptionPexpect) as exc:
             self.logger.error("Unable to run: %s", exc)
 
