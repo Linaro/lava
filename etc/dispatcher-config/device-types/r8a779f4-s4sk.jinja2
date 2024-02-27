@@ -1,0 +1,7 @@
+{# device_type: r8a779f4-s4sk #}
+{# Renesas R-Car S4 Starter Kit #}
+{% extends 'rcar-gen3-common.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+{% set console_device = console_device|default('ttySC0') %}
+{% set baud_rate = '921600' %}
