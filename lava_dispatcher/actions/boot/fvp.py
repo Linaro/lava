@@ -173,17 +173,37 @@ class BaseFVPAction(Action):
         data = "#!/bin/sh\n"
 
         if self.ubl_license:
-            data += f"""set -e
+            data += f"""
 echo "Finding the armlm binary"
 ARMLM="$(find /opt/model -maxdepth 1 -type d | grep -v license_terms | tail -n 1)/bin/arm_license_management_utilities/armlm"
 if [ -e $ARMLM ]; then
 echo "armlm at $ARMLM"
-echo "Activating UBL license"
-$ARMLM activate -code {self.ubl_license}
+max_retries=5
+attempt=0
+backoff=1
+
+while [ $attempt -lt $max_retries ]; do
+  echo "Trying to Activate UBL license"
+
+  if $ARMLM activate -code {self.ubl_license}; then
+    echo "UBL Activation Successful"
+    break
+  else
+    echo "UBL activation failed. Retrying in $backoff seconds..."
+    sleep $backoff
+    backoff=$((backoff * 2))
+    attempt=$((attempt + 1))
+  fi
+done
+
+if [ $attempt -eq $max_retries ]; then
+  echo "UBL Activation failed after $max_retries attempts."
+  exit 1
+fi
+
 else
 echo "No armlm binary found, Won't activate UBL license"
 fi
-set +e
 """
         # Substitute in the fvp arguments
         try:
