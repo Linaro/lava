@@ -366,7 +366,7 @@ def main():
         try:
             server_version = get_server_version(options)
         except requests.RequestException as exc:
-            LOG.warning("-> Unable to get server version")
+            LOG.warning(f"-> Unable to get server version: {exc}")
             sentry_sdk.capture_exception(exc)
             time.sleep(5)
             continue
