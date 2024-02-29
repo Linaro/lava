@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -16,7 +17,15 @@ except ImportError:
     has_bcc = False
 
 
-container = subprocess.call(["systemd-detect-virt", "--container", "--quiet"]) == 0
+IN_KERNEL_HEADERS_PATH = Path("/sys/kernel/kheaders.tar.xz")
+
+
+def should_skip_bccpf_tests() -> bool:
+    # If kheaders module was loaded available bcc can use it
+    if IN_KERNEL_HEADERS_PATH.exists():
+        return False
+
+    return subprocess.call(["systemd-detect-virt", "--container", "--quiet"]) == 0
 
 
 @pytest.fixture(autouse=True)
@@ -155,7 +164,10 @@ class TestDeviceFilterCGroupsV2:
         assert DeviceFilter("foobar").__get_existing_functions__() == []
 
     @pytest.mark.skipif(not has_bcc, reason="bcc not available")
-    @pytest.mark.skipif(container, reason="this test won't work on containers")
+    @pytest.mark.skipif(
+        should_skip_bccpf_tests(),
+        reason="running in container or kheaders module not loaded on the host",
+    )
     def test_apply(self, mocker, check_call, fd, os_close):
         load_func = mocker.patch("bcc.BPF.load_func")
         attach_func = mocker.patch("bcc.BPF.attach_func")
