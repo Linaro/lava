@@ -1,18 +1,11 @@
 [run]
 source =
-    lava
-    lava_common
-    lava_dispatcher
-    lava_dispatcher_host
-    lava_results_app
-    lava_rest_app
-    lava_scheduler_app
-    lava_server
-    linaro_django_xmlrpc
-
+    .
 omit =
     */tests/*
     */tests.py
+    setup.py
+    manage.py
 
 [report]
 precision = 2
