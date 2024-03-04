@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import unittest
+from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -46,14 +47,15 @@ class TestDownloadDeploy(LavaDispatcherTestCase):
         with self.assertRaises(JobError):
             job.validate()
 
-    @unittest.skipIf(
-        infrastructure_error_multi_paths(["nbd-server"]), "nbd-server not installed"
-    )
     def test_download_tar(self):
         job = self.factory.create_job(
             "x86-01.jinja2", "sample_jobs/up2-tests-from-tar.yaml"
         )
-        job.validate()
+        with patch("lava_dispatcher.actions.deploy.nbd.which") as which_mock:
+            job.validate()
+
+        which_mock.assert_any_call("nbd-server")
+        which_mock.assert_any_call("in.tftpd")
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("up2-tests-from-tar.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
