@@ -179,6 +179,9 @@ lava-dispatcher:
   python-responses:
     name: python3-responses
     unittests: true
+  python-bpfcc:
+    name: python3-bpfcc
+    unittests: true
 
 lava-common:
   PyYAML:
