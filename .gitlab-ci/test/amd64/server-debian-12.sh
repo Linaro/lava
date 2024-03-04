@@ -15,6 +15,7 @@ else
   python3 -m pytest \
       --color=yes \
       --pythonwarnings=default \
+      -r a \
       --cache-clear --verbose \
       --junitxml=server.xml \
       --random-order --random-order-bucket=global \
