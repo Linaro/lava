@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import os
-import unittest
 from unittest import TestCase
 from unittest.mock import patch
 
@@ -14,7 +13,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from jinja2 import TemplateError as JinjaTemplateError
 
-from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import PipelineDevice
@@ -1075,7 +1073,6 @@ class TestYamlMultinode(TestCaseWithFactory):
         job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 2)
 
-    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
@@ -1148,7 +1145,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                 TypeError,
             ) as exc:
                 self.fail("[%s] parser error: %s" % (job.sub_id, exc))
-            pipeline_job.pipeline.validate_actions()
+
+            with patch("lava_dispatcher.actions.boot.qemu.SYS_CLASS_KVM", "/"):
+                pipeline_job.pipeline.validate_actions()
 
         for job in job_object_list:
             job = TestJob.objects.get(id=job.id)
