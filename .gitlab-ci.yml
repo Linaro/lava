@@ -102,10 +102,14 @@ code_quality:
 coverage:
   <<: *analyze
   image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
-  coverage: '/^TOTAL.+ (\d+\.\d+)%$/'
+  coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
       - htmlcov/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
 
 dockerfiles:
   <<: *analyze
