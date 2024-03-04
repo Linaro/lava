@@ -139,11 +139,11 @@ class CallQemuAction(Action):
                     "qemu-system-%s --version" % self.get_qemu_arch(architecture)
                 ),
                 action=self,
-                capture=True
+                capture=True,
             )
         else:
             ver_strs = subprocess.check_output(
-                ("qemu-system-{architecture}", "--version"),
+                (f"qemu-system-{architecture}", "--version"),
                 encoding="utf-8",
                 errors="replace",
             )
