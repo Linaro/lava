@@ -7,13 +7,12 @@
 
 import glob
 import os
-import sys
 import time
 import unittest
+from unittest.mock import patch
 
 from pexpect import EOF as pexpect_eof
 
-from lava_common.constants import SYS_CLASS_KVM
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
@@ -838,11 +837,9 @@ class TestQemuNFS(LavaDispatcherTestCase):
         self.job = factory.create_job("kvm02.jinja2", "sample_jobs/qemu-nfs.yaml")
         self.job.logger = DummyLogger()
 
-    @unittest.skipIf(sys.version_info.minor < 6, "unreliable on python3.5 and before")
     @unittest.skipIf(
         infrastructure_error("qemu-system-aarch64"), "qemu-system-arm not installed"
     )
-    @unittest.skipIf(not os.path.exists(SYS_CLASS_KVM), "Cannot use --enable-kvm")
     def test_qemu_nfs(self):
         self.assertIsNotNone(self.job)
         description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)
@@ -861,8 +858,9 @@ class TestQemuNFS(LavaDispatcherTestCase):
         execute = [
             action for action in qemu.pipeline.actions if action.name == "execute-qemu"
         ][0]
-        self.job.validate()
-        execute.run(None, 1)
+        with patch(f"{execute.__module__}.SYS_CLASS_KVM", "/"):
+            self.job.validate()
+            execute.run(None, 1)
         self.assertEqual(["-initrd {initrd}", "-kernel {kernel}"], execute.commands)
         self.assertEqual(
             [

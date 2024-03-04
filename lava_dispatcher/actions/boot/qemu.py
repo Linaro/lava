@@ -143,8 +143,10 @@ class CallQemuAction(Action):
             )
         else:
             ver_strs = subprocess.check_output(
-                ("qemu-system-%s" % architecture, "--version")
-            ).decode("utf-8", errors="replace")
+                ("qemu-system-{architecture}", "--version"),
+                encoding="utf-8",
+                errors="replace",
+            )
         # line is QEMU emulator version xxxx
         ver_str = ver_strs.split()[3]
         arch_str = (
