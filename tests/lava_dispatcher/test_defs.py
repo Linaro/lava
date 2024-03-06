@@ -9,14 +9,12 @@ import os
 import re
 import shutil
 import stat
-import subprocess  # nosec - unit test support.
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import pexpect
 
-from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -452,22 +450,6 @@ class TestSkipInstall(LavaDispatcherTestCase):
         self.assertEqual(single_testdef.skip_options, ["deps"])
 
 
-@nottest
-def check_rpcinfo(server="127.0.0.1"):
-    """
-    Supports the unittest.SkipIf
-    needs to return True if skip, so
-    returns True on failure.
-    """
-    try:
-        subprocess.check_output(  # nosec - unit test support.
-            ["/usr/sbin/rpcinfo", "-u", server, "nfs", "3"]
-        )
-    except (OSError, subprocess.CalledProcessError):
-        return True
-    return False
-
-
 class TestDefinitions(LavaDispatcherTestCase):
     """
     For compatibility until the V1 code is removed and we can start
@@ -513,12 +495,16 @@ class TestDefinitions(LavaDispatcherTestCase):
         pattern = PatternFixup(testdef=params, count=0)
         self.assertTrue(pattern.valid())
 
-    @unittest.skipIf(check_rpcinfo(), "rpcinfo returns non-zero for nfs")
-    @patch(
-        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
-    )
-    def test_definition_lists(self, which_mock):
-        self.job.validate()
+    def test_definition_lists(self):
+        with patch(
+            "lava_dispatcher.actions.deploy.tftp.which",
+            return_value="/usr/bin/in.tftpd",
+        ), patch(
+            "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+            return_value=None,
+        ):
+            self.job.validate()
+
         tftp_deploy = [
             action
             for action in self.job.pipeline.actions
