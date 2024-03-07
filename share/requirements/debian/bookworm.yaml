@@ -49,6 +49,8 @@ lava-server:
     name: python3-tap
   junit.xml:
     name: python3-junit.xml
+  pydantic:
+    name: python3-pydantic
   voluptuous:
     name: python3-voluptuous
   whitenoise:
@@ -133,6 +135,8 @@ lava-dispatcher:
     name: python3-guestfs
   bmap-tools:
     name: bmap-tools
+  pydantic:
+    name: python3-pydantic
   pyocd:
     name: python3-pyocd
     unittests: true
@@ -191,6 +195,8 @@ lava-dispatcher:
 lava-common:
   PyYAML:
     name: python3-yaml
+  pydantic:
+    name: python3-pydantic
   voluptuous:
     name: python3-voluptuous
   sentry-sdk:
