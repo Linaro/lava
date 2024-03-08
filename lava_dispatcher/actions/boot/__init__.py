@@ -290,7 +290,7 @@ class AutoLoginAction(RetryAction):
                 if not prompt:
                     self.errors = "Items of 'prompts' can't be empty"
 
-        methods = self.job.device["actions"]["boot"]["methods"]
+        methods = self.job.device.actions.boot.methods
         with contextlib.suppress(KeyError, TypeError):
             if "parameters" in methods[self.method]:
                 # fastboot devices usually lack method parameters

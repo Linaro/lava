@@ -28,6 +28,11 @@ from lava_dispatcher.utils.strings import substitute_address_with_static_info
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.pydantic.device import Device
+
 
 class Overlay(Deployment):
     name = "overlay"
@@ -37,8 +42,8 @@ class Overlay(Deployment):
         return OverlayAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters):
-        if "overlay" not in device["actions"]["deploy"]["methods"]:
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
+        if "overlay" not in device.actions.deploy.methods:
             return False, "'overlay' not in the device configuration deploy methods"
         if parameters["to"] != "overlay":
             return False, '"to" parameter is not "overlay"'
@@ -130,7 +135,7 @@ class CreateOverlay(Action):
                     self.target_ip = self.job.device["parameters"]["interfaces"][
                         "target"
                     ].get("ip", "")
-        for device in self.job.device.get("static_info", []):
+        for device in self.job.device.static_info or ():
             if "probe_channel" in device and "probe_ip" in device:
                 self.probe_channel = device["probe_channel"]
                 self.probe_ip = device["probe_ip"]
@@ -140,9 +145,7 @@ class CreateOverlay(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        if any(
-            "ssh" in data for data in self.job.device["actions"]["deploy"]["methods"]
-        ):
+        if any("ssh" in data for data in self.job.device.actions.deploy.methods):
             # only devices supporting ssh deployments add this action.
             self.pipeline.add_action(SshAuthorize(self.job))
         self.pipeline.add_action(VlandOverlayAction(self.job))
@@ -225,7 +228,7 @@ class CreateOverlay(Action):
                         fout.write("PROBE_DEVICE_CHANNEL='%s'\n" % self.probe_channel)
                     if foutname == "lava-target-storage":
                         fout.write('LAVA_STORAGE="\n')
-                        for method in self.job.device.get("storage_info", [{}]):
+                        for method in self.job.device.storage_info or ():
                             for key, value in method.items():
                                 self.logger.debug(
                                     "storage methods:\t%s\t%s", key, value

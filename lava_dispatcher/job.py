@@ -26,9 +26,8 @@ if TYPE_CHECKING:
     from logging import Logger
     from typing import Any
 
+    from lava_common.pydantic.device import Device
     from lava_common.timeout import Timeout
-
-    from .device import Device
 
 
 class Job:

@@ -51,6 +51,11 @@ from lava_dispatcher.utils.strings import substitute_address_with_static_info
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.pydantic.device import Device
+
 
 class DownloaderAction(RetryAction):
     """
@@ -904,7 +909,7 @@ class Download(Deployment):
         return DownloadAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters):
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "download":

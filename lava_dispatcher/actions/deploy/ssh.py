@@ -27,6 +27,12 @@ if TYPE_CHECKING:
 # For secondary, authorize: ssh is needed as 'to' is already used.
 
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.pydantic.device import Device
+
+
 class Ssh(Deployment):
     """
     Copies files to the target to support further actions,
@@ -40,8 +46,8 @@ class Ssh(Deployment):
         return ScpOverlay(job)
 
     @classmethod
-    def accepts(cls, device, parameters):
-        if "ssh" not in device["actions"]["deploy"]["methods"]:
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
+        if "ssh" not in device.actions.deploy.methods:
             return False, '"ssh" is not in the device configuration deploy methods'
         if parameters["to"] != "ssh":
             return False, '"to" parameter is not "ssh"'

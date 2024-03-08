@@ -52,13 +52,8 @@ class TestMultiDeploy(LavaDispatcherTestCase):
             ],
         }
 
-    class FakeDevice(NewDevice):
-        def check_config(self, job):
-            pass
-
-        def __init__(self):
-            data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-            super().__init__(data)
+    def FakeDevice():
+        return yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
 
     @nottest
     class TestDeploy:  # cannot be a subclass of Deployment without a full select function.

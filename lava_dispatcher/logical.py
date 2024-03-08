@@ -21,6 +21,7 @@ from lava_dispatcher.utils.strings import seconds_to_str
 if TYPE_CHECKING:
     from typing import Optional
 
+    from lava_common.pydantic.device import Device
     from lava_dispatcher.job import Job
 
 
@@ -154,7 +155,7 @@ class Deployment:
         self.__parameters__.update(data)
 
     @classmethod
-    def accepts(cls, device, parameters):
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
         """
         Returns True if this deployment strategy can be used by the
         given device and details of an image in the parameters.
@@ -164,7 +165,7 @@ class Deployment:
         return NotImplementedError("accepts %s" % cls)
 
     @classmethod
-    def deploy_check(cls, device, parameters):
+    def deploy_check(cls, device: Device, parameters: dict[Any, Any]) -> None:
         if not device:
             raise JobError('job "device" was None')
         if "actions" not in device:
@@ -225,7 +226,7 @@ class Boot:
     section = "boot"
 
     @classmethod
-    def boot_check(cls, device, parameters):
+    def boot_check(cls, device: Device, parameters: dict[Any, Any]) -> None:
         if not device:
             raise JobError('job "device" was None')
         if "method" not in parameters:
@@ -244,7 +245,7 @@ class Boot:
             )
 
     @classmethod
-    def accepts(cls, device, parameters):
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
         """
         Returns True if this deployment strategy can be used by the
         given device and details of an image in the parameters.

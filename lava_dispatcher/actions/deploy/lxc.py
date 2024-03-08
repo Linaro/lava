@@ -30,6 +30,11 @@ from lava_dispatcher.utils.udev import allow_fs_label
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.pydantic.device import Device
+
 
 class Lxc(Deployment):
     """
@@ -44,12 +49,12 @@ class Lxc(Deployment):
         return LxcAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters):
+    def accepts(cls, device: Device, parameters: dict[Any, Any]) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "lxc":
             return False, '"to" parameter is not "lxc"'
-        if "lxc" in device["actions"]["deploy"]["methods"]:
+        if "lxc" in device.actions.deploy.methods:
             return True, "accepted"
         return False, '"lxc" was not in the device configuration deploy methods'
 

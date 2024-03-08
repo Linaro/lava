@@ -4,14 +4,21 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
-import yaml
+from typing import TYPE_CHECKING
+
+from yaml import YAMLError
 
 from lava_common.exceptions import ConfigurationError
+from lava_common.pydantic.device import Device
 from lava_common.yaml import yaml_safe_load
 
+if TYPE_CHECKING:
+    from typing import Any, TextIO, Union
 
-class PipelineDevice(dict):
+
+class _PipelineDevice(dict):
     """
     Dictionary Device class which accepts data rather than a filename.
     This allows the scheduler to use the same class without needing to write
@@ -91,7 +98,7 @@ class PipelineDevice(dict):
         )
 
 
-class NewDevice(PipelineDevice):
+class _NewDevice(_PipelineDevice):
     """
     YAML based PipelineDevice class with clearer support for the pipeline overrides
     and deployment types. Simple change of init whilst allowing the scheduler and
@@ -114,7 +121,7 @@ class NewDevice(PipelineDevice):
             if data is None:
                 raise ConfigurationError("Missing device configuration")
             self.update(data)
-        except yaml.parser.ParserError:
+        except YAMLError:
             raise ConfigurationError("%s could not be parsed" % target)
 
         self.setdefault("power_state", "off")  # assume power is off at start of job
@@ -126,3 +133,20 @@ class NewDevice(PipelineDevice):
         *before* the Deployment actions are initialised.
         """
         raise NotImplementedError("check_config")
+
+
+def NewDevice(path_or_dict_or_io: Union[str, dict[Any, Any], TextIO]) -> Device:
+    try:
+        if isinstance(path_or_dict_or_io, str):
+            with open(path_or_dict_or_io) as f_in:
+                device_dict = yaml_safe_load(f_in)
+        elif isinstance(path_or_dict_or_io, dict):
+            device_dict = path_or_dict_or_io
+        else:
+            device_dict = yaml_safe_load(path_or_dict_or_io)
+    except YAMLError as yaml_error:
+        raise ConfigurationError(
+            f"{path_or_dict_or_io} could not be parsed"
+        ) from yaml_error
+
+    return Device(**device_dict)

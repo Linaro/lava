@@ -156,7 +156,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
     def test_available_architectures(self):
         job_ctx = {"arch": "unknown", "no_kvm": True}
         job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm.yaml", job_ctx)
-        self.assertIsNotNone(job.device["available_architectures"])
+        self.assertIsNotNone(job.device.available_architectures)
         self.assertEqual(job.parameters["context"]["arch"], "unknown")
         self.assertRaises(JobError, job.pipeline.validate_actions)
 

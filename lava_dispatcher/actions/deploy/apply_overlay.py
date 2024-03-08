@@ -58,12 +58,7 @@ class ApplyOverlayGuest(Action):
         self.set_namespace_data(
             action=self.name, label="guest", key="name", value=self.guest_filename
         )
-        if (
-            "guest"
-            not in self.job.device["actions"]["deploy"]["methods"]["image"][
-                "parameters"
-            ]
-        ):
+        if "guest" not in self.job.device.actions.deploy.methods["image"]["parameters"]:
             self.errors = (
                 "Device configuration does not specify size of guest filesystem."
             )

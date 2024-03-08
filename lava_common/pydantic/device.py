@@ -80,29 +80,29 @@ class Parameters(BaseModel):
 
 
 class Deploy(BaseModel):
-    methods: dict[str, Any]
+    methods: dict[str, Any] = Field(default_factory=dict)
     connections: Optional[dict[str, Any]] = None
     parameters: Optional[dict[str, Any]] = None
 
 
 class Boot(BaseModel):
-    connections: dict[str, Any]
-    methods: dict[str, Any]
+    connections: dict[str, Any] = Field(default_factory=dict)
+    methods: dict[str, Any] = Field(default_factory=dict)
 
 
 class Actions(BaseModel):
-    deploy: Deploy
-    boot: Boot
+    deploy: Deploy = Field(default_factory=Deploy)
+    boot: Boot = Field(default_factory=Boot)
 
 
 class Timeouts(BaseModel):
-    actions: dict[str, Timeout]
-    connections: dict[str, Timeout]
+    actions: dict[str, Timeout] = Field(default_factory=dict)
+    connections: dict[str, Timeout] = Field(default_factory=dict)
 
 
 class Device(BaseModel):
     character_delays: Optional[CharacterDelays] = None
-    constants: dict[str, Any]
+    constants: dict[str, Any] = Field(default_factory=dict)
     test: Optional[int] = None
     commands: Optional[Commands] = None
     adb_serial_number: Optional[str] = None
@@ -114,13 +114,15 @@ class Device(BaseModel):
     storage_info: Optional[list[dict[str, Any]]] = None
     environment: Optional[dict[str, Any]] = None
     flash_cmds_order: Optional[list[str]] = None
+    parameters: Parameters = Field(default_factory=Parameters)
     board_id: Optional[str] = None
     usb_vendor_id: Optional[str] = None
     usb_product_id: Optional[str] = None
     usb_sleep: Optional[int] = None
     usb_filesystem_label: Optional[str] = None
     usb_serial_driver: Optional[str] = None
-    timeouts: Timeouts
+    actions: Actions = Field(default_factory=Actions)
+    timeouts: Timeouts = Field(default_factory=Timeouts)
     available_architectures: Optional[list[str]] = None
     power_state: bool = False
     dynamic_data: dict[Any, Any] = Field(default_factory=dict)

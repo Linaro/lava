@@ -128,7 +128,7 @@ class Pipeline:
         # Compute the timeout
         global_timeouts = []
         # First, the device level overrides
-        global_timeouts.append(self.job.device.get("timeouts", {}))
+        global_timeouts.append(self.job.device.timeouts.dict())
         # Then job level overrides
         global_timeouts.append(self.job.parameters.get("timeouts", {}))
 
