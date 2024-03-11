@@ -3,42 +3,55 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import datetime
 import signal
 import time
 from contextlib import contextmanager
+from typing import TYPE_CHECKING
 
 from lava_common.constants import ACTION_TIMEOUT
 from lava_common.exceptions import ConfigurationError, JobError
+
+if TYPE_CHECKING:
+    from typing import Any, Iterator, Optional
+
+    from lava_dispatcher.action import Action
 
 
 class Timeout:
     """
     The Timeout class is a declarative base which any actions can use. If an Action has
     a timeout, that timeout name and the duration will be output as part of the action
-    description and the timeout is then exposed as a modifiable value via the device_type,
-    device or even job inputs. All timeouts are subject to a hardcoded maximum duration which
-    cannot be exceeded by device_type, device or job input, only by the Action initialising
-    the timeout.
-    If a connection is set, this timeout is used per pexpect operation on that connection.
-    If a connection is not set, this timeout applies for the entire run function of the action.
+    description and the timeout is then exposed as a modifiable value via the
+    device_type, device or even job inputs. All timeouts are subject to a hardcoded
+    maximum duration which cannot be exceeded by device_type, device or job input,
+    only by the Action initialising the timeout. If a connection is set, this timeout
+    is used per pexpect operation on that connection. If a connection is not set, this
+    timeout applies for the entire run function of the action.
     """
 
-    def __init__(self, name, action, duration=ACTION_TIMEOUT, exception=JobError):
+    def __init__(
+        self,
+        name: str,
+        action: Optional[Action],
+        duration: int = ACTION_TIMEOUT,
+        exception: type[Exception] = JobError,
+    ):
         self.action = action
         self.name = name
-        self.start = 0
-        self.elapsed_time = -1
+        self.start = 0.0
+        self.elapsed_time = -1.0
         self.duration = duration  # Actions can set timeouts higher than the clamp.
         self.exception = exception
 
     @classmethod
-    def default_duration(cls):
+    def default_duration(cls) -> int:
         return ACTION_TIMEOUT
 
     @classmethod
-    def parse(cls, data):
+    def parse(cls, data: dict[str, Any]) -> int:
         """
         Parsed timeouts can be set in device configuration or device_type configuration
         and can therefore exceed the clamp.
@@ -55,10 +68,10 @@ class Timeout:
             return Timeout.default_duration()
         return int(duration.total_seconds())
 
-    def can_skip(self, parameters):
+    def can_skip(self, parameters: dict[str, Any]) -> bool:
         return parameters.get("timeout", {}).get("skip", False)
 
-    def _timed_out(self, signum, frame):
+    def _timed_out(self, signum: Any, frame: Any) -> None:
         # Call on_timeout action function
         if self.action is not None:
             self.action.on_timeout()
@@ -67,7 +80,9 @@ class Timeout:
         raise self.exception("%s timed out after %s seconds" % (self.name, duration))
 
     @contextmanager
-    def __call__(self, parent, action_max_end_time):
+    def __call__(
+        self, parent: Optional[Action], action_max_end_time: int
+    ) -> Iterator[float]:
         self.start = time.monotonic()
 
         max_end_time = self.start + self.duration
@@ -82,7 +97,7 @@ class Timeout:
             # (by passing 0 or the unsigned value).
             # Deactivate any previous alarm and set elapse_time prior to raise
             signal.alarm(0)
-            self.elapsed_time = 0
+            self.elapsed_time = 0.0
             self._timed_out(None, None)
 
         signal.signal(signal.SIGALRM, self._timed_out)

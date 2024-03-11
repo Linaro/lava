@@ -366,7 +366,9 @@ class Action:
         self.job = None
         self.logger = logging.getLogger("dispatcher")
         self.__results__ = {}
-        self.timeout = Timeout(self.name, self, exception=self.timeout_exception)
+        self.timeout: Timeout = Timeout(
+            self.name, self, exception=self.timeout_exception
+        )
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
         self.diagnostics = []
@@ -515,7 +517,7 @@ class Action:
                 return self.parameters["deployment_data"][key]
         return self.job.device.get_constant(key, prefix=prefix)
 
-    def on_timeout(self):
+    def on_timeout(self) -> None:
         ...
 
     def validate(self):
