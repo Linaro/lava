@@ -23,7 +23,6 @@ from lava_common.exceptions import (
     InfrastructureError,
     JobError,
     LAVABug,
-    LAVAError,
 )
 from lava_common.jinja import create_device_templates_env
 from lava_common.log import YAMLLogger
@@ -264,7 +263,7 @@ class Factory:
             print("####### Parser exception ########")
             print(device)
             print("#######")
-            raise ConfigurationError("Invalid device: %s" % exc)
+            raise ConfigurationError("Invalid device: %s" % exc) from exc
 
         return job
 
@@ -296,18 +295,14 @@ class Factory:
             job_data = yaml_safe_load(sample_job_data.read())
         if validate:
             validate_job(job_data, strict=False)
-        try:
-            job = parser.parse(
-                yaml_safe_dump(job_data),
-                device,
-                4212,
-                YAMLLogger("lava_dispatcher_testcase_job_logger"),
-                "",
-            )
-        except LAVAError as exc:
-            print(exc)
-            return None
-        return job
+
+        return parser.parse(
+            yaml_safe_dump(job_data),
+            device,
+            4212,
+            YAMLLogger("lava_dispatcher_testcase_job_logger"),
+            "",
+        )
 
 
 class TestPipeline(LavaDispatcherTestCase):
