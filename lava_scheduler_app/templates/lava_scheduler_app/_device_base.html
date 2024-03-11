@@ -97,6 +97,7 @@
                       {% if device.health != device.HEALTH_GOOD %}<option>Good</option>{% endif %}
                       {% if device.health != device.HEALTH_LOOPING %}<option>Looping</option>{% endif %}
                       {% if device.health != device.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
+                      <option>{{ device.get_health_display }}</option>
                     </select>
                   </div>
                   <div class="form-group">
