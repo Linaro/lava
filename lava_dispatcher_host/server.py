@@ -29,6 +29,16 @@ class CommandHandler:
         share_device_with_container(command.options)
 
 
+def encode_result(result, exception=None):
+    data = {
+        "result": result,
+    }
+    if exception:
+        data["message"] = repr(exception)
+
+    return bytes(json.dumps(data), "utf-8") + b"\n"
+
+
 class ServerWrapper:
     def __init__(self, socket=SOCKET):
         self.socket = socket
@@ -64,18 +74,26 @@ class ServerWrapper:
 
         try:
             command = ShareCommand(**json.loads(request))
-        except (TypeError, json.decoder.JSONDecodeError):
-            result = b'{"result": "INVALID_REQUEST"}\n'
+        except (TypeError, json.decoder.JSONDecodeError) as ex:
+            logger.warning(repr(ex))
+            result = encode_result("INVALID_REQUEST", ex)
 
         if not result:
-            handler = CommandHandler()
-            handler.handle(command)
-            result = b'{"result": "OK"}\n'
+            try:
+                handler = CommandHandler()
+                handler.handle(command)
+                result = encode_result("OK")
+            except Exception as ex:
+                logger.warning(repr(ex))
+                result = encode_result("FAILED", ex)
 
-        writer.write(result)
-        await writer.drain()
-        writer.close()
-        await writer.wait_closed()
+        try:
+            writer.write(result)
+            await writer.drain()
+            writer.close()
+            await writer.wait_closed()
+        except ConnectionResetError as ex:
+            logger.warning(repr(ex))
 
 
 class Client:
