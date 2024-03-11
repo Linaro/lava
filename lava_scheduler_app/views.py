@@ -2503,8 +2503,9 @@ def __set_device_health__(device, user, health, reason):
             return HttpResponseBadRequest("Wrong device health %s" % health)
 
         old_health_display = device.get_health_display()
-        device.health = Device.HEALTH_REVERSE[health]
-        device.save(update_fields=["health"])
+        if health.title() != old_health_display:
+            device.health = Device.HEALTH_REVERSE[health]
+            device.save(update_fields=["health"])
         if reason:
             device.log_admin_entry(
                 user,
