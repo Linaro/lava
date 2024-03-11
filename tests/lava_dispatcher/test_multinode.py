@@ -111,7 +111,9 @@ class TestMultinode(LavaDispatcherTestCase):
         """
         filename = "/etc/lava-coordinator/lava-coordinator.conf"
         if not os.path.exists(filename):
-            self.skipTest("Coordinator not configured")
+            filename = os.path.join(
+                os.path.dirname(__file__), "../../etc/lava-coordinator.conf"
+            )
         self.assertTrue(os.path.exists(filename))
         client_protocol = [protocol for protocol in self.client_job.protocols][0]
         settings = client_protocol.read_settings(filename)
