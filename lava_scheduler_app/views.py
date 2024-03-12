@@ -25,7 +25,11 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
-from django.core.exceptions import FieldDoesNotExist, PermissionDenied
+from django.core.exceptions import (
+    FieldDoesNotExist,
+    PermissionDenied,
+    RequestDataTooBig,
+)
 from django.db import transaction
 from django.db.models import (
     Count,
@@ -58,6 +62,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
 from django_tables2 import RequestConfig
 
+from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
 from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
@@ -1285,7 +1290,10 @@ def internal_v1_jobs_logs(request, pk):
         return JsonResponse({"error": "Invalid 'token'"}, status=400)
 
     # check data
-    lines = request.POST.get("lines")
+    try:
+        lines = request.POST.get("lines")
+    except RequestDataTooBig:
+        return HttpResponse(REQUEST_DATA_TOO_BIG_MSG, status=413)
     if not lines:
         return JsonResponse({"error": "Missing 'lines'"}, status=400)
     line_idx = request.POST.get("index")
