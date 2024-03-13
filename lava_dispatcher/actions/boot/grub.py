@@ -114,11 +114,15 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
             "sequence", []
         )
         for sequence in sequences:
-            mapped = _grub_sequence_map(sequence)
-            if mapped[1]:
-                self.pipeline.add_action(mapped[0](self.job, itype=mapped[1]))
-            elif mapped[0]:
-                self.pipeline.add_action(mapped[0](self.job))
+            action_type, itype = _grub_sequence_map(sequence)
+            if (
+                itype is not None
+                and action_type is not None
+                and issubclass(action_type, WaitFastBootInterrupt)
+            ):
+                self.pipeline.add_action(action_type(self.job, itype=itype))
+            elif action_type is not None:
+                self.pipeline.add_action(action_type(self.job))
         if self.has_prompts(parameters):
             self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
