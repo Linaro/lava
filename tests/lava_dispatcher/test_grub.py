@@ -181,7 +181,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
-        overlay = BootloaderCommandOverlay()
+        overlay = BootloaderCommandOverlay(job)
         pipeline.add_action(overlay)
         ip_addr = dispatcher_ip(None)
         parsed = []

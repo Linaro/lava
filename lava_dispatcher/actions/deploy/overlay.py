@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import glob
 import os
@@ -10,6 +11,7 @@ import shlex
 import shutil
 import stat
 import tarfile
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
@@ -22,13 +24,16 @@ from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.network import dispatcher_ip, rpcinfo_nfs
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Overlay(Deployment):
     name = "overlay"
 
     @classmethod
-    def action(cls):
-        return OverlayAction()
+    def action(cls, job: Job) -> Action:
+        return OverlayAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -64,8 +69,8 @@ class CreateOverlay(Action):
     description = "add lava scripts during deployment for test shell use"
     summary = "overlay the lava support scripts"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.lava_test_dir = os.path.realpath(
             "%s/../../lava_test_shell" % os.path.dirname(__file__)
         )
@@ -138,10 +143,10 @@ class CreateOverlay(Action):
             "ssh" in data for data in self.job.device["actions"]["deploy"]["methods"]
         ):
             # only devices supporting ssh deployments add this action.
-            self.pipeline.add_action(SshAuthorize())
-        self.pipeline.add_action(VlandOverlayAction())
-        self.pipeline.add_action(MultinodeOverlayAction())
-        self.pipeline.add_action(TestDefinitionAction())
+            self.pipeline.add_action(SshAuthorize(self.job))
+        self.pipeline.add_action(VlandOverlayAction(self.job))
+        self.pipeline.add_action(MultinodeOverlayAction(self.job))
+        self.pipeline.add_action(TestDefinitionAction(self.job))
         # Skip compress-overlay for actions that mount overlay directory
         # that located on lava worker directly.
         skip_overlay_compression = False
@@ -152,8 +157,8 @@ class CreateOverlay(Action):
         if {"docker", "definitions"}.issubset(parameters):
             skip_overlay_compression = True
         if not skip_overlay_compression:
-            self.pipeline.add_action(CompressOverlay())
-        self.pipeline.add_action(PersistentNFSOverlay())  # idempotent
+            self.pipeline.add_action(CompressOverlay(self.job))
+        self.pipeline.add_action(PersistentNFSOverlay(self.job))  # idempotent
 
     def _export_data(self, fout, data, prefix):
         if isinstance(data, dict):
@@ -326,8 +331,8 @@ class MultinodeOverlayAction(OverlayAction):
     description = "add lava scripts during deployment for multinode test shell use"
     summary = "overlay the lava multinode scripts"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         # Multinode-only
         self.lava_multi_node_test_dir = os.path.realpath(
             "%s/../../lava_test_shell/multi_node" % os.path.dirname(__file__)
@@ -443,8 +448,8 @@ class VlandOverlayAction(OverlayAction):
     description = "Populate specific vland scripts for tests to lookup vlan data."
     summary = "Add files detailing vlan configuration."
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         # vland-only
         self.lava_vland_test_dir = os.path.realpath(
             "%s/../../lava_test_shell/vland" % os.path.dirname(__file__)
@@ -641,8 +646,8 @@ class SshAuthorize(Action):
     description = "include public key in overlay and authorize root user"
     summary = "add public key to authorized_keys"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.active = False
         self.identity_file = None
 

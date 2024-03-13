@@ -3,12 +3,14 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import logging
 import time
 from re import error as re_error
 from re import split as re_split
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -24,6 +26,9 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
 from lava_dispatcher.connection import Connection
 from lava_dispatcher.utils.strings import seconds_to_str
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class ShellLogger:
@@ -337,8 +342,8 @@ class ExpectShellSession(Action):
     description = "Wait for a shell"
     summary = "Expect a shell prompt"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.force_prompt = True
 
     def validate(self):

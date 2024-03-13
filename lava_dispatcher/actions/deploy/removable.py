@@ -6,8 +6,10 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.constants import DD_PROMPTS, DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.action import Action, JobError, Pipeline, Timeout
@@ -18,6 +20,9 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class Removable(Deployment):
@@ -36,8 +41,8 @@ class Removable(Deployment):
     name = "removable"
 
     @classmethod
-    def action(cls):
-        return MassStorage()
+    def action(cls, job: Job) -> Action:
+        return MassStorage(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -77,8 +82,8 @@ class DDAction(Action):
     description = "deploy image to drive"
     summary = "write image to drive"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.timeout = Timeout(
             self.name, self, duration=600, exception=self.timeout_exception
         )
@@ -250,8 +255,8 @@ class MassStorage(Action):
     description = "Deploy image to mass storage"
     summary = "write image to storage"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.suffix = None
         self.image_path = None
 
@@ -283,12 +288,14 @@ class MassStorage(Action):
         self.image_path = self.mkdtemp()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
+            # idempotent, includes testdef
+            self.pipeline.add_action(OverlayAction(self.job))
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             for k in sorted(parameters["images"].keys()):
                 self.pipeline.add_action(
                     DownloaderAction(
+                        self.job,
                         k,
                         path=self.image_path,
                         uniquify=uniquify,
@@ -297,11 +304,12 @@ class MassStorage(Action):
                 )
                 if parameters["images"][k].get("apply-overlay", False):
                     if self.test_needs_overlay(parameters):
-                        self.pipeline.add_action(ApplyOverlayImage())
-            self.pipeline.add_action(DDAction())
+                        self.pipeline.add_action(ApplyOverlayImage(self.job))
+            self.pipeline.add_action(DDAction(self.job))
         elif "image" in parameters:
             self.pipeline.add_action(
                 DownloaderAction(
+                    self.job,
                     "image",
                     path=self.image_path,
                     uniquify=uniquify,
@@ -309,9 +317,9 @@ class MassStorage(Action):
                 )
             )
             if self.test_needs_overlay(parameters):
-                self.pipeline.add_action(ApplyOverlayImage())
-            self.pipeline.add_action(DDAction())
+                self.pipeline.add_action(ApplyOverlayImage(self.job))
+            self.pipeline.add_action(DDAction(self.job))
 
         # FIXME: could support tarballs too
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))

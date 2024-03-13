@@ -8,9 +8,11 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import re
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -21,6 +23,9 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.strings import safe_dict_format
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class CheckSerialDownloadMode(OptionalContainerUuuAction):
@@ -101,8 +106,8 @@ class UUUBoot(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return UUUBootRetryAction()
+    def action(cls, job: Job) -> Action:
+        return UUUBootRetryAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -150,15 +155,17 @@ class BootBootloaderCorruptBootMediaAction(Action):
             parent=self, job=self.job, parameters={**parameters, **u_boot_params}
         )
         if power_off:
-            self.pipeline.add_action(PowerOff())
-        self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(PowerOff(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
         self.pipeline.add_action(
             BootloaderCommandOverlay(
-                method=u_boot_params["bootloader"], commands=u_boot_params["commands"]
+                self.job,
+                method=u_boot_params["bootloader"],
+                commands=u_boot_params["commands"],
             )
         )
-        self.pipeline.add_action(BootBootloaderAction())
-        self.pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(BootBootloaderAction(self.job))
+        self.pipeline.add_action(DisconnectDevice(self.job))
 
     def run(self, connection, max_end_time):
         otg_available = self.get_namespace_data(
@@ -193,8 +200,8 @@ class UUUBootRetryAction(RetryAction):
                 "bcu_board_id"
             ] = self.eval_bcu_board_id()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DisconnectDevice())
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(DisconnectDevice(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
 
         # Serial availability check is skipped if
         #  bcu reset usb is the first command
@@ -211,13 +218,13 @@ Following actions will be skipped :
     - ResetDevice"""
             )
         else:
-            self.pipeline.add_action(CheckSerialDownloadMode())
-            self.pipeline.add_action(BootBootloaderCorruptBootMediaAction())
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(CheckSerialDownloadMode(self.job))
+            self.pipeline.add_action(BootBootloaderCorruptBootMediaAction(self.job))
+            self.pipeline.add_action(ResetDevice(self.job))
 
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(UUUBootAction(), parameters=parameters)
-        self.pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(UUUBootAction(self.job), parameters=parameters)
+        self.pipeline.add_action(DisconnectDevice(self.job))
 
     def eval_otg_path(self):
         uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]

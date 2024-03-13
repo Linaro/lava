@@ -6,6 +6,9 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
@@ -29,6 +32,9 @@ from lava_dispatcher.utils.storage import FlashUBootUMSAction
 from lava_dispatcher.utils.strings import map_kernel_uboot
 from lava_dispatcher.utils.udev import WaitDevicePathAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class UBoot(Boot):
     """
@@ -41,8 +47,8 @@ class UBoot(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return UBootAction()
+    def action(cls, job: Job) -> Action:
+        return UBootAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -76,10 +82,10 @@ class UBootAction(RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        self.pipeline.add_action(UBootSecondaryMedia())
-        self.pipeline.add_action(BootloaderCommandOverlay())
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(UBootCommandsAction())
+        self.pipeline.add_action(UBootSecondaryMedia(self.job))
+        self.pipeline.add_action(BootloaderCommandOverlay(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(UBootCommandsAction(self.job))
 
 
 class UBootCommandsAction(BootHasMixin, Action):
@@ -87,8 +93,8 @@ class UBootCommandsAction(BootHasMixin, Action):
     description = "interactive uboot commands action"
     summary = "uboot commands"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.method_params = None
         self.usb_mass_device = None
 
@@ -99,28 +105,34 @@ class UBootCommandsAction(BootHasMixin, Action):
         ]
         self.usb_mass_device = self.method_params.get("uboot_mass_storage_device")
         # establish a new connection before trying the reset
-        self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(BootloaderInterruptAction(self.job))
         if self.method_params.get("uboot_ums_flash", False):
-            self.pipeline.add_action(BootloaderCommandsAction(expect_final=False))
-            self.pipeline.add_action(WaitDevicePathAction(self.usb_mass_device))
-            self.pipeline.add_action(FlashUBootUMSAction(self.usb_mass_device))
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(
+                BootloaderCommandsAction(self.job, expect_final=False)
+            )
+            self.pipeline.add_action(
+                WaitDevicePathAction(self.job, self.usb_mass_device)
+            )
+            self.pipeline.add_action(
+                FlashUBootUMSAction(self.job, self.usb_mass_device)
+            )
+            self.pipeline.add_action(ResetDevice(self.job))
         elif self.method_params.get("uboot_altbank", False):
             self.pipeline.add_action(
-                BootloaderCommandsActionAltBank(expect_final=False)
+                BootloaderCommandsActionAltBank(self.job, expect_final=False)
             )
-            self.pipeline.add_action(BootloaderInterruptAction())
-            self.pipeline.add_action(BootloaderCommandsAction())
+            self.pipeline.add_action(BootloaderInterruptAction(self.job))
+            self.pipeline.add_action(BootloaderCommandsAction(self.job))
         else:
-            self.pipeline.add_action(BootloaderCommandsAction())
+            self.pipeline.add_action(BootloaderCommandsAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
     def validate(self):
         super().validate()
@@ -211,17 +223,17 @@ class UBootEnterFastbootAction(RetryAction):
     description = "interactive uboot enter fastboot action"
     summary = "uboot commands to enter fastboot mode"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.params = {}
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ResetDevice(self.job))
         # need to look for Hit any key to stop autoboot
-        self.pipeline.add_action(BootloaderInterruptAction())
-        self.pipeline.add_action(ConnectLxc())
+        self.pipeline.add_action(BootloaderInterruptAction(self.job))
+        self.pipeline.add_action(ConnectLxc(self.job))
 
     def validate(self):
         super().validate()

@@ -24,6 +24,5 @@ class OptionalContainerFastbootAction(OptionalContainerAction):
 
     def on_timeout(self):
         self.logger.error("fastboot timing out, power-off the DuT")
-        power_off = PowerOff()
-        power_off.job = self.job
+        power_off = PowerOff(self.job)
         power_off.run(None, self.timeout.duration)

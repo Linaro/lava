@@ -6,9 +6,11 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
 import shutil
+from typing import TYPE_CHECKING
 
 from lava_common.constants import VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
 from lava_common.exceptions import InfrastructureError, LAVABug
@@ -25,6 +27,9 @@ from lava_dispatcher.utils.filesystem import (
 )
 from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class VExpressMsd(Deployment):
     """
@@ -36,8 +41,8 @@ class VExpressMsd(Deployment):
     name = "vemsd"
 
     @classmethod
-    def action(cls):
-        return VExpressMsdRetry()
+    def action(cls, job: Job) -> Action:
+        return VExpressMsdRetry(job)
 
     @classmethod
     def uses_deployment_data(cls):
@@ -62,7 +67,7 @@ class VExpressMsdRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(VExpressMsdAction())
+        self.pipeline.add_action(VExpressMsdAction(self.job))
 
 
 class VExpressMsdAction(Action):
@@ -85,24 +90,27 @@ class VExpressMsdAction(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
             DownloaderAction(
-                "recovery_image", path=download_dir, params=parameters["recovery_image"]
+                self.job,
+                "recovery_image",
+                path=download_dir,
+                params=parameters["recovery_image"],
             )
         )
-        self.pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline.add_action(LxcCreateUdevRuleAction(self.job))
         self.force_prompt = True
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(ExtractVExpressRecoveryImage())
-        self.pipeline.add_action(EnterVExpressMCC())
-        self.pipeline.add_action(EnableVExpressMassStorage())
-        self.pipeline.add_action(WaitUSBMassStorageDeviceAction())
-        self.pipeline.add_action(MountVExpressMassStorageDevice())
-        self.pipeline.add_action(DeployVExpressRecoveryImage())
-        self.pipeline.add_action(UnmountVExpressMassStorageDevice())
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(ExtractVExpressRecoveryImage(self.job))
+        self.pipeline.add_action(EnterVExpressMCC(self.job))
+        self.pipeline.add_action(EnableVExpressMassStorage(self.job))
+        self.pipeline.add_action(WaitUSBMassStorageDeviceAction(self.job))
+        self.pipeline.add_action(MountVExpressMassStorageDevice(self.job))
+        self.pipeline.add_action(DeployVExpressRecoveryImage(self.job))
+        self.pipeline.add_action(UnmountVExpressMassStorageDevice(self.job))
         if self.job.device["actions"]["deploy"]["methods"]["vemsd"]["parameters"].get(
             "flash_prompt", False
         ):
-            self.pipeline.add_action(VExpressFlashErase())
+            self.pipeline.add_action(VExpressFlashErase(self.job))
 
 
 class ExtractVExpressRecoveryImage(Action):
@@ -114,8 +122,8 @@ class ExtractVExpressRecoveryImage(Action):
     description = "unpack versatile express recovery image"
     summary = "unpack versatile express recovery image ready for deployment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.param_key = "recovery_image"
         self.file_key = "recovery_image"
         self.compression = None
@@ -184,8 +192,8 @@ class EnterVExpressMCC(Action):
     description = "enter Versatile Express MCC"
     summary = "enter Versatile Express MCC, interrupting autorun if needed"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.device_params = None
         self.interrupt_char = None
         self.mcc_prompt = None
@@ -248,8 +256,8 @@ class EnableVExpressMassStorage(Action):
     description = "enable vexpress usb msd"
     summary = "enable vexpress usb mass storage device"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.mcc_prompt = None
         self.mcc_cmd = None
 
@@ -289,8 +297,8 @@ class MountDeviceMassStorageDevice(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.device_name = None
         self.disk_identifier = None
         self.disk_identifier_type = None  # uuid, id, label
@@ -353,8 +361,8 @@ class MountVExpressMassStorageDevice(MountDeviceMassStorageDevice):
     description = "mount vexpress usb msd"
     summary = "mount vexpress usb mass storage device on the dispatcher"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.device_name = "Versatile Express"
         self.disk_identifier = None
         self.disk_identifier_type = "label"
@@ -424,8 +432,8 @@ class UnmountVExpressMassStorageDevice(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.namespace_label = "vexpress-fw"
         self.namespace_action = "mount-vexpress-usbmsd"
 
@@ -455,8 +463,8 @@ class VExpressFlashErase(Action):
     description = "erase vexpress flash"
     summary = "erase vexpress flash using the commands set by the user"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.mcc_prompt = None
         self.flash_prompt = None
         self.flash_enter_cmd = None

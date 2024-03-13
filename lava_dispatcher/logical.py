@@ -21,6 +21,8 @@ from lava_dispatcher.utils.strings import seconds_to_str
 if TYPE_CHECKING:
     from typing import Optional
 
+    from lava_dispatcher.job import Job
+
 
 class RetryAction(Action):
     """
@@ -30,8 +32,8 @@ class RetryAction(Action):
     Only the top level Boot and Test actions support 'repeat' as this is set in the job.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.sleep = 1
 
     def validate(self):

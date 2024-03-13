@@ -3,13 +3,18 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.shell import which
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class SShSession(ShellSession):
@@ -50,8 +55,8 @@ class ConnectSsh(Action):
     summary = "make an ssh connection to a device"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.command = None
         self.host = None
         self.ssh_port = ["-p", "22"]

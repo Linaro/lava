@@ -3,10 +3,12 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import pathlib
 import shlex
+from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import LAVATimeoutError
@@ -21,6 +23,9 @@ from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DockerTest(LavaTest):
     """
@@ -30,8 +35,8 @@ class DockerTest(LavaTest):
     priority = 10
 
     @classmethod
-    def action(cls, parameters):
-        return DockerTestAction()
+    def action(cls, job: Job, parameters) -> Action:
+        return DockerTestAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -53,7 +58,7 @@ class DockerTest(LavaTest):
         return True
 
 
-class GetBoardId:
+class GetBoardId(Action):
     @property
     def device_info(self):
         return self.job.device.get("device_info")
@@ -65,7 +70,7 @@ class GetBoardId:
         return device_info[0].get("board_id")
 
 
-class DockerTestAction(Action, GetBoardId):
+class DockerTestAction(GetBoardId):
     name = "lava-docker-test"
     description = "Runs tests in a docker container"
     summary = "Runs tests in a docker container, with the DUT available via adb/fastboot over USB"
@@ -73,16 +78,16 @@ class DockerTestAction(Action, GetBoardId):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DockerTestSetEnvironment())
-        self.pipeline.add_action(CreateOverlay())
+        self.pipeline.add_action(DockerTestSetEnvironment(self.job))
+        self.pipeline.add_action(CreateOverlay(self.job))
         if "role" in parameters:
-            self.pipeline.add_action(MultinodeDockerTestShell())
+            self.pipeline.add_action(MultinodeDockerTestShell(self.job))
         else:
-            self.pipeline.add_action(DockerTestShell())
-        self.pipeline.add_action(ReadFeedback())
+            self.pipeline.add_action(DockerTestShell(self.job))
+        self.pipeline.add_action(ReadFeedback(self.job))
 
 
-class DockerTestSetEnvironment(Action, GetBoardId):
+class DockerTestSetEnvironment(GetBoardId):
     name = "lava-docker-test-set-environment"
     description = "Adds necessary environments variables for docker-test-shell"
     summary = description

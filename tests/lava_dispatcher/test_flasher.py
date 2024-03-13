@@ -43,9 +43,7 @@ class TestFlasher(LavaDispatcherTestCase):
             ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
             ["touch"],
         ]
-
-        action = FlasherAction()
-        action.job = self.create_simple_job(
+        job = self.create_simple_job(
             device_dict={
                 "actions": {
                     "deploy": {
@@ -57,6 +55,8 @@ class TestFlasher(LavaDispatcherTestCase):
                 "commands": {"hard_reset": "/home/lava/bin/PiCtrl.py PowerPlug 0 off"},
             }
         )
+
+        action = FlasherAction(job)
         action.parameters = {"namespace": "common", "images": {}}
         action.section = Flasher.section
 

@@ -3,9 +3,11 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import json
 import time
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -23,6 +25,9 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 @nottest
 class TestInteractive(LavaTest):
@@ -31,8 +36,8 @@ class TestInteractive(LavaTest):
     """
 
     @classmethod
-    def action(cls, parameters):
-        return TestInteractiveRetry()
+    def action(cls, job: Job, parameters) -> Action:
+        return TestInteractiveRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -68,7 +73,7 @@ class TestInteractiveRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(TestInteractiveAction())
+        self.pipeline.add_action(TestInteractiveAction(self.job))
 
 
 @nottest

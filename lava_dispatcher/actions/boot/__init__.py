@@ -8,6 +8,7 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+from typing import TYPE_CHECKING
 
 from lava_common.constants import (
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
@@ -35,6 +36,9 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootHasMixin:
     """Add the two methods to boot classes using it"""
@@ -58,8 +62,8 @@ class LoginAction(Action):
         " actual prompt string more closely."
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.force_prompt = True  # Kernel logs may overlap with login prompt on boot
 
     def check_kernel_messages(
@@ -237,8 +241,8 @@ class AutoLoginAction(RetryAction):
     )
     summary = "Auto-login after boot with support for kernel messages."
 
-    def __init__(self, booting=True):
-        super().__init__()
+    def __init__(self, job: Job, booting=True):
+        super().__init__(job)
         self.params = None
         self.booting = booting  # if a boot is expected, False for second UART or ssh.
 
@@ -294,7 +298,7 @@ class AutoLoginAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(LoginAction())
+        self.pipeline.add_action(LoginAction(self.job))
 
     def run(self, connection, max_end_time):
         # Prompts commonly include # - when logging such strings,
@@ -348,8 +352,8 @@ class BootloaderCommandOverlay(Action):
     description = "substitute job data into bootloader command list"
     summary = "replace placeholders with job data"
 
-    def __init__(self, method=None, commands=None):
-        super().__init__()
+    def __init__(self, job: Job, method=None, commands=None):
+        super().__init__(job)
         self.commands = commands
         self.method = method
         self.use_bootscript = False
@@ -777,8 +781,8 @@ class BootloaderInterruptAction(Action):
     summary = "interrupt bootloader to get an interactive shell"
     timeout_exception = InfrastructureError
 
-    def __init__(self, method=None):
-        super().__init__()
+    def __init__(self, job: Job, method=None):
+        super().__init__(job)
         self.params = {}
         self.method = method
         self.needs_interrupt = False
@@ -878,8 +882,8 @@ class BootloaderCommandsActionAltBank(Action):
     summary = "interactive bootloader altbank"
     timeout_exception = InfrastructureError
 
-    def __init__(self, expect_final=True, method=None):
-        super().__init__()
+    def __init__(self, job: Job, expect_final=True, method=None):
+        super().__init__(job)
         self.params = None
         self.timeout = Timeout(
             self.name,
@@ -944,8 +948,8 @@ class BootloaderCommandsAction(Action):
     summary = "interactive bootloader"
     timeout_exception = InfrastructureError
 
-    def __init__(self, expect_final=True, method=None):
-        super().__init__()
+    def __init__(self, job: Job, expect_final=True, method=None):
+        super().__init__(job)
         self.params = None
         self.timeout = Timeout(
             self.name,

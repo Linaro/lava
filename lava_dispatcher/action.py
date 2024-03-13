@@ -107,12 +107,10 @@ class Pipeline:
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
-    def add_action(self, action, parameters=None):
+    def add_action(self, action: Action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
-        # FIXME: if this is only happening in unit test, this has to be fixed later on
-        # should only be None inside the unit tests
-        action.job = self.job
+
         if self.parent:  # action
             self.parent.pipeline = self
             action.level = "%s.%s" % (self.parent.level, len(self.actions))
@@ -349,7 +347,7 @@ class CommandLogger:
 
 
 class Action:
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         Actions get added to pipelines by calling the
         Pipeline.add_action function. Other Action
@@ -365,11 +363,11 @@ class Action:
         # First command in pipeline within outer pipeline: 1.1
         # Level is set during pipeline creation and must not be changed
         # subsequently except by RetryCommand.
+        self.job = job
         self.level = None
         self.pipeline: Optional[Pipeline] = None
         self.__parameters__ = {}
         self.__errors__ = []
-        self.job = None
         self.logger = logging.getLogger("dispatcher")
         self.__results__ = {}
         self.timeout: Timeout = Timeout(

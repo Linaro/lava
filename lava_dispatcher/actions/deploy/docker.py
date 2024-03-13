@@ -3,9 +3,11 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import re
 import subprocess  # nosec - internal
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_common.schemas import docker_image_format_pattern
@@ -15,14 +17,17 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DockerAction(Action):
     name = "deploy-docker"
     description = "deploy docker images"
     summary = "deploy docker"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.remote = []
 
     def validate(self):
@@ -70,9 +75,9 @@ class DockerAction(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
 
     def run(self, connection, max_end_time):
         # Pull the image
@@ -107,8 +112,8 @@ class Docker(Deployment):
     name = "docker"
 
     @classmethod
-    def action(cls):
-        return DockerAction()
+    def action(cls, job: Job) -> Action:
+        return DockerAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):

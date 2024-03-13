@@ -3,8 +3,10 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import shlex
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
@@ -24,6 +26,9 @@ from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 def _fastboot_sequence_map(sequence):
@@ -46,8 +51,8 @@ class BootFastboot(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return BootFastbootAction()
+    def action(cls, job: Job) -> Action:
+        return BootFastbootAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -95,7 +100,7 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         if parameters.get("commands"):
-            self.pipeline.add_action(BootFastbootCommands())
+            self.pipeline.add_action(BootFastbootCommands(self.job))
 
         board_id = self.job.device["fastboot_serial_number"]
 
@@ -103,40 +108,40 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         if self.job.device.get("fastboot_via_uboot", False):
-            self.pipeline.add_action(ConnectDevice())
-            self.pipeline.add_action(UBootEnterFastbootAction())
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(UBootEnterFastbootAction(self.job))
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
-            self.pipeline.add_action(ConnectDevice())
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(ResetDevice(self.job))
         else:
-            self.pipeline.add_action(WaitDeviceBoardID(board_id))
-            self.pipeline.add_action(EnterFastbootAction())
+            self.pipeline.add_action(WaitDeviceBoardID(self.job, board_id))
+            self.pipeline.add_action(EnterFastbootAction(self.job))
 
         # Based on the boot sequence defined in the device configuration, add
         # the required pipeline actions.
         sequences = self.job.device["actions"]["boot"]["methods"].get("fastboot", [])
         for sequence in sequences:
             mapped = _fastboot_sequence_map(sequence)
-            self.pipeline.add_action(WaitDeviceBoardID(board_id))
+            self.pipeline.add_action(WaitDeviceBoardID(self.job, board_id))
             if mapped[1]:
-                self.pipeline.add_action(mapped[0](device_actions=mapped[1]))
+                self.pipeline.add_action(mapped[0](self.job, device_actions=mapped[1]))
             elif mapped[0]:
-                self.pipeline.add_action(mapped[0]())
+                self.pipeline.add_action(mapped[0](self.job))
         if self.job.device.hard_reset_command:
             if not self.is_container():
-                self.pipeline.add_action(PreOs())
+                self.pipeline.add_action(PreOs(self.job))
             if self.has_prompts(parameters):
-                self.pipeline.add_action(AutoLoginAction())
+                self.pipeline.add_action(AutoLoginAction(self.job))
                 if self.test_has_shell(parameters):
-                    self.pipeline.add_action(ExpectShellSession())
+                    self.pipeline.add_action(ExpectShellSession(self.job))
                     if "transfer_overlay" in parameters:
-                        self.pipeline.add_action(OverlayUnpack())
-                    self.pipeline.add_action(ExportDeviceEnvironment())
+                        self.pipeline.add_action(OverlayUnpack(self.job))
+                    self.pipeline.add_action(ExportDeviceEnvironment(self.job))
         else:
             if not self.is_container():
-                self.pipeline.add_action(ConnectAdb())
-                self.pipeline.add_action(AdbOverlayUnpack())
+                self.pipeline.add_action(ConnectAdb(self.job))
+                self.pipeline.add_action(AdbOverlayUnpack(self.job))
 
 
 class WaitFastBootInterrupt(Action):
@@ -150,9 +155,9 @@ class WaitFastBootInterrupt(Action):
     description = "Check for prompt and pass the interrupt string to exit fastboot."
     summary = "watch output and try to interrupt fastboot"
 
-    def __init__(self, itype):
-        super().__init__()
-        self.type = itype
+    def __init__(self, job: Job, itype: str):
+        super().__init__(job)
+        self.itype = itype
         self.prompt = None
         self.string = None
 

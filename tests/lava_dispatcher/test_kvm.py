@@ -42,53 +42,47 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         factory = Factory()
         job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         pipe = Pipeline(job=job)
-        action = Action()
+        action = Action(job)
         action.name = "deploy_linaro_image"
         action.description = "deploy action using preset subactions in an internal pipe"
         action.summary = "deploy_linaro_image"
-        action.job = job
         # deliberately unlikely location
         # a successful validation would need to use the cwd
         action.parameters = {"image": "file:///none/images/bad-kvm-debian-wheezy.img"}
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
         deploy_pipe = Pipeline(job=job, parent=action)
-        action = Action()
+        action = Action(job)
         action.name = "downloader"
         action.description = "download image wrapper, including an internal retry pipe"
         action.summary = "downloader"
-        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.1")
         # a formal RetryAction would contain a pre-built pipeline which can be
         # inserted directly
         retry_pipe = Pipeline(job=job, parent=action)
-        action = Action()
+        action = Action(job)
         action.name = "wget"
         action.description = "do the download with retries"
         action.summary = "wget"
-        action.job = job
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "1.1.1")
-        action = Action()
+        action = Action(job)
         action.name = "checksum"
         action.description = "checksum the downloaded file"
         action.summary = "md5sum"
-        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.2")
-        action = Action()
+        action = Action(job)
         action.name = "overlay"
         action.description = "apply lava overlay"
         action.summary = "overlay"
-        action.job = job
         deploy_pipe.add_action(action)
         self.assertEqual(action.level, "1.3")
-        action = Action()
+        action = Action(job)
         action.name = "boot"
         action.description = "boot image"
         action.summary = "qemu"
-        action.job = job
         # cmd_line built from device configuration
         action.parameters = {
             "cmd_line": [
@@ -104,21 +98,19 @@ class TestKVMSimulation(LavaDispatcherTestCase):
         pipe.add_action(action)
         self.assertEqual(action.level, "2")
 
-        action = Action()
+        action = Action(job)
         action.name = "simulated"
         action.description = "lava test shell"
         action.summary = "simulated"
-        action.job = job
         # a formal lava test shell action would include an internal pipe
         # which would handle the run.sh
         pipe.add_action(action)
         self.assertEqual(action.level, "3")
         # just a fake action
-        action = Action()
+        action = Action(job)
         action.name = "fake"
         action.description = "faking results"
         action.summary = "fake action"
-        action.job = job
         pipe.add_action(action)
         self.assertEqual(action.level, "4")
         self.assertEqual(len(pipe.describe()), 4)

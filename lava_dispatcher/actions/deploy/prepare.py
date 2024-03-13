@@ -3,13 +3,18 @@
 # Author: Matthew Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import map_kernel_uboot
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class PrepareKernelAction(Action):
@@ -26,9 +31,9 @@ class PrepareKernelAction(Action):
         # the logic here can be upgraded in future if needed with more parameters to the deploy.
         methods = self.job.device["actions"]["boot"]["methods"]
         if "u-boot" in methods:
-            self.pipeline.add_action(UBootPrepareKernelAction())
+            self.pipeline.add_action(UBootPrepareKernelAction(self.job))
         elif "depthcharge" in methods:
-            self.pipeline.add_action(PrepareFITAction())
+            self.pipeline.add_action(PrepareFITAction(self.job))
 
 
 class UBootPrepareKernelAction(Action):
@@ -40,8 +45,8 @@ class UBootPrepareKernelAction(Action):
     description = "convert kernel to uimage"
     summary = "prepare/convert kernel"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.bootcommand = None
         self.params = None
         self.kernel_type = None
@@ -175,8 +180,8 @@ class PrepareFITAction(Action):
     description = "package kernel, dtb and ramdisk into an FIT image"
     summary = "generate depthcharge FIT image"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.deploy_params = None
         self.device_params = None
 

@@ -6,9 +6,11 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
 import shutil
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
@@ -24,6 +26,9 @@ from lava_dispatcher.logical import Deployment
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Mps(Deployment):
     """
@@ -34,8 +39,8 @@ class Mps(Deployment):
     name = "mps"
 
     @classmethod
-    def action(cls):
-        return MpsAction()
+    def action(cls, job: Job) -> Action:
+        return MpsAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -83,34 +88,37 @@ class MpsAction(Action):
     def populate(self, parameters):
         download_dir = self.mkdtemp()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DisconnectDevice())
-        self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(WaitUSBMassStorageDeviceAction())
+        self.pipeline.add_action(DisconnectDevice(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(WaitUSBMassStorageDeviceAction(self.job))
         for image in parameters["images"].keys():
             self.pipeline.add_action(
                 DownloaderAction(
-                    image, path=download_dir, params=parameters["images"][image]
+                    self.job,
+                    image,
+                    path=download_dir,
+                    params=parameters["images"][image],
                 )
             )
-        self.pipeline.add_action(MountVExpressMassStorageDevice())
+        self.pipeline.add_action(MountVExpressMassStorageDevice(self.job))
         # Sort the keys so recovery_image will be first
         for image in sorted(parameters["images"].keys()):
             if image == "recovery_image":
-                self.pipeline.add_action(ExtractVExpressRecoveryImage())
-                self.pipeline.add_action(DeployVExpressRecoveryImage())
+                self.pipeline.add_action(ExtractVExpressRecoveryImage(self.job))
+                self.pipeline.add_action(DeployVExpressRecoveryImage(self.job))
             else:
-                self.pipeline.add_action(DeployMPSTestBinary(image))
+                self.pipeline.add_action(DeployMPSTestBinary(self.job, image))
 
         # Should we hard reboot the board after flash?
         params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
         if params["hard-reboot"]:
             # Unmount the mass storage device before rebooting
-            self.pipeline.add_action(UnmountVExpressMassStorageDevice())
-            self.pipeline.add_action(PowerOff())
+            self.pipeline.add_action(UnmountVExpressMassStorageDevice(self.job))
+            self.pipeline.add_action(PowerOff(self.job))
         else:
             # Unmount the mass storage device after the creation of reboot.txt
-            self.pipeline.add_action(DeployMPSRebootTxt())
-            self.pipeline.add_action(UnmountVExpressMassStorageDevice())
+            self.pipeline.add_action(DeployMPSRebootTxt(self.job))
+            self.pipeline.add_action(UnmountVExpressMassStorageDevice(self.job))
 
 
 class DeployMPSTestBinary(Action):
@@ -124,8 +132,8 @@ class DeployMPSTestBinary(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def __init__(self, key):
-        super().__init__()
+    def __init__(self, job: Job, key):
+        super().__init__(job)
         self.param_key = key
 
     def validate(self):

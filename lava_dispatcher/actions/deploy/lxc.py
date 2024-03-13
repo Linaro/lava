@@ -3,8 +3,10 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.constants import (
     LXC_DEFAULT_PACKAGES,
@@ -25,6 +27,9 @@ from lava_dispatcher.utils.filesystem import lxc_path
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import allow_fs_label
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Lxc(Deployment):
     """
@@ -35,8 +40,8 @@ class Lxc(Deployment):
     name = "lxc"
 
     @classmethod
-    def action(cls):
-        return LxcAction()
+    def action(cls, job: Job) -> Action:
+        return LxcAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -54,8 +59,8 @@ class LxcAction(Action):
     description = "download files and deploy using lxc"
     summary = "lxc deployment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.lxc_data = {}
 
     def validate(self):
@@ -78,18 +83,18 @@ class LxcAction(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(LxcCreateAction())
-        self.pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline.add_action(LxcCreateAction(self.job))
+        self.pipeline.add_action(LxcCreateUdevRuleAction(self.job))
         if "packages" in parameters:
-            self.pipeline.add_action(LxcStartAction())
-            self.pipeline.add_action(LxcAptUpdateAction())
-            self.pipeline.add_action(LxcAptInstallAction())
-            self.pipeline.add_action(LxcStopAction())
+            self.pipeline.add_action(LxcStartAction(self.job))
+            self.pipeline.add_action(LxcAptUpdateAction(self.job))
+            self.pipeline.add_action(LxcAptInstallAction(self.job))
+            self.pipeline.add_action(LxcStopAction(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
-            self.pipeline.add_action(ApplyLxcOverlay())
+            self.pipeline.add_action(OverlayAction(self.job))
+            self.pipeline.add_action(ApplyLxcOverlay(self.job))
 
 
 class LxcCreateAction(Action):
@@ -101,8 +106,8 @@ class LxcCreateAction(Action):
     description = "create lxc action"
     summary = "create lxc"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.retries = 10
         self.sleep = 10
         self.lxc_data = {}
@@ -212,8 +217,8 @@ class LxcCreateUdevRuleAction(DeviceContainerMappingMixin):
     description = "create lxc udev rule action"
     summary = "create lxc udev rule"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.retries = 10
         self.sleep = 10
 
@@ -276,8 +281,8 @@ class LxcAptUpdateAction(Action):
     description = "lxc apt update action"
     summary = "lxc apt update"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.retries = 10
         self.sleep = 10
 
@@ -301,8 +306,8 @@ class LxcAptInstallAction(Action):
     description = "lxc apt install packages action"
     summary = "lxc apt install"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.retries = 10
         self.sleep = 10
 

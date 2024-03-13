@@ -22,9 +22,8 @@ class TestDownloads(LavaDispatcherTestCase):
         self.job = self.create_simple_job()
 
     def test_downloads_action(self):
-        action = DownloadsAction()
+        action = DownloadsAction(self.job)
         action.level = 2
-        action.job = self.job
         action.populate(
             {
                 "images": {"rootfs": {"url": "https://example.com/image.img"}},
@@ -39,9 +38,8 @@ class TestDownloads(LavaDispatcherTestCase):
         self.assertFalse(download.uniquify)
 
     def test_uniquify(self):
-        action = DownloadsAction()
+        action = DownloadsAction(self.job)
         action.level = 2
-        action.job = self.job
         action.populate(
             {
                 "uniquify": True,
@@ -70,11 +68,11 @@ class TestDownloads(LavaDispatcherTestCase):
         self.assertEqual(str(action.path), f"{job.tmp_dir}/downloads/common")
 
     def test_postprocess_with_docker_populate_missing_data(self):
-        action = PostprocessWithDocker(self.create_temporary_directory())
+        action = PostprocessWithDocker(self.job, self.create_temporary_directory())
         action.populate({})
 
     def test_postprocess_with_docker_validate(self):
-        action = PostprocessWithDocker(self.create_temporary_directory())
+        action = PostprocessWithDocker(self.job, self.create_temporary_directory())
         self.assertFalse(action.validate())
         self.assertIn("postprocessing steps missing", action.errors)
         action.steps = ["date"]
@@ -87,7 +85,7 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.job = self.create_simple_job()
-        self.action = PostprocessWithDocker(self.create_temporary_directory())
+        self.action = PostprocessWithDocker(self.job, self.create_temporary_directory())
         self.action.job = self.job
         self.action.populate(
             {

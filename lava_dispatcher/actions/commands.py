@@ -3,9 +3,15 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError, InfrastructureError
 from lava_dispatcher.action import Action
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class CommandAction(Action):
@@ -24,8 +30,8 @@ class CommandAction(Action):
         "recovery_exit",
     ]
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.section = "command"
         self.cmd = None
         self.ran = False

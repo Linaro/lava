@@ -8,6 +8,7 @@
 
 # This class is used for all downloads, including images and individual files for tftp.
 # python2 only
+from __future__ import annotations
 
 import contextlib
 import hashlib
@@ -17,6 +18,7 @@ import pathlib
 import shutil
 import subprocess  # nosec - verified.
 import time
+from typing import TYPE_CHECKING
 from urllib.parse import quote_plus, urlparse
 
 import requests
@@ -45,6 +47,9 @@ from lava_dispatcher.utils.filesystem import (
 )
 from lava_dispatcher.utils.network import requests_retry
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DownloaderAction(RetryAction):
     """
@@ -56,8 +61,8 @@ class DownloaderAction(RetryAction):
     description = "download with retry"
     summary = "download-retry"
 
-    def __init__(self, key, path, params, uniquify=True):
-        super().__init__()
+    def __init__(self, job: Job, key, path, params, uniquify=True):
+        super().__init__(job)
         self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
@@ -77,35 +82,43 @@ class DownloaderAction(RetryAction):
         url = urlparse(url)
         if url.scheme == "scp":
             action = ScpDownloadAction(
-                self.key, self.path, url, self.uniquify, params=self.params
+                self.job, self.key, self.path, url, self.uniquify, params=self.params
             )
         elif url.scheme in ["http", "https"]:
             action = HttpDownloadAction(
-                self.key, self.path, url, self.uniquify, params=self.params
+                self.job, self.key, self.path, url, self.uniquify, params=self.params
             )
         elif url.scheme == "file":
             action = FileDownloadAction(
-                self.key, self.path, url, self.uniquify, params=self.params
+                self.job, self.key, self.path, url, self.uniquify, params=self.params
             )
         elif url.scheme == "lxc":
-            action = LxcDownloadAction(self.key, self.path, url)
+            action = LxcDownloadAction(self.job, self.key, self.path, url)
         elif url.scheme == "downloads":
-            action = PreDownloadedAction(self.key, url, self.path, params=self.params)
+            action = PreDownloadedAction(
+                self.job, self.key, url, self.path, params=self.params
+            )
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
         self.pipeline.add_action(action)
         overlays = self.params.get("overlays", [])
         for overlay in overlays:
             if overlay == "lava":
-                # Special case, don't download an overlay, just defined where to find overlays
+                # Special case, don't download an overlay,
+                # just defined where to find overlays
                 continue
             self.pipeline.add_action(
                 DownloaderAction(
-                    "%s.%s" % (self.key, overlay), self.path, params=overlays[overlay]
+                    self.job,
+                    "%s.%s" % (self.key, overlay),
+                    self.path,
+                    params=overlays[overlay],
                 )
             )
         if overlays:
-            self.pipeline.add_action(AppendOverlays(self.key, params=self.params))
+            self.pipeline.add_action(
+                AppendOverlays(self.job, self.key, params=self.params)
+            )
 
 
 class DownloadHandler(Action):
@@ -132,8 +145,8 @@ class DownloadHandler(Action):
         "zstd": "unzstd",
     }
 
-    def __init__(self, key, path, url, uniquify=True, params=None):
-        super().__init__()
+    def __init__(self, job: Job, key, path, url, uniquify=True, params=None):
+        super().__init__(job)
         self.url = url
         self.key = key
         self.size = -1
@@ -698,8 +711,8 @@ class LxcDownloadAction(Action):
     description = "Map to the correct lxc path"
     summary = "lxc download"
 
-    def __init__(self, key, path, url):
-        super().__init__()
+    def __init__(self, job: Job, key, path, url):
+        super().__init__(job)
         self.key = key
         self.path = path
         self.url = url
@@ -750,8 +763,8 @@ class PreDownloadedAction(Action):
     description = "Map to the correct downloaded path"
     summary = "pre downloaded"
 
-    def __init__(self, key, url, path, params=None):
-        super().__init__()
+    def __init__(self, job: Job, key, url, path, params=None):
+        super().__init__(job)
         self.key = key
         self.url = url
         self.path = path
@@ -838,8 +851,8 @@ class QCowConversionAction(Action):
     description = "convert qcow image using qemu-img"
     summary = "qcow conversion"
 
-    def __init__(self, key):
-        super().__init__()
+    def __init__(self, job: Job, key):
+        super().__init__(job)
         self.key = key
 
     def run(self, connection, max_end_time):
@@ -882,8 +895,8 @@ class Download(Deployment):
     name = "download"
 
     @classmethod
-    def action(cls):
-        return DownloadAction()
+    def action(cls, job: Job) -> Action:
+        return DownloadAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -899,8 +912,8 @@ class DownloadAction(Action):
     description = "download files and copy to LXC if available"
     summary = "download deployment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.download_dir = None
 
     def validate(self):
@@ -920,25 +933,28 @@ class DownloadAction(Action):
         #
         # NOTE: Add more power on strategies, if required for specific devices.
         if self.job.device.get("fastboot_via_uboot", False):
-            self.pipeline.add_action(ConnectDevice())
-            self.pipeline.add_action(UBootEnterFastbootAction())
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(UBootEnterFastbootAction(self.job))
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
-            self.pipeline.add_action(ConnectDevice())
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(ResetDevice(self.job))
         else:
-            self.pipeline.add_action(EnterFastbootAction())
+            self.pipeline.add_action(EnterFastbootAction(self.job))
 
         self.download_dir = self.mkdtemp()
         for image in sorted(parameters["images"].keys()):
             self.pipeline.add_action(
                 DownloaderAction(
-                    image, self.download_dir, params=parameters["images"][image]
+                    self.job,
+                    image,
+                    self.download_dir,
+                    params=parameters["images"][image],
                 )
             )
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
-        self.pipeline.add_action(CopyToLxcAction())
+            self.pipeline.add_action(OverlayAction(self.job))
+        self.pipeline.add_action(CopyToLxcAction(self.job))
 
 
 class CopyToLxcAction(Action):
@@ -950,8 +966,8 @@ class CopyToLxcAction(Action):
     description = "copy files to lxc"
     summary = "copy to lxc"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.retries = 3
         self.sleep = 10
 

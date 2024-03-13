@@ -3,15 +3,20 @@
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import os
+from typing import TYPE_CHECKING
 
 import yaml
 
 from lava_common.constants import LINE_SEPARATOR
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class DeployDeviceEnvironment(Action):
@@ -23,8 +28,8 @@ class DeployDeviceEnvironment(Action):
     description = "deploy device environment"
     summary = "deploy device environment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.env = ""
 
     def validate(self):

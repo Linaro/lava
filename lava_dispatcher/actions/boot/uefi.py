@@ -3,6 +3,9 @@
 # Author: Dean Birch <dean.birch@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.constants import UEFI_LINE_SEPARATOR
 from lava_dispatcher.action import Pipeline
@@ -20,11 +23,15 @@ from lava_dispatcher.menus.menus import MenuConnect, MenuInterrupt
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
+if TYPE_CHECKING:
+    from lava_dispatcher.action import Action
+    from lava_dispatcher.job import Job
+
 
 class UefiShell(Boot):
     @classmethod
-    def action(cls):
-        return UefiShellAction()
+    def action(cls, job: Job) -> Action:
+        return UefiShellAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -55,8 +62,8 @@ class UefiShellAction(BootHasMixin, RetryAction):
     description = "UEFI shell boot action"
     summary = "run UEFI shell to system"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.shell_menu = []
 
     def _skip_menu(self, parameters):
@@ -77,23 +84,23 @@ class UefiShellAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootloaderCommandOverlay())
-        self.pipeline.add_action(MenuConnect())
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(BootloaderCommandOverlay(self.job))
+        self.pipeline.add_action(MenuConnect(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
         # Newer firmware often needs no menu interaction, just press to drop to shell
         if not self._skip_menu(parameters):
             # Some older firmware, UEFI Shell has to be selected from a menu.
-            self.pipeline.add_action(UefiShellMenuInterrupt())
-            self.pipeline.add_action(UefiShellMenuSelector())
-        self.pipeline.add_action(UefiShellInterrupt())
-        self.pipeline.add_action(UefiBootloaderCommandsAction())
+            self.pipeline.add_action(UefiShellMenuInterrupt(self.job))
+            self.pipeline.add_action(UefiShellMenuSelector(self.job))
+        self.pipeline.add_action(UefiShellInterrupt(self.job))
+        self.pipeline.add_action(UefiBootloaderCommandsAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -119,8 +126,8 @@ class UefiShellMenuInterrupt(UEFIMenuInterrupt):
     description = "interrupt default boot and to menu"
     summary = "interrupt default boot and to menu"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         # Take parameters from the uefi method, not uefi menu.
         self.method = "uefi"
 
@@ -166,8 +173,8 @@ class UefiShellMenuSelector(UefiMenuSelector):
     description = "select uefi menu items to drop to a uefi shell"
     summary = "use uefi menu to drop to shell"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         # Take parameters from the uefi method, not uefi menu.
         self.method_name = "uefi"
         # Default menu command name: drop to shell

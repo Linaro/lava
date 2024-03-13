@@ -16,7 +16,7 @@ class AutoLoginTestCase(LavaDispatcherTestCase):
             device_dict={"actions": {"boot": {"methods": []}}},
         )
         pipeline = Pipeline(parent=None, job=job)
-        auto_login = AutoLoginAction()
+        auto_login = AutoLoginAction(job)
         auto_login.section = "internal"
         auto_login.parameters = params
         pipeline.add_action(auto_login)

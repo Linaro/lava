@@ -17,6 +17,7 @@ from ...test_basic import LavaDispatcherTestCase
 
 class TestApplyOverlay(LavaDispatcherTestCase):
     def test_append_overlays_validate(self):
+        job = self.create_simple_job()
         # 1/ Working setup
         params = {
             "format": "cpio.newc",
@@ -29,7 +30,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
                 }
             },
         }
-        action = AppendOverlays("rootfs", params)
+        action = AppendOverlays(job, "rootfs", params)
         action.validate()
 
         # 2/ Check errors
@@ -60,6 +61,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             action.validate()
 
     def test_append_overlays_validate_sparse(self):
+        job = self.create_simple_job()
         params = {
             "format": "cpio.newc",
             "overlays": {
@@ -72,7 +74,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             },
         }
 
-        action = AppendOverlays("rootfs", params)
+        action = AppendOverlays(job, "rootfs", params)
         action.validate()
         with self.assertRaisesRegex(
             JobError, "sparse=True is only available for ext4 images"
@@ -81,6 +83,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             action.validate()
 
     def test_append_overlays_run(self):
+        job = self.create_simple_job()
         params = {
             "format": "cpio.newc",
             "overlays": {
@@ -92,7 +95,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
                 }
             },
         }
-        action = AppendOverlays("rootfs", params)
+        action = AppendOverlays(job, "rootfs", params)
         action.update_cpio = MagicMock()
         action.update_guestfs = MagicMock()
         action.update_tar = MagicMock()
@@ -123,8 +126,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             },
         }
 
-        action = AppendOverlays("rootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "rootfs", params)
         action.parameters = {
             "rootfs": {"url": "http://example.com/rootfs.cpio.gz", **params},
             "namespace": "common",
@@ -207,8 +209,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             },
         }
 
-        action = AppendOverlays("rootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "rootfs", params)
         action.parameters = {
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",
@@ -273,8 +274,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             },
         }
 
-        action = AppendOverlays("nfsrootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "nfsrootfs", params)
         action.parameters = {
             "nfsrootfs": {"url": "http://example.com/rootfs.tar.gz", **params},
             "namespace": "common",
@@ -362,8 +362,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             },
         }
 
-        action = AppendOverlays("rootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "rootfs", params)
         action.parameters = {
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",
@@ -459,8 +458,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
 
         params = {"format": "cpio.newc", "overlays": {"lava": True}}
 
-        action = AppendOverlays("rootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "rootfs", params)
         action.parameters = {
             "rootfs": {"url": "http://example.com/rootfs.cpio.gz", **params},
             "namespace": "common",
@@ -534,8 +532,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
 
         params = {"format": "ext4", "overlays": {"lava": True}}
 
-        action = AppendOverlays("rootfs", params)
-        action.job = job
+        action = AppendOverlays(job, "rootfs", params)
         action.parameters = {
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",

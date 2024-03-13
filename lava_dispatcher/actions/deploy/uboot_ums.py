@@ -3,6 +3,9 @@
 # Author: Matthew Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
@@ -10,6 +13,9 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class UBootUMS(Deployment):
@@ -21,8 +27,8 @@ class UBootUMS(Deployment):
     name = "uboot-ums"
 
     @classmethod
-    def action(cls):
-        return UBootUMSAction()
+    def action(cls, job: Job) -> Action:
+        return UBootUMSAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -48,10 +54,10 @@ class UBootUMSAction(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         path = self.mkdtemp()
         self.pipeline.add_action(
-            DownloaderAction("image", path=path, params=parameters["image"])
+            DownloaderAction(self.job, "image", path=path, params=parameters["image"])
         )
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
-            self.pipeline.add_action(ApplyOverlayImage())
+            self.pipeline.add_action(OverlayAction(self.job))
+            self.pipeline.add_action(ApplyOverlayImage(self.job))
             if self.test_needs_deployment(parameters):
-                self.pipeline.add_action(DeployDeviceEnvironment())
+                self.pipeline.add_action(DeployDeviceEnvironment(self.job))

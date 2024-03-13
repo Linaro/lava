@@ -3,10 +3,12 @@
 # Author: Tyler Baker <tyler.baker@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import shutil
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
@@ -16,11 +18,14 @@ from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.udev import WaitDevicePathAction, WaitUSBSerialDeviceAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class CMSIS(Boot):
     @classmethod
-    def action(cls):
-        return BootCMSISRetry()
+    def action(cls, job: Job) -> Action:
+        return BootCMSISRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -68,12 +73,12 @@ class BootCMSISRetry(RetryAction):
         usb_mass_device = method_params.get("usb_mass_device")
         resets_after_flash = method_params.get("resets_after_flash", True)
         if self.job.device.hard_reset_command:
-            self.pipeline.add_action(ResetDevice())
-            self.pipeline.add_action(WaitDevicePathAction(usb_mass_device))
-        self.pipeline.add_action(FlashCMSISAction())
+            self.pipeline.add_action(ResetDevice(self.job))
+            self.pipeline.add_action(WaitDevicePathAction(self.job, usb_mass_device))
+        self.pipeline.add_action(FlashCMSISAction(self.job))
         if resets_after_flash:
-            self.pipeline.add_action(WaitUSBSerialDeviceAction())
-        self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(WaitUSBSerialDeviceAction(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
 
 
 class FlashCMSISAction(Action):
@@ -82,8 +87,8 @@ class FlashCMSISAction(Action):
     summary = "flash cmsis to usb mass storage"
     command_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.filelist = []
         self.usb_mass_device = None
 

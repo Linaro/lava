@@ -3,6 +3,9 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -10,6 +13,9 @@ from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class ConnectDevice(Action):
@@ -29,8 +35,8 @@ class ConnectDevice(Action):
     # runs the command to initiate the connection
     shell_class = ShellCommand
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.command = ""
         self.hardware = None
         self.primary = True
@@ -198,8 +204,8 @@ class ConnectShell(ConnectDevice):
     # runs the command to initiate the connection
     shell_class = ShellCommand
 
-    def __init__(self, name=None):
-        super().__init__()
+    def __init__(self, job: Job, name=None):
+        super().__init__(job)
         self.name = "connect-shell"
         self.primary = False
         self.hardware = name
@@ -252,8 +258,8 @@ class DisconnectDevice(ConnectDevice):
     Breaks the serial connection made by ConnectDevice.
     """
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.name = "disconnect-device"
         self.description = "disconnect from console"
         self.summary = self.description
@@ -324,5 +330,5 @@ class ResetConnection(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DisconnectDevice())
-        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(DisconnectDevice(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))

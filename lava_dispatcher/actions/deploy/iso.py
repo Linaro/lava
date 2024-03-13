@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.constants import INSTALLER_IMAGE_MAX_SIZE
 from lava_common.exceptions import JobError
@@ -19,6 +21,9 @@ from lava_dispatcher.utils.filesystem import copy_out_files, prepare_install_bas
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DeployIsoAction(Action):
     """
@@ -31,12 +36,12 @@ class DeployIsoAction(Action):
     description = "setup deployment for emulated installer"
     summary = "pull kernel and initrd out of iso"
 
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         Uses the tftp directory for easier cleanup and for parity
         with the non-QEMU Debian Installer support.
         """
-        super().__init__()
+        super().__init__(job)
         self.preseed_path = None
 
     def validate(self):
@@ -50,32 +55,38 @@ class DeployIsoAction(Action):
     def populate(self, parameters):
         self.preseed_path = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(IsoEmptyImage())
+        self.pipeline.add_action(IsoEmptyImage(self.job))
         # the preseed file needs to go into the dispatcher apache tmp directory.
         self.pipeline.add_action(
             DownloaderAction(
-                "preseed", self.preseed_path, params=parameters["images"]["preseed"]
+                self.job,
+                "preseed",
+                self.preseed_path,
+                params=parameters["images"]["preseed"],
             )
         )
         self.pipeline.add_action(
-            DownloaderAction("iso", self.mkdtemp(), params=parameters["images"]["iso"])
+            DownloaderAction(
+                self.job, "iso", self.mkdtemp(), params=parameters["images"]["iso"]
+            )
         )
-        self.pipeline.add_action(IsoPullInstaller())
-        self.pipeline.add_action(QemuCommandLine())
+        self.pipeline.add_action(IsoPullInstaller(self.job))
+        self.pipeline.add_action(QemuCommandLine(self.job))
         # prepare overlay at this stage - make it available after installation.
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-            self.pipeline.add_action(ApplyOverlayGuest())
+            # idempotent, includes testdef
+            self.pipeline.add_action(OverlayAction(self.job))
+            self.pipeline.add_action(ApplyOverlayGuest(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
 
 class DeployIso(Deployment):
     name = "iso"
 
     @classmethod
-    def action(cls):
-        return DeployIsoAction()
+    def action(cls, job: Job) -> Action:
+        return DeployIsoAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -97,8 +108,8 @@ class IsoEmptyImage(Action):
     description = "create empty image of specified size"
     summary = "create destination image"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.size = 0
 
     def validate(self):
@@ -150,8 +161,8 @@ class IsoPullInstaller(Action):
 
     FILE_KEYS = ["kernel", "initrd"]
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.files = {}
 
     def validate(self):
@@ -207,8 +218,8 @@ class QemuCommandLine(Action):
     description = "prepare qemu command and options to append to kernel command line"
     summary = "build qemu command line with kernel command string"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.sub_command = []
         self.command_line = ""
         self.console = None

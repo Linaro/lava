@@ -3,8 +3,10 @@
 # Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
@@ -20,11 +22,14 @@ from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.network import retry
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootAvh(Boot):
     @classmethod
-    def action(cls):
-        return BootAvhAction()
+    def action(cls, job: Job) -> Action:
+        return BootAvhAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -42,12 +47,12 @@ class BootAvhAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(CallAvhAction())
+        self.pipeline.add_action(CallAvhAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                self.pipeline.add_action(ExpectShellSession(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class CallAvhAction(Action):
@@ -55,8 +60,8 @@ class CallAvhAction(Action):
     description = "call avh api"
     summary = "call avh api"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.docker_cleanup_required = False
         self.websocat_docker_image = "ghcr.io/vi/websocat:1.12.0"
         self.api_config = None

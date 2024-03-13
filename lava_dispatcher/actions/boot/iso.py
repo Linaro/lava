@@ -3,9 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.constants import INSTALLER_QUIET_MSG
 from lava_common.exceptions import ConfigurationError, JobError
@@ -17,11 +18,14 @@ from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootIsoInstaller(Boot):
     @classmethod
-    def action(cls):
-        return BootIsoInstallerAction()
+    def action(cls, job: Job) -> Action:
+        return BootIsoInstallerAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -42,14 +46,14 @@ class BootIsoInstallerAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(IsoCommandLine())
-        self.pipeline.add_action(MonitorInstallerSession())
-        self.pipeline.add_action(IsoRebootAction())
+        self.pipeline.add_action(IsoCommandLine(self.job))
+        self.pipeline.add_action(MonitorInstallerSession(self.job))
+        self.pipeline.add_action(IsoRebootAction(self.job))
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        self.pipeline.add_action(AutoLoginAction())
-        self.pipeline.add_action(ExpectShellSession())
-        self.pipeline.add_action(ExportDeviceEnvironment())
+        self.pipeline.add_action(AutoLoginAction(self.job))
+        self.pipeline.add_action(ExpectShellSession(self.job))
+        self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class IsoCommandLine(Action):
@@ -132,8 +136,8 @@ class MonitorInstallerSession(Action):
     description = "Monitor installer operation"
     summary = "Watch for error strings or end of install"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.force_prompt = True
 
     def validate(self):
@@ -154,8 +158,8 @@ class IsoRebootAction(Action):
     description = "reboot and login to the new system"
     summary = "reboot into installed image"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.sub_command = None
 
     def validate(self):

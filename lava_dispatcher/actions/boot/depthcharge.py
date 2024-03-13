@@ -4,9 +4,10 @@
 # Author: Guillaume Tucker <guillaume.tucker@collabora.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os.path
+from typing import TYPE_CHECKING
 
 from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
 from lava_common.exceptions import ConfigurationError, InfrastructureError
@@ -27,6 +28,9 @@ from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Depthcharge(Boot):
     """
@@ -41,8 +45,8 @@ class Depthcharge(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return DepthchargeAction()
+    def action(cls, job: Job) -> Action:
+        return DepthchargeAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -65,8 +69,8 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
 
     name = "depthcharge-overlay"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.cmdline = None
 
     def validate(self):
@@ -166,8 +170,8 @@ class DepthchargeAction(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(DepthchargeCommandOverlay())
-        self.pipeline.add_action(DepthchargeRetry())
+        self.pipeline.add_action(DepthchargeCommandOverlay(self.job))
+        self.pipeline.add_action(DepthchargeRetry(self.job))
 
 
 class DepthchargeRetry(BootHasMixin, RetryAction):
@@ -177,17 +181,17 @@ class DepthchargeRetry(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ResetConnection())
-        self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(DepthchargeStart())
-        self.pipeline.add_action(BootloaderCommandsAction())
+        self.pipeline.add_action(ResetConnection(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(DepthchargeStart(self.job))
+        self.pipeline.add_action(BootloaderCommandsAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class DepthchargeStart(Action):
@@ -200,8 +204,8 @@ class DepthchargeStart(Action):
     summary = "Depthcharge start"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.start_message = None
         self.timeout = Timeout(
             self.name,

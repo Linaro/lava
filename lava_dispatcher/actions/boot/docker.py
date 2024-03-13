@@ -3,9 +3,11 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import pathlib
+from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.exceptions import JobError
@@ -16,11 +18,14 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootDocker(Boot):
     @classmethod
-    def action(cls):
-        return BootDockerAction()
+    def action(cls, job: Job) -> Action:
+        return BootDockerAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -40,11 +45,11 @@ class BootDockerAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(CallDockerAction())
+        self.pipeline.add_action(CallDockerAction(self.job))
         if self.has_prompts(parameters):
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                self.pipeline.add_action(ExpectShellSession(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class CallDockerAction(Action):
@@ -52,8 +57,8 @@ class CallDockerAction(Action):
     description = "call docker run on the image"
     summary = "call docker run"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.cleanup_required = False
         self.remote = ""
         self.extra_options = ""

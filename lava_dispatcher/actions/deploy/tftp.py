@@ -6,9 +6,11 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
 import tempfile
+from typing import TYPE_CHECKING
 
 from lava_common.constants import TFTP_SIZE_LIMIT
 from lava_common.exceptions import JobError
@@ -20,6 +22,9 @@ from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class Tftp(Deployment):
@@ -33,8 +38,8 @@ class Tftp(Deployment):
     name = "tftp"
 
     @classmethod
-    def action(cls):
-        return TftpAction()
+    def action(cls, job: Job) -> Action:
+        return TftpAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -52,8 +57,8 @@ class TftpAction(Action):
     description = "download files and deploy using tftp"
     summary = "tftp deployment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.tftp_dir = None
 
     def validate(self):
@@ -98,7 +103,9 @@ class TftpAction(Action):
         ]:
             if key in parameters:
                 self.pipeline.add_action(
-                    DownloaderAction(key, path=self.tftp_dir, params=parameters[key])
+                    DownloaderAction(
+                        self.job, key, path=self.tftp_dir, params=parameters[key]
+                    )
                 )
                 if key == "ramdisk":
                     self.set_namespace_data(
@@ -110,10 +117,10 @@ class TftpAction(Action):
                     )
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
-        self.pipeline.add_action(PrepareOverlayTftp())
-        self.pipeline.add_action(LxcCreateUdevRuleAction())
+        self.pipeline.add_action(PrepareOverlayTftp(self.job))
+        self.pipeline.add_action(LxcCreateUdevRuleAction(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
     def run(self, connection, max_end_time):
         # Extract the 3 last path elements. See action.mkdtemp()
