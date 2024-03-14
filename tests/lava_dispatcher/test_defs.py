@@ -500,6 +500,9 @@ class TestDefinitions(LavaDispatcherTestCase):
             "lava_dispatcher.actions.deploy.tftp.which",
             return_value="/usr/bin/in.tftpd",
         ), patch(
+            "lava_dispatcher.actions.deploy.overlay.which",
+            return_value="/usr/bin/rpcinfo",
+        ), patch(
             "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
             return_value=None,
         ):
