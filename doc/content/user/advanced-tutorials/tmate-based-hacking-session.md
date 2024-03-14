@@ -36,8 +36,7 @@ are required.
 
 * ***Always set job `visibility` to `personal` to avoid leaking SSH access information.***
 * ***Provide your SSH public key using the `parameters.PUB_KEY` test parameter. It
-is mandatory. tmate session wouldn't be launched if the key is empty or equal
-to `None`.***
+is mandatory. tmate session wouldn't be launched if the key is empty.***
 * Define a meaningful job name.
 * Change the device type to the one that you want to use.
 * Define the deploy and boot actions for the device type.
@@ -74,7 +73,7 @@ actions:
       from: git
       path: hacking-session-tmate.yaml
       parameters:
-          PUB_KEY: "None"
+          PUB_KEY: "YOUR_PUB_KEY"
       name: hacking-session
 ```
 
@@ -89,6 +88,71 @@ job immediately.
 * **Kill** the tmate process using the command `pkill tmate`. Once the process
 is killed, the test will be finished immediately. If no other tests are defined
 after the test, the entire job will be finished very quickly.
+
+## Using a custom tmate server
+
+### Host a custom tmate server
+
+#### Create SSH Keys
+
+You need to generate SSH keys for the tmate server. You can use the
+`create_keys.sh` script provided by tmate to do this. Run the following commands
+on your server:
+
+```bash
+mkdir tmate && cd tmate
+curl -s -q https://raw.githubusercontent.com/tmate-io/tmate-ssh-server/master/create_keys.sh | bash
+```
+
+This will create a keys directory containing the necessary SSH keys. Write down
+the RSA and ED25519 public key fingerprints. You can see them in the output.
+They are needed in the following LAVA job definition.
+
+#### Start the tmate server Docker container
+
+Use the following command, adjust the `SSH_HOSTNAME` to your server's domain
+or IP, and `SSH_PORT_LISTEN` to the port that your server is using.
+
+```bash
+docker run -d --name="tmate-server" \
+  --cap-add SYS_ADMIN \
+  -v $(pwd)/keys:/keys \
+  -e SSH_KEYS_PATH=/keys \
+  -p 22:22 \
+  -e SSH_PORT_LISTEN=22 \
+  -e SSH_HOSTNAME=<domain/IP> \
+  -e USE_PROXY_PROTOCOL=0 \
+  tmate/tmate-ssh-server:prod
+```
+
+### Use the custom tmate server
+
+The following parameters are provided to specify custom tmate server.
+
+* `SERVER_HOST`: tmate server domain name or IP.
+* `SERVER_PORT`: tmate sever port. Defaults to 22.
+* `RAS_FINGERPRINT`: ras public key fingerprint. e.g. SHA256:j9OzsEpYzOOnUAMLdGvMyj2KiiVWCFGLQB+vfIA2rE4
+* `ED25519_FINGERPRINT`: ed25519 public key fingerprint. e.g. SHA256:amJtQzWuZ1rSpEIMnE6qeHf7rcTh8eRazOTLVNsuJN4
+
+Refer to the below test action example to use a custom tmate server. You need to
+replace the `YOUR_*` strings with the real values.
+
+```yaml
+- test:
+    timeout:
+      minutes: 90
+    definitions:
+    - repository: https://gitlab.com/lava/hacking-session.git
+      from: git
+      path: hacking-session-tmate.yaml
+      parameters:
+          PUB_KEY: "YOUR_PUB_KEY"
+          SERVER_HOST: "YOUR_SERVER_HOST"
+          SERVER_PORT: "YOUR_SERVER_PORT"
+          RAS_FINGERPRINT: "YOUR_RAS_FINGERPRINT"
+          ED25519_FINGERPRINT: "YOUR_ED25519_FINGERPRINT"
+      name: hacking-session
+```
 
 ## SSH-based hacking session
 
