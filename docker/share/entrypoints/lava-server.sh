@@ -155,7 +155,7 @@ start_lava_server_gunicorn() {
     BIND=${GUNICORN_BIND:-}
     LOGLEVEL=${GUNICORN_LOGLEVEL:-DEBUG}
     TIMEOUT=${GUNICORN_TIMEOUT:-}
-    WORKER_CLASS=${GUNICORN_WORKER_CLASS:-eventlet}
+    WORKER_CLASS=${GUNICORN_WORKER_CLASS:-gthread}
     WORKERS=${GUNICORN_WORKERS:-4}
     LOGFILE="/var/log/lava-server/gunicorn.log"
     EXTRA_ARGS=${GUNICORN_EXTRA_ARGS:-}
