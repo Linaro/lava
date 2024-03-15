@@ -5,8 +5,8 @@
 # LOGFILE="/var/log/lava-server/gunicorn.log"
 
 # Worker class
-# Default to eventlet which is more appropriate when downloading large job logs
-# WORKER_CLASS="eventlet"
+# Default to gthread which is more appropriate when downloading large job logs
+# WORKER_CLASS="gthread"
 
 # Number of workers
 # WORKERS=4
