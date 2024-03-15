@@ -20,12 +20,18 @@ from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
 
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {"xz": ["xz", "--check=crc32"], "gz": ["gzip"], "bz2": ["bzip2"]}
+compress_command_map = {
+    "xz": ["xz", "--check=crc32"],
+    "gz": ["gzip"],
+    "bz2": ["bzip2"],
+    "zstd": ["zstd"],
+}
 decompress_command_map = {
     "xz": ["unxz"],
     "gz": ["gunzip"],
     "bz2": ["bunzip2"],
     "zip": ["unzip"],
+    "zstd": ["unzstd"],
 }
 
 
