@@ -32,10 +32,11 @@ class ShellLogger:
     using the logfile support built into pexpect.
     """
 
-    def __init__(self, logger):
+    def __init__(self, logger, is_input: bool = False):
         self.line = ""
         self.logger = logger
         self.is_feedback = False
+        self.is_input = is_input
 
     def write(self, new_line):
         replacements = {
@@ -56,6 +57,8 @@ class ShellLogger:
                         self.logger.feedback(line, namespace=self.namespace)
                     else:
                         self.logger.feedback(line)
+                elif self.is_input:
+                    self.logger.input(line)
                 else:
                     self.logger.target(line)
         else:
@@ -100,13 +103,15 @@ class ShellCommand(pexpect.spawn):
             command,
             timeout=lava_timeout.duration,
             cwd=cwd,
-            logfile=ShellLogger(logger),
+            logfile=None,  # Split logging
             encoding="utf-8",
             # Data before searchwindowsize point is preserved, but not searched.
             searchwindowsize=searchwindowsize,  # pattern match in twice the window size
             maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors="replace",
         )
+        self.logfile_read = ShellLogger(logger)
+        self.logfile_send = ShellLogger(logger, is_input=True)
         self.name = "ShellCommand"
         self.logger = logger
         # delayafterterminate allow for some spare time for a process to terminate
@@ -130,12 +135,12 @@ class ShellCommand(pexpect.spawn):
         if delay > 0:
             self.logger.debug("Sending with %s millisecond of delay", delay)
             send_char = True
-        self.logger.input(s + self.linesep)
+        self.logger.debug("Sending line: %r", s)
         self.send(s, delay, send_char)
         self.send(self.linesep, delay)
 
     def sendcontrol(self, char):
-        self.logger.input(char)
+        self.logger.debug("Sending character: %r", char)
         return super().sendcontrol(char)
 
     def send(self, string, delay=0, send_char=True):
@@ -175,7 +180,8 @@ class ShellCommand(pexpect.spawn):
 
     def flush(self):
         """Will be called by pexpect itself when closing the connection"""
-        self.logfile.flush(force=True)
+        self.logfile_read.flush(force=True)
+        self.logfile_send.flush(force=True)
 
 
 class ShellSession(Connection):
