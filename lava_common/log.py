@@ -14,6 +14,8 @@ import time
 
 import requests
 
+from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
+from lava_common.exceptions import RequestBodyTooLargeError
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
 
@@ -62,6 +64,9 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     data = data[count:]
                     index += count
             else:
+                if ret.status_code == 413:
+                    if ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG:
+                        raise RequestBodyTooLargeError
                 # If the request fails, give some time for the server to
                 # recover from the failure.
                 time.sleep(FAILURE_SLEEP)
@@ -88,11 +93,17 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             if records and (records_limit or time_limit):
                 last_call = time.monotonic()
                 # Send the data
-                (records, index) = post(session, records, index)
+                try:
+                    (records, index) = post(session, records, index)
+                except RequestBodyTooLargeError:
+                    MAX_RECORDS = max(1, MAX_RECORDS - 100)
 
         while records:
             # Send the data
-            (records, index) = post(session, records, index)
+            try:
+                (records, index) = post(session, records, index)
+            except RequestBodyTooLargeError:
+                MAX_RECORDS = max(1, MAX_RECORDS - 100)
 
 
 class HTTPHandler(logging.Handler):

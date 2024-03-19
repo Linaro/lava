@@ -118,3 +118,8 @@ class ObjectNotPersisted(LAVAServerError):
 class PermissionNameError(LAVAServerError):
     error_help = "PermissionNameError: Unexisting permission codename."
     error_type = "Unexisting permission codename."
+
+
+class RequestBodyTooLargeError(LAVAError):
+    error_help = "RequestBodyTooLarge: Request body exceeds server settings param."
+    error_type = "RequestBodyTooLarge"

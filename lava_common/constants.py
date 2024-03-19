@@ -130,3 +130,8 @@ VALID_DISPATCHER_IP_PROTOCOLS = ["http", "nfs", "tftp"]
 # worker daemon data directory
 WORKER_DIR = "/var/lib/lava/dispatcher/worker"
 DOCKER_WORKER_DIR = "/var/lib/lava/dispatcher/docker-worker"
+
+# RequestDataTooBig error msg
+REQUEST_DATA_TOO_BIG_MSG = (
+    "The dataset provided is too large. Please reduce size and try again."
+)

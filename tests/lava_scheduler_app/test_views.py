@@ -14,6 +14,7 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 
+from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
 from lava_common.yaml import yaml_safe_load
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import (
@@ -1444,3 +1445,26 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     assert tc.suite.name == "lava"
     assert tc.name == "validate"
     assert tc.result == TestCase.RESULT_PASS
+
+    # Test request data too big middleware
+    data = []
+    for i in range(1, 300000):
+        data.append(
+            '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}'
+        )
+        data.append(
+            '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}'
+        )
+        data.append(
+            '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}'
+        )
+    data = {"lines": "- " + "\n- ".join(data), "index": 1}
+
+    # Resend
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        data,
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 413
+    assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
