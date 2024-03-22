@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import (
     ConfigurationError,
@@ -15,6 +17,9 @@ from lava_common.exceptions import (
 )
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 
 class RetryAction(Action):
@@ -46,7 +51,8 @@ class RetryAction(Action):
         parent_end_time = max_end_time
 
         retries = 0
-        has_failed_exc = None
+        has_failed_exc: Optional[Exception] = None
+        has_parent_timed_out = False
         self.call_protocols()
         while retries < self.max_retries:
             retries += 1
@@ -76,6 +82,7 @@ class RetryAction(Action):
 
                 # Stop retrying if parent timed out
                 if time.monotonic() >= parent_end_time:
+                    has_parent_timed_out = True
                     break
 
                 # Wait some time before retrying
@@ -94,12 +101,17 @@ class RetryAction(Action):
         # If we are repeating, check that all repeat were a success.
         if has_failed_exc:
             # tried and failed
-            # Use the same exception class as the last failed
-            # run exception.
-            retry_fail_exc = type(has_failed_exc)(
+            exception_text = (
                 f"{retries} retries out of "
                 f"{self.max_retries} failed for {self.name}"
             )
+            if has_parent_timed_out:
+                exception_text = (
+                    f"No time left for remaining {self.max_retries - retries} retries. "
+                ) + exception_text
+            # Use the same exception class as the last failed
+            # run exception.
+            retry_fail_exc = type(has_failed_exc)(exception_text)
             raise retry_fail_exc from has_failed_exc
         return connection
 
