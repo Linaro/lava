@@ -1,15 +1,15 @@
-# Copyright (C) 2014 Linaro Limited
+# Copyright (C) 2024 Collabora Limited
 #
-# Author: Neil Williams <neil.williams@linaro.org>
+# Author: Igor Ponomarev <igor.ponomarev@collabora.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
+from unittest.mock import patch
 
-from lava_common.exceptions import InfrastructureError, JobError, LAVABug
-from lava_common.timeout import Timeout
+from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.parser import JobParser
@@ -20,511 +20,359 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
-class TestAction(LavaDispatcherTestCase):
-    class FakeDeploy:
-        """
-        Derived from object, *not* Deployment as this confuses python -m unittest discover
-        - leads to the FakeDeploy being called instead.
-        """
+DEFAULT_TEST_ERROR_MESSAGE = "Unit Testing Expected Error"
 
-        def __init__(self, parent):
-            self.__parameters__ = {}
-            self.pipeline = parent
-            self.job = parent.job
-            self.action = TestAction.CleanupRetryAction(self.job)
 
-    class MissingCleanupDeploy:
-        def __init__(self, parent):
-            self.__parameters__ = {}
-            self.pipeline = parent
-            self.job = parent.job
-            self.action = TestAction.InternalRetryAction(self.job)
+class RaisesErrorException(JobError):
+    # Exception raised by RaisesErrorAction
+    # to differentiate between real errors and expected testing ones
+    ...
 
-    class FakePipeline(Pipeline):
-        def __init__(self, job: Job):
-            super().__init__(job)
-            job.pipeline = self
 
-    class FakeAction(Action):
-        """
-        Isolated Action which can be used to generate artificial exceptions.
-        """
+class RaisesErrorAction(Action):
+    name = "unit-test-raises-error"
 
-        name = "fake-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake action for unit tests"
+    def __init__(
+        self,
+        job: Job,
+        retries_to_success: int = 100,
+        error_message: str = DEFAULT_TEST_ERROR_MESSAGE,
+        populate_actions: Optional[list[Action]] = None,
+        exception_class: type[Exception] = RaisesErrorException,
+    ):
+        super().__init__(job)
+        self.num_calls = 0
+        self.num_cleanup_calls = 0
+        self.retries_to_success = retries_to_success
+        self.error_message = error_message
+        self._populate_actions = populate_actions
+        self._exception_class = exception_class
 
-        def __init__(self, job: Job):
-            super().__init__(job)
-            self.count = 1
-            self.parameters["namespace"] = "common"
+    def run(self, connection, max_end_time):
+        self.num_calls += 1
 
-        def run(self, connection, max_end_time):
-            self.count += 1
-            raise JobError("fake error")
+        if self.num_calls < self.retries_to_success:
+            raise self._exception_class(self.error_message)
+        else:
+            super().run(connection, max_end_time)
 
-    class FakeRetryAction(RetryAction):
-        name = "fake-retry-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake retry action for unit tests"
+    def populate(self, parameters):
+        if self._populate_actions is None:
+            return
 
-    class InternalRetryAction(RetryAction):
-        section = "internal"
-        name = "internal-retry-action"
-        description = "internal, do not use outside unit tests"
-        summary = "internal retry action for unit tests"
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        for a in self._populate_actions:
+            self.pipeline.add_action(a)
 
-        def populate(self, parameters):
-            self.pipeline = Pipeline(parent=self, job=self.job)
-            self.pipeline.add_action(TestAction.FakeAction(self.job), parameters)
+    def validate(self):
+        # Don't check self.name, self.summary and etc...
+        ...
 
-    class CleanupRetryAction(RetryAction):
-        section = "internal"
-        name = "internal-retry-action"
-        description = "internal, do not use outside unit tests"
-        summary = "internal retry action for unit tests"
+    def cleanup(self, connection):
+        self.num_cleanup_calls += 1
+        super().cleanup(connection)
 
-        def populate(self, parameters):
-            self.pipeline = Pipeline(parent=self, job=self.job)
-            self.pipeline.add_action(TestAction.FakeAction(self.job), parameters)
 
-        def cleanup(self, connection):
-            pass
+class UnitTestRetryAction(RetryAction):
+    name = "unit-test-retry"
 
-    def setUp(self):
-        super().setUp()
-        self.parameters = {
-            "job_name": "fakejob",
-            "timeouts": {"job": {"seconds": 3}},
-            "actions": [
-                {
-                    "deploy": {"namespace": "common", "failure_retry": 3},
-                    "boot": {"namespace": "common", "failure_retry": 4},
-                    "test": {"namespace": "common", "failure_retry": 5},
-                }
-            ],
+    def __init__(self, job: Job, internal_actions: list[Action]):
+        super().__init__(job)
+        self._internal_actions = internal_actions
+        self.sleep = 0
+
+    def populate(self, parameters):
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        for a in self._internal_actions:
+            self.pipeline.add_action(a)
+
+    def validate(self):
+        # Don't check self.name, self.summary and etc...
+        ...
+
+
+class TestRetriesAndFailuresBase(LavaDispatcherTestCase):
+    def create_job_and_root_pipeline(
+        self, job_timeout: int = 10
+    ) -> tuple[Pipeline, Job]:
+        parameters = {
+            "job_name": "retry_test_job",
+            "timeouts": {"job": {"seconds": job_timeout}},
         }
-        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
-        self.fakejob.timeout = JobParser._parse_job_timeout(self.parameters)
+        job = self.create_simple_job(job_parameters=parameters)
+        job.timeout = JobParser._parse_job_timeout(parameters)
+        pipeline = Pipeline(job)
+        job.pipeline = pipeline
 
-    def lookup_deploy(self, params):
-        actions = iter(params)
-        while actions:
-            try:
-                action = next(actions)
-                if "deploy" in action:
-                    yield action["deploy"]
-            except StopIteration:
-                break
-
-    def test_fakeaction_fails_joberror(self):
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeAction(self.fakejob))
-        self.assertIsInstance(fakepipeline.actions[0], TestAction.FakeAction)
-        with self.assertRaises(JobError):
-            # FakeAction is not a RetryAction
-            fakepipeline.run_actions(None, None)
-
-    def test_fakeretry_action(self):
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeRetryAction(self.fakejob))
-        with self.assertRaises(LAVABug):
-            # first fake retry has no internal pipeline
-            self.assertTrue(fakepipeline.validate_actions())
-
-    def test_cleanup_deploy(self):
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        deploy = TestAction.MissingCleanupDeploy(fakepipeline)
-        for actions in self.lookup_deploy(self.parameters["actions"]):
-            deploy.action.parameters = actions
-        self.assertEqual(deploy.action.max_retries, 3)
-        fakepipeline.add_action(deploy.action)
-        self.assertIsNone(fakepipeline.validate_actions())
-        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
-        self.assertIsNotNone(fakepipeline.errors)
-        self.assertIsNotNone(deploy.action.job)
-
-    def test_internal_retry(self):
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        deploy = TestAction.FakeDeploy(fakepipeline)
-        for actions in self.lookup_deploy(self.parameters["actions"]):
-            deploy.action.parameters = actions
-        self.assertEqual(deploy.action.max_retries, 3)
-        fakepipeline.add_action(deploy.action)
-        self.assertIsNotNone(deploy.action.job)
-        self.assertIsNone(fakepipeline.validate_actions())
-        self.assertRaises(JobError, fakepipeline.run_actions, None, None)
-        with self.assertRaises(JobError):
-            self.assertIsNotNone(fakepipeline.validate_actions())
-        self.assertIsNotNone(fakepipeline.errors)
-        # from meliae import scanner
-        # scanner.dump_all_objects('filename.json')
-
-    def test_namespace_data(self):
-        """
-        namespace data uses copies, not references
-
-        This allows actions to refer to the common data and manipulate it without affecting other actions.
-        """
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.FakeAction(self.fakejob)
-        pipeline.add_action(action)
-        self.assertEqual({"namespace": "common"}, action.parameters)
-        action.set_namespace_data(
-            action="test", label="fake", key="string value", value="test string"
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="string value"),
-            "test string",
-        )
-        test_string = action.get_namespace_data(
-            action="test", label="fake", key="string value"
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="string value"),
-            "test string",
-        )
-        self.assertEqual(test_string, "test string")
-        test_string += "extra data"
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="string value"),
-            "test string",
-        )
-        self.assertNotEqual(test_string, "test string")
-        self.assertNotEqual(
-            action.get_namespace_data(action="test", label="fake", key="string value"),
-            test_string,
-        )
-        action.set_namespace_data(
-            action="test", label="fake", key="list value", value=[1, 2, 3]
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3],
-        )
-        test_list = action.get_namespace_data(
-            action="test", label="fake", key="list value"
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3],
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            test_list,
-        )
-        test_list.extend([4, 5, 6])
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3],
-        )
-        self.assertNotEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            test_list,
-        )
-        self.assertEqual(test_list, [1, 2, 3, 4, 5, 6])
-
-        # test support for the more risky reference method
-        reference_list = action.get_namespace_data(
-            action="test", label="fake", key="list value", deepcopy=False
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3],
-        )
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            reference_list,
-        )
-        reference_list.extend([7, 8, 9])
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3, 7, 8, 9],
-        )
-        self.assertEqual(reference_list, [1, 2, 3, 7, 8, 9])
-        reference_list = [4, 5, 6]
-        self.assertEqual(
-            action.get_namespace_data(action="test", label="fake", key="list value"),
-            [1, 2, 3, 7, 8, 9],
-        )
-        self.assertNotEqual(reference_list, [1, 2, 3, 7, 8, 9])
-
-    def test_failure_retry_default_interval(self):
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.InternalRetryAction(self.fakejob)
-        for actions in self.lookup_deploy(self.parameters["actions"]):
-            action.parameters = actions
-        pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
-        self.assertEqual(action.sleep, 1)
-
-    def test_failure_retry_specified_interval(self):
-        self.parameters = {
-            "job_name": "fakejob",
-            "timeouts": {"job": {"seconds": 3}},
-            "actions": [
-                {
-                    "deploy": {
-                        "namespace": "common",
-                        "failure_retry": 3,
-                        "failure_retry_interval": 2,
-                    },
-                    "boot": {"namespace": "common", "failure_retry": 4},
-                    "test": {"namespace": "common", "failure_retry": 5},
-                }
-            ],
-        }
-        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.InternalRetryAction(self.fakejob)
-        for actions in self.lookup_deploy(self.parameters["actions"]):
-            action.parameters = actions
-        pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
-        self.assertEqual(action.sleep, 2)
+        return pipeline, job
 
 
-class TestTimeout(LavaDispatcherTestCase):
-    class FakeDevice(dict):
-        def __init__(self):
-            self.update({"parameters": {}, "commands": {}})
+class TestRetries(TestRetriesAndFailuresBase):
+    def test_action_success(self) -> None:
+        # Test that Action can successfully run
+        root_pipeline, job = self.create_job_and_root_pipeline()
 
-        def __get_item__(self):
-            return {}
+        success_action = RaisesErrorAction(job, retries_to_success=0)
+        root_pipeline.add_action(success_action)
 
-    class FakeAction(Action):
-        """
-        Isolated Action which can be used to generate artificial exceptions.
-        """
+        with self.subTest("Run success"):
+            job.run()
 
-        name = "fake-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake action for unit tests"
+        with self.subTest("Number of calls"):
+            self.assertEqual(success_action.num_calls, 1)
 
-        def populate(self, parameters):
-            self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.pipeline.add_action(TestAction.FakeAction(self.job))
+        with self.subTest("Number of cleanups"):
+            # Regular Actions .cleanup() is called once by the Job once it finishes
+            self.assertEqual(success_action.num_cleanup_calls, 1)
 
-        def run(self, connection, max_end_time):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            time.sleep(3)
-            self.results = {"status": "failed"}
-            return connection
+    def test_action_raise_error(self) -> None:
+        # Check that running pipeline that raises error
+        root_pipeline, job = self.create_job_and_root_pipeline()
 
-    class SafeAction(Action):
-        """
-        Isolated test action which passes
-        """
+        fail_action = RaisesErrorAction(job)
+        root_pipeline.add_action(fail_action)
 
-        name = "passing-action"
-        description = "fake action runs without calling adjuvant"
-        summary = "fake action without adjuvant"
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        ):
+            job.run()
 
-        def __init__(self, job: Job):
-            super().__init__(job)
-            self.parameters["namespace"] = "common"
+        with self.subTest("Number of calls"):
+            self.assertEqual(fail_action.num_calls, 1)
 
-        def run(self, connection, max_end_time):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            self.results = {"status": "passed"}
-            return connection
+        with self.subTest("Number of cleanups"):
+            # Regular Actions .cleanup() is called once by the Job once it finishes
+            self.assertEqual(fail_action.num_cleanup_calls, 1)
 
-    class LongAction(Action):
-        """
-        Isolated test action which times out the job itself
-        """
+    def test_retry_action_no_pipeline(self) -> None:
+        # RetryAction must fail validation if no sub actions were added
+        # but mock the Action.validate because it is not relevant
+        root_pipeline, job = self.create_job_and_root_pipeline()
 
-        name = "long-action"
-        description = "fake action"
-        summary = "fake action with overly long sleep"
+        root_pipeline.add_action(RetryAction(job))
 
-        def __init__(self, job: Job):
-            super().__init__(job)
-            self.parameters["namespace"] = "common"
+        with self.assertRaisesRegex(
+            LAVABug, "needs to implement an internal pipeline"
+        ), patch.object(Action, "validate") as action_validate_mock:
+            root_pipeline.validate_actions()
 
-        def run(self, connection, max_end_time):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            time.sleep(5)
-            self.results = {"status": "passed"}
-            return connection
+        action_validate_mock.assert_called_once()
 
-    class SkippedAction(Action):
-        """
-        Isolated test action which must not be run
-        """
+    def test_retry_action_first_try_success(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
 
-        name = "passing-action"
-        description = "fake action runs without calling adjuvant"
-        summary = "fake action without adjuvant"
+        success_action = RaisesErrorAction(job, retries_to_success=0)
+        retry_action = UnitTestRetryAction(job, [success_action])
 
-        def run(self, connection, max_end_time):
-            raise LAVABug(
-                "Fake action not meant to actually run - should have timed out"
+        root_pipeline.add_action(retry_action)
+
+        with self.subTest("Run success"):
+            job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(success_action.num_calls, 1)
+
+        with self.subTest("Number of cleanups"):
+            # Regular Actions .cleanup() is called once by the Job once it finishes
+            self.assertEqual(success_action.num_cleanup_calls, 1)
+
+    def test_retry_action_second_try_success(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
+
+        success_action = RaisesErrorAction(job, retries_to_success=2)
+        retry_action = UnitTestRetryAction(job, [success_action])
+
+        root_pipeline.add_action(retry_action, {"failure_retry": 3})
+
+        with self.subTest("Run success"):
+            job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(success_action.num_calls, 2)
+
+        with self.subTest("Number of cleanups"):
+            # Cleanup called once by RetryAction on failure and once by Job on finish
+            self.assertEqual(success_action.num_cleanup_calls, 2)
+
+    def test_retry_action_all_fails(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
+
+        fail_action = RaisesErrorAction(job)
+        retry_action = UnitTestRetryAction(job, [fail_action])
+
+        root_pipeline.add_action(retry_action, {"failure_retry": 3})
+
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        ):
+            job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(fail_action.num_calls, 3)
+
+        with self.subTest("Number of cleanups"):
+            # 3 reties == 3 cleanups + 1 Job cleanup
+            self.assertEqual(
+                fail_action.num_cleanup_calls,
+                4,
             )
 
-    class FakeSafeAction(Action):
-        """
-        Isolated Action which can be used to generate artificial exceptions.
-        """
 
-        name = "fake-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake action for unit tests"
+class SleepsTimeoutException(JobError):
+    # Exception raised then sleep times out
+    ...
 
-        def __init__(self, job: Job):
-            super().__init__(job)
-            self.timeout.duration = 4
 
-        def populate(self, parameters):
-            self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.pipeline.add_action(TestAction.FakeAction(self.job))
+class SleepsAction(Action):
+    name = "unit-test-sleeps"
+    timeout_exception = SleepsTimeoutException
 
-        def run(self, connection, max_end_time):
-            if connection:
-                raise LAVABug("Fake action not meant to have a real connection")
-            time.sleep(3)
-            self.results = {"status": "failed"}
-            return connection
+    def __init__(self, job: Job, retries_to_success: int = 100):
+        super().__init__(job)
+        self.num_calls = 0
+        self.retries_to_success = retries_to_success
 
-    def setUp(self):
-        super().setUp()
-        self.parameters = {
-            "job_name": "fakejob",
-            "timeouts": {"job": {"seconds": 3}},
-            "actions": [
-                {
-                    "deploy": {"namespace": "common", "failure_retry": 3},
-                    "boot": {"namespace": "common", "failure_retry": 4},
-                    "test": {"namespace": "common", "failure_retry": 5},
-                }
-            ],
-        }
-        self.fakejob = self.create_simple_job(job_parameters=self.parameters)
-        self.fakejob.timeout = JobParser._parse_job_timeout(self.parameters)
+    def run(self, connection, max_end_time):
+        self.num_calls += 1
 
-    def test_action_timeout(self):
-        """
-        Testing timeouts does mean that the tests do nothing until the timeout happens,
-        so the total length of time to run the tests has to increase...
-        """
-        self.assertIsNotNone(self.fakejob.timeout)
-        seconds = 2
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.FakeAction(self.fakejob)
-        pipeline.add_action(action)
-        action.timeout = Timeout(action.name, action=action, duration=seconds)
-        self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+        if self.num_calls < self.retries_to_success:
+            time.sleep(60)
+        else:
+            super().run(connection, max_end_time)
 
-    def test_action_timout_custom_exception(self):
-        seconds = 2
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.FakeAction(self.fakejob)
-        action.timeout = Timeout(
-            action.name, action=action, duration=seconds, exception=InfrastructureError
-        )
-        pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(InfrastructureError):
-            self.fakejob.run()
+    def validate(self):
+        # Don't check self.name, self.summary and etc...
+        ...
 
-    def test_action_complete(self):
-        self.assertIsNotNone(self.fakejob.timeout)
-        seconds = 2
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.SafeAction(self.fakejob)
-        action.timeout = Timeout(action.name, action=action, duration=seconds)
-        pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        self.fakejob.run()
 
-    def test_job_timeout(self):
-        self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.LongAction(self.fakejob)
-        pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.SafeAction(self.fakejob))
-        finalize = FinalizeAction(self.fakejob)
-        finalize.parameters["namespace"] = "common"
-        pipeline.add_action(finalize)
-        self.fakejob.device = TestTimeout.FakeDevice()
-        with self.assertRaises(JobError):
-            self.fakejob.run()
+class TestRetryTimeout(TestRetriesAndFailuresBase):
+    def test_retry_timeout_duration_divided(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline(job_timeout=4)
 
-    def test_retry_job_timeout(self):
-        fakejob = self.fakejob
+        sleep_action = SleepsAction(job)
+        retry_action = UnitTestRetryAction(job, [sleep_action])
 
-        class LongRetryAction(RetryAction):
-            def populate(self, parameters):
-                self.pipeline = TestAction.FakePipeline(job=fakejob)
-                self.pipeline.add_action(TestTimeout.LongAction(fakejob))
-
-                finalize = FinalizeAction(self.job)
-                finalize.parameters["namespace"] = "common"
-                self.pipeline.add_action(finalize)
-
-        self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = LongRetryAction(self.fakejob)
-        action.max_retries = 10
-        pipeline.add_action(action)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-
-        from time import monotonic
-
-        start_time = monotonic()
-
-        with self.assertRaises(JobError):
-            self.fakejob.run()
-
-        # Test that we honor job timeout over retries
-        self.assertAlmostEqual(
-            self.fakejob.timeout.duration,
-            monotonic() - start_time,
-            delta=3,
+        root_pipeline.add_action(
+            retry_action,
+            {
+                "failure_retry": 3,
+                "failure_retry_interval": 0,
+                "timeout": {"seconds": 3},
+            },
         )
 
-    def test_job_safe(self):
-        self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.SafeAction(self.fakejob)
-        pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.SafeAction(self.fakejob))
-        finalize = FinalizeAction(self.fakejob)
-        finalize.parameters["namespace"] = "common"
-        pipeline.add_action(finalize)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        # run() raises an exception in case of error
-        self.fakejob.run()
+        start_time = time.monotonic()
 
-    def test_long_job_safe(self):
-        self.fakejob.timeout.duration = 8
-        self.assertIsNotNone(self.fakejob.timeout)
-        pipeline = TestAction.FakePipeline(job=self.fakejob)
-        self.fakejob.pipeline = pipeline
-        action = TestTimeout.SafeAction(self.fakejob)
-        action.timeout.duration = 2
-        pipeline.add_action(action)
-        pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.FakeSafeAction(self.fakejob))
-        pipeline.add_action(TestTimeout.FakeSafeAction(self.fakejob))
-        finalize = FinalizeAction(self.fakejob)
-        finalize.parameters["namespace"] = "common"
-        pipeline.add_action(finalize)
-        self.fakejob.pipeline = pipeline
-        self.fakejob.device = TestTimeout.FakeDevice()
-        self.fakejob.run()
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            SleepsTimeoutException, "timed out after 1 seconds"
+        ):
+            root_pipeline.job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(sleep_action.num_calls, 3)
+
+        with self.subTest("Passed time"):
+            # Only (3 * 1) + (3 - 1) * 0 = 3 seconds should have passed
+            self.assertAlmostEqual(start_time + 3.0, time.monotonic(), delta=0.3)
+
+    def test_retry_timeout_duration_respects_job_timeout(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline(job_timeout=2)
+
+        sleep_action = SleepsAction(job)
+        retry_action = UnitTestRetryAction(job, [sleep_action])
+
+        root_pipeline.add_action(
+            retry_action,
+            {
+                "failure_retry": 10,
+                "failure_retry_interval": 0,
+                "timeout": {"seconds": 10},
+            },
+        )
+
+        start_time = time.monotonic()
+
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            SleepsTimeoutException, "No time left for"
+        ):
+            root_pipeline.job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(sleep_action.num_calls, 2)
+
+        with self.subTest("Passed time"):
+            self.assertAlmostEqual(start_time + 2.0, time.monotonic(), delta=0.3)
+
+    def test_retry_timeout_duration_respects_action_timeout(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline(job_timeout=10)
+
+        sleep_action = SleepsAction(job, retries_to_success=8)
+        nested_retry_action = UnitTestRetryAction(job, [sleep_action])
+        main_action = RaisesErrorAction(
+            job, retries_to_success=1, populate_actions=[nested_retry_action]
+        )
+
+        root_pipeline.add_action(
+            main_action,
+            {
+                "failure_retry": 10,
+                "failure_retry_interval": 0,
+                "timeout": {"seconds": 5},
+                "timeouts": {
+                    main_action.name: {"seconds": 1},
+                    nested_retry_action.name: {"seconds": 3},
+                },
+            },
+        )
+
+        start_time = time.monotonic()
+
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            SleepsTimeoutException,
+            f"1 retries out of 10 failed for {UnitTestRetryAction.name}",
+        ):
+            job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(sleep_action.num_calls, 1)
+
+        with self.subTest("Passed time"):
+            self.assertAlmostEqual(start_time + 1.0, time.monotonic(), delta=0.3)
+
+
+class TestFinalizeAction(TestRetriesAndFailuresBase):
+    def test_finalize_action_success(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
+
+        success_action = RaisesErrorAction(job, retries_to_success=0)
+        root_pipeline.add_action(success_action)
+
+        finalize_action = FinalizeAction(job)
+        root_pipeline.add_action(finalize_action)
+
+        self.assertFalse(job.started)
+
+        with self.subTest("Run success"):
+            root_pipeline.job.run()
+
+        self.assertTrue(job.started)
+        self.assertTrue(finalize_action.ran)
+
+    def test_finalize_action_failure(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
+
+        success_action = RaisesErrorAction(job)
+        root_pipeline.add_action(success_action)
+
+        finalize_action = FinalizeAction(job)
+        root_pipeline.add_action(finalize_action)
+
+        self.assertFalse(job.started)
+
+        with self.subTest("Raises error"), self.assertRaisesRegex(
+            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        ):
+            job.run()
+
+        self.assertTrue(job.started)
+        self.assertTrue(finalize_action.ran)
