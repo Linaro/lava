@@ -26,6 +26,6 @@ else
     --cov --cov-report=term \
     --cov-report xml:coverage.xml \
     --cov-fail-under=$COVERAGE_MIN_PERCENTAGE \
-    tests/
+    tests/ "$@"
   python3 -m coverage html
 fi
