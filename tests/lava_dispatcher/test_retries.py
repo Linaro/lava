@@ -92,12 +92,24 @@ class TestAction(LavaDispatcherTestCase):
         super().setUp()
         self.parameters = {
             "job_name": "fakejob",
-            "timeouts": {"job": {"seconds": 3}},
+            "timeouts": {"job": {"seconds": 10}},
             "actions": [
                 {
-                    "deploy": {"namespace": "common", "failure_retry": 3},
-                    "boot": {"namespace": "common", "failure_retry": 4},
-                    "test": {"namespace": "common", "failure_retry": 5},
+                    "deploy": {
+                        "namespace": "common",
+                        "failure_retry": 3,
+                        "timeout": {"seconds": 3},
+                    },
+                    "boot": {
+                        "namespace": "common",
+                        "failure_retry": 4,
+                        "timeout": {"seconds": 3},
+                    },
+                    "test": {
+                        "namespace": "common",
+                        "failure_retry": 5,
+                        "timeout": {"seconds": 3},
+                    },
                 }
             ],
         }
@@ -149,6 +161,7 @@ class TestAction(LavaDispatcherTestCase):
         self.assertEqual(deploy.action.max_retries, 3)
         fakepipeline.add_action(deploy.action)
         self.assertIsNotNone(deploy.action.job)
+        fakepipeline.job.timeout.start = time.monotonic()
         self.assertIsNone(fakepipeline.validate_actions())
         self.assertRaises(JobError, fakepipeline.run_actions, None, None)
         with self.assertRaises(JobError):

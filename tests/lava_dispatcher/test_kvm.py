@@ -7,6 +7,7 @@
 
 import glob
 import os
+import time
 import unittest
 from unittest.mock import patch
 
@@ -585,6 +586,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         with self.assertRaisesRegex(
             JobError, "Login incorrect"
         ), autologinaction.timeout(None, None) as max_end_time:
+            autologinaction.job.timeout.start = time.monotonic()
             autologinaction.run(shell_connection, max_end_time)
 
         self.assertIn("root@debian:~#", shell_connection.prompt_str)

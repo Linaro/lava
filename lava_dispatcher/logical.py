@@ -48,7 +48,6 @@ class RetryAction(Action):
 
     def run(self, connection, max_end_time):
         self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
-        parent_end_time = max_end_time
 
         retries = 0
         has_failed_exc: Optional[Exception] = None
@@ -80,23 +79,29 @@ class RetryAction(Action):
                     self.errors = "%s retries failed for %s" % (retries, self.name)
                     raise
 
-                # Stop retrying if parent timed out
-                if time.monotonic() >= parent_end_time:
-                    has_parent_timed_out = True
-                    break
-
-                # Wait some time before retrying
-                time.sleep(self.sleep)
                 # Restart max_end_time or the retry on a timeout fails with duration < 0
                 current_time = time.monotonic()
                 max_end_time += current_time - self.timeout.start
+                if retries == 1:
+                    max_end_time += self.sleep
+
+                # Allow retry action to retry within job max_end_time.
+                job_max_end_time = self.job.timeout.start + self.job.timeout.duration
+                max_end_time = min(job_max_end_time, max_end_time)
                 self.timeout.start = current_time
+                duration = max_end_time - self.timeout.start
+                if duration <= 0:
+                    has_parent_timed_out = True
+                    break
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
                     self.level,
                     self.name,
-                    seconds_to_str(max_end_time - self.timeout.start),
+                    seconds_to_str(duration),
                 )
+                # Wait some time before retrying
+                self.logger.debug(f"Wait {self.sleep} second(s) ...")
+                time.sleep(self.sleep)
 
         # If we are repeating, check that all repeat were a success.
         if has_failed_exc:
