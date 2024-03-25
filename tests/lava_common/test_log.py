@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import logging
+import signal
 
 from lava_common.log import HTTPHandler, YAMLLogger, sender
 from lava_common.yaml import yaml_safe_load
@@ -61,6 +62,28 @@ def test_sender_exceptions(mocker):
     for c in post.mock_calls:
         assert c[1] == ("http://localhost",)
         assert c[2]["data"] == {"lines": "- hello world", "index": 0}
+
+
+def test_sender_404(mocker):
+    response = mocker.Mock(status_code=404)
+    post = mocker.Mock(return_value=response)
+    enter = mocker.MagicMock()
+    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
+    session = mocker.MagicMock(return_value=enter)
+
+    mocker.patch("requests.Session", session)
+    conn = mocker.MagicMock()
+    conn.poll = mocker.MagicMock()
+    conn.recv_bytes = mocker.MagicMock()
+    conn.recv_bytes.side_effect = [b"hello world", b""]
+
+    os_getppid = mocker.patch("os.getppid", return_value=1)
+    os_kill = mocker.patch("os.kill")
+
+    sender(conn, "http://localhost", "my-token", 1)
+
+    os_getppid.assert_called_once()
+    os_kill.assert_called_once_with(1, signal.SIGTERM)
 
 
 def test_http_handler(mocker):

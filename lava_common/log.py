@@ -9,6 +9,7 @@ import contextlib
 import datetime
 import logging
 import multiprocessing
+import os
 import signal
 import time
 
@@ -63,6 +64,9 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     count = int(ret.json()["line_count"])
                     data = data[count:]
                     index += count
+            elif ret.status_code == 404:
+                data, remaining = [], []
+                os.kill(os.getppid(), signal.SIGTERM)
             else:
                 if ret.status_code == 413:
                     if ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG:
