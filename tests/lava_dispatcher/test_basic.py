@@ -9,6 +9,7 @@ import os
 import sys
 import time
 import unittest
+from functools import cache
 from pathlib import Path
 from random import randint
 from tempfile import TemporaryDirectory
@@ -16,7 +17,7 @@ from time import monotonic
 from typing import TYPE_CHECKING
 
 import voluptuous
-from jinja2 import ChoiceLoader, DictLoader, FileSystemLoader
+from jinja2 import FileSystemLoader
 
 from lava_common.exceptions import (
     ConfigurationError,
@@ -36,7 +37,9 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Any, Optional
+
+    from jinja2.sandbox import SandboxedEnvironment
 
 
 class LavaDispatcherTestCase(unittest.TestCase):
@@ -169,6 +172,17 @@ class TestValidation(LavaDispatcherTestCase):
         self.assertEqual([1, 2], pipe.errors)
 
 
+@cache
+def get_test_template_env() -> SandboxedEnvironment:
+    test_dir = Path(__file__).parent
+    device_types_templates_path = test_dir / "../../etc/dispatcher-config/device-types"
+    device_templates_path = test_dir / "../lava_scheduler_app/devices"
+
+    return create_device_templates_env(
+        loader=FileSystemLoader((device_types_templates_path, device_templates_path)),
+    )
+
+
 class Factory:
     """
     Not Model based, this is not a Django factory.
@@ -176,68 +190,45 @@ class Factory:
     of any database objects.
     """
 
-    DEVICE_TYPES_PATH = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "etc",
-            "dispatcher-config",
-            "device-types",
-        )
-    )
-
     validate_job_strict = False
 
-    def prepare_jinja_template(self, hostname, jinja_data):
-        string_loader = DictLoader({"%s.jinja2" % hostname: jinja_data})
-        type_loader = FileSystemLoader([self.DEVICE_TYPES_PATH])
-        env = create_device_templates_env(
-            loader=ChoiceLoader([string_loader, type_loader]),
-        )
+    def prepare_jinja_template(self, hostname: str):
+        env = get_test_template_env()
         return env.get_template("%s.jinja2" % hostname)
 
-    def render_device_dictionary(self, hostname, data, job_ctx=None):
-        if not job_ctx:
+    def render_device_dictionary(
+        self, hostname: str, job_ctx: Optional[dict[str, Any]] = None
+    ):
+        if job_ctx is None:
             job_ctx = {}
-        test_template = self.prepare_jinja_template(hostname, data)
+        test_template = self.prepare_jinja_template(hostname)
         rendered = test_template.render(**job_ctx)
         return rendered
 
-    def validate_data(self, hostname, data, job_ctx=None):
+    def validate_data(
+        self, hostname: str, job_ctx: Optional[dict[str, Any]] = None
+    ) -> None:
         """
         Needs to be passed a device dictionary (jinja2 format)
         """
-        rendered = self.render_device_dictionary(hostname, data, job_ctx)
+        rendered = self.render_device_dictionary(hostname, job_ctx)
         try:
-            ret = validate_device(yaml_safe_load(rendered))
+            validate_device(yaml_safe_load(rendered))
         except (voluptuous.Invalid, ConfigurationError) as exc:
             print("#######")
             print(rendered)
             print("#######")
             raise exc
-        return ret
 
-    def create_device(self, template, job_ctx=None):
+    def create_device(
+        self, template_name: str, job_ctx: Optional[dict[str, Any]] = None
+    ) -> tuple[str, None]:
         """
         Create a device configuration on-the-fly from in-tree
         device-type Jinja2 template.
         """
-        with open(
-            os.path.join(
-                os.path.dirname(__file__),
-                "..",
-                "..",
-                "tests",
-                "lava_scheduler_app",
-                "devices",
-                template,
-            )
-        ) as hikey:
-            data = hikey.read()
-        hostname = template.replace(".jinja2", "")
-        rendered = self.render_device_dictionary(hostname, data, job_ctx)
-        return (rendered, data)
+        hostname = template_name.replace(".jinja2", "")
+        return self.render_device_dictionary(hostname, job_ctx), None
 
     def create_custom_job(
         self, template, job_data, job_ctx=None, validate=True, dispatcher_config=None
@@ -248,8 +239,8 @@ class Factory:
             job_data["context"] = job_ctx
         else:
             job_ctx = job_data.get("context")
-        (data, device_dict) = self.create_device(template, job_ctx)
-        device = NewDevice(yaml_safe_load(data))
+        device_dict, _ = self.create_device(template, job_ctx)
+        device = NewDevice(yaml_safe_load(device_dict))
         try:
             parser = JobParser()
             job = parser.parse(
