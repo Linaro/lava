@@ -717,6 +717,8 @@ async def main() -> int:
     if worker_dir != WORKER_DIR:
         global tmp_dir
         tmp_dir = worker_dir / "tmp"
+        # Update stale config dictionary.
+        STALE_CONFIG[tmp_dir] = "{prefix}{job_id}"
 
     try:
         if options.username is not None:
