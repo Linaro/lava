@@ -12,9 +12,11 @@ import unittest
 from functools import cache
 from pathlib import Path
 from random import randint
+from signal import alarm
 from tempfile import TemporaryDirectory
 from time import monotonic
 from typing import TYPE_CHECKING
+from warnings import warn
 
 import voluptuous
 from jinja2 import FileSystemLoader
@@ -85,6 +87,12 @@ class LavaDispatcherTestCase(unittest.TestCase):
                 )
         with open(y_file) as f_ref:
             return yaml_safe_load(f_ref)
+
+    def tearDown(self) -> None:
+        super().tearDown()
+
+        if alarm(0) != 0:
+            warn("SIGALRM not cleaned-up", RuntimeWarning)
 
 
 class TestAction(LavaDispatcherTestCase):
