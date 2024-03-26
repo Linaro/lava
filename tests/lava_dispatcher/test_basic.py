@@ -14,7 +14,6 @@ from pathlib import Path
 from random import randint
 from signal import alarm
 from tempfile import TemporaryDirectory
-from time import monotonic
 from typing import TYPE_CHECKING
 from warnings import warn
 
@@ -72,6 +71,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
             timeout=Timeout(
                 f"unittest-timeout-{self.__class__.__name__}",
                 None,
+                duration=3,
             ),
         )
         return new_job
@@ -514,7 +514,8 @@ class TestFakeActions(LavaDispatcherTestCase):
         pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
-        pipe.run_actions(None, monotonic() + 1.0)
+        with pipe.job.timeout(None, None) as max_end_time:
+            pipe.run_actions(None, max_end_time)
         self.assertTrue(self.sub0.ran)
         self.assertTrue(self.sub1.ran)
         self.assertNotEqual(self.sub0.timeout.elapsed_time, 0)
@@ -524,13 +525,15 @@ class TestFakeActions(LavaDispatcherTestCase):
         pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(TestFakeActions.KeepConnection())
         conn = object()
-        self.assertIs(conn, pipe.run_actions(conn, monotonic() + 1.0))
+        with pipe.job.timeout(None, None) as max_end_time:
+            self.assertIs(conn, pipe.run_actions(conn, max_end_time))
 
     def test_change_connection(self):
         pipe = Pipeline(job=self.create_simple_job())
         pipe.add_action(TestFakeActions.MakeNewConnection())
         conn = object()
-        self.assertIsNot(conn, pipe.run_actions(conn, monotonic() + 1.0))
+        with pipe.job.timeout(None, None) as max_end_time:
+            self.assertIsNot(conn, pipe.run_actions(conn, max_end_time))
 
 
 class TestStrategySelector(LavaDispatcherTestCase):
