@@ -108,7 +108,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 542
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 4.1.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 180,

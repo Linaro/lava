@@ -456,7 +456,8 @@ class TestTimeouts(LavaDispatcherTestCase):
         self.assertNotEqual(
             deploy.connection_timeout.duration, test_shell.connection_timeout
         )
-        self.assertEqual(test_action.timeout.duration, 300)
+        # RetryAction wants enough duration for all of its retries
+        self.assertEqual(test_action.timeout.duration, 902)
         auto = job.pipeline.find_action(AutoLoginAction)
         self.assertEqual(auto.timeout.duration / 60, 9)  # 9 minutes in the job def
 

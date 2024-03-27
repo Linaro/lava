@@ -140,7 +140,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 900
+    timeout: 2702
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
@@ -151,7 +151,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 900
+    timeout: 2702
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
@@ -162,7 +162,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 900
+    timeout: 2702
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
@@ -173,7 +173,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 900
+    timeout: 2702
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,

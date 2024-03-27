@@ -82,7 +82,7 @@
   max_retries: 2
   description: connect over ssh and ensure a shell is found
   summary: login over ssh
-  timeout: 60
+  timeout: 121
   pipeline:
   - {class: Scp, name: scp-deploy, level: '2.1', max_retries: 2, description: copy
       a file to a known device using scp, summary: scp over the ssh connection, timeout: 60}
@@ -98,7 +98,7 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 120
+    timeout: 241
     pipeline:
     - {class: LoginAction, name: login-action, level: 2.4.1, max_retries: 2, description: Real
         login action., summary: Login after boot., timeout: 60}
@@ -118,7 +118,7 @@
   max_retries: 3
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 180
+  timeout: 542
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 3,
     description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 180}

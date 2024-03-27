@@ -12,7 +12,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -23,7 +23,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -34,7 +34,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -45,7 +45,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -56,7 +56,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -227,7 +227,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 600
+    timeout: 1802
     pipeline:
     - {class: FileDownloadAction, name: file-download, level: 4.1.1, max_retries: 1,
       description: copy a local file, summary: local file copy, timeout: 600, url: 'file:///dev/null'}
@@ -237,7 +237,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 600
+    timeout: 1802
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 4.2.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 600,

@@ -1,57 +1,55 @@
 - class: DeployImagesAction
-  description: deploy images using guestfs
+  name: deployimages
   level: '1'
   max_retries: 1
-  name: deployimages
-  pipeline:
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.1'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to
-        download the file, level: 1.1.1, max_retries: 1, name: http-download, summary: http
-        download, timeout: 180, url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'}
-    summary: download-retry
-    timeout: 180
+  description: deploy images using guestfs
   summary: deploy images
   timeout: 180
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 542
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 180,
+      url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'}
 - class: BootOpenOCDRetry
-  description: boot openocd image using the command line interface
+  name: boot-openocd-image
   level: '2'
   max_retries: 1
-  name: boot-openocd-image
-  pipeline:
-  - {class: ConnectDevice, description: use the configured command
-      to connect serial to the device, level: '2.1', max_retries: 1, name: connect-device,
-    summary: run connection command, timeout: 120}
-  - {class: FlashOpenOCDAction, description: use openocd to flash
-      the image, level: '2.2', max_retries: 1, name: flash-openocd, summary: use openocd
-      to flash the image, timeout: 120}
+  description: boot openocd image using the command line interface
   summary: boot openocd image
   timeout: 120
+  pipeline:
+  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 120}
+  - {class: FlashOpenOCDAction, name: flash-openocd, level: '2.2', max_retries: 1,
+    description: use openocd to flash the image, summary: use openocd to flash the
+      image, timeout: 120}
 - class: TestMonitorRetry
-  description: Retry wrapper for lava-test-monitor
+  name: lava-test-monitor-retry
   level: '3'
   max_retries: 1
-  name: lava-test-monitor-retry
-  pipeline:
-  - {class: TestMonitorAction, description: Executing lava-test-monitor,
-    level: '3.1', max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor,
-    timeout: 120}
+  description: Retry wrapper for lava-test-monitor
   summary: Retry support for Lava Test Monitoring
   timeout: 120
+  pipeline:
+  - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
+    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 120}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '4'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '4.1',
-    max_retries: 1, name: power-off, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 180}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 180
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}

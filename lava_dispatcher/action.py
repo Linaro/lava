@@ -124,6 +124,7 @@ class Pipeline:
             parameters = self.parameters
         # if the action has an internal pipeline, initialise that here.
         action.populate(parameters)
+        action.parameters = parameters
 
         # Compute the timeout
         global_timeouts = []
@@ -155,8 +156,6 @@ class Pipeline:
         action._override_connection_timeout(
             get_lastest_subdict_value(global_timeouts, "connections", action.name)
         )
-
-        action.parameters = parameters
 
     def describe(self):
         """
@@ -456,16 +455,6 @@ class Action:
         except ValueError:
             raise LAVABug("Action parameters need to be a dictionary")
 
-        # Override the duration if needed
-        if "timeout" in self.parameters:
-            # preserve existing overrides
-            if self.timeout.duration == Timeout.default_duration():
-                self.timeout.duration = Timeout.parse(self.parameters["timeout"])
-        if "connection_timeout" in self.parameters:
-            self.connection_timeout.duration = Timeout.parse(
-                self.parameters["connection_timeout"]
-            )
-
         # only unit tests should have actions without a pointer to the job.
         if "failure_retry" in self.parameters and "repeat" in self.parameters:
             raise JobError("Unable to use repeat and failure_retry, use a repeat block")
@@ -483,9 +472,21 @@ class Action:
                     self.max_retries = int(boot_retry)
         if "repeat" in self.parameters:
             self.max_retries = self.parameters["repeat"]
+        if "failure_retry_interval" in self.parameters:
+            self.sleep = self.parameters["failure_retry_interval"]
         if "character_delays" in self.job.device:
             self.character_delay = self.job.device["character_delays"].get(
                 self.section, 0
+            )
+
+        # Override the duration if needed
+        if "timeout" in self.parameters:
+            # preserve existing overrides
+            if self.timeout.duration == Timeout.default_duration():
+                self.set_action_timeout(Timeout.parse(self.parameters["timeout"]))
+        if "connection_timeout" in self.parameters:
+            self.connection_timeout.duration = Timeout.parse(
+                self.parameters["connection_timeout"]
             )
 
     @parameters.setter
@@ -916,6 +917,9 @@ class Action:
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
 
+    def set_action_timeout(self, new_timeout: int) -> None:
+        self.timeout.duration = new_timeout
+
     def wait(self, connection, max_end_time=None):
         if not connection:
             return
@@ -950,7 +954,8 @@ class Action:
             return
         if not isinstance(timeout, dict):
             raise JobError("Invalid timeout %s" % str(timeout))
-        self.timeout.duration = Timeout.parse(timeout)
+
+        self.set_action_timeout(Timeout.parse(timeout))
         if self.timeout.duration > self.job.timeout.duration:
             self.logger.warning("Action timeout for %s exceeds Job timeout", self.name)
 

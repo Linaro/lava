@@ -57,7 +57,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 902
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 300,
@@ -68,7 +68,7 @@
   max_retries: 2
   description: boot image with retry
   summary: boot with retry
-  timeout: 120
+  timeout: 241
   pipeline:
   - class: BootQemuRetry
     name: boot-qemu-image
@@ -76,7 +76,7 @@
     max_retries: 2
     description: boot image using QEMU command line
     summary: boot QEMU image
-    timeout: 120
+    timeout: 241
     pipeline:
     - {class: CallQemuAction, name: execute-qemu, level: 2.1.1, max_retries: 2, description: call
         qemu to boot the image, summary: execute qemu to boot the image, timeout: 60}
@@ -87,7 +87,7 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 120
+    timeout: 241
     pipeline:
     - {class: LoginAction, name: login-action, level: 2.2.1, max_retries: 2, description: Real
         login action., summary: Login after boot., timeout: 60}
@@ -102,7 +102,7 @@
   max_retries: 3
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 180
+  timeout: 542
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 3,
     description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 180}

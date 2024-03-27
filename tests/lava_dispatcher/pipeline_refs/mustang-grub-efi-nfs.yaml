@@ -12,7 +12,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 480
+    timeout: 1442
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 480,
@@ -23,7 +23,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 480
+    timeout: 1442
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 480,
@@ -34,7 +34,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 480
+    timeout: 1442
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 480,
@@ -45,7 +45,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 480
+    timeout: 1442
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 480,
@@ -199,7 +199,7 @@
   max_retries: 3
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 300
+  timeout: 902
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 3,
     description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}

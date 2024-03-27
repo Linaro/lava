@@ -115,7 +115,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 2400
+    timeout: 7202
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
@@ -246,7 +246,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 2400
+    timeout: 7202
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.4.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,

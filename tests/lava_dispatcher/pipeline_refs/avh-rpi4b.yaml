@@ -60,7 +60,7 @@
       max_retries: 3
       description: download with retry
       summary: download-retry
-      timeout: 1800
+      timeout: 5402
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.2.1, max_retries: 1,
         description: use http to download the file, summary: http download, timeout: 1800,
@@ -74,7 +74,7 @@
       max_retries: 3
       description: download with retry
       summary: download-retry
-      timeout: 1800
+      timeout: 5402
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.4.1, max_retries: 1,
         description: use http to download the file, summary: http download, timeout: 1800,
@@ -85,7 +85,7 @@
       max_retries: 3
       description: download with retry
       summary: download-retry
-      timeout: 1800
+      timeout: 5402
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.5.1, max_retries: 1,
         description: use http to download the file, summary: http download, timeout: 1800,

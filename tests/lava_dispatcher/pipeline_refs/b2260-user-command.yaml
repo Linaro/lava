@@ -14,7 +14,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -25,7 +25,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,
@@ -36,7 +36,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 722
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 240,

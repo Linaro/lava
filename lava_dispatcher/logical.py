@@ -15,6 +15,7 @@ from lava_common.exceptions import (
     LAVABug,
     TestError,
 )
+from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
@@ -35,6 +36,11 @@ class RetryAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.sleep = 1
+        per_retry_duration = self.timeout.duration
+        self.timeout_per_retry = Timeout(
+            f"{self.name}-per-retry", self, exception=self.timeout_exception
+        )
+        self.set_action_timeout(per_retry_duration)
 
     def validate(self):
         """
@@ -48,10 +54,13 @@ class RetryAction(Action):
                 "Retry action %s needs to implement an internal pipeline" % self.name
             )
 
-    def run(self, connection, max_end_time):
-        self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
-        parent_end_time = max_end_time
+    def set_action_timeout(self, new_timeout: int) -> None:
+        self.timeout_per_retry.duration = new_timeout
+        super().set_action_timeout(
+            self.max_retries * new_timeout + (self.max_retries - 1) * self.sleep
+        )
 
+    def run(self, connection, max_end_time):
         retries = 0
         has_failed_exc: Optional[Exception] = None
         has_parent_timed_out = False
@@ -59,9 +68,15 @@ class RetryAction(Action):
         while retries < self.max_retries:
             retries += 1
             try:
-                connection = self.pipeline.run_actions(connection, max_end_time)
+                with self.timeout_per_retry(
+                    self, max_end_time
+                ) as per_retry_max_end_time:
+                    connection = self.pipeline.run_actions(
+                        connection, per_retry_max_end_time
+                    )
                 if "repeat" not in self.parameters:
-                    # failure_retry returns on first success. repeat returns only at max_retries.
+                    # failure_retry returns on first success.
+                    # repeat returns only at max_retries.
                     return connection
             # Do not retry for LAVABug (as it's a bug in LAVA)
             except (InfrastructureError, JobError, TestError) as exc:
@@ -83,21 +98,17 @@ class RetryAction(Action):
                     raise
 
                 # Stop retrying if parent timed out
-                if time.monotonic() >= parent_end_time:
+                if time.monotonic() >= max_end_time:
                     has_parent_timed_out = True
                     break
 
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                # Restart max_end_time or the retry on a timeout fails with duration < 0
-                current_time = time.monotonic()
-                max_end_time += current_time - self.timeout.start
-                self.timeout.start = current_time
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
                     self.level,
                     self.name,
-                    seconds_to_str(max_end_time - self.timeout.start),
+                    seconds_to_str(self.timeout_per_retry.duration),
                 )
 
         # If we are repeating, check that all repeat were a success.
