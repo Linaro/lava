@@ -299,6 +299,8 @@ class TestCase(models.Model, Queryable):
     lava-test-case or action result
     """
 
+    id = models.BigAutoField(primary_key=True)
+
     objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
 
     RESULT_PASS = 0
