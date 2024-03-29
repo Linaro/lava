@@ -100,6 +100,9 @@ lava-server:
   pytest-random-order:
     name: python3-pytest-random-order
     unittests: true
+  pytest-subtests:
+    name: python3-pytest-subtests
+    unittests: true
 
 lava-dispatcher:
   aiohttp:
@@ -181,6 +184,9 @@ lava-dispatcher:
     unittests: true
   python-bpfcc:
     name: python3-bpfcc
+    unittests: true
+  pytest-subtests:
+    name: python3-pytest-subtests
     unittests: true
 
 lava-common:
