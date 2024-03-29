@@ -218,29 +218,6 @@ class Pipeline:
         if error:
             raise InfrastructureError("Failed to clean after job")
 
-    def _diagnose(self, connection):
-        """
-        Pipeline Jobs have a number of Diagnostic classes registered - all
-        supported DiagnosticAction classes should be registered with the Job.
-        If an Action.run() function reports a JobError or InfrastructureError,
-        the Pipeline calls Job.diagnose(). The job iterates through the DiagnosticAction
-        classes declared in the diagnostics list, checking if the trigger classmethod
-        matches the requested complaint. Matching diagnostics are run using the current Connection.
-        Actions generate a complaint by appending the return of the trigger classmethod
-        to the triggers list of the Job. This can be done at any point prior to the
-        exception being raised in the run function.
-        The trigger list is cleared after each diagnostic operation is complete.
-        """
-        for complaint in self.job.triggers:
-            diagnose = self.job.diagnose(complaint)
-            if diagnose:
-                connection = diagnose.run(connection, None)
-            else:
-                raise LAVABug("No diagnosis for trigger %s" % complaint)
-        self.job.triggers = []
-        # Diagnosis is not allowed to alter the connection, do not use the return value.
-        return None
-
     def run_actions(self, connection, max_end_time):
         for action in self.actions:
             failed = False
@@ -285,7 +262,6 @@ class Pipeline:
                 # allows retries without setting errors, which make the job incomplete.
                 failed = True
                 action.results = {"fail": str(exc)}
-                self._diagnose(connection)
                 raise
             except Exception as exc:
                 action.logger.exception(traceback.format_exc())
@@ -371,7 +347,6 @@ class Action:
         )
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries = 1
-        self.diagnostics = []
         # list of protocol objects supported by this action, full list in job.protocols
         self.protocols = []
         self.connection_timeout = Timeout(

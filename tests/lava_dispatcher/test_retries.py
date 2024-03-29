@@ -9,7 +9,7 @@ import time
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import DiagnosticAction, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
@@ -54,29 +54,10 @@ class TestAction(LavaDispatcherTestCase):
         def __init__(self):
             super().__init__()
             self.count = 1
-
-        def run(self, connection, max_end_time):
-            self.count += 1
-            raise JobError("fake error")
-
-    class FakeTriggerAction(Action):
-        """
-        Always fails, always triggers a diagnostic
-        """
-
-        section = "internal"
-        name = "trigger-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake trigger action for unit tests"
-
-        def __init__(self):
-            super().__init__()
-            self.count = 1
             self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
             self.count += 1
-            self.job.triggers.append(TestAction.DiagnoseCheck.trigger())
             raise JobError("fake error")
 
     class FakeRetryAction(RetryAction):
@@ -106,11 +87,6 @@ class TestAction(LavaDispatcherTestCase):
 
         def cleanup(self, connection):
             pass
-
-    class DiagnoseCheck(DiagnosticAction):
-        @classmethod
-        def trigger(cls):
-            return "fake-check"
 
     def setUp(self):
         super().setUp()
@@ -181,25 +157,6 @@ class TestAction(LavaDispatcherTestCase):
         # from meliae import scanner
         # scanner.dump_all_objects('filename.json')
 
-    def test_missing_diagnostic(self):
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeTriggerAction())
-        self.assertIsNone(fakepipeline.validate_actions())
-        with self.assertRaises(LAVABug):
-            fakepipeline.run_actions(None, None)
-
-    def test_diagnostic(self):
-        self.fakejob.diagnostics.append(TestAction.DiagnoseCheck)
-        self.assertIn(
-            TestAction.DiagnoseCheck.trigger(),
-            [a.trigger() for a in self.fakejob.diagnostics],
-        )
-        fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeTriggerAction())
-        self.assertIsNone(fakepipeline.validate_actions())
-        with self.assertRaises(JobError):
-            fakepipeline.run_actions(None, None)
-
     def test_namespace_data(self):
         """
         namespace data uses copies, not references
@@ -207,7 +164,7 @@ class TestAction(LavaDispatcherTestCase):
         This allows actions to refer to the common data and manipulate it without affecting other actions.
         """
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.FakeTriggerAction()
+        action = TestAction.FakeAction()
         pipeline.add_action(action)
         self.assertEqual({"namespace": "common"}, action.parameters)
         action.set_namespace_data(

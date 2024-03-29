@@ -116,30 +116,6 @@ class RetryAction(Action):
         return connection
 
 
-class DiagnosticAction(Action):
-    """
-    Base class for actions which are run only if a failure is detected.
-    Diagnostics have no level and are not intended to be added to Pipeline.
-    """
-
-    section = "diagnostic"
-    name = "diagnose"
-    description = "action-specific diagnostics in case of failure"
-    summary = "diagnose action failure"
-
-    @classmethod
-    def trigger(cls):
-        raise NotImplementedError("Define in the subclass: %s" % cls)
-
-    def run(self, connection, max_end_time):
-        """
-        Log the requested diagnostic.
-        Raises NotImplementedError if subclass has omitted a trigger classmethod.
-        """
-        self.logger.debug("%s diagnostic triggered.", self.trigger())
-        return connection
-
-
 class Deployment:
     """
     Deployment is a strategy class which aggregates Actions
