@@ -4,8 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from unittest.mock import patch
-
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import RetryAction
 
@@ -22,7 +20,6 @@ class TestRepeatAction(LavaDispatcherTestCase):
 
             def run(self_, connection, max_end_time):
                 self.assertIsNone(connection)
-                self.assertEqual(max_end_time, 1)
                 self_.ran += 1
 
         ra = RetryAction()
@@ -30,8 +27,8 @@ class TestRepeatAction(LavaDispatcherTestCase):
         ra.level = "1"
         ra.pipeline = Pipeline(job=self.create_simple_job(), parent=ra)
         ra.pipeline.add_action(DummyAction())
-        with patch("time.monotonic", return_value=0.0):
-            ra.run(None, 1)
+        with ra.pipeline.job.timeout(None, None) as max_end_time:
+            ra.run(None, max_end_time)
         self.assertEqual(
             ra.pipeline.actions[0].ran,
             5,

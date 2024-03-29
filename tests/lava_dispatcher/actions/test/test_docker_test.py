@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import re
-import time
 from pathlib import Path
 from unittest.mock import MagicMock
 
@@ -99,7 +98,8 @@ def test_run(action, mocker):
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     action.validate()
-    action.run(connection, time.monotonic() + 1000)
+    with action.timeout(None, None) as max_end_time:
+        action.run(connection, max_end_time)
 
     # device is shared with the container
     add_device_container_mappings.assert_called()
