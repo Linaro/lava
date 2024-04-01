@@ -3,34 +3,32 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import datetime
-import os
+from typing import Any
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger
 
 
 class TestDefinitionHandlers(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_kvm_job("sample_jobs/kvm.yaml")
 
     def test_testshell(self):
-        testshell = self.job.pipeline.find_action(TestShellAction)
+        job = self.factory.create_kvm_job("sample_jobs/kvm.yaml")
+
+        testshell = job.pipeline.find_action(TestShellAction)
 
         self.assertIsInstance(testshell, TestShellAction)
         self.assertTrue(testshell.valid)
@@ -45,25 +43,27 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         )
 
     def test_missing_handler(self):
-        (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
-        parser = JobParser()
-        with open(kvm_yaml) as sample_job_data:
-            data = yaml_safe_load(sample_job_data)
-        data["actions"][2]["test"]["definitions"][0]["from"] = "unusable-handler"
-        try:
-            job = parser.parse(yaml_safe_dump(data), device, 4212, None, "")
-            job.logger = DummyLogger()
-        except JobError:
-            pass
-        except Exception as exc:
-            self.fail(exc)
-        else:
-            self.fail("JobError not raised")
+        def set_test_from_to_bad_value(job_dict: dict[str, Any]) -> None:
+            job_dict["actions"][-1]["test"]["definitions"][0][
+                "from"
+            ] = "unusable-handler-test"
+
+        with self.assertRaisesRegex(
+            JobError,
+            "(?=No testdef_repo handler is available for)"
+            "(?=.*unusable-handler-test)",
+        ):
+            self.factory.create_job(
+                "kvm01",
+                "sample_jobs/kvm.yaml",
+                validate=False,
+                job_dict_preprocessor=set_test_from_to_bad_value,
+            )
 
     def test_eventpatterns(self):
-        testshell = self.job.pipeline.find_action(TestShellAction)
+        job = self.factory.create_kvm_job("sample_jobs/kvm.yaml")
+
+        testshell = job.pipeline.find_action(TestShellAction)
 
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns("exit", None))
@@ -79,12 +79,16 @@ class X86Factory(Factory):
 class TestMultiNodeOverlay(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
-        factory = X86Factory()
-        self.server_job = factory.create_x86_job(
-            "sample_jobs/test_action-1.yaml", "lng-generator-01.jinja2", validate=False
+        factory = Factory()
+        self.server_job = factory.create_job(
+            "lng-generator-01",
+            "sample_jobs/test_action-1.yaml",
+            validate=False,
         )
-        self.client_job = factory.create_x86_job(
-            "sample_jobs/test_action-2.yaml", "lng-generator-02.jinja2", validate=False
+        self.client_job = factory.create_job(
+            "lng-generator-02",
+            "sample_jobs/test_action-2.yaml",
+            validate=False,
         )
 
     def test_action_namespaces(self):
@@ -124,7 +128,8 @@ class TestShellResults(LavaDispatcherTestCase):
 
     class FakeDeploy:
         """
-        Derived from object, *not* Deployment as this confuses python -m unittest discover
+        Derived from object, *not* Deployment as this confuses
+        python -m unittest discover
         - leads to the FakeDeploy being called instead.
         """
 

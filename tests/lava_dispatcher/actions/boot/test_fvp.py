@@ -24,7 +24,7 @@ All Rights Reserved."""
 class TestCheckFVPVersionAction:
     @pytest.fixture
     def action(self, factory):
-        job = factory.create_job("fvp-01.jinja2", "sample_jobs/fvp_foundation.yaml")
+        job = factory.create_job("fvp-01", "sample_jobs/fvp_foundation.yaml")
         return job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
 
     def test_action_class(self, action):

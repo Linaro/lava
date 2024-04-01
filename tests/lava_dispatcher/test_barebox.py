@@ -3,12 +3,8 @@
 # Author: Michael Grzeschik <m.grzeschik@pengutronix.de>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-
-import os
 from unittest.mock import patch
 
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.barebox import BareboxAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -17,8 +13,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     PrepareOverlayTftp,
 )
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils import filesystem
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -31,7 +25,7 @@ class BareboxFactory(Factory):
     """
 
     def create_bbb_job(self, filename):
-        return self.create_job("bbb-03-barebox.jinja2", filename)
+        return self.create_job("bbb-03-barebox", filename)
 
 
 class TestBareboxAction(LavaDispatcherTestCase):
@@ -162,22 +156,3 @@ class TestBareboxAction(LavaDispatcherTestCase):
         extract = overlay.pipeline.find_action(ExtractNfsRootfs)
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, 240)
-
-
-class TestKernelConversion(LavaDispatcherTestCase):
-    def setUp(self):
-        self.device = NewDevice(
-            os.path.join(os.path.dirname(__file__), "devices/bbb-01-barebox.yaml")
-        )
-        bbb_yaml = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/barebox-ramdisk.yaml"
-        )
-        with open(bbb_yaml) as sample_job_data:
-            self.base_data = yaml_safe_load(sample_job_data)
-        self.deploy_block = [
-            block for block in self.base_data["actions"] if "deploy" in block
-        ][0]["deploy"]
-        self.boot_block = [
-            block for block in self.base_data["actions"] if "boot" in block
-        ][0]["boot"]
-        self.parser = JobParser()

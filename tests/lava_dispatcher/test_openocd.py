@@ -30,7 +30,7 @@ class OpenOCDFactory(Factory):
 
     @unittest.skipIf(infrastructure_error("openocd"), "openocd not installed")
     def create_cc3230SF_job(self, filename):
-        return self.create_job("cc3220SF-02.jinja2", filename)
+        return self.create_job("cc3220SF-02", filename)
 
 
 class TestOpenOCDAction(LavaDispatcherTestCase):

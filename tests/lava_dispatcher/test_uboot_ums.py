@@ -19,7 +19,7 @@ class UBootUMSFactory(Factory):
     """
 
     def create_warp7_job(self, filename):
-        return self.create_job("imx7s-warp-01.jinja2", filename)
+        return self.create_job("imx7s-warp-01", filename)
 
 
 class TestUbootUMSAction(LavaDispatcherTestCase):

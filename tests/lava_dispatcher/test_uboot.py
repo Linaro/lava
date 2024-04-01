@@ -3,13 +3,13 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
-
-import os
 import unittest
+from functools import partial
+from typing import Any
 from unittest.mock import MagicMock, patch
 
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
@@ -32,13 +32,12 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 from lava_dispatcher.actions.deploy.prepare import UBootPrepareKernelAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger, infrastructure_error
+from tests.utils import infrastructure_error
 
 
 class UBootFactory(Factory):
@@ -49,16 +48,16 @@ class UBootFactory(Factory):
     """
 
     def create_bbb_job(self, filename):
-        return self.create_job("bbb-03.jinja2", filename)
+        return self.create_job("bbb-03", filename)
 
     def create_x15_job(self, filename):
-        return self.create_job("x15-01.jinja2", filename)
+        return self.create_job("x15-01", filename)
 
     def create_juno_job(self, filename):
-        return self.create_job("juno-r2-01.jinja2", filename)
+        return self.create_job("juno-r2-01", filename)
 
     def create_zcu102_job(self, filename):
-        return self.create_job("zcu102.jinja2", filename)
+        return self.create_job("zcu102", filename)
 
 
 class TestUbootAction(LavaDispatcherTestCase):
@@ -270,8 +269,7 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
-        device = NewDevice(data)
+        device = NewDevice(self.factory.load_device_configuration_dict("imx8mq-evk-03"))
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -350,8 +348,7 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
-        device = NewDevice(data)
+        device = NewDevice(self.factory.load_device_configuration_dict("imx8mq-evk-03"))
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -440,9 +437,8 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        device = NewDevice(yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0]))
         job = self.create_simple_job(
-            device_dict=device,
+            device_dict=self.factory.load_device_configuration_dict("bbb-01"),
             job_parameters=parameters,
         )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
@@ -484,7 +480,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             "{DTB}": dtb,
             "{TEE}": tee,
         }
-        params = device["actions"]["boot"]["methods"]
+        params = job.device["actions"]["boot"]["methods"]
         params["u-boot"]["ramdisk"]["commands"] = substitute(
             params["u-boot"]["ramdisk"]["commands"], substitution_dictionary
         )
@@ -543,10 +539,9 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
+
+        device = NewDevice(self.factory.load_device_configuration_dict("bbb-01"))
         ip_addr = dispatcher_ip(None)
-        parsed = []
         kernel_addr = "0x83000000"
         ramdisk_addr = "0x83000000"
         dtb_addr = "0x88000000"
@@ -606,14 +601,12 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
+
+        device = NewDevice(self.factory.load_device_configuration_dict("bbb-01"))
         ip_addr = dispatcher_ip(None)
-        parsed = []
         kernel_addr = "0x83000000"
         ramdisk_addr = "0x83000000"
         dtb_addr = "0x88000000"
-        tee_adr = "0x83000000"
         kernel = parameters["actions"]["deploy"]["kernel"]["url"]
         ramdisk = parameters["actions"]["deploy"]["ramdisk"]["url"]
         dtb = parameters["actions"]["deploy"]["dtb"]["url"]
@@ -825,17 +818,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         """
         Test UBootSecondaryMedia validation
         """
-        job_parser = JobParser()
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
-        )
-        sample_job_data = open(sample_job_file)
-        job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
-        job.logger = DummyLogger()
+        job = self.factory.create_job("cubie1", "sample_jobs/cubietruck-removable.yaml")
         job.validate()
-        sample_job_data.close()
 
         _, u_boot_media = job.pipeline.find_all_actions(UBootSecondaryMedia)
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
@@ -861,7 +845,8 @@ class TestUbootAction(LavaDispatcherTestCase):
                 action="download-action", label="file", key="dtb"
             ),
         )
-        # use the base class name so that uboot-from-media can pick up the value reliably.
+        # use the base class name so that uboot-from-media
+        # can pick up the value reliably.
         self.assertEqual(
             u_boot_media.parameters["root_uuid"],
             u_boot_media.get_namespace_data(
@@ -908,9 +893,7 @@ class TestUbootAction(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_imx8m(self):
-        job = self.factory.create_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk.yaml"
-        )
+        job = self.factory.create_job("imx8mq-evk-01", "sample_jobs/imx8mq-evk.yaml")
         self.assertIsNotNone(job)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
@@ -923,30 +906,24 @@ class TestUbootAction(LavaDispatcherTestCase):
 
 class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        self.device = NewDevice(data)
-        bbb_yaml = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
-        )
-        with open(bbb_yaml) as sample_job_data:
-            self.base_data = yaml_safe_load(sample_job_data)
-        self.deploy_block = [
-            block for block in self.base_data["actions"] if "deploy" in block
-        ][0]["deploy"]
-        self.boot_block = [
-            block for block in self.base_data["actions"] if "boot" in block
-        ][0]["boot"]
-        self.parser = JobParser()
+        self.factory = Factory()
+
+    @staticmethod
+    def override_image_type(new_value: str, job_dict: dict[str, Any]) -> None:
+        deploy_block = [block for block in job_dict["actions"] if "deploy" in block][0][
+            "deploy"
+        ]
+        deploy_block["kernel"]["type"] = new_value
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_zimage_bootz(self, which_mock):
-        self.deploy_block["kernel"]["type"] = "zimage"
-        job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        job = self.factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            job_dict_preprocessor=partial(self.override_image_type, "zimage"),
         )
-        job.logger = DummyLogger()
         job.validate()
 
         uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
@@ -958,11 +935,11 @@ class TestKernelConversion(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_image(self, which_mock):
-        self.deploy_block["kernel"]["type"] = "image"
-        job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        job = self.factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            job_dict_preprocessor=partial(self.override_image_type, "image"),
         )
-        job.logger = DummyLogger()
         job.validate()
 
         uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
@@ -975,11 +952,11 @@ class TestKernelConversion(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_uimage(self, which_mock):
-        self.deploy_block["kernel"]["type"] = "uimage"
-        job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        job = self.factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            job_dict_preprocessor=partial(self.override_image_type, "uimage"),
         )
-        job.logger = DummyLogger()
         job.validate()
 
         uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
@@ -991,14 +968,12 @@ class TestKernelConversion(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_zimage_nobootz(self, which_mock):
-        print(which_mock)
         # drop bootz from the device for this part of the test
-        del self.device["parameters"]["bootz"]
-        self.deploy_block["kernel"]["type"] = "zimage"
-        job = self.parser.parse(
-            yaml_safe_dump(self.base_data), self.device, 4212, None, ""
+        job = self.factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            device_dict_preprocessor=lambda d: d["parameters"].pop("bootz"),
         )
-        job.logger = DummyLogger()
         job.validate()
 
         uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)

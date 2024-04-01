@@ -36,10 +36,10 @@ class ConnectionFactory(Factory):
     """
 
     def create_ssh_job(self, filename):
-        return self.create_job("ssh-host-01.jinja2", filename, validate=False)
+        return self.create_job("ssh-host-01", filename, validate=False)
 
     def create_bbb_job(self, filename):
-        return self.create_job("bbb-02.jinja2", filename, validate=False)
+        return self.create_job("bbb-02", filename, validate=False)
 
 
 class TestConnection(LavaDispatcherTestCase):
@@ -470,7 +470,7 @@ class TestTimeouts(LavaDispatcherTestCase):
         with open(y_file) as uboot_ramdisk:
             data = yaml_safe_load(uboot_ramdisk)
         data["timeouts"]["connection"] = {"seconds": 20}
-        job = self.factory.create_custom_job("bbb-01.jinja2", data)
+        job = self.factory.create_custom_job("bbb-01", data)
         for action in job.pipeline.actions:
             if action.pipeline:
                 for check_action in action.pipeline.actions:
@@ -504,7 +504,7 @@ class TestTimeouts(LavaDispatcherTestCase):
         data["timeouts"]["connections"]["uboot-commands"] = {}
         data["timeouts"]["connections"]["uboot-commands"]["seconds"] = 45
         self.assertEqual(connection_timeout, 240)
-        job = self.factory.create_custom_job("bbb-01.jinja2", data)
+        job = self.factory.create_custom_job("bbb-01", data)
         retry = job.pipeline.find_action(UBootCommandsAction)
         self.assertEqual(
             retry.timeout.duration, 90
@@ -524,7 +524,7 @@ class TestDisconnect(LavaDispatcherTestCase):
     def test_handled_disconnect(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-01.jinja2", "sample_jobs/mps2plus.yaml", validate=False
+            "mps2plus-01", "sample_jobs/mps2plus.yaml", validate=False
         )
         job.validate()
         self.assertTrue(
@@ -534,16 +534,16 @@ class TestDisconnect(LavaDispatcherTestCase):
     def test_disconnect_with_plain_connection_command(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-02.jinja2", "sample_jobs/mps2plus.yaml", validate=False
+            "mps2plus-02", "sample_jobs/mps2plus.yaml", validate=False
         )
-        # mps2plus-02.jinja2 does not use tags for it's connection
+        # mps2plus-02 does not use tags for it's connection
         with self.assertRaises(JobError):
             job.validate()
 
     def test_unhandled_disconnect(self):
         factory = ConnectionFactory()
         job = factory.create_job(
-            "mps2plus-03.jinja2", "sample_jobs/mps2plus.yaml", validate=False
+            "mps2plus-03", "sample_jobs/mps2plus.yaml", validate=False
         )
         try:
             job.validate()
@@ -551,7 +551,7 @@ class TestDisconnect(LavaDispatcherTestCase):
             pass
         except InfrastructureError:
             raise self.skipTest("Cannot validate if minicom is not on PATH")
-        # mps2plus-03.jinja2 does use a tag, but minicom cannot be disconnected from currently
+        # mps2plus-03 does use a tag, but minicom cannot be disconnected from currently
         # Want to check the exception message gives some useful information
         # on how to amend the device dictionary.
         with self.assertRaises(JobError) as exc:

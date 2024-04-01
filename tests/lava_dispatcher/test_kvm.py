@@ -13,7 +13,7 @@ from unittest.mock import patch
 from pexpect import EOF as pexpect_eof
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, LoginAction
 from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction, CallQemuAction
@@ -21,8 +21,6 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import InlineRepoAction
 from lava_dispatcher.connections.serial import QemuSession
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -124,9 +122,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
             "arch": "amd64",
             "no_kvm": True,
         }  # override to allow unit tests on all types of systems
-        self.job = self.factory.create_job(
-            "qemu01.jinja2", "sample_jobs/kvm.yaml", job_ctx
-        )
+        self.job = self.factory.create_job("qemu01", "sample_jobs/kvm.yaml", job_ctx)
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -155,7 +151,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
 
     def test_available_architectures(self):
         job_ctx = {"arch": "unknown", "no_kvm": True}
-        job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm.yaml", job_ctx)
+        job = self.factory.create_job("qemu01", "sample_jobs/kvm.yaml", job_ctx)
         self.assertIsNotNone(job.device["available_architectures"])
         self.assertEqual(job.parameters["context"]["arch"], "unknown")
         self.assertRaises(JobError, job.pipeline.validate_actions)
@@ -163,7 +159,8 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
     def test_overlay(self):
         overlay = self.job.pipeline.find_action(OverlayAction)
         self.assertIsNotNone(overlay)
-        # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
+        # these tests require that lava-dispatcher itself is installed,
+        # not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
         self.assertIsNot(overlay.lava_test_dir, "/")
         self.assertNotIn("lava_multi_node_test_dir", dir(overlay))
@@ -304,31 +301,21 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
             self.assertEqual([], action.errors)
 
     def test_extra_options(self):
-        (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        kvm_yaml = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/kvm-inline.yaml"
+        def override_qemu_extra(device_dict: dict[str, object]) -> None:
+            device_dict["actions"]["boot"]["methods"]["qemu"]["parameters"]["extra"] = [
+                "-smp",
+                1,
+                "-global",
+                "virtio-blk-device.scsi=off",
+                "device virtio-scsi-device,id=scsi",
+                '--append "console=ttyAMA0 root=/dev/vda rw"',
+            ]
+
+        job = self.factory.create_job(
+            "kvm01",
+            "sample_jobs/kvm-inline.yaml",
+            device_dict_preprocessor=override_qemu_extra,
         )
-        with open(kvm_yaml) as sample_job_data:
-            job_data = yaml_safe_load(sample_job_data)
-        device["actions"]["boot"]["methods"]["qemu"]["parameters"][
-            "extra"
-        ] = yaml_safe_load(
-            """
-                  - -smp
-                  - 1
-                  - -global
-                  - virtio-blk-device.scsi=off
-                  - -device virtio-scsi-device,id=scsi
-                  - --append "console=ttyAMA0 root=/dev/vda rw"
-                  """
-        )
-        self.assertIsInstance(
-            device["actions"]["boot"]["methods"]["qemu"]["parameters"]["extra"][1], int
-        )
-        parser = JobParser()
-        job = parser.parse(yaml_safe_dump(job_data), device, 4212, None, "")
-        job.logger = DummyLogger()
         job.validate()
         qemu = job.pipeline.find_action(CallQemuAction)
         self.assertIsInstance(qemu.sub_command, list)
@@ -659,7 +646,7 @@ class TestQemuNFS(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         factory = Factory()
-        self.job = factory.create_job("kvm02.jinja2", "sample_jobs/qemu-nfs.yaml")
+        self.job = factory.create_job("kvm02", "sample_jobs/qemu-nfs.yaml")
         self.job.logger = DummyLogger()
 
     @unittest.skipIf(

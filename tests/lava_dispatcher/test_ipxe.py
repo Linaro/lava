@@ -5,11 +5,9 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-import os
 import unittest
 from unittest.mock import patch
 
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
@@ -18,8 +16,6 @@ from lava_dispatcher.actions.boot import (
 from lava_dispatcher.actions.boot.ipxe import BootloaderAction, BootloaderRetry
 from lava_dispatcher.actions.deploy.apply_overlay import ExtractNfsRootfs
 from lava_dispatcher.actions.deploy.tftp import PrepareOverlayTftp, TftpAction
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -37,7 +33,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_simulated_action(self, which_mock):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe-ramdisk.yaml")
         self.assertIsNotNone(job)
 
         description_ref = self.pipeline_reference("ipxe.yaml", job=job)
@@ -46,7 +42,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         self.assertIsNone(job.validate())
 
     def test_tftp_pipeline(self):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe-ramdisk.yaml")
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "bootloader-action", "lava-test-retry", "finalize"],
@@ -78,7 +74,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         )
 
     def test_device_x86(self):
-        job = self.factory.create_job("x86-02.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
+        job = self.factory.create_job("x86-02", "sample_jobs/ipxe-ramdisk.yaml")
         self.assertEqual(
             job.device["commands"]["connections"]["uart0"]["connect"],
             "telnet bumblebee 8003",
@@ -94,7 +90,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_bootloader_action(self, which_mock):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn("ipxe", job.device["actions"]["boot"]["methods"])
@@ -141,10 +137,8 @@ class TestBootloaderAction(LavaDispatcherTestCase):
                 "deploy": {"ramdisk": "initrd.gz", "kernel": "zImage"},
             },
         }
-        (rendered, _) = self.factory.create_device("x86-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
         job = self.create_simple_job(
-            device_dict=device,
+            device_dict=self.factory.load_device_configuration_dict("x86-01"),
             job_parameters=parameters,
         )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
@@ -177,7 +171,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
             "{KERNEL}": kernel,
             "{LAVA_MAC}": overlay.lava_mac,
         }
-        params = device["actions"]["boot"]["methods"]
+        params = job.device["actions"]["boot"]["methods"]
         params["ipxe"]["ramdisk"]["commands"] = substitute(
             params["ipxe"]["ramdisk"]["commands"], substitution_dictionary
         )
@@ -196,9 +190,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         self.assertIn("boot", commands)
 
     def test_nbd_boot(self):
-        job = self.factory.create_job(
-            "x86-01.jinja2", "sample_jobs/up2-initrd-nbd.yaml"
-        )
+        job = self.factory.create_job("x86-01", "sample_jobs/up2-initrd-nbd.yaml")
         with patch("lava_dispatcher.actions.deploy.nbd.which") as which_mock:
             job.validate()
 
@@ -225,7 +217,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_download_action(self, which_mock):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe.yaml")
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -247,7 +239,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_reset_actions(self, which_mock):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe.yaml")
         bootloader_retry = None
         reset_action = None
         for action in job.pipeline.actions:
@@ -281,23 +273,11 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         Loads a known YAML, adds a prompt to the dict and re-parses the job.
         Checks that the prompt is available in the expect_shell_connection action.
         """
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe-ramdisk.yaml")
         job.validate()
         job.pipeline.find_action(ExpectShellSession)
 
-        (rendered, _) = self.factory.create_device("x86-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        extra_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/ipxe.yaml")
-        with open(extra_yaml) as data:
-            sample_job_string = data.read()
-        parser = JobParser()
-        sample_job_data = yaml_safe_load(sample_job_string)
-        boot = [item["boot"] for item in sample_job_data["actions"] if "boot" in item][
-            0
-        ]
-        self.assertIsNotNone(boot)
-        sample_job_string = yaml_safe_dump(sample_job_data)
-        job = parser.parse(sample_job_string, device, 4212, None, "")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe.yaml")
         job.logger = DummyLogger()
         job.validate()
         job.pipeline.find_action(ExpectShellSession)
@@ -306,7 +286,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_ipxe_with_monitor(self, which_mock):
-        job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-monitor.yaml")
+        job = self.factory.create_job("x86-01", "sample_jobs/ipxe-monitor.yaml")
         job.validate()
         description_ref = self.pipeline_reference("ipxe-monitor.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())

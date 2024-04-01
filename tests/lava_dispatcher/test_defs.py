@@ -16,7 +16,7 @@ from unittest.mock import patch
 import pexpect
 
 from lava_common.exceptions import InfrastructureError
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootAction
@@ -30,8 +30,6 @@ from lava_dispatcher.actions.deploy.testdef import (
     TestRunnerAction,
 )
 from lava_dispatcher.actions.test.shell import PatternFixup
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
@@ -58,7 +56,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm.yaml")
+        self.job = self.factory.create_job("qemu01", "sample_jobs/kvm.yaml")
         with open(
             os.path.join(os.path.dirname(__file__), "testdefs", "params.yaml")
         ) as params:
@@ -110,17 +108,9 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         testdef = self.job.pipeline.find_action(TestDefinitionAction)
         testdef.validate()
         self.assertEqual([], testdef.errors)
-        (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
-        parser = JobParser()
-        with open(kvm_yaml) as sample_job_data:
-            content = yaml_safe_load(sample_job_data)
-        data = [block["test"] for block in content["actions"] if "test" in block][0]
-        definitions = [block for block in data["definitions"] if "path" in block][0]
-        definitions["name"] = "smoke tests"
-        job = parser.parse(yaml_safe_dump(content), device, 4212, None, "")
+        job = self.factory.create_job("kvm01", "sample_jobs/kvm.yaml")
         testdef = job.pipeline.find_action(TestDefinitionAction)
+        testdef.test_list[0][0]["name"] = "smoke tests"  # Introduce match error
         testdef.validate()
         self.assertNotEqual([], testdef.errors)
         self.assertIn(
@@ -183,7 +173,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         )
 
     def test_overlay_override(self):
-        job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm-context.yaml")
+        job = self.factory.create_job("qemu01", "sample_jobs/kvm-context.yaml")
         overlay = job.pipeline.find_action(OverlayAction)
         self.assertEqual(
             "/sysroot/lava-%s", overlay.get_constant("lava_test_results_dir", "posix")
@@ -414,7 +404,8 @@ class TestDefinitions(LavaDispatcherTestCase):
             {"1.3.2.4.4": "0_smoke-tests", "1.3.2.4.8": "1_singlenode-advanced"},
         )
         self.assertEqual(
-            {repo.uuid for repo in git_repos}, {"4999_1.3.2.4.1", "4999_1.3.2.4.5"}
+            {repo.uuid for repo in git_repos},
+            {f"{self.job.job_id}_1.3.2.4.1", f"{self.job.job_id}_1.3.2.4.5"},
         )
         self.assertEqual(
             set(
@@ -444,12 +435,12 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertEqual(
             self.job.context["test"],
             {
-                "4999_1.3.2.4.5": {
+                f"{self.job.job_id}_1.3.2.4.5": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
                 },
-                "4999_1.3.2.4.1": {
+                f"{self.job.job_id}_1.3.2.4.1": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
@@ -466,7 +457,7 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
-                self.assertEqual("4999_1.3.2.4.1", uuid_list[key])
+                self.assertEqual(f"{self.job.job_id}_1.3.2.4.1", uuid_list[key])
                 self.assertEqual(
                     self.job.context["test"][uuid_list[key]]["testdef_pattern"][
                         "pattern"
@@ -510,7 +501,7 @@ test3a: skip
     )
     def test_deployment_data(self):
         job = self.factory.create_job(
-            "hi960-hikey-01.jinja2", "sample_jobs/hikey960-oe-aep.yaml"
+            "hi960-hikey-01", "sample_jobs/hikey960-oe-aep.yaml"
         )
         job.validate()
         description_ref = self.pipeline_reference("hikey960-oe-aep.yaml", job=job)

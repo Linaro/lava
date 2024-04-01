@@ -22,13 +22,13 @@ class PyocdFactory(Factory):
         infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
     )
     def create_k64f_job(self, filename):
-        return self.create_job("frdm-k64f-01.jinja2", filename)
+        return self.create_job("frdm-k64f-01", filename)
 
     @unittest.skipIf(
         infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
     )
     def create_k64f_job_with_power(self, filename):
-        return self.create_job("frdm-k64f-power-01.jinja2", filename)
+        return self.create_job("frdm-k64f-power-01", filename)
 
 
 class TestPyocdAction(LavaDispatcherTestCase):

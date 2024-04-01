@@ -85,9 +85,7 @@ class TestExportData(LavaDispatcherTestCase):
 def test_persist_nfs_place_holder():
     factory = Factory()
     factory.validate_job_strict = True
-    job = factory.create_job(
-        "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
-    )
+    job = factory.create_job("kvm03", "sample_jobs/qemu-download-postprocess.yaml")
 
     action = PersistentNFSOverlay(job)
     action.parameters = {

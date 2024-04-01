@@ -15,7 +15,7 @@ class TestPowerAction(LavaDispatcherTestCase):
         self.factory = Factory()
 
     def test_reset_nopower(self):
-        job = self.factory.create_job("cubie1.jinja2", "sample_jobs/uboot-ramdisk.yaml")
+        job = self.factory.create_job("cubie1", "sample_jobs/uboot-ramdisk.yaml")
         reset_device = job.pipeline.find_action(ResetDevice)
         self.assertEqual(
             [SendRebootCommands],
@@ -23,7 +23,7 @@ class TestPowerAction(LavaDispatcherTestCase):
         )
 
     def test_reset_power(self):
-        job = self.factory.create_job("bbb-01.jinja2", "sample_jobs/uboot-ramdisk.yaml")
+        job = self.factory.create_job("bbb-01", "sample_jobs/uboot-ramdisk.yaml")
         reset_device = job.pipeline.find_action(ResetDevice)
         self.assertEqual(
             [PDUReboot],

@@ -9,7 +9,6 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -31,7 +30,6 @@ from lava_dispatcher.actions.deploy.fastboot import FastbootFlashAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
 from lava_dispatcher.connections.serial import ConnectShell
-from lava_dispatcher.device import NewDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
@@ -47,13 +45,13 @@ class GrubFactory(Factory):
     """
 
     def create_mustang_job(self, filename):
-        return self.create_job("mustang1.jinja2", filename)
+        return self.create_job("mustang1", filename)
 
     def create_hikey_job(self, filename):
-        return self.create_job("hi6220-hikey-r2-01.jinja2", filename)
+        return self.create_job("hi6220-hikey-r2-01", filename)
 
     def create_hikey960_job(self, filename):
-        return self.create_job("hi960-hikey-01.jinja2", filename)
+        return self.create_job("hi960-hikey-01", filename)
 
 
 class TestGrubAction(LavaDispatcherTestCase):
@@ -66,7 +64,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_simulated_action(self, which_mock):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk.yaml")
         self.assertIsNotNone(job)
 
         # uboot and uboot-ramdisk have the same pipeline structure
@@ -76,7 +74,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         self.assertIsNone(job.validate())
 
     def test_tftp_pipeline(self):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk.yaml")
         self.assertEqual(
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "grub-main-action", "lava-test-retry", "finalize"],
@@ -112,7 +110,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         self.assertNotIn("=", filesystem.tftpd_dir())
 
     def test_device_d02(self):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk.yaml")
         self.assertNotIn("connect", job.device["commands"])
         self.assertEqual(
             job.device["commands"]["connections"]["uart0"]["connect"],
@@ -130,7 +128,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_grub_action(self, which_mock):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk.yaml")
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn("grub", job.device["actions"]["boot"]["methods"])
@@ -173,10 +171,8 @@ class TestGrubAction(LavaDispatcherTestCase):
                 },
             },
         }
-        (rendered, _) = self.factory.create_device("d02-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
         job = self.create_simple_job(
-            device_dict=device,
+            device_dict=self.factory.load_device_configuration_dict("d02-01"),
             job_parameters=parameters,
         )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
@@ -196,7 +192,7 @@ class TestGrubAction(LavaDispatcherTestCase):
             "{KERNEL}": kernel,
             "{DTB}": dtb,
         }
-        params = device["actions"]["boot"]["methods"]
+        params = job.device["actions"]["boot"]["methods"]
         commands = params["grub"]["ramdisk"]["commands"]
         self.assertIn("net_bootp", commands)
         self.assertIn(
@@ -228,7 +224,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_download_action(self, which_mock):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-nfs.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-nfs.yaml")
         for action in job.pipeline.actions:
             action.validate()
             if not action.valid:
@@ -251,7 +247,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_reset_actions(self, which_mock):
-        job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk.yaml")
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
@@ -268,9 +264,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_grub_with_monitor(self, which_mock):
-        job = self.factory.create_job(
-            "d02-01.jinja2", "sample_jobs/grub-ramdisk-monitor.yaml"
-        )
+        job = self.factory.create_job("d02-01", "sample_jobs/grub-ramdisk-monitor.yaml")
         job.validate()
         description_ref = self.pipeline_reference("grub-ramdisk-monitor.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
@@ -368,7 +362,7 @@ class TestGrubAction(LavaDispatcherTestCase):
     )
     def test_synquacer_grub(self, which_mock):
         job = self.factory.create_job(
-            "synquacer-dtb-01.jinja2", "sample_jobs/synquacer-dtb.yaml"
+            "synquacer-dtb-01", "sample_jobs/synquacer-dtb.yaml"
         )
         self.assertIsNotNone(job)
         job.validate()

@@ -15,7 +15,7 @@ from tests.utils import DummyLogger
 
 class FlasherFactory(Factory):
     def create_b2260_job(self, filename):
-        job = super().create_job("b2260-01.jinja2", filename)
+        job = super().create_job("b2260-01", filename)
         job.logger = DummyLogger()
         return job
 

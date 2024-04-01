@@ -782,9 +782,7 @@ class TestDowload(LavaDispatcherTestCase):
     def test_predownloaded_job_validation(self):
         factory = Factory()
         factory.validate_job_strict = True
-        job = factory.create_job(
-            "kvm01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
-        )
+        job = factory.create_job("kvm01", "sample_jobs/qemu-download-postprocess.yaml")
         job.validate()
 
     def test_predownloaded(self):
@@ -855,9 +853,7 @@ class TestDowload(LavaDispatcherTestCase):
     def test_address_place_holder(self):
         factory = Factory()
         factory.validate_job_strict = True
-        job = factory.create_job(
-            "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
-        )
+        job = factory.create_job("kvm03", "sample_jobs/qemu-download-postprocess.yaml")
         action = DownloadHandler(
             job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
         )

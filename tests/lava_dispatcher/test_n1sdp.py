@@ -9,7 +9,7 @@ from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 class N1sdpFactory(Factory):
     def create_n1sdp_job(self, filename):  # pylint: disable=no-self-use
-        return self.create_job("n1sdp-01.jinja2", filename)
+        return self.create_job("n1sdp-01", filename)
 
 
 class TestN1sdp(LavaDispatcherTestCase):

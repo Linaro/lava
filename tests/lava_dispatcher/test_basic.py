@@ -34,11 +34,12 @@ from lava_common.schemas.device import validate as validate_device
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.device import NewDevice, PipelineDevice
+from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any, Optional
 
     from jinja2.sandbox import SandboxedEnvironment
@@ -71,7 +72,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
             job_id=randint(0, 2**32 - 1),
             parameters=job_parameters,
             logger=LavaDispatcherTestCase.TESTCASE_JOB_LOGGER,
-            device=PipelineDevice(device_dict),
+            device=NewDevice(device_dict),
             timeout=Timeout(
                 f"unittest-timeout-{self.__class__.__name__}",
                 None,
@@ -200,63 +201,66 @@ class Factory:
 
     validate_job_strict = False
 
-    def prepare_jinja_template(self, hostname: str):
+    def get_device_jinja_template(self, device_name: str):
         env = get_test_template_env()
-        return env.get_template("%s.jinja2" % hostname)
+        return env.get_template(f"{device_name}.jinja2")
 
     def render_device_dictionary(
-        self, hostname: str, job_ctx: Optional[dict[str, Any]] = None
-    ):
-        if job_ctx is None:
-            job_ctx = {}
-        test_template = self.prepare_jinja_template(hostname)
-        rendered = test_template.render(**job_ctx)
-        return rendered
+        self, device_name: str, job_context: Optional[dict[str, Any]] = None
+    ) -> str:
+        if job_context is None:
+            job_context = {}
+        test_template = self.get_device_jinja_template(device_name)
+        return test_template.render(**job_context)
 
-    def validate_data(
-        self, hostname: str, job_ctx: Optional[dict[str, Any]] = None
-    ) -> None:
-        """
-        Needs to be passed a device dictionary (jinja2 format)
-        """
-        rendered = self.render_device_dictionary(hostname, job_ctx)
+    def validate_device_dict(self, device_dict: dict[str, Any]) -> None:
         try:
-            validate_device(yaml_safe_load(rendered))
+            validate_device(device_dict)
         except (voluptuous.Invalid, ConfigurationError) as exc:
             print("#######")
-            print(rendered)
+            print(repr(device_dict))
             print("#######")
             raise exc
 
-    def create_device(
-        self, template_name: str, job_ctx: Optional[dict[str, Any]] = None
-    ) -> tuple[str, None]:
-        """
-        Create a device configuration on-the-fly from in-tree
-        device-type Jinja2 template.
-        """
-        hostname = template_name.replace(".jinja2", "")
-        return self.render_device_dictionary(hostname, job_ctx), None
+    def load_device_configuration_dict(
+        self, device_name: str, job_context: Optional[dict[str, Any]] = None
+    ) -> dict[str, Any]:
+        device_dict_str = self.render_device_dictionary(device_name, job_context)
+        device_dict = yaml_safe_load(device_dict_str)
+        self.validate_device_dict(device_dict)
+        return device_dict
 
     def create_custom_job(
-        self, template, job_data, job_ctx=None, validate=True, dispatcher_config=None
+        self,
+        device_name: str,
+        job_dict: dict[str, Any],
+        job_context: dict[str, Any] = None,
+        validate: bool = True,
+        dispatcher_config=None,
+        env_dut=None,
+        *,
+        device_dict_preprocessor: Optional[Callable[[dict[str, Any], None]]] = None,
     ):
         if validate:
-            validate_job(job_data, strict=self.validate_job_strict)
-        if job_ctx:
-            job_data["context"] = job_ctx
+            validate_job(job_dict, strict=self.validate_job_strict)
+        if job_context is not None:
+            job_dict["context"] = job_context
         else:
-            job_ctx = job_data.get("context")
-        device_dict, _ = self.create_device(template, job_ctx)
-        device = NewDevice(yaml_safe_load(device_dict))
+            job_context = job_dict.get("context")
+
+        device_dict = self.load_device_configuration_dict(device_name, job_context)
+        if device_dict_preprocessor is not None:
+            device_dict_preprocessor(device_dict)
+        device = NewDevice(device_dict)
         try:
             parser = JobParser()
             job = parser.parse(
-                yaml_safe_dump(job_data),
-                device,
-                "4999",
-                YAMLLogger("lava_dispatcher_testcase_job_logger"),
-                dispatcher_config,
+                content=yaml_safe_dump(job_dict),
+                device=device,
+                job_id=str(randint(1, 2**32 - 1)),
+                logger=YAMLLogger("lava_dispatcher_testcase_job_logger"),
+                dispatcher_config=dispatcher_config,
+                env_dut=env_dut,
             )
         except (ConfigurationError, TypeError) as exc:
             print("####### Parser exception ########")
@@ -267,40 +271,40 @@ class Factory:
         return job
 
     def create_job(
-        self, template, filename, job_ctx=None, validate=True, dispatcher_config=None
+        self,
+        device_name: str,
+        filename: str,
+        job_context: dict[str, Any] = None,
+        validate: bool = True,
+        dispatcher_config=None,
+        env_dut=None,
+        *,
+        device_dict_preprocessor: Optional[Callable[[dict[str, Any], None]]] = None,
+        job_dict_preprocessor: Optional[Callable[[dict[str, Any], None]]] = None,
     ):
         y_file = os.path.join(os.path.dirname(__file__), filename)
         with open(y_file) as sample_job_data:
-            job_data = yaml_safe_load(sample_job_data.read())
+            job_dict = yaml_safe_load(sample_job_data.read())
+
+        if job_dict_preprocessor is not None:
+            job_dict_preprocessor(job_dict)
+
         return self.create_custom_job(
-            template, job_data, job_ctx, validate, dispatcher_config
+            device_name,
+            job_dict,
+            job_context,
+            validate,
+            dispatcher_config,
+            env_dut,
+            device_dict_preprocessor=device_dict_preprocessor,
         )
 
-    def create_kvm_job(self, filename, validate=False):
-        """
-        Custom function to allow for extra exception handling.
-        """
-        job_ctx = {
-            "arch": "amd64",
-            "no_kvm": True,
-        }  # override to allow unit tests on all types of systems
-        (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
-        device = NewDevice(yaml_safe_load(data))
-        self.validate_data("hi6220-hikey-01", device_dict)
-        kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
-        parser = JobParser()
-        job_data = ""
-        with open(kvm_yaml) as sample_job_data:
-            job_data = yaml_safe_load(sample_job_data.read())
-        if validate:
-            validate_job(job_data, strict=False)
-
-        return parser.parse(
-            yaml_safe_dump(job_data),
-            device,
-            4212,
-            YAMLLogger("lava_dispatcher_testcase_job_logger"),
-            "",
+    def create_kvm_job(self, filename: str, validate=False):
+        return self.create_job(
+            "kvm01",
+            filename,
+            {"arch": "amd64", "no_kvm": True},
+            validate,
         )
 
 

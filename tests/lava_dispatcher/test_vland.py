@@ -10,44 +10,34 @@ import socket
 from unittest.mock import patch
 
 from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.deploy.overlay import VlandOverlayAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger
 
 
 class TestVland(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
-        self.filename = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/bbb-group-vland-alpha.yaml"
-        )
-        self.beta_filename = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/bbb-group-vland-beta.yaml"
-        )
         self.factory = Factory()
-        (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        self.device = NewDevice(yaml_safe_load(rendered))
-        self.job_id = "100"
+        self.job = self.factory.create_job(
+            "bbb-01",
+            "sample_jobs/bbb-group-vland-alpha.yaml",
+            validate=False,
+        )
 
     def test_file_structure(self):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        self.assertIn("protocols", alpha_data)
-        self.assertTrue(VlandProtocol.accepts(alpha_data))
-        level_tuple = Protocol.select_all(alpha_data)
+        self.assertIn("protocols", self.job.parameters)
+        self.assertTrue(VlandProtocol.accepts(self.job.parameters))
+        level_tuple = Protocol.select_all(self.job.parameters)
         self.assertEqual(len(level_tuple), 2)
         self.assertEqual(
             VlandProtocol,
             [item[0] for item in sorted(level_tuple, key=lambda data: data[1])][1],
         )
-        vprotocol = VlandProtocol(alpha_data, self.job_id)
+        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id)
         self.assertIn("arbit", vprotocol.base_group)
         self.assertNotIn("group", vprotocol.base_group)
         vprotocol.set_up()
@@ -68,29 +58,28 @@ class TestVland(LavaDispatcherTestCase):
             self.assertIn("tags", vlan)
 
     def test_device(self):
-        self.assertIsNotNone(self.device)
-        self.assertIn("eth0", self.device["parameters"]["interfaces"])
-        self.assertIn("eth1", self.device["parameters"]["interfaces"])
-        self.assertIn("sysfs", self.device["parameters"]["interfaces"]["eth0"])
-        self.assertIn("mac", self.device["parameters"]["interfaces"]["eth0"])
-        self.assertIn("switch", self.device["parameters"]["interfaces"]["eth0"])
-        self.assertIn("port", self.device["parameters"]["interfaces"]["eth0"])
-        self.assertIn("tags", self.device["parameters"]["interfaces"]["eth0"])
-        self.assertIn("sysfs", self.device["parameters"]["interfaces"]["eth1"])
-        self.assertIn("mac", self.device["parameters"]["interfaces"]["eth1"])
-        self.assertIn("switch", self.device["parameters"]["interfaces"]["eth1"])
-        self.assertIn("port", self.device["parameters"]["interfaces"]["eth1"])
-        self.assertIn("tags", self.device["parameters"]["interfaces"]["eth1"])
-        self.assertIsInstance(
-            self.device["parameters"]["interfaces"]["eth1"]["tags"], list
-        )
-        self.assertIsNone(self.device["parameters"]["interfaces"]["eth0"]["tags"])
+        device = self.job.device
+        self.assertIsNotNone(device)
+        self.assertIn("eth0", device["parameters"]["interfaces"])
+        self.assertIn("eth1", device["parameters"]["interfaces"])
+        self.assertIn("sysfs", device["parameters"]["interfaces"]["eth0"])
+        self.assertIn("mac", device["parameters"]["interfaces"]["eth0"])
+        self.assertIn("switch", device["parameters"]["interfaces"]["eth0"])
+        self.assertIn("port", device["parameters"]["interfaces"]["eth0"])
+        self.assertIn("tags", device["parameters"]["interfaces"]["eth0"])
+        self.assertIn("sysfs", device["parameters"]["interfaces"]["eth1"])
+        self.assertIn("mac", device["parameters"]["interfaces"]["eth1"])
+        self.assertIn("switch", device["parameters"]["interfaces"]["eth1"])
+        self.assertIn("port", device["parameters"]["interfaces"]["eth1"])
+        self.assertIn("tags", device["parameters"]["interfaces"]["eth1"])
+        self.assertIsInstance(device["parameters"]["interfaces"]["eth1"]["tags"], list)
+        self.assertIsNone(device["parameters"]["interfaces"]["eth0"]["tags"])
         csv_list = []
-        for interface in self.device["parameters"]["interfaces"]:
+        for interface in device["parameters"]["interfaces"]:
             csv_list.extend(
                 [
-                    self.device["parameters"]["interfaces"][interface]["sysfs"],
-                    self.device["parameters"]["interfaces"][interface]["mac"],
+                    device["parameters"]["interfaces"][interface]["sysfs"],
+                    device["parameters"]["interfaces"][interface]["mac"],
                     interface,
                 ]
             )
@@ -106,24 +95,20 @@ class TestVland(LavaDispatcherTestCase):
             },
         )
         tag_list = []
-        for interface in self.device["parameters"]["interfaces"]:
+        for interface in device["parameters"]["interfaces"]:
             if interface == "eth0":
                 continue
-            for tag in self.device["parameters"]["interfaces"][interface]["tags"]:
+            for tag in device["parameters"]["interfaces"][interface]["tags"]:
                 tag_list.extend([interface, tag])
         self.assertEqual(set(tag_list), {"RJ45", "100M", "eth1", "10M"})
 
     def test_configure(self):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        self.assertIn("protocols", alpha_data)
-        self.assertTrue(VlandProtocol.accepts(alpha_data))
-        vprotocol = VlandProtocol(alpha_data, self.job_id)
+        self.assertIn("protocols", self.job.parameters)
+        self.assertTrue(VlandProtocol.accepts(self.job.parameters))
+        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id)
         vprotocol.set_up()
-        with open(self.filename) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, "")
-        ret = vprotocol.configure(self.device, job)
+
+        ret = vprotocol.configure(self.job.device, self.job)
         if not ret:
             print(vprotocol.errors)
         self.assertTrue(ret)
@@ -140,8 +125,7 @@ class TestVland(LavaDispatcherTestCase):
         self.assertIn("port", vprotocol.params["vlan_one"])
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
-        (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb2 = NewDevice(yaml_safe_load(rendered))
+        bbb2 = self.job.device
         bbb2["parameters"]["interfaces"]["eth0"]["switch"] = "192.168.0.2"
         bbb2["parameters"]["interfaces"]["eth0"]["port"] = "6"
         bbb2["parameters"]["interfaces"]["eth1"]["switch"] = "192.168.0.2"
@@ -158,7 +142,7 @@ class TestVland(LavaDispatcherTestCase):
             },
         )
         # already configured the vland protocol in the same job
-        self.assertTrue(vprotocol.configure(bbb2, job))
+        self.assertTrue(vprotocol.configure(bbb2, self.job))
         self.assertEqual(
             vprotocol.params,
             {
@@ -171,28 +155,27 @@ class TestVland(LavaDispatcherTestCase):
             },
         )
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {"vlan_one": "4212vlanone"})
+        self.assertEqual(
+            vprotocol.names, {"vlan_one": f"{self.job.job_id[-8:]}vlanone"}
+        )
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_job(self, which_mock):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        self.assertIn("protocols", alpha_data)
-        self.assertIn(VlandProtocol.name, alpha_data["protocols"])
-        with open(self.filename) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, self.device, 4212, None, "")
-        job.logger = DummyLogger()
-        description_ref = self.pipeline_reference("bbb-group-vland-alpha.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe())
-        job.validate()
+        self.assertIn("protocols", self.job.parameters)
+        self.assertIn(VlandProtocol.name, self.job.parameters["protocols"])
+
+        description_ref = self.pipeline_reference(
+            "bbb-group-vland-alpha.yaml", job=self.job
+        )
+        self.assertEqual(description_ref, self.job.pipeline.describe())
+        self.job.validate()
         self.assertNotEqual(
             [],
             [
                 protocol.name
-                for protocol in job.protocols
+                for protocol in self.job.protocols
                 if protocol.name == MultinodeProtocol.name
             ],
         )
@@ -204,28 +187,30 @@ class TestVland(LavaDispatcherTestCase):
             ("name", 6),
             (ret["message"]["kvm01"]["vlan_name"], ret["message"]["kvm01"]["vlan_tag"]),
         )
-        self.assertIn("protocols", job.parameters)
-        self.assertIn(VlandProtocol.name, job.parameters["protocols"])
-        self.assertIn(MultinodeProtocol.name, job.parameters["protocols"])
+        self.assertIn("protocols", self.job.parameters)
+        self.assertIn(VlandProtocol.name, self.job.parameters["protocols"])
+        self.assertIn(MultinodeProtocol.name, self.job.parameters["protocols"])
         vprotocol = [
             vprotocol
-            for vprotocol in job.protocols
+            for vprotocol in self.job.protocols
             if vprotocol.name == VlandProtocol.name
         ][0]
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {"vlan_one": "4212vlanone"})
+        self.assertEqual(
+            vprotocol.names, {"vlan_one": f"{self.job.job_id[-8:]}vlanone"}
+        )
         self.assertFalse(vprotocol.check_timeout(120, {"request": "no call"}))
         self.assertRaises(JobError, vprotocol.check_timeout, 60, "deploy_vlans")
         self.assertRaises(
             JobError, vprotocol.check_timeout, 60, {"request": "deploy_vlans"}
         )
         self.assertTrue(vprotocol.check_timeout(120, {"request": "deploy_vlans"}))
-        for vlan_name in job.parameters["protocols"][VlandProtocol.name]:
+        for vlan_name in self.job.parameters["protocols"][VlandProtocol.name]:
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn("switch", vprotocol.params[vlan_name])
             self.assertIn("port", vprotocol.params[vlan_name])
             self.assertIn("iface", vprotocol.params[vlan_name])
-        params = job.parameters["protocols"][vprotocol.name]
+        params = self.job.parameters["protocols"][vprotocol.name]
         names = []
         for key, _ in params.items():
             names.append(",".join([key, vprotocol.params[key]["iface"]]))
@@ -236,20 +221,19 @@ class TestVland(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_vland_overlay(self, which_mock):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
-            alpha_data["protocols"][VlandProtocol.name][vlan_key] = {"tags": []}
-        # removed tags from original job to simulate job where any interface tags will be acceptable
+        for vlan_key, _ in self.job.parameters["protocols"][VlandProtocol.name].items():
+            self.job.parameters["protocols"][VlandProtocol.name][vlan_key] = {
+                "tags": []
+            }
+        # removed tags from original job to simulate job where any interface
+        # tags will be acceptable
         self.assertEqual(
-            alpha_data["protocols"][VlandProtocol.name], {"vlan_one": {"tags": []}}
+            self.job.parameters["protocols"][VlandProtocol.name],
+            {"vlan_one": {"tags": []}},
         )
-        parser = JobParser()
-        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
-        job.logger = DummyLogger()
-        job.validate()
+        self.job.validate()
 
-        tftp_deploy = job.pipeline.find_action(TftpAction)
+        tftp_deploy = self.job.pipeline.find_action(TftpAction)
         vland = tftp_deploy.pipeline.find_action(VlandOverlayAction)
         self.assertTrue(os.path.exists(vland.lava_vland_test_dir))
         vland_files = os.listdir(vland.lava_vland_test_dir)
@@ -261,121 +245,60 @@ class TestVland(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_job_no_tags(self, which_mock):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
-            alpha_data["protocols"][VlandProtocol.name][vlan_key] = {"tags": []}
-        # removed tags from original job to simulate job where any interface tags will be acceptable
+        for vlan_key, _ in self.job.parameters["protocols"][VlandProtocol.name].items():
+            self.job.parameters["protocols"][VlandProtocol.name][vlan_key] = {
+                "tags": []
+            }
+        # removed tags from original job to simulate job where any interface
+        # tags will be acceptable
         self.assertEqual(
-            alpha_data["protocols"][VlandProtocol.name], {"vlan_one": {"tags": []}}
+            self.job.parameters["protocols"][VlandProtocol.name],
+            {"vlan_one": {"tags": []}},
         )
-        parser = JobParser()
-        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
-        job.logger = DummyLogger()
-        job.validate()
+        self.job.validate()
         vprotocol = [
             vprotocol
-            for vprotocol in job.protocols
+            for vprotocol in self.job.protocols
             if vprotocol.name == VlandProtocol.name
         ][0]
         self.assertTrue(vprotocol.valid)
-        self.assertEqual(vprotocol.names, {"vlan_one": "4212vlanone"})
+        self.assertEqual(
+            vprotocol.names, {"vlan_one": f"{self.job.job_id[-8:]}vlanone"}
+        )
         self.assertFalse(vprotocol.check_timeout(120, {"request": "no call"}))
         self.assertRaises(JobError, vprotocol.check_timeout, 60, "deploy_vlans")
         self.assertRaises(
             JobError, vprotocol.check_timeout, 60, {"request": "deploy_vlans"}
         )
         self.assertTrue(vprotocol.check_timeout(120, {"request": "deploy_vlans"}))
-        for vlan_name in job.parameters["protocols"][VlandProtocol.name]:
+        for vlan_name in self.job.parameters["protocols"][VlandProtocol.name]:
             self.assertIn(vlan_name, vprotocol.params)
             self.assertIn("switch", vprotocol.params[vlan_name])
             self.assertIn("port", vprotocol.params[vlan_name])
 
     def test_job_bad_tags(self):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        for vlan_key, _ in alpha_data["protocols"][VlandProtocol.name].items():
-            alpha_data["protocols"][VlandProtocol.name][vlan_key] = {
+        for vlan_key, _ in self.job.parameters["protocols"][VlandProtocol.name].items():
+            self.job.parameters["protocols"][VlandProtocol.name][vlan_key] = {
                 "tags": ["spurious"]
             }
-        # replaced tags from original job to simulate job where an unsupported tag is specified
+        # replaced tags from original job to simulate job
+        # where an unsupported tag is specified
         self.assertEqual(
-            alpha_data["protocols"][VlandProtocol.name],
+            self.job.parameters["protocols"][VlandProtocol.name],
             {"vlan_one": {"tags": ["spurious"]}},
         )
-        parser = JobParser()
-        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
-        job.logger = DummyLogger()
-        self.assertRaises(JobError, job.validate)
+        self.assertRaises(JobError, self.job.validate)
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_primary_interface(self, which_mock):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        for interface in self.device["parameters"]["interfaces"]:
+        for interface in self.job.device["parameters"]["interfaces"]:
             # jinja2 processing of tags: [] results in tags:
-            if self.device["parameters"]["interfaces"][interface]["tags"] == []:
-                self.device["parameters"]["interfaces"][interface]["tags"] = None
-        parser = JobParser()
-        job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
+            if self.job.device["parameters"]["interfaces"][interface]["tags"] == []:
+                self.job.device["parameters"]["interfaces"][interface]["tags"] = None
 
-        tftp_deploy = job.pipeline.find_action(TftpAction)
+        tftp_deploy = self.job.pipeline.find_action(TftpAction)
         vland_overlay = tftp_deploy.pipeline.find_action(VlandOverlayAction)
         vland_overlay.validate()
-        job.logger = DummyLogger()
-        job.validate()
-
-    def demo(self):
-        with open(self.filename) as yaml_data:
-            alpha_data = yaml_safe_load(yaml_data)
-        vprotocol = VlandProtocol(alpha_data, 422)
-        vprotocol.settings = vprotocol.read_settings()
-        self.assertIn("port", vprotocol.settings)
-        self.assertIn("poll_delay", vprotocol.settings)
-        self.assertIn("vland_hostname", vprotocol.settings)
-        vprotocol.base_message = {
-            "port": vprotocol.settings["port"],
-            "poll_delay": vprotocol.settings["poll_delay"],
-            "host": vprotocol.settings["vland_hostname"],
-            "client_name": socket.gethostname(),
-        }
-        count = 0
-        print("\nTesting vland live using connections.")
-        for friendly_name in vprotocol.parameters["protocols"][vprotocol.name]:
-            print("Processing VLAN: %s" % friendly_name)
-            vprotocol.names[friendly_name] = vprotocol.base_group + "%02d" % count
-            count += 1
-            vprotocol.vlans[friendly_name], tag = vprotocol._create_vlan(friendly_name)
-            print(
-                "[%s] Created vlan with id %s"
-                % (friendly_name, vprotocol.vlans[friendly_name])
-            )
-            print("[%s] tag: %s" % (friendly_name, tag))
-            for hostname in vprotocol.parameters["protocols"][vprotocol.name][
-                friendly_name
-            ]:
-                params = vprotocol.parameters["protocols"][vprotocol.name][
-                    friendly_name
-                ][hostname]
-                print(
-                    "[%s] to use switch %s and port %s"
-                    % (friendly_name, params["switch"], params["port"])
-                )
-                self.assertIn("switch", params)
-                self.assertIn("port", params)
-                self.assertIsNotNone(params["switch"])
-                self.assertIsNotNone(params["port"])
-                switch_id = vprotocol._lookup_switch_id(params["switch"])
-                self.assertIsNotNone(switch_id)
-                print("[%s] Using switch ID %s" % (friendly_name, switch_id))
-                port_id = vprotocol._lookup_port_id(switch_id, params["port"])
-                print(
-                    "%s Looked up port ID %s for %s"
-                    % (friendly_name, port_id, params["port"])
-                )
-                vprotocol._set_port_onto_vlan(vprotocol.vlans[friendly_name], port_id)
-                vprotocol.ports.append(port_id)
-        print("Finalising - tearing down vlans")
-        vprotocol.finalise_protocol()
+        self.job.validate()

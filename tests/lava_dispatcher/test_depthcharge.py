@@ -23,7 +23,7 @@ class DepthchargeFactory(Factory):
     """
 
     def create_jaq_job(self, filename):
-        job = super().create_job("rk3288-veyron-jaq-01.jinja2", filename)
+        job = super().create_job("rk3288-veyron-jaq-01", filename)
         job.logger = DummyLogger()
         return job
 

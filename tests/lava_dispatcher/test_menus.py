@@ -16,7 +16,6 @@ from lava_dispatcher.menus.menus import SelectorMenu
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger
 
 
 class TestSelectorMenu(LavaDispatcherTestCase):
@@ -63,9 +62,7 @@ class MenuFactory(Factory):
     """
 
     def create_uefi_job(self, filename):
-        job = super().create_job("mustang-uefi-01.jinja2", filename)
-        job.logger = DummyLogger()
-        return job
+        return self.create_job("mustang-uefi-01", filename)
 
 
 class TestUefi(LavaDispatcherTestCase):
@@ -186,7 +183,7 @@ class TestUefi(LavaDispatcherTestCase):
     )
     def test_tc2_uefi_job(self, which_mock):
         factory = Factory()
-        job = factory.create_job("tc2-01.jinja2", "sample_jobs/tc2.yaml")
+        job = factory.create_job("tc2-01", "sample_jobs/tc2.yaml")
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference("tc2.yaml", job=self.job)

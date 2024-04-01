@@ -1,0 +1,281 @@
+- class: TftpAction
+  name: tftp-deploy
+  level: '1'
+  max_retries: 1
+  description: download files and deploy using tftp
+  summary: tftp deployment
+  timeout: 300
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/initrd.img-4.9.0-2-arm64'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.2'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/vmlinuz-4.9.0-2-arm64'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.3'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/stretch-arm64-nfs.tar.gz'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.4'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/stretch/arm64/3/modules.tar.gz'}
+  - class: PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    level: '1.5'
+    max_retries: 1
+    description: extract ramdisk or nfsrootfs in preparation for lava overlay
+    summary: extract ramdisk or nfsrootfs
+    timeout: 300
+    pipeline:
+    - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: 1.5.1, max_retries: 1,
+      description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
+        overlay', timeout: 300}
+    - class: OverlayAction
+      name: lava-overlay
+      level: 1.5.2
+      max_retries: 1
+      description: add lava scripts during deployment for test shell use
+      summary: overlay the lava support scripts
+      timeout: 300
+      pipeline:
+      - {class: SshAuthorize, name: ssh-authorize, level: 1.5.2.1, max_retries: 1,
+        description: include public key in overlay and authorize root user, summary: add
+          public key to authorized_keys, timeout: 300}
+      - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.5.2.2, max_retries: 1,
+        description: Populate specific vland scripts for tests to lookup vlan data.,
+        summary: Add files detailing vlan configuration., timeout: 300}
+      - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.5.2.3,
+        max_retries: 1, description: add lava scripts during deployment for multinode
+          test shell use, summary: overlay the lava multinode scripts, timeout: 300}
+      - class: TestDefinitionAction
+        name: test-definition
+        level: 1.5.2.4
+        max_retries: 1
+        description: load test definitions into image
+        summary: loading test definitions
+        timeout: 300
+        pipeline:
+        - {class: InlineRepoAction, name: inline-repo-action, level: 1.5.2.4.1, max_retries: 1,
+          description: apply inline test definition to the test image, summary: extract
+            inline test definition, timeout: 300}
+        - {class: TestOverlayAction, name: test-overlay, level: 1.5.2.4.2, max_retries: 1,
+          description: overlay test support files onto image, summary: applying LAVA
+            test overlay, timeout: 300}
+        - {class: TestInstallAction, name: test-install-overlay, level: 1.5.2.4.3,
+          max_retries: 1, description: overlay dependency installation support files
+            onto image, summary: applying LAVA test install scripts, timeout: 300}
+        - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.5.2.4.4,
+          max_retries: 1, description: overlay run script onto image, summary: applying
+            LAVA test run script, timeout: 300}
+        - {class: GitRepoAction, name: git-repo-action, level: 1.5.2.4.5, max_retries: 1,
+          description: apply git repository of tests to the test image, summary: clone
+            git test repo, timeout: 300}
+        - {class: TestOverlayAction, name: test-overlay, level: 1.5.2.4.6, max_retries: 1,
+          description: overlay test support files onto image, summary: applying LAVA
+            test overlay, timeout: 300}
+        - {class: TestInstallAction, name: test-install-overlay, level: 1.5.2.4.7,
+          max_retries: 1, description: overlay dependency installation support files
+            onto image, summary: applying LAVA test install scripts, timeout: 300}
+        - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.5.2.4.8,
+          max_retries: 1, description: overlay run script onto image, summary: applying
+            LAVA test run script, timeout: 300}
+        - {class: GitRepoAction, name: git-repo-action, level: 1.5.2.4.9, max_retries: 1,
+          description: apply git repository of tests to the test image, summary: clone
+            git test repo, timeout: 300}
+        - {class: TestOverlayAction, name: test-overlay, level: 1.5.2.4.10, max_retries: 1,
+          description: overlay test support files onto image, summary: applying LAVA
+            test overlay, timeout: 300}
+        - {class: TestInstallAction, name: test-install-overlay, level: 1.5.2.4.11,
+          max_retries: 1, description: overlay dependency installation support files
+            onto image, summary: applying LAVA test install scripts, timeout: 300}
+        - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.5.2.4.12,
+          max_retries: 1, description: overlay run script onto image, summary: applying
+            LAVA test run script, timeout: 300}
+        - {class: GitRepoAction, name: git-repo-action, level: 1.5.2.4.13, max_retries: 1,
+          description: apply git repository of tests to the test image, summary: clone
+            git test repo, timeout: 300}
+        - {class: TestOverlayAction, name: test-overlay, level: 1.5.2.4.14, max_retries: 1,
+          description: overlay test support files onto image, summary: applying LAVA
+            test overlay, timeout: 300}
+        - {class: TestInstallAction, name: test-install-overlay, level: 1.5.2.4.15,
+          max_retries: 1, description: overlay dependency installation support files
+            onto image, summary: applying LAVA test install scripts, timeout: 300}
+        - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.5.2.4.16,
+          max_retries: 1, description: overlay run script onto image, summary: applying
+            LAVA test run script, timeout: 300}
+      - {class: CompressOverlay, name: compress-overlay, level: 1.5.2.5, max_retries: 1,
+        description: Create a lava overlay tarball and store alongside the job, summary: Compress
+          the lava overlay files, timeout: 300}
+      - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.5.2.6,
+        max_retries: 1, description: unpack overlay into persistent NFS, summary: add
+          test overlay to NFS, timeout: 300}
+    - {class: ExtractRamdisk, name: extract-overlay-ramdisk, level: 1.5.3, max_retries: 1,
+      description: extract ramdisk to a temporary directory, summary: extract the
+        ramdisk, timeout: 300}
+    - {class: ExtractModules, name: extract-modules, level: 1.5.4, max_retries: 1,
+      description: extract supplied kernel modules, summary: extract kernel modules,
+      timeout: 300}
+    - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: 1.5.5, max_retries: 1,
+      description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
+        lava overlay test files, timeout: 300}
+    - {class: PrepareKernelAction, name: prepare-kernel, level: 1.5.6, max_retries: 1,
+      description: populates the pipeline with a kernel conversion action, summary: add
+        a kernel conversion, timeout: 300}
+    - {class: ConfigurePreseedFile, name: configure-preseed-file, level: 1.5.7, max_retries: 1,
+      description: 'add commands to automated installers, to copy the lava test overlay
+        to the installed system', summary: add commands to installer config, timeout: 300}
+    - {class: CompressRamdisk, name: compress-ramdisk, level: 1.5.8, max_retries: 1,
+      description: recreate a ramdisk with the overlay applied., summary: compress
+        ramdisk with overlay, timeout: 300}
+  - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '1.6',
+    max_retries: 1, description: create lxc udev rule action, summary: create lxc
+      udev rule, timeout: 300}
+  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.7', max_retries: 1,
+    description: deploy device environment, summary: deploy device environment, timeout: 300}
+- class: GrubMainAction
+  name: grub-main-action
+  level: '2'
+  max_retries: 1
+  description: main grub boot action
+  summary: run grub boot from power to system
+  timeout: 240
+  pipeline:
+  - {class: BootloaderSecondaryMedia, name: bootloader-from-media, level: '2.1', max_retries: 1,
+    description: let bootloader know where to find the kernel in the image on secondary
+      media, summary: set bootloader strings for deployed media, timeout: 240}
+  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '2.2', max_retries: 1,
+    description: substitute job data into bootloader command list, summary: replace
+      placeholders with job data, timeout: 240}
+  - {class: ConnectDevice, name: connect-device, level: '2.3', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 240}
+  - class: ResetDevice
+    name: reset-device
+    level: '2.4'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 240
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 2.4.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 240}
+  - {class: UEFIMenuInterrupt, name: uefi-menu-interrupt, level: '2.5', max_retries: 1,
+    description: interrupt for uefi menu, summary: interrupt for uefi menu, timeout: 240}
+  - {class: GrubMenuSelector, name: grub-efi-menu-selector, level: '2.6', max_retries: 1,
+    description: select specified grub-efi menu items, summary: select grub options
+      in the efi menu, timeout: 240}
+  - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '2.7', max_retries: 1,
+    description: interrupt bootloader, summary: interrupt bootloader to get an interactive
+      shell, timeout: 240}
+  - {class: BootloaderCommandsAction, name: bootloader-commands, level: '2.8', max_retries: 1,
+    description: send commands to bootloader, summary: interactive bootloader, timeout: 240}
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '2.9'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 240
+    pipeline:
+    - {class: LoginAction, name: login-action, level: 2.9.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 240}
+  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.10', max_retries: 1,
+    description: Wait for a shell, summary: Expect a shell prompt, timeout: 240}
+  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.11', max_retries: 1,
+    description: Exports environment variables to the device, summary: Exports environment
+      variables action, timeout: 240}
+- class: TestShellRetry
+  name: lava-test-retry
+  level: '3'
+  max_retries: 1
+  description: Retry wrapper for lava-test-shell
+  summary: Retry support for Lava Test Shell
+  timeout: 120
+  pipeline:
+  - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 1,
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 120}
+- {class: MassStorage, name: storage-deploy, level: '4', max_retries: 1, description: Deploy
+    image to mass storage, summary: write image to storage, timeout: 1800}
+- class: GrubMainAction
+  name: grub-main-action
+  level: '5'
+  max_retries: 1
+  description: main grub boot action
+  summary: run grub boot from power to system
+  timeout: 180
+  pipeline:
+  - {class: BootloaderSecondaryMedia, name: bootloader-from-media, level: '5.1', max_retries: 1,
+    description: let bootloader know where to find the kernel in the image on secondary
+      media, summary: set bootloader strings for deployed media, timeout: 180}
+  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '5.2', max_retries: 1,
+    description: substitute job data into bootloader command list, summary: replace
+      placeholders with job data, timeout: 180}
+  - {class: ConnectDevice, name: connect-device, level: '5.3', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 180}
+  - class: ResetDevice
+    name: reset-device
+    level: '5.4'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 180
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 5.4.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 180}
+  - {class: UEFIMenuInterrupt, name: uefi-menu-interrupt, level: '5.5', max_retries: 1,
+    description: interrupt for uefi menu, summary: interrupt for uefi menu, timeout: 180}
+  - {class: GrubMenuSelector, name: grub-efi-menu-selector, level: '5.6', max_retries: 1,
+    description: select specified grub-efi menu items, summary: select grub options
+      in the efi menu, timeout: 180}
+  - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '5.7', max_retries: 1,
+    description: interrupt bootloader, summary: interrupt bootloader to get an interactive
+      shell, timeout: 180}
+  - {class: BootloaderCommandsAction, name: bootloader-commands, level: '5.8', max_retries: 1,
+    description: send commands to bootloader, summary: interactive bootloader, timeout: 180}
+- class: FinalizeAction
+  name: finalize
+  level: '6'
+  max_retries: 1
+  description: finish the process and cleanup
+  summary: finalize the job
+  timeout: 300
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '6.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 20}
+  - {class: ReadFeedback, name: read-feedback, level: '6.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
