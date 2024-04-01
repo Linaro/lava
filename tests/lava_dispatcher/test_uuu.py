@@ -30,16 +30,16 @@ class UUUBootFactory(Factory):  # pylint: disable=too-few-public-methods
         return self.create_job(device_template, filename)
 
     def create_imx8mq_job_uuu_path_from_command(self, filename):
-        return self.create_job("imx8mq-evk-03.jinja2", filename)
+        return self.create_job("imx8mq-evk-03", filename)
 
     def create_imx8dxlevk_job(self, filename):
-        return self.create_job("imx8dxl-evk-01.jinja2", filename)
+        return self.create_job("imx8dxl-evk-01", filename)
 
     def create_imx8dxlevk_without_bcu_configuration_board_id(self, filename):
-        return self.create_job("imx8dxl-evk-02.jinja2", filename)
+        return self.create_job("imx8dxl-evk-02", filename)
 
     def create_imx8dxlevk_with_bcu_board_id_command(self, filename):
-        return self.create_job("imx8dxl-evk-03.jinja2", filename)
+        return self.create_job("imx8dxl-evk-03", filename)
 
 
 @patch("time.sleep", Mock())
@@ -62,7 +62,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
     def test_check_board_availability_not_available(self):
         self.action.run_uuu = MagicMock(return_value=143)
         self.action.job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
         )
 
         self.assertEqual(False, self.action.check_board_availability())
@@ -70,7 +70,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
     def test_check_board_availability_failure(self):
         self.action.run_uuu = MagicMock(return_value=1)
         self.action.job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
         )
 
         with self.assertRaises(InfrastructureError) as e:
@@ -85,7 +85,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         self.action.run_uuu = MagicMock(return_value=0)
 
         self.action.job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
         )
 
         self.action.check_board_availability()
@@ -106,7 +106,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         self.action.run_uuu = MagicMock(return_value=0)
 
         self.action.job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-01", "sample_jobs/uuu-bootimage-only.yaml"
         )
 
         self.action.check_board_availability()
@@ -150,7 +150,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         self.action.run_uuu = MagicMock(return_value=0)
 
         self.action.job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-03.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-03", "sample_jobs/uuu-bootimage-only.yaml"
         )
 
         self.action.check_board_availability()
@@ -205,7 +205,7 @@ class TestUUUbootAction(
 
     def test_pipeline_uuu_only_uboot(self):
         job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-01", "sample_jobs/uuu-bootimage-only.yaml"
         )
         self.assertIsNotNone(job)
 
@@ -217,7 +217,7 @@ class TestUUUbootAction(
 
     def test_pipeline_power_off_before_corrupt_boot_media(self):
         job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
         )
         self.assertIsNotNone(job)
 
@@ -355,7 +355,7 @@ class TestUUUbootAction(
     @patch("time.sleep", Mock())
     def test_run_single_path(self):
         job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
         )
         action = UUUBootAction(job)
         action.uuu = "/bin/uuu"
@@ -429,7 +429,7 @@ class TestUUUbootAction(
     @patch("time.sleep", Mock())
     def test_run_multiple_path(self):
         job = self.factory.create_imx8mq_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
+            "imx8mq-evk-01", "sample_jobs/uuu-bootimage-only.yaml"
         )
         action = UUUBootAction(job)
         action.uuu = "/bin/uuu"

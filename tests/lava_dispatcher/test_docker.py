@@ -21,7 +21,7 @@ class DockerFactory(Factory):
 
     def create_docker_job(self, filename, dispatcher_config=None):
         return self.create_job(
-            "docker-01.jinja2", filename, dispatcher_config=dispatcher_config
+            "docker-01", filename, dispatcher_config=dispatcher_config
         )
 
 
@@ -78,7 +78,9 @@ class TestDocker(LavaDispatcherTestCase):
 
         call.run(connection, 0)
         shell_command.assert_called_with(
-            "docker run --rm --interactive --tty --hostname lava --name lava-4999-2.1 --volume foo/bar/foo/bar:foo/bar foo/bar bash",
+            "docker run --rm --interactive --tty --hostname lava "
+            f"--name lava-{self.job.job_id}-2.1 "
+            "--volume foo/bar/foo/bar:foo/bar foo/bar bash",
             call.timeout,
             logger=call.logger,
         )
@@ -88,7 +90,10 @@ class TestDocker(LavaDispatcherTestCase):
         managed_downloads_dir.mkdir(parents=True)
         call.run(connection, 0)
         shell_command.assert_called_with(
-            f"docker run --rm --interactive --tty --hostname lava --name lava-4999-2.1 --volume foo/bar/foo/bar:foo/bar --volume {self.job.tmp_dir}/downloads/common:/lava-downloads foo/bar bash",
+            "docker run --rm --interactive --tty --hostname lava "
+            f"--name lava-{self.job.job_id}-2.1 --volume foo/bar/foo/bar:foo/bar "
+            f"--volume {self.job.tmp_dir}/downloads/common:/lava-downloads "
+            "foo/bar bash",
             call.timeout,
             logger=call.logger,
         )
@@ -125,7 +130,9 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
 
         call.run(connection, 0)
         shell_command.assert_called_with(
-            "docker run --rm --interactive --tty --hostname lava --name lava-prefix-4999-2.1 --volume foo/bar/foo/bar:foo/bar foo/bar bash",
+            "docker run --rm --interactive --tty --hostname lava "
+            f"--name lava-prefix-{self.job.job_id}-2.1 "
+            "--volume foo/bar/foo/bar:foo/bar foo/bar bash",
             call.timeout,
             logger=call.logger,
         )
@@ -139,7 +146,7 @@ class DockerDb410cFactory(Factory):
     """
 
     def create_docker_db410c_job(self, filename):
-        return self.create_job("db410c-01.jinja2", filename)
+        return self.create_job("db410c-01", filename)
 
 
 class TestDockerDb410c(LavaDispatcherTestCase):

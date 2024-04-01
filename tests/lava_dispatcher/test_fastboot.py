@@ -35,28 +35,28 @@ class FastBootFactory(Factory):
     """
 
     def create_fastboot_job(self, filename):
-        return self.create_job("nexus4-01.jinja2", filename)
+        return self.create_job("nexus4-01", filename)
 
     def create_db410c_job(self, filename):
-        return self.create_job("db410c-01.jinja2", filename)
+        return self.create_job("db410c-01", filename)
 
     def create_x15_job(self, filename):
-        return self.create_job("x15-01.jinja2", filename)
+        return self.create_job("x15-01", filename)
 
     def create_hikey_job(self, filename):
-        return self.create_job("hi6220-hikey-r2-01.jinja2", filename)
+        return self.create_job("hi6220-hikey-r2-01", filename)
 
     def create_hikey960_job(self, filename):
-        return self.create_job("hi960-hikey-01.jinja2", filename)
+        return self.create_job("hi960-hikey-01", filename)
 
     def create_nexus5x_job(self, filename):
-        return self.create_job("nexus5x-01.jinja2", filename)
+        return self.create_job("nexus5x-01", filename)
 
     def create_pixel_job(self, filename):
-        return self.create_job("pixel-01.jinja2", filename)
+        return self.create_job("pixel-01", filename)
 
     def create_db410c_auto_job(self, filename):
-        return self.create_job("db410c-auto-01.jinja2", filename)
+        return self.create_job("db410c-auto-01", filename)
 
 
 class TestFastbootBaseAction(unittest.TestCase):
@@ -446,13 +446,13 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
     def test_sdm845_qcs(self):
         self.factory = FastBootFactory()
         job = self.factory.create_job(
-            "qcs404-evb-1k-01.jinja2", "sample_jobs/qcs404-evb-1k.yaml"
+            "qcs404-evb-1k-01", "sample_jobs/qcs404-evb-1k.yaml"
         )
         # do not run job.validate() - power urls do not exist.
         description_ref = self.pipeline_reference("qcs404-evb-1k.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
         job = self.factory.create_job(
-            "qcs404-evb-4k-01.jinja2", "sample_jobs/qcs404-evb-4k.yaml"
+            "qcs404-evb-4k-01", "sample_jobs/qcs404-evb-4k.yaml"
         )
         # do not run job.validate() - power urls do not exist.
         description_ref = self.pipeline_reference("qcs404-evb-4k.yaml", job=job)
@@ -539,9 +539,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         self.assertEqual([], lxc_cmd_prefix(job))
 
     def test_fastboot_boot_commands(self):
-        job = self.factory.create_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk.yaml"
-        )
+        job = self.factory.create_job("imx8mq-evk-01", "sample_jobs/imx8mq-evk.yaml")
         boot = job.pipeline.find_action(BootFastbootAction)
 
         self.assertIn("commands", boot.parameters)
@@ -550,7 +548,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
 
     def test_fastboot_plus_reboot(self):
         job = self.factory.create_job(
-            "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk-with-flash-reboot.yaml"
+            "imx8mq-evk-01", "sample_jobs/imx8mq-evk-with-flash-reboot.yaml"
         )
         description_ref = self.pipeline_reference(
             "imx8mq-evk-with-flash-reboot.yaml", job=job

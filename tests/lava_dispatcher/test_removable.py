@@ -4,12 +4,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import os
 import unittest
 from unittest.mock import patch
 
-from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderSecondaryMedia,
@@ -19,24 +16,9 @@ from lava_dispatcher.actions.boot.u_boot import UBootAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.removable import DDAction, MassStorage
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.strings import map_kernel_uboot, substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger, infrastructure_error
-
-
-class RemovableFactory(Factory):
-    """
-    Not Model based, this is not a Django factory.
-    Factory objects are dispatcher based classes, independent
-    of any database objects.
-    """
-
-    def create_job(self, template, filename):
-        job = super().create_job(template, filename)
-        job.logger = DummyLogger()
-        return job
+from tests.utils import infrastructure_error
 
 
 class TestRemovable(LavaDispatcherTestCase):
@@ -48,8 +30,7 @@ class TestRemovable(LavaDispatcherTestCase):
         """
         Test that the correct parameters have been set for the device
         """
-        (rendered, _) = self.factory.create_device("cubie2.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = self.factory.load_device_configuration_dict("cubie2")
         self.assertIsNotNone(cubie["parameters"]["media"].get("usb"))
         self.assertIsNotNone(cubie.get("commands"))
         self.assertIsNotNone(cubie.get("actions"))
@@ -65,28 +46,7 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertIn("parameters", u_boot_params)
         self.assertIn("bootloader_prompt", u_boot_params["parameters"])
 
-    @patch(
-        "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
-    )
-    def _check_valid_job(self, device, test_file, which_mock):
-        self.maxDiff = None
-        job_parser = JobParser()
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), f"sample_jobs/{test_file}"
-        )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, device, 4212, None, "")
-        job.logger = DummyLogger()
-        try:
-            job.validate()
-        except JobError:
-            self.fail(job.pipeline.errors)
-        description_ref = self.pipeline_reference(test_file, job=job)
-        self.assertEqual(description_ref, job.pipeline.describe())
-        return job
-
-    def _check_job_parameters(self, device, job, agent_key):
-        mass_storage = None  # deploy
+    def _check_job_parameters(self, job, agent_key):
         action = job.pipeline.actions[3]
         self.assertTrue(action.valid)
         agent = action.parameters[agent_key]["tool"]
@@ -101,14 +61,14 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertIsNotNone(mass_storage)
         self.assertIn("device", mass_storage.parameters)
         self.assertIn(
-            mass_storage.parameters["device"], device["parameters"]["media"]["usb"]
+            mass_storage.parameters["device"], job.device["parameters"]["media"]["usb"]
         )
         self.assertIsNotNone(
             mass_storage.get_namespace_data(
                 action="storage-deploy", label="u-boot", key="device"
             )
         )
-        u_boot_params = device["actions"]["boot"]["methods"]["u-boot"]
+        u_boot_params = job.device["actions"]["boot"]["methods"]["u-boot"]
         self.assertEqual(
             mass_storage.get_namespace_data(
                 action="uboot-commands", label="bootloader_prompt", key="prompt"
@@ -120,39 +80,53 @@ class TestRemovable(LavaDispatcherTestCase):
         """
         Test that the job parameters match expected structure
         """
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        job = self._check_valid_job(cubie, "cubietruck-removable.yaml")
-        self._check_job_parameters(cubie, job, "download")
+        job_filename = "cubietruck-removable.yaml"
+        job = self.factory.create_job(
+            "cubie1",
+            f"sample_jobs/{job_filename}",
+        )
+        job.validate()
+        self._check_job_parameters(job, "download")
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_writer_job_parameters(self):
         """
         Test that the job parameters with a writer tool match expected structure
         """
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        job = self._check_valid_job(cubie, "cubietruck-removable-with-writer.yaml")
-        self._check_job_parameters(cubie, job, "writer")
+        job_filename = "cubietruck-removable-with-writer.yaml"
+        job = self.factory.create_job(
+            "cubie1",
+            f"sample_jobs/{job_filename}",
+        )
+        job.validate()
+        self._check_job_parameters(job, "writer")
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
 
-    def _check_deployment(self, device, test_file):
-        job_parser = JobParser()
-        job = self._check_valid_job(device, test_file)
-        self.assertIn("usb", device["parameters"]["media"].keys())
+    def _check_deployment(self, device_name, test_file):
+        job = self.factory.create_job(device_name, f"sample_jobs/{test_file}")
+        job.validate()
+        description_ref = self.pipeline_reference(test_file, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+        self.assertIn("usb", job.device["parameters"]["media"].keys())
         deploy_params = [
             methods
             for methods in job.parameters["actions"]
             if "deploy" in methods.keys()
         ][1]["deploy"]
         self.assertIn("device", deploy_params)
-        self.assertIn(deploy_params["device"], device["parameters"]["media"]["usb"])
+        self.assertIn(deploy_params["device"], job.device["parameters"]["media"]["usb"])
         self.assertIn(
-            "uuid", device["parameters"]["media"]["usb"][deploy_params["device"]]
+            "uuid", job.device["parameters"]["media"]["usb"][deploy_params["device"]]
         )
         self.assertIn(
-            "device_id", device["parameters"]["media"]["usb"][deploy_params["device"]]
+            "device_id",
+            job.device["parameters"]["media"]["usb"][deploy_params["device"]],
         )
         self.assertNotIn(
-            "boot_part", device["parameters"]["media"]["usb"][deploy_params["device"]]
+            "boot_part",
+            job.device["parameters"]["media"]["usb"][deploy_params["device"]],
         )
         deploy_action = job.pipeline.find_action(MassStorage)
         tftp_deploy_action = job.pipeline.find_action(TftpAction)
@@ -209,24 +183,25 @@ class TestRemovable(LavaDispatcherTestCase):
         )
 
     def test_deployment(self):
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        self._check_deployment(cubie, "cubietruck-removable.yaml")
+        self._check_deployment("cubie1", "cubietruck-removable.yaml")
 
     def test_writer_deployment(self):
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        self._check_deployment(cubie, "cubietruck-removable-with-writer.yaml")
+        self._check_deployment("cubie1", "cubietruck-removable-with-writer.yaml")
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_juno_deployment(self, which_mock):
-        factory = RemovableFactory()
+        factory = Factory()
+        job_filename = "juno-uboot-removable.yaml"
         job = factory.create_job(
-            "juno-uboot-01.jinja2", "sample_jobs/juno-uboot-removable.yaml"
+            "juno-uboot-01",
+            f"sample_jobs/{job_filename}",
         )
         job.validate()
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
         self.assertEqual(job.pipeline.errors, [])
         self.assertIn("usb", job.device["parameters"]["media"].keys())
         deploy_params = [
@@ -266,11 +241,16 @@ class TestRemovable(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_mustang_deployment(self, which_mock):
-        factory = RemovableFactory()
+        factory = Factory()
+        job_filename = "mustang-secondary-media.yaml"
         job = factory.create_job(
-            "mustang1.jinja2", "sample_jobs/mustang-secondary-media.yaml"
+            "mustang1",
+            f"sample_jobs/{job_filename}",
         )
         job.validate()
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
         description_ref = self.pipeline_reference("mustang-media.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
         self.assertIn("sata", job.device["parameters"]["media"].keys())
@@ -308,11 +288,15 @@ class TestRemovable(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_secondary_media(self, which_mock):
-        factory = RemovableFactory()
+        factory = Factory()
+        job_filename = "mustang-secondary-media.yaml"
         job = factory.create_job(
-            "mustang1.jinja2", "sample_jobs/mustang-secondary-media.yaml"
+            "mustang1",
+            f"sample_jobs/{job_filename}",
         )
         job.validate()
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
 
         grub_nfs, grub_main = sorted(
             job.pipeline.find_all_actions(GrubMainAction),
@@ -387,20 +371,20 @@ class TestRemovable(LavaDispatcherTestCase):
     )
     def test_primary_media(self, which_mock):
         """
-        Test that definitions of secondary media do not block submissions using primary media
+        Test that definitions of secondary media do not block submissions
+        using primary media
         """
-        job_parser = JobParser()
-        (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
+        job_filename = "uboot-ramdisk.yaml"
+        job = self.factory.create_job(
+            "bbb-01",
+            f"sample_jobs/{job_filename}",
         )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, bbb, 4212, None, "")
-        job.logger = DummyLogger()
         job.validate()
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
         self.assertEqual(job.pipeline.errors, [])
-        self.assertIn("usb", bbb["parameters"]["media"].keys())
+        self.assertIn("usb", job.device["parameters"]["media"].keys())
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
@@ -409,20 +393,21 @@ class TestRemovable(LavaDispatcherTestCase):
         """
         Test substitution of secondary media values into u-boot commands
 
-        Unlike most u-boot calls, removable knows in advance all the values it needs to substitute
-        into the boot commands for the secondary deployment as these are fixed by the device config
-        and the image details from the job submission.
+        Unlike most u-boot calls, removable knows in advance all the values it
+        needs to substitute into the boot commands for the secondary deployment
+        as these are fixed by the device config and the image details from the
+        job submission.
         """
-        job_parser = JobParser()
-        (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
+        job_filename = "cubietruck-removable.yaml"
+        job = self.factory.create_job(
+            "cubie1",
+            f"sample_jobs/{job_filename}",
         )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(sample_job_data, cubie, 4212, None, "")
-        job.logger = DummyLogger()
         job.validate()
+        description_ref = self.pipeline_reference(job_filename, job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
+        cubie = job.device
         boot_params = [
             methods for methods in job.parameters["actions"] if "boot" in methods.keys()
         ][1]["boot"]

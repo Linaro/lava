@@ -13,7 +13,7 @@ class TestFVPActions(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/fvp_foundation.yaml"):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("fvp-01.jinja2", job)
+        self.job = self.factory.create_job("fvp-01", job)
 
 
 def test_shell_reference(monkeypatch):

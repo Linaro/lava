@@ -23,15 +23,13 @@ def factory():
 
 @pytest.fixture
 def job(factory):
-    return factory.create_job(
-        "hi6220-hikey-r2-01.jinja2", "sample_jobs/docker-test.yaml"
-    )
+    return factory.create_job("hi6220-hikey-r2-01", "sample_jobs/docker-test.yaml")
 
 
 @pytest.fixture
 def job_prefix(factory):
     return factory.create_job(
-        "hi6220-hikey-r2-01.jinja2",
+        "hi6220-hikey-r2-01",
         "sample_jobs/docker-test.yaml",
         dispatcher_config="{'prefix': 'prefix'}",
     )
@@ -55,7 +53,7 @@ def second_test_action(job):
 @pytest.fixture
 def multinode_job(factory):
     return factory.create_job(
-        "hi6220-hikey-r2-01.jinja2", "sample_jobs/docker-test-multinode.yaml"
+        "hi6220-hikey-r2-01", "sample_jobs/docker-test-multinode.yaml"
     )
 
 
@@ -68,7 +66,7 @@ def test_validate_schema(factory):
     factory.validate_job_strict = True
     # The next call not crashing means that the strict schema validation
     # passed.
-    factory.create_job("hi6220-hikey-r2-01.jinja2", "sample_jobs/docker-test.yaml")
+    factory.create_job("hi6220-hikey-r2-01", "sample_jobs/docker-test.yaml")
 
 
 def test_detect_correct_action(action):
@@ -222,7 +220,7 @@ def test_multinode_docker_test_shell(action, multinode_action):
 def test_docker_test_shell_run(first_test_action, mocker):
     mocker.patch(
         "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
-        return_value="lava-4999",
+        return_value=f"lava-{first_test_action.job.job_id}",
     )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
     shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
@@ -244,7 +242,11 @@ def test_docker_test_shell_run(first_test_action, mocker):
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
     shell_cmd.assert_called_with(
-        "docker run --interactive --tty --rm --init --name=lava-docker-test-shell-4999-3.3 --mount=type=bind,source=lava-4999/lava-4999,destination=/lava-4999 '--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
+        "docker run --interactive --tty --rm --init "
+        f"--name=lava-docker-test-shell-{action.job.job_id}-3.3 "
+        f"--mount=type=bind,source=lava-{action.job.job_id}/lava-{action.job.job_id},"
+        f"destination=/lava-{action.job.job_id} "
+        "'--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
         action.timeout,
         logger=action.logger,
     )
@@ -253,7 +255,7 @@ def test_docker_test_shell_run(first_test_action, mocker):
 def test_docker_test_shell_run_prefix(job_prefix, mocker):
     mocker.patch(
         "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
-        return_value="lava-4999",
+        return_value=f"lava-{job_prefix.job_id}",
     )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
     shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
@@ -275,7 +277,11 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
     shell_cmd.assert_called_with(
-        "docker run --interactive --tty --rm --init --name=lava-docker-test-shell-prefix-4999-3.3 --mount=type=bind,source=lava-4999/lava-4999,destination=/lava-4999 '--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
+        "docker run --interactive --tty --rm --init "
+        f"--name=lava-docker-test-shell-prefix-{action.job.job_id}-3.3 "
+        f"--mount=type=bind,source=lava-{action.job.job_id}"
+        f"/lava-{action.job.job_id},destination=/lava-{action.job.job_id} "
+        "'--env=PS1=docker-test-shell:$ ' adb-fastboot bash --norc -i",
         action.timeout,
         logger=action.logger,
     )

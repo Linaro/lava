@@ -19,16 +19,16 @@ class JLinkFactory(Factory):
     """
 
     def create_kw36zj_board_id_unset(self, filename):
-        return self.create_job("frdm-kw36zj-02.jinja2", filename)
+        return self.create_job("frdm-kw36zj-02", filename)
 
     def create_kw36zj_job_flash_only(self, filename):
-        return self.create_job("frdm-kw36zj-01.jinja2", filename)
+        return self.create_job("frdm-kw36zj-01", filename)
 
     def create_rw610bga_job_multiple_flash(self, filename):
-        return self.create_job("rw610bga-fr01.jinja2", filename)
+        return self.create_job("rw610bga-fr01", filename)
 
     def create_mimxrt1180_coretype_not_supported(self, filename):
-        return self.create_job("mimxrt1180-evk-01.jinja2", filename)
+        return self.create_job("mimxrt1180-evk-01", filename)
 
 
 @patch("time.sleep", Mock())

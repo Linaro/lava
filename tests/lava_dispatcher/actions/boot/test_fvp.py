@@ -27,7 +27,7 @@ All Rights Reserved."""
 class TestCheckFVPVersionAction:
     @pytest.fixture
     def action(self, factory):
-        job = factory.create_job("fvp-01.jinja2", "sample_jobs/fvp_foundation.yaml")
+        job = factory.create_job("fvp-01", "sample_jobs/fvp_foundation.yaml")
         return job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
 
     def test_action_class(self, action):
@@ -77,7 +77,7 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/fvp_erpc_app.yaml"):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("fvp-01.jinja2", job)
+        self.job = self.factory.create_job("fvp-01", job)
         self.action = self.job.pipeline.find_action(RunFVPeRPCApp)
 
     def test_validate(self):
