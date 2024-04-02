@@ -16,7 +16,6 @@ import time
 
 import requests
 
-from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
 from lava_common.exceptions import RequestBodyTooLargeError
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
@@ -100,8 +99,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                 os.kill(os.getppid(), signal.SIGTERM)
             else:
                 if ret.status_code == 413:
-                    if ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG:
-                        raise RequestBodyTooLargeError
+                    raise RequestBodyTooLargeError
                 # If the request fails, give some time for the server to
                 # recover from the failure.
                 time.sleep(FAILURE_SLEEP)
