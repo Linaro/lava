@@ -11,6 +11,7 @@ import logging
 import multiprocessing
 import os
 import signal
+import sys
 import time
 
 import requests
@@ -44,8 +45,14 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
     HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
     MAX_RECORDS = 1000
     FAILURE_SLEEP = 5
+    # Record the exception to prevent spamming
+    last_exception_type = None
+    exception_counter = 0
 
     def post(session, records: list[str], index: int) -> tuple[list[str], int]:
+        nonlocal last_exception_type
+        nonlocal exception_counter
+
         # limit the number of records to send in one call
         data, remaining = records[:MAX_RECORDS], records[MAX_RECORDS:]
         with contextlib.suppress(requests.RequestException):
@@ -53,11 +60,35 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             # background process so waiting is not an issue.
             # Will avoid resending the same request a second time if gunicorn
             # is too slow to answer.
-            ret = session.post(
-                url,
-                data={"lines": "- " + "\n- ".join(data), "index": index},
-                headers=HEADERS,
-            )
+            # In case of exception, print the exception to stderr that will be
+            # forwarded to lava-server by lava-worker. If the same exception is
+            # raised multiple time in a row, record also the number of
+            # occurrences.
+            try:
+                ret = session.post(
+                    url,
+                    data={"lines": "- " + "\n- ".join(data), "index": index},
+                    headers=HEADERS,
+                )
+                if exception_counter > 0:
+                    now = datetime.datetime.utcnow().isoformat()
+                    sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
+                    last_exception_type = None
+                    exception_counter = 0
+            except Exception as exc:
+                if last_exception_type == type(exc):
+                    exception_counter += 1
+                else:
+                    now = datetime.datetime.utcnow().isoformat()
+                    if exception_counter:
+                        sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
+                    sys.stderr.write(f"{now}: {str(exc)}\n")
+                    last_exception_type = type(exc)
+                    exception_counter = 0
+                    sys.stderr.flush()
+
+                # Empty response for the rest of the code
+                ret = requests.models.Response()
 
             if ret.status_code == 200:
                 with contextlib.suppress(KeyError, ValueError):
