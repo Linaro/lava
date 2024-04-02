@@ -36,11 +36,6 @@ class BackendAuthTest(TestCaseWithFactory):
         self.job = TestJob.from_yaml_and_user(self.definition, self.user)
         self.backend = GroupPermissionBackend()
 
-    def tearDown(self):
-        super().tearDown()
-        GroupDeviceTypePermission.objects.all().delete()
-        GroupDevicePermission.objects.all().delete()
-
     def test_is_object_supported(self):
         self.assertTrue(is_object_supported(self.device))
         self.assertTrue(is_object_supported(self.device_type))

@@ -103,13 +103,6 @@ class ManagersTest(TestCaseWithFactory):
         self.all_qemu_jobs = [self.qemu_job1, self.qemu_job2]
         self.all_jobs = self.all_qemu_jobs + self.all_bbb_jobs
 
-    def tearDown(self):
-        super().tearDown()
-        GroupDeviceTypePermission.objects.all().delete()
-        GroupDevicePermission.objects.all().delete()
-        GroupWorkerPermission.objects.all().delete()
-        TestJob.objects.all().delete()
-
     def test_assign_perm(self):
         # Test assign permission.
         GroupDevicePermission.objects.assign_perm(

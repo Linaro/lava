@@ -515,10 +515,6 @@ class TestYamlMultinode(TestCaseWithFactory):
         super().setUp()
         self.factory = YamlFactory()
 
-    def tearDown(self):
-        super().tearDown()
-        Device.objects.all().delete()
-
     def test_multinode_split(self):
         """
         Test just the split of pipeline YAML
