@@ -1,151 +1,152 @@
 - class: VExpressMsdRetry
-  description: deploy vexpress board recovery image with retry
+  name: vexpress-fw-deploy-retry
   level: '1'
   max_retries: 1
-  name: vexpress-fw-deploy-retry
-  pipeline:
-  - class: VExpressMsdAction
-    description: deploy vexpress board recovery image
-    level: '1.1'
-    max_retries: 1
-    name: vexpress-fw-deploy
-    pipeline:
-    - class: DownloaderAction
-      description: download with retry
-      level: 1.1.1
-      max_retries: 3
-      name: download-retry
-      pipeline:
-      - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1.1,
-        max_retries: 1, name: http-download, summary: http download, timeout: 600,
-        url: 'https://releases.linaro.org/members/arm/platforms/17.04/juno-uefi.zip'}
-      summary: download-retry
-      timeout: 600
-    - {class: LxcCreateUdevRuleAction, description: create lxc udev rule action, level: 1.1.2,
-      max_retries: 1, name: lxc-create-udev-rule-action, summary: create lxc udev
-        rule, timeout: 600}
-    - {class: ConnectDevice, description: use the configured command to connect serial
-        to the device, level: 1.1.3, max_retries: 1, name: connect-device, summary: run
-        connection command, timeout: 600}
-    - class: ResetDevice
-      description: reboot or power-cycle the device
-      level: 1.1.4
-      max_retries: 1
-      name: reset-device
-      pipeline:
-      - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-        level: 1.1.4.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using
-          PDU, timeout: 600}
-      summary: reboot the device
-      timeout: 600
-    - {class: ExtractVExpressRecoveryImage, description: unpack versatile express
-        recovery image, level: 1.1.5, max_retries: 1, name: extract-vexpress-recovery-image,
-      summary: unpack versatile express recovery image ready for deployment, timeout: 600}
-    - {class: EnterVExpressMCC, description: enter Versatile Express MCC, level: 1.1.6,
-      max_retries: 1, name: enter-vexpress-mcc, summary: 'enter Versatile Express
-        MCC, interrupting autorun if needed', timeout: 600}
-    - {class: EnableVExpressMassStorage, description: enable vexpress usb msd, level: 1.1.7,
-      max_retries: 1, name: enable-vexpress-usbmsd, summary: enable vexpress usb mass
-        storage device, timeout: 600}
-    - {class: WaitUSBMassStorageDeviceAction, description: wait for USB mass storage
-        device, level: 1.1.8, max_retries: 1, name: wait-usb-mass-storage-device,
-      summary: wait for USB mass storage device, timeout: 600}
-    - {class: MountVExpressMassStorageDevice, description: mount vexpress usb msd,
-      level: 1.1.9, max_retries: 1, name: mount-vexpress-usbmsd, summary: mount vexpress
-        usb mass storage device on the dispatcher, timeout: 600}
-    - {class: DeployVExpressRecoveryImage, description: deploy vexpress recovery image
-        to usb msd, level: 1.1.10, max_retries: 1, name: deploy-vexpress-recovery-image,
-      summary: copy recovery image contents to vexpress usb mass storage device, timeout: 600}
-    - {class: UnmountVExpressMassStorageDevice, description: unmount vexpress usb
-        msd, level: 1.1.11, max_retries: 1, name: unmount-vexpress-usbmsd, summary: unmount
-        vexpress usb mass storage device, timeout: 600}
-    - {class: VExpressFlashErase, description: erase vexpress flash, level: 1.1.12,
-      max_retries: 1, name: erase-vexpress-flash, summary: erase vexpress flash using
-        the commands set by the user, timeout: 600}
-    summary: VExpress FW deployment
-    timeout: 600
+  description: deploy vexpress board recovery image with retry
   summary: VExpress FW deployment with retry
   timeout: 600
+  pipeline:
+  - class: VExpressMsdAction
+    name: vexpress-fw-deploy
+    level: '1.1'
+    max_retries: 1
+    description: deploy vexpress board recovery image
+    summary: VExpress FW deployment
+    timeout: 600
+    pipeline:
+    - class: DownloaderAction
+      name: download-retry
+      level: 1.1.1
+      max_retries: 3
+      description: download with retry
+      summary: download-retry
+      timeout: 600
+      pipeline:
+      - {class: HttpDownloadAction, name: http-download, level: 1.1.1.1, max_retries: 1,
+        description: use http to download the file, summary: http download, timeout: 600,
+        url: 'https://releases.linaro.org/members/arm/platforms/17.04/juno-uefi.zip'}
+    - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: 1.1.2,
+      max_retries: 1, description: create lxc udev rule action, summary: create lxc
+        udev rule, timeout: 600}
+    - {class: ConnectDevice, name: connect-device, level: 1.1.3, max_retries: 1, description: use
+        the configured command to connect serial to the device, summary: run connection
+        command, timeout: 600}
+    - class: ResetDevice
+      name: reset-device
+      level: 1.1.4
+      max_retries: 1
+      description: reboot or power-cycle the device
+      summary: reboot the device
+      timeout: 600
+      pipeline:
+      - {class: PDUReboot, name: pdu-reboot, level: 1.1.4.1, max_retries: 1, description: issue
+          commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+        timeout: 600}
+    - {class: ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image,
+      level: 1.1.5, max_retries: 1, description: unpack versatile express recovery
+        image, summary: unpack versatile express recovery image ready for deployment,
+      timeout: 600}
+    - {class: EnterVExpressMCC, name: enter-vexpress-mcc, level: 1.1.6, max_retries: 1,
+      description: enter Versatile Express MCC, summary: 'enter Versatile Express
+        MCC, interrupting autorun if needed', timeout: 600}
+    - {class: EnableVExpressMassStorage, name: enable-vexpress-usbmsd, level: 1.1.7,
+      max_retries: 1, description: enable vexpress usb msd, summary: enable vexpress
+        usb mass storage device, timeout: 600}
+    - {class: WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device,
+      level: 1.1.8, max_retries: 1, description: wait for USB mass storage device,
+      summary: wait for USB mass storage device, timeout: 600}
+    - {class: MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd, level: 1.1.9,
+      max_retries: 1, description: mount vexpress usb msd, summary: mount vexpress
+        usb mass storage device on the dispatcher, timeout: 600}
+    - {class: DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image, level: 1.1.10,
+      max_retries: 1, description: deploy vexpress recovery image to usb msd, summary: copy
+        recovery image contents to vexpress usb mass storage device, timeout: 600}
+    - {class: UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd, level: 1.1.11,
+      max_retries: 1, description: unmount vexpress usb msd, summary: unmount vexpress
+        usb mass storage device, timeout: 600}
+    - {class: VExpressFlashErase, name: erase-vexpress-flash, level: 1.1.12, max_retries: 1,
+      description: erase vexpress flash, summary: erase vexpress flash using the commands
+        set by the user, timeout: 600}
 - class: NfsAction
-  description: deploy nfsrootfs
+  name: nfs-deploy
   level: '2'
   max_retries: 1
-  name: nfs-deploy
-  pipeline:
-  - class: DownloaderAction
-    description: download with retry
-    level: '2.1'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 2.1.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 120, url: 'https://releases.linaro.org/openembedded/images/minimal-armv8/15.12/linaro-image-minimal-genericarmv8-20151214-782.rootfs.tar.gz'}
-    summary: download-retry
-    timeout: 120
-  - {class: ExtractNfsRootfs, description: unpack nfsrootfs, level: '2.2', max_retries: 1,
-    name: extract-nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava overlay',
-    timeout: 120}
-  - {class: OverlayAction, description: add lava scripts during deployment for test
-      shell use, level: '2.3', max_retries: 1, name: lava-overlay, summary: overlay
-      the lava support scripts, timeout: 120}
-  - {class: ExtractModules, description: extract supplied kernel modules, level: '2.4',
-    max_retries: 1, name: extract-modules, summary: extract kernel modules, timeout: 120}
-  - {class: ApplyOverlayTftp, description: unpack the overlay into the nfsrootfs or
-      ramdisk, level: '2.5', max_retries: 1, name: apply-overlay-tftp, summary: apply
-      lava overlay test files, timeout: 120}
+  description: deploy nfsrootfs
   summary: NFS deployment
   timeout: 120
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '2.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 120
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 120,
+      url: 'https://releases.linaro.org/openembedded/images/minimal-armv8/15.12/linaro-image-minimal-genericarmv8-20151214-782.rootfs.tar.gz'}
+  - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: '2.2', max_retries: 1,
+    description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
+      overlay', timeout: 120}
+  - {class: OverlayAction, name: lava-overlay, level: '2.3', max_retries: 1, description: add
+      lava scripts during deployment for test shell use, summary: overlay the lava
+      support scripts, timeout: 120}
+  - {class: ExtractModules, name: extract-modules, level: '2.4', max_retries: 1, description: extract
+      supplied kernel modules, summary: extract kernel modules, timeout: 120}
+  - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: '2.5', max_retries: 1,
+    description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
+      lava overlay test files, timeout: 120}
 - class: UefiShellAction
-  description: UEFI shell boot action
+  name: uefi-shell-main-action
   level: '3'
   max_retries: 1
-  name: uefi-shell-main-action
-  pipeline:
-  - {class: BootloaderCommandOverlay, description: substitute job data into bootloader
-      command list, level: '3.1', max_retries: 1, name: bootloader-overlay, summary: replace
-      placeholders with job data, timeout: 360}
-  - {class: MenuConnect, description: change into a menu session, level: '3.2', max_retries: 1,
-    name: menu-connect, summary: Customise connection for menu operations, timeout: 360}
-  - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '3.3'
-    max_retries: 1
-    name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 3.3.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 30}
-    summary: reboot the device
-    timeout: 30
-  - {class: UefiShellInterrupt, description: interrupt uefi menu to get to a shell,
-    level: '3.4', max_retries: 1, name: uefi-shell-interrupt, summary: first uefi
-      interrupt, timeout: 360}
-  - {class: UefiBootloaderCommandsAction, description: send commands to bootloader,
-    level: '3.5', max_retries: 1, name: bootloader-commands, summary: interactive
-      bootloader, timeout: 180}
-  - class: AutoLoginAction
-    description: automatically login after boot using job parameters and checking
-      for messages.
-    level: '3.6'
-    max_retries: 1
-    name: auto-login-action
-    pipeline:
-    - {class: LoginAction, description: Real login action., level: 3.6.1, max_retries: 1,
-      name: login-action, summary: Login after boot., timeout: 360}
-    summary: Auto-login after boot with support for kernel messages.
-    timeout: 300
+  description: UEFI shell boot action
   summary: run UEFI shell to system
   timeout: 360
+  pipeline:
+  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '3.1', max_retries: 1,
+    description: substitute job data into bootloader command list, summary: replace
+      placeholders with job data, timeout: 360}
+  - {class: MenuConnect, name: menu-connect, level: '3.2', max_retries: 1, description: change
+      into a menu session, summary: Customise connection for menu operations, timeout: 360}
+  - class: ResetDevice
+    name: reset-device
+    level: '3.3'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 30
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 3.3.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 30}
+  - {class: UefiShellInterrupt, name: uefi-shell-interrupt, level: '3.4', max_retries: 1,
+    description: interrupt uefi menu to get to a shell, summary: first uefi interrupt,
+    timeout: 360}
+  - {class: UefiBootloaderCommandsAction, name: bootloader-commands, level: '3.5',
+    max_retries: 1, description: send commands to bootloader, summary: interactive
+      bootloader, timeout: 180}
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '3.6'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 300
+    pipeline:
+    - {class: LoginAction, name: login-action, level: 3.6.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 360}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '4'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '4.1', max_retries: 1,
-    name: power-off, summary: send power_off command, timeout: 35}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 360}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 360
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 35}
+  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 360}

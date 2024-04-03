@@ -1,54 +1,54 @@
 - class: DeployImagesAction
-  description: deploy images using guestfs
+  name: deployimages
   level: '1'
   max_retries: 1
-  name: deployimages
-  pipeline:
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.1'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 180, url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
-    summary: download-retry
-    timeout: 180
+  description: deploy images using guestfs
   summary: deploy images
   timeout: 180
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 180
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 180,
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
 - class: BootJLinkRetry
-  description: boot jlink image using the command line interface
+  name: boot-jlink-image
   level: '2'
   max_retries: 1
-  name: boot-jlink-image
-  pipeline:
-  - {class: ConnectDevice, description: use the configured command to connect serial
-      to the device, level: '2.1', max_retries: 1, name: connect-device, summary: run
-      connection command, timeout: 600}
-  - {class: FlashJLinkAction, description: flash jlink to boot the image, level: '2.2',
-    max_retries: 1, name: flash-jlink, summary: flash jlink to boot the image, timeout: 600}
+  description: boot jlink image using the command line interface
   summary: boot jlink image
   timeout: 600
+  pipeline:
+  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 600}
+  - {class: FlashJLinkAction, name: flash-jlink, level: '2.2', max_retries: 1, description: flash
+      jlink to boot the image, summary: flash jlink to boot the image, timeout: 600}
 - class: TestMonitorRetry
-  description: Retry wrapper for lava-test-monitor
+  name: lava-test-monitor-retry
   level: '3'
   max_retries: 1
-  name: lava-test-monitor-retry
-  pipeline:
-  - {class: TestMonitorAction, description: Executing lava-test-monitor, level: '3.1',
-    max_retries: 1, name: lava-test-monitor, summary: Lava Test Monitor, timeout: 180}
+  description: Retry wrapper for lava-test-monitor
   summary: Retry support for Lava Test Monitoring
   timeout: 180
+  pipeline:
+  - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
+    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 180}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '4'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '4.1', max_retries: 1,
-    name: power-off, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '4.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 180}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 180
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}

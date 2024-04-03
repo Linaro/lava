@@ -1,129 +1,132 @@
 - class: TftpAction
-  description: download files and deploy using tftp
+  name: tftp-deploy
   level: '1'
   max_retries: 1
-  name: tftp-deploy
-  pipeline:
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.1'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 120, url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/rootfs.cpio.gz'}
-    summary: download-retry
-    timeout: 120
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.2'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.2.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 120, url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/Image'}
-    summary: download-retry
-    timeout: 120
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.3'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.3.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 120, url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/modules.tar.xz'}
-    summary: download-retry
-    timeout: 120
-  - class: PrepareOverlayTftp
-    description: extract ramdisk or nfsrootfs in preparation for lava overlay
-    level: '1.4'
-    max_retries: 1
-    name: prepare-tftp-overlay
-    pipeline:
-    - {class: ExtractNfsRootfs, description: unpack nfsrootfs, level: 1.4.1, max_retries: 1,
-      name: extract-nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava overlay',
-      timeout: 120}
-    - {class: OverlayAction, description: add lava scripts during deployment for test
-        shell use, level: 1.4.2, max_retries: 1, name: lava-overlay, summary: overlay
-        the lava support scripts, timeout: 120}
-    - {class: ExtractRamdisk, description: extract ramdisk to a temporary directory,
-      level: 1.4.3, max_retries: 1, name: extract-overlay-ramdisk, summary: extract
-        the ramdisk, timeout: 120}
-    - {class: ExtractModules, description: extract supplied kernel modules, level: 1.4.4,
-      max_retries: 1, name: extract-modules, summary: extract kernel modules, timeout: 120}
-    - {class: ApplyOverlayTftp, description: unpack the overlay into the nfsrootfs
-        or ramdisk, level: 1.4.5, max_retries: 1, name: apply-overlay-tftp, summary: apply
-        lava overlay test files, timeout: 120}
-    - {class: PrepareKernelAction, description: populates the pipeline with a kernel
-        conversion action, level: 1.4.6, max_retries: 1, name: prepare-kernel, summary: add
-        a kernel conversion, timeout: 120}
-    - {class: ConfigurePreseedFile, description: 'add commands to automated installers,
-        to copy the lava test overlay to the installed system', level: 1.4.7, max_retries: 1,
-      name: configure-preseed-file, summary: add commands to installer config, timeout: 120}
-    - {class: CompressRamdisk, description: recreate a ramdisk with the overlay applied.,
-      level: 1.4.8, max_retries: 1, name: compress-ramdisk, summary: compress ramdisk
-        with overlay, timeout: 120}
-    summary: extract ramdisk or nfsrootfs
-    timeout: 120
-  - {class: LxcCreateUdevRuleAction, description: create lxc udev rule action, level: '1.5',
-    max_retries: 1, name: lxc-create-udev-rule-action, summary: create lxc udev rule,
-    timeout: 120}
+  description: download files and deploy using tftp
   summary: tftp deployment
   timeout: 120
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 120
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 120,
+      url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/rootfs.cpio.gz'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.2'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 120
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 120,
+      url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/Image'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.3'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 120
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 120,
+      url: 'http://images.validation.linaro.org/ironhide.bounceme.net/health-checks/synquacer/modules.tar.xz'}
+  - class: PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    level: '1.4'
+    max_retries: 1
+    description: extract ramdisk or nfsrootfs in preparation for lava overlay
+    summary: extract ramdisk or nfsrootfs
+    timeout: 120
+    pipeline:
+    - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: 1.4.1, max_retries: 1,
+      description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
+        overlay', timeout: 120}
+    - {class: OverlayAction, name: lava-overlay, level: 1.4.2, max_retries: 1, description: add
+        lava scripts during deployment for test shell use, summary: overlay the lava
+        support scripts, timeout: 120}
+    - {class: ExtractRamdisk, name: extract-overlay-ramdisk, level: 1.4.3, max_retries: 1,
+      description: extract ramdisk to a temporary directory, summary: extract the
+        ramdisk, timeout: 120}
+    - {class: ExtractModules, name: extract-modules, level: 1.4.4, max_retries: 1,
+      description: extract supplied kernel modules, summary: extract kernel modules,
+      timeout: 120}
+    - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: 1.4.5, max_retries: 1,
+      description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
+        lava overlay test files, timeout: 120}
+    - {class: PrepareKernelAction, name: prepare-kernel, level: 1.4.6, max_retries: 1,
+      description: populates the pipeline with a kernel conversion action, summary: add
+        a kernel conversion, timeout: 120}
+    - {class: ConfigurePreseedFile, name: configure-preseed-file, level: 1.4.7, max_retries: 1,
+      description: 'add commands to automated installers, to copy the lava test overlay
+        to the installed system', summary: add commands to installer config, timeout: 120}
+    - {class: CompressRamdisk, name: compress-ramdisk, level: 1.4.8, max_retries: 1,
+      description: recreate a ramdisk with the overlay applied., summary: compress
+        ramdisk with overlay, timeout: 120}
+  - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '1.5',
+    max_retries: 1, description: create lxc udev rule action, summary: create lxc
+      udev rule, timeout: 120}
 - class: GrubMainAction
-  description: main grub boot action
+  name: grub-main-action
   level: '2'
   max_retries: 1
-  name: grub-main-action
-  pipeline:
-  - {class: BootloaderSecondaryMedia, description: let bootloader know where to find
-      the kernel in the image on secondary media, level: '2.1', max_retries: 1, name: bootloader-from-media,
-    summary: set bootloader strings for deployed media, timeout: 300}
-  - {class: BootloaderCommandOverlay, description: substitute job data into bootloader
-      command list, level: '2.2', max_retries: 1, name: bootloader-overlay, summary: replace
-      placeholders with job data, timeout: 300}
-  - {class: ConnectDevice, description: use the configured command to connect serial
-      to the device, level: '2.3', max_retries: 1, name: connect-device, summary: run
-      connection command, timeout: 300}
-  - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '2.4'
-    max_retries: 1
-    name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 2.4.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 300}
-    summary: reboot the device
-    timeout: 300
-  - {class: BootloaderInterruptAction, description: interrupt bootloader, level: '2.5',
-    max_retries: 1, name: bootloader-interrupt, summary: interrupt bootloader to get
-      an interactive shell, timeout: 300}
-  - {class: BootloaderCommandsAction, description: send commands to bootloader, level: '2.6',
-    max_retries: 1, name: bootloader-commands, summary: interactive bootloader, timeout: 300}
-  - class: AutoLoginAction
-    description: automatically login after boot using job parameters and checking
-      for messages.
-    level: '2.7'
-    max_retries: 1
-    name: auto-login-action
-    pipeline:
-    - {class: LoginAction, description: Real login action., level: 2.7.1, max_retries: 1,
-      name: login-action, summary: Login after boot., timeout: 300}
-    summary: Auto-login after boot with support for kernel messages.
-    timeout: 300
+  description: main grub boot action
   summary: run grub boot from power to system
   timeout: 300
+  pipeline:
+  - {class: BootloaderSecondaryMedia, name: bootloader-from-media, level: '2.1', max_retries: 1,
+    description: let bootloader know where to find the kernel in the image on secondary
+      media, summary: set bootloader strings for deployed media, timeout: 300}
+  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '2.2', max_retries: 1,
+    description: substitute job data into bootloader command list, summary: replace
+      placeholders with job data, timeout: 300}
+  - {class: ConnectDevice, name: connect-device, level: '2.3', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 300}
+  - class: ResetDevice
+    name: reset-device
+    level: '2.4'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 300
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 2.4.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 300}
+  - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '2.5', max_retries: 1,
+    description: interrupt bootloader, summary: interrupt bootloader to get an interactive
+      shell, timeout: 300}
+  - {class: BootloaderCommandsAction, name: bootloader-commands, level: '2.6', max_retries: 1,
+    description: send commands to bootloader, summary: interactive bootloader, timeout: 300}
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '2.7'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 300
+    pipeline:
+    - {class: LoginAction, name: login-action, level: 2.7.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 300}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '3'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '3.1', max_retries: 1,
-    name: power-off, summary: send power_off command, timeout: 30}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '3.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 600}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 600
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '3.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 30}
+  - {class: ReadFeedback, name: read-feedback, level: '3.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 600}
