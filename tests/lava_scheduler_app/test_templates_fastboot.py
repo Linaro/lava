@@ -3,18 +3,10 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-import os
-
-from lava_common.yaml import yaml_safe_load
-from lava_scheduler_app.schema import validate_device
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
+from .test_templates import BaseTemplateTest
 
 
-class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
+class TestFastbootTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -30,8 +22,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
 {% set static_info = [{'board_id': 'R32D300FRYP'}] %}
 """
-        self.assertTrue(self.validate_data("nexus4-01", data))
-        template_dict = prepare_jinja_template("nexus4-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual("R32D300FRYP", template_dict["adb_serial_number"])
         self.assertEqual("R32D300FRYP", template_dict["fastboot_serial_number"])
         self.assertEqual([], template_dict["fastboot_options"])
@@ -45,8 +36,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set fastboot_serial_number = '1234567890' %}
 {% set interrupt_prompt = "interrupt bootloader" %}
 """
-        self.assertTrue(self.validate_data("x15-01", data))
-        template_dict = prepare_jinja_template("x15-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsInstance(template_dict["adb_serial_number"], str)
         self.assertEqual("1234567890", template_dict["adb_serial_number"])
         self.assertEqual("1234567890", template_dict["fastboot_serial_number"])
@@ -90,8 +80,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set adb_serial_number = 'R32D300FRYP' %}
 {% set fastboot_serial_number = 'R32D300FRYP' %}
 """
-        self.assertTrue(self.validate_data("sharkl2-01", data))
-        template_dict = prepare_jinja_template("sharkl2-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual("R32D300FRYP", template_dict["adb_serial_number"])
         self.assertEqual("R32D300FRYP", template_dict["fastboot_serial_number"])
         self.assertEqual([], template_dict["fastboot_options"])
@@ -116,22 +105,13 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set device_info = [{'board_id': 'R32D300FRYP'}] %}
 {% set static_info = [{'board_id': 'R32D300FRYP'}] %}
 """
-        self.assertTrue(self.validate_data("staging-nexus10-01", data))
-        template_dict = prepare_jinja_template("staging-pixel-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
 
     def test_hikey_r2_template(self):
-        with open(
-            os.path.join(
-                os.path.dirname(__file__), "devices", "hi6220-hikey-r2-01.jinja2"
-            )
-        ) as hikey:
-            data = hikey.read()
-        self.assertIsNotNone(data)
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template("staging-hikey-01", data, raw=False)
+        template_dict = self.render_device_dictionary("hi6220-hikey-r2-01")
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
@@ -145,13 +125,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual(2, order.index("fastboot"))
 
     def test_hikey_template(self):
-        with open(
-            os.path.join(os.path.dirname(__file__), "devices", "hi6220-hikey-01.jinja2")
-        ) as hikey:
-            data = hikey.read()
-        self.assertIsNotNone(data)
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template("staging-hikey-01", data, raw=False)
+        template_dict = self.render_device_dictionary("hi6220-hikey-01")
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
@@ -166,10 +140,13 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("system", order)
         self.assertIn("userdata", order)
         self.assertNotIn("xloader", order)
+
         # test support for retrieving MAC from device.
-        data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template("staging-hikey-01", data, raw=False)
+        data = """{% extends 'hi6220-hikey-01.jinja2' %}
+{% set device_mac = '00:E0:4C:53:44:58' %}"""
+        template_dict = self.render_device_dictionary_from_text(
+            data, use_device_templates=True
+        )
         self.assertIn("parameters", template_dict)
         self.assertIn("interfaces", template_dict["parameters"])
         self.assertIn("target", template_dict["parameters"]["interfaces"])
@@ -182,16 +159,8 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIsNone(template_dict["parameters"]["interfaces"]["target"]["ip"])
 
     def test_hikey_grub_efi(self):
-        with open(
-            os.path.join(os.path.dirname(__file__), "devices", "hi6220-hikey-01.jinja2")
-        ) as hikey:
-            data = hikey.read()
-        self.assertIsNotNone(data)
         job_ctx = {"kernel": "Image", "devicetree": "hi6220-hikey.dtb"}
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template(
-            "staging-hikey-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary("hi6220-hikey-01", job_ctx)
         self.assertIsNotNone(template_dict)
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"])
         self.assertIn("grub-efi", template_dict["actions"]["boot"]["methods"])
@@ -222,17 +191,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("identity_file", params)
 
     def test_hikey620_uarts(self):
-        with open(
-            os.path.join(os.path.dirname(__file__), "devices", "hi6220-hikey-01.jinja2")
-        ) as hikey:
-            data = hikey.read()
-        self.assertIsNotNone(data)
-        job_ctx = {}
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template(
-            "staging-hikey-01", data, job_ctx=job_ctx, raw=False
-        )
-        validate_device(template_dict)
+        template_dict = self.render_device_dictionary("hi6220-hikey-01")
         self.assertIsNotNone(template_dict)
         self.assertIn("commands", template_dict)
         self.assertNotIn("connect", template_dict["commands"])
@@ -254,16 +213,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_hikey960_grub(self):
-        with open(
-            os.path.join(os.path.dirname(__file__), "devices", "hi960-hikey-01.jinja2")
-        ) as hikey:
-            data = hikey.read()
-        self.assertIsNotNone(data)
-        job_ctx = {"kernel": "Image", "devicetree": "hi960-hikey.dtb"}
-        # self.assertTrue(self.validate_data('hi960-hikey-01', data))
-        template_dict = prepare_jinja_template(
-            "staging-hikey-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary("hi960-hikey-01")
         self.assertIsNotNone(template_dict)
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"])
         self.assertNotIn(
@@ -282,10 +232,10 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
         self.assertIn("identity_file", params)
 
         # test support for retrieving MAC from device using base-fastboot.
-        data += "{% set device_mac = '00:E0:4C:53:44:58' %}"
-        self.assertTrue(self.validate_data("hi6220-hikey-01", data))
-        template_dict = prepare_jinja_template(
-            "staging-hikey-01", data, job_ctx=None, raw=False
+        data = """{% extends 'hi960-hikey-01.jinja2' %}
+{% set device_mac = '00:E0:4C:53:44:58' %}"""
+        template_dict = self.render_device_dictionary_from_text(
+            data, use_device_templates=True
         )
         self.assertIn("parameters", template_dict)
         self.assertIn("interfaces", template_dict["parameters"])
@@ -309,8 +259,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set device_info = [{'board_id': '10de1214adae123'}] %}
 {% set static_info = [{'board_id': '10de1214adae123'}] %}
 """
-        self.assertTrue(self.validate_data("staging-nexus5x-01", data))
-        template_dict = prepare_jinja_template("staging-pixel-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
@@ -322,29 +271,23 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set device_info = [{'board_id': 'FDAC1231DAD'}] %}
 {% set static_info = [{'board_id': 'FDAC1231DAD'}] %}
 """
-        self.assertTrue(self.validate_data("staging-pixel-01", data))
-        template_dict = prepare_jinja_template("staging-pixel-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
 
     def test_nuc_template(self):
-        self.assertTrue(
-            self.validate_data(
-                "staging-nuc-01",
-                """{% extends 'adb-nuc.jinja2' %}
+        template_data = """{% extends 'adb-nuc.jinja2' %}
 {% set device_ip = '192.168.1.11' %}
-""",
-            )
-        )
+"""
+        self.render_device_dictionary_from_text(template_data)
 
     def test_ifc6410(self):
         data = """{% extends 'ifc6410.jinja2' %}
 {% set adb_serial_number = 'e080c212' %}
 {% set fastboot_serial_number = 'e080c212' %}
         """
-        self.assertTrue(self.validate_data("staging-ifc6410-01", data))
-        template_dict = prepare_jinja_template("staging-ifc6410-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual("e080c212", template_dict["adb_serial_number"])
         self.assertEqual("e080c212", template_dict["fastboot_serial_number"])
         self.assertEqual([], template_dict["fastboot_options"])
@@ -359,21 +302,13 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set adb_serial_number = '3083f595' %}
 {% set fastboot_serial_number = '3083f595' %}
 """
-        self.assertTrue(self.validate_data("db820c-01", data))
-        template_dict = prepare_jinja_template("db820c-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual("3083f595", template_dict["adb_serial_number"])
         self.assertEqual("3083f595", template_dict["fastboot_serial_number"])
         self.assertEqual([], template_dict["fastboot_options"])
 
     def test_recovery_mode(self):
-        with open(
-            os.path.join(
-                os.path.dirname(__file__), "devices", "hi6220-hikey-bl-01.jinja2"
-            )
-        ) as hikey:
-            data = hikey.read()
-        self.assertTrue(self.validate_data("hi620-bl-01", data))
-        template_dict = prepare_jinja_template("hi620-bl-01", data, raw=False)
+        template_dict = self.render_device_dictionary("hi6220-hikey-bl-01")
         recovery = template_dict["actions"]["deploy"]["methods"]
         self.assertIsNotNone("recovery", recovery)
         self.assertIn("recovery", recovery)
@@ -418,8 +353,7 @@ class TestFastbootTemplates(BaseTemplate.BaseTemplateCases):
             "userdata",
         ]
 
-        rendered = self.render_device_dictionary_file("sdm845-mtp-05.jinja2")
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary("sdm845-mtp-05")
         self.assertEqual("5c302cef", template_dict["adb_serial_number"])
         self.assertEqual("5c302cef", template_dict["fastboot_serial_number"])
         self.assertEqual(False, template_dict["device_info"][0]["wait_device_board_id"])

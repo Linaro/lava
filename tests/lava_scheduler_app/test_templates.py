@@ -3,14 +3,55 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
+from typing import Any, Optional
+from unittest import TestCase
+
+from lava_common.yaml import yaml_safe_load
+from lava_scheduler_app.environment import DEVICE_TYPES_JINJA_ENV, DEVICES_JINJA_ENV
+from lava_scheduler_app.schema import SubmissionException, validate_device
 
 
-class TestTemplates(BaseTemplate.BaseTemplateCases):
+class BaseTemplateTest(TestCase):
+    def render_device_dictionary_from_text(
+        self,
+        text: str,
+        job_ctx: Optional[dict[str, Any]] = None,
+        validate: bool = True,
+        use_device_templates: bool = False,
+    ) -> dict[str, Any]:
+        if job_ctx is None:
+            job_ctx = {}
+
+        jinja_environment = (
+            DEVICES_JINJA_ENV if use_device_templates else DEVICE_TYPES_JINJA_ENV
+        )
+
+        rendered_yaml_str = jinja_environment.from_string(text).render(**job_ctx)
+        device_dict = yaml_safe_load(rendered_yaml_str)
+        if validate:
+            validate_device(device_dict)
+
+        return device_dict
+
+    def render_device_dictionary(
+        self,
+        device_name: str,
+        job_ctx: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        if job_ctx is None:
+            job_ctx = {}
+
+        rendered_yaml_str = DEVICES_JINJA_ENV.get_template(
+            f"{device_name}.jinja2"
+        ).render(**job_ctx)
+        device_dict = yaml_safe_load(rendered_yaml_str)
+        validate_device(device_dict)
+        return device_dict
+
+
+class TestTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -25,8 +66,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
-        self.assertTrue(self.validate_data("staging-x86-01", data))
-        template_dict = prepare_jinja_template("staging-x86-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         for _, value in template_dict["actions"]["boot"]["methods"]["ipxe"].items():
             if "commands" in value:
                 for item in value["commands"]:
@@ -55,9 +95,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
                                                 self.fail("%s ends with a comma" % item)
         self.assertEqual(depth, 8)
         job_ctx = {}
-        template_dict = prepare_jinja_template(
-            "staging-x86-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
 
         self.assertIsNotNone(
             template_dict["actions"]["boot"]["methods"]["ipxe"]["nfs"]["commands"]
@@ -76,25 +114,19 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 
         # override template in job context
         job_ctx = {"boot_character_delay": 150}
-        template_dict = prepare_jinja_template(
-            "staging-x86-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         self.assertEqual(150, template_dict["character_delays"]["boot"])
 
         # add device dictionary override
         # overrides the template default
         data += """{% set boot_character_delay = 400 %}"""
         job_ctx = {}
-        template_dict = prepare_jinja_template(
-            "staging-x86-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         self.assertEqual(400, template_dict["character_delays"]["boot"])
 
         # job context does not override device dictionary
         job_ctx = {"boot_character_delay": 150}
-        template_dict = prepare_jinja_template(
-            "staging-x86-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         self.assertNotEqual(150, template_dict["character_delays"]["boot"])
         self.assertEqual(400, template_dict["character_delays"]["boot"])
 
@@ -105,8 +137,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
-        self.assertTrue(self.validate_data("staging-x86-01", data))
-        template_dict = prepare_jinja_template("staging-x86-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         for _, value in template_dict["actions"]["boot"]["methods"]["ipxe"].items():
             if "commands" in value:
                 self.assertIn("dhcp net0", value["commands"])
@@ -118,8 +149,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command reboot' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --port 02 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7302' %}"""
-        self.assertTrue(self.validate_data("staging-x86-01", data))
-        template_dict = prepare_jinja_template("staging-x86-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         for _, value in template_dict["actions"]["boot"]["methods"]["ipxe"].items():
             if "commands" in value:
                 self.assertIn("dhcp net1", value["commands"])
@@ -139,8 +169,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command off --port 19' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
 {% set connection_command = 'telnet localhost 7333' %}"""
-        self.assertTrue(self.validate_data("staging-thunderx-01", data))
-        template_dict = prepare_jinja_template("staging-thunderx-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn("character_delays", template_dict)
         self.assertIn("boot", template_dict["character_delays"])
         self.assertEqual(150, template_dict["character_delays"]["boot"])
@@ -156,8 +185,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power off' %}
 {% set power_on_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}
 {% set hard_reset_command = 'ipmitool -H calxeda02-07-02 -U admin -P admin chassis power off; sleep 20; ipmitool -H calxeda02-07-02 -U admin -P admin chassis power on' %}"""
-        self.assertTrue(self.validate_data("highbank-07", data))
-        template_dict = prepare_jinja_template("highbank-07", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertEqual(template_dict["character_delays"]["boot"], 100)
         self.assertEqual(
@@ -220,16 +248,13 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 1 --hostname lngpdu01 --command on' %}
 {% set connection_command = 'telnet localhost 7301' %}
 {% set lava_mac = 'd8:9d:67:26:ae:e8' %}"""
-        self.assertTrue(self.validate_data("staging-x86-01", data))
-        template_dict = prepare_jinja_template("staging-qemu-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn(
             "set console console=ttyS0,115200n8 lava_mac={LAVA_MAC}",
             template_dict["actions"]["boot"]["methods"]["ipxe"]["nfs"]["commands"],
         )
         context = {"extra_kernel_args": "intel_mmio=on mmio=on"}
-        template_dict = prepare_jinja_template(
-            "staging-qemu-01", data, job_ctx=context, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, context)
         self.assertIn(
             "set extraargs root=/dev/nfs rw nfsroot={NFS_SERVER_IP}:{NFSROOTFS},tcp,hard intel_mmio=on mmio=on ip=dhcp",
             template_dict["actions"]["boot"]["methods"]["ipxe"]["nfs"]["commands"],
@@ -238,8 +263,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
     def test_arduino(self):
         data = """{% extends 'arduino101.jinja2' %}
 {% set board_id = 'AE6642EK61804EZ' %}"""
-        self.assertTrue(self.validate_data("staging-arduino101-01", data))
-        template_dict = prepare_jinja_template("staging-arduino101-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertEqual(template_dict["board_id"], "AE6642EK61804EZ")
         self.assertEqual(template_dict["usb_vendor_id"], "8087")
@@ -253,8 +277,7 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
 {% set start_message = 'Starting netboot on veyron_jaq...' %}
 {% set console_device = console_device | default('ttyS2') %}
 {% set extra_kernel_args = 'earlyprintk=ttyS2,115200n8 console=tty1' %}"""
-        self.assertTrue(self.validate_data("jaq-01", data))
-        template_dict = prepare_jinja_template("jaq-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         load_addr = template_dict["parameters"]["load_address"]
         self.assertEqual(load_addr, "0x5678")
         depthcharge = template_dict["actions"]["boot"]["methods"]["depthcharge"]
@@ -268,11 +291,145 @@ class TestTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_x86_atom330_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "x86-atom330-01.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("x86-atom330-01")
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"]["ipxe"])
         self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["ipxe"])
         self.assertIn(
             "commands", template_dict["actions"]["boot"]["methods"]["ipxe"]["nfs"]
+        )
+
+    def test_all_templates(self):
+        all_template_names = DEVICES_JINJA_ENV.list_templates()
+
+        # Check that templates are properly loaded
+        self.assertNotEqual([], all_template_names)
+
+        for template_name in all_template_names:
+            with self.subTest(template_name=template_name):
+                self.assertTrue(template_name.endswith(".jinja2"))
+                self.render_device_dictionary(template_name.removesuffix(".jinja2"), {})
+
+    def test_all_template_connections(self):
+        for template_name in DEVICE_TYPES_JINJA_ENV.list_templates():
+            with self.subTest(template_name=template_name):
+                data = f"{{% extends '{template_name}' %}}"
+                data += "{% set connection_command = 'telnet calvin 6080' %}"
+                template_dict = self.render_device_dictionary_from_text(data)
+                self.assertIn("connect", template_dict["commands"])
+                self.assertNotIn(
+                    "connections",
+                    template_dict["commands"],
+                    msg=f"{template_name} - failed support for connection_list syntax",
+                )
+
+                data = f"{{% extends '{template_name}' %}}"
+                data += "{% set connection_list = ['uart0'] %}"
+                data += (
+                    "{% set connection_commands = {'uart1': 'telnet calvin 6080'} %}"
+                )
+                data += "{% set connection_tags = {'uart1': ['primary']} %}"
+                template_dict = self.render_device_dictionary_from_text(data)
+                self.assertNotIn("connect", template_dict["commands"])
+                self.assertIn(
+                    "connections",
+                    template_dict["commands"],
+                    msg=f"{template_name} - missing connection_list syntax",
+                )
+
+    def test_inclusion(self):
+        data = """{% extends 'nexus4.jinja2' %}
+{% set adb_serial_number = 'R42D300FRYP' %}
+{% set fastboot_serial_number = 'R42D300FRYP' %}
+{% set connection_command = 'adb -s ' + adb_serial_number +' shell' %}
+"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            "adb -s R42D300FRYP shell", template_dict["commands"]["connect"]
+        )
+        self.assertIn("lxc", template_dict["actions"]["boot"]["methods"])
+        self.assertIn("fastboot", template_dict["actions"]["boot"]["methods"])
+        self.assertIn("lxc", template_dict["actions"]["deploy"]["methods"])
+        self.assertIn("fastboot", template_dict["actions"]["deploy"]["methods"])
+        self.assertEqual(
+            ["reboot"], template_dict["actions"]["boot"]["methods"]["fastboot"]
+        )
+
+    def test_console_baud(self):
+        data = """{% extends 'beaglebone-black.jinja2' %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertIn("u-boot", template_dict["actions"]["boot"]["methods"])
+        self.assertIn("nfs", template_dict["actions"]["boot"]["methods"]["u-boot"])
+        commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"][
+            "commands"
+        ]
+        for command in commands:
+            if not command.startswith("setenv nfsargs"):
+                continue
+            self.assertIn("console=ttyO0,115200n8", command)
+        data = """{% extends 'base-uboot.jinja2' %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertIn("u-boot", template_dict["actions"]["boot"]["methods"])
+        self.assertIn("nfs", template_dict["actions"]["boot"]["methods"]["u-boot"])
+        commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"][
+            "commands"
+        ]
+        for command in commands:
+            if not command.startswith("setenv nfsargs"):
+                continue
+            self.assertNotIn("console=ttyO0,115200n8", command)
+            self.assertNotIn("console=", command)
+            self.assertNotIn("console=ttyO0", command)
+            self.assertNotIn("115200n8", command)
+            self.assertNotIn("n8", command)
+
+    def test_primary_connection_power_commands_fail(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = 'localhost' %}"""
+        with self.assertRaises(SubmissionException):
+            self.render_device_dictionary_from_text(data)
+
+    def test_primary_connection_power_commands_empty_ssh_host(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set connection_command = 'telnet localhost 7302' %}
+{% set ssh_host = '' %}"""
+        self.render_device_dictionary_from_text(data)
+
+    def test_primary_connection_power_commands(self):
+        data = """{% extends 'x86.jinja2' %}
+{% set power_off_command = '/usr/bin/pduclient --command off' %}
+{% set hard_reset_command = '/usr/bin/pduclient --command reset' %}
+{% set power_on_command = '/usr/bin/pduclient --command on' %}
+{% set connection_command = 'telnet localhost 7302' %}"""
+        self.render_device_dictionary_from_text(data)
+
+    def test_pexpect_spawn_window(self):
+        template_dict = self.render_device_dictionary("hi6220-hikey-01")
+        self.assertIsNotNone(template_dict["constants"])
+        self.assertIn("spawn_maxread", template_dict["constants"])
+        self.assertIsInstance(template_dict["constants"]["spawn_maxread"], str)
+        self.assertEqual(int(template_dict["constants"]["spawn_maxread"]), 4092)
+
+    def test_test_shell_constants(self):
+        job_ctx = {}
+        template_dict = self.render_device_dictionary("hi6220-hikey-01", job_ctx)
+        self.assertIsNotNone(template_dict["constants"])
+        self.assertIn("posix", template_dict["constants"])
+        self.assertEqual(
+            "/lava-%s", template_dict["constants"]["posix"]["lava_test_results_dir"]
+        )
+
+        job_ctx = {"lava_test_results_dir": "/sysroot/lava-%s"}
+        template_dict = self.render_device_dictionary("hi6220-hikey-01", job_ctx)
+        self.assertIsNotNone(template_dict["constants"])
+        self.assertIn("posix", template_dict["constants"])
+        self.assertEqual(
+            "/sysroot/lava-%s",
+            template_dict["constants"]["posix"]["lava_test_results_dir"],
         )

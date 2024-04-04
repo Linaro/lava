@@ -8,18 +8,16 @@ import os
 import tempfile
 import unittest
 
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Timeout
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
 from tests.utils import DummyLogger, infrastructure_error
 
+from .test_templates import BaseTemplateTest
 
-class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
+
+class TestUbootTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -46,8 +44,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set use_xip = true %}
 {% set uboot_bootx_cmd = "bootm {KERNEL_ADDR} {RAMDISK_ADDR}" %}
         """
-        self.assertTrue(self.validate_data("armada-375-01", data))
-        template_dict = prepare_jinja_template("armada-375-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         params = template_dict["actions"]["deploy"]["parameters"]
         self.assertIsNotNone(params)
         self.assertIn("use_xip", params)
@@ -73,8 +70,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set mac_addr = {'eth0': '90:59:af:5e:69:fd', 'eth1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/bin/pduclient --daemon localhost --hostname lngpdu01 --command on --port 19' %}
 {% set connection_command = 'telnet localhost 7333' %}"""
-        self.assertTrue(self.validate_data("staging-bbb-01", data))
-        template_dict = prepare_jinja_template("staging-bbb-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(
             template_dict["actions"]["deploy"]["methods"]["ssh"]["host"]
         )
@@ -85,7 +81,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "None", template_dict["actions"]["deploy"]["methods"]["ssh"]["host"]
         )
         data += "{% set ssh_host = '192.168.0.10' %}"
-        template_dict = prepare_jinja_template("staging-bbb-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data, validate=False)
         self.assertIsNotNone(
             template_dict["actions"]["deploy"]["methods"]["ssh"]["host"]
         )
@@ -95,8 +91,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_b2260_template(self):
         data = """{% extends 'b2260.jinja2' %}"""
-        self.assertTrue(self.validate_data("staging-b2260-01", data))
-        template_dict = prepare_jinja_template("staging-b2260-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {"seconds": 15}, template_dict["timeouts"]["actions"]["power-off"]
         )
@@ -107,8 +102,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
-        self.assertTrue(self.validate_data("staging-mustang-01", data))
-        template_dict = prepare_jinja_template("staging-mustang-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsInstance(template_dict["parameters"]["text_offset"], str)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
@@ -125,8 +119,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
-        self.assertTrue(self.validate_data("staging-avenger96-01", data))
-        template_dict = prepare_jinja_template("staging-avenger96-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
@@ -139,13 +132,10 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
     def test_rpi3_32_template(self):
         checked = False
         data = """{% extends 'bcm2837-rpi-3-b-32.jinja2' %}"""
-        self.assertTrue(self.validate_data("staging-rpi3-01", data))
 
         # test appending to kernel args
         context = {"extra_kernel_args": "extra_arg=extra_val"}
-        template_dict = prepare_jinja_template(
-            "staging-rpi3-01", data, job_ctx=context, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, context)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
@@ -161,9 +151,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         # test overwriting kernel args
         checked = False
         context = {"custom_kernel_args": "custom_arg=custom_val"}
-        template_dict = prepare_jinja_template(
-            "staging-rpi3-01", data, job_ctx=context, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, context)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
@@ -182,11 +170,8 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command reboot --port 05' %}
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
-        self.assertTrue(self.validate_data("staging-panda-01", data))
         context = {"extra_kernel_args": "intel_mmio=on mmio=on"}
-        template_dict = prepare_jinja_template(
-            "staging-panda-01", data, job_ctx=context, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, context)
         self.assertIn("bootloader-commands", template_dict["timeouts"]["actions"])
         self.assertEqual(
             180.0,
@@ -220,8 +205,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set usb_label = 'SanDiskCruzerBlade' %}
 {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
 {% set usb_device_id = 0 %}"""
-        self.assertTrue(self.validate_data("staging-juno-01", data))
-        template_dict = prepare_jinja_template("staging-juno-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
 
     def test_cubietruck_template(self):
@@ -233,8 +217,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
 {% set connection_command = 'telnet localhost 6002' %}
 {% set console_device = 'ttyfake1' %}"""
-        self.assertTrue(self.validate_data("staging-cubietruck-01", data))
-        template_dict = prepare_jinja_template("staging-cubietruck-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertIn("u-boot", template_dict["actions"]["boot"]["methods"])
         self.assertIn("SanDisk_Ultra", template_dict["parameters"]["media"]["usb"])
@@ -272,9 +255,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon staging-master --hostname pdu15 --command on --port 05' %}"""
         job_ctx = {}
-        template_dict = prepare_jinja_template(
-            "staging-panda-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         for line in template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"][
             "commands"
         ]:
@@ -282,9 +263,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
                 self.assertIn(",tcp,hard ", line)
                 self.assertNotIn("nfsvers", line)
         job_ctx = {"extra_nfsroot_args": ",nolock,nfsvers=3"}
-        template_dict = prepare_jinja_template(
-            "staging-panda-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         for line in template_dict["actions"]["boot"]["methods"]["u-boot"]["nfs"][
             "commands"
         ]:
@@ -312,8 +291,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set mac_addr = {'iface0': '90:59:af:5e:69:fd', 'iface1': '00:e0:4c:53:44:58'} %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command on --port 19' %}
 {% set connection_command = 'telnet localhost 7333' %}"""
-        self.assertTrue(self.validate_data("staging-x86-01", data))
-        template_dict = prepare_jinja_template("staging-qemu-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn("interfaces", template_dict["parameters"])
         self.assertIn("iface0", template_dict["parameters"]["interfaces"])
         self.assertIn("port", template_dict["parameters"]["interfaces"]["iface0"])
@@ -329,8 +307,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
 {% set connection_command = 'telnet serial4 7010' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
-        self.assertTrue(self.validate_data("staging-panda-01", data))
-        template_dict = prepare_jinja_template("staging-panda-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         fdesc, device_yaml = tempfile.mkstemp()
         os.write(fdesc, yaml_safe_dump(template_dict).encode())
         panda = NewDevice(device_yaml)
@@ -351,8 +328,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7114' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command on' %}
 {% set uboot_mac_addr = '00:80:e1:12:81:30' %}"""
-        self.assertTrue(self.validate_data("staging-b2260-01", data))
-        template_dict = prepare_jinja_template("staging-b2260-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         ethaddr = False
         for command in template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
@@ -376,8 +352,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
 {% set connection_command = 'telnet serial4 7010' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
-        self.assertTrue(self.validate_data("staging-arndale-01", data))
-        template_dict = prepare_jinja_template("staging-panda-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         for line in template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]:
@@ -395,8 +370,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set connection_command = 'telnet localhost 7001' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 07' %}
 {% set boot_character_delay = 30 %}"""
-        self.assertTrue(self.validate_data("staging-d03-01", data))
-        template_dict = prepare_jinja_template("staging-d03-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn("character_delays", template_dict)
         self.assertIn("boot", template_dict["character_delays"])
         self.assertNotIn("test", template_dict["character_delays"])
@@ -411,10 +385,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
     {% set usb_label = 'SanDiskCruzerBlade' %}
     {% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
     {% set usb_device_id = 0 %}"""
-        self.assertTrue(self.validate_data("staging-juno-01", data))
-        test_template = prepare_jinja_template("staging-juno-01", data, raw=True)
-        rendered = test_template.render()
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertEqual({"boot": 30}, template_dict["character_delays"])
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -437,8 +408,9 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             ],
         )
 
-        rendered = test_template.render(bootloader_prompt="vexpress>")
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary_from_text(
+            data, {"bootloader_prompt": "vexpress>"}
+        )
         self.assertIsNotNone(template_dict)
         self.assertEqual({"boot": 30}, template_dict["character_delays"])
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
@@ -500,8 +472,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
             "recovery",
         ]
 
-        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2")
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary("imx8mq-evk-01")
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
@@ -512,8 +483,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
         context = {"bootloader_prompt": "=>"}
-        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary("imx8mq-evk-01", context)
         self.assertIsNotNone(template_dict)
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
@@ -529,8 +499,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         # test overwriting kernel args
         checked = False
         context = {"console_device": "ttyUSB1"}
-        rendered = self.render_device_dictionary_file("imx8mq-evk-01.jinja2", context)
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary("imx8mq-evk-01", context)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
@@ -544,23 +513,21 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_x15_template(self):
         # Test that we can override fastboot_deploy_uboot_commands
-        rendered = self.render_device_dictionary_file("x15-01.jinja2", raw=False)
+        rendered = self.render_device_dictionary("x15-01")
         params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
         self.assertEqual(params["fastboot"]["commands"], ["fastboot 1"])
         self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
 
-        rendered = self.render_device_dictionary_file(
-            "x15-01.jinja2",
-            raw=False,
+        rendered = self.render_device_dictionary(
+            "x15-01",
             job_ctx={"fastboot_deploy_uboot_commands": ["fastboot 0"]},
         )
         params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
         self.assertEqual(params["fastboot"]["commands"], ["fastboot 0"])
         self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
 
-        rendered = self.render_device_dictionary_file(
-            "x15-01.jinja2",
-            raw=False,
+        rendered = self.render_device_dictionary(
+            "x15-01",
             job_ctx={
                 "fastboot_deploy_uboot_commands": [
                     "setenv autoload no",
@@ -576,12 +543,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_xilinx_zcu102(self):
-        with open(
-            os.path.join(os.path.dirname(__file__), "devices", "zcu102.jinja2")
-        ) as zcu:
-            data = zcu.read()
-        self.assertTrue(self.validate_data("zcu-01", data))
-        template_dict = prepare_jinja_template("zcu-01", data, raw=False)
+        template_dict = self.render_device_dictionary("zcu102")
         self.assertIn("u-boot", template_dict["actions"]["boot"]["methods"])
         self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["u-boot"])
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
@@ -597,8 +559,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         data = """{% extends 'b2260.jinja2' %}
 {% set flasher_deploy_commands = ['flashing', 'something --else'] %}
 """
-        self.assertTrue(self.validate_data("staging-b2260-01", data))
-        template_dict = prepare_jinja_template("staging-b2260-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             ["flashing", "something --else"],
             template_dict["actions"]["deploy"]["methods"]["flasher"]["commands"],
@@ -609,8 +570,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 {% set user_commands = {'set_boot_to_usb': {'do': '/bin/true', 'undo': '/bin/true'},
                         'set_boot_to_sd': {'do': '/bin/true', 'undo': '/bin/true'}} %}
 """
-        self.assertTrue(self.validate_data("staging-b2260-01", data))
-        template_dict = prepare_jinja_template("staging-b2260-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "set_boot_to_usb": {"do": "/bin/true", "undo": "/bin/true"},
@@ -620,9 +580,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_meson8b_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "meson8b-odroidc1-1.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("meson8b-odroidc1-1")
         self.assertIsNotNone(template_dict)
         template_dict["constants"]["u-boot"].get("interrupt_ctrl_list", self.fail)
         self.assertEqual(
@@ -631,8 +589,7 @@ class TestUbootTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_rzn1d_template(self):
         data = """{% extends 'rzn1d.jinja2' %}"""
-        self.assertTrue(self.validate_data("rzn1d-01", data))
-        template_dict = prepare_jinja_template("rzn1d-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         commands = template_dict["actions"]["boot"]["methods"]["u-boot"]["ramdisk"][
             "commands"
         ]
