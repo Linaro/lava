@@ -1,3 +1,9 @@
+lava (2024.03-1) unstable; urgency=medium
+
+  * LAVA Software 2024.03 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Fri, 05 Apr 2024 10:57:16 +0200
+
 lava (2024.01-1) unstable; urgency=medium
 
   * LAVA Software 2024.01 release
