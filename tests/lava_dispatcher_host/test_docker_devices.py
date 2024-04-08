@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import importlib
 import subprocess
 from pathlib import Path
 
@@ -9,12 +10,7 @@ import pytest
 
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
-try:
-    import bcc
-
-    has_bcc = True
-except ImportError:
-    has_bcc = False
+has_bcc = importlib.util.find_spec("bcc") is not None
 
 
 IN_KERNEL_HEADERS_PATH = Path("/sys/kernel/kheaders.tar.xz")
