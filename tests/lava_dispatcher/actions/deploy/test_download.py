@@ -22,8 +22,7 @@ from lava_dispatcher.actions.deploy.download import (
     PreDownloadedAction,
     ScpDownloadAction,
 )
-
-from ...test_basic import Factory, LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class TestDowload(LavaDispatcherTestCase):

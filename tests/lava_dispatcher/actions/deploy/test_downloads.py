@@ -12,8 +12,7 @@ from lava_dispatcher.actions.deploy.downloads import (
     DownloadsAction,
     PostprocessWithDocker,
 )
-
-from ...test_basic import Factory, LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class TestDownloads(LavaDispatcherTestCase):

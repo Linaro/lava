@@ -93,7 +93,7 @@ def test_get_available_dts(mocker):
 @pytest.mark.django_db
 def test_main_loop(mocker):
     schedule = mocker.Mock()
-    mocker.patch(__name__ + ".lava_scheduler.schedule", schedule)
+    mocker.patch.object(lava_scheduler, "schedule", schedule)
 
     cmd = Command()
     cmd.logger = mocker.Mock()

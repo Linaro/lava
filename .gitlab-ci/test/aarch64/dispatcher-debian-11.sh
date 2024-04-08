@@ -13,6 +13,7 @@ then
 else
   set -x
   python3 -m pytest \
+      --import-mode importlib \
       --color=yes \
       --pythonwarnings=default \
       -r a \

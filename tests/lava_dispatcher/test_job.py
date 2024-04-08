@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from .test_basic import LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class TestJob(LavaDispatcherTestCase):

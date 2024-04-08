@@ -9,8 +9,7 @@ from unittest.mock import call as mock_call
 
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.device import PipelineDevice
-
-from ..test_basic import LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class TestCommands(LavaDispatcherTestCase):

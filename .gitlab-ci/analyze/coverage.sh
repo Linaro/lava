@@ -21,6 +21,7 @@ then
 else
   set -x
   python3 -m pytest --cache-clear -v \
+    --import-mode importlib \
     --cov --cov-report=term \
     --cov-report xml:coverage.xml \
     --cov-report html:htmlcov \

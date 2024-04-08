@@ -6,8 +6,7 @@
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import RetryAction
-
-from .test_basic import LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class TestRepeatAction(LavaDispatcherTestCase):

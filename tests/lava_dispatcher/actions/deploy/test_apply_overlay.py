@@ -11,8 +11,7 @@ from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
-
-from ...test_basic import LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class TestApplyOverlay(LavaDispatcherTestCase):

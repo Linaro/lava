@@ -8,8 +8,7 @@ from unittest.mock import MagicMock, patch
 
 from lava_common.exceptions import ConnectionClosedError, TestError
 from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
-
-from ...test_basic import LavaDispatcherTestCase
+from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 class Mockmatch:
