@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import argparse
 import csv
 
 from django.contrib.auth.models import User
@@ -50,6 +51,12 @@ class Command(BaseCommand):
         update_parser.add_argument("username", help="Username of the user")
         update_parser.add_argument(
             "--email", type=str, default=None, help="Change email of the user"
+        )
+        update_parser.add_argument(
+            "--passwd",
+            type=str,
+            default=argparse.SUPPRESS,
+            help="Change password of the user",
         )
 
         active_parser = update_parser.add_mutually_exclusive_group(required=False)
@@ -157,6 +164,8 @@ class Command(BaseCommand):
             raise CommandError("User %s does not exist" % username)
         if options["email"]:
             user.email = options["email"]
+        if "passwd" in options:
+            user.set_password(options["passwd"])
         # False is an allowed value, but not None.
         if options["active"] in [True, False]:
             user.is_active = options["active"]
