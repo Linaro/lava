@@ -4,7 +4,19 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
+from lava_dispatcher.actions.boot import (
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction,
+)
+from lava_dispatcher.actions.boot.uefi import (
+    UefiShellAction,
+    UefiShellInterrupt,
+    UefiShellMenuInterrupt,
+    UefiShellMenuSelector,
+)
+from lava_dispatcher.actions.deploy.nfs import NfsAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.menus.menus import MenuConnect
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -34,52 +46,16 @@ class TestUefiShell(LavaDispatcherTestCase):
         self.assertIn("shell_menu", params)
         self.assertIn("bootloader_prompt", params)
         # Nfs Deploy checks
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "nfs-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        self.assertIsNotNone(overlay)
+        deploy = self.job.pipeline.find_action(NfsAction)
+        deploy.pipeline.find_action(OverlayAction)
 
         # Boot checks
-        boot = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "uefi-shell-main-action"
-        ][0]
-        commands = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
-        menu_connect = [
-            action for action in boot.pipeline.actions if action.name == "menu-connect"
-        ][0]
-        menu_interrupt = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "uefi-shell-menu-interrupt"
-        ][0]
-        menu_selector = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "uefi-shell-menu-selector"
-        ][0]
-        shell_interrupt = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "uefi-shell-menu-interrupt"
-        ][0]
-        boot_commands = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "bootloader-commands"
-        ][0]
+        boot = self.job.pipeline.find_action(UefiShellAction)
+        commands = boot.pipeline.find_action(BootloaderCommandOverlay)
+        menu_connect = boot.pipeline.find_action(MenuConnect)
+        menu_interrupt = boot.pipeline.find_action(UefiShellMenuInterrupt)
+        menu_selector = boot.pipeline.find_action(UefiShellMenuSelector)
+        boot_commands = boot.pipeline.find_action(BootloaderCommandsAction)
         self.assertEqual("uefi", commands.method)
         self.assertFalse(commands.use_bootscript)
         self.assertIsNone(commands.lava_mac)
@@ -91,7 +67,6 @@ class TestUefiShell(LavaDispatcherTestCase):
         self.assertEqual("UEFI Interactive Shell", menu_selector.boot_message)
         # ...then, shell commands boot to linux.
         self.assertEqual("Linux version", boot_commands.params["boot_message"])
-        self.assertIsNotNone(shell_interrupt)
 
     def test_no_menu_reference(self):
         job = self.factory.create_job(
@@ -114,60 +89,22 @@ class TestUefiShell(LavaDispatcherTestCase):
         self.assertIn("shell_menu", params)
         self.assertIn("bootloader_prompt", params)
         # Nfs Deploy checks
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "nfs-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        self.assertIsNotNone(overlay)
+        deploy = job.pipeline.find_action(NfsAction)
+        deploy.pipeline.find_action(OverlayAction)
 
         # Boot checks
-        boot = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "uefi-shell-main-action"
-        ][0]
-        commands = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
-        boot_commands = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "bootloader-commands"
-        ][0]
-
-        self.assertIsNotNone(
-            [
-                action
-                for action in boot.pipeline.actions
-                if action.name == "uefi-shell-interrupt"
-            ]
-        )
+        boot = job.pipeline.find_action(UefiShellAction)
+        commands = boot.pipeline.find_action(BootloaderCommandOverlay)
+        boot_commands = boot.pipeline.find_action(BootloaderCommandsAction)
+        boot.pipeline.find_action(UefiShellInterrupt)
 
         self.assertEqual(
             0,
-            len(
-                [
-                    action
-                    for action in boot.pipeline.actions
-                    if action.name == "uefi-shell-menu-interrupt"
-                ]
-            ),
+            len(boot.pipeline.find_all_actions(UefiShellMenuInterrupt)),
         )
         self.assertEqual(
             0,
-            len(
-                [
-                    action
-                    for action in boot.pipeline.actions
-                    if action.name == "uefi-shell-menu-selector"
-                ]
-            ),
+            len(boot.pipeline.find_all_actions(UefiShellMenuSelector)),
         )
 
         self.assertEqual("uefi", commands.method)

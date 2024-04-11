@@ -15,6 +15,11 @@ from pexpect import EOF as pexpect_eof
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.boot import AutoLoginAction, LoginAction
+from lava_dispatcher.actions.boot.qemu import BootQEMUImageAction, CallQemuAction
+from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.deploy.testdef import InlineRepoAction
 from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -138,21 +143,13 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm.yaml", job=self.job)
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
+        self.assertEqual(description_ref, self.job.pipeline.describe())
+
+        overlay = self.job.pipeline.find_action(OverlayAction)
         self.assertIn(
             "persistent-nfs-overlay",
             [action.name for action in overlay.pipeline.actions],
         )
-        self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
         try:
@@ -172,9 +169,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertRaises(JobError, job.pipeline.validate_actions)
 
     def test_overlay(self):
-        overlay = None
-        action = self.job.pipeline.actions[0]
-        overlay = action.pipeline.actions[0]
+        overlay = self.job.pipeline.find_action(OverlayAction)
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -194,7 +189,7 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         self.assertIsNotNone(glob.glob(os.path.join(overlay.lava_test_dir, "lava-*")))
 
     def test_boot(self):
-        action = self.job.pipeline.actions[1]
+        action = self.job.pipeline.find_action(BootQEMUImageAction)
         # get the action & populate it
         self.assertEqual(action.parameters["method"], "qemu")
         self.assertEqual(
@@ -219,11 +214,6 @@ class TestKVMPortable(LavaDispatcherTestCase):
         super().setUp()
         factory = Factory()
         self.job = factory.create_kvm_job("sample_jobs/kvm-noos.yaml")
-
-    def test_deploy_job(self):
-        self.assertEqual(self.job.pipeline.job, self.job)
-        action = self.job.pipeline.actions[0]
-        self.assertEqual(action.job, self.job)
 
     def test_pipeline(self):
         description_ref = self.pipeline_reference("kvm-noos.yaml", job=self.job)
@@ -348,21 +338,7 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
         job = parser.parse(yaml_safe_dump(job_data), device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
-        boot_image = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        boot_qemu = [
-            action
-            for action in boot_image.pipeline.actions
-            if action.name == "boot-qemu-image"
-        ][0]
-        qemu = [
-            action
-            for action in boot_qemu.pipeline.actions
-            if action.name == "execute-qemu"
-        ][0]
+        qemu = job.pipeline.find_action(CallQemuAction)
         self.assertIsInstance(qemu.sub_command, list)
         [self.assertIsInstance(item, str) for item in qemu.base_sub_command]
         self.assertIn("virtio-blk-device.scsi=off", qemu.base_sub_command)
@@ -374,17 +350,9 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
         self.assertEqual(len(self.job.pipeline.describe()), 4)
-        inline_repo = None
-        action = self.job.pipeline.actions[0]
-        self.assertIsNotNone(action.pipeline.actions[1])
-        overlay = action.pipeline.actions[0]
-        self.assertIsNotNone(overlay.pipeline.actions[1])
-        testdef = overlay.pipeline.actions[2]
-        self.assertIsNotNone(testdef.pipeline.actions[0])
-        inline_repo = testdef.pipeline.actions[0]
 
+        inline_repo = self.job.pipeline.find_action(InlineRepoAction)
         # Test the InlineRepoAction directly
-        self.assertIsNotNone(inline_repo)
         location = mkdtemp()
         # other actions have not been run, so fake up
         inline_repo.set_namespace_data(
@@ -448,38 +416,9 @@ class TestKvmConnection(LavaDispatcherTestCase):
         self.job.validate()
         description_ref = self.pipeline_reference("qemu-reboot.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe())
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        bootqemu = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "boot-qemu-image"
-        ][0]
-        call_qemu = [
-            action
-            for action in bootqemu.pipeline.actions
-            if action.name == "execute-qemu"
-        ][0]
-        self.assertEqual(call_qemu.session_class, QemuSession)
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][1]
-        bootqemu = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "boot-qemu-image"
-        ][0]
-        call_qemu = [
-            action
-            for action in bootqemu.pipeline.actions
-            if action.name == "execute-qemu"
-        ][0]
-        self.assertEqual(call_qemu.session_class, QemuSession)
+
+        for call_qemu in self.job.pipeline.find_all_actions(CallQemuAction):
+            self.assertEqual(call_qemu.session_class, QemuSession)
 
 
 class TestAutoLogin(LavaDispatcherTestCase):
@@ -493,16 +432,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
         self.job.validate()
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update(
             {
@@ -535,16 +465,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_autologin_void_login_prompt(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update(
             {
@@ -560,16 +481,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_void_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": []})
         autologinaction.parameters.update({"method": "qemu"})
@@ -581,16 +493,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_void_prompts_list_item(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": [""]})
 
@@ -601,16 +504,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_void_prompts_list_item2(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": ["root@debian:~#", ""]})
 
@@ -621,16 +515,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_prompts_list(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": ["root@debian:~#", pexpect_eof]})
         autologinaction.parameters.update({"method": "qemu"})
@@ -650,16 +535,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_void_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": ""})
 
@@ -670,16 +546,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_missing_autologin_prompts_str(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": ["root@debian:~#", pexpect_eof]})
         autologinaction.parameters.update({"method": "qemu"})
@@ -699,21 +566,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
     def test_autologin_login_incorrect(self):
         self.assertEqual(len(self.job.pipeline.describe()), 4)
 
-        bootaction = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        autologinaction = [
-            action
-            for action in bootaction.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
-        loginaction = [
-            action
-            for action in autologinaction.pipeline.actions
-            if action.name == "login-action"
-        ][0]
+        autologinaction = self.job.pipeline.find_action(AutoLoginAction)
 
         autologinaction.parameters.update({"prompts": ["root@debian:~#"]})
         autologinaction.parameters.update(
@@ -722,6 +575,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         autologinaction.parameters.update({"method": "qemu"})
         autologinaction.validate()
 
+        loginaction = autologinaction.pipeline.find_action(LoginAction)
         loginaction.parameters = autologinaction.parameters
 
         # initialise the first Connection object, a command line shell
@@ -768,16 +622,8 @@ class TestKvmUefi(LavaDispatcherTestCase):
         infrastructure_error("qemu-system-x86_64"), "qemu-system-x86_64 not installed"
     )
     def test_uefi_path(self):
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
-        ][0]
-        downloaders = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "download-retry"
-        ]
+        downloaders = self.job.pipeline.find_all_actions(DownloaderAction)
+
         self.assertEqual(len(downloaders), 2)
         uefi_download = downloaders[0]
         image_download = downloaders[1]
@@ -790,19 +636,8 @@ class TestKvmUefi(LavaDispatcherTestCase):
             os.path.exists(uefi_dir)
         )  # no download has taken place, but the directory needs to exist
         self.assertFalse(uefi_dir.endswith("bios-256k.bin"))
-        boot = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        qemu = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "boot-qemu-image"
-        ][0]
-        execute = [
-            action for action in qemu.pipeline.actions if action.name == "execute-qemu"
-        ][0]
+
+        execute = self.job.pipeline.find_action(CallQemuAction)
         self.job.validate()
         execute.run(None, 1)
         self.assertEqual(["-drive format=raw,file={disk1}"], execute.commands)
@@ -843,19 +678,8 @@ class TestQemuNFS(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("qemu-nfs.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
-        boot = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-image-retry"
-        ][0]
-        qemu = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "boot-qemu-image"
-        ][0]
-        execute = [
-            action for action in qemu.pipeline.actions if action.name == "execute-qemu"
-        ][0]
+        execute = self.job.pipeline.find_action(CallQemuAction)
+
         with patch(f"{execute.__module__}.SYS_CLASS_KVM", "/"):
             self.job.validate()
             execute.run(None, 1)

@@ -7,6 +7,8 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+from lava_dispatcher.actions.boot.docker import CallDockerAction
+from lava_dispatcher.actions.deploy.docker import DockerAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -43,11 +45,7 @@ class TestDocker(LavaDispatcherTestCase):
     def test_deploy(self, run_cmd, *args):
         self.job.validate()
 
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deploy-docker"
-        ][0]
+        deploy = self.job.pipeline.find_action(DockerAction)
 
         connection = MagicMock()
         connection.timeout = MagicMock()
@@ -73,14 +71,7 @@ class TestDocker(LavaDispatcherTestCase):
     def test_boot(self, shell_command, *args):
         self.job.validate()
 
-        boot = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-docker"
-        ][0]
-        call = [
-            action for action in boot.pipeline.actions if action.name == "docker-run"
-        ][0]
+        call = self.job.pipeline.find_action(CallDockerAction)
 
         connection = MagicMock()
         connection.timeout = MagicMock()
@@ -127,14 +118,7 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
     def test_boot(self, shell_command, *args):
         self.job.validate()
 
-        boot = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "boot-docker"
-        ][0]
-        call = [
-            action for action in boot.pipeline.actions if action.name == "docker-run"
-        ][0]
+        call = self.job.pipeline.find_action(CallDockerAction)
 
         connection = MagicMock()
         connection.timeout = MagicMock()

@@ -11,6 +11,7 @@ import re
 from lava_common.exceptions import JobError, LAVATimeoutError, TestError
 from lava_common.log import YAMLLogger
 from lava_common.yaml import yaml_safe_load
+from lava_dispatcher.actions.test.shell import TestShellAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -32,28 +33,10 @@ class TestSkipTimeouts(LavaDispatcherTestCase):
         self.job = factory.create_kvm_job("sample_jobs/qemu-reboot.yaml", validate=True)
         self.job.validate()
         self.ret = False
-        test_retry = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
-        self.skipped_shell = [
-            action
-            for action in test_retry.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
-        print(self.skipped_shell.parameters["timeout"])
-        self.skipped_shell.logger = YAMLLogger("dispatcher")
-        test_retry = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][1]
-        self.fatal_shell = [
-            action
-            for action in test_retry.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+
+        self.skipped_shell, self.fatal_shell = self.job.pipeline.find_all_actions(
+            TestShellAction
+        )
 
     def test_timeouterror(self):
         self.assertEqual(self.skipped_shell.timeout_exception, LAVATimeoutError)
@@ -81,16 +64,7 @@ class TestPatterns(LavaDispatcherTestCase):
         self.job = factory.create_kvm_job("sample_jobs/kvm.yaml")
         self.job.validate()
         self.ret = False
-        test_retry = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
-        self.test_shell = [
-            action
-            for action in test_retry.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+        self.test_shell = self.job.pipeline.find_action(TestShellAction)
         self.test_shell.logger = YAMLLogger("dispatcher")
 
     def test_case_result(self):

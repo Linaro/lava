@@ -14,6 +14,7 @@ import responses
 from responses import RequestsMock
 
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -60,15 +61,8 @@ class TestDecompression(LavaDispatcherTestCase):
 
         self.assertEqual(len(job.pipeline.describe()), 2)
 
-        deployaction = [
-            action for action in job.pipeline.actions if action.name == "deployimages"
-        ][0]
-        downloadactions = [
-            action
-            for action in deployaction.pipeline.actions
-            if action.name == "download-retry"
-        ]
-        self.assertEqual(len(downloadactions), 4)
+        http_download_actions = job.pipeline.find_all_actions(HttpDownloadAction)
+        self.assertEqual(len(http_download_actions), 4)
 
         sha256sum = "31e00e0e4c233c89051cd748122fde2c98db0121ca09ba93a3820817ea037bc5"
         md5sum = "596c35b949baf46b721744a13f76a258"
@@ -77,12 +71,7 @@ class TestDecompression(LavaDispatcherTestCase):
         filesize = 10240000
         zipsize = 10109
 
-        for downloadaction in downloadactions:
-            httpaction = [
-                action
-                for action in downloadaction.pipeline.actions
-                if action.name == "http-download"
-            ][0]
+        for httpaction in http_download_actions:
             httpaction.validate()
             httpaction.parameters = httpaction.parameters["images"]
             httpaction.run(None, None)
@@ -120,21 +109,7 @@ class TestDecompression(LavaDispatcherTestCase):
         job = self.factory.create_kvm_job("sample_jobs/compression_bad.yaml")
         job.validate()
 
-        deploy_actions = (
-            action for action in job.pipeline.actions if action.name == "deployimages"
-        )
-        download_actions = (
-            action
-            for deploy_action in deploy_actions
-            for action in deploy_action.pipeline.actions
-            if action.name == "download-retry"
-        )
-        http_download_actions = (
-            action
-            for download_action in download_actions
-            for action in download_action.pipeline.actions
-            if action.name == "http-download"
-        )
+        http_download_actions = job.pipeline.find_all_actions(HttpDownloadAction)
 
         tests_dict = {action.key: action for action in http_download_actions}
         test_bad_sha256sum = tests_dict["test_bad_sha256sum"]

@@ -31,7 +31,11 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
+    from typing import Iterator, Optional, TypeVar
+
     from .job import Job
+
+    TAction = TypeVar("TAction", bound="Action")
 
 
 class InternalObject:
@@ -80,7 +84,7 @@ class Pipeline:
     """
 
     def __init__(self, job: Job, parent=None, parameters=None):
-        self.actions = []
+        self.actions: list[Action] = []
         self.parent = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
@@ -314,6 +318,28 @@ class Pipeline:
                 connection = new_connection
         return connection
 
+    def _iter_actions(self) -> Iterator[Action]:
+        for action in self.actions:
+            yield action
+            if action.pipeline is not None:
+                yield from action.pipeline._iter_actions()
+
+    def find_action(self, action_class: type[TAction]) -> TAction:
+        for action in self._iter_actions():
+            if isinstance(action, action_class):
+                return action
+
+        raise LookupError(f"Action of type {action_class} not found")
+
+    def find_all_actions(self, action_class: type[TAction]) -> list[TAction]:
+        all_actions: list[TAction] = []
+
+        for action in self._iter_actions():
+            if isinstance(action, action_class):
+                all_actions.append(action)
+
+        return all_actions
+
 
 class CommandLogger:
     """
@@ -360,7 +386,7 @@ class Action:
         # Level is set during pipeline creation and must not be changed
         # subsequently except by RetryCommand.
         self.level = None
-        self.pipeline = None
+        self.pipeline: Optional[Pipeline] = None
         self.__parameters__ = {}
         self.__errors__ = []
         self.job = None

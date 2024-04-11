@@ -10,7 +10,12 @@ import unittest
 from unittest.mock import ANY, MagicMock, PropertyMock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.actions.deploy.fastboot import FastbootFlashOrderAction
+from lava_dispatcher.actions.boot import AutoLoginAction, BootloaderInterruptAction
+from lava_dispatcher.actions.boot.fastboot import BootFastbootAction
+from lava_dispatcher.actions.boot.grub import GrubSequenceAction
+from lava_dispatcher.actions.deploy.fastboot import FastbootAction, FastbootFlashAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
 from lava_dispatcher.utils.containers import DockerDriver, LxcDriver, NullDriver
@@ -280,11 +285,8 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         self.assertIn(LxcProtocol.name, [protocol.name for protocol in job.protocols])
         self.assertEqual(len(job.protocols), 1)
         self.assertIsNotNone(job.device.pre_os_command)
-        select = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-sequence-action"
-        ][0]
+
+        select = job.pipeline.find_action(GrubSequenceAction)
         self.assertIn(LxcProtocol.name, select.parameters.keys())
         self.assertIn("protocols", select.parameters.keys())
         self.assertIn(LxcProtocol.name, select.parameters["protocols"].keys())
@@ -300,11 +302,8 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         for calling in select.parameters["protocols"][LxcProtocol.name]:
             self.assertEqual(calling["action"], select.name)
             self.assertEqual(calling["request"], "pre-os-command")
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
+
+        deploy = job.pipeline.find_action(FastbootAction)
         self.assertIn(LxcProtocol.name, deploy.parameters.keys())
         self.assertIn("protocols", deploy.parameters.keys())
         self.assertIn(LxcProtocol.name, deploy.parameters["protocols"].keys())
@@ -333,19 +332,8 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
             job.device.pre_power_command,
             "/home/neil/lava-lab/shared/lab-scripts/usb_hub_control -u 12 -p 4000 -m sync",
         )
-        lxc_deploy = [
-            action for action in job.pipeline.actions if action.name == "lxc-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in lxc_deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
+
+        testdef = job.pipeline.find_action(TestDefinitionAction)
         job.validate()
         self.assertEqual(
             {
@@ -374,14 +362,9 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
             self.assertEqual([], action.errors)
 
     def test_overlay(self):
-        overlay = None
         action = self.job.pipeline.actions[0]
         self.assertEqual(action.parameters["namespace"], "tlxc")
-        overlay = [
-            action
-            for action in action.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
+        overlay = action.pipeline.find_action(OverlayAction)
         self.assertIsNotNone(overlay)
         # these tests require that lava-dispatcher itself is installed, not just running tests from a git clone
         self.assertTrue(os.path.exists(overlay.lava_test_dir))
@@ -424,9 +407,6 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         self.assertTrue(job.device.get("fastboot_via_uboot", True))
         description_ref = self.pipeline_reference("db410c.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        boot = [
-            action for action in job.pipeline.actions if action.name == "fastboot-boot"
-        ][0]
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_x15_job(self):
@@ -435,47 +415,22 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("x15.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
-        enter = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "uboot-enter-fastboot"
-        ][0]
-        interrupt = [
-            action
-            for action in enter.pipeline.actions
-            if action.name == "bootloader-interrupt"
-        ][0]
-        self.assertTrue(interrupt.needs_interrupt)
-        self.assertIsInstance(interrupt.params, dict)
-        self.assertNotEqual(interrupt.params, {})
-        self.assertIn("interrupt_prompt", interrupt.params)
-        boot = [
-            action for action in job.pipeline.actions if action.name == "fastboot-boot"
-        ][0]
-        enter = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "uboot-enter-fastboot"
-        ][0]
-        interrupt = [
-            action
-            for action in enter.pipeline.actions
-            if action.name == "bootloader-interrupt"
-        ][0]
-        self.assertIsInstance(interrupt.params, dict)
-        self.assertNotEqual(interrupt.params, {})
-        self.assertIn("interrupt_prompt", interrupt.params)
-        self.assertTrue(interrupt.needs_interrupt)
-        autologin = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+
+        deploy = job.pipeline.find_action(FastbootAction)
+        interrupt_deploy = deploy.pipeline.find_action(BootloaderInterruptAction)
+        self.assertTrue(interrupt_deploy.needs_interrupt)
+        self.assertIsInstance(interrupt_deploy.params, dict)
+        self.assertNotEqual(interrupt_deploy.params, {})
+        self.assertIn("interrupt_prompt", interrupt_deploy.params)
+
+        boot = job.pipeline.find_action(BootFastbootAction)
+        interrupt_boot = boot.pipeline.find_action(BootloaderInterruptAction)
+        self.assertIsInstance(interrupt_boot.params, dict)
+        self.assertNotEqual(interrupt_boot.params, {})
+        self.assertIn("interrupt_prompt", interrupt_boot.params)
+        self.assertTrue(interrupt_boot.needs_interrupt)
+
+        autologin = boot.pipeline.find_action(AutoLoginAction)
         self.assertTrue(autologin.booting)
         self.assertEqual(
             set(autologin.parameters.get("prompts")),
@@ -532,28 +487,10 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
             "boot",
             "rootfs",
         ]
-        flash_order = None
-        action = job.pipeline.actions[2]
-        self.assertEqual(action.name, "fastboot-deploy")
-        flash_order = [
-            action
-            for action in action.pipeline.actions
-            if action.name == "fastboot-flash-order-action"
-        ][0]
-        flash_action = [
-            action
-            for action in flash_order.pipeline.actions
-            if action.name == "fastboot-flash-action"
-        ][0]
-        flash_cmds = [
-            action.command
-            for action in flash_order.pipeline.actions
-            if action.name == "fastboot-flash-action"
-        ]
-        self.assertIsNotNone(flash_order)
-        self.assertIsNotNone(flash_action)
-        self.assertEqual(flash_action.timeout_exception, InfrastructureError)
-        self.assertIsInstance(flash_order, FastbootFlashOrderAction)
+
+        flash_actions = job.pipeline.find_all_actions(FastbootFlashAction)
+        flash_cmds = [action.command for action in flash_actions]
+        self.assertEqual(FastbootFlashAction.timeout_exception, InfrastructureError)
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
@@ -563,22 +500,11 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("hi960-aosp-efi.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        flash_order = None
         expected_flash_cmds = ["boot", "system", "userdata", "cache"]
-        action = job.pipeline.actions[2]
-        self.assertEqual(action.name, "fastboot-deploy")
-        flash_order = [
-            action
-            for action in action.pipeline.actions
-            if action.name == "fastboot-flash-order-action"
-        ][0]
-        flash_cmds = [
-            action.command
-            for action in flash_order.pipeline.actions
-            if action.name == "fastboot-flash-action"
-        ]
-        self.assertIsNotNone(flash_order)
-        self.assertIsInstance(flash_order, FastbootFlashOrderAction)
+
+        flash_actions = job.pipeline.find_all_actions(FastbootFlashAction)
+        flash_cmds = [action.command for action in flash_actions]
+
         self.assertEqual(expected_flash_cmds, flash_cmds)
 
     def test_fastboot_minus_lxc(self):
@@ -590,11 +516,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         # There shouldn't be any lxc defined
         lxc_name = is_lxc_requested(job)
         self.assertEqual(lxc_name, False)
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
+
         # No lxc requested, hence lxc_cmd_prefix is an empty list
         self.assertEqual([], lxc_cmd_prefix(job))
 
@@ -607,11 +529,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         # There shouldn't be any lxc defined
         lxc_name = is_lxc_requested(job)
         self.assertEqual(lxc_name, False)
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
+
         # No lxc requested, hence lxc_cmd_prefix is an empty list
         self.assertEqual([], lxc_cmd_prefix(job))
 
@@ -619,9 +537,8 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         job = self.factory.create_job(
             "imx8mq-evk-01.jinja2", "sample_jobs/imx8mq-evk.yaml"
         )
-        boot = [
-            action for action in job.pipeline.actions if action.name == "fastboot-boot"
-        ][0]
+        boot = job.pipeline.find_action(BootFastbootAction)
+
         self.assertIn("commands", boot.parameters)
         self.assertEqual("191c51d6f060954b", job.device["fastboot_serial_number"])
         self.assertIsInstance(boot.parameters["commands"], list)

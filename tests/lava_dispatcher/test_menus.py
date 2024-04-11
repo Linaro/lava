@@ -11,6 +11,7 @@ from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
+from lava_dispatcher.actions.boot.uefi_menu import UefiMenuSelector
 from lava_dispatcher.menus.menus import SelectorMenu
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.strings import substitute
@@ -92,16 +93,8 @@ class TestUefi(LavaDispatcherTestCase):
     def test_selector(self, which_mock):
         self.assertIsNotNone(self.job)
         self.job.validate()
-        uefi_menu = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "uefi-menu-action"
-        ][0]
-        selector = [
-            action
-            for action in uefi_menu.pipeline.actions
-            if action.name == "uefi-menu-selector"
-        ][0]
+
+        selector = self.job.pipeline.find_action(UefiMenuSelector)
         params = self.job.device["actions"]["boot"]["methods"]["uefi-menu"][
             "parameters"
         ]
@@ -123,16 +116,8 @@ class TestUefi(LavaDispatcherTestCase):
     def test_uefi_job(self, which_mock):
         self.assertIsNotNone(self.job)
         self.job.validate()
-        uefi_menu = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "uefi-menu-action"
-        ][0]
-        selector = [
-            action
-            for action in uefi_menu.pipeline.actions
-            if action.name == "uefi-menu-selector"
-        ][0]
+
+        selector = self.job.pipeline.find_action(UefiMenuSelector)
         self.assertEqual(selector.selector.prompt, "Start:")
         self.assertIsInstance(selector.items, list)
         description_ref = self.pipeline_reference("mustang-uefi.yaml", job=self.job)

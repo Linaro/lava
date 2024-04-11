@@ -9,7 +9,14 @@ import unittest
 
 from lava_common.exceptions import JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.actions.deploy.lxc import LxcCreateAction
+from lava_dispatcher.actions.boot.lxc import BootLxcAction, LxcAddStaticDevices
+from lava_dispatcher.actions.deploy.lxc import LxcAction, LxcCreateAction
+from lava_dispatcher.actions.deploy.testdef import (
+    TestDefinitionAction,
+    TestRunnerAction,
+)
+from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -64,20 +71,22 @@ class TestLxcDeploy(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-create"), "lxc-create not installed")
     def test_create(self):
-        for action in self.job.pipeline.actions:
-            if isinstance(action, LxcCreateAction):
-                self.assertEqual(action.lxc_data["lxc_name"], "pipeline-lxc-test-4577")
-                self.assertEqual(action.lxc_data["lxc_distribution"], "debian")
-                self.assertEqual(action.lxc_data["lxc_release"], "sid")
-                self.assertEqual(action.lxc_data["lxc_arch"], "amd64")
-                self.assertEqual(action.lxc_data["lxc_template"], "debian")
-                self.assertEqual(
-                    action.lxc_data["lxc_mirror"], "http://ftp.us.debian.org/debian/"
-                )
-                self.assertEqual(
-                    action.lxc_data["lxc_security_mirror"],
-                    "http://mirror.csclub.uwaterloo.ca/debian-security/",
-                )
+        self.job.validate()
+        action = self.job.pipeline.find_action(LxcCreateAction)
+
+        self.assertEqual(
+            action.lxc_data["lxc_name"], f"pipeline-lxc-test-{self.job.job_id}"
+        )
+        self.assertEqual(action.lxc_data["lxc_distribution"], "debian")
+        self.assertEqual(action.lxc_data["lxc_release"], "sid")
+        self.assertEqual(action.lxc_data["lxc_template"], "debian")
+        self.assertEqual(
+            action.lxc_data["lxc_mirror"], "http://ftp.us.debian.org/debian/"
+        )
+        self.assertEqual(
+            action.lxc_data["lxc_security_mirror"],
+            "http://mirror.csclub.uwaterloo.ca/debian-security/",
+        )
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_boot(self):
@@ -104,17 +113,11 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
         self.job.validate()
-        drone_test = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
+
+        drone_test = self.job.pipeline.find_action(TestShellRetry)
         self.assertNotEqual(10, drone_test.connection_timeout.duration)
-        drone_shell = [
-            action
-            for action in drone_test.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+
+        drone_shell = drone_test.pipeline.find_action(TestShellAction)
         self.assertEqual(10, drone_shell.connection_timeout.duration)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
@@ -125,49 +128,16 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         lxc_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/bbb-lxc.yaml")
         with open(lxc_yaml) as sample_job_data:
             data = yaml_safe_load(sample_job_data)
-        lxc_deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lxc-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in lxc_deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        test_def = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        self.assertIsNotNone(test_def.level, test_def.test_list)
-        runner = [
-            action
-            for action in test_def.pipeline.actions
-            if action.name == "test-runscript-overlay"
-        ][0]
-        self.assertIsNotNone(runner.testdef_levels)
-        tftp_deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        test_def = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        namespace = test_def.parameters.get("namespace")
+
+        lxc_deploy = self.job.pipeline.find_action(LxcAction)
+        lxc_test_def = lxc_deploy.pipeline.find_action(TestDefinitionAction)
+        self.assertIsNotNone(lxc_test_def.level, lxc_test_def.test_list)
+        lxc_runner = lxc_test_def.pipeline.find_action(TestRunnerAction)
+        self.assertIsNotNone(lxc_runner.testdef_levels)
+
+        tftp_deploy = self.job.pipeline.find_action(TftpAction)
+        tftp_test_def = tftp_deploy.pipeline.find_action(TestDefinitionAction)
+        namespace = tftp_test_def.parameters.get("namespace")
         self.assertIsNotNone(namespace)
         test_actions = [
             action for action in self.job.parameters["actions"] if "test" in action
@@ -187,14 +157,11 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         self.assertEqual(len(namespace_tests), 1)
         self.assertEqual(len(test_actions), 2)
         self.assertEqual("smoke-tests-bbb", namespace_tests[0][0]["name"])
-        self.assertEqual("smoke-tests-bbb", test_def.test_list[0][0]["name"])
-        self.assertIsNotNone(test_def.level, test_def.test_list)
-        runner = [
-            action
-            for action in test_def.pipeline.actions
-            if action.name == "test-runscript-overlay"
-        ][0]
-        self.assertIsNotNone(runner.testdef_levels)
+        self.assertEqual("smoke-tests-bbb", tftp_test_def.test_list[0][0]["name"])
+        self.assertIsNotNone(tftp_test_def.level, tftp_test_def.test_list)
+        tftp_runner = tftp_test_def.pipeline.find_action(TestRunnerAction)
+        self.assertIsNotNone(tftp_runner.testdef_levels)
+
         # remove the second test action
         data["actions"].pop()
         test_actions = [action for action in data["actions"] if "test" in action]
@@ -206,41 +173,18 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
-        lxc_deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lxc-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in lxc_deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        test_def = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        self.assertIsNotNone(test_def.level, test_def.test_list)
-        runner = [
-            action
-            for action in test_def.pipeline.actions
-            if action.name == "test-runscript-overlay"
-        ][0]
-        self.assertIsNotNone(runner.testdef_levels)
+        lxc2_deploy = job.pipeline.find_action(LxcAction)
+        lxc2_test_def = lxc2_deploy.pipeline.find_action(TestDefinitionAction)
+        self.assertIsNotNone(lxc2_test_def.level, lxc2_test_def.test_list)
+        lxc2_runner = lxc2_test_def.pipeline.find_action(TestRunnerAction)
+        self.assertIsNotNone(lxc2_runner.testdef_levels)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_with_static_device(self):
         self.job = self.factory.create_hikey_aep_job("sample_jobs/hi6220-hikey.yaml")
         self.job.validate()
-        lxc_boot = [
-            action for action in self.job.pipeline.actions if action.name == "lxc-boot"
-        ][0]
-        lxc_static = [
-            action
-            for action in lxc_boot.pipeline.actions
-            if action.name == "lxc-add-static"
-        ][0]
+
+        lxc_static = self.job.pipeline.find_action(LxcAddStaticDevices)
         self.assertIsNotNone(lxc_static)
         self.assertIsInstance(self.job.device.get("static_info"), list)
         self.assertEqual(len(self.job.device.get("static_info")), 1)
@@ -264,30 +208,14 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
-        lxc_deploy = [
-            action for action in job.pipeline.actions if action.name == "lxc-deploy"
-        ][0]
+
+        lxc_deploy = job.pipeline.find_action(LxcAction)
         names = [action.name for action in lxc_deploy.pipeline.actions]
         self.assertNotIn("prepare-tftp-overlay", names)
         namespace1 = lxc_deploy.parameters.get("namespace")
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        test_def = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
+
+        tftp_deploy = job.pipeline.find_action(TftpAction)
+        test_def = tftp_deploy.pipeline.find_action(TestDefinitionAction)
         namespace = test_def.parameters.get("namespace")
         self.assertIsNotNone(namespace)
         self.assertIsNotNone(namespace1)
@@ -312,6 +240,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         ]
         self.assertEqual(len(namespace_tests), 1)
         self.assertEqual(len(test_actions), 1)
+
         description_ref = self.pipeline_reference("bbb-lxc-notest.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
@@ -328,11 +257,9 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
             "frdm-k64f-01.jinja2", "sample_jobs/frdm-k64f-lxc.yaml"
         )
         job.validate()
-        self.assertIsNotNone(
-            [action for action in job.pipeline.actions if action.name == "lxc-deploy"]
-        )
-        self.assertIsNotNone(
-            [action for action in job.pipeline.actions if action.name == "lxc-boot"]
-        )
+
         description_ref = self.pipeline_reference("frdm-k64f-lxc.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
+
+        job.pipeline.find_action(LxcAction)
+        job.pipeline.find_action(BootLxcAction)

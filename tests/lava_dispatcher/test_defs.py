@@ -17,8 +17,10 @@ import pexpect
 
 from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.image import DeployImagesAction
+from lava_dispatcher.actions.deploy.fastboot import FastbootAction
+from lava_dispatcher.actions.deploy.lxc import LxcAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import (
     GitRepoAction,
@@ -104,21 +106,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         )
 
     def test_name(self):
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
+        testdef = self.job.pipeline.find_action(TestDefinitionAction)
         testdef.validate()
         self.assertEqual([], testdef.errors)
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
@@ -131,19 +119,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         definitions = [block for block in data["definitions"] if "path" in block][0]
         definitions["name"] = "smoke tests"
         job = parser.parse(yaml_safe_dump(content), device, 4212, None, "")
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
+        testdef = job.pipeline.find_action(TestDefinitionAction)
         testdef.validate()
         self.assertNotEqual([], testdef.errors)
         self.assertIn(
@@ -152,26 +128,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         )
 
     def test_vcs_parameters(self):
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        git_repos = [
-            action
-            for action in testdef.pipeline.actions
-            if action.name == "git-repo-action"
-        ]
+        git_repos = self.job.pipeline.find_all_actions(GitRepoAction)
         for git_repo in git_repos:
             if (
                 git_repo.parameters["repository"]
@@ -209,12 +166,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
             "lava-common-functions",
         ]
 
-        overlay = None
-        action = self.job.pipeline.actions[0]
-        for child in action.pipeline.actions:
-            if isinstance(child, OverlayAction):
-                overlay = child
-                break
+        overlay = self.job.pipeline.find_action(OverlayAction)
         self.assertIsInstance(overlay, OverlayAction)
         # Generic scripts
         scripts_to_copy = glob.glob(os.path.join(overlay.lava_test_dir, "lava-*"))
@@ -231,14 +183,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
 
     def test_overlay_override(self):
         job = self.factory.create_job("qemu01.jinja2", "sample_jobs/kvm-context.yaml")
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
+        overlay = job.pipeline.find_action(OverlayAction)
         self.assertEqual(
             "/sysroot/lava-%s", overlay.get_constant("lava_test_results_dir", "posix")
         )
@@ -251,20 +196,15 @@ class TestDefinitionSimple(LavaDispatcherTestCase):
         self.job = factory.create_kvm_job("sample_jobs/kvm-notest.yaml")
 
     def test_job_without_tests(self):
-        deploy = boot = finalize = None
         allow_missing_path(
             self.job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
-        for action in self.job.pipeline.actions:
-            self.assertNotIsInstance(action, TestDefinitionAction)
-            self.assertNotIsInstance(action, OverlayAction)
-            deploy = self.job.pipeline.actions[0]
-            boot = self.job.pipeline.actions[1]
-            finalize = self.job.pipeline.actions[2]
+
+        self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
+        deploy, boot, finalize = self.job.pipeline.actions
         self.assertEqual(deploy.name, "deployimages")
         self.assertEqual(boot.section, "boot")
         self.assertIsInstance(finalize, FinalizeAction)
-        self.assertEqual(len(self.job.pipeline.actions), 3)  # deploy, boot, finalize
         self.assertIsInstance(deploy.pipeline.actions[0], DownloaderAction)
         self.assertEqual(
             len(deploy.pipeline.actions), 1
@@ -278,41 +218,20 @@ class TestDefinitionParams(LavaDispatcherTestCase):
         self.job = self.factory.create_kvm_job("sample_jobs/kvm-params.yaml")
 
     def test_job_without_tests(self):
-        boot = finalize = None
         allow_missing_path(
             self.job.pipeline.validate_actions, self, "qemu-system-x86_64"
         )
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        for action in self.job.pipeline.actions:
-            self.assertNotIsInstance(action, TestDefinitionAction)
-            self.assertNotIsInstance(action, OverlayAction)
-            boot = self.job.pipeline.actions[1]
-            finalize = self.job.pipeline.actions[3]
-        self.assertIsInstance(overlay, OverlayAction)
-        self.assertIsInstance(testdef, TestDefinitionAction)
-        test = testdef.pipeline.actions[1]
-        install = testdef.pipeline.actions[2]
-        runsh = testdef.pipeline.actions[3]
-        self.assertIsInstance(deploy, DeployImagesAction)
-        self.assertEqual(boot.section, "boot")
-        self.assertIsInstance(finalize, FinalizeAction)
+
         self.assertEqual(
             len(self.job.pipeline.actions), 4
         )  # deploy, boot, test, finalize
+        self.assertIsInstance(self.job.pipeline.actions[3], FinalizeAction)
+
+        testdef = self.job.pipeline.find_action(TestDefinitionAction)
+        test = testdef.pipeline.actions[1]
+        install = testdef.pipeline.actions[2]
+        runsh = testdef.pipeline.actions[3]
+
         self.assertNotIn("test_params", testdef.parameters)
         self.assertIsInstance(install, TestInstallAction)
         self.assertIsInstance(runsh, TestRunnerAction)
@@ -356,27 +275,10 @@ class TestDefinitionParams(LavaDispatcherTestCase):
     @unittest.skipIf(infrastructure_error("git"), "git not installed")
     def test_install_repos(self, GitHelper):
         job = self.factory.create_kvm_job("sample_jobs/kvm-install.yaml")
-        allow_missing_path(
-            self.job.pipeline.validate_actions, self, "qemu-system-x86_64"
-        )
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "deployimages"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        test_install = [
-            action
-            for action in testdef.pipeline.actions
-            if action.name == "test-install-overlay"
-        ][0]
+        allow_missing_path(job.pipeline.validate_actions, self, "qemu-system-x86_64")
+
+        testdef = job.pipeline.find_action(TestDefinitionAction)
+        test_install = testdef.pipeline.find_action(TestInstallAction)
         self.assertIsNotNone(test_install)
         yaml_file = os.path.join(os.path.dirname(__file__), "./testdefs/install.yaml")
         self.assertTrue(os.path.exists(yaml_file))
@@ -402,32 +304,7 @@ class TestSkipInstall(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
     def test_skip_install_params(self, which_mock):
-        self.assertIsNotNone(self.job)
-        deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        lava_apply = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        testoverlay = [
-            action
-            for action in lava_apply.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        testdefs = [
-            action
-            for action in testoverlay.pipeline.actions
-            if action.name == "test-install-overlay"
-        ]
+        testdefs = self.job.pipeline.find_all_actions(TestInstallAction)
         ubuntu_testdef = None
         single_testdef = None
         for testdef in testdefs:
@@ -508,38 +385,12 @@ class TestDefinitions(LavaDispatcherTestCase):
         ):
             self.job.validate()
 
-        tftp_deploy = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        apply_o = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "apply-overlay-tftp"
-        ][0]
+        apply_o = self.job.pipeline.find_action(ApplyOverlayTftp)
         self.assertIsInstance(apply_o.parameters.get("persistent_nfs"), dict)
         self.assertIsInstance(apply_o.parameters["persistent_nfs"].get("address"), str)
-        definition = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        git_repos = [
-            action
-            for action in definition.pipeline.actions
-            if action.name == "git-repo-action"
-        ]
+
+        definition = self.job.pipeline.find_action(TestDefinitionAction)
+        git_repos = self.job.pipeline.find_all_actions(GitRepoAction)
         self.assertIn("common", self.job.context)
         self.assertIn("test-definition", self.job.context["common"])
         self.assertIsNotNone(
@@ -664,44 +515,11 @@ test3a: skip
         description_ref = self.pipeline_reference("hikey960-oe-aep.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
-        lxc_deploy = [
-            action for action in job.pipeline.actions if action.name == "lxc-deploy"
-        ][0]
-        lxc_overlay = [
-            action
-            for action in lxc_deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        lxc_defs = [
-            action
-            for action in lxc_overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        lxc_installscript = [
-            action
-            for action in lxc_defs.pipeline.actions
-            if action.name == "test-install-overlay"
-        ][0]
-        fastboot_deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
-        fastboot_overlay = [
-            action
-            for action in fastboot_deploy.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        fastboot_defs = [
-            action
-            for action in fastboot_overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        fastboot_installscript = [
-            action
-            for action in fastboot_defs.pipeline.actions
-            if action.name == "test-install-overlay"
-        ][0]
+        lxc_deploy = job.pipeline.find_action(LxcAction)
+        lxc_installscript = lxc_deploy.pipeline.find_action(TestInstallAction)
+
+        fastboot_deploy = job.pipeline.find_action(FastbootAction)
+        fastboot_installscript = fastboot_deploy.pipeline.find_action(TestInstallAction)
 
         self.assertIn("distro", lxc_installscript.parameters["deployment_data"].keys())
         self.assertIn(

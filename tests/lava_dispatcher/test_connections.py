@@ -13,7 +13,15 @@ import lava_dispatcher
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher.actions.boot.ssh import SchrootAction
+from lava_dispatcher.actions.boot import AutoLoginAction
+from lava_dispatcher.actions.boot.ssh import PrepareSsh, SchrootAction, Scp, SshAction
+from lava_dispatcher.actions.boot.u_boot import UBootCommandsAction
+from lava_dispatcher.actions.deploy.overlay import SshAuthorize
+from lava_dispatcher.actions.deploy.ssh import PrepareOverlayScp, ScpOverlay
+from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
+from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.connections.ssh import ConnectSsh
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -52,21 +60,7 @@ class TestConnection(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_ssh_authorize(self):
-        overlay = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "scp-overlay"
-        ][0]
-        prepare = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        authorize = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "ssh-authorize"
-        ][0]
+        authorize = self.job.pipeline.find_action(SshAuthorize)
         self.assertFalse(authorize.active)
         self.job.validate()
         # only secondary connections set 'active' which then copies the identity file into the overlay.
@@ -135,20 +129,9 @@ class TestConnection(LavaDispatcherTestCase):
             "8022",
         ]
         self.job.validate()
-        login = [
-            action for action in self.job.pipeline.actions if action.name == "login-ssh"
-        ][0]
-        self.assertIn(
-            "ssh-connection", [action.name for action in login.pipeline.actions]
-        )
-        primary = [
-            action
-            for action in login.pipeline.actions
-            if action.name == "ssh-connection"
-        ][0]
-        prepare = [
-            action for action in login.pipeline.actions if action.name == "prepare-ssh"
-        ][0]
+
+        primary = self.job.pipeline.find_action(ConnectSsh)
+        prepare = self.job.pipeline.find_action(PrepareSsh)
         self.assertTrue(prepare.primary)
         self.assertEqual(identity, primary.identity_file)
         self.assertEqual(primary.host, params["ssh"]["host"])
@@ -182,14 +165,7 @@ class TestConnection(LavaDispatcherTestCase):
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_scp_command(self):
         self.job.validate()
-        login = [
-            action
-            for action in self.guest_job.pipeline.actions
-            if action.name == "login-ssh"
-        ][0]
-        scp = [
-            action for action in login.pipeline.actions if action.name == "scp-deploy"
-        ][0]
+        scp = self.guest_job.pipeline.find_action(Scp)
         self.assertIsNotNone(scp)
         # FIXME: schroot needs to make use of scp
         self.assertNotIn("ssh", scp.scp)
@@ -198,9 +174,7 @@ class TestConnection(LavaDispatcherTestCase):
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_tar_command(self):
         self.job.validate()
-        login = [
-            item for item in self.job.pipeline.actions if item.name == "login-ssh"
-        ][0]
+        login = self.job.pipeline.find_action(SshAction)
         tar_flags = login.get_namespace_data(
             action="scp-overlay", label="scp-overlay", key="tar_flags"
         )
@@ -209,14 +183,7 @@ class TestConnection(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_schroot_params(self):
-        self.assertIn(
-            "schroot-login", [action.name for action in self.job.pipeline.actions]
-        )
-        schroot_action = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "schroot-login"
-        ][0]
+        schroot_action = self.job.pipeline.find_action(SchrootAction)
         self.job.validate()
         schroot_action.parsed_command(
             ["schroot", "-i", "-c", schroot_action.parameters["schroot"]],
@@ -242,11 +209,7 @@ class TestConnection(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("schroot"), "schroot not installed")
     def test_schroot_params_bad_schroot_name(self):
-        schroot_action = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "schroot-login"
-        ][0]
+        schroot_action = self.job.pipeline.find_action(SchrootAction)
 
         bad_chroot = "unobtainium"
         schroot_action.parsed_command(
@@ -268,9 +231,7 @@ class TestConnection(LavaDispatcherTestCase):
         factory = ConnectionFactory()
         job = factory.create_ssh_job("sample_jobs/primary-ssh.yaml")
         job.validate()
-        overlay = [
-            action for action in job.pipeline.actions if action.name == "scp-overlay"
-        ][0]
+        overlay = job.pipeline.find_action(ScpOverlay)
         self.assertIsNotNone(overlay.parameters["deployment_data"])
         tar_flags = (
             overlay.parameters["deployment_data"]["tar_flags"]
@@ -293,26 +254,9 @@ class TestConnection(LavaDispatcherTestCase):
         ][0]
         self.assertEqual(int(multinode.system_timeout.duration), 900)
         self.assertEqual([], self.guest_job.pipeline.errors)
-        self.assertEqual(
-            len(
-                [
-                    item
-                    for item in self.guest_job.pipeline.actions
-                    if item.name == "scp-overlay"
-                ]
-            ),
-            1,
-        )
-        scp_overlay = [
-            item
-            for item in self.guest_job.pipeline.actions
-            if item.name == "scp-overlay"
-        ][0]
-        prepare = [
-            item
-            for item in scp_overlay.pipeline.actions
-            if item.name == "prepare-scp-overlay"
-        ][0]
+
+        scp_overlay = self.guest_job.pipeline.find_action(ScpOverlay)
+        prepare = scp_overlay.pipeline.find_action(PrepareOverlayScp)
         self.assertEqual(prepare.host_keys, ["ipv4"])
         self.assertEqual(
             prepare.get_namespace_data(
@@ -336,26 +280,14 @@ class TestConnection(LavaDispatcherTestCase):
                     "timeout": {"minutes": 5},
                 },
             )
-        login = [
-            action
-            for action in self.guest_job.pipeline.actions
-            if action.name == "login-ssh"
-        ][0]
-        scp = [
-            action for action in login.pipeline.actions if action.name == "scp-deploy"
-        ][0]
+        login = self.guest_job.pipeline.find_action(SshAction)
+        scp = login.pipeline.find_action(Scp)
         self.assertFalse(scp.primary)
-        ssh = [
-            action for action in login.pipeline.actions if action.name == "prepare-ssh"
-        ][0]
+        ssh = login.pipeline.find_action(PrepareSsh)
         self.assertFalse(ssh.primary)
         self.assertIsNotNone(scp.scp)
         self.assertFalse(scp.primary)
-        autologin = [
-            action
-            for action in login.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        autologin = login.pipeline.find_action(AutoLoginAction)
         self.assertIsNone(autologin.params)
         self.assertIn("host_key", login.parameters["parameters"])
         self.assertIn("hostID", login.parameters["parameters"])
@@ -483,14 +415,8 @@ commands:
             self.assertIn("connect", value)
             self.assertIn("tags", value)
             self.assertEqual(["primary", "telnet"], value["tags"])
-        boot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        connect = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "connect-device"
-        ][0]
+
+        connect = job.pipeline.find_action(ConnectDevice)
         for hardware, value in connect.tag_dict.items():
             self.assertEqual("uart0", hardware)
             self.assertNotIn("connect", value)
@@ -516,19 +442,9 @@ class TestTimeouts(LavaDispatcherTestCase):
         factory = ConnectionFactory()
         job = factory.create_bbb_job("sample_jobs/uboot-ramdisk.yaml")
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        test_action = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
-        test_shell = [
-            action
-            for action in test_action.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+        deploy = job.pipeline.find_action(TftpAction)
+        test_action = job.pipeline.find_action(TestShellRetry)
+        test_shell = job.pipeline.find_action(TestShellAction)
         self.assertEqual(
             test_shell.connection_timeout.duration, 240
         )  # job specifies 4 minutes
@@ -541,19 +457,7 @@ class TestTimeouts(LavaDispatcherTestCase):
             deploy.connection_timeout.duration, test_shell.connection_timeout
         )
         self.assertEqual(test_action.timeout.duration, 300)
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
-        auto = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        auto = job.pipeline.find_action(AutoLoginAction)
         self.assertEqual(auto.timeout.duration / 60, 9)  # 9 minutes in the job def
 
     def test_job_connection_timeout(self):
@@ -577,34 +481,10 @@ class TestTimeouts(LavaDispatcherTestCase):
                         # lava-test-shell and uboot-commands have overrides in this sample job
                         # lava-test-shell from the job, uboot-commands from the device
                         self.assertEqual(check_action.connection_timeout.duration, 20)
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        self.assertIsNotNone(deploy)
-        test_action = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
-        test_shell = [
-            action
-            for action in test_action.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+
+        test_shell = job.pipeline.find_action(TestShellAction)
         self.assertEqual(test_shell.timeout.duration, 300)
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
-        auto = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+        auto = job.pipeline.find_action(AutoLoginAction)
         self.assertEqual(auto.connection_timeout.duration / 60, 12)
 
     def test_action_connection_timeout(self):
@@ -625,14 +505,7 @@ class TestTimeouts(LavaDispatcherTestCase):
         data["timeouts"]["connections"]["uboot-commands"]["seconds"] = 45
         self.assertEqual(connection_timeout, 240)
         job = self.factory.create_custom_job("bbb-01.jinja2", data)
-        boot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in boot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
+        retry = job.pipeline.find_action(UBootCommandsAction)
         self.assertEqual(
             retry.timeout.duration, 90
         )  # Set by the job global action timeout
@@ -654,10 +527,9 @@ class TestDisconnect(LavaDispatcherTestCase):
             "mps2plus-01.jinja2", "sample_jobs/mps2plus.yaml", validate=False
         )
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "mps-deploy"
-        ][0]
-        self.assertIsNotNone(deploy)
+        self.assertTrue(
+            any(action.name == "mps-deploy" for action in job.pipeline.actions)
+        )
 
     def test_disconnect_with_plain_connection_command(self):
         factory = ConnectionFactory()

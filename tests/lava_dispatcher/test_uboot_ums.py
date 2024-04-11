@@ -6,6 +6,7 @@
 
 import unittest
 
+from lava_dispatcher.utils.storage import FlashUBootUMSAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
@@ -35,19 +36,8 @@ class TestUbootUMSAction(LavaDispatcherTestCase):
         self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
-        flash = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "flash-uboot-ums"
-        ][0]
+
+        flash = job.pipeline.find_action(FlashUBootUMSAction)
         self.assertEqual("ums", flash.parameters["commands"])
         self.assertEqual(
             "/dev/disk/by-id/usb-Linux_UMS_disk_0_WaRP7-0x742400d3000000e6-0:0",
