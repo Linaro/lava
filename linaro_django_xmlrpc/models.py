@@ -428,8 +428,9 @@ class Dispatcher:
             impl = self.mapper.lookup(method_name, context)
             if impl is None:
                 self.logger.error(
-                    "Unable to dispatch unknown method %r",
+                    "Unable to dispatch unknown method %r for user %s",
                     method_name,
+                    "Anonymous" if context.user is None else context.user,
                     extra={"request": context.request},
                 )
                 raise xmlrpc.client.Fault(
