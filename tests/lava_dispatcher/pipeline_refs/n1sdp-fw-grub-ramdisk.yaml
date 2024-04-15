@@ -1,190 +1,192 @@
 - class: FlasherRetryAction
-  description: deploy flasher with retry
+  name: deploy-flasher-retry
   level: '1'
   max_retries: 1
-  name: deploy-flasher-retry
-  pipeline:
-  - class: FlasherAction
-    description: deploy flasher
-    level: '1.1'
-    max_retries: 1
-    name: deploy-flasher
-    pipeline:
-    - class: DownloaderAction
-      description: download with retry
-      level: 1.1.1
-      max_retries: 3
-      name: download-retry
-      pipeline:
-      - {class: HttpDownloadAction, description: use http to download the file, level: 1.1.1.1,
-        max_retries: 1, name: http-download, summary: http download, timeout: 300,
-        url: 'http://example.com/index.html'}
-      summary: download-retry
-      timeout: 300
-    summary: deploy custom flasher
-    timeout: 30
+  description: deploy flasher with retry
   summary: deploy custom flasher
   timeout: 30
+  pipeline:
+  - class: FlasherAction
+    name: deploy-flasher
+    level: '1.1'
+    max_retries: 1
+    description: deploy flasher
+    summary: deploy custom flasher
+    timeout: 30
+    pipeline:
+    - class: DownloaderAction
+      name: download-retry
+      level: 1.1.1
+      max_retries: 3
+      description: download with retry
+      summary: download-retry
+      timeout: 300
+      pipeline:
+      - {class: HttpDownloadAction, name: http-download, level: 1.1.1.1, max_retries: 1,
+        description: use http to download the file, summary: http download, timeout: 300,
+        url: 'http://example.com/index.html'}
 - class: TftpAction
-  description: download files and deploy using tftp
+  name: tftp-deploy
   level: '2'
   max_retries: 1
-  name: tftp-deploy
-  pipeline:
-  - class: DownloaderAction
-    description: download with retry
-    level: '2.1'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 2.1.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 300, url: 'http://example.com/index.html'}
-    summary: download-retry
-    timeout: 300
-  - class: DownloaderAction
-    description: download with retry
-    level: '2.2'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 2.2.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 300, url: 'http://example.com/index.html'}
-    summary: download-retry
-    timeout: 300
-  - class: PrepareOverlayTftp
-    description: extract ramdisk or nfsrootfs in preparation for lava overlay
-    level: '2.3'
-    max_retries: 1
-    name: prepare-tftp-overlay
-    pipeline:
-    - {class: ExtractNfsRootfs, description: unpack nfsrootfs, level: 2.3.1, max_retries: 1,
-      name: extract-nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava overlay',
-      timeout: 30}
-    - {class: OverlayAction, description: add lava scripts during deployment for test
-        shell use, level: 2.3.2, max_retries: 1, name: lava-overlay, summary: overlay
-        the lava support scripts, timeout: 30}
-    - {class: ExtractRamdisk, description: extract ramdisk to a temporary directory,
-      level: 2.3.3, max_retries: 1, name: extract-overlay-ramdisk, summary: extract
-        the ramdisk, timeout: 30}
-    - {class: ExtractModules, description: extract supplied kernel modules, level: 2.3.4,
-      max_retries: 1, name: extract-modules, summary: extract kernel modules, timeout: 30}
-    - {class: ApplyOverlayTftp, description: unpack the overlay into the nfsrootfs
-        or ramdisk, level: 2.3.5, max_retries: 1, name: apply-overlay-tftp, summary: apply
-        lava overlay test files, timeout: 30}
-    - {class: PrepareKernelAction, description: populates the pipeline with a kernel
-        conversion action, level: 2.3.6, max_retries: 1, name: prepare-kernel, summary: add
-        a kernel conversion, timeout: 30}
-    - {class: ConfigurePreseedFile, description: 'add commands to automated installers,
-        to copy the lava test overlay to the installed system', level: 2.3.7, max_retries: 1,
-      name: configure-preseed-file, summary: add commands to installer config, timeout: 30}
-    - {class: CompressRamdisk, description: recreate a ramdisk with the overlay applied.,
-      level: 2.3.8, max_retries: 1, name: compress-ramdisk, summary: compress ramdisk
-        with overlay, timeout: 30}
-    summary: extract ramdisk or nfsrootfs
-    timeout: 30
-  - {class: LxcCreateUdevRuleAction, description: create lxc udev rule action, level: '2.4',
-    max_retries: 1, name: lxc-create-udev-rule-action, summary: create lxc udev rule,
-    timeout: 30}
+  description: download files and deploy using tftp
   summary: tftp deployment
   timeout: 30
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '2.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://example.com/index.html'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '2.2'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://example.com/index.html'}
+  - class: PrepareOverlayTftp
+    name: prepare-tftp-overlay
+    level: '2.3'
+    max_retries: 1
+    description: extract ramdisk or nfsrootfs in preparation for lava overlay
+    summary: extract ramdisk or nfsrootfs
+    timeout: 30
+    pipeline:
+    - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: 2.3.1, max_retries: 1,
+      description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
+        overlay', timeout: 30}
+    - {class: OverlayAction, name: lava-overlay, level: 2.3.2, max_retries: 1, description: add
+        lava scripts during deployment for test shell use, summary: overlay the lava
+        support scripts, timeout: 30}
+    - {class: ExtractRamdisk, name: extract-overlay-ramdisk, level: 2.3.3, max_retries: 1,
+      description: extract ramdisk to a temporary directory, summary: extract the
+        ramdisk, timeout: 30}
+    - {class: ExtractModules, name: extract-modules, level: 2.3.4, max_retries: 1,
+      description: extract supplied kernel modules, summary: extract kernel modules,
+      timeout: 30}
+    - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: 2.3.5, max_retries: 1,
+      description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
+        lava overlay test files, timeout: 30}
+    - {class: PrepareKernelAction, name: prepare-kernel, level: 2.3.6, max_retries: 1,
+      description: populates the pipeline with a kernel conversion action, summary: add
+        a kernel conversion, timeout: 30}
+    - {class: ConfigurePreseedFile, name: configure-preseed-file, level: 2.3.7, max_retries: 1,
+      description: 'add commands to automated installers, to copy the lava test overlay
+        to the installed system', summary: add commands to installer config, timeout: 30}
+    - {class: CompressRamdisk, name: compress-ramdisk, level: 2.3.8, max_retries: 1,
+      description: recreate a ramdisk with the overlay applied., summary: compress
+        ramdisk with overlay, timeout: 30}
+  - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '2.4',
+    max_retries: 1, description: create lxc udev rule action, summary: create lxc
+      udev rule, timeout: 30}
 - class: MinimalBoot
-  description: connect and reset device
+  name: minimal-boot
   level: '3'
   max_retries: 1
-  name: minimal-boot
-  pipeline:
-  - {class: ConnectDevice, description: use the configured command to connect serial
-      to the device, level: '3.1', max_retries: 1, name: connect-device, summary: run
-      connection command, timeout: 180}
-  - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '3.2'
-    max_retries: 1
-    name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 3.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 180}
-    summary: reboot the device
-    timeout: 180
-  - class: AutoLoginAction
-    description: automatically login after boot using job parameters and checking
-      for messages.
-    level: '3.3'
-    max_retries: 1
-    name: auto-login-action
-    pipeline:
-    - {class: LoginAction, description: Real login action., level: 3.3.1, max_retries: 1,
-      name: login-action, summary: Login after boot., timeout: 180}
-    summary: Auto-login after boot with support for kernel messages.
-    timeout: 180
+  description: connect and reset device
   summary: connect and reset device
   timeout: 180
-- class: SecondaryShellAction
-  description: Connect to a secondary shell on specified hardware
-  level: '4'
-  max_retries: 1
-  name: secondary-shell-action
   pipeline:
-  - {class: ConnectShell, description: use the configured command to connect serial
-      to a second shell, level: '4.1', max_retries: 1, name: connect-shell, summary: run
-      connection command, timeout: 30}
-  summary: connect to a specified second shell
-  timeout: 30
-- class: GrubMainAction
-  description: main grub boot action
-  level: '5'
-  max_retries: 1
-  name: grub-main-action
-  pipeline:
-  - {class: BootloaderSecondaryMedia, description: let bootloader know where to find
-      the kernel in the image on secondary media, level: '5.1', max_retries: 1, name: bootloader-from-media,
-    summary: set bootloader strings for deployed media, timeout: 300}
-  - {class: BootloaderCommandOverlay, description: substitute job data into bootloader
-      command list, level: '5.2', max_retries: 1, name: bootloader-overlay, summary: replace
-      placeholders with job data, timeout: 300}
-  - {class: ConnectDevice, description: use the configured command to connect serial
-      to the device, level: '5.3', max_retries: 1, name: connect-device, summary: run
-      connection command, timeout: 300}
+  - {class: ConnectDevice, name: connect-device, level: '3.1', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 180}
   - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '5.4'
-    max_retries: 1
     name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 5.4.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 300}
+    level: '3.2'
+    max_retries: 1
+    description: reboot or power-cycle the device
     summary: reboot the device
-    timeout: 300
-  - {class: BootloaderInterruptAction, description: interrupt bootloader, level: '5.5',
-    max_retries: 1, name: bootloader-interrupt, summary: interrupt bootloader to get
-      an interactive shell, timeout: 300}
-  - {class: BootloaderCommandsAction, description: send commands to bootloader, level: '5.6',
-    max_retries: 1, name: bootloader-commands, summary: interactive bootloader, timeout: 300}
+    timeout: 180
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 3.2.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 180}
   - class: AutoLoginAction
+    name: auto-login-action
+    level: '3.3'
+    max_retries: 1
     description: automatically login after boot using job parameters and checking
       for messages.
-    level: '5.7'
-    max_retries: 1
-    name: auto-login-action
-    pipeline:
-    - {class: LoginAction, description: Real login action., level: 5.7.1, max_retries: 1,
-      name: login-action, summary: Login after boot., timeout: 300}
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 300
+    timeout: 180
+    pipeline:
+    - {class: LoginAction, name: login-action, level: 3.3.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 180}
+- class: SecondaryShellAction
+  name: secondary-shell-action
+  level: '4'
+  max_retries: 1
+  description: Connect to a secondary shell on specified hardware
+  summary: connect to a specified second shell
+  timeout: 30
+  pipeline:
+  - {class: ConnectShell, name: connect-shell, level: '4.1', max_retries: 1, description: use
+      the configured command to connect serial to a second shell, summary: run connection
+      command, timeout: 30}
+- class: GrubMainAction
+  name: grub-main-action
+  level: '5'
+  max_retries: 1
+  description: main grub boot action
   summary: run grub boot from power to system
   timeout: 300
+  pipeline:
+  - {class: BootloaderSecondaryMedia, name: bootloader-from-media, level: '5.1', max_retries: 1,
+    description: let bootloader know where to find the kernel in the image on secondary
+      media, summary: set bootloader strings for deployed media, timeout: 300}
+  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '5.2', max_retries: 1,
+    description: substitute job data into bootloader command list, summary: replace
+      placeholders with job data, timeout: 300}
+  - {class: ConnectDevice, name: connect-device, level: '5.3', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 300}
+  - class: ResetDevice
+    name: reset-device
+    level: '5.4'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 300
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 5.4.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 300}
+  - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '5.5', max_retries: 1,
+    description: interrupt bootloader, summary: interrupt bootloader to get an interactive
+      shell, timeout: 300}
+  - {class: BootloaderCommandsAction, name: bootloader-commands, level: '5.6', max_retries: 1,
+    description: send commands to bootloader, summary: interactive bootloader, timeout: 300}
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '5.7'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 300
+    pipeline:
+    - {class: LoginAction, name: login-action, level: 5.7.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 300}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '6'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '6.1', max_retries: 1,
-    name: power-off, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '6.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 30}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 30
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '6.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, name: read-feedback, level: '6.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}

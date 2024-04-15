@@ -1,97 +1,98 @@
 - class: MpsAction
-  description: deploy image to MPS device
+  name: mps-deploy
   level: '1'
   max_retries: 1
-  name: mps-deploy
-  pipeline:
-  - {class: DisconnectDevice, description: disconnect from console, level: '1.1',
-    max_retries: 1, name: disconnect-device, summary: disconnect from console, timeout: 600}
-  - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '1.2'
-    max_retries: 1
-    name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 1.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 30}
-    summary: reboot the device
-    timeout: 30
-  - {class: WaitUSBMassStorageDeviceAction, description: wait for USB mass storage
-      device, level: '1.3', max_retries: 1, name: wait-usb-mass-storage-device, summary: wait
-      for USB mass storage device, timeout: 600}
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.4'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.4.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 300, url: 'http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz'}
-    summary: download-retry
-    timeout: 300
-  - class: DownloaderAction
-    description: download with retry
-    level: '1.5'
-    max_retries: 3
-    name: download-retry
-    pipeline:
-    - {class: HttpDownloadAction, description: use http to download the file, level: 1.5.1,
-      max_retries: 1, name: http-download, summary: http download, timeout: 300, url: 'http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf'}
-    summary: download-retry
-    timeout: 300
-  - {class: MountVExpressMassStorageDevice, description: mount vexpress usb msd, level: '1.6',
-    max_retries: 1, name: mount-vexpress-usbmsd, summary: mount vexpress usb mass
-      storage device on the dispatcher, timeout: 600}
-  - {class: ExtractVExpressRecoveryImage, description: unpack versatile express recovery
-      image, level: '1.7', max_retries: 1, name: extract-vexpress-recovery-image,
-    summary: unpack versatile express recovery image ready for deployment, timeout: 600}
-  - {class: DeployVExpressRecoveryImage, description: deploy vexpress recovery image
-      to usb msd, level: '1.8', max_retries: 1, name: deploy-vexpress-recovery-image,
-    summary: copy recovery image contents to vexpress usb mass storage device, timeout: 600}
-  - {class: DeployMPSTestBinary, description: deploy test binary to usb msd, level: '1.9',
-    max_retries: 1, name: deploy-mps-test-binary, summary: copy test binary to MPS
-      device and rename if required, timeout: 600}
-  - {class: DeployMPSRebootTxt, description: deploy reboot.txt to mps, level: '1.10',
-    max_retries: 1, name: deploy-mps-reboot-txt, summary: copy reboot.txt to MPS device
-      to trigger restart, timeout: 600}
-  - {class: UnmountVExpressMassStorageDevice, description: unmount vexpress usb msd,
-    level: '1.11', max_retries: 1, name: unmount-vexpress-usbmsd, summary: unmount
-      vexpress usb mass storage device, timeout: 600}
+  description: deploy image to MPS device
   summary: MPS device image deployment
   timeout: 600
+  pipeline:
+  - {class: DisconnectDevice, name: disconnect-device, level: '1.1', max_retries: 1,
+    description: disconnect from console, summary: disconnect from console, timeout: 600}
+  - class: ResetDevice
+    name: reset-device
+    level: '1.2'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 30
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 1.2.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 30}
+  - {class: WaitUSBMassStorageDeviceAction, name: wait-usb-mass-storage-device, level: '1.3',
+    max_retries: 1, description: wait for USB mass storage device, summary: wait for
+      USB mass storage device, timeout: 600}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.4'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz'}
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.5'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf'}
+  - {class: MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd, level: '1.6',
+    max_retries: 1, description: mount vexpress usb msd, summary: mount vexpress usb
+      mass storage device on the dispatcher, timeout: 600}
+  - {class: ExtractVExpressRecoveryImage, name: extract-vexpress-recovery-image, level: '1.7',
+    max_retries: 1, description: unpack versatile express recovery image, summary: unpack
+      versatile express recovery image ready for deployment, timeout: 600}
+  - {class: DeployVExpressRecoveryImage, name: deploy-vexpress-recovery-image, level: '1.8',
+    max_retries: 1, description: deploy vexpress recovery image to usb msd, summary: copy
+      recovery image contents to vexpress usb mass storage device, timeout: 600}
+  - {class: DeployMPSTestBinary, name: deploy-mps-test-binary, level: '1.9', max_retries: 1,
+    description: deploy test binary to usb msd, summary: copy test binary to MPS device
+      and rename if required, timeout: 600}
+  - {class: DeployMPSRebootTxt, name: deploy-mps-reboot-txt, level: '1.10', max_retries: 1,
+    description: deploy reboot.txt to mps, summary: copy reboot.txt to MPS device
+      to trigger restart, timeout: 600}
+  - {class: UnmountVExpressMassStorageDevice, name: unmount-vexpress-usbmsd, level: '1.11',
+    max_retries: 1, description: unmount vexpress usb msd, summary: unmount vexpress
+      usb mass storage device, timeout: 600}
 - class: MinimalBoot
-  description: connect and reset device
+  name: minimal-boot
   level: '2'
   max_retries: 1
-  name: minimal-boot
-  pipeline:
-  - {class: ConnectDevice, description: use the configured command to connect serial
-      to the device, level: '2.1', max_retries: 1, name: connect-device, summary: run
-      connection command, timeout: 600}
-  - class: ResetDevice
-    description: reboot or power-cycle the device
-    level: '2.2'
-    max_retries: 1
-    name: reset-device
-    pipeline:
-    - {class: PDUReboot, description: issue commands to a PDU to power cycle a device,
-      level: 2.2.1, max_retries: 1, name: pdu-reboot, summary: hard reboot using PDU,
-      timeout: 600}
-    summary: reboot the device
-    timeout: 600
+  description: connect and reset device
   summary: connect and reset device
   timeout: 600
+  pipeline:
+  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
+      the configured command to connect serial to the device, summary: run connection
+      command, timeout: 600}
+  - class: ResetDevice
+    name: reset-device
+    level: '2.2'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 600
+    pipeline:
+    - {class: PDUReboot, name: pdu-reboot, level: 2.2.1, max_retries: 1, description: issue
+        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
+      timeout: 600}
 - class: FinalizeAction
-  description: finish the process and cleanup
+  name: finalize
   level: '3'
   max_retries: 1
-  name: finalize
-  pipeline:
-  - {class: PowerOff, description: discontinue power to device, level: '3.1', max_retries: 1,
-    name: power-off, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, description: Check for messages on all other namespaces,
-    level: '3.2', max_retries: 1, name: read-feedback, summary: Read from other namespaces,
-    timeout: 600}
+  description: finish the process and cleanup
   summary: finalize the job
   timeout: 600
+  pipeline:
+  - {class: PowerOff, name: power-off, level: '3.1', max_retries: 1, description: discontinue
+      power to device, summary: send power_off command, timeout: 10}
+  - {class: ReadFeedback, name: read-feedback, level: '3.2', max_retries: 1, description: Check
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 600}

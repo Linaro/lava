@@ -859,7 +859,7 @@ class TestQemuNFS(LavaDispatcherTestCase):
         with patch(f"{execute.__module__}.SYS_CLASS_KVM", "/"):
             self.job.validate()
             execute.run(None, 1)
-        self.assertEqual(["-initrd {initrd}", "-kernel {kernel}"], execute.commands)
+        self.assertEqual(["-kernel {kernel}", "-initrd {initrd}"], execute.commands)
         self.assertEqual(
             [
                 "/usr/bin/qemu-system-x86_64",
@@ -871,13 +871,13 @@ class TestQemuNFS(LavaDispatcherTestCase):
                 "-monitor none",
                 "-smp",
                 "1",
-                "-initrd %s"
-                % execute.get_namespace_data(
-                    action="download-action", label="initrd", key="file"
-                ),
                 "-kernel %s"
                 % execute.get_namespace_data(
                     action="download-action", label="kernel", key="file"
+                ),
+                "-initrd %s"
+                % execute.get_namespace_data(
+                    action="download-action", label="initrd", key="file"
                 ),
                 "--append",
                 '"console=ttyAMA0 root=/dev/nfs nfsroot=192.168.0.2:{NFSROOTFS},tcp,hard rw ip=dhcp"',

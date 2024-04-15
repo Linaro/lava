@@ -31,8 +31,8 @@ def yaml_safe_load(data):
 
 
 def yaml_safe_dump(data, *args, **kwargs):
-    # sort_keys=False will break the CI because
-    # some dispatcher tests check the order of dict keys
+    # Preserve key order by default
+    kwargs["sort_keys"] = kwargs.get("sort_keys", False)
     return dump(data, *args, Dumper=SafeDumper, **kwargs)
 
 
