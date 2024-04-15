@@ -19,7 +19,6 @@ import pytz
 from lava_common.constants import CLEANUP_TIMEOUT, DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
-from lava_dispatcher.diagnostics import DiagnoseNetwork
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
@@ -65,8 +64,6 @@ class Job:
         self.__context__ = PipelineContext()
         self.pipeline = None
         self.connection = None
-        self.triggers = []  # actions can add trigger strings to the run a diagnostic
-        self.diagnostics = [DiagnoseNetwork]
         self.timeout = timeout
         self.protocols = []
         # Was the job cleaned
@@ -83,17 +80,6 @@ class Job:
     @context.setter
     def context(self, data):
         self.__context__.pipeline_data.update(data)
-
-    def diagnose(self, trigger):
-        """
-        Looks up the class to execute to diagnose the problem described by the
-         specified trigger.
-        """
-        trigger_tuples = [(cls.trigger(), cls) for cls in self.diagnostics]
-        for diagnostic in trigger_tuples:
-            if trigger is diagnostic[0]:
-                return diagnostic[1]()
-        return None
 
     def describe(self):
         return {
