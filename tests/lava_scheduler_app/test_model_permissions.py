@@ -91,13 +91,6 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.all_qemu_jobs = [self.qemu_job1, self.qemu_job2]
         self.all_jobs = self.all_qemu_jobs + self.all_bbb_jobs
 
-    def tearDown(self):
-        super().tearDown()
-        GroupDeviceTypePermission.objects.all().delete()
-        GroupDevicePermission.objects.all().delete()
-        GroupWorkerPermission.objects.all().delete()
-        TestJob.objects.all().delete()
-
     def test_device_type_is_permission_restricted(self):
         self.assertFalse(
             self.qemu_device_type.is_permission_restricted(DeviceType.VIEW_PERMISSION)

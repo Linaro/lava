@@ -43,11 +43,6 @@ class PermissionAuthTest(TestCaseWithFactory):
             device_type=self.device_type, hostname="qemu-1"
         )
 
-    def tearDown(self):
-        super().tearDown()
-        GroupDeviceTypePermission.objects.all().delete()
-        GroupDevicePermission.objects.all().delete()
-
     def test_get_group_perms(self):
         # Test group permission queries.
         auth = PermissionAuth(self.user)

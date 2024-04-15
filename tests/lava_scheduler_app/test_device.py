@@ -118,11 +118,6 @@ class DeviceTest(TestCaseWithFactory):
 
 
 class DeviceTypeTest(TestCaseWithFactory):
-    def tearDown(self):
-        super().tearDown()
-        Device.objects.all().delete()
-        DeviceType.objects.all().delete()
-
     """
     Test loading of device-type information
     """

@@ -387,12 +387,6 @@ class TestVisibility(TestCase):
         self.user = User.objects.create(username="user-01")
         self.device03.save()
 
-    def tearDown(self):
-        for job in TestJob.objects.filter(
-            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-        ):
-            job.go_state_finished(TestJob.HEALTH_COMPLETE)
-
     def _check_hc_scheduled(self, device):
         device.refresh_from_db()
         self.assertEqual(device.state, Device.STATE_RESERVED)
@@ -625,12 +619,6 @@ class TestJobLimitHc1(TestCase):
         self.device03.save()
         self.device04.save()
 
-    def tearDown(self):
-        for job in TestJob.objects.filter(
-            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-        ):
-            job.go_state_finished(TestJob.HEALTH_COMPLETE)
-
     @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_job_limit_hc(self):
         schedule_health_checks(logging.getLogger(), [], ["worker-01"])
@@ -700,12 +688,6 @@ class TestJobLimitHc2(TestCase):
         self.devices.append(self.device02)
         self.devices.append(self.device03)
         self.devices.append(self.device04)
-
-    def tearDown(self):
-        for job in TestJob.objects.filter(
-            state__in=[TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
-        ):
-            job.go_state_finished(TestJob.HEALTH_COMPLETE)
 
     @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_job_limit_hc2(self):
