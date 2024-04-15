@@ -9,6 +9,12 @@ from unittest.mock import patch
 
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline, Timeout
+from lava_dispatcher.actions.deploy.iso import (
+    IsoEmptyImage,
+    IsoPullInstaller,
+    QemuCommandLine,
+)
+from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
@@ -49,22 +55,11 @@ class TestIsoJob(LavaDispatcherTestCase):
     @patch("lava_dispatcher.actions.deploy.iso.which", return_value="/usr/bin/in.tftpd")
     def test_iso_preparation(self, which_mock):
         self.job.validate()
-        deploy_iso = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deploy-iso-installer"
-        ][0]
-        empty = [
-            action
-            for action in deploy_iso.pipeline.actions
-            if action.name == "prepare-empty-image"
-        ][0]
+
+        empty = self.job.pipeline.find_action(IsoEmptyImage)
         self.assertEqual(empty.size, 2 * 1024 * 1024 * 1024)
-        pull = [
-            action
-            for action in deploy_iso.pipeline.actions
-            if action.name == "pull-installer-files"
-        ][0]
+
+        pull = self.job.pipeline.find_action(IsoPullInstaller)
         self.assertEqual(pull.files["kernel"], "/install.amd/vmlinuz")
         self.assertEqual(pull.files["initrd"], "/install.amd/initrd.gz")
         self.assertEqual(len(pull.files.keys()), 2)
@@ -72,16 +67,8 @@ class TestIsoJob(LavaDispatcherTestCase):
     @patch("lava_dispatcher.actions.deploy.iso.which", return_value="/usr/bin/in.tftpd")
     def test_command_line(self, which_mock):
         self.job.validate()
-        deploy_iso = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "deploy-iso-installer"
-        ][0]
-        prepare = [
-            action
-            for action in deploy_iso.pipeline.actions
-            if action.name == "prepare-qemu-commands"
-        ][0]
+
+        prepare = self.job.pipeline.find_action(QemuCommandLine)
         self.assertEqual(prepare.boot_order, "-boot c")
         self.assertEqual(prepare.console, "console=ttyS0,115200")
         self.assertIsNotNone(prepare.preseed_url)
@@ -125,11 +112,8 @@ class TestIsoJob(LavaDispatcherTestCase):
         Each action in the pipeline needs to pick up the timeout
         specified in the job definition block for the top level parent action.
         """
-        test_retry = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ][0]
+        test_retry = self.job.pipeline.find_action(TestShellRetry)
+
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )
@@ -138,11 +122,7 @@ class TestIsoJob(LavaDispatcherTestCase):
         testdata = [block["test"] for block in data["actions"] if "test" in block][0]
         duration = Timeout.parse(testdata["timeout"])
         self.assertEqual(duration, test_retry.timeout.duration)
-        shell = [
-            action
-            for action in test_retry.pipeline.actions
-            if action.name == "lava-test-shell"
-        ][0]
+        shell = test_retry.pipeline.find_action(TestShellAction)
         self.assertEqual(duration, shell.timeout.duration)
         if shell.timeout.duration > shell.connection_timeout.duration:
             self.assertEqual(duration, shell.timeout.duration)

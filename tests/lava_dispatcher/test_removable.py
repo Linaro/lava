@@ -10,8 +10,15 @@ from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher.actions.boot import BootloaderSecondaryMedia
-from lava_dispatcher.actions.deploy.removable import MassStorage
+from lava_dispatcher.actions.boot import (
+    BootloaderCommandOverlay,
+    BootloaderSecondaryMedia,
+)
+from lava_dispatcher.actions.boot.grub import GrubMainAction
+from lava_dispatcher.actions.boot.u_boot import UBootAction
+from lava_dispatcher.actions.deploy.download import DownloaderAction
+from lava_dispatcher.actions.deploy.removable import DDAction, MassStorage
+from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.strings import map_kernel_uboot, substitute
@@ -147,12 +154,8 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertNotIn(
             "boot_part", device["parameters"]["media"]["usb"][deploy_params["device"]]
         )
-        deploy_action = [
-            action for action in job.pipeline.actions if action.name == "storage-deploy"
-        ][0]
-        tftp_deploy_action = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
+        deploy_action = job.pipeline.find_action(MassStorage)
+        tftp_deploy_action = job.pipeline.find_action(TftpAction)
         self.assertIsNotNone(deploy_action)
         test_dir = deploy_action.get_namespace_data(
             action="test",
@@ -165,11 +168,7 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertIsInstance(deploy_action, MassStorage)
         img_params = deploy_action.parameters.get("images", deploy_action.parameters)
         self.assertIn("image", img_params)
-        dd_action = [
-            action
-            for action in deploy_action.pipeline.actions
-            if action.name == "dd-image"
-        ][0]
+        dd_action = deploy_action.pipeline.find_action(DDAction)
         self.assertEqual(
             dd_action.boot_params[dd_action.parameters["device"]]["uuid"],
             "usb-SanDisk_Ultra_20060775320F43006019-0:0",
@@ -248,9 +247,7 @@ class TestRemovable(LavaDispatcherTestCase):
             "boot_part",
             job.device["parameters"]["media"]["usb"][deploy_params["device"]],
         )
-        tftp_deploys = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ]
+        tftp_deploys = job.pipeline.find_all_actions(TftpAction)
         self.assertEqual(len(tftp_deploys), 2)
         first_deploy = tftp_deploys[0]
         second_deploy = tftp_deploys[1]
@@ -260,15 +257,9 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertEqual("android", second_deploy.parameters["namespace"])
         self.assertNotIn("deployment_data", first_deploy.parameters)
         self.assertNotIn("deployment_data", second_deploy.parameters)
-        storage_deploy_action = [
-            action for action in job.pipeline.actions if action.name == "storage-deploy"
-        ][0]
-        download_action = [
-            action
-            for action in storage_deploy_action.pipeline.actions
-            if action.name == "download-retry"
-        ][0]
-        self.assertIsNotNone(download_action)
+
+        storage_deploy_action = job.pipeline.find_action(MassStorage)
+        job.pipeline.find_action(DownloaderAction)
         self.assertEqual("android", storage_deploy_action.parameters["namespace"])
 
     @patch(
@@ -305,11 +296,8 @@ class TestRemovable(LavaDispatcherTestCase):
                 "grub_interface"
             ],
         )
-        grub_deploys = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-main-action"
-        ]
+
+        grub_deploys = job.pipeline.find_all_actions(GrubMainAction)
         self.assertEqual(len(grub_deploys), 2)
         first_deploy = grub_deploys[0]
         second_deploy = grub_deploys[1]
@@ -325,82 +313,71 @@ class TestRemovable(LavaDispatcherTestCase):
             "mustang1.jinja2", "sample_jobs/mustang-secondary-media.yaml"
         )
         job.validate()
-        grub_nfs = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-main-action"
-            and action.parameters["namespace"] == "nfsdeploy"
-        ][0]
-        media_action = [
-            action
-            for action in grub_nfs.pipeline.actions
-            if action.name == "bootloader-from-media"
-        ][0]
+
+        grub_nfs, grub_main = sorted(
+            job.pipeline.find_all_actions(GrubMainAction),
+            key=lambda x: x.parameters["namespace"],
+        )
+
+        grub_nfs_media_action = grub_nfs.pipeline.find_action(BootloaderSecondaryMedia)
         self.assertEqual(
             None,
-            media_action.get_namespace_data(
+            grub_nfs_media_action.get_namespace_data(
                 action="download-action", label="file", key="kernel"
             ),
         )
         self.assertEqual(
             None,
-            media_action.get_namespace_data(
+            grub_nfs_media_action.get_namespace_data(
                 action="compress-ramdisk", label="file", key="ramdisk"
             ),
         )
         self.assertEqual(
             None,
-            media_action.get_namespace_data(
+            grub_nfs_media_action.get_namespace_data(
                 action="download-action", label="file", key="dtb"
             ),
         )
         self.assertEqual(
             None,
-            media_action.get_namespace_data(
-                action=media_action.name, label="file", key="root"
+            grub_nfs_media_action.get_namespace_data(
+                action=grub_nfs_media_action.name, label="file", key="root"
             ),
         )
-        grub_main = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-main-action"
-            and action.parameters["namespace"] == "satadeploy"
-        ][0]
-        media_action = [
-            action
-            for action in grub_main.pipeline.actions
-            if action.name == "bootloader-from-media"
-        ][0]
-        self.assertIsInstance(media_action, BootloaderSecondaryMedia)
+
+        grub_main_media_action = grub_main.pipeline.find_action(
+            BootloaderSecondaryMedia
+        )
+        self.assertIsInstance(grub_main_media_action, BootloaderSecondaryMedia)
         self.assertIsNotNone(
-            media_action.get_namespace_data(
+            grub_main_media_action.get_namespace_data(
                 action="download-action", label="file", key="kernel"
             )
         )
         self.assertIsNotNone(
-            media_action.get_namespace_data(
+            grub_main_media_action.get_namespace_data(
                 action="compress-ramdisk", label="file", key="ramdisk"
             )
         )
         self.assertIsNotNone(
-            media_action.get_namespace_data(
+            grub_main_media_action.get_namespace_data(
                 action="download-action", label="file", key="ramdisk"
             )
         )
         self.assertEqual(
             "",
-            media_action.get_namespace_data(
+            grub_main_media_action.get_namespace_data(
                 action="download-action", label="file", key="dtb"
             ),
         )
         self.assertIsNotNone(
-            media_action.get_namespace_data(
-                action=media_action.name, label="uuid", key="root"
+            grub_main_media_action.get_namespace_data(
+                action=grub_main_media_action.name, label="uuid", key="root"
             )
         )
         self.assertIsNotNone(
-            media_action.get_namespace_data(
-                action=media_action.name, label="uuid", key="boot_part"
+            grub_main_media_action.get_namespace_data(
+                action=grub_main_media_action.name, label="uuid", key="boot_part"
             )
         )
 
@@ -457,14 +434,10 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertNotIn("type", boot_params)
         self.assertGreater(len(job.pipeline.actions), 1)
         self.assertIsNotNone(job.pipeline.actions[1].pipeline)
-        u_boot_action = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][1]
-        overlay = [
-            action
-            for action in u_boot_action.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
+
+        _, u_boot_action = job.pipeline.find_all_actions(UBootAction)
+        overlay = u_boot_action.pipeline.find_action(BootloaderCommandOverlay)
+
         self.assertIsNotNone(
             overlay.get_namespace_data(
                 action="storage-deploy", label="u-boot", key="device"

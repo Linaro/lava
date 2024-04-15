@@ -9,6 +9,8 @@
 import unittest
 from unittest.mock import patch
 
+from lava_dispatcher.actions.boot.depthcharge import DepthchargeAction, DepthchargeRetry
+from lava_dispatcher.actions.deploy.prepare import PrepareFITAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
 
@@ -49,28 +51,7 @@ class TestDepthchargeAction(LavaDispatcherTestCase):
             ["tftp-deploy", "depthcharge-action", "finalize"],
         )
 
-        tftp = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prep_overlay = [
-            action
-            for action in tftp.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        prep_kernel = [
-            action
-            for action in prep_overlay.pipeline.actions
-            if action.name == "prepare-kernel"
-        ][0]
-        self.assertEqual(
-            [action.name for action in prep_kernel.pipeline.actions], ["prepare-fit"]
-        )
-
-        prep_fit = [
-            action
-            for action in prep_kernel.pipeline.actions
-            if action.name == "prepare-fit"
-        ][0]
+        prep_fit = job.pipeline.find_action(PrepareFITAction)
         params = {
             "arch": "neo-gothic",
             "load_addr": "0x1234",
@@ -96,21 +77,13 @@ class TestDepthchargeAction(LavaDispatcherTestCase):
         cmd = prep_fit._make_mkimage_command(params)
         self.assertEqual(cmd_ref, " ".join(cmd))
 
-        depthcharge = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "depthcharge-action"
-        ][0]
+        depthcharge = job.pipeline.find_action(DepthchargeAction)
         self.assertEqual(
             [action.name for action in depthcharge.pipeline.actions],
             ["depthcharge-overlay", "depthcharge-retry"],
         )
 
-        retry = [
-            action
-            for action in depthcharge.pipeline.actions
-            if action.name == "depthcharge-retry"
-        ][0]
+        retry = depthcharge.pipeline.find_action(DepthchargeRetry)
         self.assertEqual(
             [action.name for action in retry.pipeline.actions],
             [

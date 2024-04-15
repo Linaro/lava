@@ -11,6 +11,7 @@ from unittest.mock import patch
 from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.deploy.testdef import TestRunnerAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -153,27 +154,8 @@ class TestMultiDefinition(LavaDispatcherTestCase):
         parser = JobParser()
         job = parser.parse(yaml_safe_dump(self.job_data), self.device, 4212, None, "")
         self.assertIsNotNone(job)
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        tftp = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action for action in tftp.pipeline.actions if action.name == "lava-overlay"
-        ][0]
-        testdef = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "test-definition"
-        ][0]
-        runscript = [
-            action
-            for action in testdef.pipeline.actions
-            if action.name == "test-runscript-overlay"
-        ][0]
+
+        runscript = job.pipeline.find_action(TestRunnerAction)
         testdef_index = runscript.get_namespace_data(
             action="test-definition", label="test-definition", key="testdef_index"
         )

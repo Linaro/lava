@@ -11,11 +11,17 @@ from unittest.mock import patch
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
-from lava_dispatcher.actions.boot.ipxe import BootloaderAction
-from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.actions.boot import (
+    BootloaderCommandOverlay,
+    BootloaderCommandsAction,
+)
+from lava_dispatcher.actions.boot.ipxe import BootloaderAction, BootloaderRetry
+from lava_dispatcher.actions.deploy.apply_overlay import ExtractNfsRootfs
+from lava_dispatcher.actions.deploy.tftp import PrepareOverlayTftp, TftpAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
+from lava_dispatcher.power import ResetDevice
+from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -45,9 +51,8 @@ class TestBootloaderAction(LavaDispatcherTestCase):
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "bootloader-action", "lava-test-retry", "finalize"],
         )
-        tftp = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
+
+        tftp = job.pipeline.find_action(TftpAction)
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
@@ -98,22 +103,10 @@ class TestBootloaderAction(LavaDispatcherTestCase):
             "boot_message", job.device.get_constant("kernel-start-message")
         )
         self.assertIsNotNone(boot_message)
-        bootloader_action = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "bootloader-action"
-        ][0]
-        bootloader_retry = [
-            action
-            for action in bootloader_action.pipeline.actions
-            if action.name == "bootloader-retry"
-        ][0]
-        commands = [
-            action
-            for action in bootloader_retry.pipeline.actions
-            if action.name == "bootloader-commands"
-        ][0]
+
+        commands = job.pipeline.find_action(BootloaderCommandsAction)
         self.assertEqual(commands.character_delay, 500)
+
         for action in job.pipeline.actions:
             action.validate()
             if isinstance(action, BootloaderAction):
@@ -238,20 +231,10 @@ class TestBootloaderAction(LavaDispatcherTestCase):
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        deploy = None
-        overlay = None
-        extract = None
-        for action in job.pipeline.actions:
-            if action.name == "tftp-deploy":
-                deploy = action
-        if deploy:
-            for action in deploy.pipeline.actions:
-                if action.name == "prepare-tftp-overlay":
-                    overlay = action
-        if overlay:
-            for action in overlay.pipeline.actions:
-                if action.name == "extract-nfsrootfs":
-                    extract = action
+
+        overlay = job.pipeline.find_action(PrepareOverlayTftp)
+        extract = overlay.pipeline.find_action(ExtractNfsRootfs)
+
         test_dir = overlay.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
@@ -265,28 +248,25 @@ class TestBootloaderAction(LavaDispatcherTestCase):
     )
     def test_reset_actions(self, which_mock):
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe.yaml")
-        bootloader_action = None
         bootloader_retry = None
         reset_action = None
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
-            if action.name == "bootloader-action":
-                bootloader_action = action
+
+        bootloader_action = job.pipeline.find_action(BootloaderAction)
         names = [r_action.name for r_action in bootloader_action.pipeline.actions]
         self.assertIn("connect-device", names)
         self.assertIn("bootloader-retry", names)
-        for action in bootloader_action.pipeline.actions:
-            if action.name == "bootloader-retry":
-                bootloader_retry = action
+
+        bootloader_retry = bootloader_action.pipeline.find_action(BootloaderRetry)
         names = [r_action.name for r_action in bootloader_retry.pipeline.actions]
         self.assertIn("reset-device", names)
         self.assertIn("bootloader-interrupt", names)
         self.assertIn("expect-shell-connection", names)
         self.assertIn("bootloader-commands", names)
-        for action in bootloader_retry.pipeline.actions:
-            if action.name == "reset-device":
-                reset_action = action
+
+        reset_action = bootloader_action.pipeline.find_action(ResetDevice)
         names = [r_action.name for r_action in reset_action.pipeline.actions]
         self.assertIn("pdu-reboot", names)
 
@@ -303,22 +283,8 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         """
         job = self.factory.create_job("x86-01.jinja2", "sample_jobs/ipxe-ramdisk.yaml")
         job.validate()
-        bootloader = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "bootloader-action"
-        ][0]
-        retry = [
-            action
-            for action in bootloader.pipeline.actions
-            if action.name == "bootloader-retry"
-        ][0]
-        expect = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "expect-shell-connection"
-        ][0]
-        check = expect.parameters
+        job.pipeline.find_action(ExpectShellSession)
+
         (rendered, _) = self.factory.create_device("x86-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
         extra_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/ipxe.yaml")
@@ -334,21 +300,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         job = parser.parse(sample_job_string, device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
-        bootloader = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "bootloader-action"
-        ][0]
-        retry = [
-            action
-            for action in bootloader.pipeline.actions
-            if action.name == "bootloader-retry"
-        ][0]
-        expect = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "expect-shell-connection"
-        ][0]
+        job.pipeline.find_action(ExpectShellSession)
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

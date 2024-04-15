@@ -12,7 +12,8 @@ from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
-from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
+from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
@@ -29,12 +30,8 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         self.job = self.factory.create_kvm_job("sample_jobs/kvm.yaml")
 
     def test_testshell(self):
-        testshell = None
-        for action in self.job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, TestShellRetry):
-                testshell = action.pipeline.actions[0]
-                break
+        testshell = self.job.pipeline.find_action(TestShellAction)
+
         self.assertIsInstance(testshell, TestShellAction)
         self.assertTrue(testshell.valid)
 
@@ -66,12 +63,8 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
             self.fail("JobError not raised")
 
     def test_eventpatterns(self):
-        testshell = None
-        for action in self.job.pipeline.actions:
-            self.assertIsNotNone(action.name)
-            if isinstance(action, TestShellRetry):
-                testshell = action.pipeline.actions[0]
-                break
+        testshell = self.job.pipeline.find_action(TestShellAction)
+
         self.assertTrue(testshell.valid)
         self.assertFalse(testshell.check_patterns("exit", None))
         self.assertRaises(InfrastructureError, testshell.check_patterns, "eof", None)
@@ -97,11 +90,8 @@ class TestMultiNodeOverlay(LavaDispatcherTestCase):
     def test_action_namespaces(self):
         self.assertIsNotNone(self.server_job)
         self.assertIsNotNone(self.client_job)
-        deploy_server = [
-            action
-            for action in self.server_job.pipeline.actions
-            if action.name == "tftp-deploy"
-        ][0]
+
+        deploy_server = self.server_job.pipeline.find_action(TftpAction)
         self.assertIn(MultinodeProtocol.name, deploy_server.parameters.keys())
         self.assertIn(VlandProtocol.name, deploy_server.parameters.keys())
         self.assertEqual(
@@ -111,11 +101,8 @@ class TestMultiNodeOverlay(LavaDispatcherTestCase):
         self.assertIsNone(namespace)
         namespace = self.client_job.parameters.get("namespace")
         self.assertIsNone(namespace)
-        deploy_client = [
-            action
-            for action in self.client_job.pipeline.actions
-            if action.name == "tftp-deploy"
-        ][0]
+
+        deploy_client = self.client_job.pipeline.find_action(TftpAction)
         self.assertIn(MultinodeProtocol.name, deploy_client.parameters.keys())
         self.assertIn(VlandProtocol.name, deploy_client.parameters.keys())
         key_list = []

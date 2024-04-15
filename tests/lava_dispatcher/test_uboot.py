@@ -11,13 +11,25 @@ from unittest.mock import MagicMock, patch
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import BootloaderCommandOverlay
+from lava_dispatcher.actions.boot import (
+    BootloaderCommandOverlay,
+    BootloaderInterruptAction,
+    OverlayUnpack,
+)
 from lava_dispatcher.actions.boot.u_boot import (
     UBootAction,
     UBootCommandsAction,
     UBootSecondaryMedia,
 )
-from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    ApplyOverlayTftp,
+    CompressRamdisk,
+    ExtractModules,
+    ExtractNfsRootfs,
+    ExtractRamdisk,
+    PrepareOverlayTftp,
+)
+from lava_dispatcher.actions.deploy.prepare import UBootPrepareKernelAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -73,42 +85,37 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertIsNotNone(job.parameters)
         deploy = job.pipeline.actions[0]
         self.assertIsNone(deploy.parameters.get("parameters"))
-        uboot = job.pipeline.actions[1]
+        uboot = job.pipeline.find_action(UBootAction)
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             uboot.parameters.get("parameters", {}).get(
                 "shutdown-message", job.device.get_constant("shutdown-message")
             ),
         )
-        self.assertIsInstance(uboot, UBootAction)
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
+
+        retry = uboot.pipeline.find_action(UBootCommandsAction)
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             retry.parameters["parameters"].get(
                 "shutdown-message", job.device.get_constant("shutdown-message")
             ),
         )
-        self.assertIsInstance(retry, UBootCommandsAction)
-        reset = retry.pipeline.actions[0]
+
+        reset = retry.pipeline.find_action(ResetDevice)
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             reset.parameters["parameters"].get(
                 "shutdown-message", job.device.get_constant("shutdown-message")
             ),
         )
-        self.assertIsInstance(reset, ResetDevice)
-        reboot = reset.pipeline.actions[0]
+
+        reboot = reset.pipeline.find_action(PDUReboot)
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
             reboot.parameters["parameters"].get(
                 "shutdown-message", job.device.get_constant("shutdown-message")
             ),
         )
-        self.assertIsInstance(reboot, PDUReboot)
         self.assertIsNotNone(reboot.parameters.get("parameters"))
         self.assertEqual(
             "reboot: Restarting system",  # modified in the job yaml
@@ -126,9 +133,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "uboot-action", "lava-test-retry", "finalize"],
         )
-        tftp = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
+        tftp = job.pipeline.find_action(TftpAction)
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
@@ -216,21 +221,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("x15-uboot.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
-        enter = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "uboot-enter-fastboot"
-        ][0]
-        interrupt = [
-            action
-            for action in enter.pipeline.actions
-            if action.name == "bootloader-interrupt"
-        ][0]
+
+        interrupt = job.pipeline.find_action(BootloaderInterruptAction)
         self.assertIsNotNone(interrupt.params)
         self.assertNotEqual(interrupt.params, {})
         self.assertEqual("u-boot", interrupt.method)
@@ -242,19 +234,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("x15-nfs.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
+
+        nfs = job.pipeline.find_action(ExtractNfsRootfs)
         self.assertIn("compression", nfs.parameters["nfsrootfs"])
         self.assertEqual(nfs.parameters["nfsrootfs"]["compression"], "gz")
 
@@ -504,14 +485,8 @@ class TestUbootAction(LavaDispatcherTestCase):
             "sample_jobs/uboot-ramdisk-inline-commands.yaml"
         )
         job.validate()
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        overlay = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
+
+        overlay = job.pipeline.find_action(BootloaderCommandOverlay)
         self.assertEqual(
             overlay.commands,
             ["a list", "of commands", "with a {KERNEL_ADDR} substitution"],
@@ -543,14 +518,8 @@ class TestUbootAction(LavaDispatcherTestCase):
                 self.assertIn("to", action.parameters)
                 self.assertEqual("nbd", action.parameters["to"])
             self.assertTrue(action.valid)
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        overlay = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
+
+        overlay = job.pipeline.find_action(BootloaderCommandOverlay)
         for setenv in overlay.commands:
             if "setenv nbdbasekargs" in setenv:
                 self.assertIn("rw", setenv.split("'")[1])
@@ -572,19 +541,8 @@ class TestUbootAction(LavaDispatcherTestCase):
             "uboot-ramdisk-inline-commands.yaml", job=job
         )
         self.assertEqual(description_ref, job.pipeline.describe())
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
-        transfer = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "overlay-unpack"
-        ][0]
+
+        transfer = job.pipeline.find_action(OverlayUnpack)
         self.assertIn("transfer_overlay", transfer.parameters)
         self.assertIn("download_command", transfer.parameters["transfer_overlay"])
         self.assertIn("unpack_command", transfer.parameters["transfer_overlay"])
@@ -604,20 +562,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         job = self.factory.create_bbb_job(
             "sample_jobs/uboot-ramdisk-inline-commands.yaml"
         )
-        uboot = [
-            action for action in job.pipeline.actions if action.name == "uboot-action"
-        ][0]
-        retry = [
-            action
-            for action in uboot.pipeline.actions
-            if action.name == "uboot-commands"
-        ][0]
 
-        transfer = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "overlay-unpack"
-        ][0]
+        transfer = job.pipeline.find_action(OverlayUnpack)
 
         class Connection:
             def __init__(self):
@@ -666,20 +612,10 @@ class TestUbootAction(LavaDispatcherTestCase):
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        deploy = None
-        overlay = None
-        extract = None
-        for action in job.pipeline.actions:
-            if action.name == "tftp-deploy":
-                deploy = action
-        if deploy:
-            for action in deploy.pipeline.actions:
-                if action.name == "prepare-tftp-overlay":
-                    overlay = action
-        if overlay:
-            for action in overlay.pipeline.actions:
-                if action.name == "extract-nfsrootfs":
-                    extract = action
+
+        overlay = job.pipeline.find_action(PrepareOverlayTftp)
+        extract = overlay.pipeline.find_action(ExtractNfsRootfs)
+
         test_dir = overlay.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
@@ -693,30 +629,25 @@ class TestUbootAction(LavaDispatcherTestCase):
     )
     def test_reset_actions(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/uboot.yaml")
-        uboot_action = None
-        uboot_commands = None
-        reset_action = None
-        for action in job.pipeline.actions:
-            action.validate()
-            self.assertTrue(action.valid)
-            if action.name == "uboot-action":
-                uboot_action = action
-        names = [r_action.name for r_action in uboot_action.pipeline.actions]
-        self.assertIn("connect-device", names)
-        self.assertIn("uboot-commands", names)
-        for action in uboot_action.pipeline.actions:
-            if action.name == "uboot-commands":
-                uboot_commands = action
-        names = [r_action.name for r_action in uboot_commands.pipeline.actions]
-        self.assertIn("reset-device", names)
-        self.assertIn("bootloader-interrupt", names)
-        self.assertIn("expect-shell-connection", names)
-        self.assertIn("bootloader-commands", names)
-        for action in uboot_commands.pipeline.actions:
-            if action.name == "reset-device":
-                reset_action = action
-        names = [r_action.name for r_action in reset_action.pipeline.actions]
-        self.assertIn("pdu-reboot", names)
+        job.validate()
+
+        uboot_action = job.pipeline.find_action(UBootAction)
+        uboot_names = [r_action.name for r_action in uboot_action.pipeline.actions]
+        self.assertIn("connect-device", uboot_names)
+        self.assertIn("uboot-commands", uboot_names)
+
+        uboot_commands = uboot_action.pipeline.find_action(UBootCommandsAction)
+        uboot_commands_names = [
+            r_action.name for r_action in uboot_commands.pipeline.actions
+        ]
+        self.assertIn("reset-device", uboot_commands_names)
+        self.assertIn("bootloader-interrupt", uboot_commands_names)
+        self.assertIn("expect-shell-connection", uboot_commands_names)
+        self.assertIn("bootloader-commands", uboot_commands_names)
+
+        reset_action = uboot_commands.pipeline.find_action(ResetDevice)
+        reset_names = [r_action.name for r_action in reset_action.pipeline.actions]
+        self.assertIn("pdu-reboot", reset_names)
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
@@ -736,18 +667,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         job.logger = DummyLogger()
         job.validate()
         sample_job_data.close()
-        uboot_action = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "uboot-action"
-            and action.parameters["namespace"] == "boot2"
-        ][0]
-        u_boot_media = [
-            action
-            for action in uboot_action.pipeline.actions
-            if action.name == "uboot-from-media"
-            and action.parameters["namespace"] == "boot2"
-        ][0]
+
+        _, u_boot_media = job.pipeline.find_all_actions(UBootSecondaryMedia)
         self.assertIsInstance(u_boot_media, UBootSecondaryMedia)
         self.assertEqual([], u_boot_media.errors)
         self.assertEqual(
@@ -800,19 +721,8 @@ class TestUbootAction(LavaDispatcherTestCase):
     def test_prefix(self, which_mock):
         job = self.factory.create_bbb_job("sample_jobs/bbb-skip-install.yaml")
         job.validate()
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
+
+        nfs = job.pipeline.find_action(ExtractNfsRootfs)
         self.assertIn("prefix", nfs.parameters["nfsrootfs"])
         self.assertEqual(nfs.parameters["nfsrootfs"]["prefix"], "jessie/")
         self.assertEqual(nfs.param_key, "nfsrootfs")
@@ -837,21 +747,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("imx8mq-evk.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
-        fastboot = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "uboot-enter-fastboot"
-        ][0]
-        bootloader = [
-            action
-            for action in fastboot.pipeline.actions
-            if action.name == "bootloader-interrupt"
-        ][0]
+
+        bootloader = job.pipeline.find_action(BootloaderInterruptAction)
         self.assertEqual("u-boot", bootloader.method)
 
 
@@ -882,24 +779,8 @@ class TestKernelConversion(LavaDispatcherTestCase):
         )
         job.logger = DummyLogger()
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        prepare = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "prepare-kernel"
-        ][0]
-        uboot_prepare = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "uboot-prepare-kernel"
-        ][0]
+
+        uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
         self.assertEqual("zimage", uboot_prepare.kernel_type)
         self.assertEqual("bootz", uboot_prepare.bootcommand)
         self.assertFalse(uboot_prepare.mkimage_conversion)
@@ -914,24 +795,8 @@ class TestKernelConversion(LavaDispatcherTestCase):
         )
         job.logger = DummyLogger()
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        prepare = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "prepare-kernel"
-        ][0]
-        uboot_prepare = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "uboot-prepare-kernel"
-        ][0]
+
+        uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
         self.assertEqual("image", uboot_prepare.kernel_type)
         # bbb-01.yaml does not contain booti parameters, try to convert to a uImage
         self.assertEqual("bootm", uboot_prepare.bootcommand)
@@ -947,24 +812,8 @@ class TestKernelConversion(LavaDispatcherTestCase):
         )
         job.logger = DummyLogger()
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        prepare = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "prepare-kernel"
-        ][0]
-        uboot_prepare = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "uboot-prepare-kernel"
-        ][0]
+
+        uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
         self.assertEqual("uimage", uboot_prepare.kernel_type)
         self.assertEqual("bootm", uboot_prepare.bootcommand)
         self.assertFalse(uboot_prepare.mkimage_conversion)
@@ -982,24 +831,8 @@ class TestKernelConversion(LavaDispatcherTestCase):
         )
         job.logger = DummyLogger()
         job.validate()
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        overlay = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        prepare = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "prepare-kernel"
-        ][0]
-        uboot_prepare = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "uboot-prepare-kernel"
-        ][0]
+
+        uboot_prepare = job.pipeline.find_action(UBootPrepareKernelAction)
         self.assertEqual("zimage", uboot_prepare.kernel_type)
         self.assertEqual("bootm", uboot_prepare.bootcommand)
         self.assertTrue(uboot_prepare.mkimage_conversion)
@@ -1012,34 +845,13 @@ class TestOverlayCommands(LavaDispatcherTestCase):
 
     def test_combined_ramdisk_nfs(self):
         job = self.factory.create_bbb_job("sample_jobs/bbb-ramdisk-nfs.yaml")
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
-        ramdisk = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-overlay-ramdisk"
-        ][0]
-        modules = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-modules"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "apply-overlay-tftp"
-        ][0]
+
+        tftp_deploy = job.pipeline.find_action(TftpAction)
+        ramdisk = tftp_deploy.pipeline.find_action(ExtractRamdisk)
+        modules = tftp_deploy.pipeline.find_action(ExtractModules)
+        nfs = tftp_deploy.pipeline.find_action(ExtractNfsRootfs)
+        overlay = tftp_deploy.pipeline.find_action(ApplyOverlayTftp)
+
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))
         self.assertIsNotNone(ramdisk.parameters["ramdisk"].get("url"))
         self.assertIsNotNone(ramdisk.parameters["ramdisk"].get("compression"))
@@ -1053,34 +865,13 @@ class TestOverlayCommands(LavaDispatcherTestCase):
 
     def test_ramdisk_nfs_nomodules(self):
         job = self.factory.create_bbb_job("sample_jobs/bbb-uinitrd-nfs.yaml")
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        nfs = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-nfsrootfs"
-        ][0]
-        ramdisk = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-overlay-ramdisk"
-        ][0]
-        modules = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "extract-modules"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "apply-overlay-tftp"
-        ][0]
+
+        tftp_deploy = job.pipeline.find_action(TftpAction)
+        ramdisk = tftp_deploy.pipeline.find_action(ExtractRamdisk)
+        modules = tftp_deploy.pipeline.find_action(ExtractModules)
+        nfs = tftp_deploy.pipeline.find_action(ExtractNfsRootfs)
+        overlay = tftp_deploy.pipeline.find_action(ApplyOverlayTftp)
+
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))
         self.assertIsNotNone(ramdisk.parameters["ramdisk"].get("url"))
         self.assertIsNone(ramdisk.parameters["ramdisk"].get("compression"))

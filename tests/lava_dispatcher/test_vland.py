@@ -11,6 +11,8 @@ from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_dispatcher.actions.deploy.overlay import VlandOverlayAction
+from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -246,24 +248,9 @@ class TestVland(LavaDispatcherTestCase):
         job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
         job.logger = DummyLogger()
         job.validate()
-        tftp_deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in tftp_deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        vland = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "lava-vland-overlay"
-        ][0]
+
+        tftp_deploy = job.pipeline.find_action(TftpAction)
+        vland = tftp_deploy.pipeline.find_action(VlandOverlayAction)
         self.assertTrue(os.path.exists(vland.lava_vland_test_dir))
         vland_files = os.listdir(vland.lava_vland_test_dir)
         self.assertIn("lava-vland-names", vland_files)
@@ -333,24 +320,9 @@ class TestVland(LavaDispatcherTestCase):
                 self.device["parameters"]["interfaces"][interface]["tags"] = None
         parser = JobParser()
         job = parser.parse(yaml_safe_dump(alpha_data), self.device, 4212, None, "")
-        deploy = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
-        prepare = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "prepare-tftp-overlay"
-        ][0]
-        overlay = [
-            action
-            for action in prepare.pipeline.actions
-            if action.name == "lava-overlay"
-        ][0]
-        vland_overlay = [
-            action
-            for action in overlay.pipeline.actions
-            if action.name == "lava-vland-overlay"
-        ][0]
+
+        tftp_deploy = job.pipeline.find_action(TftpAction)
+        vland_overlay = tftp_deploy.pipeline.find_action(VlandOverlayAction)
         vland_overlay.validate()
         job.logger = DummyLogger()
         job.validate()

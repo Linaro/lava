@@ -12,11 +12,25 @@ from lava_common.exceptions import JobError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
+    AutoLoginAction,
     BootloaderCommandOverlay,
     BootloaderInterruptAction,
 )
-from lava_dispatcher.actions.boot.grub import GrubMainAction
+from lava_dispatcher.actions.boot.grub import (
+    GrubMainAction,
+    GrubMenuSelector,
+    GrubSequenceAction,
+)
+from lava_dispatcher.actions.boot.secondary import SecondaryShellAction
+from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    ExtractNfsRootfs,
+    PrepareOverlayTftp,
+)
+from lava_dispatcher.actions.deploy.fastboot import FastbootFlashAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
+from lava_dispatcher.actions.test.shell import TestShellRetry
+from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -67,9 +81,7 @@ class TestGrubAction(LavaDispatcherTestCase):
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "grub-main-action", "lava-test-retry", "finalize"],
         )
-        tftp = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
+        tftp = job.pipeline.find_action(TftpAction)
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
@@ -224,20 +236,9 @@ class TestGrubAction(LavaDispatcherTestCase):
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        deploy = None
-        overlay = None
-        extract = None
-        for action in job.pipeline.actions:
-            if action.name == "tftp-deploy":
-                deploy = action
-        if deploy:
-            for action in deploy.pipeline.actions:
-                if action.name == "prepare-tftp-overlay":
-                    overlay = action
-        if overlay:
-            for action in overlay.pipeline.actions:
-                if action.name == "extract-nfsrootfs":
-                    extract = action
+
+        overlay = job.pipeline.find_action(PrepareOverlayTftp)
+        extract = overlay.pipeline.find_action(ExtractNfsRootfs)
         test_dir = overlay.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
@@ -251,12 +252,11 @@ class TestGrubAction(LavaDispatcherTestCase):
     )
     def test_reset_actions(self, which_mock):
         job = self.factory.create_job("d02-01.jinja2", "sample_jobs/grub-ramdisk.yaml")
-        grub_action = None
         for action in job.pipeline.actions:
             action.validate()
             self.assertTrue(action.valid)
-            if action.name == "grub-main-action":
-                grub_action = action
+
+        grub_action = job.pipeline.find_action(GrubMainAction)
         names = [r_action.name for r_action in grub_action.pipeline.actions]
         self.assertIn("connect-device", names)
         self.assertIn("reset-device", names)
@@ -284,22 +284,11 @@ class TestGrubAction(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("mustang-grub-efi-nfs.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        grub = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-main-action"
-        ][0]
-        menu = [
-            action
-            for action in grub.pipeline.actions
-            if action.name == "uefi-menu-interrupt"
-        ][0]
+
+        menu = job.pipeline.find_action(UEFIMenuInterrupt)
         self.assertIn("item_class", menu.params)
-        grub_efi = [
-            action
-            for action in grub.pipeline.actions
-            if action.name == "grub-efi-menu-selector"
-        ][0]
+
+        grub_efi = job.pipeline.find_action(GrubMenuSelector)
         self.assertEqual("pxe-grub", grub_efi.commands)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
@@ -320,27 +309,16 @@ class TestGrubAction(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("hikey-console.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        console = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "secondary-shell-action"
-        ][0]
-        command = [
-            action
-            for action in console.pipeline.actions
-            if action.name == "connect-shell"
-        ][0]
+
+        command = job.pipeline.find_action(ConnectShell)
         self.assertEqual("isolation", command.parameters["namespace"])
         self.assertEqual("uart0", command.hardware)
         self.assertIn("connections", job.device["commands"])
         uart = job.device["commands"]["connections"][command.hardware]["connect"]
         self.assertIn(command.command, uart)
         self.assertEqual("telnet localhost 4002", uart)
-        tshells = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "lava-test-retry"
-        ]
+
+        tshells = job.pipeline.find_all_actions(TestShellRetry)
         for shell in tshells:
             cn = shell.parameters.get("connection-namespace")
             if cn:
@@ -355,32 +333,18 @@ class TestGrubAction(LavaDispatcherTestCase):
                 self.assertNotEqual(shell.parameters["namespace"], "isolation")
                 self.assertEqual(shell.parameters["namespace"], "tlxc")
                 self.assertNotIn("connection-namespace", shell.parameters.keys())
-        menu = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-sequence-action"
-        ][0]
-        autologin = [
-            action
-            for action in menu.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
-        self.assertIsNone(autologin.params)
-        self.assertEqual(["login:"], autologin.parameters.get("prompts"))
-        menu = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "secondary-shell-action"
-        ][0]
-        autologin = [
-            action
-            for action in menu.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
-        self.assertIsNotNone(autologin.parameters)
-        self.assertIn("isolation", autologin.job.test_info)
-        self.assertIn("hikey-oe", autologin.job.test_info)
-        self.assertIn("tlxc", autologin.job.test_info)
+
+        grub_menu = job.pipeline.find_action(GrubSequenceAction)
+        grub_autologin = grub_menu.pipeline.find_action(AutoLoginAction)
+        self.assertIsNone(grub_autologin.params)
+        self.assertEqual(["login:"], grub_autologin.parameters.get("prompts"))
+
+        secondary_menu = job.pipeline.find_action(SecondaryShellAction)
+        secondary_autologin = secondary_menu.pipeline.find_action(AutoLoginAction)
+        self.assertIsNotNone(secondary_autologin.parameters)
+        self.assertIn("isolation", secondary_autologin.job.test_info)
+        self.assertIn("hikey-oe", secondary_autologin.job.test_info)
+        self.assertIn("tlxc", secondary_autologin.job.test_info)
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey960_grub(self):
@@ -389,42 +353,14 @@ class TestGrubAction(LavaDispatcherTestCase):
         job.validate()
         description_ref = self.pipeline_reference("hi960-grub-efi.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
-        deploy = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "fastboot-deploy"
-        ][0]
-        flash_ord = [
-            action
-            for action in deploy.pipeline.actions
-            if action.name == "fastboot-flash-order-action"
-        ][0]
-        flash = [
-            action
-            for action in flash_ord.pipeline.actions
-            if action.name == "fastboot-flash-action"
-        ][0]
+
+        flash = job.pipeline.find_action(FastbootFlashAction)
         self.assertIsNotNone(flash.interrupt_prompt)
         self.assertEqual("Android Fastboot mode", flash.interrupt_prompt)
         self.assertIsNotNone(flash.interrupt_string)
         self.assertEqual(" ", flash.interrupt_string)
-        grub_seq = [
-            action
-            for action in job.pipeline.actions
-            if action.name == "grub-sequence-action"
-        ][0]
-        self.assertIsNotNone(grub_seq)
-        wait = [
-            action
-            for action in grub_seq.pipeline.actions
-            if action.name == "wait-fastboot-interrupt"
-        ][0]
-        self.assertIsNotNone(wait)
-        login = [
-            action
-            for action in grub_seq.pipeline.actions
-            if action.name == "auto-login-action"
-        ][0]
+
+        login = job.pipeline.find_action(AutoLoginAction)
         self.assertIsNotNone(login)
 
     @patch(

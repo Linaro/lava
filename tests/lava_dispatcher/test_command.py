@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from lava_dispatcher.actions.commands import CommandAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -17,10 +18,6 @@ class TestCommand(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("kvm-command.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
-        command = [
-            action
-            for action in self.job.pipeline.actions
-            if action.name == "user-command"
-        ][0]
+        command = self.job.pipeline.find_action(CommandAction)
         self.assertEqual(command.parameters["name"], "user_command_to_run")
         self.assertEqual(command.timeout.duration, 60)

@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from lava_dispatcher.actions.test.docker import DockerTestShell
 from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
 from tests.lava_dispatcher.test_basic import Factory
@@ -231,11 +232,7 @@ def test_docker_test_shell_run(first_test_action, mocker):
     connection = MagicMock()
     connection.timeout = MagicMock()
 
-    action = [
-        action
-        for action in first_test_action.pipeline.actions
-        if action.name == "lava-docker-test-shell"
-    ][0]
+    action = first_test_action.pipeline.find_action(DockerTestShell)
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
@@ -265,11 +262,7 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
     connection = MagicMock()
     connection.timeout = MagicMock()
 
-    action = [
-        action
-        for action in job_prefix.pipeline.actions[2].pipeline.actions
-        if action.name == "lava-docker-test-shell"
-    ][0]
+    action = job_prefix.pipeline.find_action(DockerTestShell)
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)

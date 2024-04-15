@@ -9,8 +9,13 @@ import os
 from unittest.mock import patch
 
 from lava_common.yaml import yaml_safe_load
+from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.barebox import BareboxAction
-from lava_dispatcher.actions.deploy.apply_overlay import CompressRamdisk
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    CompressRamdisk,
+    ExtractNfsRootfs,
+    PrepareOverlayTftp,
+)
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -43,9 +48,7 @@ class TestBareboxAction(LavaDispatcherTestCase):
             [action.name for action in job.pipeline.actions],
             ["tftp-deploy", "barebox-action", "lava-test-retry", "finalize"],
         )
-        tftp = [
-            action for action in job.pipeline.actions if action.name == "tftp-deploy"
-        ][0]
+        tftp = job.pipeline.find_action(TftpAction)
         self.assertTrue(
             tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
         )
@@ -133,14 +136,7 @@ class TestBareboxAction(LavaDispatcherTestCase):
             "sample_jobs/barebox-ramdisk-inline-commands.yaml"
         )
         job.validate()
-        barebox = [
-            action for action in job.pipeline.actions if action.name == "barebox-action"
-        ][0]
-        overlay = [
-            action
-            for action in barebox.pipeline.actions
-            if action.name == "bootloader-overlay"
-        ][0]
+        overlay = job.pipeline.find_action(BootloaderCommandOverlay)
         self.assertEqual(
             overlay.commands, ["a list", "of commands", "with a load_addr substitution"]
         )
@@ -155,25 +151,15 @@ class TestBareboxAction(LavaDispatcherTestCase):
             self.assertTrue(action.valid)
         job.validate()
         self.assertEqual(job.pipeline.errors, [])
-        deploy = None
-        overlay = None
-        extract = None
-        for action in job.pipeline.actions:
-            if action.name == "tftp-deploy":
-                deploy = action
-        if deploy:
-            for action in deploy.pipeline.actions:
-                if action.name == "prepare-tftp-overlay":
-                    overlay = action
-        if overlay:
-            for action in overlay.pipeline.actions:
-                if action.name == "extract-nfsrootfs":
-                    extract = action
+
+        overlay = job.pipeline.find_action(PrepareOverlayTftp)
         test_dir = overlay.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
         self.assertIsNotNone(test_dir)
         self.assertIn("/lava-", test_dir)
+
+        extract = overlay.pipeline.find_action(ExtractNfsRootfs)
         self.assertIsNotNone(extract)
         self.assertEqual(extract.timeout.duration, 240)
 

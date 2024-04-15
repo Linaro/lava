@@ -11,6 +11,7 @@ from unittest.mock import patch
 from lava_common.exceptions import ConfigurationError, JobError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action
+from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -210,19 +211,7 @@ overrides:
         job.logger = DummyLogger()
         self.assertEqual(job.parameters["env_dut"], data)
         job.validate()
-        boot_actions = [
-            action.pipeline.actions
-            for action in job.pipeline.actions
-            if action.name == "uboot-action"
-        ][0]
-        retry = [action for action in boot_actions if action.name == "uboot-commands"][
-            0
-        ]
-        boot_env = [
-            action
-            for action in retry.pipeline.actions
-            if action.name == "export-device-env"
-        ][0]
+        boot_env = job.pipeline.find_action(ExportDeviceEnvironment)
         found = False
         for line in boot_env.env:
             if "DEBFULLNAME" in line:
