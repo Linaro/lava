@@ -13,9 +13,9 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_scheduler_app.dbutils import match_vlan_interface
+from lava_scheduler_app.environment import DEVICE_TYPES_JINJA_ENV
 from lava_scheduler_app.models import Tag, TestJob
 from lava_scheduler_app.utils import split_multinode_yaml
-from tests.lava_scheduler_app.test_base_templates import prepare_jinja_template
 from tests.lava_scheduler_app.test_pipeline import YamlFactory
 from tests.lava_scheduler_app.test_submission import TestCaseWithFactory
 
@@ -157,9 +157,9 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
             yaml_safe_dump(client_job, f)
         # YAML device file, as required by lava-dispatch --target
         data = "{% extends 'beaglebone-black.jinja2' %}"
-        device_yaml_file = prepare_jinja_template("bbb-01", data, raw=False)
+        device_yaml_file = DEVICE_TYPES_JINJA_ENV.from_string(data).render()
         parser = JobParser()
-        bbb_device = NewDevice(device_yaml_file)
+        bbb_device = NewDevice(yaml_safe_load(device_yaml_file))
         with open(client_file_name) as sample_job_data:
             bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, "")
         os.close(client_handle)

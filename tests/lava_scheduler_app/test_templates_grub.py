@@ -3,14 +3,10 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
+from .test_templates import BaseTemplateTest
 
 
-class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
+class TestGrubTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -25,8 +21,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
-        self.assertTrue(self.validate_data("staging-mustang-01", data))
-        template_dict = prepare_jinja_template("staging-mustang-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn("uefi-menu", template_dict["actions"]["boot"]["methods"])
         self.assertIn(
             "pxe-grub", template_dict["actions"]["boot"]["methods"]["uefi-menu"]
@@ -71,8 +66,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
-        self.assertTrue(self.validate_data("staging-mustang-01", data))
-        template_dict = prepare_jinja_template("staging-mustang-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIn("uefi-menu", template_dict["actions"]["boot"]["methods"])
         self.assertNotIn(
             "pxe-grub", template_dict["actions"]["boot"]["methods"]["uefi-menu"]
@@ -108,8 +102,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 {% set power_off_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command off --port 05' %}
 {% set power_on_command = '/usr/bin/pduclient --daemon services --hostname pdu09 --command on --port 05' %}
 {% set connection_command = 'telnet localhost 7012' %}"""
-        self.assertTrue(self.validate_data("staging-mustang-01", data))
-        template_dict = prepare_jinja_template("staging-mustang-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         parameters = {
             "parameters": {
                 "media": {
@@ -155,8 +148,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
 'iface2': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.0/net/',
 'iface3': '/sys/devices/pci0000:00/0000:00:02.1/0000:01:00.1/net/'} %}
 {% set boot_character_delay = 100 %}"""
-        self.assertTrue(self.validate_data("staging-overdrive-01", data))
-        template_dict = prepare_jinja_template("staging-overdrive-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
         self.assertIn("parameters", template_dict)
         self.assertIn("interfaces", template_dict["parameters"])
@@ -190,9 +182,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_synquacer_acpi_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "synquacer-acpi-01.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("synquacer-acpi-01")
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn(
@@ -208,9 +198,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_synquacer_dtb_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "synquacer-dtb-01.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("synquacer-dtb-01")
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn(
@@ -226,9 +214,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_moonshot_m400_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "moonshot-m400-17.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("moonshot-m400-17")
         self.assertIsNotNone(template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["grub"])
         self.assertIn(
@@ -240,9 +226,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         )
 
     def test_minnowboard_turbot_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "minnowboard-turbot-E3826-01.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("minnowboard-turbot-E3826-01")
         grub = template_dict["actions"]["boot"]["methods"]["grub"]
         self.assertIsNotNone(grub)
 
@@ -269,9 +253,7 @@ class TestGrubTemplates(BaseTemplate.BaseTemplateCases):
         self.assertEqual(nfs_commands, nfs_ref_commands)
 
     def test_qdf2400_template(self):
-        template_dict = self.render_device_dictionary_file(
-            "qcom-qdf2400-01.jinja2", raw=False
-        )
+        template_dict = self.render_device_dictionary("qcom-qdf2400-01")
         grub = template_dict["actions"]["boot"]["methods"]["grub"]
         self.assertIsNotNone(grub)
         nfs_commands = template_dict["actions"]["boot"]["methods"]["grub"]["nfs"][

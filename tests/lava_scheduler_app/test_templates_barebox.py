@@ -3,28 +3,12 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
+from .test_templates import BaseTemplateTest
 
 
-def barebox_helper(self, board):
-    data = """{% extends '""" + board + """.jinja2' %}"""
-    self.assertTrue(self.validate_data(board + "-0", data))
-    template_dict = prepare_jinja_template(board + "-0", data, raw=False)
-    self.assertIn("barebox", template_dict["actions"]["boot"]["methods"])
-    self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["barebox"])
-    commands = template_dict["actions"]["boot"]["methods"]["barebox"]["ramdisk"][
-        "commands"
-    ]
-    for command in commands:
-        self.assertNotIn("boot ", command)
-        self.assertIn("bootm", command)
-
-
-class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
+class TestBareboxTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -41,41 +25,53 @@ class TestBareboxTemplates(BaseTemplate.BaseTemplateCases):
     system file.
     """
 
+    def barebox_templater(self, board) -> None:
+        data = f"{{% extends '{board}.jinja2' %}}"
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertIn("barebox", template_dict["actions"]["boot"]["methods"])
+        self.assertIn("ramdisk", template_dict["actions"]["boot"]["methods"]["barebox"])
+        commands = template_dict["actions"]["boot"]["methods"]["barebox"]["ramdisk"][
+            "commands"
+        ]
+        for command in commands:
+            self.assertNotIn("boot ", command)
+            self.assertIn("bootm", command)
+
     def test_imx6ul_pico_hobbit_template(self):
-        barebox_helper(self, "imx6ul-pico-hobbit")
+        self.barebox_templater("imx6ul-pico-hobbit")
 
     def test_imx23_olinuxino_template(self):
-        barebox_helper(self, "imx23-olinuxino")
+        self.barebox_templater("imx23-olinuxino")
 
     def test_imx28_duckbill_template(self):
-        barebox_helper(self, "imx28-duckbill")
+        self.barebox_templater("imx28-duckbill")
 
     def test_imx27_phytec_phycard_s_rdk_template(self):
-        barebox_helper(self, "imx27-phytec-phycard-s-rdk")
+        self.barebox_templater("imx27-phytec-phycard-s-rdk")
 
     def test_imx53_qsrb_template(self):
-        barebox_helper(self, "imx53-qsrb")
+        self.barebox_templater("imx53-qsrb")
 
     def test_imx6l_riotboard_template(self):
-        barebox_helper(self, "imx6dl-riotboard")
+        self.barebox_templater("imx6dl-riotboard")
 
     def test_imx6qp_wandboard_revd1_template(self):
-        barebox_helper(self, "imx6qp-wandboard-revd1")
+        self.barebox_templater("imx6qp-wandboard-revd1")
 
     def test_imx8mq_zii_ultra_zest_template(self):
-        barebox_helper(self, "imx8mq-zii-ultra-zest")
+        self.barebox_templater("imx8mq-zii-ultra-zest")
 
     def test_dove_cubox_template(self):
-        barebox_helper(self, "dove-cubox")
+        self.barebox_templater("dove-cubox")
 
     def test_ar9331_dpt_module_template(self):
-        barebox_helper(self, "ar9331-dpt-module")
+        self.barebox_templater("ar9331-dpt-module")
 
     def test_socfpga_cyclone5_socrates_template(self):
-        barebox_helper(self, "socfpga-cyclone5-socrates")
+        self.barebox_templater("socfpga-cyclone5-socrates")
 
     def test_stm32mp157c_lxa_mc1_template(self):
-        barebox_helper(self, "stm32mp157c-lxa-mc1")
+        self.barebox_templater("stm32mp157c-lxa-mc1")
 
     def test_jh7100_beaglev_starlight_template(self):
-        barebox_helper(self, "jh7100-beaglev-starlight")
+        self.barebox_templater("jh7100-beaglev-starlight")

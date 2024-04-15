@@ -3,15 +3,10 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-import yaml
 from django.contrib.auth.models import Group, Permission, User
 from django.db.models import Q
 from django.test import TestCase
-from jinja2.exceptions import TemplateNotFound as JinjaTemplateNotFound
 
-from lava_common.jinja import create_device_templates_env
-from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.dbutils import (
     active_device_types,
     invalid_template,
@@ -128,26 +123,6 @@ class DeviceTypeTest(TestCaseWithFactory):
         self.assertIn("actions", data)
         self.assertIn("deploy", data["actions"])
         self.assertIn("boot", data["actions"])
-
-    def test_device_type_templates(self):
-        """
-        Ensure each template renders valid YAML
-        """
-        env = create_device_templates_env(loader=File("device-type").loader())
-
-        for template_name in File("device-type").list("*.jinja2"):
-            try:
-                template = env.get_template(template_name)
-            except JinjaTemplateNotFound as exc:
-                self.fail("%s: %s" % (template_name, exc))
-            data = None
-            try:
-                data = template.render()
-                yaml_data = yaml_safe_load(data)
-            except yaml.YAMLError as exc:
-                print(data)  # for easier debugging - use the online yaml parser
-                self.fail("%s: %s" % (template_name, exc))
-            self.assertIsInstance(yaml_data, dict)
 
     def test_retired_invalid_template(self):
         name = "beaglebone-black"

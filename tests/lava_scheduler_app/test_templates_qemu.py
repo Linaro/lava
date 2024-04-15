@@ -3,15 +3,10 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-from lava_common.yaml import yaml_safe_load
-from tests.lava_scheduler_app.test_base_templates import (
-    BaseTemplate,
-    prepare_jinja_template,
-)
+from .test_templates import BaseTemplateTest
 
 
-class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
+class TestQemuTemplates(BaseTemplateTest):
     """
     Test rendering of jinja2 templates
 
@@ -25,19 +20,13 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {"arch": "amd64", "no_kvm": True}
-        self.assertTrue(self.validate_data("staging-qemu-01", data, job_ctx))
-        test_template = prepare_jinja_template(
-            "staging-qemu-01", data, job_ctx=None, raw=True
-        )
-        rendered = test_template.render(**job_ctx)
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "options"
         ]
         self.assertNotIn("-enable-kvm", options)
         job_ctx = {"arch": "amd64", "no_kvm": False}
-        rendered = test_template.render(**job_ctx)
-        template_dict = yaml_safe_load(rendered)
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "options"
         ]
@@ -48,9 +37,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set mac_addr = 'DE:AD:BE:EF:28:01' %}
 {% set memory = 512 %}"""
         job_ctx = {"arch": "amd64"}
-        template_dict = prepare_jinja_template(
-            "staging-qemu-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         self.assertEqual(
             "c",
             template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
@@ -77,10 +64,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
                 "virtio-scsi-device,id=scsi",
             ],
         }
-        self.assertTrue(self.validate_data("staging-qemu-01", data))
-        template_dict = prepare_jinja_template(
-            "staging-juno-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
             "options"
         ]
@@ -108,10 +92,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
             "netdevice": "tap",
             "extra_options": ["-smp", 1],
         }
-        self.assertTrue(self.validate_data("staging-qemu-01", data))
-        template_dict = prepare_jinja_template(
-            "staging-juno-01", data, job_ctx=job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
         self.assertIn("qemu-nfs", template_dict["actions"]["boot"]["methods"])
         params = template_dict["actions"]["boot"]["methods"]["qemu-nfs"]["parameters"]
         self.assertIn("command", params)
@@ -127,8 +108,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_docker_template(self):
         data = "{% extends 'docker.jinja2' %}"
-        self.assertTrue(self.validate_data("docker-01", data))
-        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "docker": {"options": {"remote": None}},
@@ -176,8 +156,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_devices = ["/dev/kvm:/dev/kvm"] %}"
 {% set docker_networks = ["mynet"] %}"
 {% set docker_volumes = ["/home", "/tmp"] %}"""
-        self.assertTrue(self.validate_data("docker-01", data))
-        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "docker": {"options": {"remote": None}},
@@ -223,8 +202,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_memory="120M" %}
 {% set docker_devices=["/dev/kvm"] %}
 {% set docker_privileged = True %}"""
-        self.assertTrue(self.validate_data("docker-01", data))
-        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "docker": {"options": {"remote": None}},
@@ -271,8 +249,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 {% set docker_memory="120M" %}
 {% set docker_devices=["/dev/kvm"] %}
 {% set docker_privileged = True %}"""
-        self.assertTrue(self.validate_data("docker-01", data))
-        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "docker": {"options": {"remote": "tcp://10.192.244.7:2375"}},
@@ -315,8 +292,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_lava_slave_docker(self):
         data = "{% extends 'lava-slave-docker.jinja2' %}"
-        self.assertTrue(self.validate_data("docker-01", data))
-        template_dict = prepare_jinja_template("docker-01", data, raw=False)
+        template_dict = self.render_device_dictionary_from_text(data)
         self.assertEqual(
             {
                 "/srv/tftp:/srv/tftp",
@@ -334,9 +310,7 @@ class TestQemuTemplates(BaseTemplate.BaseTemplateCases):
 
     def test_qemu_misc(self):
         job_ctx = {"arch": "microblaze"}
-        template_dict = self.render_device_dictionary_file(
-            "qemu01.jinja2", job_ctx, raw=False
-        )
+        template_dict = self.render_device_dictionary("qemu01", job_ctx)
         self.assertIsNotNone(template_dict)
         self.assertEqual(
             {
