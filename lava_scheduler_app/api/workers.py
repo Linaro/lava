@@ -235,12 +235,13 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        try:
-            yaml_safe_load(config)
-        except YAMLError:
-            raise xmlrpc.client.Fault(
-                400, f"Invalid YAML syntax in '{hostname}' config: {config}"
-            )
+        if config:
+            try:
+                yaml_safe_load(config)
+            except YAMLError:
+                raise xmlrpc.client.Fault(
+                    400, f"Invalid YAML syntax in '{hostname}' config: {config}"
+                )
 
         with contextlib.suppress(OSError):
             File("dispatcher", hostname).write(config)
@@ -279,12 +280,13 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        try:
-            yaml_safe_load(env)
-        except YAMLError:
-            raise xmlrpc.client.Fault(
-                400, f"Invalid YAML syntax in '{hostname}' env: {env}"
-            )
+        if env:
+            try:
+                yaml_safe_load(env)
+            except YAMLError:
+                raise xmlrpc.client.Fault(
+                    400, f"Invalid YAML syntax in '{hostname}' env: {env}"
+                )
 
         with contextlib.suppress(OSError):
             File("env", hostname).write(env)
@@ -323,12 +325,13 @@ class SchedulerWorkersAPI(ExposedV2API):
         except Worker.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Worker '%s' was not found." % hostname)
 
-        try:
-            yaml_safe_load(env)
-        except YAMLError:
-            raise xmlrpc.client.Fault(
-                400, f"Invalid YAML syntax in '{hostname}' DUT env: {env}"
-            )
+        if env:
+            try:
+                yaml_safe_load(env)
+            except YAMLError:
+                raise xmlrpc.client.Fault(
+                    400, f"Invalid YAML syntax in '{hostname}' DUT env: {env}"
+                )
 
         with contextlib.suppress(OSError):
             File("env-dut", hostname).write(env)

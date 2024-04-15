@@ -2116,6 +2116,7 @@ def test_workers_set_config(setup, mocker, tmp_path):
         },
     )
 
+    # Add
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_config("example.com", "hello")
         is True
@@ -2123,6 +2124,13 @@ def test_workers_set_config(setup, mocker, tmp_path):
     assert (tmp_path / "example.com" / "dispatcher.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
+
+    # Delete
+    assert (
+        server("admin", "admin").scheduler.workers.set_config("example.com", None)
+        is True
+    )
+    assert not (tmp_path / "example.com" / "dispatcher.yaml").exists()
 
 
 @pytest.mark.django_db
@@ -2184,6 +2192,7 @@ def test_workers_set_env(setup, mocker, tmp_path):
         {"env": [str(tmp_path / "{name}/env.yaml"), str(tmp_path / "env.yaml")]},
     )
 
+    # Add
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_env("example.com", "hello")
         is True
@@ -2191,6 +2200,12 @@ def test_workers_set_env(setup, mocker, tmp_path):
     assert (tmp_path / "example.com" / "env.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
+
+    # Delete
+    assert (
+        server("admin", "admin").scheduler.workers.set_env("example.com", None) is True
+    )
+    assert not (tmp_path / "example.com" / "env.yaml").exists()
 
 
 @pytest.mark.django_db
@@ -2248,6 +2263,7 @@ def test_workers_set_env_dut(setup, mocker, tmp_path):
         },
     )
 
+    # Add
     assert (  # nosec
         server("admin", "admin").scheduler.workers.set_env_dut("example.com", "hello")
         is True
@@ -2255,6 +2271,13 @@ def test_workers_set_env_dut(setup, mocker, tmp_path):
     assert (tmp_path / "example.com" / "env-dut.yaml").read_text(  # nosec
         encoding="utf-8"
     ) == "hello"
+
+    # Delete
+    assert (
+        server("admin", "admin").scheduler.workers.set_env_dut("example.com", None)
+        is True
+    )
+    assert not (tmp_path / "example.com" / "env-dut.yaml").exists()
 
 
 @pytest.mark.django_db
