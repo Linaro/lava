@@ -188,6 +188,7 @@ def get_test_template_env() -> SandboxedEnvironment:
 
     return create_device_templates_env(
         loader=FileSystemLoader((device_types_templates_path, device_templates_path)),
+        cache_size=-1,
     )
 
 
