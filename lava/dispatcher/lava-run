@@ -15,7 +15,6 @@ import sys
 import traceback
 from pathlib import Path
 
-import yaml
 from setproctitle import setproctitle
 
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
@@ -170,31 +169,6 @@ def terminating_handler(*_):
     raise JobCanceled("The job was canceled again (too long to cancel)")
 
 
-def dump_as_safe_yaml(obj):
-    """
-    Dump as yaml without using any tags.
-    Breaks the implicit dependency between lava_scheduler_app and
-    lava_dispatcher python modules.
-    Note that the resulting description will differ from the pipeline
-    references used in the dispatcher test suite.
-    We have to use a specific emitter that will remove tags on the fly.
-    """
-    process_tag = yaml.emitter.Emitter.process_tag
-
-    def replace_tags(self, *args, **kwargs):
-        if self.event.tag.startswith("tag:yaml.org,2002:python/name:"):
-            self.event.value = self.event.tag.replace(
-                "tag:yaml.org,2002:python/name:", ""
-            )
-            self.event.tag = "tag:yaml.org,2002:str"
-        return process_tag(self, *args, **kwargs)
-
-    yaml.emitter.Emitter.process_tag = replace_tags
-    data = yaml.dump(obj)
-    yaml.emitter.Emitter.process_tag = process_tag
-    return data
-
-
 def main():
     # Parse the command line
     options = parser().parse_args()
@@ -241,7 +215,7 @@ def main():
             os.environ[k] = v
 
         # Generate the description
-        description = dump_as_safe_yaml(job.describe())
+        description = yaml_safe_dump(job.describe())
         (options.output_dir / "description.yaml").write_text(
             description, encoding="utf-8"
         )
