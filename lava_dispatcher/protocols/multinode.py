@@ -448,6 +448,9 @@ class MultinodeProtocol(Protocol):
         and the second value is the collated data from the call to the protocol.
         """
         retval = {}
+        if reply == "ack":
+            # Skip collate, if 'ack' got from lava-coordinator
+            return
         if reply == {} or not isinstance(reply, dict):
             msg = "Unable to identify replaceable values in the parameters: %s" % params
             self.logger.error(msg)
