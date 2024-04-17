@@ -119,7 +119,6 @@ from lava_scheduler_app.tables_jobs import (
     LongestJobsTable,
     QueuedJobsTable,
 )
-from lava_scheduler_app.templatetags.utils import udecode
 from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class, is_ajax
@@ -1740,19 +1739,6 @@ def job_detail(request, pk):
     except yaml.YAMLError:
         log_data = None
 
-    if log_data:
-        test_case_count = TestCase.objects.filter(suite__job=job).count()
-        if test_case_count <= settings.TESTCASE_COUNT_LIMIT:
-            results = {
-                (t.suite.name, t.name): t.id
-                for t in TestCase.objects.filter(suite__job=job).select_related("suite")
-            }
-            # list all related results
-            for line in [line for line in log_data if line["lvl"] == "results"]:
-                key = (line["msg"].get("definition"), line["msg"].get("case"))
-                if key in results:
-                    line["msg"]["case_id"] = results[key]
-
     # Get lava.job result if available
     lava_job_result = None
     with contextlib.suppress(TestCase.DoesNotExist):
@@ -2167,19 +2153,6 @@ def job_log_incremental(request, pk):
         # When reaching EOF, yaml.load does return None instead of []
         if not data:
             data = []
-        else:
-            for line in data:
-                line["msg"] = udecode(line["msg"])
-                if line["lvl"] == "results":
-                    definition = line["msg"].get("definition")
-                    case = line["msg"].get("case")
-                    if definition and case:
-                        case_id = TestCase.objects.filter(
-                            suite__job=job, suite__name=definition, name=case
-                        ).values_list("id", flat=True)
-                        if case_id:
-                            line["msg"]["case_id"] = case_id[0]
-
     except (OSError, StopIteration, yaml.YAMLError):
         data = []
 

@@ -311,12 +311,8 @@
         {% elif line.lvl == "feedback" %}
       <code class="feedback" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
         {% elif line.lvl == "results" %}
-            {% if line.msg.set %}
-              {% url 'lava.results.testset' job.id line.msg.definition line.msg.set line.msg.case as result_url %}
-            {% else %}
-              {% url 'lava.results.testcase' line.msg.case_id as result_url %}
-            {% endif %}
-      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.case_id }}">
+        {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
+      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.case }}_{{ forloop.counter }}">
         <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
         {% for key, value in line.msg.items|sort_items %}
           {% if value.items %}
@@ -584,8 +580,8 @@
                   .insertBefore(progressNode);
               } else if(level == 'results') {
                 id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_F_' + d['msg']['result'];
-                // TODO: not working with MOUNT_POINT
-                var link = $('<a href="/results/testcase/' + d['msg']['case_id'] + '"></a>');
+                var base_url = '{% url 'lava.results.testjob' job=job.pk %}';
+                var link = $('<a href="' + base_url + '/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
                 var node;
                 if(d['msg']['result'] == 'fail') {
                   node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
