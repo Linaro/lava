@@ -189,7 +189,7 @@ urlpatterns = [
         name="lava.results.job.metadata",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)$",
+        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<testsuite_name>[-_a-zA-Z0-9.]+)$",
         suite,
         name="lava.results.suite",
     ),
@@ -268,38 +268,57 @@ urlpatterns = [
         name="lava.results.chart_omit_result",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<ts>[-_a-zA-Z0-9.]+)/(?P<case>[-_a-zA-Z0-9.+]+)$",
+        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"(?P<testset_name>[-_a-zA-Z0-9.]+)/"
+        r"(?P<testcase_name>[-_a-zA-Z0-9.+]+)$",
         testset,
         name="lava.results.testset",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/csv$",
+        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"csv$",
         suite_csv,
         name="lava.results.suite_csv",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/stream/csv$",
+        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"stream/csv$",
         suite_csv_stream,
         name="lava.results.suite_csv_stream",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/yaml$",
+        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"yaml$",
         suite_yaml,
         name="lava.results.suite_yaml",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/\+testcase-count$",
+        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"\+testcase-count$",
         suite_testcase_count,
         name="lava.results.suite_testcase_count",
     ),
-    re_path(r"^testcase/(?P<case_id>[0-9]+)$", testcase, name="lava.results.testcase"),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case_id>[0-9]+)$",
+        r"^testcase/(?P<testcase_id_or_name>[0-9]+)$",
         testcase,
         name="lava.results.testcase",
     ),
     re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/(?P<pk>[-_a-zA-Z0-9.]+)/(?P<case_id>[-_a-zA-Z0-9.\(\)+]+)$",
+        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"(?P<testcase_id_or_name>[0-9]+)$",
+        testcase,
+        name="lava.results.testcase",
+    ),
+    re_path(
+        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
+        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
+        r"(?P<testcase_id_or_name>[-_a-zA-Z0-9.\(\)+]+)$",
         testcase,
         name="lava.results.testcase",
     ),

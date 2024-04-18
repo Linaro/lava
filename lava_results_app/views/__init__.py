@@ -230,10 +230,10 @@ def testjob_yaml_summary(request, job):
     return response
 
 
-@BreadCrumb("Suite {pk}", parent=testjob, needs=["job", "pk"])
-def suite(request, job, pk):
+@BreadCrumb("Suite {testsuite_name}", parent=testjob, needs=["job", "testsuite_name"])
+def suite(request, job, testsuite_name):
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     data = SuiteView(request, model=TestCase, table_class=SuiteTable)
     suite_table = SuiteTable(
         data.get_table_data().filter(suite=test_suite), request=request
@@ -245,22 +245,24 @@ def suite(request, job, pk):
         request,
         "lava_results_app/suite.html",
         {
-            "bread_crumb_trail": BreadCrumbTrail.leading_to(suite, pk=pk, job=job.id),
+            "bread_crumb_trail": BreadCrumbTrail.leading_to(
+                suite, testsuite_name=testsuite_name, job=job.id
+            ),
             "job": job,
             "job_link": pklink(job),
             "testsuite_content_type_id": ContentType.objects.get_for_model(
                 TestSuite
             ).id,
-            "suite_name": pk,
+            "suite_name": testsuite_name,
             "suite_id": test_suite.id,
             "suite_table": suite_table,
         },
     )
 
 
-def suite_csv(request, job, pk):
+def suite_csv(request, job, testsuite_name):
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
     limit = int(querydict.get("limit", default=0))
@@ -280,7 +282,7 @@ def suite_csv(request, job, pk):
     return response
 
 
-def suite_csv_stream(request, job, pk):
+def suite_csv_stream(request, job, testsuite_name):
     """
     Django is designed for short-lived requests.
     Streaming responses will tie a worker process for the entire duration of the response.
@@ -291,7 +293,7 @@ def suite_csv_stream(request, job, pk):
     https://docs.djangoproject.com/en/3.2/howto/outputting-csv/
     """
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
     limit = int(querydict.get("limit", default=0))
@@ -308,9 +310,9 @@ def suite_csv_stream(request, job, pk):
     return response
 
 
-def suite_yaml(request, job, pk):
+def suite_yaml(request, job, testsuite_name):
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     querydict = request.GET
     offset = int(querydict.get("offset", default=0))
     limit = int(querydict.get("limit", default=0))
@@ -325,9 +327,9 @@ def suite_yaml(request, job, pk):
     return response
 
 
-def suite_testcase_count(request, job, pk):
+def suite_testcase_count(request, job, testsuite_name):
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     test_case_count = test_suite.testcase_set.all().count()
     return HttpResponse(test_case_count, content_type="text/plain")
 
@@ -354,18 +356,26 @@ def metadata_export(request, job):
     return response
 
 
-@BreadCrumb("TestSet {case}", parent=testjob, needs=["job", "pk", "ts", "case"])
-def testset(request, job, ts, pk, case):
+@BreadCrumb(
+    "TestSet {testcase_name}",
+    parent=testjob,
+    needs=["job", "testsuite_name", "testset_name", "testcase_name"],
+)
+def testset(request, job, testsuite_name, testset_name, testcase_name):
     job = TestJob.get_restricted_job(job, request.user)
-    test_suite = get_object_or_404(TestSuite, name=pk, job=job)
-    test_set = get_object_or_404(TestSet, name=ts, suite=test_suite)
-    test_cases = TestCase.objects.filter(name=case, test_set=test_set)
+    test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
+    test_set = get_object_or_404(TestSet, name=testset_name, suite=test_suite)
+    test_cases = TestCase.objects.filter(name=testcase_name, test_set=test_set)
     return render(
         request,
         "lava_results_app/case.html",
         {
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
-                testset, pk=pk, job=job.id, ts=ts, case=case
+                testset,
+                testsuite_name=testsuite_name,
+                job=job.id,
+                testset_name=testset_name,
+                testcase_name=testcase_name,
             ),
             "job": job,
             "suite": test_suite,
@@ -375,8 +385,12 @@ def testset(request, job, ts, pk, case):
     )
 
 
-@BreadCrumb("Test case {case_id}", parent=suite, needs=["job", "pk", "case_id"])
-def testcase(request, case_id, job=None, pk=None):
+@BreadCrumb(
+    "Test case {testcase_id_or_name}",
+    parent=suite,
+    needs=["job", "testsuite_name", "testcase_id_or_name"],
+)
+def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
     """
     Each testcase can appear multiple times in the same testsuite and testjob,
     the action_data.action_level distinguishes each testcase.
@@ -385,18 +399,18 @@ def testcase(request, case_id, job=None, pk=None):
     job ID, suite name and test set name.
     :param request: http request object
     :param job: ID of the TestJob
-    :param pk: the name of the TestSuite
-    :param case_id: the name or ID of one TestCase object in the TestSuite
+    :param testsuite_name: the name of the TestSuite
+    :param testcase_id_or_name: the name or ID of one TestCase object in the TestSuite
     """
     test_sets = None
     try:
-        case = TestCase.objects.get(pk=case_id)
+        case = TestCase.objects.get(pk=testcase_id_or_name)
     except (TestCase.DoesNotExist, ValueError):
         case = TestCase.objects.filter(
-            name=case_id, suite__name=pk, suite__job__id=job
+            name=testcase_id_or_name, suite__name=testsuite_name, suite__job__id=job
         ).first()
         if not case:
-            test_sets = TestSet.objects.filter(name=case_id)
+            test_sets = TestSet.objects.filter(name=testcase_id_or_name)
             if not test_sets:
                 raise Http404("No TestCase/TestSet matches the given parameters.")
     if not job:
@@ -405,10 +419,10 @@ def testcase(request, case_id, job=None, pk=None):
         job = TestJob.get_restricted_job(job.id, request.user)
     else:
         job = TestJob.get_restricted_job(job, request.user)
-    if not pk:
+    if not testsuite_name:
         test_suite = case.suite
     else:
-        test_suite = get_object_or_404(TestSuite, name=pk, job=job)
+        test_suite = get_object_or_404(TestSuite, name=testsuite_name, job=job)
     if test_sets:
         # No test case was found.
         test_sets = test_sets.filter(suite=test_suite)
@@ -445,7 +459,10 @@ def testcase(request, case_id, job=None, pk=None):
         "lava_results_app/case.html",
         {
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
-                testcase, pk=test_suite.name, job=job.id, case_id=trail_id
+                testcase,
+                testsuite_name=test_suite.name,
+                job=job.id,
+                testcase_id_or_name=trail_id,
             ),
             "job": job,
             "sets": test_sets,
