@@ -166,7 +166,7 @@ class JobParser:
         # there's always going to need to be a finalize_process action
         finalize = FinalizeAction()
         pipeline.add_action(finalize)
-        finalize.populate(None)
+
         job.pipeline = pipeline
 
         return job
