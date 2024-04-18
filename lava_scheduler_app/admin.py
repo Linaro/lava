@@ -470,6 +470,7 @@ class TestJobAdmin(admin.ModelAdmin):
         "end_time",
     )
     ordering = ["-submit_time"]
+    show_full_result_count = False
 
 
 def disable_health_check_action(modeladmin, request, queryset):

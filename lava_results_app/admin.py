@@ -30,6 +30,7 @@ class TestCaseAdmin(admin.ModelAdmin):
     list_select_related = ("suite", "suite__job")
     ordering = ("-suite__job__pk", "suite__name", "name")
     raw_id_fields = ("suite",)
+    show_full_result_count = False
 
     def job_pk(self, testcase):
         return testcase.suite.job.pk
@@ -47,6 +48,7 @@ class TestCaseAdmin(admin.ModelAdmin):
 class TestSetAdmin(admin.ModelAdmin):
     list_display = ("suite", "name")
     raw_id_fields = ("suite",)
+    show_full_result_count = False
 
     def has_add_permission(self, request):
         return False
@@ -60,6 +62,7 @@ class TestSuiteAdmin(admin.ModelAdmin):
     list_select_related = ("job",)
     ordering = ("-job__pk", "name")
     raw_id_fields = ("job",)
+    show_full_result_count = False
 
     def job_pk(self, testsuite):
         return testsuite.job.pk
