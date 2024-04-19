@@ -84,7 +84,7 @@
       top: 70px;
     }
     #affix-full {
-      display: none;
+      display: block;
     }
 
     .tr-danger {
@@ -225,8 +225,7 @@
 <div class="affix hidden-xs hidden-sm">
   <h4>Pipeline <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
   <div id="affix-full">
-    <ul class="list-unstyled">
-      {% include 'lava_scheduler_app/_pipeline_actions.html' with pipeline=pipeline_data %}
+    <ul class="list-unstyled" id="actions-list">
     </ul>
   </div>
 </div>
@@ -300,44 +299,7 @@
     </div>
 
     <div id="sectionlogs">
-      {% for line in log_data %}
-        {% if line.lvl == "debug" %}
-          {% get_action_id line.msg as act_id %}
-      <code class="debug" title="{{ line.dt }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}">{{ line.msg|udecode }}</code>
-        {% elif line.lvl == "input" %}
-      <code class="keyboard" id="L{{ forloop.counter0 }}" title="{{ line.dt }}"><kbd>{{ line.msg|udecode }}</kbd></code>
-        {% elif line.lvl == "target" %}
-      <code class="target bg-success" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
-        {% elif line.lvl == "feedback" %}
-      <code class="feedback" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
-        {% elif line.lvl == "results" %}
-        {% url 'lava.results.testcase' job.id line.msg.definition line.msg.case as result_url %}
-      <code class="results bg-primary{% if line.msg.result == "fail" %} results_failed{% endif %}" id="results_{{ line.msg.case }}_{{ forloop.counter }}">
-        <a class="text-white" href="{{ result_url|default:"#invalid_test_name" }}">
-        {% for key, value in line.msg.items|sort_items %}
-          {% if value.items %}
-            {% if key == "extra" %}
-              extra: ...<br />
-            {% else %}
-              {% for k, v in value.items %}
-                {{ k }}: {{ v }}<br />
-              {% endfor %}
-            {% endif %}
-          {% else %}
-              {{ key }}: {{ value }}<br />
-          {% endif %}
-        {% endfor %}
-        </a></code>
-        {% elif line.lvl == "error" or line.lvl == "exception" %}
-      <code class="{{ line.lvl }} bg-danger" id="L{{ forloop.counter0 }}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
-        {% else %}
-          {% get_action_id line.msg as act_id %}
-      <code class="{{ line.lvl }} bg-{{ line.lvl }}" id="{% if act_id %}action_{{ act_id }}{% else %}L{{ forloop.counter0 }}{% endif %}" title="{{ line.dt }}">{{ line.msg|udecode }}</code>
-        {% endif %}
-      {% endfor %}
-      {% if job.state != job.STATE_FINISHED %}
       <img id="log-messages" src="{% static "lava_scheduler_app/images/ajax-loader.gif" %}" />
-      {% endif %}
     </div>
     {% if not size_warning %}
     <p class="pull-right"><a href="#top">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></p>
@@ -374,6 +336,99 @@
 <script src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
 <script src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
 <script>
+  var logs_position = 0;
+  const progress_node = document.getElementById('log-messages');
+  const actions_list = document.getElementById('actions-list');
+  const action_id_regexp = /^start: (?<action_level>[\d.]+) (?<action_name>[\w_-]+)/;
+
+  function render_logs(logs_data) {
+    const logs_fragment = document.createDocumentFragment();
+    const actions_fragment = document.createDocumentFragment();
+    // Loop on all new code blocks
+    for(var i = 0; i < logs_data.length; i++) {
+        const d = logs_data[i];
+        const level = d['lvl'];
+        const id = "L" + (logs_position + i);
+        const msg = d['msg']
+        const dt = d['dt']
+
+        const code_node = document.createElement('code');
+        code_node.setAttribute('id', id);
+        code_node.setAttribute('title', dt);
+        if(level == 'debug') {
+          code_node.setAttribute('class', 'debug');
+          code_node.textContent = msg;
+          add_to_action_list(actions_fragment, msg, id);
+        } else if(level == 'input') {
+          code_node.setAttribute('class', 'keyboard');
+          code_node.textContent = msg;
+        } else if(level == 'target') {
+          code_node.setAttribute('class', 'target bg-success');
+          code_node.textContent = msg;
+        } else if(level == 'feedback') {
+          code_node.setAttribute('class', 'feedback');
+          code_node.textContent = msg;
+        } else if(level == 'results') {
+          if(msg['result'] == 'fail') {
+            code_node.setAttribute('class', 'results bg-primary results_failed');
+          } else {
+            code_node.setAttribute('class', 'results bg-primary');
+          }
+          const results_node = document.createElement('a');
+          const base_url = '{% url 'lava.results.testjob' job=job.pk %}';
+          results_node.setAttribute('class', 'text-white');
+          results_node.setAttribute('href', `${base_url}/${msg['definition']}/${msg['case']}`);
+          for(const key in msg) {
+            const value = msg[key];
+            if (key == 'extra') {
+              continue;
+            } else {
+              results_node.appendChild(document.createTextNode(`${key}: ${value}`));
+            }
+            results_node.appendChild(document.createElement('br'));
+          }
+          code_node.appendChild(results_node);
+        } else if (level == 'error' || level == 'exception' ) {
+          code_node.setAttribute('class', `${level}  bg-danger`);
+          code_node.textContent = msg;
+        } else {
+          code_node.setAttribute('class', `${level}  bg-${level}`);
+          code_node.textContent = msg;
+          add_to_action_list(actions_fragment, msg, id);
+        }
+        logs_fragment.appendChild(code_node);
+    }
+    logs_position += logs_data.length;
+    actions_list.appendChild(actions_fragment);
+    progress_node.before(logs_fragment);
+  };
+  function add_to_action_list(fragment, line, id_to_href) {
+    const match = action_id_regexp.exec(line);
+    if (!match) {
+      return;
+    }
+    const groups = match.groups;
+    const action_level = groups.action_level;
+    const action_name = groups.action_name;
+
+    const new_action_list_entry = document.createElement('li');
+    fragment.appendChild(new_action_list_entry);
+    const new_action_link = document.createElement('a');
+    new_action_link.setAttribute('href', `#${id_to_href}`);
+    new_action_link.textContent = `${action_level} - ${action_name}`;
+    new_action_list_entry.appendChild(new_action_link);
+  };
+
+  document.addEventListener('DOMContentLoaded', function render_logs_initial() {
+    const logs_initial = JSON.parse(document.getElementById('logs-initial').textContent);
+    render_logs(logs_initial);
+{% if job.state == job.STATE_FINISHED %}
+    anchors.options.placement = 'left';
+    anchors.add('code');
+    $('#log-messages').css('display', 'none');
+{% endif %}
+  });
+
   $(document).ready(
     function() {
 {% if not size_warning %}
@@ -418,7 +473,7 @@
       });
 
       // Open the affix if the user click on the button
-      var affix_toggle = true;
+      var affix_toggle = false;
       $('.affix h4').click(function() {
         if(affix_toggle) {
           $('#affix-full').css('display', 'block');
@@ -496,12 +551,6 @@
       })
     });
 
-    {% if job.state == job.STATE_FINISHED %}
-    // Add the links only for non-running jobs
-    anchors.options.placement = 'left';
-    anchors.add('code');
-    {% endif %}
-
 {% if job.state != job.STATE_FINISHED %}
   // Add a timer for the log updates
   pollTimer = setTimeout(poll, 5000);
@@ -509,9 +558,7 @@
 
   var poll_status = 1;
   var poll_logs = 1;
-  var position = {{ log_data|length }};
-  var progressNode = $('#log-messages');
-  var action_id_regexp = /^start: ([\d.]+) [\w_-]+ /;
+
   function poll() {
     // Update job status
     if(poll_status) {
@@ -542,7 +589,7 @@
     // Update logs
     if(poll_logs) {
       $.ajax({
-        url: '{% url 'lava.scheduler.job.log_incremental' pk=job.pk %}?line=' + position,
+        url: '{% url 'lava.scheduler.job.log_incremental' pk=job.pk %}?line=' + logs_position,
         success: function(data, success, xhr) {
           // Do we have to scroll down ?
           var scroll_down = false;
@@ -550,73 +597,8 @@
             scroll_down = true;
           }
 
-          // Loop on all new code blocks
-          for(var i = 0; i < data.length; i++) {
-              var d = data[i];
-              var level = d['lvl'];
-              var id = "L" + (position + i);
+          render_logs(data);
 
-              var node;
-              if(level == 'debug') {
-                var action_id = action_id_regexp.exec(d['msg']);
-                if(action_id) {
-                  id = 'action_' + action_id[1].replace(/\./g, '-');
-                }
-                $('<code class="debug" id="' + id + '"></code>')
-                  .text(d['msg'])
-                  .insertBefore(progressNode);
-              } else if(level == 'input') {
-                $('<code class="keyboard" id="' + id + '"></code>')
-                  .append($('<kbd></kbd>')
-                  .text(d['msg']))
-                  .insertBefore(progressNode);
-              } else if(level == 'target') {
-                $('<code class="target bg-success" id="' + id + '"></code>')
-                  .text(d['msg'])
-                  .insertBefore(progressNode);
-              } else if(level == 'feedback') {
-                $('<code class="feedback" id="' + id + '"></code>')
-                  .text(d['msg'])
-                  .insertBefore(progressNode);
-              } else if(level == 'results') {
-                id = 'results_' + d['msg']['definition'] + '_' + d['msg']['case'] + '_F_' + d['msg']['result'];
-                var base_url = '{% url 'lava.results.testjob' job=job.pk %}';
-                var link = $('<a href="' + base_url + '/' + d['msg']['definition'] + '/' + d['msg']['case'] + '"></a>');
-                var node;
-                if(d['msg']['result'] == 'fail') {
-                  node = $('<code class="results bg-primary results_failed" id="' + id + '"></code>');
-                } else {
-                  node = $('<code class="results bg-primary" id="' + id + '"></code>');
-                }
-                for(key in d['msg']) {
-                  if(typeof(d['msg'][key]) == 'string') {
-                    node.append($('<span></span>').text(key + ': ' + d['msg'][key]));
-                    node.append($('<br />'));
-                  } else if(key == 'extra') {
-                    node.append($('<span>extra: ...</span><br />'));
-                  } else {
-                    for(k in d ['msg'][key]) {
-                      node.append($('<span></span>').text(k + ': ' + d['msg'][key][k]));
-                      node.append($('<br />'));
-                    }
-                  }
-                }
-                link.append(node);
-                link.insertBefore(progressNode);
-              } else if (level == 'error' || level == 'exception' ) {
-                $('<code class="' + level + ' bg-danger" id="' + id + '"></code>')
-                  .text(d['msg'])
-                  .insertBefore(progressNode);
-              } else {
-                var action_id = action_id_regexp.exec(d['msg']);
-                if(action_id) {
-                  id = 'action_' + action_id[1].replace(/\./g, '-');
-                }
-                $('<code class="' + level + ' bg-' + level + '" id="' + id + '"></code>')
-                  .text(d['msg'])
-                  .insertBefore(progressNode);
-              }
-          }
           // Relaunch the timer
           if(xhr.getResponseHeader('X-Size-Warning')) {
             $('#log-messages').css('display', 'none');
@@ -626,8 +608,6 @@
           } else if(xhr.getResponseHeader('X-Is-Finished')) {
             $('#log-messages').css('display', 'none');
             poll_logs = 0;
-          } else {
-            position += data.length
           }
 
           // Scroll down
@@ -642,4 +622,5 @@
     }
   };
 </script>
+{{ log_data|json_script:"logs-initial" }}
 {% endblock scripts %}

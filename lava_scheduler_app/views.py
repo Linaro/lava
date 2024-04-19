@@ -75,7 +75,7 @@ from lava_results_app.models import (
     TestCase,
     TestData,
 )
-from lava_results_app.utils import description_data, description_filename
+from lava_results_app.utils import description_filename
 from lava_scheduler_app.dbutils import (
     device_summary,
     device_type_summary,
@@ -1691,8 +1691,6 @@ def job_submit(request):
 def job_detail(request, pk):
     job = TestJob.get_restricted_job(pk, request.user)
 
-    pipeline = description_data(job).get("pipeline", {})
-
     # Validate the job definition
     validation_errors = ""
     try:
@@ -1720,7 +1718,6 @@ def job_detail(request, pk):
         "available_content_types": json_dumps(
             QueryCondition.get_similar_job_content_types()
         ),
-        "pipeline_data": pipeline,
         "job_tags": job.tags.all(),
         "size_limit": job.size_limit,
         "validation_errors": validation_errors,
