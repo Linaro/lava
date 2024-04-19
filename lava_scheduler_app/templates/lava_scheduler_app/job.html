@@ -13,6 +13,7 @@
       color: black;
       white-space: pre-wrap;
       display: block;
+      position: relative;
     }
     .results {
       border: 1px solid black;
@@ -104,6 +105,17 @@
     }
     .text-white:hover {
       color: white;
+    }
+    code > .lava-log-line-url {
+      position: absolute;
+      text-align: end;
+      padding-right: 3px;
+      right: 100%;
+      opacity: 0;
+      user-select: none;
+    }
+    code:hover > .lava-log-line-url{
+      opacity: 1;
     }
   </style>
 {% endblock %}
@@ -331,7 +343,6 @@
   var condition_choices = JSON.parse($("#id_condition_choices").val());
   var content_types = JSON.parse($("#id_available_content_types").val());
 </script>
-<script src="{% static "lava_scheduler_app/js/anchor-v4.2.2.js" %}"></script>
 <script src="{% static "lava_server/js/jquery.typeahead.js" %}"></script>
 <script src="{% static "lava_scheduler_app/js/similar-jobs.js" %}"></script>
 <script src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
@@ -345,58 +356,72 @@
     const logs_fragment = document.createDocumentFragment();
     const actions_fragment = document.createDocumentFragment();
     // Loop on all new code blocks
-    for(var i = 0; i < logs_data.length; i++) {
-        const d = logs_data[i];
+    for (const [i, d] of logs_data.entries()) {
         const level = d['lvl'];
         const id = "L" + (logs_position + i);
         const msg = d['msg']
         const dt = d['dt']
 
         const code_node = document.createElement('code');
-        code_node.setAttribute('id', id);
-        code_node.setAttribute('title', dt);
-        if(level == 'debug') {
-          code_node.setAttribute('class', 'debug');
-          code_node.textContent = msg;
-          add_to_action_list(actions_fragment, msg, id);
-        } else if(level == 'input') {
-          code_node.setAttribute('class', 'keyboard');
-          const kbd_node = document.createElement('kbd');
-          kbd_node.textContent = msg;
-          code_node.appendChild(kbd_node);
-        } else if(level == 'target') {
-          code_node.setAttribute('class', 'target bg-success');
-          code_node.textContent = msg;
-        } else if(level == 'feedback') {
-          code_node.setAttribute('class', 'feedback');
-          code_node.textContent = msg;
-        } else if(level == 'results') {
-          if(msg['result'] == 'fail') {
-            code_node.setAttribute('class', 'results bg-primary results_failed');
-          } else {
-            code_node.setAttribute('class', 'results bg-primary');
-          }
-          const results_node = document.createElement('a');
-          const base_url = '{% url 'lava.results.testjob' job=job.pk %}';
-          results_node.setAttribute('class', 'text-white');
-          results_node.setAttribute('href', `${base_url}/${msg['definition']}/${msg['case']}`);
-          for(const key in msg) {
-            const value = msg[key];
-            if (key == 'extra') {
-              continue;
-            } else {
-              results_node.appendChild(document.createTextNode(`${key}: ${value}`));
+        code_node.id = id;
+        code_node.title = dt;
+        // Base HTML class switch
+        switch(level) {
+          case 'debug':
+          case 'feedback':
+            code_node.classList.add(level);
+            break;
+          case 'input':
+            code_node.classList.add('keyboard');
+            break;
+          case 'target':
+            code_node.classList.add('target', 'bg-success');
+            break;
+          case 'results':
+            code_node.classList.add('results', 'bg-primary');
+            break;
+          case 'error':
+          case 'exception':
+            code_node.classList.add(level, 'bg-danger');
+            break;
+          default:
+            code_node.classList.add(level, `bg-${level}`)
+        }
+        // Floating line link
+        const line_link = document.createElement('a');
+        line_link.setAttribute('href', `#${id}`);
+        line_link.textContent = id;
+        line_link.className = 'lava-log-line-url';
+        code_node.appendChild(line_link);
+        // Content switch
+        switch(level) {
+          case 'results':
+            if (msg['result'] == 'fail') {
+              code_node.classList.add('results_failed');
             }
-            results_node.appendChild(document.createElement('br'));
-          }
-          code_node.appendChild(results_node);
-        } else if (level == 'error' || level == 'exception' ) {
-          code_node.setAttribute('class', `${level}  bg-danger`);
-          code_node.textContent = msg;
-        } else {
-          code_node.setAttribute('class', `${level}  bg-${level}`);
-          code_node.textContent = msg;
-          add_to_action_list(actions_fragment, msg, id);
+            const results_node = document.createElement('a');
+            const base_url = '{% url 'lava.results.testjob' job=job.pk %}';
+            results_node.className = 'text-white';
+            results_node.setAttribute('href', `${base_url}/${msg['definition']}/${msg['case']}`);
+            for (let [key, value] of Object.entries(msg)) {
+              if (key == 'extra') {
+                value = '...';
+              }
+              results_node.appendChild(document.createTextNode(`${key}: ${value}`));
+              results_node.appendChild(document.createElement('br'));
+            }
+            code_node.appendChild(results_node);
+            break;
+          case 'input':
+            const kbd_node = document.createElement('kbd');
+            kbd_node.textContent = msg;
+            code_node.appendChild(kbd_node);
+            break;
+          case 'info':
+          case 'debug':
+            add_to_action_list(actions_fragment, msg, id);
+          default:
+            code_node.appendChild(document.createTextNode(msg));
         }
         logs_fragment.appendChild(code_node);
     }
@@ -425,8 +450,6 @@
     const logs_initial = JSON.parse(document.getElementById('logs-initial').textContent);
     render_logs(logs_initial);
 {% if job.state == job.STATE_FINISHED %}
-    anchors.options.placement = 'left';
-    anchors.add('code');
     $('#log-messages').css('display', 'none');
 {% endif %}
   });
