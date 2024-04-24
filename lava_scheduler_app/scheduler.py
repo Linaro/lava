@@ -298,43 +298,50 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
 
 
 def schedule_jobs_for_device(logger, device, print_header):
-    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
-    jobs = jobs.filter(actual_device__isnull=True)
-    jobs = jobs.filter(requested_device_type__pk=device.device_type.pk)
-    jobs = jobs.select_related("submitter")
-    jobs = jobs.order_by("-priority", "submit_time", "sub_id", "id")
+    jobs = (
+        TestJob.objects.select_for_update()
+        .filter(
+            state=TestJob.STATE_SUBMITTED,
+            actual_device__isnull=True,
+            requested_device_type_id=device.device_type_id,
+        )
+        .select_related("submitter")
+        .order_by("-priority", "submit_time", "sub_id", "id")
+    )
 
     device_tags = set(device.tags.all())
-    for job in jobs:
-        if not device.can_submit(job.submitter):
-            continue
-
-        job_tags = set(job.tags.all())
-        if not job_tags.issubset(device_tags):
-            continue
-
-        job_dict = yaml_safe_load(job.definition)
-        if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
-            if not match_vlan_interface(device, job_dict):
+    with transaction.atomic():
+        for job in jobs:
+            if not device.can_submit(job.submitter):
                 continue
 
-        if print_header:
-            logger.debug("- %s", device.device_type.name)
+            job_tags = set(job.tags.all())
+            if not job_tags.issubset(device_tags):
+                continue
 
-        logger.debug(
-            " -> %s (%s, %s)",
-            device.hostname,
-            device.get_state_display(),
-            device.get_health_display(),
-        )
-        logger.debug("  |--> [%d] scheduling", job.id)
-        if job.is_multinode:
-            # TODO: keep track of the multinode jobs
-            fields = job.go_state_scheduling(device)
-        else:
-            fields = job.go_state_scheduled(device)
-        job.save(update_fields=fields)
-        return job.id
+            job_dict = yaml_safe_load(job.definition)
+            if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
+                if not match_vlan_interface(device, job_dict):
+                    continue
+
+            if print_header:
+                logger.debug("- %s", device.device_type.name)
+
+            logger.debug(
+                " -> %s (%s, %s)",
+                device.hostname,
+                device.get_state_display(),
+                device.get_health_display(),
+            )
+            logger.debug("  |--> [%d] scheduling", job.id)
+            if job.is_multinode:
+                # TODO: keep track of the multinode jobs
+                fields = job.go_state_scheduling(device)
+            else:
+                fields = job.go_state_scheduled(device)
+            job.save(update_fields=fields)
+            return job.id
+
     return None
 
 
