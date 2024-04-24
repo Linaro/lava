@@ -4,8 +4,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-import warnings
+from __future__ import annotations
 
 from django import forms
 from django.conf import settings
@@ -167,15 +166,20 @@ admin.site.register(Group, CustomGroupAdmin)
 
 
 def cancel_action(modeladmin, request, queryset):
+    tesjobs_to_cancel: list[TestJob] = []
     with transaction.atomic():
-        for testjob in queryset:
-            # TODO: hacky. until django 2.0+ is used and select_for_update gets
-            # the 'of' argument.
-            warnings.warn(
-                "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
-                DeprecationWarning,
-            )
-            testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
+        # Lock TestJob without actual_device
+        tesjobs_to_cancel.extend(
+            queryset.filter(actual_device__isnull=True).select_for_update()
+        )
+        # Lock TestJob with actual_device
+        tesjobs_to_cancel.extend(
+            queryset.filter(actual_device__isnull=False)
+            .select_related("actual_device")
+            .select_for_update()
+        )
+
+        for testjob in tesjobs_to_cancel:
             if testjob.can_cancel(request.user):
                 if testjob.is_multinode:
                     for job in testjob.sub_jobs_list:
@@ -190,18 +194,26 @@ cancel_action.short_description = "cancel selected jobs"
 
 
 def fail_action(modeladmin, request, queryset):
-    if request.user.is_superuser:
-        with transaction.atomic():
-            for testjob in queryset.filter(state=TestJob.STATE_CANCELING):
-                # TODO: hacky. until django 2.0+ is used and select_for_update
-                # gets the 'of' argument.
-                warnings.warn(
-                    "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
-                    DeprecationWarning,
-                )
-                testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
-                fields = testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
-                testjob.save(update_fields=fields)
+    if not (request.user.is_active and request.user.is_superuser):
+        return
+
+    tesjobs_to_fail: list[TestJob] = []
+    with transaction.atomic():
+        cancelling_jobs = queryset.filter(state=TestJob.STATE_CANCELING)
+        # Lock TestJob without actual_device
+        tesjobs_to_fail.extend(
+            cancelling_jobs.filter(actual_device__isnull=True).select_for_update()
+        )
+        # Lock TestJob with actual_device
+        tesjobs_to_fail.extend(
+            cancelling_jobs.filter(actual_device__isnull=False)
+            .select_related("actual_device")
+            .select_for_update()
+        )
+
+        for testjob in tesjobs_to_fail:
+            fields = testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
+            testjob.save(update_fields=fields)
 
 
 fail_action.short_description = "fail selected jobs"
@@ -278,15 +290,7 @@ class RequestedDeviceTypeFilter(admin.SimpleListFilter):
 
 def _update_devices_health(request, queryset, health):
     with transaction.atomic():
-        for device in queryset:
-            # TODO: hacky. until django 2.0+ is used and select_for_update gets
-            # the 'of' argument.
-            warnings.warn(
-                "select_for_update should be applied to the whole queryset at once, once we upgrade to django 2+",
-                DeprecationWarning,
-            )
-            device = Device.objects.select_for_update().get(pk=device.pk)
-
+        for device in queryset.select_for_update():
             old_health_display = device.get_health_display()
             device.health = health
             device.save(update_fields=["health"])

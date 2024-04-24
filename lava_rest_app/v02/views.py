@@ -502,7 +502,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
         # even if you don't have required permissions.
         with transaction.atomic():
             try:
-                job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
+                job = TestJob.get_by_job_number(kwargs["pk"], for_update=True)
             except TestJob.DoesNotExist:
                 raise NotFound()
             job.cancel(request.user)

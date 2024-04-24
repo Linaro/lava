@@ -1251,8 +1251,7 @@ def internal_v1_jobs(request, pk):
             return JsonResponse({"error": f"Invalid state '{state}'"}, status=400)
 
         with transaction.atomic():
-            # TODO: find a way to lock actual_device
-            job = TestJob.objects.select_for_update().get(pk=pk)
+            job = TestJob.get_by_job_number(pk, for_update=True)
             if TestJob.STATE_REVERSE[state] == TestJob.STATE_RUNNING:
                 fields = job.go_state_running()
                 job.save(update_fields=fields)
