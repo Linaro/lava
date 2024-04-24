@@ -68,8 +68,9 @@ def worker_summary(workers):
 
 def check_queue_timeout():
     LOGGER.info("Check queue timeouts:")
-    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
-    jobs = jobs.filter(queue_timeout__isnull=False)
+    jobs = TestJob.objects.filter(
+        state=TestJob.STATE_SUBMITTED, queue_timeout__isnull=False
+    ).select_for_update()
     # TODO: use alias() once Debian 12 is required
     # See https://docs.djangoproject.com/en/dev/ref/models/querysets/#alias
     jobs = jobs.annotate(
@@ -96,7 +97,8 @@ def schedule(workers):
     workers_limit = worker_summary(workers)
     available_devices = schedule_health_checks(workers_limit)
     schedule_jobs(available_devices, workers_limit)
-    check_queue_timeout()
+    with transaction.atomic():
+        check_queue_timeout()
 
 
 def schedule_health_checks(workers_limit):

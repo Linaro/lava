@@ -1627,7 +1627,6 @@ class TestJob(models.Model):
         if self.state >= TestJob.STATE_SCHEDULING:
             return []
         self.state = TestJob.STATE_SCHEDULING
-        # TODO: check that device is locked
         self.actual_device = device
         fields = self.actual_device.testjob_signal("go_state_scheduling", self)
         self.actual_device.save(update_fields=fields)
@@ -1654,7 +1653,6 @@ class TestJob(models.Model):
         self.state = TestJob.STATE_SCHEDULED
         # dynamic connection does not have any device
         if not dynamic_connection:
-            # TODO: check that device is locked
             self.actual_device = device
             fields = self.actual_device.testjob_signal("go_state_scheduled", self)
             self.actual_device.save(update_fields=fields)
@@ -1669,8 +1667,6 @@ class TestJob(models.Model):
             return []
         self.state = TestJob.STATE_RUNNING
         self.start_time = timezone.now()
-        # TODO: check that self.actual_device is locked by the
-        # select_for_update on the TestJob
         if not self.dynamic_connection:
             fields = self.actual_device.testjob_signal("go_state_running", self)
             self.actual_device.save(update_fields=fields)
@@ -2145,7 +2141,7 @@ class TestJob(models.Model):
             return self.id
 
     @classmethod
-    def get_by_job_number(cls, job_id, for_update=False):
+    def get_by_job_number(cls, job_id: int | str, for_update: bool = False):
         """If JOB_ID is of the form x.y ie., a multinode job notation, then
         query the database with sub_id and get the JOB object else use the
         given id as the primary key value.
@@ -2153,10 +2149,8 @@ class TestJob(models.Model):
         Returns JOB object.
         """
         query = TestJob.objects
-        if for_update:
-            query = query.select_for_update()
-        if "." in str(job_id):
-            job = query.get(sub_id=job_id)
+        if isinstance(job_id, str) and "." in job_id:
+            query = query.filter(sub_id=job_id)
         else:
             # Validate 'job_id' earlier. Raise 'TestJob.DoesNotExist' for
             # invalid IDs. This exception is expected by job query APIs.
@@ -2166,8 +2160,23 @@ class TestJob(models.Model):
                 raise TestJob.DoesNotExist(
                     f"'job_id' expected a number but got {job_id}"
                 )
-            job = query.get(pk=job_id)
-        return job
+            query = query.filter(pk=job_id)
+
+        if not for_update:
+            # Simply return the job
+            return query.get()
+        else:
+            query = query.select_for_update()
+
+        # Perform locking including potentially the actual_device
+        try:
+            return (
+                query.filter(actual_device__isnull=False)
+                .select_related("actual_device")
+                .get()
+            )
+        except TestJob.DoesNotExist:
+            return query.filter(actual_device__isnull=True).get()
 
     @classmethod
     def get_restricted_job(cls, job_id, user, for_update: bool = False) -> TestJob:
@@ -2251,7 +2260,6 @@ class TestJob(models.Model):
                 retval.append({attribute.name: attribute.value})
         return retval
 
-    @transaction.atomic
     def cancel(self, user):
         if not self.can_cancel(user):
             if self.state in [TestJob.STATE_CANCELING, TestJob.STATE_FINISHED]:
