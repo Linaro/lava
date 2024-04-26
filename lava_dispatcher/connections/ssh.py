@@ -22,13 +22,11 @@ class SShSession(ShellSession):
     without duplicating the SSH setup, keys etc.
     """
 
-    name = "SshSession"
-
     def finalise(self):
         self.disconnect("closing")
         super().finalise()
 
-    def disconnect(self, reason=""):
+    def disconnect(self, reason: str = ""):
         # FIXME: handle super if tags are present.
         self.sendline("logout", disconnecting=True)
         self.connected = False

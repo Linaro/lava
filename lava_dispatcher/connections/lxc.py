@@ -3,6 +3,7 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 from lava_dispatcher.action import Action, JobError
 from lava_dispatcher.shell import ShellCommand, ShellSession
@@ -14,13 +15,11 @@ class LxcSession(ShellSession):
     cleanly.
     """
 
-    name = "LxcSession"
-
     def finalise(self):
         self.disconnect("closing")
         super().finalise()
 
-    def disconnect(self, reason=""):
+    def disconnect(self, reason: str = ""):
         self.sendline("exit", disconnecting=True)
         self.connected = False
 

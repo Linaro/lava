@@ -236,8 +236,6 @@ class QemuSession(ShellSession):
     cleanly.
     """
 
-    name = "QemuSession"
-
     def __init__(self, shell_command: ShellCommand):
         super().__init__(shell_command)
         self.tags = ["qemu"]
@@ -246,7 +244,7 @@ class QemuSession(ShellSession):
         self.disconnect("closing")
         super().finalise()
 
-    def disconnect(self, reason=""):
+    def disconnect(self, reason: str = ""):
         self.sendline("poweroff", disconnecting=True)
         self.listen_feedback(5)
         self.connected = False

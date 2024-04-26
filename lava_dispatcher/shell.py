@@ -193,8 +193,6 @@ class ShellCommand(pexpect.spawn):
 
 
 class ShellSession:
-    name = "ShellSession"
-
     def __init__(self, shell_command: ShellCommand):
         """
         A ShellSession monitors a pexpect connection.
@@ -243,16 +241,8 @@ class ShellSession:
                     logger.info("Disconnecting from ssh: %s", reason)
                     self.sendline("", disconnecting=True)
                     self.sendline("~.", disconnecting=True)
-                elif self.name == "LxcSession":
-                    logger.info("Disconnecting from lxc: %s", reason)
-                    self.sendline("", disconnecting=True)
-                    self.sendline("exit", disconnecting=True)
-                elif self.name == "QemuSession":
-                    logger.info("Disconnecting from qemu: %s", reason)
-                elif self.name == "ShellSession":
-                    logger.info("Disconnecting from shell: %s", reason)
                 else:
-                    raise LAVABug("'disconnect' not supported for %s" % self.tags)
+                    logger.info("Disconnecting from shell: %s", reason)
             except ValueError:  # protection against file descriptor == -1
                 logger.debug("Already disconnected")
         else:
