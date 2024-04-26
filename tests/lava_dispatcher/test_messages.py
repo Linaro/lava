@@ -29,7 +29,7 @@ def create_shell_session_cat_file(
         logger=MagicMock(),
     )
 
-    shell_session = ShellSession(MagicMock(), shell_command)
+    shell_session = ShellSession(shell_command)
     pexpect_patterns.append(pexpect_eof)
     shell_session.prompt_str = pexpect_patterns
 

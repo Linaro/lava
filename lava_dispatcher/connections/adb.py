@@ -62,7 +62,7 @@ class ConnectAdb(Action):
                 "%s command exited %d: %s" % (cmd, shell.exitstatus, shell.readlines())
             )
         # ShellSession monitors the pexpect
-        connection = self.session_class(self.job, shell)
+        connection = self.session_class(shell)
         connection.connected = True
         connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters["prompts"]

@@ -99,7 +99,7 @@ class IsoCommandLine(Action):
             )
         self.logger.debug("started a shell command")
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection.prompt_str = self.get_namespace_data(
             action="prepare-qemu-commands", label="prepare-qemu-commands", key="prompts"
         )
@@ -201,7 +201,7 @@ class IsoRebootAction(Action):
             )
         self.logger.debug("started a shell command")
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
