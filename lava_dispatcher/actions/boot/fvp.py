@@ -353,7 +353,7 @@ class StartFVPAction(BaseFVPAction):
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         # Wait for the console string
@@ -461,7 +461,7 @@ class GetFVPSerialAction(Action):
             self.logger.debug("Feedback command: %s", cmd)
             shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-            shell_connection = ShellSession(self.job, shell)
+            shell_connection = ShellSession(shell)
             shell_connection = super().run(shell_connection, max_end_time)
             shell_connection.raw_connection.logfile_read.is_feedback = True
 
@@ -484,7 +484,7 @@ class GetFVPSerialAction(Action):
         self.logger.debug("Connect command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

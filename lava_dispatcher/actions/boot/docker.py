@@ -131,7 +131,7 @@ class CallDockerAction(Action):
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
         self.cleanup_required = True
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

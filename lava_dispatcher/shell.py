@@ -8,8 +8,10 @@ from __future__ import annotations
 import contextlib
 import logging
 import time
+from os import killpg as os_killpg
 from re import error as re_error
 from re import split as re_split
+from signal import SIGKILL
 from typing import TYPE_CHECKING
 
 import pexpect
@@ -24,7 +26,6 @@ from lava_common.exceptions import (
 )
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
-from lava_dispatcher.connection import Connection
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
@@ -89,7 +90,9 @@ class ShellCommand(pexpect.spawn):
     A ShellCommand is a raw_connection for a ShellConnection instance.
     """
 
-    def __init__(self, command, lava_timeout, logger=None, cwd=None, window=2000):
+    def __init__(
+        self, command, lava_timeout: Timeout, logger=None, cwd=None, window=2000
+    ):
         if isinstance(window, str):
             # constants need to be stored as strings.
             try:
@@ -189,29 +192,88 @@ class ShellCommand(pexpect.spawn):
         self.logfile_send.flush(force=True)
 
 
-class ShellSession(Connection):
+class ShellSession:
     name = "ShellSession"
 
-    def __init__(self, job, shell_command):
+    def __init__(self, shell_command: ShellCommand):
         """
         A ShellSession monitors a pexpect connection.
         Optionally, a prompt can be forced after
         a percentage of the timeout.
         """
-        super().__init__(job, shell_command)
+
+        self.raw_connection = shell_command
+        self.check_char = "#"
+        self.connected = True
+        self.tags: list[str] = ["shell"]
+
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
-        self.spawn = shell_command
-        self.__runner__ = None
         self.timeout = shell_command.lava_timeout
-        self.__logger__ = None
-        self.tags = ["shell"]
+        self.logger = logging.getLogger("dispatcher")
 
-    @property
-    def logger(self):
-        if not self.__logger__:
-            self.__logger__ = logging.getLogger("dispatcher")
-        return self.__logger__
+    def send(self, character, disconnecting=False):
+        if self.connected:
+            self.raw_connection.send(character)
+        elif not disconnecting:
+            raise LAVABug("send")
+
+    def sendline(self, line, delay=0, disconnecting=False):
+        if self.connected:
+            self.raw_connection.sendline(line, delay=delay)
+        elif not disconnecting:
+            raise LAVABug("sendline called on disconnected connection")
+
+    def sendcontrol(self, char):
+        if self.connected:
+            self.raw_connection.sendcontrol(char)
+        else:
+            raise LAVABug("sendcontrol called on disconnected connection")
+
+    def disconnect(self, reason: str):
+        logger = self.logger
+
+        if self.connected:
+            try:
+                if "telnet" in self.tags:
+                    logger.info("Disconnecting from telnet: %s", reason)
+                    self.sendcontrol("]")
+                    self.sendline("quit", disconnecting=True)
+                elif "ssh" in self.tags:
+                    logger.info("Disconnecting from ssh: %s", reason)
+                    self.sendline("", disconnecting=True)
+                    self.sendline("~.", disconnecting=True)
+                elif self.name == "LxcSession":
+                    logger.info("Disconnecting from lxc: %s", reason)
+                    self.sendline("", disconnecting=True)
+                    self.sendline("exit", disconnecting=True)
+                elif self.name == "QemuSession":
+                    logger.info("Disconnecting from qemu: %s", reason)
+                elif self.name == "ShellSession":
+                    logger.info("Disconnecting from shell: %s", reason)
+                else:
+                    raise LAVABug("'disconnect' not supported for %s" % self.tags)
+            except ValueError:  # protection against file descriptor == -1
+                logger.debug("Already disconnected")
+        else:
+            logger.debug("Already disconnected")
+
+        self.connected = False
+        if self.raw_connection:
+            with contextlib.suppress(pexpect.ExceptionPexpect):
+                self.raw_connection.close(force=True)
+                self.raw_connection = None
+
+    def finalise(self):
+        if self.raw_connection:
+            try:
+                os_killpg(self.raw_connection.pid, SIGKILL)
+            except OSError:
+                self.raw_connection.kill(SIGKILL)
+            else:
+                self.connected = False
+                self.raw_connection.close(force=True)
+                self.raw_connection = None
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property

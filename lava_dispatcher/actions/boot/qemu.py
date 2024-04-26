@@ -359,7 +359,7 @@ class CallQemuAction(Action):
             )
         self.logger.debug("started a shell command")
 
-        shell_connection = self.session_class(self.job, shell)
+        shell_connection = self.session_class(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

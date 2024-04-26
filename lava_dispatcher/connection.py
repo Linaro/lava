@@ -4,13 +4,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import contextlib
 import decimal
 import logging
-import os
-import signal
-
-from pexpect.exceptions import ExceptionPexpect
 
 from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
@@ -61,118 +56,6 @@ class SignalMatch(InternalObject):
             )
 
         return res
-
-
-class Connection:
-    """
-    A raw_connection is an arbitrary instance of a standard Python (or added LAVA) class
-    designed to implement an interactive connection onto the device. The raw_connection
-    needs to be able to send commands, use a timeout, handle errors, log the output,
-    match on regular expressions for the output, report the pid of the spawned process
-    and cause the spawned process to close/terminate.
-    The current implementation uses a pexpect.spawn wrapper. For a standard Shell
-    connection, that is the ShellCommand class.
-    Each different wrapper of pexpect.spawn (and any other wrappers later designed)
-    needs to be a separate class supported by another class inheriting from Connection.
-
-    A TestJob can have multiple connections but only one device and all Connection objects
-    must reference that one device.
-
-    Connecting between devices is handled inside the YAML test definition, whether by
-    multinode or by configured services inside the test image.
-    """
-
-    name = "Connection"
-
-    def __init__(self, job, raw_connection):
-        self.raw_connection = raw_connection
-        self.connected = True
-        self.check_char = "#"
-        self.tags = []
-        self.recognized_names = ["LxcSession", "QemuSession", "ShellSession"]
-
-    def corruption_check(self):
-        self.sendline(self.check_char)
-
-    def send(self, character, disconnecting=False):
-        if self.connected:
-            self.raw_connection.send(character)
-        elif not disconnecting:
-            raise LAVABug("send")
-
-    def sendline(self, line, delay=0, disconnecting=False):
-        if self.connected:
-            self.raw_connection.sendline(line, delay=delay)
-        elif not disconnecting:
-            raise LAVABug("sendline called on disconnected connection")
-
-    def sendcontrol(self, char):
-        if self.connected:
-            self.raw_connection.sendcontrol(char)
-        else:
-            raise LAVABug("sendcontrol called on disconnected connection")
-
-    def force_prompt_wait(self, remaining):
-        raise LAVABug("'force_prompt_wait' not implemented")
-
-    def wait(self, max_end_time=None):
-        raise LAVABug("'wait' not implemented")
-
-    def disconnect(self, reason):
-        logger = logging.getLogger("dispatcher")
-        if not self.tags or (
-            self.name not in self.recognized_names
-            and not set(RECOGNIZED_TAGS) & set(self.tags)
-        ):
-            raise LAVABug("'disconnect' not implemented")
-
-        if self.connected:
-            try:
-                if "telnet" in self.tags:
-                    logger.info("Disconnecting from telnet: %s", reason)
-                    self.sendcontrol("]")
-                    self.sendline("quit", disconnecting=True)
-                elif "ssh" in self.tags:
-                    logger.info("Disconnecting from ssh: %s", reason)
-                    self.sendline("", disconnecting=True)
-                    self.sendline("~.", disconnecting=True)
-                elif self.name == "LxcSession":
-                    logger.info("Disconnecting from lxc: %s", reason)
-                    self.sendline("", disconnecting=True)
-                    self.sendline("exit", disconnecting=True)
-                elif self.name == "QemuSession":
-                    logger.info("Disconnecting from qemu: %s", reason)
-                elif self.name == "ShellSession":
-                    logger.info("Disconnecting from shell: %s", reason)
-                else:
-                    raise LAVABug("'disconnect' not supported for %s" % self.tags)
-            except ValueError:  # protection against file descriptor == -1
-                logger.debug("Already disconnected")
-        else:
-            logger.debug("Already disconnected")
-
-        self.connected = False
-        if self.raw_connection:
-            with contextlib.suppress(ExceptionPexpect):
-                self.raw_connection.close(force=True)
-                self.raw_connection = None
-
-    def finalise(self):
-        # logger = logging.getLogger('dispatcher')
-        if self.raw_connection:
-            if self.tags or self.name == "LxcSession":
-                self.disconnect(reason="Finalise")
-        if self.raw_connection:
-            try:
-                os.killpg(self.raw_connection.pid, signal.SIGKILL)
-                # logger.debug("Finalizing child process group with PID %d" % self.raw_connection.pid)
-            except OSError:
-                self.raw_connection.kill(9)
-                # logger.debug("Finalizing child process with PID %d" % self.raw_connection.pid)
-            else:
-                self.connected = False
-                self.raw_connection.close(force=True)
-                self.raw_connection = None
 
 
 class Protocol:

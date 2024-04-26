@@ -82,7 +82,7 @@ class TestUefi(LavaDispatcherTestCase):
             raise JobError(
                 "%s command exited %d: %s" % ("ls", shell.exitstatus, shell.readlines())
             )
-        connection = ShellSession(self.job, shell)
+        connection = ShellSession(shell)
         self.assertFalse(hasattr(shell, "check_char"))
         self.assertTrue(hasattr(connection, "check_char"))
         self.assertIsNotNone(connection.check_char)
