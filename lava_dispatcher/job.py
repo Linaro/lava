@@ -242,10 +242,11 @@ class Job:
             self.cleanup(self.connection)
 
     def cleanup(self, connection):
+        self.timeout.name = "job-cleanup"
         with self.timeout(None, time.monotonic() + CLEANUP_TIMEOUT) as max_end_time:
-            return self._cleanup(connection)
+            return self._cleanup(connection, max_end_time)
 
-    def _cleanup(self, connection):
+    def _cleanup(self, connection, max_end_time):
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
             return
@@ -254,10 +255,10 @@ class Job:
         # connection and poweroff the device (the cleanup action will do that
         # for us)
         self.logger.info("Cleaning after the job")
-        self.pipeline.cleanup(connection)
+        self.pipeline.cleanup(connection, max_end_time)
 
         for tmp_dir in self.base_overrides.values():
-            self.logger.info("Override tmp directory removed at %s", tmp_dir)
+            self.logger.info("Removing override tmp directory at %s", tmp_dir)
             try:
                 shutil.rmtree(tmp_dir)
             except OSError as exc:
@@ -267,7 +268,7 @@ class Job:
                     )
 
         if self.tmp_dir is not None:
-            self.logger.info("Root tmp directory removed at %s", self.tmp_dir)
+            self.logger.info("Removing root tmp directory at %s", self.tmp_dir)
             try:
                 shutil.rmtree(self.tmp_dir)
             except OSError as exc:

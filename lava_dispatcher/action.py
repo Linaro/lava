@@ -204,7 +204,7 @@ class Pipeline:
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self, connection):
+    def cleanup(self, connection, max_end_time=None):
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
@@ -212,7 +212,10 @@ class Pipeline:
         error = False
         for child in self.actions:
             try:
-                child.cleanup(connection)
+                if max_end_time is not None and child.name == "finalize":
+                    child.cleanup(connection, max_end_time)
+                else:
+                    child.cleanup(connection)
             except Exception as exc:
                 # Just log the exception and continue the cleanup
                 child.logger.error(
@@ -849,7 +852,7 @@ class Action:
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self, connection):
+    def cleanup(self, connection, max_end_time=None):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -863,7 +866,7 @@ class Action:
         instead of using cleanup().
         """
         if self.pipeline:
-            self.pipeline.cleanup(connection)
+            self.pipeline.cleanup(connection, max_end_time)
 
     def get_namespace_keys(self, action, parameters=None):
         """Return the keys for the given action"""
