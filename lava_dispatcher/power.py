@@ -344,7 +344,10 @@ class FinalizeAction(Action):
             protocol.finalise_protocol(self.job.device)
         return connection
 
-    def cleanup(self, connection):
+    def cleanup(self, connection, max_end_time=None):
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
-            self.run(connection, time.monotonic() + self.timeout.duration)
+            if max_end_time is None:
+                max_end_time = time.monotonic() + self.timeout.duration
+            with self.timeout(self.job, max_end_time) as action_max_end_time:
+                self.run(connection, action_max_end_time)
