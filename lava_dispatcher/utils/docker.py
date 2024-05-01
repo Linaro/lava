@@ -242,7 +242,8 @@ class DockerRun:
                     "Unable to inspect docker image '%s'" % self.image
                 )
                 pull = True
-        else:
+
+        if pull:
             if self.__docker_login__:
                 # Note we do not use `self.__docker_options__`
                 # here. This is intentional.  Unless we parse those
@@ -271,9 +272,10 @@ class DockerRun:
                     login_cmd.extend(["-p", self.__docker_login__["password"]])
                 login_cmd.append(self.__docker_login__["registry"])
                 action.run_cmd(login_cmd)
-            action.run_cmd(["docker", "pull", self.image])
-        if pull:
-            action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
+                action.run_cmd(["docker", "pull", self.image])
+            else:
+                action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
+
         self.__check_image_arch__()
 
     def wait(self, shell=None):
