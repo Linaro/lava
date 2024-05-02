@@ -1973,7 +1973,7 @@ class TestJob(models.Model):
 
         return False
 
-    def create_job_data(self, token=None, output=False, results=False):
+    def create_job_data(self, output=False, results=False):
         """
         Populates a dictionary used by the NotificationCallback
         and by the REST API, containing data about the test job.
@@ -1999,10 +1999,6 @@ class TestJob(models.Model):
             "definition": self.definition,
             "metadata": self.get_metadata_dict(),
         }
-
-        # Only add the token if it's not empty
-        if token is not None:
-            data["token"] = token
 
         # Logs.
         if output:
@@ -2460,7 +2456,7 @@ class NotificationCallback(models.Model):
                 NotificationCallback.ALL,
             ]
             data = self.notification.test_job.create_job_data(
-                token=self.token, output=output, results=results
+                output=output, results=results
             )
             # store callback_data for later retrieval & triage
             job_data_file = os.path.join(

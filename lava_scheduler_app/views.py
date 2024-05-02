@@ -1829,9 +1829,14 @@ def multinode_job_definition_plain(request, pk):
 
 
 def job_fetch_data(request, pk):
-    job = TestJob.get_restricted_job(pk, request.user)
+    request_user = request.user
+    job = TestJob.get_restricted_job(pk, request_user)
     if job.state != TestJob.STATE_FINISHED:
         raise Http404()
+
+    if not (request_user.is_staff or request_user == job.submitter):
+        raise PermissionDenied()
+
     path = os.path.join(job.output_dir, "job_data.gz")
     if not os.path.exists(path):
         raise Http404()
