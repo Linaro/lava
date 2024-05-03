@@ -18,6 +18,7 @@ else
       -r a \
       --cache-clear --verbose \
       --junitxml=dispatcher.xml \
+      --random-order --random-order-bucket=global \
     tests/lava_dispatcher \
     tests/lava_dispatcher_host \
     tests/lava_coordinator "$@"
