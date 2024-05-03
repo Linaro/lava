@@ -1,0 +1,69 @@
+{% extends 'base.jinja2' %}
+{% block body %}
+board_id: '{{ board_id|default('0000000000')}}'
+usb_vendor_id: '{{ usb_vendor_id|default('0000')}}'
+usb_product_id: '{{ usb_product_id|default('0000')}}'
+usb_sleep: {{ usb_sleep|default(0) }}
+
+character_delays:
+      boot: 5
+      test: 5
+
+actions:
+  deploy:
+    connections:
+      lxc:
+    methods:
+      lxc:
+      image:
+        parameters:
+
+  boot:
+    connections:
+      serial:
+      lxc:
+      ssh:
+    methods:
+      lxc:
+      pyocd:
+        parameters:
+          command:
+            {{ pyocd_command|default("pyocd") }}
+          options:
+          - load
+          - -d {{ debug|default('debug') }}
+          - -t {{ pyocd_target|default('cortex-m') }}
+          - -f {{ pyocd_frequency|default('3000000') }}
+          - -a {{ pyocd_address|default('0x0') }}
+      cmsis-dap:
+        parameters:
+          usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
+          resets_after_flash: {{ resets_after_flash|default(True) }}
+          {# Allow to set any cmsis-dap parameters in a device dict. #}
+          {% filter indent(width=10) -%}
+          {% block cmsis_dap_params %}{% endblock cmsis_dap_params %}
+          {% endfilter %}
+          {# Next empty line is mandatory (jinja matters). #}
+          
+      jlink:
+        parameters:
+          command: JLinkExe 
+          address: {{ load_address|default("0x00000000") }}
+          options: 
+          {% filter indent(width=10) -%}
+          {% block jlink_options %}{% endblock jlink_options %}
+          {% endfilter %}
+          {# Next empty line is mandatory (jinja matters). #}
+
+  test:
+    methods:
+      docker:
+        # Docker-shell additional command-line options. Can be given as
+        # a list here, or additional options can be taken from device
+        # dict vars below (which in turn can be not defined (== null),
+        # a string, or an inline list of strings).
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
+{% endblock body -%}
