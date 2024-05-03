@@ -70,9 +70,9 @@ ln -s ~/lava/linaro_django_xmlrpc/ .
 
 # binaries
 cd /usr/bin/
-ln -s ~/lava/lava/coordinator/lava-coordinator .
-ln -s ~/lava/lava/dispatcher/lava-run .
-ln -s ~/lava/lava/dispatcher/lava-worker .
+ln -s ~/lava/lava_coordinator/lava-coordinator .
+ln -s ~/lava/lava_dispatcher/bin/lava-run .
+ln -s ~/lava/lava_dispatcher/bin/lava-worker .
 ln -s ~/lava/lava_dispatcher_host/lava-dispatcher-host .
 ln -s ~/lava/manage.py lava-server
 ```

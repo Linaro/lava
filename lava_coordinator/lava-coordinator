@@ -15,8 +15,8 @@ import pathlib
 import sys
 import time
 
-from lava.coordinator import LavaCoordinator
 from lava_common.version import __version__
+from lava_coordinator import LavaCoordinator
 
 # Create the logger that will be configured later
 logging.Formatter.convert = time.gmtime

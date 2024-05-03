@@ -14,7 +14,7 @@ import sys
 import unittest
 import uuid
 
-from lava.coordinator import LavaCoordinator
+from lava_coordinator import LavaCoordinator
 
 bundle_sample = {
     "test_runs": [

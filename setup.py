@@ -65,8 +65,8 @@ COMMON = {
 COORDINATOR = {
     "name": "lava-coordinator",
     "description": "LAVA coordinator",
-    "packages": ["lava.coordinator"],
-    "scripts": ["lava/coordinator/lava-coordinator"],
+    "packages": ["lava_coordinator"],
+    "scripts": ["lava_coordinator/lava-coordinator"],
     "data_files": [
         (
             "/etc/lava-coordinator/",
@@ -86,9 +86,9 @@ DISPATCHER = {
         "lava_dispatcher": ["dynamic_vm_keys/lava*", "lava_test_shell/**"]
     },
     "scripts": [
-        "lava/dispatcher/lava-outerr",
-        "lava/dispatcher/lava-run",
-        "lava/dispatcher/lava-worker",
+        "lava_dispatcher/bin/lava-outerr",
+        "lava_dispatcher/bin/lava-run",
+        "lava_dispatcher/bin/lava-worker",
     ],
     "data_files": [
         ("/etc/exports.d/", ["etc/lava-dispatcher-nfs.exports"]),

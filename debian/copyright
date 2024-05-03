@@ -16,7 +16,7 @@ Files: setup.py
 Copyright: 2010-2019, Linaro Limited
 License: GPL-3.0+
 
-Files: lava/lxc-mocker/*
+Files: lxc-mocker/*
 Copyright: 2018 Linaro Limited
 License: MIT
 

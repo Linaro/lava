@@ -13,7 +13,7 @@ RUN apt-get update && \
     apt-get install --no-install-recommends --yes python3 python3-setuptools
 
 # Install lava-lxc-mocker
-COPY lava/lxc-mocker/ /install/usr/bin/
+COPY lxc-mocker/ /install/usr/bin/
 
 # Install common, dispatcher and dispatcher-host modules
 RUN --mount=type=bind,target=/app \
