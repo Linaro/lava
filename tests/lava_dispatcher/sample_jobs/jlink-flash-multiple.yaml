@@ -1,0 +1,35 @@
+# Multiple flash 
+device_type: rw610bga
+job_name: health-check
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    to : tmpfs
+    images :
+      boot :
+          url: https://myserver.com/binaries/test_unit_FSAbstraction.elf
+      cpu1 :
+          url: https://myserver.com/binaries/rw61xw_raw_cpu1_a1.bin
+      cpu2 :
+          url: https://myserver.com/binaries/rw61xn_raw_cpu2_ble_a1.bin
+      combo :
+          url: https://myserver.com/binaries/rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin
+
+- boot:
+    method: jlink
+    commands :
+      - loadfile {boot}
+      - loadfile {cpu1} 0x8400000
+      - loadfile {cpu2} 0x8540000
+      - loadfile {combo} 0x85E0000
+    timeout:
+      minutes: 2

@@ -1,6 +1,6 @@
-# Zephyr JOB definition for QEMU
-device_type: frdm-k64f
-job_name: zephyr-test-kernel-common
+# jlink flash
+device_type: frdm-kw36zj
+job_name: health-check
 
 timeouts:
   job:
@@ -13,12 +13,10 @@ visibility: public
 
 actions:
 - deploy:
-    timeout:
-      minutes: 3
-    to: tmpfs
-    images:
-        zephyr:
-          url: http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin
+    to : tmpfs
+    images :
+      boot :
+          url: https://myserver.com/binaries/frdm-kw36-shell.bin
 
 - boot:
     method: jlink
