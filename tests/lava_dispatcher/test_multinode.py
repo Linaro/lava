@@ -3,11 +3,17 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
+from json import dumps as json_dumps
+from json import loads as json_loads
+from random import randint
+from socket import socket
+from typing import Any
+from unittest.mock import Mock
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
@@ -318,4 +324,51 @@ class TestMultinode(LavaDispatcherTestCase):
                 "request": "lava-wait",
                 "messageID": "test",
             },
+        )
+
+
+class TestMultinodeProtocol(LavaDispatcherTestCase):
+    def init_protocol(
+        self, params: dict[str, Any] = {}, recv_object: dict[str, Any] = {}
+    ) -> MultinodeProtocol:
+        class MultinodeProtocolSocketMock(MultinodeProtocol):
+            def _connect(self, delay):
+                self.sock = Mock(spec=socket)
+                return True
+
+            def _recv_message(self):
+                return json_dumps(recv_object)
+
+        base_params = {
+            "target_group": "test",
+            "role": "test",
+        }
+        base_params.update(params)
+        new_protocol = MultinodeProtocolSocketMock(
+            {"protocols": {MultinodeProtocolSocketMock.name: base_params}},
+            str(randint(0, 2**31)),
+        )
+        new_protocol.debug_setup()
+        return new_protocol
+
+    def test_multinode_protocol_init(self) -> None:
+        self.init_protocol()
+
+    def test_multinode_protocol_init_equal_roles(self) -> None:
+        protocol = self.init_protocol(
+            {"request": "lava-start", "expect_role": "test", "role": "test"}
+        )
+        self.assertFalse(protocol.valid)
+
+    def test_multinode_protocol_called_without_data(self) -> None:
+        protocol = self.init_protocol()
+        with self.assertRaisesRegex(JobError, "No data to be sent over protocol"):
+            protocol({})
+
+    def test_multinode_protocol_send_empty_message(self) -> None:
+        test_message = {"response": "success"}
+        protocol = self.init_protocol(recv_object=test_message)
+        self.assertEqual(
+            json_loads(protocol.request_send("test_id")),
+            test_message,
         )
