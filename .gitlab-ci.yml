@@ -106,6 +106,7 @@ coverage:
   artifacts:
     paths:
       - htmlcov/
+      - coverage.xml
     reports:
       coverage_report:
         coverage_format: cobertura
