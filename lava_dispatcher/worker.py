@@ -5,12 +5,10 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
 from __future__ import annotations
 
 import asyncio
 import contextlib
-import functools
 import getpass
 import json
 import logging
@@ -24,7 +22,9 @@ import sys
 import time
 import traceback
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -58,6 +58,7 @@ LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
 SESSION = requests.Session()
+THREAD_EXECUTOR = ThreadPoolExecutor()
 
 ping_interval = 20
 debug = False
@@ -392,7 +393,7 @@ def setup_logger(log_file: str, level: str) -> None:
 #####################
 # Server <-> Worker #
 #####################
-def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
+async def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
     LOG.info("[%d] => CANCEL", job_id)
     job = jobs.get(job_id)
     if job is None:
@@ -405,13 +406,16 @@ def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
             jobs.update(job_id, Job.CANCELING)
 
 
-def check(url: str, jobs: JobsDB) -> None:
+async def check(url: str, jobs: JobsDB) -> None:
+    loop = asyncio.get_running_loop()
     # Loop on running jobs
     for job in jobs.running():
         if not job.is_running():
             # wait for the job
             try:
-                os.waitpid(job.pid, 0)
+                await loop.run_in_executor(
+                    THREAD_EXECUTOR, partial(os.waitpid, job.pid, 0)
+                )
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
@@ -424,7 +428,9 @@ def check(url: str, jobs: JobsDB) -> None:
         if not job.is_running():
             # wait for the job
             try:
-                os.waitpid(job.pid, 0)
+                await loop.run_in_executor(
+                    THREAD_EXECUTOR, partial(os.waitpid, job.pid, 0)
+                )
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
@@ -456,7 +462,12 @@ def check(url: str, jobs: JobsDB) -> None:
             "description": job.description(),
         }
 
-        ret = requests_post(f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data)
+        ret = await loop.run_in_executor(
+            THREAD_EXECUTOR,
+            partial(
+                requests_post, f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data
+            ),
+        )
         if ret.status_code != 200:
             LOG.error("[%d] -> server error: code %d", job.job_id, ret.status_code)
             LOG.debug("[%d] --> %s", job.job_id, ret.text)
@@ -472,7 +483,10 @@ def check(url: str, jobs: JobsDB) -> None:
             if not dir_path.exists():
                 continue
             LOG.debug("[%d] Removing %s", job.job_id, dir_path)
-            shutil.rmtree(str(dir_path), ignore_errors=True)
+            await loop.run_in_executor(
+                THREAD_EXECUTOR,
+                partial(shutil.rmtree, str(dir_path), ignore_errors=True),
+            )
 
         jobs.delete(job.job_id)
 
@@ -487,10 +501,16 @@ class VersionMismatch(Exception):
     pass
 
 
-def ping(url: str, token: str, name: str) -> dict[str, list]:
+async def ping(url: str, token: str, name: str) -> dict[str, list]:
     LOG.debug("PING => server")
-    ret = requests_get(
-        f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}
+    ret = await asyncio.get_running_loop().run_in_executor(
+        THREAD_EXECUTOR,
+        partial(
+            requests_get,
+            f"{url}{URL_WORKERS}{name}/",
+            token,
+            params={"version": __version__},
+        ),
     )
 
     if ret.status_code != 200:
@@ -509,7 +529,9 @@ def ping(url: str, token: str, name: str) -> dict[str, list]:
         return {}
 
 
-def register(url: str, name: str, username: str = None, password: str = None) -> str:
+async def register(
+    url: str, name: str, username: str = None, password: str = None
+) -> str:
     data = {"name": name}
     if username is not None and password is not None:
         data["username"] = username
@@ -517,23 +539,26 @@ def register(url: str, name: str, username: str = None, password: str = None) ->
 
     while True:
         LOG.debug("[INIT] Auto register as %r", name)
-        ret = requests_post(f"{url}{URL_WORKERS}", None, data=data)
+        ret = await asyncio.get_running_loop().run_in_executor(
+            THREAD_EXECUTOR,
+            partial(requests_post, f"{url}{URL_WORKERS}", None, data=data),
+        )
         if ret.status_code == 200:
             return ret.json()["token"]
         LOG.error("[INIT] -> server error: code %d", ret.status_code)
         LOG.debug("[INIT] --> %s", ret.text)
-        time.sleep(5)
+        await asyncio.sleep(5)
 
 
-def running(
+async def running(
     url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
 ) -> None:
     job = jobs.get(job_id)
     if job is None:
-        start(url, jobs, job_id, token, job_log_interval)
+        await start(url, jobs, job_id, token, job_log_interval)
 
 
-def start(
+async def start(
     url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
 ) -> None:
     LOG.info("[%d] server => START", job_id)
@@ -542,7 +567,9 @@ def start(
 
     # Start the job
     if job is None:
-        ret = requests_get(f"{url}{URL_JOBS}{job_id}/", token)
+        ret = await asyncio.get_running_loop().run_in_executor(
+            THREAD_EXECUTOR, partial(requests_get, f"{url}{URL_JOBS}{job_id}/", token)
+        )
         if ret.status_code != 200:
             LOG.error("[%d] -> server error: code %d", job_id, ret.status_code)
             LOG.debug("[%d] --> %s", job_id, ret.text)
@@ -567,16 +594,20 @@ def start(
         LOG.debug("[%d] env-dut : %r", job_id, env_dut)
 
         # Start the job, grab the pid and create it in the dabatase
-        pid = start_job(
-            url,
-            token,
-            job_id,
-            definition,
-            device,
-            dispatcher,
-            env,
-            env_dut,
-            job_log_interval,
+        pid = await asyncio.get_running_loop().run_in_executor(
+            THREAD_EXECUTOR,
+            partial(
+                start_job,
+                url,
+                token,
+                job_id,
+                definition,
+                device,
+                dispatcher,
+                env,
+                env_dut,
+                job_log_interval,
+            ),
         )
         job = jobs.create(
             job_id,
@@ -590,7 +621,12 @@ def start(
 
     # Update the server state
     LOG.info("[%d] RUNNING => server", job_id)
-    ret = requests_post(f"{url}{URL_JOBS}{job_id}/", token, data={"state": "RUNNING"})
+    ret = await asyncio.get_running_loop().run_in_executor(
+        THREAD_EXECUTOR,
+        partial(
+            requests_post, f"{url}{URL_JOBS}{job_id}/", token, data={"state": "RUNNING"}
+        ),
+    )
     if ret.status_code != 200:
         LOG.error("[%d] -> server error: code %d", job_id, ret.status_code)
         LOG.debug("[%d] --> %s", job_id, ret.text)
@@ -599,7 +635,7 @@ def start(
 ###############
 # Entrypoints #
 ###############
-def handle(options, jobs: JobsDB) -> float:
+async def handle(options, jobs: JobsDB) -> float:
     begin: float = time.monotonic()
 
     name: str = options.name
@@ -608,7 +644,7 @@ def handle(options, jobs: JobsDB) -> float:
     job_log_interval: int = options.job_log_interval
 
     try:
-        data = ping(url, token, name)
+        data = await ping(url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
         return max(ping_interval - (time.monotonic() - begin), 0)
@@ -619,19 +655,19 @@ def handle(options, jobs: JobsDB) -> float:
 
     # running jobs
     for job in data.get("running", []):
-        running(url, jobs, job["id"], job["token"], job_log_interval)
+        await running(url, jobs, job["id"], job["token"], job_log_interval)
 
     # cancel jobs
     for job in data.get("cancel", []):
-        cancel(url, jobs, job["id"], job["token"])
+        await cancel(url, jobs, job["id"], job["token"])
 
     # start jobs
     for job in data.get("start", []):
-        start(url, jobs, job["id"], job["token"], job_log_interval)
+        await start(url, jobs, job["id"], job["token"], job_log_interval)
 
     # Check job status
     # TODO: store the token and reuse it
-    check(url, jobs)
+    await check(url, jobs)
 
     # Compute the sleep duration
     return max(ping_interval - (time.monotonic() - begin), 0)
@@ -639,7 +675,7 @@ def handle(options, jobs: JobsDB) -> float:
 
 async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
     while True:
-        timeout = handle(options, jobs)
+        timeout = await handle(options, jobs)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(event.wait(), timeout=timeout)
             event.clear()
@@ -725,7 +761,7 @@ async def main() -> int:
         if options.username is not None:
             LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
             password = getpass.getpass()
-            options.token = register(
+            options.token = await register(
                 options.url, options.name, options.username, password
             )
             options.token_file.write_text(options.token, encoding="utf-8")
@@ -741,7 +777,7 @@ async def main() -> int:
             options.token = options.token_file.read_text(encoding="utf-8").rstrip("\n")
         else:
             LOG.info("[INIT] Token  : '<auto register>'")
-            options.token = register(options.url, options.name)
+            options.token = await register(options.url, options.name)
             options.token_file.write_text(options.token, encoding="utf-8")
             options.token_file.chmod(0o600)
 
@@ -753,10 +789,11 @@ async def main() -> int:
         )
 
         loop = asyncio.get_running_loop()
+        loop.set_default_executor(THREAD_EXECUTOR)
         LOG.debug(f"LAVA worker pid is {os.getpid()}")
         for signame in ("SIGINT", "SIGTERM"):
             loop.add_signal_handler(
-                getattr(signal, signame), functools.partial(ask_exit, signame, group)
+                getattr(signal, signame), partial(ask_exit, signame, group)
             )
 
         await group
@@ -766,7 +803,7 @@ async def main() -> int:
         if options.wait_jobs:
             LOG.info("[EXIT] Wait for jobs to finish")
             while True:
-                check(options.url, jobs)
+                await check(options.url, jobs)
                 all_ids = jobs.all_ids()
                 LOG.info(
                     "[EXIT] => %d jobs ([%s])",
@@ -775,7 +812,7 @@ async def main() -> int:
                 )
                 if not all_ids:
                     break
-                time.sleep(ping_interval)
+                await asyncio.sleep(ping_interval)
         return 1
     except VersionMismatch as exc:
         LOG.info("[EXIT] %s" % exc)
