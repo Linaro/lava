@@ -96,10 +96,12 @@ class BaseFVPAction(Action):
         # manually composing docker run command lines.
         if "container_name" in self.parameters["docker"]:
             self.container = (
-                self.parameters["docker"]["container_name"] + "-lava-" + self.job.job_id
+                self.parameters["docker"]["container_name"]
+                + "-lava-"
+                + str(self.job.job_id)
             )
         else:
-            self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+            self.container = "lava-%d-%s" % (self.job.job_id, self.level)
 
         options = self.job.device["actions"]["boot"]["methods"]["fvp"]["options"]
 

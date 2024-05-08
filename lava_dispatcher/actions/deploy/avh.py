@@ -164,7 +164,7 @@ class AvhDeploy(Action):
 
         # Create Info.plist
         fw_version = self.level
-        fw_build = self.job.job_id
+        fw_build = str(self.job.job_id)
         rand = "".join(random.choice(string.hexdigits) for c in range(5))
         fw_name = f"lava-avh-{self.avh['model']}-{fw_version}-{fw_build}-{rand}"
         pl = dict(

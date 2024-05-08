@@ -64,12 +64,12 @@ def handle_devices_share(options):
 def handle_devices_map(options):
     container = options.container
     container_type = options.container_type
-    job_id = "0"  # fake map
+    job_id = 0  # fake map
     fields = ["serial_number", "usb_vendor_id", "usb_product_id", "fs_label"]
     device_info = {
         k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
     }
-    add_device_container_mapping(job_id, device_info, container, container_type)
+    add_device_container_mapping(str(job_id), device_info, container, container_type)
 
 
 def handle_devices_unmap(_):

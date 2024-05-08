@@ -154,10 +154,10 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             action="test", label="results", key="lava_test_results_dir"
         ).strip("/")
 
-        container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
+        container = "lava-docker-test-shell-%d-%s" % (self.job.job_id, self.level)
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
         if prefix:
-            container = "lava-docker-test-shell-%s-%s-%s" % (
+            container = "lava-docker-test-shell-%s-%d-%s" % (
                 prefix,
                 self.job.job_id,
                 self.level,

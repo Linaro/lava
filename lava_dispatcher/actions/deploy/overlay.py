@@ -88,7 +88,7 @@ class CreateOverlay(Action):
 
         lava_test_results_dir = self.get_constant("lava_test_results_dir", "posix")
         try:
-            lava_test_results_dir = lava_test_results_dir % self.job.job_id
+            lava_test_results_dir = lava_test_results_dir % str(self.job.job_id)
         except ValueError:
             raise JobError("Invalid lava_test_results_dir, should include '%s'")
         self.set_namespace_data(
@@ -419,7 +419,7 @@ class MultinodeOverlayAction(OverlayAction):
                             % self.job.parameters["protocols"][self.protocol]["role"]
                         )
                     elif foutname == "lava-self":
-                        fout.write("LAVA_HOSTNAME='%s'\n" % self.job.job_id)
+                        fout.write("LAVA_HOSTNAME='%d'\n" % self.job.job_id)
                     else:
                         fout.write("LAVA_TEST_BIN='%s/bin'\n" % lava_test_results_dir)
                         fout.write(

@@ -140,7 +140,7 @@ class RepoAction(Action):
         lava_test_results_dir = self.get_constant("lava_test_results_dir", "posix")
         args = self.parameters
         runner_path = os.path.join(
-            lava_test_results_dir % self.job.job_id,
+            lava_test_results_dir % str(self.job.job_id),
             str(self.stage),
             "tests",
             args["test_name"],
@@ -499,7 +499,7 @@ class TestDefinitionAction(Action):
                 # a genuinely unique ID based on the *database* JobID and
                 # pipeline level for reproducibility and tracking -
                 # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
-                handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
+                handler.uuid = "%d_%s" % (self.job.job_id, handler.level)
                 handler.stage = self.stages
                 self.run_levels[testdef["name"]] = self.stages
 

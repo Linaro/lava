@@ -256,7 +256,7 @@ class MultinodeProtocol(Protocol):
             "host": self.settings["coordinator_hostname"],
             # hostname here is the node hostname, not the server.
             "hostname": socket.gethostname(),
-            "client_name": self.job_id,
+            "client_name": str(self.job_id),
             "group_name": self.parameters["protocols"][self.name]["target_group"],
             "role": self.parameters["protocols"][self.name]["role"],
         }
@@ -300,7 +300,7 @@ class MultinodeProtocol(Protocol):
             "host": self.settings["coordinator_hostname"],
             # hostname here is the node hostname, not the server.
             "hostname": socket.gethostname(),
-            "client_name": self.job_id,
+            "client_name": str(self.job_id),
             "group_name": self.parameters["protocols"][self.name]["target_group"],
             "role": self.parameters["protocols"][self.name]["role"],
         }
@@ -521,7 +521,7 @@ class MultinodeProtocol(Protocol):
         wait_msg = {
             "request": "lava_wait",
             "messageID": message_id,
-            "nodeID": self.job_id,
+            "nodeID": str(self.job_id),
         }
         return self._send(wait_msg)
 

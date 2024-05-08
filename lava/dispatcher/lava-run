@@ -32,6 +32,7 @@ def parser():
         "--job-id",
         required=True,
         metavar="ID",
+        type=int,
         help="Job identifier. This alters process name for easier debugging",
     )
     p_obj.add_argument(
@@ -179,7 +180,7 @@ def main():
         return 1
 
     # Set process title for easier debugging
-    setproctitle("lava-run [job: %s]" % options.job_id)
+    setproctitle("lava-run [job: %d]" % options.job_id)
 
     # Setup the logger as early as possible
     logger = setup_logger(options)

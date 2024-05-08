@@ -351,7 +351,7 @@ class CallQemuAction(Action):
             )
             if not self.parameters["docker"].get("container_name"):
                 docker.name(
-                    "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
+                    "lava-docker-qemu-%d-%s-" % (self.job.job_id, self.level),
                     random_suffix=True,
                 )
             docker.interactive()

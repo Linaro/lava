@@ -24,11 +24,13 @@ logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
 
 
-def get_mapping_path(job_id):
+def get_mapping_path(job_id: str) -> str:
     return os.path.join(JOBS_DIR, job_id, "usbmap.yaml")
 
 
-def add_device_container_mapping(job_id, device_info, container, container_type="lxc"):
+def add_device_container_mapping(
+    job_id: str, device_info: dict, container: str, container_type: str = "lxc"
+) -> None:
     validate_device_info(device_info)
     item = {
         "device_info": device_info,

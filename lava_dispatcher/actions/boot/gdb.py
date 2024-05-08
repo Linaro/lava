@@ -136,7 +136,7 @@ class BootGDBRetry(RetryAction):
         if self.container is None:
             cmd = self.gdb
         else:
-            cmd = "docker run --rm -it --name lava-%s-%s" % (
+            cmd = "docker run --rm -it --name lava-%d-%s" % (
                 self.job.job_id,
                 self.level,
             )
@@ -190,6 +190,6 @@ class BootGDBRetry(RetryAction):
                 if self.container is None:
                     self.gdb_connection.finalise()
                 else:
-                    name = "lava-%s-%s" % (self.job.job_id, self.level)
+                    name = "lava-%d-%s" % (self.job.job_id, self.level)
                     self.logger.debug("Stopping container %s", name)
                     self.run_command(["docker", "stop", name], allow_fail=True)

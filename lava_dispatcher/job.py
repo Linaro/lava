@@ -92,7 +92,7 @@ class Job:
 
     def get_basedir(self, path):
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
-        return os.path.join(path, "%s%s" % (prefix, self.job_id))
+        return os.path.join(path, "%s%d" % (prefix, self.job_id))
 
     def mkdtemp(self, action_name, override=None):
         """

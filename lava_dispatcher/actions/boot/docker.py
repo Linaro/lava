@@ -61,10 +61,10 @@ class CallDockerAction(Action):
 
     def validate(self):
         super().validate()
-        self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+        self.container = "lava-%d-%s" % (self.job.job_id, self.level)
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
         if prefix:
-            self.container = "lava-%s-%s-%s" % (prefix, self.job.job_id, self.level)
+            self.container = "lava-%s-%d-%s" % (prefix, self.job.job_id, self.level)
 
         options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
 

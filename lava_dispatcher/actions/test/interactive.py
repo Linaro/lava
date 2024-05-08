@@ -122,7 +122,7 @@ class TestInteractiveAction(Action):
             substitutions["{SERVER_IP}"] = dispatcher_ip(
                 self.job.parameters["dispatcher"]
             )
-        substitutions["{JOB_ID}"] = self.job.job_id
+        substitutions["{JOB_ID}"] = str(self.job.job_id)
 
         # Loop on all scripts
         for script in self.parameters["interactive"]:

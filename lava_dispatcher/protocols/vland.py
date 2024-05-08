@@ -352,7 +352,7 @@ class VlandProtocol(Protocol):
                 available.extend(device["parameters"]["interfaces"][iface]["tags"])
         requested = []
         for friendly_name in self.parameters["protocols"][self.name]:
-            base_jobid = "%s" % job.job_id
+            base_jobid = "%d" % job.job_id
             base = "%s%s" % (base_jobid[-8:], friendly_name[:8])
             self.names[friendly_name] = "".join(e for e in base if e.isalnum())[:16]
         self.params = copy.deepcopy(self.parameters["protocols"][self.name])
