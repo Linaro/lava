@@ -7,6 +7,7 @@
 import glob
 import os
 import unittest
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, PropertyMock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -209,7 +210,7 @@ class TestDockerDriver(unittest.TestCase):
         dest = self.action.maybe_copy_to_container(src)
         self.assertEqual(src, dest)
 
-    @patch("lava_dispatcher_host.get_mapping_path")
+    @patch("lava_common.device_mappings.get_mapping_path")
     @patch("lava_dispatcher.action.Action.run_cmd")
     @patch("subprocess.check_call")
     @patch(
@@ -219,7 +220,7 @@ class TestDockerDriver(unittest.TestCase):
     def test_run_fastboot(
         self, get_udev_devices, check_call, run_cmd, get_mapping_path
     ):
-        get_mapping_path.return_value = "/tmp/usbmap.yaml"  # FIXME
+        get_mapping_path.return_value = Path("/tmp/usbmap.yaml")  # FIXME
         self.action.maybe_copy_to_container("/path/to/image.img")
         self.action.run_fastboot(["wait-for-devices"])
         cmd = run_cmd.call_args[0][0]

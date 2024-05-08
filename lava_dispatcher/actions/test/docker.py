@@ -17,9 +17,9 @@ from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
-from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
 class DockerTest(LavaTest):

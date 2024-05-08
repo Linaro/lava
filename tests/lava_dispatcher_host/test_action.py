@@ -6,12 +6,12 @@
 
 import pytest
 
-from lava_dispatcher_host.action import DeviceContainerMappingMixin
+from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 
 
 @pytest.fixture
 def add_device_container_mapping(mocker):
-    return mocker.patch("lava_dispatcher_host.action.add_device_container_mapping")
+    return mocker.patch("lava_dispatcher.utils.containers.add_device_container_mapping")
 
 
 @pytest.fixture
