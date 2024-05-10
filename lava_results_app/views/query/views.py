@@ -272,6 +272,7 @@ def query_custom(request):
 @login_required
 def query_detail(request, username, name):
     query = get_object_or_404(Query, owner__username=username, name=name)
+    query_conditions = Query.serialize_conditions(query.querycondition_set.all())
     query_conditions_table = QueryConditionsTable(
         query.querycondition_set.select_related("table").all(), request=request
     )
@@ -282,6 +283,7 @@ def query_detail(request, username, name):
         "lava_results_app/query_detail.html",
         {
             "query": query,
+            "query_conditions": query_conditions,
             "query_conditions_table": query_conditions_table,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(
                 query_detail, username=username, name=name
