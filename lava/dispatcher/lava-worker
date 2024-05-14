@@ -9,11 +9,12 @@
 
 import os
 
-from lava_dispatcher.worker import run
+if __name__ == "__main__":
+    # ensure we will find lava-run when running uninstalled
+    bindir = os.path.abspath(os.path.dirname(__file__))
+    if bindir not in os.environ["PATH"].split(":"):
+        os.environ["PATH"] = bindir + ":" + os.environ["PATH"]
 
-# ensure we will find lava-run when running uninstalled
-bindir = os.path.abspath(os.path.dirname(__file__))
-if bindir not in os.environ["PATH"].split(":"):
-    os.environ["PATH"] = bindir + ":" + os.environ["PATH"]
+    from lava_dispatcher.worker import run
 
-run()
+    run()
