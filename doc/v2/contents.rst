@@ -156,6 +156,7 @@ Results in LAVA
    custom-result-handling
    relating
    tables
+   favorite-jobs
 
 .. _contents_admin_guide:
 
