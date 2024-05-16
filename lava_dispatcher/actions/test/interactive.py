@@ -92,6 +92,11 @@ class TestInteractiveAction(Action):
 
         connection_namespace = self.parameters.get("connection-namespace")
         parameters = None
+        if self.timeout.can_skip(self.parameters):
+            self.logger.info(
+                "The timeout has 'skip' enabled. "
+                "If this test action block times out, the job will continue at the next action block."
+            )
 
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
