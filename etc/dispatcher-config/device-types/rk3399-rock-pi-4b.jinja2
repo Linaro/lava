@@ -7,13 +7,13 @@
 {% set boot_character_delay = boot_character_delay|default('10') %}
 {% set test_character_delay = test_character_delay|default('10') %}
 
-{% set booti_kernel_addr = '0x2800000' %}
-{% set booti_ramdisk_addr = '0xa200000' %}
-{% set booti_dtb_addr = '0x8300000' %}
+{% set booti_kernel_addr = booti_kernel_addr|default('0x2800000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr|default('0xa200000') %}
+{% set booti_dtb_addr = booti_dtb_addr|default('0x8300000') %}
 
-{% set bootm_kernel_addr = '0x2800000' %}
-{% set bootm_ramdisk_addr = '0xa200000' %}
-{% set bootm_dtb_addr = '0x8300000' %}
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0x2800000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0xa200000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0x8300000') %}
 
 {% set uboot_mkimage_arch = 'arm64' %}
 
