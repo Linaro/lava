@@ -85,7 +85,7 @@ class DockerAction(Action):
                     "image",
                     "inspect",
                     "--format",
-                    f"Image {self.image_name} exists locally",
+                    f"Image {self.image_name} exists locally\nImage Id: {{{{.Id}}}}",
                     self.image_name,
                 ]
             )
