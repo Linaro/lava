@@ -68,7 +68,7 @@ register_converter(JobIdConverter, "job_id")
 # Auth backends
 auth_urls = [
     path(
-        f"{settings.MOUNT_POINT}accounts/",
+        "accounts/",
         include("django.contrib.auth.urls"),
     )
 ]
@@ -79,8 +79,16 @@ if (
 ):
     auth_urls.append(
         path(
-            f"{settings.MOUNT_POINT}accounts/",
+            "accounts/",
             include("allauth.urls"),
+        )
+    )
+
+if settings.OIDC_ENABLED:
+    auth_urls.append(
+        path(
+            "oidc/",
+            include("mozilla_django_oidc.urls"),
         )
     )
 
@@ -92,96 +100,91 @@ urlpatterns = [
         name="robots",
     ),
     path(
-        f"{settings.MOUNT_POINT}v1/healthz/",
-        healthz,
-        name="lava.healthz",
+        settings.MOUNT_POINT,
+        include(
+            [
+                path("", index, name="lava.home"),
+                path(
+                    "v1/healthz/",
+                    healthz,
+                    name="lava.healthz",
+                ),
+                path(
+                    "v1/prometheus/",
+                    prometheus,
+                    name="lava.prometheus",
+                ),
+                path(
+                    "me/",
+                    me,
+                    name="lava.me",
+                ),
+                path(
+                    "update-irc-settings/",
+                    update_irc_settings,
+                    name="lava.update_irc_settings",
+                ),
+                path(
+                    "update-remote-auth/",
+                    update_remote_auth,
+                    name="lava.update_remote_auth",
+                ),
+                path(
+                    "delete-remote-auth/<int:pk>/",
+                    delete_remote_auth,
+                    name="lava.delete_remote_auth",
+                ),
+                path(
+                    "update-table-length-setting/",
+                    update_table_length_setting,
+                    name="lava.update_table_length_setting",
+                ),
+                *auth_urls,
+                path(
+                    "admin/",
+                    admin.site.urls,
+                ),
+                # RPC endpoints
+                path(
+                    "RPC2/",
+                    linaro_django_xmlrpc_views_handler,
+                    name="lava.api_handler",
+                    kwargs={"mapper": mapper, "help_view": "lava.api_help"},
+                ),
+                path(
+                    "RPC2",
+                    linaro_django_xmlrpc_views_handler,
+                    kwargs={"mapper": mapper, "help_view": "lava.api_help"},
+                ),
+                path(
+                    "api/help/",
+                    linaro_django_xmlrpc_views_help,
+                    name="lava.api_help",
+                    kwargs={"mapper": mapper},
+                ),
+                path(
+                    "api/",
+                    include("linaro_django_xmlrpc.urls"),
+                ),
+                path(
+                    "results/",
+                    include("lava_results_app.urls"),
+                ),
+                path(
+                    "scheduler/",
+                    include("lava_scheduler_app.urls"),
+                ),
+                # REST API
+                path(
+                    "api/",
+                    include("lava_rest_app.urls"),
+                ),
+            ]
+        ),
     ),
-    path(
-        f"{settings.MOUNT_POINT}v1/prometheus/",
-        prometheus,
-        name="lava.prometheus",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}",
-        index,
-        name="lava.home",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}me/",
-        me,
-        name="lava.me",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}update-irc-settings/",
-        update_irc_settings,
-        name="lava.update_irc_settings",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}update-remote-auth/",
-        update_remote_auth,
-        name="lava.update_remote_auth",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}delete-remote-auth/<int:pk>/",
-        delete_remote_auth,
-        name="lava.delete_remote_auth",
-    ),
-    path(
-        f"{settings.MOUNT_POINT}update-table-length-setting/",
-        update_table_length_setting,
-        name="lava.update_table_length_setting",
-    ),
-    *auth_urls,
     path("admin/jsi18n", JavaScriptCatalog.as_view()),
-    path(
-        f"{settings.MOUNT_POINT}admin/",
-        admin.site.urls,
-    ),
-    # RPC endpoints
-    path(
-        f"{settings.MOUNT_POINT}RPC2/",
-        linaro_django_xmlrpc_views_handler,
-        name="lava.api_handler",
-        kwargs={"mapper": mapper, "help_view": "lava.api_help"},
-    ),
-    path(
-        f"{settings.MOUNT_POINT}RPC2",
-        linaro_django_xmlrpc_views_handler,
-        name="lava.api_handler",
-        kwargs={"mapper": mapper, "help_view": "lava.api_help"},
-    ),
-    path(
-        f"{settings.MOUNT_POINT}api/help/",
-        linaro_django_xmlrpc_views_help,
-        name="lava.api_help",
-        kwargs={"mapper": mapper},
-    ),
-    path(
-        f"{settings.MOUNT_POINT}api/",
-        include("linaro_django_xmlrpc.urls"),
-    ),
-    path(
-        f"{settings.MOUNT_POINT}results/",
-        include("lava_results_app.urls"),
-    ),
-    path(
-        f"{settings.MOUNT_POINT}scheduler/",
-        include("lava_scheduler_app.urls"),
-    ),
-    # REST API
-    path(
-        f"{settings.MOUNT_POINT}api/",
-        include("lava_rest_app.urls"),
-    ),
 ]
 
-if settings.OIDC_ENABLED:
-    urlpatterns.append(
-        path(
-            f"{settings.MOUNT_POINT}oidc/",
-            include("mozilla_django_oidc.urls"),
-        )
-    )
 
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
