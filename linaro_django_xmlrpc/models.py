@@ -427,6 +427,8 @@ class Dispatcher:
         try:
             impl = self.mapper.lookup(method_name, context)
             if impl is None:
+                if method_name == "close":
+                    return None
                 self.logger.error(
                     "Unable to dispatch unknown method %r for user %s",
                     method_name,

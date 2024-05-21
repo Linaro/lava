@@ -313,6 +313,10 @@ class DispatcherTests(TestCase):
     def test_boom(self):
         self.assertRaises(xmlrpc.client.Fault, self.xml_rpc_call, "boom", 1, "str")
 
+    def test_close(self):
+        retval = self.xml_rpc_call("close")
+        self.assertIsNone(retval)
+
 
 class SystemAPITest(TestCase):
     def setUp(self):
