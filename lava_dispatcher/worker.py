@@ -509,7 +509,9 @@ def ping(url: str, token: str, name: str) -> dict[str, list]:
         return {}
 
 
-def register(url: str, name: str, username: str = None, password: str = None) -> str:
+async def register(
+    url: str, name: str, username: str = None, password: str = None
+) -> str:
     data = {"name": name}
     if username is not None and password is not None:
         data["username"] = username
@@ -522,7 +524,7 @@ def register(url: str, name: str, username: str = None, password: str = None) ->
             return ret.json()["token"]
         LOG.error("[INIT] -> server error: code %d", ret.status_code)
         LOG.debug("[INIT] --> %s", ret.text)
-        time.sleep(5)
+        await asyncio.sleep(5)
 
 
 def running(
@@ -725,7 +727,7 @@ async def main() -> int:
         if options.username is not None:
             LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
             password = getpass.getpass()
-            options.token = register(
+            options.token = await register(
                 options.url, options.name, options.username, password
             )
             options.token_file.write_text(options.token, encoding="utf-8")
@@ -741,7 +743,7 @@ async def main() -> int:
             options.token = options.token_file.read_text(encoding="utf-8").rstrip("\n")
         else:
             LOG.info("[INIT] Token  : '<auto register>'")
-            options.token = register(options.url, options.name)
+            options.token = await register(options.url, options.name)
             options.token_file.write_text(options.token, encoding="utf-8")
             options.token_file.chmod(0o600)
 
@@ -775,7 +777,7 @@ async def main() -> int:
                 )
                 if not all_ids:
                     break
-                time.sleep(ping_interval)
+                await asyncio.sleep(ping_interval)
         return 1
     except VersionMismatch as exc:
         LOG.info("[EXIT] %s" % exc)
