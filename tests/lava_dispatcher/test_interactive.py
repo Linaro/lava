@@ -690,3 +690,75 @@ def test_run_script_raise_timeout(monkeypatch):
     )  # nosec - assert is part of the test process.
     assert action.logger.data == []  # nosec - assert is part of the test process.
     assert test_connection.data == []  # nosec - assert is part of the test process.
+
+
+def test_namespace_connection(monkeypatch):
+    factory = InteractiveFactory()
+    job = factory.create_interactive_job(
+        "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
+    )
+    action = job.pipeline.find_action(TestInteractiveAction)
+    action.logger = Logger(
+        [
+            ("debug", "Using namespace: common"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "fail",
+                    "duration": "1.00",
+                },
+            ),
+        ]
+    )
+
+    conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
+    previous_connection = Connection(conn_previous)
+    conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
+    data_connection = Connection(conn_previous)
+    action.set_namespace_data("shared", "shared", "connection", data_connection)
+
+    # disable script run to avoid duplicate as it's already test by other test function
+    action.parameters["interactive"] = {}
+
+    new_connection = action.run(previous_connection, 10)
+    assert new_connection == data_connection
+
+
+def test_connection_namespace_connection(monkeypatch):
+    factory = InteractiveFactory()
+    job = factory.create_interactive_job(
+        "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
+    )
+    action = job.pipeline.find_action(TestInteractiveAction)
+    action.parameters["connection-namespace"] = "foobar"
+    action.logger = Logger(
+        [
+            ("debug", "Using connection namespace: foobar"),
+            ("debug", "Using namespace: foobar"),
+            (
+                "results",
+                {
+                    "definition": "0_setup",
+                    "case": "wait prompt",
+                    "result": "fail",
+                    "duration": "1.00",
+                },
+            ),
+        ]
+    )
+
+    conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
+    previous_connection = Connection(conn_previous)
+    conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
+    data_connection = Connection(conn_previous)
+    action.set_namespace_data(
+        "shared", "shared", "connection", data_connection, {"namespace": "foobar"}
+    )
+
+    # disable script run to avoid duplicate as it's already test by other test function
+    action.parameters["interactive"] = {}
+
+    new_connection = action.run(previous_connection, 10)
+    assert new_connection == data_connection

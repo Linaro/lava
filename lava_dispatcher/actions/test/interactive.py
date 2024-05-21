@@ -88,7 +88,29 @@ class TestInteractiveAction(Action):
         self.multinode_proto = proto[0] if proto else None
 
     def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
+        super().run(connection, max_end_time)
+
+        connection_namespace = self.parameters.get("connection-namespace")
+        parameters = None
+        if self.timeout.can_skip(self.parameters):
+            self.logger.info(
+                "The timeout has 'skip' enabled. "
+                "If this test action block times out, the job will continue at the next action block."
+            )
+
+        if connection_namespace:
+            self.logger.debug("Using connection namespace: %s", connection_namespace)
+            parameters = {"namespace": connection_namespace}
+        else:
+            parameters = {"namespace": self.parameters.get("namespace", "common")}
+        self.logger.debug("Using namespace: %s", parameters["namespace"])
+        connection = self.get_namespace_data(
+            action="shared",
+            label="shared",
+            key="connection",
+            deepcopy=False,
+            parameters=parameters,
+        )
 
         if not connection:
             raise ConnectionClosedError("Connection closed")
