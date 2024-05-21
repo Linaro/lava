@@ -3,11 +3,13 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import hashlib
 import os
 import re
 import shutil
+from typing import TYPE_CHECKING
 
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
@@ -16,6 +18,9 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.vcs import GitHelper
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 @nottest
@@ -63,8 +68,8 @@ class RepoAction(Action):
     description = "apply tests to the test image"
     summary = "repo base class"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.vcs = None
         self.runner = None
         self.uuid = None
@@ -372,8 +377,8 @@ class UrlRepoAction(RepoAction):
     description = "apply a single test file to the test image"
     summary = "download file test"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.tmpdir = None  # FIXME: needs to be a /mntpoint/lava-%hostname/ directory.
         self.testdef = None
 
@@ -400,7 +405,9 @@ class UrlRepoAction(RepoAction):
         self.action_key = "url_repo"
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=params)
         self.internal_pipeline.add_action(
-            DownloaderAction(self.action_key, self.download_dir, params=params)
+            DownloaderAction(
+                self.job, self.action_key, self.download_dir, params=params
+            )
         )
 
     def run(self, connection, max_end_time):
@@ -446,7 +453,7 @@ class TestDefinitionAction(Action):
     description = "load test definitions into image"
     summary = "loading test definitions"
 
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         The TestDefinitionAction installs each test definition into
         the overlay. It does not execute the scripts in the test
@@ -456,7 +463,7 @@ class TestDefinitionAction(Action):
         In addition, a TestOverlayAction is added to the pipeline
         to handle parts of the overlay which are test definition dependent.
         """
-        super().__init__()
+        super().__init__(job)
         self.test_list = None
         self.stages = 0
         self.run_levels = {}
@@ -485,7 +492,7 @@ class TestDefinitionAction(Action):
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
                 # deployment as the next deployment could be a different OS.
-                handler = RepoAction.select(testdef["from"])()
+                handler = RepoAction.select(testdef["from"])(self.job)
 
                 # set the full set of job YAML parameters for this handler as handler parameters.
                 handler.job = self.job
@@ -504,21 +511,21 @@ class TestDefinitionAction(Action):
                 self.run_levels[testdef["name"]] = self.stages
 
                 # copy details into the overlay, one per handler but the same class each time.
-                overlay = TestOverlayAction()
+                overlay = TestOverlayAction(self.job)
                 overlay.job = self.job
                 overlay.parameters = testdef
                 overlay.parameters["test_name"] = handler.parameters["test_name"]
                 overlay.test_uuid = handler.uuid
 
                 # add install handler - uses job parameters
-                installer = TestInstallAction()
+                installer = TestInstallAction(self.job)
                 installer.job = self.job
                 installer.parameters = testdef
                 installer.parameters["test_name"] = handler.parameters["test_name"]
                 installer.test_uuid = handler.uuid
 
                 # add runsh handler - uses job parameters
-                runsh = TestRunnerAction()
+                runsh = TestRunnerAction(self.job)
                 runsh.job = self.job
                 runsh.parameters = testdef
                 runsh.parameters["test_name"] = handler.parameters["test_name"]
@@ -575,7 +582,7 @@ class TestDefinitionAction(Action):
         for testdefs in self.test_list:
             for testdef in testdefs:
                 try:
-                    RepoAction.select(testdef["from"])()
+                    RepoAction.select(testdef["from"])(self.job)
                 except JobError as exc:
                     self.errors = str(exc)
 
@@ -633,7 +640,7 @@ class TestOverlayAction(Action):
     description = "overlay test support files onto image"
     summary = "applying LAVA test overlay"
 
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         TestOverlayAction is a simple helper to do the same routine boilerplate
         for every RepoAction, tweaking the data for the specific parameters of
@@ -644,7 +651,7 @@ class TestOverlayAction(Action):
         so the overlay has access to the same parameters as the handler and is
         always executed immediately after the relevant handler.
         """
-        super().__init__()
+        super().__init__(job)
         self.test_uuid = None  # Match the overlay to the handler
 
     def validate(self):
@@ -748,7 +755,7 @@ class TestInstallAction(TestOverlayAction):
     description = "overlay dependency installation support files onto image"
     summary = "applying LAVA test install scripts"
 
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         This Action will need a run check that the file does not exist
         and then it will create it.
@@ -759,7 +766,7 @@ class TestInstallAction(TestOverlayAction):
         run the pipeline at the start of the TestOverlayAction
         run step.
         """
-        super().__init__()
+        super().__init__(job)
         self.test_uuid = None  # Match the overlay to the handler
         self.skip_list = [
             "keys",
@@ -945,8 +952,8 @@ class TestRunnerAction(TestOverlayAction):
     description = "overlay run script onto image"
     summary = "applying LAVA test run script"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.testdef_levels = (
             {}
         )  # allow looking up the testname from the level of this action

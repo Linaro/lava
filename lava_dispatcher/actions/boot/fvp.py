@@ -3,12 +3,14 @@
 # Author: Dean Arnold <dean.arnold@arm.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import re
 import shlex
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -17,11 +19,14 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootFVP(Boot):
     @classmethod
-    def action(cls):
-        return BootFVPAction()
+    def action(cls, job: Job) -> Action:
+        return BootFVPAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -41,14 +46,14 @@ class BootFVPAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootFVPMain())
+        self.pipeline.add_action(BootFVPMain(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(ReadFeedback())
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(ReadFeedback(self.job))
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
 
 
 class BootFVPMain(Action):
@@ -58,11 +63,11 @@ class BootFVPMain(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(CheckFVPVersionAction())
-        self.pipeline.add_action(StartFVPAction())
+        self.pipeline.add_action(CheckFVPVersionAction(self.job))
+        self.pipeline.add_action(StartFVPAction(self.job))
         if parameters.get("use_telnet", True):
-            self.pipeline.add_action(GetFVPSerialAction())
-            self.pipeline.add_action(ReadFeedback())
+            self.pipeline.add_action(GetFVPSerialAction(self.job))
+            self.pipeline.add_action(ReadFeedback(self.job))
 
 
 class BaseFVPAction(Action):
@@ -70,8 +75,8 @@ class BaseFVPAction(Action):
     description = "call docker run with fvp entry point"
     summary = "base fvp action"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.extra_options = ""
         self.container = ""
         self.fvp_license = None
@@ -238,8 +243,8 @@ class CheckFVPVersionAction(BaseFVPAction):
     description = "call docker run with fvp version entry point"
     summary = "check fvp version"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.extra_options = ""
         self.container = ""
         self.fvp_version_string = ""
@@ -300,8 +305,8 @@ class StartFVPAction(BaseFVPAction):
     description = "call docker run with fvp boot entry point"
     summary = "run fvp model"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.extra_options = ""
         self.container = ""
         self.fvp_console_string = ""

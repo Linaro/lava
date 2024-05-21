@@ -3,8 +3,10 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -15,6 +17,9 @@ from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import allow_fs_label, get_udev_devices
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootLxc(Boot):
     """
@@ -22,8 +27,8 @@ class BootLxc(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return BootLxcAction()
+    def action(cls, job: Job) -> Action:
+        return BootLxcAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -45,13 +50,13 @@ class BootLxcAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(LxcStartAction())
-        self.pipeline.add_action(LxcAddStaticDevices())
-        self.pipeline.add_action(ConnectLxc())
+        self.pipeline.add_action(LxcStartAction(self.job))
+        self.pipeline.add_action(LxcAddStaticDevices(self.job))
+        self.pipeline.add_action(ConnectLxc(self.job))
         # Skip AutoLoginAction unconditionally as this action tries to parse kernel message
         # self.pipeline.add_action(AutoLoginAction())
-        self.pipeline.add_action(ExpectShellSession())
-        self.pipeline.add_action(ExportDeviceEnvironment())
+        self.pipeline.add_action(ExpectShellSession(self.job))
+        self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class LxcAddStaticDevices(Action):
@@ -127,8 +132,8 @@ class LxcStartAction(Action):
     description = "boot into lxc container"
     summary = "attempt to boot"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.sleep = 10
 
     def validate(self):

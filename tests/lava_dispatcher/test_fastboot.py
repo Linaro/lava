@@ -8,7 +8,7 @@ import glob
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import ANY, MagicMock, PropertyMock, patch
+from unittest.mock import ANY, PropertyMock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.boot import AutoLoginAction, BootloaderInterruptAction
@@ -75,15 +75,15 @@ class TestFastbootBaseAction(unittest.TestCase):
         self.assertIsInstance(action.driver, DockerDriver)
 
 
-class TestFastbootBaseActionDriverUsage(unittest.TestCase):
+class TestFastbootBaseActionDriverUsage(LavaDispatcherTestCase):
     def setUp(self):
         class OptionalContainerAndroidAction(
             OptionalContainerFastbootAction, OptionalContainerAdbAction
         ):
             pass
 
-        action = OptionalContainerAndroidAction()
-        action.job = MagicMock()
+        job = self.create_job_mock()
+        action = OptionalContainerAndroidAction(job)
         action.job.device = {
             "adb_serial_number": "01234556789",
             "fastboot_serial_number": "01234556789",

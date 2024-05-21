@@ -3,6 +3,9 @@
 # Author: Dean Birch <dean.birch@arm.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -10,13 +13,16 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class FVP(Deployment):
     name = "fvp"
 
     @classmethod
-    def action(cls):
-        return FVPDeploy()
+    def action(cls, job: Job) -> Action:
+        return FVPDeploy(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -31,8 +37,8 @@ class FVPDeploy(Action):
     description = "Download images for use with fvp"
     summary = "download images for use with fvp"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.suffix = None
         self.image_path = None
 
@@ -50,7 +56,7 @@ class FVPDeploy(Action):
         self.image_path = self.mkdtemp()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
             if not isinstance(parameters["images"], dict):
@@ -58,6 +64,10 @@ class FVPDeploy(Action):
             for k in sorted(parameters["images"].keys()):
                 self.pipeline.add_action(
                     DownloaderAction(
-                        k, self.image_path, parameters["images"][k], uniquify=uniquify
+                        self.job,
+                        k,
+                        self.image_path,
+                        parameters["images"][k],
+                        uniquify=uniquify,
                     )
                 )

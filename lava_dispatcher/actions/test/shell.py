@@ -3,11 +3,13 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import decimal
 import logging
 import re
 import time
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -22,6 +24,9 @@ from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.logical import LavaTest, RetryAction
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 def handle_testcase(params):
@@ -43,8 +48,8 @@ class TestShell(LavaTest):
     """
 
     @classmethod
-    def action(cls, parameters):
-        return TestShellRetry()
+    def action(cls, job: Job, parameters) -> Action:
+        return TestShellRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -74,7 +79,7 @@ class TestShellRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(TestShellAction())
+        self.pipeline.add_action(TestShellAction(self.job))
 
 
 # FIXME: move to utils and call inside the overlay
@@ -148,8 +153,8 @@ class TestShellAction(Action):
     summary = "Lava Test Shell"
     timeout_exception = LAVATimeoutError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.signal_director = self.SignalDirector(None)  # no default protocol
         self.patterns = {}
         self.signal_match = SignalMatch()

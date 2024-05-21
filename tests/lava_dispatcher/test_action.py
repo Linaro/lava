@@ -9,14 +9,15 @@ from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from time import monotonic as time_monotonic
-from unittest import TestCase
 
 from lava_dispatcher.action import Action
 
+from .test_basic import LavaDispatcherTestCase
 
-class TestActionRunCmd(TestCase):
+
+class TestActionRunCmd(LavaDispatcherTestCase):
     def setUp(self) -> None:
-        self.action = Action()
+        self.action = Action(self.create_job_mock())
 
     def test_simple_command_with_args(self) -> None:
         with self.assertLogs(self.action.logger, "DEBUG") as logs:

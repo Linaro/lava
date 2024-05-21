@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -20,6 +22,9 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.compression import untar_file
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
     name = "deployimages"
@@ -31,15 +36,16 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
         path = self.mkdtemp()
 
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
-            self.pipeline.add_action(ApplyOverlayGuest())
+            # idempotent, includes testdef
+            self.pipeline.add_action(OverlayAction(self.job))
+            self.pipeline.add_action(ApplyOverlayGuest(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
             self.pipeline.add_action(
-                DownloaderAction("uefi", uefi_path, params=parameters["uefi"])
+                DownloaderAction(self.job, "uefi", uefi_path, params=parameters["uefi"])
             )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
@@ -52,10 +58,12 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
             self.pipeline.add_action(
-                DownloaderAction(image, path, params=parameters["images"][image])
+                DownloaderAction(
+                    self.job, image, path, params=parameters["images"][image]
+                )
             )
             if parameters["images"][image].get("format", "") == "qcow2":
-                self.pipeline.add_action(QCowConversionAction(image))
+                self.pipeline.add_action(QCowConversionAction(self.job, image))
 
 
 class DeployQemuNfs(Deployment):
@@ -67,8 +75,8 @@ class DeployQemuNfs(Deployment):
     name = "qemu-nfs"
 
     @classmethod
-    def action(cls):
-        return DeployQemuNfsAction()
+    def action(cls, job: Job) -> Action:
+        return DeployQemuNfsAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -101,7 +109,7 @@ class DeployQemuNfsAction(Action):
         if "uefi" in parameters:
             uefi_path = self.mkdtemp()
             self.pipeline.add_action(
-                DownloaderAction("uefi", uefi_path, params=parameters["uefi"])
+                DownloaderAction(self.job, "uefi", uefi_path, params=parameters["uefi"])
             )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
@@ -114,16 +122,18 @@ class DeployQemuNfsAction(Action):
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
             self.pipeline.add_action(
-                DownloaderAction(image, path, params=parameters["images"][image])
+                DownloaderAction(
+                    self.job, image, path, params=parameters["images"][image]
+                )
             )
             if parameters["images"][image].get("format", "") == "qcow2":
-                self.pipeline.add_action(QCowConversionAction(image))
-        self.pipeline.add_action(ExtractNfsAction())
+                self.pipeline.add_action(QCowConversionAction(self.job, image))
+        self.pipeline.add_action(ExtractNfsAction(self.job))
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
-            self.pipeline.add_action(ApplyOverlayTftp())
+            self.pipeline.add_action(OverlayAction(self.job))
+            self.pipeline.add_action(ApplyOverlayTftp(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
 
 class ExtractNfsAction(Action):
@@ -131,8 +141,8 @@ class ExtractNfsAction(Action):
     description = "deploy nfsrootfs for QEMU"
     summary = "NFS deployment for QEMU"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.param_key = "nfsrootfs"
         self.file_key = "nfsroot"
         self.extra_compression = ["xz"]
@@ -209,8 +219,8 @@ class DeployImages(Deployment):
     name = "images"
 
     @classmethod
-    def action(cls):
-        return DeployImagesAction()
+    def action(cls, job: Job) -> Action:
+        return DeployImagesAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):

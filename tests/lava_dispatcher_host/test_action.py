@@ -16,8 +16,7 @@ def add_device_container_mapping(mocker):
 
 @pytest.fixture
 def action(mocker):
-    a = DeviceContainerMappingMixin()
-    a.job = mocker.MagicMock()
+    a = DeviceContainerMappingMixin(mocker.MagicMock())
     a.job.job_id = "99"
     a.job.parameters = {"dispatcher": {"prefix": "xx-"}}
     a.job.device = {"device_info": []}

@@ -3,10 +3,12 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import shutil
 from functools import partial
+from typing import TYPE_CHECKING
 
 import guestfs
 
@@ -37,6 +39,9 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class ApplyOverlayGuest(Action):
     name = "apply-overlay-guest"
@@ -44,8 +49,8 @@ class ApplyOverlayGuest(Action):
     summary = "build a guest filesystem with the overlay"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.guest_filename = "lava-guest.qcow2"
 
     def validate(self):
@@ -107,8 +112,8 @@ class ApplyOverlayImage(Action):
     summary = "apply overlay to test image"
     timeout_exception = InfrastructureError
 
-    def __init__(self, image_key="image", use_root_partition=True):
-        super().__init__()
+    def __init__(self, job: Job, image_key="image", use_root_partition=True):
+        super().__init__(job)
         self.image_key = image_key
         self.use_root_partition = use_root_partition
 
@@ -163,8 +168,8 @@ class ApplyOverlaySparseImage(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def __init__(self, image_key):
-        super().__init__()
+    def __init__(self, job: Job, image_key):
+        super().__init__(job)
         self.image_key = image_key  # the sparse image key in the parameters
 
     def validate(self):
@@ -219,26 +224,28 @@ class PrepareOverlayTftp(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
-            ExtractNfsRootfs()
+            ExtractNfsRootfs(self.job)
         )  # idempotent, checks for nfsrootfs parameter
-        self.pipeline.add_action(OverlayAction())  # idempotent, includes testdef
         self.pipeline.add_action(
-            ExtractRamdisk()
+            OverlayAction(self.job)
+        )  # idempotent, includes testdef
+        self.pipeline.add_action(
+            ExtractRamdisk(self.job)
         )  # idempotent, checks for a ramdisk parameter
         self.pipeline.add_action(
-            ExtractModules()
+            ExtractModules(self.job)
         )  # idempotent, checks for a modules parameter
-        self.pipeline.add_action(ApplyOverlayTftp())
+        self.pipeline.add_action(ApplyOverlayTftp(self.job))
         if "kernel" in parameters and "type" in parameters["kernel"]:
-            self.pipeline.add_action(PrepareKernelAction())
+            self.pipeline.add_action(PrepareKernelAction(self.job))
         self.pipeline.add_action(
-            ConfigurePreseedFile()
+            ConfigurePreseedFile(self.job)
         )  # idempotent, checks for a preseed parameter
         self.pipeline.add_action(
-            CompressRamdisk()
+            CompressRamdisk(self.job)
         )  # idempotent, checks for a ramdisk parameter
         if "depthcharge" in self.job.device["actions"]["boot"]["methods"]:
-            self.pipeline.add_action(PrepareKernelAction())
+            self.pipeline.add_action(PrepareKernelAction(self.job))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -394,8 +401,8 @@ class ExtractRootfs(Action):
     summary = "unpack rootfs, ready to apply lava overlay"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.param_key = "rootfs"
         self.file_key = "root"
         self.extra_compression = ["xz"]
@@ -428,8 +435,8 @@ class ExtractNfsRootfs(ExtractRootfs):
     summary = "unpack nfsrootfs, ready to apply lava overlay"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.param_key = "nfsrootfs"
         self.file_key = "nfsroot"
 
@@ -542,8 +549,8 @@ class ExtractRamdisk(Action):
     summary = "extract the ramdisk"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.skip = False
 
     def validate(self):
@@ -619,8 +626,8 @@ class CompressRamdisk(Action):
     summary = "compress ramdisk with overlay"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.mkimage_arch = None
         self.add_header = None
         self.skip = False
@@ -743,8 +750,8 @@ class ApplyLxcOverlay(Action):
     summary = "apply overlay on the container"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.lava_test_dir = os.path.realpath(
             "%s/../../lava_test_shell" % os.path.dirname(__file__)
         )
@@ -844,8 +851,8 @@ class AppendOverlays(Action):
     IMAGE_FORMATS = ["cpio.newc", "ext4", "tar"]
     OVERLAY_FORMATS = ["file", "tar"]
 
-    def __init__(self, key, params):
-        super().__init__()
+    def __init__(self, job: Job, key, params):
+        super().__init__(job)
         self.key = key
         self.params = params
 

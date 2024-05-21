@@ -64,8 +64,7 @@ class TestMultiDeploy(LavaDispatcherTestCase):
     class TestDeploy:  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):
             super().__init__()
-            self.action = TestMultiDeploy.TestDeployAction()
-            self.action.job = job
+            self.action = TestMultiDeploy.TestDeployAction(job)
             self.action.section = "internal"
             parent.add_action(self.action, parameters)
 

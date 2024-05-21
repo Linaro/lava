@@ -6,6 +6,9 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -22,6 +25,9 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class IPXE(Boot):
     """
@@ -34,8 +40,8 @@ class IPXE(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return BootloaderAction()
+    def action(cls, job: Job) -> Action:
+        return BootloaderAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -60,9 +66,9 @@ class BootloaderAction(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # customize the device configuration for this job
-        self.pipeline.add_action(BootloaderCommandOverlay())
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(BootloaderRetry())
+        self.pipeline.add_action(BootloaderCommandOverlay(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(BootloaderRetry(self.job))
 
 
 class BootloaderRetry(BootHasMixin, RetryAction):
@@ -70,25 +76,25 @@ class BootloaderRetry(BootHasMixin, RetryAction):
     description = "interactive uboot retry action"
     summary = "uboot commands with retry"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.type = "ipxe"
         self.force_prompt = False
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # establish a new connection before trying the reset
-        self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(BootloaderInterruptAction())
+        self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(BootloaderInterruptAction(self.job))
         # need to look for Hit any key to stop autoboot
-        self.pipeline.add_action(BootloaderCommandsAction())
+        self.pipeline.add_action(BootloaderCommandsAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
     def validate(self):
         super().validate()

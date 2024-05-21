@@ -3,11 +3,13 @@
 # Author: Stevan Radaković <stevan.radakovic@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import glob
 import os
 import subprocess
 import time
+from typing import TYPE_CHECKING
 
 import requests
 
@@ -19,6 +21,10 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.docker import DockerRun
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
+
 LAVA_NODEBOOTER_PATH = "/home/lava/downloads"
 NODEBOOTER_HOME = "/data/nodebooter/"
 NIC_NO_OF_SUPPORTED = 4
@@ -26,8 +32,8 @@ NIC_NO_OF_SUPPORTED = 4
 
 class BootNodebooter(Boot):
     @classmethod
-    def action(cls):
-        return BootNodebooterAction()
+    def action(cls, job: Job) -> Action:
+        return BootNodebooterAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -50,14 +56,14 @@ class BootNodebooterAction(BootHasMixin, RetryAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # TODO: auth with GAR and get image:
         # self.pipeline.add_action(GetNodebooterImage())
-        self.pipeline.add_action(RunNodebooterContainer())
-        self.pipeline.add_action(ConfigureNodebooter())
+        self.pipeline.add_action(RunNodebooterContainer(self.job))
+        self.pipeline.add_action(ConfigureNodebooter(self.job))
 
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ResetDevice(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
         if "transfer_overlay" in parameters:
-            self.pipeline.add_action(OverlayUnpack())
+            self.pipeline.add_action(OverlayUnpack(self.job))
 
 
 class RunNodebooterContainer(Action):
@@ -65,8 +71,8 @@ class RunNodebooterContainer(Action):
     description = "run nodebooter container based on image"
     summary = "run nodebooter container"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.dut_iface = None
         self.dut_mac = None
         self.container = ""
@@ -161,8 +167,8 @@ class ConfigureNodebooter(Action):
     description = "update nodebooter settings and add dut via API"
     summary = "configure nodebooter"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         # Validated in previous
         self.dut_mac = None
 

@@ -6,6 +6,9 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -25,11 +28,16 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
+if TYPE_CHECKING:
+    from typing import Optional
+
+    from lava_dispatcher.job import Job
+
 
 class GrubSequence(Boot):
     @classmethod
-    def action(cls):
-        return GrubSequenceAction()
+    def action(cls, job: Job) -> Action:
+        return GrubSequenceAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -48,8 +56,8 @@ class GrubSequence(Boot):
 
 class Grub(Boot):
     @classmethod
-    def action(cls):
-        return GrubMainAction()
+    def action(cls, job: Job) -> Action:
+        return GrubMainAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -68,9 +76,11 @@ class Grub(Boot):
             )
 
 
-def _grub_sequence_map(sequence):
+def _grub_sequence_map(
+    sequence: str,
+) -> tuple[Optional[type[Action]], Optional[str]]:
     """Maps grub sequence with corresponding class."""
-    sequence_map = {
+    sequence_map: dict[str, tuple[type[Action], Optional[str]]] = {
         "wait-fastboot-interrupt": (WaitFastBootInterrupt, "grub"),
         "auto-login": (AutoLoginAction, None),
         "shell-session": (ExpectShellSession, None),
@@ -84,8 +94,8 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
     description = "grub boot sequence"
     summary = "run grub boot using specified sequence of actions"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.expect_shell = False
 
     def validate(self):
@@ -106,21 +116,21 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
         for sequence in sequences:
             mapped = _grub_sequence_map(sequence)
             if mapped[1]:
-                self.pipeline.add_action(mapped[0](itype=mapped[1]))
+                self.pipeline.add_action(mapped[0](self.job, itype=mapped[1]))
             elif mapped[0]:
-                self.pipeline.add_action(mapped[0]())
+                self.pipeline.add_action(mapped[0](self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
         else:
             if self.has_boot_finished(parameters):
                 self.logger.debug("Doing a boot without a shell (installer)")
-                self.pipeline.add_action(InstallerWait())
-                self.pipeline.add_action(PowerOff())
+                self.pipeline.add_action(InstallerWait(self.job))
+                self.pipeline.add_action(PowerOff(self.job))
 
 
 class GrubMainAction(BootHasMixin, RetryAction):
@@ -128,16 +138,16 @@ class GrubMainAction(BootHasMixin, RetryAction):
     description = "main grub boot action"
     summary = "run grub boot from power to system"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.expect_shell = True
 
     def populate(self, parameters):
         self.expect_shell = parameters.get("expect_shell", True)
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootloaderSecondaryMedia())
-        self.pipeline.add_action(BootloaderCommandOverlay())
-        self.pipeline.add_action(ConnectDevice())
+        self.pipeline.add_action(BootloaderSecondaryMedia(self.job))
+        self.pipeline.add_action(BootloaderCommandOverlay(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
         # FIXME: reset_device is a hikey hack due to fastboot/OTG issues
         # remove as part of LAVA-940 - convert to use fastboot-sequence
         reset_device = (
@@ -147,26 +157,26 @@ class GrubMainAction(BootHasMixin, RetryAction):
         )
         if parameters["method"] == "grub-efi" and reset_device:
             # added unless the device specifies not to reset the device in grub.
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ResetDevice(self.job))
         elif parameters["method"] == "grub":
-            self.pipeline.add_action(ResetDevice())
+            self.pipeline.add_action(ResetDevice(self.job))
         if parameters["method"] == "grub-efi":
-            self.pipeline.add_action(UEFIMenuInterrupt())
-            self.pipeline.add_action(GrubMenuSelector())
-        self.pipeline.add_action(BootloaderInterruptAction())
-        self.pipeline.add_action(BootloaderCommandsAction())
+            self.pipeline.add_action(UEFIMenuInterrupt(self.job))
+            self.pipeline.add_action(GrubMenuSelector(self.job))
+        self.pipeline.add_action(BootloaderInterruptAction(self.job))
+        self.pipeline.add_action(BootloaderCommandsAction(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
         else:
             if self.has_boot_finished(parameters):
                 self.logger.debug("Doing a boot without a shell (installer)")
-                self.pipeline.add_action(InstallerWait())
-                self.pipeline.add_action(PowerOff())
+                self.pipeline.add_action(InstallerWait(self.job))
+                self.pipeline.add_action(PowerOff(self.job))
 
 
 class GrubMenuSelector(UefiMenuSelector):
@@ -174,8 +184,8 @@ class GrubMenuSelector(UefiMenuSelector):
     description = "select specified grub-efi menu items"
     summary = "select grub options in the efi menu"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.selector.prompt = "Start:"
         self.commands = []
         self.boot_message = None
@@ -215,8 +225,8 @@ class InstallerWait(Action):
     description = "installer wait"
     summary = "wait for task to finish match arbitrary string"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.type = "grub"
 
     def validate(self):

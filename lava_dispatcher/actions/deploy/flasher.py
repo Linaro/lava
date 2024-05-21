@@ -3,6 +3,9 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
@@ -12,6 +15,9 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class FlasherRetryAction(RetryAction):
     name = "deploy-flasher-retry"
@@ -20,7 +26,7 @@ class FlasherRetryAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(FlasherAction())
+        self.pipeline.add_action(FlasherAction(self.job))
 
 
 class FlasherAction(Action):
@@ -28,8 +34,8 @@ class FlasherAction(Action):
     description = "deploy flasher"
     summary = "deploy custom flasher"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.commands = []
         self.path = None
 
@@ -44,17 +50,19 @@ class FlasherAction(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
 
         # Download the images
         self.path = self.mkdtemp()
         for image in parameters["images"].keys():
             self.pipeline.add_action(
-                DownloaderAction(image, self.path, params=parameters["images"][image])
+                DownloaderAction(
+                    self.job, image, self.path, params=parameters["images"][image]
+                )
             )
 
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -103,8 +111,8 @@ class Flasher(Deployment):
     name = "flasher"
 
     @classmethod
-    def action(cls):
-        return FlasherRetryAction()
+    def action(cls, job: Job) -> Action:
+        return FlasherRetryAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):

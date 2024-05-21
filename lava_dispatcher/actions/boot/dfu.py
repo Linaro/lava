@@ -3,6 +3,9 @@
 # Author: Tyler Baker <tyler.baker@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError, InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
@@ -14,11 +17,14 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitDFUDeviceAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DFU(Boot):
     @classmethod
-    def action(cls):
-        return BootDFURetry()
+    def action(cls, job: Job) -> Action:
+        return BootDFURetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -41,13 +47,15 @@ class BootDFURetry(RetryAction):
         parameters = dfu["parameters"]
 
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
         if dfu.get("implementation") == "u-boot":
-            self.pipeline.add_action(BootloaderInterruptAction(method="u-boot"))
-            self.pipeline.add_action(EnterDFU())
-        self.pipeline.add_action(WaitDFUDeviceAction())
-        self.pipeline.add_action(FlashDFUAction())
+            self.pipeline.add_action(
+                BootloaderInterruptAction(self.job, method="u-boot")
+            )
+            self.pipeline.add_action(EnterDFU(self.job))
+        self.pipeline.add_action(WaitDFUDeviceAction(self.job))
+        self.pipeline.add_action(FlashDFUAction(self.job))
 
 
 class EnterDFU(Action):
@@ -79,8 +87,8 @@ class FlashDFUAction(Action):
     description = "use dfu to flash the images"
     summary = "use dfu to flash the images"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.base_command = []
         self.exec_list = []
         self.board_id = "0000000000"

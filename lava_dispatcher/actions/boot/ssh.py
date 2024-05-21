@@ -3,9 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
@@ -17,6 +18,9 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class SshLogin(Boot):
     """
@@ -25,8 +29,8 @@ class SshLogin(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return SshAction()
+    def action(cls, job: Job) -> Action:
+        return SshAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -48,13 +52,13 @@ class SshAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(Scp("overlay"))
-        self.pipeline.add_action(PrepareSsh())
-        self.pipeline.add_action(ConnectSsh())
-        self.pipeline.add_action(AutoLoginAction(booting=False))
-        self.pipeline.add_action(ExpectShellSession())
-        self.pipeline.add_action(ExportDeviceEnvironment())
-        self.pipeline.add_action(ScpOverlayUnpack())
+        self.pipeline.add_action(Scp(self.job, "overlay"))
+        self.pipeline.add_action(PrepareSsh(self.job))
+        self.pipeline.add_action(ConnectSsh(self.job))
+        self.pipeline.add_action(AutoLoginAction(self.job, booting=False))
+        self.pipeline.add_action(ExpectShellSession(self.job))
+        self.pipeline.add_action(ExportDeviceEnvironment(self.job))
+        self.pipeline.add_action(ScpOverlayUnpack(self.job))
 
 
 class Scp(ConnectSsh):
@@ -70,8 +74,8 @@ class Scp(ConnectSsh):
     description = "copy a file to a known device using scp"
     summary = "scp over the ssh connection"
 
-    def __init__(self, key):
-        super().__init__()
+    def __init__(self, job: Job, key):
+        super().__init__(job)
         self.key = key
         self.scp = []
 
@@ -203,8 +207,8 @@ class PrepareSsh(Action):
     description = "determine which address to use for primary or secondary connections"
     summary = "set the host address of the ssh connection"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.primary = False
 
     def validate(self):
@@ -275,8 +279,8 @@ class ScpOverlayUnpack(Action):
 
 class Schroot(Boot):
     @classmethod
-    def action(cls):
-        return SchrootAction()
+    def action(cls, job: Job) -> Action:
+        return SchrootAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -298,8 +302,8 @@ class SchrootAction(Action):
     description = "enter schroot using existing connection"
     summary = "enter specified schroot"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.schroot = None
         self.command = None
 

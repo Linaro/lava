@@ -3,9 +3,11 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -17,11 +19,14 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class GDB(Boot):
     @classmethod
-    def action(cls):
-        return BootGDB()
+    def action(cls, job: Job) -> Action:
+        return BootGDB(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -48,7 +53,7 @@ class BootGDB(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootGDBRetry())
+        self.pipeline.add_action(BootGDBRetry(self.job))
 
 
 class BootGDBRetry(RetryAction):
@@ -56,8 +61,8 @@ class BootGDBRetry(RetryAction):
     description = "boot with gdb with retry and optional docker support"
     summary = "boot with gdb with retry"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.gdb = None
         self.gdb_connection = None
         self.commands = []
@@ -109,9 +114,9 @@ class BootGDBRetry(RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.pipeline.add_action(ResetDevice())
-        self.pipeline.add_action(WaitUSBSerialDeviceAction())
-        self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ResetDevice(self.job))
+        self.pipeline.add_action(WaitUSBSerialDeviceAction(self.job))
+        self.pipeline.add_action(ConnectDevice(self.job))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

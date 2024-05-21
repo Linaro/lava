@@ -3,8 +3,14 @@
 # Author: Stevan Radakovic <stevan.radakovic@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class ExportDeviceEnvironment(Action):
@@ -16,8 +22,8 @@ class ExportDeviceEnvironment(Action):
     description = "Exports environment variables to the device"
     summary = "Exports environment variables action"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.env = []
 
     def validate(self):

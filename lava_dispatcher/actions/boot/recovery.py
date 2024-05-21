@@ -3,18 +3,23 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import Boot
 from lava_dispatcher.power import PowerOff, PowerOn
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class RecoveryBoot(Boot):
     @classmethod
-    def action(cls):
-        return RecoveryBootAction()
+    def action(cls, job: Job) -> Action:
+        return RecoveryBootAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -41,13 +46,17 @@ class RecoveryBootAction(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if parameters["commands"] == "recovery":
             # only switch into recovery mode with power off.
-            self.pipeline.add_action(PowerOff())
-            self.pipeline.add_action(SwitchRecoveryCommand(mode="recovery_mode"))
-            self.pipeline.add_action(PowerOn())
+            self.pipeline.add_action(PowerOff(self.job))
+            self.pipeline.add_action(
+                SwitchRecoveryCommand(self.job, mode="recovery_mode")
+            )
+            self.pipeline.add_action(PowerOn(self.job))
         elif parameters["commands"] == "exit":
-            self.pipeline.add_action(PowerOff())
-            self.pipeline.add_action(SwitchRecoveryCommand(mode="recovery_exit"))
-            self.pipeline.add_action(PowerOn())
+            self.pipeline.add_action(PowerOff(self.job))
+            self.pipeline.add_action(
+                SwitchRecoveryCommand(self.job, mode="recovery_exit")
+            )
+            self.pipeline.add_action(PowerOn(self.job))
         else:
             self.errors = "Invalid recovery command"
 
@@ -57,8 +66,8 @@ class SwitchRecoveryCommand(Action):
     description = "call commands to switch device into and out of recovery"
     summary = "execute recovery mode commands"
 
-    def __init__(self, mode):
-        super().__init__()
+    def __init__(self, job: Job, mode):
+        super().__init__(job)
         self.recovery = []
         self.mode = mode
 

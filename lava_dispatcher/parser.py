@@ -32,11 +32,11 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
 
     if name == "boot":
         cls = Boot.select(device, parameters)
-        action = cls.action()
+        action = cls.action(pipeline.job)
     elif name == "test":
         parameters["stage"] = test_count
         cls = LavaTest.select(device, parameters)
-        action = cls.action(parameters)
+        action = cls.action(pipeline.job, parameters)
     elif name == "deploy":
         cls = Deployment.select(device, parameters)
         ns = parameters["namespace"]
@@ -54,7 +54,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
                 {"deployment_data": get_deployment_data(parameters.get("os", ""))}
             )
         cls = Deployment.select(device, parameters)
-        action = cls.action()
+        action = cls.action(pipeline.job)
 
     action.section = cls.section
     pipeline.add_action(action, parameters)
@@ -156,7 +156,7 @@ class JobParser:
                     if name == "test" and action.needs_overlay(action_data["test"]):
                         test_counts[namespace] += 1
                 elif name == "command":
-                    action = CommandAction()
+                    action = CommandAction(job)
                     action.parameters = action_data[name]
                     pipeline.add_action(action)
 
@@ -164,7 +164,7 @@ class JobParser:
                     raise JobError("Unknown action name '%s'" % name)
 
         # there's always going to need to be a finalize_process action
-        finalize = FinalizeAction()
+        finalize = FinalizeAction(job)
         pipeline.add_action(finalize)
 
         job.pipeline = pipeline

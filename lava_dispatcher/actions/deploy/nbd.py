@@ -6,12 +6,14 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
 import re
 import shutil
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -22,6 +24,9 @@ from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class Nbd(Deployment):
@@ -36,8 +41,8 @@ class Nbd(Deployment):
     name = "nbd"
 
     @classmethod
-    def action(cls):
-        return NbdAction()
+    def action(cls, job: Job) -> Action:
+        return NbdAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -55,8 +60,8 @@ class NbdAction(Action):
     description = "download files and deploy for using tftp+initrd+nbd"
     summary = "nbd deployment"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.tftp_dir = None
         self.nbd_ip = None
         self.nbd_port = None
@@ -110,7 +115,7 @@ class NbdAction(Action):
         for key in ["initrd", "kernel", "dtb", "nbdroot"]:
             if key in parameters:
                 download = DownloaderAction(
-                    key, path=self.tftp_dir, params=parameters[key]
+                    self.job, key, path=self.tftp_dir, params=parameters[key]
                 )
                 download.max_retries = (
                     3  # overridden by failure_retry in the parameters, if set.
@@ -133,9 +138,9 @@ class NbdAction(Action):
                     )
 
         # prepare overlay
-        self.pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(OverlayAction(self.job))
         if "kernel" in parameters and "type" in parameters["kernel"]:
-            self.pipeline.add_action(PrepareKernelAction())
+            self.pipeline.add_action(PrepareKernelAction(self.job))
         # setup values for protocol and later steps
         self.set_namespace_data(
             action=self.name,
@@ -149,7 +154,7 @@ class NbdAction(Action):
         # ip
         parameters["lava-xnbd"] = {}
         # handle XnbdAction next - bring-up nbd-server
-        self.pipeline.add_action(XnbdAction())
+        self.pipeline.add_action(XnbdAction(self.job))
 
 
 class XnbdAction(Action):
@@ -157,8 +162,8 @@ class XnbdAction(Action):
     description = "nbd daemon"
     summary = "nbd daemon"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.protocol = XnbdProtocol.name
         self.nbd_server_port = None
         self.nbd_server_ip = None

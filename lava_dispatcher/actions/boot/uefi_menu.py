@@ -3,7 +3,9 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from lava_common.constants import (
     DEFAULT_UEFI_LABEL_CLASS,
@@ -26,6 +28,9 @@ from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class UefiMenu(Boot):
     """
@@ -35,8 +40,8 @@ class UefiMenu(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return UefiMenuAction()
+    def action(cls, job: Job) -> Action:
+        return UefiMenuAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -60,8 +65,8 @@ class UEFIMenuInterrupt(MenuInterrupt):
     summary = "interrupt for uefi menu"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.params = None
         self.method = "uefi-menu"
 
@@ -91,8 +96,8 @@ class UefiMenuSelector(SelectorMenuAction):
     description = "select specified uefi menu items"
     summary = "select options in the uefi menu"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.selector.prompt = "Start:"
         self.method_name = "uefi-menu"
         self.commands = []
@@ -207,8 +212,8 @@ class UefiSubstituteCommands(Action):
     description = "set job-specific variables into the uefi menu commands"
     summary = "substitute job values into uefi commands"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.items = None
 
     def validate(self):
@@ -280,8 +285,8 @@ class UefiMenuAction(RetryAction):
     description = "interrupt and select uefi menu items"
     summary = "interact with uefi menu"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.method = "uefi-menu"
 
     def validate(self):
@@ -298,18 +303,18 @@ class UefiMenuAction(RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if "commands" in parameters and "fastboot" in parameters["commands"]:
-            self.pipeline.add_action(UefiSubstituteCommands())
-            self.pipeline.add_action(UEFIMenuInterrupt())
-            self.pipeline.add_action(UefiMenuSelector())
-            self.pipeline.add_action(MenuReset())
-            self.pipeline.add_action(AutoLoginAction())
-            self.pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(UefiSubstituteCommands(self.job))
+            self.pipeline.add_action(UEFIMenuInterrupt(self.job))
+            self.pipeline.add_action(UefiMenuSelector(self.job))
+            self.pipeline.add_action(MenuReset(self.job))
+            self.pipeline.add_action(AutoLoginAction(self.job))
+            self.pipeline.add_action(ExportDeviceEnvironment(self.job))
         else:
-            self.pipeline.add_action(UefiSubstituteCommands())
-            self.pipeline.add_action(MenuConnect())
-            self.pipeline.add_action(ResetDevice())
-            self.pipeline.add_action(UEFIMenuInterrupt())
-            self.pipeline.add_action(UefiMenuSelector())
-            self.pipeline.add_action(MenuReset())
-            self.pipeline.add_action(AutoLoginAction())
-            self.pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(UefiSubstituteCommands(self.job))
+            self.pipeline.add_action(MenuConnect(self.job))
+            self.pipeline.add_action(ResetDevice(self.job))
+            self.pipeline.add_action(UEFIMenuInterrupt(self.job))
+            self.pipeline.add_action(UefiMenuSelector(self.job))
+            self.pipeline.add_action(MenuReset(self.job))
+            self.pipeline.add_action(AutoLoginAction(self.job))
+            self.pipeline.add_action(ExportDeviceEnvironment(self.job))

@@ -31,10 +31,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "images.key" with http
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
+            job, "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"images": {"key": {"url": "http://url.org/resource.img"}}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], HttpDownloadAction)
@@ -44,10 +43,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # "key" with http
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
+            job, "key", "/path/to/save", params={"url": "http://url.org/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"key": {"url": "http://url.org/resource.img"}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], HttpDownloadAction)
@@ -59,10 +57,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "images.key" with https
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
+            job, "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"images": {"key": {"url": "https://url.org/resource.img"}}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], HttpDownloadAction)
@@ -72,10 +69,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # "key" with https
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
+            job, "key", "/path/to/save", params={"url": "https://url.org/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"key": {"url": "https://url.org/resource.img"}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], HttpDownloadAction)
@@ -87,10 +83,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "images.key" with scp
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
+            job, "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"images": {"key": {"url": "scp://user@host:/resource.img"}}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], ScpDownloadAction)
@@ -100,10 +95,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # "key" with scp
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
+            job, "key", "/path/to/save", params={"url": "scp://user@host:/resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"key": {"url": "scp://user@host:/resource.img"}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], ScpDownloadAction)
@@ -115,10 +109,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "images.key" with file
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "file:///resource.img"}
+            job, "key", "/path/to/save", params={"url": "file:///resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"images": {"key": {"url": "file:///resource.img"}}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], FileDownloadAction)
@@ -128,10 +121,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # "key" with file
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "file:///resource.img"}
+            job, "key", "/path/to/save", params={"url": "file:///resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"key": {"url": "file:///resource.img"}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], FileDownloadAction)
@@ -143,10 +135,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "images.key" with lxc
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "lxc:///resource.img"}
+            job, "key", "/path/to/save", params={"url": "lxc:///resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"images": {"key": {"url": "lxc:///resource.img"}}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], LxcDownloadAction)
@@ -156,10 +147,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # "key" with lxc
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "lxc:///resource.img"}
+            job, "key", "/path/to/save", params={"url": "lxc:///resource.img"}
         )
         action.level = 1
-        action.job = job
         action.populate({"key": {"url": "lxc:///resource.img"}})
         self.assertEqual(len(action.pipeline.actions), 1)
         self.assertIsInstance(action.pipeline.actions[0], LxcDownloadAction)
@@ -171,7 +161,10 @@ class TestDowload(LavaDispatcherTestCase):
         # Test raise
         # 1. unsupported scheme
         action = DownloaderAction(
-            "key", "/path/to/save", params={"url": "ftp://user@host:/resource.img"}
+            self.create_job_mock(),
+            "key",
+            "/path/to/save",
+            params={"url": "ftp://user@host:/resource.img"},
         )
         action.level = 1
         with self.assertRaisesRegex(JobError, "Unsupported url protocol scheme: ftp"):
@@ -179,7 +172,9 @@ class TestDowload(LavaDispatcherTestCase):
 
     def test_downloader_no_url(self):
         # 1. no url available
-        action = DownloaderAction("key", "/path/to/save", params={})
+        action = DownloaderAction(
+            self.create_job_mock(), "key", "/path/to/save", params={}
+        )
         action.level = 1
         with self.assertRaisesRegex(
             JobError, "Invalid deploy action: 'url' is missing for 'key'"
@@ -188,10 +183,10 @@ class TestDowload(LavaDispatcherTestCase):
 
     def test_download_handler_validate_simple(self):
         # "images.key" without extra parameters
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "images": {"key": {"url": "http://example.com/resource.img"}},
             "namespace": "common",
@@ -213,10 +208,10 @@ class TestDowload(LavaDispatcherTestCase):
         )
 
         # "key" without extra parameters
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "key": {"url": "http://example.com/resource.img"},
             "namespace": "common",
@@ -240,10 +235,10 @@ class TestDowload(LavaDispatcherTestCase):
     def test_download_handler_validate_kernel(self):
         # "images.key" for kernel
         # In this case, the "kernel.type" is not taken into account
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "kernel", "/path/to/save", urlparse("http://example.com/kernel")
+            job, "kernel", "/path/to/save", urlparse("http://example.com/kernel")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "images": {
                 "kernel": {"url": "http://example.com/kernel", "type": "zimage"}
@@ -267,10 +262,10 @@ class TestDowload(LavaDispatcherTestCase):
         )
 
         # "key" for kernel
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "kernel", "/path/to/save", urlparse("http://example.com/kernel")
+            job, "kernel", "/path/to/save", urlparse("http://example.com/kernel")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "kernel": {"url": "http://example.com/kernel", "type": "zimage"},
             "namespace": "common",
@@ -294,10 +289,10 @@ class TestDowload(LavaDispatcherTestCase):
 
     def test_download_handler_validate_extra_arguments(self):
         # "images.key" with compression, image_arg, overlay, ...
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img.gz")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img.gz")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "images": {
                 "key": {
@@ -328,10 +323,10 @@ class TestDowload(LavaDispatcherTestCase):
         )
 
         # "key" with compression, image_arg, overlay, ...
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img.gz")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img.gz")
         )
-        action.job = self.create_simple_job()
         action.parameters = {
             "key": {
                 "url": "http://example.com/resource.img.gz",
@@ -360,13 +355,14 @@ class TestDowload(LavaDispatcherTestCase):
         )
 
     def test_download_handler_errors(self):
+        job = self.create_simple_job()
         # "key" downloading a directory
         # TODO: is this a good idea to keep this feature?
+
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource/")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource/")
         )
         action.section = "deploy"
-        action.job = self.create_simple_job()
         action.parameters = {
             "key": {"url": "http://example.com/resource/"},
             "namespace": "common",
@@ -376,11 +372,11 @@ class TestDowload(LavaDispatcherTestCase):
             action.validate()
 
         # Unknown compression format
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
         )
         action.section = "deploy"
-        action.job = self.create_simple_job()
         action.parameters = {
             "key": {
                 "url": "http://example.com/resource.img",
@@ -393,11 +389,11 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertEqual(action.errors, ["Unknown 'compression' format 'something'"])
 
         # Unknown archive format
+        job = self.create_simple_job()
         action = DownloadHandler(
-            "key", "/path/to/save", urlparse("http://example.com/resource.img")
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
         )
         action.section = "deploy"
-        action.job = self.create_simple_job()
         action.parameters = {
             "key": {"url": "http://example.com/resource.img", "archive": "cpio"},
             "namespace": "common",
@@ -415,12 +411,12 @@ class TestDowload(LavaDispatcherTestCase):
 
         # Working
         action = FileDownloadAction(
+            job,
             "image",
             "/path/to/file",
             urlparse("file://" + str(tmp_dir_path) + "/bla.img"),
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "file://" + str(tmp_dir_path) + "/bla.img"},
             "namespace": "common",
@@ -431,13 +427,14 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertEqual(action.size, 5)
 
         # Missing file
+        job = self.create_simple_job()
         action = FileDownloadAction(
+            job,
             "image",
             "/path/to/file",
             urlparse("file://" + str(tmp_dir_path) + "/bla2.img"),
         )
         action.section = "deploy"
-        action.job = self.create_simple_job()
         action.parameters = {
             "image": {"url": "file://" + str(tmp_dir_path) + "/bla2.img"},
             "namespace": "common",
@@ -488,10 +485,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job(job_parameters={"dispatcher": {}})
         # HEAD is working
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/kernel")
+            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "https://example.com/kernel"},
             "namespace": "common",
@@ -504,10 +500,9 @@ class TestDowload(LavaDispatcherTestCase):
 
         # Only GET works
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/dtb")
+            job, "image", "/path/to/file", urlparse("https://example.com/dtb")
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "https://example.com/dtb"},
             "namespace": "common",
@@ -525,10 +520,9 @@ class TestDowload(LavaDispatcherTestCase):
             return DummyResponseNOK()
 
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/kernel")
+            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "https://example.com/kernel"},
             "namespace": "common",
@@ -546,10 +540,9 @@ class TestDowload(LavaDispatcherTestCase):
             raise requests.Timeout()
 
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/kernel")
+            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "https://example.com/kernel"},
             "namespace": "common",
@@ -563,10 +556,9 @@ class TestDowload(LavaDispatcherTestCase):
             raise requests.RequestException("an error occurred")
 
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/kernel")
+            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
         action.section = "deploy"
-        action.job = job
         action.parameters = {
             "image": {"url": "https://example.com/kernel"},
             "namespace": "common",
@@ -587,6 +579,7 @@ class TestDowload(LavaDispatcherTestCase):
 
         # Normal case
         action = FileDownloadAction(
+            self.create_job_mock(),
             "image",
             "/path/to/file",
             urlparse("file://" + str(tmpr_dir_path) + "/bla.img"),
@@ -599,6 +592,7 @@ class TestDowload(LavaDispatcherTestCase):
 
         # Error when reading
         action = FileDownloadAction(
+            self.create_job_mock(),
             "image",
             "/path/to/file",
             urlparse("file://" + str(tmpr_dir_path) + "/bla2.img"),
@@ -635,7 +629,10 @@ class TestDowload(LavaDispatcherTestCase):
             return DummyResponse()
 
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/dtb")
+            self.create_job_mock(),
+            "image",
+            "/path/to/file",
+            urlparse("https://example.com/dtb"),
         )
         action.url = urlparse("https://example.com/dtb")
         with patch("requests.get", dummyget):
@@ -649,7 +646,10 @@ class TestDowload(LavaDispatcherTestCase):
             raise requests.RequestException("error")
 
         action = HttpDownloadAction(
-            "image", "/path/to/file", urlparse("https://example.com/dtb")
+            self.create_job_mock(),
+            "image",
+            "/path/to/file",
+            urlparse("https://example.com/dtb"),
         )
         action.url = urlparse("https://example.com/dtb")
 
@@ -667,7 +667,10 @@ class TestDowload(LavaDispatcherTestCase):
             yield b"world"
 
         action = HttpDownloadAction(
-            "dtb", str(tmp_dir_path), urlparse("https://example.com/dtb")
+            self.create_job_mock(),
+            "dtb",
+            str(tmp_dir_path),
+            urlparse("https://example.com/dtb"),
         )
         action.job = self.create_simple_job(job_parameters={"dispatcher": {}})
         action.url = urlparse("https://example.com/dtb")
@@ -731,10 +734,10 @@ class TestDowload(LavaDispatcherTestCase):
             yield b"\x7f\xbf\xcf\x00\x01$\x0c\xa6\x18\xd8\xd8\x1f\xb6\xf3}\x01"
             yield b"\x00\x00\x00\x00\x04YZ"
 
+        job = self.create_simple_job()
         action = HttpDownloadAction(
-            "rootfs", str(tmp_dir_path), urlparse("https://example.com/rootfs.xz")
+            job, "rootfs", str(tmp_dir_path), urlparse("https://example.com/rootfs.xz")
         )
-        action.job = self.create_simple_job()
         action.url = urlparse("https://example.com/rootfs.xz")
         action.parameters = {
             "to": "download",
@@ -805,10 +808,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         destdir = job.mkdtemp("some-other-action")
         action = PreDownloadedAction(
-            "rootfs", urlparse("downloads://rootfs.xz"), destdir, params
+            job, "rootfs", urlparse("downloads://rootfs.xz"), destdir, params
         )
         action.parameters = params
-        action.job = job
 
         filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
         filename.parent.mkdir(parents=True)
@@ -829,10 +831,9 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         destdir = job.mkdtemp("some-other-action")
         action = PreDownloadedAction(
-            "rootfs", urlparse("downloads://subdir/rootfs.xz"), destdir, params
+            job, "rootfs", urlparse("downloads://subdir/rootfs.xz"), destdir, params
         )
         action.parameters = params
-        action.job = job
 
         filename = Path(action.job.tmp_dir) / "downloads/common/subdir/rootfs.xz"
         filename.parent.mkdir(parents=True)
@@ -852,14 +853,13 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         destdir = job.mkdtemp("some-other-action")
         action = PreDownloadedAction(
-            "rootfs", urlparse("downloads://missing.xz"), destdir
+            job, "rootfs", urlparse("downloads://missing.xz"), destdir
         )
-        action.job = job
         action.parameters = {"namespace": "common"}
         with self.assertRaises(JobError):
             action.run(None, 4242)
 
     def test_copy_to_lxc_without_lxc_should_do_nothing(self):
-        action = CopyToLxcAction()
-        action.job = self.create_simple_job()
+        job = self.create_simple_job()
+        action = CopyToLxcAction(job)
         action.run(None, 4242)  # no crash = success

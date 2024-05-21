@@ -223,7 +223,7 @@ overrides:
 
 class TestCommand(LavaDispatcherTestCase):
     def test_silent(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "true"
         with self.assertWarns(DeprecationWarning):
             log = fake.run_command(command.split(" "))
@@ -231,7 +231,7 @@ class TestCommand(LavaDispatcherTestCase):
         self.assertEqual([], fake.errors)
 
     def test_allow_silent(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "true"
         with self.assertWarns(DeprecationWarning):
             log = fake.run_command(command.split(" "), allow_silent=True)
@@ -240,7 +240,7 @@ class TestCommand(LavaDispatcherTestCase):
         self.assertEqual([], fake.errors)
 
     def test_error(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "false"
         # sets return code non-zero with no output
         with self.assertWarns(DeprecationWarning):
@@ -249,7 +249,7 @@ class TestCommand(LavaDispatcherTestCase):
         self.assertNotEqual([], fake.errors)
 
     def test_allow_silent_error(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "false"
         with self.assertWarns(DeprecationWarning):
             log = fake.run_command(command.split(" "), allow_silent=True)
@@ -257,7 +257,7 @@ class TestCommand(LavaDispatcherTestCase):
         self.assertNotEqual([], fake.errors)
 
     def test_invalid(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "/bin/false"
         with self.assertWarns(DeprecationWarning):
             log = fake.run_command(command.split(" "))
@@ -265,7 +265,7 @@ class TestCommand(LavaDispatcherTestCase):
         self.assertNotEqual([], fake.errors)
 
     def test_allow_silent_invalid(self):
-        fake = FakeAction()
+        fake = FakeAction(self.create_job_mock())
         command = "/bin/false"
         with self.assertWarns(DeprecationWarning):
             log = fake.run_command(command.split(" "), allow_silent=True)

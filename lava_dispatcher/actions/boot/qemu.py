@@ -3,10 +3,12 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import shlex
 import subprocess
+from typing import TYPE_CHECKING
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
 from lava_common.exceptions import JobError
@@ -22,6 +24,9 @@ from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootQEMU(Boot):
     """
@@ -34,8 +39,8 @@ class BootQEMU(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return BootQEMUImageAction()
+    def action(cls, job: Job) -> Action:
+        return BootQEMUImageAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -57,14 +62,14 @@ class BootQEMUImageAction(BootHasMixin, RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootQemuRetry())
+        self.pipeline.add_action(BootQemuRetry(self.job))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction())
+            self.pipeline.add_action(AutoLoginAction(self.job))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class BootQemuRetry(RetryAction):
@@ -74,7 +79,7 @@ class BootQemuRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(CallQemuAction())
+        self.pipeline.add_action(CallQemuAction(self.job))
 
 
 class CallQemuAction(Action):
@@ -85,8 +90,8 @@ class CallQemuAction(Action):
     session_class = QemuSession
     shell_class = ShellCommand
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.base_sub_command = []
         self.docker = None
         self.sub_command = []

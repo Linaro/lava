@@ -3,8 +3,10 @@
 # Author: Vincent Wan <vincent.wan@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_common.utils import binary_version
 from lava_dispatcher.action import Action, Pipeline
@@ -15,11 +17,14 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class OpenOCD(Boot):
     @classmethod
-    def action(cls):
-        return BootOpenOCDRetry()
+    def action(cls, job: Job) -> Action:
+        return BootOpenOCDRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -40,10 +45,12 @@ class BootOpenOCDRetry(RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.pipeline.add_action(ResetDevice())
-            self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(FlashOpenOCDAction())
+            self.pipeline.add_action(ResetDevice(self.job))
+            self.pipeline.add_action(
+                WaitDeviceBoardID(self.job, self.job.device.get("board_id"))
+            )
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(FlashOpenOCDAction(self.job))
 
 
 class FlashOpenOCDAction(Action):
@@ -51,8 +58,8 @@ class FlashOpenOCDAction(Action):
     description = "use openocd to flash the image"
     summary = "use openocd to flash the image"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.base_command = []
         self.exec_list = []
 

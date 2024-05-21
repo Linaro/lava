@@ -29,8 +29,7 @@ class TestCommands(LavaDispatcherTestCase):
                 }
             )
         )
-        self.action = CommandAction()
-        self.action.job = self.job
+        self.action = CommandAction(self.job)
         self.action.run_cmd = MagicMock()
 
     def do_something(self):

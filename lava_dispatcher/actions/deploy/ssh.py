@@ -3,9 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import ExtractModules, ExtractRootfs
@@ -14,6 +15,9 @@ from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 # Deploy SSH can mean a few options:
 # for a primary connection, the device might need to be powered_on
@@ -32,8 +36,8 @@ class Ssh(Deployment):
     name = "ssh"
 
     @classmethod
-    def action(cls):
-        return ScpOverlay()
+    def action(cls, job: Job) -> Action:
+        return ScpOverlay(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -53,8 +57,8 @@ class ScpOverlay(Action):
     description = "prepare overlay and scp to device"
     summary = "copy overlay to device"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.items = []
 
     def validate(self):
@@ -80,11 +84,13 @@ class ScpOverlay(Action):
             value=tar_flags,
             parameters=parameters,
         )
-        self.pipeline.add_action(OverlayAction())
+        self.pipeline.add_action(OverlayAction(self.job))
         for item in self.items:
             if item in parameters:
                 self.pipeline.add_action(
-                    DownloaderAction(item, path=self.mkdtemp()), params=parameters[item]
+                    DownloaderAction(
+                        self.job, item, path=self.mkdtemp(), params=parameters[item]
+                    ),
                 )
                 self.set_namespace_data(
                     action=self.name,
@@ -94,9 +100,9 @@ class ScpOverlay(Action):
                     parameters=parameters,
                 )
         # we might not have anything to download, just the overlay to push
-        self.pipeline.add_action(PrepareOverlayScp())
+        self.pipeline.add_action(PrepareOverlayScp(self.job))
         # prepare the device environment settings in common data for enabling in the boot step
-        self.pipeline.add_action(DeployDeviceEnvironment())
+        self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
 
 class PrepareOverlayScp(Action):
@@ -109,8 +115,8 @@ class PrepareOverlayScp(Action):
     description = "copy the overlay over an existing ssh connection"
     summary = "scp the overlay to the remote device"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.host_keys = []
 
     def validate(self):
@@ -148,10 +154,10 @@ class PrepareOverlayScp(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
-            ExtractRootfs()
+            ExtractRootfs(self.job)
         )  # idempotent, checks for nfsrootfs parameter
         self.pipeline.add_action(
-            ExtractModules()
+            ExtractModules(self.job)
         )  # idempotent, checks for a modules parameter
 
     def run(self, connection, max_end_time):

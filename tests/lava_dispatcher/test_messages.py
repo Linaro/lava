@@ -53,7 +53,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         connection = create_shell_session_cat_file(logfile, message_list)
         with self.assertRaises(JobError):
             LinuxKernelMessages.parse_failures(
-                connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+                connection,
+                action=Action(self.create_job_mock()),
+                max_end_time=self.max_end_time,
+                fail_msg="",
             )
 
     def test_kernel_1(self):
@@ -62,7 +65,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         message_list = LinuxKernelMessages.get_init_prompts()
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(results, [])
 
@@ -74,7 +80,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
-            action=Action(),
+            action=Action(self.create_job_mock()),
             max_end_time=self.max_end_time,
             fail_msg="",
         )
@@ -105,7 +111,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         connection = create_shell_session_cat_file(logfile, message_list)
         with self.assertRaises(JobError):
             LinuxKernelMessages.parse_failures(
-                connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+                connection,
+                action=Action(self.create_job_mock()),
+                max_end_time=self.max_end_time,
+                fail_msg="",
             )
 
     def test_kernel_5(self):
@@ -123,7 +132,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["kind"], "kasan")
@@ -145,7 +157,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["kind"], "kfence")
@@ -167,7 +182,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(results), 6)
         for res in results:
@@ -181,7 +199,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["kind"], "oops")
@@ -203,7 +224,10 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
 
         self.assertEqual(len(results), 4)
@@ -241,6 +265,9 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
-            connection, action=Action(), max_end_time=self.max_end_time, fail_msg=""
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
         )
         self.assertEqual(len(results), 134)

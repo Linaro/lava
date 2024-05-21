@@ -6,9 +6,11 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import os
 import shutil
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
@@ -22,6 +24,9 @@ from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import wait_udev_changed_event, wait_udev_event
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Musca(Deployment):
     """
@@ -32,8 +37,8 @@ class Musca(Deployment):
     name = "musca"
 
     @classmethod
-    def action(cls):
-        return MuscaAction()
+    def action(cls, job: Job) -> Action:
+        return MuscaAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -71,30 +76,34 @@ class MuscaAction(RetryAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # Musca will autoboot previously deployed binaries
         # Therefore disconnect serial to avoid clutter.
-        self.pipeline.add_action(DisconnectDevice())
+        self.pipeline.add_action(DisconnectDevice(self.job))
         # If we don't run with a strict schema, it is possible to pass validation with warnings
         # even without the required 'test_binary' field.
         # Therefore, ensure the DownloaderAction.populate does not fail, and catch this at validate step.
         image_params = parameters.get("images", {}).get("test_binary")
         if image_params:
             self.pipeline.add_action(
-                DownloaderAction("test_binary", path=download_dir, params=image_params)
+                DownloaderAction(
+                    self.job, "test_binary", path=download_dir, params=image_params
+                )
             )
         # Turn on
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ResetDevice(self.job))
         # Wait for storage
-        self.pipeline.add_action(WaitMuscaMassStorageAction())
+        self.pipeline.add_action(WaitMuscaMassStorageAction(self.job))
 
         # Deploy test binary
-        self.pipeline.add_action(MountMuscaMassStorageDevice())
-        self.pipeline.add_action(DeployMuscaTestBinary())
-        self.pipeline.add_action(UnmountMuscaMassStorageDevice())
+        self.pipeline.add_action(MountMuscaMassStorageDevice(self.job))
+        self.pipeline.add_action(DeployMuscaTestBinary(self.job))
+        self.pipeline.add_action(UnmountMuscaMassStorageDevice(self.job))
 
         # Check for FAIL.TXT to check if we were successful
-        self.pipeline.add_action(WaitMuscaMassStorageAction(udev_action="change"))
-        self.pipeline.add_action(MountMuscaMassStorageDevice())
-        self.pipeline.add_action(CheckMuscaFlashAction())
-        self.pipeline.add_action(UnmountMuscaMassStorageDevice())
+        self.pipeline.add_action(
+            WaitMuscaMassStorageAction(self.job, udev_action="change")
+        )
+        self.pipeline.add_action(MountMuscaMassStorageDevice(self.job))
+        self.pipeline.add_action(CheckMuscaFlashAction(self.job))
+        self.pipeline.add_action(UnmountMuscaMassStorageDevice(self.job))
 
 
 class UnmountMuscaMassStorageDevice(UnmountVExpressMassStorageDevice):
@@ -106,8 +115,8 @@ class UnmountMuscaMassStorageDevice(UnmountVExpressMassStorageDevice):
     description = "unmount musca usb msd"
     summary = "unmount musca usb mass storage device"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.namespace_label = "musca-usb"
         self.namespace_action = "mount-musca-usbmsd"
 
@@ -127,8 +136,8 @@ class WaitMuscaMassStorageAction(Action):
     description = "wait for musca mass storage"
     summary = "wait for musca mass storage"
 
-    def __init__(self, udev_action="add"):
-        super().__init__()
+    def __init__(self, job: Job, udev_action="add"):
+        super().__init__(job)
         self.udev_action = udev_action
         # Ensure that we only trigger once FS details are known
         self.match_dict = {"ID_FS_VERSION": "FAT16"}
@@ -175,8 +184,8 @@ class MountMuscaMassStorageDevice(MountDeviceMassStorageDevice):
     description = "mount musca usb msd"
     summary = "mount musca usb mass storage device on the dispatcher"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.disk_identifier = None
         self.disk_identifier_type = "id"
         self.namespace_label = "musca-usb"
@@ -201,8 +210,8 @@ class DeployMuscaTestBinary(Action):
     description = "deploy test binary to usb msd"
     summary = "copy test binary to Musca device"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.param_key = "test_binary"
 
     def validate(self):
@@ -240,8 +249,8 @@ class DeployMuscaAutomationAction(Action):
     description = "deploy automation file to usb msd"
     summary = "copy automation file to Musca device"
 
-    def __init__(self, automation_filename=""):
-        super().__init__()
+    def __init__(self, job: Job, automation_filename=""):
+        super().__init__(job)
         self.automation_filename = automation_filename
 
     def validate(self):

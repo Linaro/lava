@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -12,6 +14,9 @@ from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.action import Action
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.shell import ShellSession
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class MovementMenu:
@@ -26,8 +31,8 @@ class MenuInterrupt(Action):
     description = "interrupt the bootloader to start the menu handling"
     summary = "base menu interrupt action"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.interrupt_prompt = None
         self.interrupt_string = None
 
@@ -140,8 +145,8 @@ class SelectorMenuAction(Action):
     description = "select specified menu items"
     summary = "select options in a menu"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.selector = SelectorMenu()
         self.items = []
         self.line_sep = None

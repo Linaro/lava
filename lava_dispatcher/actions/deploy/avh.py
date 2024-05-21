@@ -3,6 +3,7 @@
 # Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 import plistlib
@@ -11,6 +12,7 @@ import shutil
 import string
 import zipfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
@@ -24,13 +26,16 @@ from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment, RetryAction
 from lava_dispatcher.utils.network import retry
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Avh(Deployment):
     name = "avh"
 
     @classmethod
-    def action(cls):
-        return AvhRetryAction()
+    def action(cls, job: Job) -> Action:
+        return AvhRetryAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -48,7 +53,7 @@ class AvhRetryAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(AvhDeploy())
+        self.pipeline.add_action(AvhDeploy(self.job))
 
 
 class AvhDeploy(Action):
@@ -56,8 +61,8 @@ class AvhDeploy(Action):
     description = "create and upload avh firmware zip package"
     summary = "create and upload avh firmware zip package"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.avh = {}
         self.path = None
         self.required_images = [
@@ -107,17 +112,21 @@ class AvhDeploy(Action):
         self.path = self.mkdtemp()
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
 
         images = parameters.get("images")
         uniquify = parameters.get("uniquify", True)
         for image in images.keys():
             self.pipeline.add_action(
-                DownloaderAction(image, self.path, images[image], uniquify=uniquify)
+                DownloaderAction(
+                    self.job, image, self.path, images[image], uniquify=uniquify
+                )
             )
             if image == "rootfs" and self.test_needs_overlay(parameters):
                 self.pipeline.add_action(
-                    ApplyOverlayImage(image_key=image, use_root_partition=True)
+                    ApplyOverlayImage(
+                        self.job, image_key=image, use_root_partition=True
+                    )
                 )
 
     @retry(exception=AvhApi.ApiException, retries=3, delay=1)

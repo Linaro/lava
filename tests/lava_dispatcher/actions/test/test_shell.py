@@ -35,8 +35,9 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
     def test_check_patterns(self):
+        job = self.create_simple_job()
         # "exit"
-        action = TestShellAction()
+        action = TestShellAction(job)
         with self.assertLogs(action.logger) as action_logs:
             self.assertIs(action.check_patterns("exit", None), False)
         self.assertEqual(
@@ -45,12 +46,12 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "eof"
-        action = TestShellAction()
+        action = TestShellAction(job)
         with self.assertRaises(ConnectionClosedError):
             action.check_patterns("eof", None)
 
         # "timeout"
-        action = TestShellAction()
+        action = TestShellAction(job)
         with self.assertRaisesRegex(AssertionError, "no logs"), self.assertLogs(
             action.logger
         ) as action_logs:
@@ -60,8 +61,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.STARTRUN"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.parameters = {"namespace": "common"}
         action.data = {}
         action.set_namespace_data(
@@ -97,7 +97,7 @@ class TestTestShell(LavaDispatcherTestCase):
         self.assertEqual(action.patterns, {})
 
         # "signal.STARTRUN exception"
-        action = TestShellAction()
+        action = TestShellAction(job)
 
         data = ("STARTRUN", "0_DEFINITIO")
         with self.assertRaises(TestError):
@@ -114,8 +114,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.ENDRUN"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.results = MagicMock()
         action.parameters = {"namespace": "common"}
         action.data = {}
@@ -158,7 +157,7 @@ class TestTestShell(LavaDispatcherTestCase):
         self.assertIsNone(action.current_run)
 
         # "signal.ENDRUN exception"
-        action = TestShellAction()
+        action = TestShellAction(job)
 
         data = ("ENDRUN", "0_DEFINITIO")
         with self.assertRaises(TestError):
@@ -168,8 +167,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.STARTTC"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
 
         data = ("STARTTC", "TESTCASE")
@@ -184,8 +182,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.ENDTC"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
 
         data = ("ENDTC", "TESTCASE")
@@ -203,8 +200,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.TESTCASE without test_uuid"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
 
         data = ("TESTCASE", "hello")
@@ -227,8 +223,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE malformed parameters"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.signal_director.test_uuid = "UUID"
 
@@ -247,8 +242,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE missing TEST_CASE_ID"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.signal_director.test_uuid = "UUID"
 
@@ -270,8 +264,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE missing RESULT"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.signal_director.test_uuid = "UUID"
 
@@ -293,8 +286,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
@@ -319,8 +311,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE with measurement"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
@@ -350,8 +341,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTCASE with measurement and unit"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
@@ -385,8 +375,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.TESTFEEDBACK missing ns"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
 
         data = ("TESTFEEDBACK", "FEED1")
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
@@ -403,8 +392,7 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
 
         # "signal.TESTREFERENCE missing parameters"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
 
         data = ("TESTREFERENCE", "")
         with self.assertRaises(TestError), self.assertLogs(
@@ -420,8 +408,7 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # "signal.TESTREFERENCE"
-        action = TestShellAction()
-        action.job = job
+        action = TestShellAction(job)
         action.logger.results = MagicMock()
 
         data = ("TESTREFERENCE", "case-id pass http://example.com")

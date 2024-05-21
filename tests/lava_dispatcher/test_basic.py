@@ -15,6 +15,7 @@ from random import randint
 from signal import alarm
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING
+from unittest.mock import MagicMock
 from warnings import warn
 
 import voluptuous
@@ -53,6 +54,9 @@ class LavaDispatcherTestCase(unittest.TestCase):
         return Path(tmp_dir.name)
 
     TESTCASE_JOB_LOGGER = YAMLLogger("lava_dispatcher_testcase_job_logger")
+
+    def create_job_mock(self) -> Job:
+        return MagicMock(spec=Job)
 
     def create_simple_job(
         self, device_dict: Optional[dict] = None, job_parameters: Optional[dict] = None
@@ -95,19 +99,11 @@ class LavaDispatcherTestCase(unittest.TestCase):
             warn("SIGALRM not cleaned-up", RuntimeWarning)
 
 
-class TestAction(LavaDispatcherTestCase):
-    def test_references_a_device(self):
-        device = object()
-        cmd = Action()
-        cmd.device = device
-        self.assertIs(cmd.device, device)
-
-
 class TestPipelineInit(LavaDispatcherTestCase):
     class FakeAction(Action):
-        def __init__(self):
+        def __init__(self, job: Job):
             self.ran = False
-            super().__init__()
+            super().__init__(job)
 
         def run(self, connection, max_end_time):
             self.ran = True
@@ -117,8 +113,9 @@ class TestPipelineInit(LavaDispatcherTestCase):
 
     def setUp(self):
         super().setUp()
-        self.sub0 = TestPipelineInit.FakeAction()
-        self.sub1 = TestPipelineInit.FakeAction()
+        job = self.create_job_mock()
+        self.sub0 = TestPipelineInit.FakeAction(job)
+        self.sub1 = TestPipelineInit.FakeAction(job)
 
     def test_pipeline_init(self):
         self.assertIsNotNone(self.sub0)
@@ -159,17 +156,19 @@ class TestPipelineInit(LavaDispatcherTestCase):
 
 class TestValidation(LavaDispatcherTestCase):
     def test_action_is_valid_if_there_are_not_errors(self):
-        action = Action()
+        job = self.create_job_mock()
+        action = Action(job)
         action.__errors__ = [1]
         self.assertFalse(action.valid)
         action.__errors__ = []
         self.assertTrue(action.valid)
 
     def test_composite_action_aggregates_errors_from_sub_actions(self):
+        job = self.create_simple_job()
         # Unable to call Action.validate() as there is no job in this unit test
-        sub1 = Action()
+        sub1 = Action(job)
         sub1.__errors__ = [1]
-        sub2 = Action()
+        sub2 = Action(job)
         sub2.name = "sub2"
         sub2.__errors__ = [2]
 
@@ -309,9 +308,9 @@ class TestPipeline(LavaDispatcherTestCase):
     class FakeAction(Action):
         name = "fake-action"
 
-        def __init__(self):
+        def __init__(self, job: Job):
             self.ran = False
-            super().__init__()
+            super().__init__(job)
 
         def run(self, connection, max_end_time):
             time.sleep(0.01)
@@ -322,7 +321,7 @@ class TestPipeline(LavaDispatcherTestCase):
         self.assertEqual(pipe.actions, [])
 
     def test_add_action_to_pipeline(self):
-        action = Action()
+        action = Action(self.create_simple_job())
         action.name = "test-action"
         action.description = "test action only"
         action.summary = "starter"
@@ -352,15 +351,16 @@ class TestPipeline(LavaDispatcherTestCase):
         self.assertIn("timeout", description[0])
 
     def test_create_pipeline(self):
-        action = Action()
+        job = self.create_simple_job()
+        action = Action(job)
         action.name = "internal_pipe"
         action.description = "test action only"
         action.summary = "starter"
-        pipe = Pipeline(job=self.create_simple_job())
+        pipe = Pipeline(job=job)
         pipe.add_action(action)
         self.assertEqual(len(pipe.actions), 1)
         self.assertEqual(action.level, "1")
-        action = Action()
+        action = Action(job)
         action.name = "child_action"
         action.summary = "child"
         action.description = "action implementing an internal pipe"
@@ -371,8 +371,9 @@ class TestPipeline(LavaDispatcherTestCase):
         self.assertEqual(len(pipe.actions), 2)
         # a formal RetryAction would contain a pre-built pipeline
         # which can be inserted directly
-        retry_pipe = Pipeline(job=self.create_simple_job(), parent=action)
-        action = Action()
+        job = self.create_simple_job()
+        retry_pipe = Pipeline(job=job, parent=action)
+        action = Action(job)
         action.name = "inside_action"
         action.description = "action inside the internal pipe"
         action.summary = "child"
@@ -381,14 +382,15 @@ class TestPipeline(LavaDispatcherTestCase):
         self.assertEqual(action.level, "2.1")
 
     def test_complex_pipeline(self):
-        action = Action()
+        job = self.create_simple_job()
+        action = Action(job)
         action.name = "starter_action"
         action.description = "test action only"
         action.summary = "starter"
-        pipe = Pipeline(job=self.create_simple_job())
+        pipe = Pipeline(job=job)
         pipe.add_action(action)
         self.assertEqual(action.level, "1")
-        action = Action()
+        action = Action(job)
         action.name = "pipe_action"
         action.description = "action implementing an internal pipe"
         action.summary = "child"
@@ -396,40 +398,42 @@ class TestPipeline(LavaDispatcherTestCase):
         self.assertEqual(action.level, "2")
         # a formal RetryAction would contain a pre-built pipeline
         # which can be inserted directly
+        job = self.create_simple_job()
         retry_pipe = Pipeline(job=self.create_simple_job(), parent=action)
-        action = Action()
+        action = Action(job)
         action.name = "child_action"
         action.description = "action inside the internal pipe"
         action.summary = "child"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.1")
-        action = Action()
+        action = Action(job)
         action.name = "second-child-action"
         action.description = "second action inside the internal pipe"
         action.summary = "child2"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.2")
-        action = Action()
+        action = Action(job)
         action.name = "baby_action"
         action.description = "action implementing an internal pipe"
         action.summary = "baby"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.3")
-        inner_pipe = Pipeline(job=self.create_simple_job(), parent=action)
-        action = Action()
+        job = self.create_simple_job()
+        inner_pipe = Pipeline(job=job, parent=action)
+        action = Action(job)
         action.name = "single_action"
         action.description = "single line action"
         action.summary = "single"
         inner_pipe.add_action(action)
         self.assertEqual(action.level, "2.3.1")
 
-        action = Action()
+        action = Action(job)
         action.name = "step_out"
         action.description = "step out of inner pipe"
         action.summary = "brother"
         retry_pipe.add_action(action)
         self.assertEqual(action.level, "2.4")
-        action = Action()
+        action = Action(job)
         action.name = "top-level"
         action.description = "top level"
         action.summary = "action"
@@ -501,18 +505,19 @@ class TestFakeActions(LavaDispatcherTestCase):
 
     def setUp(self):
         super().setUp()
-        self.sub0 = TestPipeline.FakeAction()
-        self.sub1 = TestPipeline.FakeAction()
+        self.job = self.create_simple_job()
+        self.sub0 = TestPipeline.FakeAction(self.job)
+        self.sub1 = TestPipeline.FakeAction(self.job)
 
     def test_list_of_subcommands(self):
-        pipe = Pipeline(job=self.create_simple_job())
+        pipe = Pipeline(job=self.job)
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
         self.assertIs(pipe.actions[0], self.sub0)
         self.assertIs(pipe.actions[1], self.sub1)
 
     def test_runs_subaction(self):
-        pipe = Pipeline(job=self.create_simple_job())
+        pipe = Pipeline(job=self.job)
         pipe.add_action(self.sub0)
         pipe.add_action(self.sub1)
         with pipe.job.timeout(None, None) as max_end_time:
@@ -523,15 +528,17 @@ class TestFakeActions(LavaDispatcherTestCase):
         self.assertNotEqual(self.sub1.timeout.elapsed_time, 0)
 
     def test_keep_connection(self):
-        pipe = Pipeline(job=self.create_simple_job())
-        pipe.add_action(TestFakeActions.KeepConnection())
+        job = self.create_simple_job()
+        pipe = Pipeline(job=job)
+        pipe.add_action(TestFakeActions.KeepConnection(job))
         conn = object()
         with pipe.job.timeout(None, None) as max_end_time:
             self.assertIs(conn, pipe.run_actions(conn, max_end_time))
 
     def test_change_connection(self):
-        pipe = Pipeline(job=self.create_simple_job())
-        pipe.add_action(TestFakeActions.MakeNewConnection())
+        job = self.create_simple_job()
+        pipe = Pipeline(job=job)
+        pipe.add_action(TestFakeActions.MakeNewConnection(job))
         conn = object()
         with pipe.job.timeout(None, None) as max_end_time:
             self.assertIsNot(conn, pipe.run_actions(conn, max_end_time))

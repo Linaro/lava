@@ -5,7 +5,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import unittest
 from unittest.mock import MagicMock, Mock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -51,7 +50,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()
-        self.action = CheckSerialDownloadMode()
+        self.action = CheckSerialDownloadMode(self.create_job_mock())
 
         self.action.get_namespace_data = MagicMock(return_value="file.boot")
         self.action.uuu = "/bin/uuu"
@@ -354,11 +353,11 @@ class TestUUUbootAction(
 
     @patch("time.sleep", Mock())
     def test_run_single_path(self):
-        action = UUUBootAction()
-        action.uuu = "/bin/uuu"
-        action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = UUUBootAction(job)
+        action.uuu = "/bin/uuu"
 
         def mocked_get_namespace_data(*args, **kwargs):
             if kwargs.get("key") == "images_names":
@@ -387,12 +386,10 @@ class TestUUUbootAction(
 
     @patch("time.sleep", Mock())
     def test_run_single_path_with_bcu(self):
-        action = UUUBootAction()
+        job = self.factory.create_imx8dxlevk_job("sample_jobs/uuu_enhancement.yaml")
+        action = UUUBootAction(job)
         action.uuu = "/bin/uuu"
         action.bcu = "/bin/bcu"
-        action.job = self.factory.create_imx8dxlevk_job(
-            "sample_jobs/uuu_enhancement.yaml"
-        )
 
         def mocked_get_namespace_data(*args, **kwargs):
             if kwargs.get("key") == "images_names":
@@ -430,11 +427,11 @@ class TestUUUbootAction(
 
     @patch("time.sleep", Mock())
     def test_run_multiple_path(self):
-        action = UUUBootAction()
-        action.uuu = "/bin/uuu"
-        action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = UUUBootAction(job)
+        action.uuu = "/bin/uuu"
 
         def mocked_get_namespace_data(*args, **kwargs):
             if kwargs.get("key") == "images_names":
@@ -457,10 +454,11 @@ class TestUUUbootAction(
         )
 
 
-class TestUUUActionDriver(unittest.TestCase):
+class TestUUUActionDriver(LavaDispatcherTestCase):
     def create_action(self, uuu_device_parameters):
-        action = OptionalContainerUuuAction()
-        action.job = MagicMock()
+        action = OptionalContainerUuuAction(
+            self.create_simple_job(job_parameters={"dispatcher": "foo"})
+        )
         action.job.device = {
             "actions": {
                 "boot": {"methods": {"uuu": {"options": uuu_device_parameters}}}
@@ -481,14 +479,14 @@ class TestUUUActionDriver(unittest.TestCase):
         action = self.create_action(uuu_device_parameters)
         self.assertIsInstance(action.driver, DockerDriver)
 
-    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_native_uuu_cmd(self, mock_cmd):
         uuu_device_parameters = {"docker_image": "", "remote_options": ""}
         action = self.create_action(uuu_device_parameters)
         action.run_uuu(["foo", "bar"])
         mock_cmd.assert_called_with(["foo", "bar"], False, None, None)
 
-    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_docker_uuu_local_cmd(self, mock_cmd):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
@@ -516,11 +514,12 @@ class TestUUUActionDriver(unittest.TestCase):
         )
 
     @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="foo")
-    @patch(
-        "lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.get_namespace_data",
+    @patch.object(
+        OptionalContainerUuuAction,
+        "get_namespace_data",
         return_value="bar",
     )
-    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_docker_uuu_remote_cmd(self, mock_cmd, mock_location, mock_ip):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
@@ -554,7 +553,7 @@ class TestUUUActionDriver(unittest.TestCase):
             None,
         )
 
-    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch.object(OptionalContainerUuuAction, "run_cmd")
     @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
     def test_docker_uuu_local_validate(self, _, mock_cmd):
         uuu_device_parameters = {
@@ -565,7 +564,7 @@ class TestUUUActionDriver(unittest.TestCase):
         action.driver.validate()
         mock_cmd.assert_called_with(["docker", "pull", "atline/uuu:1.3.191"])
 
-    @patch("lava_dispatcher.actions.boot.uuu.OptionalContainerUuuAction.run_cmd")
+    @patch.object(OptionalContainerUuuAction, "run_cmd")
     @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
     def test_docker_uuu_remote_validate(self, _, mock_cmd):
         uuu_device_parameters = {

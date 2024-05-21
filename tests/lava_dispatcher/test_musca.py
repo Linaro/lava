@@ -38,8 +38,7 @@ class TestMusca(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_musca_flash_fail_catch(self):
-        flash_check_action = CheckMuscaFlashAction()
-        flash_check_action.job = self.job
+        flash_check_action = CheckMuscaFlashAction(self.job)
         flash_check_action.data = []
         flash_check_action.parameters = {"namespace": "test"}
         flash_check_action.set_namespace_data(
@@ -57,9 +56,8 @@ class TestMusca(LavaDispatcherTestCase):
     def test_automation_action_places_file(self):
         automation_filename = "foo"
         automation_action = DeployMuscaAutomationAction(
-            automation_filename=automation_filename
+            self.job, automation_filename=automation_filename
         )
-        automation_action.job = self.job
         automation_action.data = []
         automation_action.parameters = {"namespace": "test"}
         automation_action.set_namespace_data(

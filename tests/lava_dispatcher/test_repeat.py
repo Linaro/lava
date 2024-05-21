@@ -14,19 +14,20 @@ class TestRepeatAction(LavaDispatcherTestCase):
     def test_repeat_action(self):
         class DummyAction(Action):
             # pylint: disable=no-self-argument
-            def __init__(self_):
-                super().__init__()
+            def __init__(self_, job):
+                super().__init__(job)
                 self_.ran = 0
 
             def run(self_, connection, max_end_time):
                 self.assertIsNone(connection)
                 self_.ran += 1
 
-        ra = RetryAction()
+        job = self.create_simple_job()
+        ra = RetryAction(job)
         ra.parameters = {"repeat": 5}
         ra.level = "1"
         ra.pipeline = Pipeline(job=self.create_simple_job(), parent=ra)
-        ra.pipeline.add_action(DummyAction())
+        ra.pipeline.add_action(DummyAction(job))
         with ra.pipeline.job.timeout(None, None) as max_end_time:
             ra.run(None, max_end_time)
         self.assertEqual(

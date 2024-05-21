@@ -6,6 +6,9 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -18,6 +21,9 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.logical import Deployment
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class Nfs(Deployment):
     """
@@ -28,8 +34,8 @@ class Nfs(Deployment):
     name = "nfs"
 
     @classmethod
-    def action(cls):
-        return NfsAction()
+    def action(cls, job: Job) -> Action:
+        return NfsAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -62,19 +68,22 @@ class NfsAction(Action):
         if "nfsrootfs" in parameters:
             self.pipeline.add_action(
                 DownloaderAction(
-                    "nfsrootfs", path=download_dir, params=parameters["nfsrootfs"]
+                    self.job,
+                    "nfsrootfs",
+                    path=download_dir,
+                    params=parameters["nfsrootfs"],
                 )
             )
         if "modules" in parameters:
             self.pipeline.add_action(
                 DownloaderAction(
-                    "modules", path=download_dir, params=parameters["modules"]
+                    self.job, "modules", path=download_dir, params=parameters["modules"]
                 )
             )
         # NfsAction is a deployment, so once the nfsrootfs has been deployed, just do the overlay
-        self.pipeline.add_action(ExtractNfsRootfs())
-        self.pipeline.add_action(OverlayAction())
-        self.pipeline.add_action(ExtractModules())
-        self.pipeline.add_action(ApplyOverlayTftp())
+        self.pipeline.add_action(ExtractNfsRootfs(self.job))
+        self.pipeline.add_action(OverlayAction(self.job))
+        self.pipeline.add_action(ExtractModules(self.job))
+        self.pipeline.add_action(ApplyOverlayTftp(self.job))
         if self.test_needs_deployment(parameters):
-            self.pipeline.add_action(DeployDeviceEnvironment())
+            self.pipeline.add_action(DeployDeviceEnvironment(self.job))

@@ -3,6 +3,9 @@
 # Author: Tyler Baker <tyler.baker@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_common.utils import binary_version
 from lava_dispatcher.action import Action, JobError, Pipeline
@@ -13,11 +16,14 @@ from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class PyOCD(Boot):
     @classmethod
-    def action(cls):
-        return BootPyOCD()
+    def action(cls, job: Job) -> Action:
+        return BootPyOCD(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -37,7 +43,7 @@ class BootPyOCD(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(BootPyOCDRetry())
+        self.pipeline.add_action(BootPyOCDRetry(self.job))
 
 
 class BootPyOCDRetry(RetryAction):
@@ -51,13 +57,15 @@ class BootPyOCDRetry(RetryAction):
             "parameters"
         ]
         if self.job.device.hard_reset_command:
-            self.pipeline.add_action(ResetDevice())
-            self.pipeline.add_action(WaitDeviceBoardID(self.job.device.get("board_id")))
+            self.pipeline.add_action(ResetDevice(self.job))
+            self.pipeline.add_action(
+                WaitDeviceBoardID(self.job, self.job.device.get("board_id"))
+            )
         if method_params.get("connect_before_flash", False):
-            self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(FlashPyOCDAction())
+            self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(FlashPyOCDAction(self.job))
         if not method_params.get("connect_before_flash", False):
-            self.pipeline.add_action(ConnectDevice())
+            self.pipeline.add_action(ConnectDevice(self.job))
 
 
 class FlashPyOCDAction(Action):
@@ -65,8 +73,8 @@ class FlashPyOCDAction(Action):
     description = "flash pyocd to boot the image"
     summary = "flash pyocd to boot the image"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.base_command = []
         self.exec_list = []
 

@@ -3,9 +3,11 @@
 # Author: Tyler Baker <tyler.baker@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import re
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -13,6 +15,9 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.logical import LavaTest, RetryAction
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 @nottest
@@ -22,8 +27,8 @@ class TestMonitor(LavaTest):
     """
 
     @classmethod
-    def action(cls, parameters):
-        return TestMonitorRetry()
+    def action(cls, job: Job, parameters) -> Action:
+        return TestMonitorRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -58,7 +63,7 @@ class TestMonitorRetry(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(TestMonitorAction())
+        self.pipeline.add_action(TestMonitorAction(self.job))
 
 
 @nottest
@@ -72,8 +77,8 @@ class TestMonitorAction(Action):
     summary = "Lava Test Monitor"
     timeout_exception = LAVATimeoutError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.test_suite_name = None
         self.report = {}
         self.fixupdict = {}

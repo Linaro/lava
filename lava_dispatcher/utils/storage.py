@@ -3,9 +3,15 @@
 # Author: Matthew Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, JobError
 from lava_dispatcher.utils.shell import which
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class FlashUBootUMSAction(Action):
@@ -17,8 +23,8 @@ class FlashUBootUMSAction(Action):
     description = "Write the image file to USB Mass Storage"
     summary = "USB Mass storage flash"
 
-    def __init__(self, usb_mass_device):
-        super().__init__()
+    def __init__(self, job: Job, usb_mass_device):
+        super().__init__(job)
         self.params = None
         self.usb_mass_device = usb_mass_device
 

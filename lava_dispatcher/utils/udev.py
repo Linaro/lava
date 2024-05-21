@@ -3,13 +3,18 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 import pyudev
 
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class WaitUSBSerialDeviceAction(Action):
@@ -18,8 +23,8 @@ class WaitUSBSerialDeviceAction(Action):
     summary = "wait for USB serial device"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.serial_device = {}
         self.usb_sleep = 0
 
@@ -63,8 +68,8 @@ class WaitDFUDeviceAction(Action):
     summary = "wait for DFU device"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.dfu_device = {}
 
     def validate(self):
@@ -99,8 +104,8 @@ class WaitUSBMassStorageDeviceAction(Action):
     summary = "wait for USB mass storage device"
     timeout_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.ms_device = {}
 
     def validate(self):
@@ -125,8 +130,8 @@ class WaitDevicePathAction(Action):
     summary = "wait for udev device path"
     timeout_exception = InfrastructureError
 
-    def __init__(self, path=None):
-        super().__init__()
+    def __init__(self, job: Job, path=None):
+        super().__init__(job)
         self.devicepath = path
 
     def validate(self):
@@ -147,8 +152,8 @@ class WaitDeviceBoardID(Action):
     summary = "wait for udev device with board ID"
     timeout_exception = InfrastructureError
 
-    def __init__(self, board_id=None):
-        super().__init__()
+    def __init__(self, job: Job, board_id=None):
+        super().__init__(job)
         self.udev_device = None
         if not board_id:
             self.board_id = self.job.device.get("board_id")

@@ -3,9 +3,11 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import json
 import re
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import MultinodeProtocolTimeoutError, TestError
 from lava_common.timeout import Timeout
@@ -15,6 +17,9 @@ from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
 from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
+if TYPE_CHECKING:
+    from lava_dispatcher.action import Action
+    from lava_dispatcher.job import Job
 
 # TODO: This is a workaround allowing to run multinode jobs with "monitors"
 # and "interactive" test actions - simple scenarios, without cross-device
@@ -25,12 +30,6 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 # from which individual test action implementations would inherit. In the
 # meantime, this is a small and localized workaround enabling multinode
 # for those test actions ahead of heavy refactors above.
-def get_subaction(parameters):
-    if "monitors" in parameters:
-        return TestMonitor.action(parameters)
-    if "interactive" in parameters:
-        return TestInteractive.action(parameters)
-    return MultinodeTestAction()
 
 
 def get_subaction_class(parameters):
@@ -50,8 +49,12 @@ class MultinodeTestShell(LavaTest):
     priority = 2
 
     @classmethod
-    def action(cls, parameters):
-        return get_subaction(parameters)
+    def action(cls, job: Job, parameters) -> Action:
+        if "monitors" in parameters:
+            return TestMonitor.action(job, parameters)
+        if "interactive" in parameters:
+            return TestInteractive.action(job, parameters)
+        return MultinodeTestAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -86,8 +89,8 @@ class MultinodeTestShell(LavaTest):
 class MultinodeMixin:
     timeout_exception = TestError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.multinode_dict = {"multinode": r"<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>"}
 
     def validate(self):

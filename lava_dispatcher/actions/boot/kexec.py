@@ -3,7 +3,9 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
@@ -14,6 +16,9 @@ from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootKExec(Boot):
     """
@@ -22,8 +27,8 @@ class BootKExec(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return BootKexecAction()
+    def action(cls, job: Job) -> Action:
+        return BootKexecAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -44,14 +49,14 @@ class BootKexecAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(KexecAction())
+        self.pipeline.add_action(KexecAction(self.job))
         # Add AutoLoginAction unconditionally as this action does nothing if
         # the configuration does not contain 'auto_login'
-        self.pipeline.add_action(AutoLoginAction())
-        self.pipeline.add_action(ExpectShellSession())
+        self.pipeline.add_action(AutoLoginAction(self.job))
+        self.pipeline.add_action(ExpectShellSession(self.job))
         if "transfer_overlay" in parameters:
-            self.pipeline.add_action(OverlayUnpack())
-        self.pipeline.add_action(ExportDeviceEnvironment())
+            self.pipeline.add_action(OverlayUnpack(self.job))
+        self.pipeline.add_action(ExportDeviceEnvironment(self.job))
 
 
 class KexecAction(Action):
@@ -65,8 +70,8 @@ class KexecAction(Action):
     summary = "attempt to kexec new kernel"
     description = "call kexec with specified arguments"
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.command = ""
         self.load_command = ""
         self.deploy_commands = []

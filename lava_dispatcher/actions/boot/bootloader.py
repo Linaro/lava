@@ -3,6 +3,9 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -14,11 +17,14 @@ from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.power import ResetDevice
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class BootBootloader(Boot):
     @classmethod
-    def action(cls):
-        return BootBootloaderRetry()
+    def action(cls, job: Job) -> Action:
+        return BootBootloaderRetry(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -43,9 +49,9 @@ class BootBootloaderRetry(RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
-            BootloaderCommandOverlay(method=parameters["bootloader"])
+            BootloaderCommandOverlay(self.job, method=parameters["bootloader"])
         )
-        self.pipeline.add_action(BootBootloaderAction())
+        self.pipeline.add_action(BootBootloaderAction(self.job))
 
 
 class BootBootloaderAction(Action):
@@ -55,13 +61,13 @@ class BootBootloaderAction(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ConnectDevice())
-        self.pipeline.add_action(ResetDevice())
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(
-            BootloaderInterruptAction(method=parameters["bootloader"])
+            BootloaderInterruptAction(self.job, method=parameters["bootloader"])
         )
         self.pipeline.add_action(
             BootloaderCommandsAction(
-                expect_final=False, method=parameters["bootloader"]
+                self.job, expect_final=False, method=parameters["bootloader"]
             )
         )

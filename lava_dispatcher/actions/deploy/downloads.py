@@ -3,8 +3,10 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_dispatcher.action import Action, Pipeline
@@ -12,6 +14,9 @@ from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAc
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.docker import DockerRun
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class Downloads(Deployment):
@@ -23,8 +28,8 @@ class Downloads(Deployment):
     name = "downloads"
 
     @classmethod
-    def action(cls):
-        return DownloadsAction()
+    def action(cls, job: Job) -> Action:
+        return DownloadsAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -44,13 +49,14 @@ class DownloadsAction(DownloadAction):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
 
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
 
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
         for image in sorted(parameters["images"].keys()):
             self.pipeline.add_action(
                 DownloaderAction(
+                    self.job,
                     image,
                     download_dir,
                     params=parameters["images"][image],
@@ -61,7 +67,7 @@ class DownloadsAction(DownloadAction):
         postprocess = parameters.get("postprocess")
         if postprocess:
             if postprocess.get("docker"):
-                self.pipeline.add_action(PostprocessWithDocker(download_dir))
+                self.pipeline.add_action(PostprocessWithDocker(self.job, download_dir))
 
 
 class PostprocessWithDocker(Action):
@@ -73,8 +79,8 @@ class PostprocessWithDocker(Action):
     description = "Postprocess downloaded images with Docker"
     summary = "download-postprocess"
 
-    def __init__(self, path):
-        super().__init__()
+    def __init__(self, job: Job, path):
+        super().__init__(job)
         self.path = Path(path)
         self.steps = []
 

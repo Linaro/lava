@@ -278,7 +278,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         )
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
-        overlay = BootloaderCommandOverlay()
+        overlay = BootloaderCommandOverlay(job)
         connection = MagicMock()
         connection.timeout = MagicMock()
         pipeline.add_action(overlay)

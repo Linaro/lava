@@ -6,14 +6,19 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import time
 import traceback
+from typing import TYPE_CHECKING
 
 from lava_common.constants import REBOOT_COMMAND_LIST
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class ResetDevice(Action):
@@ -30,9 +35,9 @@ class ResetDevice(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
-            self.pipeline.add_action(PDUReboot())
+            self.pipeline.add_action(PDUReboot(self.job))
         else:
-            self.pipeline.add_action(SendRebootCommands())
+            self.pipeline.add_action(SendRebootCommands(self.job))
 
 
 class SendRebootCommands(Action):
@@ -90,8 +95,8 @@ class PDUReboot(Action):
     timeout_exception = InfrastructureError
     command_exception = InfrastructureError
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.command = None
 
     def run(self, connection, max_end_time):
@@ -242,8 +247,8 @@ class ReadFeedback(Action):
     description = "Check for messages on all other namespaces"
     summary = "Read from other namespaces"
 
-    def __init__(self, finalize=False, repeat=False):
-        super().__init__()
+    def __init__(self, job: Job, finalize=False, repeat=False):
+        super().__init__(job)
         self.finalize = finalize
         self.parameters["namespace"] = "common"
         self.duration = 1
@@ -311,19 +316,19 @@ class FinalizeAction(Action):
     description = "finish the process and cleanup"
     summary = "finalize the job"
 
-    def __init__(self):
+    def __init__(self, job: Job):
         """
         The FinalizeAction is always added as the last Action in the top level pipeline by the parser.
         The tasks include finalising the connection (whatever is the last connection in the pipeline)
         and writing out the final pipeline structure containing the results as a logfile.
         """
-        super().__init__()
+        super().__init__(job)
         self.ran = False
 
     def populate(self, parameters):
         self.pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
-        self.pipeline.add_action(PowerOff())
-        self.pipeline.add_action(ReadFeedback(finalize=True, repeat=True))
+        self.pipeline.add_action(PowerOff(self.job))
+        self.pipeline.add_action(ReadFeedback(self.job, finalize=True, repeat=True))
 
     def run(self, connection, max_end_time):
         """

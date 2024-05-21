@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
@@ -13,6 +15,9 @@ from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class TestAction(LavaDispatcherTestCase):
@@ -26,19 +31,17 @@ class TestAction(LavaDispatcherTestCase):
             self.__parameters__ = {}
             self.pipeline = parent
             self.job = parent.job
-            self.action = TestAction.CleanupRetryAction()
-            self.action.job = self.job
+            self.action = TestAction.CleanupRetryAction(self.job)
 
     class MissingCleanupDeploy:
         def __init__(self, parent):
             self.__parameters__ = {}
             self.pipeline = parent
             self.job = parent.job
-            self.action = TestAction.InternalRetryAction()
-            self.action.job = self.job
+            self.action = TestAction.InternalRetryAction(self.job)
 
     class FakePipeline(Pipeline):
-        def __init__(self, job):
+        def __init__(self, job: Job):
             super().__init__(job)
             job.pipeline = self
 
@@ -51,8 +54,8 @@ class TestAction(LavaDispatcherTestCase):
         description = "fake, do not use outside unit tests"
         summary = "fake action for unit tests"
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, job: Job):
+            super().__init__(job)
             self.count = 1
             self.parameters["namespace"] = "common"
 
@@ -73,7 +76,7 @@ class TestAction(LavaDispatcherTestCase):
 
         def populate(self, parameters):
             self.pipeline = Pipeline(parent=self, job=self.job)
-            self.pipeline.add_action(TestAction.FakeAction(), parameters)
+            self.pipeline.add_action(TestAction.FakeAction(self.job), parameters)
 
     class CleanupRetryAction(RetryAction):
         section = "internal"
@@ -83,7 +86,7 @@ class TestAction(LavaDispatcherTestCase):
 
         def populate(self, parameters):
             self.pipeline = Pipeline(parent=self, job=self.job)
-            self.pipeline.add_action(TestAction.FakeAction(), parameters)
+            self.pipeline.add_action(TestAction.FakeAction(self.job), parameters)
 
         def cleanup(self, connection):
             pass
@@ -116,7 +119,7 @@ class TestAction(LavaDispatcherTestCase):
 
     def test_fakeaction_fails_joberror(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeAction())
+        fakepipeline.add_action(TestAction.FakeAction(self.fakejob))
         self.assertIsInstance(fakepipeline.actions[0], TestAction.FakeAction)
         with self.assertRaises(JobError):
             # FakeAction is not a RetryAction
@@ -124,7 +127,7 @@ class TestAction(LavaDispatcherTestCase):
 
     def test_fakeretry_action(self):
         fakepipeline = TestAction.FakePipeline(job=self.fakejob)
-        fakepipeline.add_action(TestAction.FakeRetryAction())
+        fakepipeline.add_action(TestAction.FakeRetryAction(self.fakejob))
         with self.assertRaises(LAVABug):
             # first fake retry has no internal pipeline
             self.assertTrue(fakepipeline.validate_actions())
@@ -164,7 +167,7 @@ class TestAction(LavaDispatcherTestCase):
         This allows actions to refer to the common data and manipulate it without affecting other actions.
         """
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.FakeAction()
+        action = TestAction.FakeAction(self.fakejob)
         pipeline.add_action(action)
         self.assertEqual({"namespace": "common"}, action.parameters)
         action.set_namespace_data(
@@ -248,7 +251,7 @@ class TestAction(LavaDispatcherTestCase):
 
     def test_failure_retry_default_interval(self):
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.InternalRetryAction()
+        action = TestAction.InternalRetryAction(self.fakejob)
         for actions in self.lookup_deploy(self.parameters["actions"]):
             action.parameters = actions
         pipeline.add_action(action)
@@ -276,7 +279,7 @@ class TestAction(LavaDispatcherTestCase):
         }
         self.fakejob = self.create_simple_job(job_parameters=self.parameters)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestAction.InternalRetryAction()
+        action = TestAction.InternalRetryAction(self.fakejob)
         for actions in self.lookup_deploy(self.parameters["actions"]):
             action.parameters = actions
         pipeline.add_action(action)
@@ -306,7 +309,7 @@ class TestTimeout(LavaDispatcherTestCase):
 
         def populate(self, parameters):
             self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.pipeline.add_action(TestAction.FakeAction())
+            self.pipeline.add_action(TestAction.FakeAction(self.job))
 
         def run(self, connection, max_end_time):
             if connection:
@@ -324,8 +327,8 @@ class TestTimeout(LavaDispatcherTestCase):
         description = "fake action runs without calling adjuvant"
         summary = "fake action without adjuvant"
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, job: Job):
+            super().__init__(job)
             self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
@@ -343,8 +346,8 @@ class TestTimeout(LavaDispatcherTestCase):
         description = "fake action"
         summary = "fake action with overly long sleep"
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, job: Job):
+            super().__init__(job)
             self.parameters["namespace"] = "common"
 
         def run(self, connection, max_end_time):
@@ -377,13 +380,13 @@ class TestTimeout(LavaDispatcherTestCase):
         description = "fake, do not use outside unit tests"
         summary = "fake action for unit tests"
 
-        def __init__(self):
-            super().__init__()
+        def __init__(self, job: Job):
+            super().__init__(job)
             self.timeout.duration = 4
 
         def populate(self, parameters):
             self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-            self.pipeline.add_action(TestAction.FakeAction())
+            self.pipeline.add_action(TestAction.FakeAction(self.job))
 
         def run(self, connection, max_end_time):
             if connection:
@@ -416,7 +419,7 @@ class TestTimeout(LavaDispatcherTestCase):
         self.assertIsNotNone(self.fakejob.timeout)
         seconds = 2
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.FakeAction()
+        action = TestTimeout.FakeAction(self.fakejob)
         pipeline.add_action(action)
         action.timeout = Timeout(action.name, action=action, duration=seconds)
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -426,7 +429,7 @@ class TestTimeout(LavaDispatcherTestCase):
     def test_action_timout_custom_exception(self):
         seconds = 2
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.FakeAction()
+        action = TestTimeout.FakeAction(self.fakejob)
         action.timeout = Timeout(
             action.name, action=action, duration=seconds, exception=InfrastructureError
         )
@@ -440,7 +443,7 @@ class TestTimeout(LavaDispatcherTestCase):
         self.assertIsNotNone(self.fakejob.timeout)
         seconds = 2
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.SafeAction()
+        action = TestTimeout.SafeAction(self.fakejob)
         action.timeout = Timeout(action.name, action=action, duration=seconds)
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
@@ -450,10 +453,10 @@ class TestTimeout(LavaDispatcherTestCase):
     def test_job_timeout(self):
         self.assertIsNotNone(self.fakejob.timeout)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.LongAction()
+        action = TestTimeout.LongAction(self.fakejob)
         pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.SafeAction())
-        finalize = FinalizeAction()
+        pipeline.add_action(TestTimeout.SafeAction(self.fakejob))
+        finalize = FinalizeAction(self.fakejob)
         finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.device = TestTimeout.FakeDevice()
@@ -466,15 +469,15 @@ class TestTimeout(LavaDispatcherTestCase):
         class LongRetryAction(RetryAction):
             def populate(self, parameters):
                 self.pipeline = TestAction.FakePipeline(job=fakejob)
-                self.pipeline.add_action(TestTimeout.LongAction())
+                self.pipeline.add_action(TestTimeout.LongAction(fakejob))
 
-                finalize = FinalizeAction()
+                finalize = FinalizeAction(self.job)
                 finalize.parameters["namespace"] = "common"
                 self.pipeline.add_action(finalize)
 
         self.assertIsNotNone(self.fakejob.timeout)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = LongRetryAction()
+        action = LongRetryAction(self.fakejob)
         action.max_retries = 10
         pipeline.add_action(action)
         self.fakejob.pipeline = pipeline
@@ -497,10 +500,10 @@ class TestTimeout(LavaDispatcherTestCase):
     def test_job_safe(self):
         self.assertIsNotNone(self.fakejob.timeout)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
-        action = TestTimeout.SafeAction()
+        action = TestTimeout.SafeAction(self.fakejob)
         pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.SafeAction())
-        finalize = FinalizeAction()
+        pipeline.add_action(TestTimeout.SafeAction(self.fakejob))
+        finalize = FinalizeAction(self.fakejob)
         finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline
@@ -513,13 +516,13 @@ class TestTimeout(LavaDispatcherTestCase):
         self.assertIsNotNone(self.fakejob.timeout)
         pipeline = TestAction.FakePipeline(job=self.fakejob)
         self.fakejob.pipeline = pipeline
-        action = TestTimeout.SafeAction()
+        action = TestTimeout.SafeAction(self.fakejob)
         action.timeout.duration = 2
         pipeline.add_action(action)
         pipeline.add_action(action)
-        pipeline.add_action(TestTimeout.FakeSafeAction())
-        pipeline.add_action(TestTimeout.FakeSafeAction())
-        finalize = FinalizeAction()
+        pipeline.add_action(TestTimeout.FakeSafeAction(self.fakejob))
+        pipeline.add_action(TestTimeout.FakeSafeAction(self.fakejob))
+        finalize = FinalizeAction(self.fakejob)
         finalize.parameters["namespace"] = "common"
         pipeline.add_action(finalize)
         self.fakejob.pipeline = pipeline

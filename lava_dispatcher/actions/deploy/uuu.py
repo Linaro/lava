@@ -4,6 +4,9 @@
 #         Franck Lenormand <franck.lenormand@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -13,6 +16,9 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 # pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring
@@ -25,8 +31,8 @@ class UUU(Deployment):
     name = "uuu"
 
     @classmethod
-    def action(cls):
-        return UUUAction()
+    def action(cls, job: Job) -> Action:
+        return UUUAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -52,7 +58,7 @@ class UUUAction(Action):
         self.parameters = parameters
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
-            self.pipeline.add_action(OverlayAction())
+            self.pipeline.add_action(OverlayAction(self.job))
         path = self.mkdtemp()
         self.set_namespace_data(
             action="uuu-deploy", label="uuu-images", key="root_location", value=path
@@ -67,7 +73,9 @@ class UUUAction(Action):
 
         for image in images:
             self.pipeline.add_action(
-                DownloaderAction(image, path=path, params=parameters["images"][image])
+                DownloaderAction(
+                    self.job, image, path=path, params=parameters["images"][image]
+                )
             )
             if images_param[image].get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
@@ -76,11 +84,13 @@ class UUUAction(Action):
                     )
                     if images_param[image].get("sparse", False):
                         self.pipeline.add_action(
-                            ApplyOverlaySparseImage(image_key=image)
+                            ApplyOverlaySparseImage(self.job, image_key=image)
                         )
                     else:
                         self.pipeline.add_action(
                             ApplyOverlayImage(
-                                image_key=image, use_root_partition=use_root_part
+                                self.job,
+                                image_key=image,
+                                use_root_partition=use_root_part,
                             )
                         )

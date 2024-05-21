@@ -3,6 +3,9 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
@@ -10,6 +13,10 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectShell
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession
+
+if TYPE_CHECKING:
+    from lava_dispatcher.action import Action
+    from lava_dispatcher.job import Job
 
 
 class SecondaryShell(Boot):
@@ -21,8 +28,8 @@ class SecondaryShell(Boot):
     """
 
     @classmethod
-    def action(cls):
-        return SecondaryShellAction()
+    def action(cls, job: Job) -> Action:
+        return SecondaryShellAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -41,11 +48,11 @@ class SecondaryShellAction(BootHasMixin, RetryAction):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         name = parameters["connection"]
-        self.pipeline.add_action(ConnectShell(name=name))
+        self.pipeline.add_action(ConnectShell(self.job, name=name))
         if self.has_prompts(parameters):
-            self.pipeline.add_action(AutoLoginAction(booting=False))
+            self.pipeline.add_action(AutoLoginAction(self.job, booting=False))
             if self.test_has_shell(parameters):
-                self.pipeline.add_action(ExpectShellSession())
+                self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
-                    self.pipeline.add_action(OverlayUnpack())
-                self.pipeline.add_action(ExportDeviceEnvironment())
+                    self.pipeline.add_action(OverlayUnpack(self.job))
+                self.pipeline.add_action(ExportDeviceEnvironment(self.job))
