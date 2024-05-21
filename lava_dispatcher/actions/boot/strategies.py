@@ -18,7 +18,7 @@ from lava_dispatcher.actions.boot.docker import BootDocker
 from lava_dispatcher.actions.boot.fastboot import BootFastboot
 from lava_dispatcher.actions.boot.fvp import BootFVP
 from lava_dispatcher.actions.boot.gdb import GDB
-from lava_dispatcher.actions.boot.grub import Grub, GrubSequence
+from lava_dispatcher.actions.boot.grub import Grub
 from lava_dispatcher.actions.boot.ipxe import IPXE
 from lava_dispatcher.actions.boot.iso import BootIsoInstaller
 from lava_dispatcher.actions.boot.jlink import JLink

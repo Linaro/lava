@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayTftp,
@@ -19,6 +20,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.actions.deploy.image import DeployQemuNfsAction
 from lava_dispatcher.logical import Deployment
 
 if TYPE_CHECKING:
@@ -35,7 +37,16 @@ class Nfs(Deployment):
 
     @classmethod
     def action(cls, job: Job) -> Action:
-        return NfsAction(job)
+
+        device_boot_methods = job.device["actions"]["boot"]["methods"]
+        if "qemu-nfs" in device_boot_methods:
+            return DeployQemuNfsAction(job)
+
+        device_deploy_methods = job.device["actions"]["deploy"]["methods"]
+        if "image" not in device_deploy_methods:
+            return NfsAction(job)
+
+        raise JobError("No matching NFS deployment action")
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -43,11 +54,14 @@ class Nfs(Deployment):
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "nfs":
             return False, '"to" parameter is not "nfs"'
-        if "image" in device["actions"]["deploy"]["methods"]:
-            return False, '"image" was in the device configuration deploy methods'
-        if "nfs" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"nfs" was not in the device configuration deploy methods"'
+
+        device_boot_methods = device["actions"]["deploy"]["methods"]
+        if not ("nfs" in device_boot_methods or "qemu-nfs" in device_boot_methods):
+            return False, (
+                '"nfs" or "qemu-nfs" was not in the device configuration deploy methods'
+            )
+
+        return True, "accepted"
 
 
 class NfsAction(Action):

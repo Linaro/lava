@@ -34,30 +34,16 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
-class GrubSequence(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return GrubSequenceAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] not in ["grub", "grub-efi"]:
-            return False, '"method" was not "grub" or "grub-efi"'
-
-        params = device["actions"]["boot"]["methods"]
-        if "grub" not in params:
-            return False, '"grub" was not in the device configuration boot methods'
-        if "grub-efi" in params:
-            return False, '"grub-efi" was not in the device configuration boot methods'
-        if "sequence" in params["grub"]:
-            return True, "accepted"
-        return False, '"sequence" not in device configuration boot methods'
-
-
 class Grub(Boot):
     @classmethod
     def action(cls, job: Job) -> Action:
-        return GrubMainAction(job)
+        device_boot_methods = job.device["actions"]["boot"]["methods"]
+        device_grub_params = device_boot_methods.get("grub", {})
+
+        if "grub-efi" not in device_boot_methods and "sequence" in device_grub_params:
+            return GrubSequenceAction(job)
+        else:
+            return GrubMainAction(job)
 
     @classmethod
     def accepts(cls, device, parameters):
@@ -65,15 +51,12 @@ class Grub(Boot):
             return False, '"method" was not "grub" or "grub-efi"'
 
         params = device["actions"]["boot"]["methods"]
-        if "grub" in params and "sequence" in params["grub"]:
-            return False, '"sequence" was in "grub" parameters'
-        if "grub" in params or "grub-efi" in params:
-            return True, "accepted"
-        else:
-            return (
-                False,
-                '"grub" or "grub-efi" was not in the device configuration boot methods',
+        if not ("grub" in params or "grub-efi" in params):
+            return False, (
+                '"grub" or "grub-efi" was not in the device configuration boot methods'
             )
+
+        return True, "accepted"
 
 
 def _grub_sequence_map(
