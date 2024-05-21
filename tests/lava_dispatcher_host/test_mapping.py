@@ -4,24 +4,21 @@
 
 import os
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
-import lava_dispatcher_host
+from lava_common.device_mappings import add_device_container_mapping, load_mapping_data
 from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher_host import (
-    add_device_container_mapping,
-    load_mapping_data,
-    share_device_with_container,
-)
+from lava_dispatcher_host import share_device_with_container
 
 
 @pytest.fixture(autouse=True)
-def setup(monkeypatch, mocker, tmp_path):
+def setup(mocker, tmp_path):
     os.makedirs(tmp_path / "1")
     os.makedirs(tmp_path / "2")
-    monkeypatch.setattr(lava_dispatcher_host, "JOBS_DIR", str(tmp_path))
+    mocker.patch("lava_common.device_mappings.DISPATCHER_DOWNLOAD_PATH", Path(tmp_path))
     mocker.patch("os.path.exists", return_value=True)
 
 

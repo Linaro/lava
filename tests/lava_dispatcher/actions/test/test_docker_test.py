@@ -84,14 +84,14 @@ def test_run(action, mocker):
     action_run = mocker.patch("lava_dispatcher.actions.test.docker.TestShellAction.run")
     connection = mocker.MagicMock()
     add_device_container_mappings = mocker.patch(
-        "lava_dispatcher_host.action.DeviceContainerMappingMixin.add_device_container_mappings"
+        "lava_dispatcher.utils.containers.DeviceContainerMappingMixin.add_device_container_mappings"
     )
     get_udev_devices = mocker.patch(
         "lava_dispatcher.actions.test.docker.get_udev_devices",
         return_value=["/dev/foobar"],
     )
     trigger_share_device_with_container = mocker.patch(
-        "lava_dispatcher_host.action.DeviceContainerMappingMixin.trigger_share_device_with_container"
+        "lava_dispatcher.utils.containers.DeviceContainerMappingMixin.trigger_share_device_with_container"
     )
     docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     docker_wait_file = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait_file")

@@ -2,7 +2,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import glob
 import logging
 import logging.handlers
 import os
@@ -13,8 +12,8 @@ from pathlib import Path
 import pyudev
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
+from lava_common.device_mappings import find_mapping
 from lava_common.exceptions import InfrastructureError
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
 context = pyudev.Context()
@@ -22,43 +21,6 @@ context = pyudev.Context()
 logger = logging.getLogger("lava-dispatcher-host")
 logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
-
-
-def get_mapping_path(job_id):
-    return os.path.join(JOBS_DIR, job_id, "usbmap.yaml")
-
-
-def add_device_container_mapping(job_id, device_info, container, container_type="lxc"):
-    validate_device_info(device_info)
-    item = {
-        "device_info": device_info,
-        "container": container,
-        "container_type": container_type,
-        "job_id": job_id,
-    }
-    mapping_path = get_mapping_path(job_id)
-    data = load_mapping_data(mapping_path)
-
-    # remove old mappings for the same device_info
-    newdata = [old for old in data if old["device_info"] != item["device_info"]]
-    newdata.append(item)
-
-    os.makedirs(os.path.dirname(mapping_path), exist_ok=True)
-    with open(mapping_path, "w") as f:
-        f.write(yaml_safe_dump(newdata))
-
-
-def remove_device_container_mappings(job_id):
-    os.unlink(get_mapping_path(job_id))
-
-
-def validate_device_info(device_info):
-    if not device_info:
-        raise ValueError("Addind mapping for empty device info: %r" % device_info)
-    if not any(device_info.values()):
-        raise ValueError(
-            "Addind mapping for device info with empty keys: %r" % device_info
-        )
 
 
 def share_device_with_container(options):
@@ -80,40 +42,6 @@ def share_device_with_container(options):
         share_device_with_container_docker(container, device, job_id=job_id)
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
-
-
-def find_mapping(options):
-    for mapping in glob.glob(get_mapping_path("*")):
-        data = load_mapping_data(mapping)
-        for item in data:
-            if match_mapping(item["device_info"], options):
-                job_id = str(Path(mapping).parent.name)
-                return item, job_id
-    return None, None
-
-
-def load_mapping_data(filename):
-    try:
-        with open(filename) as f:
-            data = yaml_safe_load(f) or []
-        if isinstance(data, dict):
-            data = [data]
-        return data
-    except FileNotFoundError:
-        return []
-
-
-def match_mapping(device_info, options):
-    matched = False
-    for k, v in device_info.items():
-        if v:
-            if k in options and getattr(options, k) == v:
-                matched = True
-            else:
-                return False
-        else:
-            matched = True
-    return matched
 
 
 def log_sharing_device(device, container_type, container):

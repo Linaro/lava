@@ -28,7 +28,6 @@ Package: lava-dispatcher
 Architecture: all
 Depends: file,
          lava-common (= ${binary:Version}),
-         lava-dispatcher-host (= ${binary:Version}),
          systemd-sysv,
          tar (>= 1.27),
          ${misc:Depends},

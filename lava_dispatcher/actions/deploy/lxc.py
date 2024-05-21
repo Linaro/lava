@@ -20,10 +20,10 @@ from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.lxc import LxcProtocol
+from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.filesystem import lxc_path
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import allow_fs_label
-from lava_dispatcher_host.action import DeviceContainerMappingMixin
 
 
 class Lxc(Deployment):
@@ -203,7 +203,7 @@ class LxcCreateAction(Action):
         return connection
 
 
-class LxcCreateUdevRuleAction(Action, DeviceContainerMappingMixin):
+class LxcCreateUdevRuleAction(DeviceContainerMappingMixin):
     """
     Creates Lxc related udev rules for this container.
     """
