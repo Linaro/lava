@@ -73,7 +73,7 @@ class TestShellLogger(TestCase):
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [
-                "Hello World",  # Input
+                "Hello World",  # Echo
                 "Hello, World!",  # Actual output
             ],
         )
@@ -90,8 +90,6 @@ class TestShellLogger(TestCase):
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [
-                "Hello",  # Input
-                "World",
                 "Hello",  # Echo
                 "World",
                 "Hello, World!",  # Actual output
