@@ -17,7 +17,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import QemuSession
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -26,33 +26,6 @@ from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootQEMU(Boot):
-    """
-    The Boot method prepares the command to run on the dispatcher but this
-    command needs to start a new connection and then allow AutoLogin, if
-    enabled, and then expect a shell session which can be handed over to the
-    test method. self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
-    hand this pexpect wrapper to subsequent actions as a shell connection.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootQEMUImageAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        methods = device["actions"]["boot"]["methods"]
-        if "qemu" not in methods and "qemu-nfs" not in methods:
-            return (
-                False,
-                '"qemu" or "qemu-nfs" was not in the device configuration boot methods',
-            )
-        if parameters["method"] not in ["qemu", "qemu-nfs", "monitor"]:
-            return False, '"method" was not "qemu" or "qemu-nfs"'
-        return True, "accepted"
 
 
 class BootQEMUImageAction(BootHasMixin, RetryAction):

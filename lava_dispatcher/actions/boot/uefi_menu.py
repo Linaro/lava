@@ -16,7 +16,7 @@ from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.menus.menus import (
     MenuConnect,
     MenuInterrupt,
@@ -30,33 +30,6 @@ from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class UefiMenu(Boot):
-    """
-    The UEFI Menu strategy selects the specified options
-    and inserts relevant strings into the UEFI menu instead
-    of issuing commands over a shell-like serial connection.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return UefiMenuAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "uefi-menu":
-            return False, '"method" was not "uefi-menu"'
-        if "uefi-menu" in device["actions"]["boot"]["methods"]:
-            params = device["actions"]["boot"]["methods"]["uefi-menu"]["parameters"]
-            if "interrupt_prompt" in params and "interrupt_string" in params:
-                return True, "accepted"
-            else:
-                return (
-                    False,
-                    '"interrupt_prompt" or "interrupt_string" was not in the device configuration uefi-menu boot method parameters',
-                )
-        return False, '"uefi-menu" was not in the device configuration boot methods'
 
 
 class UEFIMenuInterrupt(MenuInterrupt):

@@ -8,17 +8,17 @@
 # pylint: disable=unused-import
 from __future__ import annotations
 
-import lava_dispatcher.actions.boot.strategies
 import lava_dispatcher.actions.test.strategies
 import lava_dispatcher.protocols.strategies
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import JobError, Pipeline, Timeout
+from lava_dispatcher.actions.boot_strategy import BootStrategy
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy_strategy import DeployStrategy
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.job import Job
-from lava_dispatcher.logical import Boot, LavaTest
+from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import FinalizeAction
 
 
@@ -31,7 +31,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         parameters.update(pipeline.job.parameters["protocols"])
 
     if name == "boot":
-        cls = Boot.select(device, parameters)
+        cls = BootStrategy.select(device, parameters)
         action = cls.action(pipeline.job)
     elif name == "test":
         parameters["stage"] = test_count

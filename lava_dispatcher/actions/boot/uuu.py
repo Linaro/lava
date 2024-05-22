@@ -13,20 +13,16 @@ from __future__ import annotations
 
 import re
 import time
-from typing import TYPE_CHECKING
 
-from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.strings import safe_dict_format
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
 
 
 class CheckSerialDownloadMode(OptionalContainerUuuAction):
@@ -92,42 +88,6 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
             )
 
         return connection
-
-
-class UUUBoot(Boot):
-    """
-    The UUUBoot method allow to always boot on USB serial download mode
-    used by uuu to flash on boot media a fresh bootimage.
-
-    If the board is not available for USB serial download, action 'boot-corrupt-boot-media'
-    will run commands in u-boot to corrupt boot media. After this action, board must be available in USB serial download
-    mode.
-    if the board is available without the previous action, 'boot-corrupt-boot-media' won't add anything to pipeline.
-
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return UUUBootRetryAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "uuu":
-            return False, '"method" was not "uuu"'
-        if "commands" not in parameters:
-            raise ConfigurationError("commands not specified in boot parameters")
-        params = device["actions"]["boot"]["methods"]["uuu"]["options"]
-        if not params["usb_otg_path"] and not params["usb_otg_path_command"]:
-            raise ConfigurationError(
-                "'uuu_usb_otg_path' or 'uuu_usb_otg_path_command' not defined in device definition"
-            )
-        if params["corrupt_boot_media_command"] is None:
-            raise ConfigurationError(
-                "uuu_corrupt_boot_media_command not defined in device definition"
-            )
-        if "u-boot" in device["actions"]["boot"]["methods"]:
-            return True, "accepted"
-        return False, '"uuu" was not in the device configuration boot methods'
 
 
 class BootBootloaderCorruptBootMediaAction(Action):

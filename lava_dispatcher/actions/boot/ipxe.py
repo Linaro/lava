@@ -21,36 +21,12 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class IPXE(Boot):
-    """
-    The IPXE method prepares the command to run on the dispatcher but this
-    command needs to start a new connection and then interrupt iPXE.
-    An expect shell session can then be handed over to the BootloaderAction.
-    self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
-    hand this pexpect wrapper to subsequent actions as a shell connection.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootloaderAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "ipxe":
-            return False, '"method" was not "ipxe"'
-        if "ipxe" in device["actions"]["boot"]["methods"]:
-            return True, "accepted"
-        else:
-            return False, '"ipxe" was not in the device configuration boot methods'
 
 
 class BootloaderAction(Action):

@@ -20,7 +20,7 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.connections.adb import ConnectAdb
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import PreOs, ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
@@ -43,23 +43,6 @@ def _fastboot_sequence_map(sequence):
         "export-env": (ExportDeviceEnvironment, None),
     }
     return sequence_map.get(sequence, (None, None))
-
-
-class BootFastboot(Boot):
-    """
-    Expects fastboot bootloader, and boots.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootFastbootAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "fastboot":
-            return False, 'boot "method" was not "fastboot"'
-
-        return True, "accepted"
 
 
 class BootFastbootCommands(OptionalContainerFastbootAction):

@@ -8,13 +8,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import (
-    ConfigurationError,
-    InfrastructureError,
-    JobError,
-    LAVABug,
-    TestError,
-)
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
@@ -132,74 +126,6 @@ class RetryAction(Action):
             retry_fail_exc = type(has_failed_exc)(exception_text)
             raise retry_fail_exc from has_failed_exc
         return connection
-
-
-class Boot:
-    """
-    Allows selection of the boot method for this job within the parser.
-    """
-
-    priority = 0
-    section = "boot"
-
-    @classmethod
-    def boot_check(cls, device, parameters):
-        if not device:
-            raise JobError('job "device" was None')
-        if "method" not in parameters:
-            raise ConfigurationError("method not specified in boot parameters")
-        if "actions" not in device:
-            raise ConfigurationError(
-                'Invalid device configuration, no "actions" in device configuration'
-            )
-        if "boot" not in device["actions"]:
-            raise ConfigurationError(
-                '"boot" is not in the device configuration actions'
-            )
-        if "methods" not in device["actions"]["boot"]:
-            raise ConfigurationError(
-                'Device misconfiguration, no "methods" in device configuration boot action'
-            )
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        """
-        Returns True if this deployment strategy can be used by the
-        given device and details of an image in the parameters.
-
-        Must be implemented by subclasses.
-        """
-        return NotImplementedError("accepts %s" % cls)
-
-    @classmethod
-    def select(cls, device, parameters):
-        cls.boot_check(device, parameters)
-        candidates = cls.__subclasses__()
-        replies = {}
-        willing = []
-        for c in candidates:
-            res = c.accepts(device, parameters)
-            if not isinstance(res, tuple):
-                raise LAVABug(
-                    "class %s accept function did not return a tuple" % c.__name__
-                )
-            if res[0]:
-                willing.append(c)
-            else:
-                class_name = c.name if hasattr(c, "name") else c.__name__
-                replies[class_name] = res[1]
-
-        if not willing:
-            replies_string = ""
-            for name, reply in replies.items():
-                replies_string += "%s: %s\n" % (name, reply)
-            raise JobError(
-                "None of the boot strategies accepted your boot parameters, reasons given:\n%s"
-                % replies_string
-            )
-
-        willing.sort(key=lambda x: x.priority, reverse=True)
-        return willing[0]
 
 
 class LavaTest:

@@ -15,28 +15,12 @@ from typing import TYPE_CHECKING
 
 from lava_dispatcher.action import Action, JobError, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class JLink(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootJLinkRetry(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "jlink" not in device["actions"]["boot"]["methods"]:
-            return False, '"jlink" was not in the device configuration boot methods'
-        if parameters["method"] != "jlink":
-            return False, '"method" was not "jlink"'
-        if "board_id" not in device:
-            return False, '"board_id" is not in the device configuration'
-        return True, "accepted"
 
 
 class BootJLinkRetry(RetryAction):

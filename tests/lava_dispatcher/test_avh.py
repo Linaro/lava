@@ -22,7 +22,7 @@ from avh_api.model.model import Model
 from avh_api.model.project import Project
 from avh_api.model.token import Token
 
-from lava_dispatcher.actions.boot.avh import BootAvh
+from lava_dispatcher.actions.boot_strategy import BootAvh
 from lava_dispatcher.actions.deploy_strategy import Avh
 
 

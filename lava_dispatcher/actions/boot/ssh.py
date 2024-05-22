@@ -13,32 +13,13 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import ConnectSsh
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class SshLogin(Boot):
-    """
-    Ssh boot strategy is a login process, without actually booting a kernel
-    but still needs AutoLoginAction.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return SshAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "ssh" not in device["actions"]["boot"]["methods"]:
-            return False, '"ssh" not in device configuration boot methods'
-        if "ssh" not in parameters["method"]:
-            return False, '"ssh" not in "method"'
-        return True, "accepted"
 
 
 class SshAction(RetryAction):
@@ -275,20 +256,6 @@ class ScpOverlayUnpack(Action):
         connection.sendline(cmd)
         self.wait(connection)
         return connection
-
-
-class Schroot(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return SchrootAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "schroot" not in device["actions"]["boot"]["methods"]:
-            return False, '"schroot" was not in the device configuration boot methods'
-        if "schroot" not in parameters["method"]:
-            return False, '"method" was not "schroot"'
-        return True, "accepted"
 
 
 class SchrootAction(Action):

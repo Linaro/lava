@@ -12,30 +12,13 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.lxc import ConnectLxc
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import allow_fs_label, get_udev_devices
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootLxc(Boot):
-    """
-    Attaches to the lxc container.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootLxcAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "lxc":
-            return False, '"method" was not "lxc"'
-
-        return True, "accepted"
 
 
 class BootLxcAction(RetryAction):

@@ -17,7 +17,7 @@ from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.docker import DockerRun
 
@@ -28,23 +28,6 @@ if TYPE_CHECKING:
 LAVA_NODEBOOTER_PATH = "/home/lava/downloads"
 NODEBOOTER_HOME = "/data/nodebooter/"
 NIC_NO_OF_SUPPORTED = 4
-
-
-class BootNodebooter(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootNodebooterAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "nodebooter" not in device["actions"]["boot"]["methods"]:
-            return (
-                False,
-                '"nodebooter" was not in the device configuration boot methods',
-            )
-        if parameters["method"] != "nodebooter":
-            return False, '"method" was not "nodebooter"'
-        return True, "accepted"
 
 
 class BootNodebooterAction(BootHasMixin, RetryAction):

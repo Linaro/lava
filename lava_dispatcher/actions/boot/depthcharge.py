@@ -10,7 +10,7 @@ import os.path
 from typing import TYPE_CHECKING
 
 from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
-from lava_common.exceptions import ConfigurationError, InfrastructureError
+from lava_common.exceptions import InfrastructureError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -22,7 +22,7 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ResetConnection
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -30,36 +30,6 @@ from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Depthcharge(Boot):
-    """
-    Depthcharge is a payload used by Coreboot in recent ChromeOS machines.
-    This boot strategy works with the "dev" build variant of Depthcharge, which
-    enables an interactive command line interface and the tftpboot command to
-    download files over TFTP. This includes at least a kernel image and a
-    command line file.  On arm/arm64, the kernel image is in the FIT format,
-    which can include a device tree blob and a ramdisk.  On x86, the kernel
-    image is a plain bzImage and an optional ramdisk can be downloaded as a
-    separate file.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DepthchargeAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "depthcharge":
-            return False, '"method" was not "depthcharge"'
-        if "commands" not in parameters:
-            raise ConfigurationError("commands not specified in boot parameters")
-        if "depthcharge" not in device["actions"]["boot"]["methods"]:
-            return (
-                False,
-                '"depthcharge" was not in the device configuration boot methods',
-            )
-        return True, "accepted"
 
 
 class DepthchargeCommandOverlay(BootloaderCommandOverlay):

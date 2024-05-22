@@ -14,28 +14,12 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootDocker(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootDockerAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "docker" not in device["actions"]["boot"]["methods"]:
-            return False, '"docker" was not in the device configuration boot methods'
-        if parameters["method"] != "docker":
-            return False, '"method" was not "docker"'
-        if "command" not in parameters:
-            return False, '"command" was not in boot parameters'
-        return True, "accepted"
 
 
 class BootDockerAction(BootHasMixin, RetryAction):

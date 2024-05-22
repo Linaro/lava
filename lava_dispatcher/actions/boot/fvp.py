@@ -15,28 +15,12 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootFVP(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootFVPAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "fvp" not in device["actions"]["boot"]["methods"]:
-            return False, '"fvp" was not in the device configuration boot methods'
-        if parameters["method"] != "fvp":
-            return False, '"method" was not "fvp"'
-        if "image" not in parameters:
-            return False, '"image" was not in boot parameters'
-        return True, "accepted"
 
 
 class BootFVPAction(BootHasMixin, RetryAction):

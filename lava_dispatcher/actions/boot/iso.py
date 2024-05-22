@@ -13,30 +13,13 @@ from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootIsoInstaller(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootIsoInstallerAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "qemu-iso":
-            return False, '"method" was not "qemu-iso"'
-        if "media" not in parameters:
-            return False, '"media" was not in parameters'
-        if parameters["media"] != "img":
-            return False, '"media" was not "img"'
-
-        return True, "accepted"
 
 
 class BootIsoInstallerAction(RetryAction):
@@ -57,7 +40,6 @@ class BootIsoInstallerAction(RetryAction):
 
 
 class IsoCommandLine(Action):
-
     """
     qemu-system-x86_64 -nographic -enable-kvm -cpu host -net nic,model=virtio,macaddr=52:54:00:12:34:59 -net user -m 2048 \
     -drive format=raw,file=hd_img.img -drive file=${NAME},index=2,media=cdrom,readonly \

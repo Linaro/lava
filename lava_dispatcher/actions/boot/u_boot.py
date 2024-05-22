@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import ConfigurationError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -25,7 +24,7 @@ from lava_dispatcher.actions.boot import (
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.storage import FlashUBootUMSAction
@@ -34,31 +33,6 @@ from lava_dispatcher.utils.udev import WaitDevicePathAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class UBoot(Boot):
-    """
-    The UBoot method prepares the command to run on the dispatcher but this
-    command needs to start a new connection and then interrupt u-boot.
-    An expect shell session can then be handed over to the UBootAction.
-    self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
-    hand this pexpect wrapper to subsequent actions as a shell connection.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return UBootAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "u-boot":
-            return False, '"method" was not "u-boot"'
-        if "commands" not in parameters:
-            raise ConfigurationError("commands not specified in boot parameters")
-        if "u-boot" in device["actions"]["boot"]["methods"]:
-            return True, "accepted"
-        return False, '"u-boot" was not in the device configuration boot methods'
 
 
 class UBootAction(RetryAction):
