@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
 from django.utils import timezone
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -17,6 +17,7 @@ from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    Tag,
     TestJob,
     Worker,
     _create_pipeline_job,
@@ -298,25 +299,30 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
 
 
 def schedule_jobs_for_device(logger, device, print_header):
+    job_extra_tags_subquery = Exists(
+        Tag.objects.filter(
+            testjob=OuterRef("pk"),
+        ).exclude(pk__in=device.tags.all())
+    )
     jobs = (
         TestJob.objects.select_for_update()
+        .annotate(_tags_are_subset=~job_extra_tags_subquery)
         .filter(
             state=TestJob.STATE_SUBMITTED,
             actual_device__isnull=True,
             requested_device_type_id=device.device_type_id,
+            # TODO: Pass ~job_extra_tags_subquery directly to filter()
+            # once Debian 12 is minimal version
+            _tags_are_subset=True,
         )
+        .annotate(_tags_are_subset=Value(1, output_field=IntegerField()))
         .select_related("submitter")
         .order_by("-priority", "submit_time", "sub_id", "id")
     )
 
-    device_tags = set(device.tags.all())
     with transaction.atomic():
         for job in jobs:
             if not device.can_submit(job.submitter):
-                continue
-
-            job_tags = set(job.tags.all())
-            if not job_tags.issubset(device_tags):
                 continue
 
             job_dict = yaml_safe_load(job.definition)
