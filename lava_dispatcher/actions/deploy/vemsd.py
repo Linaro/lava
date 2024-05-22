@@ -18,7 +18,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.compression import decompress_file, untar_file
 from lava_dispatcher.utils.filesystem import (
@@ -29,35 +29,6 @@ from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class VExpressMsd(Deployment):
-    """
-    Strategy class for a Versatile Express firmware deployment.
-    Downloads Versatile Express board recovery image and deploys
-    to target device
-    """
-
-    name = "vemsd"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return VExpressMsdRetry(job)
-
-    @classmethod
-    def uses_deployment_data(cls):
-        # recovery image deployment does not involve an OS
-        return False
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "vemsd":
-            return False, '"to" parameter is not "vemsd"'
-        if "vemsd" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"vemsd" was not in the device configuration deploy methods'
 
 
 class VExpressMsdRetry(RetryAction):

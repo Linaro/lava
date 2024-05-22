@@ -19,7 +19,6 @@ from lava_dispatcher.actions.deploy.download import (
 )
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.compression import untar_file
 
 if TYPE_CHECKING:
@@ -64,38 +63,6 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
             )
             if parameters["images"][image].get("format", "") == "qcow2":
                 self.pipeline.add_action(QCowConversionAction(self.job, image))
-
-
-class DeployQemuNfs(Deployment):
-    """
-    Strategy class for a kernel & NFS QEMU deployment.
-    Does not use GuestFS, adds overlay to the NFS
-    """
-
-    name = "qemu-nfs"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DeployQemuNfsAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        """
-        As a classmethod, this cannot set data
-        in the instance of the class.
-        This is *not* the same as validation of the action
-        which can use instance data.
-        """
-        if "nfs" not in device["actions"]["deploy"]["methods"]:
-            return False, '"nfs" is not in the device configuration deploy methods'
-        if parameters["to"] != "nfs":
-            return False, '"to" is not "nfs"'
-        if "qemu-nfs" not in device["actions"]["boot"]["methods"]:
-            return False, '"qemu-nfs" is not in the device configuration boot methods'
-        if "type" in parameters:
-            if parameters["type"] != "monitor":
-                return False, '"type" was set, but it was not "monitor"'
-        return True, "accepted"
 
 
 class DeployQemuNfsAction(Action):
@@ -197,47 +164,3 @@ class ExtractNfsAction(Action):
                 action="extract-rootfs", label="file", key=self.file_key, value=root_dir
             )
         return connection
-
-
-# FIXME: needs to be renamed to DeployPosixImages
-class DeployImages(Deployment):
-    """
-    Strategy class for an Image based Deployment.
-    Accepts parameters to deploy a QEMU
-    Uses existing Actions to download and checksum
-    as well as creating a qcow2 image for the test files.
-    Does not boot the device.
-    Requires guestfs instead of loopback support.
-    Prepares the following actions and pipelines:
-        retry-pipeline
-            download-action
-        report-checksum-action
-        customisation-action
-        test-definitions-action
-    """
-
-    name = "images"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DeployImagesAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        """
-        As a classmethod, this cannot set data
-        in the instance of the class.
-        This is *not* the same as validation of the action
-        which can use instance data.
-        """
-        if "image" not in device["actions"]["deploy"]["methods"]:
-            return False, '"image" is not in the device configuration deploy methods'
-        if parameters["to"] != "tmpfs":
-            return False, '"to" parameter is not "tmpfs"'
-        # lookup if the job parameters match the available device methods
-        if "images" not in parameters:
-            return False, '"images" was not in the deployment parameters'
-        if "type" in parameters:
-            if parameters["type"] != "monitor":
-                return False, '"type" parameter was set but it was not "monitor"'
-        return True, "accepted"

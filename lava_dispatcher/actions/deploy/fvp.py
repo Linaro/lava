@@ -11,25 +11,9 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class FVP(Deployment):
-    name = "fvp"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return FVPDeploy(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        to = parameters.get("to")
-        if to != "fvp":
-            return False, "'to' was not fvp"
-        return True, "accepted"
 
 
 class FVPDeploy(Action):

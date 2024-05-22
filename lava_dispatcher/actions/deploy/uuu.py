@@ -6,8 +6,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayImage,
@@ -15,38 +13,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
-
-
-# pylint: disable=too-many-return-statements,too-many-instance-attributes,missing-docstring
-class UUU(Deployment):
-    """
-    Strategy class for a UUU deployment.
-    Downloads images and apply overlay if needed.
-    """
-
-    name = "uuu"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return UUUAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "uuu":
-            return False, '"to" parameter is not "uuu"'
-        if "deploy" not in device["actions"]:
-            return False, '"deploy" is not in the device configuration actions'
-        if "images" not in parameters:
-            return False, "'images' not in deploy parameters"
-        if "boot" not in parameters["images"].keys():
-            return False, "'boot' image is required, not found in 'images' parameter"
-        return True, "accepted"
 
 
 class UUUAction(Action):

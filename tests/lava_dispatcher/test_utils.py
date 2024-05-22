@@ -16,7 +16,6 @@ from lava_dispatcher.action import Action
 
 # pylint: disable=unused-import
 from lava_dispatcher.actions.boot import strategies as boot_strategies
-from lava_dispatcher.actions.deploy import strategies as deploy_strategies
 from lava_dispatcher.actions.test import strategies as test_strategies
 from lava_dispatcher.utils import installers, vcs
 from lava_dispatcher.utils.contextmanager import chdir

@@ -17,57 +17,11 @@ from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Removable(Deployment):
-    """
-    Deploys an image to a usb or sata mass storage device
-    *Destroys* anything on that device, including partition table
-    Requires a preceding boot (e.g. ramdisk) which may have a test shell of it's own.
-    Does not require the ramdisk to be able to mount the usb storage, just for the kernel
-    to be able to see the device (the filesystem will be replaced anyway).
-
-    SD card partitions will use a similar approach but the UUID will be fixed in the device
-    configuration and specifying a restricted UUID will invalidate the job to protect the bootloader.
-
-    """
-
-    name = "removable"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return MassStorage(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        media = parameters.get("to")
-        job_device = parameters.get("device")
-
-        # Is the media supported?
-        if media not in ["sata", "sd", "usb"]:
-            return False, '"media" was not "sata", "sd", or "usb"'
-        # "parameters.media" is not defined for every devices
-        if "parameters" not in device or "media" not in device["parameters"]:
-            return (
-                False,
-                '"parameters" was not in the device or "media" was not in the parameters',
-            )
-        # Is the device allowing this method?
-        if job_device not in device["parameters"]["media"].get(media, {}):
-            return False, 'media was not in the device "media" parameters'
-        # Is the configuration correct?
-        if "uuid" in device["parameters"]["media"][media].get(job_device, {}):
-            return True, "accepted"
-        return (
-            False,
-            '"uuid" was not in the parameters for the media device %s' % job_device,
-        )
 
 
 class DDAction(Action):

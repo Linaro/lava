@@ -22,37 +22,11 @@ from lava_dispatcher.actions.deploy.vemsd import (
     UnmountVExpressMassStorageDevice,
 )
 from lava_dispatcher.connections.serial import DisconnectDevice
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.utils.udev import WaitUSBMassStorageDeviceAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Mps(Deployment):
-    """
-    Strategy class for a booting Arm MPS devices.
-    Downloads board recovery image and deploys to target
-    """
-
-    name = "mps"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return MpsAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "mps" not in device["actions"]["deploy"]["methods"]:
-            return False, '"mps" was not in the device configuration deploy methods'
-        if "to" not in parameters:
-            return False, '"to" was not in parameters'
-        if parameters["to"] != "mps":
-            return False, '"to" was not "mps"'
-        if "usb_filesystem_label" not in device:
-            return False, '"usb_filesystem_label" is not in the device configuration'
-        return True, "accepted"
 
 
 class MpsAction(Action):

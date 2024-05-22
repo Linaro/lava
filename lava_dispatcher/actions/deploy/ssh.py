@@ -13,7 +13,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import ExtractModules, Extract
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 
 if TYPE_CHECKING:
@@ -25,27 +24,6 @@ if TYPE_CHECKING:
 # In each case, files need to be copied to the device
 # For primary: to: ssh is used to implicitly copy the authorization
 # For secondary, authorize: ssh is needed as 'to' is already used.
-
-
-class Ssh(Deployment):
-    """
-    Copies files to the target to support further actions,
-    typically the overlay.
-    """
-
-    name = "ssh"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return ScpOverlay(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "ssh" not in device["actions"]["deploy"]["methods"]:
-            return False, '"ssh" is not in the device configuration deploy methods'
-        if parameters["to"] != "ssh":
-            return False, '"to" parameter is not "ssh"'
-        return True, "accepted"
 
 
 class ScpOverlay(Action):

@@ -22,7 +22,6 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.power import PDUReboot, PrePower, ReadFeedback, ResetDevice
 from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
@@ -32,41 +31,6 @@ from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Fastboot(Deployment):
-    """
-    Strategy class for a fastboot deployment.
-    Downloads the relevant parts, copies to the locations using fastboot.
-    """
-
-    name = "fastboot"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return FastbootAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "fastboot":
-            return False, '"to" parameter is not "fastboot"'
-        if "deploy" not in device["actions"]:
-            return False, '"deploy" is not in the device configuration actions'
-        if not device.get("fastboot_auto_detection", False):
-            if "adb_serial_number" not in device:
-                return False, '"adb_serial_number" is not in the device configuration'
-            if "fastboot_serial_number" not in device:
-                return (
-                    False,
-                    '"fastboot_serial_number" is not in the device configuration',
-                )
-        if "fastboot_options" not in device:
-            return False, '"fastboot_options" is not in the device configuration'
-        if "fastboot" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"fastboot" was not in the device configuration deploy methods"'
 
 
 class FastbootAction(

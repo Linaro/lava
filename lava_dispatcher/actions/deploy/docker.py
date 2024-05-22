@@ -14,7 +14,6 @@ from lava_common.schemas import docker_image_format_pattern
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
@@ -106,21 +105,3 @@ class DockerAction(Action):
             )
 
         return super().run(connection, max_end_time)
-
-
-class Docker(Deployment):
-    name = "docker"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DockerAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "docker" not in device["actions"]["deploy"]["methods"]:
-            return False, "'docker' not in the device configuration deploy methods"
-        if parameters["to"] != "docker":
-            return False, '"to" parameter is not "docker"'
-        if "image" not in parameters:
-            return False, '"image" is not in the deployment parameters'
-        return True, "accepted"

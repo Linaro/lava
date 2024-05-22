@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.utils.contextmanager import chdir
@@ -27,22 +26,6 @@ from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Overlay(Deployment):
-    name = "overlay"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return OverlayAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "overlay" not in device["actions"]["deploy"]["methods"]:
-            return False, "'overlay' not in the device configuration deploy methods"
-        if parameters["to"] != "overlay":
-            return False, '"to" parameter is not "overlay"'
-        return True, "accepted"
 
 
 class CreateOverlay(Action):

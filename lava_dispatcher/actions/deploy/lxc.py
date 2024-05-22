@@ -20,7 +20,6 @@ from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.filesystem import lxc_path
@@ -29,29 +28,6 @@ from lava_dispatcher.utils.udev import allow_fs_label
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Lxc(Deployment):
-    """
-    Strategy class for a lxc deployment.
-    Downloads the relevant parts, copies to the locations using lxc.
-    """
-
-    name = "lxc"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return LxcAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "lxc":
-            return False, '"to" parameter is not "lxc"'
-        if "lxc" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"lxc" was not in the device configuration deploy methods'
 
 
 class LxcAction(Action):

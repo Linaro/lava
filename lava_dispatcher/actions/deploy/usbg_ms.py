@@ -3,46 +3,14 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
-from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.strings import substitute
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
-
-
-class USBGMS(Deployment):
-    """
-    Strategy class for a usbg-ms deployment.
-    """
-
-    name = "usbg-ms"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return USBGMSAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["to"] != "usbg-ms":
-            return False, '"to" parameter is not "usbg-ms"'
-        if "usbg-ms" not in device["actions"]["deploy"]["methods"]:
-            return False, "'usbg-ms' not in the device configuration deploy methods"
-        keys = set(device["actions"]["deploy"]["methods"]["usbg-ms"].keys())
-        if keys != {"disable", "enable"}:
-            raise ConfigurationError(
-                "usbg-ms 'disable' and 'enable' commands missing: %s", keys
-            )
-        return True, "accepted"
 
 
 class USBGMSAction(DownloadAction):
