@@ -13,9 +13,6 @@ import pytest
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action
-
-# pylint: disable=unused-import
-from lava_dispatcher.actions.test import strategies as test_strategies
 from lava_dispatcher.utils import installers, vcs
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.decorator import replace_exception

@@ -23,7 +23,7 @@ from lava_common.exceptions import (
 from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import SignalMatch
-from lava_dispatcher.logical import LavaTest, RetryAction
+from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -40,35 +40,6 @@ def handle_testcase(params):
         else:
             raise JobError('Ignoring malformed parameter for signal: "%s". ' % param)
     return data
-
-
-class TestShell(LavaTest):
-    """
-    LavaTestShell Strategy object
-    """
-
-    @classmethod
-    def action(cls, job: Job, parameters) -> Action:
-        return TestShellRetry(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "definitions" in parameters:
-            return True, "accepted"
-        return False, '"definitions" not in parameters'
-
-    @classmethod
-    def needs_deployment_data(cls, parameters):
-        """Some, not all, deployments will want deployment_data"""
-        return True
-
-    @classmethod
-    def needs_overlay(cls, parameters):
-        return True
-
-    @classmethod
-    def has_shell(cls, parameters):
-        return True
 
 
 @nottest

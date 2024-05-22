@@ -8,7 +8,6 @@ from __future__ import annotations
 import os
 import pathlib
 import shlex
-from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
 from lava_common.device_mappings import remove_device_container_mappings
@@ -17,46 +16,11 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
-
-
-class DockerTest(LavaTest):
-    """
-    DockerTest Strategy object
-    """
-
-    priority = 10
-
-    @classmethod
-    def action(cls, job: Job, parameters) -> Action:
-        return DockerTestAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "definition" in parameters or "definitions" in parameters:
-            if "docker" in parameters:
-                return True, "accepted"
-        return False, "docker or definition(s) not in parameters"
-
-    @classmethod
-    def needs_deployment_data(cls, parameters):
-        return False
-
-    @classmethod
-    def needs_overlay(cls, parameters):
-        return True
-
-    @classmethod
-    def has_shell(cls, parameters):
-        return True
 
 
 class GetBoardId(Action):

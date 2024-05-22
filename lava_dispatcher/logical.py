@@ -128,66 +128,6 @@ class RetryAction(Action):
         return connection
 
 
-class LavaTest:
-    """
-    Allows selection of the LAVA test method for this job within the parser.
-    """
-
-    priority = 1
-    section = "test"
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        """
-        Returns True if this Lava test strategy can be used on the
-        given device and details of an image in the parameters.
-
-        Must be implemented by subclasses.
-        """
-        return NotImplementedError("accepts %s" % cls)
-
-    @classmethod
-    def select(cls, device, parameters):
-        candidates = cls.__subclasses__()
-        replies = {}
-        willing = []
-        for c in candidates:
-            res = c.accepts(device, parameters)
-            if not isinstance(res, tuple):
-                raise LAVABug(
-                    "class %s accept function did not return a tuple" % c.__name__
-                )
-            if res[0]:
-                willing.append(c)
-            else:
-                class_name = c.name if hasattr(c, "name") else c.__name__
-                replies[class_name] = res[1]
-
-        if not willing:
-            replies_string = ""
-            for name, reply in replies.items():
-                replies_string += "%s: %s\n" % (name, reply)
-            raise JobError(
-                "None of the test strategies accepted your test parameters, reasons given:\n%s"
-                % replies_string
-            )
-
-        willing.sort(key=lambda x: x.priority, reverse=True)
-        return willing[0]
-
-    @classmethod
-    def needs_deployment_data(cls):
-        return NotImplementedError("needs_deployment_data %s" % cls)
-
-    @classmethod
-    def needs_overlay(cls):
-        return NotImplementedError("needs_overlay %s" % cls)
-
-    @classmethod
-    def has_shell(cls):
-        return NotImplementedError("has_shell %s" % cls)
-
-
 class PipelineContext:
     """
     Replacement for the LavaContext which only holds data for the device for the

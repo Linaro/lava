@@ -14,45 +14,10 @@ import pexpect
 from lava_common.decorators import nottest
 from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import LavaTest, RetryAction
+from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-@nottest
-class TestMonitor(LavaTest):
-    """
-    LavaTestMonitor Strategy object
-    """
-
-    @classmethod
-    def action(cls, job: Job, parameters) -> Action:
-        return TestMonitorRetry(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        # TODO: Add configurable timeouts
-        required_parms = ["name", "start", "end", "pattern"]
-        if "monitors" in parameters:
-            for monitor in parameters["monitors"]:
-                for param in required_parms:
-                    if param not in monitor:
-                        return (False, "missing required parameter '%s'" % param)
-            return True, "accepted"
-        return False, '"monitors" not in parameters'
-
-    @classmethod
-    def needs_deployment_data(cls, parameters):
-        return False
-
-    @classmethod
-    def needs_overlay(cls, parameters):
-        return False
-
-    @classmethod
-    def has_shell(cls, parameters):
-        return False
 
 
 @nottest

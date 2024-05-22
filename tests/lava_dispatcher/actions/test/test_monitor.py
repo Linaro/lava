@@ -6,7 +6,8 @@
 
 
 from lava_common.exceptions import ConnectionClosedError
-from lava_dispatcher.actions.test.monitor import TestMonitor, TestMonitorAction
+from lava_dispatcher.actions.test.monitor import TestMonitorAction
+from lava_dispatcher.actions.test_strategy import TestMonitor
 from tests.utils import RecordingLogger
 
 from ...test_basic import LavaDispatcherTestCase

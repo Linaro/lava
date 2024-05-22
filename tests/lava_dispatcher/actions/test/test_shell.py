@@ -7,7 +7,8 @@
 from unittest.mock import MagicMock, patch
 
 from lava_common.exceptions import ConnectionClosedError, TestError
-from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
+from lava_dispatcher.actions.test.shell import TestShellAction
+from lava_dispatcher.actions.test_strategy import TestShell
 
 from ...test_basic import LavaDispatcherTestCase
 

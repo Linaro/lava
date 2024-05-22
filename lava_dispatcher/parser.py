@@ -8,17 +8,16 @@
 # pylint: disable=unused-import
 from __future__ import annotations
 
-import lava_dispatcher.actions.test.strategies
 import lava_dispatcher.protocols.strategies
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import JobError, Pipeline, Timeout
 from lava_dispatcher.actions.boot_strategy import BootStrategy
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy_strategy import DeployStrategy
+from lava_dispatcher.actions.test_strategy import LavaTestStrategy
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.job import Job
-from lava_dispatcher.logical import LavaTest
 from lava_dispatcher.power import FinalizeAction
 
 
@@ -35,7 +34,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         action = cls.action(pipeline.job)
     elif name == "test":
         parameters["stage"] = test_count
-        cls = LavaTest.select(device, parameters)
+        cls = LavaTestStrategy.select(device, parameters)
         action = cls.action(pipeline.job, parameters)
     elif name == "deploy":
         cls = DeployStrategy.select(device, parameters)
@@ -121,7 +120,7 @@ class JobParser:
         test_actions = [action for action in data["actions"] if "test" in action]
         for test_action in test_actions:
             test_parameters = test_action["test"]
-            test_type = LavaTest.select(device, test_parameters)
+            test_type = LavaTestStrategy.select(device, test_parameters)
             namespace = test_parameters.get("namespace", "common")
             connection_namespace = test_parameters.get(
                 "connection-namespace", namespace
