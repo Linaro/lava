@@ -24,7 +24,9 @@ import sys
 import time
 import traceback
 from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from functools import partial
 from pathlib import Path
 from typing import Any, NoReturn
 
@@ -72,6 +74,9 @@ STALE_CONFIG = {
 # URLs
 URL_JOBS = "/scheduler/internal/v1/jobs/"
 URL_WORKERS = "/scheduler/internal/v1/workers/"
+
+THREAD_EXECUTOR = ThreadPoolExecutor(max_workers=8)
+JOB_CLEANUP_TASKS: set[asyncio.Task] = set()
 
 
 ###########
@@ -205,6 +210,22 @@ def start_job(
         # The END message will be sent the next time
         # check_job_status is run
         return None
+
+
+async def cleanup_job(prefix: str, job_id: int) -> None:
+    loop = asyncio.get_running_loop()
+    for directory, pattern in STALE_CONFIG.items():
+        dir_name = pattern.format(prefix=prefix, job_id=job_id)
+        dir_path = directory / dir_name
+        if not dir_path.exists():
+            continue
+        LOG.debug("[%d] Removing %s", job_id, dir_path)
+        await loop.run_in_executor(
+            THREAD_EXECUTOR,
+            partial(shutil.rmtree, str(dir_path), ignore_errors=True),
+        )
+
+    LOG.debug("[%d] Finished cleanup", job_id)
 
 
 #########
@@ -405,7 +426,9 @@ def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
             jobs.update(job_id, Job.CANCELING)
 
 
-def check(url: str, jobs: JobsDB) -> None:
+async def check(url: str, jobs: JobsDB) -> None:
+    loop = asyncio.get_running_loop()
+
     # Loop on running jobs
     for job in jobs.running():
         if not job.is_running():
@@ -465,14 +488,9 @@ def check(url: str, jobs: JobsDB) -> None:
 
         # Remove stale resources
         prefix = "" if job is None else job.prefix
-        for directory in STALE_CONFIG:
-            pattern = STALE_CONFIG[directory]
-            dir_name = pattern.format(prefix=prefix, job_id=job.job_id)
-            dir_path = directory / dir_name
-            if not dir_path.exists():
-                continue
-            LOG.debug("[%d] Removing %s", job.job_id, dir_path)
-            shutil.rmtree(str(dir_path), ignore_errors=True)
+        cleanup_task = loop.create_task(cleanup_job(prefix, job.job_id))
+        JOB_CLEANUP_TASKS.add(cleanup_task)
+        cleanup_task.add_done_callback(JOB_CLEANUP_TASKS.discard)
 
         jobs.delete(job.job_id)
 
@@ -601,7 +619,7 @@ def start(
 ###############
 # Entrypoints #
 ###############
-def handle(options, jobs: JobsDB) -> float:
+async def handle(options, jobs: JobsDB) -> float:
     begin: float = time.monotonic()
 
     name: str = options.name
@@ -633,7 +651,7 @@ def handle(options, jobs: JobsDB) -> float:
 
     # Check job status
     # TODO: store the token and reuse it
-    check(url, jobs)
+    await check(url, jobs)
 
     # Compute the sleep duration
     return max(ping_interval - (time.monotonic() - begin), 0)
@@ -641,7 +659,7 @@ def handle(options, jobs: JobsDB) -> float:
 
 async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
     while True:
-        timeout = handle(options, jobs)
+        timeout = await handle(options, jobs)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(event.wait(), timeout=timeout)
             event.clear()
@@ -755,6 +773,7 @@ async def main() -> int:
         )
 
         loop = asyncio.get_running_loop()
+        loop.set_default_executor(THREAD_EXECUTOR)
         LOG.debug(f"LAVA worker pid is {os.getpid()}")
         for signame in ("SIGINT", "SIGTERM"):
             loop.add_signal_handler(
