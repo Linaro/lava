@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
 
@@ -112,7 +113,8 @@ class LinuxKernelMessages:
         """
         results = []  # wrap inside a dict to use in results
         result = "pass"
-        halt = None
+        halt: str | None = None
+        non_fatal_pexcept_errors: tuple[Exception] = (pexpect.EOF, TestError)
         start = time.monotonic()
 
         while True:
@@ -141,6 +143,16 @@ class LinuxKernelMessages:
             if index is None:
                 break
             if index < len(KERNEL_MESSAGES):
+                matched_kernel_message = KERNEL_MESSAGES[index]
+                if matched_kernel_message.get("fatal"):
+                    halt = "Kernel panic"
+                    # If connection.wait times out it raises JobError.
+                    # Overwrite that JobError with kernel panic JobError.
+                    # This can happen if a device reboots
+                    # before printing "end Kernel panic".
+                    if JobError not in non_fatal_pexcept_errors:
+                        non_fatal_pexcept_errors += (JobError,)
+
                 # Capture the start of the line
                 if "\n" in connection.raw_connection.before:
                     start_line = connection.raw_connection.before.rindex("\n")
@@ -153,11 +165,12 @@ class LinuxKernelMessages:
                 # Capture the end of the kernel message
                 previous_prompts = connection.prompt_str
                 connection.prompt_str = [
-                    KERNEL_MESSAGES[index]["end"]
+                    matched_kernel_message["end"]
                 ] + previous_prompts[len(KERNEL_MESSAGES) :]
+
                 try:
                     sub_index = connection.wait(max_end_time, max_searchwindowsize=True)
-                except (pexpect.EOF, TestError):
+                except non_fatal_pexcept_errors:
                     msg = "Failed to match end of kernel error"
                     action.logger.warning(msg)
                     action.errors = msg
@@ -173,7 +186,7 @@ class LinuxKernelMessages:
                 connection.prompt_str = previous_prompts
 
                 # Classify the errors
-                kind = KERNEL_MESSAGES[index]["kind"]
+                kind = matched_kernel_message["kind"]
                 if kind is None:
                     if "Oops" in message:
                         kind = "oops"
@@ -184,7 +197,7 @@ class LinuxKernelMessages:
                     else:
                         kind = "unknown"
 
-                if KERNEL_MESSAGES[index].get("fatal"):
+                if matched_kernel_message.get("fatal"):
                     result = "fail"
                     action.logger.error("%s kernel %r" % (action.name, kind))
                     halt = message
@@ -192,7 +205,7 @@ class LinuxKernelMessages:
                     action.logger.warning("%s: kernel %r" % (action.name, kind))
 
                 # TRACE may need a newline to force a prompt (only when not using auto-login)
-                if not auto_login and KERNEL_MESSAGES[index]["kind"] == "trace":
+                if not auto_login and matched_kernel_message["kind"] == "trace":
                     connection.sendline(connection.check_char)
 
                 results.append(
@@ -201,7 +214,7 @@ class LinuxKernelMessages:
                         "message": message,
                     }
                 )
-                if KERNEL_MESSAGES[index].get("fatal"):
+                if matched_kernel_message.get("fatal"):
                     break
                 else:
                     continue
