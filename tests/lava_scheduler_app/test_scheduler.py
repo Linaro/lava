@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
+from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
 from lava_scheduler_app.scheduler import schedule, schedule_health_checks
 
 
@@ -349,6 +349,101 @@ class TestHealthCheckScheduling(TestCase):
         current_hc = self.device03.current_job()
         self.assertTrue(current_hc.health_check)
         self.assertEqual(current_hc.state, TestJob.STATE_SCHEDULED)
+
+
+@patch.object(Device, "get_health_check", _minimal_valid_job)
+class TestTagsScheduling(TestCase):
+    def setUp(self) -> None:
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.user = User.objects.create(username="user-01")
+        self.device_type01 = DeviceType.objects.create(
+            name="qemu", disable_health_check=True
+        )
+        self.device01 = Device.objects.create(
+            hostname="qemu01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device03 = Device.objects.create(
+            hostname="qemu03",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+
+    def create_job_with_tags(self, *tags: Tag) -> TestJob:
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+        )
+        job.tags.add(*tags)
+        return job
+
+    def test_tags_none(self) -> None:
+        test_tag = Tag.objects.create(name="test-01")
+
+        job = self.create_job_with_tags(test_tag)
+
+        schedule(logging.getLogger(), [], ["worker-01"])
+        job.refresh_from_db()
+
+        self.assertIsNone(job.actual_device_id)
+
+    def test_tags_equal(self) -> None:
+        test_tag = Tag.objects.create(name="test-01")
+        self.device03.tags.add(test_tag)
+
+        job = self.create_job_with_tags(test_tag)
+
+        schedule(logging.getLogger(), [], ["worker-01"])
+        job.refresh_from_db()
+
+        self.assertEqual(job.actual_device_id, self.device03.pk)
+
+    def test_tags_equal_multiple(self) -> None:
+        test_tag_1 = Tag.objects.create(name="test-01")
+        test_tag_2 = Tag.objects.create(name="test-02")
+        self.device03.tags.add(test_tag_1)
+        self.device01.tags.add(test_tag_1)
+        self.device01.tags.add(test_tag_2)
+
+        job = self.create_job_with_tags(test_tag_1, test_tag_2)
+
+        schedule(logging.getLogger(), [], ["worker-01"])
+        job.refresh_from_db()
+
+        self.assertEqual(job.actual_device_id, self.device01.pk)
+
+    def test_tags_subset(self) -> None:
+        test_tag_1 = Tag.objects.create(name="test-01")
+        test_tag_2 = Tag.objects.create(name="test-02")
+        self.device03.tags.add(test_tag_1)
+        self.device03.tags.add(test_tag_2)
+        self.device01.tags.add(test_tag_1)
+
+        job = self.create_job_with_tags(test_tag_2)
+
+        schedule(logging.getLogger(), [], ["worker-01"])
+        job.refresh_from_db()
+
+        self.assertEqual(job.actual_device_id, self.device03.pk)
+
+    def test_tags_superset(self) -> None:
+        test_tag_1 = Tag.objects.create(name="test-01")
+        test_tag_2 = Tag.objects.create(name="test-02")
+        self.device03.tags.add(test_tag_2)
+        self.device01.tags.add(test_tag_1)
+
+        job = self.create_job_with_tags(test_tag_1, test_tag_2)
+
+        schedule(logging.getLogger(), [], ["worker-01"])
+        job.refresh_from_db()
+
+        self.assertIsNone(job.actual_device_id)
 
 
 class TestVisibility(TestCase):
