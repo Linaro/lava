@@ -178,36 +178,55 @@ class BaseFVPAction(Action):
         data = "#!/bin/sh\n"
 
         if self.ubl_license:
+            license_type = "file"
+            license_pat = re.compile(r"^[^\W_]+-[^\W_]+-[^\W_]+-[^\W_]+-[^\W_]+$")
+            if license_pat.match(self.ubl_license):
+                license_type = "code"
+
             data += f"""
 echo "Finding the armlm binary"
 ARMLM="$(find /opt/model -maxdepth 1 -type d | grep -v license_terms | tail -n 1)/bin/arm_license_management_utilities/armlm"
-if [ -e $ARMLM ]; then
-echo "armlm at $ARMLM"
-max_retries=5
-attempt=0
-backoff=1
+if [ -e "$ARMLM" ]; then
+  echo "armlm at $ARMLM"
 
-while [ $attempt -lt $max_retries ]; do
-  echo "Trying to Activate UBL license"
+  ubl_license="{self.ubl_license}"
+  license_type="{license_type}"
 
-  if $ARMLM activate -code {self.ubl_license}; then
-    echo "UBL Activation Successful"
-    break
+  if [ "$license_type" = "file" ] && [ -e "$ubl_license" ]; then
+    echo "Trying to import UBL license"
+    if ! $ARMLM import -file "$ubl_license"; then
+      echo "Failed to import license file!"
+      exit 1
+    fi
+  elif [ "$license_type" = "code" ]; then
+    max_retries=5
+    attempt=0
+    backoff=1
+
+    while [ $attempt -lt $max_retries ]; do
+      echo "Trying to Activate UBL license"
+
+      if $ARMLM activate -code "$ubl_license"; then
+        echo "UBL Activation Successful"
+        break
+      else
+        echo "UBL activation failed. Retrying in $backoff seconds..."
+        sleep $backoff
+        backoff=$((backoff * 2))
+        attempt=$((attempt + 1))
+      fi
+    done
+
+    if [ $attempt -eq $max_retries ]; then
+      echo "UBL Activation failed after $max_retries attempts."
+      exit 1
+    fi
   else
-    echo "UBL activation failed. Retrying in $backoff seconds..."
-    sleep $backoff
-    backoff=$((backoff * 2))
-    attempt=$((attempt + 1))
+    echo "Invalid UBL file/code!"
+    exit 1
   fi
-done
-
-if [ $attempt -eq $max_retries ]; then
-  echo "UBL Activation failed after $max_retries attempts."
-  exit 1
-fi
-
 else
-echo "No armlm binary found, Won't activate UBL license"
+  echo "No armlm binary found, Won't import/activate UBL license"
 fi
 """
         # Substitute in the fvp arguments
