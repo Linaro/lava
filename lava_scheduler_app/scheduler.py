@@ -263,6 +263,11 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
     devices = dt.device_set.select_for_update()
     devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
+    # Check that the device had been marked available by
+    # schedule_health_checks. In fact, it's possible that a device is made IDLE
+    # between the two functions.  If that the case, we can miss an
+    # health-check. Better to only consider devices in available_devices.
+    devices = devices.filter(hostname__in=available_devices)
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will
     # never be used.
@@ -270,14 +275,6 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
 
     print_header = True
     for device in devices:
-        # Check that the device had been marked available by
-        # schedule_health_checks. In fact, it's possible that a device is made
-        # IDLE between the two functions.
-        # If that the case, we can miss an health-check. Better to only
-        # consider devices in available_devices.
-        if device.hostname not in available_devices:
-            continue
-
         if workers_limit[device.worker_host_id].overused():
             logger.debug(
                 "SKIP %s due to %s having %d jobs (greater than %d)"
