@@ -322,10 +322,13 @@ def schedule_jobs_for_device(logger, device, print_header):
             if not device.can_submit(job.submitter):
                 continue
 
-            job_dict = yaml_safe_load(job.definition)
-            if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
-                if not match_vlan_interface(device, job_dict):
-                    continue
+            # Only load the yaml file if the string is in the document
+            # This will save many CPU cycles
+            if "lava-vland" in job.definition:
+                job_dict = yaml_safe_load(job.definition)
+                if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
+                    if not match_vlan_interface(device, job_dict):
+                        continue
 
             if print_header:
                 logger.debug("- %s", device.device_type.name)
