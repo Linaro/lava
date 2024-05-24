@@ -15,7 +15,7 @@ RUN apt-get update && \
 # Install lava-lxc-mocker
 COPY lava/lxc-mocker/ /install/usr/bin/
 
-# Install common, dispatcher and dispatcher-host modules
+# Install lava_common and lava_dispatcher modules
 RUN --mount=type=bind,target=/app \
     cd /app && \
     python3 setup.py build -b /tmp/build egg_info --egg-base /tmp/build install --root /install --no-compile --install-layout=deb lava-common && \
