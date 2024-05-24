@@ -127,14 +127,14 @@ def schedule_health_checks_for_device_type(logger, dt, workers_limit):
     print_header = True
     available_devices = []
     for device in devices:
-        if workers_limit[device.worker_host.hostname].overused():
+        if workers_limit[device.worker_host_id].overused():
             logger.debug(
                 "SKIP healthcheck for %s due to %s having %d jobs (greater than %d)"
                 % (
                     device.hostname,
                     device.worker_host,
-                    workers_limit[device.worker_host.hostname].busy,
-                    workers_limit[device.worker_host.hostname].limit,
+                    workers_limit[device.worker_host_id].busy,
+                    workers_limit[device.worker_host_id].limit,
                 )
             )
             continue
@@ -196,7 +196,7 @@ def schedule_health_checks_for_device_type(logger, dt, workers_limit):
         logger.debug("  |--> scheduling health check")
         try:
             schedule_health_check(device, health_check)
-            workers_limit[device.worker_host.hostname].busy += 1
+            workers_limit[device.worker_host_id].busy += 1
         except Exception as exc:
             # If the health check cannot be schedule, set health to BAD to exclude the device
             logger.error("  |--> Unable to schedule health check")
@@ -263,14 +263,14 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
         if device.hostname not in available_devices:
             continue
 
-        if workers_limit[device.worker_host.hostname].overused():
+        if workers_limit[device.worker_host_id].overused():
             logger.debug(
                 "SKIP %s due to %s having %d jobs (greater than %d)"
                 % (
                     device.hostname,
                     device.worker_host,
-                    workers_limit[device.worker_host.hostname].busy,
-                    workers_limit[device.worker_host.hostname].limit,
+                    workers_limit[device.worker_host_id].busy,
+                    workers_limit[device.worker_host_id].limit,
                 )
             )
             continue
@@ -292,7 +292,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
 
         if schedule_jobs_for_device(logger, device, print_header) is not None:
             print_header = False
-            workers_limit[device.worker_host.hostname].busy += 1
+            workers_limit[device.worker_host_id].busy += 1
 
 
 def schedule_jobs_for_device(logger, device, print_header):
