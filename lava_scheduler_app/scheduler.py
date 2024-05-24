@@ -39,8 +39,8 @@ def filter_devices(q, workers):
     return q
 
 
-def worker_summary():
-    query = Worker.objects.all()
+def worker_summary(workers):
+    query = Worker.objects.filter(hostname__in=workers)
     query = query.values("hostname", "job_limit")
     query = query.annotate(
         busy=Count(
@@ -74,12 +74,13 @@ def check_queue_timeout(logger):
 
 
 def schedule(logger, available_dt, workers):
-    available_devices = schedule_health_checks(logger, available_dt, workers)
-    schedule_jobs(logger, available_devices, workers)
+    workers_limit = worker_summary(workers)
+    available_devices = schedule_health_checks(logger, available_dt, workers_limit)
+    schedule_jobs(logger, available_devices, workers_limit)
     check_queue_timeout(logger)
 
 
-def schedule_health_checks(logger, available_dt, workers):
+def schedule_health_checks(logger, available_dt, workers_limit):
     logger.info("scheduling health checks:")
     available_devices = {}
     hc_disabled = []
@@ -92,7 +93,7 @@ def schedule_health_checks(logger, available_dt, workers):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
             # Add all devices of that type to the list of available devices
-            devices = filter_devices(dt.device_set, workers)
+            devices = filter_devices(dt.device_set, workers_limit.keys())
             devices = devices.filter(
                 health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]
             )
@@ -104,7 +105,7 @@ def schedule_health_checks(logger, available_dt, workers):
         else:
             with transaction.atomic():
                 available_devices[dt.name] = schedule_health_checks_for_device_type(
-                    logger, dt, workers
+                    logger, dt, workers_limit
                 )
 
     # Print disabled device types
@@ -115,15 +116,13 @@ def schedule_health_checks(logger, available_dt, workers):
     return available_devices
 
 
-def schedule_health_checks_for_device_type(logger, dt, workers):
+def schedule_health_checks_for_device_type(logger, dt, workers_limit):
     devices = dt.device_set.select_for_update()
-    devices = filter_devices(devices, workers)
+    devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(
         health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]
     )
     devices = devices.order_by("hostname")
-
-    workers_limit = worker_summary()
 
     print_header = True
     available_devices = []
@@ -229,13 +228,13 @@ def schedule_health_check(device, definition):
     job.save(update_fields=fields)
 
 
-def schedule_jobs(logger, available_devices, workers):
+def schedule_jobs(logger, available_devices, workers_limit):
     logger.info("scheduling jobs:")
     dts = list(available_devices.keys())
     for dt in DeviceType.objects.filter(name__in=dts).order_by("name"):
         with transaction.atomic():
             schedule_jobs_for_device_type(
-                logger, dt, available_devices[dt.name], workers
+                logger, dt, available_devices[dt.name], workers_limit
             )
 
     with transaction.atomic():
@@ -245,16 +244,14 @@ def schedule_jobs(logger, available_devices, workers):
     logger.info("done")
 
 
-def schedule_jobs_for_device_type(logger, dt, available_devices, workers):
+def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
     devices = dt.device_set.select_for_update()
-    devices = filter_devices(devices, workers)
+    devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will
     # never be used.
     devices = devices.order_by("?")
-
-    workers_limit = worker_summary()
 
     print_header = True
     for device in devices:
