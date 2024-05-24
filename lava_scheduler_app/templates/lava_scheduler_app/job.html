@@ -68,24 +68,20 @@
       background-color: #e0f0d9;
     }
 
-    .affix {
-      position: absolute;
+    #actions-table {
+      position: fixed;
       left: 0px;
-      overflow: auto;
+      top: 70px;
       background-color: #eee;
       border: 1px solid #ddd;
       border-radius: 4px;
       padding: 3px;
-      z-index: 1;
-      max-height: 80vh;
+      z-index: 0;
     }
-    .fix-affix {
-      position: fixed;
-      left: 0px;
-      top: 70px;
-    }
-    #affix-full {
-      display: block;
+    #actions-list-div {
+      overflow: auto;
+      overscroll-behavior: contain;
+      max-height: 75vh;
     }
 
     .tr-danger {
@@ -116,6 +112,9 @@
     }
     code:hover > .lava-log-line-url{
       opacity: 1;
+    }
+    .lava-action-on-screen {
+      font-weight: bold;
     }
   </style>
 {% endblock %}
@@ -234,10 +233,10 @@
     It can only be downloaded:
 <a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></p>
 </div>
-<div class="affix hidden-xs hidden-sm">
-  <h4>Pipeline <span class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
-  <div id="affix-full">
-    <ul class="list-unstyled" id="actions-list">
+<div id="actions-table" class="hidden-xs hidden-sm">
+  <h4>Pipeline <span id="actions-table-arrow" class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
+  <div id="actions-list-div">
+    <ul class="list-unstyled" id="actions-list" style="display: block;">
     </ul>
   </div>
 </div>
@@ -348,9 +347,29 @@
 <script src="{% static "lava_scheduler_app/js/jquery.flot.js" %}"></script>
 <script>
   var logs_position = 0;
+  let current_log_div = null;
   const progress_node = document.getElementById('log-messages');
+  const logs_section = document.getElementById('sectionlogs');
   const actions_list = document.getElementById('actions-list');
   const action_id_regexp = /^start: (?<action_level>[\d.]+) (?<action_name>[\w_-]+)/;
+
+  let log_div_to_action = new Map();
+  function logs_observer_callback (entries, observer) {
+    for (const observed_entry of entries) {
+      const action_table_entry = log_div_to_action.get(observed_entry.target);
+      if (!action_table_entry) {
+        continue;
+      }
+      if (observed_entry.isIntersecting) {
+        action_table_entry.classList.add('lava-action-on-screen');
+        action_table_entry.scrollIntoView({block: "center"});
+      } else {
+        action_table_entry.classList.remove('lava-action-on-screen');
+      }
+    }
+  }
+
+  const logs_observer = new IntersectionObserver(logs_observer_callback);
 
   function render_logs(logs_data) {
     const logs_fragment = document.createDocumentFragment();
@@ -414,12 +433,19 @@
             break;
           case 'info':
           case 'debug':
-            add_to_action_list(actions_fragment, msg, id);
+            const new_div_node = add_to_action_list(actions_fragment, msg, id);
+            if (new_div_node) {
+              logs_fragment.appendChild(new_div_node);
+              current_log_div = new_div_node;
+            }
           default:
             code_node.appendChild(document.createTextNode(msg));
         }
-
-        logs_fragment.appendChild(code_node);
+        if (current_log_div) {
+          current_log_div.appendChild(code_node);
+        } else {
+          logs_fragment.appendChild(code_node);
+        }
     }
     logs_position += logs_data.length;
     actions_list.appendChild(actions_fragment);
@@ -428,11 +454,12 @@
   function add_to_action_list(fragment, line, id_to_href) {
     const match = action_id_regexp.exec(line);
     if (!match) {
-      return;
+      return null;
     }
     const groups = match.groups;
     const action_level = groups.action_level;
     const action_name = groups.action_name;
+    const div_node = document.createElement('div');
 
     const new_action_list_entry = document.createElement('li');
     fragment.appendChild(new_action_list_entry);
@@ -440,6 +467,10 @@
     new_action_link.setAttribute('href', `#${id_to_href}`);
     new_action_link.textContent = `${action_level} - ${action_name}`;
     new_action_list_entry.appendChild(new_action_link);
+
+    log_div_to_action.set(div_node, new_action_list_entry);
+    logs_observer.observe(div_node);
+    return div_node;
   };
 
   document.addEventListener('DOMContentLoaded', function render_logs_initial() {
@@ -495,35 +526,17 @@
 
       // Open the affix if the user click on the button
       var affix_toggle = false;
-      $('.affix h4').click(function() {
+      $('#actions-table h4').click(function() {
         if(affix_toggle) {
-          $('#affix-full').css('display', 'block');
-          $('.affix span').removeClass('glyphicon-arrow-down');
-          $('.affix span').addClass('glyphicon-arrow-up');
+          $('#actions-list').css('display', 'block');
+          $('#actions-table-arrow').removeClass('glyphicon-arrow-up');
+          $('#actions-table-arrow').addClass('glyphicon-arrow-down');
         } else {
-          $('#affix-full').css('display', 'none');
-          $('.affix span').removeClass('glyphicon-arrow-up');
-          $('.affix span').addClass('glyphicon-arrow-down');
+          $('#actions-list').css('display', 'none');
+          $('#actions-table-arrow').removeClass('glyphicon-arrow-down');
+          $('#actions-table-arrow').addClass('glyphicon-arrow-up');
         }
         affix_toggle = !affix_toggle;
-      });
-
-      // Move the affix
-      var affix = $('.affix');
-      var affix_top = window.scrollY +
-                      $('.affix h4')[0].getBoundingClientRect().top - 70;
-      // Place it correctly if the page is reloaded while not at the top
-      if (document.body.scrollTop > affix_top ||
-          document.documentElement.scrollTop > affix_top) {
-        affix.addClass("fix-affix");
-      }
-      $(window).scroll(function(e) {
-        if (document.body.scrollTop > affix_top ||
-            document.documentElement.scrollTop > affix_top) {
-          affix.addClass("fix-affix");
-        } else {
-          affix.removeClass("fix-affix");
-        }
       });
 {% endif %}
 
