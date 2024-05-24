@@ -9,7 +9,17 @@ from dataclasses import dataclass
 
 from django.contrib.auth.models import User
 from django.db import transaction
-from django.db.models import Count, Exists, IntegerField, OuterRef, Q, Value
+from django.db.models import (
+    Count,
+    DurationField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    Value,
+)
 from django.utils import timezone
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -54,22 +64,27 @@ def worker_summary(workers):
 
 def check_queue_timeout(logger):
     logger.info("Check queue timeouts:")
-    jobs = TestJob.objects.filter(
-        state=TestJob.STATE_SUBMITTED, queue_timeout__isnull=False
+    jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
+    jobs = jobs.filter(queue_timeout__isnull=False)
+    # TODO: use alias() once Debian 12 is required
+    # See https://docs.djangoproject.com/en/dev/ref/models/querysets/#alias
+    jobs = jobs.annotate(
+        queue_timeout_date=ExpressionWrapper(
+            F("submit_time") + datetime.timedelta(seconds=1) * F("queue_timeout"),
+            output_field=DurationField(),
+        )
     )
+    jobs = jobs.filter(queue_timeout_date__lt=timezone.now())
+
     for testjob in jobs:
-        now = timezone.now()
-        queue_timeout_delta = datetime.timedelta(seconds=testjob.queue_timeout)
-        canceling = testjob.submit_time + queue_timeout_delta < now
-        if canceling:
-            logger.debug("  |--> [%d] canceling", testjob.id)
-            if testjob.is_multinode:
-                for job in testjob.sub_jobs_list:
-                    fields = job.go_state_canceling()
-                    job.save(update_fields=fields)
-            else:
-                fields = testjob.go_state_canceling()
-                testjob.save(update_fields=fields)
+        logger.debug("  |--> [%d] canceling", testjob.id)
+        if testjob.is_multinode:
+            for job in testjob.sub_jobs_list:
+                fields = job.go_state_canceling()
+                job.save(update_fields=fields)
+        else:
+            fields = testjob.go_state_canceling()
+            testjob.save(update_fields=fields)
     logger.info("done")
 
 
