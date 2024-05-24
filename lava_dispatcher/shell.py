@@ -317,14 +317,14 @@ class ShellSession(Connection):
         if timeout < 0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
-            self.raw_connection.logfile.is_feedback = True
-            self.raw_connection.logfile.namespace = namespace
+            self.raw_connection.logfile_read.is_feedback = True
+            self.raw_connection.logfile_read.namespace = namespace
             index = self.raw_connection.expect(
                 [".+", pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
             )
         finally:
-            self.raw_connection.logfile.is_feedback = False
-            self.raw_connection.logfile.namespace = None
+            self.raw_connection.logfile_read.is_feedback = False
+            self.raw_connection.logfile_read.namespace = None
 
         if index == 0:
             return len(self.raw_connection.after)
