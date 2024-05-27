@@ -59,7 +59,7 @@ def safe_dict_format(string, dictionary):
 
     class SafeDict(dict):
         def __missing__(self, key):
-            logger = logging.getLogger("lava-dispatcher")
+            logger = logging.getLogger("dispatcher")
             logger.warning("Missing key : '{%s}' for string '%s'", key, string)
             return "{" + key + "}"
 
@@ -77,7 +77,7 @@ def map_kernel_uboot(kernel_type, device_params=None):
     bootm is the last resort.
     """
     bootcommand = "bootm"
-    logger = logging.getLogger("lava-dispatcher")
+    logger = logging.getLogger("dispatcher")
     if kernel_type == "uimage":
         return bootcommand
     elif kernel_type == "zimage":
