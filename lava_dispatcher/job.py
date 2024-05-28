@@ -14,8 +14,6 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
-import pytz
-
 from lava_common.constants import CLEANUP_TIMEOUT, DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
@@ -129,7 +127,7 @@ class Job:
         LAVAError) if it fails.
         """
         self.logger.info(
-            "Start time: %s (UTC)", pytz.utc.localize(datetime.datetime.utcnow())
+            "Start time: %s (UTC)", datetime.datetime.now(datetime.timezone.utc)
         )
         for protocol in self.protocols:
             try:
