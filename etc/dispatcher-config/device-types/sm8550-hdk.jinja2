@@ -1,0 +1,5 @@
+{# device_type = 'sm8550-hdk' #}
+{% extends 'base-fastboot.jinja2' %}
+
+{% set fastboot_sequence = ['no-flash-boot'] %}
+{% set flash_cmds_order = flash_cmds_order|default(['super', 'userdata', 'boot']) %}
