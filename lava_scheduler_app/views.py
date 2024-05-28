@@ -2093,28 +2093,23 @@ def job_timing(request, pk):
 
 
 def job_configuration(request, pk):
-    def add_optional_file(tar, filename):
-        with contextlib.suppress(OSError):
-            tar.add(filename)
-
     job = TestJob.get_restricted_job(pk, request.user)
-    data = ""
-    pwd = os.getcwd()
-    try:
-        with contextlib.suppress(FileNotFoundError):
-            os.chdir(job.output_dir)
-            fileobj = io.BytesIO()
-            with tarfile.open(fileobj=fileobj, mode="w:bz2") as tar:
-                add_optional_file(tar, "job.yaml")
-                add_optional_file(tar, "device.yaml")
-                add_optional_file(tar, "dispatcher.yaml")
-                add_optional_file(tar, "env.yaml")
-                add_optional_file(tar, "env-dut.yaml")
-            fileobj.seek(0)
-            data = fileobj.read()
-            fileobj.close()
-    finally:
-        os.chdir(pwd)
+    job_output_dir_path = Path(job.output_dir)
+
+    def add_optional_file(tar: tarfile.TarFile, filename: str):
+        with contextlib.suppress(OSError):
+            tar.add(job_output_dir_path / filename, filename)
+
+    with io.BytesIO() as fileobj:
+        with tarfile.open(fileobj=fileobj, mode="w:bz2") as tar:
+            add_optional_file(tar, "job.yaml")
+            add_optional_file(tar, "device.yaml")
+            add_optional_file(tar, "dispatcher.yaml")
+            add_optional_file(tar, "env.yaml")
+            add_optional_file(tar, "env-dut.yaml")
+
+        data = fileobj.getvalue()
+
     response = HttpResponse(data, content_type="application/tar")
     response["content-Disposition"] = "attachment; filename=configuration.tar.bz2"
     return response
