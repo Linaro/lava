@@ -19,6 +19,7 @@ from lava_dispatcher.actions.boot import strategies as boot_strategies
 from lava_dispatcher.actions.deploy import strategies as deploy_strategies
 from lava_dispatcher.actions.test import strategies as test_strategies
 from lava_dispatcher.utils import installers, vcs
+from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.decorator import replace_exception
 from lava_dispatcher.utils.shell import which
 from tests.utils import infrastructure_error
@@ -26,67 +27,79 @@ from tests.utils import infrastructure_error
 
 @pytest.fixture
 def setup(tmp_path):
-    os.chdir(str(tmp_path))
+    original_cwd = os.getcwd()
 
-    # Create a Git repository with two commits
-    subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
-    os.chdir("git")
-    subprocess.check_output(
-        ["git", "checkout", "-b", "master"]
-    )  # nosec - unit test support.
-    with open("test.txt", "w") as testfile:
-        testfile.write("Some data")
-    subprocess.check_output(["git", "add", "test.txt"])  # nosec - unit test support.
-    subprocess.check_output(  # nosec - unit test support.
-        ["git", "commit", "test.txt", "-m", "First commit"],
-        env={
-            "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:36 CEST 2014",
-            "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:36 CEST 2014",
-            "GIT_AUTHOR_NAME": "Foo Bar",
-            "GIT_AUTHOR_EMAIL": "foo@example.com",
-            "GIT_COMMITTER_NAME": "Foo Bar",
-            "GIT_COMMITTER_EMAIL": "foo@example.com",
-        },
-    )
-    with open("second.txt", "w") as datafile:
-        datafile.write("Some more data")
-    subprocess.check_output(["git", "add", "second.txt"])  # nosec - unit test support.
-    subprocess.check_output(  # nosec - unit test support.
-        ["git", "commit", "second.txt", "-m", "Second commit"],
-        env={
-            "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:38 CEST 2014",
-            "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:38 CEST 2014",
-            "GIT_AUTHOR_NAME": "Foo Bar",
-            "GIT_AUTHOR_EMAIL": "foo@example.com",
-            "GIT_COMMITTER_NAME": "Foo Bar",
-            "GIT_COMMITTER_EMAIL": "foo@example.com",
-        },
-    )
+    with chdir(tmp_path):
+        # Create a Git repository with two commits
+        subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
+        os.chdir("git")
+        subprocess.check_output(
+            ["git", "checkout", "-b", "master"]
+        )  # nosec - unit test support.
+        with open("test.txt", "w") as testfile:
+            testfile.write("Some data")
+        subprocess.check_output(
+            ["git", "add", "test.txt"]
+        )  # nosec - unit test support.
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "commit", "test.txt", "-m", "First commit"],
+            env={
+                "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:36 CEST 2014",
+                "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:36 CEST 2014",
+                "GIT_AUTHOR_NAME": "Foo Bar",
+                "GIT_AUTHOR_EMAIL": "foo@example.com",
+                "GIT_COMMITTER_NAME": "Foo Bar",
+                "GIT_COMMITTER_EMAIL": "foo@example.com",
+            },
+        )
+        with open("second.txt", "w") as datafile:
+            datafile.write("Some more data")
+        subprocess.check_output(
+            ["git", "add", "second.txt"]
+        )  # nosec - unit test support.
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "commit", "second.txt", "-m", "Second commit"],
+            env={
+                "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:38 CEST 2014",
+                "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:38 CEST 2014",
+                "GIT_AUTHOR_NAME": "Foo Bar",
+                "GIT_AUTHOR_EMAIL": "foo@example.com",
+                "GIT_COMMITTER_NAME": "Foo Bar",
+                "GIT_COMMITTER_EMAIL": "foo@example.com",
+            },
+        )
 
-    subprocess.check_output(  # nosec - unit test support.
-        ["git", "checkout", "-q", "-b", "testing"]
-    )
-    with open("third.txt", "w") as datafile:
-        datafile.write("333")
-    subprocess.check_output(["git", "add", "third.txt"])  # nosec - unit test support.
-    subprocess.check_output(  # nosec - unit test support.
-        ["git", "commit", "third.txt", "-m", "Third commit"],
-        env={
-            "GIT_COMMITTER_DATE": "Thu Sep  1 10:14:29 CEST 2016",
-            "GIT_AUTHOR_DATE": "Thu Sep  1 10:14:29 CEST 2016",
-            "GIT_AUTHOR_NAME": "Foo Bar",
-            "GIT_AUTHOR_EMAIL": "foo@example.com",
-            "GIT_COMMITTER_NAME": "Foo Bar",
-            "GIT_COMMITTER_EMAIL": "foo@example.com",
-        },
-    )
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "checkout", "-q", "-b", "testing"]
+        )
+        with open("third.txt", "w") as datafile:
+            datafile.write("333")
+        subprocess.check_output(
+            ["git", "add", "third.txt"]
+        )  # nosec - unit test support.
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "commit", "third.txt", "-m", "Third commit"],
+            env={
+                "GIT_COMMITTER_DATE": "Thu Sep  1 10:14:29 CEST 2016",
+                "GIT_AUTHOR_DATE": "Thu Sep  1 10:14:29 CEST 2016",
+                "GIT_AUTHOR_NAME": "Foo Bar",
+                "GIT_AUTHOR_EMAIL": "foo@example.com",
+                "GIT_COMMITTER_NAME": "Foo Bar",
+                "GIT_COMMITTER_EMAIL": "foo@example.com",
+            },
+        )
 
-    subprocess.check_output(  # nosec - unit test support.
-        ["git", "checkout", "-q", "master"]
-    )
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "checkout", "-q", "master"]
+        )
 
-    # Go into the tempdir
-    os.chdir("..")
+        # Go into the tempdir
+        os.chdir("..")
+
+        yield
+
+    # Check that chdir() contextmanager worker
+    assert original_cwd == os.getcwd()
 
 
 def test_simple_clone(setup):
@@ -202,34 +215,42 @@ def test_short_replacement():
 
 
 def test_installer_add_late_command(tmp_path):
-    os.chdir(str(tmp_path))
-    # Create preseed file with a few lines.
-    with open("preseed.cfg", "w") as preseedfile:
-        preseedfile.write("d-i netcfg/dhcp_timeout string 60\n")
-        preseedfile.write("d-i pkgsel/include string openssh-server build-essential\n")
-        preseedfile.write("d-i finish-install/reboot_in_progress note\n")
-    preseedfile = "preseed.cfg"
+    original_cwd = os.getcwd()
 
-    # Test adding new preseed/late_command line.
-    extra_command = "cmd1"
-    installers.add_late_command(preseedfile, extra_command)
-    with open("preseed.cfg") as f_in:
-        file_content = f_in.read()
-        assert "d-i preseed/late_command string cmd1" in file_content
+    with chdir(tmp_path):
+        os.chdir(str(tmp_path))
+        # Create preseed file with a few lines.
+        with open("preseed.cfg", "w") as preseedfile:
+            preseedfile.write("d-i netcfg/dhcp_timeout string 60\n")
+            preseedfile.write(
+                "d-i pkgsel/include string openssh-server build-essential\n"
+            )
+            preseedfile.write("d-i finish-install/reboot_in_progress note\n")
+        preseedfile = "preseed.cfg"
 
-    # Test appending the second command to existing presseed/late_command line.
-    extra_command = "cmd2 ;"
-    installers.add_late_command(preseedfile, extra_command)
-    with open("preseed.cfg") as f_in:
-        file_content = f_in.read()
-        assert "d-i preseed/late_command string cmd1; cmd2 ;" in file_content
+        # Test adding new preseed/late_command line.
+        extra_command = "cmd1"
+        installers.add_late_command(preseedfile, extra_command)
+        with open("preseed.cfg") as f_in:
+            file_content = f_in.read()
+            assert "d-i preseed/late_command string cmd1" in file_content
 
-    # Test if it strips off extra space and semi-colon.
-    extra_command = "cmd3"
-    installers.add_late_command(preseedfile, extra_command)
-    with open("preseed.cfg") as f_in:
-        file_content = f_in.read()
-        assert "d-i preseed/late_command string cmd1; cmd2; cmd3" in file_content
+        # Test appending the second command to existing presseed/late_command line.
+        extra_command = "cmd2 ;"
+        installers.add_late_command(preseedfile, extra_command)
+        with open("preseed.cfg") as f_in:
+            file_content = f_in.read()
+            assert "d-i preseed/late_command string cmd1; cmd2 ;" in file_content
+
+        # Test if it strips off extra space and semi-colon.
+        extra_command = "cmd3"
+        installers.add_late_command(preseedfile, extra_command)
+        with open("preseed.cfg") as f_in:
+            file_content = f_in.read()
+            assert "d-i preseed/late_command string cmd1; cmd2; cmd3" in file_content
+
+    # Check that chdir() contextmanager worker
+    assert original_cwd == os.getcwd()
 
 
 @unittest.skipIf(infrastructure_error("dpkg-query"), "dpkg-query not installed")
