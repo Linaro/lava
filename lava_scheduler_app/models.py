@@ -232,8 +232,8 @@ class DeviceType(RestrictedObject):
 
     objects = RestrictedDeviceTypeQuerySet.as_manager()
 
-    name = models.SlugField(
-        primary_key=True, editable=True
+    name = models.CharField(
+        verbose_name=_("Name"), max_length=50, primary_key=True, editable=True
     )  # read-only after create via admin.py
 
     architecture = models.ForeignKey(

@@ -5,8 +5,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from django.urls import path
+from django.urls import path, register_converter
 
+from lava_common.converters import JobIdConverter
 from lava_scheduler_app.views import (
     active_device_list,
     active_jobs,
@@ -71,6 +72,8 @@ from lava_scheduler_app.views import (
     workers,
 )
 
+register_converter(JobIdConverter, "job_id")
+
 urlpatterns = (
     path("", index, name="lava.scheduler"),
     path("reports", reports, name="lava.scheduler.reports"),
@@ -81,7 +84,7 @@ urlpatterns = (
     path("jobsubmit", job_submit, name="lava.scheduler.job.submit"),
     path("device_types", all_device_types, name="lava.scheduler.device_types"),
     path(
-        "device_type/<slug:pk>",
+        "device_type/<str:pk>",
         device_type_detail,
         name="lava.scheduler.device_type.detail",
     ),
@@ -237,7 +240,7 @@ urlpatterns = (
         name="lava.scheduler.device_report",
     ),
     path(
-        "reports/device_type/<slug:pk>",
+        "reports/device_type/<str:pk>",
         device_type_reports,
         name="lava.scheduler.device_type_report",
     ),
@@ -251,7 +254,7 @@ urlpatterns = (
     path("healthcheck", healthcheck, name="lava.scheduler.healthcheck"),
     path("running", running, name="lava.scheduler.running"),
     path(
-        "dthealthhistory/device_type/<slug:pk>",
+        "dthealthhistory/device_type/<str:pk>",
         device_type_health_history_log,
         name="lava.scheduler.device_type_health_history_log",
     ),
@@ -261,7 +264,7 @@ urlpatterns = (
         name="lava.scheduler.mydevices_health_history_log",
     ),
     path(
-        "devicetypeyaml/<slug:pk>",
+        "devicetypeyaml/<str:pk>",
         download_device_type_template,
         name="lava_scheduler_download_device_type_yaml",
     ),

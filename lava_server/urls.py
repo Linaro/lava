@@ -10,6 +10,7 @@ from django.urls import include, path, register_converter
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 
+from lava_common.converters import JobIdConverter
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
@@ -61,21 +62,6 @@ mapper.register(GroupsPermissionsAPI, "auth.groups.perms")
 mapper.register(UsersAPI, "auth.users")
 mapper.register(UsersGroupsAPI, "auth.users.groups")
 mapper.register(UsersPermissionsAPI, "auth.users.perms")
-
-
-# Custom Job id converter
-class JobIdConverter:
-    # Multipart job uses the job_id.sub_id format
-    # Example: 12345.9876
-    # To preserve accuracy job id has to be string
-    regex = r"[0-9]+|[0-9]+\.[0-9]+"
-
-    def to_python(self, value):
-        return value
-
-    def to_url(self, value):
-        return value
-
 
 register_converter(JobIdConverter, "job_id")
 
