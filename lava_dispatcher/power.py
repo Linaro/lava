@@ -16,9 +16,11 @@ from lava_common.constants import REBOOT_COMMAND_LIST
 from lava_common.exceptions import InfrastructureError, JobError, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.utils.selectors import ShellSessionSelector
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class ResetDevice(Action):
@@ -265,7 +267,8 @@ class ReadFeedback(Action):
             self.duration = Timeout.parse(dur)
 
     def run(self, connection, max_end_time):
-        feedbacks = []
+        selector = ShellSessionSelector()
+        feedbacks: list[tuple[str, ShellSession]] = []
         for feedback_ns in self.data.keys():
             if feedback_ns == self.parameters.get("namespace"):
                 if not self.repeat:
@@ -279,33 +282,33 @@ class ReadFeedback(Action):
             )
             if feedback_connection:
                 feedbacks.append((feedback_ns, feedback_connection))
+                selector.add_feedback_connection(
+                    feedback_connection, namespace=feedback_ns
+                )
             else:
                 self.logger.debug("No connection for namespace %s", feedback_ns)
-        for feedback in feedbacks:
-            deadline = time.monotonic() + self.duration
-            while True:
-                timeout = max(deadline - time.monotonic(), 0)
-                bytes_read = feedback[1].listen_feedback(
-                    timeout=timeout, namespace=feedback[0]
-                )
-                # ignore empty or single newline-only content
-                if bytes_read > 1:
-                    self.logger.debug(
-                        "Listened to connection for namespace '%s' for up to %ds",
-                        feedback[0],
-                        self.duration,
-                    )
-                # If we're not finalizing, we make only one attempt to read
-                # feedback. Otherwise, we try to consume more output while
-                # it's coming (i.e. until EOF or timeout expires).
-                if not self.finalize or bytes_read == 0 or timeout == 0:
-                    break
+
+        with selector.selector:
+            # If we're not finalizing, we make only one attempt to read
+            # feedback. Otherwise, we try to consume more output while
+            # it's coming (i.e. until EOF or timeout expires).
+            if not self.finalize:
+                selector.listen_feedback(self.duration)
+            else:
+                selector.listen_feedback_instant()
+
+        for namespace, shell_session in feedbacks:
+            self.logger.debug(
+                "Listened to connection for namespace '%s' for up to %ds",
+                namespace,
+                self.duration,
+            )
+
             if self.finalize:
-                self.logger.info(
-                    "Finalising connection for namespace '%s'", feedback[0]
-                )
+                self.logger.info("Finalising connection for namespace '%s'", namespace)
                 # Finalize all connections associated with each namespace.
-                feedback[1].finalise()
+                shell_session.finalise()
+
         super().run(connection, max_end_time)
         return connection
 
