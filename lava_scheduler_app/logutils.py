@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -15,6 +16,7 @@ import struct
 from importlib import import_module
 from json import dumps as json_dumps
 from json import loads as json_loads
+from typing import TYPE_CHECKING
 
 import requests
 from django.conf import settings
@@ -22,21 +24,33 @@ from django.conf import settings
 from lava_common.exceptions import ConfigurationError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+    from typing import Any, BinaryIO
+
+    from lava_scheduler_app.models import TestJob
+
 
 class Logs:
-    def line_count(self, job):
+    def line_count(self, job: TestJob) -> int:
         raise NotImplementedError("Should implement this method")
 
-    def open(self, job):
+    def open(self, job: TestJob) -> BinaryIO:
         raise NotImplementedError("Should implement this method")
 
-    def read(self, job, start=0, end=None):
+    def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         raise NotImplementedError("Should implement this method")
 
-    def size(self, job, start=0, end=None):
+    def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         raise NotImplementedError("Should implement this method")
 
-    def write(self, job, line, output=None, idx=None):
+    def write(
+        self,
+        job: TestJob,
+        line: bytes,
+        output: BinaryIO | None = None,
+        idx: BinaryIO | None = None,
+    ) -> None:
         raise NotImplementedError("Should implement this method")
 
 
@@ -44,14 +58,14 @@ class LogsFilesystem(Logs):
     PACK_FORMAT = "=Q"
     PACK_SIZE = struct.calcsize(PACK_FORMAT)
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.index_filename = "output.idx"
         self.log_filename = "output.yaml"
         self.log_size_filename = "output.yaml.size"
         self.compressed_log_filename = "output.yaml.xz"
         super().__init__()
 
-    def _build_index(self, job):
+    def _build_index(self, job: TestJob) -> None:
         directory = pathlib.Path(job.output_dir)
         with self.open(job) as f_log:
             with open(str(directory / self.index_filename), "wb") as f_idx:
@@ -61,7 +75,7 @@ class LogsFilesystem(Logs):
                     f_idx.write(struct.pack(self.PACK_FORMAT, f_log.tell()))
                     line = f_log.readline()
 
-    def _get_line_offset(self, f_idx, line):
+    def _get_line_offset(self, f_idx: BinaryIO, line: int) -> int | None:
         f_idx.seek(self.PACK_SIZE * line, 0)
         data = f_idx.read(self.PACK_SIZE)
         if data:
@@ -69,17 +83,17 @@ class LogsFilesystem(Logs):
         else:
             return None
 
-    def line_count(self, job):
+    def line_count(self, job: TestJob) -> int:
         st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
         return int(st.st_size / self.PACK_SIZE)
 
-    def open(self, job):
+    def open(self, job: TestJob) -> BinaryIO:
         directory = pathlib.Path(job.output_dir)
         with contextlib.suppress(FileNotFoundError):
             return open(str(directory / self.log_filename), "rb")
         return lzma.open(str(directory / self.compressed_log_filename), "rb")
 
-    def read(self, job, start=0, end=None):
+    def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         directory = pathlib.Path(job.output_dir)
 
         # Only create the index if needed
@@ -106,7 +120,7 @@ class LogsFilesystem(Logs):
                     return ""
                 return f_log.read(end_offset - start_offset).decode("utf-8")
 
-    def size(self, job):
+    def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         directory = pathlib.Path(job.output_dir)
         with contextlib.suppress(FileNotFoundError):
             return (directory / self.log_filename).stat().st_size
@@ -114,7 +128,13 @@ class LogsFilesystem(Logs):
             return int((directory / self.log_size_filename).read_text(encoding="utf-8"))
         return None
 
-    def write(self, job, line, output=None, idx=None):
+    def write(
+        self,
+        job: TestJob,
+        line: bytes,
+        output: BinaryIO | None = None,
+        idx: BinaryIO | None = None,
+    ) -> None:
         idx.write(struct.pack(self.PACK_FORMAT, output.tell()))
         idx.flush()
         output.write(line)
@@ -122,7 +142,7 @@ class LogsFilesystem(Logs):
 
 
 class LogsMongo(Logs):
-    def __init__(self):
+    def __init__(self) -> None:
         import pymongo
 
         self.client = pymongo.MongoClient(settings.MONGO_DB_URI)
@@ -139,7 +159,9 @@ class LogsMongo(Logs):
         self.db.logs.create_index([("job_id", 1), ("dt", 1)])
         super().__init__()
 
-    def _get_docs(self, job, start=0, end=None):
+    def _get_docs(
+        self, job: TestJob, start: int = 0, end: int | None = None
+    ) -> Iterable[dict[str, Any]]:
         import pymongo
 
         limit = 0
@@ -156,26 +178,32 @@ class LogsMongo(Logs):
             limit=limit,
         )
 
-    def line_count(self, job):
+    def line_count(self, job: TestJob) -> int:
         return self.db.logs.count_documents({"job_id": job.id})
 
-    def open(self, job):
+    def open(self, job: TestJob) -> BinaryIO:
         stream = io.BytesIO(yaml_safe_dump(list(self._get_docs(job))).encode("utf-8"))
         stream.seek(0)
         return stream
 
-    def read(self, job, start=0, end=None):
+    def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         docs = self._get_docs(job, start, end)
         if not docs:
             return ""
 
         return yaml_safe_dump(list(docs))
 
-    def size(self, job, start=0, end=None):
+    def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(list(docs)).encode("utf-8"))
 
-    def write(self, job, line, output=None, idx=None):
+    def write(
+        self,
+        job: TestJob,
+        line: bytes,
+        output: BinaryIO | None = None,
+        idx: BinaryIO | None = None,
+    ) -> None:
         line = yaml_safe_load(line)[0]
 
         self.db.logs.insert_one(
@@ -186,7 +214,7 @@ class LogsMongo(Logs):
 class LogsElasticsearch(Logs):
     MAX_RESULTS = 1000000
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_url = "%s%s/" % (
             settings.ELASTICSEARCH_URI,
             settings.ELASTICSEARCH_INDEX,
@@ -203,7 +231,9 @@ class LogsElasticsearch(Logs):
         requests.put(self.api_url, json_dumps(params), headers=self.headers)
         super().__init__()
 
-    def _get_docs(self, job, start=0, end=None):
+    def _get_docs(
+        self, job: TestJob, start: int = 0, end: int | None = None
+    ) -> list[dict[str, str]]:
         if not end:
             end = self.MAX_RESULTS
 
@@ -238,7 +268,7 @@ class LogsElasticsearch(Logs):
             result.append(doc)
         return result
 
-    def line_count(self, job):
+    def line_count(self, job: TestJob) -> int:
         response = requests.get(
             "%s_search/" % self.api_url,
             params={"query": {"match": {"job_id": job.id}}, "_source": False},
@@ -247,24 +277,30 @@ class LogsElasticsearch(Logs):
             return response["hits"]["total"]["value"]
         return 0
 
-    def open(self, job):
+    def open(self, job: TestJob) -> BinaryIO:
         stream = io.BytesIO(yaml_safe_dump(self._get_docs(job)).encode("utf-8"))
         stream.seek(0)
         return stream
 
-    def read(self, job, start=0, end=None):
+    def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         docs = self._get_docs(job, start, end)
         if not docs:
             return ""
 
         return yaml_safe_dump(docs)
 
-    def size(self, job, start=0, end=None):
+    def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(docs).encode("utf-8"))
 
-    def write(self, job, line, output=None, idx=None):
-        line = yaml_safe_load(line)[0]
+    def write(
+        self,
+        job: TestJob,
+        line: bytes,
+        output: BinaryIO | None = None,
+        idx: BinaryIO | None = None,
+    ) -> None:
+        line: dict[str, Any] = yaml_safe_load(line)[0]
         dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
         line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
         if line["lvl"] == "results":
@@ -275,7 +311,7 @@ class LogsElasticsearch(Logs):
 
 
 class LogsFirestore(Logs):
-    def __init__(self):
+    def __init__(self) -> None:
         from google.cloud import firestore
 
         # Project ID is determined by the GCLOUD_PROJECT environment variable
@@ -286,7 +322,7 @@ class LogsFirestore(Logs):
         self.root_collection = "logs"
         super().__init__()
 
-    def line_count(self, job):
+    def line_count(self, job: TestJob) -> int:
         doc_ref = (
             self.db.collection(self.root_collection)
             .document(
@@ -297,10 +333,10 @@ class LogsFirestore(Logs):
         )
         return len(doc_ref.stream())
 
-    def open(self, job):
+    def open(self, job: TestJob) -> BinaryIO:
         raise NotImplementedError("Should implement this method")
 
-    def read(self, job, start=0, end=None):
+    def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         # TODO: read() method should utilize start and end numbers.
         docs = (
             self.db.collection(self.root_collection)
@@ -322,12 +358,18 @@ class LogsFirestore(Logs):
             )
         return "\n".join(["- %s" % x for x in result])
 
-    def size(self, job, start=0, end=None):
+    def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         # TODO: should be implemented.
         return None
 
-    def write(self, job, line, output=None, idx=None):
-        line = yaml_safe_load(line)[0]
+    def write(
+        self,
+        job: TestJob,
+        line: bytes,
+        output: BinaryIO | None = None,
+        idx: BinaryIO | None = None,
+    ) -> None:
+        line: dict[str, Any] = yaml_safe_load(line)[0]
         doc_ref = (
             self.db.collection(self.root_collection)
             .document(
@@ -340,9 +382,11 @@ class LogsFirestore(Logs):
         doc_ref.set({"lvl": line["lvl"], "msg": line["msg"]})
 
 
-logs_backend_str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
+logs_backend_str: str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
 try:
-    logs_class = getattr(import_module(logs_backend_str[0]), logs_backend_str[1])
+    logs_class: type[Logs] = getattr(
+        import_module(logs_backend_str[0]), logs_backend_str[1]
+    )
 except (AttributeError, ModuleNotFoundError) as exc:
     raise ConfigurationError(str(exc))
-logs_instance = logs_class()
+logs_instance: Logs = logs_class()
