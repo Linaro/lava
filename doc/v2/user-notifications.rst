@@ -57,8 +57,7 @@ The **callbacks** section supports list of the following options:
 * **token** This option is used to supply the API token of the
   authenticated user, appended as the POST request parameter. If the submitting
   user has an XMLRPC auth token with a description that matches this field, that
-  token is returned instead. The token is included in the POST data, and also in
-  an Authorization header.
+  token is returned instead. The token is included in the Authorization header.
 
 * **header** In case **token** is defined this option gives possibility to define
   custom header to be used instead of Authorization.
