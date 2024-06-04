@@ -1,3 +1,12 @@
+lava (2024.05-1) unstable; urgency=medium
+
+  * LAVA Software 2024.05 release
+
+  [ Igor Ponomarev ]
+  * [7e7450e41] Make lava_dispatcher not depend on lava_dispatcher_host
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 04 Jun 2024 14:51:49 +0200
+
 lava (2024.03-1) unstable; urgency=medium
 
   * LAVA Software 2024.03 release
