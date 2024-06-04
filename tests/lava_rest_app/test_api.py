@@ -132,12 +132,18 @@ class TestRestApi:
             state=Worker.STATE_OFFLINE,
             health=Worker.HEALTH_MAINTENANCE,
         )
+        self.spec_worker1 = Worker.objects.create(
+            hostname="worker!~`@[].'",
+            state=Worker.STATE_ONLINE,
+            health=Worker.HEALTH_ACTIVE,
+        )
 
         # create devicetypes
         self.public_device_type1 = DeviceType.objects.create(name="public_device_type1")
         self.restricted_device_type1 = DeviceType.objects.create(
             name="restricted_device_type1"
         )
+        self.spec_device_type1 = DeviceType.objects.create(name="device_type!'.]~!")
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.restricted_device_type1
         )
@@ -181,6 +187,12 @@ class TestRestApi:
             device_type=self.public_device_type1,
             worker_host=self.worker1,
         )
+        self.spec_char_device1 = Device.objects.create(
+            hostname="device:.'][~;!",
+            device_type=self.public_device_type1,
+            worker_host=self.worker1,
+        )
+
         GroupDevicePermission.objects.assign_perm(
             Device.VIEW_PERMISSION, self.group1, self.restricted_device1
         )
@@ -754,20 +766,26 @@ ok 2 bar
             self.userclient,
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
-        assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
-        assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
+        assert (
+            data["results"][0]["hostname"] == "device:.'][~;!"
+        )  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "public01"  # nosec - unit test support
+        assert data["results"][2]["hostname"] == "public02"  # nosec - unit test support
 
     def test_devices_admin(self):
         data = self.hit(
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
-        assert len(data["results"]) == 4  # nosec - unit test support
-        assert data["results"][0]["hostname"] == "public01"  # nosec - unit test support
-        assert data["results"][1]["hostname"] == "public02"  # nosec - unit test support
+        assert len(data["results"]) == 5  # nosec - unit test support
         assert (
-            data["results"][2]["hostname"] == "restricted_device1"
+            data["results"][0]["hostname"] == "device:.'][~;!"
+        )  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "public01"  # nosec - unit test support
+        assert data["results"][2]["hostname"] == "public02"  # nosec - unit test support
+        assert (
+            data["results"][3]["hostname"] == "restricted_device1"
         )  # nosec - unit test support
 
     def test_devices_retrieve(self):
@@ -776,6 +794,14 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "devices/public01/",
         )
         assert data["hostname"] == "public01"  # nosec - unit test support
+        assert data["device_type"] == "public_device_type1"  # nosec - unit test support
+
+        # Test spec chars in URL
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version]) + "devices/device:.'][~;!/",
+        )
+        assert data["hostname"] == "device:.'][~;!"  # nosec - unit test support
         assert data["device_type"] == "public_device_type1"  # nosec - unit test support
 
     def test_devices_create_unauthorized(self):
@@ -811,6 +837,12 @@ ok 2 bar
     def test_devices_delete(self):
         response = self.adminclient.delete(
             reverse("api-root", args=[self.version]) + "devices/public02/"
+        )
+        assert response.status_code == 204  # nosec - unit test support
+
+    def test_devices_delete_spec(self):
+        response = self.adminclient.delete(
+            reverse("api-root", args=[self.version]) + "devices/device:.'][~;!/"
         )
         assert response.status_code == 204  # nosec - unit test support
 
@@ -856,6 +888,13 @@ ok 2 bar
         )
         assert logentry.user == self.admin
         assert logentry.change_message == "Unknown → Good"
+
+        # Update spec
+        response = self.adminclient.put(
+            reverse("api-root", args=[self.version]) + "devices/device:.'][~;!/",
+            {"device_type": "restricted_device_type1", "health": "Unknown"},
+        )
+        assert response.status_code == 200  # nosec - unit test support
 
     def test_devices_get_dictionary(self, tmp_path):
         # invalid context
@@ -952,7 +991,7 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devices/?state=Idle",
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
@@ -978,18 +1017,25 @@ ok 2 bar
         data = self.hit(
             self.userclient, reverse("api-root", args=[self.version]) + "devicetypes/"
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
 
     def test_devicetypes_admin(self):
         data = self.hit(
             self.adminclient, reverse("api-root", args=[self.version]) + "devicetypes/"
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
 
     def test_devicetype_view(self):
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
             + "devicetypes/%s/" % self.public_device_type1.name
+        )
+        assert response.status_code == 200  # nosec - unit test support
+
+    def test_devicetype_view_spec(self):
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "devicetypes/%s/" % self.spec_device_type1.name
         )
         assert response.status_code == 200  # nosec - unit test support
 
@@ -1116,14 +1162,14 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "devicetypes/?display=True",
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
             reverse("api-root", args=[self.version])
             + "devicetypes/?display__in=True,False",
         )
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
@@ -1146,18 +1192,24 @@ ok 2 bar
         )
         # We get 3 workers because the default one (example.com) is always
         # created by the migrations
-        assert len(data["results"]) == 3  # nosec - unit test support
+        assert len(data["results"]) == 4  # nosec - unit test support
         assert (  # nosec - unit test support
             data["results"][0]["hostname"] == "example.com"
         )
-        assert data["results"][1]["hostname"] == "worker1"  # nosec - unit test support
+        assert (
+            data["results"][1]["hostname"] == "worker!~`@[].'"
+        )  # nosec - unit test support
         assert data["results"][1]["health"] == "Active"  # nosec - unit test support
         assert data["results"][1]["state"] == "Online"  # nosec - unit test support
-        assert data["results"][2]["hostname"] == "worker2"  # nosec - unit test support
+        assert data["results"][2]["hostname"] == "worker1"  # nosec - unit test support
+        assert data["results"][2]["health"] == "Active"  # nosec - unit test support
+        assert data["results"][2]["state"] == "Online"  # nosec - unit test support
+
+        assert data["results"][3]["hostname"] == "worker2"  # nosec - unit test support
         assert (  # nosec - unit test support
-            data["results"][2]["health"] == "Maintenance"
+            data["results"][3]["health"] == "Maintenance"
         )
-        assert data["results"][2]["state"] == "Offline"  # nosec - unit test support
+        assert data["results"][3]["state"] == "Offline"  # nosec - unit test support
 
     def test_workers_retrieve(self):
         data = self.hit(
@@ -1166,6 +1218,16 @@ ok 2 bar
             + "workers/%s/" % self.worker1.hostname,
         )
         assert data["hostname"] == "worker1"  # nosec - unit test support
+        assert data["state"] == "Online"  # nosec - unit test support
+        assert data["health"] == "Active"  # nosec - unit test support
+
+    def test_workers_retrieve_spec(self):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "workers/%s/" % self.spec_worker1.hostname,
+        )
+        assert data["hostname"] == "worker!~`@[].'"  # nosec - unit test support
         assert data["state"] == "Online"  # nosec - unit test support
         assert data["health"] == "Active"  # nosec - unit test support
 
@@ -1359,17 +1421,24 @@ ok 2 bar
             self.adminclient,
             reverse("api-root", args=[self.version]) + "workers/?health=Active",
         )
-        assert len(data["results"]) == 2  # nosec - unit test support
+        assert len(data["results"]) == 3  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
             reverse("api-root", args=[self.version]) + "workers/?state=Online",
         )
-        assert len(data["results"]) == 1  # nosec - unit test support
+        assert len(data["results"]) == 2  # nosec - unit test support
 
         data = self.hit(
             self.adminclient,
             reverse("api-root", args=[self.version]) + "workers/?hostname=worker1",
+        )
+        assert len(data["results"]) == 1  # nosec - unit test support
+
+        data = self.hit(
+            self.adminclient,
+            reverse("api-root", args=[self.version])
+            + "workers/?hostname=worker!~`@[].'",
         )
         assert len(data["results"]) == 1  # nosec - unit test support
 

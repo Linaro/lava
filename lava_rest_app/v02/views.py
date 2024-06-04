@@ -599,6 +599,7 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
         "display",
     )
     filterset_class = filters.DeviceTypeFilter
+    lookup_value_regex = r"[^\0/]+"
 
     def get_queryset(self):
         return DeviceType.objects.visible_by_user(self.request.user).prefetch_related(
@@ -736,7 +737,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
     filterset_class = filters.DeviceFilter
     parser_classes = (JSONParser, FormParser, MultiPartParser)
 
-    lookup_value_regex = r"[\_\w0-9.-]+"
+    lookup_value_regex = r"[^\0/]+"
     serializer_class = serializers.DeviceSerializer
     filterset_class = filters.DeviceFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
@@ -869,7 +870,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.WorkerSerializer
     filterset_fields = "__all__"
     ordering_fields = "__all__"
-    lookup_value_regex = r"[\_\w0-9.-]+"
+    lookup_value_regex = r"[^\0/]+"
     serializer_class = serializers.WorkerSerializer
     filterset_class = filters.WorkerFilter
     permission_classes = [DjangoModelPermissionsOrAnonReadOnly]
