@@ -51,10 +51,10 @@ def remove_device_container_mappings(job_id):
 
 def validate_device_info(device_info):
     if not device_info:
-        raise ValueError("Addind mapping for empty device info: %r" % device_info)
+        raise ValueError("Adding mapping for empty device info: %r" % device_info)
     if not any(device_info.values()):
         raise ValueError(
-            "Addind mapping for device info with empty keys: %r" % device_info
+            "Adding mapping for device info with empty keys: %r" % device_info
         )
 
 
