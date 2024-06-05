@@ -244,6 +244,10 @@ class DockerRun:
             host = "x86_64"
         if container == "amd64":
             container = "x86_64"
+        if host == "arm64":
+            host = "aarch64"
+        if container == "arm64":
+            container = "aarch64"
         if host != container:
             logger = logging.getLogger("dispatcher")
             logger.warning(
