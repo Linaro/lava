@@ -72,6 +72,8 @@ config_worker() {
 
   case "${INSTALL}" in
     docker_worker)
+      systemctl enable lava-dispatcher-host.socket
+      systemctl start lava-dispatcher-host.socket
       systemctl enable lava-docker-worker.service
       systemctl restart lava-docker-worker.service
       ;;
