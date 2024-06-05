@@ -127,6 +127,10 @@ class PostprocessWithDocker(Action):
 
         docker.workdir(LAVA_DOWNLOADS)
 
-        docker.run(f"{LAVA_DOWNLOADS}/postprocess.sh", action=self)
+        docker.run(
+            f"{LAVA_DOWNLOADS}/postprocess.sh",
+            action=self,
+            error_msg="Post-processing of downloads failed",
+        )
 
         return connection

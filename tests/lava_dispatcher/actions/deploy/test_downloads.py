@@ -115,4 +115,8 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         self.assertIn("date\n", script_text)
         self.assertIn("echo HELLO WORLD\n", script_text)
 
-        docker_run_mock.assert_called_with(MOCK_ANY, action=self.action)
+        docker_run_mock.assert_called_with(
+            MOCK_ANY,
+            action=self.action,
+            error_msg="Post-processing of downloads failed",
+        )
