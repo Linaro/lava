@@ -136,7 +136,7 @@ class DockerRun:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
-    def run(self, *args, action, capture=False):
+    def run(self, *args, action, capture=False, error_msg=None):
         self.prepare(action)
         cmd = self.cmdline(*args)
         if capture:
@@ -144,7 +144,7 @@ class DockerRun:
                 "utf-8", errors="replace"
             )
         else:
-            return action.run_cmd(cmd)
+            return action.run_cmd(cmd, error_msg=error_msg)
 
     def prepare(self, action):
         pull = not self.__local__
