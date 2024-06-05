@@ -23,7 +23,10 @@ variables:
   before_script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
   needs: []
-  except: [schedules]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
   script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
 
@@ -65,16 +68,15 @@ aarch64/dispatcher-debian-11:
   extends: .dispatcher
   tags:
     - saas-linux-medium-arm64
-  only:
-    refs:
-      - master
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
 aarch64/server-debian-11:
   extends: .server
   tags:
     - saas-linux-medium-arm64
-  only:
-    refs:
-      - master
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
 
 ###########
 # Analyze #
@@ -83,9 +85,10 @@ aarch64/server-debian-11:
   extends: .job
   image: registry.gitlab.com/lava/ci-images/amd64/analyze
   stage: analyze
-  except:
-    refs:
-      - tags
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "push"
 
 black:
   extends: .analyze
@@ -151,7 +154,9 @@ doc:
 .debian_build:
   extends: .job
   stage: build
-  except: []
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_PIPELINE_SOURCE == "push"
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
   artifacts:
     paths:
@@ -186,10 +191,9 @@ debian/13:
 
 .docker_aarch64:
   extends: .docker
-  only:
-    refs:
-      - master
-      - tags
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_COMMIT_TAG
   tags:
     - saas-linux-medium-arm64
   services:
@@ -226,17 +230,15 @@ publish-packages/daily:
 
 publish-packages/release:
   extends: .publish-packages
-  only:
-    refs:
-      - tags
+  rules:
+    - if: $CI_COMMIT_TAG
   variables:
     LAVA_APT_CHANNEL: release
 
 pages:
   stage: deploy
-  only:
-    refs:
-      - tags
+  rules:
+    - if: $CI_COMMIT_TAG
   needs:
     - doc
   script:
@@ -247,9 +249,8 @@ pages:
 
 publish-docs:
   stage: deploy
-  only:
-    refs:
-      - tags
+  rules:
+    - if: $CI_COMMIT_TAG
   needs:
     - pages
   trigger:
