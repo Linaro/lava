@@ -86,7 +86,7 @@
   {% endif %}
   {% if testcase.test_set %}
       {% if test_cases|length > 1 %}
-      <a href="{% url 'lava.results.testcase' testcase.id testcase.test_set testcase.name %}"</a>
+      <a href="{% url 'lava.results.testset' job.id suite.name testcase.test_set.name testcase.name %}"</a>
       {% endif %}
   {% endif %}
   {% if testcase.action_metadata %}
