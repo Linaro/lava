@@ -67,6 +67,12 @@ actions:
       lxc:
       ssh:
       minimal:
+      u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('=>') }}
+          interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
+          interrupt_char: "{{ interrupt_char|default('') }}"
+          needs_interrupt: {{ uboot_needs_interrupt|default(True) }}
       fastboot: {{ fastboot_sequence }}
 {{- fastboot_boot_uboot }}
 {{- fastboot_boot_grub }}
