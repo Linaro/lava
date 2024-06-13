@@ -5,7 +5,6 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
 from __future__ import annotations
 
 import asyncio
@@ -27,11 +26,11 @@ from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import partial
+from json import loads as json_loads
 from pathlib import Path
 from typing import Any, NoReturn
 
 import aiohttp
-import requests
 import sentry_sdk
 import yaml
 
@@ -48,7 +47,6 @@ FINISH_MAX_DURATION = 120
 
 TIMEOUT = 60 * 10  # http timeout to 10 minutes
 WORKER_DIR = Path(WORKER_DIR)
-HEADERS = {"User-Agent": f"lava-worker {__version__}"}
 
 
 #########
@@ -58,8 +56,6 @@ HEADERS = {"User-Agent": f"lava-worker {__version__}"}
 logging.Formatter.convert = time.gmtime
 LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
-
-SESSION = requests.Session()
 
 ping_interval = 20
 debug = False
@@ -111,30 +107,37 @@ class Response:
     status_code: int
     text: str
 
-    def json(self):
-        raise NotImplementedError()
+    def json(self) -> Any:
+        return json_loads(self.text)
 
 
-def requests_get(
-    url: str, token: str, params: dict[str, str] = None
-) -> requests.Response | Response:
+async def aiohttp_get(
+    session: aiohttp.ClientSession,
+    url: str,
+    token: str,
+    params: dict[str, str] | None = None,
+) -> Response:
     if params is None:
         params = {}
 
     try:
-        headers = {**HEADERS, "LAVA-Token": token}
-        return SESSION.get(url, params=params, headers=headers, timeout=TIMEOUT)
-    except requests.RequestException as exc:
+        async with session.get(
+            url, params=params, headers={"LAVA-Token": token}, timeout=TIMEOUT
+        ) as request:
+            return Response(request.status, await request.text())
+    except aiohttp.ClientError as exc:
         return Response(503, str(exc))
 
 
-def requests_post(
-    url: str, token: str | None, data: dict[str, str]
-) -> requests.Response | Response:
+async def aiohttp_post(
+    session: aiohttp.ClientSession, url: str, token: str | None, data: dict[str, str]
+) -> Response:
     try:
-        headers = {**HEADERS, "LAVA-Token": token}
-        return SESSION.post(url, data=data, headers=headers, timeout=TIMEOUT)
-    except requests.RequestException as exc:
+        async with session.post(
+            url, data=data, headers={"LAVA-Token": token}, timeout=TIMEOUT
+        ) as request:
+            return Response(request.status, await request.text())
+    except aiohttp.ClientError as exc:
         return Response(503, str(exc))
 
 
@@ -426,7 +429,7 @@ def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
             jobs.update(job_id, Job.CANCELING)
 
 
-async def check(url: str, jobs: JobsDB) -> None:
+async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
     loop = asyncio.get_running_loop()
 
     # Loop on running jobs
@@ -479,7 +482,9 @@ async def check(url: str, jobs: JobsDB) -> None:
             "description": job.description(),
         }
 
-        ret = requests_post(f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data)
+        ret = await aiohttp_post(
+            session, f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data
+        )
         if ret.status_code != 200:
             LOG.error("[%d] -> server error: code %d", job.job_id, ret.status_code)
             LOG.debug("[%d] --> %s", job.job_id, ret.text)
@@ -505,12 +510,13 @@ class VersionMismatch(Exception):
     pass
 
 
-def ping(url: str, token: str, name: str) -> dict[str, list]:
+async def ping(
+    session: aiohttp.ClientSession, url: str, token: str, name: str
+) -> dict[str, list]:
     LOG.debug("PING => server")
-    ret = requests_get(
-        f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}
+    ret = await aiohttp_get(
+        session, f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}
     )
-
     if ret.status_code != 200:
         LOG.error("-> server error: code %d", ret.status_code)
         LOG.debug("--> %s", ret.text)
@@ -528,7 +534,11 @@ def ping(url: str, token: str, name: str) -> dict[str, list]:
 
 
 async def register(
-    url: str, name: str, username: str = None, password: str = None
+    session: aiohttp.ClientSession,
+    url: str,
+    name: str,
+    username: str = None,
+    password: str = None,
 ) -> str:
     data = {"name": name}
     if username is not None and password is not None:
@@ -537,7 +547,7 @@ async def register(
 
     while True:
         LOG.debug("[INIT] Auto register as %r", name)
-        ret = requests_post(f"{url}{URL_WORKERS}", None, data=data)
+        ret = await aiohttp_post(session, f"{url}{URL_WORKERS}", None, data=data)
         if ret.status_code == 200:
             return ret.json()["token"]
         LOG.error("[INIT] -> server error: code %d", ret.status_code)
@@ -545,16 +555,26 @@ async def register(
         await asyncio.sleep(5)
 
 
-def running(
-    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+async def running(
+    session: aiohttp.ClientSession,
+    url: str,
+    jobs: JobsDB,
+    job_id: int,
+    token: str,
+    job_log_interval: int,
 ) -> None:
     job = jobs.get(job_id)
     if job is None:
-        start(url, jobs, job_id, token, job_log_interval)
+        await start(session, url, jobs, job_id, token, job_log_interval)
 
 
-def start(
-    url: str, jobs: JobsDB, job_id: int, token: str, job_log_interval: int
+async def start(
+    session: aiohttp.ClientSession,
+    url: str,
+    jobs: JobsDB,
+    job_id: int,
+    token: str,
+    job_log_interval: int,
 ) -> None:
     LOG.info("[%d] server => START", job_id)
     # Was the job already started?
@@ -562,7 +582,7 @@ def start(
 
     # Start the job
     if job is None:
-        ret = requests_get(f"{url}{URL_JOBS}{job_id}/", token)
+        ret = await aiohttp_get(session, f"{url}{URL_JOBS}{job_id}/", token)
         if ret.status_code != 200:
             LOG.error("[%d] -> server error: code %d", job_id, ret.status_code)
             LOG.debug("[%d] --> %s", job_id, ret.text)
@@ -610,7 +630,9 @@ def start(
 
     # Update the server state
     LOG.info("[%d] RUNNING => server", job_id)
-    ret = requests_post(f"{url}{URL_JOBS}{job_id}/", token, data={"state": "RUNNING"})
+    ret = await aiohttp_post(
+        session, f"{url}{URL_JOBS}{job_id}/", token, data={"state": "RUNNING"}
+    )
     if ret.status_code != 200:
         LOG.error("[%d] -> server error: code %d", job_id, ret.status_code)
         LOG.debug("[%d] --> %s", job_id, ret.text)
@@ -619,7 +641,7 @@ def start(
 ###############
 # Entrypoints #
 ###############
-async def handle(options, jobs: JobsDB) -> float:
+async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> float:
     begin: float = time.monotonic()
 
     name: str = options.name
@@ -628,7 +650,7 @@ async def handle(options, jobs: JobsDB) -> float:
     job_log_interval: int = options.job_log_interval
 
     try:
-        data = ping(url, token, name)
+        data = await ping(session, url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
         return max(ping_interval - (time.monotonic() - begin), 0)
@@ -639,7 +661,7 @@ async def handle(options, jobs: JobsDB) -> float:
 
     # running jobs
     for job in data.get("running", []):
-        running(url, jobs, job["id"], job["token"], job_log_interval)
+        await running(session, url, jobs, job["id"], job["token"], job_log_interval)
 
     # cancel jobs
     for job in data.get("cancel", []):
@@ -647,36 +669,38 @@ async def handle(options, jobs: JobsDB) -> float:
 
     # start jobs
     for job in data.get("start", []):
-        start(url, jobs, job["id"], job["token"], job_log_interval)
+        await start(session, url, jobs, job["id"], job["token"], job_log_interval)
 
     # Check job status
     # TODO: store the token and reuse it
-    await check(url, jobs)
+    await check(session, url, jobs)
 
     # Compute the sleep duration
     return max(ping_interval - (time.monotonic() - begin), 0)
 
 
-async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
+async def main_loop(
+    options, session: aiohttp.ClientSession, jobs: JobsDB, event: asyncio.Event
+) -> None:
     while True:
-        timeout = await handle(options, jobs)
+        timeout = await handle(options, session, jobs)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(event.wait(), timeout=timeout)
             event.clear()
 
 
-async def listen_for_events(options, event: asyncio.Event) -> None:
+async def listen_for_events(
+    options, session: aiohttp.ClientSession, event: asyncio.Event
+) -> None:
     retry_interval = 1
     while True:
         try:
             LOG.info("[EVENT] Connecting to websocket")
-            async with aiohttp.ClientSession(
-                headers={
-                    **HEADERS,
-                    "LAVA-Token": options.token,
-                    "LAVA-Host": options.name,
-                }
-            ) as session, session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
+            async with session.ws_connect(
+                f"{options.ws_url}",
+                headers={"LAVA-Token": options.token, "LAVA-Host": options.name},
+                heartbeat=30,
+            ) as ws:
                 retry_interval = 1
                 async for msg in ws:
                     if msg.type != aiohttp.WSMsgType.TEXT:
@@ -748,68 +772,77 @@ async def main() -> int:
     loop = asyncio.get_running_loop()
     loop.set_default_executor(THREAD_EXECUTOR)
 
-    try:
-        if options.username is not None:
-            LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
-            password = getpass.getpass()
-            options.token = await register(
-                options.url, options.name, options.username, password
-            )
-            options.token_file.write_text(options.token, encoding="utf-8")
-            options.token_file.chmod(0o600)
-
-        elif options.token is not None:
-            LOG.info("[INIT] Token  : '<command line>'")
-            options.token_file.write_text(options.token, encoding="utf-8")
-            options.token_file.chmod(0o600)
-            options.token_file = str(worker_dir / "token")
-        elif options.token_file.exists():
-            LOG.info("[INIT] Token  : file %r", str(options.token_file))
-            options.token = options.token_file.read_text(encoding="utf-8").rstrip("\n")
-        else:
-            LOG.info("[INIT] Token  : '<auto register>'")
-            options.token = await register(options.url, options.name)
-            options.token_file.write_text(options.token, encoding="utf-8")
-            options.token_file.chmod(0o600)
-
-        jobs = JobsDB(str(worker_dir / "db.sqlite3"))
-
-        event = asyncio.Event()
-        group = asyncio.gather(
-            main_loop(options, jobs, event), listen_for_events(options, event)
-        )
-
-        LOG.debug(f"LAVA worker pid is {os.getpid()}")
-        for signame in ("SIGINT", "SIGTERM"):
-            loop.add_signal_handler(
-                getattr(signal, signame), functools.partial(ask_exit, signame, group)
-            )
-
-        await group
-        return 0
-    except asyncio.CancelledError:
-        LOG.info("[EXIT] Canceled")
-        if options.wait_jobs:
-            LOG.info("[EXIT] Wait for jobs to finish")
-            while True:
-                await check(options.url, jobs)
-                all_ids = jobs.all_ids()
-                LOG.info(
-                    "[EXIT] => %d jobs ([%s])",
-                    len(all_ids),
-                    ", ".join(str(i) for i in all_ids),
+    async with aiohttp.ClientSession(
+        headers={
+            "User-Agent": f"lava-worker {__version__}",
+        }
+    ) as session:
+        try:
+            if options.username is not None:
+                LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
+                password = getpass.getpass()
+                options.token = await register(
+                    options.url, options.name, options.username, password
                 )
-                if not all_ids:
-                    break
-                await asyncio.sleep(ping_interval)
-        return 1
-    except VersionMismatch as exc:
-        LOG.info("[EXIT] %s" % exc)
-        return 0
-    except Exception as exc:
-        LOG.error("[EXIT] %s", exc)
-        LOG.exception(exc)
-        return 1
+                options.token_file.write_text(options.token, encoding="utf-8")
+                options.token_file.chmod(0o600)
+
+            elif options.token is not None:
+                LOG.info("[INIT] Token  : '<command line>'")
+                options.token_file.write_text(options.token, encoding="utf-8")
+                options.token_file.chmod(0o600)
+                options.token_file = str(worker_dir / "token")
+            elif options.token_file.exists():
+                LOG.info("[INIT] Token  : file %r", str(options.token_file))
+                options.token = options.token_file.read_text(encoding="utf-8").rstrip(
+                    "\n"
+                )
+            else:
+                LOG.info("[INIT] Token  : '<auto register>'")
+                options.token = await register(session, options.url, options.name)
+                options.token_file.write_text(options.token, encoding="utf-8")
+                options.token_file.chmod(0o600)
+
+            jobs = JobsDB(str(worker_dir / "db.sqlite3"))
+
+            event = asyncio.Event()
+            group = asyncio.gather(
+                main_loop(options, session, jobs, event),
+                listen_for_events(options, session, event),
+            )
+
+            LOG.debug(f"LAVA worker pid is {os.getpid()}")
+            for signame in ("SIGINT", "SIGTERM"):
+                loop.add_signal_handler(
+                    getattr(signal, signame),
+                    functools.partial(ask_exit, signame, group),
+                )
+
+            await group
+            return 0
+        except asyncio.CancelledError:
+            LOG.info("[EXIT] Canceled")
+            if options.wait_jobs:
+                LOG.info("[EXIT] Wait for jobs to finish")
+                while True:
+                    await check(session, options.url, jobs)
+                    all_ids = jobs.all_ids()
+                    LOG.info(
+                        "[EXIT] => %d jobs ([%s])",
+                        len(all_ids),
+                        ", ".join(str(i) for i in all_ids),
+                    )
+                    if not all_ids:
+                        break
+                    await asyncio.sleep(ping_interval)
+            return 1
+        except VersionMismatch as exc:
+            LOG.info("[EXIT] %s" % exc)
+            return 0
+        except Exception as exc:
+            LOG.error("[EXIT] %s", exc)
+            LOG.exception(exc)
+            return 1
 
 
 def run():
