@@ -1065,6 +1065,7 @@ class ManagersTest(TestCaseWithFactory):
         # able to admin qemu jobs but user1 should not anymore.
         # Anonymous still cannot admin any jobs.
         self.qemu_job1.actual_device = self.qemu_device1
+        self.qemu_job1.state = TestJob.STATE_FINISHED
         self.qemu_job1.save()
         self.qemu_job2.actual_device = self.qemu_device1
         self.qemu_job2.save()
