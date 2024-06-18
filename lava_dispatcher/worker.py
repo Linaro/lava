@@ -741,6 +741,9 @@ async def main() -> int:
         # Update stale config dictionary.
         STALE_CONFIG[tmp_dir] = "{prefix}{job_id}"
 
+    loop = asyncio.get_running_loop()
+    loop.set_default_executor(THREAD_EXECUTOR)
+
     try:
         if options.username is not None:
             LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
@@ -772,8 +775,6 @@ async def main() -> int:
             main_loop(options, jobs, event), listen_for_events(options, event)
         )
 
-        loop = asyncio.get_running_loop()
-        loop.set_default_executor(THREAD_EXECUTOR)
         LOG.debug(f"LAVA worker pid is {os.getpid()}")
         for signame in ("SIGINT", "SIGTERM"):
             loop.add_signal_handler(
@@ -787,7 +788,7 @@ async def main() -> int:
         if options.wait_jobs:
             LOG.info("[EXIT] Wait for jobs to finish")
             while True:
-                check(options.url, jobs)
+                await check(options.url, jobs)
                 all_ids = jobs.all_ids()
                 LOG.info(
                     "[EXIT] => %d jobs ([%s])",
