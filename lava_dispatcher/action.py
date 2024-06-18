@@ -329,6 +329,8 @@ class CommandLogger:
         self.logger = logger
 
     def write(self, new_line):
+        if not isinstance(new_line, str):
+            new_line = str(new_line)
         lines = self.line + new_line
 
         # Print one full line at a time. A partial line is kept in memory.
