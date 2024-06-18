@@ -6,5 +6,5 @@
 	missingok
 	su lavaserver lavaserver
 	notifempty
-	create 644 lavaserver adm
+	create 644 lavaserver lavaserver
 }
