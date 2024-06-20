@@ -105,7 +105,8 @@ class UBootCommandsAction(BootHasMixin, Action):
         ]
         self.usb_mass_device = self.method_params.get("uboot_mass_storage_device")
         # establish a new connection before trying the reset
-        self.pipeline.add_action(ResetDevice(self.job))
+        if parameters.get("reset", True):
+            self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(BootloaderInterruptAction(self.job))
         if self.method_params.get("uboot_ums_flash", False):
             self.pipeline.add_action(
