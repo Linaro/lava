@@ -1246,6 +1246,34 @@ By default its value is set to "false"
  context:
    uboot_altbank: true
 
+By default LAVA will reset the board power when executing this action. Users
+can skip this step by adding ``reset: false``. This can be useful when loading
+u-boot in fastboot mode.
+
+.. code-block:: yaml
+
+  - deploy:
+      to: fastboot
+      docker:
+        image: lavalabteam/adb-fastboot
+        local: true
+      images:
+        boot:
+          url: https://.../uboot.img
+      timeout:
+        seconds: 90
+  - boot:
+      method: fastboot
+      docker:
+        image: lavalabteam/adb-fastboot
+        local: true
+      timeout:
+        seconds: 30
+  - boot:
+      method: u-boot
+      reset: false
+      ...
+
 .. _boot_method_uefi_menu:
 
 uefi-menu
