@@ -986,7 +986,10 @@ class AppendOverlays(Action):
         try:
             guest.launch()
             if partition is not None:
-                device = guest.list_partitions()[partition]
+                try:
+                    device = guest.list_partitions()[partition]
+                except (IndexError, TypeError) as exc:
+                    raise JobError("Invalid partition number '%s'" % partition) from exc
             else:
                 device = guest.list_devices()[0]
             guest.mount(device, "/")
