@@ -28,6 +28,7 @@ from lava_dispatcher.actions.deploy.removable import MassStorage
 from lava_dispatcher.actions.deploy.ssh import Ssh
 from lava_dispatcher.actions.deploy.tftp import Tftp
 from lava_dispatcher.actions.deploy.uboot_ums import UBootUMS
+from lava_dispatcher.actions.deploy.usbg_ms import USBGMS
 from lava_dispatcher.actions.deploy.uuu import UUU
 from lava_dispatcher.actions.deploy.vemsd import VExpressMsd
 

@@ -142,6 +142,11 @@ actions:
 {% if uboot_ums_flash %}
       u-boot-ums:
 {% endif %}
+{% if usbg_ms_commands %}
+      usbg-ms:
+        enable: {{ usbg_ms_commands["enable"] }}
+        disable: {{ usbg_ms_commands["disable"] }}
+{% endif %}
 {% if flasher_deploy_commands %}
       flasher:
         commands: {{ flasher_deploy_commands }}
