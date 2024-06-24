@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from django.contrib.auth.models import Group, Permission, User
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.test import TestCase
 
@@ -110,6 +111,14 @@ class DeviceTest(TestCaseWithFactory):
         user3 = self.factory.make_user()
         user3.user_permissions.add(Permission.objects.get(codename="change_device"))
         self.assertEqual(device.can_change(user3), True)
+
+    def test_device_invalid_name(self):
+        dt = DeviceType.objects.create(name="type1")
+        with self.assertRaises(ValidationError):
+            Device.objects.create(device_type=dt, hostname="device1/")
+        dev = Device(device_type=dt, hostname="device2/")
+        with self.assertRaises(ValidationError):
+            dev.save()
 
 
 class DeviceTypeTest(TestCaseWithFactory):
@@ -248,3 +257,10 @@ class DeviceTypeTest(TestCaseWithFactory):
             {"beaglebone-black", "qemu"},
             set(active_device_types().values_list("name", flat=True)),
         )
+
+    def test_devicetype_invalid_name(self):
+        with self.assertRaises(ValidationError):
+            DeviceType.objects.create(name="type1/")
+        dt = DeviceType(name="typ/e2")
+        with self.assertRaises(ValidationError):
+            dt.save()

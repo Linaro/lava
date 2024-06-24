@@ -100,6 +100,27 @@ class TestSchedulerAPI(TestCaseWithFactory):
             server.scheduler.get_device_status("black01"),
         )
 
+    def test_new_devices_spec_chars(self):
+        user = self.factory.ensure_user("test", "e@mail.invalid", "test")
+        user.save()
+        device_type = self.factory.make_device_type("beaglebone-black_:'),;~")
+        device = self.factory.make_device(
+            device_type=device_type, hostname="black01_:'),;~"
+        )
+        device.save()
+        server = self.server_proxy("test", "test")
+        self.assertEqual(
+            {
+                "status": "offline",
+                "job": None,
+                "offline_since": None,
+                "hostname": "black01_:'),;~",
+                "offline_by": None,
+                "is_pipeline": True,
+            },
+            server.scheduler.get_device_status("black01_:'),;~"),
+        )
+
     def test_type_aliases(self):
         aliases = DeviceType.objects.filter(aliases__name__contains="black")
         retval = {"black": [device_type.name for device_type in aliases]}
@@ -876,18 +897,32 @@ def test_devices_list(setup):
     dt = DeviceType.objects.create(name="black")
     device1 = Device.objects.create(hostname="device01", device_type=dt)
     device2 = Device.objects.create(hostname="device02", device_type=dt)
+    device3 = Device.objects.create(hostname="device_:'),;~", device_type=dt)
     group = Group.objects.create(name="group1")
     GroupDevicePermission.objects.assign_perm("view_device", group, device2)
-    assert server().scheduler.devices.list() == [  # nosec
-        {
-            "current_job": None,
-            "health": "Maintenance",
-            "hostname": "device01",
-            "pipeline": True,
-            "state": "Idle",
-            "type": "black",
-        }
-    ]
+    assert sorted(
+        server().scheduler.devices.list(), key=lambda d: d["hostname"]
+    ) == sorted(
+        [  # nosec
+            {
+                "current_job": None,
+                "health": "Maintenance",
+                "hostname": "device_:'),;~",
+                "pipeline": True,
+                "state": "Idle",
+                "type": "black",
+            },
+            {
+                "current_job": None,
+                "health": "Maintenance",
+                "hostname": "device01",
+                "pipeline": True,
+                "state": "Idle",
+                "type": "black",
+            },
+        ],
+        key=lambda d: d["hostname"],
+    )
 
 
 @pytest.mark.django_db
@@ -1273,6 +1308,16 @@ def test_device_types_add(setup):
         exc.value.faultString == "Bad request: device-type name is already used."
     )
 
+    # 4. Spec character in name
+    server("admin", "admin").scheduler.device_types.add(
+        "aqemu:'-)[]~!,;", None, True, None, 12, "jobs"
+    )
+    assert DeviceType.objects.count() == 3  # nosec
+    # Should be ordered b2260, qemu
+    assert (
+        DeviceType.objects.all().order_by("name")[0].name == "aqemu:'-)[]~!,;"
+    )  # nosec
+
 
 @pytest.mark.django_db
 def test_device_types_get_health_check(setup, mocker, tmp_path):
@@ -1382,6 +1427,7 @@ def test_device_types_list(setup, mocker, tmp_path):
     (tmp_path / "base-uboot.jinja2").write_text("", encoding="utf-8")
     (tmp_path / "b2260.jinja2").write_text("", encoding="utf-8")
     (tmp_path / "qemu.jinja2").write_text("", encoding="utf-8")
+    (tmp_path / "qemu',:!~)[.jinja2").write_text("", encoding="utf-8")
 
     data = server("admin", "admin").scheduler.device_types.list()
     assert data == []  # nosec
@@ -1396,6 +1442,7 @@ def test_device_types_list(setup, mocker, tmp_path):
     assert data == [  # nosec
         {"name": "qemu", "devices": 0, "installed": True, "template": True},
         {"name": "b2260", "devices": 0, "installed": False, "template": True},
+        {"name": "qemu',:!~)[", "devices": 0, "installed": False, "template": True},
     ]
 
 
@@ -1852,7 +1899,17 @@ def test_workers_add(setup):
     assert worker.description == "worker"  # nosec
     assert worker.health == Worker.HEALTH_RETIRED  # nosec
 
-    # 5. already used hostname => exception
+    # 5. as admin with spec characters => success
+    assert (  # nosec
+        server("admin", "admin").scheduler.workers.add("worker{[),~!<.example.com")
+        is None
+    )
+    assert Worker.objects.count() == 4  # nosec
+    worker = Worker.objects.get(hostname="worker{[),~!<.example.com")
+    assert worker.description is None  # nosec
+    assert worker.health == Worker.HEALTH_ACTIVE  # nosec
+
+    # 6. already used hostname => exception
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.workers.add("dispatcher.example.com")
     assert exc.value.faultCode == 400  # nosec

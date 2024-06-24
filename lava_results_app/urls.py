@@ -8,8 +8,9 @@
 """
 URL mappings for the LAVA Results application
 """
-from django.urls import re_path
+from django.urls import path, register_converter
 
+from lava_common.converters import JobIdConverter
 from lava_results_app.views import (
     index,
     metadata_export,
@@ -71,260 +72,253 @@ from lava_results_app.views.query.views import (
     query_toggle_published,
 )
 
-urlpatterns = [
-    re_path(r"^$", index, name="lava_results"),
-    re_path(r"^query$", query_list, name="lava.results.query_list"),
-    re_path(r"^query/\+add$", query_add, name="lava.results.query_add"),
-    re_path(r"^query/\+custom$", query_custom, name="lava.results.query_custom"),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)$",
+register_converter(JobIdConverter, "job_id")
+
+urlpatterns = (
+    path("", index, name="lava_results"),
+    path("query", query_list, name="lava.results.query_list"),
+    path("query/+add", query_add, name="lava.results.query_add"),
+    path("query/+custom", query_custom, name="lava.results.query_custom"),
+    # Query model:
+    # username: str
+    # name: slug
+    path(
+        "query/~<str:username>/<slug:name>",
         query_display,
         name="lava.results.query_display",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+detail$",
+    path(
+        "query/~<str:username>/<slug:name>/+detail",
         query_detail,
         name="lava.results.query_detail",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+edit$",
+    path(
+        "query/~<str:username>/<slug:name>/+edit",
         query_edit,
         name="lava.results.query_edit",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+delete$",
+    path(
+        "query/~<str:username>/<slug:name>/+delete",
         query_delete,
         name="lava.results.query_delete",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+export$",
+    path(
+        "query/~<str:username>/<slug:name>/+export",
         query_export,
         name="lava.results.query_export",
     ),
-    re_path(
-        r"^query/\+export-custom$",
+    path(
+        "query/+export-custom",
         query_export_custom,
         name="lava.results.query_export_custom",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+toggle-published$",
+    path(
+        "query/~<str:username>/<slug:name>/+toggle-published",
         query_toggle_published,
         name="lava.results.query_toggle_published",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+copy$",
+    path(
+        "query/~<str:username>/<slug:name>/+copy",
         query_copy,
         name="lava.results.query_copy",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+refresh$",
+    path(
+        "query/~<str:username>/<slug:name>/+refresh",
         query_refresh,
         name="lava.results.query_refresh",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+add-condition$",
+    path(
+        "query/~<str:username>/<slug:name>/+add-condition",
         query_add_condition,
         name="lava.results.query_add_condition",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+remove-condition$",
+    # Condition model
+    # primary key: int
+    path(
+        "query/~<str:username>/<slug:name>/<int:id>/+remove-condition",
         query_remove_condition,
         name="lava.results.query_remove_condition",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+edit-condition$",
+    path(
+        "query/~<str:username>/<slug:name>/<int:id>/+edit-condition",
         query_edit_condition,
         name="lava.results.query_edit_condition",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+add-group$",
+    path(
+        "query/~<str:username>/<slug:name>/+add-group",
         query_add_group,
         name="query_add_group",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/\+select-group$",
+    path(
+        "query/~<str:username>/<slug:name>/+select-group",
         query_select_group,
         name="query_select_group",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+omit-result$",
+    path(
+        "query/~<str:username>/<slug:name>/<int:id>/+omit-result",
         query_omit_result,
         name="lava.results.query_omit_result",
     ),
-    re_path(
-        r"^query/~(?P<username>[^/]+)/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+include-result$",
+    path(
+        "query/~<str:username>/<slug:name>/<int:id>/+include-result",
         query_include_result,
         name="lava.results.query_include_result",
     ),
-    re_path(r"^query/get-query-groups$", query_group_list, name="query_group_list"),
-    re_path(
-        r"^query/\+get-group-names$",
+    path("query/get-query-groups", query_group_list, name="query_group_list"),
+    path(
+        "query/+get-group-names",
         get_query_group_names,
         name="get_query_group_names",
     ),
-    re_path(
-        r"^query/\+get-query-names$",
+    path(
+        "query/+get-query-names",
         get_query_names,
         name="lava.results.get_query_names",
     ),
-    re_path(r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)$", testjob, name="lava.results.testjob"),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/csv$",
+    path("<job_id:job>", testjob, name="lava.results.testjob"),
+    path(
+        "<job_id:job>/csv",
         testjob_csv,
         name="lava.results.testjob_csv",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml$",
+    path(
+        "<job_id:job>/yaml",
         testjob_yaml,
         name="lava.results.testjob_yaml",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/yaml_summary$",
+    path(
+        "<job_id:job>/yaml_summary",
         testjob_yaml_summary,
         name="lava.results.testjob_yaml_summary",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/metadata$",
+    path(
+        "<job_id:job>/metadata",
         metadata_export,
         name="lava.results.job.metadata",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/(?P<testsuite_name>[-_a-zA-Z0-9.]+)$",
+    # TestSuite model
+    # primary key: int
+    path(
+        "<job_id:job>/<str:testsuite_name>",
         suite,
         name="lava.results.suite",
     ),
-    re_path(r"^chart$", chart_list, name="lava.results.chart_list"),
-    re_path(r"^chart/\+add$", chart_add, name="lava.results.chart_add"),
-    re_path(r"^chart/\+custom$", chart_custom, name="lava.results.chart_custom"),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)$",
+    path("chart", chart_list, name="lava.results.chart_list"),
+    path("chart/+add", chart_add, name="lava.results.chart_add"),
+    path("chart/+custom", chart_custom, name="lava.results.chart_custom"),
+    # Chart model
+    # name: slug
+    path(
+        "chart/<slug:name>",
         chart_display,
         name="lava.results.chart_display",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+detail$",
+    path(
+        "chart/<slug:name>/+detail",
         chart_detail,
         name="lava.results.chart_detail",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+edit$",
+    path(
+        "chart/<slug:name>/+edit",
         chart_edit,
         name="lava.results.chart_edit",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+delete$",
+    path(
+        "chart/<slug:name>/+delete",
         chart_delete,
         name="lava.results.chart_delete",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+toggle-published$",
+    path(
+        "chart/<slug:name>/+toggle-published",
         chart_toggle_published,
         name="lava.results.chart_toggle_published",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+chart-query-add$",
+    path(
+        "chart/<slug:name>/+chart-query-add",
         chart_query_add,
         name="lava.results.chart_query_add",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+chart-query-remove$",
+    # ChartQuery model
+    # primary key: int
+    path(
+        "chart/<slug:name>/<int:id>/+chart-query-remove",
         chart_query_remove,
         name="lava.results.chart_query_remove",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+chart-query-edit$",
+    path(
+        "chart/<slug:name>/<int:id>/+chart-query-edit",
         chart_query_edit,
         name="lava.results.chart_query_edit",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+add-group$",
+    path(
+        "chart/<slug:name>/+add-group",
         chart_add_group,
         name="chart_add_group",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+select-group$",
+    path(
+        "chart/<slug:name>/+select-group",
         chart_select_group,
         name="chart_select_group",
     ),
-    re_path(r"^chart/\+get-chart-groups$", chart_group_list, name="chart_group_list"),
-    re_path(
-        r"^chart/\+get-group-names$",
+    path("chart/+get-chart-groups", chart_group_list, name="chart_group_list"),
+    path(
+        "chart/+get-group-names",
         get_chart_group_names,
         name="get_chart_group_names",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/\+settings-update$",
+    # ChartQueryUser model
+    # chart_query__id: int
+    path(
+        "chart/<slug:name>/<int:id>/+settings-update",
         settings_update,
         name="chart_settings_update",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/\+chart-query-order-update$",
+    path(
+        "chart/<slug:name>/+chart-query-order-update",
         chart_query_order_update,
         name="chart_query_order_update",
     ),
-    re_path(
-        r"^chart/(?P<name>[a-zA-Z0-9-_]+)/(?P<id>\d+)/(?P<result_id>\d+)/\+omit-result$",
+    path(
+        "chart/<slug:name>/<int:id>/<int:result_id>/+omit-result",
         chart_omit_result,
         name="lava.results.chart_omit_result",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"(?P<testset_name>[-_a-zA-Z0-9.]+)/"
-        r"(?P<testcase_name>[-_a-zA-Z0-9.+]+)$",
+    # TestSet model
+    # name: str
+    path(
+        "<job_id:job>/<str:testsuite_name>/<str:testset_name>/<str:testcase_name>",
         testset,
         name="lava.results.testset",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+\.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"csv$",
+    path(
+        "<job_id:job>/<str:testsuite_name>/csv",
         suite_csv,
         name="lava.results.suite_csv",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"stream/csv$",
+    path(
+        "<job_id:job>/<str:testsuite_name>/stream/csv",
         suite_csv_stream,
         name="lava.results.suite_csv_stream",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"yaml$",
+    path(
+        "<job_id:job>/<str:testsuite_name>/yaml",
         suite_yaml,
         name="lava.results.suite_yaml",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"\+testcase-count$",
+    path(
+        "<job_id:job>/<str:testsuite_name>/+testcase-count",
         suite_testcase_count,
         name="lava.results.suite_testcase_count",
     ),
-    re_path(
-        r"^testcase/(?P<testcase_id_or_name>[0-9]+)$",
+    path("testcase/<int:testcase_id_or_name>", testcase, name="lava.results.testcase"),
+    path(
+        "<job_id:job>/<str:testsuite_name>/<str:testcase_id_or_name>",
         testcase,
         name="lava.results.testcase",
     ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"(?P<testcase_id_or_name>[0-9]+)$",
-        testcase,
-        name="lava.results.testcase",
-    ),
-    re_path(
-        r"^(?P<job>[0-9]+|[0-9]+.[0-9]+)/"
-        r"(?P<testsuite_name>[-_a-zA-Z0-9.]+)/"
-        r"(?P<testcase_id_or_name>[-_a-zA-Z0-9.\(\)+]+)$",
-        testcase,
-        name="lava.results.testcase",
-    ),
-    re_path(
-        r"^testcase/(?P<pk>[0-9]+)/yaml$",
+    path(
+        "testcase/<int:pk>/yaml",
         testcase_yaml,
         name="lava.results.testcase_yaml",
     ),
-]
+)

@@ -5,12 +5,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from django.conf import settings
-from django.conf.urls import include
 from django.contrib import admin
-from django.urls import re_path
+from django.urls import include, path, register_converter
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 
+from lava_common.converters import JobIdConverter
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
@@ -63,10 +63,12 @@ mapper.register(UsersAPI, "auth.users")
 mapper.register(UsersGroupsAPI, "auth.users.groups")
 mapper.register(UsersPermissionsAPI, "auth.users.perms")
 
+register_converter(JobIdConverter, "job_id")
+
 # Auth backends
 auth_urls = [
-    re_path(
-        rf"^{settings.MOUNT_POINT}accounts/",
+    path(
+        f"{settings.MOUNT_POINT}accounts/",
         include("django.contrib.auth.urls"),
     )
 ]
@@ -76,105 +78,107 @@ if (
     in settings.AUTHENTICATION_BACKENDS
 ):
     auth_urls.append(
-        re_path(
-            rf"^{settings.MOUNT_POINT}accounts/",
+        path(
+            f"{settings.MOUNT_POINT}accounts/",
             include("allauth.urls"),
         )
     )
 
 # Root URL patterns
 urlpatterns = [
-    re_path(
-        r"^robots\.txt$",
+    path(
+        "robots.txt",
         TemplateView.as_view(template_name="robots.txt"),
         name="robots",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}v1/healthz/$",
+    path(
+        f"{settings.MOUNT_POINT}v1/healthz/",
         healthz,
         name="lava.healthz",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}v1/prometheus/$",
+    path(
+        f"{settings.MOUNT_POINT}v1/prometheus/",
         prometheus,
         name="lava.prometheus",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}$",
+    path(
+        f"{settings.MOUNT_POINT}",
         index,
         name="lava.home",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}me/$",
+    path(
+        f"{settings.MOUNT_POINT}me/",
         me,
         name="lava.me",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}update-irc-settings/$",
+    path(
+        f"{settings.MOUNT_POINT}update-irc-settings/",
         update_irc_settings,
         name="lava.update_irc_settings",
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}update-remote-auth/$",
+    path(
+        f"{settings.MOUNT_POINT}update-remote-auth/",
         update_remote_auth,
         name="lava.update_remote_auth",
     ),
-    re_path(
-        r"^{mount_point}delete-remote-auth/(?P<pk>[0-9]+|[0-9]+\.[0-9]+)/$".format(
-            mount_point=settings.MOUNT_POINT
-        ),
+    path(
+        f"{settings.MOUNT_POINT}delete-remote-auth/<int:pk>/",
         delete_remote_auth,
         name="lava.delete_remote_auth",
     ),
-    re_path(
-        r"^{mount_point}update-table-length-setting/$".format(
-            mount_point=settings.MOUNT_POINT
-        ),
+    path(
+        f"{settings.MOUNT_POINT}update-table-length-setting/",
         update_table_length_setting,
         name="lava.update_table_length_setting",
     ),
     *auth_urls,
-    re_path(r"^admin/jsi18n", JavaScriptCatalog.as_view()),
-    re_path(
-        rf"^{settings.MOUNT_POINT}admin/",
+    path("admin/jsi18n", JavaScriptCatalog.as_view()),
+    path(
+        f"{settings.MOUNT_POINT}admin/",
         admin.site.urls,
     ),
     # RPC endpoints
-    re_path(
-        rf"^{settings.MOUNT_POINT}RPC2/?",
+    path(
+        f"{settings.MOUNT_POINT}RPC2/",
         linaro_django_xmlrpc_views_handler,
         name="lava.api_handler",
         kwargs={"mapper": mapper, "help_view": "lava.api_help"},
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}api/help/$",
+    path(
+        f"{settings.MOUNT_POINT}RPC2",
+        linaro_django_xmlrpc_views_handler,
+        name="lava.api_handler",
+        kwargs={"mapper": mapper, "help_view": "lava.api_help"},
+    ),
+    path(
+        f"{settings.MOUNT_POINT}api/help/",
         linaro_django_xmlrpc_views_help,
         name="lava.api_help",
         kwargs={"mapper": mapper},
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}api/",
+    path(
+        f"{settings.MOUNT_POINT}api/",
         include("linaro_django_xmlrpc.urls"),
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}results/",
+    path(
+        f"{settings.MOUNT_POINT}results/",
         include("lava_results_app.urls"),
     ),
-    re_path(
-        rf"^{settings.MOUNT_POINT}scheduler/",
+    path(
+        f"{settings.MOUNT_POINT}scheduler/",
         include("lava_scheduler_app.urls"),
     ),
     # REST API
-    re_path(
-        rf"^{settings.MOUNT_POINT}api/",
+    path(
+        f"{settings.MOUNT_POINT}api/",
         include("lava_rest_app.urls"),
     ),
 ]
 
 if settings.OIDC_ENABLED:
     urlpatterns.append(
-        re_path(
-            rf"^{settings.MOUNT_POINT}oidc/",
+        path(
+            f"{settings.MOUNT_POINT}oidc/",
             include("mozilla_django_oidc.urls"),
         )
     )
@@ -182,4 +186,4 @@ if settings.OIDC_ENABLED:
 if settings.USE_DEBUG_TOOLBAR:
     import debug_toolbar
 
-    urlpatterns.append(re_path(r"^__debug__/", include(debug_toolbar.urls)))
+    urlpatterns.append(path("__debug__/", include(debug_toolbar.urls)))

@@ -56,6 +56,7 @@ from lava_scheduler_app.managers import (
     RestrictedWorkerQuerySet,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
+from lava_scheduler_app.validators import validate_non_slash
 from lava_server.files import File
 
 
@@ -232,8 +233,12 @@ class DeviceType(RestrictedObject):
 
     objects = RestrictedDeviceTypeQuerySet.as_manager()
 
-    name = models.SlugField(
-        primary_key=True, editable=True
+    name = models.CharField(
+        verbose_name=_("Name"),
+        max_length=50,
+        primary_key=True,
+        editable=True,
+        validators=[validate_non_slash],
     )  # read-only after create via admin.py
 
     architecture = models.ForeignKey(
@@ -342,6 +347,10 @@ class DeviceType(RestrictedObject):
     def has_any_permission_restrictions(self, perm):
         return self.is_permission_restricted(perm)
 
+    def save(self, *args, **kwargs):
+        super().full_clean()
+        super().save(*args, **kwargs)
+
 
 class Worker(RestrictedObject):
     """
@@ -362,6 +371,7 @@ class Worker(RestrictedObject):
         primary_key=True,
         default=None,
         editable=True,
+        validators=[validate_non_slash],
     )
 
     STATE_ONLINE, STATE_OFFLINE = range(2)
@@ -507,6 +517,10 @@ class Worker(RestrictedObject):
     def has_any_permission_restrictions(self, perm):
         return self.is_permission_restricted(perm)
 
+    def save(self, *args, **kwargs):
+        super().full_clean()
+        super().save(*args, **kwargs)
+
 
 class Device(RestrictedObject):
     """
@@ -537,6 +551,7 @@ class Device(RestrictedObject):
         max_length=200,
         primary_key=True,
         editable=True,  # read-only after create via admin.py
+        validators=[validate_non_slash],
     )
 
     device_type = models.ForeignKey(
@@ -979,6 +994,10 @@ class Device(RestrictedObject):
                 return f_in.read()
         except OSError:
             return None
+
+    def save(self, *args, **kwargs):
+        super().full_clean()
+        super().save(*args, **kwargs)
 
 
 class JobFailureTag(models.Model):
