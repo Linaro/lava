@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 
@@ -108,6 +109,19 @@ def create_objects(w):
         "devices": [qemu01, qemu02, qemu03, qemu04, qemu05],
         "jobs": [j1, j2, j3, j4, j5, j6],
     }
+
+
+@pytest.mark.django_db
+def test_basic_db(client, mocker, settings):
+    # Test create
+    worker = Worker.objects.create(hostname="worker-01")
+    assert worker.hostname == "worker-01"
+    # Test create with invalid hostname
+    with pytest.raises(ValidationError):
+        worker = Worker.objects.create(hostname="worker-01/")
+    # Test create duplicate hostname
+    with pytest.raises(ValidationError):
+        worker = Worker.objects.create(hostname="worker-01")
 
 
 @pytest.mark.django_db

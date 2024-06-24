@@ -8,7 +8,8 @@ import contextlib
 import pathlib
 import xmlrpc.client
 
-from django.db import IntegrityError, transaction
+from django.core.exceptions import ValidationError
+from django.db import transaction
 from yaml import YAMLError
 
 from lava_common.yaml import yaml_safe_load
@@ -49,7 +50,7 @@ class SchedulerWorkersAPI(ExposedV2API):
             Worker.objects.create(
                 hostname=hostname, description=description, health=health
             )
-        except IntegrityError:
+        except ValidationError:
             raise xmlrpc.client.Fault(400, "Bad request: worker already exists?")
 
     def get_config(self, hostname):
