@@ -1602,6 +1602,21 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job cancel signal sent."  # nosec - unit test support
 
+    def test_batch_cancel(self, mocker):
+        mocker.patch("lava_scheduler_app.models.TestJob.cancel")
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/batch_cancel/",
+            {"job_ids": [self.public_testjob1.pk, self.private_testjob1.pk, -2]},
+            format="json",
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert (
+            msg["message"] == "Job cancel signal sent for job ids."
+        )  # nosec - unit test support
+        assert msg["job_ids"] == [self.public_testjob1.pk, self.private_testjob1.pk]
+        assert msg["invalid_job_ids"] == [-2]
+
     def test_tags_list(self):
         data = self.hit(
             self.userclient,
