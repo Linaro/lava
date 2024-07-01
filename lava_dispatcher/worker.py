@@ -236,13 +236,13 @@ class Job:
 
     RUNNING, CANCELING, FINISHED = range(3)
 
-    def __init__(self, row):
-        self.job_id = row["id"]
-        self.pid = row["pid"]
-        self.status = row["status"]
-        self.prefix = row["prefix"]
-        self.last_update = row["last_update"]
-        self.token = row["token"]
+    def __init__(self, row: sqlite3.Row):
+        self.job_id: int = row["id"]
+        self.pid: int = row["pid"]
+        self.status: int = row["status"]
+        self.prefix: str = row["prefix"]
+        self.last_update: int = row["last_update"]
+        self.token: str = row["token"]
         # Create the base directory
         self.base_dir = tmp_dir / "{prefix}{job_id}".format(
             prefix=self.prefix, job_id=str(self.job_id)
