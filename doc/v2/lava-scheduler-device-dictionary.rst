@@ -61,6 +61,9 @@ Commands
 * **fastboot_serial_number** - value to pass to ``fastboot`` to connect to this
   device.
 
+* **fastboot_auto_detection** - A boolean. Defaults to ``false``. Set it to
+  ``true`` to detect fastboot device serial number at runtime.
+
 * **fastboot_options** - a list of strings, used for specifying additional
   options to the ``fastboot`` command.
 
