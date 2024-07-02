@@ -8,9 +8,10 @@ import glob
 import os
 import unittest
 from pathlib import Path
+from subprocess import CompletedProcess
 from unittest.mock import ANY, PropertyMock, patch
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import FastbootDeviceNotFound, InfrastructureError, JobError
 from lava_dispatcher.actions.boot import AutoLoginAction, BootloaderInterruptAction
 from lava_dispatcher.actions.boot.fastboot import BootFastbootAction
 from lava_dispatcher.actions.boot.grub import GrubSequenceAction
@@ -53,6 +54,9 @@ class FastBootFactory(Factory):
 
     def create_pixel_job(self, filename):
         return self.create_job("pixel-01.jinja2", filename)
+
+    def create_db410c_auto_job(self, filename):
+        return self.create_job("db410c-auto-01.jinja2", filename)
 
 
 class TestFastbootBaseAction(unittest.TestCase):
@@ -552,3 +556,103 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
             "imx8mq-evk-with-flash-reboot.yaml", job=job
         )
         self.assertEqual(description_ref, job.pipeline.describe())
+
+
+class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = FastBootFactory()
+        self.job = self.factory.create_db410c_auto_job(
+            "sample_jobs/fastboot-docker.yaml"
+        )
+
+    @patch("lava_dispatcher.utils.containers.DockerRun.prepare")
+    def test_validate(self, docker_run_prepare):
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
+
+    def test_deploy_job(self):
+        self.assertEqual(self.job.pipeline.job, self.job)
+        self.assertIsInstance(self.job.device["device_info"], list)
+        self.assertIsInstance(self.job.device["device_info"][0], dict)
+        self.assertEqual(
+            self.job.device["device_info"][0].get("board_id"), "0000000000"
+        )
+        for action in self.job.pipeline.actions:
+            self.assertEqual(action.job, self.job)
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference(
+            "fastboot-auto-detections.yaml", job=self.job
+        )
+        self.assertEqual(description_ref, self.job.pipeline.describe())
+
+    @patch(
+        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        return_value=CompletedProcess(
+            ["/usr/bin/fastboot", "devices"],
+            0,
+            stdout="a2c22e48\tfastboot\n",
+            stderr="",
+        ),
+    )
+    @patch("time.sleep")
+    def test_fastboot_auto_detection(self, *args):
+        self.assertEqual(self.job.device["fastboot_serial_number"], "0000000000")
+        self.assertEqual(self.job.device["adb_serial_number"], "0000000000")
+        self.assertIsNone(self.job.device.get("board_id"))
+        self.assertEqual(self.job.device["device_info"], [{"board_id": "0000000000"}])
+
+        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action.run(None, None)
+
+        self.assertEqual(self.job.device["fastboot_serial_number"], "a2c22e48")
+        self.assertEqual(self.job.device["adb_serial_number"], "a2c22e48")
+        self.assertEqual(self.job.device["board_id"], "a2c22e48")
+        self.assertEqual(self.job.device["device_info"], [{"board_id": "a2c22e48"}])
+
+    @patch(
+        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        return_value=CompletedProcess(
+            ["/usr/bin/fastboot", "devices"],
+            0,
+            stdout="",
+            stderr="",
+        ),
+    )
+    @patch("time.sleep")
+    def test_fastboot_auto_detection_none(self, *args):
+        action = self.job.pipeline.actions[0].pipeline.actions[4]
+
+        with self.assertRaises(FastbootDeviceNotFound) as context:
+            action.run(None, None)
+
+        self.assertEqual(
+            str(context.exception),
+            "Fastboot device not found.",
+        )
+
+    @patch(
+        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        return_value=CompletedProcess(
+            ["/usr/bin/fastboot", "devices"],
+            0,
+            stdout="a2c22e48\tfastboot\n1de55d7f32c101b8\tfastboot\n",
+            stderr="",
+        ),
+    )
+    @patch("time.sleep")
+    def test_fastboot_auto_detection_multiple(self, *args):
+        action = self.job.pipeline.actions[0].pipeline.actions[4]
+
+        with self.assertRaises(JobError) as context:
+            action.run(None, None)
+
+        self.assertEqual(
+            str(context.exception),
+            "More then one fastboot devices found: ['a2c22e48', '1de55d7f32c101b8']",
+        )

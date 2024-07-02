@@ -6,10 +6,13 @@
 from __future__ import annotations
 
 import os
+import shutil
+import subprocess
+import time
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.action import Pipeline
+from lava_common.exceptions import FastbootDeviceNotFound, InfrastructureError, JobError
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -24,10 +27,10 @@ from lava_dispatcher.logical import Deployment
 from lava_dispatcher.power import PDUReboot, PrePower, ReadFeedback, ResetDevice
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from lava_dispatcher.utils.lxc import is_lxc_requested
+from lava_dispatcher.utils.network import retry
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
-    from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
 
 
@@ -51,10 +54,14 @@ class Fastboot(Deployment):
             return False, '"to" parameter is not "fastboot"'
         if "deploy" not in device["actions"]:
             return False, '"deploy" is not in the device configuration actions'
-        if "adb_serial_number" not in device:
-            return False, '"adb_serial_number" is not in the device configuration'
-        if "fastboot_serial_number" not in device:
-            return False, '"fastboot_serial_number" is not in the device configuration'
+        if not device.get("fastboot_auto_detection", False):
+            if "adb_serial_number" not in device:
+                return False, '"adb_serial_number" is not in the device configuration'
+            if "fastboot_serial_number" not in device:
+                return (
+                    False,
+                    '"fastboot_serial_number" is not in the device configuration',
+                )
         if "fastboot_options" not in device:
             return False, '"fastboot_options" is not in the device configuration'
         if "fastboot" in device["actions"]["deploy"]["methods"]:
@@ -82,17 +89,26 @@ class FastbootAction(
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
+        board_id = self.job.device["fastboot_serial_number"]
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         if self.job.device.get("fastboot_via_uboot", False):
             self.pipeline.add_action(ConnectDevice(self.job))
             self.pipeline.add_action(UBootEnterFastbootAction(self.job))
+            if board_id == "0000000000" and self.job.device.get(
+                "fastboot_auto_detection", False
+            ):
+                self.pipeline.add_action(DetectFastbootDevice(self.job))
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.pipeline.add_action(ConnectDevice(self.job))
             if not is_lxc_requested(self.job):
                 self.pipeline.add_action(PrePower(self.job))
             self.pipeline.add_action(ResetDevice(self.job))
+            if board_id == "0000000000" and self.job.device.get(
+                "fastboot_auto_detection", False
+            ):
+                self.pipeline.add_action(DetectFastbootDevice(self.job))
         else:
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
@@ -182,10 +198,11 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
         if "flash_cmds_order" not in self.job.device:
             self.errors = "device flash commands order missing"
         if "fastboot_options" not in self.job.device:
@@ -195,7 +212,6 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
 
 
 class FastbootFlashAction(OptionalContainerFastbootAction):
-
     """
     Fastboot flash image.
     """
@@ -269,10 +285,11 @@ class FastbootReboot(OptionalContainerFastbootAction):
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -298,10 +315,11 @@ class FastbootRebootBootloader(OptionalContainerFastbootAction):
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -327,10 +345,11 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -340,4 +359,82 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
 
         self.logger.info("fastboot reboot device to fastbootd.")
         self.run_fastboot(["reboot", "fastboot"])
+        return connection
+
+
+class DetectFastbootDevice(Action):
+    name = "detect-fastboot-device"
+    description = "Detect fastboot device serial number."
+    summary = "Set fastboot SN if only one device found."
+
+    def __init__(self, job: "Job"):
+        super().__init__(job)
+        self.fastboot_path = shutil.which("fastboot")
+
+    def validate(self):
+        super().validate()
+        if self.fastboot_path is None:
+            raise JobError("fastboot not installed for auto device detection!")
+
+    @retry(exception=FastbootDeviceNotFound, retries=10, delay=3)
+    def detect(self):
+        cmd = subprocess.run(
+            [self.fastboot_path, "devices"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        if cmd.returncode == 0:
+            # 'fastboot devices' output line example: a2c22e48\tfastboot\n
+            output = cmd.stdout.strip().split("\n")
+            devices = [
+                str(line.split("\t")[0])
+                for line in output
+                if line.endswith("\tfastboot")
+            ]
+
+            if len(devices) > 1:
+                raise JobError(f"More then one fastboot devices found: {devices}")
+            if len(devices) < 1:
+                raise FastbootDeviceNotFound("Fastboot device not found.")
+
+            fastboot_serial_number = devices[0]
+            self.job.device["fastboot_serial_number"] = fastboot_serial_number
+            self.logger.info(
+                f"Detected fastboot serial number: {fastboot_serial_number}"
+            )
+
+            if self.job.device["adb_serial_number"] == "0000000000":
+                self.logger.info(
+                    "Assume adb serial number equals to fastboot serial number."
+                )
+                self.job.device["adb_serial_number"] = fastboot_serial_number
+
+            # udev device check needs 'board_id'.
+            board_id = self.job.device.get("board_id", "0000000000")
+            if board_id == "0000000000":
+                self.logger.info(
+                    "Assume device 'board_id' equals to fastboot serial number."
+                )
+                self.job.device["board_id"] = fastboot_serial_number
+
+            # Device passing to container needs 'device_info'.
+            device_info = self.job.device["device_info"]
+            if device_info[0]["board_id"] == "0000000000":
+                self.logger.info(
+                    "Assume 'device_info[0].board_id' equals to fastboot serial number."
+                )
+                self.job.device["device_info"] = [{"board_id": fastboot_serial_number}]
+        else:
+            raise JobError(f"Failed to detect fastboot device: {cmd.stderr}")
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
+        # Wait a while for the device to enter fastboot.
+        time.sleep(3)
+        # Try the detection up to 10 times.
+        self.detect()
+
         return connection

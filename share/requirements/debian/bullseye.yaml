@@ -111,6 +111,8 @@ lava-dispatcher:
     name: python3-yaml
   configobj:
     name: python3-configobj
+  fastboot:
+    name: fastboot
   file-magic:
     name: python3-magic
   jinja2:

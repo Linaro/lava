@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pyudev
 
-from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action
 
 if TYPE_CHECKING:
@@ -178,6 +178,12 @@ class WaitDeviceBoardID(Action):
                 "wait_device_board_id", True
             )
 
+        # Refresh board_id for auto detected fastboot device.
+        if self.board_id == "0000000000":
+            self.board_id = self.job.device.get("board_id", "0000000000")
+            if self.board_id == "0000000000":
+                raise JobError("Device 'board_id' is not set.")
+            self.udev_device = {"ID_SERIAL_SHORT": str(self.board_id)}
         if wait_device_board_id:
             self.logger.debug("Waiting for udev device with ID: %s", self.board_id)
             wait_udev_event(match_dict=self.udev_device)
