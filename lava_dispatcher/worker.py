@@ -666,34 +666,38 @@ async def main_loop(options, jobs: JobsDB, event: asyncio.Event) -> None:
 
 
 async def listen_for_events(options, event: asyncio.Event) -> None:
+    retry_interval = 1
     while True:
-        with contextlib.suppress(aiohttp.ClientError, asyncio.TimeoutError):
+        try:
+            LOG.info("[EVENT] Connecting to websocket")
             async with aiohttp.ClientSession(
                 headers={
                     **HEADERS,
                     "LAVA-Token": options.token,
                     "LAVA-Host": options.name,
                 }
-            ) as session:
-                async with session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
-                    async for msg in ws:
-                        if msg.type != aiohttp.WSMsgType.TEXT:
-                            continue
-                        try:
-                            data = json.loads(msg.data)
-                            (topic, _, dt, username, data) = data
-                            data = json.loads(data)
-                        except ValueError:
-                            LOG.warning("[EVENT] Invalid message: %s", msg)
-                            continue
-                        if not topic.endswith(".testjob"):
-                            continue
-                        if data.get("worker") != options.name:
-                            continue
-                        if data.get("state") in ["Scheduled", "Canceling"]:
-                            LOG.info("[EVENT] Worker mentioned")
-                            event.set()
-        await asyncio.sleep(1)
+            ) as session, session.ws_connect(f"{options.ws_url}", heartbeat=30) as ws:
+                retry_interval = 1
+                async for msg in ws:
+                    if msg.type != aiohttp.WSMsgType.TEXT:
+                        continue
+                    try:
+                        data = json.loads(msg.data)
+                        (topic, _, dt, username, data) = data
+                        data = json.loads(data)
+                    except ValueError:
+                        LOG.warning("[EVENT] Invalid message: %s", msg)
+                        continue
+                    if not topic.endswith(".testjob"):
+                        continue
+                    if data.get("worker") != options.name:
+                        continue
+                    if data.get("state") in ["Scheduled", "Canceling"]:
+                        LOG.info("[EVENT] Worker mentioned")
+                        event.set()
+        except (aiohttp.ClientError, asyncio.TimeoutError):
+            retry_interval = min(60, retry_interval * 2)
+        await asyncio.sleep(retry_interval)
 
 
 def ask_exit(signame: str, group: asyncio.tasks._GatheringFuture) -> NoReturn:
