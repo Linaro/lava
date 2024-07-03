@@ -41,12 +41,12 @@ distribution := unstable
 endif
 
 override_dh_python3:
-	./share/requires.py --distribution debian --suite $(distribution) --package lava-dispatcher > dispatcher-requirements.txt
-	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-server > server-requirements.txt
-	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-common > common-requirements.txt
-	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3 --requires=dispatcher-requirements.txt
-	dh_python3 -p lava-server --shebang=/usr/bin/python3 --requires=server-requirements.txt
-	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
+	./share/requires.py --names debian-substvars --distribution debian --suite $(distribution) --package lava-dispatcher >> debian/lava-dispatcher.substvars
+	./share/requires.py --names debian-substvars --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-server >> debian/lava-server.substvars
+	./share/requires.py --names debian-substvars --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-common >> debian/lava-common.substvars
+	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3
+	dh_python3 -p lava-server --shebang=/usr/bin/python3
+	dh_python3 -p lava-common --shebang=/usr/bin/python3
 
 override_dh_auto_build:
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-D today=\"$(BUILD_DATE)\""

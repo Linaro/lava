@@ -31,7 +31,8 @@ Depends: file,
          systemd-sysv,
          tar (>= 1.27),
          ${misc:Depends},
-         ${python3:Depends}
+         ${python3:Depends},
+         ${lava-dispatcher:Depends}
 Multi-Arch: foreign
 Recommends: bridge-utils,
             debootstrap,
@@ -113,7 +114,8 @@ Depends: adduser,
          postgresql-client,
          systemd-sysv,
          ${misc:Depends},
-         ${python3:Depends}
+         ${python3:Depends},
+         ${lava-server:Depends}
 Recommends: apache2,
             lava-coordinator (= ${binary:Version}),
             lava-dispatcher (= ${binary:Version}),
@@ -145,7 +147,8 @@ Package: lava-common
 Architecture: all
 Depends: python3-sentry-sdk,
          ${misc:Depends},
-         ${python3:Depends}
+         ${python3:Depends},
+         ${lava-common:Depends}
 Description: Linaro Automated Validation Architecture common
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
