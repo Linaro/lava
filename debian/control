@@ -81,8 +81,7 @@ Depends: lava-common (= ${binary:Version}),
          python3-jinja2,
          python3-requests,
          python3-pyudev,
-         ${misc:Depends},
-         ${python3:Depends}
+         ${misc:Depends}
 Recommends: docker.io
 Multi-Arch: foreign
 Suggests: udev
@@ -261,8 +260,7 @@ Depends: build-essential,
          python3-zmq,
          python3:any,
          xsltproc,
-         ${misc:Depends},
-         ${python3:Depends}
+         ${misc:Depends}
 Recommends: img2simg,
             lxc | lava-lxc-mocker,
             nfs-kernel-server,
