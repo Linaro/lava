@@ -247,7 +247,7 @@ class Job:
         self.base_dir = tmp_dir / "{prefix}{job_id}".format(
             prefix=self.prefix, job_id=str(self.job_id)
         )
-        self.base_dir.mkdir(mode=0o755, exist_ok=True)
+        self.base_dir.mkdir(mode=0o755, exist_ok=True, parents=True)
 
     def errors(self) -> str:
         with contextlib.suppress(OSError, UnicodeDecodeError):
