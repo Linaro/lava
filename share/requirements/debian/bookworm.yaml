@@ -41,8 +41,6 @@ lava-server:
     name: python3-jinja2
   psycopg2:
     name: python3-psycopg2
-  pytz:
-    name: python3-tz
   pyzmq:
     name: python3-zmq
   requests:
