@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction, PersistentNFSOverlay
+from tests.lava_dispatcher.test_basic import Factory
 
 from ...test_basic import LavaDispatcherTestCase
 
@@ -79,3 +80,32 @@ class TestExportData(LavaDispatcherTestCase):
                     sorted(fout.data.strip("\n").split("\n")),
                     result,
                 )
+
+
+def test_persist_nfs_place_holder():
+    factory = Factory()
+    factory.validate_job_strict = True
+    job = factory.create_job(
+        "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+    )
+
+    action = PersistentNFSOverlay(job)
+    action.parameters = {
+        "persistent_nfs": {
+            "address": "foo:/var/lib/lava/dispatcher/tmp/linux/imx8mm_rootfs"
+        },
+        "namespace": "common",
+    }
+    action.params = action.parameters["persistent_nfs"]
+    action.validate()
+    assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foo"
+
+    action.parameters = {
+        "persistent_nfs": {
+            "address": "{FILE_SERVER_IP}:/var/lib/lava/dispatcher/tmp/linux/imx8mm_rootfs"
+        },
+        "namespace": "common",
+    }
+    action.params = action.parameters["persistent_nfs"]
+    action.validate()
+    assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foobar"

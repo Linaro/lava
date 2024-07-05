@@ -23,6 +23,7 @@ from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.network import dispatcher_ip, rpcinfo_nfs
 from lava_dispatcher.utils.shell import which
+from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -743,6 +744,11 @@ class PersistentNFSOverlay(Action):
                 % self.parameters["persistent_nfs"]["address"]
             )
             return
+
+        persist["address"] = substitute_address_with_static_info(
+            persist["address"], self.job.device.get("static_info", [])
+        )
+
         nfs_server, dirname = persist["address"].split(":")
         which("rpcinfo")
         self.errors = rpcinfo_nfs(nfs_server)

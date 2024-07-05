@@ -44,6 +44,13 @@ def substitute(command_list, dictionary, drop=False, drop_line=True):
     return parsed
 
 
+def substitute_address_with_static_info(address, static_info):
+    substitutions = {
+        "{" + k + "}": v for info in static_info for (k, v) in info.items()
+    }
+    return substitute([address], substitutions)[0]
+
+
 def seconds_to_str(time):
     hours, remainder = divmod(int(round(time)), 3600)
     minutes, seconds = divmod(remainder, 60)

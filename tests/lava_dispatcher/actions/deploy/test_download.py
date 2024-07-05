@@ -863,3 +863,29 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         action = CopyToLxcAction(job)
         action.run(None, 4242)  # no crash = success
+
+    def test_address_place_holder(self):
+        factory = Factory()
+        factory.validate_job_strict = True
+        job = factory.create_job(
+            "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+        )
+        action = DownloadHandler(
+            job, "key", "/path/to/save", urlparse("http://example.com/resource.img")
+        )
+
+        action.parameters = {
+            "images": {"key": {"url": "http://example.com/resource.img"}},
+            "namespace": "common",
+        }
+        action.params = action.parameters["images"]["key"]
+        action.validate()
+        assert action.params["url"] == "http://example.com/resource.img"
+
+        action.parameters = {
+            "images": {"key": {"url": "http://{FILE_SERVER_IP}/resource.img"}},
+            "namespace": "common",
+        }
+        action.params = action.parameters["images"]["key"]
+        action.validate()
+        assert action.params["url"] == "http://foobar/resource.img"

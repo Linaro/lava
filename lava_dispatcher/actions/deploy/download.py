@@ -46,6 +46,7 @@ from lava_dispatcher.utils.filesystem import (
     lava_lxc_home,
 )
 from lava_dispatcher.utils.network import requests_retry
+from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -194,6 +195,10 @@ class DownloadHandler(Action):
         # Check that self.key is not a path
         if len(pathlib.Path(self.key).parts) != 1:
             raise JobError("Invalid key %r" % self.key)
+
+        self.params["url"] = substitute_address_with_static_info(
+            self.params["url"], self.job.device.get("static_info", [])
+        )
 
         self.url = urlparse(self.params["url"])
         compression = self.params.get("compression")
