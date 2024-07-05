@@ -9,6 +9,7 @@ import copy
 import hashlib
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import responses
 from responses import RequestsMock
@@ -162,5 +163,6 @@ class TestDownloadDecompressionMap(LavaDispatcherTestCase):
         # Call decompress_file, we only need it to create the command required,
         # it doesn't need to complete successfully.
         with self.assertRaises(InfrastructureError):
-            decompress_file("/dev/null/test", "zip")  # nosec - unit test only.
+            with TemporaryDirectory() as temp_dir:
+                decompress_file(f"{temp_dir}/test", "zip")  # nosec - unit test only.
         self.assertEqual(copy_of_command_map, decompress_command_map)
