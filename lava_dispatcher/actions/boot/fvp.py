@@ -418,6 +418,10 @@ class StartFVPAction(BaseFVPAction):
         # which will terminate the model.
         self.shell = shell
 
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=shell_connection
+        )
+
         self.shell_session = shell_connection
         return shell_connection
 
