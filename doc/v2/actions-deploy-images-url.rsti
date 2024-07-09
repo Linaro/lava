@@ -14,3 +14,26 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``file://``
  * ``lxc://``
 
+URLs allow placeholder for `http`, `https` and `file` schema.
+
+.. code-block:: yaml
+
+  - deploy:
+      timeout:
+        minutes: 120
+      to: tftp
+      kernel:
+        url: http://{FILE_SERVER_IP}/linux/Image-imx8mmevk.bin
+        type: image
+      persistent_nfs:
+        address: "{FILE_SERVER_IP}:/var/lib/lava/dispatcher/tmp/linux/imx8mm_rootfs"
+      dtb:
+        url: http://{FILE_SERVER_IP}/linux/imx8mm-evk.dtb
+      os: debian
+
+.. note:: admin can define any placeholder and assign an address to it in device dictionary.
+          LAVA then substitutes the placeholders in job with the `static_info` to generate a new `url`.
+
+  .. code-block:: jinja
+
+    {% set static_info = [{'FILE_SERVER_IP': "10.192.244.104"}] %}
