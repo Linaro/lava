@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from shutil import copy
 from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
@@ -113,6 +114,14 @@ class PostprocessWithDocker(Action):
         scriptfile = self.path / "postprocess.sh"
         scriptfile.write_text(script)
         scriptfile.chmod(0o755)
+
+        # make overlay available in the downloads directory
+        # Note: overlay filename is not constant
+        overlay_full_path = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
+        if overlay_full_path:
+            copy(overlay_full_path, self.path)
 
         docker = DockerRun.from_parameters(self.docker_parameters, self.job)
         docker.add_device("/dev/kvm", skip_missing=True)

@@ -87,13 +87,15 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         self.job = self.create_simple_job()
         self.action = PostprocessWithDocker(self.job, self.create_temporary_directory())
         self.action.job = self.job
-        self.action.populate(
-            {
-                "postprocess": {
-                    "docker": {"image": "foo", "steps": ["date", "echo HELLO WORLD"]}
-                }
-            }
-        )
+        parameters = {
+            "postprocess": {
+                "docker": {"image": "foo", "steps": ["date", "echo HELLO WORLD"]}
+            },
+            "namespace": "common",
+        }
+        self.action.populate(parameters)
+        # this simulates Pipeline.add_action method
+        self.action.parameters = parameters
 
     def test_postprocess_with_docker_populate(self):
         self.assertEqual(self.action.docker_parameters["image"], "foo")
