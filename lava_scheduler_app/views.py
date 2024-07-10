@@ -16,6 +16,7 @@ import tarfile
 from json import dumps as json_dumps
 from pathlib import Path
 
+import django_filters as filters
 import voluptuous
 import yaml
 from django import forms
@@ -138,6 +139,22 @@ def request_config(request, paginate):
 
 def _str_to_bool(string):
     return string.lower() in ["1", "true", "yes"]
+
+
+class JobTableFilter(filters.FilterSet):
+    submitter_name = filters.ModelChoiceFilter(
+        field_name="submitter__username", queryset=User.objects.all()
+    )
+    state = filters.TypedMultipleChoiceFilter(
+        # Use verbose names (i.e. "Running") and convert them
+        # to original integers when filtering.
+        choices=tuple(
+            (state_display, state_display)
+            for state_value, state_display in TestJob.STATE_CHOICES
+        ),
+        coerce=TestJob.STATE_REVERSE.__getitem__,
+        distinct=False,
+    )
 
 
 class JobTableView(LavaView):
@@ -1574,7 +1591,9 @@ class AllJobsView(JobTableView):
 @BreadCrumb("Jobs", parent=index)
 def job_list(request):
     data = AllJobsView(request, model=TestJob, table_class=AllJobsTable)
-    ptable = AllJobsTable(data.get_table_data())
+    filter = JobTableFilter(request.GET, queryset=data.get_queryset())
+    ptable = AllJobsTable(filter.qs)
+    ptable.filter = filter
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
