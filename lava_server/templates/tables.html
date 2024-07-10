@@ -19,22 +19,9 @@
     </div>
     </form>
   </div>
-{%  if table.has_searches %}
-  <div class="col-md-5">
-    <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
-      {% for key,value in request.GET.items %}
-        {% if key != table.prefix|add:"search" %}
-          <input type="hidden" name="{{ key }}" value="{{ value }}">
-        {% endif %}
-      {% endfor %}
-      <div class="form-group">
-        <label>Search</label>
-        <input type="text" name="{{ table.prefix }}search" value="{{ table|get_prefix_search:request.GET }}" placeholder="Press ? for search help">
-      </div>
-    </form>
-  </div>
+{%  if table.filter_set %}
   <div class="col-md-1">
-    <button class="btn btn-info btn-xs" data-toggle="modal" data-target="#{{ table.prefix }}SearchModal">?</button>
+    <button class="btn btn-info btn-xs" data-toggle="modal" data-target="#{{ table.prefix }}SearchModal">Search</button>
     <div class="modal fade" id="{{ table.prefix }}SearchModal" tabindex="-1" role="dialog" aria-labelledby="{{ table.prefix }}SearchModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -43,23 +30,12 @@
             <h4 class="modal-title" id="{{ table.prefix }}SearchModalLabel">Search help</h4>
           </div>
           <div class="modal-body">
-            <p>Available methods and fields</p>
+            <p>Available search filters</p>
             <dl class="dl-horizontal">
-              {% if table.Meta.searches %}
-                <dt>Simple text</dt>
-                <dd>{{ table.get_simple_text_searches|join:", " }} <abbr
-                title="text entered in the search box will be used in case sensitive matches - any field can match.">(?)</abbr></dd>
-              {% endif %}
-              {% if table.Meta.queries %}
-                <dt>Custom query text</dt>
-                <dd>{{ table.get_query_searches|join:", " }} <abbr
-                title="add the filter and a value in the query string, e.g. requested_device_type=qemu - all rows must match">(?)</abbr></dd>
-              {% endif %}
-              {% if table.Meta.times %}
-                <dt>Time based</dt>
-                <dd>{{ table.get_time_searches|join:", " }} <abbr
-                title="add the filter and a number in the query string, e.g. end_time=48 - rows will be filtered where difference between now and filter cannot be larger than passed number of hours.">(?)</abbr></dd>
-              {% endif %}
+              <form method="get">
+                {{ table.filter_set.form.as_p }}
+                <input type="submit"/>
+              </form>
             </dl>
           </div>
         </div>

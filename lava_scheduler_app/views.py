@@ -383,11 +383,14 @@ def index(request):
         request, model=DeviceType, table_class=DeviceTypeOverviewTable
     )
     ptable = DeviceTypeOverviewTable(
-        data.get_table_data(), request=request, prefix="device_type_"
+        data.get_table_data(),
+        request=request,
+        prefix="device_type_",
+        filter_set=data.filter_set,
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
-    (device_stats, running_jobs_count) = device_summary()
+    device_stats, running_jobs_count = device_summary()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -409,7 +412,10 @@ def index(request):
 def workers(request):
     worker_data = WorkerView(request, model=Worker, table_class=WorkerTable)
     worker_ptable = WorkerTable(
-        worker_data.get_table_data(), request=request, prefix="worker_"
+        worker_data.get_table_data(),
+        request=request,
+        prefix="worker_",
+        filter_set=worker_data.filter_set,
     )
     RequestConfig(request, paginate={"per_page": worker_ptable.length}).configure(
         worker_ptable
@@ -421,7 +427,9 @@ def workers(request):
         worker_list, request, model=LogEntry, table_class=LogEntryTable
     )
     worker_log_ptable = LogEntryTable(
-        worker_log_data.get_table_data(), prefix="worker_log_"
+        worker_log_data.get_table_data(),
+        prefix="worker_log_",
+        filter_set=worker_log_data.filter_set,
     )
     request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
         worker_log_ptable
@@ -558,7 +566,9 @@ def failure_report(request):
 @BreadCrumb("Devices", parent=index)
 def device_list(request):
     data = DeviceTableView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data(), request=request)
+    ptable = DeviceTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -574,7 +584,9 @@ def device_list(request):
 @BreadCrumb("Active", parent=device_list)
 def active_device_list(request):
     data = ActiveDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data(), request=request)
+    ptable = DeviceTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -599,7 +611,9 @@ class OnlineDeviceView(DeviceTableView):
 @BreadCrumb("Online Devices", parent=device_list)
 def online_device_list(request):
     data = OnlineDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data(), request=request)
+    ptable = DeviceTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -625,7 +639,9 @@ class PassingHealthTableView(DeviceTableView):
 @BreadCrumb("Passing Health Checks", parent=device_list)
 def passing_health_checks(request):
     data = PassingHealthTableView(request, model=Device, table_class=PassingHealthTable)
-    ptable = PassingHealthTable(data.get_table_data(), request=request)
+    ptable = PassingHealthTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -664,7 +680,9 @@ class MyDeviceView(DeviceTableView):
 @BreadCrumb("My Devices", parent=index)
 def mydevice_list(request):
     data = MyDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data(), request=request)
+    ptable = DeviceTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -684,7 +702,9 @@ def mydevices_health_history_log(request):
         devices, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
     devices_log_ptable = DeviceLogEntryTable(
-        devices_log_data.get_table_data(), prefix="devices_log_"
+        devices_log_data.get_table_data(),
+        prefix="devices_log_",
+        filter_set=devices_log_data.filter_set,
     )
     request_config(request, paginate={"per_page": devices_log_ptable.length}).configure(
         devices_log_ptable
@@ -759,7 +779,9 @@ class DTDeviceView(DeviceTableView):
 @BreadCrumb("Maintenance", parent=device_list)
 def maintenance_devices(request):
     data = MaintenanceDeviceView(request, model=Device, table_class=DeviceTable)
-    ptable = DeviceTable(data.get_table_data(), request=request)
+    ptable = DeviceTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -777,7 +799,9 @@ def all_device_types(request):
     data = DeviceTypeOverView(
         request, model=DeviceType, table_class=DeviceTypeOverviewTable
     )
-    ptable = DeviceTypeOverviewTable(data.get_table_data(), request=request)
+    ptable = DeviceTypeOverviewTable(
+        data.get_table_data(), request=request, filter_set=data.filter_set
+    )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     return render(
@@ -922,6 +946,7 @@ def device_type_detail(request, pk):
         devices_data.get_table_data(prefix).filter(device_type=dt),
         request=request,
         prefix=prefix,
+        filter_set=devices_data.filter_set,
     )
     config = RequestConfig(request, paginate={"per_page": devices_ptable.length})
     config.configure(devices_ptable)
@@ -931,6 +956,7 @@ def device_type_detail(request, pk):
     jobs_ptable = DeviceTypeJobsTable(
         jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
         prefix=prefix,
+        filter_set=jobs_data.filter_set,
     )
     config = request_config(request, {"per_page": jobs_ptable.length})
     config.configure(jobs_ptable)
@@ -1601,7 +1627,7 @@ class AllJobsView(JobTableView):
 @BreadCrumb("Jobs", parent=index)
 def job_list(request):
     data = AllJobsView(request, model=TestJob, table_class=AllJobsTable)
-    ptable = AllJobsTable(data.get_table_data())
+    ptable = AllJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1618,7 +1644,9 @@ def job_list(request):
 @login_required
 def job_errors(request):
     data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
-    ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
+    ptable = JobErrorsTable(
+        data.get_table_data(), prefix="job_errors_", filter_set=data.filter_set
+    )
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1634,7 +1662,7 @@ def job_errors(request):
 @BreadCrumb("Active", parent=job_list)
 def active_jobs(request):
     data = ActiveJobsTableView(request, model=TestJob, table_class=ActiveJobsTable)
-    ptable = ActiveJobsTable(data.get_table_data())
+    ptable = ActiveJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
 
     return render(
@@ -1886,7 +1914,7 @@ def job_fetch_data(request, pk):
 def myjobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyJobsView(request, model=TestJob, table_class=AllJobsTable)
-    ptable = AllJobsTable(data.get_table_data())
+    ptable = AllJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1902,7 +1930,7 @@ def myjobs(request):
 def my_active_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyActiveJobsView(request, model=TestJob, table_class=ActiveJobsTable)
-    ptable = ActiveJobsTable(data.get_table_data())
+    ptable = ActiveJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1919,7 +1947,7 @@ def my_active_jobs(request):
 def my_queued_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyQueuedJobsView(request, model=TestJob, table_class=QueuedJobsTable)
-    ptable = QueuedJobsTable(data.get_table_data())
+    ptable = QueuedJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1936,7 +1964,9 @@ def my_queued_jobs(request):
 def my_error_jobs(request):
     get_object_or_404(User, pk=request.user.id)
     data = MyErrorJobsView(request, model=TestJob, table_class=AllJobsTable)
-    ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
+    ptable = JobErrorsTable(
+        data.get_table_data(), prefix="job_errors_", filter_set=data.filter_set
+    )
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1952,7 +1982,7 @@ def my_error_jobs(request):
 @BreadCrumb("Longest Running Jobs", parent=reports)
 def longest_jobs(request, username=None):
     data = LongestJobsView(request, model=TestJob, table_class=LongestJobsTable)
-    ptable = LongestJobsTable(data.get_table_data())
+    ptable = LongestJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -1972,7 +2002,7 @@ def favorite_jobs(request):
         username = request.user.username
     user = get_object_or_404(User, username=username)
     data = FavoriteJobsView(request, model=TestJob, table_class=AllJobsTable, user=user)
-    ptable = AllJobsTable(data.get_table_data())
+    ptable = AllJobsTable(data.get_table_data(), filter_set=data.filter_set)
     request_config(request, {"per_page": ptable.length}).configure(ptable)
     return render(
         request,
@@ -2395,14 +2425,20 @@ def device_detail(request, pk):
     recent_data = RecentJobsView(
         request, device, model=TestJob, table_class=DeviceJobsTable
     )
-    recent_ptable = DeviceJobsTable(recent_data.get_table_data(prefix), prefix=prefix)
+    recent_ptable = DeviceJobsTable(
+        recent_data.get_table_data(prefix),
+        prefix=prefix,
+        filter_set=recent_data.filter_set,
+    )
     request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     device_log_data = DeviceLogView(
         device, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
     device_logs = device_log_data.get_table_data()
-    device_log_ptable = DeviceLogEntryTable(device_logs, prefix="device_log_")
+    device_log_ptable = DeviceLogEntryTable(
+        device_logs, prefix="device_log_", filter_set=device_log_data.filter_set
+    )
     request_config(request, paginate={"per_page": device_log_ptable.length}).configure(
         device_log_ptable
     )
@@ -2558,13 +2594,14 @@ def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
     if not worker.can_view(request.user):
         raise PermissionDenied()
-    data = DeviceTableView(request)
+    data = DeviceTableView(request, model=Device, table_class=NoWorkerDeviceTable)
     ptable = NoWorkerDeviceTable(
         data.get_table_data()
         .filter(worker_host=worker)
         .exclude(health=Device.HEALTH_RETIRED)
         .order_by("hostname"),
         request=request,
+        filter_set=data.filter_set,
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
@@ -2572,7 +2609,9 @@ def worker_detail(request, pk):
         worker, request, model=LogEntry, table_class=LogEntryTable
     )
     worker_log_ptable = LogEntryTable(
-        worker_log_data.get_table_data(), prefix="worker_log_"
+        worker_log_data.get_table_data(),
+        prefix="worker_log_",
+        filter_set=worker_log_data.filter_set,
     )
     request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
         worker_log_ptable
@@ -2654,7 +2693,9 @@ def healthcheck(request):
         model=TestJob,
         table_class=AllJobsTable,
     )
-    health_check_ptable = AllJobsTable(health_check_data.get_table_data())
+    health_check_ptable = AllJobsTable(
+        health_check_data.get_table_data(), filter_set=health_check_data.filter_set
+    )
     request_config(request, {"per_page": health_check_ptable.length}).configure(
         health_check_ptable
     )
@@ -2678,7 +2719,9 @@ class QueueJobsView(JobTableView):
 @BreadCrumb("Queue", parent=job_list)
 def queue(request):
     queue_data = QueueJobsView(request, model=TestJob, table_class=QueuedJobsTable)
-    queue_ptable = QueuedJobsTable(queue_data.get_table_data())
+    queue_ptable = QueuedJobsTable(
+        queue_data.get_table_data(), filter_set=queue_data.filter_set
+    )
     request_config(request, {"per_page": queue_ptable.length}).configure(queue_ptable)
     return render(
         request,
@@ -2742,7 +2785,11 @@ class RunningView(LavaView):
 @BreadCrumb("Running", parent=index)
 def running(request):
     running_data = RunningView(request, model=DeviceType, table_class=RunningTable)
-    running_ptable = RunningTable(running_data.get_table_data(), request=request)
+    running_ptable = RunningTable(
+        running_data.get_table_data(),
+        request=request,
+        filter_set=running_data.filter_set,
+    )
     RequestConfig(request, paginate={"per_page": running_ptable.length}).configure(
         running_ptable
     )
