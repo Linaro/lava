@@ -12,6 +12,7 @@ from django.utils import timezone
 from django.utils.html import format_html
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
+from lava_scheduler_app.filters import JobTableFilter
 from lava_scheduler_app.models import Device, TestJob
 from lava_scheduler_app.tables import TagsColumn, render_user_display
 from lava_server.lavatable import LavaTable
@@ -167,6 +168,7 @@ class AllJobsTable(
             "end_time",
             "duration",
         )
+        filters = JobTableFilter
         # filter view functions supporting relational mappings and returning a Q()
         queries = {
             "device_query": "device",  # active_device

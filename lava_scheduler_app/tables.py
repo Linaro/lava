@@ -14,6 +14,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
+from lava_scheduler_app.filters import DeviceTableFilters
 from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
 from lava_server.lavatable import LavaTable
 
@@ -307,6 +308,7 @@ class DeviceTable(LavaTable):
             "current_job",
             "last_health_report_job",
         ]
+        filters = DeviceTableFilters
         sequence = ["hostname", "worker_host", "device_type", "state", "health"]
         searches = {"hostname": "contains"}
         queries = {
