@@ -471,27 +471,22 @@ class Action:
             raise JobError("Unable to use repeat and failure_retry, use a repeat block")
         if "failure_retry" in self.parameters:
             self.max_retries = self.parameters["failure_retry"]
-        else:
-            if self.job:
-                if self.job.device and type(self.job.device).__name__ != "dict":
-                    if "constants" in self.job.device:
-                        device_max_retry = self.get_constant("failure_retry", "")
-                        if device_max_retry:
-                            device_max_retry = int(device_max_retry)
-                            if device_max_retry > self.max_retries:
-                                self.max_retries = device_max_retry
-                            # In case of a boot section, used boot_retry if it exists
-                            boot_retry = self.get_constant("boot_retry", "")
-                            if self.section == "boot" and boot_retry:
-                                self.max_retries = int(boot_retry)
+        elif "constants" in self.job.device:
+            device_max_retry = self.get_constant("failure_retry", "")
+            if device_max_retry:
+                device_max_retry = int(device_max_retry)
+                if device_max_retry > self.max_retries:
+                    self.max_retries = device_max_retry
+                # In case of a boot section, used boot_retry if it exists
+                boot_retry = self.get_constant("boot_retry", "")
+                if self.section == "boot" and boot_retry:
+                    self.max_retries = int(boot_retry)
         if "repeat" in self.parameters:
             self.max_retries = self.parameters["repeat"]
-        if self.job:
-            if self.job.device:
-                if "character_delays" in self.job.device:
-                    self.character_delay = self.job.device["character_delays"].get(
-                        self.section, 0
-                    )
+        if "character_delays" in self.job.device:
+            self.character_delay = self.job.device["character_delays"].get(
+                self.section, 0
+            )
 
     @parameters.setter
     def parameters(self, data):
