@@ -1,7 +1,8 @@
-# Copyright 2019-2023 NXP
+# Copyright 2019-2024 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
+#         Larry Shen <larry.shen@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
@@ -452,6 +453,18 @@ class TestUUUbootAction(
             allow_fail=False,
             error_msg="Fail UUUBootAction on cmd : -b sd image.boot",
         )
+
+    def test_pipeline_skip_uuu(self):
+        job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
+            "sample_jobs/uuu_skip.yaml"
+        )
+        self.assertIsNotNone(job)
+
+        # Test that generated pipeline is the same as defined in pipeline_refs
+        description_ref = self.pipeline_reference("uuu-skip.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
+        self.assertIsNone(job.validate())
 
 
 class TestUUUActionDriver(LavaDispatcherTestCase):
