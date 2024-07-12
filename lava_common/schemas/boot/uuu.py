@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 NXP
+# Copyright 2019-2020, 2023 NXP
 #
 # Author: Mahe Thomas <thomas.mahe@nxp.com>
 #
@@ -15,5 +15,6 @@ def schema():
         Required("method"): Msg("uuu", "'method' should be 'uuu'"),
         Required("commands"): Any(str, [{str: str}]),
         Optional("docker"): docker(),
+        Optional("skip_uuu_if_bootloader_valid"): bool,
     }
     return {**boot.schema(), **base}

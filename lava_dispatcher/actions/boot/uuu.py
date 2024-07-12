@@ -1,8 +1,9 @@
-# Copyright 2019-2023 NXP
+# Copyright 2019-2024 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
 #         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
+#         Larry Shen <larry.shen@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
@@ -14,7 +15,7 @@ import re
 import time
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import ConfigurationError, JobError
+from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootloaderCommandOverlay
 from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
@@ -177,13 +178,79 @@ class BootBootloaderCorruptBootMediaAction(Action):
             return super().run(connection, max_end_time)
 
 
+class CheckBootloaderValidAction(Action):
+    name = "check-bootloader-valid"
+    description = "Store in 'board_valid_check' namespace_data"
+    summary = "Store in 'board_valid_check' namespace_data"
+
+    def populate(self, parameters):
+        self.parameters = parameters
+
+        u_boot_params = {
+            "method": "bootloader",
+            "bootloader": "u-boot",
+            "commands": [],
+            "prompts": [
+                self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
+                    "bootloader_prompt"
+                ]
+            ],
+        }
+        u_boot_params = {**parameters, **u_boot_params}
+        u_boot_params.setdefault("timeouts", {}).setdefault(
+            "bootloader-interrupt", {"seconds": 15}
+        )
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=u_boot_params)
+        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(
+            BootloaderCommandOverlay(
+                self.job,
+                method=u_boot_params["bootloader"],
+                commands=u_boot_params["commands"],
+            )
+        )
+        self.pipeline.add_action(BootBootloaderAction(self.job))
+        self.pipeline.add_action(DisconnectDevice(self.job))
+
+    def run(self, connection, max_end_time):
+        try:
+            con = super().run(connection, max_end_time)
+            self.set_namespace_data(
+                action="boot", label="uuu", key="bootloader_valid_check", value=True
+            )
+            return con
+        except InfrastructureError:
+            self.logger.info("Start uuu flash due to no valid bootloader")
+            self.set_namespace_data(
+                action="boot", label="uuu", key="bootloader_valid_check", value=False
+            )
+            return connection
+
+
 class UUUBootRetryAction(RetryAction):
     """
-    Wraps the Retry Action to allow for actions which precede
-    the reset, e.g. Connect.
+    Wraps the retryaction to allow for bootloader valid check
+    if `skip_uuu_if_bootloader_valid` specified
     """
 
     name = "uuu-boot-retry"
+    description = "wrap action to allow bootloader valid check"
+    summary = "check valid bootloader before uuu"
+
+    def populate(self, parameters):
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        if parameters.get("skip_uuu_if_bootloader_valid"):
+            self.pipeline.add_action(CheckBootloaderValidAction(self.job))
+        self.pipeline.add_action(UUUAction(self.job))
+
+
+class UUUAction(Action):
+    """
+    Wraps the action to allow for actions which precede
+    the reset, e.g. Connect.
+    """
+
+    name = "uuu"
     description = "Boot the board using uboot and perform uuu commands"
     summary = "Pass uuu commands"
 
@@ -225,6 +292,16 @@ Following actions will be skipped :
         self.pipeline.add_action(ConnectDevice(self.job))
         self.pipeline.add_action(UUUBootAction(self.job), parameters=parameters)
         self.pipeline.add_action(DisconnectDevice(self.job))
+
+    def run(self, connection, max_end_time):
+        bootloader_valid = self.get_namespace_data(
+            action="boot", label="uuu", key="bootloader_valid_check"
+        )
+        if bootloader_valid:
+            self.logger.info("Skip uuu flash due to valid bootloader")
+            return connection
+        else:
+            return super().run(connection, max_end_time)
 
     def eval_otg_path(self):
         uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
