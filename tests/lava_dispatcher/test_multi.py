@@ -12,7 +12,7 @@ from lava_common.decorators import nottest
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestRunnerAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
@@ -52,14 +52,6 @@ class TestMultiDeploy(LavaDispatcherTestCase):
             ],
         }
 
-    class FakeDevice(NewDevice):
-        def check_config(self, job):
-            pass
-
-        def __init__(self):
-            data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-            super().__init__(data)
-
     @nottest
     class TestDeploy:  # cannot be a subclass of Deployment without a full select function.
         def __init__(self, parent, parameters, job):
@@ -83,7 +75,9 @@ class TestMultiDeploy(LavaDispatcherTestCase):
     def test_multi_deploy(self, which_mock):
         self.assertIsNotNone(self.parsed_data)
         job = self.create_simple_job(
-            device_dict=TestMultiDeploy.FakeDevice(),
+            device_dict=DeviceDict.from_yaml_str(
+                Factory().create_device("bbb-01.jinja2")[0]
+            ),
             job_parameters=self.parsed_data,
         )
         pipeline = Pipeline(job=job)
@@ -134,8 +128,9 @@ class TestMultiDeploy(LavaDispatcherTestCase):
 class TestMultiDefinition(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        self.device = NewDevice(data)
+        self.device = DeviceDict.from_yaml_str(
+            Factory().create_device("bbb-01.jinja2")[0]
+        )
         bbb_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/uboot-nfs.yaml")
         with open(bbb_yaml) as sample_job_data:
             self.job_data = yaml_safe_load(sample_job_data)

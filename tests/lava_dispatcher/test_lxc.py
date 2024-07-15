@@ -17,7 +17,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 )
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
@@ -169,7 +169,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         self.assertEqual(test_actions[0]["test"]["namespace"], "probe")
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()
@@ -204,7 +204,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
             data = yaml_safe_load(sample_job_data)
         parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
         job.logger = DummyLogger()
         job.validate()

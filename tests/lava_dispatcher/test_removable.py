@@ -9,7 +9,6 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
     BootloaderSecondaryMedia,
@@ -19,7 +18,7 @@ from lava_dispatcher.actions.boot.u_boot import UBootAction
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.removable import DDAction, MassStorage
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.strings import map_kernel_uboot, substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -49,7 +48,7 @@ class TestRemovable(LavaDispatcherTestCase):
         Test that the correct parameters have been set for the device
         """
         (rendered, _) = self.factory.create_device("cubie2.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         self.assertIsNotNone(cubie["parameters"]["media"].get("usb"))
         self.assertIsNotNone(cubie.get("commands"))
         self.assertIsNotNone(cubie.get("actions"))
@@ -121,7 +120,7 @@ class TestRemovable(LavaDispatcherTestCase):
         Test that the job parameters match expected structure
         """
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         job = self._check_valid_job(cubie, "cubietruck-removable.yaml")
         self._check_job_parameters(cubie, job, "download")
 
@@ -130,7 +129,7 @@ class TestRemovable(LavaDispatcherTestCase):
         Test that the job parameters with a writer tool match expected structure
         """
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         job = self._check_valid_job(cubie, "cubietruck-removable-with-writer.yaml")
         self._check_job_parameters(cubie, job, "writer")
 
@@ -210,12 +209,12 @@ class TestRemovable(LavaDispatcherTestCase):
 
     def test_deployment(self):
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         self._check_deployment(cubie, "cubietruck-removable.yaml")
 
     def test_writer_deployment(self):
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         self._check_deployment(cubie, "cubietruck-removable-with-writer.yaml")
 
     @patch(
@@ -391,7 +390,7 @@ class TestRemovable(LavaDispatcherTestCase):
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb = NewDevice(yaml_safe_load(rendered))
+        bbb = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
@@ -415,7 +414,7 @@ class TestRemovable(LavaDispatcherTestCase):
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )

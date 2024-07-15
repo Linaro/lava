@@ -15,7 +15,7 @@ from lava_dispatcher.actions.deploy.iso import (
     QemuCommandLine,
 )
 from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.strings import substitute
@@ -26,7 +26,7 @@ from tests.utils import DummyLogger
 class InstallerFactory(Factory):
     def create_qemu_installer_job(self):
         (rendered, _) = self.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/qemu-debian-installer.yaml"
         )

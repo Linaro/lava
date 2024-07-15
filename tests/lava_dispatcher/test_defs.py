@@ -30,7 +30,7 @@ from lava_dispatcher.actions.deploy.testdef import (
     TestRunnerAction,
 )
 from lava_dispatcher.actions.test.shell import PatternFixup
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -111,7 +111,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         testdef.validate()
         self.assertEqual([], testdef.errors)
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:

@@ -12,7 +12,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -37,7 +37,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
 
     def test_missing_handler(self):
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         kvm_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/kvm.yaml")
         parser = JobParser()
         with open(kvm_yaml) as sample_job_data:

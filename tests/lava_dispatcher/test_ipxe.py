@@ -18,7 +18,7 @@ from lava_dispatcher.actions.boot import (
 from lava_dispatcher.actions.boot.ipxe import BootloaderAction, BootloaderRetry
 from lava_dispatcher.actions.deploy.apply_overlay import ExtractNfsRootfs
 from lava_dispatcher.actions.deploy.tftp import PrepareOverlayTftp, TftpAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
@@ -143,7 +143,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
             },
         }
         (rendered, _) = self.factory.create_device("x86-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -287,7 +287,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         job.pipeline.find_action(ExpectShellSession)
 
         (rendered, _) = self.factory.create_device("x86-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         extra_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/ipxe.yaml")
         with open(extra_yaml) as data:
             sample_job_string = data.read()

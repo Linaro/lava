@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 from unittest.mock import call as mock_call
 
 from lava_dispatcher.actions.commands import CommandAction
-from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.device import DeviceDict
 
 from ..test_basic import LavaDispatcherTestCase
 
@@ -17,7 +17,7 @@ class TestCommands(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.job = self.create_simple_job(
-            device_dict=PipelineDevice(
+            device_dict=DeviceDict(
                 {
                     "commands": {
                         "hard_reset": "/path/to/hard-reset",
@@ -57,7 +57,7 @@ class TestCommands(LavaDispatcherTestCase):
         self.assertIn("Unknown user command 'unknown_command'", self.action.errors)
 
     def test_unconfigured_device(self):
-        self.job.device = PipelineDevice({})
+        self.job.device = DeviceDict()
         self.action.parameters = {"name": "some-action"}
         self.assertFalse(self.action.validate())
 

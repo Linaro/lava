@@ -149,7 +149,7 @@ class PipelineContext:
 
     Do NOT store data here which is not relevant to ALL pipelines, this is NOT
     the place for any configuration relating to devices or device types. The
-    NewDevice class loads only the configuration required for the one device.
+    DeviceDict class loads only the configuration required for the one device.
 
     Keep the memory footprint of this class as low as practical.
 

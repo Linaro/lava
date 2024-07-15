@@ -15,7 +15,7 @@ from jinja2 import TemplateError as JinjaTemplateError
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_scheduler_app.dbutils import match_vlan_interface
@@ -452,7 +452,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             self.fail("[%s] device-dictionary error: %s" % (job.id, msg))
 
         self.assertTrue(device.is_valid())
-        device_object = PipelineDevice(
+        device_object = DeviceDict(
             device_config
         )  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
@@ -594,7 +594,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.fail("[%d] device-dictionary error: %s" % (host_job.id, msg))
 
         self.assertTrue(device.is_valid())
-        device_object = PipelineDevice(
+        device_object = DeviceDict(
             device_config
         )  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
         # FIXME: drop this nasty hack once 'target' is dropped as a parameter
@@ -1013,7 +1013,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     )
                     self.fail("[%d] device-dictionary error: %s" % (job.id, msg))
 
-                device_object = PipelineDevice(
+                device_object = DeviceDict(
                     device_config
                 )  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
                 # FIXME: drop this nasty hack once 'target' is dropped as a parameter
@@ -1116,7 +1116,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     )
                     self.fail("[%d] device-dictionary error: %s" % (job.id, msg))
 
-                device_object = PipelineDevice(
+                device_object = DeviceDict(
                     device_config
                 )  # equivalent of the NewDevice in lava-dispatcher, without .yaml file.
                 # FIXME: drop this nasty hack once 'target' is dropped as a parameter

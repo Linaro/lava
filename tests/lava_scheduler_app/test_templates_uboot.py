@@ -10,7 +10,7 @@ import unittest
 
 from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Timeout
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from tests.utils import DummyLogger, infrastructure_error
 
@@ -309,9 +309,9 @@ class TestUbootTemplates(BaseTemplateTest):
 {% set connection_command = 'telnet serial4 7010' %}
 {% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
         template_dict = self.render_device_dictionary_from_text(data)
-        fdesc, device_yaml = tempfile.mkstemp()
+        fdesc, device_yaml_path = tempfile.mkstemp()
         os.write(fdesc, yaml_safe_dump(template_dict).encode())
-        panda = NewDevice(device_yaml)
+        panda = DeviceDict.from_path(device_yaml_path)
         lxc_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs", "panda-lxc-aep.yaml"
         )

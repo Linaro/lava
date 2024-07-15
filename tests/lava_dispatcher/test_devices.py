@@ -13,7 +13,7 @@ from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
@@ -128,7 +128,7 @@ class TestJobDeviceParameters(LavaDispatcherTestCase):
     def test_device_constants(self):
         factory = Factory()
         (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         self.assertIn("constants", device)
         self.assertEqual(
             device.get_constant("kernel-start-message"), "Linux version [0-9]"
@@ -148,7 +148,7 @@ class TestDeviceEnvironment(LavaDispatcherTestCase):
         data = None
         job_parser = JobParser()
         (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
@@ -173,7 +173,7 @@ overrides:
         factory = Factory()
         job_parser = JobParser()
         (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
@@ -200,7 +200,7 @@ overrides:
         factory = Factory()
         job_parser = JobParser()
         (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )
@@ -225,42 +225,41 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
     def test_device_init_with_str_path(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        device = NewDevice(str(device_path))
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict.from_path(str(device_path))
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
     def test_device_init_with_dict(self):
-        device = NewDevice({"constants": {}})
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict({"constants": {}})
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
     def test_device_init_with_pathlib_path(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        device = NewDevice(str(device_path))
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict.from_path(device_path)
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
     def test_device_init_with_unsupported_type(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        with self.assertRaises(ConfigurationError) as context:
+        with self.assertRaises(ValueError):
             with open(str(device_path)) as f:
-                NewDevice(f)
-        self.assertIn("Unsupported device configuration type: ", str(context.exception))
+                DeviceDict(f)
 
     def test_device_init_with_empty_file(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("", encoding="utf-8")
         with self.assertRaises(ConfigurationError) as context:
-            NewDevice(device_path)
+            DeviceDict.from_path(device_path)
         self.assertIn("Empty device configuration", str(context.exception))
 
     def test_device_init_with_invalid_yaml(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("invalid_yaml: {", encoding="utf-8")
         with self.assertRaises(ConfigurationError) as context:
-            NewDevice(device_path)
+            DeviceDict.from_path(device_path)
         self.assertIn(" could not be parsed", str(context.exception))
 
 
