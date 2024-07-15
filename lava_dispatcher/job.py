@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from lava_dispatcher.shell import ShellSession
 
     from .connection import Protocol
-    from .device import NewDevice
+    from .device import DeviceDict
 
 
 class Job:
@@ -48,7 +48,7 @@ class Job:
         logging_level
         job_timeout
     Job also provides the primary access to the Device.
-    The NewDevice class only loads the specific configuration of the
+    The DeviceDict class only loads the specific configuration of the
     device for this job - one job, one device.
     """
 
@@ -56,7 +56,7 @@ class Job:
         self,
         job_id: str,
         parameters: dict[str, Any],
-        device: NewDevice,
+        device: DeviceDict,
         timeout: Timeout,
         logger: YAMLLogger | None = None,
     ):
