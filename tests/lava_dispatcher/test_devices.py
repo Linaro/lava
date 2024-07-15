@@ -11,7 +11,7 @@ from lava_common.exceptions import ConfigurationError, JobError
 from lava_dispatcher.action import Action
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import infrastructure_error
 
@@ -122,7 +122,7 @@ class TestJobDeviceParameters(LavaDispatcherTestCase):
 
     def test_device_constants(self):
         factory = Factory()
-        device = NewDevice(factory.load_device_configuration_dict("bbb-01"))
+        device = DeviceDict(factory.load_device_configuration_dict("bbb-01"))
         self.assertIn("constants", device)
         self.assertEqual(
             device.get_constant("kernel-start-message"), "Linux version [0-9]"
@@ -201,42 +201,34 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
     def test_device_init_with_str_path(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        device = NewDevice(str(device_path))
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict.from_path(device_path)
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
     def test_device_init_with_dict(self):
-        device = NewDevice({"constants": {}})
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict({"constants": {}})
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
     def test_device_init_with_pathlib_path(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        device = NewDevice(str(device_path))
-        self.assertIsInstance(device, NewDevice)
+        device = DeviceDict.from_path(device_path)
+        self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
-
-    def test_device_init_with_unsupported_type(self):
-        device_path = self.create_temporary_directory() / "bbb-01.yaml"
-        device_path.write_text("constants:", encoding="utf-8")
-        with self.assertRaises(ConfigurationError) as context:
-            with open(str(device_path)) as f:
-                NewDevice(f)
-        self.assertIn("Unsupported device configuration type: ", str(context.exception))
 
     def test_device_init_with_empty_file(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("", encoding="utf-8")
         with self.assertRaises(ConfigurationError) as context:
-            NewDevice(device_path)
+            DeviceDict.from_path(device_path)
         self.assertIn("Empty device configuration", str(context.exception))
 
     def test_device_init_with_invalid_yaml(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("invalid_yaml: {", encoding="utf-8")
         with self.assertRaises(ConfigurationError) as context:
-            NewDevice(device_path)
+            DeviceDict.from_path(device_path)
         self.assertIn(" could not be parsed", str(context.exception))
 
 
