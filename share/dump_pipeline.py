@@ -13,8 +13,8 @@ import sys
 from jinja2 import FileSystemLoader
 
 from lava_common.jinja import create_device_templates_env
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import NewDevice
+from lava_common.yaml import yaml_safe_dump
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 
 
@@ -44,7 +44,7 @@ def main():
     env = create_device_templates_env(loader=FileSystemLoader(options.path))
     # Load the device configuration
     data = env.from_string(options.device.read()).render()
-    device = NewDevice(yaml_safe_load(data))
+    device = DeviceDict.from_yaml_str(data)
 
     # Load the job definition
     parser = JobParser()

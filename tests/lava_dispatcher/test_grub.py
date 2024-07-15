@@ -9,7 +9,6 @@ import unittest
 from unittest.mock import patch
 
 from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import (
     AutoLoginAction,
@@ -31,7 +30,7 @@ from lava_dispatcher.actions.deploy.fastboot import FastbootFlashAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellRetry
 from lava_dispatcher.connections.serial import ConnectShell
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
@@ -175,7 +174,7 @@ class TestGrubAction(LavaDispatcherTestCase):
             },
         }
         (rendered, _) = self.factory.create_device("d02-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,

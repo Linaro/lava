@@ -17,7 +17,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     PrepareOverlayTftp,
 )
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils import filesystem
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -167,7 +167,7 @@ class TestBareboxAction(LavaDispatcherTestCase):
 
 class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
-        self.device = NewDevice(
+        self.device = DeviceDict.from_path(
             os.path.join(os.path.dirname(__file__), "devices/bbb-01-barebox.yaml")
         )
         bbb_yaml = os.path.join(

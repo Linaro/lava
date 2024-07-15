@@ -8,7 +8,8 @@
 # pylint: disable=unused-import
 from __future__ import annotations
 
-import lava_dispatcher.protocols.strategies
+from typing import TYPE_CHECKING
+
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import JobError, Pipeline, Timeout
 from lava_dispatcher.actions.boot_strategy import BootStrategy
@@ -20,8 +21,11 @@ from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.job import Job
 from lava_dispatcher.power import FinalizeAction
 
+if TYPE_CHECKING:
+    from lava_dispatcher.device import DeviceDict
 
-def parse_action(job_data, name, device, pipeline, test_info, test_count):
+
+def parse_action(job_data, name, device: DeviceDict, pipeline, test_info, test_count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -87,7 +91,15 @@ class JobParser:
         duration = Timeout.parse(timeouts_dict["job"])
         return Timeout("job", None, duration=duration)
 
-    def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
+    def parse(
+        self,
+        content,
+        device: DeviceDict,
+        job_id,
+        logger,
+        dispatcher_config,
+        env_dut=None,
+    ):
         data = yaml_safe_load(content)
         job = Job(
             job_id=job_id,

@@ -14,7 +14,7 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.deploy.overlay import VlandOverlayAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
@@ -33,7 +33,7 @@ class TestVland(LavaDispatcherTestCase):
         )
         self.factory = Factory()
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        self.device = NewDevice(yaml_safe_load(rendered))
+        self.device = DeviceDict.from_yaml_str(rendered)
         self.job_id = "100"
 
     def test_file_structure(self):
@@ -141,7 +141,7 @@ class TestVland(LavaDispatcherTestCase):
         self.assertIsNotNone(vprotocol.multinode_protocol)
 
         (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        bbb2 = NewDevice(yaml_safe_load(rendered))
+        bbb2 = DeviceDict.from_yaml_str(rendered)
         bbb2["parameters"]["interfaces"]["eth0"]["switch"] = "192.168.0.2"
         bbb2["parameters"]["interfaces"]["eth0"]["port"] = "6"
         bbb2["parameters"]["interfaces"]["eth1"]["switch"] = "192.168.0.2"

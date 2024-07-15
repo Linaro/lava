@@ -34,7 +34,7 @@ from lava_common.schemas.device import validate as validate_device
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.device import NewDevice, PipelineDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 
@@ -71,7 +71,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
             job_id=randint(0, 2**32 - 1),
             parameters=job_parameters,
             logger=LavaDispatcherTestCase.TESTCASE_JOB_LOGGER,
-            device=PipelineDevice(device_dict),
+            device=DeviceDict(device_dict),
             timeout=Timeout(
                 f"unittest-timeout-{self.__class__.__name__}",
                 None,
@@ -263,7 +263,7 @@ class Factory:
             validate_job(job_dict, strict=self.validate_job_strict)
 
         device_dict, _ = self.create_device(template, job_ctx)
-        device = NewDevice(yaml_safe_load(device_dict))
+        device = DeviceDict.from_yaml_str(device_dict)
         try:
             parser = JobParser()
             job = parser.parse(
@@ -300,7 +300,7 @@ class Factory:
             "no_kvm": True,
         }  # override to allow unit tests on all types of systems
         (data, device_dict) = self.create_device("kvm01.jinja2", job_ctx)
-        device = NewDevice(yaml_safe_load(data))
+        device = DeviceDict.from_yaml_str(data)
         self.validate_data("hi6220-hikey-01", device_dict)
         kvm_yaml = os.path.join(os.path.dirname(__file__), filename)
         parser = JobParser()

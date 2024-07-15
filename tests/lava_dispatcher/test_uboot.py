@@ -30,7 +30,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.prepare import UBootPrepareKernelAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
@@ -283,8 +283,9 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
-        device = NewDevice(data)
+        device = DeviceDict.from_yaml_str(
+            Factory().create_device("imx8mq-evk-03.jinja2")[0]
+        )
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -363,8 +364,9 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
-        device = NewDevice(data)
+        device = DeviceDict.from_yaml_str(
+            Factory().create_device("imx8mq-evk-03.jinja2")[0]
+        )
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -453,7 +455,7 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        device = NewDevice(yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0]))
+        device = DeviceDict.from_yaml_str(Factory().create_device("bbb-01.jinja2")[0])
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -556,8 +558,7 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
+        device = DeviceDict.from_yaml_str(Factory().create_device("bbb-01.jinja2")[0])
         ip_addr = dispatcher_ip(None)
         parsed = []
         kernel_addr = "0x83000000"
@@ -619,8 +620,7 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        device = NewDevice(data)
+        device = DeviceDict.from_yaml_str(Factory().create_device("bbb-01.jinja2")[0])
         ip_addr = dispatcher_ip(None)
         parsed = []
         kernel_addr = "0x83000000"
@@ -840,7 +840,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         """
         job_parser = JobParser()
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
-        cubie = NewDevice(yaml_safe_load(rendered))
+        cubie = DeviceDict.from_yaml_str(rendered)
         sample_job_file = os.path.join(
             os.path.dirname(__file__), "sample_jobs/cubietruck-removable.yaml"
         )
@@ -936,8 +936,9 @@ class TestUbootAction(LavaDispatcherTestCase):
 
 class TestKernelConversion(LavaDispatcherTestCase):
     def setUp(self):
-        data = yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0])
-        self.device = NewDevice(data)
+        self.device = DeviceDict.from_yaml_str(
+            Factory().create_device("bbb-01.jinja2")[0]
+        )
         bbb_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
         )

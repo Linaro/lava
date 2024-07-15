@@ -21,7 +21,7 @@ from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import InlineRepoAction
 from lava_dispatcher.connections.serial import QemuSession
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
@@ -299,7 +299,7 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
 
     def test_extra_options(self):
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = DeviceDict.from_yaml_str(rendered)
         kvm_yaml = os.path.join(
             os.path.dirname(__file__), "sample_jobs/kvm-inline.yaml"
         )

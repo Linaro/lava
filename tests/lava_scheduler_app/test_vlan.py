@@ -8,7 +8,7 @@ import os
 import tempfile
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
@@ -159,7 +159,7 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         data = "{% extends 'beaglebone-black.jinja2' %}"
         device_yaml_file = DEVICE_TYPES_JINJA_ENV.from_string(data).render()
         parser = JobParser()
-        bbb_device = NewDevice(yaml_safe_load(device_yaml_file))
+        bbb_device = DeviceDict.from_yaml_str(device_yaml_file)
         with open(client_file_name) as sample_job_data:
             bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, "")
         os.close(client_handle)
