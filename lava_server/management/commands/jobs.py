@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -10,6 +11,7 @@ import lzma
 import pathlib
 import re
 import time
+from argparse import BooleanOptionalAction
 from shutil import chown, rmtree
 
 import voluptuous
@@ -130,6 +132,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Only remove job logs and not database objects",
         )
+        rm.add_argument(
+            "--skip-favorite",
+            action=BooleanOptionalAction,
+            default=True,
+        )
 
         valid = sub.add_parser(
             "validate",
@@ -210,6 +217,7 @@ class Command(BaseCommand):
                 options["dry_run"],
                 options["slow"],
                 options["logs_only"],
+                options["skip_favorite"],
             )
         elif options["sub_command"] == "fail":
             self.handle_fail(options["job_id"])
@@ -283,7 +291,9 @@ class Command(BaseCommand):
                     f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
                 )
 
-    def handle_rm(self, older_than, submitter, simulate, slow, logs_only):
+    def handle_rm(
+        self, older_than, submitter, simulate, slow, logs_only, skip_favorite: bool
+    ):
         if not older_than and not submitter:
             raise CommandError("You should specify at least one filtering option")
 
@@ -311,6 +321,9 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 raise CommandError("Unable to find submitter '%s'" % submitter)
             jobs = jobs.filter(submitter=user)
+
+        if skip_favorite:
+            jobs = jobs.exclude(testjobuser__is_favorite=True)
 
         self.stdout.write("Removing %d jobs:" % jobs.count())
 

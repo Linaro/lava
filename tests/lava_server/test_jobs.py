@@ -12,7 +12,7 @@ import pytest
 from django.core.management import call_command
 from django.utils import timezone
 
-from lava_scheduler_app.models import TestJob, User
+from lava_scheduler_app.models import TestJob, TestJobUser, User
 
 
 @pytest.fixture
@@ -125,3 +125,23 @@ def test_jobs_rm_logs_only(job1, job2):
 
     assert TestJob.objects.filter(id=job2.id).exists()
     assert not Path(job2.output_dir).exists()
+
+
+@pytest.mark.django_db
+def test_jobs_rm_favorite_preserved(job1, job2):
+    user = job1.submitter
+    user_metadata = TestJobUser(user=user, test_job=job1, is_favorite=True)
+    user_metadata.save()
+
+    call_command("jobs", "rm", "--older-than", "1d")
+
+    assert TestJob.objects.filter(id=job1.id).exists()
+    assert Path(job1.output_dir).exists()
+
+    assert not TestJob.objects.filter(id=job2.id).exists()
+    assert not Path(job2.output_dir).exists()
+
+    call_command("jobs", "rm", "--older-than", "1d", "--no-skip-favorite")
+
+    assert not TestJob.objects.filter(id=job1.id).exists()
+    assert not Path(job1.output_dir).exists()
