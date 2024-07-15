@@ -26,9 +26,10 @@ from lava_dispatcher.power import FinalizeAction
 
 if TYPE_CHECKING:
     from lava_common.log import YAMLLogger
+    from lava_dispatcher.device import DeviceDict
 
 
-def parse_action(job_data, name, device, pipeline, test_info, test_count):
+def parse_action(job_data, name, device: DeviceDict, pipeline, test_info, test_count):
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
@@ -96,7 +97,7 @@ class JobParser:
     def parse(
         self,
         content,
-        device,
+        device: DeviceDict,
         job_id,
         dispatcher_config,
         env_dut=None,
