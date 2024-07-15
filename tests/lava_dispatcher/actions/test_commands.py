@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 from unittest.mock import call as mock_call
 
 from lava_dispatcher.actions.commands import CommandAction
-from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.device import DeviceDict
 
 from ..test_basic import LavaDispatcherTestCase
 
@@ -17,7 +17,7 @@ class TestCommands(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.job = self.create_simple_job(
-            device_dict=PipelineDevice(
+            device_dict=DeviceDict(
                 {
                     "commands": {
                         "hard_reset": "/path/to/hard-reset",
@@ -59,7 +59,7 @@ class TestCommands(LavaDispatcherTestCase):
         self.assertEqual(["Unknown user command 'unknown_command'"], self.action.errors)
 
     def test_unconfigured_device(self):
-        self.job.device = PipelineDevice({})
+        self.job.device = DeviceDict()
         self.action.parameters = {"name": "some-action"}
         self.assertFalse(self.action.validate())
 
@@ -88,7 +88,7 @@ class TestCommands(LavaDispatcherTestCase):
         )
 
     def test_usbg_ms_commands_disable(self):
-        self.job.device = PipelineDevice(
+        self.job.device = DeviceDict(
             {
                 "actions": {
                     "deploy": {
@@ -107,7 +107,7 @@ class TestCommands(LavaDispatcherTestCase):
         self.action.run_cmd.assert_called_with("laacli usbg-ms off")
 
     def test_usbg_ms_commands_disable_missing(self):
-        self.job.device = PipelineDevice({})
+        self.job.device = DeviceDict()
         self.action.parameters = {"name": "usbg_ms_commands_disable"}
         self.action.validate()
         self.assertFalse(self.action.valid)

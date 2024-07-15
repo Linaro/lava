@@ -35,7 +35,7 @@ from lava_common.schemas.device import validate as validate_device
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 
@@ -106,7 +106,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
         new_job = Job(
             job_id=randint(0, 2**32 - 1),
             parameters=job_parameters,
-            device=NewDevice(device_dict),
+            device=DeviceDict(device_dict),
             timeout=Timeout(
                 f"unittest-timeout-{self.__class__.__name__}",
                 None,
@@ -285,7 +285,7 @@ class Factory:
         device_dict = self.load_device_configuration_dict(device_name, job_context)
         if device_dict_preprocessor is not None:
             device_dict_preprocessor(device_dict)
-        device = NewDevice(device_dict)
+        device = DeviceDict(device_dict)
         try:
             parser = JobParser()
             job = parser.parse(
