@@ -28,13 +28,13 @@ if TYPE_CHECKING:
 
     from lava_common.log import YAMLLogger
     from lava_dispatcher.action import Pipeline
-    from lava_dispatcher.device import NewDevice
+    from lava_dispatcher.device import DeviceDict
 
 
 def parse_action(
     stage_data: dict[str, Any],
     name: str,
-    device: NewDevice,
+    device: DeviceDict,
     pipeline: Pipeline,
     test_info: dict[str, list[dict[str, Any]]],
     test_count: int,
@@ -107,7 +107,7 @@ class JobParser:
     def parse(
         self,
         content: str,
-        device: NewDevice,
+        device: DeviceDict,
         job_id: str,
         dispatcher_config: str,
         env_dut: str | None = None,

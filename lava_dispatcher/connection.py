@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from lava_common.log import YAMLLogger
 
     from .action import Action
-    from .device import NewDevice
+    from .device import DeviceDict
     from .job import Job
 
 RECOGNIZED_TAGS: tuple[str, ...] = ("telnet", "ssh", "shell")
@@ -124,7 +124,7 @@ class Protocol:
     def set_up(self) -> None:
         raise LAVABug("'set_up' not implemented")
 
-    def configure(self, device: NewDevice, job: Job) -> bool:
+    def configure(self, device: DeviceDict, job: Job) -> bool:
         self.configured = True
         return True
 

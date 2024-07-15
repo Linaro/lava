@@ -30,7 +30,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.prepare import UBootPrepareKernelAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.device import NewDevice
+from lava_dispatcher.device import DeviceDict
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -282,7 +282,9 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        device = NewDevice(self.factory.load_device_configuration_dict("imx8mq-evk-03"))
+        device = DeviceDict(
+            self.factory.load_device_configuration_dict("imx8mq-evk-03")
+        )
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -361,7 +363,9 @@ class TestUbootAction(LavaDispatcherTestCase):
                 },
             },
         }
-        device = NewDevice(self.factory.load_device_configuration_dict("imx8mq-evk-03"))
+        device = DeviceDict(
+            self.factory.load_device_configuration_dict("imx8mq-evk-03")
+        )
         job = self.create_simple_job(
             device_dict=device,
             job_parameters=parameters,
@@ -553,7 +557,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             },
         }
 
-        device = NewDevice(self.factory.load_device_configuration_dict("bbb-01"))
+        device = DeviceDict(self.factory.load_device_configuration_dict("bbb-01"))
         ip_addr = dispatcher_ip(None)
         kernel_addr = "0x83000000"
         ramdisk_addr = "0x83000000"
@@ -617,7 +621,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             },
         }
 
-        device = NewDevice(self.factory.load_device_configuration_dict("bbb-01"))
+        device = DeviceDict(self.factory.load_device_configuration_dict("bbb-01"))
         ip_addr = dispatcher_ip(None)
         kernel_addr = "0x83000000"
         ramdisk_addr = "0x83000000"
