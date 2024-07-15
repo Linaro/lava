@@ -13,13 +13,13 @@ from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.test.service import TestServiceAction, TestServices
 from lava_dispatcher.actions.test_strategy import TestService
-from lava_dispatcher.device import PipelineDevice
+from lava_dispatcher.device import DeviceDict
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class TestTestServiceStrategy(LavaDispatcherTestCase):
     def setUp(self):
-        self.device = PipelineDevice({})
+        self.device = DeviceDict()
         self.service = {
             "name": "srv1",
             "from": "git",
