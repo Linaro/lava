@@ -50,6 +50,19 @@ url *
 -----
 .. include:: actions-deploy-images-url.rsti
 
+.. _deploy_to_tftp_dtbo:
+
+dtbo
+====
+
+Device Tree Overlay Blob.
+
+.. _deploy_to_tftp_dtbo_url:
+
+url *
+-----
+.. include:: actions-deploy-images-url.rsti
+
 .. _deploy_to_tftp_modules:
 
 modules

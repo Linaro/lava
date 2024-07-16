@@ -33,6 +33,10 @@ actions:
     # despite this being a Debian initramfs, it is not a complete Debian rootfs, so use oe compatibility
     dtb:
       url: http://example.com/am335x-boneblack.dtb
+    dtbo:
+      - url: https://example.com/it6263-lvds1.dtbo
+      - url: https://example.com/neoisp.dtbo
+      - url: https://example.com/ox03c10.dtbo
 
 # BOOT_BLOCK
 - boot:

@@ -163,6 +163,37 @@ an existing value.
     {% set bootz_ramdisk_addr = bootm_ramdisk_addr %}
     {% set bootz_dtb_addr = bootm_dtb_addr %}
 
+Additional, some uboot based devices support Device Tree Overlays: https://docs.u-boot.org/en/latest/usage/fdt_overlays.html
+
+We need to configure separate load address to store the dtbos, and set a number to grow the base binary device-tree,
+so it can encompass all applied overlays.
+
+Correspondingly, next required be defined if your device setting is different with default:
+
+.. code-block:: jinja
+
+    {% set bootm_dtbo_addr = '0x93c00000' %}
+    {% set bootz_dtbo_addr = bootm_dtbo_addr %}
+    {% set dtb_base_resize = dtb_base_resize | default(1048576) %}
+
+.. note:: Same dtb overlay load address can be used for every overlay as they are loaded then ftd-applied in sequence
+   one after each other in LAVA as next:
+
+   .. code-block:: jinja
+
+       - fdt addr ${fdt_addr}
+       - fdt resize 1048576
+       - tftp 0x93c00000 577262/tftp-deploy-o40xvdqb/dtbo0/imx95-19x19-evk-it6263-lvds1.dtbo
+       - fdt apply 0x93c00000
+       - tftp 0x93c00000 577262/tftp-deploy-o40xvdqb/dtbo1/imx95-19x19-evk-neoisp.dtbo
+       - fdt apply 0x93c00000
+
+.. note:: By default, dtb overlay is not enabled for lava uboot based devices, you need next to enable it:
+
+    .. code-block:: jinja
+
+        {% set enable_dtbo_support = 'true' %}
+
 .. _uboot_requirements:
 
 Required configuration
