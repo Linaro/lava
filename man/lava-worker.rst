@@ -36,5 +36,5 @@ network:
 
 logging:
   --log-file LOG_FILE   Log file for the worker logs
-  --level {DEBUG,ERROR,INFO,WARN}, -l {DEBUG,ERROR,INFO,WARN}
+  --level <{DEBUG,ERROR,INFO,WARN}>, -l <{DEBUG,ERROR,INFO,WARN}>
                         Log level, default to INFO
