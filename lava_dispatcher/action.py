@@ -27,8 +27,8 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
-from lava_common.log import YAMLLogger
 from lava_common.timeout import Timeout
+from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:

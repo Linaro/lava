@@ -18,9 +18,9 @@ from pathlib import Path
 from setproctitle import setproctitle
 
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import YAMLLogger
 from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.device import NewDevice
+from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.parser import JobParser
 
 

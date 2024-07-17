@@ -28,7 +28,6 @@ from lava_common.exceptions import (
     LAVABug,
 )
 from lava_common.jinja import create_device_templates_env
-from lava_common.log import YAMLLogger
 from lava_common.schemas import validate as validate_job
 from lava_common.schemas.device import validate as validate_device
 from lava_common.timeout import Timeout
@@ -36,6 +35,7 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.device import NewDevice, PipelineDevice
 from lava_dispatcher.job import Job
+from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.parser import JobParser
 
 if TYPE_CHECKING:

@@ -9,7 +9,7 @@ import time
 import pexpect
 
 from lava_common.exceptions import JobError, TestError
-from lava_common.log import YAMLLogger
+from lava_dispatcher.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
 # kernel boot monitoring

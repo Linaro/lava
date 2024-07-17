@@ -9,9 +9,9 @@ import os
 import re
 
 from lava_common.exceptions import JobError, LAVATimeoutError, TestError
-from lava_common.log import YAMLLogger
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.test.shell import TestShellAction
+from lava_dispatcher.log import YAMLLogger
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 

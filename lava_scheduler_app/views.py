@@ -63,7 +63,6 @@ from django.views.decorators.http import require_http_methods, require_POST
 from django_tables2 import RequestConfig
 
 from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
-from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -1329,7 +1328,7 @@ def internal_v1_jobs_logs(request, pk):
                     ".event", "lavaserver", {"message": line["msg"], "job": job.id}
                 )
                 line["lvl"] = "debug"
-                string = "- " + dump(line)
+                string = "- " + json_dumps(line)
 
             # Save the log line
             logs_instance.write(job, (string + "\n").encode("utf-8"), output, index)

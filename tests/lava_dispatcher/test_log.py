@@ -7,8 +7,8 @@
 import logging
 import signal
 
-from lava_common.log import HTTPHandler, YAMLLogger, sender
 from lava_common.yaml import yaml_safe_load
+from lava_dispatcher.log import HTTPHandler, YAMLLogger, sender
 
 
 def test_sender(mocker):
