@@ -11,7 +11,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandsAction,
     BootloaderInterruptAction,
 )
-from lava_dispatcher.connections.serial import ConnectDevice
+from lava_dispatcher.connections.serial import ResetConnection
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 
@@ -36,7 +36,7 @@ class BootBootloaderAction(Action):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(ConnectDevice(self.job))
+        self.pipeline.add_action(ResetConnection(self.job))
         self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(
             BootloaderInterruptAction(self.job, method=parameters["bootloader"])
