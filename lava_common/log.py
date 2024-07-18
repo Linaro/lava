@@ -4,6 +4,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -11,14 +12,25 @@ import logging
 import multiprocessing
 import os
 import signal
-import sys
-import time
+from asyncio import Event, get_running_loop
+from asyncio import run as asyncio_run
+from asyncio import sleep
+from collections import deque
+from fcntl import F_SETFL, fcntl
+from json import JSONDecodeError
+from json import loads as json_loads
+from sys import stderr
+from typing import TYPE_CHECKING
 
-import requests
+from aiohttp.client import ClientSession
 
-from lava_common.exceptions import RequestBodyTooLargeError
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
+
+if TYPE_CHECKING:
+    from asyncio import Future, Task
+    from collections.abc import Iterator
+    from typing import Any
 
 
 def dump(data: dict) -> str:
@@ -40,139 +52,208 @@ def dump(data: dict) -> str:
     return data_str
 
 
-def sender(conn, url: str, token: str, max_time: int) -> None:
-    HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
+class LavaLogUploaderAsync:
     MAX_RECORDS = 1000
     FAILURE_SLEEP = 5
-    # Record the exception to prevent spamming
-    last_exception_type = None
-    exception_counter = 0
 
-    def post(session, records: list[str], index: int) -> tuple[list[str], int]:
-        nonlocal last_exception_type
-        nonlocal exception_counter
+    def __init__(
+        self,
+        conn: multiprocessing.connection.Connection,
+        url: str,
+        token: str,
+        max_time: int,
+    ):
+        loop = get_running_loop()
 
-        # limit the number of records to send in one call
-        data, remaining = records[:MAX_RECORDS], records[MAX_RECORDS:]
-        with contextlib.suppress(requests.RequestException):
-            # Do not specify a timeout so we wait forever for an answer. This is a
-            # background process so waiting is not an issue.
-            # Will avoid resending the same request a second time if gunicorn
-            # is too slow to answer.
-            # In case of exception, print the exception to stderr that will be
-            # forwarded to lava-server by lava-worker. If the same exception is
-            # raised multiple time in a row, record also the number of
-            # occurrences.
+        self.conn = conn
+        self.url = url
+        self.token = token
+        self.max_time = max_time
+
+        self.last_exception_type: type[Exception] | None = None
+        self.exception_counter = 0
+        self.records: deque[str] = deque(maxlen=30_000)
+        self.index = 0
+        self.flush_event = Event()
+        self.finish_future: Future[None] = loop.create_future()
+        self.exit_stack = contextlib.AsyncExitStack()
+
+        self.aio_http_session = ClientSession(
+            headers={"User-Agent": f"lava {__version__}", "LAVA-Token": token}
+        )
+
+        # Set pipe file descriptor as non-blocking
+        fcntl(conn.fileno(), F_SETFL, os.O_NONBLOCK)
+
+    def stop(self) -> None:
+        get_running_loop().remove_reader(self.conn.fileno())
+        self.finish_future.set_exception(SystemExit(0))
+
+    def read_logs(self) -> None:
+        try:
+            while True:
+                data = self.conn.recv_bytes()
+                if data == b"":
+                    self.stop()
+                    return
+
+                self.records.append(data.decode("utf-8", errors="replace"))
+        except BlockingIOError:
+            if len(self.records) >= self.MAX_RECORDS:
+                self.flush_event.set()
+
+            return
+        except EOFError:
+            self.stop()
+
+    async def run(self) -> None:
+        loop = get_running_loop()
+        async with self.exit_stack:
+            await self.exit_stack.enter_async_context(self.aio_http_session)
+            self.exit_stack.push_async_callback(self.flush_all)
+            loop.add_reader(self.conn.fileno(), self.read_logs)
+            flush_task: Task[None] = loop.create_task(self.flush_loop())
+            self.exit_stack.callback(flush_task.cancel)
+
+            await self.finish_future
+
+    async def flush_all(self) -> None:
+        while self.records:
+            await self.flush()
+
+    async def flush_loop(self) -> None:
+        loop = get_running_loop()
+        while not self.finish_future.done():
+            timer_handle = loop.call_later(self.max_time, self.flush_event.set)
+            await self.flush_event.wait()
+            timer_handle.cancel()
+            self.flush_event.clear()
+
+            await self.flush()
+
+    async def flush(self) -> None:
+        records_to_send: list[str] = []
+        for _ in range(self.MAX_RECORDS):
             try:
-                ret = session.post(
-                    url,
-                    data={"lines": "- " + "\n- ".join(data), "index": index},
-                    headers=HEADERS,
-                )
-                if exception_counter > 0:
-                    now = datetime.datetime.utcnow().isoformat()
-                    sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
-                    last_exception_type = None
-                    exception_counter = 0
-            except Exception as exc:
-                if last_exception_type == type(exc):
-                    exception_counter += 1
-                else:
-                    now = datetime.datetime.utcnow().isoformat()
-                    if exception_counter:
-                        sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
-                    sys.stderr.write(f"{now}: {str(exc)}\n")
-                    last_exception_type = type(exc)
-                    exception_counter = 0
-                    sys.stderr.flush()
+                records_to_send.append(self.records.popleft())
+            except IndexError:
+                break
 
-                # Empty response for the rest of the code
-                ret = requests.models.Response()
+        if records_to_send:
+            await self.send_records(records_to_send)
 
-            if ret.status_code == 200:
-                with contextlib.suppress(KeyError, ValueError):
-                    count = int(ret.json()["line_count"])
-                    data = data[count:]
-                    index += count
-            elif ret.status_code == 404:
-                data, remaining = [], []
-                os.kill(os.getppid(), signal.SIGTERM)
-            else:
-                if ret.status_code == 413:
-                    raise RequestBodyTooLargeError
-                # If the request fails, give some time for the server to
-                # recover from the failure.
-                time.sleep(FAILURE_SLEEP)
-        return (data + remaining, index)
-
-    last_call = time.monotonic()
-    records: list[str] = []
-    leaving: bool = False
-    index: int = 0
-
-    def _reduce_record_size(
-        records: list[str], max_records: int
-    ) -> tuple[list[str], int]:
-        """
-        The method should only be called for handling `RequestBodyTooLargeError`. It
-        minus 100 records for every call. In case only one record left, the record will
-        be replaced by a short "log-upload fail" result line and an error message also
-        will be sent to kill the job.
-        """
-        if max_records == 1:
-            record = records[0]
-            records = [
-                dump(
+    async def send_records(self, records: list[str]) -> None:
+        retries = 5  # 5 attempts to send logs
+        while retries >= 0:
+            retries -= 1
+            with self.log_request_exceptions():
+                status_code, text = await self.make_post_request(
                     {
-                        "dt": datetime.datetime.utcnow().isoformat(),
-                        "lvl": "results",
-                        "msg": {
-                            "definition": "lava",
-                            "case": "log-upload",
-                            "result": "fail",
-                        },
+                        "lines": "- " + "\n- ".join(records),
+                        "index": self.index,
                     }
                 )
-            ]
+                if status_code == 200:
+                    with contextlib.suppress(KeyError, ValueError, JSONDecodeError):
+                        count = int(json_loads(text)["line_count"])
+                        self.records.extendleft(records[count:])
+                        self.index += count
+                    return
+                elif status_code == 404:
+                    self.records.clear()
+                    os.kill(os.getppid(), signal.SIGTERM)
+                    return
+                elif status_code == 413:
+                    current_num_records = len(records)
+                    if current_num_records <= 1:
+                        # Give up
+                        try:
+                            self.extra_large_record(records[0])
+                        except IndexError:
+                            ...
+                        return
+                    else:
+                        current_num_records = current_num_records // 2
+                        retries += 1
 
-            sys.stderr.write(
-                "Error: Log post request body exceeds server settings param.\n"
-                f"Log line length: {len(record)}\n"
-                f"Truncated log line: {record[:1024]} ...\n"
+                    records, records_to_save = (
+                        records[:current_num_records],
+                        records[current_num_records:],
+                    )
+                    self.records.extendleft(records_to_save)
+                    continue
+
+            # If the request fails, give some time for the server to
+            # recover from the failure.
+            await sleep(self.FAILURE_SLEEP)
+
+    async def make_post_request(self, data: Any) -> tuple[int, str]:
+        async with self.aio_http_session.post(
+            self.url,
+            data=data,
+        ) as resp:
+            return resp.status, await resp.text()
+
+    @contextlib.contextmanager
+    def log_request_exceptions(self) -> Iterator[None]:
+        try:
+            yield
+        except Exception as exc:
+            if self.last_exception_type == type(exc):
+                self.exception_counter += 1
+            else:
+                now = datetime.datetime.utcnow().isoformat()
+                if self.exception_counter:
+                    print(
+                        f"{now}: <{self.exception_counter} skipped>",
+                        file=stderr,
+                        flush=True,
+                    )
+                print(f"{now}: {str(exc)}", file=stderr, flush=True)
+                self.last_exception_type = type(exc)
+                self.exception_counter = 0
+
+            return
+
+        if self.exception_counter > 0:
+            now = datetime.datetime.utcnow().isoformat()
+            print(f"{now}: <{self.exception_counter} skipped>", file=stderr, flush=True)
+            self.last_exception_type = None
+            self.exception_counter = 0
+
+    def extra_large_record(self, record: str):
+        self.records.appendleft(
+            dump(
+                {
+                    "dt": datetime.datetime.utcnow().isoformat(),
+                    "lvl": "results",
+                    "msg": {
+                        "definition": "lava",
+                        "case": "log-upload",
+                        "result": "fail",
+                    },
+                }
             )
-            sys.stderr.flush()
-        else:
-            max_records = max(1, max_records - 100)
+        )
+        print(
+            "Error: Log post request body exceeds server settings param.\n"
+            f"Log line length: {len(record)}\n"
+            f"Truncated log line: {record[:1024]} ...",
+            file=stderr,
+            flush=True,
+        )
 
-        return (records, max_records)
 
-    with requests.Session() as session:
-        while not leaving:
-            # Listen for new messages if we don't have message yet or some
-            # messages are already in the socket.
-            if len(records) == 0 or conn.poll(max_time):
-                data = conn.recv_bytes()
-                if data == b"":
-                    leaving = True
-                else:
-                    records.append(data.decode("utf-8", errors="replace"))
+def run_lava_logs_uploader(
+    conn: multiprocessing.connection.Connection,
+    url: str,
+    token: str,
+    max_time: int,
+) -> None:
+    async def run() -> None:
+        await LavaLogUploaderAsync(conn, url, token, max_time).run()
 
-            records_limit = len(records) >= MAX_RECORDS
-            time_limit = (time.monotonic() - last_call) >= max_time
-            if records and (records_limit or time_limit):
-                last_call = time.monotonic()
-                # Send the data
-                try:
-                    (records, index) = post(session, records, index)
-                except RequestBodyTooLargeError:
-                    (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
-
-        while records:
-            # Send the data
-            try:
-                (records, index) = post(session, records, index)
-            except RequestBodyTooLargeError:
-                (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
+    asyncio_run(run())
 
 
 class HTTPHandler(logging.Handler):
@@ -186,7 +267,7 @@ class HTTPHandler(logging.Handler):
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
         self.proc = multiprocessing.Process(
-            target=sender, args=(reader, url, token, interval)
+            target=run_lava_logs_uploader, args=(reader, url, token, interval)
         )
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
