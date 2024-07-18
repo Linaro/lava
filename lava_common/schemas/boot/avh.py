@@ -1,5 +1,4 @@
-#
-# Copyright (C) 2019 Arm Limited
+# Copyright (C) 2023-present Linaro Limited
 #
 # Author: Chase Qi <chase.qi@linaro.org>
 #

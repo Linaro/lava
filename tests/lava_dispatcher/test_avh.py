@@ -1,6 +1,6 @@
-# Copyright (C) 2019 Arm Limited
+# Copyright (C) 2023-present Linaro Limited
 #
-# Author: Dean Birch <dean.birch@arm.com>
+# Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from importlib.util import find_spec
