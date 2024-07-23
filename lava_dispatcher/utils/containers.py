@@ -7,6 +7,7 @@
 
 import os
 import uuid
+from typing import TYPE_CHECKING
 
 from lava_common.device_mappings import add_device_container_mapping
 from lava_common.exceptions import InfrastructureError
@@ -16,12 +17,19 @@ from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.utils.udev import get_udev_devices
 
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
+
 
 class DeviceContainerMappingMixin(Action):
     """
     This mixing should be included by action classes that add device/container
     mappings.
     """
+
+    def __init__(self, job: "Job"):
+        super().__init__(job)
+        self.containers: list[DockerContainer] = []
 
     def add_device_container_mappings(self, container, container_type):
         device_info = self.job.device.get("device_info", [])
@@ -93,6 +101,14 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
 
     def get_output_maybe_in_container(self, cmd, **kwargs):
         return self.driver.get_output(cmd)
+
+    def cleanup(self, connection):
+        super().cleanup(connection)
+
+        if isinstance(self.driver, DockerDriver):
+            for container in self.containers:
+                self.logger.debug(f"Destroying docker container {container.__name__}")
+                container.destroy()
 
 
 class NullDriver(InternalObject):
@@ -171,6 +187,7 @@ class DockerDriver(NullDriver):
         docker = self.build(DockerContainer)
         name = self.get_container_name()
         docker.name(name)
+        self.action.containers.append(docker)
         docker.start(self.action)
         try:
             self.__map_devices__(name)
@@ -183,6 +200,7 @@ class DockerDriver(NullDriver):
         docker = self.build(DockerContainer)
         name = self.get_container_name()
         docker.name(name)
+        self.action.containers.append(docker)
         docker.start(self.action)
         try:
             self.__map_devices__(name)
