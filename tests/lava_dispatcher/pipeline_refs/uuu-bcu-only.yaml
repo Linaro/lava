@@ -57,7 +57,65 @@
   name: boot-bootloader-retry
   level: '3'
   max_retries: 1
-  description: boot to bootloader with retry
+  name: boot-bootloader-retry
+  pipeline:
+  - class: BootloaderCommandOverlay
+    description: substitute job data into bootloader command list
+    level: '3.1'
+    max_retries: 1
+    name: bootloader-overlay
+    summary: replace placeholders with job data
+    timeout: 30
+  - class: BootBootloaderAction
+    description: boot to bootloader
+    level: '3.2'
+    max_retries: 1
+    name: boot-bootloader
+    pipeline:
+    - class: ResetConnection
+      name: reset-connection
+      level: 6.2.1
+      max_retries: 1
+      description: Disconnect and connect the serial
+      summary: Reset the connection
+      timeout: 30
+      pipeline:
+      - {class: DisconnectDevice, name: disconnect-device, level: 6.2.1.1, max_retries: 1,
+        description: disconnect from console, summary: disconnect from console, timeout: 30}
+      - {class: ConnectDevice, name: connect-device, level: 6.2.1.2, max_retries: 1,
+        description: use the configured command to connect serial to the device, summary: run
+          connection command, timeout: 30}
+    - class: ResetDevice
+      description: reboot or power-cycle the device
+      level: 3.2.2
+      max_retries: 1
+      name: reset-device
+      pipeline:
+      - class: PDUReboot
+        description: issue commands to a PDU to power cycle a device
+        level: 3.2.2.1
+        max_retries: 1
+        name: pdu-reboot
+        summary: hard reboot using PDU
+        timeout: 30
+      summary: reboot the device
+      timeout: 30
+    - class: BootloaderInterruptAction
+      description: interrupt bootloader
+      level: 3.2.3
+      max_retries: 1
+      name: bootloader-interrupt
+      summary: interrupt bootloader to get an interactive shell
+      timeout: 30
+    - class: BootloaderCommandsAction
+      description: send commands to bootloader
+      level: 3.2.4
+      max_retries: 1
+      name: bootloader-commands
+      summary: interactive bootloader
+      timeout: 30
+    summary: boot bootloader
+    timeout: 30
   summary: boot bootloader retry
   timeout: 30
   pipeline:
