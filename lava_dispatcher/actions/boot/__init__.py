@@ -517,12 +517,19 @@ class BootloaderCommandOverlay(Action):
             add_header = self.job.device["actions"]["deploy"]["parameters"].get(
                 "add_header"
             )
-            if self.method == "u-boot" and not add_header == "u-boot":
+            if (
+                self.method == "u-boot"
+                and not add_header == "u-boot"
+                and not add_header == "raw"
+            ):
                 self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = "-"
 
-            if self.get_namespace_data(
-                action="download-action", label="file", key="initrd"
+            if (
+                self.get_namespace_data(
+                    action="download-action", label="file", key="initrd"
+                )
+                or add_header == "raw"
             ):
                 # no u-boot header, thus no embedded size, so we have to add it to the
                 # boot cmd with colon after the ramdisk

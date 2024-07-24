@@ -657,7 +657,7 @@ class CompressRamdisk(Action):
                     self.mkimage_arch = self.job.device["actions"]["deploy"][
                         "parameters"
                     ]["mkimage_arch"]
-                else:
+                elif self.add_header != "raw":
                     self.errors = "ramdisk: add_header: unknown header type"
 
     def run(self, connection, max_end_time):
