@@ -10,7 +10,7 @@ from shutil import which
 from tempfile import TemporaryDirectory
 from time import monotonic as time_monotonic
 
-from lava_dispatcher.action import Action
+from lava_dispatcher.action import Action, Pipeline
 
 from .test_basic import LavaDispatcherTestCase
 
@@ -73,4 +73,51 @@ class TestActionRunCmd(LavaDispatcherTestCase):
         self.assertIn(
             non_existant_command,
             "".join(error_logs.output),
+        )
+
+
+class TestActionTimeoutWarnings(LavaDispatcherTestCase):
+    def test_timeout_warnings(self) -> None:
+        job = self.create_simple_job(
+            job_parameters={
+                "timeouts": {
+                    "job": {"minutes": 5},
+                    "action": {"minutes": 10},
+                    "actions": {
+                        "simple-job-action": {"minutes": 10},
+                        "nested-action": {"minutes": 20},
+                    },
+                }
+            }
+        )
+        pipeline = Pipeline(job=job)
+        job.pipeline = pipeline
+
+        simple_job_action = Action(job)
+        simple_job_action.name = "simple-job-action"
+        with self.assertLogs(
+            simple_job_action.logger, "WARN"
+        ) as simple_job_action_warn_logs:
+            pipeline.add_action(simple_job_action)
+        self.assertTrue(
+            any(
+                ("exceeds Job" in log) and ("simple-job-action" in log)
+                for log in simple_job_action_warn_logs.output
+            )
+        )
+
+        nested_pipeline = Pipeline(parent=simple_job_action, job=job, parameters={})
+        simple_job_action.pipeline = nested_pipeline
+
+        nested_action = Action(job)
+        nested_action.name = "nested-action"
+        with self.assertLogs("dispatcher", "WARN") as nested_action_warn_logs:
+            nested_pipeline.add_action(nested_action)
+        self.assertTrue(
+            any(
+                ("exceeds parent Action" in log)
+                and ("simple-job-action" in log)
+                and ("nested-action" in log)
+                for log in nested_action_warn_logs.output
+            )
         )

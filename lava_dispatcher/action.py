@@ -86,7 +86,7 @@ class Pipeline:
 
     def __init__(self, job: Job, parent=None, parameters=None):
         self.actions: list[Action] = []
-        self.parent = None
+        self.parent: Action | None = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
         if parent is not None:
@@ -111,7 +111,7 @@ class Pipeline:
         self._check_action(action)
         self.actions.append(action)
 
-        if self.parent:  # action
+        if self.parent is not None:  # action
             self.parent.pipeline = self
             action.level = "%s.%s" % (self.parent.level, len(self.actions))
             action.section = self.parent.section
@@ -136,18 +136,21 @@ class Pipeline:
         # Set the timeout. The order is:
         # 1. global action timeout
         action._override_action_timeout(
-            get_lastest_dict_value(global_timeouts, "action")
+            get_lastest_dict_value(global_timeouts, "action"),
+            self.parent,
         )
         # 2. global named action timeout
         action._override_action_timeout(
-            get_lastest_subdict_value(global_timeouts, "actions", action.name)
+            get_lastest_subdict_value(global_timeouts, "actions", action.name),
+            self.parent,
         )
         # 3. action block timeout
-        action._override_action_timeout(parameters.get("timeout"))
+        action._override_action_timeout(parameters.get("timeout"), self.parent)
         # 4. action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(
                 action_block_timeouts.get(action.name),
+                self.parent,
             )
 
         action._override_connection_timeout(
@@ -946,7 +949,7 @@ class Action:
     def mkdtemp(self, override=None):
         return self.job.mkdtemp(self.name, override=override)
 
-    def _override_action_timeout(self, timeout):
+    def _override_action_timeout(self, timeout, parent_action: Action | None = None):
         """
         Only to be called by the Pipeline object, add_action().
         """
@@ -956,8 +959,28 @@ class Action:
             raise JobError("Invalid timeout %s" % str(timeout))
 
         self.set_action_timeout(Timeout.parse(timeout))
-        if self.timeout.duration > self.job.timeout.duration:
-            self.logger.warning("Action timeout for %s exceeds Job timeout", self.name)
+        new_timeout = self.timeout.duration
+        if parent_action is not None:
+            # Check parent Action timeout
+            parent_action_timeout = parent_action.timeout.duration
+            if new_timeout > parent_action_timeout:
+                self.logger.warning(
+                    "Action %r timeout of %r exceeds parent Action %r timeout of %r",
+                    self.name,
+                    new_timeout,
+                    parent_action.name,
+                    parent_action_timeout,
+                )
+        else:
+            # Check job timeout
+            job_timeout = self.job.timeout.duration
+            if new_timeout > job_timeout:
+                self.logger.warning(
+                    "Action %r timeout of %r exceeds Job timeout of %r",
+                    self.name,
+                    new_timeout,
+                    job_timeout,
+                )
 
     def _override_connection_timeout(self, timeout):
         """
