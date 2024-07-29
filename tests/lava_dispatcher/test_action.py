@@ -99,12 +99,11 @@ class TestActionTimeoutWarnings(LavaDispatcherTestCase):
             simple_job_action.logger, "WARN"
         ) as simple_job_action_warn_logs:
             pipeline.add_action(simple_job_action)
-        self.assertTrue(
-            any(
-                ("exceeds Job" in log) and ("simple-job-action" in log)
-                for log in simple_job_action_warn_logs.output
-            )
-        )
+
+        self.assertEqual(len(simple_job_action_warn_logs.output), 1)
+        simple_job_action_warn = simple_job_action_warn_logs.output[0]
+        self.assertIn("exceeds Job", simple_job_action_warn)
+        self.assertIn("simple-job-action", simple_job_action_warn)
 
         nested_pipeline = Pipeline(parent=simple_job_action, job=job, parameters={})
         simple_job_action.pipeline = nested_pipeline
@@ -113,11 +112,9 @@ class TestActionTimeoutWarnings(LavaDispatcherTestCase):
         nested_action.name = "nested-action"
         with self.assertLogs("dispatcher", "WARN") as nested_action_warn_logs:
             nested_pipeline.add_action(nested_action)
-        self.assertTrue(
-            any(
-                ("exceeds parent Action" in log)
-                and ("simple-job-action" in log)
-                and ("nested-action" in log)
-                for log in nested_action_warn_logs.output
-            )
-        )
+
+        self.assertEqual(len(nested_action_warn_logs.output), 1)
+        nested_action_warn = nested_action_warn_logs.output[0]
+        self.assertIn("exceeds parent Action", nested_action_warn)
+        self.assertIn("simple-job-action", nested_action_warn)
+        self.assertIn("nested-action", nested_action_warn)

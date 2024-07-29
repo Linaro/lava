@@ -107,6 +107,41 @@ class Pipeline:
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
+    def _pick_action_timeout(self, parameters, action_name: str) -> int | None:
+        # 1. action block named action timeout
+        if (action_block_timeouts := parameters.get("timeouts")) is not None and (
+            named_timeout_dict := action_block_timeouts.get(action_name)
+        ) is not None:
+            return Timeout.parse(named_timeout_dict)
+
+        # 2. action block timeout
+        if (action_block_timeout := parameters.get("timeout")) is not None:
+            return Timeout.parse(action_block_timeout)
+
+        job_timeouts = self.job.parameters.get("timeouts", {})
+        device_timeouts = self.job.device.get("timeouts", {})
+        # 3. job named action timeout
+        if (job_actions_timeouts := job_timeouts.get("actions")) is not None and (
+            job_named_timeout_dict := job_actions_timeouts.get(action_name)
+        ) is not None:
+            return Timeout.parse(job_named_timeout_dict)
+
+        # 4. device named action timeout
+        if (device_actions_timeouts := device_timeouts.get("actions")) is not None and (
+            device_named_timeout_dict := device_actions_timeouts.get(action_name)
+        ) is not None:
+            return Timeout.parse(device_named_timeout_dict)
+
+        # 5. job action timeout
+        if job_action_timeout_dict := job_timeouts.get("action"):
+            return Timeout.parse(job_action_timeout_dict)
+
+        # 6. device action timeout
+        if device_action_timeout_dict := device_timeouts.get("action"):
+            return Timeout.parse(device_action_timeout_dict)
+
+        return None
+
     def add_action(self, action: Action, parameters=None):
         self._check_action(action)
         self.actions.append(action)
@@ -127,31 +162,16 @@ class Pipeline:
         action.parameters = parameters
 
         # Compute the timeout
+        action._override_action_timeout(
+            self._pick_action_timeout(parameters, action.name),
+            self.parent,
+        )
+
         global_timeouts = []
         # First, the device level overrides
         global_timeouts.append(self.job.device.get("timeouts", {}))
         # Then job level overrides
         global_timeouts.append(self.job.parameters.get("timeouts", {}))
-
-        # Set the timeout. The order is:
-        # 1. global action timeout
-        action._override_action_timeout(
-            get_lastest_dict_value(global_timeouts, "action"),
-            self.parent,
-        )
-        # 2. global named action timeout
-        action._override_action_timeout(
-            get_lastest_subdict_value(global_timeouts, "actions", action.name),
-            self.parent,
-        )
-        # 3. action block timeout
-        action._override_action_timeout(parameters.get("timeout"), self.parent)
-        # 4. action block named action timeout
-        if action_block_timeouts := parameters.get("timeouts"):
-            action._override_action_timeout(
-                action_block_timeouts.get(action.name),
-                self.parent,
-            )
 
         action._override_connection_timeout(
             get_lastest_dict_value(global_timeouts, "connection")
@@ -949,16 +969,18 @@ class Action:
     def mkdtemp(self, override=None):
         return self.job.mkdtemp(self.name, override=override)
 
-    def _override_action_timeout(self, timeout, parent_action: Action | None = None):
+    def _override_action_timeout(
+        self, timeout: int | None, parent_action: Action | None = None
+    ) -> None:
         """
         Only to be called by the Pipeline object, add_action().
         """
         if timeout is None:
             return
-        if not isinstance(timeout, dict):
-            raise JobError("Invalid timeout %s" % str(timeout))
+        if not isinstance(timeout, int):
+            raise JobError(f"Expected timeout duration in seconds got {timeout!r}")
 
-        self.set_action_timeout(Timeout.parse(timeout))
+        self.set_action_timeout(timeout)
         new_timeout = self.timeout.duration
         if parent_action is not None:
             # Check parent Action timeout
