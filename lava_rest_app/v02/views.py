@@ -500,6 +500,32 @@ class TestJobViewSet(viewsets.ModelViewSet):
             {"message": "Job cancel signal sent."}, status=status.HTTP_200_OK
         )
 
+    @action(methods=("post",), detail=False, suffix="batch-cancel")
+    def batch_cancel(self, request, **kwargs):
+        job_ids = request.data.get("job_ids", None)
+        job_ids_canceled = []
+        invalid_job_ids = []
+        for job_id in job_ids:
+            with transaction.atomic():
+                try:
+                    job = TestJob.get_restricted_job(
+                        job_id, request.user, for_update=True
+                    )
+                    job.cancel(request.user)
+                    job_ids_canceled.append(job_id)
+                except (PermissionDenied, Http404):
+                    # No view or cancel permissions
+                    # 404 is thrown by get_restricted_job when job is non existing
+                    invalid_job_ids.append(job_id)
+        return Response(
+            {
+                "message": "Job cancel signal sent for job ids.",
+                "job_ids": job_ids_canceled,
+                "invalid_job_ids": invalid_job_ids,
+            },
+            status=status.HTTP_200_OK,
+        )
+
 
 class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     """
