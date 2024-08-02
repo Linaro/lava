@@ -118,6 +118,12 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
         metadata = yaml_safe_dump(stripped_results)
         if len(metadata) > 4096:
             metadata = ""
+        # Try to keep partial error msg
+        elif "error_msg" in results:
+            stripped_results["error_msg"] = results["error_msg"][:256]
+            stripped_results_str = yaml_safe_dump(stripped_results)
+            if len(stripped_results_str) < 4096:
+                metadata = stripped_results_str
 
     suite, _ = TestSuite.objects.get_or_create(name=results["definition"], job=job)
     testset = _check_for_testset(results, suite)
