@@ -315,7 +315,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 {"message": "Problem with submitted job data: %s" % exc},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        except (ValueError, KeyError) as exc:
+        except (ValueError, KeyError, yaml.YAMLError) as exc:
             return Response(
                 {"message": "job submission failed: %s." % exc},
                 status=status.HTTP_400_BAD_REQUEST,
