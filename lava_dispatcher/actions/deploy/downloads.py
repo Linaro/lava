@@ -97,8 +97,6 @@ class PostprocessWithDocker(Action):
         return res
 
     def run(self, connection, max_end_time):
-        job_id = self.job.job_id
-
         script = ["#!/bin/sh", "exec 2>&1", "set -ex"]
 
         # Export data generated during run of the Pipeline like NFS settings
