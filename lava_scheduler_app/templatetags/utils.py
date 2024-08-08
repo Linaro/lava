@@ -93,11 +93,6 @@ def split_definition(data):
 
 
 @register.filter()
-def level_replace(level):
-    return level.replace(".", "-")
-
-
-@register.filter()
 def sort_items(items):
     return sorted(items)
 
