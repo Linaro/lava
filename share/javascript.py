@@ -8,7 +8,6 @@
 
 import argparse
 import os
-import subprocess  # nosec - internal
 import sys
 
 import yaml
@@ -72,58 +71,6 @@ def handle_embedded(os_name, data, dirname, simulate=False):
     return dependencies
 
 
-def uglify(os_name, data, dirname, remove=False, simulate=False):
-    """"""
-    python_dir = None
-    os_check = check_os(os_name, data)
-    for os_data in next(os_check):
-        for dkey, value in os_data.items():
-            if dkey == "python_dir":
-                python_dir = value
-                if python_dir.startswith("/"):
-                    python_dir = str(python_dir[1:])
-            elif dkey == "uglify":
-                package = os_data
-                lava_dir = package["lava_directory"]
-                dest_dir = package["destination"]
-
-                for file_name, dest_name in package["files"].items():
-                    orig_path = os.path.join(lava_dir, file_name)
-                    install_path = os.path.join(
-                        dirname, python_dir, lava_dir, file_name
-                    )
-                    dest_path = os.path.join(dirname, python_dir, dest_dir, dest_name)
-
-                    if not simulate:
-                        try:
-                            subprocess.check_call(  # nosec - internal
-                                [
-                                    "/usr/bin/uglifyjs",
-                                    orig_path,
-                                    "-o",
-                                    dest_path,
-                                    "-c",
-                                    "-m",
-                                ],
-                                stderr=open(os.devnull, "wb"),
-                            )
-                        except Exception as e:
-                            print(e)
-
-                        if remove:
-                            if not os.path.exists(install_path):
-                                print(
-                                    "WARNING: JS file %s does not exist"
-                                    % (install_path)
-                                )
-                                continue
-                            os.unlink(install_path)
-                    else:
-                        print("uglifyjs %s -o %s -c -m" % (orig_path, dest_path))
-
-    return None
-
-
 def main():
     """
     Parse options and load the supporting YAML file.
@@ -159,7 +106,6 @@ def main():
         print("Build-Depends:", ", ".join(sorted(dep_list)))
         print("Depends:", ", ".join(sorted(dep_list)))
 
-    uglify("debian", data, os.getcwd(), args.remove, args.simulate)
     return 0
 
 
