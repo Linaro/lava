@@ -80,10 +80,10 @@ class PostprocessWithDocker(Action):
     description = "Postprocess downloaded images with Docker"
     summary = "download-postprocess"
 
-    def __init__(self, job: Job, path):
+    def __init__(self, job: Job, path: Path):
         super().__init__(job)
-        self.path = Path(path)
-        self.steps = []
+        self.path = path
+        self.steps: list[str] = []
 
     def populate(self, parameters):
         self.docker_parameters = parameters.get("postprocess", {}).get("docker", {})
