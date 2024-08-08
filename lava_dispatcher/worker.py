@@ -258,7 +258,9 @@ class Job:
 
     def description(self) -> str:
         with contextlib.suppress(OSError):
-            return (self.base_dir / "description.yaml").read_bytes()
+            return (self.base_dir / "description.yaml").read_text(
+                encoding="utf-8", errors="backslashreplace"
+            )
         return ""
 
     def result(self) -> dict[str, Any]:
