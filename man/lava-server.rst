@@ -101,7 +101,7 @@ lava_server
               --offline             Create the device offline (online by default)
               --private             Make the device private (public by default)
               --worker WORKER       The name of the worker
-              --tags [TAGS [TAGS ...]]
+              --tags <[TAGS_[TAGS...]]>
                                     List of tags to add to the device
               --physical-user PHYSICAL_USER
                                     Username of the user with physical access to the
@@ -134,10 +134,10 @@ lava_server
 
             optional arguments:
               -h, --help           show this help message and exit
-              --state {IDLE,RESERVED,RUNNING}
+              --state <{IDLE,RESERVED,RUNNING}>
                                    Show only devices with the given state
               --all, -a            Show all devices, including retired ones
-              --health {GOOD,UNKNOWN,LOOPING,BAD,MAINTENANCE,RETIRED}
+              --health <{GOOD,UNKNOWN,LOOPING,BAD,MAINTENANCE,RETIRED}>
                                    Show only devices with the given health
               --csv                Print as csv
               --all, -a            Show all devices, including retired ones
@@ -155,7 +155,7 @@ lava_server
               -h, --help           show this help message and exit
               --description DESCRIPTION
                                    Set the description
-              --health {GOOD,UNKNOWN,LOOPING,BAD,MAINTENANCE,RETIRED}
+              --health <{GOOD,UNKNOWN,LOOPING,BAD,MAINTENANCE,RETIRED}>
                                    Update the device health
               --worker WORKER      Update the worker
               --public             make the device public
@@ -196,8 +196,8 @@ lava_server
 
                   --health-frequency HEALTH_FREQUENCY
                                         How often to run health checks.
-                  --health-denominator  {hours, jobs}
-                                        Initiate health checks by hours or by jobs.
+                  --health-denominator <{hours,jobs}>
+                                Initiate health checks by hours or by jobs.
 
             details             Details about a device-type
 
@@ -265,7 +265,7 @@ lava_server
                                         Remove jobs older than this. The time is of the form:
                                         1h (one hour) or 2d (two days). By default, all jobs
                                         will be removed.
-                  --state {SUBMITTED,SCHEDULING,SCHEDULED,RUNNING,CANCELING,FINISHED}
+                  --state <{SUBMITTED,SCHEDULING,SCHEDULED,RUNNING,CANCELING,FINISHED}>
                                         Filter by job state
                   --submitter SUBMITTER
                                         Filter jobs by submitter
@@ -303,7 +303,7 @@ lava_server
                   -h, --help            show this help message and exit
                   --description DESCRIPTION
                                         Worker description
-                  --health {ACTIVE,MAINTENANCE,RETIRED}
+                  --health <{ACTIVE,MAINTENANCE,RETIRED}>
                                         Worker health
 
             details             Details of a worker
@@ -332,7 +332,7 @@ lava_server
                   -h, --help            show this help message and exit
                   --description DESCRIPTION
                                         Worker description
-                  --health {ACTIVE,MAINTENANCE,RETIRED}
+                  --health <{ACTIVE,MAINTENANCE,RETIRED}>
                                         Set worker health
 
     test
