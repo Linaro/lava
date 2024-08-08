@@ -18,7 +18,6 @@ djangorestframework_extensions python3-djangorestframework-extensions; PEP386
 # Listing the packages here, force dj_python3 to set the right version.
 django_tables2 python3-django-tables2; PEP386
 django-filter python3-django-filters; PEP386
-docutils python3-docutils; PEP386
 netifaces python3-netifaces; PEP386
 pexpect python3-pexpect; PEP386
 pyudev python3-pyudev; PEP386

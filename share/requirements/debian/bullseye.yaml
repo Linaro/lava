@@ -33,8 +33,6 @@ lava-server:
     name: python3-djangorestframework-filters
   djangorestframework-extensions:
     name: python3-djangorestframework-extensions
-  docutils:
-    name: python3-docutils
   eventlet:
     name: python3-eventlet
   jinja2:
