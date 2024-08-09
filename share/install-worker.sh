@@ -103,7 +103,6 @@ install_worker() {
   case "${INSTALL}" in
     docker_worker) install_pkgs "docker.io lava-dispatcher-host" ;;
     worker) install_pkgs "lava-dispatcher" ;;
-    dut_services) ;;
     *) error_msg "Installing ${INSTALL} is not supported." ;;
   esac
 
