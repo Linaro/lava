@@ -44,7 +44,7 @@ class BootDFURetry(RetryAction):
 
     def populate(self, parameters):
         dfu = self.job.device["actions"]["boot"]["methods"]["dfu"]
-        parameters = dfu["parameters"]
+        parameters = {**dfu["parameters"], **parameters}
 
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ConnectDevice(self.job))

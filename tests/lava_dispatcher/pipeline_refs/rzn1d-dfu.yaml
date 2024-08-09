@@ -62,7 +62,7 @@
   pipeline:
   - {class: ConnectDevice, name: connect-device, level: '3.1', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 300}
+      command, timeout: 600}
   - class: ResetDevice
     name: reset-device
     level: '3.2'
@@ -78,11 +78,11 @@
     description: interrupt bootloader, summary: interrupt bootloader to get an interactive
       shell, timeout: 600}
   - {class: EnterDFU, name: enter-dfu, level: '3.4', max_retries: 1, description: enter
-      software dfu mode, summary: enter software dfu mode, timeout: 300}
+      software dfu mode, summary: enter software dfu mode, timeout: 600}
   - {class: WaitDFUDeviceAction, name: wait-dfu-device, level: '3.5', max_retries: 1,
-    description: wait for DFU device, summary: wait for DFU device, timeout: 300}
+    description: wait for DFU device, summary: wait for DFU device, timeout: 600}
   - {class: FlashDFUAction, name: flash-dfu, level: '3.6', max_retries: 1, description: use
-      dfu to flash the images, summary: use dfu to flash the images, timeout: 300}
+      dfu to flash the images, summary: use dfu to flash the images, timeout: 600}
 - {class: CommandAction, name: user-command, level: '4', max_retries: 1, description: execute
     one of the commands listed by the admin, summary: execute commands, timeout: 300}
 - class: OverlayAction

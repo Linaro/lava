@@ -157,8 +157,6 @@ class Pipeline:
         # parameters.
         if parameters is None:
             parameters = self.parameters
-        # if the action has an internal pipeline, initialise that here.
-        action.populate(parameters)
         action.parameters = parameters
 
         # Compute the timeout
@@ -179,6 +177,9 @@ class Pipeline:
         action._override_connection_timeout(
             get_lastest_subdict_value(global_timeouts, "connections", action.name)
         )
+
+        # If the action has an internal pipeline, initialise after the timeouts.
+        action.populate(parameters)
 
     def describe(self):
         """

@@ -78,10 +78,10 @@
           max_retries: 2
           description: download with retry
           summary: download-retry
-          timeout: 1802
+          timeout: 1801
           pipeline:
           - {class: HttpDownloadAction, name: http-download, level: 1.4.4.1.1.1, max_retries: 2,
-            description: use http to download the file, summary: http download, timeout: 600,
+            description: use http to download the file, summary: http download, timeout: 900,
             url: 'https://github.com/Linaro/test-definitions/archive/2019.03.tar.gz'}
       - {class: TestOverlayAction, name: test-overlay, level: 1.4.4.2, max_retries: 2,
         description: overlay test support files onto image, summary: applying LAVA
