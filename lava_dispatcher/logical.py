@@ -55,10 +55,10 @@ class RetryAction(Action):
             )
 
     def set_action_timeout(self, new_timeout: int) -> None:
-        self.timeout_per_retry.duration = new_timeout
-        super().set_action_timeout(
-            self.max_retries * new_timeout + (self.max_retries - 1) * self.sleep
-        )
+        self.timeout_per_retry.duration = (
+            new_timeout - (self.max_retries - 1) * self.sleep
+        ) // self.max_retries
+        super().set_action_timeout(new_timeout)
 
     def run(self, connection, max_end_time):
         retries = 0
