@@ -736,8 +736,11 @@ async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> None:
         cancel(url, jobs, job["id"], job["token"])
 
     # start jobs
-    for job in data.get("start", []):
-        await start(session, url, jobs, job["id"], job["token"], job_log_interval)
+    async with asyncio.TaskGroup() as start_jobs_tg:
+        for job in data.get("start", []):
+            start_jobs_tg.create_task(
+                start(session, url, jobs, job["id"], job["token"], job_log_interval)
+            )
 
     # Check job status
     # TODO: store the token and reuse it
