@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
-import functools
 import getpass
 import json
 import logging
@@ -817,7 +816,7 @@ async def main() -> int:
             for signame in ("SIGINT", "SIGTERM"):
                 loop.add_signal_handler(
                     getattr(signal, signame),
-                    functools.partial(ask_exit, signame, group),
+                    partial(ask_exit, signame, group),
                 )
 
             await group
