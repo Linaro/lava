@@ -397,7 +397,7 @@ def setup_logger(log_file: str, level: str) -> None:
     """
     # Configure the log handler
     if log_file == "-":
-        handler = logging.StreamHandler(sys.stdout)
+        handler: logging.Handler = logging.StreamHandler(sys.stdout)
     else:
         handler = logging.handlers.WatchedFileHandler(log_file)
     handler.setFormatter(logging.Formatter(FORMAT))
