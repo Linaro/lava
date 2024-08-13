@@ -846,7 +846,7 @@ async def main() -> int:
             return 1
 
 
-def run():
+def run() -> None:
     try:
         sys.exit(asyncio.run(main()))
     except KeyboardInterrupt:
