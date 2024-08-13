@@ -538,8 +538,8 @@ async def register(
     session: aiohttp.ClientSession,
     url: str,
     name: str,
-    username: str = None,
-    password: str = None,
+    username: str | None = None,
+    password: str | None = None,
 ) -> str:
     data = {"name": name}
     if username is not None and password is not None:
