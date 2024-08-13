@@ -113,15 +113,18 @@ class Response:
 async def aiohttp_get(
     session: aiohttp.ClientSession,
     url: str,
-    token: str,
+    token: str | None,
     params: dict[str, str] | None = None,
 ) -> Response:
     if params is None:
         params = {}
+    headers: dict[str, str] = {}
+    if token is not None:
+        headers["LAVA-Token"] = token
 
     try:
         async with session.get(
-            url, params=params, headers={"LAVA-Token": token}, timeout=TIMEOUT
+            url, params=params, headers=headers, timeout=TIMEOUT
         ) as request:
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
@@ -131,9 +134,13 @@ async def aiohttp_get(
 async def aiohttp_post(
     session: aiohttp.ClientSession, url: str, token: str | None, data: dict[str, str]
 ) -> Response:
+    headers: dict[str, str] = {}
+    if token is not None:
+        headers["LAVA-Token"] = token
+
     try:
         async with session.post(
-            url, data=data, headers={"LAVA-Token": token}, timeout=TIMEOUT
+            url, data=data, headers=headers, timeout=TIMEOUT
         ) as request:
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
