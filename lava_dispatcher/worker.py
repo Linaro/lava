@@ -795,12 +795,10 @@ async def main() -> int:
                 )
                 options.token_file.write_text(options.token, encoding="utf-8")
                 options.token_file.chmod(0o600)
-
             elif options.token is not None:
                 LOG.info("[INIT] Token  : '<command line>'")
                 options.token_file.write_text(options.token, encoding="utf-8")
                 options.token_file.chmod(0o600)
-                options.token_file = str(worker_dir / "token")
             elif options.token_file.exists():
                 LOG.info("[INIT] Token  : file %r", str(options.token_file))
                 options.token = options.token_file.read_text(encoding="utf-8").rstrip(
