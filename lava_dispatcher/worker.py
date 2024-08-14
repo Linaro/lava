@@ -33,7 +33,8 @@ import aiohttp
 import sentry_sdk
 import yaml
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, WORKER_DIR
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import WORKER_DIR as _WORKER_DIR_STR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
@@ -45,7 +46,7 @@ from lava_common.yaml import yaml_safe_load
 FINISH_MAX_DURATION = 120
 
 TIMEOUT = 60 * 10  # http timeout to 10 minutes
-WORKER_DIR = Path(WORKER_DIR)
+WORKER_DIR = Path(_WORKER_DIR_STR)
 
 
 #########
