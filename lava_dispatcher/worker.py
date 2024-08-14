@@ -15,7 +15,6 @@ import logging
 import logging.handlers
 import os
 import shutil
-import signal
 import sqlite3
 import subprocess
 import sys
@@ -27,6 +26,7 @@ from dataclasses import dataclass
 from functools import partial
 from json import loads as json_loads
 from pathlib import Path
+from signal import Signals
 from typing import Any
 
 import aiohttp
@@ -284,13 +284,13 @@ class Job:
         # If the pid is 0, just skip because lava-run was not started
         if self.pid == 0:
             return
-        os.kill(self.pid, signal.SIGKILL)
+        os.kill(self.pid, Signals.SIGKILL)
 
     def terminate(self) -> None:
         # If the pid is 0, just skip because lava-run was not started
         if self.pid == 0:
             return
-        os.kill(self.pid, signal.SIGTERM)
+        os.kill(self.pid, Signals.SIGTERM)
 
     def is_running(self) -> bool:
         with contextlib.suppress(OSError):
@@ -819,10 +819,10 @@ async def main() -> int:
             )
 
             LOG.debug(f"LAVA worker pid is {os.getpid()}")
-            for signame in ("SIGINT", "SIGTERM"):
+            for sig in (Signals.SIGINT, Signals.SIGTERM):
                 loop.add_signal_handler(
-                    getattr(signal, signame),
-                    partial(ask_exit, signame, group),
+                    sig,
+                    partial(ask_exit, sig.name, group),
                 )
 
             await group
