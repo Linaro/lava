@@ -161,7 +161,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/bootloader/ptable-linux-8g.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.5', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
@@ -174,7 +174,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20180128213254-588.uefi.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.7', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
@@ -187,7 +187,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.8.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/rpb-console-image-hikey-20180128213254-588.rootfs.img.gz'}
   - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '3.9',
     max_retries: 1, description: apply overlay to sparse image, summary: apply overlay

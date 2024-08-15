@@ -96,7 +96,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/kvm/standard/large-stable-6.img.gz'}
 - class: BootQEMUImageAction
   name: boot-image-retry

@@ -106,7 +106,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img'}
   - class: DownloaderAction
     name: download-retry
@@ -117,7 +117,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img'}
   - class: DownloaderAction
     name: download-retry
@@ -128,7 +128,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img'}
   - class: DownloaderAction
     name: download-retry
@@ -139,7 +139,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img'}
   - class: DownloaderAction
     name: download-retry
@@ -150,7 +150,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img'}
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action

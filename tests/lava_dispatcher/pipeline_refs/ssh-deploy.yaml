@@ -84,13 +84,13 @@
   summary: login over ssh
   timeout: 60
   pipeline:
-  - {class: Scp, name: scp-deploy, level: '2.1', max_retries: 2, description: copy
-      a file to a known device using scp, summary: scp over the ssh connection, timeout: 60}
-  - {class: PrepareSsh, name: prepare-ssh, level: '2.2', max_retries: 2, description: determine
+  - {class: Scp, name: scp-deploy, level: '2.1', max_retries: 1, description: copy
+      a file to a known device using scp, summary: scp over the ssh connection, timeout: 30}
+  - {class: PrepareSsh, name: prepare-ssh, level: '2.2', max_retries: 1, description: determine
       which address to use for primary or secondary connections, summary: set the
-      host address of the ssh connection, timeout: 60}
-  - {class: ConnectSsh, name: ssh-connection, level: '2.3', max_retries: 2, description: login
-      to a known device using ssh, summary: make an ssh connection to a device, timeout: 60}
+      host address of the ssh connection, timeout: 30}
+  - {class: ConnectSsh, name: ssh-connection, level: '2.3', max_retries: 1, description: login
+      to a known device using ssh, summary: make an ssh connection to a device, timeout: 30}
   - class: AutoLoginAction
     name: auto-login-action
     level: '2.4'
@@ -98,19 +98,19 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 120
+    timeout: 30
     pipeline:
-    - {class: LoginAction, name: login-action, level: 2.4.1, max_retries: 2, description: Real
-        login action., summary: Login after boot., timeout: 60}
-  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.5', max_retries: 2,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 60}
-  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.6', max_retries: 2,
+    - {class: LoginAction, name: login-action, level: 2.4.1, max_retries: 1, description: Real
+        login action., summary: Login after boot., timeout: 15}
+  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.5', max_retries: 1,
+    description: Wait for a shell, summary: Expect a shell prompt, timeout: 30}
+  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.6', max_retries: 1,
     description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 60}
-  - {class: ScpOverlayUnpack, name: scp-overlay-unpack, level: '2.7', max_retries: 2,
+      variables action, timeout: 30}
+  - {class: ScpOverlayUnpack, name: scp-overlay-unpack, level: '2.7', max_retries: 1,
     description: unpack the overlay over an existing ssh connection, summary: unpack
-      the overlay on the remote device, timeout: 60}
-- {class: SchrootAction, name: schroot-login, level: '3', max_retries: 2, description: enter
+      the overlay on the remote device, timeout: 30}
+- {class: SchrootAction, name: schroot-login, level: '3', max_retries: 1, description: enter
     schroot using existing connection, summary: enter specified schroot, timeout: 60}
 - class: TestShellRetry
   name: lava-test-retry
@@ -120,8 +120,8 @@
   summary: Retry support for Lava Test Shell
   timeout: 180
   pipeline:
-  - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 3,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 180}
+  - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 1,
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 60}
 - class: FinalizeAction
   name: finalize
   level: '5'

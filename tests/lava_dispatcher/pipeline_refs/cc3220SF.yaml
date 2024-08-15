@@ -15,7 +15,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf'}
   - class: DownloaderAction
     name: download-retry
@@ -26,7 +26,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg'}
 - class: BootGDB
   name: boot-gdb

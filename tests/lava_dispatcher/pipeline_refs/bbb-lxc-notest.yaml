@@ -36,7 +36,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz'}
   - class: DownloaderAction
     name: download-retry
@@ -47,7 +47,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz'}
   - class: DownloaderAction
     name: download-retry
@@ -58,7 +58,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-bone.dtb'}
   - class: DownloaderAction
     name: download-retry
@@ -69,7 +69,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/modules.tar.gz'}
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay

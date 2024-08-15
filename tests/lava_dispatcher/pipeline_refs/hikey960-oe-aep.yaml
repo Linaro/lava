@@ -173,7 +173,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/50/hikey960/release/prm_ptable.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.5', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
@@ -186,7 +186,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/reference-platform/embedded/morty/hikey960/140/rpb/boot-0.0+AUTOINC+ba45819943-ea12986b87-r0-hikey960-20180420075721-140.uefi.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.7', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
@@ -199,7 +199,7 @@
     timeout: 1800
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.8.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1800,
+      description: use http to download the file, summary: http download, timeout: 600,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/reference-platform/embedded/morty/hikey960/140/rpb/rpb-console-image-hikey960-20180420075721-140.rootfs.img.gz'}
   - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '3.9',
     max_retries: 1, description: apply overlay to sparse image, summary: apply overlay

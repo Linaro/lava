@@ -15,7 +15,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot'}
 - class: UUUBootRetryAction
   name: uuu-boot-retry

@@ -18,7 +18,7 @@
     timeout: 240
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 240,
+      description: use http to download the file, summary: http download, timeout: 80,
       url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-cd1-preseed.cfg'}
   - class: DownloaderAction
     name: download-retry
@@ -29,7 +29,7 @@
     timeout: 240
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 240,
+      description: use http to download the file, summary: http download, timeout: 80,
       url: 'http://images.validation.linaro.org/kvm/debian-8.3.0-amd64-CD-1.iso'}
   - {class: IsoPullInstaller, name: pull-installer-files, level: '1.4', max_retries: 1,
     description: pull kernel and initrd out of iso, summary: copy files out of installer

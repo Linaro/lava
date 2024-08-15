@@ -4,11 +4,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import datetime
 import os
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
@@ -35,14 +33,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         self.assertIsInstance(testshell, TestShellAction)
         self.assertTrue(testshell.valid)
 
-        if "timeout" in testshell.parameters:
-            time_int = Timeout.parse(testshell.parameters["timeout"])
-        else:
-            time_int = Timeout.default_duration()
-        self.assertEqual(
-            datetime.timedelta(seconds=time_int).total_seconds(),
-            testshell.timeout.duration,
-        )
+        self.assertEqual(200, testshell.timeout.duration)
 
     def test_missing_handler(self):
         (rendered, _) = self.factory.create_device("kvm01.jinja2")
