@@ -27,7 +27,7 @@ from dataclasses import dataclass
 from functools import partial
 from json import loads as json_loads
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any
 
 import aiohttp
 import sentry_sdk
@@ -733,7 +733,7 @@ async def listen_for_events(
         await asyncio.sleep(retry_interval)
 
 
-def ask_exit(signame: str, group: asyncio.tasks._GatheringFuture) -> NoReturn:
+def ask_exit(signame: str, group: asyncio.Future) -> None:
     LOG.info(f"[EXIT] Received signal {signame}")
     # await cancelled group throws asyncio.CancelledError. The
     # exception is handled in the main().
