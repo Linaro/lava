@@ -72,7 +72,7 @@ URL_JOBS = "/scheduler/internal/v1/jobs/"
 URL_WORKERS = "/scheduler/internal/v1/workers/"
 
 THREAD_EXECUTOR = ThreadPoolExecutor(max_workers=8)
-JOB_CLEANUP_TASKS: set[asyncio.Task] = set()
+JOB_CLEANUP_TASKS: set[asyncio.Task[None]] = set()
 
 
 ###########
@@ -733,7 +733,7 @@ async def listen_for_events(
         await asyncio.sleep(retry_interval)
 
 
-def ask_exit(signame: str, group: asyncio.Future) -> None:
+def ask_exit(signame: str, group: asyncio.Future[Any]) -> None:
     LOG.info(f"[EXIT] Received signal {signame}")
     # await cancelled group throws asyncio.CancelledError. The
     # exception is handled in the main().
