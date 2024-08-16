@@ -4,10 +4,13 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import contextlib
 import decimal
 import logging
 import os
 import signal
+
+from pexpect.exceptions import ExceptionPexpect
 
 from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
@@ -150,8 +153,9 @@ class Connection:
 
         self.connected = False
         if self.raw_connection:
-            self.raw_connection.close(force=True)
-        self.raw_connection = None
+            with contextlib.suppress(ExceptionPexpect):
+                self.raw_connection.close(force=True)
+                self.raw_connection = None
 
     def finalise(self):
         # logger = logging.getLogger('dispatcher')
