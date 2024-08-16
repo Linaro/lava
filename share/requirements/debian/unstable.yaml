@@ -131,6 +131,9 @@ lava-dispatcher:
     name: python3-guestfs
   bmap-tools:
     name: bmap-tools
+  openocd:
+    name: openocd
+    unittests: true
   voluptuous:
     name: python3-voluptuous
     unittests: true

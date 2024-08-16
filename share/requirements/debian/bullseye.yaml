@@ -134,6 +134,9 @@ lava-dispatcher:
   pyocd:
     name: python3-pyocd
     unittests: true
+  openocd:
+    name: openocd
+    unittests: true
   voluptuous:
     name: python3-voluptuous
     unittests: true
