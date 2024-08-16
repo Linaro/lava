@@ -27,11 +27,6 @@ variables:
   script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
 
-.job_aarch64: &job_aarch64
-  <<: *job
-  tags:
-    - aarch64
-
 .dind: &dind
   <<: *job
   image: docker:24-dind
@@ -67,14 +62,14 @@ amd64/server-debian-12: *server
 aarch64/dispatcher-debian-11:
   <<: *dispatcher
   tags:
-    - aarch64-dind
+    - saas-linux-medium-arm64
   only:
     refs:
       - master
 aarch64/server-debian-11:
   <<: *server
   tags:
-    - aarch64-dind
+    - saas-linux-medium-arm64
   only:
     refs:
       - master
@@ -185,7 +180,8 @@ debian/12:
     refs:
       - master
       - tags
-  tags: [aarch64-dind]
+  tags:
+    - saas-linux-medium-arm64
 
 docker-amd64-dispatcher: *docker
 docker-amd64-server: *docker
