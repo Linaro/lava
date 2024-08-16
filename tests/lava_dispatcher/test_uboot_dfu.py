@@ -4,10 +4,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import unittest
+from unittest.mock import Mock, patch
 
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import infrastructure_error
 
 
 class UBootDFUFactory(Factory):
@@ -20,7 +19,6 @@ class TestUbootDFUAction(LavaDispatcherTestCase):
         super().setUp()
         self.factory = UBootDFUFactory()
 
-    @unittest.skipIf(infrastructure_error("dfu-util"), "dfu-util not installed")
     def test_enter_dfu_action(self):
         job = self.factory.create_rzn1d_job("sample_jobs/rzn1d-dfu.yaml")
         self.assertIsNotNone(job)
@@ -28,4 +26,10 @@ class TestUbootDFUAction(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("rzn1d-dfu.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
-        self.assertIsNone(job.validate())
+        with patch(
+            "lava_dispatcher.actions.boot.dfu.which",
+            Mock(return_value="/usr/bin/dfu-util"),
+        ) as which_mock:
+            self.assertIsNone(job.validate())
+
+        which_mock.assert_called_once_with("dfu-util")
