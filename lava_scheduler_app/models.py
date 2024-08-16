@@ -2370,6 +2370,8 @@ class NotificationRecipient(models.Model):
     IRC = 1
     IRC_STR = "irc"
 
+    LAVA_DEVICE_OWNER_STR = "{LAVA_DEVICE_OWNER}"
+
     METHOD_CHOICES = ((EMAIL, EMAIL_STR), (IRC, IRC_STR))
     METHOD_MAP = {EMAIL_STR: EMAIL, IRC_STR: IRC}
 
