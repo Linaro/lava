@@ -733,14 +733,15 @@ async def listen_for_events(
         await asyncio.sleep(retry_interval)
 
 
-def ask_exit(signame: str, group: asyncio.Future[Any]) -> None:
+def ask_exit(signame: str, gather: asyncio.Future[Any]) -> None:
     LOG.info(f"[EXIT] Received signal {signame}")
-    # await cancelled group throws asyncio.CancelledError. The
+    # await cancelled gather throws asyncio.CancelledError. The
     # exception is handled in the main().
-    group.cancel()
+    gather.cancel("Asked exit")
+    gather.set_exception(SystemExit(0))
 
 
-async def main() -> int:
+async def main() -> None:
     # Parse command line
     options = get_parser().parse_args()
     if options.sentry_dsn:
@@ -781,55 +782,64 @@ async def main() -> int:
     loop = asyncio.get_running_loop()
     loop.set_default_executor(THREAD_EXECUTOR)
 
-    async with aiohttp.ClientSession(
-        headers={
-            "User-Agent": f"lava-worker {__version__}",
-        }
-    ) as session:
+    @contextlib.contextmanager
+    def log_exception() -> Iterator[None]:
         try:
-            if options.username is not None:
-                LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
-                password = getpass.getpass()
-                options.token = await register(
-                    options.url, options.name, options.username, password
-                )
-                options.token_file.write_text(options.token, encoding="utf-8")
-                options.token_file.chmod(0o600)
-            elif options.token is not None:
-                LOG.info("[INIT] Token  : '<command line>'")
-                options.token_file.write_text(options.token, encoding="utf-8")
-                options.token_file.chmod(0o600)
-            elif options.token_file.exists():
-                LOG.info("[INIT] Token  : file %r", str(options.token_file))
-                options.token = options.token_file.read_text(encoding="utf-8").rstrip(
-                    "\n"
-                )
-            else:
-                LOG.info("[INIT] Token  : '<auto register>'")
-                options.token = await register(session, options.url, options.name)
-                options.token_file.write_text(options.token, encoding="utf-8")
-                options.token_file.chmod(0o600)
+            yield None
+        except Exception as exc:
+            LOG.error("[EXIT] %s", exc)
+            LOG.exception(exc)
+            raise
 
-            jobs = JobsDB(str(worker_dir / "db.sqlite3"))
+    async with contextlib.AsyncExitStack() as exit_stack:
+        session = await exit_stack.enter_async_context(
+            aiohttp.ClientSession(
+                headers={
+                    "User-Agent": f"lava-worker {__version__}",
+                }
+            )
+        )
+        exit_stack.enter_context(log_exception())
 
-            event = asyncio.Event()
-            group = asyncio.gather(
-                main_loop(options, session, jobs, event),
-                listen_for_events(options, session, event),
+        if options.username is not None:
+            LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
+            password = getpass.getpass()
+            options.token = await register(
+                options.url, options.name, options.username, password
+            )
+            options.token_file.write_text(options.token, encoding="utf-8")
+            options.token_file.chmod(0o600)
+        elif options.token is not None:
+            LOG.info("[INIT] Token  : '<command line>'")
+            options.token_file.write_text(options.token, encoding="utf-8")
+            options.token_file.chmod(0o600)
+        elif options.token_file.exists():
+            LOG.info("[INIT] Token  : file %r", str(options.token_file))
+            options.token = options.token_file.read_text(encoding="utf-8").rstrip("\n")
+        else:
+            LOG.info("[INIT] Token  : '<auto register>'")
+            options.token = await register(session, options.url, options.name)
+            options.token_file.write_text(options.token, encoding="utf-8")
+            options.token_file.chmod(0o600)
+
+        jobs = JobsDB(str(worker_dir / "db.sqlite3"))
+
+        event = asyncio.Event()
+        gather = asyncio.gather(
+            main_loop(options, session, jobs, event),
+            listen_for_events(options, session, event),
+        )
+
+        LOG.debug(f"LAVA worker pid is {os.getpid()}")
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(
+                sig,
+                partial(ask_exit, sig.name, gather),
             )
 
-            LOG.debug(f"LAVA worker pid is {os.getpid()}")
-            for signame in ("SIGINT", "SIGTERM"):
-                loop.add_signal_handler(
-                    getattr(signal, signame),
-                    partial(ask_exit, signame, group),
-                )
+        if options.wait_jobs:
 
-            await group
-            return 0
-        except asyncio.CancelledError:
-            LOG.info("[EXIT] Canceled")
-            if options.wait_jobs:
+            async def wait_for_jobs() -> None:
                 LOG.info("[EXIT] Wait for jobs to finish")
                 while True:
                     await check(session, options.url, jobs)
@@ -842,22 +852,14 @@ async def main() -> int:
                     if not all_ids:
                         break
                     await asyncio.sleep(ping_interval)
-            return 1
-        except VersionMismatch as exc:
-            LOG.info("[EXIT] %s" % exc)
-            return 0
-        except Exception as exc:
-            LOG.error("[EXIT] %s", exc)
-            LOG.exception(exc)
-            return 1
+
+            exit_stack.push_async_callback(wait_for_jobs)
+
+        await gather
 
 
 def run() -> None:
-    try:
-        sys.exit(asyncio.run(main()))
-    except KeyboardInterrupt:
-        LOG.info("[EXIT] Received Ctrl+C")
-        sys.exit(1)
+    asyncio.run(main())
 
 
 if __name__ == "__main__":
