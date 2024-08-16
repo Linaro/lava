@@ -96,7 +96,7 @@ def create_environ(env: str) -> dict[str, str]:
     return environ
 
 
-def get_prefix(cfg):
+def get_prefix(cfg) -> str:
     if isinstance(cfg, dict):
         return cfg.get("prefix", "")
     return ""
