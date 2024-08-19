@@ -93,10 +93,9 @@ def test_size_logs(mocker, tmp_path, logs_filesystem):
 def test_write_logs(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
     job.output_dir = tmp_path
-    with open(str(tmp_path / "output.yaml"), "wb") as f_logs:
-        with open(str(tmp_path / "output.idx"), "wb") as f_idx:
-            logs_filesystem.write(job, b"hello world\n", f_logs, f_idx)
-            logs_filesystem.write(job, b"how are you?\n", f_logs, f_idx)
+    with logs_filesystem.enter_writer(job) as writer:
+        writer.write_line({}, "hello world\n")
+        writer.write_line({}, "how are you?\n")
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
     with open(str(tmp_path / "output.idx"), "rb") as f_idx:
@@ -124,10 +123,10 @@ def test_mongo_logs(mocker):
     mocker.patch("pymongo.collection.Collection.find", find)
     mocker.patch("pymongo.collection.Collection.insert_one", insert_one)
 
-    logs_mongo.write(
-        job,
-        '- {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}',
-    )
+    log_line = '- {"dt": "2020-03-25T19:44:36.209548", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
+    with logs_mongo.enter_writer(job) as mongo_writer:
+        mongo_writer.write_line(yaml_safe_load(log_line)[0], log_line)
+
     insert_one.assert_called_with(
         {
             "job_id": 1,
@@ -150,7 +149,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     job = mocker.Mock()
     job.id = 1
 
-    post = mocker.MagicMock()
+    session_mock = mocker.MagicMock()
     get = mocker.MagicMock()
     get_ret_val = mocker.Mock()
 
@@ -166,14 +165,15 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     get.return_value = get_ret_val
 
     mocker.patch("requests.get", get)
-    mocker.patch("requests.post", post)
 
     line = '- {"dt": "2020-03-25T19:44:36.209", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
-    logs_elasticsearch.write(job, line)
-    post.assert_called_with(
+    with logs_elasticsearch.enter_writer(job) as elastic_writer:
+        assert elastic_writer.session.headers["Content-type"] == "application/json"
+        mocker.patch.object(elastic_writer, "session", session_mock)
+        elastic_writer.write_line(yaml_safe_load(line)[0], line)
+    session_mock.post.assert_called_with(
         "%s%s/_doc/" % (settings.ELASTICSEARCH_URI, settings.ELASTICSEARCH_INDEX),
         data='{"dt": 1585165476209, "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02", "job_id": 1}',
-        headers={"Content-type": "application/json"},
     )  # nosec
     result = yaml_safe_load(logs_elasticsearch.read(job))
 

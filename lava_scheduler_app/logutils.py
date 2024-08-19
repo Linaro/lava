@@ -16,6 +16,7 @@ import struct
 from importlib import import_module
 from json import dumps as json_dumps
 from json import loads as json_loads
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import requests
@@ -25,8 +26,8 @@ from lava_common.exceptions import ConfigurationError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
-    from typing import Any, BinaryIO
+    from collections.abc import Iterable, Iterator
+    from typing import Any, BinaryIO, TextIO
 
     from lava_scheduler_app.models import TestJob
 
@@ -44,13 +45,13 @@ class Logs:
     def size(self, job: TestJob, start: int = 0, end: int | None = None) -> int | None:
         raise NotImplementedError("Should implement this method")
 
-    def write(
-        self,
-        job: TestJob,
-        line: bytes,
-        output: BinaryIO | None = None,
-        idx: BinaryIO | None = None,
-    ) -> None:
+    @contextlib.contextmanager
+    def enter_writer(self, job: TestJob) -> Iterator[LogsWriter]:
+        raise NotImplementedError("Should implement this method")
+
+
+class LogsWriter:
+    def write_line(self, line_dict: dict[str, Any], line_string: str) -> None:
         raise NotImplementedError("Should implement this method")
 
 
@@ -84,7 +85,11 @@ class LogsFilesystem(Logs):
             return None
 
     def line_count(self, job: TestJob) -> int:
-        st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        try:
+            st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        except FileNotFoundError:
+            return 0
+
         return int(st.st_size / self.PACK_SIZE)
 
     def open(self, job: TestJob) -> BinaryIO:
@@ -128,17 +133,26 @@ class LogsFilesystem(Logs):
             return int((directory / self.log_size_filename).read_text(encoding="utf-8"))
         return None
 
-    def write(
-        self,
-        job: TestJob,
-        line: bytes,
-        output: BinaryIO | None = None,
-        idx: BinaryIO | None = None,
-    ) -> None:
-        idx.write(struct.pack(self.PACK_FORMAT, output.tell()))
-        idx.flush()
-        output.write(line)
-        output.flush()
+    @contextlib.contextmanager
+    def enter_writer(self, job: TestJob) -> Iterator[LogsWriter]:
+        path = Path(job.output_dir)
+        path.mkdir(mode=0o755, parents=True, exist_ok=True)
+
+        with contextlib.ExitStack() as exit_stack:
+            yield FilesystemLogsWriter(
+                output=exit_stack.enter_context((path / self.log_filename).open("at")),
+                index=exit_stack.enter_context((path / self.index_filename).open("ab")),
+            )
+
+
+class FilesystemLogsWriter(LogsWriter):
+    def __init__(self, output: TextIO, index: BinaryIO):
+        self.output = output
+        self.index = index
+
+    def write_line(self, line_dict: dict[str, Any], line_string: str) -> None:
+        self.index.write(struct.pack(LogsFilesystem.PACK_FORMAT, self.output.tell()))
+        self.output.write(line_string)
 
 
 class LogsMongo(Logs):
@@ -197,17 +211,27 @@ class LogsMongo(Logs):
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(list(docs)).encode("utf-8"))
 
-    def write(
-        self,
-        job: TestJob,
-        line: bytes,
-        output: BinaryIO | None = None,
-        idx: BinaryIO | None = None,
-    ) -> None:
-        line = yaml_safe_load(line)[0]
+    @contextlib.contextmanager
+    def enter_writer(self, job: TestJob) -> Iterator[LogsWriter]:
+        yield MongoLogsWriter(
+            db=self.db,
+            job_id=job.id,
+        )
 
+
+class MongoLogsWriter(LogsWriter):
+    def __init__(self, job_id: int, db: Any):
+        self.db = db
+        self.job_id = job_id
+
+    def write_line(self, line_dict: dict[str, Any], line_string: str) -> None:
         self.db.logs.insert_one(
-            {"job_id": job.id, "dt": line["dt"], "lvl": line["lvl"], "msg": line["msg"]}
+            {
+                "job_id": self.job_id,
+                "dt": line_dict["dt"],
+                "lvl": line_dict["lvl"],
+                "msg": line_dict["msg"],
+            }
         )
 
 
@@ -293,21 +317,32 @@ class LogsElasticsearch(Logs):
         docs = self._get_docs(job, start, end)
         return len(yaml_safe_dump(docs).encode("utf-8"))
 
-    def write(
-        self,
-        job: TestJob,
-        line: bytes,
-        output: BinaryIO | None = None,
-        idx: BinaryIO | None = None,
-    ) -> None:
-        line: dict[str, Any] = yaml_safe_load(line)[0]
-        dt = datetime.datetime.strptime(line["dt"], "%Y-%m-%dT%H:%M:%S.%f")
-        line.update({"job_id": job.id, "dt": int(dt.timestamp() * 1000)})
-        if line["lvl"] == "results":
-            line.update({"msg": str(line["msg"])})
-        data = json_dumps(line)
+    @contextlib.contextmanager
+    def enter_writer(self, job: TestJob) -> Iterator[LogsWriter]:
+        with requests.Session() as session:
+            session.headers.update(self.headers)
+            yield ElasticLogsWriter(
+                job_id=job.id,
+                api_url=self.api_url,
+                session=session,
+            )
 
-        requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
+
+class ElasticLogsWriter(LogsWriter):
+    def __init__(self, job_id: int, api_url: str, session: requests.Session):
+        self.job_id = job_id
+        self.api_url = api_url
+        self.session = session
+
+    def write_line(self, line_dict: dict[str, Any], line_string: str) -> None:
+        line_dict = line_dict.copy()
+        dt = datetime.datetime.strptime(line_dict["dt"], "%Y-%m-%dT%H:%M:%S.%f")
+        line_dict.update({"job_id": self.job_id, "dt": int(dt.timestamp() * 1000)})
+        if line_dict["lvl"] == "results":
+            line_dict.update({"msg": str(line_dict["msg"])})
+        data = json_dumps(line_dict)
+
+        self.session.post("%s_doc/" % self.api_url, data=data)
 
 
 class LogsFirestore(Logs):
@@ -380,6 +415,35 @@ class LogsFirestore(Logs):
             .document(line["dt"])
         )
         doc_ref.set({"lvl": line["lvl"], "msg": line["msg"]})
+
+    @contextlib.contextmanager
+    def enter_writer(self, job: TestJob) -> Iterator[LogsWriter]:
+        yield FirestoreLogsWriter(
+            job=job,
+            db=self.db,
+        )
+
+
+class FirestoreLogsWriter(LogsWriter):
+    def __init__(self, job: TestJob, db: Any):
+        self.job = job
+        self.db = db
+
+    def write_line(self, line_dict: dict[str, Any], line_string: str) -> None:
+        doc_ref = (
+            self.db.collection(self.root_collection)
+            .document(
+                "%02d-%02d-%02d"
+                % (
+                    self.job.submit_time.year,
+                    self.job.submit_time.month,
+                    self.job.submit_time.day,
+                )
+            )
+            .collection(str(self.job.id))
+            .document(line_dict["dt"])
+        )
+        doc_ref.set({"lvl": line_dict["lvl"], "msg": line_dict["msg"]})
 
 
 logs_backend_str: str = settings.LAVA_LOG_BACKEND.rsplit(".", 1)
