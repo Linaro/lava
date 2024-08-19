@@ -127,7 +127,7 @@ def test_run_architecture_check_failure(mocker):
     )
     assert action.run_cmd.call_args_list == [
         call(["docker", "pull", "myimage"]),
-        call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+        call(["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None),
     ]
 
     getLogger.assert_called_with("dispatcher")
@@ -150,7 +150,7 @@ def test_run_architecture_check_success(mocker):
     )
     assert action.run_cmd.call_args_list == [
         call(["docker", "pull", "myimage"]),
-        call(["docker", "run", "--rm", "--init", "myimage", "echo"]),
+        call(["docker", "run", "--rm", "--init", "myimage", "echo"], error_msg=None),
     ]
     logger.warning.assert_not_called()
 
@@ -168,7 +168,9 @@ def test_run_with_action(mocker):
     action.run_cmd.assert_has_calls(
         [
             mocker.call(["docker", "pull", "myimage"]),
-            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+            mocker.call(
+                ["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None
+            ),
         ]
     )
 
@@ -193,7 +195,9 @@ def test_run_with_local_image_does_not_pull(mocker):
                 ],
                 allow_fail=True,
             ),
-            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+            mocker.call(
+                ["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None
+            ),
         ]
     )
 
@@ -219,7 +223,9 @@ def test_run_with_local_image_does_not_pull_when_missing(mocker):
                 allow_fail=True,
             ),
             mocker.call(["docker", "pull", "myimage"]),
-            mocker.call(["docker", "run", "--rm", "--init", "myimage", "date"]),
+            mocker.call(
+                ["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None
+            ),
         ]
     )
 
