@@ -16,10 +16,8 @@ import logging.handlers
 import os
 import shutil
 import sqlite3
-import subprocess
 import sys
 import time
-import traceback
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -27,7 +25,7 @@ from functools import partial
 from json import loads as json_loads
 from pathlib import Path
 from signal import Signals
-from typing import Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import sentry_sdk
@@ -39,6 +37,9 @@ from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
 from lava_common.yaml import yaml_safe_load
+
+if TYPE_CHECKING:
+    from typing import Any
 
 ###########
 # Constants
@@ -147,6 +148,45 @@ async def aiohttp_post(
 ###############
 # job helpers #
 ###############
+def invoke_posix_spawn(
+    args: list[str],
+    env: dict[str, str],
+    stdout_path: Path | str | None = None,
+    stderr_path: Path | str | None = None,
+) -> int:
+    add_file_actions: list[tuple[int, int, str, int, int]] = []
+
+    if stdout_path is not None:
+        add_file_actions.append(
+            (
+                os.POSIX_SPAWN_OPEN,
+                1,
+                str(stdout_path),
+                os.O_CREAT | os.O_TRUNC | os.O_WRONLY,
+                0o660,
+            )
+        )
+
+    if stderr_path is not None:
+        add_file_actions.append(
+            (
+                os.POSIX_SPAWN_OPEN,
+                2,
+                str(stderr_path),
+                os.O_CREAT | os.O_TRUNC | os.O_WRONLY,
+                0o660,
+            )
+        )
+
+    return os.posix_spawnp(
+        args[0],
+        args,
+        env,
+        file_actions=add_file_actions + [(os.POSIX_SPAWN_CLOSE, 0)],
+        setpgroup=0,
+    )
+
+
 def start_job(
     url: str,
     token: str,
@@ -176,12 +216,6 @@ def start_job(
         (base_dir / "env-dut.yaml").write_text(env_dut, encoding="utf-8")
 
     try:
-        if debug:
-            out_file = sys.stdout
-            err_file = sys.stderr
-        else:
-            out_file = (base_dir / "stdout").open("w")
-            err_file = (base_dir / "stderr").open("w")
         env = create_environ(env_str)
         args = [
             "lava-run",
@@ -200,10 +234,12 @@ def start_job(
         if env_dut:
             args.append("--env-dut=%s" % (base_dir / "env-dut.yaml"))
 
-        proc = subprocess.Popen(
-            args, stdout=out_file, stderr=err_file, env=env, preexec_fn=os.setpgrp
+        return invoke_posix_spawn(
+            args=args,
+            env=env,
+            stdout_path=None if debug else base_dir / "stdout",
+            stderr_path=None if debug else base_dir / "stderr",
         )
-        return proc.pid
     except Exception as exc:  # pylint: disable=broad-except
         LOG.error("[%d] Unable to start: %s", job_id, args)
         # daemon must always continue running even if the job crashes
@@ -211,7 +247,6 @@ def start_job(
             LOG.exception("[%d] %s", job_id, exc.child_traceback)
         else:
             LOG.exception("[%d] %s", job_id, exc)
-            err_file.write("%s\n%s\n" % (exc, traceback.format_exc()))
         # The process has not started
         # The END message will be sent the next time
         # check_job_status is run
