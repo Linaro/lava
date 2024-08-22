@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from decimal import Decimal
 from json import dumps as json_dumps
 
 from django.contrib.auth.decorators import login_required
@@ -89,6 +90,13 @@ class GroupChartView(LavaView):
         return group_charts
 
 
+def json_serializer(obj):
+    """Convert objects that may appear in chart data to be JSON compatible."""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    raise TypeError("Type not serializable")
+
+
 @BreadCrumb("Charts", parent=index)
 def chart_list(request):
     group_tables = {}
@@ -157,7 +165,7 @@ def chart_display(request, name):
         "lava_results_app/chart_display.html",
         {
             "chart": chart,
-            "chart_data": json_dumps(chart_data),
+            "chart_data": json_dumps(chart_data, default=json_serializer),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_display, name=name),
             "can_admin": chart.can_admin(request.user),
         },
@@ -206,7 +214,7 @@ def chart_custom(request):
         "lava_results_app/chart_display.html",
         {
             "chart": chart,
-            "chart_data": json_dumps(chart_data),
+            "chart_data": json_dumps(chart_data, default=json_serializer),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(chart_custom),
             "can_admin": False,
         },
