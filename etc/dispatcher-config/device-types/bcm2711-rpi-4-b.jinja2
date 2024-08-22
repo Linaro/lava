@@ -6,13 +6,13 @@
 {% set interrupt_ctrl_list = ['c'] %}
 {% set action_timeout_bootloader_interrupt = '60' %}
 
-{% set booti_kernel_addr = booti_kernel_addr|default('0x00080000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr|default('0x06700000') %}
-{% set booti_dtb_addr = booti_dtb_addr|default('0x06400000') %}
+{% set booti_kernel_addr = booti_kernel_addr|default('0x00200000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr|default('0x09900000') %}
+{% set booti_dtb_addr = booti_dtb_addr|default('0x09800000') %}
 
-{% set bootm_kernel_addr = bootm_kernel_addr|default('0x00080000') %}
-{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x06700000') %}
-{% set bootm_dtb_addr = bootm_dtb_addr|default('0x06400000') %}
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0x00200000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x09900000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0x09800000') %}
 
 {% set uboot_mkimage_arch = 'arm64' %}
 
