@@ -26,10 +26,10 @@ def dump(data: dict) -> str:
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
     data_str = yaml_safe_dump(
-        data, default_flow_style=True, default_style='"', width=10**6
+        data, default_flow_style=True, default_style='"', width=10**5
     )[:-1]
     # Test the limit and skip if the line is too long
-    if len(data_str) >= 10**6:
+    if len(data_str) >= 10**5:
         if isinstance(data["msg"], str):
             data["msg"] = "<line way too long ...>"
         else:
@@ -110,6 +110,42 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
     leaving: bool = False
     index: int = 0
 
+    def _reduce_record_size(
+        records: list[str], max_records: int
+    ) -> tuple[list[str], int]:
+        """
+        The method should only be called for handling `RequestBodyTooLargeError`. It
+        minus 100 records for every call. In case only one record left, the record will
+        be replaced by a short "log-upload fail" result line and an error message also
+        will be sent to kill the job.
+        """
+        if max_records == 1:
+            record = records[0]
+            records = [
+                dump(
+                    {
+                        "dt": datetime.datetime.utcnow().isoformat(),
+                        "lvl": "results",
+                        "msg": {
+                            "definition": "lava",
+                            "case": "log-upload",
+                            "result": "fail",
+                        },
+                    }
+                )
+            ]
+
+            sys.stderr.write(
+                "Error: Log post request body exceeds server settings param.\n"
+                f"Log line length: {len(record)}\n"
+                f"Truncated log line: {record[:1024]} ...\n"
+            )
+            sys.stderr.flush()
+        else:
+            max_records = max(1, max_records - 100)
+
+        return (records, max_records)
+
     with requests.Session() as session:
         while not leaving:
             # Listen for new messages if we don't have message yet or some
@@ -129,14 +165,14 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                 try:
                     (records, index) = post(session, records, index)
                 except RequestBodyTooLargeError:
-                    MAX_RECORDS = max(1, MAX_RECORDS - 100)
+                    (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
 
         while records:
             # Send the data
             try:
                 (records, index) = post(session, records, index)
             except RequestBodyTooLargeError:
-                MAX_RECORDS = max(1, MAX_RECORDS - 100)
+                (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
 
 
 class HTTPHandler(logging.Handler):
