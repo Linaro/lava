@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import contextlib
 import copy
 import logging
 import subprocess  # nosec - internal
@@ -661,6 +662,10 @@ class Action:
                     "Timed out after %s seconds", int(time.monotonic() - start)
                 )
                 pexpect_popen.proc.terminate()
+            # SIGALRM on action timeout can raise an exception anywhere.
+            except BaseException:
+                with contextlib.suppress(ProcessLookupError):
+                    pexpect_popen.proc.terminate()
 
     def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
         """
