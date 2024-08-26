@@ -13,14 +13,16 @@ are:
 +===============+========================+========+======================+
 | Debian        | experimental           | n/a    | No [#f1]_            |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Sid (unstable)         | n/a    | Yes [#f2]_           |
+| Debian        | sid (unstable)         | n/a    | Yes [#f2]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Bullseye (testing)     | 11.*   | Yes [#f3]_           |
+| Debian        | trixie (testing)       | n/a    | Yes [#f3]_           |
 +---------------+------------------------+--------+----------------------+
-| Debian        | Buster (stable)        | 10.*   | Yes [#f4]_           |
+| Debian        | bookworm (stable)      | 12.*   | Yes [#f4]_           |
++---------------+------------------------+--------+----------------------+
+| Debian        | bullseye (oldstable)   | 11.*   | No                   |
 +---------------+------------------------+--------+----------------------+
 
-Debian uses codenames for releases (bullseye, buster, stretch) and names for
+Debian uses codenames for releases (bookworm, bullseye, buster) and names for
 `suites`_ (unstable, testing, stable & oldstable). When a new Debian major
 release is made, the packages in "testing" are frozen and become the new
 "stable". A new codename is chosen for the new "testing" suite, and that will
@@ -52,18 +54,18 @@ that point will include that codename in the table.
          Unstable is **never** recommended for production instances
          of any software, including LAVA.
 
-.. [#f3] `bullseye` is the name of the next Debian release after Buster,
-         which is supported automatically via uploads to Sid
-         (unstable). Bullseye is not recommended for production
+.. [#f3] `trixie` is the name of the next Debian release after `bookworm`,
+         which is supported automatically via uploads to `sid`
+         (unstable). `Trixie` is not recommended for production
          instances of LAVA.
 
-         When bullseye is released as Debian 11, it will use the suite
+         When `trixie` is released as Debian 13, it will use the suite
          name ``stable``, testing will get the codename of the next
-         Debian stable release, and Buster will become
+         Debian stable release, and `bookworm` will become
          ``oldstable``.
 
-.. [#f4] `buster` is the name of the stable version of Debian. LAVA is fully
-         supported on this Debian version. It's recommended to use Buster for
+.. [#f4] `bookworm` is the name of the stable version of Debian. LAVA is fully
+         supported on this Debian version. It's recommended to use `bookworm` for
          production instances.
 
 .. _experimental: https://wiki.debian.org/DebianExperimental
@@ -94,10 +96,10 @@ that any test job using ``fastboot`` requires a single CPU core (not
 hyperthread) per attached device, as well as at least one core for the
 base OS. ``armhf`` in particular can struggle to provide enough
 processing power (CPU or I/O or RAM) for such devices. Each QEMU device
-can require more RAM than would be available on most 32bit systems.
+can require more RAM than would be available on most 32 bit systems.
 
 LAVA is routinely used on ``amd64`` and ``arm64`` architectures.
-Packages for other 64bit architectures like ppc64, ppc64el and s390x
+Packages for other 64 bit architectures like ppc64, ppc64el and s390x
 are available from Debian.
 
 Each lab will be different and there are no definitive guidelines on
@@ -120,9 +122,8 @@ repository at https://apt.lavasoftware.org/ . This uses the
 :ref:`lava_archive_signing_key` - a copy of the key is available in
 the repository and on key servers.
 
-Update apt to find the new packages::
-
- $ sudo apt update
+It is recommended to use this repository as it contains more up to
+date releases.
 
 .. seealso:: :ref:`dependency_requirements`.
 
@@ -131,13 +132,13 @@ Releases
 
 .. code-block:: none
 
- deb https://apt.lavasoftware.org/release buster main
+ deb https://apt.lavasoftware.org/release bookworm main
 
 .. note:: The LAVA repositories only provide packages for ``amd64`` and
    ``arm64``. See :ref:`recommended_debian_architectures`.
 
 In times when the current production release has not made it into
-either ``bullseye`` or ``testing`` (e.g. due to a migration
+either ``stable`` or ``testing`` (e.g. due to a migration
 issue or a pre-release package freeze in Debian), this repository
 should be used instead.
 
@@ -149,7 +150,7 @@ daily builds repository, using the same suites:
 
 .. code-block:: none
 
- deb https://apt.lavasoftware.org/daily buster main
+ deb https://apt.lavasoftware.org/daily bookworm main
 
 Snapshots
 ---------
@@ -164,14 +165,14 @@ is created in the snapshot folder:
 Entries are created according to the suite for which it was built and
 the year, month and day of the build.
 
-Buster users
--------------
+Bookworm users
+--------------
 
-.. note:: The recommended base for LAVA is Debian Stretch, as of 2018.1.
+.. note:: The recommended base for LAVA is Debian bookworm
 
 .. code-block:: none
 
- deb https://apt.lavasoftware.org/release buster main
+ deb https://apt.lavasoftware.org/release bookworm main
 
 .. index:: lava archive signing key, lava repository,
 	   apt.lavasoftware.org, fingerprint
@@ -200,13 +201,18 @@ Production releases are signed using:
  uid                 [ultimate] LAVA Software release key <release@lavasoftware.org>
  sub   rsa4096/42124FB9C30943EC 2018-10-02 [E]
 
-Both keys can be downloaded and added to apt easily::
+Both keys can be downloaded and added to keyrings easily::
 
- $ wget https://apt.lavasoftware.org/lavasoftware.key.asc
- $ sudo apt-key add lavasoftware.key.asc
- OK
+ $ sudo apt install curl gpg     # just in case you don't have them installed yet
+ $ curl -fsSL "https://apt.lavasoftware.org/lavasoftware.key.asc" | gpg --dearmor > lavasoftware.gpg
+ $ sudo mv lavasoftware.gpg /usr/share/keyrings
+ $ sudo chmod u=rw,g=r,o=r /usr/share/keyrings/lavasoftware.gpg
 
-After that step, run apt update again to locate the required dependencies::
+Now add the repository::
+
+ $ echo 'deb [signed-by=/usr/share/keyrings/lavasoftware.gpg] https://apt.lavasoftware.org/release bookworm main' | sudo tee /etc/apt/sources.list.d/lavasoftware.list
+
+After that step, run ``apt update`` again to locate the required dependencies::
 
  $ sudo apt update
 
@@ -219,8 +225,8 @@ Production releases
 
 .. seealso:: :ref:`setting_up_pipeline_instance`.
 
-LAVA is currently packaged for Debian unstable using Django1.10 and
-Postgresql. LAVA packages are now available from official Debian
+LAVA is currently packaged for Debian using Django 3.2 and
+PostgreSQL. LAVA packages are now available from official Debian
 mirrors for Debian unstable. e.g. to install the master, use::
 
  $ sudo apt install postgresql
