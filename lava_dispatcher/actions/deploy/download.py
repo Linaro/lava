@@ -256,9 +256,12 @@ class DownloadHandler(Action):
         raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
 
     def run(self, connection, max_end_time):
-        def progress_unknown_total(downloaded_sz, last_val):
+        def progress_unknown_total(downloaded_sz, last_val, last_update):
             """Compute progress when the size is unknown"""
-            condition = downloaded_sz >= last_val + 25 * 1024 * 1024
+            condition = (
+                downloaded_sz >= last_val + 25 * 1024 * 1024
+                and time.monotonic() - last_update >= 0.1
+            )
             return (
                 condition,
                 downloaded_sz,
@@ -267,10 +270,12 @@ class DownloadHandler(Action):
                 else "",
             )
 
-        def progress_known_total(downloaded_sz, last_val):
+        def progress_known_total(downloaded_sz, last_val, last_update):
             """Compute progress when the size is known"""
             percent = math.floor(downloaded_sz / float(self.size) * 100)
-            condition = percent >= last_val + 5
+            condition = (
+                percent >= last_val + 5 and time.monotonic() - last_update >= 0.1
+            )
             return (
                 condition,
                 percent,
@@ -345,11 +350,16 @@ class DownloadHandler(Action):
         elif not self.params.get("compression", False):
             self.logger.debug("No compression specified")
 
+        last_update = time.monotonic()  # time for rate limiting the progress output
+
         def update_progress(buff):
-            nonlocal downloaded_size, last_value, md5, sha256, sha512
+            nonlocal downloaded_size, last_update, last_value, md5, sha256, sha512
             downloaded_size += len(buff)
-            (printing, new_value, msg) = progress(downloaded_size, last_value)
+            (printing, new_value, msg) = progress(
+                downloaded_size, last_value, last_update
+            )
             if printing:
+                last_update = time.monotonic()
                 last_value = new_value
                 self.logger.debug(msg)
             md5.update(buff)
