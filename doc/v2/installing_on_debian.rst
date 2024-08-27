@@ -239,7 +239,7 @@ enable it immediately::
  $ sudo a2enmod proxy
  $ sudo a2enmod proxy_http
  $ sudo a2ensite lava-server.conf
- $ sudo service apache2 restart
+ $ sudo systemctl restart apache2.service
 
 Edits to the ``/etc/apache2/sites-available/lava-server.conf`` file
 will not be overwritten by package upgrades unless the admin explicitly
@@ -422,10 +422,10 @@ directory will be alphabetically ordered.
 If a variable is defined in two files, the value from the last file will
 override the value from first one.
 Any changes made in LAVA settings yaml file  will require a
-restart of `lava-server-gunicorn` service for the changes to get
+restart of ``lava-server-gunicorn`` service for the changes to get
 applied::
 
-  $ sudo service lava-server-gunicorn restart
+  $ systemctl restart lava-server-gunicorn.service
 
 .. note:: From 2020.05 release the settings files will not be created by
           default on fresh installations. The settings file can be added in
