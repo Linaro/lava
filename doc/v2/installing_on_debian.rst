@@ -265,22 +265,6 @@ expect ``https``.
 If the installation uses a remote slave, then HTTPS should
 be used.
 
-.. index:: python3
-
-.. _lava_python3:
-
-LAVA and Python3
-================
-
-Python2 has been `marked as end of life
-<https://legacy.python.org/dev/peps/pep-0373/>`_ and distributions are
-in the process of removing packages which depend on Python2. Django has
-had Python3 support for some time and will be dropping Python2 support
-in the next LTS. (The current non-LTS release of django, version 2.0,
-has already dropped support for Python2.)
-
-LAVA has moved to exclusive Python3 support.
-
 .. _django_non_localhost:
 
 Using a domain name other than localhost
