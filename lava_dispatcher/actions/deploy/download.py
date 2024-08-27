@@ -15,7 +15,6 @@ import hashlib
 import math
 import os
 import pathlib
-import shutil
 import subprocess  # nosec - verified.
 import time
 from typing import TYPE_CHECKING
@@ -164,8 +163,8 @@ class DownloadHandler(Action):
 
     def cleanup(self, connection):
         if os.path.exists(self.path):
-            self.logger.debug("Cleaning up download directory: %s", self.path)
-            shutil.rmtree(self.path)
+            self.logger.debug("Cleaning up downloaded image: %s", self.fname)
+            os.remove(self.fname)
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=""
         )
