@@ -261,6 +261,7 @@ class DownloadHandler(Action):
             condition = (
                 downloaded_sz >= last_val + 25 * 1024 * 1024
                 and time.monotonic() - last_update >= 0.1
+                or time.monotonic() - last_update >= 1
             )
             return (
                 condition,
