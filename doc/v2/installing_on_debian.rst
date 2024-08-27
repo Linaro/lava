@@ -291,21 +291,21 @@ first steps, a real deploy of LAVA will most probably end up on a domain
 e.g. like `lava.example.net`. There are some more configuration to do
 to achieve this:
 
-* Set up Apache configuration to serve LAVA on your desired domain by
-   editing Apache configuration and/or ``/etc/apache2/sites-available/lava-server.conf``
-   to fit to your needs. Reload apache configuration by ``systemctl reload apache2``
+Set up Apache configuration to serve LAVA on your desired domain by
+editing Apache configuration and/or ``/etc/apache2/sites-available/lava-server.conf``
+to fit to your needs. Reload apache configuration by ``systemctl reload apache2``
 
-* Append this line to ``/etc/lava-server/lava-server-gunicorn``::
+Append this line to ``/etc/lava-server/lava-server-gunicorn``::
 
    ALLOWED_HOSTS='lava.example.net'
 
-and restart `lava-server-gunicorn` service for the changes to get applied::
+restart ``lava-server-gunicorn`` service for the changes to get applied::
 
    $ systemctl restart lava-server-gunicorn.service
 
-* Remember to also modify ``/etc/lava-dispatcher/lava-worker`` and add
-   domain name there too (and edit worker configuration in django). Don't
-   forget to restart worker afterwards for the changes to get applied::
+Remember to also modify ``/etc/lava-dispatcher/lava-worker`` and add
+domain name there too (and edit worker configuration in django). Don't
+forget to restart worker afterwards for the changes to get applied::
 
    $ systemctl restart lava-worker.service
 
