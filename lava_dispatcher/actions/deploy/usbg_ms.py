@@ -37,11 +37,8 @@ class USBGMS(Deployment):
             return False, '"to" parameter is not "usbg-ms"'
         if "usbg-ms" not in device["actions"]["deploy"]["methods"]:
             return False, "'usbg-ms' not in the device configuration deploy methods"
-        keys = sorted(device["actions"]["deploy"]["methods"]["usbg-ms"].keys())
-        if sorted(device["actions"]["deploy"]["methods"]["usbg-ms"].keys()) != [
-            "disable",
-            "enable",
-        ]:
+        keys = set(device["actions"]["deploy"]["methods"]["usbg-ms"].keys())
+        if keys != {"disable", "enable"}:
             raise ConfigurationError(
                 "usbg-ms 'disable' and 'enable' commands missing: %s", keys
             )

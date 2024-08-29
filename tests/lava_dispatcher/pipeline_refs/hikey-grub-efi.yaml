@@ -119,7 +119,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
-      url: 'http://images.validation.linaro.org/functional-test-images/hikey/boot.img.xz'}
+      url: 'http://images.validation.linaro.org/functional-test-images/hikey/ptable-aosp-8g.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
@@ -130,7 +130,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
-      url: 'http://images.validation.linaro.org/functional-test-images/hikey/ptable-aosp-8g.img'}
+      url: 'http://images.validation.linaro.org/functional-test-images/hikey/boot.img.xz'}
   - class: DownloaderAction
     name: download-retry
     level: '3.5'

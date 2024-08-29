@@ -54,7 +54,7 @@ class DownloadsAction(DownloadAction):
 
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
-        for image in sorted(parameters["images"].keys()):
+        for image in parameters["images"].keys():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,

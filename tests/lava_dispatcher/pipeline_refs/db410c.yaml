@@ -162,7 +162,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.5', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -175,7 +175,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/boot-linaro-buster-dragonboard-410c-305.img.gz'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.7', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -201,7 +201,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.10.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.11', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -214,7 +214,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.12.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.13', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -227,7 +227,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.14.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/linaro-buster-alip-dragonboard-410c-305.img.gz'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.15', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -240,7 +240,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.16.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn'}
+      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.17', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -253,7 +253,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.18.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn'}
+      url: 'https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/boot-linaro-buster-dragonboard-410c-305.img.gz'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.19', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: DownloaderAction
@@ -266,7 +266,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.20.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2100,
-      url: 'http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn'}
+      url: 'https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/linaro-buster-alip-dragonboard-410c-305.img.gz'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.21', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2100}
   - class: FastbootFlashOrderAction

@@ -74,7 +74,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 300,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img'}
+      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.6', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 300}
   - class: DownloaderAction
@@ -87,7 +87,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 300,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img'}
+      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.8', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 300}
   - class: FastbootFlashOrderAction

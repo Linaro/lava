@@ -174,7 +174,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 1800,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/boot-0.0+AUTOINC+06e4def583-4adfdd06f1-r0-hikey-20170411131448-30.uefi.img'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/bootloader/ptable-linux-8g.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.5', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
   - class: DownloaderAction
@@ -187,7 +187,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 1800,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/bootloader/ptable-linux-8g.img'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/boot-0.0+AUTOINC+06e4def583-4adfdd06f1-r0-hikey-20170411131448-30.uefi.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '3.7', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 1800}
   - class: DownloaderAction

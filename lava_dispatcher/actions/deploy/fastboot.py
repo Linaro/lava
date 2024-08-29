@@ -97,7 +97,7 @@ class FastbootAction(
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
         fastboot_dir = self.mkdtemp()
-        for image in sorted(parameters["images"].keys()):
+        for image in parameters["images"].keys():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job, image, fastboot_dir, params=parameters["images"][image]
@@ -195,7 +195,6 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
 
 
 class FastbootFlashAction(OptionalContainerFastbootAction):
-
     """
     Fastboot flash image.
     """

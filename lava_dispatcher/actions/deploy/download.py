@@ -948,7 +948,7 @@ class DownloadAction(Action):
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
         self.download_dir = self.mkdtemp()
-        for image in sorted(parameters["images"].keys()):
+        for image in parameters["images"].keys():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,

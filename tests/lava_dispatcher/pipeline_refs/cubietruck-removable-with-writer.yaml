@@ -229,8 +229,9 @@
     summary: download-retry
     timeout: 600
     pipeline:
-    - {class: FileDownloadAction, name: file-download, level: 4.1.1, max_retries: 1,
-      description: copy a local file, summary: local file copy, timeout: 600, url: 'file:///dev/null'}
+    - {class: HttpDownloadAction, name: http-download, level: 4.1.1, max_retries: 1,
+      description: use http to download the file, summary: http download, timeout: 600,
+      url: 'http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz'}
   - class: DownloaderAction
     name: download-retry
     level: '4.2'
@@ -239,9 +240,8 @@
     summary: download-retry
     timeout: 600
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 4.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 600,
-      url: 'http://images.validation.linaro.org/functional-test-images/panda/panda-raring_developer_20130723-408.img.gz'}
+    - {class: FileDownloadAction, name: file-download, level: 4.2.1, max_retries: 1,
+      description: copy a local file, summary: local file copy, timeout: 600, url: 'file:///dev/null'}
   - {class: DDAction, name: dd-image, level: '4.3', max_retries: 1, description: deploy
       image to drive, summary: write image to drive, timeout: 600}
 - class: UBootAction

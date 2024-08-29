@@ -292,7 +292,7 @@ class MassStorage(Action):
             self.pipeline.add_action(OverlayAction(self.job))
         uniquify = parameters.get("uniquify", True)
         if "images" in parameters:
-            for k in sorted(parameters["images"].keys()):
+            for k in parameters["images"].keys():
                 self.pipeline.add_action(
                     DownloaderAction(
                         self.job,

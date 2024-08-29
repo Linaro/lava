@@ -61,7 +61,7 @@ class FVPDeploy(Action):
         if "images" in parameters:
             if not isinstance(parameters["images"], dict):
                 raise JobError("'deploy.images' should be a dictionary")
-            for k in sorted(parameters["images"].keys()):
+            for k in parameters["images"].keys():
                 self.pipeline.add_action(
                     DownloaderAction(
                         self.job,

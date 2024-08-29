@@ -131,7 +131,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin'}
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
@@ -142,7 +142,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/hyp.mbn'}
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
@@ -153,7 +153,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/hyp.mbn'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/NON-HLOS.bin'}
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
@@ -164,7 +164,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/NON-HLOS.bin'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/rpm.mbn'}
   - class: DownloaderAction
     name: download-retry
     level: '3.7'
@@ -175,7 +175,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.7.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sbl1.mbn'}
   - class: DownloaderAction
     name: download-retry
     level: '3.8'
@@ -186,7 +186,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.8.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sec.dat'}
   - class: DownloaderAction
     name: download-retry
     level: '3.9'
@@ -197,7 +197,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.9.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/rpm.mbn'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/tz.mbn'}
   - class: DownloaderAction
     name: download-retry
     level: '3.10'
@@ -208,7 +208,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.10.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sbl1.mbn'}
+      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn'}
   - class: DownloaderAction
     name: download-retry
     level: '3.11'
@@ -219,7 +219,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.11.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sec.dat'}
+      url: 'http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz'}
   - class: DownloaderAction
     name: download-retry
     level: '3.12'
@@ -230,7 +230,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.12.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2400,
-      url: 'http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/tz.mbn'}
+      url: 'http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz'}
   - class: OverlayAction
     name: lava-overlay
     level: '3.13'
@@ -361,7 +361,7 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.4.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/emmc_appsboot.mbn'}
+      url: 'lxc:/gpt_both0.bin'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.5', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
@@ -374,7 +374,7 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.6.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img'}
+      url: 'lxc:/hyp.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.7', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
@@ -387,7 +387,7 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.8.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/hyp.mbn'}
+      url: 'lxc:/NON-HLOS.bin'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.9', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
@@ -400,7 +400,7 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.10.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/NON-HLOS.bin'}
+      url: 'lxc:/rpm.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.11', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
@@ -413,7 +413,7 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.12.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/gpt_both0.bin'}
+      url: 'lxc:/sbl1.mbn'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.13', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
@@ -426,62 +426,62 @@
     pipeline:
     - {class: LxcDownloadAction, name: lxc-download, level: 5.14.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img'}
-  - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '5.15',
-    max_retries: 1, description: apply overlay to sparse image, summary: apply overlay
-      to sparse image, timeout: 2400}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.16', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 2400}
-  - class: DownloaderAction
-    name: download-retry
-    level: '5.17'
-    max_retries: 3
-    description: download with retry
-    summary: download-retry
-    timeout: 2400
-    pipeline:
-    - {class: LxcDownloadAction, name: lxc-download, level: 5.17.1, max_retries: 1,
-      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/rpm.mbn'}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.18', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 2400}
-  - class: DownloaderAction
-    name: download-retry
-    level: '5.19'
-    max_retries: 3
-    description: download with retry
-    summary: download-retry
-    timeout: 2400
-    pipeline:
-    - {class: LxcDownloadAction, name: lxc-download, level: 5.19.1, max_retries: 1,
-      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
-      url: 'lxc:/sbl1.mbn'}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.20', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 2400}
-  - class: DownloaderAction
-    name: download-retry
-    level: '5.21'
-    max_retries: 3
-    description: download with retry
-    summary: download-retry
-    timeout: 2400
-    pipeline:
-    - {class: LxcDownloadAction, name: lxc-download, level: 5.21.1, max_retries: 1,
-      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
       url: 'lxc:/sec.dat'}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.22', max_retries: 1,
+  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.15', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: DownloaderAction
     name: download-retry
-    level: '5.23'
+    level: '5.16'
     max_retries: 3
     description: download with retry
     summary: download-retry
     timeout: 2400
     pipeline:
-    - {class: LxcDownloadAction, name: lxc-download, level: 5.23.1, max_retries: 1,
+    - {class: LxcDownloadAction, name: lxc-download, level: 5.16.1, max_retries: 1,
       description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
       url: 'lxc:/tz.mbn'}
+  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.17', max_retries: 1,
+    description: deploy device environment, summary: deploy device environment, timeout: 2400}
+  - class: DownloaderAction
+    name: download-retry
+    level: '5.18'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - {class: LxcDownloadAction, name: lxc-download, level: 5.18.1, max_retries: 1,
+      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
+      url: 'lxc:/emmc_appsboot.mbn'}
+  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.19', max_retries: 1,
+    description: deploy device environment, summary: deploy device environment, timeout: 2400}
+  - class: DownloaderAction
+    name: download-retry
+    level: '5.20'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - {class: LxcDownloadAction, name: lxc-download, level: 5.20.1, max_retries: 1,
+      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
+      url: 'lxc:/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img'}
+  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.21', max_retries: 1,
+    description: deploy device environment, summary: deploy device environment, timeout: 2400}
+  - class: DownloaderAction
+    name: download-retry
+    level: '5.22'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - {class: LxcDownloadAction, name: lxc-download, level: 5.22.1, max_retries: 1,
+      description: Map to the correct lxc path, summary: lxc download, timeout: 2400,
+      url: 'lxc:/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img'}
+  - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '5.23',
+    max_retries: 1, description: apply overlay to sparse image, summary: apply overlay
+      to sparse image, timeout: 2400}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '5.24', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
   - class: FastbootFlashOrderAction

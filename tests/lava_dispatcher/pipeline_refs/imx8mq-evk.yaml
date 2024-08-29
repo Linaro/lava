@@ -166,7 +166,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vbmeta-imx8mq.img'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vendor.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
@@ -177,7 +177,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vendor.img'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vbmeta-imx8mq.img'}
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '3.7'
