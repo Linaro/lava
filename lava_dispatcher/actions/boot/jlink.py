@@ -1,6 +1,8 @@
 # Copyright (C) 2019 Linaro Limited
+# Copyright 2024 NXP
 #
 # Author: Andrei Gansari <andrei.gansari@linaro.org>
+#         Andy Sabathier <andy.sabathier@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
@@ -61,104 +63,124 @@ class FlashJLinkAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.base_command = []
-        self.exec_list = []
-        self.fname = []
         self.path = []
-
-    def version(self, binary, command):
-        """
-        Returns a string with the version of the JLink binary, board's hardware
-        and firmware.
-        """
-        # if binary is not absolute, fail.
-        msg = "Unable to retrieve version of %s" % binary
-        try:
-            with open(self.fname, "w") as f:
-                f.write("f\nexit")
-            cmd_output = subprocess.check_output(command)
-            if not cmd_output:
-                raise JobError(cmd_output)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            raise JobError(msg)
-
-        output_str = cmd_output.decode("utf-8")
-        host_ver = "none"
-        fw_ver = "none"
-        hw_ver = "none"
-        temp = re.search("J-Link Commander (.+?) \\(Compiled", output_str)
-        if temp:
-            host_ver = temp.group(1)
-
-        temp = re.search("Firmware: (.+?) compiled", output_str)
-        if temp:
-            fw_ver = temp.group(1)
-
-        temp = re.search("Hardware version: (.+?)\n", output_str)
-        if temp:
-            hw_ver = temp.group(1)
-
-        return "%s, SEGGER J-Link Commander %s, Firmware %s, Hardware %s" % (
-            binary,
-            host_ver,
-            fw_ver,
-            hw_ver,
-        )
 
     def validate(self):
         super().validate()
-        boot = self.job.device["actions"]["boot"]["methods"]["jlink"]
-        jlink_binary = boot["parameters"]["command"]
-        load_address = boot["parameters"]["address"]
-        self.base_command = [jlink_binary]
-        for option in boot["parameters"].get("options", []):
-            self.base_command.extend(shlex.split(option))
+        boot = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
+        jlink_binary = boot["command"]
+        # check version of jlink
+        self.version(jlink_binary)
+        # prepare jlink command
+        options = boot.get("options", [])
+        self.command_maker(jlink_binary, options)
 
-        self.base_command.extend(["-autoconnect", "1"])
+    def version(self, binary):
+        try:
+            # check version of Jlink
+            cmd_output = subprocess.run([binary, "-v"], capture_output=True, text=True)
+            if not cmd_output.stdout:
+                raise JobError("command JLinkExe -v doesn't return an output")
+            # parse cmd_output and print in logger info
+            temp = re.search("J-Link Commander (.+?) \\(Compiled", cmd_output.stdout)
+            if temp:
+                # print the version of jlink
+                self.logger.info(f"Jlink version : {temp.group(1)}")
+            else:
+                # Does not produce an error in case of the jlink version display changes
+                self.logger.info("Jlink version unknown")
+        except FileNotFoundError:
+            raise JobError("JLink is not installed")
+
+    def command_maker(self, jlink_binary, options):
+        ### create JlinkExe command and add it to a namespace ###
+        self.base_command = [jlink_binary]
+        for option in options:
+            self.base_command.extend(shlex.split(option))
+        self.base_command.extend(["-autoconnect", "1", "-NoGui", "1"])
         self.path = self.mkdtemp()
-        self.fname = os.path.join(self.path, "cmd.jlink")
-        self.base_command.append("-CommanderScript")
-        self.base_command.append(self.fname)
-        board_id = [self.job.device["board_id"]]
+        # set a namespace for the jlink path script which is used to flash
+        self.jlink_script = os.path.join(self.path, "cmd.jlink")
+        self.set_namespace_data(
+            action=self.name,
+            label="jlink-path-script",
+            key="path",
+            value=self.jlink_script,
+        )
+        self.base_command.extend(["-CommanderScript", self.jlink_script])
+        board_id = self.job.device["board_id"]
         if board_id == "0000000000":
             self.errors = "[JLink] board_id unset"
-        # select the board with the correct serial number
-        self.base_command.append("-SelectEmuBySN")
-        self.base_command.extend(board_id)
-        self.logger.info(self.version(jlink_binary, self.base_command))
-        substitutions = {}
-        for action in self.get_namespace_keys("download-action"):
-            jlink_full_command = []
-            image_arg = self.get_namespace_data(
-                action="download-action", label=action, key="image_arg"
-            )
-            action_arg = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
-            binary_image = action_arg
+        self.base_command.extend(["-SelectEmuBySN", str(board_id)])
+        # Set a namespace for the JlinkExe cmd
+        self.set_namespace_data(
+            action=self.name,
+            label="jlink-cmd",
+            key="cmd",
+            value=self.base_command,
+        )
 
-            jlink_full_command.extend(self.base_command)
+    def create_jlink_script(self, path_jlink_script):
+        # Create jlink script
+        if "commands" in self.parameters:
+            lines = ["r", "h"]
+            pattern = r"\{(.*?)\}"
+            jlink_cmds_script = self.parameters["commands"]
+            for cmd in jlink_cmds_script:
+                match = re.search(pattern, cmd)
+                if match:
+                    result = match.group(1)
+                    binary_image = self.get_namespace_data(
+                        action="download-action", label=result, key="file"
+                    )
+                    jlink_command = cmd.replace("{" + result + "}", binary_image)
+                    lines.append(jlink_command)
+                else:
+                    lines.append(cmd)
 
-            lines = ["r"]  # Reset and halt the target
-            lines.append("h")  # Reset and halt the target
-            lines.append("erase")  # Erase all flash sectors
-            lines.append("sleep 500")
-
-            lines.append(f"loadfile {binary_image} 0x{load_address:x}")
-            lines.append(f"verifybin {binary_image} 0x{load_address:x}")
-            lines.append("r")  # Restart the CPU
-            lines.append("qc")  # Close the connection and quit
-
-            self.logger.info("JLink command file: \n" + "\n".join(lines))
-
-            with open(self.fname, "w") as f:
-                f.writelines(line + "\n" for line in lines)
-
-            self.exec_list.append(jlink_full_command)
-        if not self.exec_list:
-            self.errors = "No JLinkExe command to execute"
+            lines += ["r", "g", "qc"]
+        else:
+            boot = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
+            load_address = boot["address"]
+            for action in self.get_namespace_keys("download-action"):
+                binary_image = self.get_namespace_data(
+                    action="download-action", label=action, key="file"
+                )
+                if binary_image:
+                    lines = ["r"]  # Reset and halt the target
+                    lines.append("h")  # Reset and halt the target
+                    lines.append("sleep 500")
+                    # Write DEAD BEEF to ensure the binary is flashed.
+                    lines.append(f"write4 0x{load_address:x} EFBEADDE")
+                    # Erase and Flash
+                    lines.append(f"loadfile {binary_image} 0x{load_address:x}")
+                    lines.append(f"verifybin {binary_image} 0x{load_address:x}")
+                    lines.append("r")  # Restart the CPU
+                    lines.append("qc")
+        self.logger.info(lines)
+        with open(path_jlink_script, "w") as f:
+            f.write("\n".join(lines))
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        for jlink_command in self.exec_list:
-            self.run_cmd(jlink_command, error_msg="Unable to flash with JLink")
+
+        path_jlink_script = self.get_namespace_data(
+            action=self.name, label="jlink-path-script", key="path"
+        )
+        jlink_cmd = self.get_namespace_data(
+            action=self.name, label="jlink-cmd", key="cmd"
+        )
+        self.logger.info(jlink_cmd)
+        self.create_jlink_script(path_jlink_script)
+        # execute command
+        result = self.parsed_command(jlink_cmd)
+        flash_check = "Connecting to J-Link via USB...FAILED"
+        if flash_check in result:
+            raise JobError(flash_check)
+
+        if "prompts" in self.parameters:
+            prompt_str = self.parameters["prompts"]
+            connection.prompt_str = prompt_str
+            self.wait(connection)
+
         return connection

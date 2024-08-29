@@ -12,11 +12,11 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
+      description: use http to download the file, summary: http download, timeout: 300,
+      url: 'https://myserver.com/binaries/frdm-kw36-shell.bin'}
 - class: BootJLinkRetry
   name: boot-jlink-image
   level: '2'
@@ -36,10 +36,13 @@
     - {class: PDUReboot, name: pdu-reboot, level: 2.1.1, max_retries: 1, description: issue
         commands to a PDU to power cycle a device, summary: hard reboot using PDU,
       timeout: 600}
-  - {class: ConnectDevice, name: connect-device, level: '2.2', max_retries: 1, description: use
+  - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '2.2', max_retries: 1,
+    description: wait for udev device with board ID, summary: wait for udev device
+      with board ID, timeout: 600}
+  - {class: ConnectDevice, name: connect-device, level: '2.3', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
       command, timeout: 600}
-  - {class: FlashJLinkAction, name: flash-jlink, level: '2.3', max_retries: 1, description: flash
+  - {class: FlashJLinkAction, name: flash-jlink, level: '2.4', max_retries: 1, description: flash
       jlink to boot the image, summary: flash jlink to boot the image, timeout: 600}
 - class: TestMonitorRetry
   name: lava-test-monitor-retry

@@ -1,0 +1,7 @@
+{% extends 'rw610bga.jinja2' %}
+{% set board_id = '001069074245' %}
+{% set usb_mass_device = '/dev/disk/by-id/usb-SEGGER_J-Link_001069074245-if00' %}
+{% set connection_command = 'telnet localhost 7015' %}
+{% set hard_reset_command = 'board-control rw610bga-fr01 pdu reboot' %}
+{% set power_off_command = 'upoco set-state -d hub-01 -p 2 -s OFF -r 200' %}
+{% set power_on_command = 'upoco set-state -d hub-01 -p 2 -s ON -r 200' %}

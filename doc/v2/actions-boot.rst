@@ -913,14 +913,116 @@ Following configuration options are supported:
 jlink
 =====
 
-The ``jlink`` boot method takes no arguments or parameters.
+Installation
+------------
+
+To install ``jlink``, first download the "JLink Software and Documentation Pack" from the SEGGER website: https://www.segger.com/downloads/jlink/
+
+Device type configuration 
+--------------------------
+
+Example Configuration:
+
+.. code-block:: jinja
+
+  {% extends 'base-nxp-mcu.jinja2' %}
+  {% set usb_vendor_id = '1366' %}
+  {% set usb_product_id = '1015' %}
+  {% set device_name = 'MKW36A512XXX4' %}
+  {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
+  {% block jlink_options %}
+  - '-device {{device_name}}'
+  - '-if {{target_interface|default("SWD")}}'
+  - '-speed {{ speed_ti|default(4000)}}'
+  {% endblock jlink_options %}
+
+``It is important to fill in all the parameters present in jlink_options block.``
+
+Device configuration
+---------------------
+
+.. code-block:: jinja
+
+  {% set board_id = '000380000008' %}
+  {% set usb_mass_device = '/dev/disk/by-id/usb-MBED_microcontroller_02400201E8B77E4E154983F6-0:0' %}
+  {% set connection_command = 'telnet localhost 7010' %}
+  {% set hard_reset_command = 'board-control frdm-kw36zj-01 pdu reboot' %}
+  {% set power_off_command = 'upoco set-state -d hub-01 -p 1 -s OFF -r 200' %}
+  {% set power_on_command = 'upoco set-state -d hub-01 -p 1 -s ON -r 200' %}
+
+
+Usage
+-------
+
+.. note:: Images passed to jlink commands must be first deployed using the ``tmpfs`` deploy action.
+
+    Using the following :
+
+    .. code-block:: yaml
+
+      - deploy:
+          to: tmpfs
+          images:
+            shell:
+              url: https://.../shell.bin
+            hello_world:
+              url: https://../hello_world.bin
+
+For the JLink boot method, there are two possibilities: 
+
+``flashing a single image``: It will flash the binary to the load address 0x0 by default.
 
 .. code-block:: yaml
 
   - boot:
-      method: jlink
-      timeout:
-        minutes: 10
+    method: jlink
+    timeout:
+      minutes: 2
+
+``flashing multiple images`` : It also works with a single image, allowing additional commands to be executed during the flash via JLink.
+
+.. code-block:: yaml
+
+  - boot:
+    method: jlink
+    prompts : ['SHELL>> ']
+    commands :
+      - loadfile {shell} 0x0
+      - loadfile {hello_world} 0x0
+    timeout:
+      minutes: 2
+
+``method`` (required): Specifies the method used for booting the device. Set this to "jlink" when using JLink.
+
+``prompts`` (optional): Specifies the prompts expected from the target device. This parameter is optional and is only used when the flashing binary behaves like a shell, allowing for interactive testing. It expects a list of strings representing the prompts. 
+    
+``commands`` (optional): Specifies a list of commands to execute using JLink. These commands can include `loadfile` or any other valid JLink command. Additionally, you can use variables in the commands to reference binaries deployed during the deploy phase of tmpfs.
+    
+In this example, `{shell}` and `{hello_world}` are variables referencing binaries deployed during the deploy phase of tmpfs.
+
+Test Setup with Multiple MCUs
+-----------------------------------
+
+To set up a test requiring multiple MCUs, such as testing Bluetooth connectivity, the best solution is a multinode job. In this setup, MCU 1 and MCU 2 are placed on the same worker. 
+Additionally, a Docker device is used to execute tests once both MCUs have completed their deployment and boot processes.
+
+.. figure:: images/multi_mcu_jlink_setup.png
+   :alt: Multinode Test Setup
+   :align: center
+
+As depicted in the diagram above, the test setup consists of the following components:
+
+- **MCU 1 and MCU 2:** These are the target devices to be tested.
+
+- **Docker Device:** A Docker container is deployed to execute the tests. This Docker device is responsible for coordinating the test execution once both MCUs are ready.
+
+Here's how the process works:
+
+1. **Deployment and Boot:** The necessary images are deployed to both MCUs using tmpfs. Once deployed, the MCUs are booted to initiate the test process.
+
+2. **Test Execution:** Once both MCUs have completed their boot processes, the Docker device executes the test suite. This suite includes tests for Bluetooth connectivity or any other desired functionality.
+
+3. **Results Analysis:** The test results are collected and analyzed by a LAVA test to verify the functionality of the MCUs and ensure successful connectivity.
 
 .. index:: boot method console
 

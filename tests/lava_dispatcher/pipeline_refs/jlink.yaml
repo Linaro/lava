@@ -25,10 +25,21 @@
   summary: boot jlink image
   timeout: 600
   pipeline:
-  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
+  - class: ResetDevice
+    name: reset-device
+    level: '2.1'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 600
+    pipeline:
+    - {class: SendRebootCommands, name: send-reboot-commands, level: 2.1.1, max_retries: 1,
+      description: Issue a reboot command on the device, summary: Issue a reboot command
+        on the device, timeout: 600}
+  - {class: ConnectDevice, name: connect-device, level: '2.2', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
       command, timeout: 600}
-  - {class: FlashJLinkAction, name: flash-jlink, level: '2.2', max_retries: 1, description: flash
+  - {class: FlashJLinkAction, name: flash-jlink, level: '2.3', max_retries: 1, description: flash
       jlink to boot the image, summary: flash jlink to boot the image, timeout: 600}
 - class: TestMonitorRetry
   name: lava-test-monitor-retry

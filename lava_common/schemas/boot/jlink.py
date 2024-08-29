@@ -5,11 +5,15 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from voluptuous import Msg, Required
+from voluptuous import Msg, Optional, Required
 
 from lava_common.schemas import boot
 
 
 def schema():
-    base = {Required("method"): Msg("jlink", "'method' should be 'jlink'")}
+    base = {
+        Required("method"): Msg("jlink", "'method' should be 'jlink'"),
+        Optional("prompts"): [str],
+        Optional("commands"): [str],
+    }
     return {**boot.schema(), **base}

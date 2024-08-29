@@ -1,0 +1,83 @@
+# Health Check JOB definition for MCU
+job_name: health-check
+
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+
+priority: medium
+visibility: public
+
+protocols:
+  lava-multinode:
+    roles:
+      host:
+        device_type: rw610bga
+        count: 1
+        tags:
+          - rw610bga-fr01
+        timeout:
+          minutes: 30
+      guest:
+        device_type: rw610bga
+        tags:
+          - rw610bga-fr02
+        count: 1
+        timeout:
+          minutes: 30
+      docker:
+        device_type: docker
+        count: 1
+
+actions:
+- deploy:
+    role:
+      - host
+      - guest
+    to : tmpfs
+    images :
+      boot :
+          url: file:///home/lava-dev/bin/bt_ble_cli.out
+      cpu1 :
+          url: file:///home/lava-dev/bin/rw61xw_raw_cpu1_a1.bin
+      cpu2 :
+          url: file:///home/lava-dev/bin/rw61xn_raw_cpu2_ble_a1.bin
+      combo :
+          url: file:///home/lava-dev/bin/rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin
+
+- deploy:
+    role:
+      - docker
+    to: docker
+    os: ubuntu
+    image:
+      name: connectivity_test
+      local: true
+
+- boot:
+    role:
+      - host
+      - guest
+    method: jlink
+    commands :
+      - loadfile {boot} 
+      - loadfile {cpu1} 0x8400000
+      - loadfile {cpu2} 0x8540000
+      - loadfile {combo} 0x85E0000
+    timeout:
+      minutes: 2
+
+- boot:
+    role:
+      - docker
+    method: docker
+    command: bash
+    prompts:
+    - 'root@\w*:(.*)#'
+    timeout:
+      minutes: 2
+

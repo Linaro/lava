@@ -1,0 +1,7 @@
+{% extends 'frdm-kw36zj.jinja2' %}
+{% set board_id = '380000008' %}
+{% set usb_mass_device = '/dev/disk/by-id/usb-MBED_microcontroller_000380000008-0:0' %}
+{% set hard_reset_command  = ['/usr/local/lab-scripts/pdu_by_board.sh frdm-kw36zj-01 pdu reboot'] %}
+{% set power_off_command   = ['/usr/local/lab-scripts/pdu_by_board.sh frdm-kw36zj-01 pdu off'] %}
+{% set power_on_command    = ['/usr/local/lab-scripts/pdu_by_board.sh frdm-kw36zj-01 pdu on'] %}
+{% set connection_command = 'telnet localhost 7010' %}
