@@ -72,7 +72,7 @@ URL_JOBS = "/scheduler/internal/v1/jobs/"
 URL_WORKERS = "/scheduler/internal/v1/workers/"
 
 THREAD_EXECUTOR = ThreadPoolExecutor(max_workers=8)
-JOB_CLEANUP_TASKS: set[asyncio.Task[None]] = set()
+JOB_ASYNC_TASKS: set[asyncio.Task[None]] = set()
 
 
 ###########
@@ -320,6 +320,8 @@ class JobsDB:
             )
             self.conn.commit()
 
+        self.lock = asyncio.Lock()
+
     def create(
         self, job_id: int, pid: int, status: int, dispatcher_cfg: str, token: str
     ) -> Job | None:
@@ -350,6 +352,10 @@ class JobsDB:
         row = self.conn.execute(
             "SELECT * FROM jobs WHERE id=?", (str(job_id),)
         ).fetchone()
+        return None if row is None else Job(row)
+
+    def get_from_pid(self, pid: int) -> Job | None:
+        row = self.conn.execute("SELECT * FROM jobs WHERE pid=?", (pid,)).fetchone()
         return None if row is None else Job(row)
 
     def update(self, job_id: int, status) -> Job | None:
@@ -438,9 +444,45 @@ def cancel(url: str, jobs: JobsDB, job_id: int, token: str) -> None:
             jobs.update(job_id, Job.CANCELING)
 
 
-async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
-    loop = asyncio.get_running_loop()
+async def finish_job(
+    session: aiohttp.ClientSession, url: str, job: Job, jobs: JobsDB
+) -> None:
+    LOG.info("[%d] FINISHED => server", job.job_id)
+    result = job.result()
+    # Default error values
+    if result.get("result") == "pass":
+        default_error_type = ""
+    else:
+        default_error_type = LAVABug.error_type
+    data = {
+        "state": "FINISHED",
+        "result": result.get("result", "fail"),
+        "error_type": result.get("error_type", default_error_type),
+        "errors": job.errors(),
+        "description": job.description(),
+    }
 
+    ret = await aiohttp_post(
+        session, f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data
+    )
+    if ret.status_code != 200:
+        LOG.error("[%d] -> server error: code %d", job.job_id, ret.status_code)
+        LOG.debug("[%d] --> %s", job.job_id, ret.text)
+        if ret.status_code != 404:  # If the job is not present on lava-server delete it
+            return
+
+    # Remove stale resources
+    prefix = "" if job is None else job.prefix
+    cleanup_task = asyncio.get_running_loop().create_task(
+        cleanup_job(prefix, job.job_id)
+    )
+    JOB_ASYNC_TASKS.add(cleanup_task)
+    cleanup_task.add_done_callback(JOB_ASYNC_TASKS.discard)
+
+    jobs.delete(job.job_id)
+
+
+async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
     # Loop on running jobs
     for job in jobs.running():
         if not job.is_running():
@@ -476,37 +518,7 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
 
     # Loop on finished jobs
     for job in jobs.finished():
-        LOG.info("[%d] FINISHED => server", job.job_id)
-        result = job.result()
-        # Default error values
-        if result.get("result") == "pass":
-            default_error_type = ""
-        else:
-            default_error_type = LAVABug.error_type
-        data = {
-            "state": "FINISHED",
-            "result": result.get("result", "fail"),
-            "error_type": result.get("error_type", default_error_type),
-            "errors": job.errors(),
-            "description": job.description(),
-        }
-
-        ret = await aiohttp_post(
-            session, f"{url}{URL_JOBS}{job.job_id}/", job.token, data=data
-        )
-        if ret.status_code != 200:
-            LOG.error("[%d] -> server error: code %d", job.job_id, ret.status_code)
-            LOG.debug("[%d] --> %s", job.job_id, ret.text)
-            if ret.status_code != 404:
-                continue
-
-        # Remove stale resources
-        prefix = "" if job is None else job.prefix
-        cleanup_task = loop.create_task(cleanup_job(prefix, job.job_id))
-        JOB_CLEANUP_TASKS.add(cleanup_task)
-        cleanup_task.add_done_callback(JOB_CLEANUP_TASKS.discard)
-
-        jobs.delete(job.job_id)
+        await finish_job(session, url, job, jobs)
 
 
 class ServerUnavailable(Exception):
@@ -692,10 +704,49 @@ async def main_loop(
     options, session: aiohttp.ClientSession, jobs: JobsDB, event: asyncio.Event
 ) -> None:
     while True:
-        timeout = await handle(options, session, jobs)
+        async with jobs.lock:
+            timeout = await handle(options, session, jobs)
         with contextlib.suppress(asyncio.TimeoutError):
             await asyncio.wait_for(event.wait(), timeout=timeout)
             event.clear()
+
+
+async def sigchild_handler_async(
+    session: aiohttp.ClientSession, url: str, jobs: JobsDB
+) -> None:
+    async with jobs.lock:
+        jobs_to_finish: list[Job] = []
+        with contextlib.suppress(ChildProcessError):
+            while (waitpid_tuple := os.waitpid(-1, os.WNOHANG)) != (0, 0):
+                pid, exit_code = waitpid_tuple
+                LOG.debug(
+                    "Collected PID %d with exit code %d from SIGCHLD", pid, exit_code
+                )
+
+                job = jobs.get_from_pid(pid)
+                if job is not None:
+                    jobs_to_finish.append(job)
+                else:
+                    LOG.debug("Unknown PID collected %d from SIGCHLD", pid)
+
+        results = await asyncio.gather(
+            *(finish_job(session, url, job, jobs) for job in jobs_to_finish),
+            # If a job finish fails it will remain in database
+            # and later can be finished by the main loop
+            return_exceptions=True,
+        )
+
+        for r in results:
+            if isinstance(r, BaseException):
+                LOG.exception("Exception raised during SIGCHLD job finish", exc_info=r)
+
+
+def sigchld_handler(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
+    handler_task = asyncio.get_running_loop().create_task(
+        sigchild_handler_async(session, url, jobs)
+    )
+    JOB_ASYNC_TASKS.add(handler_task)
+    handler_task.add_done_callback(JOB_ASYNC_TASKS.discard)
 
 
 async def listen_for_events(
@@ -824,6 +875,10 @@ async def main() -> int:
                     sig,
                     partial(ask_exit, sig.name, group),
                 )
+
+            loop.add_signal_handler(
+                signal.SIGCHLD, partial(sigchld_handler, session, options.url, jobs)
+            )
 
             await group
             return 0
