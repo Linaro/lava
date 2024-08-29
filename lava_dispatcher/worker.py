@@ -877,7 +877,7 @@ async def main() -> int:
                 )
 
             loop.add_signal_handler(
-                signal.SIGCHLD, partial(sigchld_handler, session, options.url, jobs)
+                Signals.SIGCHLD, partial(sigchld_handler, session, options.url, jobs)
             )
 
             await group
