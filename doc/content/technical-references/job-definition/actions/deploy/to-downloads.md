@@ -30,7 +30,7 @@ actions:
       docker:
         image: debian
         steps:
-        - cp rootfs/sid.img rootfs/sid-modified.img
+        - cp sid.img sid-modified.img
         - ls -lhR
 ```
 
