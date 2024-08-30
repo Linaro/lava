@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from io import StringIO
 from json import loads as json_loads
 from pathlib import Path
 
@@ -14,7 +15,6 @@ from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
 
-from lava_common.constants import REQUEST_DATA_TOO_BIG_MSG
 from lava_common.yaml import yaml_safe_load
 from lava_results_app.models import TestCase
 from lava_scheduler_app.models import (
@@ -1402,11 +1402,11 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
         HTTP_LAVA_TOKEN=job.token,
     )
     assert ret.status_code == 400
-    assert ret.json() == {"error": "Missing 'lines'"}
+    assert ret.json() == {"error": "Missing lava-logs.yaml file"}
 
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
-        {"lines": ["hello"]},
+        {"lava-logs.yaml": StringIO("hello")},
         HTTP_LAVA_TOKEN=job.token,
     )
     assert ret.status_code == 400
@@ -1414,7 +1414,7 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
 
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
-        {"lines": ["hello"], "index": "hello"},
+        {"lava-logs.yaml": StringIO("hello"), "index": "hello"},
         HTTP_LAVA_TOKEN=job.token,
     )
     assert ret.status_code == 400
@@ -1423,7 +1423,7 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     # Valid data
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
-        {"lines": LOGS, "index": 0},
+        {"lava-logs.yaml": StringIO(LOGS), "index": 0},
         HTTP_LAVA_TOKEN=job.token,
     )
     assert ret.status_code == 200
@@ -1440,7 +1440,7 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     # Resend the same valid data
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
-        {"lines": LOGS, "index": 0},
+        {"lava-logs.yaml": StringIO(LOGS), "index": 0},
         HTTP_LAVA_TOKEN=job.token,
     )
     assert ret.status_code == 200
@@ -1455,18 +1455,17 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     assert tc.result == TestCase.RESULT_PASS
 
     # Test request data too big middleware
-    data = []
-    for i in range(1, 300000):
-        data.append(
+    log_data = []
+    for i in range(1, 45000):
+        log_data.append(
             '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}'
         )
-        data.append(
-            '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}'
-        )
-        data.append(
+        log_data.append(
             '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}'
         )
-    data = {"lines": "- " + "\n- ".join(data), "index": 1}
+    log_file = "- " + "\n- ".join(log_data)
+    assert len(log_file) >= 2621440  # Django default body limit
+    data = {"lava-logs.yaml": StringIO(log_file), "index": 1}
 
     # Resend
     ret = client.post(
@@ -1474,5 +1473,5 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
         data,
         HTTP_LAVA_TOKEN=job.token,
     )
-    assert ret.status_code == 413
-    assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": len(log_data)}

@@ -13,6 +13,7 @@ import os
 import signal
 import sys
 import time
+from io import StringIO
 
 import requests
 
@@ -66,7 +67,8 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             try:
                 ret = session.post(
                     url,
-                    data={"lines": "- " + "\n- ".join(data), "index": index},
+                    data={"index": index},
+                    files={"lava-logs.yaml": StringIO("- " + "\n- ".join(data))},
                     headers=HEADERS,
                 )
                 if exception_counter > 0:

@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from io import StringIO
 from pathlib import Path
 
 import pytest
@@ -289,11 +290,11 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
         HTTP_LAVA_TOKEN=j1.token,
     )
     assert ret.status_code == 400
-    assert ret.json()["error"] == "Missing 'lines'"
+    assert ret.json()["error"] == "Missing lava-logs.yaml file"
 
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
-        data={"lines": ["hello"]},
+        data={"lava-logs.yaml": StringIO("test")},
         HTTP_LAVA_TOKEN=j1.token,
     )
     assert ret.status_code == 400
@@ -301,7 +302,7 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
 
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
-        data={"index": "a", "lines": ["hello"]},
+        data={"index": "a", "lava-logs.yaml": StringIO("test")},
         HTTP_LAVA_TOKEN=j1.token,
     )
     assert ret.status_code == 400
@@ -312,7 +313,9 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
         data={
             "index": 0,
-            "lines": '- {"lvl": "info", "msg": "hello world"}\n- {"lvl": "debug", "msg": "a debug message"}',
+            "lava-logs.yaml": StringIO(
+                '- {"lvl": "info", "msg": "hello world"}\n- {"lvl": "debug", "msg": "a debug message"}'
+            ),
         },
         HTTP_LAVA_TOKEN=j1.token,
     )
@@ -330,7 +333,9 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
         data={
             "index": 0,
-            "lines": '- {"lvl": "info", "msg": "hello world"}\n- {"lvl": "debug", "msg": "a debug message"}',
+            "lava-logs.yaml": StringIO(
+                '- {"lvl": "info", "msg": "hello world"}\n- {"lvl": "debug", "msg": "a debug message"}'
+            ),
         },
         HTTP_LAVA_TOKEN=j1.token,
     )
@@ -348,7 +353,9 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
         data={
             "index": 1,
-            "lines": '- {"lvl": "debug", "msg": "a debug message"}\n- {"lvl": "error", "msg": "an error!"}',
+            "lava-logs.yaml": StringIO(
+                '- {"lvl": "debug", "msg": "a debug message"}\n- {"lvl": "error", "msg": "an error!"}'
+            ),
         },
         HTTP_LAVA_TOKEN=j1.token,
     )
@@ -368,7 +375,10 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
 
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
-        data={"index": 3, "lines": '- {"lvl": "event", "msg": "hello world"}'},
+        data={
+            "index": 3,
+            "lava-logs.yaml": StringIO('- {"lvl": "event", "msg": "hello world"}'),
+        },
         HTTP_LAVA_TOKEN=j1.token,
     )
     assert ret.status_code == 200
@@ -393,7 +403,9 @@ def test_internal_v1_jobs_logs(client, mocker, settings):
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[j1.id]),
         data={
             "index": 4,
-            "lines": '- {"lvl": "results", "msg": {"case": "linux-posix-pwd", "definition": "0_smoke-tests", "endtc": 20, "result": "pass", "starttc": 10}}',
+            "lava-logs.yaml": StringIO(
+                '- {"lvl": "results", "msg": {"case": "linux-posix-pwd", "definition": "0_smoke-tests", "endtc": 20, "result": "pass", "starttc": 10}}'
+            ),
         },
         HTTP_LAVA_TOKEN=j1.token,
     )

@@ -32,11 +32,12 @@ def test_sender(mocker):
     assert len(post.mock_calls) == 2
     assert post.mock_calls[0][1] == ("http://localhost",)
     assert post.mock_calls[1][1] == ("http://localhost",)
-    assert post.mock_calls[0][2]["data"] == {
-        "lines": "- " + "\n- ".join([f"{i:04}" for i in range(0, 1000)]),
-        "index": 0,
-    }
-    assert post.mock_calls[1][2]["data"] == {"lines": "- 1000", "index": 1000}
+    assert post.mock_calls[0][2]["data"] == {"index": 0}
+    assert post.mock_calls[0][2]["files"][
+        "lava-logs.yaml"
+    ].getvalue() == "- " + "\n- ".join([f"{i:04}" for i in range(0, 1000)])
+    assert post.mock_calls[1][2]["data"] == {"index": 1000}
+    assert post.mock_calls[1][2]["files"]["lava-logs.yaml"].getvalue() == "- 1000"
     assert post.mock_calls[0][2]["headers"]["LAVA-Token"] == "my-token"
     assert post.mock_calls[1][2]["headers"]["LAVA-Token"] == "my-token"
 
@@ -61,7 +62,8 @@ def test_sender_exceptions(mocker):
     assert len(post.mock_calls) == 3
     for c in post.mock_calls:
         assert c[1] == ("http://localhost",)
-        assert c[2]["data"] == {"lines": "- hello world", "index": 0}
+        assert c[2]["data"] == {"index": 0}
+        assert c[2]["files"]["lava-logs.yaml"].getvalue() == "- hello world"
 
 
 def test_sender_404(mocker):
