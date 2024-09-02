@@ -162,12 +162,15 @@ class DownloadHandler(Action):
         raise LAVABug("'reader' function unimplemented")
 
     def cleanup(self, connection):
-        if os.path.exists(self.path):
+        if self.fname is not None and os.path.exists(self.fname):
             self.logger.debug("Cleaning up downloaded image: %s", self.fname)
-            os.remove(self.fname)
-        self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=""
-        )
+            try:
+                os.remove(self.fname)
+                self.set_namespace_data(
+                    action="download-action", label=self.key, key="file", value=""
+                )
+            except OSError as exc:
+                self.logger.debug(str(exc))
         super().cleanup(connection)
 
     def _compression(self):
