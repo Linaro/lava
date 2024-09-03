@@ -97,25 +97,21 @@ class FastbootAction(
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
         fastboot_dir = self.mkdtemp()
-        for image in parameters["images"].keys():
+        for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
-                DownloaderAction(
-                    self.job, image, fastboot_dir, params=parameters["images"][image]
-                )
+                DownloaderAction(self.job, image_key, fastboot_dir, params=image_params)
             )
-            if parameters["images"][image].get("apply-overlay", False):
+            if image_params.get("apply-overlay", False):
                 if self.test_needs_overlay(parameters):
-                    if parameters["images"][image].get("sparse", True):
+                    if image_params.get("sparse", True):
                         self.pipeline.add_action(
-                            ApplyOverlaySparseImage(self.job, image)
+                            ApplyOverlaySparseImage(self.job, image_key)
                         )
                     else:
-                        use_root_part = parameters["images"][image].get(
-                            "root_partition", False
-                        )
+                        use_root_part = image_params.get("root_partition", False)
                         self.pipeline.add_action(
                             ApplyOverlayImage(
-                                self.job, image, use_root_partition=use_root_part
+                                self.job, image_key, use_root_partition=use_root_part
                             )
                         )
 

@@ -54,13 +54,13 @@ class DownloadsAction(DownloadAction):
 
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
-        for image in parameters["images"].keys():
+        for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
-                    image,
+                    image_key,
                     download_dir,
-                    params=parameters["images"][image],
+                    params=image_params,
                     uniquify=parameters.get("uniquify", False),
                 )
             )

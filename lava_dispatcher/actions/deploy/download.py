@@ -948,13 +948,13 @@ class DownloadAction(Action):
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
         self.download_dir = self.mkdtemp()
-        for image in parameters["images"].keys():
+        for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
-                    image,
+                    image_key,
                     self.download_dir,
-                    params=parameters["images"][image],
+                    params=image_params,
                 )
             )
         if self.test_needs_overlay(parameters):

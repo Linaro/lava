@@ -91,23 +91,23 @@ class MpsAction(Action):
         self.pipeline.add_action(DisconnectDevice(self.job))
         self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(WaitUSBMassStorageDeviceAction(self.job))
-        for image in parameters["images"].keys():
+        for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
-                    image,
+                    image_key,
                     path=download_dir,
-                    params=parameters["images"][image],
+                    params=image_params,
                 )
             )
         self.pipeline.add_action(MountVExpressMassStorageDevice(self.job))
         # Sort the keys so recovery_image will be first
-        for image in sorted(parameters["images"].keys()):
-            if image == "recovery_image":
+        for image_key in sorted(parameters["images"].keys()):
+            if image_key == "recovery_image":
                 self.pipeline.add_action(ExtractVExpressRecoveryImage(self.job))
                 self.pipeline.add_action(DeployVExpressRecoveryImage(self.job))
             else:
-                self.pipeline.add_action(DeployMPSTestBinary(self.job, image))
+                self.pipeline.add_action(DeployMPSTestBinary(self.job, image_key))
 
         # Should we hard reboot the board after flash?
         params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
