@@ -3,12 +3,13 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
 import csv
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -42,17 +43,29 @@ class Command(BaseCommand):
             "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
         )
 
-        del_parser = sub.add_parser("rm", help="Remove a token")
-        del_parser.add_argument("token", type=str, help="The token to remove")
+        rm_parser = sub.add_parser("rm", help="Remove tokens or clean up old tokens")
+        rm_parser.add_argument(
+            "--token",
+            type=str,
+            default=None,
+            help="The specific token to remove. If not provided, old tokens will be cleaned up.",
+        )
+        rm_parser.add_argument(
+            "-n",
+            "--days",
+            type=int,
+            default=730,
+            help="Specify the number of days to clean up tokens that have not been used since. Defaults to 730 days (2 years).",
+        )
 
     def handle(self, *args, **options):
         """Forward to the right sub-handler"""
         if options["sub_command"] == "add":
             self.handle_add(options["user"], options["description"], options["secret"])
+        elif options["sub_command"] == "rm":
+            self.handle_rm(options["token"], options["days"])
         elif options["sub_command"] == "list":
             self.handle_list(options["user"], options["csv"])
-        else:
-            self.handle_rm(options["token"])
 
     def handle_add(self, username, description, secret):
         """Create a token"""
@@ -96,9 +109,31 @@ class Command(BaseCommand):
             for token in tokens:
                 self.stdout.write("* %s (%s)" % (token.secret, token.description))
 
-    def handle_rm(self, token):
-        """Remove the token, knowing the secret"""
-        try:
-            AuthToken.objects.get(secret=token).delete()
-        except AuthToken.DoesNotExist:
-            raise CommandError("Invalid token secret")
+    def handle_rm(self, token, days):
+        """Remove a specific token or clean up old tokens"""
+        if token:
+            try:
+                AuthToken.objects.get(secret=token).delete()
+                self.stdout.write(
+                    self.style.SUCCESS(f"Successfully deleted token: {token}")
+                )
+            except AuthToken.DoesNotExist:
+                raise CommandError("Invalid token secret")
+        else:
+            cutoff_date = timezone.now() - timedelta(days=days)
+            old_tokens = AuthToken.objects.filter(last_used_on__lt=cutoff_date)
+            count = old_tokens.count()
+
+            if count > 0:
+                confirm = input(
+                    f"Are you sure you want to delete {count} tokens? (yes/no): "
+                )
+                if confirm.lower() == "yes":
+                    old_tokens.delete()
+                    self.stdout.write(
+                        self.style.SUCCESS(f"Successfully deleted {count} old tokens.")
+                    )
+                else:
+                    self.stdout.write(self.style.SUCCESS("Operation cancelled."))
+            else:
+                self.stdout.write(self.style.SUCCESS("No tokens to delete."))
