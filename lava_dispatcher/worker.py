@@ -662,9 +662,7 @@ async def start(
 ###############
 # Entrypoints #
 ###############
-async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> float:
-    begin: float = time.monotonic()
-
+async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> None:
     name: str = options.name
     token: str = options.token
     url: str = options.url
@@ -674,11 +672,11 @@ async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> float
         data = await ping(session, url, token, name)
     except ServerUnavailable:
         LOG.error("-> server unavailable")
-        return max(ping_interval - (time.monotonic() - begin), 0)
+        return
     except VersionMismatch as exc:
         if options.exit_on_version_mismatch:
             raise exc
-        return max(ping_interval - (time.monotonic() - begin), 0)
+        return
 
     # running jobs
     for job in data.get("running", []):
@@ -696,18 +694,19 @@ async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> float
     # TODO: store the token and reuse it
     await check(session, url, jobs)
 
-    # Compute the sleep duration
-    return max(ping_interval - (time.monotonic() - begin), 0)
-
 
 async def main_loop(
     options, session: aiohttp.ClientSession, jobs: JobsDB, event: asyncio.Event
 ) -> None:
+    loop = asyncio.get_running_loop()
     while True:
-        async with jobs.lock:
-            timeout = await handle(options, session, jobs)
-        with contextlib.suppress(asyncio.TimeoutError):
-            await asyncio.wait_for(event.wait(), timeout=timeout)
+        timer_handle = loop.call_later(ping_interval, event.set)
+        try:
+            async with jobs.lock:
+                await handle(options, session, jobs)
+            await event.wait()
+        finally:
+            timer_handle.cancel()
             event.clear()
 
 
