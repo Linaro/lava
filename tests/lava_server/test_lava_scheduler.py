@@ -61,7 +61,7 @@ def test_get_available_dts(mocker):
 
     # Ending the loop
     cmd.sub.recv_multipart = mocker.Mock(side_effect=[zmq.ZMQError])
-    assert cmd.get_available_dts() == set()
+    assert cmd.receive_events() == False
 
     # Ending the loop
     cmd.sub.recv_multipart = mocker.Mock(
@@ -87,7 +87,7 @@ def test_get_available_dts(mocker):
             zmq.ZMQError,
         ]
     )
-    assert cmd.get_available_dts() == {"docker", "qemu"}
+    assert cmd.receive_events() == True
 
 
 @pytest.mark.django_db
@@ -99,14 +99,12 @@ def test_main_loop(mocker):
     cmd.logger = mocker.Mock()
     cmd.poller = mocker.Mock()
     cmd.check_workers = mocker.Mock()
-    cmd.get_available_dts = mocker.Mock(side_effect=[{"qemu", "docker"}, KeyError])
+    cmd.receive_events = mocker.Mock(side_effect=[True, KeyError])
 
     with pytest.raises(KeyError):
         cmd.main_loop()
-    assert len(cmd.get_available_dts.mock_calls) == 2
+    assert len(cmd.receive_events.mock_calls) == 2
     assert len(schedule.mock_calls) == 2
-    assert schedule.mock_calls[0][1][0] == set()
-    assert schedule.mock_calls[1][1][0] == {"qemu", "docker"}
 
 
 @pytest.mark.django_db

@@ -92,21 +92,19 @@ def check_queue_timeout():
     LOGGER.info("done")
 
 
-def schedule(available_dt, workers):
+def schedule(workers):
     workers_limit = worker_summary(workers)
-    available_devices = schedule_health_checks(available_dt, workers_limit)
+    available_devices = schedule_health_checks(workers_limit)
     schedule_jobs(available_devices, workers_limit)
     check_queue_timeout()
 
 
-def schedule_health_checks(available_dt, workers_limit):
+def schedule_health_checks(workers_limit):
     LOGGER.info("scheduling health checks:")
     available_devices = {}
     hc_disabled = []
 
     query = DeviceType.objects.filter(display=True)
-    if available_dt:
-        query = query.filter(name__in=available_dt)
 
     for dt in query.order_by("name"):
         if dt.disable_health_check:

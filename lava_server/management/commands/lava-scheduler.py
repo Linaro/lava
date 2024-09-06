@@ -114,8 +114,8 @@ class Command(LAVADaemonCommand):
         self.sub.close(linger=0)
         self.context.term()
 
-    def get_available_dts(self) -> set[str]:
-        device_types: set[str] = set()
+    def receive_events(self) -> bool:
+        should_schedule = False
         with contextlib.suppress(KeyError, zmq.ZMQError):
             while True:
                 msg_part_list = self.sub.recv_multipart(zmq.NOBLOCK, copy=True)
@@ -133,20 +133,19 @@ class Command(LAVADaemonCommand):
                     continue
 
                 if topic.endswith(".testjob"):
-                    if data["state"] == "Submitted":
-                        device_types.add(data["device_type"])
+                    if data["state"] in ["Submitted", "Finished"]:
+                        should_schedule = True
                 elif topic.endswith(".device"):
                     if data["state"] == "Idle" and data["health"] in (
                         "Good",
                         "Unknown",
                         "Looping",
                     ):
-                        device_types.add(data["device_type"])
+                        should_schedule = True
 
-        return device_types
+        return should_schedule
 
     def main_loop(self) -> None:
-        dts: set[str] = set()
         while True:
             begin = time.monotonic()
             try:
@@ -155,15 +154,15 @@ class Command(LAVADaemonCommand):
                     workers = self.check_workers()
 
                 # Schedule jobs
-                schedule(dts, workers)
-                dts = set()
+                schedule(workers)
 
                 # Wait for events
-                while not dts and (time.monotonic() - begin) < INTERVAL:
+                should_schedule = False
+                while not should_schedule and (time.monotonic() - begin) < INTERVAL:
                     timeout = max(INTERVAL - (time.monotonic() - begin), 0)
                     with contextlib.suppress(zmq.ZMQError):
                         self.poller.poll(max(timeout * 1000, 1))
-                    dts = self.get_available_dts()
+                    should_schedule = self.receive_events()
 
             except (OperationalError, InterfaceError):
                 self.logger.info("[RESET] database connection reset.")

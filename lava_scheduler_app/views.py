@@ -1260,11 +1260,11 @@ def internal_v1_jobs(request, pk):
                 if errors:
                     job.failure_comment = errors
                     fields.append("failure_comment")
-                job.save(update_fields=fields)
                 Path(job.output_dir).mkdir(mode=0o755, parents=True, exist_ok=True)
                 (Path(job.output_dir) / "description.yaml").write_text(
                     description, encoding="utf-8"
                 )
+                job.save(update_fields=fields)
             else:
                 return JsonResponse(
                     {"error": f"Not handled state '{state}'"}, status=400
