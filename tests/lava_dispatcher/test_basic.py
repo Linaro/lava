@@ -255,7 +255,7 @@ class Factory:
         try:
             parser = JobParser()
             job = parser.parse(
-                content=yaml_safe_dump(job_dict),
+                data=job_dict,
                 device=device,
                 job_id=str(randint(1, 2**32 - 1)),
                 logger=YAMLLogger("lava_dispatcher_testcase_job_logger"),

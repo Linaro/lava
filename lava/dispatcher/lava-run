@@ -19,7 +19,7 @@ from setproctitle import setproctitle
 
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
 from lava_common.log import YAMLLogger
-from lava_common.yaml import yaml_safe_dump
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 
@@ -138,7 +138,7 @@ def parse_job_file(logger, options):
 
     # Generate the pipeline
     return parser.parse(
-        options.definition.read(),
+        yaml_safe_load(options.definition.read()),
         device,
         options.job_id,
         logger=logger,
