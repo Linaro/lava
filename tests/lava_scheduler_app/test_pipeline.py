@@ -462,7 +462,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
 
         parser_device = device_object
         try:
-            parser.parse(job.definition, parser_device, job.id, None, "")
+            parser.parse(job_def, parser_device, job.id, None, "")
         except (
             AttributeError,
             JobError,
@@ -605,7 +605,11 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser_device = device_object
         try:
             pipeline_job = parser.parse(
-                host_job.definition, parser_device, host_job.id, DummyLogger(), ""
+                yaml_safe_load(host_job.definition),
+                parser_device,
+                host_job.id,
+                DummyLogger(),
+                "",
             )
         except (
             AttributeError,
@@ -620,7 +624,11 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         try:
             pipeline_job = parser.parse(
-                guest_job.definition, parser_device, guest_job.id, DummyLogger(), ""
+                yaml_safe_load(guest_job.definition),
+                parser_device,
+                guest_job.id,
+                DummyLogger(),
+                "",
             )
         except (
             AttributeError,
@@ -921,7 +929,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 parser_device = None if job.dynamic_connection else device_object
                 try:
                     pipeline_job = parser.parse(
-                        check_job.definition, parser_device, check_job.id, None, ""
+                        job_def, parser_device, check_job.id, None, ""
                     )
                 except (
                     AttributeError,
@@ -1022,9 +1030,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertNotEqual(job.device_role, "Error")
             parser_device = None if job.dynamic_connection else device_object
             try:
-                pipeline_job = parser.parse(
-                    job.definition, parser_device, job.id, None, ""
-                )
+                pipeline_job = parser.parse(job_def, parser_device, job.id, None, "")
             except (
                 AttributeError,
                 JobError,

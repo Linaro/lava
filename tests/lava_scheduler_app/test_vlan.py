@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import os
-import tempfile
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
@@ -152,18 +151,12 @@ class TestVlandProtocolSplit(TestCaseWithFactory):
         target_group = "unit-test-only"
         job_dict = split_multinode_yaml(self.factory.make_vland_job(), target_group)
         client_job = job_dict["client"][0]
-        client_handle, client_file_name = tempfile.mkstemp()
-        with open(client_file_name, "w") as f:
-            yaml_safe_dump(client_job, f)
         # YAML device file, as required by lava-dispatch --target
         data = "{% extends 'beaglebone-black.jinja2' %}"
         device_yaml_file = DEVICE_TYPES_JINJA_ENV.from_string(data).render()
         parser = JobParser()
         bbb_device = NewDevice(yaml_safe_load(device_yaml_file))
-        with open(client_file_name) as sample_job_data:
-            bbb_job = parser.parse(sample_job_data, bbb_device, 4212, None, "")
-        os.close(client_handle)
-        os.unlink(client_file_name)
+        bbb_job = parser.parse(client_job, bbb_device, 4212, None, "")
         self.assertIn("protocols", bbb_job.parameters)
         self.assertIn(VlandProtocol.name, bbb_job.parameters["protocols"])
         self.assertIn(MultinodeProtocol.name, bbb_job.parameters["protocols"])
