@@ -229,6 +229,10 @@ def main():
             job.run()
 
     except LAVAError as exc:
+        if isinstance(exc, LAVABug):
+            # Log LAVABug traceback so that it is easier to debug
+            logger.exception(traceback.format_exc())
+
         error_help = exc.error_help
         error_msg = str(exc)
         error_type = exc.error_type
