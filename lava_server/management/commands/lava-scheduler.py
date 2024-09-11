@@ -19,7 +19,7 @@ from django.utils import timezone
 
 from lava_common.version import __version__
 from lava_scheduler_app.models import Worker
-from lava_scheduler_app.scheduler import schedule
+from lava_scheduler_app.scheduler import LOGGER_NAME, schedule
 from lava_server.cmdutils import LAVADaemonCommand
 
 #############
@@ -71,9 +71,7 @@ class Command(LAVADaemonCommand):
 
     def handle(self, *args, **options):
         # Initialize logging.
-        self.setup_logging(
-            "lava-scheduler", options["level"], options["log_file"], FORMAT
-        )
+        self.setup_logging(LOGGER_NAME, options["level"], options["log_file"], FORMAT)
 
         self.logger.info("[INIT] Starting lava-scheduler")
         self.logger.info("[INIT] Version %s", __version__)
@@ -157,7 +155,7 @@ class Command(LAVADaemonCommand):
                     workers = self.check_workers()
 
                 # Schedule jobs
-                schedule(self.logger, dts, workers)
+                schedule(dts, workers)
                 dts = set()
 
                 # Wait for events
