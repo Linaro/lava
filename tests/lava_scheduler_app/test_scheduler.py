@@ -116,8 +116,8 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(already_scheduled_devices, set())
 
     @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_disabled_hc(self):
@@ -130,8 +130,8 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": ["panda01", "panda03"]})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(already_scheduled_devices, set())
 
     @patch.object(Device, "get_health_check", _minimal_valid_job)
     def test_no_devicedict(self):
@@ -162,8 +162,8 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": []})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(already_scheduled_devices, {"panda01", "panda03"})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
@@ -183,8 +183,13 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": ["panda03"]})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(
+            already_scheduled_devices,
+            {
+                "panda01",
+            },
+        )
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
@@ -206,8 +211,8 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": ["panda03"]})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(already_scheduled_devices, set())
         self._check_hc_not_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_not_scheduled(self.device03)
@@ -227,8 +232,8 @@ class TestHealthCheckScheduling(TestCase):
         workers_limit = worker_summary(
             Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
         )
-        available_devices = schedule_health_checks(workers_limit)
-        self.assertEqual(available_devices, {"panda": []})
+        already_scheduled_devices = schedule_health_checks(workers_limit)
+        self.assertEqual(already_scheduled_devices, {"panda01", "panda03"})
         self._check_hc_scheduled(self.device01)
         self._check_hc_not_scheduled(self.device02)
         self._check_hc_scheduled(self.device03)
@@ -254,8 +259,8 @@ class TestHealthCheckScheduling(TestCase):
             workers_limit = worker_summary(
                 Worker.objects.filter(hostname__in=["worker-01", "worker-03"])
             )
-            available_devices = schedule_health_checks(workers_limit)
-            self.assertEqual(available_devices, {"panda": []})
+            already_scheduled_devices = schedule_health_checks(workers_limit)
+            self.assertEqual(already_scheduled_devices, set())
             self._check_hc_not_scheduled(self.device01)
             self._check_hc_not_scheduled(self.device02)
             self._check_hc_not_scheduled(self.device03)

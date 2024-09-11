@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import datetime
 import logging
@@ -92,37 +93,27 @@ def check_queue_timeout():
     LOGGER.info("done")
 
 
-def schedule(workers):
+def schedule(workers) -> None:
     workers_limit = worker_summary(workers)
-    available_devices = schedule_health_checks(workers_limit)
-    schedule_jobs(available_devices, workers_limit)
+    already_scheduled_devices = schedule_health_checks(workers_limit)
+    schedule_jobs(already_scheduled_devices, workers_limit)
     check_queue_timeout()
 
 
-def schedule_health_checks(workers_limit):
+def schedule_health_checks(workers_limit) -> set[str]:
     LOGGER.info("scheduling health checks:")
-    available_devices = {}
-    hc_disabled = []
+    already_scheduled_devices: set[str] = set()
+    hc_disabled: list[str] = []
 
     query = DeviceType.objects.filter(display=True)
 
     for dt in query.order_by("name"):
         if dt.disable_health_check:
             hc_disabled.append(dt.name)
-            # Add all devices of that type to the list of available devices
-            devices = filter_devices(dt.device_set, workers_limit.keys())
-            devices = devices.filter(
-                health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN]
-            )
-            devices = devices.order_by("hostname")
-            available_devices[dt.name] = list(
-                devices.values_list("hostname", flat=True)
-            )
-
         else:
             with transaction.atomic():
-                available_devices[dt.name] = schedule_health_checks_for_device_type(
-                    dt, workers_limit
+                schedule_health_checks_for_device_type(
+                    dt, workers_limit, already_scheduled_devices
                 )
 
     # Print disabled device types
@@ -130,10 +121,12 @@ def schedule_health_checks(workers_limit):
         LOGGER.debug("-> disabled on: %s", ", ".join(hc_disabled))
 
     LOGGER.info("done")
-    return available_devices
+    return already_scheduled_devices
 
 
-def schedule_health_checks_for_device_type(dt, workers_limit):
+def schedule_health_checks_for_device_type(
+    dt: DeviceType, workers_limit, already_scheduled_devices: set[str]
+):
     devices = dt.device_set.select_for_update()
     devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(
@@ -142,7 +135,6 @@ def schedule_health_checks_for_device_type(dt, workers_limit):
     devices = devices.order_by("hostname")
 
     print_header = True
-    available_devices = []
     for device in devices:
         if workers_limit[device.worker_host_id].overused():
             LOGGER.debug(
@@ -158,7 +150,6 @@ def schedule_health_checks_for_device_type(dt, workers_limit):
         # Do we have an health check
         health_check = device.get_health_check()
         if health_check is None:
-            available_devices.append(device.hostname)
             continue
 
         # Do we have to schedule an health check?
@@ -182,7 +173,6 @@ def schedule_health_checks_for_device_type(dt, workers_limit):
                 scheduling = submit_time + frequency < now
 
         if not scheduling:
-            available_devices.append(device.hostname)
             continue
 
         # log some information
@@ -227,7 +217,7 @@ def schedule_health_checks_for_device_type(dt, workers_limit):
             )
             device.save(update_fields=["health"])
 
-    return available_devices
+        already_scheduled_devices.add(device.hostname)
 
 
 def schedule_health_check(device, definition):
@@ -245,26 +235,17 @@ def schedule_health_check(device, definition):
     job.save(update_fields=fields)
 
 
-def schedule_jobs(available_devices, workers_limit):
+def schedule_jobs(
+    already_scheduled_devices: set[str],
+    workers_limit,
+):
     LOGGER.info("scheduling jobs:")
-    dts = list(available_devices.keys())
-    for dt in (
-        DeviceType.objects.annotate(
-            _has_submitted_jobs=Exists(
-                TestJob.objects.filter(
-                    state=TestJob.STATE_SUBMITTED,
-                    requested_device_type_id=OuterRef("name"),
-                ).values("id")
-            )
-            # TODO: Pass Exists() directly to filter()
-            # once Debian 12 is minimal version
+
+    with transaction.atomic():
+        schedule_jobs_for_devices(
+            already_scheduled_devices,
+            workers_limit,
         )
-        .filter(_has_submitted_jobs=True, name__in=dts)
-        .annotate(_has_submitted_jobs=Value(1, output_field=IntegerField()))
-        .order_by("name")
-    ):
-        with transaction.atomic():
-            schedule_jobs_for_device_type(dt, available_devices[dt.name], workers_limit)
 
     with transaction.atomic():
         # Transition multinode if needed
@@ -273,15 +254,33 @@ def schedule_jobs(available_devices, workers_limit):
     LOGGER.info("done")
 
 
-def schedule_jobs_for_device_type(dt, available_devices, workers_limit):
-    devices = dt.device_set.select_for_update()
+def schedule_jobs_for_devices(
+    already_scheduled_devices: set[str],
+    workers_limit,
+):
+    devices = Device.objects.select_for_update()
     devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
-    # Check that the device had been marked available by
+    # Check that the device had not been already scheduled by
     # schedule_health_checks. In fact, it's possible that a device is made IDLE
     # between the two functions.  If that the case, we can miss an
-    # health-check. Better to only consider devices in available_devices.
-    devices = devices.filter(hostname__in=available_devices)
+    # health-check.
+    devices = devices.exclude(hostname__in=already_scheduled_devices)
+    # Only schedule device types that have jobs
+    devices = (
+        devices.annotate(
+            _has_submitted_jobs=Exists(
+                TestJob.objects.filter(
+                    state=TestJob.STATE_SUBMITTED,
+                    requested_device_type_id=OuterRef("device_type_id"),
+                ).values("id")
+            )
+            # TODO: Pass Exists() directly to filter()
+            # once Debian 12 is minimal version
+        )
+        .filter(_has_submitted_jobs=True)
+        .annotate(_has_submitted_jobs=Value(1, output_field=IntegerField()))
+    )
     # Add a random sort: with N devices and num(jobs) < N, if we don't sort
     # randomly, the same devices will always be used while the others will
     # never be used.
@@ -321,7 +320,7 @@ def schedule_jobs_for_device_type(dt, available_devices, workers_limit):
             workers_limit[device.worker_host_id].busy += 1
 
 
-def schedule_jobs_for_device(device, print_header):
+def schedule_jobs_for_device(device: Device, print_header: bool):
     job_extra_tags_subquery = Exists(
         Tag.objects.filter(testjob=OuterRef("pk")).exclude(pk__in=device.tags.all())
     )
