@@ -246,7 +246,21 @@ def schedule_health_check(device, definition):
 def schedule_jobs(logger, available_devices, workers_limit):
     logger.info("scheduling jobs:")
     dts = list(available_devices.keys())
-    for dt in DeviceType.objects.filter(name__in=dts).order_by("name"):
+    for dt in (
+        DeviceType.objects.annotate(
+            _has_submitted_jobs=Exists(
+                TestJob.objects.filter(
+                    state=TestJob.STATE_SUBMITTED,
+                    requested_device_type_id=OuterRef("name"),
+                ).values("id")
+            )
+            # TODO: Pass Exists() directly to filter()
+            # once Debian 12 is minimal version
+        )
+        .filter(_has_submitted_jobs=True, name__in=dts)
+        .annotate(_has_submitted_jobs=Value(1, output_field=IntegerField()))
+        .order_by("name")
+    ):
         with transaction.atomic():
             schedule_jobs_for_device_type(
                 logger, dt, available_devices[dt.name], workers_limit
