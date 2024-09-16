@@ -3,10 +3,14 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import datetime
 import logging
+from contextlib import contextmanager
 from dataclasses import dataclass
+from time import monotonic
+from typing import TYPE_CHECKING
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -34,8 +38,20 @@ from lava_scheduler_app.models import (
     _create_pipeline_job,
 )
 
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
 LOGGER_NAME = "lava-scheduler"
 LOGGER = logging.getLogger(LOGGER_NAME)
+
+
+@contextmanager
+def log_time(text: str) -> Iterator[None]:
+    start = monotonic()
+    try:
+        yield None
+    finally:
+        LOGGER.debug(text, monotonic() - start)
 
 
 @dataclass
@@ -66,6 +82,7 @@ def worker_summary(workers):
     return ret
 
 
+@log_time("Queue timeout check time: %s")
 def check_queue_timeout():
     LOGGER.info("Check queue timeouts:")
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
@@ -92,6 +109,7 @@ def check_queue_timeout():
     LOGGER.info("done")
 
 
+@log_time("Total schedule cycle time: %s")
 def schedule(workers):
     workers_limit = worker_summary(workers)
     available_devices = schedule_health_checks(workers_limit)
@@ -99,6 +117,7 @@ def schedule(workers):
     check_queue_timeout()
 
 
+@log_time("Health checks schedule time: %s")
 def schedule_health_checks(workers_limit):
     LOGGER.info("scheduling health checks:")
     available_devices = {}
@@ -245,6 +264,7 @@ def schedule_health_check(device, definition):
     job.save(update_fields=fields)
 
 
+@log_time("Jobs schedule time: %s")
 def schedule_jobs(available_devices, workers_limit):
     LOGGER.info("scheduling jobs:")
     dts = list(available_devices.keys())
@@ -377,6 +397,7 @@ def schedule_jobs_for_device(device, print_header):
     return None
 
 
+@log_time("Multinode transition time: %s")
 def transition_multinode_jobs():
     """
     Transition multinode jobs that are ready to be scheduled.
