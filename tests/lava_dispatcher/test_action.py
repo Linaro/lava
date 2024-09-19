@@ -9,6 +9,7 @@ from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from time import monotonic as time_monotonic
+from unittest.mock import patch
 
 from lava_dispatcher.action import Action
 
@@ -55,6 +56,34 @@ class TestActionRunCmd(LavaDispatcherTestCase):
         self.assertIn(
             "Timed out after",
             "".join(error_logs.output),
+        )
+
+        self.assertLess(
+            end_time - start_time,
+            1.0,
+        )
+
+    def test_command_timeout_ignores_sigterm(self) -> None:
+        self.action.timeout.duration = 0.01
+
+        start_time = time_monotonic()
+
+        with self.assertRaises(self.action.command_exception), self.assertLogs(
+            self.action.logger, "DEBUG"
+        ) as debug_logs, patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01):
+            self.action.run_cmd(
+                [
+                    "sh",
+                    "-c",
+                    "trap 'echo IGNORING_SIGTERM' TERM KILL;sleep 10",
+                ]
+            )
+
+        end_time = time_monotonic()
+
+        self.assertIn(
+            "IGNORING_SIGTERM",
+            "".join(debug_logs.output),
         )
 
         self.assertLess(
