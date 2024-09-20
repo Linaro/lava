@@ -19,8 +19,8 @@ from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import Boot, RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerRun
-from lava_dispatcher.utils.network import retry
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job

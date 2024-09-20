@@ -130,7 +130,7 @@ def test_clone_at_head_1(setup):
 
 
 def test_non_existing_git(setup, mocker):
-    mocker.patch("lava_dispatcher.utils.network.time.sleep")
+    mocker.patch("lava_dispatcher.utils.decorator.time.sleep")
     git = vcs.GitHelper("does_not_exists")
     with pytest.raises(InfrastructureError):
         git.clone("foo.bar")
@@ -143,7 +143,7 @@ def test_existing_destination(setup):
 
 
 def test_invalid_commit(setup, mocker):
-    mocker.patch("lava_dispatcher.utils.network.time.sleep")
+    mocker.patch("lava_dispatcher.utils.decorator.time.sleep")
     git = vcs.GitHelper("git")
     with pytest.raises(InfrastructureError):
         git.clone("foo.bar", True, "badhash")
