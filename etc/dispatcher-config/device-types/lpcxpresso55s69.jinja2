@@ -38,10 +38,10 @@ actions:
           connect_before_flash: true
       jlink:
         parameters:
-          command:
-            JLinkExe
-          address:
-            0x00000000
+          command: JLinkExe 
+          address: {{ load_address|default("0x00000000") }}
+          erase_command: {{ erase_command|default(["erase"]) }}
+          reset_command: {{ reset_command|default(["r"]) }}
           options:
           - '-device LPC55S69_core0'
           - '-if SWD'

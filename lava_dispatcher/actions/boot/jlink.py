@@ -122,8 +122,15 @@ class FlashJLinkAction(Action):
 
     def create_jlink_script(self, path_jlink_script):
         # Create jlink script
+        params = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
+        load_address = params["address"]
+        lines = ["r"]  # Reset  the target
+        lines.append("h")  # Halt the target
+        lines.append("sleep 500")  # Sleep for 0.5s
+        # Erase commands (default = erase)
+        for cmd in params["erase_command"]:
+            lines.append(cmd)
         if "commands" in self.parameters:
-            lines = ["r", "h"]
             pattern = r"\{(.*?)\}"
             jlink_cmds_script = self.parameters["commands"]
             for cmd in jlink_cmds_script:
@@ -137,26 +144,19 @@ class FlashJLinkAction(Action):
                     lines.append(jlink_command)
                 else:
                     lines.append(cmd)
-
-            lines += ["r", "g", "qc"]
         else:
-            boot = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
-            load_address = boot["address"]
             for action in self.get_namespace_keys("download-action"):
                 binary_image = self.get_namespace_data(
                     action="download-action", label=action, key="file"
                 )
                 if binary_image:
-                    lines = ["r"]  # Reset and halt the target
-                    lines.append("h")  # Reset and halt the target
-                    lines.append("sleep 500")
-                    # Write DEAD BEEF to ensure the binary is flashed.
-                    lines.append(f"write4 0x{load_address:x} EFBEADDE")
                     # Erase and Flash
                     lines.append(f"loadfile {binary_image} 0x{load_address:x}")
                     lines.append(f"verifybin {binary_image} 0x{load_address:x}")
-                    lines.append("r")  # Restart the CPU
-                    lines.append("qc")
+        # Reset commands (default = erase)
+        for cmd in params["reset_command"]:
+            lines.append(cmd)  # Restart the CPU
+        lines.append("qc")
         self.logger.info(lines)
         with open(path_jlink_script, "w") as f:
             f.write("\n".join(lines))

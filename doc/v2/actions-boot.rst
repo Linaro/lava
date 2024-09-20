@@ -929,6 +929,8 @@ Example Configuration:
   {% set usb_vendor_id = '1366' %}
   {% set usb_product_id = '1015' %}
   {% set device_name = 'MKW36A512XXX4' %}
+  {% set erase_command = ['erase', 'r', 'connect'] %}
+  {% set reset_command = ['r'] %}
   {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
   {% block jlink_options %}
   - '-device {{device_name}}'
@@ -937,6 +939,9 @@ Example Configuration:
   {% endblock jlink_options %}
 
 ``It is important to fill in all the parameters present in jlink_options block.``
+
+.. note:: You can configure the `erase_command` (default: ["erase"]) and `reset_command` (default: ["r"]) parameters for each device type. 
+  These parameters are mandatory for the jlink boot action, refer to the ``base-nxp-mcu.jinja2`` template for reference.
 
 Device configuration
 ---------------------
