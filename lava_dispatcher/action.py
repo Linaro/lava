@@ -647,12 +647,30 @@ class Action:
             self.logger.debug("output: %s", line)
         return output
 
+    _SUBPROCESS_SIGTERM_TIMEOUT = 3.0
+
     def _run_pexpect_popen(
         self,
         pexpect_popen: PexpectPopenSpawn,
         start: float,
-    ) -> int:
-        with pexpect_popen.proc:
+    ) -> int | None:
+        proc = pexpect_popen.proc
+
+        def terminate_or_kill_proc() -> None:
+            if proc.returncode is not None:
+                return
+
+            try:
+                proc.terminate()
+                proc.wait(self._SUBPROCESS_SIGTERM_TIMEOUT)
+            except subprocess.TimeoutExpired:
+                # Subprocess ignores SIGTERM. Kill it with SIGKILL.
+                proc.kill()
+                # The process context manager will wait killed process.
+
+        with contextlib.ExitStack() as exit_stack:
+            exit_stack.enter_context(proc)
+            exit_stack.callback(terminate_or_kill_proc)
             try:
                 pexpect_popen.expect(pexpect.EOF)
                 # wait for the process and record the return value
@@ -661,11 +679,8 @@ class Action:
                 self.logger.error(
                     "Timed out after %s seconds", int(time.monotonic() - start)
                 )
-                pexpect_popen.proc.terminate()
-            # SIGALRM on action timeout can raise an exception anywhere.
-            except BaseException:
-                with contextlib.suppress(ProcessLookupError):
-                    pexpect_popen.proc.terminate()
+
+        return
 
     def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
         """
@@ -691,7 +706,7 @@ class Action:
         start = time.monotonic()
 
         cmd_logger = CommandLogger(self.logger)
-        ret = None
+        ret: int | None = None
         try:
             proc = PexpectPopenSpawn(
                 cmd=command_list,
