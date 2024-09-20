@@ -10,7 +10,7 @@ import shutil
 import subprocess  # nosec - internal use.
 
 from lava_common.exceptions import InfrastructureError
-from lava_dispatcher.utils.network import retry
+from lava_dispatcher.utils.decorator import retry
 
 
 class VCSHelper:

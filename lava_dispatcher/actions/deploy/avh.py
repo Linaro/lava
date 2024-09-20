@@ -24,7 +24,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import Deployment, RetryAction
-from lava_dispatcher.utils.network import retry
+from lava_dispatcher.utils.decorator import retry
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
