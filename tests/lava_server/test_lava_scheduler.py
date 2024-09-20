@@ -105,8 +105,8 @@ def test_main_loop(mocker):
         cmd.main_loop()
     assert len(cmd.get_available_dts.mock_calls) == 2
     assert len(schedule.mock_calls) == 2
-    assert schedule.mock_calls[0][1][1] == set()
-    assert schedule.mock_calls[1][1][1] == {"qemu", "docker"}
+    assert schedule.mock_calls[0][1][0] == set()
+    assert schedule.mock_calls[1][1][0] == {"qemu", "docker"}
 
 
 @pytest.mark.django_db

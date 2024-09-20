@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import datetime
+import logging
 from dataclasses import dataclass
 
 from django.contrib.auth.models import User
@@ -32,6 +33,9 @@ from lava_scheduler_app.models import (
     Worker,
     _create_pipeline_job,
 )
+
+LOGGER_NAME = "lava-scheduler"
+LOGGER = logging.getLogger(LOGGER_NAME)
 
 
 @dataclass
@@ -62,8 +66,8 @@ def worker_summary(workers):
     return ret
 
 
-def check_queue_timeout(logger):
-    logger.info("Check queue timeouts:")
+def check_queue_timeout():
+    LOGGER.info("Check queue timeouts:")
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(queue_timeout__isnull=False)
     # TODO: use alias() once Debian 12 is required
@@ -77,7 +81,7 @@ def check_queue_timeout(logger):
     jobs = jobs.filter(queue_timeout_date__lt=timezone.now())
 
     for testjob in jobs:
-        logger.debug("  |--> [%d] canceling", testjob.id)
+        LOGGER.debug("  |--> [%d] canceling", testjob.id)
         if testjob.is_multinode:
             for job in testjob.sub_jobs_list:
                 fields = job.go_state_canceling()
@@ -85,18 +89,18 @@ def check_queue_timeout(logger):
         else:
             fields = testjob.go_state_canceling()
             testjob.save(update_fields=fields)
-    logger.info("done")
+    LOGGER.info("done")
 
 
-def schedule(logger, available_dt, workers):
+def schedule(available_dt, workers):
     workers_limit = worker_summary(workers)
-    available_devices = schedule_health_checks(logger, available_dt, workers_limit)
-    schedule_jobs(logger, available_devices, workers_limit)
-    check_queue_timeout(logger)
+    available_devices = schedule_health_checks(available_dt, workers_limit)
+    schedule_jobs(available_devices, workers_limit)
+    check_queue_timeout()
 
 
-def schedule_health_checks(logger, available_dt, workers_limit):
-    logger.info("scheduling health checks:")
+def schedule_health_checks(available_dt, workers_limit):
+    LOGGER.info("scheduling health checks:")
     available_devices = {}
     hc_disabled = []
 
@@ -120,18 +124,18 @@ def schedule_health_checks(logger, available_dt, workers_limit):
         else:
             with transaction.atomic():
                 available_devices[dt.name] = schedule_health_checks_for_device_type(
-                    logger, dt, workers_limit
+                    dt, workers_limit
                 )
 
     # Print disabled device types
     if hc_disabled:
-        logger.debug("-> disabled on: %s", ", ".join(hc_disabled))
+        LOGGER.debug("-> disabled on: %s", ", ".join(hc_disabled))
 
-    logger.info("done")
+    LOGGER.info("done")
     return available_devices
 
 
-def schedule_health_checks_for_device_type(logger, dt, workers_limit):
+def schedule_health_checks_for_device_type(dt, workers_limit):
     devices = dt.device_set.select_for_update()
     devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(
@@ -143,7 +147,7 @@ def schedule_health_checks_for_device_type(logger, dt, workers_limit):
     available_devices = []
     for device in devices:
         if workers_limit[device.worker_host_id].overused():
-            logger.debug(
+            LOGGER.debug(
                 "SKIP healthcheck for %s due to %s having %d jobs (greater than %d)"
                 % (
                     device.hostname,
@@ -185,10 +189,10 @@ def schedule_health_checks_for_device_type(logger, dt, workers_limit):
 
         # log some information
         if print_header:
-            logger.debug("- %s", dt.name)
+            LOGGER.debug("- %s", dt.name)
             print_header = False
 
-        logger.debug(
+        LOGGER.debug(
             " -> %s (%s, %s)",
             device.hostname,
             device.get_state_display(),
@@ -203,19 +207,19 @@ def schedule_health_checks_for_device_type(logger, dt, workers_limit):
                 % (prev_health_display, device.get_health_display()),
             )
             device.save(update_fields=["health"])
-            logger.debug(
+            LOGGER.debug(
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
             )
             continue
-        logger.debug("  |--> scheduling health check")
+        LOGGER.debug("  |--> scheduling health check")
         try:
             schedule_health_check(device, health_check)
             workers_limit[device.worker_host_id].busy += 1
         except Exception as exc:
             # If the health check cannot be schedule, set health to BAD to exclude the device
-            logger.error("  |--> Unable to schedule health check")
-            logger.exception(exc)
+            LOGGER.error("  |--> Unable to schedule health check")
+            LOGGER.exception(exc)
             prev_health_display = device.get_health_display()
             device.health = Device.HEALTH_BAD
             device.log_admin_entry(
@@ -243,8 +247,8 @@ def schedule_health_check(device, definition):
     job.save(update_fields=fields)
 
 
-def schedule_jobs(logger, available_devices, workers_limit):
-    logger.info("scheduling jobs:")
+def schedule_jobs(available_devices, workers_limit):
+    LOGGER.info("scheduling jobs:")
     dts = list(available_devices.keys())
     for dt in (
         DeviceType.objects.annotate(
@@ -262,18 +266,16 @@ def schedule_jobs(logger, available_devices, workers_limit):
         .order_by("name")
     ):
         with transaction.atomic():
-            schedule_jobs_for_device_type(
-                logger, dt, available_devices[dt.name], workers_limit
-            )
+            schedule_jobs_for_device_type(dt, available_devices[dt.name], workers_limit)
 
     with transaction.atomic():
         # Transition multinode if needed
-        transition_multinode_jobs(logger)
+        transition_multinode_jobs()
 
-    logger.info("done")
+    LOGGER.info("done")
 
 
-def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
+def schedule_jobs_for_device_type(dt, available_devices, workers_limit):
     devices = dt.device_set.select_for_update()
     devices = filter_devices(devices, workers_limit.keys())
     devices = devices.filter(health__in=[Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN])
@@ -290,7 +292,7 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
     print_header = True
     for device in devices:
         if workers_limit[device.worker_host_id].overused():
-            logger.debug(
+            LOGGER.debug(
                 "SKIP %s due to %s having %d jobs (greater than %d)"
                 % (
                     device.hostname,
@@ -310,18 +312,18 @@ def schedule_jobs_for_device_type(logger, dt, available_devices, workers_limit):
                 % (prev_health_display, device.get_health_display()),
             )
             device.save(update_fields=["health"])
-            logger.debug(
+            LOGGER.debug(
                 "%s → %s (Invalid device configuration for %s)"
                 % (prev_health_display, device.get_health_display(), device.hostname)
             )
             continue
 
-        if schedule_jobs_for_device(logger, device, print_header) is not None:
+        if schedule_jobs_for_device(device, print_header) is not None:
             print_header = False
             workers_limit[device.worker_host_id].busy += 1
 
 
-def schedule_jobs_for_device(logger, device, print_header):
+def schedule_jobs_for_device(device, print_header):
     job_extra_tags_subquery = Exists(
         Tag.objects.filter(
             testjob=OuterRef("pk"),
@@ -357,15 +359,15 @@ def schedule_jobs_for_device(logger, device, print_header):
                         continue
 
             if print_header:
-                logger.debug("- %s", device.device_type.name)
+                LOGGER.debug("- %s", device.device_type.name)
 
-            logger.debug(
+            LOGGER.debug(
                 " -> %s (%s, %s)",
                 device.hostname,
                 device.get_state_display(),
                 device.get_health_display(),
             )
-            logger.debug("  |--> [%d] scheduling", job.id)
+            LOGGER.debug("  |--> [%d] scheduling", job.id)
             if job.is_multinode:
                 # TODO: keep track of the multinode jobs
                 fields = job.go_state_scheduling(device)
@@ -377,7 +379,7 @@ def schedule_jobs_for_device(logger, device, print_header):
     return None
 
 
-def transition_multinode_jobs(logger):
+def transition_multinode_jobs():
     """
     Transition multinode jobs that are ready to be scheduled.
     A multinode is ready when all sub jobs are in STATE_SCHEDULING.
@@ -397,7 +399,7 @@ def transition_multinode_jobs(logger):
         ):
             continue
 
-        logger.debug("-> multinode [%d] scheduled", job.id)
+        LOGGER.debug("-> multinode [%d] scheduled", job.id)
         # Inject the actual group hostnames into the roles for the dispatcher
         # to populate in the overlay.
         devices = {}
@@ -416,4 +418,4 @@ def transition_multinode_jobs(logger):
             # transition the job and device
             fields = ["definition"] + sub_job.go_state_scheduled()
             sub_job.save(update_fields=fields)
-            logger.debug("--> %d", sub_job.id)
+            LOGGER.debug("--> %d", sub_job.id)
