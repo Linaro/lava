@@ -2554,29 +2554,37 @@ def worker_detail(request, pk):
     )
 
 
+def __set_worker_health__(worker, user, health, reason):
+    with transaction.atomic():
+        if not worker.can_change(user):
+            return HttpResponseForbidden("Permission denied")
+
+        if health == "Active":
+            fields = worker.go_health_active(user, reason)
+        elif health == "Maintenance":
+            fields = worker.go_health_maintenance(user, reason)
+        elif health == "Retired":
+            fields = worker.go_health_retired(user, reason)
+        else:
+            return HttpResponseBadRequest("Wrong worker health %s" % health)
+
+        worker.save(update_fields=fields)
+
+
 @require_POST
 def worker_health(request, pk):
     try:
         with transaction.atomic():
             worker = Worker.objects.select_for_update().get(pk=pk)
-            if not worker.can_change(request.user):
-                return HttpResponseForbidden("Permission denied")
-
             health = request.POST.get("health")
             reason = escape(request.POST.get("reason"))
-            if health == "Active":
-                fields = worker.go_health_active(request.user, reason)
-            elif health == "Maintenance":
-                fields = worker.go_health_maintenance(request.user, reason)
-            elif health == "Retired":
-                fields = worker.go_health_retired(request.user, reason)
+            response = __set_worker_health__(worker, request.user, health, reason)
+            if response is None:
+                return HttpResponseRedirect(
+                    reverse("lava.scheduler.worker.detail", args=[pk])
+                )
             else:
-                return HttpResponseBadRequest("Wrong worker health %s" % health)
-
-            worker.save(update_fields=fields)
-            return HttpResponseRedirect(
-                reverse("lava.scheduler.worker.detail", args=[pk])
-            )
+                return response
     except Worker.DoesNotExist:
         raise Http404("Worker %s not found" % pk)
 
