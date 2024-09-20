@@ -63,7 +63,7 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.schema import SubmissionException
-from lava_scheduler_app.views import __set_device_health__
+from lava_scheduler_app.views import __set_device_health__, __set_worker_health__
 from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -971,6 +971,25 @@ class WorkerViewSet(viewsets.ModelViewSet):
                 )
             else:
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=("post",), suffix="set_health")
+    def set_health(self, request, **kwargs):
+        if not request.user.has_perm("lava_scheduler_app.change_worker"):
+            raise PermissionDenied(
+                "Insufficient permissions. Please contact system administrator."
+            )
+        worker = self.get_object()
+        reason = request.data.get("reason", None)
+        health = request.data.get("health", None)
+        if health is not None:
+            health = health.title()
+        response = __set_worker_health__(worker, request.user, health, reason)
+        if response is None:
+            data = {"message": "OK"}
+            return Response(data, status=status.HTTP_202_ACCEPTED)
+        else:
+            data = {"message": response.content}
+            return Response(data, status=response.status_code)
 
 
 class AliasViewSet(viewsets.ModelViewSet):
