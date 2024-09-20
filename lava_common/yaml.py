@@ -14,26 +14,29 @@ from yaml import dump, load
 if TYPE_CHECKING:
     from typing import Union  # For Python 3.9 compatibility
 
-# Handle compatibility with system without C yaml
-try:
-    from yaml import CSafeLoader as SafeLoader
-except ImportError:
-    from yaml import SafeLoader
+    from yaml import safe_dump, safe_load
 
-try:
-    from yaml import CSafeDumper as SafeDumper
-except ImportError:
-    from yaml import SafeDumper
+    yaml_safe_dump = safe_dump
+    yaml_safe_load = safe_load
+else:
+    # Handle compatibility with system without C yaml
+    try:
+        from yaml import CSafeLoader as SafeLoader
+    except ImportError:
+        from yaml import SafeLoader
 
+    try:
+        from yaml import CSafeDumper as SafeDumper
+    except ImportError:
+        from yaml import SafeDumper
 
-def yaml_safe_load(data):
-    return load(data, Loader=SafeLoader)
+    def yaml_safe_load(data):
+        return load(data, Loader=SafeLoader)
 
-
-def yaml_safe_dump(data, *args, **kwargs):
-    # Preserve key order by default
-    kwargs["sort_keys"] = kwargs.get("sort_keys", False)
-    return dump(data, *args, Dumper=SafeDumper, **kwargs)
+    def yaml_safe_dump(data, *args, **kwargs):
+        # Preserve key order by default
+        kwargs["sort_keys"] = kwargs.get("sort_keys", False)
+        return dump(data, *args, Dumper=SafeDumper, **kwargs)
 
 
 yaml_quote_dumper: ContextVar[tuple[StringIO, SafeDumper]] = ContextVar(
@@ -70,3 +73,10 @@ def yaml_quote(obj: Union[str, int, float, dict, list]) -> str:
 
     yaml_dumper.represent(obj)
     return stream.getvalue()[4:-1]  # Skip "--- " and newline
+
+
+__all__ = (
+    "yaml_quote",
+    "yaml_safe_dump",
+    "yaml_safe_load",
+)
