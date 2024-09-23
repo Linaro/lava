@@ -9,6 +9,7 @@ import random
 import subprocess
 import time
 from pathlib import Path
+from typing import Optional
 
 from lava_common.exceptions import InfrastructureError
 
@@ -193,8 +194,9 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
-    def wait_file(self, filename):
+    def wait_file(self, filename: str, timeout: Optional[int] = None) -> None:
         delay = 1
+        start = time.monotonic()
         while True:
             try:
                 subprocess.check_call(
@@ -212,6 +214,8 @@ class DockerRun:
                 )
                 return
             except subprocess.CalledProcessError:
+                if timeout is not None and time.monotonic() - start > timeout:
+                    raise
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 

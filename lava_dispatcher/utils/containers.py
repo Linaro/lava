@@ -7,11 +7,13 @@
 
 import os
 import uuid
+from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
 from lava_common.device_mappings import add_device_container_mapping
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, InternalObject
+from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerContainer, DockerRun
 from lava_dispatcher.utils.filesystem import copy_to_lxc
 from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
@@ -190,7 +192,7 @@ class DockerDriver(NullDriver):
         self.action.containers.append(docker)
         docker.start(self.action)
         try:
-            self.__map_devices__(name)
+            self.__map_devices__(name, docker)
             docker.run(cmd, self.action)
         finally:
             docker.stop(self.action)
@@ -203,7 +205,7 @@ class DockerDriver(NullDriver):
         self.action.containers.append(docker)
         docker.start(self.action)
         try:
-            self.__map_devices__(name)
+            self.__map_devices__(name, docker)
             return docker.get_output(cmd, self.action)
         finally:
             docker.stop(self.action)
@@ -213,12 +215,34 @@ class DockerDriver(NullDriver):
             self.copied_files.append(src)
         return src
 
-    def __map_devices__(self, container_name):
+    @retry(exception=LAVABug, retries=3, delay=1)
+    def _retry_trigger_share_device_with_container(
+        self, action: Action, dev: str, docker: DockerContainer
+    ) -> None:
+        """
+        Re-trigger device sharing if device doesn't appear in docker container after 60s
+        waiting. 60s is the default udev event processing timeout.
+        """
+        action.trigger_share_device_with_container(dev)
+        action.logger.debug(
+            f"Waiting for device '{dev}' to appear in docker container {docker.__name__} ..."
+        )
+        try:
+            docker.wait_file(dev, 60)
+        except CalledProcessError:
+            raise LAVABug(
+                f"Failed to share device '{dev}' to docker container {docker.__name__}"
+            )
+        action.logger.info(
+            f"Shared device '{dev}' to docker container {docker.__name__}"
+        )
+
+    def __map_devices__(self, container_name, docker):
         action = self.action
         action.add_device_container_mappings(container_name, "docker")
         for dev in self.__get_device_nodes__():
             if not os.path.islink(dev):
-                action.trigger_share_device_with_container(dev)
+                self._retry_trigger_share_device_with_container(action, dev, docker)
 
     def __get_device_nodes__(self):
         device_info = self.action.job.device.get("device_info", {})
