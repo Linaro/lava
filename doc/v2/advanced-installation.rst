@@ -527,6 +527,14 @@ In ``/etc/lava-server/settings.conf`` add::
 
 When any of the services is crashing, an error will be recorded along with some metadata.
 
+To optionally track performance metrics with Sentry, you can configure "SENTRY_TRACES_SAMPLE_RATE".
+This setting controls the percentage of error events that will be sent for performance monitoring,
+with a value between 0 (0% of errors) and 1 (100% of errors).
+
+In ``/etc/lava-server/settings.conf`` add::
+
+    "SENTRY_TRACES_SAMPLE_RATE": "1.0"
+
 Configuring default table length
 ================================
 

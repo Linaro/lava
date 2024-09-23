@@ -254,6 +254,11 @@ INSTANCE_NAME = "default"
 # Sentry project url
 SENTRY_DSN = ""
 
+# Set the sample rate for sending performance traces to Sentry.
+# The value should be between 0 and 1, where 0 disables traces and 1 sends
+# all traces.
+SENTRY_TRACES_SAMPLE_RATE = 0
+
 # Django debug toolbar
 USE_DEBUG_TOOLBAR = False
 
@@ -360,6 +365,7 @@ def update(values):
     MATOMO_URL = values.get("MATOMO_URL")
     MATOMO_SITE_ID = values.get("MATOMO_SITE_ID")
     SENTRY_DSN = values.get("SENTRY_DSN")
+    SENTRY_TRACES_SAMPLE_RATE = values.get("SENTRY_TRACES_SAMPLE_RATE")
     STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
     SYNC_GITHUB_TEAMS = values.get("SYNC_GITHUB_TEAMS")
     USE_DEBUG_TOOLBAR = values.get("USE_DEBUG_TOOLBAR")
@@ -608,6 +614,7 @@ def update(values):
             dsn=SENTRY_DSN,
             integrations=[DjangoIntegration()],
             release=f"lava@{__version__}",
+            traces_sample_rate=float(SENTRY_TRACES_SAMPLE_RATE),
         )
 
     # Return settings
