@@ -2,6 +2,7 @@
 {% extends 'base.jinja2' %}
 {% set usb_vendor_id = '0d28' %}
 {% set usb_product_id = '0204' %}
+{% set processor = 'MK64FN1M0xxx12' %}
 {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
 {% block body %}
 board_id: '{{ board_id|default('0000000000') }}'
@@ -47,10 +48,11 @@ actions:
         parameters:
           command: JLinkExe 
           address: {{ load_address|default("0x00000000") }}
+          processor: {{ processor }}
+          supported_core_types: {{ supported_core_types }}
           erase_command: {{ erase_command|default(["erase"]) }}
           reset_command: {{ reset_command|default(["r"]) }}
           options:
-          - '-device MK64FN1M0xxx12'
           - '-if SWD'
           - '-speed 4000'
 

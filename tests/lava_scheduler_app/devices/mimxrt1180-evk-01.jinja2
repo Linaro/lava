@@ -1,0 +1,7 @@
+{% extends 'mimxrt1180-evk.jinja2' %}
+{% set board_id = '001069911711' %}
+{% set usb_mass_device = '/dev/disk/by-id/usb-SEGGER_MSD_Volume_000380000008-0:0' %}
+{% set connection_command = 'telnet localhost 7030' %}
+{% set hard_reset_command = ['/usr/local/lab-scripts/pdu_by_board.sh mimxrt1180-evk-01 reboot'] %}
+{% set power_off_command = ['/usr/local/lab-scripts/pdu_by_board.sh mimxrt1180-evk-01 off'] %}
+{% set power_on_command = ['/usr/local/lab-scripts/pdu_by_board.sh mimxrt1180-evk-01 on'] %}

@@ -15,5 +15,6 @@ def schema():
         Required("method"): Msg("jlink", "'method' should be 'jlink'"),
         Optional("prompts"): [str],
         Optional("commands"): [str],
+        Optional("coretype"): str,
     }
     return {**boot.schema(), **base}
