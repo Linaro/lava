@@ -124,9 +124,7 @@ async def aiohttp_get(
         headers["LAVA-Token"] = token
 
     try:
-        async with session.get(
-            url, params=params, headers=headers, timeout=TIMEOUT
-        ) as request:
+        async with session.get(url, params=params, headers=headers) as request:
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
@@ -140,9 +138,7 @@ async def aiohttp_post(
         headers["LAVA-Token"] = token
 
     try:
-        async with session.post(
-            url, data=data, headers=headers, timeout=TIMEOUT
-        ) as request:
+        async with session.post(url, data=data, headers=headers) as request:
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
@@ -834,7 +830,8 @@ async def main() -> int:
     async with aiohttp.ClientSession(
         headers={
             "User-Agent": f"lava-worker {__version__}",
-        }
+        },
+        timeout=aiohttp.ClientTimeout(total=TIMEOUT),
     ) as session:
         try:
             if options.username is not None:
