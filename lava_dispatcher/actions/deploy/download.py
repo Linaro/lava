@@ -637,7 +637,13 @@ class HttpDownloadAction(DownloadHandler):
                     )
                     return
 
+            # Only validate size if Content-Length is present and valid
             self.size = int(res.headers.get("content-length", -1))
+            if self.size <= 0:
+                self.logger.warning(
+                    "Invalid or missing content-length. Skipping size validation."
+                )
+
         except requests.Timeout:
             self.logger.error("Request timed out")
             self.errors = "'%s' timed out" % (self.url.geturl())
