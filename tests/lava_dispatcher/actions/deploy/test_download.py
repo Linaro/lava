@@ -467,7 +467,7 @@ class TestDowload(LavaDispatcherTestCase):
 
         def dummyhead(url, allow_redirects, headers, timeout):
             self.assertIs(allow_redirects, True)
-            self.assertEqual(headers, {"Accept-Encoding": ""})
+            self.assertEqual(headers, {})
             if url == "https://example.com/kernel":
                 return DummyResponseOK()
             elif url == "https://example.com/dtb":
@@ -478,7 +478,7 @@ class TestDowload(LavaDispatcherTestCase):
         def dummyget(url, allow_redirects, stream, headers, timeout):
             self.assertIs(allow_redirects, True)
             self.assertIs(stream, True)
-            self.assertEqual(headers, {"Accept-Encoding": ""})
+            self.assertEqual(headers, {})
             self.assertEqual(url, "https://example.com/dtb")
             return DummyResponseOK()
 

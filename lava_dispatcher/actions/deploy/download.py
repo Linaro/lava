@@ -607,11 +607,10 @@ class HttpDownloadAction(DownloadHandler):
                     self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
                     return
 
-            headers = {"Accept-Encoding": ""}
+            headers = {}
             if self.params and "headers" in self.params:
                 headers.update(self.params["headers"])
             self.logger.debug("Validating that %s exists", self.url.geturl())
-            # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
             res = requests_retry().head(
                 self.url.geturl(),
                 allow_redirects=True,
@@ -622,7 +621,6 @@ class HttpDownloadAction(DownloadHandler):
                 # try using (the slower) get for services with broken redirect support
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
-                # Like for HEAD, we need get a size, so disable gzip
                 res = requests_retry().get(
                     self.url.geturl(),
                     allow_redirects=True,
@@ -657,8 +655,6 @@ class HttpDownloadAction(DownloadHandler):
     def reader(self):
         res = None
         try:
-            # FIXME: When requests 3.0 is released, use the enforce_content_length
-            # parameter to raise an exception the file is not fully downloaded
             headers = None
             if self.params and "headers" in self.params:
                 headers = self.params["headers"]
