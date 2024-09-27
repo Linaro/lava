@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from typing import Any
+from unittest.mock import patch
 
 from lava_dispatcher.actions.deploy.overlay import OverlayAction, PersistentNFSOverlay
 from tests.lava_dispatcher.test_basic import Factory
@@ -97,7 +98,11 @@ def test_persist_nfs_place_holder():
         "namespace": "common",
     }
     action.params = action.parameters["persistent_nfs"]
-    action.validate()
+    with patch(
+        "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+        return_value=None,
+    ):
+        action.validate()
     assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foo"
 
     action.parameters = {
@@ -107,5 +112,9 @@ def test_persist_nfs_place_holder():
         "namespace": "common",
     }
     action.params = action.parameters["persistent_nfs"]
-    action.validate()
+    with patch(
+        "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+        return_value=None,
+    ):
+        action.validate()
     assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foobar"
