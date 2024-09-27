@@ -484,7 +484,7 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
         if not job.is_running():
             # wait for the job
             try:
-                os.waitpid(job.pid, 0)
+                os.waitpid(job.pid, os.WNOHANG)
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
@@ -497,7 +497,7 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
         if not job.is_running():
             # wait for the job
             try:
-                os.waitpid(job.pid, 0)
+                os.waitpid(job.pid, os.WNOHANG)
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
