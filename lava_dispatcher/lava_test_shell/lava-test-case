@@ -22,7 +22,11 @@ fi
 if [ "$1" = "--shell" ]; then
     shift
     signal "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
-    eval '"$@"'
+    if [ $# -eq 1 ]; then
+        eval "$@"
+    else
+        eval '"$@"'
+    fi
     rc=$?
     signal "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
     if [ $rc -eq 0 ]; then
