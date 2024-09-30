@@ -49,6 +49,8 @@ actions:
         parameters:
           command: JLinkExe 
           address: {{ load_address|default("0x00000000") }}
+          erase_command: {{ erase_command|default(["erase"]) }}
+          reset_command: {{ reset_command|default(["r"]) }}
           options: 
           {% filter indent(width=10) -%}
           {% block jlink_options %}{% endblock jlink_options %}
