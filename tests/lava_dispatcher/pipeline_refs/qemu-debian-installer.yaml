@@ -121,10 +121,10 @@
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 1080
+  timeout: 1080.5
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 1080}
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 1080.5}
 - class: FinalizeAction
   name: finalize
   level: '4'
