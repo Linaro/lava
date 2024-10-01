@@ -17,7 +17,6 @@ from shlex import split as shlex_split
 from typing import TYPE_CHECKING
 
 import pexpect
-from pexpect.popen_spawn import PopenSpawn as PexpectPopenSpawn
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import (
@@ -647,22 +646,19 @@ class Action:
             self.logger.debug("output: %s", line)
         return output
 
-    _SUBPROCESS_SIGTERM_TIMEOUT = 3.0
+    _SUBPROCESS_TIMEOUT = 3.0
 
-    def _run_pexpect_popen(
+    def _run_popen(
         self,
-        pexpect_popen: PexpectPopenSpawn,
-        start: float,
+        proc: subprocess.Popen,
     ) -> int | None:
-        proc = pexpect_popen.proc
-
         def terminate_or_kill_proc() -> None:
             if proc.returncode is not None:
                 return
 
             try:
                 proc.terminate()
-                proc.wait(self._SUBPROCESS_SIGTERM_TIMEOUT)
+                proc.wait(self._SUBPROCESS_TIMEOUT)
             except subprocess.TimeoutExpired:
                 # Subprocess ignores SIGTERM. Kill it with SIGKILL.
                 proc.kill()
@@ -671,14 +667,11 @@ class Action:
         with contextlib.ExitStack() as exit_stack:
             exit_stack.enter_context(proc)
             exit_stack.callback(terminate_or_kill_proc)
-            try:
-                pexpect_popen.expect(pexpect.EOF)
-                # wait for the process and record the return value
-                return pexpect_popen.wait()
-            except pexpect.TIMEOUT:
-                self.logger.error(
-                    "Timed out after %s seconds", int(time.monotonic() - start)
-                )
+
+            while line := proc.stdout.readline():
+                self.logger.debug(">> %s", line.removesuffix("\n"))
+
+            return proc.wait(self._SUBPROCESS_TIMEOUT)
 
         return
 
@@ -705,23 +698,22 @@ class Action:
         self.logger.debug("Calling: %r", command_list)
         start = time.monotonic()
 
-        cmd_logger = CommandLogger(self.logger)
         ret: int | None = None
         try:
-            proc = PexpectPopenSpawn(
-                cmd=command_list,
+            proc = subprocess.Popen(
+                args=command_list,
                 cwd=cwd,
+                text=True,
                 encoding="utf-8",
-                codec_errors="replace",
-                logfile=cmd_logger,
-                timeout=self.timeout.duration,
-                searchwindowsize=10,
+                errors="replace",
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
             )
-            ret = self._run_pexpect_popen(proc, start)
+            ret = self._run_popen(proc)
         except (OSError, pexpect.ExceptionPexpect) as exc:
             self.logger.error("Unable to run: %s", exc)
 
-        cmd_logger.flush(force=True)
         if ret is not None:
             self.logger.debug(
                 "Returned %d in %s seconds", ret, int(time.monotonic() - start)

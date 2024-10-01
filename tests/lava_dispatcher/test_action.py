@@ -11,6 +11,7 @@ from tempfile import TemporaryDirectory
 from time import monotonic as time_monotonic
 from unittest.mock import patch
 
+from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
 
 from .test_basic import LavaDispatcherTestCase
@@ -42,35 +43,34 @@ class TestActionRunCmd(LavaDispatcherTestCase):
         self.assertEqual(ret, 0)
 
     def test_command_timeout(self) -> None:
-        self.action.timeout.duration = 0.01
+        timeout = Timeout("run-cmd-test", None, duration=0.01)
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.assertLogs(
-            self.action.logger, "ERROR"
-        ) as error_logs:
+        with timeout(None, None), self.assertRaisesRegex(
+            self.action.command_exception,
+            r"run-cmd-test timed out after .* seconds",
+        ):
             self.action.run_cmd(["sleep", "10"])
 
         end_time = time_monotonic()
 
-        self.assertIn(
-            "Timed out after",
-            "".join(error_logs.output),
-        )
-
         self.assertLess(
             end_time - start_time,
-            1.0,
+            0.5,
         )
 
     def test_command_timeout_ignores_sigterm(self) -> None:
-        self.action.timeout.duration = 0.01
+        timeout = Timeout("run-cmd-test", None, duration=0.01)
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.assertLogs(
-            self.action.logger, "DEBUG"
-        ) as debug_logs, patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01):
+        with timeout(None, None), self.assertRaisesRegex(
+            self.action.command_exception,
+            r"run-cmd-test timed out after .* seconds",
+        ), self.assertLogs(self.action.logger, "DEBUG") as debug_logs, patch.object(
+            Action, "_SUBPROCESS_TIMEOUT", 0.01
+        ):
             self.action.run_cmd(
                 [
                     "sh",
@@ -88,7 +88,7 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         self.assertLess(
             end_time - start_time,
-            1.0,
+            0.5,
         )
 
     def test_command_does_not_exist(self) -> None:

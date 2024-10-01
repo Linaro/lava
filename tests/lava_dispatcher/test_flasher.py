@@ -65,18 +65,13 @@ class TestFlasher(LavaDispatcherTestCase):
         self.assertFalse(action.errors)
 
         # Run the action
-        with patch(
-            "lava_dispatcher.action.PexpectPopenSpawn", return_value=Proc()
-        ) as mock_spawn:
+        with patch.object(FlasherAction, "run_cmd") as mock_run_cmd:
             action.run(None, 10)
 
-        self.assertEqual(mock_spawn.call_count, 2)
+        self.assertEqual(mock_run_cmd.call_count, 2)
 
-        for i, call in enumerate(mock_spawn.mock_calls):
-            self.assertEqual(call.kwargs["cmd"], commands[i])
-            self.assertEqual(call.kwargs["encoding"], "utf-8")
-            self.assertEqual(call.kwargs["codec_errors"], "replace")
-            self.assertEqual(call.kwargs["searchwindowsize"], 10)
+        for i, call in enumerate(mock_run_cmd.mock_calls):
+            self.assertEqual(call.args[0], " ".join(commands[i]))
 
     def test_accepts(self):
         # Normal case
