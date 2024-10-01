@@ -1,12 +1,12 @@
 - {class: CommandAction, name: user-command, level: '1', max_retries: 1, description: execute
-    one of the commands listed by the admin, summary: execute commands, timeout: 300}
+    one of the commands listed by the admin, summary: execute commands, timeout: 300.0}
 - class: TftpAction
   name: tftp-deploy
   level: '2'
   max_retries: 1
   description: download files and deploy using tftp
   summary: tftp deployment
-  timeout: 240
+  timeout: 240.0
   pipeline:
   - class: DownloaderAction
     name: download-retry
@@ -14,10 +14,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 240.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 80,
+      description: use http to download the file, summary: http download, timeout: 80.0,
       url: 'http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz'}
   - class: DownloaderAction
     name: download-retry
@@ -25,10 +25,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 240.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 80,
+      description: use http to download the file, summary: http download, timeout: 80.0,
       url: 'https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage'}
   - class: DownloaderAction
     name: download-retry
@@ -36,10 +36,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 240
+    timeout: 240.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 80,
+      description: use http to download the file, summary: http download, timeout: 80.0,
       url: 'https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb'}
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay
@@ -47,109 +47,109 @@
     max_retries: 1
     description: extract ramdisk or nfsrootfs in preparation for lava overlay
     summary: extract ramdisk or nfsrootfs
-    timeout: 240
+    timeout: 240.0
     pipeline:
     - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: 2.4.1, max_retries: 1,
       description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
-        overlay', timeout: 240}
+        overlay', timeout: 240.0}
     - class: OverlayAction
       name: lava-overlay
       level: 2.4.2
       max_retries: 1
       description: add lava scripts during deployment for test shell use
       summary: overlay the lava support scripts
-      timeout: 240
+      timeout: 240.0
       pipeline:
       - {class: SshAuthorize, name: ssh-authorize, level: 2.4.2.1, max_retries: 1,
         description: include public key in overlay and authorize root user, summary: add
-          public key to authorized_keys, timeout: 240}
+          public key to authorized_keys, timeout: 240.0}
       - {class: VlandOverlayAction, name: lava-vland-overlay, level: 2.4.2.2, max_retries: 1,
         description: Populate specific vland scripts for tests to lookup vlan data.,
-        summary: Add files detailing vlan configuration., timeout: 240}
+        summary: Add files detailing vlan configuration., timeout: 240.0}
       - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 2.4.2.3,
         max_retries: 1, description: add lava scripts during deployment for multinode
-          test shell use, summary: overlay the lava multinode scripts, timeout: 240}
+          test shell use, summary: overlay the lava multinode scripts, timeout: 240.0}
       - class: TestDefinitionAction
         name: test-definition
         level: 2.4.2.4
         max_retries: 1
         description: load test definitions into image
         summary: loading test definitions
-        timeout: 240
+        timeout: 240.0
         pipeline:
         - {class: GitRepoAction, name: git-repo-action, level: 2.4.2.4.1, max_retries: 1,
           description: apply git repository of tests to the test image, summary: clone
-            git test repo, timeout: 240}
+            git test repo, timeout: 240.0}
         - {class: TestOverlayAction, name: test-overlay, level: 2.4.2.4.2, max_retries: 1,
           description: overlay test support files onto image, summary: applying LAVA
-            test overlay, timeout: 240}
+            test overlay, timeout: 240.0}
         - {class: TestInstallAction, name: test-install-overlay, level: 2.4.2.4.3,
           max_retries: 1, description: overlay dependency installation support files
-            onto image, summary: applying LAVA test install scripts, timeout: 240}
+            onto image, summary: applying LAVA test install scripts, timeout: 240.0}
         - {class: TestRunnerAction, name: test-runscript-overlay, level: 2.4.2.4.4,
           max_retries: 1, description: overlay run script onto image, summary: applying
-            LAVA test run script, timeout: 240}
+            LAVA test run script, timeout: 240.0}
       - {class: CompressOverlay, name: compress-overlay, level: 2.4.2.5, max_retries: 1,
         description: Create a lava overlay tarball and store alongside the job, summary: Compress
-          the lava overlay files, timeout: 240}
+          the lava overlay files, timeout: 240.0}
       - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 2.4.2.6,
         max_retries: 1, description: unpack overlay into persistent NFS, summary: add
-          test overlay to NFS, timeout: 240}
+          test overlay to NFS, timeout: 240.0}
     - {class: ExtractRamdisk, name: extract-overlay-ramdisk, level: 2.4.3, max_retries: 1,
       description: extract ramdisk to a temporary directory, summary: extract the
-        ramdisk, timeout: 240}
+        ramdisk, timeout: 240.0}
     - {class: ExtractModules, name: extract-modules, level: 2.4.4, max_retries: 1,
       description: extract supplied kernel modules, summary: extract kernel modules,
-      timeout: 240}
+      timeout: 240.0}
     - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: 2.4.5, max_retries: 1,
       description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
-        lava overlay test files, timeout: 240}
+        lava overlay test files, timeout: 240.0}
     - class: PrepareKernelAction
       name: prepare-kernel
       level: 2.4.6
       max_retries: 1
       description: populates the pipeline with a kernel conversion action
       summary: add a kernel conversion
-      timeout: 240
+      timeout: 240.0
       pipeline:
       - {class: UBootPrepareKernelAction, name: uboot-prepare-kernel, level: 2.4.6.1,
         max_retries: 1, description: convert kernel to uimage, summary: prepare/convert
-          kernel, timeout: 240}
+          kernel, timeout: 240.0}
     - {class: ConfigurePreseedFile, name: configure-preseed-file, level: 2.4.7, max_retries: 1,
       description: 'add commands to automated installers, to copy the lava test overlay
-        to the installed system', summary: add commands to installer config, timeout: 240}
+        to the installed system', summary: add commands to installer config, timeout: 240.0}
     - {class: CompressRamdisk, name: compress-ramdisk, level: 2.4.8, max_retries: 1,
       description: recreate a ramdisk with the overlay applied., summary: compress
-        ramdisk with overlay, timeout: 240}
+        ramdisk with overlay, timeout: 240.0}
   - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '2.5',
     max_retries: 1, description: create lxc udev rule action, summary: create lxc
-      udev rule, timeout: 240}
+      udev rule, timeout: 240.0}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '2.6', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 240}
+    description: deploy device environment, summary: deploy device environment, timeout: 240.0}
 - class: UBootAction
   name: uboot-action
   level: '3'
   max_retries: 1
   description: interactive uboot action
   summary: pass uboot commands
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - {class: UBootSecondaryMedia, name: uboot-from-media, level: '3.1', max_retries: 1,
     description: let uboot know where to find the kernel in the image on secondary
-      media, summary: set uboot strings for deployed media, timeout: 300}
+      media, summary: set uboot strings for deployed media, timeout: 300.0}
   - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '3.2', max_retries: 1,
     description: substitute job data into bootloader command list, summary: replace
-      placeholders with job data, timeout: 300}
+      placeholders with job data, timeout: 300.0}
   - {class: ConnectDevice, name: connect-device, level: '3.3', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 300}
+      command, timeout: 300.0}
   - class: UBootCommandsAction
     name: uboot-commands
     level: '3.4'
     max_retries: 1
     description: interactive uboot commands action
     summary: uboot commands
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - class: ResetDevice
       name: reset-device
@@ -157,16 +157,16 @@
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
-      timeout: 30
+      timeout: 30.0
       pipeline:
       - {class: PDUReboot, name: pdu-reboot, level: 3.4.1.1, max_retries: 1, description: issue
           commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 30}
+        timeout: 30.0}
     - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: 3.4.2,
       max_retries: 1, description: interrupt bootloader, summary: interrupt bootloader
-        to get an interactive shell, timeout: 30}
+        to get an interactive shell, timeout: 30.0}
     - {class: BootloaderCommandsAction, name: bootloader-commands, level: 3.4.3, max_retries: 1,
-      description: send commands to bootloader, summary: interactive bootloader, timeout: 180}
+      description: send commands to bootloader, summary: interactive bootloader, timeout: 180.0}
     - class: AutoLoginAction
       name: auto-login-action
       level: 3.4.4
@@ -174,34 +174,34 @@
       description: automatically login after boot using job parameters and checking
         for messages.
       summary: Auto-login after boot with support for kernel messages.
-      timeout: 120
+      timeout: 120.0
       pipeline:
       - {class: LoginAction, name: login-action, level: 3.4.4.1, max_retries: 1, description: Real
-          login action., summary: Login after boot., timeout: 300}
+          login action., summary: Login after boot., timeout: 300.0}
     - {class: ExpectShellSession, name: expect-shell-connection, level: 3.4.5, max_retries: 1,
-      description: Wait for a shell, summary: Expect a shell prompt, timeout: 300}
+      description: Wait for a shell, summary: Expect a shell prompt, timeout: 300.0}
     - {class: ExportDeviceEnvironment, name: export-device-env, level: 3.4.6, max_retries: 1,
       description: Exports environment variables to the device, summary: Exports environment
-        variables action, timeout: 300}
+        variables action, timeout: 300.0}
 - class: TestShellRetry
   name: lava-test-retry
   level: '4'
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300.0}
 - class: FinalizeAction
   name: finalize
   level: '5'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: PowerOff, name: power-off, level: '5.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 15}
+      power to device, summary: send power_off command, timeout: 15.0}
   - {class: ReadFeedback, name: read-feedback, level: '5.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300.0}

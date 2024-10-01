@@ -123,6 +123,7 @@ def timeout():
         {Required("hours"): Range(min=1), Optional("skip"): bool},
         {Required("minutes"): Range(min=1), Optional("skip"): bool},
         {Required("seconds"): Range(min=1), Optional("skip"): bool},
+        {Required("milliseconds"): Range(min=1), Optional("skip"): bool},
     )
 
 

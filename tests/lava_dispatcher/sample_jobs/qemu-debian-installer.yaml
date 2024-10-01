@@ -51,6 +51,7 @@ actions:
 - test:
     timeout:
       minutes: 18
+      milliseconds: 500  # Test milliseconds timeout parsing
     definitions:
     - from: git
       repository: git://git.linaro.org/lava-team/lava-functional-tests.git

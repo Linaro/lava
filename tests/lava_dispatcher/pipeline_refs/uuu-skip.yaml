@@ -4,7 +4,7 @@
   max_retries: 1
   description: deploy images using uuu
   summary: uuu deployment
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - class: DownloaderAction
     name: download-retry
@@ -12,10 +12,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'https://myserver.com/binaries/imx-boot.bin'}
 - class: UUUBootRetryAction
   name: uuu-boot-retry
@@ -23,7 +23,7 @@
   max_retries: 1
   description: wrap action to allow bootloader valid check
   summary: check valid bootloader before uuu
-  timeout: 120
+  timeout: 120.0
   pipeline:
   - class: CheckBootloaderValidAction
     name: check-bootloader-valid
@@ -31,119 +31,119 @@
     max_retries: 1
     description: Store in 'board_valid_check' namespace_data
     summary: Store in 'board_valid_check' namespace_data
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: ConnectDevice, name: connect-device, level: 2.1.1, max_retries: 1, description: use
         the configured command to connect serial to the device, summary: run connection
-        command, timeout: 120}
+        command, timeout: 120.0}
     - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: 2.1.2, max_retries: 1,
       description: substitute job data into bootloader command list, summary: replace
-        placeholders with job data, timeout: 120}
+        placeholders with job data, timeout: 120.0}
     - class: BootBootloaderAction
       name: boot-bootloader
       level: 2.1.3
       max_retries: 1
       description: boot to bootloader
       summary: boot bootloader
-      timeout: 120
+      timeout: 120.0
       pipeline:
       - {class: ConnectDevice, name: connect-device, level: 2.1.3.1, max_retries: 1,
         description: use the configured command to connect serial to the device, summary: run
-          connection command, timeout: 120}
+          connection command, timeout: 120.0}
       - class: ResetDevice
         name: reset-device
         level: 2.1.3.2
         max_retries: 1
         description: reboot or power-cycle the device
         summary: reboot the device
-        timeout: 120
+        timeout: 120.0
         pipeline:
         - {class: PDUReboot, name: pdu-reboot, level: 2.1.3.2.1, max_retries: 1, description: issue
             commands to a PDU to power cycle a device, summary: hard reboot using
-            PDU, timeout: 120}
+            PDU, timeout: 120.0}
       - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: 2.1.3.3,
         max_retries: 1, description: interrupt bootloader, summary: interrupt bootloader
-          to get an interactive shell, timeout: 15}
+          to get an interactive shell, timeout: 15.0}
       - {class: BootloaderCommandsAction, name: bootloader-commands, level: 2.1.3.4,
         max_retries: 1, description: send commands to bootloader, summary: interactive
-          bootloader, timeout: 120}
+          bootloader, timeout: 120.0}
     - {class: DisconnectDevice, name: disconnect-device, level: 2.1.4, max_retries: 1,
-      description: disconnect from console, summary: disconnect from console, timeout: 120}
+      description: disconnect from console, summary: disconnect from console, timeout: 120.0}
   - class: UUUAction
     name: uuu
     level: '2.2'
     max_retries: 1
     description: Boot the board using uboot and perform uuu commands
     summary: Pass uuu commands
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: DisconnectDevice, name: disconnect-device, level: 2.2.1, max_retries: 1,
-      description: disconnect from console, summary: disconnect from console, timeout: 120}
+      description: disconnect from console, summary: disconnect from console, timeout: 120.0}
     - class: ResetDevice
       name: reset-device
       level: 2.2.2
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
-      timeout: 120
+      timeout: 120.0
       pipeline:
       - {class: PDUReboot, name: pdu-reboot, level: 2.2.2.1, max_retries: 1, description: issue
           commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 120}
+        timeout: 120.0}
     - {class: ConnectDevice, name: connect-device, level: 2.2.3, max_retries: 1, description: use
         the configured command to connect serial to the device, summary: run connection
-        command, timeout: 120}
+        command, timeout: 120.0}
     - {class: UUUBootAction, name: uuu-boot, level: 2.2.4, max_retries: 1, description: interactive
-        uuu action, summary: uuu commands, timeout: 120}
+        uuu action, summary: uuu commands, timeout: 120.0}
     - {class: DisconnectDevice, name: disconnect-device, level: 2.2.5, max_retries: 1,
-      description: disconnect from console, summary: disconnect from console, timeout: 120}
+      description: disconnect from console, summary: disconnect from console, timeout: 120.0}
 - class: BootBootloaderRetry
   name: boot-bootloader-retry
   level: '3'
   max_retries: 1
   description: boot to bootloader with retry
   summary: boot bootloader retry
-  timeout: 30
+  timeout: 30.0
   pipeline:
   - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '3.1', max_retries: 1,
     description: substitute job data into bootloader command list, summary: replace
-      placeholders with job data, timeout: 30}
+      placeholders with job data, timeout: 30.0}
   - class: BootBootloaderAction
     name: boot-bootloader
     level: '3.2'
     max_retries: 1
     description: boot to bootloader
     summary: boot bootloader
-    timeout: 30
+    timeout: 30.0
     pipeline:
     - {class: ConnectDevice, name: connect-device, level: 3.2.1, max_retries: 1, description: use
         the configured command to connect serial to the device, summary: run connection
-        command, timeout: 30}
+        command, timeout: 30.0}
     - class: ResetDevice
       name: reset-device
       level: 3.2.2
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
-      timeout: 30
+      timeout: 30.0
       pipeline:
       - {class: PDUReboot, name: pdu-reboot, level: 3.2.2.1, max_retries: 1, description: issue
           commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 30}
+        timeout: 30.0}
     - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: 3.2.3,
       max_retries: 1, description: interrupt bootloader, summary: interrupt bootloader
-        to get an interactive shell, timeout: 30}
+        to get an interactive shell, timeout: 30.0}
     - {class: BootloaderCommandsAction, name: bootloader-commands, level: 3.2.4, max_retries: 1,
-      description: send commands to bootloader, summary: interactive bootloader, timeout: 30}
+      description: send commands to bootloader, summary: interactive bootloader, timeout: 30.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300.0}

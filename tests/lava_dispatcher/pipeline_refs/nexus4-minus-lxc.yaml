@@ -4,7 +4,7 @@
   max_retries: 1
   description: download files and deploy using fastboot
   summary: fastboot deployment
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - class: OverlayAction
     name: lava-overlay
@@ -12,156 +12,156 @@
     max_retries: 1
     description: add lava scripts during deployment for test shell use
     summary: overlay the lava support scripts
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: SshAuthorize, name: ssh-authorize, level: 1.1.1, max_retries: 1, description: include
         public key in overlay and authorize root user, summary: add public key to
-        authorized_keys, timeout: 300}
+        authorized_keys, timeout: 300.0}
     - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.1.2, max_retries: 1,
       description: Populate specific vland scripts for tests to lookup vlan data.,
-      summary: Add files detailing vlan configuration., timeout: 300}
+      summary: Add files detailing vlan configuration., timeout: 300.0}
     - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.1.3,
       max_retries: 1, description: add lava scripts during deployment for multinode
-        test shell use, summary: overlay the lava multinode scripts, timeout: 300}
+        test shell use, summary: overlay the lava multinode scripts, timeout: 300.0}
     - class: TestDefinitionAction
       name: test-definition
       level: 1.1.4
       max_retries: 1
       description: load test definitions into image
       summary: loading test definitions
-      timeout: 300
+      timeout: 300.0
       pipeline:
       - {class: InlineRepoAction, name: inline-repo-action, level: 1.1.4.1, max_retries: 1,
         description: apply inline test definition to the test image, summary: extract
-          inline test definition, timeout: 300}
+          inline test definition, timeout: 300.0}
       - {class: TestOverlayAction, name: test-overlay, level: 1.1.4.2, max_retries: 1,
         description: overlay test support files onto image, summary: applying LAVA
-          test overlay, timeout: 300}
+          test overlay, timeout: 300.0}
       - {class: TestInstallAction, name: test-install-overlay, level: 1.1.4.3, max_retries: 1,
         description: overlay dependency installation support files onto image, summary: applying
-          LAVA test install scripts, timeout: 300}
+          LAVA test install scripts, timeout: 300.0}
       - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.1.4.4, max_retries: 1,
         description: overlay run script onto image, summary: applying LAVA test run
-          script, timeout: 300}
+          script, timeout: 300.0}
     - {class: CompressOverlay, name: compress-overlay, level: 1.1.5, max_retries: 1,
       description: Create a lava overlay tarball and store alongside the job, summary: Compress
-        the lava overlay files, timeout: 300}
+        the lava overlay files, timeout: 300.0}
     - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.1.6, max_retries: 1,
       description: unpack overlay into persistent NFS, summary: add test overlay to
-        NFS, timeout: 300}
+        NFS, timeout: 300.0}
   - {class: EnterFastbootAction, name: enter-fastboot-action, level: '1.2', max_retries: 1,
-    description: enter fastboot bootloader, summary: enter fastboot, timeout: 300}
+    description: enter fastboot bootloader, summary: enter fastboot, timeout: 300.0}
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.4', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 300}
+    description: deploy device environment, summary: deploy device environment, timeout: 300.0}
   - class: DownloaderAction
     name: download-retry
     level: '1.5'
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.6', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 300}
+    description: deploy device environment, summary: deploy device environment, timeout: 300.0}
   - class: DownloaderAction
     name: download-retry
     level: '1.7'
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.8', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 300}
+    description: deploy device environment, summary: deploy device environment, timeout: 300.0}
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '1.9'
     max_retries: 1
     description: Determine support for each flash operation
     summary: Handle reset and options for each flash url.
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: ReadFeedback, name: read-feedback, level: 1.9.1, max_retries: 1, description: Check
         for messages on all other namespaces, summary: Read from other namespaces,
-      timeout: 300}
+      timeout: 300.0}
     - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 1.9.2, max_retries: 1,
       description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
+        with board ID, timeout: 300.0}
     - {class: FastbootFlashAction, name: fastboot-flash-action, level: 1.9.3, max_retries: 1,
       description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
+        command, timeout: 300.0}
     - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 1.9.4, max_retries: 1,
       description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
+        with board ID, timeout: 300.0}
     - {class: FastbootFlashAction, name: fastboot-flash-action, level: 1.9.5, max_retries: 1,
       description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
+        command, timeout: 300.0}
     - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 1.9.6, max_retries: 1,
       description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
+        with board ID, timeout: 300.0}
     - {class: FastbootFlashAction, name: fastboot-flash-action, level: 1.9.7, max_retries: 1,
       description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
+        command, timeout: 300.0}
 - class: BootFastbootAction
   name: fastboot-boot
   level: '2'
   max_retries: 1
   description: fastboot boot into the system
   summary: fastboot boot
-  timeout: 900
+  timeout: 900.0
   pipeline:
   - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '2.1', max_retries: 1,
     description: wait for udev device with board ID, summary: wait for udev device
-      with board ID, timeout: 900}
+      with board ID, timeout: 900.0}
   - {class: EnterFastbootAction, name: enter-fastboot-action, level: '2.2', max_retries: 1,
-    description: enter fastboot bootloader, summary: enter fastboot, timeout: 900}
+    description: enter fastboot bootloader, summary: enter fastboot, timeout: 900.0}
   - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '2.3', max_retries: 1,
     description: wait for udev device with board ID, summary: wait for udev device
-      with board ID, timeout: 900}
+      with board ID, timeout: 900.0}
   - {class: FastbootRebootAction, name: fastboot-reboot, level: '2.4', max_retries: 1,
     description: fastboot reboot into system, summary: attempt to fastboot reboot,
-    timeout: 900}
+    timeout: 900.0}
   - {class: ConnectAdb, name: connect-adb, level: '2.5', max_retries: 1, description: connect
-      via adb shell to the device, summary: run connection command, timeout: 900}
+      via adb shell to the device, summary: run connection command, timeout: 900.0}
   - {class: AdbOverlayUnpack, name: adb-overlay-unpack, level: '2.6', max_retries: 1,
     description: unpack the overlay over adb, summary: unpack the overlay on the remote
-      device, timeout: 900}
+      device, timeout: 900.0}
 - class: TestShellRetry
   name: lava-test-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300.0}

@@ -4,7 +4,7 @@
   max_retries: 1
   description: deploy images using guestfs
   summary: deploy images
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - class: DownloaderAction
     name: download-retry
@@ -12,10 +12,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
+      description: use http to download the file, summary: http download, timeout: 60.0,
       url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'}
 - class: BootOpenOCDRetry
   name: boot-openocd-image
@@ -23,33 +23,33 @@
   max_retries: 1
   description: boot openocd image using the command line interface
   summary: boot openocd image
-  timeout: 120
+  timeout: 120.0
   pipeline:
   - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 120}
+      command, timeout: 120.0}
   - {class: FlashOpenOCDAction, name: flash-openocd, level: '2.2', max_retries: 1,
     description: use openocd to flash the image, summary: use openocd to flash the
-      image, timeout: 120}
+      image, timeout: 120.0}
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-monitor
   summary: Retry support for Lava Test Monitoring
-  timeout: 120
+  timeout: 120.0
   pipeline:
   - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 120}
+    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 120.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180.0}

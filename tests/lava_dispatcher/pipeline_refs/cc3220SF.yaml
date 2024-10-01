@@ -4,7 +4,7 @@
   max_retries: 1
   description: deploy images using guestfs
   summary: deploy images
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - class: DownloaderAction
     name: download-retry
@@ -12,10 +12,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
+      description: use http to download the file, summary: http download, timeout: 60.0,
       url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf'}
   - class: DownloaderAction
     name: download-retry
@@ -23,10 +23,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
+      description: use http to download the file, summary: http download, timeout: 60.0,
       url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg'}
 - class: BootGDB
   name: boot-gdb
@@ -34,7 +34,7 @@
   max_retries: 1
   description: boot with gdb
   summary: boot with gdb
-  timeout: 120
+  timeout: 120.0
   pipeline:
   - class: BootGDBRetry
     name: boot-gdb-retry
@@ -42,7 +42,7 @@
     max_retries: 1
     description: boot with gdb with retry and optional docker support
     summary: boot with gdb with retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - class: ResetDevice
       name: reset-device
@@ -50,27 +50,27 @@
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
-      timeout: 120
+      timeout: 120.0
       pipeline:
       - {class: PDUReboot, name: pdu-reboot, level: 2.1.1.1, max_retries: 1, description: issue
           commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 120}
+        timeout: 120.0}
     - {class: WaitUSBSerialDeviceAction, name: wait-usb-serial, level: 2.1.2, max_retries: 1,
       description: wait for USB serial device, summary: wait for USB serial device,
-      timeout: 120}
+      timeout: 120.0}
     - {class: ConnectDevice, name: connect-device, level: 2.1.3, max_retries: 1, description: use
         the configured command to connect serial to the device, summary: run connection
-        command, timeout: 120}
+        command, timeout: 120.0}
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-monitor
   summary: Retry support for Lava Test Monitoring
-  timeout: 480
+  timeout: 480.0
   pipeline:
   - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 480}
+    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 480.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -80,6 +80,6 @@
   timeout: 30
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
       for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}

@@ -4,7 +4,7 @@
   max_retries: 1
   description: deploy images using guestfs
   summary: deploy images
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - class: DownloaderAction
     name: download-retry
@@ -12,10 +12,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
+      description: use http to download the file, summary: http download, timeout: 60.0,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
 - class: BootCMSISRetry
   name: boot-cmsis-retry
@@ -23,35 +23,35 @@
   max_retries: 1
   description: boot cmsis usb image with retry
   summary: boot cmsis usb image with retry
-  timeout: 600
+  timeout: 600.0
   pipeline:
   - {class: FlashCMSISAction, name: flash-cmsis, level: '2.1', max_retries: 1, description: flash
-      cmsis to usb mass storage, summary: flash cmsis to usb mass storage, timeout: 600}
+      cmsis to usb mass storage, summary: flash cmsis to usb mass storage, timeout: 600.0}
   - {class: WaitUSBSerialDeviceAction, name: wait-usb-serial, level: '2.2', max_retries: 1,
     description: wait for USB serial device, summary: wait for USB serial device,
-    timeout: 600}
+    timeout: 600.0}
   - {class: ConnectDevice, name: connect-device, level: '2.3', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 600}
+      command, timeout: 600.0}
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-monitor
   summary: Retry support for Lava Test Monitoring
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 180}
+    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 180.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180.0}

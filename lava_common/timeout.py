@@ -6,16 +6,18 @@
 from __future__ import annotations
 
 import datetime
-import signal
-import time
 from contextlib import contextmanager
+from signal import ITIMER_REAL, SIGALRM, setitimer
+from signal import signal as set_signal_handler
+from time import monotonic as time_monotonic
 from typing import TYPE_CHECKING
 
 from lava_common.constants import ACTION_TIMEOUT
 from lava_common.exceptions import ConfigurationError, JobError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator, Optional
+    from collections.abc import Iterator
+    from typing import Any
 
     from lava_dispatcher.action import Action
 
@@ -35,8 +37,8 @@ class Timeout:
     def __init__(
         self,
         name: str,
-        action: Optional[Action],
-        duration: int = ACTION_TIMEOUT,
+        action: Action | None,
+        duration: float = ACTION_TIMEOUT,
         exception: type[Exception] = JobError,
     ):
         self.action = action
@@ -51,7 +53,7 @@ class Timeout:
         return ACTION_TIMEOUT
 
     @classmethod
-    def parse(cls, data: dict[str, Any]) -> int:
+    def parse(cls, data: dict[str, Any]) -> float:
         """
         Parsed timeouts can be set in device configuration or device_type configuration
         and can therefore exceed the clamp.
@@ -63,10 +65,11 @@ class Timeout:
             hours=data.get("hours", 0),
             minutes=data.get("minutes", 0),
             seconds=data.get("seconds", 0),
+            milliseconds=data.get("milliseconds", 0),
         )
         if not duration:
             return Timeout.default_duration()
-        return int(duration.total_seconds())
+        return duration.total_seconds()
 
     def can_skip(self, parameters: dict[str, Any]) -> bool:
         return parameters.get("timeout", {}).get("skip", False)
@@ -76,50 +79,51 @@ class Timeout:
         if self.action is not None:
             self.action.on_timeout()
         # Raise the exception
-        duration = int(time.monotonic() - self.start)
-        raise self.exception("%s timed out after %s seconds" % (self.name, duration))
+        duration = time_monotonic() - self.start
+        raise self.exception(f"{self.name} timed out after {duration:.2g} seconds")
 
     @contextmanager
     def __call__(
-        self, parent: Optional[Action], action_max_end_time: int
+        self, parent: Action | None, action_max_end_time: float | None
     ) -> Iterator[float]:
-        self.start = time.monotonic()
+        self.start = time_monotonic()
 
         max_end_time = self.start + self.duration
         if action_max_end_time is not None:
             # action_max_end_time is None when called by the job class directly
             max_end_time = min(action_max_end_time, max_end_time)
 
-        duration = round(max_end_time - self.start)
+        duration = max_end_time - self.start
         if duration <= 0:
             # If duration is lower than 0, then the timeout should be raised now.
             # Calling signal.alarm in this case will only deactivate the alarm
             # (by passing 0 or the unsigned value).
             # Deactivate any previous alarm and set elapse_time prior to raise
-            signal.alarm(0)
+            setitimer(ITIMER_REAL, 0)
             self.elapsed_time = 0.0
             self._timed_out(None, None)
 
-        signal.signal(signal.SIGALRM, self._timed_out)
-        signal.alarm(duration)
+        set_signal_handler(SIGALRM, self._timed_out)
+        setitimer(ITIMER_REAL, duration)
 
         try:
             yield max_end_time
 
             # Restore the parent handler and timeout
             # This will be None when called by Job class
-            if parent is None:
-                signal.alarm(0)
+            if parent is None or action_max_end_time is None:
+                setitimer(ITIMER_REAL, 0)
             else:
-                signal.signal(signal.SIGALRM, parent.timeout._timed_out)
-                duration = round(action_max_end_time - time.monotonic())
-                if duration <= 0:
-                    signal.alarm(0)
+                set_signal_handler(SIGALRM, parent.timeout._timed_out)
+                duration = action_max_end_time - time_monotonic()
+                if duration <= 0.0:
+                    setitimer(ITIMER_REAL, 0)
                     parent.timeout._timed_out(None, None)
-                signal.alarm(duration)
+                else:
+                    setitimer(ITIMER_REAL, duration)
         except Exception:
             # clear the timeout alarm, the action has returned an error
-            signal.alarm(0)
+            setitimer(ITIMER_REAL, 0)
             raise
         finally:
-            self.elapsed_time = time.monotonic() - self.start
+            self.elapsed_time = time_monotonic() - self.start

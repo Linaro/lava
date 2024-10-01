@@ -4,86 +4,86 @@
   max_retries: 1
   description: deploy docker images
   summary: deploy docker
-  timeout: 240
+  timeout: 240.0
   pipeline:
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.1', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 240}
+    description: deploy device environment, summary: deploy device environment, timeout: 240.0}
   - class: OverlayAction
     name: lava-overlay
     level: '1.2'
     max_retries: 1
     description: add lava scripts during deployment for test shell use
     summary: overlay the lava support scripts
-    timeout: 240
+    timeout: 240.0
     pipeline:
     - {class: SshAuthorize, name: ssh-authorize, level: 1.2.1, max_retries: 1, description: include
         public key in overlay and authorize root user, summary: add public key to
-        authorized_keys, timeout: 240}
+        authorized_keys, timeout: 240.0}
     - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.2.2, max_retries: 1,
       description: Populate specific vland scripts for tests to lookup vlan data.,
-      summary: Add files detailing vlan configuration., timeout: 240}
+      summary: Add files detailing vlan configuration., timeout: 240.0}
     - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.2.3,
       max_retries: 1, description: add lava scripts during deployment for multinode
-        test shell use, summary: overlay the lava multinode scripts, timeout: 240}
+        test shell use, summary: overlay the lava multinode scripts, timeout: 240.0}
     - class: TestDefinitionAction
       name: test-definition
       level: 1.2.4
       max_retries: 1
       description: load test definitions into image
       summary: loading test definitions
-      timeout: 240
+      timeout: 240.0
       pipeline:
       - {class: InlineRepoAction, name: inline-repo-action, level: 1.2.4.1, max_retries: 1,
         description: apply inline test definition to the test image, summary: extract
-          inline test definition, timeout: 240}
+          inline test definition, timeout: 240.0}
       - {class: TestOverlayAction, name: test-overlay, level: 1.2.4.2, max_retries: 1,
         description: overlay test support files onto image, summary: applying LAVA
-          test overlay, timeout: 240}
+          test overlay, timeout: 240.0}
       - {class: TestInstallAction, name: test-install-overlay, level: 1.2.4.3, max_retries: 1,
         description: overlay dependency installation support files onto image, summary: applying
-          LAVA test install scripts, timeout: 240}
+          LAVA test install scripts, timeout: 240.0}
       - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.2.4.4, max_retries: 1,
         description: overlay run script onto image, summary: applying LAVA test run
-          script, timeout: 240}
+          script, timeout: 240.0}
     - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.2.5, max_retries: 1,
       description: unpack overlay into persistent NFS, summary: add test overlay to
-        NFS, timeout: 240}
+        NFS, timeout: 240.0}
 - class: BootDockerAction
   name: boot-docker
   level: '2'
   max_retries: 1
   description: boot docker image
   summary: boot docker image
-  timeout: 120
+  timeout: 120.0
   pipeline:
   - {class: CallDockerAction, name: docker-run, level: '2.1', max_retries: 1, description: call
-      docker run on the image, summary: call docker run, timeout: 120}
+      docker run on the image, summary: call docker run, timeout: 120.0}
   - {class: ExpectShellSession, name: expect-shell-connection, level: '2.2', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 120}
+    description: Wait for a shell, summary: Expect a shell prompt, timeout: 120.0}
   - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.3', max_retries: 1,
     description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 120}
+      variables action, timeout: 120.0}
 - class: TestInteractiveRetry
   name: lava-test-interactive-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-interactive
   summary: Retry support for Lava Test Interactive
-  timeout: 240
+  timeout: 240.0
   pipeline:
   - {class: TestInteractiveAction, name: lava-test-interactive, level: '3.1', max_retries: 1,
     description: Executing lava-test-interactive, summary: Lava Test Interactive,
-    timeout: 240}
+    timeout: 240.0}
 - class: TestShellRetry
   name: lava-test-retry
   level: '4'
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300.0}
 - class: FinalizeAction
   name: finalize
   level: '5'
@@ -93,6 +93,6 @@
   timeout: 30
   pipeline:
   - {class: PowerOff, name: power-off, level: '5.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '5.2', max_retries: 1, description: Check
       for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}

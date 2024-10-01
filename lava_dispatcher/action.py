@@ -146,7 +146,7 @@ class Pipeline:
         # 4. RetryAction child action timeout
         if self.parent is not None and self.parent.max_retries > 1:
             action._override_action_timeout(
-                {"seconds": self.parent.timeout.duration // self.parent.max_retries}
+                {"seconds": self.parent.timeout.duration / self.parent.max_retries}
             )
         # 5. action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):

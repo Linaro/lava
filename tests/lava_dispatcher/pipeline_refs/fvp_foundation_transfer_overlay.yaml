@@ -4,7 +4,7 @@
   max_retries: 1
   description: Download images for use with fvp
   summary: download images for use with fvp
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - class: OverlayAction
     name: lava-overlay
@@ -52,10 +52,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'http://example.com/bl1.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -63,10 +63,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz'}
   - class: DownloaderAction
     name: download-retry
@@ -74,10 +74,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'http://example.com/fip.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -85,10 +85,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'http://example.com/foundation-v8-gicv3.dtb'}
   - class: DownloaderAction
     name: download-retry
@@ -96,10 +96,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'http://example.com/Image'}
   - class: DownloaderAction
     name: download-retry
@@ -107,10 +107,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 120
+    timeout: 120.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
+      description: use http to download the file, summary: http download, timeout: 40.0,
       url: 'http://example.com/ramdisk.img'}
 - class: BootFVPAction
   name: boot-fvp
@@ -118,7 +118,7 @@
   max_retries: 1
   description: boot fvp
   summary: boot fvp
-  timeout: 420
+  timeout: 420.0
   pipeline:
   - class: BootFVPMain
     name: boot-fvp-main
@@ -126,21 +126,21 @@
     max_retries: 1
     description: boot fvp
     summary: boot fvp
-    timeout: 420
+    timeout: 420.0
     pipeline:
     - {class: CheckFVPVersionAction, name: check-fvp-version, level: 2.1.1, max_retries: 1,
       description: call docker run with fvp version entry point, summary: check fvp
-        version, timeout: 420}
+        version, timeout: 420.0}
     - {class: StartFVPAction, name: run-fvp, level: 2.1.2, max_retries: 1, description: call
-        docker run with fvp boot entry point, summary: run fvp model, timeout: 420}
+        docker run with fvp boot entry point, summary: run fvp model, timeout: 420.0}
     - {class: GetFVPSerialAction, name: fvp-serial-connect, level: 2.1.3, max_retries: 1,
       description: connect to the fvp serial connection via telnet, summary: connect
-        to the fvp serial output, timeout: 420}
+        to the fvp serial output, timeout: 420.0}
     - {class: ReadFeedback, name: read-feedback, level: 2.1.4, max_retries: 1, description: Check
         for messages on all other namespaces, summary: Read from other namespaces,
-      timeout: 420}
+      timeout: 420.0}
   - {class: ReadFeedback, name: read-feedback, level: '2.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 420}
+      for messages on all other namespaces, summary: Read from other namespaces, timeout: 420.0}
   - class: AutoLoginAction
     name: auto-login-action
     level: '2.3'
@@ -148,25 +148,25 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 420
+    timeout: 420.0
     pipeline:
     - {class: LoginAction, name: login-action, level: 2.3.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 420}
+        login action., summary: Login after boot., timeout: 420.0}
   - {class: ExpectShellSession, name: expect-shell-connection, level: '2.4', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 420}
+    description: Wait for a shell, summary: Expect a shell prompt, timeout: 420.0}
   - {class: OverlayUnpack, name: overlay-unpack, level: '2.5', max_retries: 1, description: transfer
       and unpack overlay to persistent rootfs after login, summary: transfer and unpack
-      overlay, timeout: 420}
+      overlay, timeout: 420.0}
 - class: TestShellRetry
   name: lava-test-retry
   level: '3'
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
-  timeout: 60
+  timeout: 60.0
   pipeline:
   - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 60}
+    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 60.0}
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -176,6 +176,6 @@
   timeout: 30
   pipeline:
   - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
       for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}

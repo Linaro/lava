@@ -26,16 +26,16 @@
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
-      timeout: 30
+      timeout: 30.0
       pipeline:
       - {class: PDUReboot, name: pdu-reboot, level: 1.2.2.1, max_retries: 1, description: issue
           commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 30}
+        timeout: 30.0}
     - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: 1.2.3,
       max_retries: 1, description: interrupt bootloader, summary: interrupt bootloader
-        to get an interactive shell, timeout: 30}
+        to get an interactive shell, timeout: 30.0}
     - {class: BootloaderCommandsAction, name: bootloader-commands, level: 1.2.4, max_retries: 1,
-      description: send commands to bootloader, summary: interactive bootloader, timeout: 180}
+      description: send commands to bootloader, summary: interactive bootloader, timeout: 180.0}
 - class: FinalizeAction
   name: finalize
   level: '2'
@@ -45,6 +45,6 @@
   timeout: 30
   pipeline:
   - {class: PowerOff, name: power-off, level: '2.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 15}
+      power to device, summary: send power_off command, timeout: 15.0}
   - {class: ReadFeedback, name: read-feedback, level: '2.2', max_retries: 1, description: Check
       for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}

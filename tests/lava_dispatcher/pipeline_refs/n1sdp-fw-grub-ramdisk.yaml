@@ -20,10 +20,10 @@
       max_retries: 3
       description: download with retry
       summary: download-retry
-      timeout: 300
+      timeout: 300.0
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.1.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 100,
+        description: use http to download the file, summary: http download, timeout: 100.0,
         url: 'http://example.com/index.html'}
 - class: TftpAction
   name: tftp-deploy
@@ -39,10 +39,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'http://example.com/index.html'}
   - class: DownloaderAction
     name: download-retry
@@ -50,10 +50,10 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
+      description: use http to download the file, summary: http download, timeout: 100.0,
       url: 'http://example.com/index.html'}
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay
@@ -96,22 +96,22 @@
   max_retries: 1
   description: connect and reset device
   summary: connect and reset device
-  timeout: 180
+  timeout: 180.0
   pipeline:
   - {class: ConnectDevice, name: connect-device, level: '3.1', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 180}
+      command, timeout: 180.0}
   - class: ResetDevice
     name: reset-device
     level: '3.2'
     max_retries: 1
     description: reboot or power-cycle the device
     summary: reboot the device
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: PDUReboot, name: pdu-reboot, level: 3.2.1, max_retries: 1, description: issue
         commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 180}
+      timeout: 180.0}
   - class: AutoLoginAction
     name: auto-login-action
     level: '3.3'
@@ -119,10 +119,10 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 180
+    timeout: 180.0
     pipeline:
     - {class: LoginAction, name: login-action, level: 3.3.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 180}
+        login action., summary: Login after boot., timeout: 180.0}
 - class: SecondaryShellAction
   name: secondary-shell-action
   level: '4'
@@ -140,33 +140,33 @@
   max_retries: 1
   description: main grub boot action
   summary: run grub boot from power to system
-  timeout: 300
+  timeout: 300.0
   pipeline:
   - {class: BootloaderSecondaryMedia, name: bootloader-from-media, level: '5.1', max_retries: 1,
     description: let bootloader know where to find the kernel in the image on secondary
-      media, summary: set bootloader strings for deployed media, timeout: 300}
+      media, summary: set bootloader strings for deployed media, timeout: 300.0}
   - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '5.2', max_retries: 1,
     description: substitute job data into bootloader command list, summary: replace
-      placeholders with job data, timeout: 300}
+      placeholders with job data, timeout: 300.0}
   - {class: ConnectDevice, name: connect-device, level: '5.3', max_retries: 1, description: use
       the configured command to connect serial to the device, summary: run connection
-      command, timeout: 300}
+      command, timeout: 300.0}
   - class: ResetDevice
     name: reset-device
     level: '5.4'
     max_retries: 1
     description: reboot or power-cycle the device
     summary: reboot the device
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: PDUReboot, name: pdu-reboot, level: 5.4.1, max_retries: 1, description: issue
         commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 300}
+      timeout: 300.0}
   - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '5.5', max_retries: 1,
     description: interrupt bootloader, summary: interrupt bootloader to get an interactive
-      shell, timeout: 300}
+      shell, timeout: 300.0}
   - {class: BootloaderCommandsAction, name: bootloader-commands, level: '5.6', max_retries: 1,
-    description: send commands to bootloader, summary: interactive bootloader, timeout: 300}
+    description: send commands to bootloader, summary: interactive bootloader, timeout: 300.0}
   - class: AutoLoginAction
     name: auto-login-action
     level: '5.7'
@@ -174,10 +174,10 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 300
+    timeout: 300.0
     pipeline:
     - {class: LoginAction, name: login-action, level: 5.7.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 300}
+        login action., summary: Login after boot., timeout: 300.0}
 - class: FinalizeAction
   name: finalize
   level: '6'
@@ -187,6 +187,6 @@
   timeout: 30
   pipeline:
   - {class: PowerOff, name: power-off, level: '6.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
+      power to device, summary: send power_off command, timeout: 10.0}
   - {class: ReadFeedback, name: read-feedback, level: '6.2', max_retries: 1, description: Check
       for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}
