@@ -67,9 +67,9 @@ The **callbacks** section supports list of the following options:
   of the data and possible options are as following:
 
   * **minimal** This will provide basic job info such as job id, status,
-    submit_time, start_time, end_time, submitter_username,
-    failure_comment, priority, description, actual_device_id, definition and
-    metadata.
+    submit_time, start_time, end_time, submitter_username, submitter_email,
+    failure_comment, priority, description, actual_device_id, definition,
+    health_check and metadata.
   * **logs** In addition to minimal data this will also attach the job log
     output in the url encoded format
   * **results** In addition to minimal data this will also attach the job
