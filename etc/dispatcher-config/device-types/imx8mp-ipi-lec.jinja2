@@ -1,0 +1,12 @@
+#
+# I-Pi SMARC IMX8M Plus
+#
+# An I-Pi SMARC Plus carrier board paired with a LEC-IMX8MP SMARC module.
+#
+
+{% extends 'imx8m-common.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set root_device = '/dev/ttymxc2' %}
+{% set console_device = 'ttymxc2,115200 earlycon=ec_imx6q,0x30880000' %}
