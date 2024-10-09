@@ -50,10 +50,11 @@ actions:
             0x00000000
           command: JLinkExe 
           address: {{ load_address|default("0x00000000") }}
+          processor: {{ processor|default("MCIMXRT1052") }}
+          supported_core_types: {{ supported_core_types }}
           erase_command: {{ erase_command|default(["erase"]) }}
           reset_command: {{ reset_command|default(["r"]) }}
           options:
-          - '-device MCIMXRT1052'
           - '-if SWD'
           - '-speed 4000'
 {% endblock body -%}

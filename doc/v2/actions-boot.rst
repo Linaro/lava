@@ -927,13 +927,13 @@ Example Configuration:
 
   {% extends 'base-nxp-mcu.jinja2' %}
   {% set usb_vendor_id = '1366' %}
-  {% set usb_product_id = '1015' %}
-  {% set device_name = 'MKW36A512XXX4' %}
+  {% set usb_product_id = '1024' %}
+  {% set processor = 'MIMXRT1189XXX8' %}
+  {% set supported_core_types = ['M33', 'M7'] %}
   {% set erase_command = ['erase', 'r', 'connect'] %}
   {% set reset_command = ['r'] %}
   {% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
   {% block jlink_options %}
-  - '-device {{device_name}}'
   - '-if {{target_interface|default("SWD")}}'
   - '-speed {{ speed_ti|default(4000)}}'
   {% endblock jlink_options %}
@@ -942,6 +942,21 @@ Example Configuration:
 
 .. note:: You can configure the `erase_command` (default: ["erase"]) and `reset_command` (default: ["r"]) parameters for each device type. 
   These parameters are mandatory for the jlink boot action, refer to the ``base-nxp-mcu.jinja2`` template for reference.
+  The `supported_core_types` parameter in the device type definition is optional (default = None). 
+  It is used by JLink to connect to the board in cases where the board has multiple cores, such as with the M33 and M7 cores. 
+  By default, the connection is made using the first core in the list, which in this case is the M33. 
+  To connect to the second core (e.g., M7), you need to use the `coretype` parameter(optional) in the JLink boot method.
+
+  .. code-block:: yaml
+
+    - boot:
+        method: jlink
+        prompts : ['SHELL>>']
+        coretype : "M7"
+        commands :
+          - loadfile {test}
+        timeout:
+          minutes: 2
 
 Device configuration
 ---------------------

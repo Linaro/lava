@@ -67,13 +67,13 @@ class FlashJLinkAction(Action):
 
     def validate(self):
         super().validate()
-        boot = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
-        jlink_binary = boot["command"]
+        params = self.job.device["actions"]["boot"]["methods"]["jlink"]["parameters"]
+        jlink_binary = params["command"]
         # check version of jlink
         self.version(jlink_binary)
         # prepare jlink command
-        options = boot.get("options", [])
-        self.command_maker(jlink_binary, options)
+        options = params.get("options", [])
+        self.command_maker(jlink_binary, options, params)
 
     def version(self, binary):
         try:
@@ -92,9 +92,29 @@ class FlashJLinkAction(Action):
         except FileNotFoundError:
             raise JobError("JLink is not installed")
 
-    def command_maker(self, jlink_binary, options):
+    def command_maker(self, jlink_binary, options, params):
         ### create JlinkExe command and add it to a namespace ###
         self.base_command = [jlink_binary]
+        processor_name = params.get("processor")
+        if processor_name:
+            self.base_command.append("-device")
+            supported_core_types = params.get("supported_core_types")
+            if supported_core_types:
+                if isinstance(supported_core_types, list):
+                    # If a specific core type is provided in parameters, modify the option accordingly
+                    # Get coretype if exist else get supported_core_types[0]
+                    coretype = self.parameters.get("coretype", supported_core_types[0])
+                    if coretype not in supported_core_types:
+                        self.errors = f"[coretype = {coretype}] Not supported by current device (supported_core_types = {supported_core_types})."
+                    device_name = f"{processor_name}_{coretype}"
+                    self.base_command.append(device_name)
+                else:
+                    self.errors = f"Invalid device-type definition, supported_core_types parameter needs to be a list."
+            else:
+                self.base_command.append(processor_name)
+        else:
+            self.errors = "Invalid device-type definition, missing processor parameter"
+
         for option in options:
             self.base_command.extend(shlex.split(option))
         self.base_command.extend(["-autoconnect", "1", "-NoGui", "1"])

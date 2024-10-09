@@ -1,0 +1,44 @@
+device_type: mimxrt1180-evk
+job_name: health-check
+timeouts:
+  job:
+    minutes: 5
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+actions:
+- deploy:
+    to : tmpfs
+    images :
+      test :
+          url: https://myserver.com/binaries/evkmimxrt1189_shell_cm33.hex
+
+- boot:
+    method: jlink
+    prompts : ['SHELL>>']
+    coretype : "M36"
+    commands :
+      - loadfile {test}
+      - sleep 1000
+      - r0
+      - r1
+    timeout:
+      minutes: 2
+
+- test:
+    interactive:
+    - name: check-jlink
+      prompts:
+       - "SHELL>> "
+      script:
+      - command: "help"
+        name: help1
+        successes:
+        - message: "Usage:"
+    timeout:
+      minutes: 2
+

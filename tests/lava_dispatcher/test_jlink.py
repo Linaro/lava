@@ -27,6 +27,9 @@ class JLinkFactory(Factory):
     def create_rw610bga_job_multiple_flash(self, filename):
         return self.create_job("rw610bga-fr01.jinja2", filename)
 
+    def create_mimxrt1180_coretype_not_supported(self, filename):
+        return self.create_job("mimxrt1180-evk-01.jinja2", filename)
+
 
 @patch("time.sleep", Mock())
 class TestJLinkAction(LavaDispatcherTestCase):
@@ -97,4 +100,20 @@ class TestJLinkAction(LavaDispatcherTestCase):
             job.validate()
         self.assertEqual(
             str(context.exception), "Invalid job data: ['[JLink] board_id unset']\n"
+        )
+
+    @patch("subprocess.run")
+    def test_coretype_not_supported(self, mock_run):
+        job = self.factory.create_mimxrt1180_coretype_not_supported(
+            "sample_jobs/jlink-flash-wrong-coretype.yaml"
+        )
+        mock_run.return_value = MagicMock(
+            returncode=1,
+            stdout="SEGGER J-Link Commander V7.94b (Compiled Dec 13 2023 17:05:47)",
+        )
+        with self.assertRaises(JobError) as context:
+            job.validate()
+        self.assertEqual(
+            str(context.exception),
+            "Invalid job data: [\"[coretype = M36] Not supported by current device (supported_core_types = ['M33', 'M7']).\"]\n",
         )
