@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
-import math
 import os
 import pathlib
 import subprocess  # nosec - verified.
@@ -41,10 +40,12 @@ from lava_dispatcher.utils.filesystem import (
     copy_to_lxc,
     lava_lxc_home,
 )
-from lava_dispatcher.utils.network import requests_retry
+from lava_dispatcher.utils.http import requests_retry
 from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
     from lava_dispatcher.job import Job
 
 
@@ -147,7 +148,6 @@ class DownloadHandler(Action):
         self.url = url
         self.key = key
         self.size = -1
-
         self.path = path
         # Store the files in a sub-directory to keep the path unique.
         if uniquify:
@@ -260,38 +260,7 @@ class DownloadHandler(Action):
         raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
 
     def run(self, connection, max_end_time):
-        def progress_unknown_total(downloaded_sz, last_val, last_update):
-            """Compute progress when the size is unknown"""
-            condition = (
-                downloaded_sz >= last_val + 25 * 1024 * 1024
-                and time.monotonic() - last_update >= 0.1
-                or time.monotonic() - last_update >= 1
-            )
-            return (
-                condition,
-                downloaded_sz,
-                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
-            )
-
-        def progress_known_total(downloaded_sz, last_val, last_update):
-            """Compute progress when the size is known"""
-            percent = math.floor(downloaded_sz / float(self.size) * 100)
-            condition = (
-                percent >= last_val + 5 and time.monotonic() - last_update >= 0.1
-            )
-            return (
-                condition,
-                percent,
-                "progress %3d %% (%d MB)"
-                % (percent, int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
-            )
-
         connection = super().run(connection, max_end_time)
-        # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
 
         # Create a fresh directory if the old one has been removed by a previous cleanup
         # (when retrying inside a RetryAction)
@@ -318,7 +287,7 @@ class DownloadHandler(Action):
         md5 = hashlib.md5() if md5sum is not None else None
         sha256 = hashlib.sha256() if sha256sum is not None else None
         sha512 = hashlib.sha512() if sha512sum is not None else None
-        hash_constructors = tuple(h for h in (md5, sha256, sha512) if h is not None)
+        hash_updaters = tuple(h.update for h in (md5, sha256, sha512) if h is not None)
 
         if os.path.isdir(self.fname):
             raise JobError("Download '%s' is a directory, not a file" % self.fname)
@@ -328,19 +297,7 @@ class DownloadHandler(Action):
         self.logger.info("downloading %s", self.params["url"])
         self.logger.debug("saving as %s", self.fname)
 
-        downloaded_size = 0
         beginning = time.monotonic()
-        # Choose the progress bar (is the size known?)
-        if self.size <= 0:
-            self.logger.debug("total size: unknown")
-            last_value = -25 * 1024 * 1024
-            progress = progress_unknown_total
-        else:
-            self.logger.debug(
-                "total size: %d (%d MB)", self.size, int(self.size / (1024 * 1024))
-            )
-            last_value = -5
-            progress = progress_known_total
 
         decompress_command = None
         if compression:
@@ -357,28 +314,14 @@ class DownloadHandler(Action):
         elif not self.params.get("compression", False):
             self.logger.debug("No compression specified")
 
-        last_update = time.monotonic()  # time for rate limiting the progress output
-
-        def update_progress(buff):
-            nonlocal downloaded_size, last_update, last_value, md5, sha256, sha512
-            downloaded_size += len(buff)
-            (printing, new_value, msg) = progress(
-                downloaded_size, last_value, last_update
-            )
-            if printing:
-                last_update = time.monotonic()
-                last_value = new_value
-                self.logger.debug(msg)
-
-            for hash_constructor in hash_constructors:
-                hash_constructor.update(buff)
+        progress_updater = DownloadProgress(self, hash_updaters)
 
         if compression and decompress_command:
             try:
                 with open(self.fname, "wb") as dwnld_file:
                     self.run_download_decompression_subprocess(
                         dwnld_file,
-                        update_progress,
+                        progress_updater,
                         decompress_command,
                     )
             except OSError as exc:
@@ -388,25 +331,26 @@ class DownloadHandler(Action):
         else:
             with open(self.fname, "wb") as dwnld_file:
                 for buff in self.reader():
-                    update_progress(buff)
+                    progress_updater.update_progress(buff)
                     dwnld_file.write(buff)
 
         # Log the download speed
         ending = time.monotonic()
         self.logger.info(
-            "%d MB downloaded in %0.2f s (%0.2f MB/s)",
-            downloaded_size / (1024 * 1024),
+            "%d MiB downloaded in %0.2f s (%0.2f MiB/s)",
+            progress_updater.downloaded_size / (1024 * 1024),
             round(ending - beginning, 2),
-            round(downloaded_size / (1024 * 1024 * (ending - beginning)), 2),
+            round(
+                progress_updater.downloaded_size / (1024 * 1024 * (ending - beginning)),
+                2,
+            ),
         )
 
-        # If the remote server uses "Content-Encoding: gzip", this calculation will be wrong
-        # because requests will decompress the file on the fly, creating a larger file than
-        # LAVA expects.
-        if self.size > 0 and self.size != downloaded_size:
+        if self.size > 0 and self.size != progress_updater.downloaded_size:
             raise InfrastructureError(
-                "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
-                % (downloaded_size, self.size)
+                "Download finished (%i bytes) but was not "
+                "expected size (%i bytes), check your networking."
+                % (progress_updater.downloaded_size, self.size)
             )
 
         # set the dynamic data into the context
@@ -477,12 +421,12 @@ class DownloadHandler(Action):
 
         self.results = {
             "label": self.key,
-            "size": downloaded_size,
+            "size": progress_updater.downloaded_size,
         }
         return connection
 
     def run_download_decompression_subprocess(
-        self, dwnld_file, update_progress, decompress_command
+        self, dwnld_file, progress_updater: DownloadProgress, decompress_command
     ) -> None:
         with subprocess.Popen(
             [decompress_command],
@@ -491,7 +435,7 @@ class DownloadHandler(Action):
             stderr=subprocess.PIPE,
         ) as proc:
             for buff in self.reader():
-                update_progress(buff)
+                progress_updater.update_progress(buff)
                 try:
                     proc.stdin.write(buff)
                 except BrokenPipeError as exc:
@@ -515,6 +459,75 @@ class DownloadHandler(Action):
                 )
                 self.logger.error(exit_error_msg)
                 raise JobError(exit_error_msg)
+
+
+class DownloadProgress:
+    def __init__(
+        self,
+        download_action: DownloadHandler,
+        hash_updaters: Sequence[Callable[[bytes], None]],
+    ):
+        self.hash_updaters = hash_updaters
+
+        self.action = download_action
+        self.logger = download_action.logger
+        self.downloaded_size = 0
+        self.size = -1
+        self.last_progress_log_time = time.monotonic()
+        self.last_progress_log_val = 0
+
+        self.log_progress_method: Callable[[], None] | None = None
+
+    def log_progress_unknown_total(self) -> None:
+        current_time = time.monotonic()
+        if (
+            self.downloaded_size >= self.last_progress_log_val + 25 * 2**20
+            and current_time - self.last_progress_log_time >= 0.1
+            or current_time - self.last_progress_log_time >= 1
+        ):
+            self.logger.debug("progress %d MiB", self.downloaded_size // (2**20))
+            self.last_progress_log_time = current_time
+            self.last_progress_log_val = self.downloaded_size
+
+    def log_progress_known_total(self) -> None:
+        current_time = time.monotonic()
+        percent = (self.downloaded_size * 100) // self.size
+        if (
+            percent >= self.last_progress_log_val + 5
+            and current_time - self.last_progress_log_val >= 0.1
+        ):
+            self.logger.debug(
+                "progress %3d %% (%d MiB)",
+                percent,
+                self.downloaded_size // (2**20),
+            )
+            self.last_progress_log_time = current_time
+            self.last_progress_log_val = percent
+
+    def update_progress(self, buff: bytes) -> None:
+        self.downloaded_size += len(buff)
+        for hash_update in self.hash_updaters:
+            hash_update(buff)
+
+        if self.log_progress_method is not None:
+            self.log_progress_method()
+        else:
+            new_log_progress_method = self.init_progress_method()
+            self.log_progress_method = new_log_progress_method
+            new_log_progress_method()
+
+    def init_progress_method(self) -> Callable[[], None]:
+        self.size = self.action.size
+        if self.size <= 0:
+            self.logger.debug("total size: unknown")
+            self.last_progress_log_val = -25 * 1024 * 1024
+            return self.log_progress_unknown_total
+        else:
+            self.logger.debug(
+                "total size: %d (%d MiB)", self.size, self.size // (2**20)
+            )
+            self.last_progress_log_val = -5
+            return self.log_progress_known_total
 
 
 class FileDownloadAction(DownloadHandler):
@@ -560,71 +573,25 @@ class HttpDownloadAction(DownloadHandler):
 
     def validate(self):
         super().validate()
-        res = None
-        try:
-            http_cache = self.job.parameters["dispatcher"].get(
-                "http_url_format_string", ""
-            )
+        http_cache = self.job.parameters["dispatcher"].get("http_url_format_string", "")
 
-            use_cache = True
-            if self.params:
-                use_cache = self.params.get("use_cache", True)
+        use_cache = True
+        if self.params:
+            use_cache = self.params.get("use_cache", True)
 
-            if http_cache and use_cache:
-                self.logger.info("Using caching service: '%s'", http_cache)
-                try:
-                    self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
-                except TypeError as exc:
-                    self.logger.error("Invalid http_url_format_string: '%s'", exc)
-                    self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
-                    return
+        if http_cache and use_cache:
+            self.logger.info("Using caching service: '%s'", http_cache)
 
-            headers = {"Accept-Encoding": ""}
-            if self.params and "headers" in self.params:
-                headers.update(self.params["headers"])
-            self.logger.debug("Validating that %s exists", self.url.geturl())
-            # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
-            res = requests_retry().head(
-                self.url.geturl(),
-                allow_redirects=True,
-                headers=headers,
-                timeout=HTTP_DOWNLOAD_TIMEOUT,
-            )
-            if res.status_code != requests.codes.OK:
-                # try using (the slower) get for services with broken redirect support
-                self.logger.debug("Using GET because HEAD is not supported properly")
-                res.close()
-                # Like for HEAD, we need get a size, so disable gzip
-                res = requests_retry().get(
-                    self.url.geturl(),
-                    allow_redirects=True,
-                    stream=True,
-                    headers=headers,
-                    timeout=HTTP_DOWNLOAD_TIMEOUT,
-                )
-                if res.status_code != requests.codes.OK:
-                    self.errors = "Resource unavailable at '%s' (%d)" % (
-                        self.url.geturl(),
-                        res.status_code,
-                    )
-                    return
-
-            self.size = int(res.headers.get("content-length", -1))
-        except requests.Timeout:
-            self.logger.error("Request timed out")
-            self.errors = "'%s' timed out" % (self.url.geturl())
-        except requests.RequestException as exc:
-            self.logger.error("Resource not available")
-            self.errors = "Unable to get '%s': %s" % (self.url.geturl(), str(exc))
-        finally:
-            if res is not None:
-                res.close()
+            try:
+                self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
+            except TypeError as exc:
+                self.logger.error("Invalid http_url_format_string: '%s'", exc)
+                self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
+                return
 
     def reader(self):
         res = None
         try:
-            # FIXME: When requests 3.0 is released, use the enforce_content_length
-            # parameter to raise an exception the file is not fully downloaded
             headers = None
             if self.params and "headers" in self.params:
                 headers = self.params["headers"]
@@ -636,12 +603,12 @@ class HttpDownloadAction(DownloadHandler):
                 timeout=HTTP_DOWNLOAD_TIMEOUT,
             )
             if res.status_code != requests.codes.OK:
-                # This is an Infrastructure error because the validate function
-                # checked that the file does exist.
-                raise InfrastructureError(
-                    "Unable to download '%s'" % (self.url.geturl())
-                )
+                raise JobError("Unable to download '%s'" % (self.url.geturl()))
+            self.size = int(res.headers.get("content-length", -1))
             yield from res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE)
+            # Prevent extra download size check as
+            # enforce_content_length already did that
+            self.size = -1
         except requests.RequestException as exc:
             raise InfrastructureError(
                 "Unable to download '%s': %s" % (self.url.geturl(), str(exc))

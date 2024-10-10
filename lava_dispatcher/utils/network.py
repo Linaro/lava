@@ -14,12 +14,8 @@ import os
 import random
 import socket
 import subprocess  # nosec - internal use.
-from contextvars import ContextVar
 
 import netifaces
-import requests
-from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
 
 from lava_common.constants import (
     VALID_DISPATCHER_IP_PROTOCOLS,
@@ -120,47 +116,3 @@ def get_free_port(dispatcher_config):
             return port
     # fallthrough single default nbd port as per services file
     return 10809
-
-
-requests_session = ContextVar("requests_session")
-
-
-def requests_retry():
-    with contextlib.suppress(LookupError):
-        return requests_session.get()
-
-    session = requests.Session()
-    # Retry 15 times over a period a bit longer than 10 minutes.
-    retries = 15
-    backoff_factor = 0.1
-    status_forcelist = [
-        # See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-        408,  # Request Timeout
-        413,  # Payload Too Large
-        425,  # Too Early
-        429,  # Too Many Requests
-        500,  # Internal Server Error
-        502,  # Bad Gateway
-        503,  # Service Unavailable
-        504,  # Gateway Timeout
-        507,  # Insufficient Storage
-        # Unofficial codes
-        420,  # Enhance Your Calm
-        430,  # Request Header Fields Too Large
-        509,  # Bandwidth Limit Exceeded
-        529,  # Site is overloaded
-        598,  # (Informal convention) Network read timeout error
-    ]
-    retry = Retry(
-        total=retries,
-        read=retries,
-        connect=retries,
-        status=retries,
-        status_forcelist=status_forcelist,
-        backoff_factor=backoff_factor,
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount("http://", adapter)
-    session.mount("https://", adapter)
-    requests_session.set(session)
-    return session

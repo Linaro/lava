@@ -452,36 +452,6 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertEqual(action.size, -1)
 
     def test_http_download_validate(self):
-        class DummyResponseNOK:
-            status_code = 404
-
-            def close(self):
-                pass
-
-        class DummyResponseOK:
-            status_code = requests.codes.OK
-            headers = {"content-length": "4212"}
-
-            def close(self):
-                pass
-
-        def dummyhead(url, allow_redirects, headers, timeout):
-            self.assertIs(allow_redirects, True)
-            self.assertEqual(headers, {"Accept-Encoding": ""})
-            if url == "https://example.com/kernel":
-                return DummyResponseOK()
-            elif url == "https://example.com/dtb":
-                return DummyResponseNOK()
-            else:
-                raise ValueError
-
-        def dummyget(url, allow_redirects, stream, headers, timeout):
-            self.assertIs(allow_redirects, True)
-            self.assertIs(stream, True)
-            self.assertEqual(headers, {"Accept-Encoding": ""})
-            self.assertEqual(url, "https://example.com/dtb")
-            return DummyResponseOK()
-
         job = self.create_simple_job(job_parameters={"dispatcher": {}})
         # HEAD is working
         action = HttpDownloadAction(
@@ -493,10 +463,10 @@ class TestDowload(LavaDispatcherTestCase):
             "namespace": "common",
         }
         action.params = action.parameters["image"]
-        with patch("requests.head", dummyhead), patch("requests.get", dummyget):
-            action.validate()
+        action.validate()
         self.assertEqual(action.errors, [])
-        self.assertEqual(action.size, 4212)
+        # enforce_content_length handles size integrity
+        self.assertEqual(action.size, -1)
 
         # Only GET works
         action = HttpDownloadAction(
@@ -508,68 +478,10 @@ class TestDowload(LavaDispatcherTestCase):
             "namespace": "common",
         }
         action.params = action.parameters["image"]
-        with patch("requests.head", dummyhead), patch("requests.get", dummyget):
-            action.validate()
+        action.validate()
         self.assertEqual(action.errors, [])
-        self.assertEqual(action.size, 4212)
-
-        # 404
-        def response404(*args, **kwargs):
-            print(args)
-            print(str(kwargs))
-            return DummyResponseNOK()
-
-        action = HttpDownloadAction(
-            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
-        )
-        action.section = "deploy"
-        action.parameters = {
-            "image": {"url": "https://example.com/kernel"},
-            "namespace": "common",
-        }
-        action.params = action.parameters["image"]
-        with patch("requests.head", response404), patch("requests.get", response404):
-            action.validate()
-        self.assertEqual(
-            action.errors,
-            ["Resource unavailable at 'https://example.com/kernel' (404)"],
-        )
-
-        # Raising exceptions
-        def raisinghead(url, allow_redirects, headers, timeout):
-            raise requests.Timeout()
-
-        action = HttpDownloadAction(
-            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
-        )
-        action.section = "deploy"
-        action.parameters = {
-            "image": {"url": "https://example.com/kernel"},
-            "namespace": "common",
-        }
-        action.params = action.parameters["image"]
-        with patch("requests.head", raisinghead):
-            action.validate()
-        self.assertEqual(action.errors, ["'https://example.com/kernel' timed out"])
-
-        def raisinghead2(url, allow_redirects, headers, timeout):
-            raise requests.RequestException("an error occurred")
-
-        action = HttpDownloadAction(
-            job, "image", "/path/to/file", urlparse("https://example.com/kernel")
-        )
-        action.section = "deploy"
-        action.parameters = {
-            "image": {"url": "https://example.com/kernel"},
-            "namespace": "common",
-        }
-        action.params = action.parameters["image"]
-        with patch("requests.head", raisinghead2):
-            action.validate()
-        self.assertEqual(
-            action.errors,
-            ["Unable to get 'https://example.com/kernel': an error occurred"],
-        )
+        # enforce_content_length handles size integrity
+        self.assertEqual(action.size, -1)
 
     def test_file_download_reader(self):
         tmpr_dir_path = self.create_temporary_directory()

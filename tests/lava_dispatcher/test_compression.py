@@ -36,11 +36,6 @@ def setup_responses() -> RequestsMock:
             url=download_url,
             body=compression_file_contents,
         )
-        requests_mock.add(
-            responses.HEAD,
-            url=download_url,
-            headers={"Content-Length": str(len(compression_file_contents))},
-        )
 
     return requests_mock
 
@@ -90,7 +85,8 @@ class TestDecompression(LavaDispatcherTestCase):
             outputsha = sha256hash.hexdigest()
             outputsize = os.path.getsize(os.path.join(httpaction.path, output))
             self.assertIsInstance(httpaction.size, int)
-            self.assertIsNot(httpaction.size, -1)
+            # enforce_content_length handles size integrity
+            self.assertEqual(httpaction.size, -1)
             if httpaction.key == "testzip":
                 # zipfiles are NOT decompressed on the fly
                 self.assertEqual(outputmd5, md5zipsum)
@@ -98,8 +94,8 @@ class TestDecompression(LavaDispatcherTestCase):
                 self.assertEqual(outputsize, zipsize)
                 # zipfiles aren't decompressed, so shouldn't change name
                 self.assertEqual(outputfile, "10MB.zip")
-                # we know it's 10MB.zip for download size test
-                self.assertEqual(httpaction.size, 10109)
+                # enforce_content_length handles size integrity
+                self.assertEqual(httpaction.size, -1)
             else:
                 self.assertEqual(outputmd5, md5sum)
                 self.assertEqual(outputsha, sha256sum)
