@@ -1211,7 +1211,11 @@ def _create_pipeline_job(
                 )
 
     # handle queue timeout.
-    queue_timeout = None
+    queue_timeout = (
+        round(settings.QUEUE_TIMEOUT_HOURS * 3600)
+        if settings.QUEUE_TIMEOUT_HOURS
+        else None
+    )
     if "timeouts" in job_data and "queue" in job_data["timeouts"]:
         queue_timeout = Timeout.parse(job_data["timeouts"]["queue"])
 
