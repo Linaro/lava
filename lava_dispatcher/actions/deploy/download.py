@@ -5,9 +5,6 @@
 #         Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-# This class is used for all downloads, including images and individual files for tftp.
-# python2 only
 from __future__ import annotations
 
 import contextlib
