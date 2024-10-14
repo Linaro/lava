@@ -579,6 +579,27 @@ It is possible to set ``LANGUAGE_CODE`` to another value than the default
 ``en-us``, but this will only affect administration interface as LAVA does
 not support translation to other languages.
 
+Configuring default queue timeout
+=================================
+
+The LAVA scheduler by default won't cancel any request pending in the queue, unless
+user specify queue timeout in job definition.
+Admin could set default queue timeout (Unit: hours) in ``/etc/lava-server/settings.conf`` for
+per instance to avoid too many queued jobs due to device maintenance/bad:
+
+.. code-block:: python
+
+ QUEUE_TIMEOUT_HOURS: 168,
+
+User can still override this default queue timeout if specify queue timeout
+directly in job definition:
+
+.. code-block:: python
+
+ timeouts:
+   queue:
+     hours: 336
+
 .. _admin_control:
 
 Controlling the Django Admin Interface
