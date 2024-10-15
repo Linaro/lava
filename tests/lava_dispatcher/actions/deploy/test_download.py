@@ -702,9 +702,6 @@ class TestDowload(LavaDispatcherTestCase):
                 },
                 "label": "dtb",
                 "size": 10,
-                "md5sum": "fc5e038d38a57032085441e7fe7010b0",
-                "sha256sum": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
-                "sha512sum": "1594244d52f2d8c12b142bb61f47bc2eaf503d6d9ca8480cae9fcf112f66e4967dc5e8fa98285e36db8af1b8ffa8b84cb15e0fbcf836c3deb803c13f37659a60",
             },
         )
         self.assertEqual(
@@ -715,9 +712,6 @@ class TestDowload(LavaDispatcherTestCase):
                         "dtb": {
                             "decompressed": False,
                             "file": "%s/dtb/dtb" % str(tmp_dir_path),
-                            "md5": "fc5e038d38a57032085441e7fe7010b0",
-                            "sha256": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
-                            "sha512": "1594244d52f2d8c12b142bb61f47bc2eaf503d6d9ca8480cae9fcf112f66e4967dc5e8fa98285e36db8af1b8ffa8b84cb15e0fbcf836c3deb803c13f37659a60",
                         },
                         "file": {"dtb": "%s/dtb/dtb" % str(tmp_dir_path)},
                     }
@@ -767,9 +761,6 @@ class TestDowload(LavaDispatcherTestCase):
                 },
                 "label": "rootfs",
                 "size": 68,
-                "md5sum": "0107d527acf9b8de628b7b4d103c89d1",
-                "sha256sum": "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",
-                "sha512sum": "d0850c3e0c45bdf74995907a04f69806a070d79a4f0b2dd82d6b96adafdbfd85ce6c1daaff916ff089bdf9b04eba7805041c49afecdbeabca69fef802e60de35",
             },
         )
 
@@ -781,9 +772,6 @@ class TestDowload(LavaDispatcherTestCase):
                         "rootfs": {
                             "decompressed": True,
                             "file": "%s/rootfs/rootfs" % str(tmp_dir_path),
-                            "md5": "0107d527acf9b8de628b7b4d103c89d1",
-                            "sha256": "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",
-                            "sha512": "d0850c3e0c45bdf74995907a04f69806a070d79a4f0b2dd82d6b96adafdbfd85ce6c1daaff916ff089bdf9b04eba7805041c49afecdbeabca69fef802e60de35",
                         },
                         "file": {"rootfs": "%s/rootfs/rootfs" % str(tmp_dir_path)},
                     }
