@@ -35,7 +35,7 @@ The following steps are required to authorize LAVA for API access to AVH.
 
 1. Generate AVH API token.
 
-   Log in to AVH with your Arm account at https://app.avh.arm.com. Navigate to
+   Log in to AVH with your account at https://app.avh.corellium.com. Navigate to
    your profile by clicking on your name at the top right corner. Change to API
    tab. Then click GENERATE button to generate your AVH API Token.
 
