@@ -236,6 +236,9 @@ CALLBACK_TIMEOUT = 5
 # Default statement timeout in milliseconds
 STATEMENT_TIMEOUT = 30000
 
+# Default queue timeout in hours
+QUEUE_TIMEOUT_HOURS = None
+
 # Default length value for all tables
 DEFAULT_TABLE_LENGTH = 25
 
