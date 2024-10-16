@@ -10,7 +10,10 @@ import uuid
 from subprocess import CalledProcessError
 from typing import TYPE_CHECKING
 
-from lava_common.device_mappings import add_device_container_mapping
+from lava_common.device_mappings import (
+    add_device_container_mapping,
+    remove_device_container_mappings,
+)
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, InternalObject
 from lava_dispatcher.utils.decorator import retry
@@ -160,6 +163,9 @@ class DockerDriver(NullDriver):
         self.docker_options = []
         self.docker_run_options = []
         self.copied_files = []
+        self.job_dir = action.job.parameters.get("dispatcher", {}).get(
+            "prefix", ""
+        ) + str(action.job.job_id)
 
     def get_container_name(self):
         return (
@@ -195,6 +201,8 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name, docker)
             docker.run(cmd, self.action)
         finally:
+            remove_device_container_mappings(self.job_dir)
+            self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
     def get_output(self, cmd):
@@ -208,6 +216,8 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name, docker)
             return docker.get_output(cmd, self.action)
         finally:
+            remove_device_container_mappings(self.job_dir)
+            self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
     def maybe_copy_to_container(self, src):

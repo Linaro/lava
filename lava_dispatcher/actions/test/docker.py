@@ -11,6 +11,7 @@ import shlex
 from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_DOWNLOADS
+from lava_common.device_mappings import remove_device_container_mappings
 from lava_common.exceptions import LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
@@ -258,6 +259,8 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         try:
             super().run(shell_connection, max_end_time)
         finally:
+            remove_device_container_mappings(prefix + self.job.job_id)
+            self.logger.debug("Removed device container mappings")
             # finish the container
             shell_connection.finalise()
             docker.destroy()

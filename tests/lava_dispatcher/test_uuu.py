@@ -470,7 +470,7 @@ class TestUUUbootAction(
 class TestUUUActionDriver(LavaDispatcherTestCase):
     def create_action(self, uuu_device_parameters):
         action = OptionalContainerUuuAction(
-            self.create_simple_job(job_parameters={"dispatcher": "foo"})
+            self.create_simple_job(job_parameters={"dispatcher": {}})
         )
         action.job.device = {
             "actions": {
