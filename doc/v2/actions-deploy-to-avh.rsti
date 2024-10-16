@@ -19,7 +19,7 @@ Example definition:
       to: avh
       options:
         model: rpi4b
-        api_endpoint: https://app.avh.arm.com/api
+        api_endpoint: https://app.avh.corellium.com/api
         project_name: "Default Project"
       timeout:
         minutes: 30
@@ -63,7 +63,7 @@ Other models that capable to run Linux should work too.
 api_endpoint
 ------------
 
-(optional): AVH API endpoint defaults to https://app.avh.arm.com/api.
+(optional): AVH API endpoint defaults to https://app.avh.corellium.com/api.
 
 project_name
 ------------

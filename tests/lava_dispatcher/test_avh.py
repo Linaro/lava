@@ -165,7 +165,7 @@ class TestAvhActions(LavaDispatcherTestCase):
     @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance_console",
         return_value=InstanceConsoleEndpoint(
-            url="wss://app.avh.arm.com/console/q2Q4vZ0nJv"
+            url="wss://app.avh.corellium.com/console/q2Q4vZ0nJv"
         ),
     )
     @patch(
@@ -191,7 +191,7 @@ class TestAvhActions(LavaDispatcherTestCase):
         "lava_dispatcher.actions.boot.avh.CallAvhAction.get_namespace_data",
         return_value={
             "model": "rpi4b",
-            "api_endpoint": "https://app.avh.arm.com/api",
+            "api_endpoint": "https://app.avh.corellium.com/api",
             "project_name": "Default Project",
             "api_token": "avh_api_token",
             "project_id": "d59db33d-27bd-4b22-878d-49e4758a648e",
