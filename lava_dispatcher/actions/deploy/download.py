@@ -292,9 +292,6 @@ class DownloadHandler(Action):
 
         connection = super().run(connection, max_end_time)
         # self.cookies = self.job.context.config.lava_cookies  # FIXME: work out how to restore
-        md5 = hashlib.md5()  # nosec - not being used for cryptography.
-        sha256 = hashlib.sha256()
-        sha512 = hashlib.sha512()
 
         # Create a fresh directory if the old one has been removed by a previous cleanup
         # (when retrying inside a RetryAction)
@@ -317,6 +314,11 @@ class DownloadHandler(Action):
         md5sum = self.params.get("md5sum")
         sha256sum = self.params.get("sha256sum")
         sha512sum = self.params.get("sha512sum")
+
+        md5 = hashlib.md5() if md5sum is not None else None
+        sha256 = hashlib.sha256() if sha256sum is not None else None
+        sha512 = hashlib.sha512() if sha512sum is not None else None
+        hash_constructors = tuple(h for h in (md5, sha256, sha512) if h is not None)
 
         if os.path.isdir(self.fname):
             raise JobError("Download '%s' is a directory, not a file" % self.fname)
@@ -367,9 +369,9 @@ class DownloadHandler(Action):
                 last_update = time.monotonic()
                 last_value = new_value
                 self.logger.debug(msg)
-            md5.update(buff)
-            sha256.update(buff)
-            sha512.update(buff)
+
+            for hash_constructor in hash_constructors:
+                hash_constructor.update(buff)
 
         if compression and decompress_command:
             try:
@@ -414,21 +416,6 @@ class DownloadHandler(Action):
         self.set_namespace_data(
             action="download-action", label="file", key=self.key, value=self.fname
         )
-        self.set_namespace_data(
-            action="download-action", label=self.key, key="md5", value=md5.hexdigest()
-        )
-        self.set_namespace_data(
-            action="download-action",
-            label=self.key,
-            key="sha256",
-            value=sha256.hexdigest(),
-        )
-        self.set_namespace_data(
-            action="download-action",
-            label=self.key,
-            key="sha512",
-            value=sha512.hexdigest(),
-        )
 
         # handle archive files
         archive = self.params.get("archive")
@@ -452,9 +439,12 @@ class DownloadHandler(Action):
                 value=target_fname_path,
             )
 
-        self._check_checksum("md5", md5.hexdigest(), md5sum)
-        self._check_checksum("sha256", sha256.hexdigest(), sha256sum)
-        self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
+        if md5 is not None:
+            self._check_checksum("md5", md5.hexdigest(), md5sum)
+        if sha256 is not None:
+            self._check_checksum("sha256", sha256.hexdigest(), sha256sum)
+        if sha512 is not None:
+            self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
         if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
@@ -488,21 +478,6 @@ class DownloadHandler(Action):
         self.results = {
             "label": self.key,
             "size": downloaded_size,
-            "md5sum": str(
-                self.get_namespace_data(
-                    action="download-action", label=self.key, key="md5"
-                )
-            ),
-            "sha256sum": str(
-                self.get_namespace_data(
-                    action="download-action", label=self.key, key="sha256"
-                )
-            ),
-            "sha512sum": str(
-                self.get_namespace_data(
-                    action="download-action", label=self.key, key="sha512"
-                )
-            ),
         }
         return connection
 
