@@ -71,7 +71,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 1200,
-      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img'}
+      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
@@ -82,7 +82,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 1200,
-      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img'}
+      url: 'http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.5'

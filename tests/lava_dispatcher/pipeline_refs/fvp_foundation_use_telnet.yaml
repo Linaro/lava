@@ -67,7 +67,10 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 120,
-      url: 'http://example.com/foundation-v8-gicv3.dtb'}
+      url: 'https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz'}
+    - {class: AppendOverlays, name: append-overlays, level: 1.3.2, max_retries: 1,
+      description: append overlays to an image, summary: append overlays to an image,
+      timeout: 30}
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
@@ -89,7 +92,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 120,
-      url: 'http://example.com/Image'}
+      url: 'http://example.com/foundation-v8-gicv3.dtb'}
   - class: DownloaderAction
     name: download-retry
     level: '1.6'
@@ -100,7 +103,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 120,
-      url: 'http://example.com/ramdisk.img'}
+      url: 'http://example.com/Image'}
   - class: DownloaderAction
     name: download-retry
     level: '1.7'
@@ -111,10 +114,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 120,
-      url: 'https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz'}
-    - {class: AppendOverlays, name: append-overlays, level: 1.7.2, max_retries: 1,
-      description: append overlays to an image, summary: append overlays to an image,
-      timeout: 30}
+      url: 'http://example.com/ramdisk.img'}
 - class: BootFVPAction
   name: boot-fvp
   level: '2'

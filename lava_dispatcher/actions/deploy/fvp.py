@@ -46,10 +46,10 @@ class FVPDeploy(Action):
         super().validate()
         if "images" not in self.parameters.keys():
             raise JobError("No 'images' specified on FVP deploy")
-        for image in self.parameters["images"]:
-            if "overlays" in self.parameters["images"][image]:
+        for image_key, image_params in self.parameters["images"].items():
+            if "overlays" in image_params:
                 if self.parameters.get("format", None) == "disk":
-                    if "partition" not in self.parameters["images"][image]:
+                    if "partition" not in image_params:
                         self.errors = "Missing partition value for 'overlays' value for FVPDeploy."
 
     def populate(self, parameters):
@@ -61,7 +61,7 @@ class FVPDeploy(Action):
         if "images" in parameters:
             if not isinstance(parameters["images"], dict):
                 raise JobError("'deploy.images' should be a dictionary")
-            for k in sorted(parameters["images"].keys()):
+            for k in parameters["images"].keys():
                 self.pipeline.add_action(
                     DownloaderAction(
                         self.job,

@@ -144,7 +144,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/boot-imx8mq.img'}
+      url: 'https://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/u-boot-imx8mq.imx'}
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
@@ -155,7 +155,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'https://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/u-boot-imx8mq.imx'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/boot-imx8mq.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
@@ -166,7 +166,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/system.img.gz'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vbmeta-imx8mq.img'}
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
@@ -177,7 +177,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 2700,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vbmeta-imx8mq.img'}
+      url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/system.img.gz'}
   - class: DownloaderAction
     name: download-retry
     level: '3.7'

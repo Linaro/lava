@@ -644,7 +644,7 @@ class BootloaderCommandOverlay(Action):
             action="bootloader-overlay", label=self.method, key="commands", value=subs
         )
         self.logger.debug("substitutions:")
-        for k in sorted(substitutions.keys()):
+        for k in substitutions.keys():
             self.logger.debug("- %s: %s", k, substitutions[k])
         self.logger.info("Parsed boot commands:")
         for sub in subs:
