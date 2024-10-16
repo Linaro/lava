@@ -96,6 +96,9 @@ def test_run(action, mocker):
     docker_wait = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     docker_wait_file = mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait_file")
     docker_prepare = mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
+    remove_device_container_mappings = mocker.patch(
+        "lava_dispatcher.actions.test.docker.remove_device_container_mappings"
+    )
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     action.validate()
@@ -165,6 +168,9 @@ def test_run(action, mocker):
     # the docker shell gets finalized
     docker_connection.finalise.assert_called()
 
+    # the device container mapping file gets deleted
+    remove_device_container_mappings.assert_called_once()
+
     # the docker container gets destroyed
     docker_destroy.assert_called()
 
@@ -227,6 +233,7 @@ def test_docker_test_shell_run(first_test_action, mocker):
     mocker.patch("lava_dispatcher.utils.udev.get_udev_devices", return_value=[])
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     mocker.patch("lava_dispatcher.actions.test.shell.TestShellAction.run")
+    mocker.patch("lava_dispatcher.actions.test.docker.remove_device_container_mappings")
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     connection = MagicMock()
@@ -257,6 +264,7 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
     mocker.patch("lava_dispatcher.utils.udev.get_udev_devices", return_value=[])
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.wait")
     mocker.patch("lava_dispatcher.actions.test.shell.TestShellAction.run")
+    mocker.patch("lava_dispatcher.actions.test.docker.remove_device_container_mappings")
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
     connection = MagicMock()
