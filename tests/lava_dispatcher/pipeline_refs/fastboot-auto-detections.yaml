@@ -91,7 +91,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.8.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
-      url: 'http://images.validation.linaro.org/functional-test-images/nexus4/system.img'}
+      url: 'http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.9', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 900}
   - class: DownloaderAction
@@ -104,7 +104,7 @@
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.10.1, max_retries: 1,
       description: use http to download the file, summary: http download, timeout: 900,
-      url: 'http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img'}
+      url: 'http://images.validation.linaro.org/functional-test-images/nexus4/system.img'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.11', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 900}
   - class: FastbootFlashOrderAction
