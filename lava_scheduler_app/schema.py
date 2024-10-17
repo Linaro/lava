@@ -490,6 +490,7 @@ _device_schema = Schema(
         "character_delays": dict,
         "commands": _device_commands_schema(),
         "constants": dict,
+        "fastboot_auto_detection": bool,
         "adb_serial_number": str,
         "fastboot_serial_number": str,
         "fastboot_options": [str],

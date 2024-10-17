@@ -202,10 +202,11 @@ class FastbootBootAction(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
         if "fastboot_options" not in self.job.device:
             self.errors = "device fastboot options missing"
         elif not isinstance(self.job.device["fastboot_options"], list):
@@ -246,10 +247,11 @@ class FastbootRebootAction(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
-        elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+        if not self.job.device.get("fastboot_auto_detection", False):
+            if "fastboot_serial_number" not in self.job.device:
+                self.errors = "device fastboot serial number missing"
+            elif self.job.device["fastboot_serial_number"] == "0000000000":
+                self.errors = "device fastboot serial number unset"
         if "fastboot_options" not in self.job.device:
             self.errors = "device fastboot options missing"
         elif not isinstance(self.job.device["fastboot_options"], list):
