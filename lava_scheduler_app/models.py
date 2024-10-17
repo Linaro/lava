@@ -136,6 +136,9 @@ class Architecture(models.Model):
 
 
 class ProcessorFamily(models.Model):
+    class Meta:
+        verbose_name_plural = "Processor families"
+
     name = models.CharField(
         primary_key=True,
         verbose_name="Processor Family",
