@@ -15,7 +15,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
 - class: BootPyOCD
   name: boot-pyocd-image

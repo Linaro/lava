@@ -118,7 +118,7 @@
     timeout: 900
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 900,
+      description: use http to download the file, summary: http download, timeout: 300,
       url: 'http://images.validation.linaro.org/functional-test-images/hikey/ptable-aosp-8g.img'}
   - class: DownloaderAction
     name: download-retry
@@ -129,7 +129,7 @@
     timeout: 900
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 900,
+      description: use http to download the file, summary: http download, timeout: 300,
       url: 'http://images.validation.linaro.org/functional-test-images/hikey/boot.img.xz'}
   - class: DownloaderAction
     name: download-retry
@@ -140,7 +140,7 @@
     timeout: 900
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 900,
+      description: use http to download the file, summary: http download, timeout: 300,
       url: 'http://images.validation.linaro.org/functional-test-images/hikey/system.img.xz'}
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action

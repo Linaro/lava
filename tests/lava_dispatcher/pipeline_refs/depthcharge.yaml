@@ -15,7 +15,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://images.validation.linaro.org/functional-test-images/bbb/zImage'}
   - class: DownloaderAction
     name: download-retry
@@ -26,7 +26,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz'}
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay

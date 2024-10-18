@@ -23,7 +23,7 @@
       timeout: 300
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.1.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 300,
+        description: use http to download the file, summary: http download, timeout: 100,
         url: 'http://example.com/index.html'}
 - class: TftpAction
   name: tftp-deploy
@@ -42,7 +42,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://example.com/index.html'}
   - class: DownloaderAction
     name: download-retry
@@ -53,7 +53,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://example.com/index.html'}
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay

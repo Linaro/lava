@@ -96,7 +96,7 @@
     timeout: 600
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 600,
+      description: use http to download the file, summary: http download, timeout: 200,
       url: 'http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/MLO'}
   - class: DownloaderAction
     name: download-retry
@@ -107,7 +107,7 @@
     timeout: 600
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 600,
+      description: use http to download the file, summary: http download, timeout: 200,
       url: 'http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/u-boot.img'}
   - {class: CopyToLxcAction, name: copy-to-lxc, level: '3.3', max_retries: 1, description: copy
       files to lxc, summary: copy to lxc, timeout: 600}
@@ -238,7 +238,7 @@
     timeout: 1500
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 7.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 1500,
+      description: use http to download the file, summary: http download, timeout: 500,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz'}
   - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '7.5',
     max_retries: 1, description: apply overlay to sparse image, summary: apply overlay

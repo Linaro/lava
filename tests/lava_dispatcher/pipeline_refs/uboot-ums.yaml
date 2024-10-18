@@ -15,7 +15,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-master/imx7s-warp/70/rpb/rpb-console-image-imx7s-warp-20180131170405-70.rootfs.sdcard.gz'}
   - class: OverlayAction
     name: lava-overlay

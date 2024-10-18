@@ -449,8 +449,8 @@ class TestTimeouts(LavaDispatcherTestCase):
             test_shell.connection_timeout.duration, 240
         )  # job specifies 4 minutes
         self.assertEqual(
-            test_shell.timeout.duration, 300
-        )  # job (test action block) specifies 5 minutes
+            test_shell.timeout.duration, 100
+        )  # job (test action block) specifies 5 minutes with 3 times retry.
         self.assertEqual(deploy.timeout.duration, 120)  # job specifies 2 minutes
         self.assertEqual(deploy.connection_timeout.duration, Timeout.default_duration())
         self.assertNotEqual(
@@ -483,7 +483,7 @@ class TestTimeouts(LavaDispatcherTestCase):
                         self.assertEqual(check_action.connection_timeout.duration, 20)
 
         test_shell = job.pipeline.find_action(TestShellAction)
-        self.assertEqual(test_shell.timeout.duration, 300)
+        self.assertEqual(test_shell.timeout.duration, 100)
         auto = job.pipeline.find_action(AutoLoginAction)
         self.assertEqual(auto.connection_timeout.duration / 60, 12)
 

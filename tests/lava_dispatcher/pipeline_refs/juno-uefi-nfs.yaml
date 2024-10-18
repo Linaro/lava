@@ -23,7 +23,7 @@
       timeout: 600
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.1.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 600,
+        description: use http to download the file, summary: http download, timeout: 200,
         url: 'https://releases.linaro.org/members/arm/platforms/15.12/juno-latest-oe-uefi.zip'}
     - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: 1.1.2,
       max_retries: 1, description: create lxc udev rule action, summary: create lxc
@@ -84,7 +84,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz'}
   - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: '2.2', max_retries: 1,
     description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava

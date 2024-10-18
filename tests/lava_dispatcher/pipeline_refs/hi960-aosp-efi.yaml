@@ -118,7 +118,7 @@
     timeout: 7200
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 7200,
+      description: use http to download the file, summary: http download, timeout: 2400,
       url: 'http://images.validation.linaro.org/snapshots.linaro.org/android/pmwg/android-hikey960-linaro-4.9-pmwg/36/boot.img.xz'}
   - class: DownloaderAction
     name: download-retry
@@ -129,7 +129,7 @@
     timeout: 7200
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 7200,
+      description: use http to download the file, summary: http download, timeout: 2400,
       url: 'http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/cache.img.xz'}
   - class: DownloaderAction
     name: download-retry
@@ -140,7 +140,7 @@
     timeout: 7200
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 7200,
+      description: use http to download the file, summary: http download, timeout: 2400,
       url: 'http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/userdata.img.xz'}
   - class: DownloaderAction
     name: download-retry
@@ -151,7 +151,7 @@
     timeout: 7200
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 7200,
+      description: use http to download the file, summary: http download, timeout: 2400,
       url: 'http://images.validation.linaro.org/testdata.validation.linaro.org/hikey960-pmwg/system.img.xz'}
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action

@@ -86,7 +86,7 @@
     timeout: 2400
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 2400,
+      description: use http to download the file, summary: http download, timeout: 800,
       url: 'http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz'}
   - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.6', max_retries: 1,
     description: deploy device environment, summary: deploy device environment, timeout: 2400}
@@ -99,7 +99,7 @@
     timeout: 2400
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 2400,
+      description: use http to download the file, summary: http download, timeout: 800,
       url: 'http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/linaro-buster-developer-dragonboard-410c-359.img.gz'}
   - {class: ApplyOverlaySparseImage, name: apply-overlay-sparse-image, level: '1.8',
     max_retries: 1, description: apply overlay to sparse image, summary: apply overlay

@@ -63,7 +63,7 @@
       timeout: 1800
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.2.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 1800,
+        description: use http to download the file, summary: http download, timeout: 600,
         url: 'https://example.com/rpi4b/nand'}
     - {class: ApplyOverlayImage, name: apply-overlay-image, level: 1.1.3, max_retries: 1,
       description: apply overlay via guestfs to the test image, summary: apply overlay
@@ -77,7 +77,7 @@
       timeout: 1800
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.4.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 1800,
+        description: use http to download the file, summary: http download, timeout: 600,
         url: 'https://example.com/rpi4b/kernel'}
     - class: DownloaderAction
       name: download-retry
@@ -88,7 +88,7 @@
       timeout: 1800
       pipeline:
       - {class: HttpDownloadAction, name: http-download, level: 1.1.5.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 1800,
+        description: use http to download the file, summary: http download, timeout: 600,
         url: 'https://example.com/rpi4b/devicetree'}
 - class: BootAvhAction
   name: boot-avh

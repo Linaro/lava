@@ -36,6 +36,28 @@ class RetryAction(Action):
         super().__init__(job)
         self.sleep = 1
 
+    def __set_parameters__(self, data):
+        super().__set_parameters__(data)
+
+        if "failure_retry" in self.parameters and "repeat" in self.parameters:
+            raise JobError("Unable to use repeat and failure_retry, use a repeat block")
+        if "failure_retry" in self.parameters:
+            self.max_retries = self.parameters["failure_retry"]
+        elif "constants" in self.job.device:
+            device_max_retry = self.get_constant("failure_retry", "")
+            if device_max_retry:
+                device_max_retry = int(device_max_retry)
+                if device_max_retry > self.max_retries:
+                    self.max_retries = device_max_retry
+                # In case of a boot section, used boot_retry if it exists
+                boot_retry = self.get_constant("boot_retry", "")
+                if self.section == "boot" and boot_retry:
+                    self.max_retries = int(boot_retry)
+        if "failure_retry_interval" in self.parameters:
+            self.sleep = self.parameters["failure_retry_interval"]
+        if "repeat" in self.parameters:
+            self.max_retries = self.parameters["repeat"]
+
     def validate(self):
         """
         The reasoning here is that the RetryAction should be in charge of an internal pipeline
@@ -49,9 +71,6 @@ class RetryAction(Action):
             )
 
     def run(self, connection, max_end_time):
-        self.sleep = self.parameters.get("failure_retry_interval", self.sleep)
-        parent_end_time = max_end_time
-
         retries = 0
         has_failed_exc: Optional[Exception] = None
         has_parent_timed_out = False
@@ -83,16 +102,11 @@ class RetryAction(Action):
                     raise
 
                 # Stop retrying if parent timed out
-                if time.monotonic() >= parent_end_time:
+                if time.monotonic() + self.sleep >= max_end_time:
                     has_parent_timed_out = True
                     break
-
                 # Wait some time before retrying
                 time.sleep(self.sleep)
-                # Restart max_end_time or the retry on a timeout fails with duration < 0
-                current_time = time.monotonic()
-                max_end_time += current_time - self.timeout.start
-                self.timeout.start = current_time
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
                     self.level,
@@ -110,6 +124,8 @@ class RetryAction(Action):
             if has_parent_timed_out:
                 exception_text = (
                     f"No time left for remaining {self.max_retries - retries} retries. "
+                    "You should either increase block timeout or decrease named action "
+                    "timeout. "
                 ) + exception_text
             # Use the same exception class as the last failed
             # run exception.

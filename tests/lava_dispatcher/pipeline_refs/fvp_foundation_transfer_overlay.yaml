@@ -55,7 +55,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://example.com/bl1.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -66,7 +66,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz'}
   - class: DownloaderAction
     name: download-retry
@@ -77,7 +77,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://example.com/fip.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -88,7 +88,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://example.com/foundation-v8-gicv3.dtb'}
   - class: DownloaderAction
     name: download-retry
@@ -99,7 +99,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://example.com/Image'}
   - class: DownloaderAction
     name: download-retry
@@ -110,7 +110,7 @@
     timeout: 120
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.7.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 120,
+      description: use http to download the file, summary: http download, timeout: 40,
       url: 'http://example.com/ramdisk.img'}
 - class: BootFVPAction
   name: boot-fvp

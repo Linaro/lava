@@ -15,7 +15,7 @@
     timeout: 180
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 180,
+      description: use http to download the file, summary: http download, timeout: 60,
       url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'}
 - class: BootOpenOCDRetry
   name: boot-openocd-image

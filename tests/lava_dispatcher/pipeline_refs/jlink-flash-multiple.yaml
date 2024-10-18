@@ -15,7 +15,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'https://myserver.com/binaries/test_unit_FSAbstraction.elf'}
   - class: DownloaderAction
     name: download-retry
@@ -26,7 +26,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'https://myserver.com/binaries/rw61xw_raw_cpu1_a1.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -37,7 +37,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'https://myserver.com/binaries/rw61xn_raw_cpu2_ble_a1.bin'}
   - class: DownloaderAction
     name: download-retry
@@ -48,7 +48,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'https://myserver.com/binaries/rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin'}
 - class: BootJLinkRetry
   name: boot-jlink-image

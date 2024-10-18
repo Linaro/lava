@@ -123,8 +123,7 @@ class Pipeline:
         # parameters.
         if parameters is None:
             parameters = self.parameters
-        # if the action has an internal pipeline, initialise that here.
-        action.populate(parameters)
+        action.parameters = parameters
 
         # Compute the timeout
         global_timeouts = []
@@ -144,7 +143,12 @@ class Pipeline:
         )
         # 3. action block timeout
         action._override_action_timeout(parameters.get("timeout"))
-        # 4. action block named action timeout
+        # 4. RetryAction child action timeout
+        if self.parent is not None and self.parent.max_retries > 1:
+            action._override_action_timeout(
+                {"seconds": self.parent.timeout.duration // self.parent.max_retries}
+            )
+        # 5. action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(
                 action_block_timeouts.get(action.name),
@@ -157,7 +161,10 @@ class Pipeline:
             get_lastest_subdict_value(global_timeouts, "connections", action.name)
         )
 
-        action.parameters = parameters
+        # If the action has an internal pipeline, initialise that here. Child
+        # action timeout should be propagated from parent to child, parent
+        # timeout should be set first.
+        action.populate(parameters)
 
     def describe(self):
         """
@@ -467,23 +474,6 @@ class Action:
                 self.parameters["connection_timeout"]
             )
 
-        # only unit tests should have actions without a pointer to the job.
-        if "failure_retry" in self.parameters and "repeat" in self.parameters:
-            raise JobError("Unable to use repeat and failure_retry, use a repeat block")
-        if "failure_retry" in self.parameters:
-            self.max_retries = self.parameters["failure_retry"]
-        elif "constants" in self.job.device:
-            device_max_retry = self.get_constant("failure_retry", "")
-            if device_max_retry:
-                device_max_retry = int(device_max_retry)
-                if device_max_retry > self.max_retries:
-                    self.max_retries = device_max_retry
-                # In case of a boot section, used boot_retry if it exists
-                boot_retry = self.get_constant("boot_retry", "")
-                if self.section == "boot" and boot_retry:
-                    self.max_retries = int(boot_retry)
-        if "repeat" in self.parameters:
-            self.max_retries = self.parameters["repeat"]
         if "character_delays" in self.job.device:
             self.character_delay = self.job.device["character_delays"].get(
                 self.section, 0

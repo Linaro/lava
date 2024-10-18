@@ -31,7 +31,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz'}
   - {class: MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd, level: '1.5',
     max_retries: 1, description: mount vexpress usb msd, summary: mount vexpress usb
@@ -81,7 +81,7 @@
     timeout: 300
     pipeline:
     - {class: HttpDownloadAction, name: http-download, level: 2.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 300,
+      description: use http to download the file, summary: http download, timeout: 100,
       url: 'http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf'}
   - {class: MountVExpressMassStorageDevice, name: mount-vexpress-usbmsd, level: '2.5',
     max_retries: 1, description: mount vexpress usb msd, summary: mount vexpress usb
