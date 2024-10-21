@@ -77,11 +77,17 @@
       border-radius: 4px;
       padding: 3px;
       z-index: 0;
+      max-width: 14%;
     }
     #actions-list-div {
       overflow: auto;
       overscroll-behavior: contain;
       max-height: 75vh;
+    }
+    @media (max-width: 1580px) {
+      #actions-table {
+        display: none;
+      }
     }
 
     .tr-danger {
@@ -233,7 +239,7 @@
     It can only be downloaded:
 <a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></p>
 </div>
-<div id="actions-table" class="hidden-xs hidden-sm">
+<div id="actions-table">
   <h4>Pipeline <span id="actions-table-arrow" class="glyphicon glyphicon-arrow-down" aria-hidden="true"></span></h4>
   <div id="actions-list-div">
     <ul class="list-unstyled" id="actions-list" style="display: block;">
