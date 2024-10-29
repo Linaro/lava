@@ -146,11 +146,17 @@ Following the code flow
 +---------------------------------------+---------------------------------------------------+
 | lava_dispatcher/parser.py             | YAML Parser to create the Job object              |
 +---------------------------------------+---------------------------------------------------+
-| ....actions/deploy/                   | Handlers for different deployment strategies      |
+| ....actions/deploy_strategy.py        | Selectors for different deployment strategies     |
 +---------------------------------------+---------------------------------------------------+
-| ....actions/boot/                     | Handlers for different boot strategies            |
+| ....actions/boot_strategy.py          | Selectors for different boot strategies           |
 +---------------------------------------+---------------------------------------------------+
-| ....actions/test/                     | Handlers for different LavaTestShell strategies   |
+| ....actions/test_strategy.py          | Selectors for different LavaTestShell strategies  |
++---------------------------------------+---------------------------------------------------+
+| ....actions/deploy/                   | Actions for different deployment strategies       |
++---------------------------------------+---------------------------------------------------+
+| ....actions/boot/                     | Actions for different boot strategies             |
++---------------------------------------+---------------------------------------------------+
+| ....actions/test/                     | Actions for different LavaTestShell strategies    |
 +---------------------------------------+---------------------------------------------------+
 | ....actions/deploy/image.py           | DeployImages strategy creates DeployImagesAction  |
 +---------------------------------------+---------------------------------------------------+
@@ -310,7 +316,9 @@ to contain only classes supporting git repositories when only git repositories
 are in use for that job.
 
 The list of available strategies can be determined in the codebase from the
-module imports in the ``strategies.py`` file for each action type.
+``action`` method imports in the ``actions/*_strategy.py`` files for each action
+type. The strategy selector classes are separated from Action classes to make
+Actions imports lazy.
 
 This results in more classes but a cleaner (and more predictable) pipeline
 construction.
