@@ -13,32 +13,10 @@ from lava_common.constants import LAVA_DOWNLOADS
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils.docker import DockerRun
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Downloads(Deployment):
-    """
-    Strategy class for a download deployment.
-    Just downloads files, and that's it.
-    """
-
-    name = "downloads"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DownloadsAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "downloads":
-            return False, '"to" parameter is not "downloads"'
-        return True, "accepted"
 
 
 class DownloadsAction(DownloadAction):

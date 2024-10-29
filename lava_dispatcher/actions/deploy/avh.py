@@ -23,27 +23,11 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.utils.decorator import retry
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Avh(Deployment):
-    name = "avh"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return AvhRetryAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "avh" not in device["actions"]["deploy"]["methods"]:
-            return False, "'avh' not in the device configuration deploy methods"
-        if parameters["to"] != "avh":
-            return False, "'to' parameter is not 'avh'"
-        return True, "accepted"
 
 
 class AvhRetryAction(RetryAction):

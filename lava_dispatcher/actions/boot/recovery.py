@@ -9,24 +9,10 @@ from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import Boot
 from lava_dispatcher.power import PowerOff, PowerOn
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class RecoveryBoot(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return RecoveryBootAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "recovery":
-            return False, 'boot "method" was not "recovery"'
-
-        return True, "accepted"
 
 
 class RecoveryBootAction(Action):

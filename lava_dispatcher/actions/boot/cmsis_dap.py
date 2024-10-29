@@ -13,42 +13,13 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.udev import WaitDevicePathAction, WaitUSBSerialDeviceAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class CMSIS(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootCMSISRetry(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "cmsis-dap" not in device["actions"]["boot"]["methods"]:
-            return False, '"cmsis-dap" is not in the device configuration boot methods'
-        if parameters["method"] != "cmsis-dap":
-            return False, '"method" was not "cmsis-dap"'
-        if "board_id" not in device:
-            return False, 'device has no "board_id" configured'
-        if "parameters" not in device["actions"]["boot"]["methods"]["cmsis-dap"]:
-            return (
-                False,
-                '"parameters" was not in the device boot method configuration for "cmsis-dap"',
-            )
-        if (
-            "usb_mass_device"
-            not in device["actions"]["boot"]["methods"]["cmsis-dap"]["parameters"]
-        ):
-            return (
-                False,
-                '"usb_mass_device" was not in the device configuration "cmsis-dap" boot method parameters',
-            )
-        return True, "accepted"
 
 
 class BootCMSISRetry(RetryAction):

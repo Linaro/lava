@@ -5,39 +5,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectShell
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession
-
-if TYPE_CHECKING:
-    from lava_dispatcher.action import Action
-    from lava_dispatcher.job import Job
-
-
-class SecondaryShell(Boot):
-    """
-    SecondaryShell method can be used by a variety of other boot methods to
-    read from the kernel console independently of the shell interaction
-    required to interact with the bootloader and test shell.
-    It is also the updated way to connect to the primary console.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return SecondaryShellAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "new_connection":
-            return False, "new_connection not in method"
-        if "method" not in parameters:
-            return False, "no boot method"
-        return True, "accepted"
 
 
 class SecondaryShellAction(BootHasMixin, RetryAction):

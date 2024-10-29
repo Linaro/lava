@@ -7,19 +7,11 @@ from __future__ import annotations
 
 import json
 import re
-from typing import TYPE_CHECKING
 
 from lava_common.exceptions import MultinodeProtocolTimeoutError, TestError
 from lava_common.timeout import Timeout
-from lava_dispatcher.actions.test.interactive import TestInteractive
-from lava_dispatcher.actions.test.monitor import TestMonitor
-from lava_dispatcher.actions.test.shell import TestShell, TestShellAction
-from lava_dispatcher.logical import LavaTest
+from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-
-if TYPE_CHECKING:
-    from lava_dispatcher.action import Action
-    from lava_dispatcher.job import Job
 
 # TODO: This is a workaround allowing to run multinode jobs with "monitors"
 # and "interactive" test actions - simple scenarios, without cross-device
@@ -30,60 +22,6 @@ if TYPE_CHECKING:
 # from which individual test action implementations would inherit. In the
 # meantime, this is a small and localized workaround enabling multinode
 # for those test actions ahead of heavy refactors above.
-
-
-def get_subaction_class(parameters):
-    if "monitors" in parameters:
-        return TestMonitor
-    if "interactive" in parameters:
-        return TestInteractive
-    return TestShell
-
-
-class MultinodeTestShell(LavaTest):
-    """
-    LavaTestShell Strategy object for Multinode
-    """
-
-    # higher priority than the plain TestShell
-    priority = 2
-
-    @classmethod
-    def action(cls, job: Job, parameters) -> Action:
-        if "monitors" in parameters:
-            return TestMonitor.action(job, parameters)
-        if "interactive" in parameters:
-            return TestInteractive.action(job, parameters)
-        return MultinodeTestAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "role" in parameters:
-            if MultinodeProtocol.name in parameters:
-                if "target_group" in parameters[MultinodeProtocol.name]:
-                    return True, "accepted"
-                else:
-                    return (
-                        False,
-                        '"target_group" was not in parameters for %s'
-                        % MultinodeProtocol.name,
-                    )
-            else:
-                return False, "%s was not in parameters" % MultinodeProtocol.name
-        return False, '"role" not in parameters'
-
-    @classmethod
-    def needs_deployment_data(cls, parameters):
-        """Some, not all, deployments will want deployment_data"""
-        return get_subaction_class(parameters).needs_deployment_data(parameters)
-
-    @classmethod
-    def needs_overlay(cls, parameters):
-        return get_subaction_class(parameters).needs_overlay(parameters)
-
-    @classmethod
-    def has_shell(cls, parameters):
-        return get_subaction_class(parameters).has_shell(parameters)
 
 
 class MultinodeMixin:

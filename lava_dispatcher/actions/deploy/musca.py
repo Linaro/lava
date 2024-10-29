@@ -20,37 +20,12 @@ from lava_dispatcher.actions.deploy.vemsd import (
     UnmountVExpressMassStorageDevice,
 )
 from lava_dispatcher.connections.serial import DisconnectDevice
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.udev import wait_udev_changed_event, wait_udev_event
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Musca(Deployment):
-    """
-    Strategy class for a booting Arm Musca devices.
-    Downloads an image and deploys to the board.
-    """
-
-    name = "musca"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return MuscaAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "musca" not in device["actions"]["deploy"]["methods"]:
-            return False, '"musca" was not in the device configuration deploy methods'
-        if "to" not in parameters:
-            return False, '"to" was not in parameters'
-        if parameters["to"] != "musca":
-            return False, '"to" was not "musca"'
-        if "board_id" not in device:
-            return False, '"board_id" is not in the device configuration'
-        return True, "accepted"
 
 
 class MuscaAction(RetryAction):

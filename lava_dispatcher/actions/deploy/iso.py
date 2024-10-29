@@ -15,7 +15,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayGuest
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.filesystem import copy_out_files, prepare_install_base
 from lava_dispatcher.utils.network import dispatcher_ip
@@ -79,28 +78,6 @@ class DeployIsoAction(Action):
             self.pipeline.add_action(ApplyOverlayGuest(self.job))
         if self.test_needs_deployment(parameters):
             self.pipeline.add_action(DeployDeviceEnvironment(self.job))
-
-
-class DeployIso(Deployment):
-    name = "iso"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DeployIsoAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "image" not in device["actions"]["deploy"]["methods"]:
-            return False, '"image" is not in the device configuration deploy methods'
-        if "to" in parameters and parameters["to"] == "iso-installer":
-            if "iso" in parameters:
-                if "installation_size" in parameters["iso"]:
-                    return True, "accepted"
-                else:
-                    return False, '"installation_size" was not in the iso parameters'
-            else:
-                return False, '"iso" was not in the parameters'
-        return False, '"to" was not in parameters, or "to" was not "iso-installer"'
 
 
 class IsoEmptyImage(Action):

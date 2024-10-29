@@ -12,7 +12,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
@@ -105,19 +105,3 @@ class FlasherAction(Action):
             self.run_cmd(cmds[0], error_msg="Unable to flash the device", cwd=self.path)
 
         return connection
-
-
-class Flasher(Deployment):
-    name = "flasher"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return FlasherRetryAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "flasher" not in device["actions"]["deploy"]["methods"]:
-            return False, "'flasher' not in the device configuration deploy methods"
-        if parameters["to"] != "flasher":
-            return False, '"to" parameter is not "flasher"'
-        return True, "accepted"

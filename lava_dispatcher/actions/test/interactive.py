@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import time
-from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -20,49 +19,10 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.logical import LavaTest, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
-
-
-@nottest
-class TestInteractive(LavaTest):
-    """
-    TestInteractive Strategy object
-    """
-
-    @classmethod
-    def action(cls, job: Job, parameters) -> Action:
-        return TestInteractiveRetry(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        required_parms = ["name", "prompts", "script"]
-        if "interactive" in parameters:
-            for script in parameters["interactive"]:
-                if not all([x for x in required_parms if x in script]):
-                    return (
-                        False,
-                        "missing a required parameter from %s" % required_parms,
-                    )
-            return True, "accepted"
-        return False, '"interactive" not in parameters'
-
-    @classmethod
-    def needs_deployment_data(cls, parameters):
-        return False
-
-    @classmethod
-    def needs_overlay(cls, parameters):
-        return False
-
-    @classmethod
-    def has_shell(cls, parameters):
-        return False
 
 
 @nottest

@@ -8,8 +8,6 @@
 # imported by the parser to populate the list of subclasses.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayTftp,
@@ -19,35 +17,6 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.logical import Deployment
-
-if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
-
-
-class Nfs(Deployment):
-    """
-    Strategy class for a NFS deployment.
-    Downloads rootfs and deploys to NFS server on dispatcher
-    """
-
-    name = "nfs"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return NfsAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "nfs":
-            return False, '"to" parameter is not "nfs"'
-        if "image" in device["actions"]["deploy"]["methods"]:
-            return False, '"image" was in the device configuration deploy methods'
-        if "nfs" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"nfs" was not in the device configuration deploy methods"'
 
 
 class NfsAction(Action):

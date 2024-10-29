@@ -8,7 +8,8 @@ from unittest.mock import MagicMock, patch
 
 import pexpect
 
-from lava_dispatcher.actions.deploy.flasher import Flasher, FlasherAction
+from lava_dispatcher.actions.deploy.flasher import FlasherAction
+from lava_dispatcher.actions.deploy_strategy import Flasher
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger
 

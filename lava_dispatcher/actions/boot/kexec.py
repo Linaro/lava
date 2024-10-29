@@ -12,30 +12,12 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootKExec(Boot):
-    """
-    Expects a shell session, checks for kexec executable and
-    prepares the arguments to run kexec,
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootKexecAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "kexec":
-            return False, '"method" was not "kexec"'
-
-        return True, "accepted"
 
 
 class BootKexecAction(RetryAction):

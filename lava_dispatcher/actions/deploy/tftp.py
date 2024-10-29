@@ -19,37 +19,11 @@ from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Tftp(Deployment):
-    """
-    Strategy class for a tftp ramdisk based Deployment.
-    Downloads the relevant parts, copies to the tftp location.
-    Limited to what the bootloader can deploy which means ramdisk or nfsrootfs.
-    rootfs deployments would format the device and create a single partition for the rootfs.
-    """
-
-    name = "tftp"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return TftpAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "tftp":
-            return False, '"to" parameter is not "tftp"'
-        if "tftp" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"tftp" was not in the device configuration deploy methods"'
 
 
 class TftpAction(Action):

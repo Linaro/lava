@@ -20,39 +20,12 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
-from lava_dispatcher.logical import Deployment
 from lava_dispatcher.protocols.xnbd import XnbdProtocol
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class Nbd(Deployment):
-    """
-    Strategy class for a tftp+initrd+nbd based Deployment.
-    tftp is used for kernel/initrd/fdt. Rootfs over nbd (network block device).
-    Downloads the relevant parts, copies to the tftp location.
-    Limited to what the bootloader can deploy which means ramdisk or nfsrootfs.
-    rootfs deployments would format the device and create a single partition for the rootfs.
-    """
-
-    name = "nbd"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return NbdAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "nbd":
-            return False, '"to" parameter is not "nbd"'
-        if "nbd" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"ndb" was not in the device configuration deploy methods'
 
 
 class NbdAction(Action):

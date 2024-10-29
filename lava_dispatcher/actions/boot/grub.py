@@ -24,7 +24,7 @@ from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.fastboot import WaitFastBootInterrupt
 from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
@@ -32,48 +32,6 @@ if TYPE_CHECKING:
     from typing import Optional
 
     from lava_dispatcher.job import Job
-
-
-class GrubSequence(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return GrubSequenceAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] not in ["grub", "grub-efi"]:
-            return False, '"method" was not "grub" or "grub-efi"'
-
-        params = device["actions"]["boot"]["methods"]
-        if "grub" not in params:
-            return False, '"grub" was not in the device configuration boot methods'
-        if "grub-efi" in params:
-            return False, '"grub-efi" was not in the device configuration boot methods'
-        if "sequence" in params["grub"]:
-            return True, "accepted"
-        return False, '"sequence" not in device configuration boot methods'
-
-
-class Grub(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return GrubMainAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] not in ["grub", "grub-efi"]:
-            return False, '"method" was not "grub" or "grub-efi"'
-
-        params = device["actions"]["boot"]["methods"]
-        if "grub" in params and "sequence" in params["grub"]:
-            return False, '"sequence" was in "grub" parameters'
-        if "grub" in params or "grub-efi" in params:
-            return True, "accepted"
-        else:
-            return (
-                False,
-                '"grub" or "grub-efi" was not in the device configuration boot methods',
-            )
 
 
 def _grub_sequence_map(

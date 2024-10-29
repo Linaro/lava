@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
@@ -21,29 +21,6 @@ from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class GDB(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootGDB(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        methods = device["actions"]["boot"]["methods"]
-        if "gdb" not in methods:
-            return False, '"gdb" is not in the device configuration boot methods'
-        if parameters["method"] != "gdb":
-            return False, '"method" was not "gdb"'
-        if "commands" not in parameters:
-            return False, '"commands" not in parameters'
-        if parameters["commands"] not in methods["gdb"]:
-            return (
-                False,
-                'commands "%s" undefined for the device' % parameters["commands"],
-            )
-
-        return True, "accepted"
 
 
 class BootGDB(Action):

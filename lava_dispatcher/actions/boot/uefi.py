@@ -18,43 +18,13 @@ from lava_dispatcher.actions.boot import (
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.uefi_menu import UEFIMenuInterrupt, UefiMenuSelector
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.menus.menus import MenuConnect, MenuInterrupt
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 
 if TYPE_CHECKING:
-    from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
-
-
-class UefiShell(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return UefiShellAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if parameters["method"] != "uefi":
-            return False, '"method" was not "uefi"'
-        if "uefi" in device["actions"]["boot"]["methods"]:
-            params = device["actions"]["boot"]["methods"]["uefi"]["parameters"]
-            if not params:
-                return (
-                    False,
-                    'there were no parameters in the "uefi" device configuration boot method',
-                )
-            if "shell_interrupt_string" not in params:
-                return (
-                    False,
-                    '"shell_interrupt_string" was not in the uefi device configuration boot method parameters',
-                )
-            if "shell_interrupt_prompt" in params and "bootloader_prompt" in params:
-                return True, "accepted"
-        return (
-            False,
-            "missing or invalid parameters in the uefi device configuration boot methods",
-        )
 
 
 class UefiShellAction(BootHasMixin, RetryAction):

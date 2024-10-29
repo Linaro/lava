@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from lava_common.utils import binary_version
 from lava_dispatcher.action import Action, JobError, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
@@ -18,22 +18,6 @@ from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class PyOCD(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootPyOCD(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "pyocd" not in device["actions"]["boot"]["methods"]:
-            return False, '"pyocd" was not in the device configuration boot methods'
-        if parameters["method"] != "pyocd":
-            return False, '"method" was not "pyocd"'
-        if "board_id" not in device:
-            return False, '"board_id" is not in the device configuration'
-        return True, "accepted"
 
 
 class BootPyOCD(RetryAction):

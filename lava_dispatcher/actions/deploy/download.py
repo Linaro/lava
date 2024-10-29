@@ -32,7 +32,7 @@ from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
-from lava_dispatcher.logical import Deployment, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.compression import untar_file
@@ -874,27 +874,6 @@ class QCowConversionAction(Action):
             action=self.name, label="file", key=self.key, value=fname
         )
         return connection
-
-
-class Download(Deployment):
-    """
-    Strategy class for a download deployment.
-    Downloads the relevant parts, copies to LXC if available.
-    """
-
-    name = "download"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return DownloadAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "download":
-            return False, '"to" parameter is not "download"'
-        return True, "accepted"
 
 
 class DownloadAction(Action):

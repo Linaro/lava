@@ -17,27 +17,13 @@ from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.logical import Boot, RetryAction
+from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerRun
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
-
-
-class BootAvh(Boot):
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        return BootAvhAction(job)
-
-    @classmethod
-    def accepts(cls, device, parameters):
-        if "avh" not in device["actions"]["boot"]["methods"]:
-            return False, "'avh' not in the device configuration boot methods"
-        if parameters["method"] != "avh":
-            return False, "'method' is not 'avh'"
-        return True, "accepted"
 
 
 class BootAvhAction(BootHasMixin, RetryAction):
