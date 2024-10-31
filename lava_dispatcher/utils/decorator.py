@@ -9,6 +9,8 @@ import logging
 import time
 from functools import wraps
 
+from lava_common.exceptions import JobCanceled
+
 
 def replace_exception(cls_from, cls_to, limit=2048):
     def replace_exception_wrapper(func):
@@ -54,6 +56,8 @@ def retry(
                             return None
                     else:
                         return func(*args, **kwargs)
+                except JobCanceled:
+                    return None
                 except exception as exc:
                     logger.error(f"{str(exc)}: {attempt + 1} of {retries} attempts.")
                     if attempt == int(retries) - 1:
