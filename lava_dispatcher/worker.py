@@ -14,7 +14,6 @@ import json
 import logging
 import logging.handlers
 import os
-import shutil
 import sqlite3
 import subprocess
 import sys
@@ -26,6 +25,7 @@ from dataclasses import dataclass
 from functools import partial
 from json import loads as json_loads
 from pathlib import Path
+from shutil import rmtree
 from signal import Signals
 from typing import Any
 
@@ -218,6 +218,10 @@ def start_job(
         return None
 
 
+def rmtree_job_dir(dir_path: str) -> None:
+    rmtree(dir_path, ignore_errors=True)
+
+
 async def cleanup_job(prefix: str, job_id: int) -> None:
     loop = asyncio.get_running_loop()
     for directory, pattern in STALE_CONFIG.items():
@@ -228,7 +232,8 @@ async def cleanup_job(prefix: str, job_id: int) -> None:
         LOG.debug("[%d] Removing %s", job_id, dir_path)
         await loop.run_in_executor(
             THREAD_EXECUTOR,
-            partial(shutil.rmtree, str(dir_path), ignore_errors=True),
+            rmtree_job_dir,
+            str(dir_path),
         )
 
     LOG.debug("[%d] Finished cleanup", job_id)
