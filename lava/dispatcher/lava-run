@@ -157,9 +157,13 @@ def cancelling_handler(*_):
     signal.signal(signal.SIGINT, terminating_handler)
     signal.signal(signal.SIGQUIT, terminating_handler)
     signal.signal(signal.SIGTERM, terminating_handler)
-    signal.signal(signal.SIGUSR1, terminating_handler)
+    signal.signal(signal.SIGUSR1, job_not_found_handler)
     signal.signal(signal.SIGUSR2, terminating_handler)
     raise JobCanceled("The job was canceled")
+
+
+def job_not_found_handler(*_):
+    raise JobCanceled("The job was deleted on the lava-server")
 
 
 def terminating_handler(*_):
@@ -196,7 +200,7 @@ def main():
         signal.signal(signal.SIGINT, cancelling_handler)
         signal.signal(signal.SIGQUIT, cancelling_handler)
         signal.signal(signal.SIGTERM, cancelling_handler)
-        signal.signal(signal.SIGUSR1, cancelling_handler)
+        signal.signal(signal.SIGUSR1, job_not_found_handler)
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
         # Should be an absolute directory
