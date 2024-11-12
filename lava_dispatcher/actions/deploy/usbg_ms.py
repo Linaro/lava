@@ -67,14 +67,14 @@ class USBGMSAction(DownloadAction):
             self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
     def validate(self):
+        self.disable = method["disable"]
+        self.enable = method["enable"]
         super().validate()
         if not self.valid:
             return
         if "image" not in self.parameters:
             raise JobError("Missing 'image'")
         method = self.job.device["actions"]["deploy"]["methods"]["usbg-ms"]
-        self.disable = method["disable"]
-        self.enable = method["enable"]
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
