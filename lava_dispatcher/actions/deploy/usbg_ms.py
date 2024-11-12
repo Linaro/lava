@@ -5,12 +5,17 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.strings import substitute
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class USBGMSAction(DownloadAction):
@@ -19,6 +24,12 @@ class USBGMSAction(DownloadAction):
     summary = "USBG MS"
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
+
+    def __init__(self, job: Job):
+        super().__init__(job)
+        method = self.job.device["actions"]["deploy"]["methods"]["usbg-ms"]
+        self.disable = method["disable"]
+        self.enable = method["enable"]
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -40,9 +51,6 @@ class USBGMSAction(DownloadAction):
             return
         if "image" not in self.parameters:
             raise JobError("Missing 'image'")
-        method = self.job.device["actions"]["deploy"]["methods"]["usbg-ms"]
-        self.disable = method["disable"]
-        self.enable = method["enable"]
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
