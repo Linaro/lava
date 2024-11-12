@@ -57,6 +57,7 @@ class USBGMSAction(DownloadAction):
         image = self.get_namespace_data(
             action="download-action", label="image", key="file"
         )
+        self.run_cmd(self.disable, allow_fail=True)
         self.logger.info("Creating USB gadget MS for %s", image)
 
         # Substitute in the command line
