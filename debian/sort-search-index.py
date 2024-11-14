@@ -28,7 +28,7 @@ j = json.loads(data)
 # reorder entries in alltitles
 if "alltitles" in j:
     for k, v in j["alltitles"].items():
-        j["alltitles"][k] = sorted(v)
+        j["alltitles"][k] = sorted(v, key=lambda i: i[0])
 
 # dump JSON
 result = json.dumps(j, sort_keys=True, separators=(",", ":"))
