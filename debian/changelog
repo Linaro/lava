@@ -20,6 +20,8 @@ lava (2024.09-1) unstable; urgency=medium
   * debian/sort-search-index.py: sort by id
   * Ship systemd-udev drop-in under /usr/lib (Closes: #1078181)
   * debian/tests/control: testsuite: add new package needed for testing
+  * debian/tests/testsuite: ignore one failing test that gets confused when
+    run against the installed system.
 
  -- Antonio Terceiro <terceiro@debian.org>  Thu, 14 Nov 2024 10:42:22 -0300
 
