@@ -148,7 +148,7 @@ pairs are in a single dictionary within the list of dictionaries::
    network to get proper logging of the addition of dynamic USB devices
    to the LXC. LAVA achieves this by providing an override file for the
    ``systemd-udev.service` in
-   ``/etc/systemd/system/systemd-udevd.service.d/override.conf``. The
+   ``/usr/lib/systemd/system/systemd-udevd.service.d/override.conf``. The
    actual network change is not visible in the systemd show support for
    the udev service, so the override also updates the unit description
    to make it obvious. When this override is in effect, you will be
@@ -157,7 +157,7 @@ pairs are in a single dictionary within the list of dictionaries::
     $ sudo systemctl status udev
     systemd-udevd.service - udev Kernel Device Manager (LAVA)
     Loaded: loaded (/lib/systemd/system/systemd-udevd.service; static; vendor preset: enabled)
-    Drop-In: /etc/systemd/system/systemd-udevd.service.d
+    Drop-In: /usr/lib/systemd/system/systemd-udevd.service.d
              -override.conf
 
 Other related devices

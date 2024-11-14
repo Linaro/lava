@@ -96,7 +96,10 @@ DISPATCHER = {
         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-worker-log"]),
         ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
         ("/usr/lib/systemd/system/", ["etc/lava-worker.service"]),
-        ("/etc/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
+        (
+            "/usr/lib/systemd/system/systemd-udevd.service.d/",
+            ["etc/udev/override.conf"],
+        ),
         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa"]),
         ("/usr/share/lava-dispatcher/apache2/", ["share/apache2/lava-dispatcher.conf"]),
         ("/var/lib/lava/dispatcher/tmp/", []),
