@@ -1,8 +1,11 @@
 lava (2024.09-1) unstable; urgency=medium
 
-  * LAVA Software 2024.09 release
-
   [ Rémi Duraffort ]
+  * LAVA Software 2024.09 release
+    - systemd files that used to be shipped under /lib are now shipped under
+      /usr/lib (Closes: #1073729)
+    - Tests pass against pytest 7.4 (Closes: #1041342)
+
   * [08f2c548f] lava_dispatcher: drop pytz requirements
 
   [ Igor Ponomarev ]
@@ -12,7 +15,13 @@ lava (2024.09-1) unstable; urgency=medium
   * [2504c17da] debian: Drop libjs-excanvas Internet Explorer compatibility library
   * [21da428ef] debian: Do not install uglifyjs because it is no longer used
 
- -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 24 Sep 2024 17:51:49 +0200
+  [ Antonio Terceiro ]
+  * debian/sort-search-index.py: fix SyntaxWarning: invalid escape sequence
+  * debian/sort-search-index.py: sort by id
+  * Ship systemd-udev drop-in under /usr/lib (Closes: #1078181)
+  * debian/tests/control: testsuite: add new package needed for testing
+
+ -- Antonio Terceiro <terceiro@debian.org>  Thu, 14 Nov 2024 10:42:22 -0300
 
 lava (2024.05-1) unstable; urgency=medium
 
