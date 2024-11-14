@@ -1,0 +1,45 @@
+From: Antonio Terceiro <antonio.terceiro@linaro.org>
+Date: Thu, 14 Nov 2024 10:52:05 -0300
+Subject: Ship systemd-udev drop-in under /usr/lib
+
+Closes: #1078181
+---
+ doc/v2/admin-lxc-deploy.rst | 4 ++--
+ setup.py                    | 2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/doc/v2/admin-lxc-deploy.rst b/doc/v2/admin-lxc-deploy.rst
+index 1266f12..9a3fd4f 100644
+--- a/doc/v2/admin-lxc-deploy.rst
++++ b/doc/v2/admin-lxc-deploy.rst
+@@ -148,7 +148,7 @@ pairs are in a single dictionary within the list of dictionaries::
+    network to get proper logging of the addition of dynamic USB devices
+    to the LXC. LAVA achieves this by providing an override file for the
+    ``systemd-udev.service` in
+-   ``/etc/systemd/system/systemd-udevd.service.d/override.conf``. The
++   ``/usr/lib/systemd/system/systemd-udevd.service.d/override.conf``. The
+    actual network change is not visible in the systemd show support for
+    the udev service, so the override also updates the unit description
+    to make it obvious. When this override is in effect, you will be
+@@ -157,7 +157,7 @@ pairs are in a single dictionary within the list of dictionaries::
+     $ sudo systemctl status udev
+     systemd-udevd.service - udev Kernel Device Manager (LAVA)
+     Loaded: loaded (/lib/systemd/system/systemd-udevd.service; static; vendor preset: enabled)
+-    Drop-In: /etc/systemd/system/systemd-udevd.service.d
++    Drop-In: /usr/lib/systemd/system/systemd-udevd.service.d
+              -override.conf
+ 
+ Other related devices
+diff --git a/setup.py b/setup.py
+index 7517c73..28cda91 100755
+--- a/setup.py
++++ b/setup.py
+@@ -96,7 +96,7 @@ DISPATCHER = {
+         ("/etc/logrotate.d/", ["etc/logrotate.d/lava-worker-log"]),
+         ("/etc/modprobe.d/", ["etc/lava-modules.conf"]),
+         ("/usr/lib/systemd/system/", ["etc/lava-worker.service"]),
+-        ("/etc/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
++        ("/usr/lib/systemd/system/systemd-udevd.service.d/", ["etc/udev/override.conf"]),
+         ("/usr/share/lava-dispatcher/", ["etc/tftpd-hpa"]),
+         ("/usr/share/lava-dispatcher/apache2/", ["share/apache2/lava-dispatcher.conf"]),
+         ("/var/lib/lava/dispatcher/tmp/", []),
