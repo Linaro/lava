@@ -12,11 +12,11 @@ lava-server manage users add nobody --email b@test.com
 lava-server manage users add staffer --email c@test.com --staff
 lava-server manage workers add autopkgtest
 lava-server manage workers add disabled --health MAINTENANCE
-lava-server manage device-types add qemu
+lava-server manage device-types add arndale
 lava-server manage device-types list --all
-lava-server manage devices add --device-type qemu --worker autopkgtest qemu01
+lava-server manage devices add --device-type arndale --worker autopkgtest arndale01
 lava-server manage devices list --all
-lava-server manage devices update --health RETIRED qemu01
+lava-server manage devices update --health RETIRED arndale01
 lava-server manage devices list --all
 
 # test daemon handling

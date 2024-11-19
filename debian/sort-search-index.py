@@ -15,12 +15,12 @@ index = sys.argv[1]
 data = open(index).read()
 
 # turn data into proper JSON
-data = re.sub("^Search.setIndex\(", "", data)
-data = re.sub("\)$", "", data)
+data = re.sub(r"^Search.setIndex\(", "", data)
+data = re.sub(r"\)$", "", data)
 
 # sphinx in bullseye does not produce proper JSON data with quoted keys
 if os == "debian-11":
-    data = re.sub("(\w+):", '"\g<1>":', data)
+    data = re.sub(r"(\w+):", r'"\g<1>":', data)
 
 # load JSON
 j = json.loads(data)
@@ -28,7 +28,7 @@ j = json.loads(data)
 # reorder entries in alltitles
 if "alltitles" in j:
     for k, v in j["alltitles"].items():
-        j["alltitles"][k] = sorted(v)
+        j["alltitles"][k] = sorted(v, key=lambda i: i[0])
 
 # dump JSON
 result = json.dumps(j, sort_keys=True, separators=(",", ":"))
