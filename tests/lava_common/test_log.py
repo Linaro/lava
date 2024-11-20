@@ -83,7 +83,7 @@ def test_sender_404(mocker):
     sender(conn, "http://localhost", "my-token", 1)
 
     os_getppid.assert_called_once()
-    os_kill.assert_called_once_with(1, signal.SIGTERM)
+    os_kill.assert_called_once_with(1, signal.SIGUSR1)
 
 
 def test_http_handler(mocker):

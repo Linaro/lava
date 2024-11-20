@@ -96,7 +96,7 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     index += count
             elif ret.status_code == 404:
                 data, remaining = [], []
-                os.kill(os.getppid(), signal.SIGTERM)
+                os.kill(os.getppid(), signal.SIGUSR1)
             else:
                 if ret.status_code == 413:
                     raise RequestBodyTooLargeError
