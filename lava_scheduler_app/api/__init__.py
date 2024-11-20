@@ -782,7 +782,8 @@ class SchedulerAPI(ExposedV2API):
         original_definition, status, health_check, description,
         start_time, target_group, submit_time,
         is_public, _old_status, actual_device_id, definition, sub_id,
-        requested_device_type_id, end_time, absolute_url, submitter_username
+        requested_device_type_id, end_time, absolute_url, submitter_username,
+        submitter_email
         """
         try:
             job = TestJob.get_by_job_number(job_id)
@@ -812,7 +813,9 @@ class SchedulerAPI(ExposedV2API):
         job.status = job.get_legacy_status_display()
         job.state = job.get_state_display()
         job.health = job.get_health_display()
+        job.health_check = job.health_check
         job.submitter_username = job.submitter.username
+        job.submitter_email = job.submitter.email
         job.absolute_url = job.get_absolute_url()
         job.is_pipeline = True
 

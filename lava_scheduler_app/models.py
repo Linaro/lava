@@ -2028,12 +2028,14 @@ class TestJob(models.Model):
             "start_time": str(self.start_time),
             "end_time": str(self.end_time),
             "submitter_username": self.submitter.username,
+            "submitter_email": self.submitter.email,
             "failure_comment": self.failure_comment,
             "priority": self.priority,
             "description": self.description,
             "actual_device_id": self.actual_device_id,
             "definition": self.definition,
             "metadata": self.get_metadata_dict(),
+            "health_check": self.health_check,
         }
 
         # Logs.
