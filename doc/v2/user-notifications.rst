@@ -39,6 +39,17 @@ If the **recipients** section is omitted in the notify block, the system will
 send an email to the job submitter only, provided the **criteria** is satisfied,
 and there is no **callbacks** section.
 
+If the **user** is configured as a placeholder **"{LAVA_DEVICE_OWNER}"** as next, the system
+will send an email to the `physical owner` of the device on which the job ran.
+
+.. code-block:: yaml
+
+ notify:
+   recipients:
+   - to:
+      method: email
+      user: "{LAVA_DEVICE_OWNER}"
+
 Notification callbacks
 ======================
 

@@ -263,6 +263,50 @@ class TestSchedulerAPI(TestCaseWithFactory):
         self.assertEqual(f.faultString, "Invalid health 'Completed'")
 
 
+@pytest.mark.usefixtures("setup")
+class TestNotification(unittest.TestCase):
+    @pytest.mark.django_db
+    def test_valid_user(self):
+        good_submission = """
+notify:
+  recipients:
+  - to:
+     method: email
+     user: admin
+  criteria:
+    status: complete
+        """
+        validate_yaml(yaml_safe_load(good_submission))
+
+    @pytest.mark.django_db
+    def test_invalid_user(self):
+        bad_submission = """
+notify:
+  recipients:
+  - to:
+     method: email
+     user: foo
+  criteria:
+    status: complete
+        """
+        self.assertRaises(
+            SubmissionException, validate_yaml, yaml_safe_load(bad_submission)
+        )
+
+    @pytest.mark.django_db
+    def test_device_owner(self):
+        good_submission = """
+notify:
+  recipients:
+  - to:
+     method: email
+     user: "{LAVA_DEVICE_OWNER}"
+  criteria:
+    status: complete
+        """
+        validate_yaml(yaml_safe_load(good_submission))
+
+
 class TestVoluptuous(unittest.TestCase):
     def test_breakage_detection(self):
         bad_submission = """

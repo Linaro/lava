@@ -304,7 +304,11 @@ def validate_yaml(yaml_data):
                         raise SubmissionException(
                             "No valid user or IRC handle specified."
                         )
-                if "user" in recipient["to"]:
+                if (
+                    "user" in recipient["to"]
+                    and recipient["to"]["user"]
+                    != NotificationRecipient.LAVA_DEVICE_OWNER_STR
+                ):
                     try:
                         User.objects.get(username=recipient["to"]["user"])
                     except User.DoesNotExist:

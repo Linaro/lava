@@ -249,6 +249,54 @@ class TestTestJob(TestCaseWithFactory):
         )
 
 
+class TestNotificationCreate(TestCaseWithFactory):
+    JOB_DEFINITION_FILE = "qemu.yaml"
+
+    def setUp(self) -> None:
+        super().setUp()
+        definition = self.factory.make_job_data_from_file(self.JOB_DEFINITION_FILE)
+        dt = self.factory.make_device_type(name="qemu")
+        self.device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        self.user = self.factory.make_user()
+        self.job = TestJob.from_yaml_and_user(definition, self.user)
+
+    def test_regular_user_notification(self):
+        notify = {
+            "recipients": [{"to": {"method": "email", "user": self.user}}],
+            "criteria": {"status": "complete"},
+        }
+        create_notification(self.job, notify)
+        self.job.refresh_from_db()
+        notification = self.job.notification
+        self.assertEqual(len(notification.notificationrecipient_set.all()), 1)
+        for recipient in notification.notificationrecipient_set.all():
+            self.assertEqual(recipient.user, self.user)
+
+    def test_empty_device_owner_notification(self):
+        notify = {
+            "recipients": [{"to": {"method": "email", "user": "{LAVA_DEVICE_OWNER}"}}],
+            "criteria": {"status": "complete"},
+        }
+        create_notification(self.job, notify)
+        self.job.refresh_from_db()
+        notification = self.job.notification
+        self.assertEqual(len(notification.notificationrecipient_set.all()), 0)
+
+    def test_device_owner_notification(self):
+        self.job.actual_device = self.device
+        self.device.physical_owner = self.user
+        notify = {
+            "recipients": [{"to": {"method": "email", "user": "{LAVA_DEVICE_OWNER}"}}],
+            "criteria": {"status": "complete"},
+        }
+        create_notification(self.job, notify)
+        self.job.refresh_from_db()
+        notification = self.job.notification
+        self.assertEqual(len(notification.notificationrecipient_set.all()), 1)
+        for recipient in notification.notificationrecipient_set.all():
+            self.assertEqual(recipient.user, self.user)
+
+
 class TestNotificationBase(TestCaseWithFactory):
     JOB_DEFINITION_FILE = "none"
 

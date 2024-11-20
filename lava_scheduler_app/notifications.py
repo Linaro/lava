@@ -445,8 +445,17 @@ def create_notification(job, data):
                 recipient["to"]["method"]
             ]
             if "user" in recipient["to"]:
-                user = User.objects.get(username=recipient["to"]["user"])
-                notification_recipient.user = user
+                if (
+                    recipient["to"]["user"]
+                    == NotificationRecipient.LAVA_DEVICE_OWNER_STR
+                ):
+                    with contextlib.suppress(AttributeError):
+                        notification_recipient.user = job.actual_device.physical_owner
+                    if not notification_recipient.user:
+                        continue
+                else:
+                    user = User.objects.get(username=recipient["to"]["user"])
+                    notification_recipient.user = user
             if "email" in recipient["to"]:
                 notification_recipient.email = recipient["to"]["email"]
             if "handle" in recipient["to"]:
