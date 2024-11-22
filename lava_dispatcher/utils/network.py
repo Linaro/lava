@@ -8,9 +8,9 @@
 
 # List just the subclasses supported for this base strategy
 # imported by the parser to populate the list of subclasses.
+from __future__ import annotations
 
 import contextlib
-import os
 import random
 import socket
 import subprocess  # nosec - internal use.
@@ -27,6 +27,7 @@ from lava_common.constants import (
     XNBD_PORT_RANGE_MIN,
 )
 from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_dispatcher.utils.shell import which
 
 
 def dispatcher_gateway():
@@ -71,23 +72,28 @@ def dispatcher_ip(dispatcher_config, protocol=None):
     return iface_addr
 
 
-def rpcinfo_nfs(server, version=3):
+def rpcinfo_nfs(server: str, version: int = 3) -> str | None:
     """
     Calls rpcinfo nfs on the specified server.
     Only stderr matters
     :param server: the NFS server to check
     :return: None if success, message if fail
     """
-    with open(os.devnull, "w") as devnull:
-        proc = subprocess.Popen(  # nosec - internal use.
-            ["/usr/sbin/rpcinfo", "-t", server, "nfs", "%s" % version],
-            stdout=devnull,
-            stderr=subprocess.PIPE,
-        )
-        msg = proc.communicate()
-        if msg[1]:
-            return "%s %s" % (server, msg[1])
-    return None
+    rpcinfo_path = which("rpcinfo")
+
+    rpcinfo_result = subprocess.run(
+        (rpcinfo_path, "-t", server, "nfs", str(version)),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=10,
+    )
+    if rpcinfo_result.returncode == 0:
+        # Success
+        return None
+
+    return f"rpcinfo: {server} {rpcinfo_result.stderr}"
 
 
 def get_free_port(dispatcher_config):
