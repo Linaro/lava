@@ -46,7 +46,7 @@ def add_device_container_mapping(job_id, device_info, container, container_type=
 
 
 def remove_device_container_mappings(job_id):
-    get_mapping_path(job_id).unlink()
+    get_mapping_path(job_id).unlink(missing_ok=True)
 
 
 def validate_device_info(device_info):
