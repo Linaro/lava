@@ -1870,6 +1870,13 @@ class TestJob(models.Model):
     def get_absolute_url(self):
         return reverse("lava.scheduler.job.detail", args=[self.display_id])
 
+    def get_definition_url(self):
+        if self.is_multinode:
+            return reverse(
+                "lava.scheduler.job.multinode_definition", args=[self.display_id]
+            )
+        return reverse("lava.scheduler.job.definition", args=[self.display_id])
+
     @classmethod
     def from_yaml_and_user(cls, yaml_data, user, original_job=None):
         """
