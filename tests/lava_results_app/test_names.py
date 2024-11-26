@@ -228,3 +228,14 @@ class TestTestSuite(TestCaseWithFactory):
             self.assertTrue(testcase.name.startswith("linux-INLINE-"))
             val("http://localhost/%s" % testcase.get_absolute_url())
         self.factory.cleanup()
+
+    def test_definition_url(self):
+        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
+        self.assertEqual(
+            "/scheduler/job/%s/definition" % job.id, job.get_definition_url()
+        )
+
+        job.target_group = "foo"
+        self.assertEqual(
+            "/scheduler/job/%s/multinode_definition" % job.id, job.get_definition_url()
+        )
