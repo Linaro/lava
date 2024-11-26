@@ -447,26 +447,27 @@ class DownloadHandler(Action):
             self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
-        if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
-            suffix = self.get_namespace_data(
-                action="tftp-deploy", label="tftp", key="suffix"
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label="file",
-                key=self.key,
-                value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
-            )
-        elif self.parameters["to"] == "iso-installer":
-            suffix = self.get_namespace_data(
-                action="deploy-iso-installer", label="iso", key="suffix"
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label="file",
-                key=self.key,
-                value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
-            )
+        if self.parameters.get("to"):
+            if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
+                suffix = self.get_namespace_data(
+                    action="tftp-deploy", label="tftp", key="suffix"
+                )
+                self.set_namespace_data(
+                    action="download-action",
+                    label="file",
+                    key=self.key,
+                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
+                )
+            elif self.parameters["to"] == "iso-installer":
+                suffix = self.get_namespace_data(
+                    action="deploy-iso-installer", label="iso", key="suffix"
+                )
+                self.set_namespace_data(
+                    action="download-action",
+                    label="file",
+                    key=self.key,
+                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
+                )
 
         # xnbd protocol needs to know the location
         nbdroot = self.get_namespace_data(
