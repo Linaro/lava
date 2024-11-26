@@ -1,0 +1,21 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
+
+{% set uboot_fdt_high = '0xffffffffffffffff' %}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+
+{% set bootz_kernel_addr = '0x45000000' %}
+{% set bootz_ramdisk_addr = '0x49000000' %}
+{% set bootz_dtb_addr = '0x44000000' %}
+
+{% set bootm_kernel_addr = '0x45000000' %}
+{% set bootm_ramdisk_addr = '0x49000000' %}
+{% set bootm_dtb_addr = '0x44000000' %}
+
+{% set booti_kernel_addr = '0x45000000' %}
+{% set booti_ramdisk_addr = '0x49000000' %}
+{% set booti_dtb_addr = '0x44000000' %}
