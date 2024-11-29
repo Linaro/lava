@@ -188,4 +188,15 @@ actions:
             root: /dev/nfs
             nfsrootargs: {{ base_nfsroot_args }}
             ipargs: {{ base_ip_args }}
+  test:
+    methods:
+      docker:
+        # Docker-shell additional command-line options. Can be given as
+        # a list here, or additional options can be taken from device
+        # dict vars below (which in turn can be not defined (== null),
+        # a string, or an inline list of strings).
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
 {% endblock body %}
