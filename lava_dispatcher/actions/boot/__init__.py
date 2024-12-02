@@ -574,7 +574,7 @@ class BootloaderCommandOverlay(Action):
             }
 
         nfs_address = self.get_namespace_data(
-            action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"
+            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
         )
         nfs_root = self.get_namespace_data(
             action="download-action", label="file", key="nfsrootfs"
@@ -587,7 +587,7 @@ class BootloaderCommandOverlay(Action):
         elif nfs_address:
             substitutions["{NFSROOTFS}"] = nfs_address
             substitutions["{NFS_SERVER_IP}"] = self.get_namespace_data(
-                action="persistent-nfs-overlay", label="nfs_address", key="serverip"
+                action="parse-persistent-nfs", label="nfs_address", key="serverip"
             )
 
         if "lava-xnbd" in self.parameters:

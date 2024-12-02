@@ -62,7 +62,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         )
         cmdline_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
         nfs_address = self.get_namespace_data(
-            action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"
+            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
         )
         nfs_root = self.get_namespace_data(
             action="download-action", label="file", key="nfsrootfs"
@@ -79,7 +79,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             substitutions = {
                 "{NFSROOTFS}": nfs_address,
                 "{NFS_SERVER_IP}": self.get_namespace_data(
-                    action="persistent-nfs-overlay", label="nfs_address", key="serverip"
+                    action="parse-persistent-nfs", label="nfs_address", key="serverip"
                 ),
             }
         else:

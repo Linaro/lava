@@ -230,7 +230,7 @@ class PrepareOverlayTftp(Action):
             ExtractNfsRootfs(self.job)
         )  # idempotent, checks for nfsrootfs parameter
         self.pipeline.add_action(
-            PersistentNFSOverlay(self.job)
+            ParsePersistentNFS(self.job)
         )  # idempotent, parse persistent nfs
         self.pipeline.add_action(
             OverlayAction(self.job)
@@ -1045,15 +1045,15 @@ class AppendOverlays(Action):
             os.replace(f"{image}.sparse", image)
 
 
-class PersistentNFSOverlay(Action):
+class ParsePersistentNFS(Action):
     """
     Instead of extracting, just populate the location of the persistent NFS
     so that it can be mounted later when the overlay is applied.
     """
 
-    name = "persistent-nfs-overlay"
-    description = "unpack overlay into persistent NFS"
-    summary = "add test overlay to NFS"
+    name = "parse-persistent-nfs"
+    description = "parse persistent nfs"
+    summary = "parse persistent nfs"
 
     def validate(self):
         super().validate()
