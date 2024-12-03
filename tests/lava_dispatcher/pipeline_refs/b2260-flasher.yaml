@@ -22,15 +22,27 @@
       summary: overlay the lava support scripts
       timeout: 240
       pipeline:
-      - {class: SshAuthorize, name: ssh-authorize, level: 1.1.1.1, max_retries: 1,
-        description: include public key in overlay and authorize root user, summary: add
-          public key to authorized_keys, timeout: 240}
-      - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.1.1.2, max_retries: 1,
-        description: Populate specific vland scripts for tests to lookup vlan data.,
-        summary: Add files detailing vlan configuration., timeout: 240}
-      - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.1.1.3,
-        max_retries: 1, description: add lava scripts during deployment for multinode
-          test shell use, summary: overlay the lava multinode scripts, timeout: 240}
+      - class: SshAuthorize
+        name: ssh-authorize
+        level: 1.1.1.1
+        max_retries: 1
+        description: include public key in overlay and authorize root user
+        summary: add public key to authorized_keys
+        timeout: 240
+      - class: VlandOverlayAction
+        name: lava-vland-overlay
+        level: 1.1.1.2
+        max_retries: 1
+        description: Populate specific vland scripts for tests to lookup vlan data.
+        summary: Add files detailing vlan configuration.
+        timeout: 240
+      - class: MultinodeOverlayAction
+        name: lava-multinode-overlay
+        level: 1.1.1.3
+        max_retries: 1
+        description: add lava scripts during deployment for multinode test shell use
+        summary: overlay the lava multinode scripts
+        timeout: 240
       - class: TestDefinitionAction
         name: test-definition
         level: 1.1.1.4
@@ -39,24 +51,41 @@
         summary: loading test definitions
         timeout: 240
         pipeline:
-        - {class: GitRepoAction, name: git-repo-action, level: 1.1.1.4.1, max_retries: 1,
-          description: apply git repository of tests to the test image, summary: clone
-            git test repo, timeout: 240}
-        - {class: TestOverlayAction, name: test-overlay, level: 1.1.1.4.2, max_retries: 1,
-          description: overlay test support files onto image, summary: applying LAVA
-            test overlay, timeout: 240}
-        - {class: TestInstallAction, name: test-install-overlay, level: 1.1.1.4.3,
-          max_retries: 1, description: overlay dependency installation support files
-            onto image, summary: applying LAVA test install scripts, timeout: 240}
-        - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.1.1.4.4,
-          max_retries: 1, description: overlay run script onto image, summary: applying
-            LAVA test run script, timeout: 240}
-      - {class: CompressOverlay, name: compress-overlay, level: 1.1.1.5, max_retries: 1,
-        description: Create a lava overlay tarball and store alongside the job, summary: Compress
-          the lava overlay files, timeout: 240}
-      - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.1.1.6,
-        max_retries: 1, description: unpack overlay into persistent NFS, summary: add
-          test overlay to NFS, timeout: 240}
+        - class: GitRepoAction
+          name: git-repo-action
+          level: 1.1.1.4.1
+          max_retries: 1
+          description: apply git repository of tests to the test image
+          summary: clone git test repo
+          timeout: 240
+        - class: TestOverlayAction
+          name: test-overlay
+          level: 1.1.1.4.2
+          max_retries: 1
+          description: overlay test support files onto image
+          summary: applying LAVA test overlay
+          timeout: 240
+        - class: TestInstallAction
+          name: test-install-overlay
+          level: 1.1.1.4.3
+          max_retries: 1
+          description: overlay dependency installation support files onto image
+          summary: applying LAVA test install scripts
+          timeout: 240
+        - class: TestRunnerAction
+          name: test-runscript-overlay
+          level: 1.1.1.4.4
+          max_retries: 1
+          description: overlay run script onto image
+          summary: applying LAVA test run script
+          timeout: 240
+      - class: CompressOverlay
+        name: compress-overlay
+        level: 1.1.1.5
+        max_retries: 1
+        description: Create a lava overlay tarball and store alongside the job
+        summary: Compress the lava overlay files
+        timeout: 240
     - class: DownloaderAction
       name: download-retry
       level: 1.1.2
@@ -65,9 +94,14 @@
       summary: download-retry
       timeout: 240
       pipeline:
-      - {class: HttpDownloadAction, name: http-download, level: 1.1.2.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 80,
-        url: 'https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage'}
+      - class: HttpDownloadAction
+        name: http-download
+        level: 1.1.2.1
+        max_retries: 1
+        description: use http to download the file
+        summary: http download
+        timeout: 80
+        url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage
     - class: DownloaderAction
       name: download-retry
       level: 1.1.3
@@ -76,9 +110,14 @@
       summary: download-retry
       timeout: 240
       pipeline:
-      - {class: HttpDownloadAction, name: http-download, level: 1.1.3.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 80,
-        url: 'http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz'}
+      - class: HttpDownloadAction
+        name: http-download
+        level: 1.1.3.1
+        max_retries: 1
+        description: use http to download the file
+        summary: http download
+        timeout: 80
+        url: http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz
     - class: DownloaderAction
       name: download-retry
       level: 1.1.4
@@ -87,12 +126,21 @@
       summary: download-retry
       timeout: 240
       pipeline:
-      - {class: HttpDownloadAction, name: http-download, level: 1.1.4.1, max_retries: 1,
-        description: use http to download the file, summary: http download, timeout: 80,
-        url: 'https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb'}
-    - {class: DeployDeviceEnvironment, name: deploy-device-env, level: 1.1.5, max_retries: 1,
-      description: deploy device environment, summary: deploy device environment,
-      timeout: 240}
+      - class: HttpDownloadAction
+        name: http-download
+        level: 1.1.4.1
+        max_retries: 1
+        description: use http to download the file
+        summary: http download
+        timeout: 80
+        url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb
+    - class: DeployDeviceEnvironment
+      name: deploy-device-env
+      level: 1.1.5
+      max_retries: 1
+      description: deploy device environment
+      summary: deploy device environment
+      timeout: 240
 - class: MinimalBoot
   name: minimal-boot
   level: '2'
@@ -101,9 +149,13 @@
   summary: connect and reset device
   timeout: 300
   pipeline:
-  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 300}
+  - class: ConnectDevice
+    name: connect-device
+    level: '2.1'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 300
   - class: ResetDevice
     name: reset-device
     level: '2.2'
@@ -112,9 +164,13 @@
     summary: reboot the device
     timeout: 30
     pipeline:
-    - {class: PDUReboot, name: pdu-reboot, level: 2.2.1, max_retries: 1, description: issue
-        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 30}
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 2.2.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 30
   - class: AutoLoginAction
     name: auto-login-action
     level: '2.3'
@@ -124,16 +180,34 @@
     summary: Auto-login after boot with support for kernel messages.
     timeout: 120
     pipeline:
-    - {class: LoginAction, name: login-action, level: 2.3.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 300}
-  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.4', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 300}
-  - {class: OverlayUnpack, name: overlay-unpack, level: '2.5', max_retries: 1, description: transfer
-      and unpack overlay to persistent rootfs after login, summary: transfer and unpack
-      overlay, timeout: 300}
-  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.6', max_retries: 1,
-    description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 300}
+    - class: LoginAction
+      name: login-action
+      level: 2.3.1
+      max_retries: 1
+      description: Real login action.
+      summary: Login after boot.
+      timeout: 300
+  - class: ExpectShellSession
+    name: expect-shell-connection
+    level: '2.4'
+    max_retries: 1
+    description: Wait for a shell
+    summary: Expect a shell prompt
+    timeout: 300
+  - class: OverlayUnpack
+    name: overlay-unpack
+    level: '2.5'
+    max_retries: 1
+    description: transfer and unpack overlay to persistent rootfs after login
+    summary: transfer and unpack overlay
+    timeout: 300
+  - class: ExportDeviceEnvironment
+    name: export-device-env
+    level: '2.6'
+    max_retries: 1
+    description: Exports environment variables to the device
+    summary: Exports environment variables action
+    timeout: 300
 - class: TestShellRetry
   name: lava-test-retry
   level: '3'
@@ -142,8 +216,13 @@
   summary: Retry support for Lava Test Shell
   timeout: 300
   pipeline:
-  - {class: TestShellAction, name: lava-test-shell, level: '3.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
+    timeout: 300
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -152,7 +231,17 @@
   summary: finalize the job
   timeout: 300
   pipeline:
-  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 15}
-  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 15
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300

@@ -137,12 +137,6 @@ class TestKVMBasicDeploy(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("kvm.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
-        overlay = self.job.pipeline.find_action(OverlayAction)
-        self.assertIn(
-            "persistent-nfs-overlay",
-            [action.name for action in overlay.pipeline.actions],
-        )
-
     def test_validate(self):
         try:
             allow_missing_path(

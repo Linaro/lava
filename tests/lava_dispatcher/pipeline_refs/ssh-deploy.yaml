@@ -14,15 +14,27 @@
     summary: overlay the lava support scripts
     timeout: 120
     pipeline:
-    - {class: SshAuthorize, name: ssh-authorize, level: 1.1.1, max_retries: 1, description: include
-        public key in overlay and authorize root user, summary: add public key to
-        authorized_keys, timeout: 120}
-    - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.1.2, max_retries: 1,
-      description: Populate specific vland scripts for tests to lookup vlan data.,
-      summary: Add files detailing vlan configuration., timeout: 120}
-    - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.1.3,
-      max_retries: 1, description: add lava scripts during deployment for multinode
-        test shell use, summary: overlay the lava multinode scripts, timeout: 120}
+    - class: SshAuthorize
+      name: ssh-authorize
+      level: 1.1.1
+      max_retries: 1
+      description: include public key in overlay and authorize root user
+      summary: add public key to authorized_keys
+      timeout: 120
+    - class: VlandOverlayAction
+      name: lava-vland-overlay
+      level: 1.1.2
+      max_retries: 1
+      description: Populate specific vland scripts for tests to lookup vlan data.
+      summary: Add files detailing vlan configuration.
+      timeout: 120
+    - class: MultinodeOverlayAction
+      name: lava-multinode-overlay
+      level: 1.1.3
+      max_retries: 1
+      description: add lava scripts during deployment for multinode test shell use
+      summary: overlay the lava multinode scripts
+      timeout: 120
     - class: TestDefinitionAction
       name: test-definition
       level: 1.1.4
@@ -31,36 +43,69 @@
       summary: loading test definitions
       timeout: 120
       pipeline:
-      - {class: GitRepoAction, name: git-repo-action, level: 1.1.4.1, max_retries: 1,
-        description: apply git repository of tests to the test image, summary: clone
-          git test repo, timeout: 120}
-      - {class: TestOverlayAction, name: test-overlay, level: 1.1.4.2, max_retries: 1,
-        description: overlay test support files onto image, summary: applying LAVA
-          test overlay, timeout: 120}
-      - {class: TestInstallAction, name: test-install-overlay, level: 1.1.4.3, max_retries: 1,
-        description: overlay dependency installation support files onto image, summary: applying
-          LAVA test install scripts, timeout: 120}
-      - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.1.4.4, max_retries: 1,
-        description: overlay run script onto image, summary: applying LAVA test run
-          script, timeout: 120}
-      - {class: GitRepoAction, name: git-repo-action, level: 1.1.4.5, max_retries: 1,
-        description: apply git repository of tests to the test image, summary: clone
-          git test repo, timeout: 120}
-      - {class: TestOverlayAction, name: test-overlay, level: 1.1.4.6, max_retries: 1,
-        description: overlay test support files onto image, summary: applying LAVA
-          test overlay, timeout: 120}
-      - {class: TestInstallAction, name: test-install-overlay, level: 1.1.4.7, max_retries: 1,
-        description: overlay dependency installation support files onto image, summary: applying
-          LAVA test install scripts, timeout: 120}
-      - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.1.4.8, max_retries: 1,
-        description: overlay run script onto image, summary: applying LAVA test run
-          script, timeout: 120}
-    - {class: CompressOverlay, name: compress-overlay, level: 1.1.5, max_retries: 1,
-      description: Create a lava overlay tarball and store alongside the job, summary: Compress
-        the lava overlay files, timeout: 120}
-    - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.1.6, max_retries: 1,
-      description: unpack overlay into persistent NFS, summary: add test overlay to
-        NFS, timeout: 120}
+      - class: GitRepoAction
+        name: git-repo-action
+        level: 1.1.4.1
+        max_retries: 1
+        description: apply git repository of tests to the test image
+        summary: clone git test repo
+        timeout: 120
+      - class: TestOverlayAction
+        name: test-overlay
+        level: 1.1.4.2
+        max_retries: 1
+        description: overlay test support files onto image
+        summary: applying LAVA test overlay
+        timeout: 120
+      - class: TestInstallAction
+        name: test-install-overlay
+        level: 1.1.4.3
+        max_retries: 1
+        description: overlay dependency installation support files onto image
+        summary: applying LAVA test install scripts
+        timeout: 120
+      - class: TestRunnerAction
+        name: test-runscript-overlay
+        level: 1.1.4.4
+        max_retries: 1
+        description: overlay run script onto image
+        summary: applying LAVA test run script
+        timeout: 120
+      - class: GitRepoAction
+        name: git-repo-action
+        level: 1.1.4.5
+        max_retries: 1
+        description: apply git repository of tests to the test image
+        summary: clone git test repo
+        timeout: 120
+      - class: TestOverlayAction
+        name: test-overlay
+        level: 1.1.4.6
+        max_retries: 1
+        description: overlay test support files onto image
+        summary: applying LAVA test overlay
+        timeout: 120
+      - class: TestInstallAction
+        name: test-install-overlay
+        level: 1.1.4.7
+        max_retries: 1
+        description: overlay dependency installation support files onto image
+        summary: applying LAVA test install scripts
+        timeout: 120
+      - class: TestRunnerAction
+        name: test-runscript-overlay
+        level: 1.1.4.8
+        max_retries: 1
+        description: overlay run script onto image
+        summary: applying LAVA test run script
+        timeout: 120
+    - class: CompressOverlay
+      name: compress-overlay
+      level: 1.1.5
+      max_retries: 1
+      description: Create a lava overlay tarball and store alongside the job
+      summary: Compress the lava overlay files
+      timeout: 120
   - class: PrepareOverlayScp
     name: prepare-scp-overlay
     level: '1.2'
@@ -69,13 +114,27 @@
     summary: scp the overlay to the remote device
     timeout: 120
     pipeline:
-    - {class: ExtractRootfs, name: extract-rootfs, level: 1.2.1, max_retries: 1, description: unpack
-        rootfs, summary: 'unpack rootfs, ready to apply lava overlay', timeout: 120}
-    - {class: ExtractModules, name: extract-modules, level: 1.2.2, max_retries: 1,
-      description: extract supplied kernel modules, summary: extract kernel modules,
-      timeout: 120}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.3', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 120}
+    - class: ExtractRootfs
+      name: extract-rootfs
+      level: 1.2.1
+      max_retries: 1
+      description: unpack rootfs
+      summary: unpack rootfs, ready to apply lava overlay
+      timeout: 120
+    - class: ExtractModules
+      name: extract-modules
+      level: 1.2.2
+      max_retries: 1
+      description: extract supplied kernel modules
+      summary: extract kernel modules
+      timeout: 120
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.3'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 120
 - class: SshAction
   name: login-ssh
   level: '2'
@@ -84,13 +143,27 @@
   summary: login over ssh
   timeout: 60
   pipeline:
-  - {class: Scp, name: scp-deploy, level: '2.1', max_retries: 1, description: copy
-      a file to a known device using scp, summary: scp over the ssh connection, timeout: 30}
-  - {class: PrepareSsh, name: prepare-ssh, level: '2.2', max_retries: 1, description: determine
-      which address to use for primary or secondary connections, summary: set the
-      host address of the ssh connection, timeout: 30}
-  - {class: ConnectSsh, name: ssh-connection, level: '2.3', max_retries: 1, description: login
-      to a known device using ssh, summary: make an ssh connection to a device, timeout: 30}
+  - class: Scp
+    name: scp-deploy
+    level: '2.1'
+    max_retries: 1
+    description: copy a file to a known device using scp
+    summary: scp over the ssh connection
+    timeout: 30
+  - class: PrepareSsh
+    name: prepare-ssh
+    level: '2.2'
+    max_retries: 1
+    description: determine which address to use for primary or secondary connections
+    summary: set the host address of the ssh connection
+    timeout: 30
+  - class: ConnectSsh
+    name: ssh-connection
+    level: '2.3'
+    max_retries: 1
+    description: login to a known device using ssh
+    summary: make an ssh connection to a device
+    timeout: 30
   - class: AutoLoginAction
     name: auto-login-action
     level: '2.4'
@@ -100,18 +173,41 @@
     summary: Auto-login after boot with support for kernel messages.
     timeout: 30
     pipeline:
-    - {class: LoginAction, name: login-action, level: 2.4.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 15}
-  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.5', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 30}
-  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.6', max_retries: 1,
-    description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 30}
-  - {class: ScpOverlayUnpack, name: scp-overlay-unpack, level: '2.7', max_retries: 1,
-    description: unpack the overlay over an existing ssh connection, summary: unpack
-      the overlay on the remote device, timeout: 30}
-- {class: SchrootAction, name: schroot-login, level: '3', max_retries: 1, description: enter
-    schroot using existing connection, summary: enter specified schroot, timeout: 60}
+    - class: LoginAction
+      name: login-action
+      level: 2.4.1
+      max_retries: 1
+      description: Real login action.
+      summary: Login after boot.
+      timeout: 15
+  - class: ExpectShellSession
+    name: expect-shell-connection
+    level: '2.5'
+    max_retries: 1
+    description: Wait for a shell
+    summary: Expect a shell prompt
+    timeout: 30
+  - class: ExportDeviceEnvironment
+    name: export-device-env
+    level: '2.6'
+    max_retries: 1
+    description: Exports environment variables to the device
+    summary: Exports environment variables action
+    timeout: 30
+  - class: ScpOverlayUnpack
+    name: scp-overlay-unpack
+    level: '2.7'
+    max_retries: 1
+    description: unpack the overlay over an existing ssh connection
+    summary: unpack the overlay on the remote device
+    timeout: 30
+- class: SchrootAction
+  name: schroot-login
+  level: '3'
+  max_retries: 1
+  description: enter schroot using existing connection
+  summary: enter specified schroot
+  timeout: 60
 - class: TestShellRetry
   name: lava-test-retry
   level: '4'
@@ -120,8 +216,13 @@
   summary: Retry support for Lava Test Shell
   timeout: 180
   pipeline:
-  - {class: TestShellAction, name: lava-test-shell, level: '4.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 60}
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '4.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
+    timeout: 60
 - class: FinalizeAction
   name: finalize
   level: '5'
@@ -130,7 +231,17 @@
   summary: finalize the job
   timeout: 60
   pipeline:
-  - {class: PowerOff, name: power-off, level: '5.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '5.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 60}
+  - class: PowerOff
+    name: power-off
+    level: '5.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '5.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 60

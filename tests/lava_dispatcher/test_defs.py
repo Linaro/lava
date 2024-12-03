@@ -69,7 +69,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         action = self.job.pipeline.actions[0]
         overlay = action.pipeline.actions[0]
         testdef = overlay.pipeline.actions[2]
-        self.assertEqual(len(overlay.pipeline.actions), 5)
+        self.assertEqual(len(overlay.pipeline.actions), 4)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         self.assertEqual(
@@ -378,7 +378,7 @@ class TestDefinitions(LavaDispatcherTestCase):
             "lava_dispatcher.actions.deploy.tftp.which",
             return_value="/usr/bin/in.tftpd",
         ), patch(
-            "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+            "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
             return_value=None,
         ):
             self.job.validate()
@@ -408,10 +408,10 @@ class TestDefinitions(LavaDispatcherTestCase):
                 label="test-runscript-overlay",
                 key="testdef_levels",
             ),
-            {"1.3.2.4.4": "0_smoke-tests", "1.3.2.4.8": "1_singlenode-advanced"},
+            {"1.3.3.4.4": "0_smoke-tests", "1.3.3.4.8": "1_singlenode-advanced"},
         )
         self.assertEqual(
-            {repo.uuid for repo in git_repos}, {"4999_1.3.2.4.1", "4999_1.3.2.4.5"}
+            {repo.uuid for repo in git_repos}, {"4999_1.3.3.4.1", "4999_1.3.3.4.5"}
         )
         self.assertEqual(
             set(
@@ -441,12 +441,12 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertEqual(
             self.job.context["test"],
             {
-                "4999_1.3.2.4.5": {
+                "4999_1.3.3.4.5": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
                 },
-                "4999_1.3.2.4.1": {
+                "4999_1.3.3.4.1": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
@@ -463,7 +463,7 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
-                self.assertEqual("4999_1.3.2.4.1", uuid_list[key])
+                self.assertEqual("4999_1.3.3.4.1", uuid_list[key])
                 self.assertEqual(
                     self.job.context["test"][uuid_list[key]]["testdef_pattern"][
                         "pattern"

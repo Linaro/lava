@@ -66,6 +66,19 @@ class TestUbootAction(LavaDispatcherTestCase):
         super().setUp()
         self.factory = UBootFactory()
 
+    def test_pipeline(self):
+        job = self.factory.create_bbb_job("sample_jobs/uboot-persistent.yaml")
+        self.assertIsNotNone(job)
+
+        description_ref = self.pipeline_reference("uboot-persistent.yaml", job=job)
+        self.assertEqual(description_ref, job.pipeline.describe())
+
+        prepare_overlay_tftp = job.pipeline.find_action(PrepareOverlayTftp)
+        self.assertIn(
+            "parse-persistent-nfs",
+            [action.name for action in prepare_overlay_tftp.pipeline.actions],
+        )
+
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

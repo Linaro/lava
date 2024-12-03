@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 120
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
-      url: 'http://images.validation.linaro.org/functional-test-images/bbb/zImage'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 40
+      url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
@@ -25,9 +30,14 @@
     summary: download-retry
     timeout: 120
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 40,
-      url: 'http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 40
+      url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay
     level: '1.3'
@@ -36,41 +46,85 @@
     summary: extract ramdisk or nfsrootfs
     timeout: 120
     pipeline:
-    - {class: ExtractNfsRootfs, name: extract-nfsrootfs, level: 1.3.1, max_retries: 1,
-      description: unpack nfsrootfs, summary: 'unpack nfsrootfs, ready to apply lava
-        overlay', timeout: 120}
-    - {class: OverlayAction, name: lava-overlay, level: 1.3.2, max_retries: 1, description: add
-        lava scripts during deployment for test shell use, summary: overlay the lava
-        support scripts, timeout: 120}
-    - {class: ExtractRamdisk, name: extract-overlay-ramdisk, level: 1.3.3, max_retries: 1,
-      description: extract ramdisk to a temporary directory, summary: extract the
-        ramdisk, timeout: 120}
-    - {class: ExtractModules, name: extract-modules, level: 1.3.4, max_retries: 1,
-      description: extract supplied kernel modules, summary: extract kernel modules,
-      timeout: 120}
-    - {class: ApplyOverlayTftp, name: apply-overlay-tftp, level: 1.3.5, max_retries: 1,
-      description: unpack the overlay into the nfsrootfs or ramdisk, summary: apply
-        lava overlay test files, timeout: 120}
-    - {class: ConfigurePreseedFile, name: configure-preseed-file, level: 1.3.6, max_retries: 1,
-      description: 'add commands to automated installers, to copy the lava test overlay
-        to the installed system', summary: add commands to installer config, timeout: 120}
-    - {class: CompressRamdisk, name: compress-ramdisk, level: 1.3.7, max_retries: 1,
-      description: recreate a ramdisk with the overlay applied., summary: compress
-        ramdisk with overlay, timeout: 120}
+    - class: ExtractNfsRootfs
+      name: extract-nfsrootfs
+      level: 1.3.1
+      max_retries: 1
+      description: unpack nfsrootfs
+      summary: unpack nfsrootfs, ready to apply lava overlay
+      timeout: 120
+    - class: ParsePersistentNFS
+      name: parse-persistent-nfs
+      level: 1.3.2
+      max_retries: 1
+      description: parse persistent nfs
+      summary: parse persistent nfs
+      timeout: 120
+    - class: OverlayAction
+      name: lava-overlay
+      level: 1.3.3
+      max_retries: 1
+      description: add lava scripts during deployment for test shell use
+      summary: overlay the lava support scripts
+      timeout: 120
+    - class: ExtractRamdisk
+      name: extract-overlay-ramdisk
+      level: 1.3.4
+      max_retries: 1
+      description: extract ramdisk to a temporary directory
+      summary: extract the ramdisk
+      timeout: 120
+    - class: ExtractModules
+      name: extract-modules
+      level: 1.3.5
+      max_retries: 1
+      description: extract supplied kernel modules
+      summary: extract kernel modules
+      timeout: 120
+    - class: ApplyOverlayTftp
+      name: apply-overlay-tftp
+      level: 1.3.6
+      max_retries: 1
+      description: unpack the overlay into the nfsrootfs or ramdisk
+      summary: apply lava overlay test files
+      timeout: 120
+    - class: ConfigurePreseedFile
+      name: configure-preseed-file
+      level: 1.3.7
+      max_retries: 1
+      description: add commands to automated installers, to copy the lava test overlay
+        to the installed system
+      summary: add commands to installer config
+      timeout: 120
+    - class: CompressRamdisk
+      name: compress-ramdisk
+      level: 1.3.8
+      max_retries: 1
+      description: recreate a ramdisk with the overlay applied.
+      summary: compress ramdisk with overlay
+      timeout: 120
     - class: PrepareKernelAction
       name: prepare-kernel
-      level: 1.3.8
+      level: 1.3.9
       max_retries: 1
       description: populates the pipeline with a kernel conversion action
       summary: add a kernel conversion
       timeout: 120
       pipeline:
-      - {class: PrepareFITAction, name: prepare-fit, level: 1.3.8.1, max_retries: 1,
-        description: 'package kernel, dtb and ramdisk into an FIT image', summary: generate
-          depthcharge FIT image, timeout: 120}
-  - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '1.4',
-    max_retries: 1, description: create lxc udev rule action, summary: create lxc
-      udev rule, timeout: 120}
+      - class: PrepareFITAction
+        name: prepare-fit
+        level: 1.3.9.1
+        max_retries: 1
+        description: package kernel, dtb and ramdisk into an FIT image
+        summary: generate depthcharge FIT image
+        timeout: 120
+  - class: LxcCreateUdevRuleAction
+    name: lxc-create-udev-rule-action
+    level: '1.4'
+    max_retries: 1
+    description: create lxc udev rule action
+    summary: create lxc udev rule
+    timeout: 120
 - class: DepthchargeAction
   name: depthcharge-action
   level: '2'
@@ -79,9 +133,13 @@
   summary: sets up boot with Depthcharge
   timeout: 300
   pipeline:
-  - {class: DepthchargeCommandOverlay, name: depthcharge-overlay, level: '2.1', max_retries: 1,
-    description: substitute job data into bootloader command list, summary: replace
-      placeholders with job data, timeout: 300}
+  - class: DepthchargeCommandOverlay
+    name: depthcharge-overlay
+    level: '2.1'
+    max_retries: 1
+    description: substitute job data into bootloader command list
+    summary: replace placeholders with job data
+    timeout: 300
   - class: DepthchargeRetry
     name: depthcharge-retry
     level: '2.2'
@@ -98,11 +156,20 @@
       summary: Reset the connection
       timeout: 300
       pipeline:
-      - {class: DisconnectDevice, name: disconnect-device, level: 2.2.1.1, max_retries: 1,
-        description: disconnect from console, summary: disconnect from console, timeout: 300}
-      - {class: ConnectDevice, name: connect-device, level: 2.2.1.2, max_retries: 1,
-        description: use the configured command to connect serial to the device, summary: run
-          connection command, timeout: 300}
+      - class: DisconnectDevice
+        name: disconnect-device
+        level: 2.2.1.1
+        max_retries: 1
+        description: disconnect from console
+        summary: disconnect from console
+        timeout: 300
+      - class: ConnectDevice
+        name: connect-device
+        level: 2.2.1.2
+        max_retries: 1
+        description: use the configured command to connect serial to the device
+        summary: run connection command
+        timeout: 300
     - class: ResetDevice
       name: reset-device
       level: 2.2.2
@@ -111,13 +178,27 @@
       summary: reboot the device
       timeout: 30
       pipeline:
-      - {class: SendRebootCommands, name: send-reboot-commands, level: 2.2.2.1, max_retries: 1,
-        description: Issue a reboot command on the device, summary: Issue a reboot
-          command on the device, timeout: 300}
-    - {class: DepthchargeStart, name: depthcharge-start, level: 2.2.3, max_retries: 1,
-      description: wait for Depthcharge to start, summary: Depthcharge start, timeout: 300}
-    - {class: BootloaderCommandsAction, name: bootloader-commands, level: 2.2.4, max_retries: 1,
-      description: send commands to bootloader, summary: interactive bootloader, timeout: 180}
+      - class: SendRebootCommands
+        name: send-reboot-commands
+        level: 2.2.2.1
+        max_retries: 1
+        description: Issue a reboot command on the device
+        summary: Issue a reboot command on the device
+        timeout: 300
+    - class: DepthchargeStart
+      name: depthcharge-start
+      level: 2.2.3
+      max_retries: 1
+      description: wait for Depthcharge to start
+      summary: Depthcharge start
+      timeout: 300
+    - class: BootloaderCommandsAction
+      name: bootloader-commands
+      level: 2.2.4
+      max_retries: 1
+      description: send commands to bootloader
+      summary: interactive bootloader
+      timeout: 180
 - class: FinalizeAction
   name: finalize
   level: '3'
@@ -126,7 +207,17 @@
   summary: finalize the job
   timeout: 300
   pipeline:
-  - {class: PowerOff, name: power-off, level: '3.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '3.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+  - class: PowerOff
+    name: power-off
+    level: '3.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '3.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300
