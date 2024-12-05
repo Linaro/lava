@@ -1,7 +1,12 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set root_device = root_device|default('/dev/ttyLP0') %}
-{% set console_device = console_device|default('ttyLP0,115200 earlycon') %}
+{% set console_device = console_device|default('ttyLP0') %}
+{% if extra_kernel_args %}
+{% set extra_kernel_args = "earlycon " + extra_kernel_args %}
+{% else %}
+{% set extra_kernel_args = "earlycon" %}
+{% endif %}
 {% set uboot_ums_flash = uboot_ums_flash|default(False) %}
 {% set ums_command = ums_command|default('ums 0 mmc 0') %}
 {% set fastboot_options = fastboot_options|default(['-i', '0x0525']) %}
