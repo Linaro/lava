@@ -223,7 +223,7 @@ class UefiSubstituteCommands(Action):
             "TEST_MENU_NAME": "LAVA %s test image" % self.parameters["commands"],
         }
         nfs_address = self.get_namespace_data(
-            action="persistent-nfs-overlay", label="nfs_address", key="nfsroot"
+            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
         )
         nfs_root = self.get_namespace_data(
             action="download-action", label="file", key="nfsrootfs"
@@ -238,7 +238,7 @@ class UefiSubstituteCommands(Action):
         elif nfs_address:
             substitution_dictionary["{NFSROOTFS}"] = nfs_address
             substitution_dictionary["{NFS_SERVER_IP}"] = self.get_namespace_data(
-                action="persistent-nfs-overlay", label="nfs_address", key="serverip"
+                action="parse-persistent-nfs", label="nfs_address", key="serverip"
             )
         for item in self.items:
             if "enter" in item["select"]:

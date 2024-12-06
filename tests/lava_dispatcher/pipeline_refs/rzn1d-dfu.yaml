@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://.../rzn1d-snarc-fsbl-secmon.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://.../rzn1d-snarc-fsbl-secmon.img
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
@@ -25,9 +30,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://.../u-boot-lces2-ddr.itb'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://.../u-boot-lces2-ddr.itb
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
@@ -36,9 +46,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://.../u-boot-lces2-ddr.itb'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.3.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://.../u-boot-lces2-ddr.itb
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
@@ -47,11 +62,21 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://.../fitImage-1.0-r0-rzn1-snarc.itb'}
-- {class: CommandAction, name: user-command, level: '2', max_retries: 1, description: execute
-    one of the commands listed by the admin, summary: execute commands, timeout: 300}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.4.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://.../fitImage-1.0-r0-rzn1-snarc.itb
+- class: CommandAction
+  name: user-command
+  level: '2'
+  max_retries: 1
+  description: execute one of the commands listed by the admin
+  summary: execute commands
+  timeout: 300
 - class: BootDFURetry
   name: boot-dfu-retry
   level: '3'
@@ -60,9 +85,13 @@
   summary: boot dfu image
   timeout: 600
   pipeline:
-  - {class: ConnectDevice, name: connect-device, level: '3.1', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 600}
+  - class: ConnectDevice
+    name: connect-device
+    level: '3.1'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 600
   - class: ResetDevice
     name: reset-device
     level: '3.2'
@@ -71,20 +100,48 @@
     summary: reboot the device
     timeout: 600
     pipeline:
-    - {class: PDUReboot, name: pdu-reboot, level: 3.2.1, max_retries: 1, description: issue
-        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 600}
-  - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: '3.3', max_retries: 1,
-    description: interrupt bootloader, summary: interrupt bootloader to get an interactive
-      shell, timeout: 600}
-  - {class: EnterDFU, name: enter-dfu, level: '3.4', max_retries: 1, description: enter
-      software dfu mode, summary: enter software dfu mode, timeout: 600}
-  - {class: WaitDFUDeviceAction, name: wait-dfu-device, level: '3.5', max_retries: 1,
-    description: wait for DFU device, summary: wait for DFU device, timeout: 600}
-  - {class: FlashDFUAction, name: flash-dfu, level: '3.6', max_retries: 1, description: use
-      dfu to flash the images, summary: use dfu to flash the images, timeout: 600}
-- {class: CommandAction, name: user-command, level: '4', max_retries: 1, description: execute
-    one of the commands listed by the admin, summary: execute commands, timeout: 300}
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 3.2.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 600
+  - class: BootloaderInterruptAction
+    name: bootloader-interrupt
+    level: '3.3'
+    max_retries: 1
+    description: interrupt bootloader
+    summary: interrupt bootloader to get an interactive shell
+    timeout: 600
+  - class: EnterDFU
+    name: enter-dfu
+    level: '3.4'
+    max_retries: 1
+    description: enter software dfu mode
+    summary: enter software dfu mode
+    timeout: 600
+  - class: WaitDFUDeviceAction
+    name: wait-dfu-device
+    level: '3.5'
+    max_retries: 1
+    description: wait for DFU device
+    summary: wait for DFU device
+    timeout: 600
+  - class: FlashDFUAction
+    name: flash-dfu
+    level: '3.6'
+    max_retries: 1
+    description: use dfu to flash the images
+    summary: use dfu to flash the images
+    timeout: 600
+- class: CommandAction
+  name: user-command
+  level: '4'
+  max_retries: 1
+  description: execute one of the commands listed by the admin
+  summary: execute commands
+  timeout: 300
 - class: OverlayAction
   name: lava-overlay
   level: '5'
@@ -93,15 +150,27 @@
   summary: overlay the lava support scripts
   timeout: 300
   pipeline:
-  - {class: SshAuthorize, name: ssh-authorize, level: '5.1', max_retries: 1, description: include
-      public key in overlay and authorize root user, summary: add public key to authorized_keys,
-    timeout: 300}
-  - {class: VlandOverlayAction, name: lava-vland-overlay, level: '5.2', max_retries: 1,
-    description: Populate specific vland scripts for tests to lookup vlan data., summary: Add
-      files detailing vlan configuration., timeout: 300}
-  - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: '5.3', max_retries: 1,
-    description: add lava scripts during deployment for multinode test shell use,
-    summary: overlay the lava multinode scripts, timeout: 300}
+  - class: SshAuthorize
+    name: ssh-authorize
+    level: '5.1'
+    max_retries: 1
+    description: include public key in overlay and authorize root user
+    summary: add public key to authorized_keys
+    timeout: 300
+  - class: VlandOverlayAction
+    name: lava-vland-overlay
+    level: '5.2'
+    max_retries: 1
+    description: Populate specific vland scripts for tests to lookup vlan data.
+    summary: Add files detailing vlan configuration.
+    timeout: 300
+  - class: MultinodeOverlayAction
+    name: lava-multinode-overlay
+    level: '5.3'
+    max_retries: 1
+    description: add lava scripts during deployment for multinode test shell use
+    summary: overlay the lava multinode scripts
+    timeout: 300
   - class: TestDefinitionAction
     name: test-definition
     level: '5.4'
@@ -110,24 +179,41 @@
     summary: loading test definitions
     timeout: 300
     pipeline:
-    - {class: GitRepoAction, name: git-repo-action, level: 5.4.1, max_retries: 1,
-      description: apply git repository of tests to the test image, summary: clone
-        git test repo, timeout: 300}
-    - {class: TestOverlayAction, name: test-overlay, level: 5.4.2, max_retries: 1,
-      description: overlay test support files onto image, summary: applying LAVA test
-        overlay, timeout: 300}
-    - {class: TestInstallAction, name: test-install-overlay, level: 5.4.3, max_retries: 1,
-      description: overlay dependency installation support files onto image, summary: applying
-        LAVA test install scripts, timeout: 300}
-    - {class: TestRunnerAction, name: test-runscript-overlay, level: 5.4.4, max_retries: 1,
-      description: overlay run script onto image, summary: applying LAVA test run
-        script, timeout: 300}
-  - {class: CompressOverlay, name: compress-overlay, level: '5.5', max_retries: 1,
-    description: Create a lava overlay tarball and store alongside the job, summary: Compress
-      the lava overlay files, timeout: 300}
-  - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: '5.6', max_retries: 1,
-    description: unpack overlay into persistent NFS, summary: add test overlay to
-      NFS, timeout: 300}
+    - class: GitRepoAction
+      name: git-repo-action
+      level: 5.4.1
+      max_retries: 1
+      description: apply git repository of tests to the test image
+      summary: clone git test repo
+      timeout: 300
+    - class: TestOverlayAction
+      name: test-overlay
+      level: 5.4.2
+      max_retries: 1
+      description: overlay test support files onto image
+      summary: applying LAVA test overlay
+      timeout: 300
+    - class: TestInstallAction
+      name: test-install-overlay
+      level: 5.4.3
+      max_retries: 1
+      description: overlay dependency installation support files onto image
+      summary: applying LAVA test install scripts
+      timeout: 300
+    - class: TestRunnerAction
+      name: test-runscript-overlay
+      level: 5.4.4
+      max_retries: 1
+      description: overlay run script onto image
+      summary: applying LAVA test run script
+      timeout: 300
+  - class: CompressOverlay
+    name: compress-overlay
+    level: '5.5'
+    max_retries: 1
+    description: Create a lava overlay tarball and store alongside the job
+    summary: Compress the lava overlay files
+    timeout: 300
 - class: BootBootloaderRetry
   name: boot-bootloader-retry
   level: '6'
@@ -136,9 +222,13 @@
   summary: boot bootloader retry
   timeout: 300
   pipeline:
-  - {class: BootloaderCommandOverlay, name: bootloader-overlay, level: '6.1', max_retries: 1,
-    description: substitute job data into bootloader command list, summary: replace
-      placeholders with job data, timeout: 300}
+  - class: BootloaderCommandOverlay
+    name: bootloader-overlay
+    level: '6.1'
+    max_retries: 1
+    description: substitute job data into bootloader command list
+    summary: replace placeholders with job data
+    timeout: 300
   - class: BootBootloaderAction
     name: boot-bootloader
     level: '6.2'
@@ -147,9 +237,13 @@
     summary: boot bootloader
     timeout: 300
     pipeline:
-    - {class: ConnectDevice, name: connect-device, level: 6.2.1, max_retries: 1, description: use
-        the configured command to connect serial to the device, summary: run connection
-        command, timeout: 300}
+    - class: ConnectDevice
+      name: connect-device
+      level: 6.2.1
+      max_retries: 1
+      description: use the configured command to connect serial to the device
+      summary: run connection command
+      timeout: 300
     - class: ResetDevice
       name: reset-device
       level: 6.2.2
@@ -158,14 +252,27 @@
       summary: reboot the device
       timeout: 30
       pipeline:
-      - {class: PDUReboot, name: pdu-reboot, level: 6.2.2.1, max_retries: 1, description: issue
-          commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 30}
-    - {class: BootloaderInterruptAction, name: bootloader-interrupt, level: 6.2.3,
-      max_retries: 1, description: interrupt bootloader, summary: interrupt bootloader
-        to get an interactive shell, timeout: 30}
-    - {class: BootloaderCommandsAction, name: bootloader-commands, level: 6.2.4, max_retries: 1,
-      description: send commands to bootloader, summary: interactive bootloader, timeout: 180}
+      - class: PDUReboot
+        name: pdu-reboot
+        level: 6.2.2.1
+        max_retries: 1
+        description: issue commands to a PDU to power cycle a device
+        summary: hard reboot using PDU
+        timeout: 30
+    - class: BootloaderInterruptAction
+      name: bootloader-interrupt
+      level: 6.2.3
+      max_retries: 1
+      description: interrupt bootloader
+      summary: interrupt bootloader to get an interactive shell
+      timeout: 30
+    - class: BootloaderCommandsAction
+      name: bootloader-commands
+      level: 6.2.4
+      max_retries: 1
+      description: send commands to bootloader
+      summary: interactive bootloader
+      timeout: 180
 - class: MinimalBoot
   name: minimal-boot
   level: '7'
@@ -174,9 +281,13 @@
   summary: connect and reset device
   timeout: 300
   pipeline:
-  - {class: ConnectDevice, name: connect-device, level: '7.1', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 300}
+  - class: ConnectDevice
+    name: connect-device
+    level: '7.1'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 300
   - class: AutoLoginAction
     name: auto-login-action
     level: '7.2'
@@ -186,16 +297,34 @@
     summary: Auto-login after boot with support for kernel messages.
     timeout: 300
     pipeline:
-    - {class: LoginAction, name: login-action, level: 7.2.1, max_retries: 1, description: Real
-        login action., summary: Login after boot., timeout: 300}
-  - {class: ExpectShellSession, name: expect-shell-connection, level: '7.3', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 300}
-  - {class: OverlayUnpack, name: overlay-unpack, level: '7.4', max_retries: 1, description: transfer
-      and unpack overlay to persistent rootfs after login, summary: transfer and unpack
-      overlay, timeout: 300}
-  - {class: ExportDeviceEnvironment, name: export-device-env, level: '7.5', max_retries: 1,
-    description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 300}
+    - class: LoginAction
+      name: login-action
+      level: 7.2.1
+      max_retries: 1
+      description: Real login action.
+      summary: Login after boot.
+      timeout: 300
+  - class: ExpectShellSession
+    name: expect-shell-connection
+    level: '7.3'
+    max_retries: 1
+    description: Wait for a shell
+    summary: Expect a shell prompt
+    timeout: 300
+  - class: OverlayUnpack
+    name: overlay-unpack
+    level: '7.4'
+    max_retries: 1
+    description: transfer and unpack overlay to persistent rootfs after login
+    summary: transfer and unpack overlay
+    timeout: 300
+  - class: ExportDeviceEnvironment
+    name: export-device-env
+    level: '7.5'
+    max_retries: 1
+    description: Exports environment variables to the device
+    summary: Exports environment variables action
+    timeout: 300
 - class: TestShellRetry
   name: lava-test-retry
   level: '8'
@@ -204,8 +333,13 @@
   summary: Retry support for Lava Test Shell
   timeout: 300
   pipeline:
-  - {class: TestShellAction, name: lava-test-shell, level: '8.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '8.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
+    timeout: 300
 - class: FinalizeAction
   name: finalize
   level: '9'
@@ -214,7 +348,17 @@
   summary: finalize the job
   timeout: 300
   pipeline:
-  - {class: PowerOff, name: power-off, level: '9.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '9.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+  - class: PowerOff
+    name: power-off
+    level: '9.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '9.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300

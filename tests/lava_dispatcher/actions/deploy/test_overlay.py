@@ -8,7 +8,8 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import patch
 
-from lava_dispatcher.actions.deploy.overlay import OverlayAction, PersistentNFSOverlay
+from lava_dispatcher.actions.deploy.apply_overlay import ParsePersistentNFS
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from tests.lava_dispatcher.test_basic import Factory
 
 from ...test_basic import LavaDispatcherTestCase
@@ -90,7 +91,7 @@ def test_persist_nfs_place_holder():
         "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
     )
 
-    action = PersistentNFSOverlay(job)
+    action = ParsePersistentNFS(job)
     action.parameters = {
         "persistent_nfs": {
             "address": "foo:/var/lib/lava/dispatcher/tmp/linux/imx8mm_rootfs"
@@ -99,7 +100,7 @@ def test_persist_nfs_place_holder():
     }
     action.params = action.parameters["persistent_nfs"]
     with patch(
-        "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
         return_value=None,
     ):
         action.validate()
@@ -113,7 +114,7 @@ def test_persist_nfs_place_holder():
     }
     action.params = action.parameters["persistent_nfs"]
     with patch(
-        "lava_dispatcher.actions.deploy.overlay.rpcinfo_nfs",
+        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
         return_value=None,
     ):
         action.validate()

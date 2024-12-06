@@ -35,9 +35,12 @@ from lava_dispatcher.utils.filesystem import (
     prepare_guestfs,
 )
 from lava_dispatcher.utils.installers import add_late_command, add_to_kickstart
-from lava_dispatcher.utils.network import dispatcher_ip
+from lava_dispatcher.utils.network import dispatcher_ip, rpcinfo_nfs
 from lava_dispatcher.utils.shell import which
-from lava_dispatcher.utils.strings import substitute
+from lava_dispatcher.utils.strings import (
+    substitute,
+    substitute_address_with_static_info,
+)
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -226,6 +229,9 @@ class PrepareOverlayTftp(Action):
         self.pipeline.add_action(
             ExtractNfsRootfs(self.job)
         )  # idempotent, checks for nfsrootfs parameter
+        self.pipeline.add_action(
+            ParsePersistentNFS(self.job)
+        )  # idempotent, parse persistent nfs
         self.pipeline.add_action(
             OverlayAction(self.job)
         )  # idempotent, includes testdef
@@ -1037,3 +1043,45 @@ class AppendOverlays(Action):
             command_list = ["/usr/bin/img2simg", image, f"{image}.sparse"]
             self.run_cmd(command_list, error_msg="img2simg failed for %s" % image)
             os.replace(f"{image}.sparse", image)
+
+
+class ParsePersistentNFS(Action):
+    """
+    Instead of extracting, just populate the location of the persistent NFS
+    so that it can be mounted later when the overlay is applied.
+    """
+
+    name = "parse-persistent-nfs"
+    description = "parse persistent nfs"
+    summary = "parse persistent nfs"
+
+    def validate(self):
+        super().validate()
+        persist = self.parameters.get("persistent_nfs")
+        if not persist:
+            return
+        if "address" not in persist:
+            self.errors = "Missing address for persistent NFS"
+            return
+        if ":" not in persist["address"]:
+            self.errors = (
+                "Unrecognised NFS URL: '%s'"
+                % self.parameters["persistent_nfs"]["address"]
+            )
+            return
+
+        persist["address"] = substitute_address_with_static_info(
+            persist["address"], self.job.device.get("static_info", [])
+        )
+
+        nfs_server, dirname = persist["address"].split(":")
+        self.errors = rpcinfo_nfs(nfs_server)
+        self.set_namespace_data(
+            action=self.name, label="nfs_address", key="nfsroot", value=dirname
+        )
+        self.set_namespace_data(
+            action=self.name, label="nfs_address", key="serverip", value=nfs_server
+        )
+
+        self.job.device["dynamic_data"]["NFS_ROOTFS"] = dirname
+        self.job.device["dynamic_data"]["NFS_SERVER_IP"] = nfs_server

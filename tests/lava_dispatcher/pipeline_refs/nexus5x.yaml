@@ -6,21 +6,55 @@
   summary: lxc deployment
   timeout: 300
   pipeline:
-  - {class: LxcCreateAction, name: lxc-create-action, level: '1.1', max_retries: 1,
-    description: create lxc action, summary: create lxc, timeout: 300}
-  - {class: LxcCreateUdevRuleAction, name: lxc-create-udev-rule-action, level: '1.2',
-    max_retries: 1, description: create lxc udev rule action, summary: create lxc
-      udev rule, timeout: 300}
-  - {class: LxcStartAction, name: boot-lxc, level: '1.3', max_retries: 1, description: boot
-      into lxc container, summary: attempt to boot, timeout: 300}
-  - {class: LxcAptUpdateAction, name: lxc-apt-update, level: '1.4', max_retries: 1,
-    description: lxc apt update action, summary: lxc apt update, timeout: 300}
-  - {class: LxcAptInstallAction, name: lxc-apt-install, level: '1.5', max_retries: 1,
-    description: lxc apt install packages action, summary: lxc apt install, timeout: 300}
-  - {class: LxcStopAction, name: lxc-stop, level: '1.6', max_retries: 1, description: stop
-      the lxc container, summary: stop lxc, timeout: 300}
-  - {class: DeployDeviceEnvironment, name: deploy-device-env, level: '1.7', max_retries: 1,
-    description: deploy device environment, summary: deploy device environment, timeout: 300}
+  - class: LxcCreateAction
+    name: lxc-create-action
+    level: '1.1'
+    max_retries: 1
+    description: create lxc action
+    summary: create lxc
+    timeout: 300
+  - class: LxcCreateUdevRuleAction
+    name: lxc-create-udev-rule-action
+    level: '1.2'
+    max_retries: 1
+    description: create lxc udev rule action
+    summary: create lxc udev rule
+    timeout: 300
+  - class: LxcStartAction
+    name: boot-lxc
+    level: '1.3'
+    max_retries: 1
+    description: boot into lxc container
+    summary: attempt to boot
+    timeout: 300
+  - class: LxcAptUpdateAction
+    name: lxc-apt-update
+    level: '1.4'
+    max_retries: 1
+    description: lxc apt update action
+    summary: lxc apt update
+    timeout: 300
+  - class: LxcAptInstallAction
+    name: lxc-apt-install
+    level: '1.5'
+    max_retries: 1
+    description: lxc apt install packages action
+    summary: lxc apt install
+    timeout: 300
+  - class: LxcStopAction
+    name: lxc-stop
+    level: '1.6'
+    max_retries: 1
+    description: stop the lxc container
+    summary: stop lxc
+    timeout: 300
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.7'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 300
   - class: OverlayAction
     name: lava-overlay
     level: '1.8'
@@ -29,15 +63,27 @@
     summary: overlay the lava support scripts
     timeout: 300
     pipeline:
-    - {class: SshAuthorize, name: ssh-authorize, level: 1.8.1, max_retries: 1, description: include
-        public key in overlay and authorize root user, summary: add public key to
-        authorized_keys, timeout: 300}
-    - {class: VlandOverlayAction, name: lava-vland-overlay, level: 1.8.2, max_retries: 1,
-      description: Populate specific vland scripts for tests to lookup vlan data.,
-      summary: Add files detailing vlan configuration., timeout: 300}
-    - {class: MultinodeOverlayAction, name: lava-multinode-overlay, level: 1.8.3,
-      max_retries: 1, description: add lava scripts during deployment for multinode
-        test shell use, summary: overlay the lava multinode scripts, timeout: 300}
+    - class: SshAuthorize
+      name: ssh-authorize
+      level: 1.8.1
+      max_retries: 1
+      description: include public key in overlay and authorize root user
+      summary: add public key to authorized_keys
+      timeout: 300
+    - class: VlandOverlayAction
+      name: lava-vland-overlay
+      level: 1.8.2
+      max_retries: 1
+      description: Populate specific vland scripts for tests to lookup vlan data.
+      summary: Add files detailing vlan configuration.
+      timeout: 300
+    - class: MultinodeOverlayAction
+      name: lava-multinode-overlay
+      level: 1.8.3
+      max_retries: 1
+      description: add lava scripts during deployment for multinode test shell use
+      summary: overlay the lava multinode scripts
+      timeout: 300
     - class: TestDefinitionAction
       name: test-definition
       level: 1.8.4
@@ -46,27 +92,48 @@
       summary: loading test definitions
       timeout: 300
       pipeline:
-      - {class: GitRepoAction, name: git-repo-action, level: 1.8.4.1, max_retries: 1,
-        description: apply git repository of tests to the test image, summary: clone
-          git test repo, timeout: 300}
-      - {class: TestOverlayAction, name: test-overlay, level: 1.8.4.2, max_retries: 1,
-        description: overlay test support files onto image, summary: applying LAVA
-          test overlay, timeout: 300}
-      - {class: TestInstallAction, name: test-install-overlay, level: 1.8.4.3, max_retries: 1,
-        description: overlay dependency installation support files onto image, summary: applying
-          LAVA test install scripts, timeout: 300}
-      - {class: TestRunnerAction, name: test-runscript-overlay, level: 1.8.4.4, max_retries: 1,
-        description: overlay run script onto image, summary: applying LAVA test run
-          script, timeout: 300}
-    - {class: CompressOverlay, name: compress-overlay, level: 1.8.5, max_retries: 1,
-      description: Create a lava overlay tarball and store alongside the job, summary: Compress
-        the lava overlay files, timeout: 300}
-    - {class: PersistentNFSOverlay, name: persistent-nfs-overlay, level: 1.8.6, max_retries: 1,
-      description: unpack overlay into persistent NFS, summary: add test overlay to
-        NFS, timeout: 300}
-  - {class: ApplyLxcOverlay, name: apply-lxc-overlay, level: '1.9', max_retries: 1,
-    description: apply the overlay to the container by copying, summary: apply overlay
-      on the container, timeout: 300}
+      - class: GitRepoAction
+        name: git-repo-action
+        level: 1.8.4.1
+        max_retries: 1
+        description: apply git repository of tests to the test image
+        summary: clone git test repo
+        timeout: 300
+      - class: TestOverlayAction
+        name: test-overlay
+        level: 1.8.4.2
+        max_retries: 1
+        description: overlay test support files onto image
+        summary: applying LAVA test overlay
+        timeout: 300
+      - class: TestInstallAction
+        name: test-install-overlay
+        level: 1.8.4.3
+        max_retries: 1
+        description: overlay dependency installation support files onto image
+        summary: applying LAVA test install scripts
+        timeout: 300
+      - class: TestRunnerAction
+        name: test-runscript-overlay
+        level: 1.8.4.4
+        max_retries: 1
+        description: overlay run script onto image
+        summary: applying LAVA test run script
+        timeout: 300
+    - class: CompressOverlay
+      name: compress-overlay
+      level: 1.8.5
+      max_retries: 1
+      description: Create a lava overlay tarball and store alongside the job
+      summary: Compress the lava overlay files
+      timeout: 300
+  - class: ApplyLxcOverlay
+    name: apply-lxc-overlay
+    level: '1.9'
+    max_retries: 1
+    description: apply the overlay to the container by copying
+    summary: apply overlay on the container
+    timeout: 300
 - class: BootLxcAction
   name: lxc-boot
   level: '2'
@@ -75,18 +142,41 @@
   summary: lxc boot
   timeout: 300
   pipeline:
-  - {class: LxcStartAction, name: boot-lxc, level: '2.1', max_retries: 1, description: boot
-      into lxc container, summary: attempt to boot, timeout: 300}
-  - {class: LxcAddStaticDevices, name: lxc-add-static, level: '2.2', max_retries: 1,
-    description: Add devices which are permanently powered by the worker to the LXC,
-    summary: Add static devices to the LXC, timeout: 300}
-  - {class: ConnectLxc, name: connect-lxc, level: '2.3', max_retries: 1, description: connect
-      to the lxc container, summary: run connection command, timeout: 300}
-  - {class: ExpectShellSession, name: expect-shell-connection, level: '2.4', max_retries: 1,
-    description: Wait for a shell, summary: Expect a shell prompt, timeout: 300}
-  - {class: ExportDeviceEnvironment, name: export-device-env, level: '2.5', max_retries: 1,
-    description: Exports environment variables to the device, summary: Exports environment
-      variables action, timeout: 300}
+  - class: LxcStartAction
+    name: boot-lxc
+    level: '2.1'
+    max_retries: 1
+    description: boot into lxc container
+    summary: attempt to boot
+    timeout: 300
+  - class: LxcAddStaticDevices
+    name: lxc-add-static
+    level: '2.2'
+    max_retries: 1
+    description: Add devices which are permanently powered by the worker to the LXC
+    summary: Add static devices to the LXC
+    timeout: 300
+  - class: ConnectLxc
+    name: connect-lxc
+    level: '2.3'
+    max_retries: 1
+    description: connect to the lxc container
+    summary: run connection command
+    timeout: 300
+  - class: ExpectShellSession
+    name: expect-shell-connection
+    level: '2.4'
+    max_retries: 1
+    description: Wait for a shell
+    summary: Expect a shell prompt
+    timeout: 300
+  - class: ExportDeviceEnvironment
+    name: export-device-env
+    level: '2.5'
+    max_retries: 1
+    description: Exports environment variables to the device
+    summary: Exports environment variables action
+    timeout: 300
 - class: FastbootAction
   name: fastboot-deploy
   level: '3'
@@ -95,8 +185,13 @@
   summary: fastboot deployment
   timeout: 300
   pipeline:
-  - {class: EnterFastbootAction, name: enter-fastboot-action, level: '3.1', max_retries: 1,
-    description: enter fastboot bootloader, summary: enter fastboot, timeout: 300}
+  - class: EnterFastbootAction
+    name: enter-fastboot-action
+    level: '3.1'
+    max_retries: 1
+    description: enter fastboot bootloader
+    summary: enter fastboot
+    timeout: 300
   - class: DownloaderAction
     name: download-retry
     level: '3.2'
@@ -105,9 +200,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 3.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 3.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/boot.img
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
@@ -116,9 +216,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 3.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 3.3.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
@@ -127,9 +232,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 3.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 3.4.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/userdata.img
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
@@ -138,9 +248,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 3.5.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 3.5.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/system.img
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
@@ -149,9 +264,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 3.6.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 3.6.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: http://images.validation.linaro.org/nexus5x/2016-04-19-307/cache.img
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '3.7'
@@ -160,39 +280,83 @@
     summary: Handle reset and options for each flash url.
     timeout: 300
     pipeline:
-    - {class: ReadFeedback, name: read-feedback, level: 3.7.1, max_retries: 1, description: Check
-        for messages on all other namespaces, summary: Read from other namespaces,
-      timeout: 300}
-    - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 3.7.2, max_retries: 1,
-      description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
-    - {class: FastbootFlashAction, name: fastboot-flash-action, level: 3.7.3, max_retries: 1,
-      description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
-    - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 3.7.4, max_retries: 1,
-      description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
-    - {class: FastbootFlashAction, name: fastboot-flash-action, level: 3.7.5, max_retries: 1,
-      description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
-    - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 3.7.6, max_retries: 1,
-      description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
-    - {class: FastbootFlashAction, name: fastboot-flash-action, level: 3.7.7, max_retries: 1,
-      description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
-    - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 3.7.8, max_retries: 1,
-      description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
-    - {class: FastbootFlashAction, name: fastboot-flash-action, level: 3.7.9, max_retries: 1,
-      description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
-    - {class: WaitDeviceBoardID, name: wait-device-boardid, level: 3.7.10, max_retries: 1,
-      description: wait for udev device with board ID, summary: wait for udev device
-        with board ID, timeout: 300}
-    - {class: FastbootFlashAction, name: fastboot-flash-action, level: 3.7.11, max_retries: 1,
-      description: Run a specified flash command, summary: Execute fastboot flash
-        command, timeout: 300}
+    - class: ReadFeedback
+      name: read-feedback
+      level: 3.7.1
+      max_retries: 1
+      description: Check for messages on all other namespaces
+      summary: Read from other namespaces
+      timeout: 300
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 3.7.2
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 300
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 3.7.3
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 300
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 3.7.4
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 300
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 3.7.5
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 300
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 3.7.6
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 300
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 3.7.7
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 300
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 3.7.8
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 300
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 3.7.9
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 300
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 3.7.10
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 300
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 3.7.11
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 300
 - class: BootFastbootAction
   name: fastboot-boot
   level: '4'
@@ -201,17 +365,34 @@
   summary: fastboot boot
   timeout: 900
   pipeline:
-  - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '4.1', max_retries: 1,
-    description: wait for udev device with board ID, summary: wait for udev device
-      with board ID, timeout: 900}
-  - {class: EnterFastbootAction, name: enter-fastboot-action, level: '4.2', max_retries: 1,
-    description: enter fastboot bootloader, summary: enter fastboot, timeout: 900}
-  - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '4.3', max_retries: 1,
-    description: wait for udev device with board ID, summary: wait for udev device
-      with board ID, timeout: 900}
-  - {class: FastbootRebootAction, name: fastboot-reboot, level: '4.4', max_retries: 1,
-    description: fastboot reboot into system, summary: attempt to fastboot reboot,
-    timeout: 900}
+  - class: WaitDeviceBoardID
+    name: wait-device-boardid
+    level: '4.1'
+    max_retries: 1
+    description: wait for udev device with board ID
+    summary: wait for udev device with board ID
+    timeout: 900
+  - class: EnterFastbootAction
+    name: enter-fastboot-action
+    level: '4.2'
+    max_retries: 1
+    description: enter fastboot bootloader
+    summary: enter fastboot
+    timeout: 900
+  - class: WaitDeviceBoardID
+    name: wait-device-boardid
+    level: '4.3'
+    max_retries: 1
+    description: wait for udev device with board ID
+    summary: wait for udev device with board ID
+    timeout: 900
+  - class: FastbootRebootAction
+    name: fastboot-reboot
+    level: '4.4'
+    max_retries: 1
+    description: fastboot reboot into system
+    summary: attempt to fastboot reboot
+    timeout: 900
 - class: TestShellRetry
   name: lava-test-retry
   level: '5'
@@ -220,8 +401,13 @@
   summary: Retry support for Lava Test Shell
   timeout: 300
   pipeline:
-  - {class: TestShellAction, name: lava-test-shell, level: '5.1', max_retries: 1,
-    description: Executing lava-test-runner, summary: Lava Test Shell, timeout: 300}
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '5.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
+    timeout: 300
 - class: FinalizeAction
   name: finalize
   level: '6'
@@ -230,7 +416,17 @@
   summary: finalize the job
   timeout: 300
   pipeline:
-  - {class: PowerOff, name: power-off, level: '6.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '6.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+  - class: PowerOff
+    name: power-off
+    level: '6.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '6.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300
