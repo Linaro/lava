@@ -63,6 +63,7 @@ class BaseFVPAction(Action):
         super().__init__(job)
         self.extra_options = ""
         self.container = ""
+        self.environment = []
         self.fvp_license = None
         self.ubl_license = None
         self.docker_image = None
@@ -106,6 +107,10 @@ class BaseFVPAction(Action):
             self.extra_options += " --volume %s" % volume
         if "license_variable" in self.parameters:
             self.fvp_license = shlex.quote(self.parameters["license_variable"])
+        if "environment" in self.parameters and isinstance(
+            self.parameters["environment"], list
+        ):
+            self.environment = [shlex.quote(e) for e in self.parameters["environment"]]
         if options.get("ubl_license"):
             self.ubl_license = shlex.quote(options["ubl_license"])
         if "ubl_license" in self.parameters:
@@ -154,6 +159,8 @@ class BaseFVPAction(Action):
                 )
         else:
             cmd += " -e %s" % self.fvp_license
+        for env in self.environment:
+            cmd += f" -e {env}"
         fvp_image = self.parameters.get("image")
         cmd += self.extra_options
 
@@ -285,8 +292,11 @@ class CheckFVPVersionAction(BaseFVPAction):
         fvp_image = self.parameters.get("image")
         fvp_arguments = self.parameters.get("version_args", "--version")
 
+        cmd = ["docker", "run", "--rm"]
+        for env in self.environment:
+            cmd.extend(["-e", env])
         output = self.parsed_command(
-            ["docker", "run", "--rm", self.docker_image, fvp_image, fvp_arguments]
+            cmd + [self.docker_image, fvp_image, fvp_arguments]
         )
         m = re.match(self.fvp_version_string, output)
         matched_version_string = m and m.group(0) or output

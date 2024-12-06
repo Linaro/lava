@@ -18,6 +18,7 @@ def schema():
         Optional("feedbacks"): [str],
         Required("image"): str,
         Optional("license_variable"): str,
+        Optional("environment"): [str],
         Optional("ubl_license"): str,
         Optional("version_string"): str,
         Required("arguments"): [str],
