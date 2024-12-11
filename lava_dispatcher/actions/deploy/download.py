@@ -315,8 +315,8 @@ class DownloadHandler(Action):
         sha256sum = self.params.get("sha256sum")
         sha512sum = self.params.get("sha512sum")
 
+        sha256 = hashlib.sha256()
         md5 = hashlib.md5() if md5sum is not None else None
-        sha256 = hashlib.sha256() if sha256sum is not None else None
         sha512 = hashlib.sha512() if sha512sum is not None else None
         hash_constructors = tuple(h for h in (md5, sha256, sha512) if h is not None)
 
@@ -416,6 +416,12 @@ class DownloadHandler(Action):
         self.set_namespace_data(
             action="download-action", label="file", key=self.key, value=self.fname
         )
+        self.set_namespace_data(
+            action="download-action",
+            label=self.key,
+            key="sha256",
+            value=sha256.hexdigest(),
+        )
 
         # handle archive files
         archive = self.params.get("archive")
@@ -439,11 +445,11 @@ class DownloadHandler(Action):
                 value=target_fname_path,
             )
 
-        if md5 is not None:
+        if md5sum is not None:
             self._check_checksum("md5", md5.hexdigest(), md5sum)
-        if sha256 is not None:
+        if sha256sum is not None:
             self._check_checksum("sha256", sha256.hexdigest(), sha256sum)
-        if sha512 is not None:
+        if sha512sum is not None:
             self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
@@ -479,6 +485,11 @@ class DownloadHandler(Action):
         self.results = {
             "label": self.key,
             "size": downloaded_size,
+            "sha256sum": str(
+                self.get_namespace_data(
+                    action="download-action", label=self.key, key="sha256"
+                )
+            ),
         }
         return connection
 
