@@ -11,7 +11,7 @@ import pytest
 from lava_common.device_mappings import add_device_container_mapping, load_mapping_data
 from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher_host import share_device_with_container
+from lava_dispatcher_host.utils import share_device_with_container
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +56,7 @@ def device_links(pyudev):
 
 @pytest.fixture
 def pass_device_lxc(mocker):
-    return mocker.patch("lava_dispatcher_host.pass_device_into_container_lxc")
+    return mocker.patch("lava_dispatcher_host.utils.pass_device_into_container_lxc")
 
 
 def test_simple_share_device_with_container(mocker, pass_device_lxc, device_links):
@@ -151,7 +151,7 @@ def test_unknown_container_type(mocker):
 
 
 def test_only_adds_slash_dev_if_needed(mocker):
-    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
@@ -160,7 +160,7 @@ def test_only_adds_slash_dev_if_needed(mocker):
 
 
 def test_second_mapping_does_not_invalidate_first(mocker):
-    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
     add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer1")
     share_device_with_container(
@@ -170,7 +170,7 @@ def test_second_mapping_does_not_invalidate_first(mocker):
 
 
 def test_two_devices_two_containers(mocker):
-    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
     add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer2")
     share_device_with_container(
@@ -186,7 +186,7 @@ def test_two_devices_two_containers(mocker):
 
 
 def test_device_plus_parent(mocker):
-    share = mocker.patch("lava_dispatcher_host.share_device_with_container_lxc")
+    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
     add_device_container_mapping(
         "1",
         {

@@ -10,20 +10,17 @@ import sys
 import time
 
 from lava_common.constants import UDEV_RULE_FILENAME
-from lava_common.device_mappings import (
-    add_device_container_mapping,
-    remove_device_container_mappings,
-)
-from lava_dispatcher_host import share_device_with_container
-from lava_dispatcher_host.server import Client
-from lava_dispatcher_host.udev import get_udev_rules
 
 
 def handle_rules_show(options):
+    from lava_dispatcher_host.udev import get_udev_rules
+
     print(get_udev_rules())
 
 
 def handle_rules_install(options):
+    from lava_dispatcher_host.udev import get_udev_rules
+
     dest = UDEV_RULE_FILENAME
     rules = get_udev_rules()
     if os.path.exists(dest) and rules == open(dest).read():
@@ -44,6 +41,8 @@ def handle_rules_install(options):
 
 def handle_devices_share(options):
     if options.remote:
+        from lava_dispatcher_host.client import Client
+
         client = Client()
         data = vars(options)
         request = {}
@@ -58,10 +57,14 @@ def handle_devices_share(options):
                 request[f] = data[f]
         client.send_request(request)
     else:
+        from lava_dispatcher_host.utils import share_device_with_container
+
         share_device_with_container(options)
 
 
 def handle_devices_map(options):
+    from lava_common.device_mappings import add_device_container_mapping
+
     container = options.container
     container_type = options.container_type
     job_id = "0"  # fake map
@@ -73,6 +76,8 @@ def handle_devices_map(options):
 
 
 def handle_devices_unmap(_):
+    from lava_common.device_mappings import remove_device_container_mappings
+
     remove_device_container_mappings("0")
 
 
