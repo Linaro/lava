@@ -357,6 +357,7 @@
   const progress_node = document.getElementById('log-messages');
   const logs_section = document.getElementById('sectionlogs');
   const actions_list = document.getElementById('actions-list');
+  const actions_table = document.getElementById('actions-table');
   const action_id_regexp = /^start: (?<action_level>[\d.]+) (?<action_name>[\w_-]+)/;
 
   let log_div_to_action = new Map();
@@ -368,7 +369,9 @@
       }
       if (observed_entry.isIntersecting) {
         action_table_entry.classList.add('lava-action-on-screen');
-        action_table_entry.scrollIntoView({block: "center"});
+        if (actions_table.classList.contains('actions-table-floating')) {
+          action_table_entry.scrollIntoView({block: "center", behavior: "smooth"});
+        }
       } else {
         action_table_entry.classList.remove('lava-action-on-screen');
       }
