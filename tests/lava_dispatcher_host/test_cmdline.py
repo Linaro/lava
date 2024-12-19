@@ -29,7 +29,7 @@ def test_devices_no_cmd():
 
 
 def test_gen_udev_rules(mocker):
-    get_udev_rules = mocker.spy(lava_dispatcher_host.cmdline, "get_udev_rules")
+    get_udev_rules = mocker.spy(lava_dispatcher_host.udev, "get_udev_rules")
     main(["lava-dispatcher-host", "rules", "show"])
     get_udev_rules.assert_called_once()
 
@@ -47,7 +47,7 @@ def test_install_udev_rules(mocker):
 
 def test_install_udev_rules_exists(mocker):
     mocker.patch("os.path.exists", return_value=True)
-    mocker.patch("lava_dispatcher_host.cmdline.get_udev_rules", return_value="RULES")
+    mocker.patch("lava_dispatcher_host.udev.get_udev_rules", return_value="RULES")
     __open__ = mocker.mock_open(read_data="RULES")
     mocker.patch("lava_dispatcher_host.cmdline.open", __open__)
 
@@ -72,7 +72,7 @@ def test_install_udev_rules_no_udev_running(mocker):
 
 def test_share_device(mocker):
     share_device_with_container = mocker.patch(
-        "lava_dispatcher_host.cmdline.share_device_with_container"
+        "lava_dispatcher_host.utils.share_device_with_container"
     )
 
     main(
@@ -93,7 +93,7 @@ def test_share_device(mocker):
 
 def test_map_device(mocker):
     add_device_container_mapping = mocker.patch(
-        "lava_dispatcher_host.cmdline.add_device_container_mapping"
+        "lava_common.device_mappings.add_device_container_mapping"
     )
     main(
         [
@@ -112,7 +112,7 @@ def test_map_device(mocker):
 
 def test_unmap(mocker):
     remove_device_container_mappings = mocker.patch(
-        "lava_dispatcher_host.cmdline.remove_device_container_mappings"
+        "lava_common.device_mappings.remove_device_container_mappings"
     )
     main(["lava-dispatcher-host", "devices", "unmap"])
     remove_device_container_mappings.assert_called_with(mocker.ANY)

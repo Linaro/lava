@@ -6,7 +6,7 @@
 
 import pytest
 
-from lava_dispatcher_host import (
+from lava_dispatcher_host.utils import (
     share_device_with_container_docker,
     share_device_with_container_lxc,
 )
