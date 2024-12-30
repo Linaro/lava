@@ -46,6 +46,10 @@ class LavaView(tables.SingleTableView):
         # Simple text field search
         for field_name in self.table_class.Meta.searches.keys():
             searched_value = self.request.GET.get(f"{prefix}{field_name}")
+            if field_name in self.table_class.base_columns:
+                field_name = (
+                    self.table_class.base_columns[field_name].accessor or field_name
+                )
             if searched_value:
                 q &= Q(**{f"{field_name}__contains": searched_value})
 
@@ -61,6 +65,10 @@ class LavaView(tables.SingleTableView):
         if general_search:
             # Search by searchable fields
             for field_name, field_operator in self.table_class.Meta.searches.items():
+                if field_name in self.table_class.base_columns:
+                    field_name = (
+                        self.table_class.base_columns[field_name].accessor or field_name
+                    )
                 q |= Q(**{f"{field_name}__{field_operator}": general_search})
 
             # Search inside queryable queries
