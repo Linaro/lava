@@ -72,9 +72,20 @@
         summary: boot bootloader
         timeout: 240
         pipeline:
-        - {class: ConnectDevice, name: connect-device, level: 2.1.4.3.1, max_retries: 1,
-          description: use the configured command to connect serial to the device,
-          summary: run connection command, timeout: 240}
+        - class: ResetConnection
+          name: reset-connection
+          level: 2.1.4.3.1
+          max_retries: 1
+          description: Disconnect and connect the serial
+          summary: Reset the connection
+          timeout: 240
+          pipeline:
+          - {class: DisconnectDevice, name: disconnect-device, level: 2.1.4.3.1.1,
+            max_retries: 1, description: disconnect from console, summary: disconnect
+              from console, timeout: 240}
+          - {class: ConnectDevice, name: connect-device, level: 2.1.4.3.1.2, max_retries: 1,
+            description: use the configured command to connect serial to the device,
+            summary: run connection command, timeout: 240}
         - class: ResetDevice
           name: reset-device
           level: 2.1.4.3.2
@@ -131,9 +142,19 @@
     summary: boot bootloader
     timeout: 30
     pipeline:
-    - {class: ConnectDevice, name: connect-device, level: 3.2.1, max_retries: 1, description: use
-        the configured command to connect serial to the device, summary: run connection
-        command, timeout: 30}
+    - class: ResetConnection
+      name: reset-connection
+      level: 3.2.1
+      max_retries: 1
+      description: Disconnect and connect the serial
+      summary: Reset the connection
+      timeout: 30
+      pipeline:
+      - {class: DisconnectDevice, name: disconnect-device, level: 3.2.1.1, max_retries: 1,
+        description: disconnect from console, summary: disconnect from console, timeout: 30}
+      - {class: ConnectDevice, name: connect-device, level: 3.2.1.2, max_retries: 1,
+        description: use the configured command to connect serial to the device, summary: run
+          connection command, timeout: 30}
     - class: ResetDevice
       name: reset-device
       level: 3.2.2
