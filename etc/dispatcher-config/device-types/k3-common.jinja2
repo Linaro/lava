@@ -1,0 +1,19 @@
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set console_device = console_device|default('ttyS2') %}
+{% set baud_rate = baud_rate|default(115200) %}
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+
+{% set uboot_ramdisk_format = uboot_ramdisk_format|default('raw') %}
+
+{% set booti_kernel_addr = booti_kernel_addr|default('${kernel_addr_r}') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr|default('${ramdisk_addr_r}') %}
+{% set booti_dtb_addr = booti_dtb_addr|default('${fdt_addr_r}') %}
+
+{% set bootm_kernel_addr = bootm_kernel_addr|default(booti_kernel_addr) %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default(booti_ramdisk_addr) %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default(booti_dtb_addr) %}
+
+{% set base_ip_args = base_ip_args|default('ip=dhcp') %}
