@@ -87,6 +87,12 @@ def parser():
     )
 
     p_obj.add_argument(
+        "--skip-sudo-warning",
+        action="store_true",
+        default=False,
+        help="Allow to run as a non-root user",
+    )
+    p_obj.add_argument(
         "--debug",
         action="store_true",
         default=False,
@@ -178,7 +184,7 @@ def main():
     options = parser().parse_args()
 
     # Check that we are running as root
-    if os.geteuid() != 0:
+    if not options.skip_sudo_warning and os.geteuid() != 0:
         print("lava-run should be executed as root")
         return 1
 

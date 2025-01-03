@@ -15,9 +15,18 @@ import lava_dispatcher.utils.filesystem
 os.environ["LANGUAGE"] = "C.UTF-8"
 
 
+# @pytest.fixture
+# def job_config(tmp_path):
+#     return {"dispatcher_download_path": tmp_path}
+
+
 @pytest.fixture(autouse=True)
 def tempdir(monkeypatch, tmp_path):
-    monkeypatch.setattr(lava_dispatcher.job, "DISPATCHER_DOWNLOAD_DIR", str(tmp_path))
+    monkeypatch.setattr(
+        lava_dispatcher.utils.filesystem,
+        "dispatcher_download_dir",
+        lambda _: str(tmp_path),
+    )
     monkeypatch.setattr(
         lava_dispatcher.utils.filesystem, "tftpd_dir", lambda: str(tmp_path)
     )

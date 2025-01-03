@@ -14,13 +14,14 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
-from lava_common.constants import CLEANUP_TIMEOUT, DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
+from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
     from logging import Logger
@@ -86,7 +87,9 @@ class Job:
 
     @property
     def tmp_dir(self):
-        return self.get_basedir(DISPATCHER_DOWNLOAD_DIR)
+        return self.get_basedir(
+            filesystem.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
+        )
 
     def get_basedir(self, path):
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
@@ -94,7 +97,7 @@ class Job:
 
     def mkdtemp(self, action_name, override=None):
         """
-        Create a tmp directory in DISPATCHER_DOWNLOAD_DIR/{job_id}/ because
+        Create a tmp directory in <dispatcher_download_dir>/{job_id}/ because
         this directory will be removed when the job finished, making cleanup
         easier.
         """

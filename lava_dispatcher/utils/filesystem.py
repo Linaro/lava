@@ -17,7 +17,7 @@ import guestfs
 import magic
 from configobj import ConfigObj
 
-from lava_common.constants import LAVA_LXC_HOME, LXC_PATH
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, LAVA_LXC_HOME, LXC_PATH
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
@@ -261,6 +261,17 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     # Create lava_lxc_home if it is unavailable
     os.makedirs(path, 0o755, exist_ok=True)
     return path
+
+
+def dispatcher_download_dir(dispatcher_config):
+    """
+    Returns DISPATCHER_DOWNLOAD_DIR which is a constant, unless a dispatcher specific path is
+    configured via dispatcher_download_dir key in dispatcher_config.
+    """
+    try:
+        return dispatcher_config["dispatcher_download_dir"]
+    except (KeyError, TypeError):
+        return DISPATCHER_DOWNLOAD_DIR
 
 
 def copy_to_lxc(lxc_name, src, dispatcher_config):
