@@ -1316,7 +1316,7 @@ def internal_v1_jobs_logs(request, pk):
     #       of lines that where actually parsed !!
     test_cases = []
     line_count = 0
-    for line, string in zip(yaml_safe_load(lines), lines.split("\n")):
+    for line_dict, line_string in zip(yaml_safe_load(lines), lines.splitlines(True)):
         # skip lines that where already saved to disk
         duplicated = False
         if line_skip > 0:
@@ -1324,28 +1324,33 @@ def internal_v1_jobs_logs(request, pk):
             line_skip -= 1
         else:
             # Handle lava-event
-            if line["lvl"] == "event":
+            if line_dict["lvl"] == "event":
                 send_event(
-                    ".event", "lavaserver", {"message": line["msg"], "job": job.id}
+                    ".event", "lavaserver", {"message": line_dict["msg"], "job": job.id}
                 )
-                line["lvl"] = "debug"
-                string = "- " + dump(line)
+                line_dict["lvl"] = "debug"
+                line_string = f"- {dump(line_dict)}\n"
+
+            # Fix lines that are missing the newline.
+            # Currently the lava-run submitted logs are missing the final newline.
+            if not line_string.endswith("\n"):
+                line_string += "\n"
 
             # Save the log line
-            logs_instance.write(job, (string + "\n").encode("utf-8"), output, index)
+            logs_instance.write(job, line_string.encode("utf-8"), output, index)
 
         # handle test case results
-        if line["lvl"] == "results":
+        if line_dict["lvl"] == "results":
             starttc = endtc = None
             with contextlib.suppress(KeyError):
-                starttc = line["msg"]["starttc"]
-                del line["msg"]["starttc"]
+                starttc = line_dict["msg"]["starttc"]
+                del line_dict["msg"]["starttc"]
             with contextlib.suppress(KeyError):
-                endtc = line["msg"]["endtc"]
-                del line["msg"]["endtc"]
-            meta_filename = create_metadata_store(line["msg"], job)
+                endtc = line_dict["msg"]["endtc"]
+                del line_dict["msg"]["endtc"]
+            meta_filename = create_metadata_store(line_dict["msg"], job)
             new_test_case = map_scanned_results(
-                results=line["msg"],
+                results=line_dict["msg"],
                 job=job,
                 starttc=starttc,
                 endtc=endtc,
