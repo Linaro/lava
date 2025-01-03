@@ -10,14 +10,6 @@
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.css" %}">
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/jquery.typeahead.css" %}">
 
-  <script>
-    // Hack for fixed navbar anchor problem.
-    // Source: https://github.com/twbs/bootstrap/issues/1786
-    var shiftWindow = function() { scrollBy(0, -50) };
-    window.addEventListener("hashchange", shiftWindow);
-    function fix_anchor_offset() { if (window.location.hash) shiftWindow(); }
-  </script>
-
   <style>
     body {
       padding-top: 60px;
@@ -61,6 +53,9 @@
     .typeahead__field > * {
       vertical-align: unset;
     }
+    * {
+      scroll-margin-top: 50px;
+    }
   </style>
   {% block styles %}{% endblock %}
 
@@ -71,7 +66,7 @@
   {% block extrahead %}{% endblock %}
 </head>
 
-<body onload="fix_anchor_offset()">
+<body>
 {% block body %}{% endblock %}
 
 <script src="{% static "lava_server/js/jquery-3.6.1.js" %}"></script>
