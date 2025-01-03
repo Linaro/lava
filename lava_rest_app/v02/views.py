@@ -409,6 +409,10 @@ class TestJobViewSet(viewsets.ModelViewSet):
         strict = request.data.get("strict", False)
         if not definition:
             raise ValidationError({"definition": "Test job definition is required."})
+        if not isinstance(definition, str):
+            raise ValidationError(
+                {"definition": "Test job definition should be a string."}
+            )
 
         data = yaml_safe_load(definition)
         try:
