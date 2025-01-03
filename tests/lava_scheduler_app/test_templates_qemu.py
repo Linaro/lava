@@ -31,6 +31,12 @@ class TestQemuTemplates(BaseTemplateTest):
             "options"
         ]
         self.assertIn("-enable-kvm", options)
+        job_ctx = {"arch": "amd64", "no_network": True}
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        options = template_dict["actions"]["boot"]["methods"]["qemu"]["parameters"][
+            "options"
+        ]
+        self.assertIn("-net none", options)
 
     def test_qemu_installer(self):
         data = """{% extends 'qemu.jinja2' %}

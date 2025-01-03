@@ -41,6 +41,7 @@ CONTEXT_VARIABLES = [
     "monitor",
     "netdevice",
     "no_kvm",
+    "no_network",
     "serial",
     "vga",
     # u-boot variables
