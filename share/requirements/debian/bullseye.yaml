@@ -183,6 +183,9 @@ lava-dispatcher:
   pytest-subtests:
     name: python3-pytest-subtests
     unittests: true
+  pytest-random-order:
+    name: python3-pytest-random-order
+    unittests: true
 
 lava-common:
   PyYAML:
