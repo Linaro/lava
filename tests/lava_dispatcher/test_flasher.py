@@ -7,7 +7,9 @@
 from unittest.mock import MagicMock, patch
 
 import pexpect
+import pytest
 
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.actions.deploy.flasher import FlasherAction
 from lava_dispatcher.actions.deploy_strategy import Flasher
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -78,6 +80,11 @@ class TestFlasher(LavaDispatcherTestCase):
             self.assertEqual(call.kwargs["encoding"], "utf-8")
             self.assertEqual(call.kwargs["codec_errors"], "replace")
             self.assertEqual(call.kwargs["searchwindowsize"], 10)
+
+        # Test InfrastructureError is raised on flashing failure.
+        with pytest.raises(InfrastructureError) as exc:
+            action.run(None, 10)
+        assert exc.value.args[0] == "Unable to flash the device"
 
     def test_accepts(self):
         # Normal case

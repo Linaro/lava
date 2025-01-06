@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -33,6 +34,8 @@ class FlasherAction(Action):
     name = "deploy-flasher"
     description = "deploy flasher"
     summary = "deploy custom flasher"
+
+    command_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
