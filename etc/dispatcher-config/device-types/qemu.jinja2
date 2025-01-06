@@ -172,7 +172,12 @@ actions:
 {% endif %}
 {# end arch cpu #}
           - -nographic
+{% if no_network is defined and no_network is sameas true %}
+          - -net none
+{% else %}
           - -net nic,{{ model|default('model=virtio') }},macaddr={{ mac_addr|default('52:54:00:12:34:58') }} -net {{ netdevice|default('user') }}
+{% endif %}
+{# end no_network #}
           - -m {{ memory|default(512) }}
           - -monitor {{ monitor|default('none') }}
 {# If you need to pass -soundhw in extra_options, then see doc/v2/qemu_options.rst for how to set the environment var QEMU_AUDIO_DRV=none #}
