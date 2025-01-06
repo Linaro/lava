@@ -15,11 +15,12 @@ import pwd
 import shutil
 import subprocess  # nosec - controlled inputs.
 import sys
-import tempfile
 from pathlib import Path
 
+import psycopg2
 from django.core.management.utils import get_random_secret_key
 from django.utils.crypto import get_random_string
+from psycopg2.extensions import quote_ident as psycopg_quote_ident
 
 # Constants
 DEVICE_TYPES = Path("/usr/share/lava-server/device-types/")
@@ -68,39 +69,64 @@ def create_database(config):
     devel_password = "devel"
     devel_user = "devel"
 
-    script = f"""
-DO $$
-BEGIN
-    CREATE ROLE "{user}" NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD '{password}';
-    EXCEPTION WHEN DUPLICATE_OBJECT THEN
-    RAISE NOTICE 'not creating role {user} -- it already exists';
-END
-$$;
+    with using_account("postgres", "postgres"):
+        conn = psycopg2.connect()
+        conn.autocommit = True
+        cur = conn.cursor()
 
-SELECT 'CREATE DATABASE "{db}" LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" OWNER "{user}" TEMPLATE template0;'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{db}')\\gexec
+        cur.execute("SELECT EXISTS(SELECT FROM pg_roles WHERE rolname=%s);", (user,))
+        (user_role_exists,) = cur.fetchone()
+        if user_role_exists:
+            print(f"Database role {user!r} already exists")
+        else:
+            print(f"Creating database role {db!r}")
+            cur.execute(
+                f"CREATE ROLE {psycopg_quote_ident(user, conn)} "
+                "NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED "
+                "PASSWORD %s;",
+                (password,),
+            )
+        cur.execute("SELECT EXISTS(SELECT FROM pg_database WHERE datname=%s);", (db,))
+        (db_exists,) = cur.fetchone()
+        if db_exists:
+            print(f"Database {db!r} already exists")
+        else:
+            print(f"Creating database {db!r}")
+            cur.execute(
+                f"CREATE DATABASE {psycopg_quote_ident(db, conn)} "
+                'LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" '
+                "OWNER %s TEMPLATE template0;",
+                (user,),
+            )
 
-
-DO $$
-BEGIN
-    CREATE ROLE "{devel_user}" NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED PASSWORD '{devel_password}';
-    EXCEPTION WHEN DUPLICATE_OBJECT THEN
-    RAISE NOTICE 'not creating role {devel_user} -- it already exists';
-END
-$$;
-
-SELECT 'CREATE DATABASE "{devel_db}" LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" OWNER "{devel_user}" TEMPLATE template0;'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '{devel_db}')\\gexec
-"""
-
-    with tempfile.TemporaryFile() as f_tmp:
-        f_tmp.write(script.encode("utf-8"))
-        f_tmp.seek(0, 0)
-        uid = pwd.getpwnam("postgres")[2]
-        os.seteuid(uid)
-        run(["psql", "-q"], "Creating databases and roles", stdin=f_tmp)
-        uid = pwd.getpwnam("root")[2]
-        os.seteuid(uid)
+        cur.execute(
+            "SELECT EXISTS(SELECT FROM pg_roles WHERE rolname=%s);", (devel_user,)
+        )
+        (devel_role_exists,) = cur.fetchone()
+        if devel_role_exists:
+            print(f"Database role {devel_user!r} already exists")
+        else:
+            print(f"Creating database role {devel_user!r}")
+            cur.execute(
+                f"CREATE ROLE {psycopg_quote_ident(devel_user, conn)} "
+                "NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED "
+                "PASSWORD %s;",
+                (devel_password,),
+            )
+        cur.execute(
+            "SELECT EXISTS(SELECT FROM pg_database WHERE datname=%s);", (devel_db,)
+        )
+        (devel_db_exists,) = cur.fetchone()
+        if devel_db_exists:
+            print(f"Database {devel_db!r} already exists")
+        else:
+            print(f"Creating database {devel_db!r}")
+            cur.execute(
+                f"CREATE DATABASE {psycopg_quote_ident(devel_db, conn)} "
+                'LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" '
+                "OWNER %s TEMPLATE template0;",
+                (devel_user,),
+            )
 
 
 @contextlib.contextmanager
