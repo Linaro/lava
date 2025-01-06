@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 def handle_testcase(params):
     data = {}
     for param in params:
-        parts = param.split("=")
+        parts = param.split("=", maxsplit=1)
         if len(parts) == 2:
             key, value = parts
             key = key.lower()
