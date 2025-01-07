@@ -70,7 +70,7 @@ def create_database(config):
     devel_user = "devel"
 
     with using_account("postgres", "postgres"):
-        conn = psycopg2.connect()
+        conn = psycopg2.connect("")
         conn.autocommit = True
         cur = conn.cursor()
 
