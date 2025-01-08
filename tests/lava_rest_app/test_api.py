@@ -660,6 +660,15 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job valid."
 
+    def test_testjob_validate_invalid(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate/",
+            {"definition": "job_name:"},
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["message"] == "Job invalid: expected str @ ['job_name']"
+
     def test_testjob_validate_testdef(self):
         "Test validating valid test definition."
         testdef = """
