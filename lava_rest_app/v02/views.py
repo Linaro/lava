@@ -424,7 +424,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
             return Response({"message": "Job valid."}, status=status.HTTP_200_OK)
         except voluptuous.Invalid as exc:
             return Response(
-                {"message": "Job invalid: %s" % exc.msg}, status=status.HTTP_200_OK
+                {"message": "Job invalid: %s @ %s" % (exc.msg, exc.path)},
+                status=status.HTTP_200_OK,
             )
 
     @action(
