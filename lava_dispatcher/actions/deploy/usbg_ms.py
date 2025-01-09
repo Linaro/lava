@@ -63,7 +63,6 @@ class USBGMSAction(DownloadAction):
         # Substitute in the command line
         substitutions = {"{IMAGE}": image}
         cmds = substitute(self.enable, substitutions)
-        self.logger.debug("calling %s", cmds)
         self.run_cmd(cmds)
         return connection
 
