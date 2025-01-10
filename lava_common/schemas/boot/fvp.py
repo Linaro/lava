@@ -22,7 +22,7 @@ def schema():
         Optional("ubl_license"): str,
         Optional("version_string"): str,
         Required("arguments"): [str],
-        Required("prompts"): boot.prompts(),
+        Optional("prompts"): boot.prompts(),
         Required("docker"): docker("name"),
         Optional("transfer_overlay"): boot.transfer_overlay(),
         Optional("auto_login"): boot.auto_login(),

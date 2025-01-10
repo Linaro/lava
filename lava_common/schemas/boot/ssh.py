@@ -14,7 +14,6 @@ def schema():
     base = {
         Required("method"): Msg("ssh", "'method' should be 'ssh'"),
         Optional("prompts"): boot.prompts(),
-        Required("connection"): "ssh",
     }
     ret = {**boot.schema(), **base}
     ret.update({"parameters": {Optional("hostID"): str, Optional("host_key"): str}})
