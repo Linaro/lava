@@ -22,7 +22,6 @@ from lava_dispatcher.actions.boot.u_boot import (
     UBootSecondaryMedia,
 )
 from lava_dispatcher.actions.deploy.apply_overlay import (
-    ApplyOverlayTftp,
     CompressRamdisk,
     ExtractModules,
     ExtractNfsRootfs,
@@ -154,6 +153,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertEqual(
             [action.name for action in tftp.pipeline.actions],
             [
+                "lava-overlay",
                 "download-retry",
                 "download-retry",
                 "download-retry",
@@ -1032,7 +1032,6 @@ class TestOverlayCommands(LavaDispatcherTestCase):
         ramdisk = tftp_deploy.pipeline.find_action(ExtractRamdisk)
         modules = tftp_deploy.pipeline.find_action(ExtractModules)
         nfs = tftp_deploy.pipeline.find_action(ExtractNfsRootfs)
-        overlay = tftp_deploy.pipeline.find_action(ApplyOverlayTftp)
 
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))
         self.assertIsNotNone(ramdisk.parameters["ramdisk"].get("url"))
@@ -1042,8 +1041,6 @@ class TestOverlayCommands(LavaDispatcherTestCase):
         self.assertIsNotNone(modules.parameters.get("ramdisk"))
         self.assertIsNotNone(modules.parameters.get("nfsrootfs"))
         self.assertIsNotNone(nfs.parameters.get("nfsrootfs"))
-        self.assertIsNotNone(overlay.parameters.get("nfsrootfs"))
-        self.assertIsNotNone(overlay.parameters.get("ramdisk"))
 
     def test_ramdisk_nfs_nomodules(self):
         job = self.factory.create_bbb_job("sample_jobs/bbb-uinitrd-nfs.yaml")
@@ -1052,7 +1049,6 @@ class TestOverlayCommands(LavaDispatcherTestCase):
         ramdisk = tftp_deploy.pipeline.find_action(ExtractRamdisk)
         modules = tftp_deploy.pipeline.find_action(ExtractModules)
         nfs = tftp_deploy.pipeline.find_action(ExtractNfsRootfs)
-        overlay = tftp_deploy.pipeline.find_action(ApplyOverlayTftp)
 
         self.assertIsNotNone(ramdisk.parameters.get("ramdisk"))
         self.assertIsNotNone(ramdisk.parameters["ramdisk"].get("url"))
@@ -1061,5 +1057,3 @@ class TestOverlayCommands(LavaDispatcherTestCase):
         self.assertIsNotNone(modules.parameters.get("ramdisk"))
         self.assertIsNotNone(modules.parameters.get("nfsrootfs"))
         self.assertIsNotNone(nfs.parameters.get("nfsrootfs"))
-        self.assertIsNotNone(overlay.parameters.get("nfsrootfs"))
-        self.assertIsNotNone(overlay.parameters.get("ramdisk"))

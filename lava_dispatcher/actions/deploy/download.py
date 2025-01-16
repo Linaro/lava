@@ -30,7 +30,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.actions.deploy.overlay import CreateOverlay, OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
@@ -113,6 +113,8 @@ class DownloaderAction(RetryAction):
                 )
             )
         if overlays:
+            if "lava" in overlays and not self.test_needs_overlay(self.parameters):
+                self.pipeline.add_action(CreateOverlay(self.job))
             self.pipeline.add_action(
                 AppendOverlays(self.job, self.key, params=self.params)
             )

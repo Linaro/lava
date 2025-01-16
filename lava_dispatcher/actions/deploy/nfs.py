@@ -13,10 +13,10 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayTftp,
     ExtractModules,
     ExtractNfsRootfs,
-    OverlayAction,
 )
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 
 
 class NfsAction(Action):
