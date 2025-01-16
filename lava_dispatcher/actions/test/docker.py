@@ -219,6 +219,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         for dev in devices:
             docker.wait_file(dev)
+            self.logger.info(
+                f"Shared device {dev} to docker container {docker.__name__}"
+            )
 
         try:
             super().run(shell_connection, max_end_time)
