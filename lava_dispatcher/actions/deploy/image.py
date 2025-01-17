@@ -13,10 +13,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
     ApplyOverlayGuest,
     ApplyOverlayTftp,
 )
-from lava_dispatcher.actions.deploy.download import (
-    DownloaderAction,
-    QCowConversionAction,
-)
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.compression import untar_file
@@ -61,8 +58,6 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
                     self.job, image, path, params=parameters["images"][image]
                 )
             )
-            if parameters["images"][image].get("format", "") == "qcow2":
-                self.pipeline.add_action(QCowConversionAction(self.job, image))
 
 
 class DeployQemuNfsAction(Action):
@@ -93,8 +88,6 @@ class DeployQemuNfsAction(Action):
                     self.job, image, path, params=parameters["images"][image]
                 )
             )
-            if parameters["images"][image].get("format", "") == "qcow2":
-                self.pipeline.add_action(QCowConversionAction(self.job, image))
         self.pipeline.add_action(ExtractNfsAction(self.job))
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))

@@ -11,10 +11,7 @@ from lava_common.schemas import deploy
 
 
 def schema():
-    extra = {
-        Optional("format"): "qcow2",
-        Optional("image_arg"): str,  # TODO: is this optional?
-    }
+    extra = {Optional("image_arg"): str}
 
     base = {
         Required("to"): "tmpfs",

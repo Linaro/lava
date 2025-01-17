@@ -843,51 +843,6 @@ class PreDownloadedAction(Action):
         return connection
 
 
-class QCowConversionAction(Action):
-    """
-    explicit action for qcow conversion to avoid reliance
-    on filename suffix
-    """
-
-    name = "qcow2-convert"
-    description = "convert qcow image using qemu-img"
-    summary = "qcow conversion"
-
-    def __init__(self, job: Job, key):
-        super().__init__(job)
-        self.key = key
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-        fname = self.get_namespace_data(
-            action="download-action", label=self.key, key="file"
-        )
-        origin = fname
-        # Remove the '.qcow2' extension and add '.img'
-        if fname.endswith(".qcow2"):
-            fname = fname[:-6]
-        fname += ".img"
-
-        self.logger.debug("Converting downloaded image from qcow2 to raw")
-        try:
-            subprocess.check_output(  # nosec - checked.
-                ["qemu-img", "convert", "-f", "qcow2", "-O", "raw", origin, fname],
-                stderr=subprocess.STDOUT,
-            )
-        except subprocess.CalledProcessError as exc:
-            self.logger.error("Unable to convert the qcow2 image")
-            self.logger.error(exc.output)
-            raise JobError(exc.output)
-
-        self.set_namespace_data(
-            action=self.name, label=self.key, key="file", value=fname
-        )
-        self.set_namespace_data(
-            action=self.name, label="file", key=self.key, value=fname
-        )
-        return connection
-
-
 class DownloadAction(Action):
     name = "download-deploy"
     description = "download files and copy to LXC if available"
