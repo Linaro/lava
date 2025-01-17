@@ -129,13 +129,6 @@
       summary: http download
       timeout: 400
       url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
-  - class: QCowConversionAction
-    name: qcow2-convert
-    level: '1.5'
-    max_retries: 1
-    description: convert qcow image using qemu-img
-    summary: qcow conversion
-    timeout: 1200
 - class: BootQEMUImageAction
   name: boot-image-retry
   level: '2'
