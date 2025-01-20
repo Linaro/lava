@@ -325,14 +325,14 @@ parameters:
 {% if sd_uuid %}
     sd:
       {{ sd_label }}:
-        uuid: {{ sd_uuid }}
-        device_id: {{ sd_device_id }}  # the bootloader device id for this media on the 'sd' interface
+        uuid: "{{ sd_uuid }}"
+        device_id: "{{ sd_device_id }}"  # the bootloader device id for this media on the 'sd' interface
 {% endif %} #  sd_uuid
 {% if usb_uuid %}
     usb:
       {{ usb_label|default('SanDisk_Ultra') }}:
-        uuid: {{ usb_uuid }}  # /dev/disk/by-id/
-        device_id: {{ usb_device_id }}  # the bootloader device id for this media on the 'usb' interface
+        uuid: "{{ usb_uuid }}"  # /dev/disk/by-id/
+        device_id: "{{ usb_device_id }}"  # the bootloader device id for this media on the 'usb' interface
 {% endif %} # usb_uuid
 {% else %}
   pass:

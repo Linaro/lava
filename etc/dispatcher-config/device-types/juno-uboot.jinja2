@@ -61,7 +61,7 @@ parameters:
       UUID-required: True
       {{ usb_label|default('SanDisk_Ultra') }}:
         uuid: "{{ usb_uuid }}"
-        device_id: {{ usb_device_id|default(0) }}  # the bootloader device id for this media on the 'usb' interface
+        device_id: "{{ usb_device_id|default(0) }}"  # the bootloader device id for this media on the 'usb' interface
 {% endblock parameters -%}
 
 actions:
