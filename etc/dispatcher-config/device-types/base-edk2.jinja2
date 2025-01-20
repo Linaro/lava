@@ -10,4 +10,11 @@ actions:
       serial:
     methods:
       minimal:
+  test:
+    methods:
+      docker:
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
 {% endblock %}

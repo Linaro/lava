@@ -326,5 +326,12 @@ actions:
           bcu_board_id: "{{ bcu_board_id }}"
           bcu_board_id_command: {{ bcu_board_id_command }}
           has_bcu_commands: "{{ has_bcu_commands }}"
+  test:
+    methods:
+      docker:
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
 
 {% endblock body %}
