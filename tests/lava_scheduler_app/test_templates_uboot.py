@@ -222,7 +222,8 @@ class TestUbootTemplates(BaseTemplateTest):
         self.assertIn("u-boot", template_dict["actions"]["boot"]["methods"])
         self.assertIn("SanDisk_Ultra", template_dict["parameters"]["media"]["usb"])
         self.assertEqual(
-            template_dict["parameters"]["media"]["usb"]["SanDisk_Ultra"]["device_id"], 0
+            template_dict["parameters"]["media"]["usb"]["SanDisk_Ultra"]["device_id"],
+            "0",
         )
         self.assertEqual(
             template_dict["parameters"]["media"]["usb"]["SanDisk_Ultra"]["uuid"],

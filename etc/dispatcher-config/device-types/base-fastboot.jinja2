@@ -78,4 +78,11 @@ actions:
       fastboot: {{ fastboot_sequence }}
 {{- fastboot_boot_uboot }}
 {{- fastboot_boot_grub }}
+  test:
+    methods:
+      docker:
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
 {% endblock body %}

@@ -40,5 +40,11 @@ actions:
         ramdisk:
           commands:
             - bootm -v -r /mnt/tftp/{RAMDISK} -o /mnt/tftp/{DTB} /mnt/tftp/{KERNEL} {{ load_addr }} {{ initrd_load_addr }}
-
+  test:
+    methods:
+      docker:
+        global_options:
+        - {{ docker_shell_global_arguments }}
+        options:
+        - {{ docker_shell_extra_arguments }}
 {% endblock body %}
