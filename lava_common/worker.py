@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import re
 import socket
+from dataclasses import dataclass
 from pathlib import Path
 
 import sentry_sdk
@@ -36,6 +37,23 @@ def parse_mount(s: str) -> tuple[str, str | None, str | None]:
             "mount should have 1, 2 or 3 parts (separated by ':')"
         )
     return (src, dst, opts)
+
+
+@dataclass
+class LavaWorkerBaseOptions:
+    name: str
+    worker_dir: Path
+    url: str
+    ws_url: str | None
+    http_timeout: int
+    ping_interval: int
+    job_log_interval: int
+    username: str | None
+    token: str
+    token_file: Path | None
+    log_file: str
+    level: str
+    sentry_dsn: str | None
 
 
 def get_parser(docker_worker: bool = False) -> argparse.ArgumentParser:
@@ -130,7 +148,7 @@ def get_parser(docker_worker: bool = False) -> argparse.ArgumentParser:
     token.add_argument(
         "--username", default=None, help="Username for auto registration"
     )
-    token.add_argument("--token", default=None, help="Worker token")
+    token.add_argument("--token", default="", help="Worker token")
     token.add_argument(
         "--token-file", type=Path, default=None, help="Worker token file"
     )
