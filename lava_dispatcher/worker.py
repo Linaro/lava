@@ -843,7 +843,7 @@ async def main() -> int:
                 LOG.info("[INIT] Token  : '<auto register with %s>'", options.username)
                 password = getpass.getpass()
                 options.token = await register(
-                    options.url, options.name, options.username, password
+                    session, options.url, options.name, options.username, password
                 )
                 options.token_file.write_text(options.token, encoding="utf-8")
                 options.token_file.chmod(0o600)
