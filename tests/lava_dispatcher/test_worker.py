@@ -3,13 +3,22 @@
 # Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lava_dispatcher.worker import Job, ServerUnavailable, VersionMismatch, get_job_data
+from lava_common.worker import get_parser
+from lava_dispatcher.worker import (
+    Job,
+    LavaWorkerOptions,
+    ServerUnavailable,
+    VersionMismatch,
+    get_job_data,
+)
 
 
 @pytest.fixture
@@ -121,3 +130,21 @@ async def test_get_job_data_version_mismatch_no_exit(mock_session, mock_options)
         data = await get_job_data(mock_session, mock_options)
 
         assert data == {}
+
+
+class TestWorker(TestCase):
+    def test_worker_argparse(self) -> None:
+        # Test that options dataclass can be initialized from the parsed
+        # arguments.
+        LavaWorkerOptions(
+            **vars(
+                get_parser().parse_args(
+                    ["--name", "unittest_worker", "--url", "https://example.com"]
+                )
+            )
+        )
+        # Check that --url is required
+        with self.assertRaises(SystemExit):
+            LavaWorkerOptions(
+                **vars(get_parser().parse_args(["--name", "unittest_worker"]))
+            )
