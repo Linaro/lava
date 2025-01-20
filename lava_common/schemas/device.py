@@ -57,11 +57,11 @@ def device():
                 },
                 Optional("sd"): {
                     Optional("UUID-required"): bool,
-                    Required(str): {Required("uuid"): str, Required("device_id"): int},
+                    Required(str): {Required("uuid"): str, Required("device_id"): str},
                 },
                 Optional("usb"): {
                     Optional("UUID-required"): bool,
-                    Required(str): {Required("uuid"): str, Required("device_id"): int},
+                    Required(str): {Required("uuid"): str, Required("device_id"): str},
                 },
             },
             Optional(Any("image", "booti", "uimage", "bootm", "zimage", "bootz")): {
@@ -91,6 +91,14 @@ def device():
             Required("boot"): {
                 Required("connections"): dict,
                 Required("methods"): dict,
+            },
+            Optional("test"): {
+                Required("methods"): {
+                    Optional("docker"): {
+                        Optional("global_options"): list,
+                        Optional("options"): list,
+                    }
+                }
             },
         },
         Required("timeouts"): {
