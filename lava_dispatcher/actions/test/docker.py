@@ -73,8 +73,8 @@ class DockerTestSetEnvironment(GetBoardId):
                 if "primary" in tags:
                     environment["LAVA_CONNECTION_COMMAND"] = connect
 
-        power_commands = ["hard_reset", "power_on", "power_off"]
-        for c in power_commands:
+        commands = ["connect", "hard_reset", "power_on", "power_off"]
+        for c in commands:
             cmd = self.job.device.get("commands", {}).get(c)
             if cmd:
                 if not isinstance(cmd, list):
