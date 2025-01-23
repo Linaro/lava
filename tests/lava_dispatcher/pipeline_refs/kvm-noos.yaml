@@ -99,20 +99,29 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 120
-  - class: ApplyOverlayGuest
-    name: apply-overlay-guest
-    level: '1.2'
-    max_retries: 1
-    description: prepare a qcow2 drive containing the overlay
-    summary: build a guest filesystem with the overlay
-    timeout: 120
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '1.3'
+    level: '1.2'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 120
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.3'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 120
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.3.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 40
+      url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
@@ -129,22 +138,13 @@
       summary: http download
       timeout: 40
       url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
-  - class: DownloaderAction
-    name: download-retry
+  - class: ApplyOverlayGuest
+    name: apply-overlay-guest
     level: '1.5'
-    max_retries: 3
-    description: download with retry
-    summary: download-retry
+    max_retries: 1
+    description: prepare a qcow2 drive containing the overlay
+    summary: build a guest filesystem with the overlay
     timeout: 120
-    pipeline:
-    - class: HttpDownloadAction
-      name: http-download
-      level: 1.5.1
-      max_retries: 1
-      description: use http to download the file
-      summary: http download
-      timeout: 40
-      url: http://images.validation.linaro.org/kvm-debian-wheezy.img.gz
 - class: BootQEMUImageAction
   name: boot-image-retry
   level: '2'

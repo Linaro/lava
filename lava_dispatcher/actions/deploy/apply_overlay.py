@@ -72,7 +72,7 @@ class ApplyOverlayGuest(Action):
 
     def run(self, connection, max_end_time):
         applied = self.get_namespace_data(
-            action="append-overlays", label="guest", key="applied"
+            action="append-overlays", label="result", key="applied"
         )
         if applied:
             self.logger.debug("Overlay already applied")
@@ -287,48 +287,49 @@ class ApplyOverlayTftp(Action):
         connection = super().run(connection, max_end_time)
         directory = None
         nfs_address = None
-        overlay_file = None
+
+        if self.get_namespace_data(
+            action="append-overlays", label="result", key="applied"
+        ):
+            self.logger.debug("Overlay already applied")
+            return connection
+
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
+        if not overlay_file:
+            self.logger.warning("No overlay to apply")
+            return connection
+
         namespace = self.parameters.get("namespace")
         if self.parameters.get("nfsrootfs") is not None:
             if not self.parameters["nfsrootfs"].get("install_overlay", True):
                 self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
-            overlay_file = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
-            )
             directory = self.get_namespace_data(
                 action="extract-rootfs", label="file", key="nfsroot"
             )
-            if overlay_file:
-                self.logger.info("[%s] Applying overlay to NFS", namespace)
+            self.logger.info("[%s] Applying overlay to NFS", namespace)
         elif self.parameters.get("images", {}).get("nfsrootfs") is not None:
             if not self.parameters["images"]["nfsrootfs"].get("install_overlay", True):
                 self.logger.info("[%s] Skipping applying overlay to NFS", namespace)
                 return connection
-            overlay_file = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
-            )
             directory = self.get_namespace_data(
                 action="extract-rootfs", label="file", key="nfsroot"
             )
-            if overlay_file:
-                self.logger.info("[%s] Applying overlay to NFS", namespace)
+            self.logger.info("[%s] Applying overlay to NFS", namespace)
         elif self.parameters.get("persistent_nfs") is not None:
             if not self.parameters["persistent_nfs"].get("install_overlay", True):
                 self.logger.info(
                     "[%s] Skipping applying overlay to persistent NFS", namespace
                 )
                 return connection
-            overlay_file = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
-            )
             nfs_address = self.parameters["persistent_nfs"].get("address")
-            if overlay_file:
-                self.logger.info(
-                    "[%s] Applying overlay to persistent NFS address %s",
-                    namespace,
-                    nfs_address,
-                )
+            self.logger.info(
+                "[%s] Applying overlay to persistent NFS address %s",
+                namespace,
+                nfs_address,
+            )
             # need to mount the persistent NFS here.
             # We can't use self.mkdtemp() here because this directory should
             # not be removed if umount fails.
@@ -338,22 +339,15 @@ class ApplyOverlayTftp(Action):
             if not self.parameters["ramdisk"].get("install_overlay", True):
                 self.logger.info("[%s] Skipping applying overlay to ramdisk", namespace)
                 return connection
-            overlay_file = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
-            )
             directory = self.get_namespace_data(
                 action="extract-overlay-ramdisk",
                 label="extracted_ramdisk",
                 key="directory",
             )
-            if overlay_file:
-                self.logger.info(
-                    "[%s] Applying overlay %s to ramdisk", namespace, overlay_file
-                )
-        elif self.parameters.get("rootfs") is not None:
-            overlay_file = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
+            self.logger.info(
+                "[%s] Applying overlay %s to ramdisk", namespace, overlay_file
             )
+        elif self.parameters.get("rootfs") is not None:
             directory = self.get_namespace_data(
                 action="apply-overlay", label="file", key="root"
             )
@@ -380,17 +374,18 @@ class ApplyOverlayTftp(Action):
                 key="overlay",
                 value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)),
             )
-        if overlay_file:
-            self.logger.debug(
-                "[%s] Applying overlay %s to directory %s",
-                namespace,
-                overlay_file,
-                directory,
-            )
-            untar_file(overlay_file, directory)
-            if nfs_address:
-                self.run_cmd(["umount", directory])
-                os.rmdir(directory)  # fails if the umount fails
+
+        self.logger.debug(
+            "[%s] Applying overlay %s to directory %s",
+            namespace,
+            overlay_file,
+            directory,
+        )
+        untar_file(overlay_file, directory)
+        if nfs_address:
+            self.run_cmd(["umount", directory])
+            os.rmdir(directory)  # fails if the umount fails
+
         return connection
 
 
@@ -868,9 +863,6 @@ class AppendOverlays(Action):
             raise JobError("'overlays' is not a dictionary")
         for overlay, params in self.params["overlays"].items():
             if overlay == "lava":
-                self.set_namespace_data(
-                    action=self.name, label="guest", key="applied", value=True
-                )
                 continue
             if params.get("format") not in self.OVERLAY_FORMATS:
                 raise JobError(
@@ -943,20 +935,31 @@ class AppendOverlays(Action):
                     action="download-action", label=label, key="file"
                 )
                 path = self.params["overlays"][overlay]["path"]
-            # Take off initial "/" from path, extract relative to this directory
-            extract_path = os.path.join(tempdir, path[1:])
-            if overlay == "lava" or self.params["overlays"][overlay]["format"] == "tar":
-                self.logger.debug(
-                    "- %s: untar %r to %r", label, overlay_image, extract_path
-                )
-                # In the "validate" function, we check that path startswith '/'
-                # and does not contains '..'
-                untar_file(overlay_image, extract_path)
+
+            if overlay_image:
+                # Take off initial "/" from path, extract relative to this directory
+                extract_path = os.path.join(tempdir, path[1:])
+                if (
+                    overlay == "lava"
+                    or self.params["overlays"][overlay]["format"] == "tar"
+                ):
+                    self.logger.debug(
+                        "- %s: untar %r to %r", label, overlay_image, extract_path
+                    )
+                    # In the "validate" function, we check that path startswith '/'
+                    # and does not contains '..'
+                    untar_file(overlay_image, extract_path)
+                    if overlay == "lava":
+                        self.set_namespace_data(
+                            action=self.name, label="result", key="applied", value=True
+                        )
+                else:
+                    self.logger.debug(
+                        "- %s: cp %r to %r", label, overlay_image, extract_path
+                    )
+                    shutil.copy(overlay_image, extract_path)
             else:
-                self.logger.debug(
-                    "- %s: cp %r to %r", label, overlay_image, extract_path
-                )
-                shutil.copy(overlay_image, extract_path)
+                self.logger.warning("- %s: <MISSING> to %r", label, path)
 
         # Recreating the archive
         self.logger.debug("* archiving %r", image)
@@ -1030,6 +1033,10 @@ class AppendOverlays(Action):
                 else:
                     guest.mkdir_p(os.path.dirname(path))
                     guest.upload(overlay_image, path)
+                if overlay == "lava":
+                    self.set_namespace_data(
+                        action=self.name, label="result", key="applied", value=True
+                    )
             else:
                 self.logger.warning("- %s: <MISSING> to %r", label, path)
         guest.umount(device)

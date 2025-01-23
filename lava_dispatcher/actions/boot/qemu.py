@@ -268,7 +268,7 @@ class CallQemuAction(Action):
             action="apply-overlay-guest", label="guest", key="filename"
         )
         applied = self.get_namespace_data(
-            action="append-overlays", label="guest", key="applied"
+            action="append-overlays", label="result", key="applied"
         )
 
         # check for NFS

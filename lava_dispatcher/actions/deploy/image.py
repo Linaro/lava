@@ -34,7 +34,6 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
         if self.test_needs_overlay(parameters):
             # idempotent, includes testdef
             self.pipeline.add_action(OverlayAction(self.job))
-            self.pipeline.add_action(ApplyOverlayGuest(self.job))
         if self.test_needs_deployment(parameters):
             self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 
@@ -58,6 +57,9 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
                     self.job, image, path, params=parameters["images"][image]
                 )
             )
+
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(ApplyOverlayGuest(self.job))
 
 
 class DeployQemuNfsAction(Action):
