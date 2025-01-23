@@ -1,4 +1,4 @@
-# Copyright 2019-2024 NXP
+# Copyright 2019-2025 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
@@ -110,7 +110,11 @@ class BootBootloaderCorruptBootMediaAction(Action):
             "method": "bootloader",
             "bootloader": "u-boot",
             "commands": SD_ERASE_CMDS,
-            "prompts": ["=>"],
+            "prompts": [
+                self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
+                    "bootloader_prompt"
+                ]
+            ],
         }
         self.pipeline = Pipeline(
             parent=self, job=self.job, parameters={**parameters, **u_boot_params}
