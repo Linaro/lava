@@ -16,7 +16,6 @@ from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 from lava_dispatcher.utils.compression import (
     compress_file,
@@ -233,15 +232,13 @@ class PrepareOverlayTftp(Action):
             ParsePersistentNFS(self.job)
         )  # idempotent, parse persistent nfs
         self.pipeline.add_action(
-            OverlayAction(self.job)
-        )  # idempotent, includes testdef
-        self.pipeline.add_action(
             ExtractRamdisk(self.job)
         )  # idempotent, checks for a ramdisk parameter
         self.pipeline.add_action(
             ExtractModules(self.job)
         )  # idempotent, checks for a modules parameter
-        self.pipeline.add_action(ApplyOverlayTftp(self.job))
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(ApplyOverlayTftp(self.job))
         if "kernel" in parameters and "type" in parameters["kernel"]:
             self.pipeline.add_action(PrepareKernelAction(self.job))
         self.pipeline.add_action(

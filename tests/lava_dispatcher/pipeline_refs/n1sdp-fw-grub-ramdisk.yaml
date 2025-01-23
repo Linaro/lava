@@ -92,44 +92,30 @@
       description: parse persistent nfs
       summary: parse persistent nfs
       timeout: 30
-    - class: OverlayAction
-      name: lava-overlay
-      level: 2.3.3
-      max_retries: 1
-      description: add lava scripts during deployment for test shell use
-      summary: overlay the lava support scripts
-      timeout: 30
     - class: ExtractRamdisk
       name: extract-overlay-ramdisk
-      level: 2.3.4
+      level: 2.3.3
       max_retries: 1
       description: extract ramdisk to a temporary directory
       summary: extract the ramdisk
       timeout: 30
     - class: ExtractModules
       name: extract-modules
-      level: 2.3.5
+      level: 2.3.4
       max_retries: 1
       description: extract supplied kernel modules
       summary: extract kernel modules
       timeout: 30
-    - class: ApplyOverlayTftp
-      name: apply-overlay-tftp
-      level: 2.3.6
-      max_retries: 1
-      description: unpack the overlay into the nfsrootfs or ramdisk
-      summary: apply lava overlay test files
-      timeout: 30
     - class: PrepareKernelAction
       name: prepare-kernel
-      level: 2.3.7
+      level: 2.3.5
       max_retries: 1
       description: populates the pipeline with a kernel conversion action
       summary: add a kernel conversion
       timeout: 30
     - class: ConfigurePreseedFile
       name: configure-preseed-file
-      level: 2.3.8
+      level: 2.3.6
       max_retries: 1
       description: add commands to automated installers, to copy the lava test overlay
         to the installed system
@@ -137,7 +123,7 @@
       timeout: 30
     - class: CompressRamdisk
       name: compress-ramdisk
-      level: 2.3.9
+      level: 2.3.7
       max_retries: 1
       description: recreate a ramdisk with the overlay applied.
       summary: compress ramdisk with overlay

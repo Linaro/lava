@@ -89,6 +89,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         self.assertEqual(
             [action.name for action in tftp.pipeline.actions],
             [
+                "lava-overlay",
                 "download-retry",
                 "download-retry",
                 "download-retry",

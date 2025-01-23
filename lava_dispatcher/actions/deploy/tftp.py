@@ -19,6 +19,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
+from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
 
@@ -57,7 +58,6 @@ class TftpAction(Action):
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
-        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
             action=self.name,
             label="tftp",
@@ -65,6 +65,10 @@ class TftpAction(Action):
             value=self.tftp_dir,
             parameters=parameters,
         )
+
+        self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+        if self.test_needs_overlay(parameters):
+            self.pipeline.add_action(OverlayAction(self.job))
 
         for key in [
             "ramdisk",
