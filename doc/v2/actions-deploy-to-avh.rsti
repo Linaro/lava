@@ -5,9 +5,47 @@
 to: avh
 *******
 
-This deployment method handles the following tasks in serial.
+Used to create a custom AVH package with a set of ``images`` or deploy an AVH
+``fw_package`` pre-build.
+
+options
+=======
+
+A dictionary of AVH configuration.
+
+model
+-----
+
+This ``model`` key is crucial and mandatory. ``avh`` deploy action needs it to
+generate ``Info.plist`` file. ``avh`` boot action needs it to create instance.
+
+Here are the tested models in LAVA.
+
+* rpi4b
+* imx93
+* kronos
+
+Other models that capable to run Linux should work too.
+
+api_endpoint
+------------
+
+(optional): AVH API endpoint defaults to https://app.avh.corellium.com/api.
+
+project_name
+------------
+
+(optional): AVH project name defaults to ``Default Project``.
+
+images
+======
+
+A dictionary of images to provide the images needed for creating AVH Linux
+firmware zip package. The deployment method runs the following tasks in serial
+for ``images``.
 
 * Download the ``kernel``, ``dtb`` and ``rootfs`` images required by AVH custom firmware.
+* Apply lava overlay to ``rootfs`` image when needed.
 * Generate a ``Info.plist`` file for the meta information about firmware version, type, build, unique identifier, and device identifier.
 * Create a zip package that contains the images and the ``Info.plist`` file.
 
@@ -41,40 +79,6 @@ Example definition:
           url: https://example.com/rpi4b/kernel
         dtb:
           url: https://example.com/rpi4b/devicetree
-
-options
-=======
-
-A dictionary of AVH configuration.
-
-model
------
-
-This ``model`` key is crucial and mandatory. ``avh`` deploy action needs it to
-generate ``Info.plist`` file. ``avh`` boot action needs it to create instance.
-
-Here are the tested models in LAVA.
-
-* rpi4b
-* imx93
-
-Other models that capable to run Linux should work too.
-
-api_endpoint
-------------
-
-(optional): AVH API endpoint defaults to https://app.avh.corellium.com/api.
-
-project_name
-------------
-
-(optional): AVH project name defaults to ``Default Project``.
-
-images
-======
-
-A dictionary of images to provide the images needed for creating AVH Linux
-firmware zip package.
 
 rootfs
 ------
@@ -115,3 +119,38 @@ dtb
 ---
 
 The device tree for Linux in binary ``.dtb`` format.
+
+fw_package
+==========
+
+AVH firmware package pre-build.
+
+Example definition:
+
+.. code-block:: yaml
+
+  - deploy:
+      to: avh
+      options:
+        model: kronos
+        api_endpoint: https://app.avh.corellium.com/api
+        project_name: "Default Project"
+      timeout:
+        minutes: 10
+      fw_package:
+        url: https://example.com/kronos-baremetal-psa-secure-storage-1.0.zip
+        storage_file: virtio_0
+        root_partition: 1
+
+storage_file
+------------
+
+The name of the storage file inside the firmware package. It should be a disk
+image in ext4 format.
+
+See `AVH Storage <https://support.avh.corellium.com/devices/firmware/linux-firmware#storage>`_ for details.
+
+root_partition
+--------------
+
+Storage file root partition index for LAVA to apply overlay.

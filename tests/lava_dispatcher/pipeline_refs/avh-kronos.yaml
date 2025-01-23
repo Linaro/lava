@@ -1,0 +1,186 @@
+- class: AvhRetryAction
+  name: deploy-avh-retry
+  level: '1'
+  max_retries: 1
+  description: deploy avh image with retry
+  summary: deploy avh image
+  timeout: 1800
+  pipeline:
+  - class: AvhDeploy
+    name: deploy-avh
+    level: '1.1'
+    max_retries: 1
+    description: create and upload avh firmware zip package
+    summary: create and upload avh firmware zip package
+    timeout: 1800
+    pipeline:
+    - class: OverlayAction
+      name: lava-overlay
+      level: 1.1.1
+      max_retries: 1
+      description: add lava scripts during deployment for test shell use
+      summary: overlay the lava support scripts
+      timeout: 1800
+      pipeline:
+      - class: VlandOverlayAction
+        name: lava-vland-overlay
+        level: 1.1.1.1
+        max_retries: 1
+        description: Populate specific vland scripts for tests to lookup vlan data.
+        summary: Add files detailing vlan configuration.
+        timeout: 1800
+      - class: MultinodeOverlayAction
+        name: lava-multinode-overlay
+        level: 1.1.1.2
+        max_retries: 1
+        description: add lava scripts during deployment for multinode test shell use
+        summary: overlay the lava multinode scripts
+        timeout: 1800
+      - class: TestDefinitionAction
+        name: test-definition
+        level: 1.1.1.3
+        max_retries: 1
+        description: load test definitions into image
+        summary: loading test definitions
+        timeout: 1800
+        pipeline:
+        - class: InlineRepoAction
+          name: inline-repo-action
+          level: 1.1.1.3.1
+          max_retries: 1
+          description: apply inline test definition to the test image
+          summary: extract inline test definition
+          timeout: 1800
+        - class: TestOverlayAction
+          name: test-overlay
+          level: 1.1.1.3.2
+          max_retries: 1
+          description: overlay test support files onto image
+          summary: applying LAVA test overlay
+          timeout: 1800
+        - class: TestInstallAction
+          name: test-install-overlay
+          level: 1.1.1.3.3
+          max_retries: 1
+          description: overlay dependency installation support files onto image
+          summary: applying LAVA test install scripts
+          timeout: 1800
+        - class: TestRunnerAction
+          name: test-runscript-overlay
+          level: 1.1.1.3.4
+          max_retries: 1
+          description: overlay run script onto image
+          summary: applying LAVA test run script
+          timeout: 1800
+      - class: CompressOverlay
+        name: compress-overlay
+        level: 1.1.1.4
+        max_retries: 1
+        description: Create a lava overlay tarball and store alongside the job
+        summary: Compress the lava overlay files
+        timeout: 1800
+    - class: DownloaderAction
+      name: download-retry
+      level: 1.1.2
+      max_retries: 3
+      description: download with retry
+      summary: download-retry
+      timeout: 1800
+      pipeline:
+      - class: HttpDownloadAction
+        name: http-download
+        level: 1.1.2.1
+        max_retries: 1
+        description: use http to download the file
+        summary: http download
+        timeout: 600
+        url: https://example.com/kronos/fw-package-1.0.zip
+    - class: ApplyOverlayAvh
+      name: apply-overlay-avh
+      level: 1.1.3
+      max_retries: 1
+      description: apply overlay via guestfs to avh storage file
+      summary: apply overlay to avh storage file
+      timeout: 1800
+- class: BootAvhAction
+  name: boot-avh
+  level: '2'
+  max_retries: 1
+  description: boot avh device
+  summary: boot avh device
+  timeout: 1200
+  pipeline:
+  - class: CallAvhAction
+    name: call-avh
+    level: '2.1'
+    max_retries: 1
+    description: call avh api
+    summary: call avh api
+    timeout: 1200
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '2.2'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 1200
+    pipeline:
+    - class: LoginAction
+      name: login-action
+      level: 2.2.1
+      max_retries: 1
+      description: Real login action.
+      summary: Login after boot.
+      timeout: 1200
+  - class: ExpectShellSession
+    name: expect-shell-connection
+    level: '2.3'
+    max_retries: 1
+    description: Wait for a shell
+    summary: Expect a shell prompt
+    timeout: 1200
+  - class: ExportDeviceEnvironment
+    name: export-device-env
+    level: '2.4'
+    max_retries: 1
+    description: Exports environment variables to the device
+    summary: Exports environment variables action
+    timeout: 1200
+- class: TestShellRetry
+  name: lava-test-retry
+  level: '3'
+  max_retries: 1
+  description: Retry wrapper for lava-test-shell
+  summary: Retry support for Lava Test Shell
+  timeout: 600
+  pipeline:
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
+    timeout: 600
+- class: FinalizeAction
+  name: finalize
+  level: '4'
+  max_retries: 1
+  description: finish the process and cleanup
+  summary: finalize the job
+  timeout: 30
+  pipeline:
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 30

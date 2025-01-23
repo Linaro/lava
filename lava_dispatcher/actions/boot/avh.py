@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import time
 from typing import TYPE_CHECKING
+from urllib.parse import urlparse
 
 import avh_api as AvhApi
 from avh_api.api import arm_api
@@ -45,6 +46,10 @@ class CallAvhAction(Action):
     name = "call-avh"
     description = "call avh api"
     summary = "call avh api"
+
+    model_console_map = {
+        "kronos": "Primary Compute Non-Secure",
+    }
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -98,6 +103,20 @@ class CallAvhAction(Action):
     )
     def v1_delete_instance(self, api_instance):
         return api_instance.v1_delete_instance(self.instance_id)
+
+    def console_ws(self, instance: dict) -> str:
+        name = self.model_console_map[self.avh["model"]]
+
+        console_info = None
+        for console in instance.get("consoles", []):
+            if console.get("name") == name:
+                console_info = console.get("info")
+        if console_info is None:
+            raise JobError("Instance console {name} not found")
+
+        parsed_url = urlparse(self.avh["api_endpoint"])
+
+        return f"wss://{parsed_url.netloc}/console/{console_info}"
 
     def run(self, connection, max_end_time):
         self.avh = self.get_namespace_data(
@@ -165,7 +184,11 @@ class CallAvhAction(Action):
                     raise JobError("Instance entered error state")
 
             # Get device console websocket url
-            console_ws = self.v1_get_instance_console(api_instance)
+            if self.avh["model"] in self.model_console_map:
+                instance = self.v1_get_instance(api_instance)
+                console_ws = self.console_ws(instance)
+            else:
+                console_ws = self.v1_get_instance_console(api_instance).url
 
         # Connect to device
         if "docker" in self.parameters:
@@ -181,7 +204,7 @@ class CallAvhAction(Action):
         self.docker.init(False)
         self.docker.tty()
         self.docker.interactive()
-        docker_cmdline_args = ["-b", console_ws.url]
+        docker_cmdline_args = ["-b", console_ws]
         console_cmd = " ".join(self.docker.cmdline(*docker_cmdline_args))
         self.docker.prepare(action=self)
         self.docker_cleanup_required = True
