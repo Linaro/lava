@@ -38,6 +38,13 @@
   {% set base_uboot_tftp_commands = base_uboot_tftp_commands + uboot_load_dtbo %}
 {% endif %}
 
+{% set uboot_fdt_extra_commands = uboot_fdt_extra_commands|default([]) %}
+{% if uboot_fdt_extra_commands %}
+  {% set base_uboot_tftp_commands = base_uboot_tftp_commands +
+    ["fdt addr {DTB_ADDR}"] + uboot_fdt_extra_commands
+  %}
+{% endif %}
+
 {% set base_uboot_bootcmd = uboot_bootcmd|default(uboot_bootx_cmd|default('{BOOTX}')) -%}
 
 {% set base_uboot_nbd_bootcmd = [
