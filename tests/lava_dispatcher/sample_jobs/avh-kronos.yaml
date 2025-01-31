@@ -1,0 +1,50 @@
+device_type: avh
+job_name: avh-kronos
+
+timeouts:
+  job:
+    minutes: 60
+
+priority: medium
+visibility: public
+
+secrets:
+  avh_api_token: avh_api_token
+
+actions:
+- deploy:
+    to: avh
+    timeout:
+      minutes: 30
+    options:
+      model: kronos
+    fw_package:
+      url: https://example.com/kronos/fw-package-1.0.zip
+      storage_file: virtio_0
+      root_partition: 1
+
+- boot:
+    method: avh
+    timeout:
+      minutes: 20
+    auto_login:
+      login_prompt: "login:"
+      username: root
+    prompts:
+    - "root@fvp-rd-kronos:~#"
+
+- test:
+    timeout:
+      minutes: 10
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: health checks
+        run:
+          steps:
+          - lava-test-case kernel-info --shell uname -a
+          - lava-test-case network-info --shell ip a
+      name: health-checks
+      path: inline/health-checks.yaml

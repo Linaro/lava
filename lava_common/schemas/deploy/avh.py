@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from voluptuous import Optional, Range, Required
+from voluptuous import Any, Optional, Range, Required
 
 from lava_common.schemas import deploy
 
@@ -16,6 +16,13 @@ def schema():
         # AVH only supports Linux kernel in the Image format.
         Optional("type"): "image",
     }
+    pkg_extra = {
+        **extra,
+        Optional("storage_file"): str,
+    }
+    images = {Required(str, "'images' is empty"): deploy.url(extra)}
+    fw_package = deploy.url(pkg_extra)
+
     base = {
         Required("to"): "avh",
         Optional("options"): {
@@ -23,6 +30,9 @@ def schema():
             Optional("api_endpoint"): str,
             Optional("project_name"): str,
         },
-        Required("images"): {Required(str, "'images' is empty"): deploy.url(extra)},
     }
-    return {**deploy.schema(), **base}
+
+    return Any(
+        {**deploy.schema(), **base, Required("images"): images},
+        {**deploy.schema(), **base, Required("fw_package"): fw_package},
+    )

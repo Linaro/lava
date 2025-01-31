@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import zipfile
 from functools import partial
 from typing import TYPE_CHECKING
 
@@ -1089,3 +1090,59 @@ class ParsePersistentNFS(Action):
 
         self.job.device["dynamic_data"]["NFS_ROOTFS"] = dirname
         self.job.device["dynamic_data"]["NFS_SERVER_IP"] = nfs_server
+
+
+class ApplyOverlayAvh(Action):
+    """
+    Apply lava overlay to the specific partition of avh storage file.
+    """
+
+    name = "apply-overlay-avh"
+    description = "apply overlay via guestfs to avh storage file"
+    summary = "apply overlay to avh storage file"
+    timeout_exception = InfrastructureError
+
+    def __init__(self, job: Job):
+        super().__init__(job)
+        self.storage_file = None
+        self.root_partition = None
+
+    def validate(self):
+        super().validate()
+
+        self.storage_file = self.parameters["fw_package"].get("storage_file")
+        if self.storage_file is None:
+            raise JobError("Unable to apply overlay without 'fw_package.storage_file'")
+
+        self.root_partition = self.parameters["fw_package"].get("root_partition")
+        if self.root_partition is None:
+            raise JobError(
+                "Unable to apply overlay without 'fw_package.root_partition'"
+            )
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
+        if overlay_file is None:
+            self.logger.warning("No overlay to apply")
+            return connection
+
+        fw_package_path = self.get_namespace_data(
+            action="download-action", label="fw_package", key="file"
+        )
+        self.logger.info(
+            f"applying overlay to {self.storage_file} in {fw_package_path}"
+        )
+        tempdir = self.mkdtemp()
+        with zipfile.ZipFile(fw_package_path, "r") as zf:
+            zf.extractall(tempdir)
+
+        storage_file_path = f"{tempdir}/{self.storage_file}"
+        copy_in_overlay(storage_file_path, self.root_partition, overlay_file)
+
+        shutil.make_archive(fw_package_path[:-4], "zip", tempdir)
+
+        return connection

@@ -20,7 +20,10 @@ from avh_api.exceptions import ForbiddenException
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
+from lava_dispatcher.actions.deploy.apply_overlay import (
+    ApplyOverlayAvh,
+    ApplyOverlayImage,
+)
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.logical import RetryAction
@@ -77,20 +80,25 @@ class AvhDeploy(Action):
         if not isinstance(self.avh["api_token"], str):
             raise JobError("'secrets.avh_api_token' should be a string")
 
-        images = self.parameters.get("images")
-        if not images:
-            raise JobError("No 'images' specified for AVH deploy")
-        if not isinstance(images, dict):
-            raise JobError("'deploy.images' should be a dictionary")
-        for image in self.required_images:
-            if image not in images.keys():
-                raise JobError(f"No '{image}' image specified for AVH deploy")
+        if images := self.parameters.get("images"):
+            if not isinstance(images, dict):
+                raise JobError("'deploy.images' should be a dictionary")
+            for image in self.required_images:
+                if image not in images.keys():
+                    raise JobError(f"No '{image}' image specified for AVH deploy")
 
-        if (
-            self.test_needs_overlay(self.parameters)
-            and images["rootfs"].get("root_partition") is None
-        ):
-            raise JobError("Unable to apply overlay without 'root_partition'")
+            if (
+                self.test_needs_overlay(self.parameters)
+                and images["rootfs"].get("root_partition") is None
+            ):
+                raise JobError("Unable to apply overlay without 'root_partition'")
+        elif self.parameters.get("fw_package"):
+            # No additional checks are needed for 'fw_package'. When test needs
+            # overlay, 'storage_file' and 'root_partition' options are needed,
+            # the check is covered in 'ApplyOverlayAvh' action.
+            pass
+        else:
+            raise JobError("either 'images' or 'fw_package' is needed to deploy avh")
 
     def populate(self, parameters):
         self.path = self.mkdtemp()
@@ -98,20 +106,28 @@ class AvhDeploy(Action):
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
 
-        images = parameters.get("images")
         uniquify = parameters.get("uniquify", True)
-        for image in images.keys():
-            self.pipeline.add_action(
-                DownloaderAction(
-                    self.job, image, self.path, images[image], uniquify=uniquify
-                )
-            )
-            if image == "rootfs" and self.test_needs_overlay(parameters):
+        if images := self.parameters.get("images"):
+            for image in images.keys():
                 self.pipeline.add_action(
-                    ApplyOverlayImage(
-                        self.job, image_key=image, use_root_partition=True
+                    DownloaderAction(
+                        self.job, image, self.path, images[image], uniquify=uniquify
                     )
                 )
+                if image == "rootfs" and self.test_needs_overlay(parameters):
+                    self.pipeline.add_action(
+                        ApplyOverlayImage(
+                            self.job, image_key=image, use_root_partition=True
+                        )
+                    )
+        elif fw_package := self.parameters.get("fw_package"):
+            self.pipeline.add_action(
+                DownloaderAction(
+                    self.job, "fw_package", self.path, fw_package, uniquify=uniquify
+                )
+            )
+            if self.test_needs_overlay(parameters):
+                self.pipeline.add_action(ApplyOverlayAvh(self.job))
 
     @retry(exception=AvhApi.ApiException, retries=3, delay=1)
     def v1_auth_login(self, api_instance):
@@ -155,52 +171,63 @@ class AvhDeploy(Action):
                 raise JobError(f"AVH project '{self.avh['project_name']}' NOT found!")
             self.logger.info(f"AVH project ID: {self.avh['project_id']}")
 
-        # Create Info.plist
-        fw_version = self.level
-        fw_build = self.job.job_id
-        rand = "".join(random.choice(string.hexdigits) for c in range(5))
-        fw_name = f"lava-avh-{self.avh['model']}-{fw_version}-{fw_build}-{rand}"
-        pl = dict(
-            Type="iot",
-            UniqueIdentifier=fw_name,
-            DeviceIdentifier=self.avh["model"],
-            Version=fw_version,
-            Build=fw_build,
-        )
-        plist_file = Path(self.path) / "Info.plist"
-        self.logger.info(f"Generating {plist_file}")
-        with plist_file.open("wb") as bf:
-            plistlib.dump(pl, bf)
-
-        self.avh["image_name"] = fw_name
-        self.avh["image_version"] = fw_version
-        self.avh["image_build"] = fw_build
-
-        downloaded_images = {}
-        for image in self.parameters["images"].keys():
-            filename = self.get_namespace_data(
-                action="download-action", label=image, key="file"
+        self.avh["image_version"] = self.level
+        self.avh["image_build"] = self.job.job_id
+        if self.parameters.get("images"):
+            # Create Info.plist
+            fw_version = self.level
+            fw_build = self.job.job_id
+            rand = "".join(random.choice(string.hexdigits) for c in range(5))
+            fw_name = f"lava-avh-{self.avh['model']}-{fw_version}-{fw_build}-{rand}"
+            pl = dict(
+                Type="iot",
+                UniqueIdentifier=fw_name,
+                DeviceIdentifier=self.avh["model"],
+                Version=fw_version,
+                Build=fw_build,
             )
-            downloaded_images[image] = filename
+            plist_file = Path(self.path) / "Info.plist"
+            self.logger.info(f"Generating {plist_file}")
+            with plist_file.open("wb") as bf:
+                plistlib.dump(pl, bf)
 
-        # Create firmware zip package
-        fw_path = os.path.join(self.path, f"{fw_name}.zip")
-        self.logger.info(f"Creating AVH firmware zip package {fw_path}")
-        with zipfile.ZipFile(fw_path, mode="w", compression=zipfile.ZIP_DEFLATED) as zf:
-            self.logger.info(f"Adding: Info.plist")
-            zf.write(plist_file, arcname="Info.plist")
-            self.logger.info(f"Adding: kernel")
-            zf.write(downloaded_images["kernel"], arcname="kernel")
-            self.logger.info(f"Adding: devicetree")
-            zf.write(downloaded_images["dtb"], arcname="devicetree")
-            self.logger.info(f"Adding: nand")
-            zf.write(downloaded_images["rootfs"], arcname="nand")
+            self.avh["image_name"] = fw_name
 
-        self.avh["image_path"] = fw_path
+            downloaded_images = {}
+            for image in self.parameters["images"].keys():
+                filename = self.get_namespace_data(
+                    action="download-action", label=image, key="file"
+                )
+                downloaded_images[image] = filename
+
+            # Create firmware zip package
+            fw_path = os.path.join(self.path, f"{fw_name}.zip")
+            self.logger.info(f"Creating AVH firmware zip package {fw_path}")
+            with zipfile.ZipFile(
+                fw_path, mode="w", compression=zipfile.ZIP_DEFLATED
+            ) as zf:
+                self.logger.info(f"Adding: Info.plist")
+                zf.write(plist_file, arcname="Info.plist")
+                self.logger.info(f"Adding: kernel")
+                zf.write(downloaded_images["kernel"], arcname="kernel")
+                self.logger.info(f"Adding: devicetree")
+                zf.write(downloaded_images["dtb"], arcname="devicetree")
+                self.logger.info(f"Adding: nand")
+                zf.write(downloaded_images["rootfs"], arcname="nand")
+
+            self.avh["image_path"] = fw_path
+
+        if self.parameters.get("fw_package"):
+            fw_package_path = self.get_namespace_data(
+                action="download-action", label="fw_package", key="file"
+            )
+            self.avh["image_path"] = fw_package_path
+            self.avh["image_name"] = fw_package_path.split("/")[-1][:-4]
+
         self.set_namespace_data(
             action=self.name, label=self.name, key="avh", value=self.avh
         )
-        self.results = {"success": fw_path}
+        self.results = {"success": self.avh["image_path"]}
 
         return connection
 

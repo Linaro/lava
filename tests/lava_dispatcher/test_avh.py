@@ -196,9 +196,9 @@ class TestAvhActions(LavaDispatcherTestCase):
             "api_token": "avh_api_token",
             "project_id": "d59db33d-27bd-4b22-878d-49e4758a648e",
             "image_name": "lava-avh-rpi4b-1.1-4-6A2cA",
-            "image_path": "/var/lib/lava/dispatcher/tmp/4/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
+            "image_path": "/var/lib/lava/dispatcher/tmp/4999/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
             "image_version": "1.1",
-            "image_build": "4",
+            "image_build": "4999",
             "image_id": "18af26fe-8a5a-479a-80ec-013c54176d6f",
         },
     )
@@ -225,7 +225,7 @@ class TestAvhActions(LavaDispatcherTestCase):
         v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
 
         image_open.assert_called_once_with(
-            "/var/lib/lava/dispatcher/tmp/4/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
+            "/var/lib/lava/dispatcher/tmp/4999/deploy-avh-6h9bjj3g/lava-avh-rpi4b-1.1-4-59c0d.zip",
             "rb",
         )
         v1_create_image.assert_called_once_with(
@@ -243,7 +243,7 @@ class TestAvhActions(LavaDispatcherTestCase):
                 "flavor": "rpi4b",
                 "fwpackage": "18af26fe-8a5a-479a-80ec-013c54176d6f",
                 "os": "1.1",
-                "osbuild": "4",
+                "osbuild": "4999",
                 "boot_options": {
                     "boot_args": "earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M log_buf_len=1M",
                     "restore_boot_args": "earlycon=uart8250,mmio32,0xfe215040 console=ttyS0,115200n8 console=tty0 rw rootwait root=/dev/mmcblk0p2 coherent_pool=1M 8250.nr_uarts=1 cma=64M log_buf_len=1M init=/usr/lib/raspi-config/init_resize.sh",
@@ -261,3 +261,170 @@ class TestAvhActions(LavaDispatcherTestCase):
         v1_get_instance_console.assert_called_once_with(
             "7f4f241c-821f-4219-905f-c3b50b0db5dd"
         )
+
+
+class TestAvhActionsFwPackage(LavaDispatcherTestCase):
+    def setUp(self, job="sample_jobs/avh-kronos.yaml"):
+        super().setUp()
+        self.factory = Factory()
+        self.job = self.factory.create_job("avh-01.jinja2", job)
+
+    def test_validate(self):
+        try:
+            self.job.pipeline.validate_actions()
+        except JobError as exc:
+            self.fail(exc)
+        for action in self.job.pipeline.actions:
+            self.assertEqual([], action.errors)
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference("avh-kronos.yaml", job=self.job)
+        self.assertEqual(description_ref, self.job.pipeline.describe())
+
+    # Test deploy run.
+    @patch("lava_dispatcher.actions.deploy.avh.Action.run")
+    @patch(
+        "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_projects",
+        return_value=[
+            Project("d59db33d-27bd-4b22-878d-49e4758a648e", name="Default Project"),
+        ],
+    )
+    @patch(
+        "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_models",
+        return_value=[
+            Model("iot", "kronos", "kronos", "kronos"),
+        ],
+    )
+    @patch(
+        "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_auth_login",
+        return_value=Token("avhapitoken"),
+    )
+    def test_deploy(
+        self,
+        v1_auth_login,
+        v1_get_models,
+        v1_get_projects,
+        *args,
+    ):
+        self.job.validate()
+
+        action = self.job.pipeline.actions[0].pipeline.actions[0]
+        action.run(None, None)
+
+        v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
+        v1_get_models.assert_called_once_with()
+        v1_get_projects.assert_called_once_with()
+
+        avh_data = action.get_namespace_data(
+            action="deploy-avh", label="deploy-avh", key="avh"
+        )
+        assert avh_data["api_endpoint"] == "https://app.avh.corellium.com/api"
+        assert avh_data["project_id"] == "d59db33d-27bd-4b22-878d-49e4758a648e"
+        assert avh_data["model"] == "kronos"
+        assert avh_data["image_version"] == "1.1"
+        assert avh_data["image_build"] == "4999"
+        assert "fw_package/fw-package-1.0.zip" in avh_data["image_path"]
+        assert avh_data["image_name"] == "fw-package-1.0"
+
+    # Test boot run.
+    @patch("lava_dispatcher.actions.boot.avh.ShellSession")
+    @patch("lava_dispatcher.actions.boot.avh.ShellCommand")
+    @patch("lava_dispatcher.actions.boot.avh.DockerRun.prepare")
+    @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance",
+        return_value={
+            "consoles": [
+                {
+                    "name": "Primary Compute Non-Secure",
+                    "info": "PrimaryComputeNonSecureInfo",
+                },
+            ]
+        },
+    )
+    @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance_state",
+        side_effect=[InstanceState("creating"), InstanceState("on")],
+    )
+    @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_create_instance",
+        return_value=InstanceReturn(
+            "7f4f241c-821f-4219-905f-c3b50b0db5dd", InstanceState("creating")
+        ),
+    )
+    @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_create_image",
+        return_value=Image("active", id="18af26fe-8a5a-479a-80ec-013c54176d6f"),
+    )
+    @patch("lava_dispatcher.actions.boot.avh.open")
+    @patch(
+        "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_auth_login",
+        return_value=Token("avhapitoken"),
+    )
+    @patch(
+        "lava_dispatcher.actions.boot.avh.CallAvhAction.get_namespace_data",
+        return_value={
+            "model": "kronos",
+            "api_endpoint": "https://app.avh.corellium.com/api",
+            "project_name": "Default Project",
+            "api_token": "avh_api_token",
+            "project_id": "d59db33d-27bd-4b22-878d-49e4758a648e",
+            "image_name": "fw-package-1.0",
+            "image_path": "/var/lib/lava/dispatcher/tmp/4999/deploy-avh-82eueve2/fw_package/fw-package-1.0.zip",
+            "image_version": "1.1",
+            "image_build": "4999",
+            "image_id": "18af26fe-8a5a-479a-80ec-013c54176d6f",
+        },
+    )
+    def test_boot(
+        self,
+        get_namespace_data,
+        v1_auth_login,
+        image_open,
+        v1_create_image,
+        v1_create_instance,
+        v1_get_instance_state,
+        v1_get_instance,
+        *args,
+    ):
+        self.job.validate()
+
+        action = self.job.pipeline.actions[1].pipeline.actions[0]
+        action.run(None, None)
+
+        get_namespace_data.assert_called_once_with(
+            action="deploy-avh", label="deploy-avh", key="avh"
+        )
+
+        v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
+
+        image_open.assert_called_once_with(
+            "/var/lib/lava/dispatcher/tmp/4999/deploy-avh-82eueve2/fw_package/fw-package-1.0.zip",
+            "rb",
+        )
+        v1_create_image.assert_called_once_with(
+            type="fwpackage",
+            encoding="plain",
+            name="fw-package-1.0",
+            project="d59db33d-27bd-4b22-878d-49e4758a648e",
+            file=ANY,
+        )
+
+        v1_create_instance.assert_called_once_with(
+            {
+                "name": "fw-package-1.0",
+                "project": "d59db33d-27bd-4b22-878d-49e4758a648e",
+                "flavor": "kronos",
+                "fwpackage": "18af26fe-8a5a-479a-80ec-013c54176d6f",
+                "os": "1.1",
+                "osbuild": "4999",
+            }
+        )
+
+        v1_get_instance_state.assert_has_calls(
+            [
+                call("7f4f241c-821f-4219-905f-c3b50b0db5dd"),
+                call("7f4f241c-821f-4219-905f-c3b50b0db5dd"),
+            ]
+        )
+
+        v1_get_instance.assert_called_once_with("7f4f241c-821f-4219-905f-c3b50b0db5dd")
