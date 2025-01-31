@@ -1,0 +1,5 @@
+{% extends 'base-barebox.jinja2' %}
+
+{% set barebox_final_message = 'Loaded kernel' %}
+{% set bootloader_prompt = bootloader_prompt|default('TQ-Systems i.MX8MPlus TQMa8MPxL on MBa8MPxL:/') %}
+{% set console_device = 'ttymxc3,115200 earlycon=ec_imx6q,0x30a60000' %}
