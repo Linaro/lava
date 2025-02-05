@@ -45,7 +45,8 @@ override_dh_python3:
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-server > server-requirements.txt
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-common > common-requirements.txt
 	dh_python3 -p lava-dispatcher --shebang=/usr/bin/python3 --requires=dispatcher-requirements.txt
-	dh_python3 -p lava-server --shebang=/usr/bin/python3 --requires=server-requirements.txt
+	dh_python3 -p lava-server-base --shebang=/usr/bin/python3 --requires=server-requirements.txt
+	dh_python3 -p lava-server --shebang=/usr/bin/python3
 	dh_python3 -p lava-common --shebang=/usr/bin/python3 --requires=common-requirements.txt
 
 override_dh_auto_build:
@@ -79,6 +80,8 @@ override_dh_auto_install:
 	python3 setup.py install --root=$(CURDIR)/debian/lava-dispatcher-host/ --no-compile --install-layout=deb lava-dispatcher-host
 	rm -rf $(CURDIR)/build
 	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --no-compile --install-layout=deb lava-server
+	rm -rf $(CURDIR)/build
+	python3 setup.py install --root=$(CURDIR)/debian/lava-server-base/ --no-compile --install-layout=deb lava-server-base
 	rm -rf $(CURDIR)/build
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove

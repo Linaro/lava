@@ -142,14 +142,7 @@ DISPATCHER_HOST = {
 SERVER = {
     "name": "lava-server",
     "description": "LAVA server",
-    "packages": (
-        modules("lava_rest_app")
-        + modules("lava_results_app")
-        + modules("lava_scheduler_app")
-        + modules("lava_server")
-        + modules("linaro_django_xmlrpc")
-    ),
-    "scripts": ["manage.py"],
+    "packages": (),
     "data_files": [
         ("/etc/apache2/sites-available/", ["etc/lava-server.conf"]),
         (
@@ -198,12 +191,27 @@ SERVER = {
     "cmdclass": {"install_scripts": rename_scripts},
 }
 
+SERVER_BASE = {
+    "name": "lava-server-base",
+    "description": "LAVA server base files",
+    "packages": (
+        modules("lava_rest_app")
+        + modules("lava_results_app")
+        + modules("lava_scheduler_app")
+        + modules("lava_server")
+        + modules("linaro_django_xmlrpc")
+    ),
+    "scripts": ["manage.py"],
+    "cmdclass": {"install_scripts": rename_scripts},
+}
+
 PKGS = {
     "lava-common": COMMON,
     "lava-coordinator": COORDINATOR,
     "lava-dispatcher": DISPATCHER,
     "lava-dispatcher-host": DISPATCHER_HOST,
     "lava-server": SERVER,
+    "lava-server-base": SERVER_BASE,
 }
 
 

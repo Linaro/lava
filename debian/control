@@ -100,6 +100,7 @@ Architecture: all
 Pre-Depends: debconf | debconf-2.0
 Depends: adduser,
          gunicorn (>= 19.9.0-4) | gunicorn3,
+         lava-server-base (= ${binary:Version}),
          lava-common (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
          libjs-bootstrap,
@@ -136,6 +137,19 @@ Description: Linaro Automated Validation Architecture server
  Workers must only install lava-dispatcher.
  .
  This package no longer supports Python2.
+
+Package: lava-server-base
+Architecture: all
+Pre-Depends: debconf | debconf-2.0
+Depends: lava-common (= ${binary:Version}),
+         libjs-bootstrap,
+         libjs-jquery,
+         libjs-jquery-flot,
+         libjs-jquery-typeahead,
+         ${misc:Depends},
+         ${python3:Depends}
+Description: Linaro Automated Validation Architecture server.
+ Base files and required dependencies.
 
 Package: lava-common
 Architecture: all
