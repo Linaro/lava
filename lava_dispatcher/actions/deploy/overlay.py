@@ -163,12 +163,6 @@ class CreateOverlay(Action):
             fout.write("export %s=%s\n" % (prefix, data))
 
     def run(self, connection, max_end_time):
-        if self.get_namespace_data(
-            action="lava-create-overlay", label="result", key="created"
-        ):
-            self.logger.debug("Overlay already created")
-            return connection
-
         tmp_dir = self.mkdtemp()
         self.set_namespace_data(
             action="test", label="shared", key="location", value=tmp_dir
@@ -270,10 +264,6 @@ class CreateOverlay(Action):
                     for key in environment:
                         self.logger.debug("Handling %s", key)
                         fout.write("%s=%s\n" % (key, environment[key]))
-
-        self.set_namespace_data(
-            action="lava-create-overlay", label="result", key="created", value=True
-        )
 
         connection = super().run(connection, max_end_time)
         return connection
