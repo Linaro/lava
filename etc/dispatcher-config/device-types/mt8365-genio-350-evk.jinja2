@@ -1,2 +1,7 @@
 {# device_type = "mt8365-genio-350-evk" #}
 {% extends 'mt8xxx-genio-common.jinja2' %}
+
+{% set uboot_needs_usb = true %}
+{% set uboot_usb_commands = [
+    "bind /soc/usb@11201000/ssusb@11200000 usb_ether"]
+-%}
