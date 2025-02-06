@@ -95,8 +95,22 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
                     data = data[count:]
                     index += count
             elif ret.status_code == 404:
-                data, remaining = [], []
-                os.kill(os.getppid(), signal.SIGUSR1)
+                job_id = url.strip("/").split("/")[-2]
+                json_data = {}
+                try:
+                    json_data = ret.json()
+                    if json_data.get("error") == f"Unknown job '{job_id}'":
+                        data, remaining = [], []
+                        os.kill(os.getppid(), signal.SIGUSR1)
+                    else:
+                        time.sleep(FAILURE_SLEEP)
+                # When the 'ret.json()' fails to decode the response, requests
+                # v2.25.1 on Debian 11 returns 'json.JSONDecodeError' but
+                # requests >= 2.27.0 returns 'requests.exceptions.JSONDecodeError'
+                # which is an invalid attribute on Debian 11. 'ValueError' is
+                # used here until Debian 11 is dropped.
+                except ValueError:
+                    time.sleep(FAILURE_SLEEP)
             else:
                 if ret.status_code == 413:
                     raise RequestBodyTooLargeError

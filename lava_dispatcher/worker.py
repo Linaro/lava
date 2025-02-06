@@ -471,6 +471,12 @@ async def finish_job(
         LOG.debug("[%d] --> %s", job.job_id, ret.text)
         if ret.status_code != 404:  # If the job is not present on lava-server delete it
             return
+        # Check if the '404' is returned by 'URL_JOBS' api.
+        json_data = {}
+        with contextlib.suppress(aiohttp.ContentTypeError):
+            json_data = ret.json()
+        if json_data.get("error") != f"Unknown job '{job.job_id}'":
+            return
 
     # Remove stale resources
     prefix = "" if job is None else job.prefix

@@ -65,7 +65,9 @@ def test_sender_exceptions(mocker):
 
 
 def test_sender_404(mocker):
+    job_id = "123"
     response = mocker.Mock(status_code=404)
+    response.json.return_value = {"error": f"Unknown job '{job_id}'"}
     post = mocker.Mock(return_value=response)
     enter = mocker.MagicMock()
     enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
@@ -80,7 +82,12 @@ def test_sender_404(mocker):
     os_getppid = mocker.patch("os.getppid", return_value=1)
     os_kill = mocker.patch("os.kill")
 
-    sender(conn, "http://localhost", "my-token", 1)
+    sender(
+        conn,
+        f"http://localhost/scheduler/internal/v1/jobs/{job_id}/logs/",
+        "my-token",
+        1,
+    )
 
     os_getppid.assert_called_once()
     os_kill.assert_called_once_with(1, signal.SIGUSR1)
