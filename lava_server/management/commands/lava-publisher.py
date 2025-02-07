@@ -46,8 +46,12 @@ async def db(log, func, *args, **kwargs):
     try:
         return await sync_to_async(func)(*args, **kwargs)
     except django.db.Error as exc:
-        log.error("Database exception raised: %r", exc)
-        raise aiohttp.web.GracefulExit()
+        await sync_to_async(django.db.close_old_connections)()
+        try:
+            return await sync_to_async(func)(*args, **kwargs)
+        except django.db.Error as exc:
+            log.error("Database exception raised: %r", exc)
+            raise aiohttp.web.GracefulExit()
 
 
 async def zmq_proxy(app):
