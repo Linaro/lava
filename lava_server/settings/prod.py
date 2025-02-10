@@ -110,6 +110,16 @@ if "LAVA_JSON_SETTINGS" in os.environ:
         print(exc)
         raise Exception(f"Unable to load LAVA_JSON_SETTINGS") from exc
 
+if "DATABASES" in locals() and DATABASES.get("default"):
+    if db_conn_max_age_str := globals().get("DB_CONN_MAX_AGE"):
+        with contextlib.suppress(ValueError):
+            DATABASES["default"]["CONN_MAX_AGE"] = int(db_conn_max_age_str)
+    if db_conn_health_check_str := globals().get("DB_CONN_HEALTH_CHECKS"):
+        if db_conn_health_check_str in ["True", "true", "1", "yes", "on"]:
+            DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
+        elif db_conn_health_check_str in ["False", "false", "0", "no", "off"]:
+            DATABASES["default"]["CONN_HEALTH_CHECKS"] = False
+
 # Update settings with custom values
 for k, v in update(globals()).items():
     globals()[k] = v
