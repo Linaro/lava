@@ -1,3 +1,20 @@
+lava (2025.02-1) unstable; urgency=medium
+
+  * LAVA Software 2025.02 release
+
+  [ Antonio Terceiro ]
+  * [2ed06d4ce] debian/sort-search-index.py: fix SyntaxWarning: invalid escape sequence
+  * [30e5a65b5] debian/sort-search-index.py: sort by id
+  * [70abe5efd] debian/tests/control: testsuite: add new package needed for testing
+  * [915eef0ed] debian/tests/management: avoid interfering with debian/tests/testsuite
+  * [338665160] debian/tests/testsuite: ignore one failing test
+
+  [ Igor Ponomarev ]
+  * [7814f991e] Remove lava-server's postgresql-client dependency using psycopg2 directly
+  * [a32081ccc] debian: Avoid building man pages twice
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 18 Feb 2025 10:51:09 +0100
+
 lava (2024.09-1) unstable; urgency=medium
 
   * LAVA Software 2024.09 release
