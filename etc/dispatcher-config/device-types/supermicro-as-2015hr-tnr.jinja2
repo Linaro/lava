@@ -1,0 +1,6 @@
+{# device_type = "supermicro-as-2015hr-tnr" #}
+{% extends 'base-grub.jinja2' %}
+
+{% set action_timeout_bootloader_interrupt = action_timeout_bootloader_interrupt | default(300) %}
+{% set action_timeout_power_off = action_timeout_power_off | default(15) %}
+{% set console_device = console_device | default('ttyS1') %}
