@@ -6,6 +6,7 @@ usage () {
     echo "Usage: lava-test-case TEST_CASE_ID --shell cmds ..."
     echo "   or: lava-test-case TEST_CASE_ID --result RESULT [--units UNITS] "
     echo "                                   [--measurement MEASUREMENT]"
+    echo "                                   [--output FILE]"
     echo ""
     echo "Either run or record the results of a particular test case"
 }
@@ -18,6 +19,8 @@ if [ -z "$TEST_CASE_ID" ]; then
     usage
     exit 1
 fi
+
+OUTPUT_FILE=
 
 if [ "$1" = "--shell" ]; then
     shift
@@ -52,6 +55,11 @@ else
                 MEASUREMENT=$1
                 shift
                 ;;
+            --output)
+                shift
+                OUTPUT_FILE=$1
+                shift
+                ;;
             *)
                 usage
                 exit 1
@@ -83,6 +91,12 @@ fi
 if [ -n "${MEASUREMENT+x}" ]; then
     echo $MEASUREMENT > "$result_dir/measurement"
     TCDATA="$TCDATA MEASUREMENT=$MEASUREMENT"
+fi
+
+if [ -n "$OUTPUT_FILE" ]; then
+    signal "<LAVA_SIGNAL_STARTTC $TEST_CASE_ID>"
+    cat "$OUTPUT_FILE"
+    signal "<LAVA_SIGNAL_ENDTC $TEST_CASE_ID>"
 fi
 
 # signal the test case results
