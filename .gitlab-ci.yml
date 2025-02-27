@@ -128,9 +128,6 @@ sast:
 codespell:
   extends: .analyze
   image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
-  variables:
-    GIT_DEPTH: 150
-    GIT_FETCH_EXTRA_FLAGS: "--quiet --prune $CI_DEFAULT_BRANCH"
 
 django_migrations:
   extends: .analyze

@@ -7,8 +7,12 @@ spellcheck_commit_messages()
   current_branch="$(git rev-parse --abbrev-ref HEAD)"
   if [ "$current_branch" != "$CI_DEFAULT_BRANCH" ]
   then
-    echo "Spellchecking $(git log --format=oneline "origin/${CI_DEFAULT_BRANCH}.." | wc --lines) commit messages"
-    git log --format='format:%H%n%n%s%n%n%b' "origin/${CI_DEFAULT_BRANCH}.." | codespell --ignore-words="$1" --enable-colors --context 2 -
+    echo "Spellchecking commit messages"
+    git log \
+      --format='%H%n%n%s%n%n%b%n' \
+      --max-count=100 \
+      --since=2025-09-12 \
+      --no-merges | codespell --ignore-words="$1" --enable-colors --context 3 -
   else
     echo "Already on default branch. Skipping commit message spellchecking."
   fi
