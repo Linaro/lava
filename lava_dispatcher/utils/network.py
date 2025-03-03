@@ -131,13 +131,13 @@ def get_free_port(dispatcher_config):
 requests_session = ContextVar("requests_session")
 
 
-def requests_retry():
+# Retry 15 times over a period a bit longer than 10 minutes.
+def requests_retry(retries: int = 15) -> requests.session:
     with contextlib.suppress(LookupError):
         return requests_session.get()
 
     session = requests.Session()
-    # Retry 15 times over a period a bit longer than 10 minutes.
-    retries = 15
+    retries = retries
     backoff_factor = 0.1
     status_forcelist = [
         # See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

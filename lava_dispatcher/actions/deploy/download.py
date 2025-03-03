@@ -598,7 +598,7 @@ class HttpDownloadAction(DownloadHandler):
                 headers.update(self.params["headers"])
             self.logger.debug("Validating that %s exists", self.url.geturl())
             # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
-            res = requests_retry().head(
+            res = requests_retry(retries=9).head(
                 self.url.geturl(),
                 allow_redirects=True,
                 headers=headers,
@@ -609,7 +609,7 @@ class HttpDownloadAction(DownloadHandler):
                 self.logger.debug("Using GET because HEAD is not supported properly")
                 res.close()
                 # Like for HEAD, we need get a size, so disable gzip
-                res = requests_retry().get(
+                res = requests_retry(retries=9).get(
                     self.url.geturl(),
                     allow_redirects=True,
                     stream=True,
