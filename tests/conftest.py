@@ -68,7 +68,8 @@ def no_network(mocker, request):
         mocker.patch("requests.head", head)
         mocker.patch("requests.get", get)
         mocker.patch(
-            "lava_dispatcher.actions.deploy.download.requests_retry", lambda: requests
+            "lava_dispatcher.actions.deploy.download.requests_retry",
+            lambda retries=15: requests,
         )
 
     # Fake netifaces to always return the same results
