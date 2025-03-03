@@ -152,6 +152,8 @@ def build_customized_image(image, build_dir, use_cache=False):
         "Dockerfile.lava",
         "-t",
         tag,
+        "--build-context",
+        "local=/lib",
     ]
     if not use_cache:
         build_cmd.append("--no-cache")
