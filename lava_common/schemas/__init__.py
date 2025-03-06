@@ -313,7 +313,7 @@ def job(extra_context_variables=[]):
             Optional("metadata"): {str: object},
             Optional("priority"): Any("high", "medium", "low", Range(min=0, max=100)),
             Optional("tags"): [str],
-            Optional("secrets"): dict,
+            Optional("secrets"): {str: str},
             Optional("environment"): dict,
             Optional("protocols"): {
                 Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
