@@ -14,6 +14,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.network import dispatcher_ip
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -83,6 +84,14 @@ class PostprocessWithDocker(Action):
                 script.append(
                     "export %s='%s'" % (key, self.job.device["dynamic_data"][key])
                 )
+        # Export job and dispatcher env vars.
+        environment = self.job.parameters.get("environment", {})
+        environment["LAVA_JOB_ID"] = self.job.job_id
+        environment["LAVA_DISPATCHER_IP"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
+        for key, value in environment.items():
+            script.append("export %s='%s'" % (key, value))
 
         script = script + self.steps
         script = "\n".join(script) + "\n"
