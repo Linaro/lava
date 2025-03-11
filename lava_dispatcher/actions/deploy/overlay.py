@@ -247,6 +247,11 @@ class CreateOverlay(Action):
             self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
             self._export_data(fout, self.dispatcher_ip, "LAVA_DISPATCHER_IP")
 
+            if http_cache := self.job.parameters["dispatcher"].get(
+                "http_url_format_string", ""
+            ):
+                self._export_data(fout, http_cache, "HTTP_CACHE")
+
         # Generate the file containing the secrets
         if "secrets" in self.job.parameters:
             self.logger.debug("Creating %s/secrets", lava_path)

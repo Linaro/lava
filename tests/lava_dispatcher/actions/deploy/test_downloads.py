@@ -117,9 +117,23 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         self.assertIn("echo HELLO WORLD\n", script_text)
         self.assertIn("export LAVA_JOB_ID=", script_text)
         self.assertIn("export LAVA_DISPATCHER_IP=", script_text)
+        self.assertNotIn("export HTTP_CACHE=", script_text)
 
         docker_run_mock.assert_called_with(
             MOCK_ANY,
             action=self.action,
             error_msg="Post-processing of downloads failed",
         )
+
+    def test_postprocess_with_docker_run_env_http_cache(self):
+        url = "http://kisscache/api/v1/fetch/?url=%s"
+        self.job.parameters["dispatcher"] = {"http_url_format_string": url}
+        origconn = MagicMock()
+
+        with patch("lava_dispatcher.utils.docker.DockerRun.run"):
+            self.action.run(origconn, 4242)
+
+        script = self.action.path / "postprocess.sh"
+        self.assertTrue(script.exists())
+        script_text = script.read_text()
+        self.assertIn(f"export HTTP_CACHE='{url}'", script_text)

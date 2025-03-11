@@ -92,6 +92,10 @@ class PostprocessWithDocker(Action):
         )
         for key, value in environment.items():
             script.append("export %s='%s'" % (key, value))
+        if http_cache := self.job.parameters["dispatcher"].get(
+            "http_url_format_string", ""
+        ):
+            script.append(f"export HTTP_CACHE='{http_cache}'")
 
         script = script + self.steps
         script = "\n".join(script) + "\n"
