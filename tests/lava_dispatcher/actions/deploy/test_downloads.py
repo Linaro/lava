@@ -103,6 +103,7 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         self.assertIn("echo HELLO WORLD", self.action.steps)
 
     def test_postprocess_with_docker_run(self):
+        self.job.parameters["dispatcher"] = {}
         origconn = MagicMock()
         with patch("lava_dispatcher.utils.docker.DockerRun.run") as docker_run_mock:
             conn = self.action.run(origconn, 4242)
@@ -114,6 +115,8 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         script_text = script.read_text()
         self.assertIn("date\n", script_text)
         self.assertIn("echo HELLO WORLD\n", script_text)
+        self.assertIn("export LAVA_JOB_ID=", script_text)
+        self.assertIn("export LAVA_DISPATCHER_IP=", script_text)
 
         docker_run_mock.assert_called_with(
             MOCK_ANY,
