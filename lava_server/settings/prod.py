@@ -5,13 +5,6 @@
 #         Milosz Wasilewski <milosz.wasilewski@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-# pylint:disable=wrong-import-position
-
-import warnings
-
-warnings.filterwarnings("ignore", category=UserWarning, module="environ")
-
 import base64
 import contextlib
 import json
@@ -37,7 +30,6 @@ from lava_server.settings.config_file import ConfigFile
 # character, it will try to use the rest of the key as a variable name, and
 # expose it on an error message.
 env = environ.Env()
-environ.Env.read_env()
 
 if os.environ.get("DATABASE_URL"):
     DATABASES = {"default": env.db()}
