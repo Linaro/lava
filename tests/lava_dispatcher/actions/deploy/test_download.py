@@ -791,7 +791,7 @@ class TestDowload(LavaDispatcherTestCase):
         )
         job.validate()
 
-    def test_predownloaded(self):
+    def test_predownloaded_uniquify_false(self):
         params = {
             "to": "tmpfs",
             "rootfs": {"url": "downloads://rootfs.xz"},
@@ -800,7 +800,12 @@ class TestDowload(LavaDispatcherTestCase):
         job = self.create_simple_job()
         destdir = job.mkdtemp("some-other-action")
         action = PreDownloadedAction(
-            job, "rootfs", urlparse("downloads://rootfs.xz"), destdir, params
+            job,
+            "rootfs",
+            urlparse("downloads://rootfs.xz"),
+            destdir,
+            uniquify=False,
+            params=params,
         )
         action.parameters = params
 
@@ -818,12 +823,43 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertEqual(mapped_path, (destdir + "/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
 
+    def test_predownloaded(self):
+        params = {
+            "to": "tmpfs",
+            "rootfs": {"url": "downloads://rootfs.xz"},
+            "namespace": "common",
+        }
+        job = self.create_simple_job()
+        destdir = job.mkdtemp("some-other-action")
+        action = PreDownloadedAction(
+            job, "rootfs", urlparse("downloads://rootfs.xz"), destdir, params=params
+        )
+        action.parameters = params
+
+        filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
+        filename.parent.mkdir(parents=True)
+        filename.touch()
+
+        action.data = {}
+        action.parameters = {"namespace": "common"}
+        action.validate()
+        action.run(None, 4242)
+        mapped_path = action.get_namespace_data(
+            action="download-action", label="rootfs", key="file"
+        )
+        self.assertEqual(mapped_path, (destdir + "/rootfs/rootfs.xz"))
+        self.assertTrue(Path(mapped_path).exists())
+
     def test_predownloaded_subdirectory(self):
         params = {"to": "tmpfs", "rootfs": {"url": "downloads://subdir/rootfs.xz"}}
         job = self.create_simple_job()
         destdir = job.mkdtemp("some-other-action")
         action = PreDownloadedAction(
-            job, "rootfs", urlparse("downloads://subdir/rootfs.xz"), destdir, params
+            job,
+            "rootfs",
+            urlparse("downloads://subdir/rootfs.xz"),
+            destdir,
+            params=params,
         )
         action.parameters = params
 
@@ -838,7 +874,7 @@ class TestDowload(LavaDispatcherTestCase):
         mapped_path = action.get_namespace_data(
             action="download-action", label="rootfs", key="file"
         )
-        self.assertEqual(mapped_path, (destdir + "/subdir/rootfs.xz"))
+        self.assertEqual(mapped_path, (destdir + "/rootfs/subdir/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
 
     def test_predownloaded_missing_file(self):
