@@ -841,7 +841,14 @@ async def main() -> int:
     async with aiohttp.ClientSession(
         headers={
             "User-Agent": f"lava-worker {__version__}",
+            "Connection": "keep-alive",
         },
+        connector=aiohttp.TCPConnector(
+            limit=10,
+            keepalive_timeout=TIMEOUT,
+            force_close=False,
+            enable_cleanup_closed=True,
+        ),
         timeout=aiohttp.ClientTimeout(total=TIMEOUT),
     ) as session:
         try:
