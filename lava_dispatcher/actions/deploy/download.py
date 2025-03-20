@@ -93,7 +93,7 @@ class DownloaderAction(RetryAction):
             action = LxcDownloadAction(self.job, self.key, self.path, url)
         elif url.scheme == "downloads":
             action = PreDownloadedAction(
-                self.job, self.key, url, self.path, params=self.params
+                self.job, self.key, url, self.path, self.uniquify, params=self.params
             )
         else:
             raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
@@ -767,11 +767,13 @@ class PreDownloadedAction(Action):
     description = "Map to the correct downloaded path"
     summary = "pre downloaded"
 
-    def __init__(self, job: Job, key, url, path, params=None):
+    def __init__(self, job: Job, key, url, path, uniquify=True, params=None):
         super().__init__(job)
         self.key = key
         self.url = url
         self.path = path
+        if uniquify:
+            self.path = os.path.join(path, key)
         self.params = params
 
     def validate(self):
