@@ -47,8 +47,10 @@
     "run bootcmd"]
 -%}
 
+{% set base_uboot_pci_commands = uboot_pci_commands|default(["pci enum"]) -%}
 {% set base_uboot_usb_commands = uboot_usb_commands|default(["usb start"]) -%}
 
+{% set uboot_needs_pci = uboot_needs_pci|default(false) %}
 {% set uboot_needs_usb = uboot_needs_usb|default(false) %}
 
 {% set usb_uuid = usb_uuid|default('') %}
@@ -63,6 +65,9 @@
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
 {% set uboot_common_cmds = [] %}
+{% if uboot_needs_pci %}
+  {% set uboot_common_cmds = uboot_common_cmds + base_uboot_pci_commands %}
+{% endif %}
 {% if uboot_needs_usb %}
   {% set uboot_common_cmds = uboot_common_cmds + base_uboot_usb_commands %}
 {% endif %}
