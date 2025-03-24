@@ -179,7 +179,7 @@ class SchedulerAPI(ExposedV2API):
 
         with transaction.atomic():
             try:
-                job = TestJob.get_by_job_number(job_id)
+                job = TestJob.get_by_job_number(job_id, for_update=True)
             except TestJob.DoesNotExist:
                 raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
 
