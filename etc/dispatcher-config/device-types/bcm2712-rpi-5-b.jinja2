@@ -1,0 +1,15 @@
+# Raspberry Pi 5
+{# set device_type = "bcm2712-rpi-5" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set booti_kernel_addr = booti_kernel_addr|default('0x00200000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr|default('0x09900000') %}
+{% set booti_dtb_addr = booti_dtb_addr|default('0x09800000') %}
+
+{% set bootm_kernel_addr = bootm_kernel_addr|default('0x00200000') %}
+{% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0x09900000') %}
+{% set bootm_dtb_addr = bootm_dtb_addr|default('0x09800000') %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
