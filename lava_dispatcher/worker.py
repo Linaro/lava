@@ -128,6 +128,9 @@ async def aiohttp_get(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
+    except asyncio.TimeoutError as exc:
+        LOG.error(f"Timeout during get request to {url}: {exc}")
+        return Response(504, f"Timeout error: {str(exc)}")
 
 
 async def aiohttp_post(
@@ -142,6 +145,9 @@ async def aiohttp_post(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
+    except asyncio.TimeoutError as exc:
+        LOG.error(f"Timeout during post request to {url}: {exc}")
+        return Response(504, f"Timeout error: {str(exc)}")
 
 
 ###############
@@ -843,13 +849,8 @@ async def main() -> int:
             "User-Agent": f"lava-worker {__version__}",
             "Connection": "keep-alive",
         },
-        connector=aiohttp.TCPConnector(
-            limit=10,
-            keepalive_timeout=TIMEOUT,
-            force_close=False,
-            enable_cleanup_closed=True,
-        ),
-        timeout=aiohttp.ClientTimeout(total=TIMEOUT),
+        connector=aiohttp.TCPConnector(limit=10, keepalive_timeout=TIMEOUT),
+        timeout=aiohttp.ClientTimeout(total=ping_interval),
     ) as session:
         try:
             if options.username is not None:
