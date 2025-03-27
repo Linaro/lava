@@ -30,9 +30,7 @@ class CommandHandler:
 
 
 def encode_result(result, exception=None):
-    data = {
-        "result": result,
-    }
+    data = {"result": result}
     if exception:
         data["message"] = repr(exception)
 

@@ -358,10 +358,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.add(
-                "group1",
-                "app_not_exist",
-                "devicetype",
-                "change_devicetype",
+                "group1", "app_not_exist", "devicetype", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
@@ -372,10 +369,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.add(
-                "group1",
-                "lava_scheduler_app",
-                "model_not_exist",
-                "change_devicetype",
+                "group1", "lava_scheduler_app", "model_not_exist", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert (
@@ -389,10 +383,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.add(
-                "group1",
-                "lava_scheduler_app",
-                "devicetype",
-                "perm_not_exist",
+                "group1", "lava_scheduler_app", "devicetype", "perm_not_exist"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
@@ -470,10 +461,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.delete(
-                "group1",
-                "app_not_exist",
-                "devicetype",
-                "change_devicetype",
+                "group1", "app_not_exist", "devicetype", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
@@ -484,10 +472,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.delete(
-                "group1",
-                "lava_scheduler_app",
-                "model_not_exist",
-                "change_devicetype",
+                "group1", "lava_scheduler_app", "model_not_exist", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert (
@@ -501,10 +486,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.delete(
-                "group1",
-                "lava_scheduler_app",
-                "devicetype",
-                "perm_not_exist",
+                "group1", "lava_scheduler_app", "devicetype", "perm_not_exist"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
@@ -854,10 +836,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.add(
-                "user1",
-                "app_not_exist",
-                "devicetype",
-                "change_devicetype",
+                "user1", "app_not_exist", "devicetype", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
@@ -868,10 +847,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.add(
-                "user1",
-                "lava_scheduler_app",
-                "model_not_exist",
-                "change_devicetype",
+                "user1", "lava_scheduler_app", "model_not_exist", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert (
@@ -885,10 +861,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.add(
-                "user1",
-                "lava_scheduler_app",
-                "devicetype",
-                "perm_not_exist",
+                "user1", "lava_scheduler_app", "devicetype", "perm_not_exist"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
@@ -967,10 +940,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.delete(
-                "user1",
-                "app_not_exist",
-                "devicetype",
-                "change_devicetype",
+                "user1", "app_not_exist", "devicetype", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
@@ -981,10 +951,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.delete(
-                "user1",
-                "lava_scheduler_app",
-                "model_not_exist",
-                "change_devicetype",
+                "user1", "lava_scheduler_app", "model_not_exist", "change_devicetype"
             )
         assert exc.value.faultCode == 404
         assert (
@@ -998,10 +965,7 @@ class TestLavaServerApi:
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.delete(
-                "user1",
-                "lava_scheduler_app",
-                "devicetype",
-                "perm_not_exist",
+                "user1", "lava_scheduler_app", "devicetype", "perm_not_exist"
             )
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"

@@ -21,15 +21,11 @@ class TestShellLogger(TestCase):
 
     def create_shell_command(self, shell_cmd: str) -> ShellCommand:
         return ShellCommand(
-            shell_cmd,
-            Timeout("test_shell_logger", None),
-            logger=self.logger_mock,
+            shell_cmd, Timeout("test_shell_logger", None), logger=self.logger_mock
         )
 
     def assert_logger_target_calls(
-        self,
-        input_logs: list[str],
-        target_logs: list[str],
+        self, input_logs: list[str], target_logs: list[str]
     ) -> None:
         input_mock = self.logger_mock.input
         target_mock = self.logger_mock.target
@@ -72,10 +68,7 @@ class TestShellLogger(TestCase):
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
-            [
-                "Hello World",  # Echo
-                "Hello, World!",  # Actual output
-            ],
+            ["Hello World", "Hello, World!"],  # Echo  # Actual output
         )
 
     def test_shell_input_two_inputs(self) -> None:
@@ -89,9 +82,5 @@ class TestShellLogger(TestCase):
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
-            [
-                "Hello",  # Echo
-                "World",
-                "Hello, World!",  # Actual output
-            ],
+            ["Hello", "World", "Hello, World!"],  # Echo  # Actual output
         )

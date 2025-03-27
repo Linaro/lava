@@ -66,8 +66,7 @@ class ResultsView(LavaView):
             .annotate(
                 passes=Subquery(
                     TestCase.objects.filter(
-                        result=TestCase.RESULT_PASS,
-                        suite=OuterRef("testsuite"),
+                        result=TestCase.RESULT_PASS, suite=OuterRef("testsuite")
                     )
                     .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
                     .values("dummy_group_by")
@@ -77,8 +76,7 @@ class ResultsView(LavaView):
                 ),
                 fails=Subquery(
                     TestCase.objects.filter(
-                        result=TestCase.RESULT_FAIL,
-                        suite=OuterRef("testsuite"),
+                        result=TestCase.RESULT_FAIL, suite=OuterRef("testsuite")
                     )
                     .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
                     .values("dummy_group_by")
@@ -87,9 +85,7 @@ class ResultsView(LavaView):
                     output_field=IntegerField(),
                 ),
                 totals=Subquery(
-                    TestCase.objects.filter(
-                        suite=OuterRef("testsuite"),
-                    )
+                    TestCase.objects.filter(suite=OuterRef("testsuite"))
                     .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
                     .values("dummy_group_by")
                     .annotate(totals=Count("*"))

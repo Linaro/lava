@@ -492,9 +492,7 @@ class TestTimeout(LavaDispatcherTestCase):
 
         # Test that we honor job timeout over retries
         self.assertAlmostEqual(
-            self.fakejob.timeout.duration,
-            monotonic() - start_time,
-            delta=3,
+            self.fakejob.timeout.duration, monotonic() - start_time, delta=3
         )
 
     def test_job_safe(self):

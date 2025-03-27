@@ -38,14 +38,10 @@ class Command(BaseCommand):
         duplicated_sub_id_query = TestJob.objects.filter(~Q(sub_id="")).filter(
             sub_id__in=(
                 TestJob.objects.values("sub_id")
-                .annotate(
-                    sub_ids_count=Count(
-                        "*",
-                    )
-                )
+                .annotate(sub_ids_count=Count("*"))
                 .filter(sub_ids_count__gt=1)
                 .values("sub_id")
-            ),
+            )
         )
         self.handle_duplicates(duplicated_sub_id_query, yes, dry_run)
 
@@ -60,7 +56,7 @@ class Command(BaseCommand):
                         .values("suite_id")
                     )
                 )
-            ),
+            )
         )
         self.handle_duplicates(duplicated_testset_query, yes, dry_run)
 
@@ -68,14 +64,10 @@ class Command(BaseCommand):
         duplicated_testsuites_query = TestJob.objects.filter(
             pk__in=(
                 TestJob.objects.values("pk", "testsuite__name")
-                .annotate(
-                    test_suite_names=Count(
-                        "*",
-                    )
-                )
+                .annotate(test_suite_names=Count("*"))
                 .filter(test_suite_names__gt=1)
                 .values("pk")
-            ),
+            )
         )
         self.handle_duplicates(duplicated_testsuites_query, yes, dry_run)
 
@@ -91,7 +83,7 @@ class Command(BaseCommand):
                         .values("suite_id")
                     )
                 )
-            ),
+            )
         )
         self.handle_duplicates(duplicated_testcases_query, yes, dry_run)
 

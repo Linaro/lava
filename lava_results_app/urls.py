@@ -165,69 +165,31 @@ urlpatterns = (
         name="lava.results.query_include_result",
     ),
     path("query/get-query-groups", query_group_list, name="query_group_list"),
+    path("query/+get-group-names", get_query_group_names, name="get_query_group_names"),
     path(
-        "query/+get-group-names",
-        get_query_group_names,
-        name="get_query_group_names",
-    ),
-    path(
-        "query/+get-query-names",
-        get_query_names,
-        name="lava.results.get_query_names",
+        "query/+get-query-names", get_query_names, name="lava.results.get_query_names"
     ),
     path("<job_id:job>", testjob, name="lava.results.testjob"),
-    path(
-        "<job_id:job>/csv",
-        testjob_csv,
-        name="lava.results.testjob_csv",
-    ),
-    path(
-        "<job_id:job>/yaml",
-        testjob_yaml,
-        name="lava.results.testjob_yaml",
-    ),
+    path("<job_id:job>/csv", testjob_csv, name="lava.results.testjob_csv"),
+    path("<job_id:job>/yaml", testjob_yaml, name="lava.results.testjob_yaml"),
     path(
         "<job_id:job>/yaml_summary",
         testjob_yaml_summary,
         name="lava.results.testjob_yaml_summary",
     ),
-    path(
-        "<job_id:job>/metadata",
-        metadata_export,
-        name="lava.results.job.metadata",
-    ),
+    path("<job_id:job>/metadata", metadata_export, name="lava.results.job.metadata"),
     # TestSuite model
     # primary key: int
-    path(
-        "<job_id:job>/<str:testsuite_name>",
-        suite,
-        name="lava.results.suite",
-    ),
+    path("<job_id:job>/<str:testsuite_name>", suite, name="lava.results.suite"),
     path("chart", chart_list, name="lava.results.chart_list"),
     path("chart/+add", chart_add, name="lava.results.chart_add"),
     path("chart/+custom", chart_custom, name="lava.results.chart_custom"),
     # Chart model
     # name: slug
-    path(
-        "chart/<slug:name>",
-        chart_display,
-        name="lava.results.chart_display",
-    ),
-    path(
-        "chart/<slug:name>/+detail",
-        chart_detail,
-        name="lava.results.chart_detail",
-    ),
-    path(
-        "chart/<slug:name>/+edit",
-        chart_edit,
-        name="lava.results.chart_edit",
-    ),
-    path(
-        "chart/<slug:name>/+delete",
-        chart_delete,
-        name="lava.results.chart_delete",
-    ),
+    path("chart/<slug:name>", chart_display, name="lava.results.chart_display"),
+    path("chart/<slug:name>/+detail", chart_detail, name="lava.results.chart_detail"),
+    path("chart/<slug:name>/+edit", chart_edit, name="lava.results.chart_edit"),
+    path("chart/<slug:name>/+delete", chart_delete, name="lava.results.chart_delete"),
     path(
         "chart/<slug:name>/+toggle-published",
         chart_toggle_published,
@@ -250,22 +212,12 @@ urlpatterns = (
         chart_query_edit,
         name="lava.results.chart_query_edit",
     ),
+    path("chart/<slug:name>/+add-group", chart_add_group, name="chart_add_group"),
     path(
-        "chart/<slug:name>/+add-group",
-        chart_add_group,
-        name="chart_add_group",
-    ),
-    path(
-        "chart/<slug:name>/+select-group",
-        chart_select_group,
-        name="chart_select_group",
+        "chart/<slug:name>/+select-group", chart_select_group, name="chart_select_group"
     ),
     path("chart/+get-chart-groups", chart_group_list, name="chart_group_list"),
-    path(
-        "chart/+get-group-names",
-        get_chart_group_names,
-        name="get_chart_group_names",
-    ),
+    path("chart/+get-group-names", get_chart_group_names, name="get_chart_group_names"),
     # ChartQueryUser model
     # chart_query__id: int
     path(
@@ -316,9 +268,5 @@ urlpatterns = (
         testcase,
         name="lava.results.testcase",
     ),
-    path(
-        "testcase/<int:pk>/yaml",
-        testcase_yaml,
-        name="lava.results.testcase_yaml",
-    ),
+    path("testcase/<int:pk>/yaml", testcase_yaml, name="lava.results.testcase_yaml"),
 )

@@ -10,9 +10,7 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("lava_scheduler_app", "0056_testjob_queue_timeout"),
-    ]
+    dependencies = [("lava_scheduler_app", "0056_testjob_queue_timeout")]
 
     operations = [
         migrations.AlterModelOptions(
@@ -29,8 +27,5 @@ class Migration(migrations.Migration):
                 )
             },
         ),
-        migrations.RemoveField(
-            model_name="worker",
-            name="master_version_notified",
-        ),
+        migrations.RemoveField(model_name="worker", name="master_version_notified"),
     ]

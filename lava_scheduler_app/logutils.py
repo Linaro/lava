@@ -249,9 +249,7 @@ class LogsElasticsearch(Logs):
         }
 
         response = requests.get(
-            "%s_search/" % self.api_url,
-            data=json_dumps(params),
-            headers=self.headers,
+            "%s_search/" % self.api_url, data=json_dumps(params), headers=self.headers
         )
 
         response = json_loads(response.text)

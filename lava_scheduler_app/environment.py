@@ -14,12 +14,10 @@ if TYPE_CHECKING:
     from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 DEVICES_JINJA_ENV: JinjaSandboxEnv = create_device_templates_env(
-    loader=File("device").loader(),
-    cache_size=-1,
+    loader=File("device").loader(), cache_size=-1
 )
 
 
 DEVICE_TYPES_JINJA_ENV: JinjaSandboxEnv = create_device_templates_env(
-    loader=File("device-type").loader(),
-    cache_size=-1,
+    loader=File("device-type").loader(), cache_size=-1
 )

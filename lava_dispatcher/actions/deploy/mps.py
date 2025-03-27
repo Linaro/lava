@@ -68,10 +68,7 @@ class MpsAction(Action):
         for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
                 DownloaderAction(
-                    self.job,
-                    image_key,
-                    path=download_dir,
-                    params=image_params,
+                    self.job, image_key, path=download_dir, params=image_params
                 )
             )
         self.pipeline.add_action(MountVExpressMassStorageDevice(self.job))

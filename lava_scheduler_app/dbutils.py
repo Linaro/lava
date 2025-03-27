@@ -105,9 +105,7 @@ def testjob_submission(job_definition, user, original_job=None):
 
 def device_summary():
     device_stats = (
-        Device.objects.filter(
-            ~Q(health=Device.HEALTH_RETIRED),
-        )
+        Device.objects.filter(~Q(health=Device.HEALTH_RETIRED))
         .select_related("last_health_report_job")
         .aggregate(
             num_not_retired=Count("pk"),
@@ -118,10 +116,7 @@ def device_summary():
                     & Q(worker_host__state=Worker.STATE_ONLINE)
                 ),
             ),
-            health_checks_total=Count(
-                "pk",
-                last_health_report_job__isnull=False,
-            ),
+            health_checks_total=Count("pk", last_health_report_job__isnull=False),
             health_checks_complete=Count(
                 "pk",
                 filter=(
@@ -130,8 +125,7 @@ def device_summary():
                 ),
             ),
             active_devices=Count(
-                "pk",
-                filter=Q(state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING)),
+                "pk", filter=Q(state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING))
             ),
         )
     )
@@ -161,10 +155,7 @@ def device_type_summary(user):
                 ),
             ),
             busy=Count(
-                "pk",
-                filter=Q(
-                    state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING),
-                ),
+                "pk", filter=Q(state__in=(Device.STATE_RESERVED, Device.STATE_RUNNING))
             ),
             offline=Count(
                 "pk",
@@ -175,10 +166,7 @@ def device_type_summary(user):
                     | ~Q(health__in=(Device.HEALTH_GOOD, Device.HEALTH_UNKNOWN))
                 ),
             ),
-            maintenance=Count(
-                "pk",
-                filter=Q(health=Device.HEALTH_MAINTENANCE),
-            ),
+            maintenance=Count("pk", filter=Q(health=Device.HEALTH_MAINTENANCE)),
         )
         .order_by("device_type")
     )

@@ -120,8 +120,7 @@ class QueryMaterializedView(MaterializedView):
             # TODO: handle potential exceptions here. what to do if query
             # view is not created? - new field update_status?
             cursor.execute(
-                f"CREATE MATERIALIZED VIEW {query_id_str_quoted} AS {sql}",
-                params,
+                f"CREATE MATERIALIZED VIEW {query_id_str_quoted} AS {sql}", params
             )
 
     @classmethod
@@ -132,9 +131,7 @@ class QueryMaterializedView(MaterializedView):
             # will be quoted with single quotes making
             # it incompatible with table_name identifier
             query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
-            cursor.execute(
-                f"REFRESH MATERIALIZED VIEW {query_id_str_quoted}",
-            )
+            cursor.execute(f"REFRESH MATERIALIZED VIEW {query_id_str_quoted}")
 
     @classmethod
     def drop(cls, query_id):
@@ -144,9 +141,7 @@ class QueryMaterializedView(MaterializedView):
             # will be quoted with single quotes making
             # it incompatible with table_name identifier
             query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
-            cursor.execute(
-                f"DROP MATERIALIZED VIEW IF EXISTS {query_id_str_quoted}",
-            )
+            cursor.execute(f"DROP MATERIALIZED VIEW IF EXISTS {query_id_str_quoted}")
 
     @classmethod
     def view_exists(cls, query_id):
@@ -192,22 +187,10 @@ class TestSuite(models.Model, Queryable):
         if not hasattr(self, "_testcase_count"):
             res = self.testcase_set.values("result")
             res = res.aggregate(
-                PASS=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_PASS),
-                ),
-                FAIL=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_FAIL),
-                ),
-                SKIP=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_SKIP),
-                ),
-                UNKNOWN=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_UNKNOWN),
-                ),
+                PASS=Count("pk", filter=Q(result=TestCase.RESULT_PASS)),
+                FAIL=Count("pk", filter=Q(result=TestCase.RESULT_FAIL)),
+                SKIP=Count("pk", filter=Q(result=TestCase.RESULT_SKIP)),
+                UNKNOWN=Count("pk", filter=Q(result=TestCase.RESULT_UNKNOWN)),
             )
             self._testcase_count = {k.lower(): (v or 0) for (k, v) in res.items()}
 
@@ -630,8 +613,7 @@ class Query(models.Model):
     class Meta:
         constraints = (
             models.UniqueConstraint(
-                fields=("owner", "name"),
-                name="lava_results_app_query_owner_name_uniq",
+                fields=("owner", "name"), name="lava_results_app_query_owner_name_uniq"
             ),
         )
         verbose_name = "query"

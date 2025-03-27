@@ -354,9 +354,7 @@ class JobErrorsView(LavaView):
                 health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED),
                 testsuite__name="lava",
             )
-            .annotate(
-                failure_metadata=metadata_subquery,
-            )
+            .annotate(failure_metadata=metadata_subquery)
             .filter(failure_metadata__isnull=False)
             .order_by("-end_time")
         )
@@ -439,12 +437,10 @@ def report_data(start_day, end_day, devices, url_param):
     res = res.values("health", "health_check")
     res = res.aggregate(
         health_pass=Count(
-            "pk",
-            filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=True),
+            "pk", filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=True)
         ),
         job_pass=Count(
-            "pk",
-            filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=False),
+            "pk", filter=Q(health=TestJob.HEALTH_COMPLETE, health_check=False)
         ),
         health_fail=Count(
             "pk",
@@ -722,7 +718,7 @@ class DeviceTypeOverView(JobTableView):
                 .annotate(queued_jobs=Count("*"))
                 .values("queued_jobs"),
                 output_field=IntegerField(),
-            ),
+            )
         )
 
 
@@ -888,8 +884,7 @@ def device_type_detail(request, pk):
             ),
             queued_jobs_count=Subquery(
                 TestJob.objects.filter(
-                    requested_device_type=OuterRef("pk"),
-                    state=TestJob.STATE_SUBMITTED,
+                    requested_device_type=OuterRef("pk"), state=TestJob.STATE_SUBMITTED
                 )
                 .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
                 .values("dummy_group_by")
@@ -953,13 +948,9 @@ def device_type_detail(request, pk):
             ),
         ),
         running_devices_count=Count(
-            "pk",
-            filter=Q(state__in=(Device.STATE_RUNNING, Device.STATE_RESERVED)),
+            "pk", filter=Q(state__in=(Device.STATE_RUNNING, Device.STATE_RESERVED))
         ),
-        retired_devices_count=Count(
-            "pk",
-            filter=Q(health=Device.HEALTH_RETIRED),
-        ),
+        retired_devices_count=Count("pk", filter=Q(health=Device.HEALTH_RETIRED)),
     )
 
     if device_statistics["available_devices_count"]:
@@ -2614,9 +2605,7 @@ class HealthCheckJobsView(JobTableView):
 @BreadCrumb("Healthcheck", parent=job_list)
 def healthcheck(request):
     health_check_data = HealthCheckJobsView(
-        request,
-        model=TestJob,
-        table_class=AllJobsTable,
+        request, model=TestJob, table_class=AllJobsTable
     )
     health_check_ptable = AllJobsTable(health_check_data.get_table_data())
     request_config(request, {"per_page": health_check_ptable.length}).configure(
@@ -2658,8 +2647,7 @@ class RunningView(LavaView):
     def get_queryset(self):
         reserved_devices_subquery = Subquery(
             Device.objects.filter(
-                device_type=OuterRef("pk"),
-                state=Device.STATE_RESERVED,
+                device_type=OuterRef("pk"), state=Device.STATE_RESERVED
             )
             .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
             .values("dummy_group_by")
@@ -2681,8 +2669,7 @@ class RunningView(LavaView):
 
         running_jobs_subquery = Subquery(
             TestJob.objects.filter(
-                Q(state=TestJob.STATE_RUNNING),
-                Q(requested_device_type=OuterRef("pk")),
+                Q(state=TestJob.STATE_RUNNING), Q(requested_device_type=OuterRef("pk"))
             )
             .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
             .values("dummy_group_by")

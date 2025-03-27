@@ -136,10 +136,7 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
     )
     log = parser.add_argument_group("logging")
     log.add_argument(
-        "--log-file",
-        type=str,
-        help="Log file for the worker logs",
-        default=log_file,
+        "--log-file", type=str, help="Log file for the worker logs", default=log_file
     )
     log.add_argument(
         "--level",

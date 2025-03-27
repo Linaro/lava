@@ -30,7 +30,4 @@ class TestRepeatAction(LavaDispatcherTestCase):
         ra.pipeline.add_action(DummyAction(job))
         with ra.pipeline.job.timeout(None, None) as max_end_time:
             ra.run(None, max_end_time)
-        self.assertEqual(
-            ra.pipeline.actions[0].ran,
-            5,
-        )
+        self.assertEqual(ra.pipeline.actions[0].ran, 5)

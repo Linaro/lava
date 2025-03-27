@@ -194,8 +194,7 @@ class RestrictedDeviceQuerySet(RestrictedObjectQuerySet):
         from lava_scheduler_app.models import Device, DeviceType
 
         accessible_device_types = DeviceType.objects.accessible_by_user(
-            user,
-            Device.DEVICE_TYPE_PERMISSION_MAP[perm],
+            user, Device.DEVICE_TYPE_PERMISSION_MAP[perm]
         )
 
         return self.filter_by_perm(

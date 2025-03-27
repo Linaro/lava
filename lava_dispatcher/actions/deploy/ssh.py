@@ -68,7 +68,7 @@ class ScpOverlay(Action):
                 self.pipeline.add_action(
                     DownloaderAction(
                         self.job, item, path=self.mkdtemp(), params=parameters[item]
-                    ),
+                    )
                 )
                 self.set_namespace_data(
                     action=self.name,

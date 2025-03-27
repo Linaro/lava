@@ -424,10 +424,7 @@ def query_refresh(request, name, username):
         error_msg = "%s<br>Please contact system administrator." % str(e)
 
     last_updated = defaultfilters.date(query.last_updated, "DATETIME_FORMAT")
-    return JsonResponse(
-        [success, str(last_updated), error_msg],
-        safe=False,
-    )
+    return JsonResponse([success, str(last_updated), error_msg], safe=False)
 
 
 @login_required

@@ -158,8 +158,7 @@ class QueryTestSuiteTable(LavaTable):
     )
     submitter = tables.Column(accessor="job.submitter.username", orderable=False)
     name = tables.TemplateColumn(
-        "<a href='{{ record.get_absolute_url }}'>{{ record.name }}</a>",
-        orderable=False,
+        "<a href='{{ record.get_absolute_url }}'>{{ record.name }}</a>", orderable=False
     )
     passes = tables.Column(accessor="pk", verbose_name="Passes", orderable=False)
 

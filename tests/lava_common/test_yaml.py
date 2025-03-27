@@ -22,10 +22,7 @@ class TestYamlQuoting(TestCase):
             'debug dyndbg="file dd.c +p" ignore_loglevel'
         )
         yaml_quoted_string = yaml_quote(string_with_quotes)
-        self.assertEqual(
-            string_with_quotes,
-            yaml_safe_load(yaml_quoted_string),
-        )
+        self.assertEqual(string_with_quotes, yaml_safe_load(yaml_quoted_string))
         self.assertNotIn("\n", yaml_quoted_string, "Test quoted string is single line")
         # Check idempotency
         yaml_quoted_string2 = yaml_quote(string_with_quotes)
@@ -40,8 +37,7 @@ class TestYamlQuoting(TestCase):
             "\n", extremely_large_list_quote, "Test quoted string is single line"
         )
         self.assertEqual(
-            extremely_large_list,
-            yaml_safe_load(extremely_large_list_quote),
+            extremely_large_list, yaml_safe_load(extremely_large_list_quote)
         )
 
     def test_container_quoting(self) -> None:
@@ -75,10 +71,7 @@ test: {TEST_OBJECT}
 
         test_yaml = test_template.format(TEST_OBJECT=yaml_quote(test_object))
 
-        self.assertEqual(
-            test_object,
-            yaml_safe_load(test_yaml)["test"],
-        )
+        self.assertEqual(test_object, yaml_safe_load(test_yaml)["test"])
 
     def test_python_implementation_yaml(self) -> None:
         import lava_common.yaml

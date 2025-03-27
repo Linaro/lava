@@ -83,8 +83,7 @@ class TestMultiDeploy(LavaDispatcherTestCase):
     def test_multi_deploy(self, which_mock):
         self.assertIsNotNone(self.parsed_data)
         job = self.create_simple_job(
-            device_dict=TestMultiDeploy.FakeDevice(),
-            job_parameters=self.parsed_data,
+            device_dict=TestMultiDeploy.FakeDevice(), job_parameters=self.parsed_data
         )
         pipeline = Pipeline(job=job)
         job.pipeline = pipeline

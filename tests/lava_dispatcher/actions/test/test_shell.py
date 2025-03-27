@@ -153,7 +153,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 "result": "pass",
                 "revision": "unspecified",
                 "namespace": "common",
-            },
+            }
         )
         self.assertIsNone(action.current_run)
 
@@ -297,12 +297,7 @@ class TestTestShell(LavaDispatcherTestCase):
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
             [(r.levelname, r.message) for r in action_logs.records],
-            [
-                (
-                    "DEBUG",
-                    "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id",
-                ),
-            ],
+            [("DEBUG", "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id")],
         )
         action.logger.marker.assert_called_once_with(
             {"case": "RESULT=pass", "type": "test_case"}
@@ -326,7 +321,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234",
-                ),
+                )
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -338,7 +333,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 "case": "case_id",
                 "result": "pass",
                 "measurement": 1234.0,
-            },
+            }
         )
 
         # "signal.TESTCASE with measurement and unit"
@@ -356,7 +351,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s",
-                ),
+                )
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -403,9 +398,7 @@ class TestTestShell(LavaDispatcherTestCase):
 
         self.assertEqual(
             [(r.levelname, r.message) for r in action_logs.records],
-            [
-                ("DEBUG", "Received signal: <TESTREFERENCE> "),
-            ],
+            [("DEBUG", "Received signal: <TESTREFERENCE> ")],
         )
 
         # "signal.TESTREFERENCE"
@@ -421,7 +414,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTREFERENCE> case-id pass http://example.com",
-                ),
+                )
             ],
         )
         action.logger.results.assert_called_once_with(

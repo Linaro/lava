@@ -215,7 +215,6 @@ class Migration(migrations.Migration):
             ],
         ),
         migrations.AlterUniqueTogether(
-            name="notificationrecipient",
-            unique_together={("user", "notification")},
+            name="notificationrecipient", unique_together={("user", "notification")}
         ),
     ]

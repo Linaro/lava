@@ -66,59 +66,28 @@ mapper.register(UsersPermissionsAPI, "auth.users.perms")
 register_converter(JobIdConverter, "job_id")
 
 # Auth backends
-auth_urls = [
-    path(
-        "accounts/",
-        include("django.contrib.auth.urls"),
-    )
-]
+auth_urls = [path("accounts/", include("django.contrib.auth.urls"))]
 
 if (
     "allauth.account.auth_backends.AuthenticationBackend"
     in settings.AUTHENTICATION_BACKENDS
 ):
-    auth_urls.append(
-        path(
-            "accounts/",
-            include("allauth.urls"),
-        )
-    )
+    auth_urls.append(path("accounts/", include("allauth.urls")))
 
 if settings.OIDC_ENABLED:
-    auth_urls.append(
-        path(
-            "oidc/",
-            include("mozilla_django_oidc.urls"),
-        )
-    )
+    auth_urls.append(path("oidc/", include("mozilla_django_oidc.urls")))
 
 # Root URL patterns
 urlpatterns = [
-    path(
-        "robots.txt",
-        TemplateView.as_view(template_name="robots.txt"),
-        name="robots",
-    ),
+    path("robots.txt", TemplateView.as_view(template_name="robots.txt"), name="robots"),
     path(
         settings.MOUNT_POINT,
         include(
             [
                 path("", index, name="lava.home"),
-                path(
-                    "v1/healthz/",
-                    healthz,
-                    name="lava.healthz",
-                ),
-                path(
-                    "v1/prometheus/",
-                    prometheus,
-                    name="lava.prometheus",
-                ),
-                path(
-                    "me/",
-                    me,
-                    name="lava.me",
-                ),
+                path("v1/healthz/", healthz, name="lava.healthz"),
+                path("v1/prometheus/", prometheus, name="lava.prometheus"),
+                path("me/", me, name="lava.me"),
                 path(
                     "update-irc-settings/",
                     update_irc_settings,
@@ -140,10 +109,7 @@ urlpatterns = [
                     name="lava.update_table_length_setting",
                 ),
                 *auth_urls,
-                path(
-                    "admin/",
-                    admin.site.urls,
-                ),
+                path("admin/", admin.site.urls),
                 # RPC endpoints
                 path(
                     "RPC2/",
@@ -162,23 +128,11 @@ urlpatterns = [
                     name="lava.api_help",
                     kwargs={"mapper": mapper},
                 ),
-                path(
-                    "api/",
-                    include("linaro_django_xmlrpc.urls"),
-                ),
-                path(
-                    "results/",
-                    include("lava_results_app.urls"),
-                ),
-                path(
-                    "scheduler/",
-                    include("lava_scheduler_app.urls"),
-                ),
+                path("api/", include("linaro_django_xmlrpc.urls")),
+                path("results/", include("lava_results_app.urls")),
+                path("scheduler/", include("lava_scheduler_app.urls")),
                 # REST API
-                path(
-                    "api/",
-                    include("lava_rest_app.urls"),
-                ),
+                path("api/", include("lava_rest_app.urls")),
             ]
         ),
     ),

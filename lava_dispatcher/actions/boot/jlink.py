@@ -118,10 +118,7 @@ class FlashJLinkAction(Action):
         self.base_command.extend(["-SelectEmuBySN", str(board_id)])
         # Set a namespace for the JlinkExe cmd
         self.set_namespace_data(
-            action=self.name,
-            label="jlink-cmd",
-            key="cmd",
-            value=self.base_command,
+            action=self.name, label="jlink-cmd", key="cmd", value=self.base_command
         )
 
     def create_jlink_script(self, path_jlink_script):

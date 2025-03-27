@@ -58,8 +58,7 @@ def handler(request, mapper, help_view):
             decoded_value = base64.standard_b64decode(value).decode("utf-8")
         except (TypeError, UnicodeDecodeError):
             return HttpResponse(
-                "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding",
-                status=400,
+                "Corrupted HTTP_AUTHORIZATION header, bad base64 encoding", status=400
             )
         try:
             username, secret = decoded_value.split(":", 1)

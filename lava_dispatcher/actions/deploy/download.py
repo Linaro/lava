@@ -379,9 +379,7 @@ class DownloadHandler(Action):
             try:
                 with open(self.fname, "wb") as dwnld_file:
                     self.run_download_decompression_subprocess(
-                        dwnld_file,
-                        update_progress,
-                        decompress_command,
+                        dwnld_file, update_progress, decompress_command
                     )
             except OSError as exc:
                 msg = f"Unable to open {self.fname}: {exc.strerror}"
@@ -886,10 +884,7 @@ class DownloadAction(Action):
         for image_key, image_params in parameters["images"].items():
             self.pipeline.add_action(
                 DownloaderAction(
-                    self.job,
-                    image_key,
-                    self.download_dir,
-                    params=image_params,
+                    self.job, image_key, self.download_dir, params=image_params
                 )
             )
         if self.test_needs_overlay(parameters):

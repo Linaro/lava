@@ -18,9 +18,7 @@ from linaro_django_xmlrpc.views import (
 urlpatterns = (
     path("tokens/", tokens, name="linaro_django_xmlrpc_tokens"),
     path(
-        "tokens/create/",
-        create_token,
-        name="linaro_django_xmlrpc.views.create_token",
+        "tokens/create/", create_token, name="linaro_django_xmlrpc.views.create_token"
     ),
     path(
         "tokens/<int:object_id>/delete/",

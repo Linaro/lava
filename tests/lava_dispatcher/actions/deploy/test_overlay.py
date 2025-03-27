@@ -60,14 +60,10 @@ TEST_DATA: list[tuple[dict[str, Any], str, list[str]]] = [
         "STORAGE_INFO",
         [
             "export STORAGE_INFO_0_SATA=/dev/disk/by-id/"
-            "ata-SanDisk_SSD_PLUS_120GB_190504A00573",
+            "ata-SanDisk_SSD_PLUS_120GB_190504A00573"
         ],
     ),
-    (
-        {"COMMAND": "sh -c 'date'"},
-        "",
-        ["export COMMAND='sh -c '\"'\"'date'\"'\"''"],
-    ),
+    ({"COMMAND": "sh -c 'date'"}, "", ["export COMMAND='sh -c '\"'\"'date'\"'\"''"]),
 ]
 
 
@@ -78,10 +74,7 @@ class TestExportData(LavaDispatcherTestCase):
                 action = OverlayAction(self.create_job_mock())
                 fout = Recorder()
                 action._export_data(fout, data, prefix)
-                self.assertEqual(
-                    sorted(fout.data.strip("\n").split("\n")),
-                    result,
-                )
+                self.assertEqual(sorted(fout.data.strip("\n").split("\n")), result)
 
 
 def test_persist_nfs_place_holder():
@@ -100,8 +93,7 @@ def test_persist_nfs_place_holder():
     }
     action.params = action.parameters["persistent_nfs"]
     with patch(
-        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
-        return_value=None,
+        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs", return_value=None
     ):
         action.validate()
     assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foo"
@@ -114,8 +106,7 @@ def test_persist_nfs_place_holder():
     }
     action.params = action.parameters["persistent_nfs"]
     with patch(
-        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
-        return_value=None,
+        "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs", return_value=None
     ):
         action.validate()
     assert action.job.device["dynamic_data"]["NFS_SERVER_IP"] == "foobar"

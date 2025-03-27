@@ -9,6 +9,5 @@ from django.core.exceptions import ValidationError
 def validate_non_slash(value):
     if "/" in value:
         raise ValidationError(
-            f"{value} contains slash character",
-            params={"value": value},
+            f"{value} contains slash character", params={"value": value}
         )

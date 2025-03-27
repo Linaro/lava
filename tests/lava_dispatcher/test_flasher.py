@@ -42,10 +42,7 @@ class TestFlasher(LavaDispatcherTestCase):
 
             proc = MagicMock()
 
-        commands = [
-            ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
-            ["touch"],
-        ]
+        commands = [["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"], ["touch"]]
         job = self.create_simple_job(
             device_dict={
                 "actions": {

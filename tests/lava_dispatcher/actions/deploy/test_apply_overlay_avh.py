@@ -51,9 +51,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "to": "avh",
             "timeout": {"minutes": 30},
             "options": {"model": "kronos"},
-            "fw_package": {
-                "url": "https://example.com/kronos/fw-package-1.0.zip",
-            },
+            "fw_package": {"url": "https://example.com/kronos/fw-package-1.0.zip"},
         }
         with self.assertRaisesRegex(
             JobError, "Unable to apply overlay without 'fw_package.storage_file'"
@@ -69,10 +67,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
     )
     @patch(
         "lava_dispatcher.actions.deploy.apply_overlay.ApplyOverlayAvh.get_namespace_data",
-        side_effect=[
-            "mock_overlay_file",
-            "mock_fw_package.zip",
-        ],
+        side_effect=["mock_overlay_file", "mock_fw_package.zip"],
     )
     def test_append_overlays_run(
         self,

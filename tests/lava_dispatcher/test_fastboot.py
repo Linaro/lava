@@ -622,10 +622,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
     @patch(
         "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
         return_value=CompletedProcess(
-            ["/usr/bin/fastboot", "devices"],
-            0,
-            stdout="",
-            stderr="",
+            ["/usr/bin/fastboot", "devices"], 0, stdout="", stderr=""
         ),
     )
     @patch("time.sleep")
@@ -635,10 +632,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         with self.assertRaises(FastbootDeviceNotFound) as context:
             action.run(None, None)
 
-        self.assertEqual(
-            str(context.exception),
-            "Fastboot device not found.",
-        )
+        self.assertEqual(str(context.exception), "Fastboot device not found.")
 
     @patch(
         "lava_dispatcher.actions.deploy.fastboot.subprocess.run",

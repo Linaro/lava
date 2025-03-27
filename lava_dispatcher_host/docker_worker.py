@@ -144,24 +144,13 @@ def build_customized_image(image, build_dir, use_cache=False):
                 f.write(instruction)
 
     tag = f"{image}.customized"
-    build_cmd = [
-        "docker",
-        "build",
-        "--force-rm",
-        "-f",
-        "Dockerfile.lava",
-        "-t",
-        tag,
-    ]
+    build_cmd = ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag]
     if not use_cache:
         build_cmd.append("--no-cache")
     build_cmd.append(".")
     try:
         p = subprocess.Popen(
-            build_cmd,
-            cwd=build_dir,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
+            build_cmd, cwd=build_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
         )
         for line in p.stdout:
             log_output(line)

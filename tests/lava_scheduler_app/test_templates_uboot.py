@@ -520,8 +520,7 @@ class TestUbootTemplates(BaseTemplateTest):
         self.assertIsNone(rendered["actions"]["deploy"]["methods"]["fastboot"])
 
         rendered = self.render_device_dictionary(
-            "x15-01",
-            job_ctx={"fastboot_deploy_uboot_commands": ["fastboot 0"]},
+            "x15-01", job_ctx={"fastboot_deploy_uboot_commands": ["fastboot 0"]}
         )
         params = rendered["actions"]["deploy"]["methods"]["u-boot"]["parameters"]
         self.assertEqual(params["fastboot"]["commands"], ["fastboot 0"])

@@ -32,9 +32,7 @@ def setup_responses() -> RequestsMock:
             f"compression/10MB.{compression_postfix}"
         )
         requests_mock.add(
-            responses.GET,
-            url=download_url,
-            body=compression_file_contents,
+            responses.GET, url=download_url, body=compression_file_contents
         )
         requests_mock.add(
             responses.HEAD,

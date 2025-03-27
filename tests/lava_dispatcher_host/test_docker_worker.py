@@ -104,8 +104,7 @@ class TestGetImage:
     def test_image_exists(self, check_output, mocker):
         assert lava_dispatcher_host.docker_worker.get_image("foobar") is True
         check_output.assert_called_with(
-            ["docker", "image", "inspect", "foobar"],
-            stderr=mocker.ANY,
+            ["docker", "image", "inspect", "foobar"], stderr=mocker.ANY
         )
 
     def test_image_missing(self, check_output, mocker):
@@ -168,16 +167,7 @@ class TestBuildImage:
             image, build_dir, use_cache=True
         )
         popen.assert_called_with(
-            [
-                "docker",
-                "build",
-                "--force-rm",
-                "-f",
-                "Dockerfile.lava",
-                "-t",
-                tag,
-                ".",
-            ],
+            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -234,10 +224,7 @@ class TestOptions:
     def test_get_options_call(self, check_output, mocker, docker_image):
         mocker.patch("re.findall")
         lava_dispatcher_host.docker_worker.get_options(docker_image.name)
-        check_output.assert_called_with(
-            docker_image.sh_cmd,
-            stderr=subprocess.DEVNULL,
-        )
+        check_output.assert_called_with(docker_image.sh_cmd, stderr=subprocess.DEVNULL)
 
     def test_get_options_parsing(self, mocker, docker_image):
         mocker.patch(

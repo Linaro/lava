@@ -196,8 +196,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
             self.factory.make_job_yaml(tags=["tag"]), user
         )
         self.assertEqual(
-            {tag.pk for tag in job1.tags.all()},
-            {tag.pk for tag in job2.tags.all()},
+            {tag.pk for tag in job1.tags.all()}, {tag.pk for tag in job2.tags.all()}
         )
 
     def test_from_yaml_and_user_matches_available_tags(self):
@@ -529,9 +528,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             os.path.dirname(__file__), "sample_jobs", "kvm-multinode-client.yaml"
         )
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -555,10 +552,8 @@ class TestYamlMultinode(TestCaseWithFactory):
         device = self.factory.make_device(device_type, "mustang1")
         with open(
             os.path.join(
-                os.path.dirname(__file__),
-                "sample_jobs",
-                "mustang-ssh-multinode.yaml",
-            ),
+                os.path.dirname(__file__), "sample_jobs", "mustang-ssh-multinode.yaml"
+            )
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -638,9 +633,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.ensure_tag("tap"),
         self.factory.ensure_tag("virtio")
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         roles_dict = submission["protocols"][MultinodeProtocol.name]["roles"]
@@ -678,7 +671,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
 
@@ -703,9 +696,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def test_multinode_lxc(self):
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "lxc-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "lxc-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -736,7 +727,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "hikey_multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -781,7 +772,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "nexus4_multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -813,9 +804,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         Device.objects.filter(device_type=device_type).delete()
         Tag.objects.all().delete()
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         # no devices defined for the specified type
@@ -872,9 +861,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         self.factory.make_device(device_type, "fakeqemu1")
@@ -921,9 +908,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         self.factory.make_device(device_type, "fakeqemu1")
@@ -939,9 +924,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.assertIsNotNone(job.multinode_definition)
             self.assertNotIn("#", job.multinode_definition)
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as source:
             yaml_str = source.read()
         self.assertIn("# unit test support comment", yaml_str)
@@ -955,9 +938,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
 
@@ -1057,9 +1038,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, "fakeqemu3")
         self.factory.make_device(device_type, "fakeqemu4")
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         role_list = submission["protocols"][MultinodeProtocol.name]["roles"]
@@ -1080,7 +1059,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
         job_object_list = _pipeline_protocols(
@@ -1160,7 +1139,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
         self.assertIn("protocols", submission)

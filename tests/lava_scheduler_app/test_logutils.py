@@ -187,11 +187,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
 
     assert logs_elasticsearch.read(job) == yaml_safe_dump(
         [
-            {
-                "dt": "2020-03-25T19:44:36.209000",
-                "lvl": "info",
-                "msg": "first message",
-            },
+            {"dt": "2020-03-25T19:44:36.209000", "lvl": "info", "msg": "first message"},
             {
                 "dt": "2020-03-25T19:44:36.210000",
                 "lvl": "info",

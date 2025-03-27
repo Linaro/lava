@@ -298,8 +298,7 @@ class TestUUUbootAction(
         self.assertTrue(len(cm.exception.args) >= 1)
 
         self.assertEqual(
-            "'bcu_board_name' is not defined in device-types",
-            cm.exception.args[0],
+            "'bcu_board_name' is not defined in device-types", cm.exception.args[0]
         )
 
     def test_bcu_board_id_from_command(self):
@@ -527,11 +526,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         )
 
     @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="foo")
-    @patch.object(
-        OptionalContainerUuuAction,
-        "get_namespace_data",
-        return_value="bar",
-    )
+    @patch.object(OptionalContainerUuuAction, "get_namespace_data", return_value="bar")
     @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_docker_uuu_remote_cmd(self, mock_cmd, mock_location, mock_ip):
         uuu_device_parameters = {

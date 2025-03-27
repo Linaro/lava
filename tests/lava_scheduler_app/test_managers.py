@@ -186,11 +186,7 @@ class ManagersTest(TestCaseWithFactory):
 
         # Test that qemu is not restricted by view permission.
         self.assertEqual(
-            set(
-                DeviceType.objects.visible_by_user(
-                    AnonymousUser(),
-                )
-            ),
+            set(DeviceType.objects.visible_by_user(AnonymousUser())),
             {self.qemu_device_type},
         )
 
@@ -872,8 +868,7 @@ class ManagersTest(TestCaseWithFactory):
         self.bbb_job1.viewing_groups.add(self.group2)
         self.bbb_job2.viewing_groups.add(self.group1, self.group2)
         self.assertEqual(
-            set(TestJob.objects.all().visible_by_user(AnonymousUser())),
-            set(),
+            set(TestJob.objects.all().visible_by_user(AnonymousUser())), set()
         )
 
     def test_testjob_manager_view_through_device_type(self):

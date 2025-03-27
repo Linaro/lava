@@ -152,9 +152,7 @@ def main(argv):
         )
 
     devices_share.add_argument(
-        "--remote",
-        action="store_true",
-        help="Make a remote request",
+        "--remote", action="store_true", help="Make a remote request"
     )
 
     devices_share.set_defaults(func=handle_devices_share)

@@ -255,13 +255,9 @@ class Command(BaseCommand):
         # Device types which have all the devices synced and some of them not
         # retired should become visible.
         synced_not_retired_queryset = DeviceType.objects.annotate(
-            not_synced=Count(
-                "device",
-                filter=Q(device__is_synced=False),
-            ),
+            not_synced=Count("device", filter=Q(device__is_synced=False)),
             not_retired=Count(
-                "device",
-                filter=~Q(device__health=Device.HEALTH_RETIRED),
+                "device", filter=~Q(device__health=Device.HEALTH_RETIRED)
             ),
         )
         synced_not_retired_queryset.filter(not_synced=0).filter(

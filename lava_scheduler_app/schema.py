@@ -283,12 +283,7 @@ def _notify_criteria_schema():
     return Schema(
         {
             Required("status"): Any(
-                "running",
-                "complete",
-                "incomplete",
-                "canceled",
-                "finished",
-                "all",
+                "running", "complete", "incomplete", "canceled", "finished", "all"
             ),
             Optional("dependency_query"): str,
             "type": Any("progression", "regression"),

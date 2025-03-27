@@ -6,9 +6,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("lava_results_app", "0019_update_query_contenttype"),
-    ]
+    dependencies = [("lava_results_app", "0019_update_query_contenttype")]
 
     operations = [
         migrations.AlterField(
@@ -57,18 +55,9 @@ class Migration(migrations.Migration):
                 to="lava_scheduler_app.TestJob",
             ),
         ),
-        migrations.AlterUniqueTogether(
-            name="chartqueryuser",
-            unique_together=set(),
-        ),
-        migrations.AlterUniqueTogether(
-            name="query",
-            unique_together=set(),
-        ),
-        migrations.AlterUniqueTogether(
-            name="queryomitresult",
-            unique_together=set(),
-        ),
+        migrations.AlterUniqueTogether(name="chartqueryuser", unique_together=set()),
+        migrations.AlterUniqueTogether(name="query", unique_together=set()),
+        migrations.AlterUniqueTogether(name="queryomitresult", unique_together=set()),
         migrations.AddConstraint(
             model_name="chartqueryuser",
             constraint=models.UniqueConstraint(

@@ -18,10 +18,7 @@ class Command(BaseCommand):
     help = "Manage tokens"
 
     def add_arguments(self, parser):
-        sub = parser.add_subparsers(
-            dest="sub_command",
-            help="Sub commands",
-        )
+        sub = parser.add_subparsers(dest="sub_command", help="Sub commands")
         sub.required = True
 
         add_parser = sub.add_parser("add", help="Create a token")

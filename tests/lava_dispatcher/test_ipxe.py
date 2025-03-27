@@ -144,10 +144,7 @@ class TestBootloaderAction(LavaDispatcherTestCase):
         }
         (rendered, _) = self.factory.create_device("x86-01.jinja2")
         device = NewDevice(yaml_safe_load(rendered))
-        job = self.create_simple_job(
-            device_dict=device,
-            job_parameters=parameters,
-        )
+        job = self.create_simple_job(device_dict=device, job_parameters=parameters)
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay(job)

@@ -286,13 +286,7 @@ class SchedulerDevicesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
         perms = GroupDevicePermission.objects.filter(device=device)
-        return [
-            {
-                "name": p.permission.codename,
-                "group": p.group.name,
-            }
-            for p in perms
-        ]
+        return [{"name": p.permission.codename, "group": p.group.name} for p in perms]
 
     def show(self, hostname):
         """
@@ -339,10 +333,7 @@ class SchedulerDevicesAPI(ExposedV2API):
             "current_job": current_job.pk if current_job else None,
             "tags": [t.name for t in device.tags.all().order_by("name")],
             "permissions": [
-                {
-                    "name": p.permission.codename,
-                    "group": p.group.name,
-                }
+                {"name": p.permission.codename, "group": p.group.name}
                 for p in GroupDevicePermission.objects.filter(device=device)
             ],
         }

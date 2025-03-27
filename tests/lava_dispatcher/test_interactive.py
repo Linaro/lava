@@ -34,10 +34,7 @@ class TestInteractive(LavaDispatcherTestCase):
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "b2260-interactive.yaml", job=job
         )
-        self.assertEqual(
-            description_ref,
-            job.pipeline.describe(),
-        )
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_bbb(self):
         factory = InteractiveFactory()
@@ -48,10 +45,7 @@ class TestInteractive(LavaDispatcherTestCase):
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "bbb-uboot-interactive.yaml", job=job
         )
-        self.assertEqual(
-            description_ref,
-            job.pipeline.describe(),
-        )
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_stages(self):
         factory = InteractiveFactory()
@@ -67,13 +61,9 @@ class TestInteractive(LavaDispatcherTestCase):
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "docker-interactive.yaml", job=job
         )
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertEqual(
-            description_ref,
-            job.pipeline.describe(),
-        )
-        self.assertEqual(
-            job.pipeline.actions[3].pipeline.actions[0].parameters["stage"],
-            0,
+            job.pipeline.actions[3].pipeline.actions[0].parameters["stage"], 0
         )
 
     def test_raise_exception(self):
@@ -459,10 +449,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         test_connection = Connection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
-        self.assertEqual(
-            substitutions,
-            {"{val}": "bar"},
-        )
+        self.assertEqual(substitutions, {"{val}": "bar"})
         self.assertEqual(action.logger.data, [])
         self.assertEqual(test_connection.data, [])
 
@@ -594,8 +581,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
         self.assertEqual(
-            substitutions,
-            {"{ipaddr}": "172.17.0.3", "{val2}": "172.17.0.4"},
+            substitutions, {"{ipaddr}": "172.17.0.3", "{val2}": "172.17.0.4"}
         )
         self.assertEqual(action.logger.data, [])
         self.assertEqual(test_connection.data, [])

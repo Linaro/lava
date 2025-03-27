@@ -285,10 +285,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         }
         data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
         device = NewDevice(data)
-        job = self.create_simple_job(
-            device_dict=device,
-            job_parameters=parameters,
-        )
+        job = self.create_simple_job(device_dict=device, job_parameters=parameters)
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay(job)
@@ -365,10 +362,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         }
         data = yaml_safe_load(Factory().create_device("imx8mq-evk-03.jinja2")[0])
         device = NewDevice(data)
-        job = self.create_simple_job(
-            device_dict=device,
-            job_parameters=parameters,
-        )
+        job = self.create_simple_job(device_dict=device, job_parameters=parameters)
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay(job)
@@ -454,10 +448,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             },
         }
         device = NewDevice(yaml_safe_load(Factory().create_device("bbb-01.jinja2")[0]))
-        job = self.create_simple_job(
-            device_dict=device,
-            job_parameters=parameters,
-        )
+        job = self.create_simple_job(device_dict=device, job_parameters=parameters)
         pipeline = Pipeline(job=job, parameters=parameters["actions"]["boot"])
         job.pipeline = pipeline
         overlay = BootloaderCommandOverlay(job)
@@ -729,10 +720,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertIn("download_command", transfer.parameters["transfer_overlay"])
         self.assertIn("unpack_command", transfer.parameters["transfer_overlay"])
 
-    @patch(
-        "lava_dispatcher.actions.boot.dispatcher_ip",
-        return_value="foo",
-    )
+    @patch("lava_dispatcher.actions.boot.dispatcher_ip", return_value="foo")
     @patch(
         "lava_dispatcher.actions.boot.OverlayUnpack.get_namespace_data",
         return_value="/var/lib/lava/dispatcher/tmp/bar",

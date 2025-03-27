@@ -25,10 +25,7 @@ class TestActionRunCmd(LavaDispatcherTestCase):
             ret = self.action.run_cmd(["printf", "Hello, world!"])
 
         self.assertEqual(ret, 0)
-        self.assertIn(
-            "Hello, world!",
-            "".join(logs.output),
-        )
+        self.assertIn("Hello, world!", "".join(logs.output))
 
     def test_no_args_command_with_spaces(self) -> None:
         true_path = which("true")
@@ -53,15 +50,9 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         end_time = time_monotonic()
 
-        self.assertIn(
-            "Timed out after",
-            "".join(error_logs.output),
-        )
+        self.assertIn("Timed out after", "".join(error_logs.output))
 
-        self.assertLess(
-            end_time - start_time,
-            1.0,
-        )
+        self.assertLess(end_time - start_time, 1.0)
 
     def test_command_timeout_ignores_sigterm(self) -> None:
         self.action.timeout.duration = 0.01
@@ -72,24 +63,14 @@ class TestActionRunCmd(LavaDispatcherTestCase):
             self.action.logger, "DEBUG"
         ) as debug_logs, patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01):
             self.action.run_cmd(
-                [
-                    "sh",
-                    "-c",
-                    "trap 'echo IGNORING_SIGTERM' TERM KILL;sleep 10",
-                ]
+                ["sh", "-c", "trap 'echo IGNORING_SIGTERM' TERM KILL;sleep 10"]
             )
 
         end_time = time_monotonic()
 
-        self.assertIn(
-            "IGNORING_SIGTERM",
-            "".join(debug_logs.output),
-        )
+        self.assertIn("IGNORING_SIGTERM", "".join(debug_logs.output))
 
-        self.assertLess(
-            end_time - start_time,
-            1.0,
-        )
+        self.assertLess(end_time - start_time, 1.0)
 
     def test_command_does_not_exist(self) -> None:
         non_existant_command = "THIS_COMMAND_does_NOT_exist"
@@ -99,7 +80,4 @@ class TestActionRunCmd(LavaDispatcherTestCase):
         ) as error_logs:
             self.action.run_cmd([non_existant_command])
 
-        self.assertIn(
-            non_existant_command,
-            "".join(error_logs.output),
-        )
+        self.assertIn(non_existant_command, "".join(error_logs.output))

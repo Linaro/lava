@@ -12,10 +12,7 @@ class Command(BaseCommand):
     help = "Update Django Site"
 
     def add_arguments(self, parser):
-        sub = parser.add_subparsers(
-            dest="sub_command",
-            help="Sub commands",
-        )
+        sub = parser.add_subparsers(dest="sub_command", help="Sub commands")
         sub.required = True
 
         list_parser = sub.add_parser("list", help="List the current Site")

@@ -47,10 +47,7 @@ class Command(BaseCommand):
     }
 
     def add_arguments(self, parser):
-        sub = parser.add_subparsers(
-            dest="sub_command",
-            help="Sub commands",
-        )
+        sub = parser.add_subparsers(dest="sub_command", help="Sub commands")
         sub.required = True
 
         fail = sub.add_parser(
@@ -132,11 +129,7 @@ class Command(BaseCommand):
             action="store_true",
             help="Only remove job logs and not database objects",
         )
-        rm.add_argument(
-            "--skip-favorite",
-            action=BooleanOptionalAction,
-            default=True,
-        )
+        rm.add_argument("--skip-favorite", action=BooleanOptionalAction, default=True)
 
         valid = sub.add_parser(
             "validate",

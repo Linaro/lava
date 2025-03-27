@@ -73,9 +73,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
             logger=LavaDispatcherTestCase.TESTCASE_JOB_LOGGER,
             device=PipelineDevice(device_dict),
             timeout=Timeout(
-                f"unittest-timeout-{self.__class__.__name__}",
-                None,
-                duration=3,
+                f"unittest-timeout-{self.__class__.__name__}", None, duration=3
             ),
         )
         return new_job

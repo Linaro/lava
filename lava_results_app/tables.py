@@ -37,8 +37,7 @@ class ResultsTable(LavaTable):
         linkify=("lava.scheduler.job.detail", (tables.A("pk"),)),
     )
     actions = tables.TemplateColumn(
-        template_name="lava_results_app/results_actions_field.html",
-        orderable=False,
+        template_name="lava_results_app/results_actions_field.html", orderable=False
     )
     submitter = tables.Column(accessor="submitter__username", orderable=False)
     name = tables.Column(
@@ -58,8 +57,7 @@ class ResultsTable(LavaTable):
 
 class TestJobResultsTable(ResultsTable):
     actions = tables.TemplateColumn(
-        template_name="lava_results_app/suite_actions_field.html",
-        orderable=False,
+        template_name="lava_results_app/suite_actions_field.html", orderable=False
     )
 
     class Meta(ResultsTable.Meta):

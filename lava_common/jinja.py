@@ -22,10 +22,7 @@ def create_device_templates_env(
     loader: Optional[BaseLoader] = None, cache_size: int = 400
 ) -> JinjaSandboxEnv:
     new_env = JinjaSandboxEnv(
-        loader=loader,
-        autoescape=False,
-        trim_blocks=True,
-        cache_size=cache_size,
+        loader=loader, autoescape=False, trim_blocks=True, cache_size=cache_size
     )
     new_env.filters["shlex_quote"] = shlex_quote
     new_env.filters["yaml_quote"] = yaml_quote

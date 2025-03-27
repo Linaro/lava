@@ -56,8 +56,7 @@ def main():
 
     print("Devices:")
     env = JinjaSandboxEnv(
-        loader=FileSystemLoader([args.devices, args.device_types]),
-        autoescape=False,
+        loader=FileSystemLoader([args.devices, args.device_types]), autoescape=False
     )
 
     for device in devices:

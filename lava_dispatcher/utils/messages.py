@@ -19,46 +19,14 @@ KERNEL_MESSAGES = [
         "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
         "kind": None,
     },
-    {
-        "start": r"Unhandled fault",
-        "end": r"\r",
-        "kind": "fault",
-    },
-    {
-        "start": r"BUG: KCSAN:",
-        "end": r"=+\r",
-        "kind": "kcsan",
-    },
-    {
-        "start": r"BUG: KASAN:",
-        "end": r"=+\r",
-        "kind": "kasan",
-    },
-    {
-        "start": r"BUG: KFENCE:",
-        "end": r"=+\r",
-        "kind": "kfence",
-    },
-    {
-        "start": r"Oops(?: -|:)",
-        "end": r"\r",
-        "kind": "oops",
-    },
-    {
-        "start": r"WARNING:",
-        "end": r"end trace[^\r]*\r",
-        "kind": "warning",
-    },
-    {
-        "start": r"(kernel BUG at|BUG:)",
-        "end": r"\r",
-        "kind": "bug",
-    },
-    {
-        "start": r"invalid opcode:",
-        "end": r"\r",
-        "kind": "invalid opcode",
-    },
+    {"start": r"Unhandled fault", "end": r"\r", "kind": "fault"},
+    {"start": r"BUG: KCSAN:", "end": r"=+\r", "kind": "kcsan"},
+    {"start": r"BUG: KASAN:", "end": r"=+\r", "kind": "kasan"},
+    {"start": r"BUG: KFENCE:", "end": r"=+\r", "kind": "kfence"},
+    {"start": r"Oops(?: -|:)", "end": r"\r", "kind": "oops"},
+    {"start": r"WARNING:", "end": r"end trace[^\r]*\r", "kind": "warning"},
+    {"start": r"(kernel BUG at|BUG:)", "end": r"\r", "kind": "bug"},
+    {"start": r"invalid opcode:", "end": r"\r", "kind": "invalid opcode"},
     {
         "start": r"Kernel panic - not syncing",
         "end": r"end Kernel panic[^\r]*\r",
@@ -195,12 +163,7 @@ class LinuxKernelMessages:
                 if not auto_login and KERNEL_MESSAGES[index]["kind"] == "trace":
                     connection.sendline(connection.check_char)
 
-                results.append(
-                    {
-                        "kind": kind,
-                        "message": message,
-                    }
-                )
+                results.append({"kind": kind, "message": message})
                 if KERNEL_MESSAGES[index].get("fatal"):
                     break
                 else:

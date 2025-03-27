@@ -98,14 +98,8 @@ class TestUefiShell(LavaDispatcherTestCase):
         boot_commands = boot.pipeline.find_action(BootloaderCommandsAction)
         boot.pipeline.find_action(UefiShellInterrupt)
 
-        self.assertEqual(
-            0,
-            len(boot.pipeline.find_all_actions(UefiShellMenuInterrupt)),
-        )
-        self.assertEqual(
-            0,
-            len(boot.pipeline.find_all_actions(UefiShellMenuSelector)),
-        )
+        self.assertEqual(0, len(boot.pipeline.find_all_actions(UefiShellMenuInterrupt)))
+        self.assertEqual(0, len(boot.pipeline.find_all_actions(UefiShellMenuSelector)))
 
         self.assertEqual("uefi", commands.method)
         self.assertFalse(commands.use_bootscript)

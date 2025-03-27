@@ -16,10 +16,7 @@ def schema():
         # AVH only supports Linux kernel in the Image format.
         Optional("type"): "image",
     }
-    pkg_extra = {
-        **extra,
-        Optional("storage_file"): str,
-    }
+    pkg_extra = {**extra, Optional("storage_file"): str}
     images = {Required(str, "'images' is empty"): deploy.url(extra)}
     fw_package = deploy.url(pkg_extra)
 

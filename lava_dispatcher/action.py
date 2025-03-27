@@ -150,9 +150,7 @@ class Pipeline:
             )
         # 5. action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
-            action._override_action_timeout(
-                action_block_timeouts.get(action.name),
-            )
+            action._override_action_timeout(action_block_timeouts.get(action.name))
 
         action._override_connection_timeout(
             get_lastest_dict_value(global_timeouts, "connection")
@@ -640,9 +638,7 @@ class Action:
     _SUBPROCESS_SIGTERM_TIMEOUT = 3.0
 
     def _run_pexpect_popen(
-        self,
-        pexpect_popen: PexpectPopenSpawn,
-        start: float,
+        self, pexpect_popen: PexpectPopenSpawn, start: float
     ) -> int | None:
         proc = pexpect_popen.proc
 

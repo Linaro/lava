@@ -339,10 +339,7 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
             def _recv_message(self):
                 return json_dumps(recv_object)
 
-        base_params = {
-            "target_group": "test",
-            "role": "test",
-        }
+        base_params = {"target_group": "test", "role": "test"}
         base_params.update(params)
         new_protocol = MultinodeProtocolSocketMock(
             {"protocols": {MultinodeProtocolSocketMock.name: base_params}},
@@ -368,7 +365,4 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
     def test_multinode_protocol_send_empty_message(self) -> None:
         test_message = {"response": "success"}
         protocol = self.init_protocol(recv_object=test_message)
-        self.assertEqual(
-            json_loads(protocol.request_send("test_id")),
-            test_message,
-        )
+        self.assertEqual(json_loads(protocol.request_send("test_id")), test_message)

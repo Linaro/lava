@@ -362,13 +362,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
 
         perms = GroupDeviceTypePermission.objects.filter(devicetype=dt)
-        return [
-            {
-                "name": p.permission.codename,
-                "group": p.group.name,
-            }
-            for p in perms
-        ]
+        return [{"name": p.permission.codename, "group": p.group.name} for p in perms]
 
     def show(self, name):
         """
@@ -412,10 +406,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             "devices": devices,
             "default_template": not File("device-type", name).is_first(),
             "permissions": [
-                {
-                    "name": p.permission.codename,
-                    "group": p.group.name,
-                }
+                {"name": p.permission.codename, "group": p.group.name}
                 for p in GroupDeviceTypePermission.objects.filter(devicetype=dt)
             ],
         }

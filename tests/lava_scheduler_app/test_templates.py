@@ -36,9 +36,7 @@ class BaseTemplateTest(TestCase):
         return device_dict
 
     def render_device_dictionary(
-        self,
-        device_name: str,
-        job_ctx: Optional[dict[str, Any]] = None,
+        self, device_name: str, job_ctx: Optional[dict[str, Any]] = None
     ) -> dict[str, Any]:
         if job_ctx is None:
             job_ctx = {}

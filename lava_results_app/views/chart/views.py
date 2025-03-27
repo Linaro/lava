@@ -483,9 +483,5 @@ def chart_query_form(request, bread_crumb_trail, chart=None, instance=None):
     return render(
         request,
         "lava_results_app/chart_query_form.html",
-        {
-            "bread_crumb_trail": bread_crumb_trail,
-            "form": form,
-            "instance": instance,
-        },
+        {"bread_crumb_trail": bread_crumb_trail, "form": form, "instance": instance},
     )

@@ -501,26 +501,17 @@ class TestRestApi:
             f"{reverse('api-root', args=(self.version,))}"
             f"jobs/{self.public_testjob1.id}/csv/"
         )
-        data = self.hit(
-            self.userclient,
-            csv_url,
-        )
+        data = self.hit(self.userclient, csv_url)
         csv_data = csv.reader(data.splitlines())
         assert list(csv_data)[1][0] == str(
             self.public_testjob1.id
         )  # nosec - unit test support
 
         # Test limit
-        data_with_limit = self.hit(
-            self.userclient,
-            f"{csv_url}?limit=1",
-        )
+        data_with_limit = self.hit(self.userclient, f"{csv_url}?limit=1")
         assert len(data_with_limit.splitlines()) == 2  # nosec - unit test support
         # Test offset
-        data_with_offset = self.hit(
-            self.userclient,
-            f"{csv_url}?offset=1",
-        )
+        data_with_offset = self.hit(self.userclient, f"{csv_url}?offset=1")
         assert len(data_with_offset.splitlines()) == 2  # nosec - unit test support
 
     def test_testjob_yaml(self):
@@ -528,26 +519,17 @@ class TestRestApi:
             f"{reverse('api-root', args=(self.version,))}"
             f"jobs/{self.public_testjob1.id}/yaml/"
         )
-        data = self.hit(
-            self.userclient,
-            yaml_url,
-        )
+        data = self.hit(self.userclient, yaml_url)
         data = yaml_safe_load(data)
         assert data[0]["job"] == str(
             self.public_testjob1.id
         )  # nosec - unit test support
 
         # Test limit
-        data_with_limit = self.hit(
-            self.userclient,
-            f"{yaml_url}?limit=1",
-        )
+        data_with_limit = self.hit(self.userclient, f"{yaml_url}?limit=1")
         assert len(yaml_safe_load(data_with_limit)) == 1  # nosec - unit test support
         # Test offset
-        data_with_offset = self.hit(
-            self.userclient,
-            f"{yaml_url}?offset=1",
-        )
+        data_with_offset = self.hit(self.userclient, f"{yaml_url}?offset=1")
         assert len(yaml_safe_load(data_with_offset)) == 1  # nosec - unit test support
 
     def test_testjob_junit(self):
@@ -980,16 +962,12 @@ ok 2 bar
             f"{reverse('api-root', args=[self.version])}devices/validate/"
         )
         not_allowed_response = self.userclient.post(
-            device_validate_url,
-            data=EXAMPLE_DEVICE,
-            content_type="text/plain",
+            device_validate_url, data=EXAMPLE_DEVICE, content_type="text/plain"
         )
         assert not_allowed_response.status_code == 403  # nosec - unit test support
 
         response = self.adminclient.post(
-            device_validate_url,
-            data=EXAMPLE_DEVICE,
-            content_type="text/plain",
+            device_validate_url, data=EXAMPLE_DEVICE, content_type="text/plain"
         )
         assert response.status_code == 200  # nosec - unit test support
         msg = json.loads(response.content)

@@ -15,10 +15,7 @@ class Command(BaseCommand):
     help = "Manage device tags"
 
     def add_arguments(self, parser):
-        sub = parser.add_subparsers(
-            dest="sub_command",
-            help="Sub commands",
-        )
+        sub = parser.add_subparsers(dest="sub_command", help="Sub commands")
         sub.required = True
 
         # "add" sub-command

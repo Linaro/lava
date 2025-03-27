@@ -163,10 +163,7 @@ class Alias(models.Model):
         editable=True,
     )
     device_type = models.ForeignKey(
-        "DeviceType",
-        related_name="aliases",
-        null=True,
-        on_delete=models.CASCADE,
+        "DeviceType", related_name="aliases", null=True, on_delete=models.CASCADE
     )
 
     def __str__(self):

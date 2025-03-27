@@ -18,10 +18,7 @@ from lava_scheduler_app.models import TestJob, TestJobUser, User
 @pytest.fixture
 def job1(mocker, tmp_path):
     media_root = tmp_path / "media"
-    mocker.patch(
-        "django.conf.settings.MEDIA_ROOT",
-        str(media_root),
-    )
+    mocker.patch("django.conf.settings.MEDIA_ROOT", str(media_root))
 
     user1 = User.objects.create_user("user1")
     now = timezone.now()
@@ -43,10 +40,7 @@ def job1(mocker, tmp_path):
 @pytest.fixture
 def job2(mocker, tmp_path):
     media_root = tmp_path / "media"
-    mocker.patch(
-        "django.conf.settings.MEDIA_ROOT",
-        str(media_root),
-    )
+    mocker.patch("django.conf.settings.MEDIA_ROOT", str(media_root))
 
     user2 = User.objects.create_user("user2")
     now = timezone.now()

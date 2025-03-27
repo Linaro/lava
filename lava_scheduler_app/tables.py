@@ -96,9 +96,7 @@ class JobErrorsTable(LavaTable):
         linkify=("lava.scheduler.job.detail", (tables.A("pk"),)),
     )
     end_time = tables.DateColumn(
-        format=settings.DATETIME_FORMAT,
-        orderable=False,
-        default="",
+        format=settings.DATETIME_FORMAT, orderable=False, default=""
     )
     actual_device_id = tables.Column(
         verbose_name="Device",
@@ -107,12 +105,10 @@ class JobErrorsTable(LavaTable):
         default="",
     )
     error_type = tables.Column(
-        accessor=tables.A("failure_metadata.error_type"),
-        orderable=False,
+        accessor=tables.A("failure_metadata.error_type"), orderable=False
     )
     error_msg = tables.Column(
-        accessor=tables.A("failure_metadata.error_msg"),
-        orderable=False,
+        accessor=tables.A("failure_metadata.error_msg"), orderable=False
     )
 
     class Meta(LavaTable.Meta):
@@ -168,9 +164,7 @@ class DeviceHealthTable(LavaTable):
             "last_report_time",
             "last_health_report_job",
         ]
-        searches = {
-            "hostname": "contains",
-        }
+        searches = {"hostname": "contains"}
         queries = {"device_health_query": "health"}
 
 
@@ -418,10 +412,7 @@ class RunningTable(LavaTable):
 
     # deprecated: dynamic connections are TestJob without a device
 
-    name = tables.Column(
-        linkify=True,
-        verbose_name="Device name",
-    )
+    name = tables.Column(linkify=True, verbose_name="Device name")
 
     reserved_devices = tables.Column(
         orderable=False, verbose_name="Reserved", default=""

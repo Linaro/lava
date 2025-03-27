@@ -16,12 +16,10 @@ from ...test_basic import LavaDispatcherTestCase
 class TestMonitorAccepts(LavaDispatcherTestCase):
     def test_accepts(self):
         self.assertEqual(
-            TestMonitor.accepts(None, {}),
-            (False, '"monitors" not in parameters'),
+            TestMonitor.accepts(None, {}), (False, '"monitors" not in parameters')
         )
         self.assertEqual(
-            TestMonitor.accepts(None, {"monitors": {}}),
-            (True, "accepted"),
+            TestMonitor.accepts(None, {"monitors": {}}), (True, "accepted")
         )
 
         # Missing some parameters

@@ -1382,9 +1382,7 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     job = TestJob.objects.get(description="test job 02")
 
     # Missing token
-    ret = client.post(
-        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
-    )
+    ret = client.post(reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]))
     assert ret.status_code == 400
     assert ret.json() == {"error": "Missing 'token'"}
 

@@ -44,6 +44,5 @@ def oidc_context(request):
 
 def socialaccount(request):
     return {
-        "socialaccount_enabled": settings.AUTH_SOCIALACCOUNT
-        or settings.AUTH_GITLAB_URL,
+        "socialaccount_enabled": settings.AUTH_SOCIALACCOUNT or settings.AUTH_GITLAB_URL
     }

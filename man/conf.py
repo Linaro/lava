@@ -32,13 +32,7 @@ man_pages = [
         ["Linaro Validation Team"],
         1,
     ),
-    (
-        "lava-run",
-        "lava-run",
-        "run jobs on LAVA devices",
-        ["Linaro Validation Team"],
-        1,
-    ),
+    ("lava-run", "lava-run", "run jobs on LAVA devices", ["Linaro Validation Team"], 1),
     (
         "lava-worker",
         "lava-worker",

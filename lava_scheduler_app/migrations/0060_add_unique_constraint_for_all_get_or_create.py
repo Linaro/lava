@@ -7,14 +7,11 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("lava_scheduler_app", "0059_increase_remoteartifactsauth_token_max_length"),
+        ("lava_scheduler_app", "0059_increase_remoteartifactsauth_token_max_length")
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name="testjob",
-            name="current_job_prefetch_index",
-        ),
+        migrations.RemoveIndex(model_name="testjob", name="current_job_prefetch_index"),
         migrations.AlterField(
             model_name="groupdevicepermission",
             name="device",
@@ -78,29 +75,21 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AlterUniqueTogether(
-            name="groupdevicepermission",
-            unique_together=set(),
+            name="groupdevicepermission", unique_together=set()
         ),
         migrations.AlterUniqueTogether(
-            name="groupdevicetypepermission",
-            unique_together=set(),
+            name="groupdevicetypepermission", unique_together=set()
         ),
         migrations.AlterUniqueTogether(
-            name="groupworkerpermission",
-            unique_together=set(),
+            name="groupworkerpermission", unique_together=set()
         ),
         migrations.AlterUniqueTogether(
-            name="notificationrecipient",
-            unique_together=set(),
+            name="notificationrecipient", unique_together=set()
         ),
         migrations.AlterUniqueTogether(
-            name="remoteartifactsauth",
-            unique_together=set(),
+            name="remoteartifactsauth", unique_together=set()
         ),
-        migrations.AlterUniqueTogether(
-            name="testjobuser",
-            unique_together=set(),
-        ),
+        migrations.AlterUniqueTogether(name="testjobuser", unique_together=set()),
         migrations.AddConstraint(
             model_name="groupdevicepermission",
             constraint=models.UniqueConstraint(

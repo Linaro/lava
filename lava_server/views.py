@@ -105,7 +105,7 @@ devices_health_check_complete {device_stats['health_checks_complete']}
             .annotate(queued_jobs=Count("*"))
             .values("queued_jobs"),
             output_field=IntegerField(),
-        ),
+        )
     )
     data += "# TYPE device_type counter"
     for dt in dts:

@@ -174,9 +174,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
             )
 
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.CHANGE_PERMISSION,
-            user_group,
-            test_device_type,
+            DeviceType.CHANGE_PERMISSION, user_group, test_device_type
         )
 
         server_object_permission.scheduler.device_types.set_health_check(
@@ -1186,9 +1184,7 @@ def test_devices_show(setup):
         "state": "Idle",
         "tags": [],
         "worker": "worker01",
-        "permissions": [
-            {"name": "change_device", "group": "group1"},
-        ],
+        "permissions": [{"name": "change_device", "group": "group1"}],
     }
 
 
@@ -1687,9 +1683,7 @@ def test_device_types_show(setup):
         "aliases": [],
         "devices": ["device01"],
         "default_template": False,
-        "permissions": [
-            {"name": "change_devicetype", "group": "group"},
-        ],
+        "permissions": [{"name": "change_devicetype", "group": "group"}],
     }
 
 

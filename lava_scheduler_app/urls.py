@@ -89,11 +89,7 @@ urlpatterns = (
         name="lava.scheduler.device_type.detail",
     ),
     path("alldevices", device_list, name="lava.scheduler.alldevices"),
-    path(
-        "device/<str:pk>",
-        device_detail,
-        name="lava.scheduler.device.detail",
-    ),
+    path("device/<str:pk>", device_detail, name="lava.scheduler.device.detail"),
     path(
         "device/<str:pk>/devicedict",
         device_dictionary,
@@ -105,16 +101,8 @@ urlpatterns = (
         name="lava.scheduler.device.dictionary.plain",
     ),
     path("allworkers", workers, name="lava.scheduler.workers"),
-    path(
-        "worker/<str:pk>",
-        worker_detail,
-        name="lava.scheduler.worker.detail",
-    ),
-    path(
-        "worker/<str:pk>/health",
-        worker_health,
-        name="lava.scheduler.worker.health",
-    ),
+    path("worker/<str:pk>", worker_detail, name="lava.scheduler.worker.detail"),
+    path("worker/<str:pk>/health", worker_health, name="lava.scheduler.worker.health"),
     path("labhealth/", lab_health, name="lava.scheduler.labhealth"),
     path(
         "labhealth/device/<str:pk>",
@@ -122,11 +110,7 @@ urlpatterns = (
         name="lava.scheduler.labhealth.detail",
     ),
     path("longestjobs", longest_jobs, name="lava.scheduler.longest_jobs"),
-    path(
-        "job/<job_id:pk>",
-        job_detail,
-        name="lava.scheduler.job.detail",
-    ),
+    path("job/<job_id:pk>", job_detail, name="lava.scheduler.job.detail"),
     path(
         "job/<job_id:pk>/definition",
         job_definition,
@@ -162,31 +146,11 @@ urlpatterns = (
         job_log_file_plain,
         name="lava.scheduler.job.log_file.plain",
     ),
-    path(
-        "job/<job_id:pk>/timing",
-        job_timing,
-        name="lava.scheduler.job.timing",
-    ),
-    path(
-        "job/<job_id:pk>/job_status",
-        job_status,
-        name="lava.scheduler.job_status",
-    ),
-    path(
-        "job/<job_id:pk>/cancel",
-        job_cancel,
-        name="lava.scheduler.job.cancel",
-    ),
-    path(
-        "job/<job_id:pk>/fail",
-        job_fail,
-        name="lava.scheduler.job.fail",
-    ),
-    path(
-        "job/<job_id:pk>/resubmit",
-        job_resubmit,
-        name="lava.scheduler.job.resubmit",
-    ),
+    path("job/<job_id:pk>/timing", job_timing, name="lava.scheduler.job.timing"),
+    path("job/<job_id:pk>/job_status", job_status, name="lava.scheduler.job_status"),
+    path("job/<job_id:pk>/cancel", job_cancel, name="lava.scheduler.job.cancel"),
+    path("job/<job_id:pk>/fail", job_fail, name="lava.scheduler.job.fail"),
+    path("job/<job_id:pk>/resubmit", job_resubmit, name="lava.scheduler.job.resubmit"),
     path(
         "job/<job_id:pk>/annotate_failure",
         job_annotate_failure,
@@ -203,9 +167,7 @@ urlpatterns = (
         name="lava.scheduler.job.log_incremental",
     ),
     path(
-        "job/<job_id:pk>/job_data",
-        job_fetch_data,
-        name="lava.scheduler.job.fetch_data",
+        "job/<job_id:pk>/job_data", job_fetch_data, name="lava.scheduler.job.fetch_data"
     ),
     path("myjobs", myjobs, name="lava.scheduler.myjobs"),
     path("myactivejobs", my_active_jobs, name="lava.scheduler.myjobs.active"),
@@ -217,11 +179,7 @@ urlpatterns = (
         job_change_priority,
         name="lava.scheduler.job.priority",
     ),
-    path(
-        "device/<str:pk>/health",
-        device_health,
-        name="lava.scheduler.device.health",
-    ),
+    path("device/<str:pk>/health", device_health, name="lava.scheduler.device.health"),
     path("alldevices/active", active_device_list, name="lava.scheduler.active_devices"),
     path("alldevices/online", online_device_list, name="lava.scheduler.online_devices"),
     path(
@@ -235,9 +193,7 @@ urlpatterns = (
         name="lava.scheduler.maintenance_devices",
     ),
     path(
-        "reports/device/<str:pk>",
-        device_reports,
-        name="lava.scheduler.device_report",
+        "reports/device/<str:pk>", device_reports, name="lava.scheduler.device_report"
     ),
     path(
         "reports/device_type/<str:pk>",

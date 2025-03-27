@@ -36,8 +36,7 @@ class TestDocker(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @patch(
-        "lava_dispatcher.actions.deploy.docker.which",
-        return_value="/bin/test_docker",
+        "lava_dispatcher.actions.deploy.docker.which", return_value="/bin/test_docker"
     )
     @patch("subprocess.check_output")
     @patch("lava_dispatcher.action.Action.run")
@@ -57,8 +56,7 @@ class TestDocker(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.actions.deploy.docker.which",
-        return_value="/bin/test_docker",
+        "lava_dispatcher.actions.deploy.docker.which", return_value="/bin/test_docker"
     )
     @patch("subprocess.check_output")
     @patch("lava_dispatcher.actions.deploy.docker.DockerAction.run_cmd")
@@ -104,8 +102,7 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.actions.deploy.docker.which",
-        return_value="/bin/test_docker",
+        "lava_dispatcher.actions.deploy.docker.which", return_value="/bin/test_docker"
     )
     @patch("subprocess.check_output")
     @patch("lava_dispatcher.actions.deploy.docker.DockerAction.run_cmd")
