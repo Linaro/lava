@@ -29,7 +29,7 @@ variables:
 
 .dind: &dind
   <<: *job
-  image: docker:24-dind
+  image: docker:24
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_BUILDKIT: 1
@@ -182,6 +182,11 @@ debian/12:
       - tags
   tags:
     - saas-linux-medium-arm64
+  services:
+    - name: docker:24-dind
+      # Workaround for arm64 network connectivity issues
+      # https://gitlab.com/gitlab-org/gitlab/-/issues/473739#workaround
+      command: ["--mtu=1400"]
 
 docker-amd64-dispatcher: *docker
 docker-amd64-server: *docker
