@@ -331,6 +331,10 @@ actions:
           bcu_board_id: "{{ bcu_board_id }}"
           bcu_board_id_command: {{ bcu_board_id_command }}
           has_bcu_commands: "{{ has_bcu_commands }}"
+{% if extra_boot_methods %}
+{{ extra_boot_methods|indent(first=True,width=6) }}
+{% endif %}
+
   test:
     methods:
       docker:
