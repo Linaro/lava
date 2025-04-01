@@ -130,7 +130,7 @@ class MultinodeMixin:
                 self.logger.debug("%d key value pair(s) to be sent." % len(remainder))
                 data = {}
                 for message in remainder:
-                    detail = str.split(message, "=")
+                    detail = str.split(message, "=", maxsplit=1)
                     if len(detail) == 2:
                         data[detail[0]] = detail[1]
                 msg = {"request": "lava_send", "messageID": message_id, "message": data}
