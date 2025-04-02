@@ -379,7 +379,7 @@ class DetectFastbootDevice(Action):
             # wait-device-boardid needs board_id.
             self.set_sn("board_id", fastboot_serial_number)
         else:
-            raise JobError(f"Failed to detect fastboot device: {cmd.stderr}")
+            raise JobError(f"Failed to run 'fastboot devices': {cmd.stderr}")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

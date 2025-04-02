@@ -37,7 +37,7 @@ class GitHelper(VCSHelper):
         super().__init__(url)
         self.binary = "/usr/bin/git"
 
-    @retry(retries=6, delay=5)
+    @retry(exception=InfrastructureError, retries=6, delay=5)
     def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
         logger = logging.getLogger("dispatcher")
 
