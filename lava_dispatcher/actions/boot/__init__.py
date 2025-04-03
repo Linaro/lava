@@ -369,7 +369,7 @@ class BootloaderCommandOverlay(Action):
         if self.commands is not None:
             return
         if self.parameters["method"] == "bootloader":
-            self.commands = self.parameters["commands"]
+            self.commands = self.parameters.get("commands", [])
         elif isinstance(self.parameters["commands"], list):
             self.commands = self.parameters["commands"]
             self.logger.warning(
