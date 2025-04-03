@@ -443,7 +443,7 @@ lava (2020.04-1) unstable; urgency=medium
     3305042e6 Allow device enter into fastbootd when fastboot images.
     4ad892ee9 schema: check test names
     2c07934cd Add authorization mechanism to Worker model
-    455f2d206 qemu: fix command line dupliction when retrying
+    455f2d206 qemu: fix command line duplication when retrying
     675108851 lava_dispatcher.utils.docker: encapsulate docker command lines
     d6efabed5 dispatcher: utils/fastboot: port docker calls to utils/docker
     50d2fd37a fixup! lava_dispatcher.utils.docker: encapsulate docker command lines
@@ -459,7 +459,7 @@ lava (2020.04-1) unstable; urgency=medium
     05af31736 dispatcher: ensure that Job.tmp_dir is never None
     1dd8f1bcf dispatcher: utils: docker: fix readonly flag
     714c07c4c deploy: test_download: split populate tests by scheme
-    61e771c67 qemu: do not finialise connection coming from other namespaces
+    61e771c67 qemu: do not finalise connection coming from other namespaces
     bcd18bc8e doc: update REST API docs to version 0.2
     aa9aea390 dispatcher: deploy: add supporting for postprocessing images with docker
     a9a392aa8 Boot QEMU from a user-defined docker image
@@ -1065,7 +1065,7 @@ lava (2019.10-1) unstable; urgency=medium
     01f646ee4 Expand on the authorization docs.
     b7c4ada0b Reorganize the django permissions and custom permissions.
     80bdab409 autopkgtest: run test suite "the new way"
-    9e80f439a rest api: add some documentation about submiting a test job
+    9e80f439a rest api: add some documentation about submitting a test job
     177b1c6b5 doc: fix spelling error
     7968337aa dragonboard-820c: flash every partition:%d tables right after the ptable
   * Fix unsafe use of yaml.load() (Closes: #933918)
@@ -2869,7 +2869,7 @@ lava-dispatcher (2017.1-1) unstable; urgency=medium
     36ca3c21 LAVA-818 - errors should set the job as Incomplete
     f5ac0328 Skip generation of invalid test_case_id
     9e5e56c6 Re-enable support for nose tests
-    bb89772f Merge and re-use BootloaderCommandOverlay and
+    bb89772f Merge and reuse BootloaderCommandOverlay and
      BootloaderCommandAction
     f3864c2f job: fix cleanup when validation failed
     8dd450c5 run_actions: clean error messages and exceptions
@@ -3935,7 +3935,7 @@ lava-server (2017.4-1) unstable; urgency=medium
     93d620a53 Explain how connection-namespace parameter works.
     9041b0dc0 Begin a section on common YAML syntax errors.
     6521cc0f8 LAVA-894 - Document lava lxc device add / wait command
-    ee3e5964f Fix documentation - punctuations, links, bullets.
+    ee3e5964f Fix documentation - punctuation, links, bullets.
     988d89a34 Add server side support for mustang EFI Grub.
     525d9ed47 Fix code blocks in Boot Action documentation.
     106f7f4fc LAVA-890 - Allow DUT to stay in Android OS

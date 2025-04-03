@@ -78,7 +78,7 @@ Currently we test:
 * ``tests/bootloader``: Check that lava is detecting and classifying
   common bootloader errors
 
-* ``tests/notitications``: Check that lava is sending the notifications
+* ``tests/notifications``: Check that lava is sending the notifications
   as expected (no irc or emails yet)
 
 Future plans

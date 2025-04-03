@@ -150,7 +150,7 @@ class FlashDFUAction(Action):
                 raise InfrastructureError("command failed: %s" % dfu)
 
             # Wait only for non-hardware implementations
-            # In fact, the booloader will print some strings when the transfer
+            # In fact, the bootloader will print some strings when the transfer
             # is finished.
             if implementation != "hardware":
                 connection.wait()

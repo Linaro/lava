@@ -174,7 +174,7 @@ machines and one for the ``client`` machines.
 
 To cover different boot commands we could now have two different ``boot``
 action blocks. But in this case our devices behave in the same way in terms of
-bootup, so we can just use a single ``boot`` block and list both ``client`` and
+boot-up, so we can just use a single ``boot`` block and list both ``client`` and
 ``server``.
 
 .. include:: examples/test-jobs/second-multinode-job.yaml

@@ -447,7 +447,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             )
         except voluptuous.MultipleInvalid as exc:
             return Response(
-                {"message": "Test defnition invalid: %s" % str(exc)},
+                {"message": "Test definition invalid: %s" % str(exc)},
                 status=status.HTTP_200_OK,
             )
 

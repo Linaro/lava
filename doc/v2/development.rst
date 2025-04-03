@@ -423,7 +423,7 @@ similar to this::
 
     RemotePdb session open at 127.0.0.1:37865, waiting for connection ...
 
-Note the address where the debuggin server is listening.  Then, to access the
+Note the address where the debugging server is listening.  Then, to access the
 debugger, you point ``telnet`` to the provided address and port::
 
     telnet 127.0.0.1 37865
@@ -695,7 +695,7 @@ functionality using :ref:`XML-RPC <xml_rpc>`.
    ``xmlrpc.client.Fault``.
 
 #. Move as much of the work into the relevant app as possible, either
-   in ``models.py`` or in ``dbutils.py``. Wherever possible, re-use
+   in ``models.py`` or in ``dbutils.py``. Wherever possible, reuse
    existing functions with wrappers for error handling in the API code.
 
 .. _lava_instance_settings:
