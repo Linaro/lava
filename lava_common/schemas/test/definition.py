@@ -33,6 +33,7 @@ def schema():
                     Optional("revision"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
+                    Optional("recursive"): bool,
                     **common,
                 },
                 {

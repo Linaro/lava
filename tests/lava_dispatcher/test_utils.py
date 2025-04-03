@@ -25,6 +25,36 @@ def setup(tmp_path):
     original_cwd = os.getcwd()
 
     with chdir(tmp_path):
+        # Create a Git repository to be used as submodule
+        subprocess.check_output(
+            ["git", "init", "submodule"]
+        )  # nosec - unit test support.
+        os.chdir("submodule")
+        subprocess.check_output(
+            ["git", "checkout", "-b", "master"]
+        )  # nosec - unit test support.
+        with open("submodule.txt", "w") as testfile:
+            testfile.write("Some data")
+        subprocess.check_output(
+            ["git", "add", "submodule.txt"]
+        )  # nosec - unit test support.
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "commit", "submodule.txt", "-m", "First commit"],
+            env={
+                "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:36 CEST 2014",
+                "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:36 CEST 2014",
+                "GIT_AUTHOR_NAME": "Foo Bar",
+                "GIT_AUTHOR_EMAIL": "foo@example.com",
+                "GIT_COMMITTER_NAME": "Foo Bar",
+                "GIT_COMMITTER_EMAIL": "foo@example.com",
+            },
+        )
+        os.chdir(tmp_path)
+
+        # allow to clone submodules with file protocol
+        subprocess.check_output(
+            ["git", "config", "--global", "protocol.file.allow", "always"]
+        )  # nosec - unit test support.
         # Create a Git repository with two commits
         subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
         os.chdir("git")
@@ -54,6 +84,27 @@ def setup(tmp_path):
         )  # nosec - unit test support.
         subprocess.check_output(  # nosec - unit test support.
             ["git", "commit", "second.txt", "-m", "Second commit"],
+            env={
+                "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:38 CEST 2014",
+                "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:38 CEST 2014",
+                "GIT_AUTHOR_NAME": "Foo Bar",
+                "GIT_AUTHOR_EMAIL": "foo@example.com",
+                "GIT_COMMITTER_NAME": "Foo Bar",
+                "GIT_COMMITTER_EMAIL": "foo@example.com",
+            },
+        )
+        subprocess.check_output(  # nosec - unit test support.
+            [
+                "git",
+                "submodule",
+                "add",
+                "--name",
+                "subrepo",
+                "../submodule",
+            ]
+        )
+        subprocess.check_output(  # nosec - unit test support.
+            ["git", "commit", "-m", "Submodule commit"],
             env={
                 "GIT_COMMITTER_DATE": "Fri Oct 24 14:40:38 CEST 2014",
                 "GIT_AUTHOR_DATE": "Fri Oct 24 14:40:38 CEST 2014",
@@ -99,16 +150,25 @@ def setup(tmp_path):
 
 def test_simple_clone(setup):
     git = vcs.GitHelper("git")
-    assert git.clone("git.clone1") == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
-    assert git.clone("git.clone2") == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
-    assert git.clone("git.clone3") == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
+    assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
+    assert git.clone("git.clone2") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
+    assert git.clone("git.clone3") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
+
+
+def test_clone_submodule(setup, tmp_path):
+    git = vcs.GitHelper("git")
+    assert (
+        git.clone("git.clone1", recursive=True)
+        == "fc4a64b4403f8741641b1eada653bc4d63c77179"
+    )
+    assert (tmp_path / "git.clone1" / "submodule" / "submodule.txt").exists()
 
 
 def test_clone_at_head(setup):
     git = vcs.GitHelper("git")
     assert (
-        git.clone("git.clone1", revision="a7af835862da0e0592eeeac901b90e8de2cf5b67")
-        == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
+        git.clone("git.clone1", revision="fc4a64b4403f8741641b1eada653bc4d63c77179")
+        == "fc4a64b4403f8741641b1eada653bc4d63c77179"
     )
 
 
@@ -133,8 +193,8 @@ def test_non_existing_git(setup, mocker):
 
 def test_existing_destination(setup):
     git = vcs.GitHelper("git")
-    assert git.clone("git.clone1") == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
-    assert git.clone("git.clone1") == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
+    assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
+    assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
 
 
 def test_invalid_commit(setup, mocker):
@@ -146,9 +206,10 @@ def test_invalid_commit(setup, mocker):
 
 def test_branch(setup, tmp_path):
     git = vcs.GitHelper("git")
+
     assert (
         git.clone("git.clone1", branch="testing")
-        == "f2589a1b7f0cfc30ad6303433ba4d5db1a542c2d"
+        == "778f7fdd95dec665e593541706f2fc5817910f3f"
     )
     assert (tmp_path / "git.clone1" / ".git").exists()
 
@@ -157,7 +218,7 @@ def test_no_history(setup, tmp_path):
     git = vcs.GitHelper("git")
     assert (
         git.clone("git.clone1", history=False)
-        == "a7af835862da0e0592eeeac901b90e8de2cf5b67"
+        == "fc4a64b4403f8741641b1eada653bc4d63c77179"
     )
     assert not (tmp_path / "git.clone1" / ".git").exists()
 

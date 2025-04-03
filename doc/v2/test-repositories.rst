@@ -124,6 +124,30 @@ will fail.
           shallow: False
 
 
+Using submodules
+****************
+
+It is possible to use submodules in the tests repository.
+This may be useful when sharing a part of the repository (like common library)
+with other test repositories. By default submodule cloning is disabled.
+To enable is ``recursive`` keyword should be added.
+It will result in ``--recurse-submodules`` added to the ``git clone`` command.
+
+.. code-block:: yaml
+
+ - test:
+    failure_retry: 3
+    timeout:
+      minutes: 10
+    name: kvm-basic-singlenode
+    definitions:
+        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+          from: git
+          path: lava-test-shell/single-node/singlenode03.yaml
+          name: singlenode-advanced
+          recursive: true
+
+
 Removing git history
 ********************
 

@@ -17,7 +17,15 @@ class VCSHelper:
     def __init__(self, url):
         self.url = url
 
-    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
+    def clone(
+        self,
+        dest_path,
+        shallow=None,
+        revision=None,
+        branch=None,
+        history=None,
+        recursive=None,
+    ):
         raise NotImplementedError
 
 
@@ -38,7 +46,15 @@ class GitHelper(VCSHelper):
         self.binary = "/usr/bin/git"
 
     @retry(exception=InfrastructureError, retries=6, delay=5)
-    def clone(self, dest_path, shallow=False, revision=None, branch=None, history=True):
+    def clone(
+        self,
+        dest_path,
+        shallow=False,
+        revision=None,
+        branch=None,
+        history=True,
+        recursive=False,
+    ):
         logger = logging.getLogger("dispatcher")
 
         # Clear the data
@@ -47,6 +63,8 @@ class GitHelper(VCSHelper):
 
         try:
             cmd_args = [self.binary, "clone"]
+            if recursive:
+                cmd_args.append("--recurse-submodules")
             if branch is not None:
                 cmd_args.extend(["-b", branch])
             if shallow:
@@ -120,5 +138,13 @@ class URLHelper(VCSHelper):
         super().__init__(url)
         self.binary = None
 
-    def clone(self, dest_path, shallow=None, revision=None, branch=None, history=None):
+    def clone(
+        self,
+        dest_path,
+        shallow=None,
+        revision=None,
+        branch=None,
+        history=None,
+        recursive=None,
+    ):
         raise NotImplementedError

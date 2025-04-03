@@ -289,12 +289,16 @@ class GitRepoAction(RepoAction):
         if not revision:
             shallow = self.parameters.get("shallow", True)
 
+        # clone submodules if recursive is set
+        recursive = self.parameters.get("recursive", False)
+
         commit_id = self.vcs.clone(
             runner_path,
             shallow=shallow,
             revision=revision,
             branch=branch,
             history=self.parameters.get("history", True),
+            recursive=recursive,
         )
         if commit_id is None:
             raise InfrastructureError(
