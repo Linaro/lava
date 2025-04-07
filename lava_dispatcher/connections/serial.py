@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.logical import RetryAction
@@ -44,11 +44,10 @@ class ConnectDevice(Action):
         self.tag_dict = {}
 
     def _check_command(self):
-        exe = ""
         try:
             exe = self.command.split(" ")[0]
         except AttributeError:
-            self.errors = "Unable to parse the connection command %s" % self.command
+            raise ConfigurationError("Invalid connection command: should be a string")
         which(exe)
 
     def validate(self):
