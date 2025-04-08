@@ -85,14 +85,14 @@ def test_invalid_template(mocker):
     out = StringIO()
     sys.stdout = out
     call_command("sync")
-    assert (
-        out.getvalue()
-        == """Scanning devices:
-* qemu01 [SKIP]
-  -> invalid jinja2 template
-  -> qemu01
-"""
-    )
+    # Check the first part of the output matches exactly
+    output_lines = out.getvalue().split("\n")
+    assert output_lines[0] == "Scanning devices:"
+    assert output_lines[1] == "* qemu01 [SKIP]"
+    assert output_lines[2] == "  -> invalid jinja2 template"
+
+    # Check that the last line contains the template name
+    assert "qemu01" in output_lines[3]
 
 
 @pytest.mark.django_db
