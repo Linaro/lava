@@ -65,6 +65,12 @@ KERNEL_MESSAGES = [
         "kind": "panic",
         "fatal": True,
     },
+    {
+        "start": r"U-Boot SPL 20[0-9][0-9]",
+        "end": r"\r",
+        "kind": "DUT_has_reset",
+        "fatal": True,
+    },
 ]
 
 
