@@ -18,6 +18,7 @@ def schema():
         Optional(
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
+        Optional("reset"): bool,
         Optional("use_bootscript"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
