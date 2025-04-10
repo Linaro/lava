@@ -4,7 +4,7 @@
 {% set baud_rate = baud_rate | default(115200) %}
 {% set kernel_args = [base_kernel_args, extra_kernel_args] | join(" ") %}
 
-{% set base_depthcharge_commands = depthcharge_tftp_commands | default(
+{% set base_depthcharge_tftp_commands = depthcharge_tftp_commands | default(
 "          - tftpboot {SERVER_IP} {DEPTHCHARGE_KERNEL} {CMDLINE} {DEPTHCHARGE_RAMDISK}
 ") -%}
 
@@ -41,15 +41,15 @@ actions:
         nfs:
           cmdline: {{ kernel_args }} console={{ console_device }},{{ baud_rate }}n8 root=/dev/nfs rw {{ base_nfsroot_args }} {{ base_ip_args }}
           commands:
-{{ base_depthcharge_commands }}
+{{ base_depthcharge_tftp_commands }}
         ramdisk:
           cmdline: {{ kernel_args }} console={{ console_device }},{{ baud_rate }}n8 root=/dev/ram0 {{ base_ip_args }}
           commands:
-{{ base_depthcharge_commands }}
+{{ base_depthcharge_tftp_commands }}
         emmc:
           cmdline: console={{ console_device }},{{ baud_rate }}n8 {{ base_ip_args }} {{ kernel_args }}
           commands:
-{{ base_depthcharge_commands }}
+{{ base_depthcharge_tftp_commands }}
   test:
     methods:
       docker:
