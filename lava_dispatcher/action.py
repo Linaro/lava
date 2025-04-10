@@ -364,7 +364,7 @@ class Action:
         data comes from the parameters. Actions with
         internal pipelines push parameters to actions
         within those pipelines. Parameters are to be
-        treated as inmutable.
+        treated as immutable.
         """
         # The level of this action within the pipeline. Levels start at one and
         # each pipeline within an command uses a level within the level of the

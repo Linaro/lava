@@ -476,7 +476,7 @@ currently boots and exactly how new files are deployed to the device.
 Do not resort to :ref:`simplistic testing
 <simplistic_testing_problems>`.
 
-.. caution:: Do not be tempted to re-use the existing support for
+.. caution:: Do not be tempted to reuse the existing support for
   something which is not actually using that support. Just because
   your custom system looks like U-Boot or fastboot does **not**
   mean you should mangle the existing support to fit. If you need

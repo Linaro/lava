@@ -149,7 +149,7 @@ deployed image has been built:
 
     {% set sata_label = 'ST500DM002' %}
 
-   If all devices of another device-type have SanDisk Cruzer Blade USB sticks
+   If all devices of another device-type have SanDisk Cruiser Blade USB sticks
    as secondary media, the ``usb_label`` could be usefully set as:
 
    .. code-block:: jinja

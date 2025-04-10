@@ -305,7 +305,7 @@ pass to :term:`VLANd`.
 Test writers do not provide explicit switch/port instructions; the test job
 simply defines the type of device to use, the interfaces to use and any device
 tags required. LAVA then assembles this into a series of instructions to VLANd.
-This allows test jobs to be re-used without regard to whether the lab admins
+This allows test jobs to be reused without regard to whether the lab admins
 have had to change the physical topology of the network, as long as the same
 services remain available.
 

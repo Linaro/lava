@@ -719,7 +719,7 @@ ok 2 bar
         msg = json.loads(response.content)
         assert (
             msg["message"]
-            == "Test defnition invalid: required key not provided @ data['metadata']['name']"
+            == "Test definition invalid: required key not provided @ data['metadata']['name']"
         )
 
     def test_testjob_validate_testdef_wrong_key_type(self):
@@ -738,7 +738,7 @@ ok 2 bar
         msg = json.loads(response.content)
         assert (
             msg["message"]
-            == "Test defnition invalid: expected dict for dictionary value @ data['parameters']"
+            == "Test definition invalid: expected dict for dictionary value @ data['parameters']"
         )
 
     def test_testjobs_filters(self):

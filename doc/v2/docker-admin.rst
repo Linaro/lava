@@ -302,7 +302,7 @@ see :ref:`two_dockers_together`.
     2018-10-03 15:08:32,852    INFO [INIT] Using protocol version 3
 
 If you make mistakes, set the worker to Retired in the Django admin
-interface and use ``docker rm <name>`` to allow you to re-use the same
+interface and use ``docker rm <name>`` to allow you to reuse the same
 container with different arguments next time.
 
 lava-server

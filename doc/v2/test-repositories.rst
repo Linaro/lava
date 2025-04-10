@@ -165,7 +165,7 @@ address of the repository to clone
           - cd lt_ti_lava
           - echo "now in the git cloned directory"
 
-This allows a collection of LAVA test definitions to re-use other YAML custom
+This allows a collection of LAVA test definitions to reuse other YAML custom
 scripts without duplication. The tests inside the other repository will **not**
 be executed.
 
