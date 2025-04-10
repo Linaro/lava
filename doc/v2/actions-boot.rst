@@ -1564,7 +1564,7 @@ If you also want to enable ``remote uuu`` feature, in which situation your devic
 
 * ``uuu_remote_options`` : This let docker client remotely operate an uuu docker container on a remote machine.
 
-You could follow https://docs.docker.com/engine/install/linux-postinstall/#configure-where-the-docker-daemon-listens-for-connections to configure remote docker support.
+You could follow https://docs.docker.com/engine/daemon/remote-access/ to configure remote docker support.
 
 You could follow https://docs.docker.com/engine/security/https/ to protect the docker daemon socket if you are also care about security.
 
