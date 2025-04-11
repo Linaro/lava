@@ -11,7 +11,7 @@ import shutil
 import stat
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pexpect
 
@@ -542,3 +542,230 @@ test3a: skip
         self.assertEqual(
             "oe", fastboot_installscript.parameters["deployment_data"]["distro"]
         )
+
+
+class TestRunScript(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+
+        self.action = TestRunnerAction(self.job)
+        self.action.section = "test"
+        # Set by TestDefinitionAction to: JobID_RepoActionPipelineLevel
+        self.action.test_uuid = "1_1.1.4.5"
+        # TestDefinitionAction populate the below pipeline for each testdef:
+        # UrlRepoAction->TestOverlayAction->TestInstallAction->TestRunnerAction
+        self.action.level = "1.1.4.8"
+
+        self.action.parameters = {
+            "name": "test1",
+            "path": "test1.yaml",
+            "from": "git",
+            "repository": "http://example.com/repo.git",
+            # populated by TestDefinitionAction.
+            "test_name": "1_test1",
+        }
+
+        self.testdef = {
+            "parameters": {"key1": "value1"},
+            "run": {"steps": ["step1", "step2"]},
+        }
+
+    def test_validate(self):
+        with patch(
+            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+            side_effect=[["test0", "test1"], None],
+        ):
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
+            ) as mock_set_testdef_levels:
+                self.action.validate()
+                mock_set_testdef_levels.assert_called_once_with(
+                    action="test-runscript-overlay",
+                    key="testdef_levels",
+                    label="test-runscript-overlay",
+                    value={"1.1.4.8": "1_test1"},
+                )
+                self.assertTrue(self.action.valid)
+
+    def test_validate_unique_names(self):
+        with patch(
+            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+            side_effect=[["test1", "test1"], None],
+        ):
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
+            ):
+                self.action.validate()
+                self.assertFalse(self.action.valid)
+                self.assertIn(
+                    "Test definition names need to be unique.", self.action.errors
+                )
+
+    def test_validate_update_testdef_levels(self):
+        with patch(
+            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+            side_effect=[["test0", "test1"], {"1.1.4.4": "0_test0"}],
+        ):
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
+            ) as mock_set_testdef_levels:
+                self.action.validate()
+                mock_set_testdef_levels.assert_called_once_with(
+                    action="test-runscript-overlay",
+                    key="testdef_levels",
+                    label="test-runscript-overlay",
+                    value={"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
+                )
+                self.assertTrue(self.action.valid)
+
+    @patch(
+        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+        side_effect=[
+            "/overlay/runner/path",
+            {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
+            "/lava-1/1/tests/1_test1",
+        ],
+    )
+    @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
+    def test_run(
+        self,
+        mock_super_run,
+        mock_get_ns_data,
+    ):
+        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.yaml_safe_load",
+                return_value=self.testdef,
+            ):
+                self.action.run(None, None)
+
+                mock_file().write.assert_has_calls(
+                    [
+                        call("###default parameters from test definition###\n"),
+                        call("key1='value1'\n"),
+                        call("######\n"),
+                        call("###test parameters from job submission###\n"),
+                        call("######\n"),
+                        call("set -e\n"),
+                        call("set -x\n"),
+                        call("export TESTRUN_ID=1_test1\n"),
+                        call("cd /lava-1/1/tests/1_test1\n"),
+                        call("UUID=`cat uuid`\n"),
+                        call("set +x\n"),
+                        call('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n'),
+                        call("set -x\n"),
+                        call("step1\n"),
+                        call("step2\n"),
+                        call("set +x\n"),
+                        call('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n'),
+                    ]
+                )
+
+                self.assertEqual(self.action.results["uuid"], "1_1.1.4.5")
+                self.assertEqual(self.action.results["name"], "test1")
+                self.assertEqual(self.action.results["path"], "test1.yaml")
+                self.assertEqual(self.action.results["from"], "git")
+                self.assertEqual(
+                    self.action.results["repository"],
+                    "http://example.com/repo.git",
+                )
+
+    @patch(
+        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+        side_effect=[
+            "/overlay/runner/path",
+            {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
+            "/lava-1/1/tests/1_test1",
+        ],
+    )
+    @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
+    def test_run_kmsg_signal(
+        self,
+        mock_super_run,
+        mock_get_ns_data,
+    ):
+        self.action.parameters["lava-signal"] = "kmsg"
+
+        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.yaml_safe_load",
+                return_value=self.testdef,
+            ):
+                self.action.run(None, None)
+
+                mock_file().write.assert_has_calls(
+                    [
+                        call("###default parameters from test definition###\n"),
+                        call("key1='value1'\n"),
+                        call("######\n"),
+                        call("###test parameters from job submission###\n"),
+                        call("######\n"),
+                        call("set -e\n"),
+                        call("set -x\n"),
+                        call("export TESTRUN_ID=1_test1\n"),
+                        call("cd /lava-1/1/tests/1_test1\n"),
+                        call("UUID=`cat uuid`\n"),
+                        call("set +x\n"),
+                        call("export KMSG=true\n"),
+                        call(
+                            'echo "<0><LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'
+                        ),
+                        call("set -x\n"),
+                        call("step1\n"),
+                        call("step2\n"),
+                        call("set +x\n"),
+                        call("unset KMSG\n"),
+                        call(
+                            'echo "<0><LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'
+                        ),
+                    ]
+                )
+
+    @patch(
+        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
+        side_effect=[
+            "/overlay/runner/path",
+            {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
+            "/lava-1/1/tests/1_test1",
+        ],
+    )
+    @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
+    def test_run_character_delay(
+        self,
+        mock_super_run,
+        mock_get_ns_data,
+    ):
+        self.action.parameters["needs_character_delay"] = True
+        self.job.device["character_delays"] = {"test": "10"}
+
+        with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
+            with patch(
+                "lava_dispatcher.actions.deploy.testdef.yaml_safe_load",
+                return_value=self.testdef,
+            ):
+                self.action.run(None, None)
+
+                mock_file().write.assert_has_calls(
+                    [
+                        call("###default parameters from test definition###\n"),
+                        call("key1='value1'\n"),
+                        call("######\n"),
+                        call("###test parameters from job submission###\n"),
+                        call("######\n"),
+                        call("set -e\n"),
+                        call("set -x\n"),
+                        call("export TESTRUN_ID=1_test1\n"),
+                        call("cd /lava-1/1/tests/1_test1\n"),
+                        call("UUID=`cat uuid`\n"),
+                        call("set +x\n"),
+                        call("export CHARACTER_DELAY=0.01\n"),
+                        call("sleep 0.01\n"),
+                        call('echo "<LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>"\n'),
+                        call("set -x\n"),
+                        call("step1\n"),
+                        call("step2\n"),
+                        call("set +x\n"),
+                        call("sleep 0.01\n"),
+                        call('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n'),
+                    ]
+                )

@@ -33,7 +33,11 @@ def identify_test_definitions(test_info, namespace):
     test_list = []
     for test in test_info.get(namespace, []):
         if "definitions" in test["parameters"]:
-            test_list.append(test["parameters"]["definitions"])
+            testdefs = test["parameters"]["definitions"]
+            needs_delay = test["class"].needs_character_delay(test["parameters"])
+            for testdef in testdefs:
+                testdef["needs_character_delay"] = needs_delay
+            test_list.append(testdefs)
     return test_list
 
 
@@ -1031,6 +1035,15 @@ class TestRunnerAction(TestOverlayAction):
             )
             runsh.write("UUID=`cat uuid`\n")
             runsh.write("set +x\n")
+            needs_delay = self.parameters.get("needs_character_delay")
+            delay = self.job.device.get("character_delays", {}).get("test", 0)
+            if needs_delay and delay:
+                self.logger.debug(
+                    f"A delay of {delay} milliseconds will be used for sending result signals"
+                )
+                delay = float(delay) / 1000
+                runsh.write(f"export CHARACTER_DELAY={delay}\n")
+                runsh.write(f"sleep {delay}\n")
             if lava_signal == "kmsg":
                 runsh.write("export KMSG=true\n")
                 runsh.write(
@@ -1046,6 +1059,8 @@ class TestRunnerAction(TestOverlayAction):
                         cmd = re.sub(r"\$(\d+)\b", r"\\$\1", cmd)
                     runsh.write("%s\n" % cmd)
             runsh.write("set +x\n")
+            if needs_delay and delay:
+                runsh.write(f"sleep {delay}\n")
             if lava_signal == "kmsg":
                 runsh.write("unset KMSG\n")
                 runsh.write(
