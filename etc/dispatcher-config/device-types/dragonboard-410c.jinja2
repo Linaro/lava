@@ -5,3 +5,6 @@
 {% set flash_cmds_order = flash_cmds_order|default(['update', 'ptable', 'partition', 'hyp', 'modem',
 'rpm', 'sbl1', 'sbl2', 'sec', 'tz', 'aboot', 'cdt', 'boot', 'rootfs', 'vendor',
 'system', 'cache', 'userdata']) %}
+
+{% set boot_character_delay = boot_character_delay|default(10) %}
+{% set test_character_delay = test_character_delay|default(10) %}
