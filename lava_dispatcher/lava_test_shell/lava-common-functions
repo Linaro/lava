@@ -1,5 +1,9 @@
 signal ()
 {
+  if [ -n "${CHARACTER_DELAY}" ]
+  then
+    sleep "${CHARACTER_DELAY}"
+  fi
   if [ -z ${KMSG} ]
   then
     echo "${1}"
