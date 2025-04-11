@@ -43,6 +43,12 @@ class LavaTestStrategy(BaseStrategy):
     def has_shell(cls, parameters) -> bool:
         raise NotImplementedError(f"has_shell() not implemented in {cls.__name__}")
 
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
+        raise NotImplementedError(
+            f"needs_character_delay() not implemented in {cls.__name__}"
+        )
+
 
 class DockerTest(LavaTestStrategy):
     """
@@ -75,6 +81,10 @@ class DockerTest(LavaTestStrategy):
     @classmethod
     def has_shell(cls, parameters) -> bool:
         return True
+
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
+        return False
 
 
 @nottest
@@ -114,6 +124,10 @@ class TestInteractive(LavaTestStrategy):
     def has_shell(cls, parameters) -> bool:
         return False
 
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
+        return False
+
 
 @nottest
 class TestMonitor(LavaTestStrategy):
@@ -149,6 +163,10 @@ class TestMonitor(LavaTestStrategy):
 
     @classmethod
     def has_shell(cls, parameters) -> bool:
+        return False
+
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
         return False
 
 
@@ -196,6 +214,8 @@ class MultinodeTestShell(LavaTestStrategy):
             return TestMonitor
         if "interactive" in parameters:
             return TestInteractive
+        if "docker" in parameters:
+            return DockerTest
         return TestShell
 
     @classmethod
@@ -210,6 +230,10 @@ class MultinodeTestShell(LavaTestStrategy):
     @classmethod
     def has_shell(cls, parameters) -> bool:
         return cls._get_subaction_class(parameters).has_shell(parameters)
+
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
+        return cls._get_subaction_class(parameters).needs_character_delay(parameters)
 
 
 class TestShell(LavaTestStrategy):
@@ -240,4 +264,8 @@ class TestShell(LavaTestStrategy):
 
     @classmethod
     def has_shell(cls, parameters):
+        return True
+
+    @classmethod
+    def needs_character_delay(cls, parameters) -> bool:
         return True
