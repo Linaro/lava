@@ -124,6 +124,9 @@ sast:
 
 codespell:
   <<: *analyze
+  variables:
+    GIT_DEPTH: 150
+    GIT_FETCH_EXTRA_FLAGS: "--quiet --prune $CI_DEFAULT_BRANCH"
 
 #########
 # Build #
