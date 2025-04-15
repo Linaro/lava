@@ -124,9 +124,12 @@ sast:
 
 codespell:
   <<: *analyze
-  variables:
-    GIT_DEPTH: 150
-    GIT_FETCH_EXTRA_FLAGS: "--quiet --prune $CI_DEFAULT_BRANCH"
+
+codespell_commits:
+  <<: *analyze
+  except:  # Nullify except
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
 
 #########
 # Build #
