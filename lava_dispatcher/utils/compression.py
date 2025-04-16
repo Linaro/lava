@@ -9,6 +9,7 @@
 # rootfs, always tar, comp: gz,xz,bzip2
 # android images: tar + xz,bz2,gz, or just gz,xz,bzip2
 # vexpress recovery images: any compression though usually zip
+from __future__ import annotations
 
 import os
 import subprocess  # nosec - internal use.
@@ -35,22 +36,29 @@ decompress_command_map = {
 }
 
 
-def compress_file(infile, compression):
+def compress_file(infile: str, compression: str) -> str:
     if not compression:
         return infile
     if compression not in compress_command_map.keys():
         raise JobError("Cannot find shell command to compress: %s" % compression)
 
+    # Assume infile is an absolute path
+    out_file_path = f"{infile}.{compression}"
+
     # Check that the command does exists
     which(compress_command_map[compression][0])
+    # local copy for idempotency
+    cmd = compress_command_map[compression][:]
 
-    with chdir(os.path.dirname(infile)):
-        # local copy for idempotency
-        cmd = compress_command_map[compression][:]
-        cmd.append(infile)
+    with open(infile, mode="rb") as in_file, open(out_file_path, mode="wb") as out_file:
         try:
-            subprocess.check_output(cmd)  # nosec - internal use.
-            return "%s.%s" % (infile, compression)
+            subprocess.run(
+                args=cmd,
+                stdin=in_file,
+                stdout=out_file,
+                check=True,
+            )
+            return out_file_path
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError("unable to compress file %s: %s" % (infile, exc))
 

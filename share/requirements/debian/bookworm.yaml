@@ -189,6 +189,18 @@ lava-dispatcher:
   pytest-random-order:
     name: python3-pytest-random-order
     unittests: true
+  zstd:  # Compression tests
+    name: zstd
+    unittests: true
+  xz:  # Compression tests
+    name: xz-utils
+    unittests: true
+  gz:  # Compression tests
+    name: gzip
+    unittests: true
+  bz2:  # Compression tests
+    name: bzip2
+    unittests: true
 
 lava-common:
   PyYAML:
