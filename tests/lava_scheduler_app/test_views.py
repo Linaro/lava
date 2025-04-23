@@ -1371,10 +1371,10 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     LOGS = """- {"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}
 - {"dt": "2023-06-01T05:24:00.060872", "lvl": "info", "msg": "start: 0 validate"}
 - {"dt": "2023-06-01T05:24:00.061082", "lvl": "info", "msg": "Start time: 2023-06-01 05:24:00.061063+00:00 (UTC)"}
-- {"dt": "2023-06-01T05:24:00.061300", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/bl1.bin exists"}
-- {"dt": "2023-06-01T05:24:00.435983", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/el3_payload.bin exists"}
-- {"dt": "2023-06-01T05:24:00.448713", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/fip.bin exists"}
-- {"dt": "2023-06-01T05:24:00.460928", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/ns_bl1u.bin exists"}
+- {"dt": "2023-06-01T05:24:00.061300", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/bl1.bin exists"}
+- {"dt": "2023-06-01T05:24:00.435983", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/el3_payload.bin exists"}
+- {"dt": "2023-06-01T05:24:00.448713", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/fip.bin exists"}
+- {"dt": "2023-06-01T05:24:00.460928", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/ns_bl1u.bin exists"}
 - {"dt": "2023-06-01T05:24:00.472695", "lvl": "info", "msg": "validate duration: 0.41"}
 - {"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
 - {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}

@@ -5,7 +5,7 @@ method specified in the job definition.
 
 ## Artifacts
 
-In the deploy action, the following parameters are available for artefacts
+In the deploy action, the following parameters are available for artifacts
 downloads:
 
 * archive
@@ -75,14 +75,14 @@ For http(s) artifacts, you can provide additional headers:
           my-header1: value
 ```
 
-### Protocole
+### Protocols
 
 When downloading an artifact, LAVA supports the following protocols: `http`,
 `https`, `file` and `lxc`.
 
 ## Overlays
 
-LAVA can apply a set of overlays to every artefacts. The configuration should
+LAVA can apply a set of overlays to every artifact. The configuration should
 look like:
 
 ```yaml
@@ -103,13 +103,13 @@ look like:
 
 You should provide:
 
-* `format`: the format of the artefact to update (`cpio.newc`, `ext4` or `tar`)
+* `format`: the format of the artifact to update (`cpio.newc`, `ext4` or `tar`)
 * `overlays`: a dictionary of overlays to insert
 
 You can also provide:
 
 * `partition`: to update a given partition (for `ext4` with multiple partitions)
-* `sparse`: set to `true` if the artefact is a sparse image 
+* `sparse`: set to `true` if the artifact is a sparse image
 
 ### LAVA overlay
 
@@ -118,7 +118,7 @@ helpers), use `lava: true` as overlay.
 
 ### Overlays
 
-You can insert a tar archive or a file in the artefact. You should provide:
+You can insert a tar archive or a file in the artifact. You should provide:
 
 * `format`: the format of the overlay (`file` or `tar`).
-* `path`: the path in the artefact
+* `path`: the path in the artifact

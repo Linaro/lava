@@ -35,12 +35,12 @@ actions:
 ```
 
 The post-processing `steps` are ran inside the provided docker container. The
-artefacts will be in sub-directories of the working directory. The name of
+artifacts will be in sub-directories of the working directory. The name of
 the sub-directories are the keys of the `images` dictionary (`rootfs` in the
 example).
 
-!!! info "Using the artefacts"
-    In subsequent deploy actions, you can use the artefacts created by the
+!!! info "Using the artifacts"
+    In subsequent deploy actions, you can use the artifacts created by the
     postprocessing step with `downloads://sid-modified.img`.
 
 ### LAVA overlay
