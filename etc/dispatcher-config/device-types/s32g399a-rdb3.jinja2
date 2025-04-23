@@ -11,3 +11,5 @@
 {% set console_device = 'ttyLF0' %}
 {% set baud_rate = baud_rate | default('115200') %}
 {% set extra_kernel_args = " earlycon " + extra_kernel_args|default('') %}
+
+{% set uboot_ipaddr_cmd = 'sleep 1; dhcp; if test $? -ne 0; then setenv ethact ethernet@4033c000; sleep 1; dhcp; fi;' %}
