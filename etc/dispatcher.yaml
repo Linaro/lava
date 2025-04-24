@@ -4,6 +4,9 @@
 # as shown in the lava-server logs, and create the file in
 # /etc/lava-server/dispatcher.d on the *server*.
 
+# Dispatcher tmp directory
+#dispatcher_download_dir: /var/lib/lava/dispatcher/tmp
+
 # Only set this key, if this dispatcher has many IPs
 #dispatcher_ip: <this-dispatcher-ip>
 
