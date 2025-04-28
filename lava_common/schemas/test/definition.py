@@ -41,6 +41,7 @@ def schema():
                     Optional("compression"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
+                    Optional("headers"): dict,
                     **common,
                 },
                 {

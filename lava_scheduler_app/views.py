@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -15,6 +16,7 @@ import re
 import tarfile
 from json import dumps as json_dumps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import voluptuous
 import yaml
@@ -126,6 +128,9 @@ from lava_server.dbutils import YamlField, annotate_int_field_verbose
 from lava_server.files import File
 from lava_server.lavatable import LavaView
 from lava_server.views import index as lava_index
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def request_config(request, paginate):
@@ -1123,6 +1128,32 @@ def health_job_list(request, pk):
     )
 
 
+class InPlaceTokenUpdater:
+    def __init__(self, tokens: dict[str, str]):
+        self.tokens = tokens
+
+    def update_headers(self, data: list[dict[str, Any]] | dict[str, Any]) -> None:
+        if isinstance(data, list):
+            for item in data:
+                self.update_headers(item)
+        elif isinstance(data, dict):
+            # 'UrlRepoAction' adds 'url' as an alias to 'repository' for
+            # reusing the 'HttpDownloadAction'.
+            if "url" in data or (data.get("from") == "url" and "repository" in data):
+                if headers := data.get("headers"):
+                    if isinstance(headers, dict):
+                        for key, token_value in headers.items():
+                            if token_value in self.tokens:
+                                headers[key] = self.tokens[token_value]
+            for val in data.values():
+                self.update_headers(val)
+
+    def update_secrets(self, secrets: dict[str, str]) -> None:
+        for k, v in secrets.items():
+            if v in self.tokens.keys():
+                secrets[k] = self.tokens[v]
+
+
 @require_http_methods(["GET", "POST"])
 @csrf_exempt
 def internal_v1_jobs(request, pk):
@@ -1140,36 +1171,20 @@ def internal_v1_jobs(request, pk):
     if request.method == "GET":
         job_def = yaml_safe_load(job.definition)
 
-        tokens = {
+        if tokens := {
             x["name"]: x["token"]
             for x in RemoteArtifactsAuth.objects.filter(user=job.submitter).values(
                 "name", "token"
             )
-        }
+        }:
+            updater = InPlaceTokenUpdater(tokens)
+            if actions := job_def.get("actions"):
+                for action in actions:
+                    if "deploy" in action or "test" in action:
+                        updater.update_headers(action)
 
-        def update_token(headers_dict):
-            for key in headers_dict["headers"]:
-                token_name = headers_dict["headers"][key]
-                if token_name in tokens.keys():
-                    headers_dict["headers"][key] = tokens[token_name]
-
-        if "actions" in job_def:
-            for action in job_def["actions"]:
-                for k, v in action.items():
-                    if k == "deploy":
-                        for a, b in v.items():
-                            if isinstance(b, dict):
-                                if "url" in b and "headers" in b:
-                                    update_token(b)
-                                for i, j in b.items():
-                                    if isinstance(j, dict):
-                                        if "url" in j and "headers" in j:
-                                            update_token(j)
-
-        if "secrets" in job_def:
-            for k, v in job_def["secrets"].items():
-                if v in tokens.keys():
-                    job_def["secrets"][k] = tokens[v]
+            if secrets := job_def.get("secrets"):
+                updater.update_secrets(secrets)
 
         job_ctx = job_def.get("context", {})
 
