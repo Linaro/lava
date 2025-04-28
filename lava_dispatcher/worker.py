@@ -82,6 +82,21 @@ JOB_ASYNC_TASKS: set[asyncio.Task[None]] = set()
 ###########
 # Helpers #
 ###########
+def waitstatus_to_message(waitstatus: int | None) -> str:
+    if waitstatus is None:
+        return "unknown waitstatus"
+
+    try:
+        exit_status = os.waitstatus_to_exitcode(waitstatus)
+    except ValueError:
+        return f"could not convert waitstatus {waitstatus}"
+
+    if exit_status >= 0:
+        return f"exit code {exit_status}"
+    else:
+        return f"terminated by {Signals(-exit_status).name}"
+
+
 def create_environ(env: str) -> dict[str, str]:
     """
     Generate the env variables for the job.
@@ -524,26 +539,30 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
     for job in jobs.running():
         if not job.is_running():
             # wait for the job
+            waitstatus: int | None = None
             try:
-                os.waitpid(job.pid, os.WNOHANG)
+                _, waitstatus = os.waitpid(job.pid, os.WNOHANG)
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
                 )
-            LOG.info("[%d] running -> finished", job.job_id)
+            exit_message = waitstatus_to_message(waitstatus)
+            LOG.info("[%d] running -> finished, %s", job.job_id, exit_message)
             jobs.update(job.job_id, Job.FINISHED)
 
     # Loop on canceling jobs
     for job in jobs.canceling():
         if not job.is_running():
             # wait for the job
+            waitstatus: int | None = None
             try:
-                os.waitpid(job.pid, os.WNOHANG)
+                _, waitstatus = os.waitpid(job.pid, os.WNOHANG)
             except OSError as exc:
                 LOG.debug(
                     "[%d] unable to wait for the process: %s", job.job_id, str(exc)
                 )
-            LOG.info("[%d] canceling -> finished", job.job_id)
+            exit_message = waitstatus_to_message(waitstatus)
+            LOG.info("[%d] canceling -> finished, %s", job.job_id, exit_message)
             jobs.update(job.job_id, Job.FINISHED)
         elif (
             time.monotonic() - job.last_update > FINISH_MAX_DURATION
@@ -766,16 +785,15 @@ async def sigchild_handler_async(
         jobs_to_finish: list[Job] = []
         with contextlib.suppress(ChildProcessError):
             while (waitpid_tuple := os.waitpid(-1, os.WNOHANG)) != (0, 0):
-                pid, exit_code = waitpid_tuple
-                LOG.debug(
-                    "Collected PID %d with exit code %d from SIGCHLD", pid, exit_code
-                )
+                pid, waitstatus = waitpid_tuple
+                exit_message = waitstatus_to_message(waitstatus)
+                LOG.info("Collected PID %d from SIGCHLD, %s", pid, exit_message)
 
                 job = jobs.get_from_pid(pid)
                 if job is not None:
                     jobs_to_finish.append(job)
                 else:
-                    LOG.debug("Unknown PID collected %d from SIGCHLD", pid)
+                    LOG.info("Unknown PID collected %d from SIGCHLD", pid)
 
         results = await asyncio.gather(
             *(finish_job(session, url, job, jobs) for job in jobs_to_finish),

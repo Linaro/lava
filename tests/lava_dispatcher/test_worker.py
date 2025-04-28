@@ -3,13 +3,23 @@
 # Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from os import waitpid
+from subprocess import Popen
+from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lava_dispatcher.worker import Job, ServerUnavailable, VersionMismatch, get_job_data
+from lava_dispatcher.worker import (
+    Job,
+    ServerUnavailable,
+    VersionMismatch,
+    get_job_data,
+    waitstatus_to_message,
+)
 
 
 @pytest.fixture
@@ -121,3 +131,33 @@ async def test_get_job_data_version_mismatch_no_exit(mock_session, mock_options)
         data = await get_job_data(mock_session, mock_options)
 
         assert data == {}
+
+
+class TestLavaWorker(TestCase):
+    def test_waitstatus_to_message(self) -> None:
+        self.assertEqual(waitstatus_to_message(None), "unknown waitstatus")
+
+        true_process = Popen(["true"])
+        with true_process:
+            _, waitstatus = waitpid(true_process.pid, 0)
+            self.assertEqual(
+                waitstatus_to_message(waitstatus),
+                "exit code 0",
+            )
+
+        false_process = Popen(["false"])
+        with false_process:
+            _, waitstatus = waitpid(false_process.pid, 0)
+            self.assertEqual(
+                waitstatus_to_message(waitstatus),
+                "exit code 1",
+            )
+
+        sleep_process = Popen(["sleep", "20s"])
+        with sleep_process:
+            sleep_process.kill()
+            _, waitstatus = waitpid(sleep_process.pid, 0)
+            self.assertEqual(
+                waitstatus_to_message(waitstatus),
+                "terminated by SIGKILL",
+            )
