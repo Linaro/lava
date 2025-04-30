@@ -38,6 +38,7 @@ def parser():
         "--output-dir",
         required=True,
         metavar="DIR",
+        type=Path,
         help="Directory for temporary resources",
     )
     p_obj.add_argument(
@@ -67,21 +68,21 @@ def parser():
     group.add_argument(
         "--device",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         required=True,
         help="Device configuration",
     )
     group.add_argument(
         "--dispatcher",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         default=None,
         help="Dispatcher configuration",
     )
     group.add_argument(
         "--env-dut",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         default=None,
         help="DUT environment",
     )
@@ -99,7 +100,7 @@ def parser():
         help="Start remote pdb right before running the job, for debugging",
     )
 
-    p_obj.add_argument("definition", type=argparse.FileType("r"), help="job definition")
+    p_obj.add_argument("definition", type=Path, help="Job definition")
 
     return p_obj
 
@@ -137,14 +138,14 @@ def parse_job_file(logger, options):
     # Load the configuration files (this should *not* fail)
     env_dut = None
     if options.env_dut is not None:
-        env_dut = options.env_dut.read()
+        env_dut = options.env_dut.read_text(encoding="utf-8")
     dispatcher_config = None
     if options.dispatcher is not None:
-        dispatcher_config = options.dispatcher.read()
+        dispatcher_config = options.dispatcher.read_text(encoding="utf-8")
 
     # Generate the pipeline
     return parser.parse(
-        options.definition.read(),
+        options.definition.read_text(encoding="utf-8"),
         device,
         options.job_id,
         logger=logger,
@@ -210,7 +211,7 @@ def main():
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
         # Should be an absolute directory
-        options.output_dir = Path(options.output_dir).resolve()
+        options.output_dir = options.output_dir.resolve()
         # Create the output directory
         try:
             options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
