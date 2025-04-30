@@ -117,6 +117,7 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
         self.assertIn("echo HELLO WORLD\n", script_text)
         self.assertIn("export LAVA_JOB_ID=", script_text)
         self.assertIn("export LAVA_DISPATCHER_IP=", script_text)
+        self.assertIn("export LAVA_DISPATCHER_PREFIX=", script_text)
         self.assertNotIn("export HTTP_CACHE=", script_text)
 
         docker_run_mock.assert_called_with(

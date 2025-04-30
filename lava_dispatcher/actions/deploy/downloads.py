@@ -90,6 +90,9 @@ class PostprocessWithDocker(Action):
         environment["LAVA_DISPATCHER_IP"] = dispatcher_ip(
             self.job.parameters["dispatcher"]
         )
+        environment["LAVA_DISPATCHER_PREFIX"] = self.job.parameters.get(
+            "dispatcher", {}
+        ).get("prefix", "")
         for key, value in environment.items():
             script.append("export %s='%s'" % (key, value))
         if http_cache := self.job.parameters["dispatcher"].get(
