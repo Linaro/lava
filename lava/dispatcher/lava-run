@@ -17,11 +17,13 @@ from pathlib import Path
 
 from setproctitle import setproctitle
 
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import YAMLLogger
-from lava_common.yaml import yaml_safe_dump
+from lava_common.log import YAMLListFormatter, YAMLLogger
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
+from lava_dispatcher.worker import get_prefix
 
 
 def parser():
@@ -112,6 +114,17 @@ def setup_logger(options):
 
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger("dispatcher")
+    # Save logs to a file for debugging/post-processing.
+    prefix = ""
+    if options.dispatcher is not None:
+        prefix = get_prefix(
+            yaml_safe_load(options.dispatcher.read_text(encoding="utf-8"))
+        )
+    log_file = Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}/logs.yaml"
+    log_file.parent.mkdir(parents=True, exist_ok=True)
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setFormatter(YAMLListFormatter())
+    logger.addHandler(file_handler)
     if options.url is not None:
         logger.addHTTPHandler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
