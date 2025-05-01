@@ -90,10 +90,7 @@ class SecondaryConnections(TestCaseWithFactory):
                 # validate each job
                 del data["protocols"]["lava-multinode"]["sub_id"]
                 with open(os.path.join(path, "qemu-ssh-guest-1.yaml")) as f:
-                    self.assertEqual(
-                        data,
-                        yaml_safe_load(f),
-                    )
+                    self.assertEqual(data, yaml_safe_load(f))
                 self.assertIsNone(job.requested_device_type)
                 self.assertIsNone(job.actual_device)
                 host_role.append(data["host_role"])

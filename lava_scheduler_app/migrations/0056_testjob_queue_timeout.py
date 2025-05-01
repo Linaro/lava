@@ -10,9 +10,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("lava_scheduler_app", "0055_notificationcallback_header"),
-    ]
+    dependencies = [("lava_scheduler_app", "0055_notificationcallback_header")]
 
     operations = [
         migrations.AddField(
@@ -21,5 +19,5 @@ class Migration(migrations.Migration):
             field=models.BigIntegerField(
                 blank=True, editable=False, null=True, verbose_name="Queue timeout"
             ),
-        ),
+        )
     ]

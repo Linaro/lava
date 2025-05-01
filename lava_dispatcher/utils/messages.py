@@ -201,12 +201,7 @@ class LinuxKernelMessages:
                 if not auto_login and KERNEL_MESSAGES[index]["kind"] == "trace":
                     connection.sendline(connection.check_char)
 
-                results.append(
-                    {
-                        "kind": kind,
-                        "message": message,
-                    }
-                )
+                results.append({"kind": kind, "message": message})
                 if KERNEL_MESSAGES[index].get("fatal"):
                     break
                 else:

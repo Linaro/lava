@@ -501,10 +501,7 @@ class TestRestApi:
             f"{reverse('api-root', args=(self.version,))}"
             f"jobs/{self.public_testjob1.id}/csv/"
         )
-        data = self.hit(
-            self.userclient,
-            csv_url,
-        )
+        data = self.hit(self.userclient, csv_url)
         csv_data = csv.reader(data.splitlines())
         assert list(csv_data)[1][0] == str(
             self.public_testjob1.id

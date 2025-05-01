@@ -60,7 +60,7 @@ TEST_DATA: list[tuple[dict[str, Any], str, list[str]]] = [
         "STORAGE_INFO",
         [
             "export STORAGE_INFO_0_SATA=/dev/disk/by-id/"
-            "ata-SanDisk_SSD_PLUS_120GB_190504A00573",
+            "ata-SanDisk_SSD_PLUS_120GB_190504A00573"
         ],
     ),
     (

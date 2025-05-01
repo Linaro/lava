@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("lava_scheduler_app", "0059_increase_remoteartifactsauth_token_max_length"),
+        ("lava_scheduler_app", "0059_increase_remoteartifactsauth_token_max_length")
     ]
 
     operations = [

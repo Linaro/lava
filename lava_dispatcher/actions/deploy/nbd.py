@@ -177,11 +177,7 @@ class XnbdAction(Action):
                 self.logger.debug("NBD server will be running as %s" % ret.group(1))
                 shutil.chown(fullpath_nbdroot, user=ret.group(1))
 
-        nbd_cmd = [
-            "nbd-server",
-            "%s" % self.nbd_server_port,
-            fullpath_nbdroot,
-        ]
+        nbd_cmd = ["nbd-server", str(self.nbd_server_port), fullpath_nbdroot]
         command_output = self.run_command(nbd_cmd, allow_fail=False)
 
         if command_output and "error" in command_output:

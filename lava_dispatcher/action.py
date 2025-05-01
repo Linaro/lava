@@ -150,9 +150,7 @@ class Pipeline:
             )
         # 5. action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
-            action._override_action_timeout(
-                action_block_timeouts.get(action.name),
-            )
+            action._override_action_timeout(action_block_timeouts.get(action.name))
 
         action._override_connection_timeout(
             get_lastest_dict_value(global_timeouts, "connection")

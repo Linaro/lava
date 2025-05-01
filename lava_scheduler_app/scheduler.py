@@ -323,9 +323,7 @@ def schedule_jobs_for_device_type(dt, available_devices, workers_limit):
 
 def schedule_jobs_for_device(device, print_header):
     job_extra_tags_subquery = Exists(
-        Tag.objects.filter(
-            testjob=OuterRef("pk"),
-        ).exclude(pk__in=device.tags.all())
+        Tag.objects.filter(testjob=OuterRef("pk")).exclude(pk__in=device.tags.all())
     )
     jobs = (
         TestJob.objects.select_for_update()

@@ -288,7 +288,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
                         "decompressed": False,
                     },
                     "nfsrootfs.modules": {"file": str(tmp_dir_path / "modules.tar")},
-                },
+                }
             }
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))

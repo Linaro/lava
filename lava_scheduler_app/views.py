@@ -354,9 +354,7 @@ class JobErrorsView(LavaView):
                 health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED),
                 testsuite__name="lava",
             )
-            .annotate(
-                failure_metadata=metadata_subquery,
-            )
+            .annotate(failure_metadata=metadata_subquery)
             .filter(failure_metadata__isnull=False)
             .order_by("-end_time")
         )
@@ -722,7 +720,7 @@ class DeviceTypeOverView(JobTableView):
                 .annotate(queued_jobs=Count("*"))
                 .values("queued_jobs"),
                 output_field=IntegerField(),
-            ),
+            )
         )
 
 
@@ -956,10 +954,7 @@ def device_type_detail(request, pk):
             "pk",
             filter=Q(state__in=(Device.STATE_RUNNING, Device.STATE_RESERVED)),
         ),
-        retired_devices_count=Count(
-            "pk",
-            filter=Q(health=Device.HEALTH_RETIRED),
-        ),
+        retired_devices_count=Count("pk", filter=Q(health=Device.HEALTH_RETIRED)),
     )
 
     if device_statistics["available_devices_count"]:

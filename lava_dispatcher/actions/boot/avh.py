@@ -49,9 +49,7 @@ class CallAvhAction(Action):
     description = "call avh api"
     summary = "call avh api"
 
-    model_console_map = {
-        "kronos": "Primary Compute Non-Secure",
-    }
+    model_console_map = {"kronos": "Primary Compute Non-Secure"}
 
     def __init__(self, job: Job):
         super().__init__(job)

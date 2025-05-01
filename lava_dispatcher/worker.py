@@ -236,11 +236,7 @@ async def cleanup_job(prefix: str, job_id: int) -> None:
         if not dir_path.exists():
             continue
         LOG.debug("[%d] Removing %s", job_id, dir_path)
-        await loop.run_in_executor(
-            THREAD_EXECUTOR,
-            rmtree_job_dir,
-            str(dir_path),
-        )
+        await loop.run_in_executor(THREAD_EXECUTOR, rmtree_job_dir, str(dir_path))
 
     LOG.debug("[%d] Finished cleanup", job_id)
 
@@ -886,10 +882,7 @@ async def main() -> int:
 
             LOG.debug(f"LAVA worker pid is {os.getpid()}")
             for sig in (Signals.SIGINT, Signals.SIGTERM):
-                loop.add_signal_handler(
-                    sig,
-                    partial(ask_exit, sig.name, group),
-                )
+                loop.add_signal_handler(sig, partial(ask_exit, sig.name, group))
 
             loop.add_signal_handler(
                 Signals.SIGCHLD, partial(sigchld_handler, session, options.url, jobs)
