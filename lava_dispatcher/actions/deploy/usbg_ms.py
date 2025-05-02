@@ -54,9 +54,7 @@ class USBGMSAction(DownloadAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        image = self.get_namespace_data(
-            action="download-action", label="image", key="file"
-        )
+        image = self.state.downloads["image"].file
         self.run_cmd(self.disable, allow_fail=True)
         self.logger.info("Creating USB gadget MS for %s", image)
 

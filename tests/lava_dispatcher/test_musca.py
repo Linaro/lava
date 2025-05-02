@@ -41,12 +41,7 @@ class TestMusca(LavaDispatcherTestCase):
         flash_check_action = CheckMuscaFlashAction(self.job)
         flash_check_action.data = []
         flash_check_action.parameters = {"namespace": "test"}
-        flash_check_action.set_namespace_data(
-            action="mount-musca-usbmsd",
-            label="musca-usb",
-            key="mount-point",
-            value=self.tmp_path,
-        )
+        flash_check_action.state.musca.mount_point = self.tmp_path
         self.assertEqual(None, flash_check_action.run(None, None))
         with open(os.path.join(self.tmp_path, "FAIL.TXT"), "w") as fail_file:
             fail_file.write("failed to flash software")
@@ -60,12 +55,7 @@ class TestMusca(LavaDispatcherTestCase):
         )
         automation_action.data = []
         automation_action.parameters = {"namespace": "test"}
-        automation_action.set_namespace_data(
-            action="mount-musca-usbmsd",
-            label="musca-usb",
-            key="mount-point",
-            value=self.tmp_path,
-        )
+        automation_action.state.musca.mount_point = self.tmp_path
         expected_path = os.path.join(self.tmp_path, automation_filename)
         # Check no file exists currently
         self.assertFalse(os.path.exists(expected_path))

@@ -89,9 +89,7 @@ class LxcAddStaticDevices(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         # If there are no USB devices under static_info then this action should be idempotent.
         if not self.get_usb_devices():
             return connection
@@ -125,9 +123,7 @@ class LxcStartAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         lxc_cmd = ["lxc-start", "-n", lxc_name, "-d"]
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output != "":
@@ -170,9 +166,7 @@ class LxcStopAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         lxc_cmd = ["lxc-stop", "-k", "-n", lxc_name]
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output != "":

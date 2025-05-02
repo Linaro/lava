@@ -57,9 +57,7 @@ class CallDockerAction(Action):
 
         options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
 
-        docker_image = self.get_namespace_data(
-            action="deploy-docker", label="image", key="name"
-        )
+        docker_image = self.state.docker.image_name
         if docker_image is None:
             raise JobError("Missing deploy action before boot")
 
@@ -83,21 +81,15 @@ class CallDockerAction(Action):
             self.extra_options += " " + extra_argument
 
     def run(self, connection, max_end_time):
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        docker_image = self.get_namespace_data(
-            action="deploy-docker", label="image", key="name"
-        )
+        location = self.state.test.location
+        docker_image = self.state.docker.image_name
 
         # Build the command line
         # The docker image is safe to be included in the command line
         cmd = "docker" + self.remote + " run --rm --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         if self.test_needs_overlay(self.parameters):
-            overlay = self.get_namespace_data(
-                action="test", label="results", key="lava_test_results_dir"
-            )
+            overlay = self.state.test.lava_test_results_dir
             if not self.remote:
                 cmd += " --volume %s:%s" % (
                     os.path.join(location, overlay.strip("/")),
@@ -134,9 +126,7 @@ class CallDockerAction(Action):
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
         return shell_connection
 
     def cleanup(self, connection):

@@ -266,21 +266,15 @@ class ReadFeedback(Action):
 
     def run(self, connection, max_end_time):
         feedbacks = []
-        for feedback_ns in self.data.keys():
-            if feedback_ns == self.parameters.get("namespace"):
+        for feedback_name, feedback_ns_state in self.job.namespace_states.items():
+            if feedback_name == self.parameters.get("namespace"):
                 if not self.repeat:
                     continue
-            feedback_connection = self.get_namespace_data(
-                action="shared",
-                label="shared",
-                key="connection",
-                deepcopy=False,
-                parameters={"namespace": feedback_ns},
-            )
+            feedback_connection = feedback_ns_state.shared.connection
             if feedback_connection:
-                feedbacks.append((feedback_ns, feedback_connection))
+                feedbacks.append((feedback_name, feedback_connection))
             else:
-                self.logger.debug("No connection for namespace %s", feedback_ns)
+                self.logger.debug("No connection for namespace %s", feedback_name)
         for feedback in feedbacks:
             deadline = time.monotonic() + self.duration
             while True:

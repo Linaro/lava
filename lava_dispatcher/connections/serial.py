@@ -118,25 +118,17 @@ class ConnectDevice(Action):
 
     def run(self, connection, max_end_time):
         connection_namespace = self.parameters.get("connection-namespace")
-        parameters = None
         if connection_namespace:
-            parameters = {"namespace": connection_namespace}
+            using_namespace = connection_namespace
         else:
-            parameters = {"namespace": self.parameters.get("namespace", "common")}
-        connection = self.get_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            deepcopy=False,
-            parameters=parameters,
-        )
+            using_namespace = self.parameters.get("namespace", "common")
+
+        connection = self.job.namespace_states[using_namespace].shared.connection
         if connection:
             if connection.connected:
                 self.logger.debug("Already connected")
                 # Save the connection in the current namespace
-                self.set_namespace_data(
-                    action="shared", label="shared", key="connection", value=connection
-                )
+                self.state.shared.connection = connection
                 return connection
             else:
                 self.logger.warning("Dead connection, reconnecting")
@@ -151,7 +143,7 @@ class ConnectDevice(Action):
 
         self.logger.info(
             "[%s] %s %s '%s'",
-            parameters["namespace"],
+            using_namespace,
             self.name,
             self.message,
             self.command,
@@ -179,16 +171,9 @@ class ConnectDevice(Action):
                 self.job.device.get_constant("default-shell-prompt")
             ]
         if connection_namespace:
-            self.set_namespace_data(
-                action="shared",
-                label="shared",
-                key="connection",
-                value=connection,
-                parameters=parameters,
-            )
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+            self.job.namespace_states[using_namespace].shared.connection = connection
+
+        self.state.shared.connection = connection
         return connection
 
 
@@ -281,30 +266,18 @@ class DisconnectDevice(ConnectDevice):
 
     def run(self, connection, max_end_time):
         connection_namespace = self.parameters.get("connection-namespace")
-        parameters = None
         if connection_namespace:
-            parameters = {"namespace": connection_namespace}
+            using_namespace = connection_namespace
         else:
-            parameters = {"namespace": self.parameters.get("namespace", "common")}
-        connection = self.get_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            deepcopy=False,
-            parameters=parameters,
-        )
+            using_namespace = self.parameters.get("namespace", "common")
+
+        connection = self.job.namespace_states[using_namespace].shared.connection
 
         if connection:
             self.logger.debug("Stopping connection")
             connection.disconnect(reason="")
             connection.connected = False
-            self.set_namespace_data(
-                action="shared",
-                label="shared",
-                key="connection",
-                value=None,
-                parameters=parameters,
-            )
+            self.job.namespace_states[using_namespace].shared.connection = connection
             return None
         else:
             self.logger.debug("Not connected, no need to disconnect.")

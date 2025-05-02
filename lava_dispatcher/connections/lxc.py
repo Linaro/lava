@@ -46,16 +46,12 @@ class ConnectLxc(Action):
             self.errors = "Device not configured to support LXC connection."
 
     def run(self, connection, max_end_time):
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         if not lxc_name:
             self.logger.debug("No LXC device requested")
             return connection
 
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
+        connection = self.state.shared.connection
         if connection:
             return connection
 
@@ -77,7 +73,5 @@ class ConnectLxc(Action):
         connection.connected = True
         connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters["prompts"]
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection

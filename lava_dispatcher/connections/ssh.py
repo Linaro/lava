@@ -137,9 +137,7 @@ class ConnectSsh(Action):
             self.command.extend(self.ssh_port)
 
     def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
+        connection = self.state.shared.connection
         if connection:
             self.logger.debug("Already connected")
             return connection
@@ -147,18 +145,12 @@ class ConnectSsh(Action):
 
         self._check_params()
         command = self.command[:]  # local copy for idempotency
-        overrides = self.get_namespace_data(
-            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
-        )
-        host_address = None
+        overrides: list[str] | None = None
+        if self.key:
+            overrides = list(self.state.ssh.host_keys.keys())
+        host_address: str | None = None
         if overrides:
-            host_address = str(
-                self.get_namespace_data(
-                    action="prepare-scp-overlay",
-                    label="prepare-scp-overlay",
-                    key=overrides[0],
-                )
-            )
+            host_address = str(self.state.ssh.host_keys[overrides[0]])
         if host_address:
             self.logger.info(
                 "Using common data to retrieve host_address for secondary connection."
@@ -200,7 +192,5 @@ class ConnectSsh(Action):
         connection.prompt_str = list(self.parameters.get("prompts", []))
         connection.connected = True
         self.wait(connection)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection

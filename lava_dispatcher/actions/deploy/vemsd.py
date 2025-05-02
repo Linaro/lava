@@ -101,29 +101,24 @@ class ExtractVExpressRecoveryImage(Action):
 
     def validate(self):
         super().validate()
-        if not self.get_namespace_data(
-            action="download-action", label=self.param_key, key="file"
-        ):
+        download_data = self.state.downloads.get(self.param_key)
+        if download_data is None:
             self.errors = "no file specified extract as %s" % self.param_key
-        self.compression = self.get_namespace_data(
-            action="download-action", label=self.param_key, key="compression"
-        )
+            return
+
+        self.compression = download_data.compression
         if not self.compression:
             self.errors = "no compression set for recovery image"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        recovery_image_dir = self.get_namespace_data(
-            action="extract-vexpress-recovery-image", label="file", key=self.file_key
-        )
+        recovery_image_dir = self.state.vemsd.recovery_image
         if recovery_image_dir:
             self.logger.debug("Clearing existing data at %s", recovery_image_dir)
             shutil.rmtree(recovery_image_dir)
         # copy recovery image to a temporary directory and unpack
-        recovery_image = self.get_namespace_data(
-            action="download-action", label=self.param_key, key="file"
-        )
+        recovery_image = self.state.downloads[self.param_key].file
         recovery_image_dir = self.mkdtemp()
         shutil.copy(recovery_image, recovery_image_dir)
         tmp_recovery_image = os.path.join(
@@ -141,12 +136,7 @@ class ExtractVExpressRecoveryImage(Action):
                     % self.compression
                 )
             os.remove(tmp_recovery_image)
-            self.set_namespace_data(
-                action="extract-vexpress-recovery-image",
-                label="file",
-                key=self.file_key,
-                value=recovery_image_dir,
-            )
+            self.state.vemsd.recovery_image = recovery_image_dir
             self.logger.debug("Extracted %s to %s", self.file_key, recovery_image_dir)
         else:
             raise InfrastructureError("Unable to decompress recovery image")
@@ -303,12 +293,7 @@ class MountDeviceMassStorageDevice(Action):
             error_msg="Failed to mount device %s to %s" % (device_path, mount_point),
         )
 
-        self.set_namespace_data(
-            action=self.name,
-            label=self.namespace_label,
-            key="mount-point",
-            value=mount_point,
-        )
+        self.state.vemsd.mount_point = mount_point
         return connection
 
     def cleanup(self, connection):
@@ -358,15 +343,11 @@ class DeployVExpressRecoveryImage(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(
-            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
-        )
+        mount_point = self.state.vemsd.mount_point
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
-        src_dir = self.get_namespace_data(
-            action="extract-vexpress-recovery-image", label="file", key="recovery_image"
-        )
+        src_dir = self.state.vemsd.recovery_image
         if not os.path.exists(src_dir):
             raise InfrastructureError(
                 "Unable to locate recovery image source directory: %s" % src_dir
@@ -411,9 +392,7 @@ class UnmountVExpressMassStorageDevice(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        mount_point = self.get_namespace_data(
-            action=self.namespace_action, label=self.namespace_label, key="mount-point"
-        )
+        mount_point = self.state.vemsd.mount_point
         self.run_cmd(
             ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point
         )

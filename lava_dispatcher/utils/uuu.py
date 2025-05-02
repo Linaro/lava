@@ -61,9 +61,7 @@ class OptionalContainerUuuAction(OptionalContainerAction):
     def get_manipulated_command(self, cmd):
         if self.driver.is_container and self.driver.docker_options:
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
-            root_location = self.get_namespace_data(
-                action="uuu-deploy", label="uuu-images", key="root_location"
-            )
+            root_location = self.state.uuu.root_location
             cmd = [
                 "mkdir",
                 "-p",

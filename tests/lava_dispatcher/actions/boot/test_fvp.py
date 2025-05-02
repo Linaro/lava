@@ -11,6 +11,7 @@ import pytest
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.actions.boot.fvp import CheckFVPVersionAction, RunFVPeRPCApp
+from lava_dispatcher.namespace_state import DownloadedFile
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -92,23 +93,19 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("fvp_erpc_app.yaml", job=self.job)
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
-    @mock.patch.object(RunFVPeRPCApp, "get_namespace_data")
     @mock.patch("lava_dispatcher.actions.boot.fvp.ShellCommand")
     @mock.patch("lava_dispatcher.actions.boot.fvp.ShellSession")
-    @mock.patch.object(RunFVPeRPCApp, "set_namespace_data")
     def test_run(
         self,
-        mock_set_namespace_data,
         mock_shell_session_class,
         mock_shell_command,
-        mock_get_namespace_data,
     ):
         self.action.validate()
 
-        mock_get_namespace_data.side_effect = [
-            "test-container",
-            "/path/to/erpc_main",
-        ]
+        self.action.state.fvp.container = "test-container"
+        self.action.state.downloads[self.action.app] = DownloadedFile(
+            "/path/to/erpc_main"
+        )
 
         mock_shell = mock.MagicMock()
         mock_shell_command.return_value = mock_shell
@@ -117,13 +114,6 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
         mock_shell_session_class.return_value = mock_shell_session
 
         result = self.action.run(None, None)
-
-        mock_get_namespace_data.assert_has_calls(
-            [
-                mock.call(action="run-fvp", label="fvp", key="container"),
-                mock.call(action="download-action", label="file", key=self.action.app),
-            ]
-        )
 
         expected_cmd = (
             "docker exec --tty test-container sh -c "
@@ -134,8 +124,5 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
         )
 
         mock_shell_session_class.assert_called_once_with(self.job, mock_shell)
-        mock_set_namespace_data.assert_called_once_with(
-            action="shared", label="shared", key="connection", value=mock_shell_session
-        )
 
         assert result == mock_shell_session

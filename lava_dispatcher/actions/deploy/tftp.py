@@ -58,13 +58,7 @@ class TftpAction(Action):
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
-        self.set_namespace_data(
-            action=self.name,
-            label="tftp",
-            key="tftp_dir",
-            value=self.tftp_dir,
-            parameters=parameters,
-        )
+        self.state.tftp.tftp_dir = self.tftp_dir
 
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
@@ -98,13 +92,7 @@ class TftpAction(Action):
                         )
                     )
                     if key == "ramdisk":
-                        self.set_namespace_data(
-                            action=self.name,
-                            label="tftp",
-                            key="ramdisk",
-                            value=True,
-                            parameters=parameters,
-                        )
+                        self.state.tftp.ramdisk = True
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.pipeline.add_action(PrepareOverlayTftp(self.job))
@@ -115,23 +103,20 @@ class TftpAction(Action):
     def run(self, connection, max_end_time):
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
-        self.set_namespace_data(
-            action=self.name, label="tftp", key="suffix", value=suffix
-        )
+        self.state.tftp.suffix = suffix
 
         super().run(connection, max_end_time)
         tftp_size_limit = self.job.parameters["dispatcher"].get(
             "tftp_size_limit", TFTP_SIZE_LIMIT
         )
         self.logger.debug("Checking files for TFTP limit of %s bytes.", tftp_size_limit)
-        for action, key in [
-            ("compress-ramdisk", "ramdisk"),
-            ("download-action", "kernel"),
-            ("download-action", "dtb"),
-            ("download-action", "tee"),
-        ]:
-            if key in self.parameters:
-                filename = self.get_namespace_data(action=action, label="file", key=key)
+        for filename in (
+            self.state.compressed_ramdisk.ramdisk_file,
+            self.state.downloads.maybe_file("kernel"),
+            self.state.downloads.maybe_file("dtb"),
+            self.state.downloads.maybe_file("tee"),
+        ):
+            if filename is not None:
                 filename = os.path.join(filesystem.tftpd_dir(), filename)
                 fsize = os.stat(filename).st_size
                 if fsize >= tftp_size_limit:

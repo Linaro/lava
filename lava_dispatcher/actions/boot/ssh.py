@@ -14,7 +14,6 @@ from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import ConnectSsh
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 
@@ -67,23 +66,11 @@ class Scp(ConnectSsh):
             self.errors = "Unable to use %s without ssh deployment" % self.name
         if "ssh" not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "Unable to use %s without ssh boot" % self.name
-        if self.get_namespace_data(
-            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
-        ):
+        if self.state.ssh.host_keys:
             self.primary = False
         elif "host" not in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             self.errors = "Invalid device or job configuration, missing host."
-        if (
-            not self.primary
-            and len(
-                self.get_namespace_data(
-                    action="prepare-scp-overlay",
-                    label="prepare-scp-overlay",
-                    key="overlay",
-                )
-            )
-            != 1
-        ):
+        if not self.primary and len(self.state.ssh.host_keys) != 1:
             self.errors = "Invalid number of host_keys"
         if self.primary:
             host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
@@ -103,17 +90,13 @@ class Scp(ConnectSsh):
                 self.scp.extend(params["options"])
 
     def run(self, connection, max_end_time):
-        path = self.get_namespace_data(
-            action="prepare-scp-overlay", label="scp-deploy", key="overlay"
-        )
+        path = self.state.ssh.overlay_file
         if not path:
             error_msg = "%s: could not find details of '%s'" % (self.name, "overlay")
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
-        overrides = self.get_namespace_data(
-            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
-        )
+        overrides = tuple(self.state.ssh.host_keys.keys())
         if self.primary:
             host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
                 "host"
@@ -123,13 +106,7 @@ class Scp(ConnectSsh):
                 "Retrieving common data for prepare-scp-overlay using %s",
                 ",".join(overrides),
             )
-            host_address = str(
-                self.get_namespace_data(
-                    action="prepare-scp-overlay",
-                    label="prepare-scp-overlay",
-                    key=overrides[0],
-                )
-            )
+            host_address = self.state.ssh.host_keys[overrides[0]]
             self.logger.debug("Using common data for host: %s", host_address)
         if not host_address:
             error_msg = "%s: could not find host for deployment using %s" % (
@@ -139,9 +116,7 @@ class Scp(ConnectSsh):
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        lava_test_results_dir = self.state.test.lava_test_results_dir
         destination = os.path.join(lava_test_results_dir, os.path.basename(path))
         command = self.scp[:]  # local copy
         # add the argument for setting the port (-P port)
@@ -169,12 +144,7 @@ class Scp(ConnectSsh):
         self.run_cmd(command, error_msg="Unable to copy %s" % "overlay")
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
-        self.set_namespace_data(
-            action=self.name,
-            label="scp-overlay-unpack",
-            key="overlay",
-            value=destination,
-        )
+        self.state.ssh.overlay_destination = destination
         return connection
 
 
@@ -196,34 +166,26 @@ class PrepareSsh(Action):
             "parameters" in self.parameters
             and "hostID" in self.parameters["parameters"]
         ):
-            self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=True
-            )
+            self.state.ssh.is_host = True
         else:
-            self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=False
-            )
+            self.state.ssh.is_host = False
             self.primary = True
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         if not self.primary:
-            host_data = self.get_namespace_data(
-                action=MultinodeProtocol.name,
-                label=MultinodeProtocol.name,
-                key=self.parameters["parameters"]["hostID"],
+            host_data = self.state.multinode.get(
+                self.parameters["parameters"]["hostID"]
             )
             if not host_data:
                 raise JobError(
                     "Unable to retrieve %s - missing ssh deploy?"
                     % self.parameters["parameters"]["hostID"]
                 )
-            self.set_namespace_data(
-                action=self.name,
-                label="ssh-connection",
-                key="host_address",
-                value=host_data[self.parameters["parameters"]["host_key"]],
-            )
+            self.state.ssh.host_address = host_data[
+                self.parameters["parameters"]["host_key"]
+            ]
+
         return connection
 
 
@@ -236,16 +198,10 @@ class ScpOverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot unpack, no connection available.")
-        filename = self.get_namespace_data(
-            action="scp-deploy", label="scp-overlay-unpack", key="overlay"
-        )
-        tar_flags = self.get_namespace_data(
-            action="scp-overlay", label="scp-overlay", key="tar_flags"
-        )
+        filename = self.state.ssh.overlay_file
+        tar_flags = self.state.ssh.tar_flags
 
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        lava_test_results_dir = self.state.test.lava_test_results_dir
 
         cmd = "tar %s -C %s -xzf %s" % (
             tar_flags,

@@ -71,15 +71,11 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
     def validate(self):
         super().validate()
         key = self.driver.key
-        validated = self.get_namespace_data(
-            action="optional_container_action", label="prepare", key=key
-        )
+        validated = self.state.container.validated.get(key)
         if validated:
             return
         self.driver.validate()
-        self.set_namespace_data(
-            action="optional_container_action", label="prepare", key=key, value=True
-        )
+        self.state.container.validated[key] = True
 
     @property
     def driver(self):

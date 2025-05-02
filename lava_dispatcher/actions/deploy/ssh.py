@@ -55,13 +55,7 @@ class ScpOverlay(Action):
             if "tar_flags" in parameters["deployment_data"].keys()
             else ""
         )
-        self.set_namespace_data(
-            action=self.name,
-            label=self.name,
-            key="tar_flags",
-            value=tar_flags,
-            parameters=parameters,
-        )
+        self.state.ssh.tar_flags = tar_flags
         self.pipeline.add_action(OverlayAction(self.job))
         for item in self.items:
             if item in parameters:
@@ -70,13 +64,7 @@ class ScpOverlay(Action):
                         self.job, item, path=self.mkdtemp(), params=parameters[item]
                     )
                 )
-                self.set_namespace_data(
-                    action=self.name,
-                    label="scp",
-                    key=item,
-                    value=True,
-                    parameters=parameters,
-                )
+                self.state.ssh.scp_items[item] = True
         # we might not have anything to download, just the overlay to push
         self.pipeline.add_action(PrepareOverlayScp(self.job))
         # prepare the device environment settings in common data for enabling in the boot step
@@ -95,19 +83,13 @@ class PrepareOverlayScp(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.host_keys = []
+        self.host_keys: dict[str, str | None] = {}
 
     def validate(self):
         super().validate()
-        environment = self.get_namespace_data(
-            action="deploy-device-env", label="environment", key="env_dict"
-        )
-        if not environment:
-            environment = {}
+        environment = self.state.device_env.env_dict.copy()
         environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
-        self.set_namespace_data(
-            action=self.name, label="environment", key="env_dict", value=environment
-        )
+        self.state.ssh.scp_env = environment
         if "protocols" in self.parameters:
             # set run to call the protocol, retrieve the data and store.
             for params in self.parameters["protocols"][MultinodeProtocol.name]:
@@ -116,7 +98,7 @@ class PrepareOverlayScp(Action):
                         "Invalid protocol action setting - needs to be a list."
                     )
                     continue
-                if "action" not in params or params["action"] != self.name:
+                if "action" not in params or params["action"] != "prepare-scp-overlay":
                     continue
                 if "messageID" not in params:
                     self.errors = "Invalid protocol block: %s" % params
@@ -124,10 +106,9 @@ class PrepareOverlayScp(Action):
                 if "message" not in params or not isinstance(params["message"], dict):
                     self.errors = "Missing message block for scp deployment"
                     return
-                self.host_keys.append(params["messageID"])
-        self.set_namespace_data(
-            action=self.name, label=self.name, key="overlay", value=self.host_keys
-        )
+                self.host_keys[params["messageID"]] = None
+
+        self.state.ssh.host_keys = self.host_keys
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -140,19 +121,11 @@ class PrepareOverlayScp(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        overlay_file = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
+        overlay_file = self.state.compresssed_overlay.file
         self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
-        self.set_namespace_data(
-            action=self.name, label="scp-deploy", key="overlay", value=overlay_file
-        )
-        for host_key in self.host_keys:
-            data = self.get_namespace_data(
-                action=MultinodeProtocol.name,
-                label=MultinodeProtocol.name,
-                key=host_key,
-            )
+        self.state.ssh.overlay_file = overlay_file
+        for host_key in self.host_keys.keys():
+            data = self.state.multinode[host_key]
             if not data:
                 self.logger.warning("Missing data for host_key %s", host_key)
                 continue
@@ -165,17 +138,11 @@ class PrepareOverlayScp(Action):
                         list(data.keys()),
                     )
                     continue
-                self.set_namespace_data(
-                    action=self.name,
-                    label=self.name,
-                    key=host_key,
-                    value=str(data[replacement_key]),
-                )
+
+                self.state.ssh.host_keys[host_key] = str(data[replacement_key])
                 self.logger.info(
                     "data %s replacement key is %s",
                     host_key,
-                    self.get_namespace_data(
-                        action=MultinodeProtocol.name, label=self.name, key=host_key
-                    ),
+                    self.state.multinode[host_key][self.name],
                 )
         return connection

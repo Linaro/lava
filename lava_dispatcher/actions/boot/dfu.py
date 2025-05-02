@@ -102,14 +102,10 @@ class FlashDFUAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
         substitutions = {}
-        for action in self.get_namespace_keys("download-action"):
+        for action, download in self.state.downloads.items():
             dfu_full_command = []
-            image_arg = self.get_namespace_data(
-                action="download-action", label=action, key="image_arg"
-            )
-            action_arg = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
+            image_arg = download.image_arg
+            action_arg = download.file
             if not image_arg or not action_arg:
                 self.errors = "Missing image_arg for %s. " % action
                 continue

@@ -165,9 +165,7 @@ class DownloadHandler(Action):
             self.logger.debug("Cleaning up downloaded image: %s", self.fname)
             try:
                 os.remove(self.fname)
-                self.set_namespace_data(
-                    action="download-action", label=self.key, key="file", value=""
-                )
+                self.state.downloads.pop(self.key)
             except OSError as exc:
                 self.logger.debug(str(exc))
         super().cleanup(connection)
@@ -210,27 +208,16 @@ class DownloadHandler(Action):
         self.fname = self._url_to_fname()
         if self.fname.endswith("/"):
             raise JobError("Cannot download a directory for %s" % self.key)
-        # Save into the namespaced data
-        self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=self.fname
-        )
-        self.set_namespace_data(
-            action="download-action",
-            label=self.key,
-            key="compression",
-            value=compression,
-        )
+        # Reuse download state if available to support downloads post processing
+        if (download_state := self.state.downloads.get(self.key)) is None:
+            download_state = self.state.downloads.create_downloaded_file(
+                download_name=self.key, download_file=self.fname
+            )
+        download_state.compression = compression
         if image_arg is not None:
-            self.set_namespace_data(
-                action="download-action",
-                label=self.key,
-                key="image_arg",
-                value=image_arg,
-            )
+            download_state.image_arg = image_arg
         if overlay:
-            self.set_namespace_data(
-                action="download-action", label=self.key, key="overlay", value=overlay
-            )
+            download_state.overlay = overlay
 
         if compression and compression not in ["gz", "bz2", "xz", "zip", "zstd"]:
             self.errors = "Unknown 'compression' format '%s'" % compression
@@ -238,12 +225,7 @@ class DownloadHandler(Action):
             self.errors = "Unknown 'archive' format '%s'" % archive
         # pass kernel type to boot Action
         if self.key == "kernel" and ("kernel" in self.parameters):
-            self.set_namespace_data(
-                action="download-action",
-                label="type",
-                key=self.key,
-                value=self.parameters[self.key].get("type"),
-            )
+            download_state.type = self.parameters[self.key].get("type")
 
     def _check_checksum(self, algorithm, actual, expected):
         if expected is None:
@@ -272,9 +254,11 @@ class DownloadHandler(Action):
             return (
                 condition,
                 downloaded_sz,
-                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         def progress_known_total(downloaded_sz, last_val, last_update):
@@ -286,10 +270,12 @@ class DownloadHandler(Action):
             return (
                 condition,
                 percent,
-                "progress %3d %% (%d MB)"
-                % (percent, int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %3d %% (%d MB)"
+                    % (percent, int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         connection = super().run(connection, max_end_time)
@@ -306,12 +292,8 @@ class DownloadHandler(Action):
         if self.key == "ramdisk":
             self.logger.debug("Not decompressing ramdisk as can be used compressed.")
 
-        self.set_namespace_data(
-            action="download-action",
-            label=self.key,
-            key="decompressed",
-            value=bool(compression),
-        )
+        download_state = self.state.downloads[self.key]
+        download_state.decompressed = bool(compression)
 
         md5sum = self.params.get("md5sum")
         sha256sum = self.params.get("sha256sum")
@@ -412,18 +394,7 @@ class DownloadHandler(Action):
             )
 
         # set the dynamic data into the context
-        self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=self.fname
-        )
-        self.set_namespace_data(
-            action="download-action", label="file", key=self.key, value=self.fname
-        )
-        self.set_namespace_data(
-            action="download-action",
-            label=self.key,
-            key="sha256",
-            value=sha256.hexdigest(),
-        )
+        download_state.sha256 = sha256.hexdigest()
 
         # handle archive files
         archive = self.params.get("archive")
@@ -434,18 +405,7 @@ class DownloadHandler(Action):
             target_fname_path = os.path.join(os.path.dirname(self.fname), self.key)
             self.logger.debug("Extracting %s archive in %s", archive, target_fname_path)
             untar_file(self.fname, target_fname_path)
-            self.set_namespace_data(
-                action="download-action",
-                label=self.key,
-                key="file",
-                value=target_fname_path,
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label="file",
-                key=self.key,
-                value=target_fname_path,
-            )
+            download_state.file = target_fname_path
 
         if md5sum is not None:
             self._check_checksum("md5", md5.hexdigest(), md5sum)
@@ -457,41 +417,25 @@ class DownloadHandler(Action):
         # certain deployments need prefixes set
         if self.parameters.get("to"):
             if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
-                suffix = self.get_namespace_data(
-                    action="tftp-deploy", label="tftp", key="suffix"
-                )
-                self.set_namespace_data(
-                    action="download-action",
-                    label="file",
-                    key=self.key,
-                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
+                suffix = self.state.tftp.suffix
+                download_state.file = os.path.join(
+                    suffix, self.key, os.path.basename(self.fname)
                 )
             elif self.parameters["to"] == "iso-installer":
-                suffix = self.get_namespace_data(
-                    action="deploy-iso-installer", label="iso", key="suffix"
-                )
-                self.set_namespace_data(
-                    action="download-action",
-                    label="file",
-                    key=self.key,
-                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
+                suffix = self.state.deploy_iso_installer.suffix
+                download_state.file = os.path.join(
+                    suffix, self.key, os.path.basename(self.fname)
                 )
 
         # xnbd protocol needs to know the location
-        nbdroot = self.get_namespace_data(
-            action="download-action", label="file", key="nbdroot"
-        )
+        nbdroot = self.state.downloads.maybe_file("nbdroot")
         if "lava-xnbd" in self.parameters and nbdroot:
             self.parameters["lava-xnbd"]["nbdroot"] = nbdroot
 
         self.results = {
             "label": self.key,
             "size": downloaded_size,
-            "sha256sum": str(
-                self.get_namespace_data(
-                    action="download-action", label=self.key, key="sha256"
-                )
-            ),
+            "sha256sum": download_state.sha256,
         }
         return connection
 
@@ -750,9 +694,7 @@ class LxcDownloadAction(Action):
         file_path = os.path.join(lxc_home, fname)
         self.logger.debug("Trying '%s' matching '%s'", file_path, fname)
         if os.path.exists(file_path):
-            self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=file_path
-            )
+            self.state.downloads[self.key].file = file_path
         else:
             raise JobError("Resource unavailable: %s" % self.url.path)
         return connection
@@ -785,12 +727,7 @@ class PreDownloadedAction(Action):
 
         image_arg = self.params.get("image_arg")
         if image_arg is not None:
-            self.set_namespace_data(
-                action="download-action",
-                label=self.key,
-                key="image_arg",
-                value=image_arg,
-            )
+            self.state.downloads[self.key].image_arg = image_arg
 
     def run(self, connection, max_end_time):
         # In downloads://foo/bar.ext, "foo" is the "netloc", "/bar.ext" is
@@ -824,22 +761,13 @@ class PreDownloadedAction(Action):
         except FileExistsError:
             self.logger.warning("-> destination already exists, skipping")
 
-        self.set_namespace_data(
-            action="download-action", label=self.key, key="file", value=str(dest)
-        )
-        self.set_namespace_data(
-            action="download-action", label="file", key=self.key, value=str(dest)
-        )
+        if (download_state := self.state.downloads.get(self.key)) is None:
+            download_state = self.state.downloads.create_downloaded_file(
+                download_name=self.key, download_file=str(dest)
+            )
         if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
-            suffix = self.get_namespace_data(
-                action="tftp-deploy", label="tftp", key="suffix"
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label="file",
-                key=self.key,
-                value=os.path.join(suffix, dest.name),
-            )
+            suffix = self.state.tftp.suffix
+            download_state.file = os.path.join(suffix, dest.name)
 
         if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
             self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
@@ -858,9 +786,7 @@ class DownloadAction(Action):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=self.name, label="download-dir", key="dir", value=self.download_dir
-        )
+        self.state.deploy_downloads.download_dir = self.download_dir
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -926,10 +852,8 @@ class CopyToLxcAction(Action):
             return connection
 
         # Copy each file to LXC.
-        for image in self.get_namespace_keys("download-action"):
-            src = self.get_namespace_data(
-                action="download-action", label=image, key="file"
-            )
+        for image, image_data in self.state.downloads.items():
+            src = image_data.file
             # The archive extraction logic and some deploy logic in
             # DownloadHandler will set a label 'file' in the namespace but
             # that file would have been dealt with and the actual path may not
@@ -938,9 +862,7 @@ class CopyToLxcAction(Action):
             if not src:
                 continue
             copy_to_lxc(lxc_name, src, self.job.parameters["dispatcher"])
-        overlay_file = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
+        overlay_file = self.state.compresssed_overlay.file
         if overlay_file is None:
             self.logger.debug("skipped %s", self.name)
         else:

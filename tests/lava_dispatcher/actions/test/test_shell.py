@@ -64,16 +64,8 @@ class TestTestShell(LavaDispatcherTestCase):
         # "signal.STARTRUN"
         action = TestShellAction(job)
         action.parameters = {"namespace": "common"}
-        action.data = {}
-        action.set_namespace_data(
-            action="test-definition",
-            label="test-definition",
-            key="testdef_index",
-            value=["DEFINITION"],
-        )
-        action.set_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
-        )
+        action.state.test.testdef_index = ["DEFINITION"]
+        action.state.repo.uuid_list = ["UUID"]
 
         data = ("STARTRUN", "0_DEFINITION UUID")
         with self.assertLogs(action.logger, level="DEBUG") as action_logs:
@@ -119,15 +111,8 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.results = MagicMock()
         action.parameters = {"namespace": "common"}
         action.data = {}
-        action.set_namespace_data(
-            action="test-definition",
-            label="test-definition",
-            key="testdef_index",
-            value=["DEFINITION"],
-        )
-        action.set_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
-        )
+        action.state.test.testdef_index = ["DEFINITION"]
+        action.state.repo.uuid_list = ["UUID"]
 
         data = ("ENDRUN", "0_DEFINITION UUID")
         with self.assertLogs(action.logger, "DEBUG") as action_logs, patch(

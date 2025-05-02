@@ -220,10 +220,6 @@ def test_multinode_docker_test_shell(action, multinode_action):
 
 
 def test_docker_test_shell_run(first_test_action, mocker):
-    mocker.patch(
-        "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
-        return_value="lava-4999",
-    )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
     shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
     mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
@@ -240,6 +236,8 @@ def test_docker_test_shell_run(first_test_action, mocker):
     connection.timeout = MagicMock()
 
     action = first_test_action.pipeline.find_action(DockerTestShell)
+    action.state.test.location = "lava-4999"
+    action.state.test.lava_test_results_dir = "lava-4999"
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
@@ -251,10 +249,6 @@ def test_docker_test_shell_run(first_test_action, mocker):
 
 
 def test_docker_test_shell_run_prefix(job_prefix, mocker):
-    mocker.patch(
-        "lava_dispatcher.actions.test.docker.DockerTestShell.get_namespace_data",
-        return_value="lava-4999",
-    )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
     shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
     mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
@@ -271,6 +265,8 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
     connection.timeout = MagicMock()
 
     action = job_prefix.pipeline.find_action(DockerTestShell)
+    action.state.test.location = "lava-4999"
+    action.state.test.lava_test_results_dir = "lava-4999"
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)

@@ -16,6 +16,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
+from lava_dispatcher.namespace_state import NamespaceState
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
@@ -117,12 +118,8 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         # start container
         # create USB device mapping to container
         # connect to container, and run lava-test-shell over it
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        overlay = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        ).strip("/")
+        location = self.state.test.location
+        overlay = self.state.test.lava_test_results_dir.strip("/")
 
         container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
@@ -171,13 +168,15 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         shell_connection = ShellSession(self.job, shell)
         shell_connection.prompt_str = "docker-test-shell:"
         self.parameters["connection-namespace"] = "docker-test-shell"
-        self.set_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            value=shell_connection,
-            parameters={"namespace": "docker-test-shell"},
-        )
+        if (
+            docker_test_shell_ns_state := self.job.namespace_states.get(
+                "docker-test-shell"
+            )
+        ) is None:
+            docker_test_shell_ns_state = NamespaceState()
+            self.job.namespace_states["docker-test-shell"] = docker_test_shell_ns_state
+
+        docker_test_shell_ns_state.shared.connection = shell_connection
 
         self.add_device_container_mappings(container, "docker")
 
@@ -214,7 +213,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             docker.destroy()
 
         # return the original connection untouched
-        self.data.pop("docker-test-shell")
+        self.job.namespace_states.pop("docker-test-shell")
         return connection
 
 

@@ -123,17 +123,13 @@ class BaseFVPAction(Action):
         cmd = "docker run --rm --interactive --tty --hostname lava"
         cmd += " --name %s" % self.container
         self.logger.debug(
-            "Download action namespace keys are: %s",
-            self.get_namespace_keys("download-action"),
+            "Downloads keys are: %s",
+            self.state.downloads.keys(),
         )
-        for label in self.get_namespace_keys("download-action"):
-            filename = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
+        for label, download in self.state.downloads.items():
+            filename = download.file
             if label == "ramdisk":
-                ramdisk = self.get_namespace_data(
-                    action="compress-ramdisk", label="file", key="full-path"
-                )
+                ramdisk = self.state.compressed_ramdisk.full_path
                 # If overlay has been copied into the ramdisk, use that
                 if ramdisk:
                     filename = ramdisk
@@ -326,7 +322,7 @@ class StartFVPAction(BaseFVPAction):
         self.container = ""
         self.fvp_console_string = ""
         self.fvp_feedbacks = set()
-        self.fvp_feedback_ports = []
+        self.fvp_feedback_ports: list[dict[str, str | None]] = []
         self.shell = None
         self.shell_session = None
 
@@ -378,12 +374,7 @@ class StartFVPAction(BaseFVPAction):
                     )
 
                 serial_port = shell_connection.raw_connection.match.groupdict()["PORT"]
-                self.set_namespace_data(
-                    action=StartFVPAction.name,
-                    label="fvp",
-                    key="serial_port",
-                    value=serial_port,
-                )
+                self.state.fvp.serial_port = serial_port
                 self.logger.info("Found FVP port %s", serial_port)
             else:
                 serial_port = shell_connection.raw_connection.match.groupdict().get(
@@ -397,26 +388,15 @@ class StartFVPAction(BaseFVPAction):
                         {"port": serial_port, "name": serial_name}
                     )
                     self.logger.info("Found secondary FVP port %s", serial_port)
-        self.set_namespace_data(
-            action=StartFVPAction.name,
-            label="fvp",
-            key="feedback_ports",
-            value=self.fvp_feedback_ports,
-        )
-        self.set_namespace_data(
-            action=StartFVPAction.name,
-            label="fvp",
-            key="container",
-            value=self.container,
-        )
+
+        self.state.fvp.feedback_ports = self.fvp_feedback_ports
+        self.state.fvp.container = self.container
         # Although we don't require any more output on this connection,
         # discarding this may cause SIGHUPs to be sent to the model
         # which will terminate the model.
         self.shell = shell
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
 
         self.shell_session = shell_connection
         return shell_connection
@@ -442,15 +422,9 @@ class GetFVPSerialAction(Action):
     summary = "connect to the fvp serial output"
 
     def run(self, connection, max_end_time):
-        serial_port = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="serial_port"
-        )
-        feedback_ports = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="feedback_ports"
-        )
-        container = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="container"
-        )
+        serial_port = self.state.fvp.serial_port
+        feedback_ports = self.state.fvp.feedback_ports
+        container = self.state.fvp.container
         for feedback_dict in feedback_ports:
             cmd = (
                 "lava-outerr docker exec --interactive --tty %s telnet localhost %s"
@@ -467,13 +441,10 @@ class GetFVPSerialAction(Action):
             feedback_name = feedback_dict.get("name")
             if not feedback_name:
                 feedback_name = "_namespace_feedback_%s" % feedback_dict["port"]
-            self.set_namespace_data(
-                action="shared",
-                label="shared",
-                key="connection",
-                value=shell_connection,
-                parameters={"namespace": feedback_name},
-            )
+
+            self.job.namespace_states[
+                feedback_name
+            ].shared.connection = shell_connection
 
         cmd = "lava-outerr docker exec --interactive --tty %s telnet localhost %s" % (
             container,
@@ -486,9 +457,7 @@ class GetFVPSerialAction(Action):
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
         return shell_connection
 
 
@@ -508,13 +477,9 @@ class RunFVPeRPCApp(Action):
             raise JobError("'erpc_app' cannot be empty")
 
     def run(self, connection, max_end_time):
-        container = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="container"
-        )
+        container = self.state.fvp.container
 
-        app_path = self.get_namespace_data(
-            action="download-action", label="file", key=self.app
-        )
+        app_path = self.state.downloads.maybe_file(self.app)
         if app_path is None:
             raise JobError(f"eRPC app '{self.app}' not deployed")
         app_path = f"/{container}/{os.path.basename(app_path)}"
@@ -527,8 +492,6 @@ class RunFVPeRPCApp(Action):
         connection = ShellSession(self.job, shell)
         connection = super().run(connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
 
         return connection

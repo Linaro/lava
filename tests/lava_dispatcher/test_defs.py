@@ -31,6 +31,7 @@ from lava_dispatcher.actions.deploy.testdef import (
 )
 from lava_dispatcher.actions.test.shell import PatternFixup
 from lava_dispatcher.device import NewDevice
+from lava_dispatcher.namespace_state import TestEntry
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -389,40 +390,20 @@ class TestDefinitions(LavaDispatcherTestCase):
 
         definition = self.job.pipeline.find_action(TestDefinitionAction)
         git_repos = self.job.pipeline.find_all_actions(GitRepoAction)
-        self.assertIn("common", self.job.context)
-        self.assertIn("test-definition", self.job.context["common"])
-        self.assertIsNotNone(
-            definition.get_namespace_data(
-                action=definition.name, label="test-definition", key="testdef_index"
-            )
+        self.assertIn("common", self.job.namespace_states)
+        self.assertIsNotNone(definition.state.test.testdef_index)
+        self.assertEqual(
+            definition.state.test.testdef_index, ["smoke-tests", "singlenode-advanced"]
         )
         self.assertEqual(
-            definition.get_namespace_data(
-                action=definition.name, label="test-definition", key="testdef_index"
-            ),
-            ["smoke-tests", "singlenode-advanced"],
-        )
-        self.assertEqual(
-            git_repos[0].get_namespace_data(
-                action="test-runscript-overlay",
-                label="test-runscript-overlay",
-                key="testdef_levels",
-            ),
+            git_repos[0].state.test.testdef_levels,
             {"1.1.4.4": "0_smoke-tests", "1.1.4.8": "1_singlenode-advanced"},
         )
         self.assertEqual(
             {repo.uuid for repo in git_repos}, {"4999_1.1.4.1", "4999_1.1.4.5"}
         )
         self.assertEqual(
-            set(
-                git_repos[0]
-                .get_namespace_data(
-                    action="test-runscript-overlay",
-                    label="test-runscript-overlay",
-                    key="testdef_levels",
-                )
-                .values()
-            ),
+            set(git_repos[0].state.test.testdef_levels.values()),
             {"1_singlenode-advanced", "0_smoke-tests"},
         )
         # fake up a run step
@@ -432,44 +413,13 @@ class TestDefinitions(LavaDispatcherTestCase):
             r"(?P<test_case_id>.*-*):\s+(?P<result>(pass|fail))",
             params["parse"]["pattern"],
         )
-        self.job.context.setdefault("test", {})
-        for git_repo in git_repos:
-            self.job.context["test"].setdefault(git_repo.uuid, {})
-            self.job.context["test"][git_repo.uuid]["testdef_pattern"] = {
-                "pattern": params["parse"]["pattern"]
-            }
-        self.assertEqual(
-            self.job.context["test"],
-            {
-                "4999_1.1.4.1": {
-                    "testdef_pattern": {
-                        "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
-                    }
-                },
-                "4999_1.1.4.5": {
-                    "testdef_pattern": {
-                        "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
-                    }
-                },
-            },
-        )
-        testdef_index = self.job.context["common"]["test-definition"][
-            "test-definition"
-        ]["testdef_index"]
+        testdef_index = self.job.namespace_states["common"].test.testdef_index
         start_run = "0_smoke-tests"
-        uuid_list = definition.get_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list"
-        )
+        uuid_list = definition.state.repo.uuid_list
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
                 self.assertEqual("4999_1.1.4.1", uuid_list[key])
-                self.assertEqual(
-                    self.job.context["test"][uuid_list[key]]["testdef_pattern"][
-                        "pattern"
-                    ],
-                    "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))",
-                )
 
     def test_defined_pattern(self):
         """
@@ -563,6 +513,7 @@ class TestRunScript(LavaDispatcherTestCase):
             "repository": "http://example.com/repo.git",
             # populated by TestDefinitionAction.
             "test_name": "1_test1",
+            "namespace": "common",
         }
 
         self.testdef = {
@@ -571,67 +522,39 @@ class TestRunScript(LavaDispatcherTestCase):
         }
 
     def test_validate(self):
-        with patch(
-            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-            side_effect=[["test0", "test1"], None],
-        ):
-            with patch(
-                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
-            ) as mock_set_testdef_levels:
-                self.action.validate()
-                mock_set_testdef_levels.assert_called_once_with(
-                    action="test-runscript-overlay",
-                    key="testdef_levels",
-                    label="test-runscript-overlay",
-                    value={"1.1.4.8": "1_test1"},
-                )
-                self.assertTrue(self.action.valid)
+        self.action.state.test.testdef_index = ["test0", "test1"]
+        self.action.validate()
+        self.assertEqual(self.action.state.test.testdef_levels, {"1.1.4.8": "1_test1"})
+        self.assertTrue(self.action.valid)
 
     def test_validate_unique_names(self):
-        with patch(
-            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-            side_effect=[["test1", "test1"], None],
-        ):
-            with patch(
-                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
-            ):
-                self.action.validate()
-                self.assertFalse(self.action.valid)
-                self.assertIn(
-                    "Test definition names need to be unique.", self.action.errors
-                )
+        self.action.state.test.testdef_index = ["test1", "test1"]
+        self.action.validate()
+        self.assertFalse(self.action.valid)
+        self.assertIn("Test definition names need to be unique.", self.action.errors)
 
     def test_validate_update_testdef_levels(self):
-        with patch(
-            "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-            side_effect=[["test0", "test1"], {"1.1.4.4": "0_test0"}],
-        ):
-            with patch(
-                "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.set_namespace_data"
-            ) as mock_set_testdef_levels:
-                self.action.validate()
-                mock_set_testdef_levels.assert_called_once_with(
-                    action="test-runscript-overlay",
-                    key="testdef_levels",
-                    label="test-runscript-overlay",
-                    value={"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
-                )
-                self.assertTrue(self.action.valid)
-
-    @patch(
-        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-        side_effect=[
-            "/overlay/runner/path",
+        self.action.state.test.testdef_index = ["test0", "test1"]
+        self.action.state.test.testdef_levels = {"1.1.4.4": "0_test0"}
+        self.action.validate()
+        self.assertEqual(
+            self.action.state.test.testdef_levels,
             {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
-            "/lava-1/1/tests/1_test1",
-        ],
-    )
+        )
+        self.assertTrue(self.action.valid)
+
     @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
-    def test_run(
-        self,
-        mock_super_run,
-        mock_get_ns_data,
-    ):
+    def test_run(self, mock_super_run):
+        self.action.state.test.entries[self.action.test_uuid] = TestEntry(
+            overlay_path="/overlay/runner/path"
+        )
+        self.action.state.test.testdef_levels = {
+            "1.1.4.4": "0_test0",
+            "1.1.4.8": "1_test1",
+        }
+        self.action.state.test.entries[
+            self.action.test_uuid
+        ].runner_path = "/lava-1/1/tests/1_test1"
         with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
             with patch(
                 "lava_dispatcher.actions.deploy.testdef.yaml_safe_load",
@@ -670,20 +593,18 @@ class TestRunScript(LavaDispatcherTestCase):
                     "http://example.com/repo.git",
                 )
 
-    @patch(
-        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-        side_effect=[
-            "/overlay/runner/path",
-            {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
-            "/lava-1/1/tests/1_test1",
-        ],
-    )
     @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
-    def test_run_kmsg_signal(
-        self,
-        mock_super_run,
-        mock_get_ns_data,
-    ):
+    def test_run_kmsg_signal(self, mock_super_run):
+        self.action.state.test.entries[self.action.test_uuid] = TestEntry(
+            overlay_path="/overlay/runner/path"
+        )
+        self.action.state.test.testdef_levels = {
+            "1.1.4.4": "0_test0",
+            "1.1.4.8": "1_test1",
+        }
+        self.action.state.test.entries[
+            self.action.test_uuid
+        ].runner_path = "/lava-1/1/tests/1_test1"
         self.action.parameters["lava-signal"] = "kmsg"
 
         with patch("builtins.open", unittest.mock.mock_open()) as mock_file:
@@ -721,20 +642,18 @@ class TestRunScript(LavaDispatcherTestCase):
                     ]
                 )
 
-    @patch(
-        "lava_dispatcher.actions.deploy.testdef.TestRunnerAction.get_namespace_data",
-        side_effect=[
-            "/overlay/runner/path",
-            {"1.1.4.4": "0_test0", "1.1.4.8": "1_test1"},
-            "/lava-1/1/tests/1_test1",
-        ],
-    )
     @patch("lava_dispatcher.actions.deploy.testdef.TestOverlayAction.run")
-    def test_run_character_delay(
-        self,
-        mock_super_run,
-        mock_get_ns_data,
-    ):
+    def test_run_character_delay(self, mock_super_run):
+        self.action.state.test.entries[self.action.test_uuid] = TestEntry(
+            overlay_path="/overlay/runner/path"
+        )
+        self.action.state.test.testdef_levels = {
+            "1.1.4.4": "0_test0",
+            "1.1.4.8": "1_test1",
+        }
+        self.action.state.test.entries[
+            self.action.test_uuid
+        ].runner_path = "/lava-1/1/tests/1_test1"
         self.action.parameters["needs_character_delay"] = True
         self.job.device["character_delays"] = {"test": "10"}
 

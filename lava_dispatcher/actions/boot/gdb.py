@@ -101,17 +101,15 @@ class BootGDBRetry(RetryAction):
         # Build the substitutions dictionary
         substitutions = {}
         paths = set()
-        for action in self.get_namespace_keys("download-action"):
-            filename = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
+        for download_name, download in self.state.downloads.items():
+            filename = download.file
             if filename is None:
                 self.logger.warning(
-                    "Empty value for action='download-action' label='%s' key='file'",
-                    action,
+                    "Empty file for download %s",
+                    download_name,
                 )
                 continue
-            substitutions["{%s}" % action.upper()] = filename
+            substitutions["{%s}" % download_name.upper()] = filename
             paths.add(os.path.dirname(filename))
 
         # If needed, prepend with docker

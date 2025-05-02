@@ -87,25 +87,21 @@ class FlashPyOCDAction(Action):
         if pyocd_binary.startswith("pyocd-flashtool"):
             connecting_option = "--board"
         self.base_command.extend([connecting_option, self.job.device["board_id"]])
-        for action in self.get_namespace_keys("download-action"):
+        for download_name, download in self.state.downloads.items():
             pyocd_full_command = []
-            image_arg = self.get_namespace_data(
-                action="download-action", label=action, key="image_arg"
-            )
-            action_arg = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
+            image_arg = download.image_arg
+            download_file = download.file
             if image_arg:
                 if not isinstance(image_arg, str):
                     self.errors = "image_arg is not a string (try quoting it)"
                     continue
-                substitutions["{%s}" % action] = action_arg
+                substitutions["{%s}" % download_name] = download_file
                 pyocd_full_command.extend(self.base_command)
                 pyocd_full_command.extend(substitute([image_arg], substitutions))
                 self.exec_list.append(pyocd_full_command)
             else:
                 pyocd_full_command.extend(self.base_command)
-                pyocd_full_command.extend([action_arg])
+                pyocd_full_command.extend([download_file])
                 self.exec_list.append(pyocd_full_command)
         if not self.exec_list:
             self.errors = "No PyOCD command to execute"

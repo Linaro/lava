@@ -21,6 +21,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         # 1. Test working job definition.
         action.parameters = {
             "to": "avh",
+            "namespace": "common",
             "timeout": {"minutes": 30},
             "options": {"model": "kronos"},
             "fw_package": {
@@ -34,6 +35,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         # 2. Test missing 'strorage_file' key.
         action.parameters = {
             "to": "avh",
+            "namespace": "common",
             "timeout": {"minutes": 30},
             "options": {"model": "kronos"},
             "fw_package": {
@@ -65,13 +67,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         "lava_dispatcher.actions.deploy.apply_overlay.ApplyOverlayAvh.mkdtemp",
         return_value="/mock/tempdir",
     )
-    @patch(
-        "lava_dispatcher.actions.deploy.apply_overlay.ApplyOverlayAvh.get_namespace_data",
-        side_effect=["mock_overlay_file", "mock_fw_package.zip"],
-    )
     def test_append_overlays_run(
         self,
-        mock_get_ns_data,
         mock_mkdtemp,
         mock_zipfile,
         mock_copy_in_overlay,
@@ -81,6 +78,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         action = ApplyOverlayAvh(job)
         action.parameters = {
             "to": "avh",
+            "namespace": "common",
             "timeout": {"minutes": 30},
             "options": {"model": "kronos"},
             "fw_package": {
@@ -89,6 +87,11 @@ class TestApplyOverlay(LavaDispatcherTestCase):
                 "root_partition": 1,
             },
         }
+        action.state.compresssed_overlay.file = "mock_overlay_file"
+        action.state.downloads.create_downloaded_file(
+            download_name="fw_package",
+            download_file="mock_fw_package.zip",
+        )
 
         action.validate()
         action.run(None, 0)

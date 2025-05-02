@@ -31,6 +31,7 @@ from lava_dispatcher.actions.deploy.apply_overlay import (
 from lava_dispatcher.actions.deploy.prepare import UBootPrepareKernelAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.device import NewDevice
+from lava_dispatcher.namespace_state import DownloadedFile
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.power import PDUReboot, ResetDevice
 from lava_dispatcher.utils import filesystem
@@ -146,9 +147,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             ["tftp-deploy", "uboot-action", "lava-test-retry", "finalize"],
         )
         tftp = job.pipeline.find_action(TftpAction)
-        self.assertTrue(
-            tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
-        )
+        self.assertTrue(tftp.state.tftp.ramdisk)
         self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
             [action.name for action in tftp.pipeline.actions],
@@ -295,18 +294,9 @@ class TestUbootAction(LavaDispatcherTestCase):
         connection = MagicMock()
         connection.timeout = MagicMock()
         pipeline.add_action(overlay)
-        overlay.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="bootcommand",
-            key="bootcommand",
-            value="bootz",
-        )
-        overlay.set_namespace_data(
-            action="download-action", label="file", key="kernel", value="zImage"
-        )
-        overlay.set_namespace_data(
-            action="download-action", label="file", key="dtb", value="dtb"
-        )
+        overlay.state.uboot.bootcommand = "bootz"
+        overlay.state.downloads["kernel"] = DownloadedFile(file="zImage")
+        overlay.state.downloads["dtb"] = DownloadedFile(file="dtb")
         overlay.validate()
         overlay.run(connection, 100)
 
@@ -326,9 +316,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             "{BOOTX}",
         ]
 
-        assert overlay.get_namespace_data(
-            action="bootloader-overlay", label="u-boot", key="commands"
-        ) == [
+        assert overlay.state.bootloader["u-boot"].commands == [
             "setenv autoload no",
             "dhcp",
             "setenv serverip 192.168.0.2",
@@ -375,21 +363,11 @@ class TestUbootAction(LavaDispatcherTestCase):
         connection = MagicMock()
         connection.timeout = MagicMock()
         pipeline.add_action(overlay)
-        overlay.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="bootcommand",
-            key="bootcommand",
-            value="bootz",
-        )
-        overlay.set_namespace_data(
-            action="download-action", label="file", key="kernel", value="zImage"
-        )
-        overlay.set_namespace_data(
-            action="download-action", label="file", key="dtb", value="dtb"
-        )
-        overlay.set_namespace_data(
-            action="download-action", label="file", key="dtbo0", value="dtbo0"
-        )
+        overlay.state.uboot.bootcommand = "bootz"
+        overlay.state.downloads["kernel"] = DownloadedFile(file="zImage")
+        overlay.state.downloads["dtb"] = DownloadedFile(file="dtb")
+        overlay.state.downloads["dtbo0"] = DownloadedFile(file="dtbo0")
+
         overlay.validate()
         overlay.run(connection, 100)
 
@@ -411,9 +389,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             "{BOOTX}",
         ]
 
-        assert overlay.get_namespace_data(
-            action="bootloader-overlay", label="u-boot", key="commands"
-        ) == [
+        assert overlay.state.bootloader["u-boot"].commands == [
             "setenv autoload no",
             "dhcp",
             "setenv serverip 192.168.0.2",
@@ -464,12 +440,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         connection = MagicMock()
         connection.timeout = MagicMock()
         pipeline.add_action(overlay)
-        overlay.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="bootcommand",
-            key="bootcommand",
-            value="bootz",
-        )
+        overlay.state.uboot.bootcommand = "bootz"
         overlay.validate()
         overlay.run(connection, 100)
         ip_addr = dispatcher_ip(None)
@@ -733,11 +704,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.boot.dispatcher_ip",
         return_value="foo",
     )
-    @patch(
-        "lava_dispatcher.actions.boot.OverlayUnpack.get_namespace_data",
-        return_value="/var/lib/lava/dispatcher/tmp/bar",
-    )
-    def test_transfer_media_cmd(self, get_namespace_data, dispatcher_ip_mock):
+    def test_transfer_media_cmd(self, dispatcher_ip_mock):
         """
         Test command used to add the overlay to existing rootfs
         """
@@ -746,6 +713,8 @@ class TestUbootAction(LavaDispatcherTestCase):
         )
 
         transfer = job.pipeline.find_action(OverlayUnpack)
+        transfer.state.compresssed_overlay.file = "/var/lib/lava/dispatcher/tmp/bar"
+        transfer.state.test.location = "/var/lib/lava/dispatcher/tmp/bar"
 
         class Connection:
             def __init__(self):
@@ -798,9 +767,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         overlay = job.pipeline.find_action(PrepareOverlayTftp)
         extract = overlay.pipeline.find_action(ExtractNfsRootfs)
 
-        test_dir = overlay.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        test_dir = overlay.state.test.lava_test_results_dir
         self.assertIsNotNone(test_dir)
         self.assertIn("/lava-", test_dir)
         self.assertIsNotNone(extract)
@@ -858,43 +825,27 @@ class TestUbootAction(LavaDispatcherTestCase):
         )
         self.assertEqual(
             u_boot_media.parameters["kernel"],
-            u_boot_media.get_namespace_data(
-                action="download-action", label="file", key="kernel"
-            ),
+            u_boot_media.state.downloads["kernel"].file,
         )
         self.assertEqual(
             u_boot_media.parameters["ramdisk"],
-            u_boot_media.get_namespace_data(
-                action="compress-ramdisk", label="file", key="ramdisk"
-            ),
+            u_boot_media.state.compressed_ramdisk.ramdisk_file,
         )
         self.assertEqual(
-            u_boot_media.parameters["dtb"],
-            u_boot_media.get_namespace_data(
-                action="download-action", label="file", key="dtb"
-            ),
+            u_boot_media.parameters["dtb"], u_boot_media.state.downloads["dtb"].file
         )
         # use the base class name so that uboot-from-media can pick up the value reliably.
         self.assertEqual(
             u_boot_media.parameters["root_uuid"],
-            u_boot_media.get_namespace_data(
-                action="bootloader-from-media", label="uuid", key="root"
-            ),
+            u_boot_media.state.bootloader_from_media.root,
         )
-        device = u_boot_media.get_namespace_data(
-            action="storage-deploy", label="u-boot", key="device"
-        )
+        device = u_boot_media.state.storage_deploy.uboot_device
         self.assertIsNotNone(device)
         part_reference = "%s:%s" % (
             job.device["parameters"]["media"]["usb"][device]["device_id"],
             u_boot_media.parameters["boot_part"],
         )
-        self.assertEqual(
-            part_reference,
-            u_boot_media.get_namespace_data(
-                action=u_boot_media.name, label="uuid", key="boot_part"
-            ),
-        )
+        self.assertEqual(part_reference, u_boot_media.state.uboot.boot_part_uuid)
         self.assertEqual(part_reference, "0:1")
 
     @patch(

@@ -111,14 +111,9 @@ class UBootCommandsAction(BootHasMixin, Action):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=self.name,
-            label="bootloader_prompt",
-            key="prompt",
-            value=self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
-                "bootloader_prompt"
-            ],
-        )
+        self.state.uboot.bootloader_prompt = self.job.device["actions"]["boot"][
+            "methods"
+        ]["u-boot"]["parameters"]["bootloader_prompt"]
 
 
 class UBootSecondaryMedia(BootloaderSecondaryMedia):
@@ -147,49 +142,23 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
             self.parameters["kernel_type"], self.job.device.get("parameters")
         )
         self.logger.debug("Using bootcommand: %s", bootcommand)
-        self.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="kernel-type",
-            key="kernel-type",
-            value=self.parameters.get("kernel_type", ""),
-        )
-        self.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="bootcommand",
-            key="bootcommand",
-            value=bootcommand,
-        )
+        self.state.uboot.kernel_type = self.parameters.get("kernel_type", "")
+        self.state.uboot.bootcommand = bootcommand
 
         media_params = self.job.device["parameters"]["media"][
             self.parameters["commands"]
         ]
-        if (
-            self.get_namespace_data(
-                action="storage-deploy", label="u-boot", key="device"
-            )
-            not in media_params
-        ):
+        if self.state.storage_deploy.uboot_device not in media_params:
             self.errors = "%s does not match requested media type %s" % (
-                self.get_namespace_data(
-                    action="storage-deploy", label="u-boot", key="device"
-                ),
+                self.state.storage_deploy.uboot_device,
                 self.parameters["commands"],
             )
         if not self.valid:
             return
-        self.set_namespace_data(
-            action=self.name,
-            label="uuid",
-            key="boot_part",
-            value="%s:%s"
-            % (
-                media_params[
-                    self.get_namespace_data(
-                        action="storage-deploy", label="u-boot", key="device"
-                    )
-                ]["device_id"],
-                self.parameters["boot_part"],
-            ),
+
+        self.state.uboot.boot_part_uuid = "%s:%s" % (
+            media_params[self.state.storage_deploy.uboot_device]["device_id"],
+            self.parameters["boot_part"],
         )
 
 

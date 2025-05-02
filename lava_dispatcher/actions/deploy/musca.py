@@ -196,15 +196,11 @@ class DeployMuscaTestBinary(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
-        )
+        mount_point = self.state.musca.mount_point
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
-        test_binary = self.get_namespace_data(
-            action="download-action", label=self.param_key, key="file"
-        )
+        test_binary = self.state.downloads[self.param_key].file
         dest = os.path.join(mount_point)
         self.logger.debug("Copying %s to %s", test_binary, dest)
         shutil.copy(test_binary, dest)
@@ -235,9 +231,7 @@ class DeployMuscaAutomationAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
-        )
+        mount_point = self.state.musca.mount_point
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 
@@ -263,9 +257,7 @@ class CheckMuscaFlashAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
-        )
+        mount_point = self.state.musca.mount_point
         if not os.path.realpath(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
 

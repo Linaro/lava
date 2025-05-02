@@ -56,7 +56,6 @@ class TestInteractiveAction(Action):
         super().run(connection, max_end_time)
 
         connection_namespace = self.parameters.get("connection-namespace")
-        parameters = None
         if self.timeout.can_skip(self.parameters):
             self.logger.info(
                 "The timeout has 'skip' enabled. "
@@ -65,46 +64,34 @@ class TestInteractiveAction(Action):
 
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
-            parameters = {"namespace": connection_namespace}
+            using_namespace = connection_namespace
         else:
-            parameters = {"namespace": self.parameters.get("namespace", "common")}
-        self.logger.debug("Using namespace: %s", parameters["namespace"])
-        connection = self.get_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            deepcopy=False,
-            parameters=parameters,
-        )
+            using_namespace = self.parameters.get("namespace", "common")
+        self.logger.debug("Using namespace: %s", using_namespace)
+        connection = self.job.namespace_states[using_namespace].shared.connection
 
         if not connection:
             raise ConnectionClosedError("Connection closed")
 
         # List the feedback connections
         self.feedbacks = []
-        for feedback_ns in self.data.keys():
-            feedback_connection = self.get_namespace_data(
-                action="shared",
-                label="shared",
-                key="connection",
-                deepcopy=False,
-                parameters={"namespace": feedback_ns},
-            )
+        for feedback_name, feedback_ns_state in self.job.namespace_states.items():
+            feedback_connection = feedback_ns_state.shared.connection
             if feedback_connection == connection:
                 continue
             if feedback_connection:
                 self.logger.debug(
-                    "Will listen to feedbacks from '%s' for 1 second", feedback_ns
+                    "Will listen to feedbacks from '%s' for 1 second", feedback_name
                 )
-                self.feedbacks.append((feedback_ns, feedback_connection))
+                self.feedbacks.append((feedback_name, feedback_connection))
         self.last_check = time.monotonic()
 
         # Get substitutions from bootloader-overlay
-        substitutions = self.get_namespace_data(
-            action="bootloader-overlay", label="u-boot", key="substitutions"
-        )
-        if substitutions is None:
-            substitutions = {}
+        bootloader_state = self.state.bootloader.get("u-boot")
+        if bootloader_state is None:
+            substitutions: dict[str, str | None] = {}
+        else:
+            substitutions = bootloader_state.substitutions.copy()
         if "{SERVER_IP}" not in substitutions:
             substitutions["{SERVER_IP}"] = dispatcher_ip(
                 self.job.parameters["dispatcher"]

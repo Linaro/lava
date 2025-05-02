@@ -475,31 +475,6 @@ class TestPipeline(LavaDispatcherTestCase):
             [action.section for action in job.pipeline.actions],
         )
 
-    def test_namespace_data(self):
-        factory = Factory()
-        job = factory.create_kvm_job("sample_jobs/kvm.yaml")
-        self.assertIsNotNone(job)
-        test_action = job.pipeline.actions[0]
-        test_action.validate()
-        test_action.set_namespace_data("common", "label", "simple", 1)
-        self.assertEqual(test_action.get_namespace_data("common", "label", "simple"), 1)
-        test_action.set_namespace_data("common", "ns", "dict", {"key": False})
-        self.assertEqual(
-            test_action.get_namespace_data("common", "ns", "dict"), {"key": False}
-        )
-        test_action.set_namespace_data("common", "ns", "list", [1, 2, 3, "4"])
-        self.assertEqual(
-            test_action.get_namespace_data("common", "ns", "list"), [1, 2, 3, "4"]
-        )
-        test_action.set_namespace_data("common", "ns", "dict2", {"key": {"nest": True}})
-        self.assertEqual(
-            test_action.get_namespace_data("common", "ns", "dict2"),
-            {"key": {"nest": True}},
-        )
-        self.assertNotEqual(
-            test_action.get_namespace_data("common", "unknown", "simple"), 1
-        )
-
 
 class TestFakeActions(LavaDispatcherTestCase):
     class KeepConnection(Action):

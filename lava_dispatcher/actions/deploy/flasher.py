@@ -77,9 +77,7 @@ class FlasherAction(Action):
         # Substitute in the device commands
         substitutions = {}
         for key in self.parameters["images"].keys():
-            filename = self.get_namespace_data(
-                action="download-action", label=key, key="file"
-            )
+            filename = self.state.downloads[key].file
             filename = filename[len(self.path) + 1 :]
             substitutions["{%s}" % key.upper()] = filename
 

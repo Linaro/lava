@@ -16,6 +16,7 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
+from lava_dispatcher.namespace_state import NamespaceState
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -721,7 +722,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         previous_connection = Connection(conn_previous)
         conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         data_connection = Connection(conn_previous)
-        action.set_namespace_data("shared", "shared", "connection", data_connection)
+        action.state.shared.connection = data_connection
 
         # disable script run to avoid duplicate as it's already test by other test function
         action.parameters["interactive"] = {}
@@ -756,9 +757,8 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         previous_connection = Connection(conn_previous)
         conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         data_connection = Connection(conn_previous)
-        action.set_namespace_data(
-            "shared", "shared", "connection", data_connection, {"namespace": "foobar"}
-        )
+        job.namespace_states["foobar"] = NamespaceState()
+        job.namespace_states["foobar"].shared.connection = data_connection
 
         # disable script run to avoid duplicate as it's already test by other test function
         action.parameters["interactive"] = {}

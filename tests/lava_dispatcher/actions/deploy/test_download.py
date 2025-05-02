@@ -26,7 +26,7 @@ from lava_dispatcher.actions.deploy.download import (
 from ...test_basic import Factory, LavaDispatcherTestCase
 
 
-class TestDowload(LavaDispatcherTestCase):
+class TestDownload(LavaDispatcherTestCase):
     def test_downloader_populate_http(self):
         job = self.create_simple_job()
         # "images.key" with http
@@ -193,19 +193,9 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["images"]["key"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "key": {
-                            "file": "/path/to/save/key/resource.img",
-                            "compression": None,
-                        }
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["key"]
+        self.assertEqual(download_state.file, "/path/to/save/key/resource.img")
+        self.assertIsNone(download_state.compression)
 
         # "key" without extra parameters
         job = self.create_simple_job()
@@ -218,19 +208,9 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["key"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "key": {
-                            "file": "/path/to/save/key/resource.img",
-                            "compression": None,
-                        }
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["key"]
+        self.assertEqual(download_state.file, "/path/to/save/key/resource.img")
+        self.assertIsNone(download_state.compression)
 
     def test_download_handler_validate_kernel(self):
         # "images.key" for kernel
@@ -247,19 +227,9 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["images"]["kernel"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "kernel": {
-                            "file": "/path/to/save/kernel/kernel",
-                            "compression": None,
-                        }
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["kernel"]
+        self.assertEqual(download_state.file, "/path/to/save/kernel/kernel")
+        self.assertIsNone(download_state.compression)
 
         # "key" for kernel
         job = self.create_simple_job()
@@ -272,20 +242,10 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["kernel"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "kernel": {
-                            "file": "/path/to/save/kernel/kernel",
-                            "compression": None,
-                        },
-                        "type": {"kernel": "zimage"},
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["kernel"]
+        self.assertEqual(download_state.file, "/path/to/save/kernel/kernel")
+        self.assertIsNone(download_state.compression)
+        self.assertEqual(download_state.type, "zimage")
 
     def test_download_handler_validate_extra_arguments(self):
         # "images.key" with compression, image_arg, overlay, ...
@@ -306,21 +266,11 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["images"]["key"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "key": {
-                            "file": "/path/to/save/key/resource.img",
-                            "image_arg": "something",
-                            "compression": "gz",
-                            "overlay": True,
-                        }
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["key"]
+        self.assertEqual(download_state.file, "/path/to/save/key/resource.img")
+        self.assertEqual(download_state.compression, "gz")
+        self.assertEqual(download_state.image_arg, "something")
+        self.assertTrue(download_state.overlay)
 
         # "key" with compression, image_arg, overlay, ...
         job = self.create_simple_job()
@@ -338,21 +288,11 @@ class TestDowload(LavaDispatcherTestCase):
         }
         action.params = action.parameters["key"]
         action.validate()
-        self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "key": {
-                            "file": "/path/to/save/key/resource.img",
-                            "compression": "gz",
-                            "image_arg": "something",
-                            "overlay": True,
-                        }
-                    }
-                }
-            },
-        )
+        download_state = action.state.downloads["key"]
+        self.assertEqual(download_state.file, "/path/to/save/key/resource.img")
+        self.assertEqual(download_state.compression, "gz")
+        self.assertEqual(download_state.image_arg, "something")
+        self.assertTrue(download_state.overlay)
 
     def test_download_handler_errors(self):
         job = self.create_simple_job()
@@ -499,6 +439,7 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertEqual(action.size, 4212)
 
         # Only GET works
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
         action = HttpDownloadAction(
             job, "image", "/path/to/file", urlparse("https://example.com/dtb")
         )
@@ -519,6 +460,7 @@ class TestDowload(LavaDispatcherTestCase):
             print(str(kwargs))
             return DummyResponseNOK()
 
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
         action = HttpDownloadAction(
             job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
@@ -539,6 +481,7 @@ class TestDowload(LavaDispatcherTestCase):
         def raisinghead(url, allow_redirects, headers, timeout):
             raise requests.Timeout()
 
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
         action = HttpDownloadAction(
             job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
@@ -555,6 +498,7 @@ class TestDowload(LavaDispatcherTestCase):
         def raisinghead2(url, allow_redirects, headers, timeout):
             raise requests.RequestException("an error occurred")
 
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
         action = HttpDownloadAction(
             job, "image", "/path/to/file", urlparse("https://example.com/kernel")
         )
@@ -689,6 +633,7 @@ class TestDowload(LavaDispatcherTestCase):
         action.params = action.parameters["images"]["dtb"]
         action.reader = reader
         action.fname = str(tmp_dir_path / "dtb/dtb")
+        action.validate()
         action.run(None, 4212)
         data = ""
         with open(str(tmp_dir_path / "dtb/dtb")) as f_in:
@@ -705,20 +650,13 @@ class TestDowload(LavaDispatcherTestCase):
                 "sha256sum": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
             },
         )
+
+        download_state = action.state.downloads["dtb"]
+        self.assertFalse(download_state.decompressed)
+        self.assertEqual(download_state.file, f"{tmp_dir_path}/dtb/dtb")
         self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "dtb": {
-                            "decompressed": False,
-                            "file": "%s/dtb/dtb" % str(tmp_dir_path),
-                            "sha256": "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
-                        },
-                        "file": {"dtb": "%s/dtb/dtb" % str(tmp_dir_path)},
-                    }
-                }
-            },
+            download_state.sha256,
+            "936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af",
         )
 
     def test_http_download_run_compressed(self):
@@ -731,6 +669,7 @@ class TestDowload(LavaDispatcherTestCase):
             yield b"\x00\x00\x00\x00\x04YZ"
 
         job = self.create_simple_job()
+        job.parameters["dispatcher"] = {}
         action = HttpDownloadAction(
             job, "rootfs", str(tmp_dir_path), urlparse("https://example.com/rootfs.xz")
         )
@@ -750,6 +689,7 @@ class TestDowload(LavaDispatcherTestCase):
         action.reader = reader
         action.size = 68
         action.fname = str(tmp_dir_path / "rootfs/rootfs")
+        action.validate()
         action.run(None, 4212)
         data = ""
         with open(str(tmp_dir_path / "rootfs/rootfs")) as f_in:
@@ -767,20 +707,12 @@ class TestDowload(LavaDispatcherTestCase):
             },
         )
 
+        download_state = action.state.downloads["rootfs"]
+        self.assertTrue(download_state.decompressed)
+        self.assertEqual(download_state.file, f"{tmp_dir_path}/rootfs/rootfs")
         self.assertEqual(
-            action.data,
-            {
-                "common": {
-                    "download-action": {
-                        "rootfs": {
-                            "decompressed": True,
-                            "file": "%s/rootfs/rootfs" % str(tmp_dir_path),
-                            "sha256": "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",
-                        },
-                        "file": {"rootfs": "%s/rootfs/rootfs" % str(tmp_dir_path)},
-                    }
-                }
-            },
+            download_state.sha256,
+            "3275a39be7b717d548b66f3c8f23d940603a63b0f13d84a596d979a7f66feb2c",
         )
 
     def test_predownloaded_job_validation(self):
@@ -817,9 +749,7 @@ class TestDowload(LavaDispatcherTestCase):
         action.parameters = {"namespace": "common"}
         action.validate()
         action.run(None, 4242)
-        mapped_path = action.get_namespace_data(
-            action="download-action", label="rootfs", key="file"
-        )
+        mapped_path = action.state.downloads["rootfs"].file
         self.assertEqual(mapped_path, (destdir + "/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
 
@@ -844,9 +774,7 @@ class TestDowload(LavaDispatcherTestCase):
         action.parameters = {"namespace": "common"}
         action.validate()
         action.run(None, 4242)
-        mapped_path = action.get_namespace_data(
-            action="download-action", label="rootfs", key="file"
-        )
+        mapped_path = action.state.downloads["rootfs"].file
         self.assertEqual(mapped_path, (destdir + "/rootfs/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
 
@@ -871,9 +799,7 @@ class TestDowload(LavaDispatcherTestCase):
         action.parameters = {"namespace": "common"}
         action.validate()
         action.run(None, 4242)
-        mapped_path = action.get_namespace_data(
-            action="download-action", label="rootfs", key="file"
-        )
+        mapped_path = action.state.downloads["rootfs"].file
         self.assertEqual(mapped_path, (destdir + "/rootfs/subdir/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
 

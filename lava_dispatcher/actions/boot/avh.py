@@ -152,9 +152,7 @@ class CallAvhAction(Action):
             raise JobError("Upload thread terminated without providing a result")
 
     def run(self, connection, max_end_time):
-        self.avh = self.get_namespace_data(
-            action="deploy-avh", label="deploy-avh", key="avh"
-        )
+        self.avh = self.state.avh.config
         if self.avh is None:
             raise JobError(
                 "AVH image attributes not found! Is 'deploy.avh' action defined before the 'boot.avh' action?"
@@ -239,9 +237,7 @@ class CallAvhAction(Action):
         shell_connection = ShellSession(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
         return shell_connection
 
     def cleanup(self, connection):

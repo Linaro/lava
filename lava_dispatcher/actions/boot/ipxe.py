@@ -81,11 +81,7 @@ class BootloaderRetry(BootHasMixin, RetryAction):
             ]
         ):
             self.errors = "Missing bootloader prompt for device"
-        self.set_namespace_data(
-            action=self.name,
-            label="bootloader_prompt",
-            key="prompt",
-            value=self.job.device["actions"]["boot"]["methods"][self.type][
-                "parameters"
-            ]["bootloader_prompt"],
-        )
+
+        self.state.ipxe.bootloader_prompt = self.job.device["actions"]["boot"][
+            "methods"
+        ][self.type]["parameters"]["bootloader_prompt"]

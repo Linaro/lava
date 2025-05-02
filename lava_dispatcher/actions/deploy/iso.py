@@ -46,9 +46,7 @@ class DeployIsoAction(Action):
     def validate(self):
         super().validate()
         suffix = os.path.join(*self.preseed_path.split("/")[-2:])
-        self.set_namespace_data(
-            action=self.name, label="iso", key="suffix", value=suffix
-        )
+        self.state.deploy_iso_installer.suffix = suffix
         which("in.tftpd")
 
     def populate(self, parameters):
@@ -118,9 +116,7 @@ class IsoEmptyImage(Action):
         output = os.path.join(base_dir, "hd.img")
         self.logger.info("Creating base image of size: %s bytes", self.size)
         prepare_install_base(output, self.size)
-        self.set_namespace_data(
-            action=self.name, label=self.name, key="output", value=output
-        )
+        self.state.prepare_empty_image.output = output
         self.results = {"success": output}
         return connection
 
@@ -158,12 +154,7 @@ class IsoPullInstaller(Action):
         unique_values = set()
         for key, value in self.files.items():
             unique_values.add(value)
-            self.set_namespace_data(
-                action=self.name,
-                label=self.name,
-                key=key,
-                value=os.path.basename(value),
-            )
+            self.state.pull_installer.files[key] = os.path.basename(value)
         if len(unique_values) != len(self.files.values()):
             self.errors = "filenames to extract from installer image must be unique."
 
@@ -173,9 +164,7 @@ class IsoPullInstaller(Action):
         # cp ./iso/install.amd/initrd.gz initrd.gz
         """
         # need download location
-        iso_download = self.get_namespace_data(
-            action="download-action", label="iso", key="file"
-        )
+        iso_download = self.state.downloads["iso"].file
         if not iso_download:
             raise JobError("installer image path is not present in the namespace.")
         destination = os.path.dirname(iso_download)
@@ -183,9 +172,7 @@ class IsoPullInstaller(Action):
         for key, value in self.files.items():
             filename = os.path.join(destination, os.path.basename(value))
             self.logger.info("filename: %s size: %s", filename, os.stat(filename)[6])
-            self.set_namespace_data(
-                action=self.name, label=self.name, key=key, value=filename
-            )
+            self.state.pull_installer.files[key] = filename
         self.results = {"success": list(self.files.values())}
         return connection
 
@@ -236,30 +223,16 @@ class QemuCommandLine(Action):
                 self.console,
             )
         )
-        self.set_namespace_data(
-            action=self.name,
-            label=self.name,
-            key="prompts",
-            value=self.parameters["deployment_data"]["prompts"],
-        )
-        self.set_namespace_data(
-            action=self.name, label=self.name, key="append", value=self.command_line
-        )
+        self.state.prepare_qemu_commands.prompts = self.parameters["deployment_data"][
+            "prompts"
+        ]
+        self.state.prepare_qemu_commands.append = self.command_line
 
     def run(self, connection, max_end_time):
         # include kernel and initrd from IsoPullInstaller
-        kernel = self.get_namespace_data(
-            action="pull-installer-files", label="pull-installer-files", key="kernel"
-        )
-        initrd = self.get_namespace_data(
-            action="pull-installer-files", label="pull-installer-files", key="initrd"
-        )
+        kernel = self.state.pull_installer.files["kernel"]
+        initrd = self.state.pull_installer.files["initrd"]
         self.sub_command.append(" -kernel %s " % kernel)
         self.sub_command.append(" -initrd %s " % initrd)
-        self.set_namespace_data(
-            action=self.name,
-            label=self.name,
-            key="sub_command",
-            value=self.sub_command[:],
-        )
+        self.state.prepare_qemu_commands.sub_command = self.sub_command[:]
         return connection

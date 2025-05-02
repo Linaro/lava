@@ -5,6 +5,7 @@
 #         Larry Shen <larry.shen@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 from unittest.mock import MagicMock, Mock, patch
 
@@ -14,6 +15,8 @@ from lava_dispatcher.actions.boot.uuu import (
     UUUBootAction,
     UUUBootRetryAction,
 )
+from lava_dispatcher.job import Job
+from lava_dispatcher.namespace_state import DownloadedFile
 from lava_dispatcher.utils.containers import DockerDriver, NullDriver
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -51,30 +54,34 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()
-        self.action = CheckSerialDownloadMode(self.create_job_mock())
 
-        self.action.get_namespace_data = MagicMock(return_value="file.boot")
-        self.action.uuu = "/bin/uuu"
-        self.action.linux_timeout = "/bin/timeout"
-
-        self.action.maybe_copy_to_container = MagicMock()
+    def find_check_serial_action(self, job: Job) -> CheckSerialDownloadMode:
+        action = job.pipeline.find_action(CheckSerialDownloadMode)
+        action.parameters["namespace"] = "common"
+        action.state.downloads["boot"] = DownloadedFile(file="file.boot")
+        action.uuu = "/bin/uuu"
+        action.linux_timeout = "/bin/timeout"
+        action.maybe_copy_to_container = MagicMock()
+        return action
 
     def test_check_board_availability_not_available(self):
-        self.action.run_uuu = MagicMock(return_value=143)
-        self.action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=143)
 
-        self.assertEqual(False, self.action.check_board_availability())
+        self.assertEqual(False, action.check_board_availability())
 
     def test_check_board_availability_failure(self):
-        self.action.run_uuu = MagicMock(return_value=1)
-        self.action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=1)
 
         with self.assertRaises(InfrastructureError) as e:
-            self.action.check_board_availability()
+            action.check_board_availability()
 
         self.assertEqual(
             "Fail UUUBootAction on cmd : /bin/timeout --preserve-status 10 /bin/uuu -m 1:14 file.boot",
@@ -82,14 +89,14 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         )
 
     def test_check_board_availability_single_otg_path(self):
-        self.action.run_uuu = MagicMock(return_value=0)
-
-        self.action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=0)
 
-        self.action.check_board_availability()
-        self.action.run_uuu.assert_called_with(
+        action.check_board_availability()
+        action.run_uuu.assert_called_with(
             [
                 "/bin/timeout",
                 "--preserve-status",
@@ -103,14 +110,14 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         )
 
     def test_check_board_availability_multiple_otg_path(self):
-        self.action.run_uuu = MagicMock(return_value=0)
-
-        self.action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=0)
 
-        self.action.check_board_availability()
-        self.action.run_uuu.assert_called_with(
+        action.check_board_availability()
+        action.run_uuu.assert_called_with(
             [
                 "/bin/timeout",
                 "--preserve-status",
@@ -126,14 +133,14 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         )
 
     def test_check_board_availability_single_otg_path_from_command(self):
-        self.action.run_uuu = MagicMock(return_value=0)
-
-        self.action.job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
-            "sample_jobs/uuu_enhancement.yaml"
+        job = self.factory.create_imx8dxlevk_with_bcu_board_id_command(
+            "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=0)
 
-        self.action.check_board_availability()
-        self.action.run_uuu.assert_called_with(
+        action.check_board_availability()
+        action.run_uuu.assert_called_with(
             [
                 "/bin/timeout",
                 "--preserve-status",
@@ -147,14 +154,14 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         )
 
     def test_check_board_availability_multiple_otg_path_from_command(self):
-        self.action.run_uuu = MagicMock(return_value=0)
-
-        self.action.job = self.factory.create_imx8mq_job(
+        job = self.factory.create_imx8mq_job(
             "imx8mq-evk-03.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.run_uuu = MagicMock(return_value=0)
 
-        self.action.check_board_availability()
-        self.action.run_uuu.assert_called_with(
+        action.check_board_availability()
+        action.run_uuu.assert_called_with(
             [
                 "/bin/timeout",
                 "--preserve-status",
@@ -170,26 +177,26 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
         )
 
     def test_run_available(self):
-        self.action.check_board_availability = MagicMock(return_value=True)
-
-        self.action.set_namespace_data = MagicMock()
-
-        self.action.run(connection=None, max_end_time=None)
-
-        self.action.set_namespace_data.assert_called_with(
-            action="boot", key="otg_availability_check", label="uuu", value=True
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-03.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.check_board_availability = MagicMock(return_value=True)
+
+        action.run(connection=None, max_end_time=None)
+
+        self.assertTrue(action.state.uuu.otg_availability_check)
 
     def test_run_not_available(self):
-        self.action.check_board_availability = MagicMock(return_value=False)
-
-        self.action.set_namespace_data = MagicMock()
-
-        self.action.run(connection=None, max_end_time=None)
-
-        self.action.set_namespace_data.assert_called_with(
-            action="boot", key="otg_availability_check", label="uuu", value=False
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-03.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
+        action = self.find_check_serial_action(job)
+        action.check_board_availability = MagicMock(return_value=False)
+
+        action.run(connection=None, max_end_time=None)
+
+        self.assertFalse(action.state.uuu.otg_availability_check)
 
 
 @patch("builtins.print", Mock())
@@ -357,16 +364,11 @@ class TestUUUbootAction(
         job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
-        action = UUUBootAction(job)
+        action = job.pipeline.find_action(UUUBootAction)
         action.uuu = "/bin/uuu"
 
-        def mocked_get_namespace_data(*args, **kwargs):
-            if kwargs.get("key") == "images_names":
-                return ["boot"]
-            if kwargs.get("label") == "boot":
-                return "image.boot"
-
-        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+        action.state.uuu.uuu_images = ["boot"]
+        action.state.downloads["boot"] = DownloadedFile(file="image.boot")
 
         action.parameters["commands"] = [{"uuu": "-b sd {boot}"}]
 
@@ -388,17 +390,12 @@ class TestUUUbootAction(
     @patch("time.sleep", Mock())
     def test_run_single_path_with_bcu(self):
         job = self.factory.create_imx8dxlevk_job("sample_jobs/uuu_enhancement.yaml")
-        action = UUUBootAction(job)
+        action = job.pipeline.find_action(UUUBootAction)
         action.uuu = "/bin/uuu"
         action.bcu = "/bin/bcu"
 
-        def mocked_get_namespace_data(*args, **kwargs):
-            if kwargs.get("key") == "images_names":
-                return ["boot"]
-            if kwargs.get("label") == "boot":
-                return "image.boot"
-
-        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+        action.state.uuu.uuu_images = ["boot"]
+        action.state.downloads["boot"] = DownloadedFile(file="image.boot")
 
         action.parameters["commands"] = [{"bcu": "reset usb"}, {"uuu": "-b sd {boot}"}]
 
@@ -431,16 +428,11 @@ class TestUUUbootAction(
         job = self.factory.create_imx8mq_job(
             "imx8mq-evk-01.jinja2", "sample_jobs/uuu-bootimage-only.yaml"
         )
-        action = UUUBootAction(job)
+        action = job.pipeline.find_action(UUUBootAction)
         action.uuu = "/bin/uuu"
 
-        def mocked_get_namespace_data(*args, **kwargs):
-            if kwargs.get("key") == "images_names":
-                return ["boot"]
-            if kwargs.get("label") == "boot":
-                return "image.boot"
-
-        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+        action.state.uuu.uuu_images = ["boot"]
+        action.state.downloads["boot"] = DownloadedFile(file="image.boot")
 
         action.parameters["commands"] = [{"uuu": "-b sd {boot}"}]
 
@@ -472,6 +464,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         action = OptionalContainerUuuAction(
             self.create_simple_job(job_parameters={"dispatcher": {}})
         )
+        action.parameters["namespace"] = "common"
         action.job.device = {
             "actions": {
                 "boot": {"methods": {"uuu": {"options": uuu_device_parameters}}}
@@ -527,18 +520,14 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         )
 
     @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="foo")
-    @patch.object(
-        OptionalContainerUuuAction,
-        "get_namespace_data",
-        return_value="bar",
-    )
     @patch.object(OptionalContainerUuuAction, "run_cmd")
-    def test_docker_uuu_remote_cmd(self, mock_cmd, mock_location, mock_ip):
+    def test_docker_uuu_remote_cmd(self, mock_cmd, mock_ip):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
             "remote_options": "--tlsverify --tlscacert=/labScripts/remote_cert/ca.pem --tlscert=/labScripts/remote_cert/cert.pem --tlskey=/labScripts/remote_cert/key.pem -H 10.192.244.5:2376",
         }
         action = self.create_action(uuu_device_parameters)
+        action.state.uuu.root_location = "bar"
         action.run_uuu(["foo", "bar"])
         mock_cmd.assert_called_with(
             [

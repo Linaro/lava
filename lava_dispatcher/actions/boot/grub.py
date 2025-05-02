@@ -204,7 +204,5 @@ class InstallerWait(Action):
         )
         connection.prompt_str = wait_string
         self.wait(connection)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection

@@ -198,9 +198,7 @@ class FastbootBootAction(OptionalContainerFastbootAction):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        boot_img = self.get_namespace_data(
-            action="download-action", label="boot", key="file"
-        )
+        boot_img = self.state.downloads["boot"].file
         boot_img = self.maybe_copy_to_container(boot_img)
 
         command_output = self.get_fastboot_output(["boot", boot_img], allow_fail=True)

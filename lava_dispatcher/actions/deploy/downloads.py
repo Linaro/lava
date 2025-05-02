@@ -109,9 +109,7 @@ class PostprocessWithDocker(Action):
 
         # make overlay available in the downloads directory
         # Note: overlay filename is not constant
-        overlay_full_path = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
+        overlay_full_path = self.state.compresssed_overlay.file
         if overlay_full_path:
             copy(overlay_full_path, self.path)
 

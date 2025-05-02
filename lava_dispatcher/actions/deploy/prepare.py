@@ -90,17 +90,13 @@ class UBootPrepareKernelAction(Action):
         if "parameters" not in self.job.device["actions"]["deploy"]:
             return
         self.params = self.job.device["actions"]["deploy"]["parameters"]
-        self.kernel_type = self.get_namespace_data(
-            action="download-action", label="type", key="kernel"
-        )
+        self.kernel_type = self.state.downloads["kernel"].type
         self.bootcommand = None
         if "parameters" not in self.job.device:
             if self.kernel_type:
                 self.errors = "Kernel boot type is not supported by this device."
         if self.kernel_type:
-            self.set_namespace_data(
-                action=self.name, label="prepared-kernel", key="exists", value=True
-            )
+            self.state.uboot.prepared_kernel_exists = True
             self.bootcommand = map_kernel_uboot(
                 self.kernel_type, self.job.device.get("parameters")
             )
@@ -117,44 +113,25 @@ class UBootPrepareKernelAction(Action):
                 self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
             if self.bootcommand == "bootm" and self.kernel_type != "uimage":
                 self.mkimage_conversion = True
-        self.set_namespace_data(
-            action="uboot-prepare-kernel",
-            label="bootcommand",
-            key="bootcommand",
-            value=self.bootcommand,
-        )
+
+        self.state.uboot.bootcommand = self.bootcommand
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         if not self.kernel_type:
             return connection  # idempotency
-        old_kernel = self.get_namespace_data(
-            action="download-action", label="file", key="kernel"
-        )
+        old_kernel = self.state.downloads["kernel"].file
         if self.params.get("append_dtb", False):
-            kernel_file = self.get_namespace_data(
-                action="download-action", label="kernel", key="file"
-            )
-            dtb_file = self.get_namespace_data(
-                action="download-action", label="dtb", key="file"
-            )
+            kernel_file = self.state.downloads["kernel"].file
+            dtb_file = self.state.downloads["dtb"].file
             kerneldtb_file = os.path.join(os.path.dirname(kernel_file), "kernel-dtb")
             self.append_dtb(kernel_file, dtb_file, kerneldtb_file)
             new_kernel = os.path.join(os.path.dirname(old_kernel), "kernel-dtb")
-            self.set_namespace_data(
-                action="download-action",
-                label="kernel",
-                key="file",
-                value=kerneldtb_file,
-            )
-            self.set_namespace_data(
-                action="prepare-kernel", label="file", key="kernel", value=new_kernel
-            )
+            self.state.downloads["kernel"].file = kerneldtb_file
+            self.state.prepared_kernel.kernel_file = new_kernel
         if self.mkimage_conversion:
             self.logger.info("Converting downloaded kernel to a uImage")
-            filename = self.get_namespace_data(
-                action="download-action", label="kernel", key="file"
-            )
+            filename = self.state.downloads["kernel"].file
             load_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
             if "text_offset" in self.job.device["parameters"]:
                 load_addr = self.job.device["parameters"]["text_offset"]
@@ -165,9 +142,7 @@ class UBootPrepareKernelAction(Action):
             self.create_uimage(filename, load_addr, use_xip, arch, "uImage")
             new_kernel = os.path.dirname(old_kernel) + "/uImage"
             # overwriting namespace data
-            self.set_namespace_data(
-                action="prepare-kernel", label="file", key="kernel", value=new_kernel
-            )
+            self.state.prepared_kernel.kernel_file = new_kernel
         return connection
 
 
@@ -233,9 +208,7 @@ class PrepareFITAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         params = {
-            label: self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
+            label: self.state.downloads[label].file
             for label in ["kernel", "dtb", "ramdisk"]
         }
         kernel_path = params["kernel"]
@@ -259,9 +232,7 @@ class PrepareFITAction(Action):
                 "fit_path": fit_path,
             }
         )
-        ramdisk_with_overlay = self.get_namespace_data(
-            action="compress-ramdisk", label="file", key="full-path"
-        )
+        ramdisk_with_overlay = self.state.compressed_ramdisk.full_path
         if ramdisk_with_overlay:
             params["ramdisk"] = ramdisk_with_overlay
 
@@ -269,12 +240,8 @@ class PrepareFITAction(Action):
         if not self.run_command(cmd):
             raise InfrastructureError("FIT image creation failed")
 
-        kernel_tftp = self.get_namespace_data(
-            action="download-action", label="file", key="kernel"
-        )
+        kernel_tftp = self.state.downloads["kernel"].file
         fit_tftp = os.path.join(os.path.dirname(kernel_tftp), "image.itb")
-        self.set_namespace_data(
-            action=self.name, label="file", key="fit", value=fit_tftp
-        )
+        self.state.prepare_fit.fit_file = fit_tftp
 
         return connection

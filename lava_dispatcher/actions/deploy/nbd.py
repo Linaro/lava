@@ -36,8 +36,8 @@ class NbdAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.tftp_dir = None
-        self.nbd_ip = None
-        self.nbd_port = None
+        self.nbd_ip: str | None = None
+        self.nbd_port: str | None = None
 
     def validate(self):
         super().validate()
@@ -57,9 +57,7 @@ class NbdAction(Action):
 
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
-        self.set_namespace_data(
-            action="tftp-deploy", label="tftp", key="suffix", value=suffix
-        )
+        self.state.tftp.suffix = suffix
         # we need tftp _and_ nbd-server
         which("in.tftpd")
         which("nbd-server")
@@ -77,13 +75,7 @@ class NbdAction(Action):
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.set_namespace_data(
-            action=self.name,
-            label="tftp",
-            key="tftp_dir",
-            value=self.tftp_dir,
-            parameters=parameters,
-        )
+        self.state.tftp.tftp_dir = self.tftp_dir
 
         for key in ["initrd", "kernel", "dtb", "nbdroot"]:
             if key in parameters:
@@ -95,33 +87,15 @@ class NbdAction(Action):
                 )
                 self.pipeline.add_action(download)
                 if key == "initrd":
-                    self.set_namespace_data(
-                        action="tftp-deploy",
-                        label="tftp",
-                        key="ramdisk",
-                        value=True,
-                        parameters=parameters,
-                    )
-                    self.set_namespace_data(
-                        action=self.name,
-                        label="nbd",
-                        key="initrd",
-                        value=True,
-                        parameters=parameters,
-                    )
+                    self.state.tftp.ramdisk = True
+                    self.state.ndb.initrd = True
 
         # prepare overlay
         self.pipeline.add_action(OverlayAction(self.job))
         if "kernel" in parameters and "type" in parameters["kernel"]:
             self.pipeline.add_action(PrepareKernelAction(self.job))
         # setup values for protocol and later steps
-        self.set_namespace_data(
-            action=self.name,
-            label="nbd",
-            key="initrd",
-            value=True,
-            parameters=parameters,
-        )
+        self.state.ndb.initrd = True
         # store in parameters for protocol 'xnbd' to tear-down nbd-server
         # and store in namespace for boot action
         # ip
@@ -146,12 +120,8 @@ class XnbdAction(Action):
         self.logger.debug("%s: starting nbd-server", self.name)
         # pull from parameters - as previously set
         self.nbd_root = self.parameters["lava-xnbd"]["nbdroot"]
-        self.nbd_server_port = self.get_namespace_data(
-            action="nbd-deploy", label="nbd", key="nbd_server_port"
-        )
-        self.nbd_server_ip = self.get_namespace_data(
-            action="nbd-deploy", label="nbd", key="nbd_server_ip"
-        )
+        self.nbd_server_port = self.state.ndb.nbd_server_port
+        self.nbd_server_ip = self.state.ndb.nbd_server_ip
         if self.nbd_server_port is None:
             self.errors = "NBD server port is unset"
             return connection

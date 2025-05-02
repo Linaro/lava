@@ -341,18 +341,9 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
         # Test the InlineRepoAction directly
         location = mkdtemp()
         # other actions have not been run, so fake up
-        inline_repo.set_namespace_data(
-            action="test", label="results", key="lava_test_results_dir", value=location
-        )
-        inline_repo.set_namespace_data(
-            action="test", label="test-definition", key="overlay_dir", value=location
-        )
-        inline_repo.set_namespace_data(
-            action="test", label="shared", key="location", value=location
-        )
-        inline_repo.set_namespace_data(
-            action="test", label="test-definiton", key="overlay_dir", value=location
-        )
+        inline_repo.state.test.lava_test_results_dir = location
+        inline_repo.state.test.overlay_dir = location
+        inline_repo.state.test.location = location
 
         inline_repo.run(None, None)
         yaml_file = os.path.join(
@@ -431,12 +422,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
 
         # initialise the first Connection object, a command line shell
         shell_connection = prepare_test_connection()
-        autologinaction.set_namespace_data(
-            action="deploy-device-env",
-            label="environment",
-            key="line_separator",
-            value="testsep",
-        )
+        autologinaction.state.device_env.line_separator = "testsep"
 
         # Test the AutoLoginAction directly
         with autologinaction.timeout(None, None) as max_end_time:
@@ -614,9 +600,7 @@ class TestKvmUefi(LavaDispatcherTestCase):
         uefi_download = downloaders[0]
         image_download = downloaders[1]
         self.assertEqual(image_download.key, "disk1")
-        uefi_dir = uefi_download.get_namespace_data(
-            action="deployimages", label="image", key="uefi_dir"
-        )
+        uefi_dir = uefi_download.state.deploy_images.uefi_dir
         self.assertIsNotNone(uefi_dir)
         self.assertTrue(
             os.path.exists(uefi_dir)
@@ -634,14 +618,9 @@ class TestKvmUefi(LavaDispatcherTestCase):
                 "-net nic,model=virtio,macaddr=52:54:00:12:34:59 -net user",
                 "-m 256",
                 "-monitor none",
-                "-drive format=raw,file=%s"
-                % execute.get_namespace_data(
-                    action="download-action", label="disk1", key="file"
-                ),
+                "-drive format=raw,file=%s" % execute.state.downloads["disk1"].file,
                 "-L",
-                execute.get_namespace_data(
-                    action="deployimages", label="image", key="uefi_dir"
-                ),
+                execute.state.deploy_images.uefi_dir,
                 "-monitor",
                 "none",
             ],
@@ -681,14 +660,8 @@ class TestQemuNFS(LavaDispatcherTestCase):
                 "-monitor none",
                 "-smp",
                 "1",
-                "-kernel %s"
-                % execute.get_namespace_data(
-                    action="download-action", label="kernel", key="file"
-                ),
-                "-initrd %s"
-                % execute.get_namespace_data(
-                    action="download-action", label="initrd", key="file"
-                ),
+                "-kernel %s" % execute.state.downloads["kernel"].file,
+                "-initrd %s" % execute.state.downloads["initrd"].file,
                 "--append",
                 '"console=ttyAMA0 root=/dev/nfs nfsroot=192.168.0.2:{NFSROOTFS},tcp,hard rw ip=dhcp"',
             ],

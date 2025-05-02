@@ -30,6 +30,8 @@ from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.utils.decorator import retry
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -50,7 +52,7 @@ class AvhDeploy(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.avh = {}
+        self.avh: dict[str, Any] = {}
         self.path = None
         self.required_images = ["kernel", "dtb", "rootfs"]
         self.api_config = None
@@ -191,9 +193,7 @@ class AvhDeploy(Action):
 
             downloaded_images = {}
             for image in self.parameters["images"].keys():
-                filename = self.get_namespace_data(
-                    action="download-action", label=image, key="file"
-                )
+                filename = self.state.downloads[image].file
                 downloaded_images[image] = filename
 
             # Create firmware zip package
@@ -214,15 +214,11 @@ class AvhDeploy(Action):
             self.avh["image_path"] = fw_path
 
         if self.parameters.get("fw_package"):
-            fw_package_path = self.get_namespace_data(
-                action="download-action", label="fw_package", key="file"
-            )
+            fw_package_path = self.state.downloads["fw_package"].file
             self.avh["image_path"] = fw_package_path
             self.avh["image_name"] = fw_package_path.split("/")[-1][:-4]
 
-        self.set_namespace_data(
-            action=self.name, label=self.name, key="avh", value=self.avh
-        )
+        self.state.avh.config = self.avh
         self.results = {"success": self.avh["image_path"]}
 
         return connection

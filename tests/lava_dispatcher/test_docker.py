@@ -62,16 +62,16 @@ class TestDocker(LavaDispatcherTestCase):
     )
     @patch("subprocess.check_output")
     @patch("lava_dispatcher.actions.deploy.docker.DockerAction.run_cmd")
-    @patch(
-        "lava_dispatcher.actions.boot.docker.CallDockerAction.get_namespace_data",
-        return_value="foo/bar",
-    )
     @patch("lava_dispatcher.actions.boot.docker.ShellSession")
     @patch("lava_dispatcher.actions.boot.docker.ShellCommand")
     def test_boot(self, shell_command, *args):
+        call = self.job.pipeline.find_action(CallDockerAction)
+
         self.job.validate()
 
-        call = self.job.pipeline.find_action(CallDockerAction)
+        call.state.docker.image_name = "foo/bar"
+        call.state.test.location = "foo/bar"
+        call.state.test.lava_test_results_dir = "foo/bar"
 
         connection = MagicMock()
         connection.timeout = MagicMock()
@@ -109,14 +109,16 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
     )
     @patch("subprocess.check_output")
     @patch("lava_dispatcher.actions.deploy.docker.DockerAction.run_cmd")
-    @patch(
-        "lava_dispatcher.actions.boot.docker.CallDockerAction.get_namespace_data",
-        return_value="foo/bar",
-    )
     @patch("lava_dispatcher.actions.boot.docker.ShellSession")
     @patch("lava_dispatcher.actions.boot.docker.ShellCommand")
     def test_boot(self, shell_command, *args):
+        call = self.job.pipeline.find_action(CallDockerAction)
+
         self.job.validate()
+
+        call.state.docker.image_name = "foo/bar"
+        call.state.test.location = "foo/bar"
+        call.state.test.lava_test_results_dir = "foo/bar"
 
         call = self.job.pipeline.find_action(CallDockerAction)
 

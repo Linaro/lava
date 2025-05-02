@@ -74,7 +74,6 @@ class TestMultiDeploy(LavaDispatcherTestCase):
         summary = "fake deployment"
 
         def run(self, connection, max_end_time):
-            self.data[self.name] = self.parameters
             return connection  # no actual connection during this fake job
 
     @patch(
@@ -94,7 +93,7 @@ class TestMultiDeploy(LavaDispatcherTestCase):
                 counts.setdefault(name, 1)
                 parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
-                self.assertEqual({}, test_deploy.action.data)
+                self.assertEqual({}, job.namespace_states)
                 counts[name] += 1
         # check that only one action has the example set
         self.assertEqual(
@@ -119,16 +118,6 @@ class TestMultiDeploy(LavaDispatcherTestCase):
         job.validate()
         self.assertEqual([], job.pipeline.errors)
         job.run()
-        self.assertNotEqual(
-            pipeline.actions[0].data, {"fake-deploy": pipeline.actions[0].parameters}
-        )
-        self.assertEqual(
-            pipeline.actions[1].data, {"fake-deploy": pipeline.actions[2].parameters}
-        )
-        # check that values from previous DeployAction run actions have been cleared
-        self.assertEqual(
-            pipeline.actions[2].data, {"fake-deploy": pipeline.actions[2].parameters}
-        )
 
 
 class TestMultiDefinition(LavaDispatcherTestCase):
@@ -155,9 +144,7 @@ class TestMultiDefinition(LavaDispatcherTestCase):
         self.assertIsNotNone(job)
 
         runscript = job.pipeline.find_action(TestRunnerAction)
-        testdef_index = runscript.get_namespace_data(
-            action="test-definition", label="test-definition", key="testdef_index"
-        )
+        testdef_index = runscript.state.test.testdef_index
         self.assertEqual(len(block["definitions"]), len(testdef_index))
         runscript.validate()
         self.assertIsNotNone(runscript.errors)

@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import contextlib
-import copy
 import logging
 import subprocess  # nosec - internal
 import time
@@ -32,8 +31,9 @@ from lava_common.log import YAMLLogger
 from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
+from .namespace_state import NamespaceState
+
 if TYPE_CHECKING:
-    from collections.abc import KeysView
     from typing import Any, Iterator, Optional, TypeVar
 
     from .job import Job
@@ -396,20 +396,14 @@ class Action:
     command_exception = JobError
 
     @property
-    def data(self):
-        """
-        Shortcut to the job.context
-        """
-        if not self.job:
-            return None
-        return self.job.context
-
-    @data.setter
-    def data(self, value):
-        """
-        Accepts a dict to be updated in the job.context
-        """
-        self.job.context.update(value)
+    def state(self) -> NamespaceState:
+        namespace = self.parameters["namespace"]
+        try:
+            return self.job.namespace_states[namespace]
+        except KeyError:
+            new_namespace_state = NamespaceState()
+            self.job.namespace_states[namespace] = new_namespace_state
+            return new_namespace_state
 
     @property
     def errors(self):
@@ -495,6 +489,7 @@ class Action:
         return self.job.device.get_constant(key, prefix=prefix)
 
     def on_timeout(self) -> None:
+        # Override in subclasses
         ...
 
     def validate(self):
@@ -812,12 +807,12 @@ class Action:
                     self.logger.info(
                         "Setting namespace data key %s to %s", message[0], message[1]
                     )
-                    self.set_namespace_data(
-                        action=protocol.name,
-                        label=protocol.name,
-                        key=message[0],
-                        value=message[1],
-                    )
+                    try:
+                        protocol_data = self.state.protocol[protocol.name]
+                    except KeyError:
+                        protocol_data: dict[str, Any] = {}
+                        self.state.protocol[protocol.name] = protocol_data
+                    protocol_data[message[0]] = message[1]
 
     def run(self, connection, max_end_time):
         """
@@ -858,75 +853,6 @@ class Action:
         """
         if self.pipeline:
             self.pipeline.cleanup(connection, max_end_time)
-
-    def get_namespace_keys(
-        self, action: str, parameters: dict[str, Any] | None = None
-    ) -> KeysView[str]:
-        """Return the keys for the given action"""
-        params = parameters if parameters else self.parameters
-        namespace = params["namespace"]
-        return self.data.get(namespace, {}).get(action, {}).keys()
-
-    def get_namespace_data(
-        self,
-        action: str,
-        label: str,
-        key: str,
-        deepcopy: bool = True,
-        parameters: dict[str, Any] | None = None,
-    ) -> Any | None:
-        """
-        Get a namespaced data value from dynamic job data using the specified key.
-        By default, returns a deep copy of the value instead of a reference to allow actions to
-        manipulate lists and dicts based on common data without altering the values used by other actions.
-        :param action: Name of the action which set the data or a commonly shared string used to
-            correlate disparate actions
-        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
-            values. Can be set to the same as the action.
-        :param key: The lookup key for the requested value within the data defined by
-            data[namespace][action][label]
-        :param deepcopy: If deepcopy is False, the reference is used - meaning that certain operations on the
-            namespaced data values other than simple strings will be able to modify the data without calls to
-            set_namespace_data.
-        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
-            will not have been set in the action at that point.
-        """
-        params = parameters if parameters else self.parameters
-        namespace = params["namespace"]
-        value = self.data.get(namespace, {}).get(action, {}).get(label, {}).get(key)
-        if value is None:
-            return None
-        return copy.deepcopy(value) if deepcopy else value
-
-    def set_namespace_data(
-        self,
-        action: str,
-        label: str,
-        key: str,
-        value: Any,
-        parameters: dict[str, Any] | None = None,
-    ) -> None:
-        """
-        Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
-        which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
-        :param action: Name of the action which set the data or a commonly shared string used to
-            correlate disparate actions
-        :param label: Arbitrary label used by many actions to sub-divide similar keys with distinct
-            values. Can be set to the same as the action.
-        :param key: The lookup key for the requested value within the data defined by
-            data[namespace][action][label]
-        :param value: The value to set into the namespace data, can be an object.
-        :param parameters: Pass parameters when calling get_namespace_data from populate() as the parameters
-            will not have been set in the action at that point.
-        """
-        params = parameters if parameters else self.parameters
-        namespace = params["namespace"]
-        if not label or not key:
-            raise LAVABug("Invalid call to set_namespace_data: %s" % action)
-        self.data.setdefault(namespace, {})
-        self.data[namespace].setdefault(action, {})
-        self.data[namespace][action].setdefault(label, {})
-        self.data[namespace][action][label][key] = value
 
     def wait(self, connection, max_end_time=None):
         if not connection:

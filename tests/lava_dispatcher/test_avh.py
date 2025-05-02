@@ -22,6 +22,7 @@ from avh_api.model.model import Model
 from avh_api.model.project import Project
 from avh_api.model.token import Token
 
+from lava_dispatcher.actions.boot.avh import CallAvhAction
 from lava_dispatcher.actions.boot_strategy import BootAvh
 from lava_dispatcher.actions.deploy_strategy import Avh
 
@@ -173,9 +174,18 @@ class TestAvhActions(LavaDispatcherTestCase):
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_auth_login",
         return_value=Token("avhapitoken"),
     )
-    @patch(
-        "lava_dispatcher.actions.boot.avh.CallAvhAction.get_namespace_data",
-        return_value={
+    def test_boot(
+        self,
+        v1_auth_login,
+        image_open,
+        v1_create_image,
+        v1_create_instance,
+        v1_get_instance_state,
+        v1_get_instance_console,
+        *args,
+    ):
+        action = self.job.pipeline.find_action(CallAvhAction)
+        action.state.avh.config = {
             "model": "rpi4b",
             "api_endpoint": "https://app.avh.corellium.com/api",
             "project_name": "Default Project",
@@ -186,27 +196,10 @@ class TestAvhActions(LavaDispatcherTestCase):
             "image_version": "1.1",
             "image_build": "4999",
             "image_id": "18af26fe-8a5a-479a-80ec-013c54176d6f",
-        },
-    )
-    def test_boot(
-        self,
-        get_namespace_data,
-        v1_auth_login,
-        image_open,
-        v1_create_image,
-        v1_create_instance,
-        v1_get_instance_state,
-        v1_get_instance_console,
-        *args,
-    ):
+        }
+
         self.job.validate()
-
-        action = self.job.pipeline.actions[1].pipeline.actions[0]
         action.run(None, None)
-
-        get_namespace_data.assert_called_once_with(
-            action="deploy-avh", label="deploy-avh", key="avh"
-        )
 
         v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
 
@@ -299,9 +292,7 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
         v1_get_models.assert_called_once_with()
         v1_get_projects.assert_called_once_with()
 
-        avh_data = action.get_namespace_data(
-            action="deploy-avh", label="deploy-avh", key="avh"
-        )
+        avh_data = action.state.avh.config
         assert avh_data["api_endpoint"] == "https://app.avh.corellium.com/api"
         assert avh_data["project_id"] == "d59db33d-27bd-4b22-878d-49e4758a648e"
         assert avh_data["model"] == "kronos"
@@ -344,9 +335,18 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_auth_login",
         return_value=Token("avhapitoken"),
     )
-    @patch(
-        "lava_dispatcher.actions.boot.avh.CallAvhAction.get_namespace_data",
-        return_value={
+    def test_boot(
+        self,
+        v1_auth_login,
+        image_open,
+        v1_create_image,
+        v1_create_instance,
+        v1_get_instance_state,
+        v1_get_instance,
+        *args,
+    ):
+        action = self.job.pipeline.find_action(CallAvhAction)
+        action.state.avh.config = {
             "model": "kronos",
             "api_endpoint": "https://app.avh.corellium.com/api",
             "project_name": "Default Project",
@@ -357,27 +357,10 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
             "image_version": "1.1",
             "image_build": "4999",
             "image_id": "18af26fe-8a5a-479a-80ec-013c54176d6f",
-        },
-    )
-    def test_boot(
-        self,
-        get_namespace_data,
-        v1_auth_login,
-        image_open,
-        v1_create_image,
-        v1_create_instance,
-        v1_get_instance_state,
-        v1_get_instance,
-        *args,
-    ):
+        }
+
         self.job.validate()
-
-        action = self.job.pipeline.actions[1].pipeline.actions[0]
         action.run(None, None)
-
-        get_namespace_data.assert_called_once_with(
-            action="deploy-avh", label="deploy-avh", key="avh"
-        )
 
         v1_auth_login.assert_called_once_with({"api_token": "avh_api_token"})
 

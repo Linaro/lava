@@ -116,12 +116,9 @@ class DDAction(Action):
             if "root_part" in self.boot_params[self.parameters["device"]]:
                 self.errors = "'root_part' is not valid as a UUID is required"
         if self.parameters["device"] in self.boot_params:
-            self.set_namespace_data(
-                action=self.name,
-                label="u-boot",
-                key="boot_part",
-                value=self.boot_params[self.parameters["device"]]["device_id"],
-            )
+            self.state.dd_image.uboot_boot_part = self.boot_params[
+                self.parameters["device"]
+            ]["device_id"]
 
     def run(self, connection, max_end_time):
         """
@@ -130,9 +127,7 @@ class DDAction(Action):
         device to write directly to the secondary media, without needing to cache on the device.
         """
         connection = super().run(connection, max_end_time)
-        d_file = self.get_namespace_data(
-            action="download-action", label="image", key="file"
-        )
+        d_file = self.state.downloads["image"].file
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
@@ -198,9 +193,7 @@ class DDAction(Action):
         # set prompt back once secondary deployment is complete
         connection.prompt_str = prompt_string
         self.logger.debug("Changing prompt to %s", connection.prompt_str)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection
 
 
@@ -223,12 +216,7 @@ class MassStorage(Action):
         if not self.valid:
             return
 
-        self.set_namespace_data(
-            action=self.name,
-            label="u-boot",
-            key="device",
-            value=self.parameters["device"],
-        )
+        self.state.storage_deploy.uboot_device = self.parameters["device"]
 
     def populate(self, parameters):
         """

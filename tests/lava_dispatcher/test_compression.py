@@ -80,9 +80,7 @@ class TestDecompression(LavaDispatcherTestCase):
             httpaction.validate()
             httpaction.parameters = httpaction.parameters["images"]
             httpaction.run(None, None)
-            output = httpaction.get_namespace_data(
-                action="download-action", label=httpaction.key, key="file"
-            )
+            output = httpaction.state.downloads[httpaction.key].file
             outputfile = output.split("/")[-1]
             sha256hash = hashlib.sha256()
             md5sumhash = hashlib.md5()  # nosec - not used for cryptography

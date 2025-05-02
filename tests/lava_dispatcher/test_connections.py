@@ -175,9 +175,7 @@ class TestConnection(LavaDispatcherTestCase):
     def test_tar_command(self):
         self.job.validate()
         login = self.job.pipeline.find_action(SshAction)
-        tar_flags = login.get_namespace_data(
-            action="scp-overlay", label="scp-overlay", key="tar_flags"
-        )
+        tar_flags = login.state.ssh.tar_flags
         self.assertIsNotNone(tar_flags)
         self.assertEqual("--warning no-timestamp", tar_flags)
 
@@ -257,13 +255,8 @@ class TestConnection(LavaDispatcherTestCase):
 
         scp_overlay = self.guest_job.pipeline.find_action(ScpOverlay)
         prepare = scp_overlay.pipeline.find_action(PrepareOverlayScp)
-        self.assertEqual(prepare.host_keys, ["ipv4"])
-        self.assertEqual(
-            prepare.get_namespace_data(
-                action=prepare.name, label=prepare.name, key="overlay"
-            ),
-            prepare.host_keys,
-        )
+        self.assertEqual(list(prepare.host_keys.keys()), ["ipv4"])
+        self.assertEqual(prepare.state.ssh.host_keys, prepare.host_keys)
         params = prepare.parameters["protocols"][MultinodeProtocol.name]
         for call_dict in [
             call
@@ -294,37 +287,17 @@ class TestConnection(LavaDispatcherTestCase):
         self.assertIn(  # ipv4
             login.parameters["parameters"]["hostID"], prepare.host_keys
         )
-        prepare.set_namespace_data(
-            action=MultinodeProtocol.name,
-            label=MultinodeProtocol.name,
-            key="ipv4",
-            value={"ipaddr": "172.16.200.165"},
-        )
-        self.assertEqual(
-            prepare.get_namespace_data(
-                action=prepare.name, label=prepare.name, key="overlay"
-            ),
-            prepare.host_keys,
-        )
+        prepare.state.multinode["ipv4"] = {"ipaddr": "172.16.200.165"}
+        self.assertEqual(prepare.state.ssh.host_keys, prepare.host_keys)
         self.assertIn(
             login.parameters["parameters"]["host_key"],
-            prepare.get_namespace_data(
-                action=MultinodeProtocol.name,
-                label=MultinodeProtocol.name,
-                key=login.parameters["parameters"]["hostID"],
-            ),
+            prepare.state.multinode[login.parameters["parameters"]["hostID"]],
         )
-        host_data = prepare.get_namespace_data(
-            action=MultinodeProtocol.name,
-            label=MultinodeProtocol.name,
-            key=login.parameters["parameters"]["hostID"],
-        )
+        host_data = prepare.state.multinode[login.parameters["parameters"]["hostID"]]
         self.assertEqual(
             host_data[login.parameters["parameters"]["host_key"]], "172.16.200.165"
         )
-        data = scp_overlay.get_namespace_data(
-            action=MultinodeProtocol.name, label=MultinodeProtocol.name, key="ipv4"
-        )
+        data = prepare.state.multinode["ipv4"]
         if "protocols" in scp_overlay.parameters:
             for params in scp_overlay.parameters["protocols"][MultinodeProtocol.name]:
                 (replacement_key, placeholder) = [
@@ -332,9 +305,7 @@ class TestConnection(LavaDispatcherTestCase):
                 ][0]
                 self.assertEqual(data[replacement_key], "172.16.200.165")
                 self.assertEqual(placeholder, "$ipaddr")
-        environment = scp_overlay.get_namespace_data(
-            action=prepare.name, label="environment", key="env_dict"
-        )
+        environment = scp_overlay.state.ssh.scp_env
         self.assertIsNotNone(environment)
         self.assertIn("LANG", environment.keys())
         self.assertIn("C", environment.values())

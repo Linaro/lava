@@ -26,16 +26,12 @@ class UUUAction(Action):
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
         path = self.mkdtemp()
-        self.set_namespace_data(
-            action="uuu-deploy", label="uuu-images", key="root_location", value=path
-        )
+        self.state.uuu.root_location = path
 
         images_param = dict(parameters["images"])
         images = list(images_param.keys())
 
-        self.set_namespace_data(
-            action="uuu-deploy", label="uuu-images", key="images_names", value=images
-        )
+        self.state.uuu.uuu_images = images
 
         for image in images:
             self.pipeline.add_action(

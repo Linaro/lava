@@ -45,9 +45,7 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         :return: True if board is available in USB serial download mode
         """
 
-        boot = self.get_namespace_data(
-            action="download-action", label="boot", key="file"
-        )
+        boot = self.state.downloads["boot"].file
         # Sleep 5 seconds before availability check
         time.sleep(5)
 
@@ -78,14 +76,10 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
             self.logger.info(
                 "Board not available in serial download mode, corrupting boot media"
             )
-            self.set_namespace_data(
-                action="boot", label="uuu", key="otg_availability_check", value=False
-            )
+            self.state.uuu.otg_availability_check = False
         else:
             self.logger.info("Board available for usb serial download")
-            self.set_namespace_data(
-                action="boot", label="uuu", key="otg_availability_check", value=True
-            )
+            self.state.uuu.otg_availability_check = True
 
         return connection
 
@@ -133,9 +127,7 @@ class BootBootloaderCorruptBootMediaAction(Action):
         self.pipeline.add_action(DisconnectDevice(self.job))
 
     def run(self, connection, max_end_time):
-        otg_available = self.get_namespace_data(
-            action="boot", label="uuu", key="otg_availability_check"
-        )
+        otg_available = self.state.uuu.otg_availability_check
         if otg_available:
             return connection
         else:
@@ -179,15 +171,11 @@ class CheckBootloaderValidAction(Action):
     def run(self, connection, max_end_time):
         try:
             con = super().run(connection, max_end_time)
-            self.set_namespace_data(
-                action="boot", label="uuu", key="bootloader_valid_check", value=True
-            )
+            self.state.uuu.otg_availability_check = True
             return con
         except InfrastructureError:
             self.logger.info("Start uuu flash due to no valid bootloader")
-            self.set_namespace_data(
-                action="boot", label="uuu", key="bootloader_valid_check", value=False
-            )
+            self.state.uuu.otg_availability_check = False
             return connection
 
 
@@ -258,9 +246,7 @@ Following actions will be skipped :
         self.pipeline.add_action(DisconnectDevice(self.job))
 
     def run(self, connection, max_end_time):
-        bootloader_valid = self.get_namespace_data(
-            action="boot", label="uuu", key="bootloader_valid_check"
-        )
+        bootloader_valid = self.state.uuu.bootloader_valid_check
         if bootloader_valid:
             self.logger.info("Skip uuu flash due to valid bootloader")
             return connection
@@ -396,9 +382,7 @@ class UUUBootAction(OptionalContainerUuuAction):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=self.name, label="bootloader_prompt", key="prompt", value=None
-        )
+        self.state.uuu.bootloader_prompt = None
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -412,16 +396,12 @@ class UUUBootAction(OptionalContainerUuuAction):
         self.bcu_board_id = self.job.device["actions"]["boot"]["methods"]["uuu"][
             "options"
         ]["bcu_board_id"]
-        images_name = self.get_namespace_data(
-            action="uuu-deploy", label="uuu-images", key="images_names"
-        )
+        images_name = self.state.uuu.uuu_images
 
         # Use to replace {boot} identifier in cmd by correct 'boot' image path
         templates = dict()
         for image in images_name:
-            templates[image] = self.get_namespace_data(
-                "download-action", label=image, key="file"
-            )
+            templates[image] = self.state.downloads[image].file
             self.maybe_copy_to_container(templates[image])
 
         self.logger.info(templates)

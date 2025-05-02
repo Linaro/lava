@@ -49,24 +49,11 @@ class DeployDeviceEnvironment(Action):
             self.env = self.job.parameters["env_dut"]
             environment = self._create_environment()
 
-            self.set_namespace_data(
-                action=self.name,
-                label="environment",
-                key="shell_file",
-                value=shell_file,
-            )
+            self.state.device_env.shell_file = shell_file
+            self.state.device_env.env_dict = environment
 
-            self.set_namespace_data(
-                action=self.name, label="environment", key="env_dict", value=environment
-            )
-
-        self.set_namespace_data(
-            action=self.name,
-            label="environment",
-            key="line_separator",
-            value=self.parameters["deployment_data"].get(
-                "line_separator", LINE_SEPARATOR
-            ),
+        self.state.device_env.line_separator = self.parameters["deployment_data"].get(
+            "line_separator", LINE_SEPARATOR
         )
 
     def _create_environment(self):

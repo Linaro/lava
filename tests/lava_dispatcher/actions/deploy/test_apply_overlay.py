@@ -131,18 +131,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "rootfs": {"url": "http://example.com/rootfs.cpio.gz", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "download-action": {
-                    "rootfs": {
-                        "file": str(tmp_dir_path / "rootfs.cpio.gz"),
-                        "compression": "gz",
-                        "decompressed": False,
-                    },
-                    "rootfs.modules": {"file": str(tmp_dir_path / "modules.tar")},
-                }
-            }
-        }
+        download = action.state.downloads.create_downloaded_file(
+            download_name="rootfs", download_file=str(tmp_dir_path / "rootfs.cpio.gz")
+        )
+        download.compression = "gz"
+        download.decompressed = False
+        action.state.downloads.create_downloaded_file(
+            download_name="rootfs.modules",
+            download_file=str(tmp_dir_path / "modules.tar"),
+        )
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
         with patch(
@@ -214,18 +211,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "download-action": {
-                    "rootfs": {
-                        "file": str(tmp_dir_path / "rootfs.ext4"),
-                        "compression": "gz",
-                        "decompressed": True,
-                    },
-                    "rootfs.modules": {"file": str(tmp_dir_path / "modules.tar")},
-                }
-            }
-        }
+        download = action.state.downloads.create_downloaded_file(
+            download_name="rootfs", download_file=str(tmp_dir_path / "rootfs.ext4")
+        )
+        download.compression = "gz"
+        download.decompressed = True
+        action.state.downloads.create_downloaded_file(
+            download_name="rootfs.modules",
+            download_file=str(tmp_dir_path / "modules.tar"),
+        )
 
         with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
             action.logger, level="DEBUG"
@@ -279,18 +273,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "nfsrootfs": {"url": "http://example.com/rootfs.tar.gz", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "download-action": {
-                    "nfsrootfs": {
-                        "file": str(tmp_dir_path / "rootfs.tar.gz"),
-                        "compression": "gz",
-                        "decompressed": False,
-                    },
-                    "nfsrootfs.modules": {"file": str(tmp_dir_path / "modules.tar")},
-                }
-            }
-        }
+        download = action.state.downloads.create_downloaded_file(
+            download_name="nfsrootfs", download_file=str(tmp_dir_path / "rootfs.tar.gz")
+        )
+        download.compression = "gz"
+        download.decompressed = False
+        action.state.downloads.create_downloaded_file(
+            download_name="nfsrootfs.modules",
+            download_file=str(tmp_dir_path / "modules.tar"),
+        )
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
         with patch(
@@ -367,18 +358,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "download-action": {
-                    "rootfs": {
-                        "file": str(tmp_dir_path / "rootfs.ext4"),
-                        "compression": "gz",
-                        "decompressed": True,
-                    },
-                    "rootfs.modules": {"file": str(tmp_dir_path / "modules.tar")},
-                }
-            }
-        }
+        download = action.state.downloads.create_downloaded_file(
+            download_name="rootfs", download_file=str(tmp_dir_path / "rootfs.ext4")
+        )
+        download.compression = "gz"
+        download.decompressed = True
+        action.state.downloads.create_downloaded_file(
+            download_name="rootfs.modules",
+            download_file=str(tmp_dir_path / "modules.tar"),
+        )
         action.run_cmd = MagicMock()
 
         with patch("guestfs.GuestFS") as guestfs_mock, patch(
@@ -459,20 +447,13 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "rootfs": {"url": "http://example.com/rootfs.cpio.gz", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "compress-overlay": {
-                    "output": {"file": str(tmp_dir_path / "overlay.tar.gz")}
-                },
-                "download-action": {
-                    "rootfs": {
-                        "file": str(tmp_dir_path / "rootfs.cpio.gz"),
-                        "compression": "gz",
-                        "decompressed": False,
-                    }
-                },
-            }
-        }
+        action.state.compresssed_overlay.file = str(tmp_dir_path / "overlay.tar.gz")
+        download = action.state.downloads.create_downloaded_file(
+            download_name="rootfs", download_file=str(tmp_dir_path / "rootfs.cpio.gz")
+        )
+        download.compression = "gz"
+        download.decompressed = False
+
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
         with patch(
             "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
@@ -533,20 +514,12 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "rootfs": {"url": "http://example.com/rootff.ext4", **params},
             "namespace": "common",
         }
-        action.data = {
-            "common": {
-                "compress-overlay": {
-                    "output": {"file": str(tmp_dir_path / "overlay.tar.gz")}
-                },
-                "download-action": {
-                    "rootfs": {
-                        "file": str(tmp_dir_path / "rootfs.ext4"),
-                        "compression": "gz",
-                        "decompressed": True,
-                    }
-                },
-            }
-        }
+        action.state.compresssed_overlay.file = str(tmp_dir_path / "overlay.tar.gz")
+        download = action.state.downloads.create_downloaded_file(
+            download_name="rootfs", download_file=str(tmp_dir_path / "rootfs.ext4")
+        )
+        download.compression = "gz"
+        download.decompressed = True
 
         with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
             action.logger, level="DEBUG"

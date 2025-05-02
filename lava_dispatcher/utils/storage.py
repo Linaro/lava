@@ -39,9 +39,7 @@ class FlashUBootUMSAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        image_file = self.get_namespace_data(
-            action="download-action", label="image", key="file"
-        )
+        image_file = self.state.downloads["image"].file
         cmd = f"bmaptool create --output {image_file}.layout {image_file}"
         self.run_cmd(cmd, error_msg="Fail to create the bmap layout")
         cmd = f"bmaptool --quiet copy --bmap {image_file}.layout {image_file} {self.usb_mass_device}"

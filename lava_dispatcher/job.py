@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING
 from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
-from lava_dispatcher.logical import PipelineContext
+from lava_dispatcher.namespace_state import NamespaceState
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
@@ -60,7 +60,6 @@ class Job:
         self.logger = logger
         self.device = device
         self.parameters = parameters
-        self.__context__ = PipelineContext()
         self.pipeline = None
         self.connection = None
         self.timeout = timeout
@@ -71,14 +70,7 @@ class Job:
         self.base_overrides = {}
         self.started = False
         self.test_info = {}
-
-    @property
-    def context(self):
-        return self.__context__.pipeline_data
-
-    @context.setter
-    def context(self, data):
-        self.__context__.pipeline_data.update(data)
+        self.namespace_states: dict[str, NamespaceState] = {}
 
     def describe(self):
         return {"pipeline": self.pipeline.describe()}

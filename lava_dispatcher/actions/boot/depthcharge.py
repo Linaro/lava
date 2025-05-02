@@ -58,16 +58,10 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             self.logger.info("Skipping creating cmdline file as kernel is not defined")
             return None
 
-        kernel_path = self.get_namespace_data(
-            action="download-action", label="kernel", key="file"
-        )  # Absolute kernel path
+        kernel_path = self.state.downloads["kernel"].file  # Absolute kernel path
         cmdline_file_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
 
-        substitutions = self.get_namespace_data(
-            action=self.name,
-            label=self.method,
-            key="substitutions",
-        )
+        substitutions = self.state.bootloader[self.method].substitutions
 
         cmdline = substitute([self.cmdline], substitutions)[0]
 
@@ -82,37 +76,24 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        kernel_tftp = self.get_namespace_data(
-            action="download-action", label="file", key="kernel"
-        )
         # Substitute {CMDLINE} with the cmdline file TFTP path
+        kernel_tftp = self.state.downloads.maybe_file("kernel")
         cmdline_tftp = self.create_cmdline_file(kernel_tftp)
 
         # Load FIT image if available, otherwise plain kernel image
-        fit_tftp = self.get_namespace_data(
-            action="prepare-fit", label="file", key="fit"
-        )
+        fit_tftp = self.state.prepare_fit.fit_file
 
         # Also load ramdisk if available and not using a FIT image
-        ramdisk_tftp = self.get_namespace_data(
-            action="compress-ramdisk", label="file", key="ramdisk"
-        )
+        ramdisk_tftp = self.state.compressed_ramdisk.ramdisk_file
 
         substitutions = {
             "{CMDLINE}": cmdline_tftp,
             "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
             "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp or "" if not fit_tftp else "",
         }
-        commands = self.get_namespace_data(
-            action="bootloader-overlay", label=self.method, key="commands"
-        )
+        commands = self.state.bootloader[self.method].commands
         commands = substitute(commands, substitutions, drop=True, drop_line=False)
-        self.set_namespace_data(
-            action="bootloader-overlay",
-            label=self.method,
-            key="commands",
-            value=commands,
-        )
+        self.state.bootloader[self.method].commands = commands
         self.logger.info("Parsed boot commands: %s", "; ".join(commands))
 
         return connection

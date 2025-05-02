@@ -78,19 +78,10 @@ class CreateOverlay(Action):
             lava_test_results_dir = lava_test_results_dir % self.job.job_id
         except ValueError:
             raise JobError("Invalid lava_test_results_dir, should include '%s'")
-        self.set_namespace_data(
-            action="test",
-            label="results",
-            key="lava_test_results_dir",
-            value=lava_test_results_dir,
-        )
+
+        self.state.test.lava_test_results_dir = lava_test_results_dir
         lava_test_sh_cmd = self.get_constant("lava_test_sh_cmd", "posix")
-        self.set_namespace_data(
-            action="test",
-            label="shared",
-            key="lava_test_sh_cmd",
-            value=lava_test_sh_cmd,
-        )
+        self.state.test.lava_test_sh_cmd = lava_test_sh_cmd
 
         # Add distro support scripts - only if deployment_data is set
         distro = self.parameters.get("deployment_data", {}).get("distro")
@@ -164,17 +155,11 @@ class CreateOverlay(Action):
 
     def run(self, connection, max_end_time):
         tmp_dir = self.mkdtemp()
-        self.set_namespace_data(
-            action="test", label="shared", key="location", value=tmp_dir
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        self.state.test.location = tmp_dir
+        lava_test_results_dir = self.state.test.lava_test_results_dir
         if not lava_test_results_dir:
             raise LAVABug("Unable to identify top level lava test directory")
-        shell = self.get_namespace_data(
-            action="test", label="shared", key="lava_test_sh_cmd"
-        )
+        shell = self.state.test.lava_test_sh_cmd
         namespace = self.parameters.get("namespace")
         self.logger.debug("[%s] Preparing overlay tarball in %s", namespace, tmp_dir)
         lava_path = os.path.abspath("%s/%s" % (tmp_dir, lava_test_results_dir))
@@ -265,10 +250,8 @@ class CreateOverlay(Action):
                     fout.write("%s=%s\n" % (key, value))
 
         if "env_dut" in self.job.parameters:
-            environment = self.get_namespace_data(
-                action="deploy-device-env", label="environment", key="env_dict"
-            )
-            if environment is not None:
+            environment = self.state.device_env.env_dict
+            if environment:
                 self.logger.debug("Creating %s/secrets with env", lava_path)
                 with open(os.path.join(lava_path, "secrets"), "a") as fout:
                     for key in environment:
@@ -358,15 +341,9 @@ class MultinodeOverlayAction(OverlayAction):
         if self.role is None:
             self.logger.debug("skipped %s", self.name)
             return connection
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
-        shell = self.get_namespace_data(
-            action="test", label="shared", key="lava_test_sh_cmd"
-        )
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
+        lava_test_results_dir = self.state.test.lava_test_results_dir
+        shell = self.state.test.lava_test_sh_cmd
+        location = self.state.test.location
         if not location:
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
@@ -516,15 +493,9 @@ class VlandOverlayAction(OverlayAction):
         if not self.params:
             self.logger.debug("skipped %s", self.name)
             return connection
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
-        shell = self.get_namespace_data(
-            action="test", label="shared", key="lava_test_sh_cmd"
-        )
+        location = self.state.test.location
+        lava_test_results_dir = self.state.test.lava_test_results_dir
+        shell = self.state.test.lava_test_sh_cmd
         if not location:
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
@@ -576,15 +547,9 @@ class CompressOverlay(Action):
 
     def run(self, connection, max_end_time):
         output = os.path.join(self.mkdtemp(), "overlay-%s.tar.gz" % self.level)
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
-        self.set_namespace_data(
-            action="test", label="shared", key="output", value=output
-        )
+        location = self.state.test.location
+        lava_test_results_dir = self.state.test.lava_test_results_dir
+        self.state.test.output = output
         if not location:
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
@@ -613,9 +578,7 @@ class CompressOverlay(Action):
                     "Unable to create lava overlay tarball: %s" % exc
                 )
 
-        self.set_namespace_data(
-            action=self.name, label="output", key="file", value=output
-        )
+        self.state.compresssed_overlay.file = output
         return connection
 
 
@@ -662,12 +625,7 @@ class SshAuthorize(Action):
         elif check[1]:
             self.identity_file = check[1]
         if self.valid:
-            self.set_namespace_data(
-                action=self.name,
-                label="authorize",
-                key="identity_file",
-                value=self.identity_file,
-            )
+            self.state.ssh.identity_file = self.identity_file
             if "authorize" in self.parameters:
                 # only secondary connections set active.
                 self.active = True
@@ -678,12 +636,8 @@ class SshAuthorize(Action):
             self.logger.debug("No authorisation required.")  # idempotency
             return connection
         # add the authorization keys to the overlay
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        location = self.state.test.location
+        lava_test_results_dir = self.state.test.lava_test_results_dir
         if not location:
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):

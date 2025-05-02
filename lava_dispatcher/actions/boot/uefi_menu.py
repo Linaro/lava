@@ -174,9 +174,8 @@ class UefiMenuSelector(SelectorMenuAction):
             self.logger.debug("Looking for %s", self.boot_message)
             connection.prompt_str = self.boot_message
             self.wait(connection)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+
+        self.state.shared.connection = connection
         return connection
 
 
@@ -211,35 +210,23 @@ class UefiSubstituteCommands(Action):
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
         substitution_dictionary = {
             "{SERVER_IP}": ip_addr,
-            "{RAMDISK}": self.get_namespace_data(
-                action="compress-ramdisk", label="file", key="ramdisk"
-            ),
-            "{KERNEL}": self.get_namespace_data(
-                action="download-action", label="file", key="kernel"
-            ),
-            "{DTB}": self.get_namespace_data(
-                action="download-action", label="file", key="dtb"
-            ),
+            "{RAMDISK}": self.state.compressed_ramdisk.ramdisk_file,
+            "{KERNEL}": self.state.downloads.maybe_file("kernel"),
+            "{DTB}": self.state.downloads.maybe_file("dtb"),
             "TEST_MENU_NAME": "LAVA %s test image" % self.parameters["commands"],
         }
-        nfs_address = self.get_namespace_data(
-            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
-        )
-        nfs_root = self.get_namespace_data(
-            action="download-action", label="file", key="nfsrootfs"
-        )
+        nfs_address = self.state.persistent_nfs.nfsroot
+        nfs_root = self.state.downloads.maybe_file("nfsrootfs")
         if nfs_root:
-            substitution_dictionary["{NFSROOTFS}"] = self.get_namespace_data(
-                action="extract-rootfs", label="file", key="nfsroot"
-            )
+            substitution_dictionary["{NFSROOTFS}"] = self.state.extract_rootfs.nfsroot
             substitution_dictionary["{NFS_SERVER_IP}"] = dispatcher_ip(
                 self.job.parameters["dispatcher"], "nfs"
             )
         elif nfs_address:
             substitution_dictionary["{NFSROOTFS}"] = nfs_address
-            substitution_dictionary["{NFS_SERVER_IP}"] = self.get_namespace_data(
-                action="parse-persistent-nfs", label="nfs_address", key="serverip"
-            )
+            substitution_dictionary[
+                "{NFS_SERVER_IP}"
+            ] = self.state.persistent_nfs.serverip
         for item in self.items:
             if "enter" in item["select"]:
                 item["select"]["enter"] = substitute(
@@ -264,14 +251,9 @@ class UefiMenuAction(RetryAction):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=self.name,
-            label="bootloader_prompt",
-            key="prompt",
-            value=self.job.device["actions"]["boot"]["methods"][self.method][
-                "parameters"
-            ]["bootloader_prompt"],
-        )
+        self.state.uefi_menu.bootloader_prompt = self.job.device["actions"]["boot"][
+            "methods"
+        ][self.method]["parameters"]["bootloader_prompt"]
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

@@ -67,9 +67,8 @@ class DockerAction(Action):
         # The string should be safe for command line inclusion
         if re.compile(docker_image_format_pattern).match(self.image_name) is None:
             self.errors = "image name '%s' is invalid" % self.image_name
-        self.set_namespace_data(
-            action=self.name, label="image", key="name", value=self.image_name
-        )
+
+        self.state.docker.image_name = self.image_name
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

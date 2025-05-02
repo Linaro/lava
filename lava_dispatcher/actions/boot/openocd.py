@@ -62,24 +62,19 @@ class FlashOpenOCDAction(Action):
         # Build the substitutions dictionary and set cfg script based on
         # job definition
         substitutions = {}
-        for action in self.get_namespace_keys("download-action"):
-            filename = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
+        for download_name, download in self.state.downloads.items():
+            filename = download.file
             if filename is None:
-                self.logger.warning(
-                    "Empty value for action='download-action' label='%s' key='file'",
-                    action,
-                )
+                self.logger.warning("Empty download file %s", download_name)
                 continue
-            if action == "openocd_script":
+            if download_name == "openocd_script":
                 # if a url for openocd_script is specified in the job
                 # definition, use that instead of the default for the device
                 # type.
                 job_cfg_file = filename
                 self.base_command.extend(["-f", job_cfg_file])
             else:
-                substitutions["{%s}" % action.upper()] = filename
+                substitutions["{%s}" % download_name.upper()] = filename
 
         if job_cfg_file == "":
             for item in boot["parameters"]["options"].get("file", []):

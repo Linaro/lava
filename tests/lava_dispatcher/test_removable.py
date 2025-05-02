@@ -103,16 +103,10 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertIn(
             mass_storage.parameters["device"], device["parameters"]["media"]["usb"]
         )
-        self.assertIsNotNone(
-            mass_storage.get_namespace_data(
-                action="storage-deploy", label="u-boot", key="device"
-            )
-        )
+        self.assertIsNotNone(mass_storage.state.storage_deploy.uboot_device)
         u_boot_params = device["actions"]["boot"]["methods"]["u-boot"]
         self.assertEqual(
-            mass_storage.get_namespace_data(
-                action="uboot-commands", label="bootloader_prompt", key="prompt"
-            ),
+            mass_storage.state.uboot.bootloader_prompt,
             u_boot_params["parameters"]["bootloader_prompt"],
         )
 
@@ -157,12 +151,7 @@ class TestRemovable(LavaDispatcherTestCase):
         deploy_action = job.pipeline.find_action(MassStorage)
         tftp_deploy_action = job.pipeline.find_action(TftpAction)
         self.assertIsNotNone(deploy_action)
-        test_dir = deploy_action.get_namespace_data(
-            action="test",
-            label="results",
-            key="lava_test_results_dir",
-            parameters=tftp_deploy_action.parameters,
-        )
+        test_dir = tftp_deploy_action.state.test.lava_test_results_dir
         self.assertIsNotNone(test_dir)
         self.assertIn("/lava-", test_dir)
         self.assertIsInstance(deploy_action, MassStorage)
@@ -173,40 +162,21 @@ class TestRemovable(LavaDispatcherTestCase):
             dd_action.boot_params[dd_action.parameters["device"]]["uuid"],
             "usb-SanDisk_Ultra_20060775320F43006019-0:0",
         )
-        self.assertIsNotNone(
-            dd_action.get_namespace_data(
-                action=dd_action.name, label="u-boot", key="boot_part"
-            )
-        )
-        self.assertIsNotNone(
-            dd_action.get_namespace_data(
-                action="uboot-from-media", label="uuid", key="boot_part"
-            )
-        )
+        self.assertIsNotNone(dd_action.state.dd_image.uboot_boot_part)
+        self.assertIsNotNone(dd_action.state.uboot.boot_part_uuid)
         self.assertEqual(
             "0",
-            "%s"
-            % dd_action.get_namespace_data(
-                action=dd_action.name, label="u-boot", key="boot_part"
-            ),
+            dd_action.state.dd_image.uboot_boot_part,
         )
         self.assertIsInstance(
-            dd_action.get_namespace_data(
-                action="uboot-from-media", label="uuid", key="boot_part"
-            ),
+            dd_action.state.uboot.boot_part_uuid,
             str,
         )
         self.assertEqual(
             "0:1",
-            dd_action.get_namespace_data(
-                action="uboot-from-media", label="uuid", key="boot_part"
-            ),
+            dd_action.state.uboot.boot_part_uuid,
         )
-        self.assertIsNotNone(
-            dd_action.get_namespace_data(
-                action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
-            )
-        )
+        self.assertIsNotNone(dd_action.state.uboot.bootcommand)
 
     def test_deployment(self):
         (rendered, _) = self.factory.create_device("cubie1.jinja2")
@@ -314,71 +284,26 @@ class TestRemovable(LavaDispatcherTestCase):
         )
         job.validate()
 
-        grub_nfs, grub_main = sorted(
-            job.pipeline.find_all_actions(GrubMainAction),
-            key=lambda x: x.parameters["namespace"],
-        )
+        grub_nfs, grub_main = job.pipeline.find_all_actions(GrubMainAction)
 
         grub_nfs_media_action = grub_nfs.pipeline.find_action(BootloaderSecondaryMedia)
-        self.assertEqual(
-            None,
-            grub_nfs_media_action.get_namespace_data(
-                action="download-action", label="file", key="kernel"
-            ),
-        )
-        self.assertEqual(
-            None,
-            grub_nfs_media_action.get_namespace_data(
-                action="compress-ramdisk", label="file", key="ramdisk"
-            ),
-        )
-        self.assertEqual(
-            None,
-            grub_nfs_media_action.get_namespace_data(
-                action="download-action", label="file", key="dtb"
-            ),
-        )
-        self.assertEqual(
-            None,
-            grub_nfs_media_action.get_namespace_data(
-                action=grub_nfs_media_action.name, label="file", key="root"
-            ),
-        )
+        self.assertIsNotNone(grub_nfs_media_action.state.downloads.get("kernel"))
+        self.assertIsNone(grub_nfs_media_action.state.compressed_ramdisk.ramdisk_file)
+        self.assertIsNone(grub_nfs_media_action.state.downloads.get("dtb"))
 
         grub_main_media_action = grub_main.pipeline.find_action(
             BootloaderSecondaryMedia
         )
         self.assertIsInstance(grub_main_media_action, BootloaderSecondaryMedia)
+        self.assertIsNotNone(grub_main_media_action.state.downloads["kernel"].file)
         self.assertIsNotNone(
-            grub_main_media_action.get_namespace_data(
-                action="download-action", label="file", key="kernel"
-            )
+            grub_main_media_action.state.compressed_ramdisk.ramdisk_file
         )
+        self.assertIsNotNone(grub_main_media_action.state.downloads["ramdisk"].file)
+        self.assertEqual("", grub_main_media_action.state.downloads["dtb"].file)
+        self.assertIsNotNone(grub_main_media_action.state.bootloader_from_media.root)
         self.assertIsNotNone(
-            grub_main_media_action.get_namespace_data(
-                action="compress-ramdisk", label="file", key="ramdisk"
-            )
-        )
-        self.assertIsNotNone(
-            grub_main_media_action.get_namespace_data(
-                action="download-action", label="file", key="ramdisk"
-            )
-        )
-        self.assertEqual(
-            "",
-            grub_main_media_action.get_namespace_data(
-                action="download-action", label="file", key="dtb"
-            ),
-        )
-        self.assertIsNotNone(
-            grub_main_media_action.get_namespace_data(
-                action=grub_main_media_action.name, label="uuid", key="root"
-            )
-        )
-        self.assertIsNotNone(
-            grub_main_media_action.get_namespace_data(
-                action=grub_main_media_action.name, label="uuid", key="boot_part"
-            )
+            grub_main_media_action.state.bootloader_from_media.boot_part
         )
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
@@ -438,20 +363,14 @@ class TestRemovable(LavaDispatcherTestCase):
         _, u_boot_action = job.pipeline.find_all_actions(UBootAction)
         overlay = u_boot_action.pipeline.find_action(BootloaderCommandOverlay)
 
-        self.assertIsNotNone(
-            overlay.get_namespace_data(
-                action="storage-deploy", label="u-boot", key="device"
-            )
-        )
+        self.assertIsNotNone(overlay.state.storage_deploy.uboot_device)
 
         methods = cubie["actions"]["boot"]["methods"]
         self.assertIn("u-boot", methods)
         self.assertIn("usb", methods["u-boot"])
         self.assertIn("commands", methods["u-boot"]["usb"])
         commands_list = methods["u-boot"]["usb"]["commands"]
-        device_id = u_boot_action.get_namespace_data(
-            action="storage-deploy", label="u-boot", key="device"
-        )
+        device_id = u_boot_action.state.storage_deploy.uboot_device
         self.assertIsNotNone(device_id)
         kernel_type = u_boot_action.parameters["kernel_type"]
         bootcommand = map_kernel_uboot(

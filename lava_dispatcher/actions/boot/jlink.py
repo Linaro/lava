@@ -105,24 +105,14 @@ class FlashJLinkAction(Action):
         self.path = self.mkdtemp()
         # set a namespace for the jlink path script which is used to flash
         self.jlink_script = os.path.join(self.path, "cmd.jlink")
-        self.set_namespace_data(
-            action=self.name,
-            label="jlink-path-script",
-            key="path",
-            value=self.jlink_script,
-        )
+        self.state.jlink.script_path = self.jlink_script
         self.base_command.extend(["-CommanderScript", self.jlink_script])
         board_id = self.job.device["board_id"]
         if board_id == "0000000000":
             self.errors = "[JLink] board_id unset"
         self.base_command.extend(["-SelectEmuBySN", str(board_id)])
         # Set a namespace for the JlinkExe cmd
-        self.set_namespace_data(
-            action=self.name,
-            label="jlink-cmd",
-            key="cmd",
-            value=self.base_command,
-        )
+        self.state.jlink.cmd = self.base_command
 
     def create_jlink_script(self, path_jlink_script):
         # Create jlink script
@@ -141,18 +131,14 @@ class FlashJLinkAction(Action):
                 match = re.search(pattern, cmd)
                 if match:
                     result = match.group(1)
-                    binary_image = self.get_namespace_data(
-                        action="download-action", label=result, key="file"
-                    )
+                    binary_image = self.state.downloads[result].file
                     jlink_command = cmd.replace("{" + result + "}", binary_image)
                     lines.append(jlink_command)
                 else:
                     lines.append(cmd)
         else:
-            for action in self.get_namespace_keys("download-action"):
-                binary_image = self.get_namespace_data(
-                    action="download-action", label=action, key="file"
-                )
+            for download in self.state.downloads.values():
+                binary_image = download.file
                 if binary_image:
                     # Erase and Flash
                     lines.append(f"loadfile {binary_image} 0x{load_address:x}")
@@ -168,12 +154,8 @@ class FlashJLinkAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        path_jlink_script = self.get_namespace_data(
-            action=self.name, label="jlink-path-script", key="path"
-        )
-        jlink_cmd = self.get_namespace_data(
-            action=self.name, label="jlink-cmd", key="cmd"
-        )
+        path_jlink_script = self.state.jlink.script_path
+        jlink_cmd = self.state.jlink.cmd
         self.logger.info(jlink_cmd)
         self.create_jlink_script(path_jlink_script)
         # execute command

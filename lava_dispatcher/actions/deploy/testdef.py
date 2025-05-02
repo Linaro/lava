@@ -16,6 +16,7 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.namespace_state import TestEntry
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.vcs import GitHelper
 
@@ -76,7 +77,7 @@ class RepoAction(Action):
         super().__init__(job)
         self.vcs = None
         self.runner = None
-        self.uuid = None
+        self.uuid: str | None = None
 
     @classmethod
     def select(cls, repo_type):
@@ -110,17 +111,10 @@ class RepoAction(Action):
 
         # FIXME: unused
         # list of levels involved in the repo actions for this overlay
-        uuid_list = self.get_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list"
-        )
-        if uuid_list:
-            if self.uuid not in uuid_list:
-                uuid_list.append(self.uuid)
-        else:
-            uuid_list = [self.uuid]
-        self.set_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list", value=uuid_list
-        )
+        uuid_list = self.state.repo.uuid_list
+
+        if self.uuid not in uuid_list:
+            uuid_list.append(self.uuid)
 
     def run(self, connection, max_end_time):
         """
@@ -131,12 +125,8 @@ class RepoAction(Action):
         """
         connection = super().run(connection, max_end_time)
 
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        location = self.state.test.location
+        lava_test_results_dir = self.state.test.lava_test_results_dir
         if not lava_test_results_dir:
             raise LAVABug("Unable to identify top level test shell directory")
         self.logger.debug("Using %s at stage %s", lava_test_results_dir, self.stage)
@@ -148,44 +138,31 @@ class RepoAction(Action):
         # runner_path is the path to read and execute from to run the tests after boot
         lava_test_results_dir = self.get_constant("lava_test_results_dir", "posix")
         args = self.parameters
+
+        test_entry = TestEntry()
+        self.state.test.entries[self.uuid] = test_entry
+
         runner_path = os.path.join(
             lava_test_results_dir % self.job.job_id,
             str(self.stage),
             "tests",
             args["test_name"],
         )
-        self.set_namespace_data(
-            action="uuid", label="runner_path", key=args["test_name"], value=runner_path
-        )
+        test_entry.runner_path = runner_path
+
         # the location written into the lava-test-runner.conf (needs a line ending)
         self.runner = "%s\n" % runner_path
 
-        overlay_base = self.get_namespace_data(
-            action="test", label="test-definition", key="overlay_dir"
-        )
+        overlay_base = self.state.test.overlay_dir
         overlay_path = os.path.join(
             overlay_base, str(self.stage), "tests", args["test_name"]
         )
-        self.set_namespace_data(
-            action="uuid",
-            label="overlay_path",
-            key=args["test_name"],
-            value=overlay_path,
-        )
-        self.set_namespace_data(
-            action="test",
-            label=self.uuid,
-            key="repository",
-            value=self.parameters["repository"],
-        )
-        self.set_namespace_data(
-            action="test", label=self.uuid, key="path", value=self.parameters["path"]
-        )
+        test_entry.overlay_path = overlay_path
+        test_entry.repository = self.parameters["repository"]
+        test_entry.path = self.parameters["path"]
         revision = self.parameters.get("revision")
         if revision:
-            self.set_namespace_data(
-                action="test", label=self.uuid, key="revision", value=revision
-            )
+            test_entry.revision = revision
 
         return connection
 
@@ -205,25 +182,21 @@ class RepoAction(Action):
             "branch_vcs": vcs_name,
             "project_name": testdef["metadata"]["name"],
         }
+        test_entry = self.state.test.entries[self.uuid]
 
         if commit_id is not None:
             val["commit_id"] = commit_id
-            self.set_namespace_data(
-                action="test", label=self.uuid, key="commit-id", value=str(commit_id)
-            )
+            test_entry.commit_id = str(commit_id)
 
-        self.set_namespace_data(
-            action="test", label=self.uuid, key="testdef_metadata", value=val
-        )
+        test_entry.testdef_metadata = val
         if "parse" in testdef:
             pattern = testdef["parse"].get("pattern", "")
             fixup = testdef["parse"].get("fixupdict", "")
             ret = {"testdef_pattern": {"pattern": pattern, "fixupdict": fixup}}
         else:
             ret = None
-        self.set_namespace_data(
-            action="test", label=self.uuid, key="testdef_pattern", value=ret
-        )
+
+        test_entry.testdef_pattern = ret
         self.logger.debug("uuid=%s testdef=%s", self.uuid, ret)
 
 
@@ -264,9 +237,7 @@ class GitRepoAction(RepoAction):
         connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.uuid].overlay_path
 
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise LAVABug(
@@ -356,9 +327,7 @@ class InlineRepoAction(RepoAction):
         connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.uuid].overlay_path
 
         # Grab the inline test definition
         testdef = self.parameters["repository"]
@@ -421,13 +390,9 @@ class UrlRepoAction(RepoAction):
     def run(self, connection, max_end_time):
         """Download the provided test definition file into tmpdir."""
         super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.uuid].overlay_path
 
-        fname = self.get_namespace_data(
-            action="download-action", label=self.action_key, key="file"
-        )
+        fname = self.state.downloads[self.action_key].file
         self.logger.debug("Runner path : %s", runner_path)
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise LAVABug(
@@ -489,13 +454,7 @@ class TestDefinitionAction(Action):
             self.job.test_info, parameters["namespace"]
         )
         if self.test_list:
-            self.set_namespace_data(
-                action=self.name,
-                label=self.name,
-                key="test_list",
-                value=self.test_list,
-                parameters=parameters,
-            )
+            self.state.test.test_list = self.test_list
         for testdefs in self.test_list:
             for testdef in testdefs:
                 # namespace support allows only running the install steps for the relevant
@@ -545,13 +504,7 @@ class TestDefinitionAction(Action):
                 self.pipeline.add_action(overlay)
                 self.pipeline.add_action(installer)
                 self.pipeline.add_action(runsh)
-                self.set_namespace_data(
-                    action="test-definition",
-                    label="test-definition",
-                    key="testdef_index",
-                    value=index,
-                    parameters=parameters,
-                )
+                self.state.test.testdef_index = index
             self.stages += 1
 
     def validate(self):
@@ -602,12 +555,8 @@ class TestDefinitionAction(Action):
         :param max_end_time: remaining time before block timeout.
         :return: the received Connection.
         """
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        location = self.state.test.location
+        lava_test_results_dir = self.state.test.lava_test_results_dir
         if not location:
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
@@ -616,12 +565,7 @@ class TestDefinitionAction(Action):
 
         # overlay_path is the location of the files before boot
         overlay_base = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
-        self.set_namespace_data(
-            action="test",
-            label="test-definition",
-            key="overlay_dir",
-            value=overlay_base,
-        )
+        self.state.test.overlay_dir = overlay_base
 
         connection = super().run(connection, max_end_time)
 
@@ -711,9 +655,7 @@ class TestOverlayAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.test_uuid].overlay_path
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
@@ -737,9 +679,7 @@ class TestOverlayAction(Action):
 
         # FIXME: does this match old-world test-shell & is it needed?
         with open("%s/testdef_metadata" % runner_path, "w") as metadata:
-            content = self.get_namespace_data(
-                action="test", label=self.test_uuid, key="testdef_metadata"
-            )
+            content = self.state.test.entries[self.test_uuid].testdef_metadata
             metadata.write(yaml_safe_dump(content))
 
         # Need actions for the run.sh script (calling parameter support in base class)
@@ -873,9 +813,7 @@ class TestInstallAction(TestOverlayAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.test_uuid].overlay_path
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
@@ -968,9 +906,7 @@ class TestRunnerAction(TestOverlayAction):
 
     def validate(self):
         super().validate()
-        testdef_index = self.get_namespace_data(
-            action="test-definition", label="test-definition", key="testdef_index"
-        )
+        testdef_index = self.state.test.testdef_index
         if not testdef_index:
             self.errors = "Unable to identify test definition index"
             return
@@ -983,22 +919,17 @@ class TestRunnerAction(TestOverlayAction):
                 self.testdef_levels[self.level] = "%s_%s" % (count, name)
         if not self.testdef_levels:
             self.errors = "Unable to identify test definition names"
-        current = self.get_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels"
-        )
-        if current:
+        current = self.state.test.testdef_levels
+        if current is not None:
             current.update(self.testdef_levels)
         else:
             current = self.testdef_levels
-        self.set_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels", value=current
-        )
+
+        self.state.test.testdef_levels = current
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
-            action="uuid", label="overlay_path", key=self.parameters["test_name"]
-        )
+        runner_path = self.state.test.entries[self.test_uuid].overlay_path
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])
@@ -1021,9 +952,7 @@ class TestRunnerAction(TestOverlayAction):
 
         lava_signal = self.parameters.get("lava-signal", "stdout")
 
-        testdef_levels = self.get_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels"
-        )
+        testdef_levels = self.state.test.testdef_levels
         with open(filename, "a") as runsh:
             for line in content:
                 runsh.write(line)
@@ -1031,12 +960,7 @@ class TestRunnerAction(TestOverlayAction):
             runsh.write("set -x\n")
             # use the testdef_index value for the testrun name to handle repeats at source
             runsh.write("export TESTRUN_ID=%s\n" % testdef_levels[self.level])
-            runsh.write(
-                "cd %s\n"
-                % self.get_namespace_data(
-                    action="uuid", label="runner_path", key=self.parameters["test_name"]
-                )
-            )
+            runsh.write("cd %s\n" % self.state.test.entries[self.test_uuid].runner_path)
             runsh.write("UUID=`cat uuid`\n")
             runsh.write("set +x\n")
             needs_delay = self.parameters.get("needs_character_delay")

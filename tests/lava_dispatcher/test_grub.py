@@ -82,9 +82,7 @@ class TestGrubAction(LavaDispatcherTestCase):
             ["tftp-deploy", "grub-main-action", "lava-test-retry", "finalize"],
         )
         tftp = job.pipeline.find_action(TftpAction)
-        self.assertTrue(
-            tftp.get_namespace_data(action=tftp.name, label="tftp", key="ramdisk")
-        )
+        self.assertTrue(tftp.state.tftp.ramdisk)
         self.assertIsNotNone(tftp.pipeline)
         self.assertEqual(
             [action.name for action in tftp.pipeline.actions],
@@ -240,9 +238,7 @@ class TestGrubAction(LavaDispatcherTestCase):
 
         overlay = job.pipeline.find_action(PrepareOverlayTftp)
         extract = overlay.pipeline.find_action(ExtractNfsRootfs)
-        test_dir = overlay.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
+        test_dir = overlay.state.test.lava_test_results_dir
         self.assertIsNotNone(test_dir)
         self.assertIn("/lava-", test_dir)
         self.assertIsNotNone(extract)

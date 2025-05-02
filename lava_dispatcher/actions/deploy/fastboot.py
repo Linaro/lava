@@ -148,12 +148,7 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=FastbootFlashAction.name,
-            label="interrupt",
-            key="reboot",
-            value=self.reboot,
-        )
+        self.state.fastboot.interrupt_reboot = self.reboot
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
@@ -205,9 +200,7 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        src = self.get_namespace_data(
-            action="download-action", label=self.command, key="file"
-        )
+        src = self.state.downloads.maybe_file(self.command)
         if not src:
             return connection
         self.logger.debug("%s bytes", os.stat(src)[6])
@@ -220,9 +213,7 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
 
         # if a reboot is requested, will need to wait for the prompt
         # if not, continue in the existing mode.
-        reboot = self.get_namespace_data(
-            action=self.name, label="interrupt", key="reboot"
-        )
+        reboot = self.state.fastboot.interrupt_reboot
         if self.interrupt_prompt and reboot:
             connection.prompt_str = self.interrupt_prompt
             self.logger.debug("Changing prompt to '%s'", connection.prompt_str)

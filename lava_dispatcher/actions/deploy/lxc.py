@@ -96,9 +96,7 @@ class LxcCreateAction(Action):
         ]
         if protocols:
             protocol = protocols[0]
-            self.set_namespace_data(
-                action=self.name, label="lxc", key="name", value=protocol.lxc_name
-            )
+            self.state.lxc.name = protocol.lxc_name
             self.lxc_data["lxc_name"] = protocol.lxc_name
             self.lxc_data["lxc_distribution"] = protocol.lxc_dist
             self.lxc_data["lxc_release"] = protocol.lxc_release
@@ -264,9 +262,7 @@ class LxcAptUpdateAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         cmd = ["lxc-attach", "-n", lxc_name, "--", "apt-get", "-y", "-q", "update"]
         if not self.run_command(cmd, allow_silent=True):
             raise JobError("Unable to apt-get update in lxc container")
@@ -294,9 +290,7 @@ class LxcAptInstallAction(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
+        lxc_name = self.state.lxc.name
         packages = self.parameters["packages"]
         cmd = [
             "lxc-attach",

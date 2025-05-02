@@ -137,12 +137,7 @@ class RunNodebooterContainer(Action):
         except subprocess.CalledProcessError as exc:
             raise JobError(f"docker run command exited: {exc}")
 
-        self.set_namespace_data(
-            action="shared",
-            label="shared",
-            key="nodebooter_container",
-            value=self.container,
-        )
+        self.state.shared.nodebooter_container = self.container
 
 
 class ConfigureNodebooter(Action):
@@ -175,10 +170,8 @@ class ConfigureNodebooter(Action):
 
         # Validate that the nic setup is present in the boot action if nic images are available in download action
         for counter in range(NIC_NO_OF_SUPPORTED):
-            image_file_path = self.get_namespace_data(
-                "download-action", label=f"nic{counter}", key="file"
-            )
-            if image_file_path:
+            image_file_download = self.state.downloads.get(f"nic{counter}")
+            if image_file_download:
                 if f"NIC{counter}_MAC" not in self.job.device["environment"]:
                     self.errors = f"Missing nic{counter} MAC address (NIC{counter}_MAC) from 'environment' variable"
 
@@ -224,14 +217,12 @@ class ConfigureNodebooter(Action):
         try:
             res = None
             headers = {"Content-Type": "application/json"}
-            boot_image = self.get_namespace_data(
-                "download-action", label="boot", key="file"
-            ).replace(DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH)
+            boot_image = self.state.downloads["boot"].file.replace(
+                DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH
+            )
             nic_images = []
             for counter in range(NIC_NO_OF_SUPPORTED):
-                image_file_path = self.get_namespace_data(
-                    "download-action", label=f"nic{counter}", key="file"
-                )
+                image_file_path = self.state.downloads.maybe_file(f"nic{counter}")
                 if image_file_path:
                     nic_images.append(
                         image_file_path.replace(
@@ -310,9 +301,7 @@ class ConfigureNodebooter(Action):
 
     def cleanup(self, connection):
         super().cleanup(connection)
-        container = self.get_namespace_data(
-            action="shared", label="shared", key="nodebooter_container"
-        )
+        container = self.state.shared.nodebooter_container
         self.logger.debug("Stopping container %s", container)
         # Stop nodebooter container
         self.run_cmd("docker stop %s" % (container), allow_fail=True)

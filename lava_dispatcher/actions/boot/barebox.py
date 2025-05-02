@@ -63,11 +63,6 @@ class BareboxRetry(BootHasMixin, RetryAction):
 
     def validate(self):
         super().validate()
-        self.set_namespace_data(
-            action=self.name,
-            label="bootloader_prompt",
-            key="prompt",
-            value=self.job.device["actions"]["boot"]["methods"]["barebox"][
-                "parameters"
-            ]["bootloader_prompt"],
-        )
+        self.state.barebox.bootloader_prompt = self.job.device["actions"]["boot"][
+            "methods"
+        ]["barebox"]["parameters"]["bootloader_prompt"]

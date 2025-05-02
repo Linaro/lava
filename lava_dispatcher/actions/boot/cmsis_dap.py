@@ -73,11 +73,8 @@ class FlashCMSISAction(Action):
         self.usb_mass_device = method_parameters.get("usb_mass_device")
         if not self.usb_mass_device:
             self.errors = "usb_mass_device unset"
-        for action in self.get_namespace_keys("download-action"):
-            action_arg = self.get_namespace_data(
-                action="download-action", label=action, key="file"
-            )
-            self.filelist.extend([action_arg])
+        for download in self.state.downloads.values():
+            self.filelist.append(download.file)
 
     def _sync_data(self, dstdir, method_parameters):
         """Make sure that data was actually written (programmed) to the

@@ -32,9 +32,7 @@ class ConnectAdb(Action):
         which("adb")
 
     def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
-            action="shared", label="shared", key="connection", deepcopy=False
-        )
+        connection = self.state.shared.connection
         if connection:
             return connection
         adb_serial_number = self.job.device["adb_serial_number"]
@@ -66,7 +64,5 @@ class ConnectAdb(Action):
         connection.connected = True
         connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters["prompts"]
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection

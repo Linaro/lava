@@ -29,6 +29,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import SShSession
 from lava_dispatcher.logical import RetryAction
+from lava_dispatcher.namespace_state import Bootloader as BootloaderState
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.filesystem import write_bootscript
@@ -134,9 +135,7 @@ class LoginAction(Action):
             connection.prompt_str.append(failure)
 
         # linesep should come from deployment_data as from now on it is OS dependent
-        linesep = self.get_namespace_data(
-            action="deploy-device-env", label="environment", key="line_separator"
-        )
+        linesep = self.state.device_env.line_separator
         connection.raw_connection.linesep = linesep if linesep else LINE_SEPARATOR
         self.logger.debug(
             "Using line separator: #%r#", connection.raw_connection.linesep
@@ -359,7 +358,7 @@ class BootloaderCommandOverlay(Action):
         self.use_bootscript = False
         self.lava_mac = None
         self.bootcommand = ""
-        self.ram_disk = None
+        self.ram_disk: str | None = None
 
     def validate(self):
         super().validate()
@@ -421,49 +420,31 @@ class BootloaderCommandOverlay(Action):
         connection = super().run(connection, max_end_time)
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
 
-        self.ram_disk = self.get_namespace_data(
-            action="compress-ramdisk", label="file", key="ramdisk"
-        )
+        self.ram_disk = self.state.compressed_ramdisk.ramdisk_file
         # most jobs substitute RAMDISK, so also use this for the initrd
-        if self.get_namespace_data(action="nbd-deploy", label="nbd", key="initrd"):
-            self.ram_disk = self.get_namespace_data(
-                action="download-action", label="file", key="initrd"
-            )
+        if self.state.ndb.initrd:
+            self.ram_disk = self.state.downloads["initrd"].file
 
-        substitutions = {
+        substitutions: dict[str, str | None] = {
             "{SERVER_IP}": ip_addr,
-            "{PRESEED_CONFIG}": self.get_namespace_data(
-                action="download-action", label="file", key="preseed"
-            ),
-            "{PRESEED_LOCAL}": self.get_namespace_data(
-                action="compress-ramdisk", label="file", key="preseed_local"
-            ),
-            "{DTB}": self.get_namespace_data(
-                action="download-action", label="file", key="dtb"
-            ),
+            "{PRESEED_CONFIG}": self.state.downloads.maybe_file("preseed"),
+            "{PRESEED_LOCAL}": self.state.compressed_ramdisk.preseed_local_file,
+            "{DTB}": self.state.downloads.maybe_file("dtb"),
             "{RAMDISK}": self.ram_disk,
             "{INITRD}": self.ram_disk,
-            "{KERNEL}": self.get_namespace_data(
-                action="download-action", label="file", key="kernel"
-            ),
+            "{KERNEL}": self.state.downloads.maybe_file("kernel"),
             "{LAVA_MAC}": self.lava_mac,
-            "{TEE}": self.get_namespace_data(
-                action="download-action", label="file", key="tee"
-            ),
+            "{TEE}": self.state.downloads.maybe_file("tee"),
             "{DTB_BASE_ADDR}": None,
             "{DTB_BASE_RESIZE}": None,
             "{APPLY_DTBO_COMMANDS}": None,
             "{LAVA_DISPATCHER_IP}": ip_addr,
             "{LAVA_JOB_ID}": str(self.job.job_id),
         }
-        self.bootcommand = self.get_namespace_data(
-            action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
-        )
+        self.bootcommand = self.state.uboot.bootcommand
         if not self.bootcommand and "type" in self.parameters:
             raise JobError("Kernel image type can't be determined")
-        prepared_kernel = self.get_namespace_data(
-            action="prepare-kernel", label="file", key="kernel"
-        )
+        prepared_kernel = self.state.prepared_kernel.kernel_file
         if prepared_kernel:
             self.logger.info(
                 "Using kernel file from prepare-kernel: %s", prepared_kernel
@@ -483,9 +464,7 @@ class BootloaderCommandOverlay(Action):
                 dtbo_pos = self.commands.index("{APPLY_DTBO_COMMANDS}")
                 index = 0
                 while True:
-                    file = self.get_namespace_data(
-                        action="download-action", label="file", key=f"dtbo{index}"
-                    )
+                    file = self.state.downloads.maybe_file(f"dtbo{index}")
                     if file:
                         for apply_dtbo_command in apply_dtbo_commands:
                             dtbo_pos += 1
@@ -505,15 +484,9 @@ class BootloaderCommandOverlay(Action):
                     substitutions["{DTBO_ADDR}"] = dtbo_addr
 
             if (
-                not self.get_namespace_data(
-                    action="tftp-deploy", label="tftp", key="ramdisk"
-                )
-                and not self.get_namespace_data(
-                    action="download-action", label="file", key="ramdisk"
-                )
-                and not self.get_namespace_data(
-                    action="download-action", label="file", key="initrd"
-                )
+                not self.state.tftp.ramdisk
+                and not self.state.downloads.get("ramdisk")
+                and not self.state.downloads.get("initrd")
             ):
                 ramdisk_addr = "-"
             add_header = self.job.device["actions"]["deploy"]["parameters"].get(
@@ -527,17 +500,10 @@ class BootloaderCommandOverlay(Action):
                 self.logger.debug("No u-boot header, not passing ramdisk to bootX cmd")
                 ramdisk_addr = "-"
 
-            if (
-                self.get_namespace_data(
-                    action="download-action", label="file", key="initrd"
-                )
-                or add_header == "raw"
-            ):
+            if self.state.downloads.get("initrd") or add_header == "raw":
                 # no u-boot header, thus no embedded size, so we have to add it to the
                 # boot cmd with colon after the ramdisk
-                if self.get_namespace_data(
-                    action="download-action", label="file", key="tee"
-                ):
+                if self.state.downloads.get("tee"):
                     substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
                         self.bootcommand,
                         tee_addr,
@@ -554,9 +520,7 @@ class BootloaderCommandOverlay(Action):
                         dtb_addr,
                     )
             else:
-                if self.get_namespace_data(
-                    action="download-action", label="file", key="tee"
-                ):
+                if self.state.downloads.get("tee"):
                     substitutions["{BOOTX}"] = "%s %s %s %s" % (
                         self.bootcommand,
                         tee_addr,
@@ -582,81 +546,46 @@ class BootloaderCommandOverlay(Action):
                 "tee_addr": tee_addr,
             }
 
-        nfs_address = self.get_namespace_data(
-            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
-        )
-        nfs_root = self.get_namespace_data(
-            action="download-action", label="file", key="nfsrootfs"
-        )
+        nfs_address = self.state.persistent_nfs.nfsroot
+        nfs_root = self.state.downloads.get("nfsrootfs")
         if nfs_root:
-            substitutions["{NFSROOTFS}"] = self.get_namespace_data(
-                action="extract-rootfs", label="file", key="nfsroot"
-            )
+            substitutions["{NFSROOTFS}"] = self.state.extract_nfs.nfsroot
             substitutions["{NFS_SERVER_IP}"] = ip_addr
         elif nfs_address:
             substitutions["{NFSROOTFS}"] = nfs_address
-            substitutions["{NFS_SERVER_IP}"] = self.get_namespace_data(
-                action="parse-persistent-nfs", label="nfs_address", key="serverip"
-            )
+            substitutions["{NFS_SERVER_IP}"] = self.state.persistent_nfs.serverip
 
         if "lava-xnbd" in self.parameters:
-            substitutions["{NBDSERVERIP}"] = str(
-                self.get_namespace_data(
-                    action="nbd-deploy", label="nbd", key="nbd_server_ip"
-                )
-            )
-            substitutions["{NBDSERVERPORT}"] = str(
-                self.get_namespace_data(
-                    action="nbd-deploy", label="nbd", key="nbd_server_port"
-                )
-            )
+            substitutions["{NBDSERVERIP}"] = str(self.state.ndb.nbd_server_ip)
+            substitutions["{NBDSERVERPORT}"] = str(self.state.ndb.nbd_server_port)
 
-        substitutions["{ROOT}"] = self.get_namespace_data(
-            action="bootloader-from-media", label="uuid", key="root"
-        )  # UUID label, not a file
-        substitutions["{ROOT_PART}"] = self.get_namespace_data(
-            action="bootloader-from-media", label="uuid", key="boot_part"
-        )
+        # UUID label, not a file
+        substitutions["{ROOT}"] = self.state.bootloader_from_media.root
+        substitutions["{ROOT_PART}"] = self.state.bootloader_from_media.boot_part
 
         # Save the substitutions
-        self.set_namespace_data(
-            action=self.name,
-            label=self.method,
-            key="substitutions",
-            value=substitutions,
-        )
+        bootloader_state = BootloaderState(substitutions=substitutions)
+        self.state.bootloader[self.method] = bootloader_state
 
         if self.use_bootscript:
             script = "/script.ipxe"
-            bootscript = (
-                self.get_namespace_data(
-                    action="tftp-deploy", label="tftp", key="tftp_dir"
-                )
-                + script
-            )
+            bootscript = self.state.tftp.tftp_dir + script
             bootscripturi = "tftp://%s/%s" % (
                 ip_addr,
                 os.path.dirname(substitutions["{KERNEL}"]) + script,
             )
             write_bootscript(substitute(self.commands, substitutions), bootscript)
             bootscript_commands = ["dhcp net0", "chain %s" % bootscripturi]
-            self.set_namespace_data(
-                action=self.name,
-                label=self.method,
-                key="commands",
-                value=bootscript_commands,
-            )
+            bootloader_state.commands = bootscript_commands
             self.logger.info("Parsed boot commands: %s", "; ".join(bootscript_commands))
             return connection
-        subs = substitute(self.commands, substitutions, drop=True)
-        self.set_namespace_data(
-            action="bootloader-overlay", label=self.method, key="commands", value=subs
-        )
+        commands_with_subs = substitute(self.commands, substitutions, drop=True)
+        bootloader_state.commands = commands_with_subs
         self.logger.debug("substitutions:")
         for k in substitutions.keys():
             self.logger.debug("- %s: %s", k, substitutions[k])
         self.logger.info("Parsed boot commands:")
-        for sub in subs:
+        for sub in commands_with_subs:
             self.logger.info("- %s", sub)
         return connection
 
@@ -688,41 +617,21 @@ class BootloaderSecondaryMedia(Action):
             self.errors = "Missing UUID of the roofs inside the deployed image"
         if "boot_part" not in self.parameters:
             self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
-        self.set_namespace_data(
-            action="download-action",
-            label="file",
-            key="kernel",
-            value=self.parameters.get("kernel", ""),
+
+        # HACK: Create fake downloads for files already on secondary media
+        self.state.downloads.create_downloaded_file(
+            download_name="kernel", download_file=self.parameters.get("kernel", "")
         )
-        self.set_namespace_data(
-            action="compress-ramdisk",
-            label="file",
-            key="ramdisk",
-            value=self.parameters.get("ramdisk", ""),
+        self.state.downloads.create_downloaded_file(
+            download_name="ramdisk", download_file=self.parameters.get("ramdisk", "")
         )
-        self.set_namespace_data(
-            action="download-action",
-            label="file",
-            key="ramdisk",
-            value=self.parameters.get("ramdisk", ""),
+        self.state.downloads.create_downloaded_file(
+            download_name="dtb", download_file=self.parameters.get("dtb", "")
         )
-        self.set_namespace_data(
-            action="download-action",
-            label="file",
-            key="dtb",
-            value=self.parameters.get("dtb", ""),
-        )
-        self.set_namespace_data(
-            action="bootloader-from-media",
-            label="uuid",
-            key="root",
-            value=self.parameters.get("root_uuid", ""),
-        )
-        self.set_namespace_data(
-            action="bootloader-from-media",
-            label="uuid",
-            key="boot_part",
-            value=str(self.parameters.get("boot_part")),
+        self.state.compressed_ramdisk.ramdisk_file = self.parameters.get("ramdisk")
+        self.state.bootloader_from_media.root = self.parameters.get("root_uuid")
+        self.state.bootloader_from_media.boot_part = str(
+            self.parameters.get("boot_part")
         )
 
 
@@ -760,9 +669,7 @@ class OverlayUnpack(Action):
         )
 
         if transfer_method == "http":
-            overlay_full_path = self.get_namespace_data(
-                action="compress-overlay", label="output", key="file"
-            )
+            overlay_full_path = self.state.compresssed_overlay.file
             if not overlay_full_path:
                 raise JobError("No overlay file identified for the transfer.")
             if not overlay_full_path.startswith(DISPATCHER_DOWNLOAD_DIR):
@@ -787,9 +694,7 @@ class OverlayUnpack(Action):
             connection.sendline(unpack + " " + overlay, delay=self.character_delay)
             connection.wait()
         elif transfer_method == "nfs":
-            location = self.get_namespace_data(
-                action="test", label="shared", key="location"
-            )
+            location = self.state.test.location
 
             cmd = self.parameters["transfer_overlay"]["download_command"]
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
@@ -904,12 +809,7 @@ class BootloaderInterruptAction(Action):
             )
             connection.prompt_str = [self.bootloader_prompt]
             self.wait(connection)
-            self.set_namespace_data(
-                action="interrupt",
-                label="interrupt",
-                key="at_bootloader_prompt",
-                value=True,
-            )
+            self.state.interrupt.at_bootloader_prompt = True
         return connection
 
 
@@ -952,9 +852,7 @@ class BootloaderCommandsActionAltBank(Action):
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
-        at_bootloader_prompt = self.get_namespace_data(
-            action="interrupt", label="interrupt", key="at_bootloader_prompt"
-        )
+        at_bootloader_prompt = self.state.interrupt.at_bootloader_prompt
         if not at_bootloader_prompt:
             self.wait(connection, max_end_time)
         error_messages = self.job.device.get_constant(
@@ -977,9 +875,7 @@ class BootloaderCommandsActionAltBank(Action):
             connection.prompt_str = [final_message]
             self.wait(connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection
 
 
@@ -1022,14 +918,10 @@ class BootloaderCommandsAction(Action):
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
-        at_bootloader_prompt = self.get_namespace_data(
-            action="interrupt", label="interrupt", key="at_bootloader_prompt"
-        )
+        at_bootloader_prompt = self.state.interrupt.at_bootloader_prompt
         if not at_bootloader_prompt:
             self.wait(connection, max_end_time)
-        commands = self.get_namespace_data(
-            action="bootloader-overlay", label=self.method, key="commands"
-        )
+        commands = self.state.bootloader[self.method].commands
         error_messages = self.job.device.get_constant(
             "error-messages", prefix=self.method, missing_ok=True
         )
@@ -1063,9 +955,7 @@ class BootloaderCommandsAction(Action):
                 )
                 raise InfrastructureError(msg)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection
 
 
@@ -1085,9 +975,7 @@ class AdbOverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
-        overlay_file = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
+        overlay_file = self.state.compresssed_overlay.file
         if not overlay_file:
             raise JobError("No overlay file identified for the transfer.")
         serial_number = self.job.device["adb_serial_number"]

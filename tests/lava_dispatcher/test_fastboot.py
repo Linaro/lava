@@ -348,11 +348,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
                 "1.8.4.8": "1_android-meminfo",
                 "1.8.4.16": "3_android-ping-dns",
             },
-            testdef.get_namespace_data(
-                action="test-runscript-overlay",
-                label="test-runscript-overlay",
-                key="testdef_levels",
-            ),
+            testdef.state.test.testdef_levels,
         )
         for testdef in testdef.test_list[0]:
             self.assertEqual("git", testdef["from"])

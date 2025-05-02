@@ -43,13 +43,7 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
                 DownloaderAction(self.job, "uefi", uefi_path, params=parameters["uefi"])
             )
             # uefi option of QEMU needs a directory, not the filename
-            self.set_namespace_data(
-                action=self.name,
-                label="image",
-                key="uefi_dir",
-                value=uefi_path,
-                parameters=parameters,
-            )
+            self.state.deploy_images.uefi_dir = uefi_path
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
             self.pipeline.add_action(
@@ -76,13 +70,7 @@ class DeployQemuNfsAction(Action):
                 DownloaderAction(self.job, "uefi", uefi_path, params=parameters["uefi"])
             )
             # uefi option of QEMU needs a directory, not the filename
-            self.set_namespace_data(
-                action=self.name,
-                label="image",
-                key="uefi_dir",
-                value=uefi_path,
-                parameters=parameters,
-            )
+            self.state.deploy_qemu_nfs.uefi_dir = uefi_path
             # alternatively use the -bios option and standard image args
         for image in parameters["images"].keys():
             self.pipeline.add_action(
@@ -117,9 +105,7 @@ class ExtractNfsAction(Action):
             return
         if not self.parameters["images"].get(self.param_key):  # idempotency
             return
-        if not self.get_namespace_data(
-            action="download-action", label=self.param_key, key="file"
-        ):
+        if not self.state.downloads.get(self.param_key):
             self.errors = "no file specified extract as %s" % self.param_key
         if "prefix" in self.parameters["images"][self.param_key]:
             prefix = self.parameters["images"][self.param_key]["prefix"]
@@ -132,14 +118,10 @@ class ExtractNfsAction(Action):
         if not self.parameters["images"].get(self.param_key):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
-        root = self.get_namespace_data(
-            action="download-action", label=self.param_key, key="file"
-        )
+        root = self.state.downloads[self.param_key].file
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
-        self.set_namespace_data(
-            action="extract-rootfs", label="file", key=self.file_key, value=root_dir
-        )
+        self.state.extract_rootfs.nfsroot = root_dir
         self.logger.debug("Extracted %s to %s", self.file_key, root_dir)
 
         if "prefix" in self.parameters["images"][self.param_key]:
@@ -149,13 +131,10 @@ class ExtractNfsAction(Action):
             )
 
             # Grab the path already defined in super().run() and add the prefix
-            root_dir = self.get_namespace_data(
-                action="extract-rootfs", label="file", key=self.file_key
-            )
+            root_dir = self.state.extract_rootfs.nfsroot
             root_dir = os.path.join(root_dir, prefix)
             # sets the directory into which the overlay is unpacked and which
             # is used in the substitutions into the bootloader command string.
-            self.set_namespace_data(
-                action="extract-rootfs", label="file", key=self.file_key, value=root_dir
-            )
+            self.state.extract_rootfs.nfsroot = root_dir
+
         return connection

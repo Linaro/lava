@@ -75,20 +75,13 @@ class UefiShellAction(BootHasMixin, RetryAction):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = UEFI_LINE_SEPARATOR
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
-        )
+        self.state.shared.connection = connection
         return connection
 
     def validate(self):
         super().validate()
         params = self.job.device["actions"]["boot"]["methods"]["uefi"]["parameters"]
-        self.set_namespace_data(
-            action=self.name,
-            label="bootloader_prompt",
-            key="prompt",
-            value=params["bootloader_prompt"],
-        )
+        self.state.uefi.bootloader_prompt = params["bootloader_prompt"]
 
 
 class UefiShellMenuInterrupt(UEFIMenuInterrupt):

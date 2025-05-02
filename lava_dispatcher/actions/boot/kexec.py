@@ -62,7 +62,7 @@ class KexecAction(Action):
         if key not in self.parameters:
             return
 
-        path = self.get_namespace_data(action="download-action", label=key, key="file")
+        path = self.state.downloads.maybe_file(key)
         if path is None:
             raise JobError(f"Missing '{key}' in deploy stage")
 
@@ -76,9 +76,6 @@ class KexecAction(Action):
         self.load_command = self.command[:]  # local copy for idempotency
 
         if self.parameters.get("deploy", False):
-            initrd_path = self.get_namespace_data(
-                action="download-action", label="initrd", key="file"
-            )
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
 
             self.append_deploy_cmd("kernel", ip_addr)

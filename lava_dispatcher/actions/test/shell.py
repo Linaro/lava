@@ -168,7 +168,6 @@ class TestShellAction(Action):
 
         # Get the connection, specific to this namespace
         connection_namespace = self.parameters.get("connection-namespace")
-        parameters = None
         if self.timeout.can_skip(self.parameters):
             self.logger.info(
                 "The timeout has 'skip' enabled. "
@@ -177,17 +176,12 @@ class TestShellAction(Action):
 
         if connection_namespace:
             self.logger.debug("Using connection namespace: %s", connection_namespace)
-            parameters = {"namespace": connection_namespace}
+            using_namespace = connection_namespace
         else:
-            parameters = {"namespace": self.parameters.get("namespace", "common")}
-            self.logger.debug("Using namespace: %s", parameters["namespace"])
-        connection = self.get_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            deepcopy=False,
-            parameters=parameters,
-        )
+            using_namespace = self.parameters.get("namespace", "common")
+            self.logger.debug("Using namespace: %s", using_namespace)
+
+        connection = self.job.namespace_states[using_namespace].shared.connection
 
         if not connection:
             self.logger.error(
@@ -203,12 +197,7 @@ class TestShellAction(Action):
 
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
-        self.set_namespace_data(
-            action=self.name,
-            label=self.name,
-            key="pattern_dictionary",
-            value=pattern_dict,
-        )
+        self.state.test.pattern_dictionary = pattern_dict
         if self.character_delay > 0:
             self.logger.debug(
                 "Using a character delay of %i (ms)", self.character_delay
@@ -230,15 +219,9 @@ class TestShellAction(Action):
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
         running = self.parameters["stage"]
-        pre_command_list = self.get_namespace_data(
-            action="test", label="lava-test-shell", key="pre-command-list"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
-        lava_test_sh_cmd = self.get_namespace_data(
-            action="test", label="shared", key="lava_test_sh_cmd"
-        )
+        pre_command_list = self.state.test.pre_command_list
+        lava_test_results_dir = self.state.test.lava_test_results_dir
+        lava_test_sh_cmd = self.state.test.lava_test_sh_cmd
 
         # Any errors arising from this command are not checked.
         # If the result of the command means that lava-test-runner cannot be found,
@@ -269,21 +252,15 @@ class TestShellAction(Action):
 
         try:
             feedbacks = []
-            for feedback_ns in self.data.keys():
-                feedback_connection = self.get_namespace_data(
-                    action="shared",
-                    label="shared",
-                    key="connection",
-                    deepcopy=False,
-                    parameters={"namespace": feedback_ns},
-                )
+            for feedback_name, feedback_ns_state in self.job.namespace_states.items():
+                feedback_connection = feedback_ns_state.shared.connection
                 if feedback_connection == connection:
                     continue
                 if feedback_connection:
                     self.logger.debug(
-                        "Will listen to feedbacks from '%s' for 1 second", feedback_ns
+                        "Will listen to feedbacks from '%s' for 1 second", feedback_name
                     )
-                    feedbacks.append((feedback_ns, feedback_connection))
+                    feedbacks.append((feedback_name, feedback_connection))
 
             with connection.test_connection() as test_connection:
                 # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
@@ -364,18 +341,14 @@ class TestShellAction(Action):
         self.start = time.monotonic()
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
         # set the pattern for this run from pattern_dict
-        testdef_index = self.get_namespace_data(
-            action="test-definition", label="test-definition", key="testdef_index"
-        )
-        uuid_list = self.get_namespace_data(
-            action="repo-action", label="repo-action", key="uuid-list"
-        )
+        testdef_index = self.state.test.testdef_index
+        uuid_list = self.state.repo.uuid_list
         for key, value in enumerate(testdef_index):
             if self.definition == "%s_%s" % (key, value):
-                pattern_dict = self.get_namespace_data(
-                    action="test", label=uuid_list[key], key="testdef_pattern"
-                )
-                if not pattern_dict:
+                test_entry = self.state.test.entries.get(uuid_list[key])
+                if test_entry is None or not (
+                    pattern_dict := test_entry.testdef_pattern
+                ):
                     self.logger.info("Skipping test definition patterns.")
                     continue
                 pattern = pattern_dict["testdef_pattern"]["pattern"]
@@ -392,10 +365,8 @@ class TestShellAction(Action):
             "uuid": uuid,
             "result": "fail",
         }
-        testdef_commit = self.get_namespace_data(
-            action="test", label=uuid, key="commit-id"
-        )
-        if testdef_commit:
+        test_entry = self.state.test.entries.get(uuid)
+        if test_entry is not None and (testdef_commit := test_entry.commit_id):
             self.current_run.update({"commit_id": testdef_commit})
 
     def signal_end_run(self, params):
@@ -421,22 +392,23 @@ class TestShellAction(Action):
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
-            "repository": self.get_namespace_data(
-                action="test", label=uuid, key="repository"
-            ),
-            "path": self.get_namespace_data(action="test", label=uuid, key="path"),
             "duration": "%.02f" % (time.monotonic() - self.start),
             "result": "pass",
         }
-        revision = self.get_namespace_data(action="test", label=uuid, key="revision")
-        res["revision"] = revision if revision else "unspecified"
+        if (test_entry := self.state.test.entries.get(uuid)) is not None:
+            res["repository"] = test_entry.repository
+            res["path"] = test_entry.path
+            res["revision"] = test_entry.revision
+            if test_entry.commit_id:
+                res["commit_id"] = test_entry.commit_id
+        else:
+            res["repository"] = None
+            res["path"] = None
+            res["revision"] = "unspecified"
         res["namespace"] = self.parameters["namespace"]
         connection_namespace = self.parameters.get("connection_namespace")
         if connection_namespace:
             res["connection-namespace"] = connection_namespace
-        commit_id = self.get_namespace_data(action="test", label=uuid, key="commit-id")
-        if commit_id:
-            res["commit_id"] = commit_id
 
         self.logger.results(res)
         self.start = None
@@ -504,17 +476,11 @@ class TestShellAction(Action):
     @nottest
     def signal_test_feedback(self, params):
         feedback_ns = params[0]
-        if feedback_ns not in self.data.keys():
+        if feedback_ns not in self.job.namespace_states:
             self.logger.error("%s is not a valid namespace")
             return
         self.logger.info("Requesting feedback from namespace: %s", feedback_ns)
-        feedback_connection = self.get_namespace_data(
-            action="shared",
-            label="shared",
-            key="connection",
-            deepcopy=False,
-            parameters={"namespace": feedback_ns},
-        )
+        feedback_connection = self.job.namespace_states[feedback_ns].shared.connection
         feedback_connection.listen_feedback(timeout=1, namespace=feedback_ns)
 
     @nottest

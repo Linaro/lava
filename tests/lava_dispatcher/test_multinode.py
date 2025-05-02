@@ -279,12 +279,11 @@ class TestMultinode(LavaDispatcherTestCase):
                             if name == "action" and params[name] == action.name
                         ]
                         for call in api_calls:
-                            action.set_namespace_data(
-                                action=protocol.name,
-                                label=protocol.name,
-                                key=action.name,
-                                value=call,
-                            )
+                            try:
+                                action.state.protocol[protocol.name][action.name] = call
+                            except KeyError:
+                                protocol_dict: dict[str, object] = {action.name: call}
+                                action.state.protocol[protocol.name] = protocol_dict
                             client_calls.update(call)
 
         # now pretend that another job has called lava-send with the same messageID,

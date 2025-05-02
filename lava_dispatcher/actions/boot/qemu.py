@@ -193,17 +193,13 @@ class CallQemuAction(Action):
         except (KeyError, TypeError):
             self.errors = "Invalid parameters for %s" % self.name
 
-        for label in self.get_namespace_keys("download-action"):
-            if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
+        for download_name, download in self.state.downloads.items():
+            if download_name in ["offset", "available_loops", "uefi", "nfsrootfs"]:
                 continue
-            image_arg = self.get_namespace_data(
-                action="download-action", label=label, key="image_arg"
-            )
-            action_arg = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            if not image_arg or not action_arg:
-                self.logger.warning("Missing image arg for %s", label)
+            image_arg = download.image_arg
+            download_file = download.file
+            if not image_arg or not download_file:
+                self.logger.warning("Missing image arg for %s", download_name)
                 continue
             self.commands.append(image_arg)
 
@@ -232,51 +228,37 @@ class CallQemuAction(Action):
         pexpect.spawn is one of the raw_connection objects for a Connection class.
         """
         if connection:
-            ns_connection = self.get_namespace_data(
-                action="shared", label="shared", key="connection", deepcopy=False
-            )
+            ns_connection = self.state.shared.connection
             if connection == ns_connection:
                 connection.finalise()
 
         self.sub_command = self.base_sub_command.copy()
         # Generate the sub command
         substitutions = {}
-        for label in self.get_namespace_keys("download-action"):
-            if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
+        for download_name, download in self.state.downloads.items():
+            if download_name in ["offset", "available_loops", "uefi", "nfsrootfs"]:
                 continue
-            image_arg = self.get_namespace_data(
-                action="download-action", label=label, key="image_arg"
-            )
-            action_arg = self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
+            image_arg = download.image_arg
+            download_file = download.file
             if image_arg is not None:
-                substitutions["{%s}" % label] = action_arg
+                substitutions["{%s}" % download_name] = download_file
         substitutions["{NFS_SERVER_IP}"] = dispatcher_ip(
             self.job.parameters["dispatcher"], "nfs"
         )
         self.sub_command.extend(substitute(self.commands, substitutions))
-        uefi_dir = self.get_namespace_data(
-            action="deployimages", label="image", key="uefi_dir"
-        )
+        uefi_dir = self.state.deploy_images.uefi_dir
         if uefi_dir:
             self.sub_command.extend(["-L", uefi_dir, "-monitor", "none"])
 
         # initialise the first Connection object, a command line shell into the running QEMU.
         self.results = self.qemu_data
-        guest = self.get_namespace_data(
-            action="apply-overlay-guest", label="guest", key="filename"
-        )
-        applied = self.get_namespace_data(
-            action="append-overlays", label="result", key="applied"
-        )
+        guest = self.state.overlay_guest.filename
+        applied = self.state.overlay_append.applied
 
         # check for NFS
         if "qemu-nfs" == self.parameters["method"]:
             self.logger.debug("Adding NFS arguments to kernel command line.")
-            root_dir = self.get_namespace_data(
-                action="extract-rootfs", label="file", key="nfsroot"
-            )
+            root_dir = self.state.extract_rootfs.nfsroot
             substitutions["{NFSROOTFS}"] = root_dir
             params = self.methods["qemu-nfs"]["parameters"]["append"]
             # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
@@ -304,24 +286,15 @@ class CallQemuAction(Action):
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
             shell_precommand_list = []
-            mountpoint = self.get_namespace_data(
-                action="test", label="results", key="lava_test_results_dir"
-            )
-            uuid = "/dev/disk/by-uuid/%s" % self.get_namespace_data(
-                action="apply-overlay-guest", label="guest", key="UUID"
-            )
+            mountpoint = self.state.test.lava_test_results_dir
+            uuid = "/dev/disk/by-uuid/%s" % self.state.overlay_guest.uuid
             shell_precommand_list.append("mkdir %s" % mountpoint)
             # prepare_guestfs always uses ext2
             shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
             shell_precommand_list.append("ls -la %s/bin/lava-test-runner" % mountpoint)
-            self.set_namespace_data(
-                action="test",
-                label="lava-test-shell",
-                key="pre-command-list",
-                value=shell_precommand_list,
-            )
+            self.state.test.pre_command_list = shell_precommand_list
 
         if "docker" in self.parameters:
             self.docker = docker = DockerRun.from_parameters(
@@ -362,9 +335,7 @@ class CallQemuAction(Action):
         shell_connection = self.session_class(self.job, shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
         return shell_connection
 
     def cleanup(self, connection):

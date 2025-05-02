@@ -53,40 +53,24 @@ class IsoCommandLine(Action):
 
     def run(self, connection, max_end_time):
         # substitutions
-        substitutions = {
-            "{emptyimage}": self.get_namespace_data(
-                action="prepare-empty-image", label="prepare-empty-image", key="output"
-            )
-        }
-        sub_command = self.get_namespace_data(
-            action="prepare-qemu-commands",
-            label="prepare-qemu-commands",
-            key="sub_command",
-        )
+        substitutions = {"{emptyimage}": self.state.prepare_empty_image.output}
+        sub_command = self.state.prepare_qemu_commands.sub_command.copy()
         sub_command = substitute(sub_command, substitutions)
         command_line = " ".join(sub_command)
 
         commands = []
         # get the download args in run()
-        image_arg = self.get_namespace_data(
-            action="download-action", label="iso", key="image_arg"
-        )
-        action_arg = self.get_namespace_data(
-            action="download-action", label="iso", key="file"
-        )
+        image_arg = self.state.downloads["iso"].image_arg
+        action_arg = self.state.downloads["iso"].file
         substitutions["{%s}" % "iso"] = action_arg
         commands.append(image_arg)
         command_line += " ".join(substitute(commands, substitutions))
 
-        preseed_file = self.get_namespace_data(
-            action="download-action", label="file", key="preseed"
-        )
+        preseed_file = self.state.downloads.maybe_file("preseed")
         if not preseed_file:
             raise JobError("Unable to identify downloaded preseed filename.")
         substitutions = {"{preseed}": preseed_file}
-        append_args = self.get_namespace_data(
-            action="prepare-qemu-commands", label="prepare-qemu-commands", key="append"
-        )
+        append_args = self.state.prepare_qemu_commands.append
         append_args = substitute([append_args], substitutions)
         command_line += " ".join(append_args)
 
@@ -100,9 +84,7 @@ class IsoCommandLine(Action):
         self.logger.debug("started a shell command")
 
         shell_connection = ShellSession(self.job, shell)
-        shell_connection.prompt_str = self.get_namespace_data(
-            action="prepare-qemu-commands", label="prepare-qemu-commands", key="prompts"
-        )
+        shell_connection.prompt_str = self.state.prepare_qemu_commands.prompts
         shell_connection = super().run(shell_connection, max_end_time)
         return shell_connection
 
@@ -163,13 +145,9 @@ class IsoRebootAction(Action):
         qemu needs help to reboot after running the debian installer
         and typically the boot is quiet, so there is almost nothing to log.
         """
-        base_image = self.get_namespace_data(
-            action="prepare-empty-image", label="prepare-empty-image", key="output"
-        )
+        base_image = self.state.prepare_empty_image.output
         self.sub_command.append("-drive format=raw,file=%s" % base_image)
-        guest = self.get_namespace_data(
-            action="apply-overlay-guest", label="guest", key="filename"
-        )
+        guest = self.state.overlay_guest.filename
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             self.sub_command.append(
@@ -177,18 +155,11 @@ class IsoRebootAction(Action):
             )
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
-            shell_precommand_list = []
-            mountpoint = self.get_namespace_data(
-                action="test", label="results", key="lava_test_results_dir"
-            )
+            shell_precommand_list: list[str] = []
+            mountpoint = self.state.test.lava_test_results_dir
             shell_precommand_list.append("mkdir %s" % mountpoint)
             shell_precommand_list.append("mount -L LAVA %s" % mountpoint)
-            self.set_namespace_data(
-                action="test",
-                label="lava-test-shell",
-                key="pre-command-list",
-                value=shell_precommand_list,
-            )
+            self.state.test.pre_command_list = shell_precommand_list
 
         self.logger.info("Boot command: %s", " ".join(self.sub_command))
         shell = ShellCommand(
@@ -205,7 +176,5 @@ class IsoRebootAction(Action):
         shell_connection = super().run(shell_connection, max_end_time)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)
-        self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=shell_connection
-        )
+        self.state.shared.connection = shell_connection
         return shell_connection

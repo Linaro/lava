@@ -3,9 +3,10 @@
 # Author: Jan-Simon Moeller <jsmoeller@linuxfoundation.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -15,6 +16,9 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.shell import ShellCommand
 from lava_dispatcher.utils.network import dispatcher_ip, get_free_port
+
+if TYPE_CHECKING:
+    from lava_dispatcher.action import Action
 
 
 class XnbdProtocol(Protocol):
@@ -72,7 +76,7 @@ class XnbdProtocol(Protocol):
                 raise JobError("Unrecognised API call in request.")
         return None
 
-    def set_port(self, action):
+    def set_port(self, action: Action):
         msg = {"data": {"nbd_server_port": 10809}}
         nbd_port = self.parameters["protocols"]["lava-xnbd"]["port"]
         if nbd_port == "auto":
@@ -80,21 +84,9 @@ class XnbdProtocol(Protocol):
             nbd_port = get_free_port(self.parameters["dispatcher"])
         self.ports.append(nbd_port)
         msg["data"]["nbd_server_port"] = nbd_port
-        action.set_namespace_data(
-            "nbd-deploy",
-            label="nbd",
-            key="nbd_server_port",
-            value=nbd_port,
-            parameters=action.parameters,
-        )
+        action.state.ndb.nbd_server_port = nbd_port
         nbd_ip = dispatcher_ip(self.parameters["dispatcher"])
-        action.set_namespace_data(
-            "nbd-deploy",
-            label="nbd",
-            key="nbd_server_ip",
-            value=nbd_ip,
-            parameters=action.parameters,
-        )
+        action.state.ndb.nbd_server_ip = nbd_ip
         self.logger.debug("Set_port %d", nbd_port)
         return msg["data"]
 
