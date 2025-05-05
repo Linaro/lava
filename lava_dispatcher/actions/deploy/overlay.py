@@ -246,6 +246,11 @@ class CreateOverlay(Action):
             self.logger.debug("LAVA metadata")
             self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
             self._export_data(fout, self.dispatcher_ip, "LAVA_DISPATCHER_IP")
+            self._export_data(
+                fout,
+                self.job.parameters.get("dispatcher", {}).get("prefix", ""),
+                "LAVA_DISPATCHER_PREFIX",
+            )
 
             if http_cache := self.job.parameters["dispatcher"].get(
                 "http_url_format_string", ""
