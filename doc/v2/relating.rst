@@ -12,7 +12,7 @@ reporting these issues is a customized process for each team involved.
 
 The details of how and why the test failed will typically be essential
 to identifying how to fix the issue, so developers need help from test
-writers and from LAVA to provide information, logs and build artefacts
+writers and from LAVA to provide information, logs and build artifacts
 to be able to reproduce the issue.
 
 However, it is common for a test failure to occur due to an earlier
@@ -110,7 +110,7 @@ Control the test operations
   from other bugs.
 
 * Implement ways to resubmit after infrastructure failures, using the
-  same automated submitter, metadata, artefacts and tests.
+  same automated submitter, metadata, artifacts and tests.
 
 Control the output
 ==================
@@ -173,7 +173,7 @@ Control the build system
 * Make changelogs available for the components that have changed
   between builds.
 
-* Always publish checksums for all build artefacts.
+* Always publish checksums for all build artifacts.
 
 This is to make it easier, during triage, to use known working versions
 of each component whilst changing just one component. It can be very

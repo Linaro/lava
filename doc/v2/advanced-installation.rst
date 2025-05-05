@@ -138,7 +138,7 @@ Fileserver
 ----------
 
 The master is **not** the correct place to be building or storing
-build artefacts. In a busy lab, the extra load may cause issues when
+build artifacts. In a busy lab, the extra load may cause issues when
 workers download large files at job startup. Development builds and
 creation of files to support the LAVA test should happen on a suitably
 powerful machine to meet the performance expectations of the CI loop

@@ -375,7 +375,7 @@ deadlock of the currently executing test shell.
      failed in the middle of an operation which relies on filesystem
      locks.
 
-   Test writers are wholly responsible for cleaning up any artefacts of
+   Test writers are wholly responsible for cleaning up any artifacts of
    the failed test shell at the start of the second test shell. For
    example:
 
