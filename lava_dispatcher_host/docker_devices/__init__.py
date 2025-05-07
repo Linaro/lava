@@ -96,10 +96,7 @@ class DeviceFilterCommon:
 class DeviceFilterCGroupsV1(DeviceFilterCommon):
     @classmethod
     def detect(cls):
-        dirs = [
-            "/sys/fs/cgroup/devices/docker",
-            "/sys/fs/cgroup/devices/system.slice",
-        ]
+        dirs = ["/sys/fs/cgroup/devices/docker", "/sys/fs/cgroup/devices/system.slice"]
         for d in dirs:
             if os.path.exists(d):
                 return True

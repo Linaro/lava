@@ -10,14 +10,12 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("lava_scheduler_app", "0058_add_testjob_view_performance_indexes"),
-    ]
+    dependencies = [("lava_scheduler_app", "0058_add_testjob_view_performance_indexes")]
 
     operations = [
         migrations.AlterField(
             model_name="remoteartifactsauth",
             name="token",
             field=models.CharField(max_length=200, verbose_name="Token value"),
-        ),
+        )
     ]

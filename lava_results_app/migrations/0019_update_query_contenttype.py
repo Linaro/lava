@@ -45,10 +45,6 @@ class Migration(migrations.Migration):
                 verbose_name="Condition model",
             ),
         ),
-        migrations.DeleteModel(
-            name="ActionData",
-        ),
-        migrations.DeleteModel(
-            name="MetaType",
-        ),
+        migrations.DeleteModel(name="ActionData"),
+        migrations.DeleteModel(name="MetaType"),
     ]

@@ -87,9 +87,7 @@ class ResultsView(LavaView):
                     output_field=IntegerField(),
                 ),
                 totals=Subquery(
-                    TestCase.objects.filter(
-                        suite=OuterRef("testsuite"),
-                    )
+                    TestCase.objects.filter(suite=OuterRef("testsuite"))
                     .annotate(dummy_group_by=Value(1))  # Disable GROUP BY
                     .values("dummy_group_by")
                     .annotate(totals=Count("*"))

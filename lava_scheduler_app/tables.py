@@ -168,9 +168,7 @@ class DeviceHealthTable(LavaTable):
             "last_report_time",
             "last_health_report_job",
         ]
-        searches = {
-            "hostname": "contains",
-        }
+        searches = {"hostname": "contains"}
         queries = {"device_health_query": "health"}
 
 

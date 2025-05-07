@@ -44,9 +44,7 @@ class ShellLogger:
         self.is_input = is_input
 
     def write(self, new_line):
-        replacements = {
-            "\x1b": "",  # remove escape control characters
-        }
+        replacements = {"\x1b": ""}  # remove escape control characters
         lines = self.line + new_line
 
         # Print one full line at a time. A partial line is kept in memory.

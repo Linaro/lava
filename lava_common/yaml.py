@@ -75,8 +75,4 @@ def yaml_quote(obj: Union[str, int, float, dict, list]) -> str:
     return stream.getvalue()[4:-1]  # Skip "--- " and newline
 
 
-__all__ = (
-    "yaml_quote",
-    "yaml_safe_dump",
-    "yaml_safe_load",
-)
+__all__ = ("yaml_quote", "yaml_safe_dump", "yaml_safe_load")

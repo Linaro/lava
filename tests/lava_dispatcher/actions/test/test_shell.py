@@ -153,7 +153,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 "result": "pass",
                 "revision": "unspecified",
                 "namespace": "common",
-            },
+            }
         )
         self.assertIsNone(action.current_run)
 
@@ -326,7 +326,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234",
-                ),
+                )
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -338,7 +338,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 "case": "case_id",
                 "result": "pass",
                 "measurement": 1234.0,
-            },
+            }
         )
 
         # "signal.TESTCASE with measurement and unit"
@@ -356,7 +356,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s",
-                ),
+                )
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -421,7 +421,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 (
                     "DEBUG",
                     "Received signal: <TESTREFERENCE> case-id pass http://example.com",
-                ),
+                )
             ],
         )
         action.logger.results.assert_called_once_with(

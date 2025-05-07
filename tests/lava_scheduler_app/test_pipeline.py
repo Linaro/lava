@@ -678,7 +678,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "bbb-qemu-multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
 
@@ -736,7 +736,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         with open(
             os.path.join(
                 os.path.dirname(__file__), "sample_jobs", "hikey_multinode.yaml"
-            ),
+            )
         ) as f:
             submission = yaml_safe_load(f)
         target_group = "arbitrary-group-id"  # for unit tests only
@@ -1057,9 +1057,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         self.factory.make_device(device_type, "fakeqemu3")
         self.factory.make_device(device_type, "fakeqemu4")
         with open(
-            os.path.join(
-                os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml"
-            ),
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
         ) as f:
             submission = yaml_safe_load(f)
         role_list = submission["protocols"][MultinodeProtocol.name]["roles"]

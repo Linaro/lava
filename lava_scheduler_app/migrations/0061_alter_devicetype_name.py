@@ -7,7 +7,7 @@ import lava_scheduler_app.validators
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("lava_scheduler_app", "0060_add_unique_constraint_for_all_get_or_create"),
+        ("lava_scheduler_app", "0060_add_unique_constraint_for_all_get_or_create")
     ]
 
     operations = [

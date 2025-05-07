@@ -34,10 +34,7 @@ class TestInteractive(LavaDispatcherTestCase):
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "b2260-interactive.yaml", job=job
         )
-        self.assertEqual(
-            description_ref,
-            job.pipeline.describe(),
-        )
+        self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_bbb(self):
         factory = InteractiveFactory()
@@ -67,10 +64,7 @@ class TestInteractive(LavaDispatcherTestCase):
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "docker-interactive.yaml", job=job
         )
-        self.assertEqual(
-            description_ref,
-            job.pipeline.describe(),
-        )
+        self.assertEqual(description_ref, job.pipeline.describe())
         self.assertEqual(
             job.pipeline.actions[3].pipeline.actions[0].parameters["stage"],
             0,
@@ -459,10 +453,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         test_connection = Connection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
-        self.assertEqual(
-            substitutions,
-            {"{val}": "bar"},
-        )
+        self.assertEqual(substitutions, {"{val}": "bar"})
         self.assertEqual(action.logger.data, [])
         self.assertEqual(test_connection.data, [])
 

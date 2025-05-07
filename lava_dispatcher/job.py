@@ -81,9 +81,7 @@ class Job:
         self.__context__.pipeline_data.update(data)
 
     def describe(self):
-        return {
-            "pipeline": self.pipeline.describe(),
-        }
+        return {"pipeline": self.pipeline.describe()}
 
     @property
     def tmp_dir(self):
