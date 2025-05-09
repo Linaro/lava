@@ -40,16 +40,18 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.cmdline = None
+        self.cmdline = ""
 
     def validate(self):
         super().validate()
         method = self.job.device["actions"]["boot"]["methods"][self.method]
         commands_name = self.parameters["commands"]
-        method_params = method[commands_name]
-        self.cmdline = method_params.get("cmdline")
-        if self.cmdline is None:
-            self.errors = f"No cmdline found in {commands_name}"
+        if isinstance(commands_name, str):
+            method_params = method[commands_name]
+            try:
+                self.cmdline = method_params["cmdline"]
+            except KeyError:
+                self.errors = f"No cmdline found in {commands_name}"
 
     def create_cmdline_file(self, kernel_tftp: str | None) -> str | None:
         if kernel_tftp is None:
