@@ -25,7 +25,6 @@ from lava_dispatcher.connections.serial import ResetConnection
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
@@ -52,51 +51,40 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         if self.cmdline is None:
             self.errors = f"No cmdline found in {commands_name}"
 
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
+    def create_cmdline_file(self, kernel_tftp: str | None) -> str | None:
+        if kernel_tftp is None:
+            self.logger.info("Skipping creating cmdline file as kernel is not defined")
+            return None
 
-        # Create the cmdline file, this is not set by any bootloader command
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
         kernel_path = self.get_namespace_data(
             action="download-action", label="kernel", key="file"
-        )
-        cmdline_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
-        nfs_address = self.get_namespace_data(
-            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
-        )
-        nfs_root = self.get_namespace_data(
-            action="download-action", label="file", key="nfsrootfs"
+        )  # Absolute kernel path
+        cmdline_file_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
+
+        substitutions = self.get_namespace_data(
+            action=self.name,
+            label=self.method,
+            key="substitutions",
         )
 
-        if nfs_root:
-            substitutions = {
-                "{NFSROOTFS}": self.get_namespace_data(
-                    action="extract-rootfs", label="file", key="nfsroot"
-                ),
-                "{NFS_SERVER_IP}": ip_addr,
-            }
-        elif nfs_address:
-            substitutions = {
-                "{NFSROOTFS}": nfs_address,
-                "{NFS_SERVER_IP}": self.get_namespace_data(
-                    action="parse-persistent-nfs", label="nfs_address", key="serverip"
-                ),
-            }
-        else:
-            substitutions = {}
         cmdline = substitute([self.cmdline], substitutions)[0]
 
         if "extra_kernel_args" in self.parameters:
             cmdline = " ".join([cmdline, self.parameters["extra_kernel_args"]])
 
-        with open(cmdline_path, "w") as cmdline_file:
+        with open(cmdline_file_path, "w") as cmdline_file:
             cmdline_file.write(cmdline)
 
-        # Substitute {CMDLINE} with the cmdline file TFTP path
+        return os.path.join(os.path.dirname(kernel_tftp), "cmdline")
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
         kernel_tftp = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
         )
-        cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), "cmdline")
+        # Substitute {CMDLINE} with the cmdline file TFTP path
+        cmdline_tftp = self.create_cmdline_file(kernel_tftp)
 
         # Load FIT image if available, otherwise plain kernel image
         fit_tftp = self.get_namespace_data(
