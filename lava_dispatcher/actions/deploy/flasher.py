@@ -57,10 +57,15 @@ class FlasherAction(Action):
 
         # Download the images
         self.path = self.mkdtemp()
+        uniquify = parameters.get("uniquify", True)
         for image in parameters["images"].keys():
             self.pipeline.add_action(
                 DownloaderAction(
-                    self.job, image, self.path, params=parameters["images"][image]
+                    self.job,
+                    image,
+                    self.path,
+                    params=parameters["images"][image],
+                    uniquify=uniquify,
                 )
             )
 
