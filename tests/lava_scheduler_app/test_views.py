@@ -789,6 +789,7 @@ def test_device_detail(client, setup):
 
 @pytest.mark.django_db
 def test_failure_report(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.failure_report"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
@@ -800,6 +801,14 @@ def test_failure_report(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
     assert ret.context["device_type"] is None  # nosec
     assert ret.context["device"] == "juno-uboot-01"  # nosec
+
+
+@pytest.mark.django_db
+def test_failure_reports_anonymous(client, setup):
+    url = reverse("lava.scheduler.failure_report")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
@@ -934,10 +943,19 @@ def test_jobs_my_error(client, setup):
 
 @pytest.mark.django_db
 def test_job_errors(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.job.errors"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_errors.html"  # nosec
     assert len(ret.context["job_errors_table"].data) == 0  # nosec
+
+
+@pytest.mark.django_db
+def test_job_errors_anonymous(client, setup):
+    url = reverse("lava.scheduler.job.errors")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
@@ -1073,6 +1091,7 @@ def test_lab_health(client, setup):
 
 @pytest.mark.django_db
 def test_reports(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.reports"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/reports.html"  # nosec
@@ -1080,6 +1099,14 @@ def test_reports(client, setup):
     assert len(ret.context["job_week_report"]) == 10  # nosec
     assert len(ret.context["health_day_report"]) == 7  # nosec
     assert len(ret.context["job_day_report"]) == 7  # nosec
+
+
+@pytest.mark.django_db
+def test_reports_anonymous(client, setup):
+    url = reverse("lava.scheduler.reports")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
