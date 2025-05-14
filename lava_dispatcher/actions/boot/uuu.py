@@ -334,7 +334,8 @@ Following actions will be skipped :
 
     def first_command_is_bcu_reset_usb(self, parameters):
         """
-        Return: True if "bcu: reset usb" is the first command listed in commands block
+        Return: True if first command listed in commands block starts with "bcu: reset usb"
+                e.g. "bcu: reset usb", "bcu: reset usb -keep"
                 False otherwise
         """
         # First command
@@ -342,7 +343,8 @@ Following actions will be skipped :
         if proto != "bcu":
             return False
 
-        return ["reset", "usb"] == list(map(str.strip, command.split(" ")))
+        pattern = ["reset", "usb"]
+        return pattern == list(map(str.strip, command.split(" ")))[: len(pattern)]
 
     def eval_bcu_board_id(self):
         uuu_options = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"]
