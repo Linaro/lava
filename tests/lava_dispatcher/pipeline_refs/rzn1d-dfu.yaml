@@ -12,7 +12,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -20,7 +20,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://.../rzn1d-snarc-fsbl-secmon.img
   - class: DownloaderAction
     name: download-retry
@@ -28,7 +28,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -36,7 +36,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://.../u-boot-lces2-ddr.itb
   - class: DownloaderAction
     name: download-retry
@@ -44,7 +44,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -52,7 +52,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://.../u-boot-lces2-ddr.itb
   - class: DownloaderAction
     name: download-retry
@@ -60,7 +60,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -68,7 +68,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://.../fitImage-1.0-r0-rzn1-snarc.itb
 - class: CommandAction
   name: user-command

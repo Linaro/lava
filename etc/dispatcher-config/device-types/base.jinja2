@@ -349,7 +349,7 @@ timeouts:
     dd-image:
       minutes: {{ action_timeout_dd_image | default(10) }}
     download-retry:
-      minutes: {{ action_timeout_download_retry | default(5) }}
+      minutes: {{ action_timeout_download_retry | default(15) }}
     http-download:
       minutes: {{ action_timeout_http_download | default(5) }}
     lava-test-shell:

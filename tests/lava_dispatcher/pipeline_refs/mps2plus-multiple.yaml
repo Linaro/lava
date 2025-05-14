@@ -41,7 +41,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -49,7 +49,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
   - class: DownloaderAction
     name: download-retry
@@ -57,7 +57,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -65,7 +65,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/mbed/SOFTWARE/zephyr.elf
   - class: MountVExpressMassStorageDevice
     name: mount-vexpress-usbmsd
