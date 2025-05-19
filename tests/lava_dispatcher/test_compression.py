@@ -10,13 +10,19 @@ import hashlib
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import TestCase
 
 import responses
 from responses import RequestsMock
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import HttpDownloadAction
-from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
+from lava_dispatcher.utils.compression import (
+    compress_command_map,
+    compress_file,
+    decompress_command_map,
+    decompress_file,
+)
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -166,3 +172,27 @@ class TestDownloadDecompressionMap(LavaDispatcherTestCase):
             with TemporaryDirectory() as temp_dir:
                 decompress_file(f"{temp_dir}/test", "zip")  # nosec - unit test only.
         self.assertEqual(copy_of_command_map, decompress_command_map)
+
+
+class TestCompressionBinaries(TestCase):
+    def test_compression_binaries(self) -> None:
+        for compression_format in compress_command_map.keys():
+            with self.subTest(compression=compression_format), TemporaryDirectory(
+                f"test-{compression_format}"
+            ) as tmp_dir:
+                test_str = f"Hello, {compression_format}!"
+                tmp_dir_path = Path(tmp_dir)
+                test_file_path = tmp_dir_path / f"{compression_format}_test"
+                test_file_path.write_text(test_str)
+                outfile = Path(compress_file(str(test_file_path), compression_format))
+                self.assertNotEqual(
+                    outfile.read_bytes(),
+                    b"",  # Check that at least some bytes are written
+                )
+
+                test_file_path.unlink()
+                self.assertFalse(test_file_path.exists())
+
+                decompress_file(str(outfile), compression_format)
+
+                self.assertEqual(test_str, test_file_path.read_text())
