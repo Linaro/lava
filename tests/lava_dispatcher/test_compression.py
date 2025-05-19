@@ -14,7 +14,7 @@ from unittest import TestCase
 import responses
 from responses import RequestsMock
 
-from lava_common.exceptions import JobError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 from lava_dispatcher.utils.compression import (
     compress_command_map,
@@ -176,3 +176,27 @@ class TestCompressionBinaries(TestCase):
                 decompress_file(str(outfile), compression_format)
 
                 self.assertEqual(test_str, test_file_path.read_text())
+
+    def test_decompression_error(self) -> None:
+        with TemporaryDirectory("test-decompression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.subTest("decompression OSError"), self.assertRaisesRegex(
+                InfrastructureError, r"unable to decompress"
+            ):
+                decompress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
+
+            test_input_file = tmp_dir_path / "test.zstd"
+            test_input_file.write_text("🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡")
+
+            with self.assertRaisesRegex(
+                InfrastructureError, r"unable to decompress.*exit code"
+            ):
+                decompress_file(str(test_input_file), "zstd")
+
+    def test_compression_error(self) -> None:
+        with TemporaryDirectory("test-compression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.assertRaisesRegex(InfrastructureError, r"unable to compress"):
+                compress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")

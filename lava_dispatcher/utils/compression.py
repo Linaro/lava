@@ -53,12 +53,26 @@ def compress_file(infile: str, compression: str) -> str:
     # local copy for idempotency
     cmd = compress_command_map[compression][:]
 
-    with open(infile, mode="rb") as in_file, open(out_file_path, mode="wb") as out_file:
-        try:
-            subprocess.run(args=cmd, stdin=in_file, stdout=out_file, check=True)
-            return out_file_path
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError("unable to compress file %s: %s" % (infile, exc))
+    try:
+        with open(infile, mode="rb") as in_file, open(
+            out_file_path, mode="wb"
+        ) as out_file:
+            subprocess.run(
+                args=cmd,
+                stdin=in_file,
+                stdout=out_file,
+                check=True,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        return out_file_path
+    except subprocess.CalledProcessError as proc_exc:
+        raise InfrastructureError(
+            f"unable to compress file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
+    except OSError as os_exc:
+        raise InfrastructureError(f"unable to compress file {infile!r}") from os_exc
 
 
 def decompress_file(infile: str, compression: str | None) -> str:
@@ -75,14 +89,26 @@ def decompress_file(infile: str, compression: str | None) -> str:
     # local copy for idempotency
     cmd = decompress_command_map[compression][:]
 
-    with open(infile, mode="rb") as in_file, open(out_file_path, mode="wb") as out_file:
-        try:
-            subprocess.run(args=cmd, stdin=in_file, stdout=out_file, check=True)
-            return out_file_path
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError(
-                "unable to decompress file %s: %s" % (infile, exc)
+    try:
+        with open(infile, mode="rb") as in_file, open(
+            out_file_path, mode="wb"
+        ) as out_file:
+            subprocess.run(
+                args=cmd,
+                stdin=in_file,
+                stdout=out_file,
+                check=True,
+                stderr=subprocess.PIPE,
+                text=True,
             )
+        return out_file_path
+    except subprocess.CalledProcessError as proc_exc:
+        raise InfrastructureError(
+            f"unable to decompress file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
+    except OSError as os_exc:
+        raise InfrastructureError(f"unable to decompress file {infile!r}") from os_exc
 
 
 def create_tarfile(indir, outfile, arcname=None):
