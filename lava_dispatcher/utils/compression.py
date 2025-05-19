@@ -28,14 +28,14 @@ compress_command_map: Mapping[str, tuple[str, ...]] = {
     "xz": ("xz", "--check=crc32"),
     "gz": ("gzip",),
     "bz2": ("bzip2",),
-    "zstd": ("zstd",),
+    "zstd": ("zstd", "-T0"),
 }
 decompress_command_map: Mapping[str, tuple[str, ...]] = {
     "xz": ("unxz",),
     "gz": ("gunzip",),
     "bz2": ("bunzip2",),
     "zip": ("unzip",),
-    "zstd": ("unzstd",),
+    "zstd": ("unzstd", "-T0"),
 }
 
 
