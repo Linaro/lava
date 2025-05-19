@@ -11,7 +11,6 @@
 # vexpress recovery images: any compression though usually zip
 from __future__ import annotations
 
-import os
 import subprocess  # nosec - internal use.
 import tarfile
 from pathlib import Path
@@ -52,36 +51,30 @@ def compress_file(infile: str, compression: str) -> str:
 
     with open(infile, mode="rb") as in_file, open(out_file_path, mode="wb") as out_file:
         try:
-            subprocess.run(
-                args=cmd,
-                stdin=in_file,
-                stdout=out_file,
-                check=True,
-            )
+            subprocess.run(args=cmd, stdin=in_file, stdout=out_file, check=True)
             return out_file_path
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError("unable to compress file %s: %s" % (infile, exc))
 
 
-def decompress_file(infile, compression):
+def decompress_file(infile: str, compression: str | None) -> str:
     if not compression:
         return infile
     if compression not in decompress_command_map.keys():
         raise JobError("Cannot find shell command to decompress: %s" % compression)
 
+    # Assume infile is an absolute path
+    out_file_path = infile.removesuffix(f".{compression}")
+
     # Check that the command does exists
     which(decompress_command_map[compression][0])
+    # local copy for idempotency
+    cmd = decompress_command_map[compression][:]
 
-    with chdir(os.path.dirname(infile)):
-        # local copy for idempotency
-        cmd = decompress_command_map[compression][:]
-        cmd.append(infile)
-        outfile = infile
-        if infile.endswith(compression):
-            outfile = infile[: -(len(compression) + 1)]
+    with open(infile, mode="rb") as in_file, open(out_file_path, mode="wb") as out_file:
         try:
-            subprocess.check_output(cmd)  # nosec - internal use.
-            return outfile
+            subprocess.run(args=cmd, stdin=in_file, stdout=out_file, check=True)
+            return out_file_path
         except (OSError, subprocess.CalledProcessError) as exc:
             raise InfrastructureError(
                 "unable to decompress file %s: %s" % (infile, exc)
