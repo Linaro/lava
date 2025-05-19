@@ -14,24 +14,28 @@ from __future__ import annotations
 import subprocess  # nosec - internal use.
 import tarfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {
-    "xz": ["xz", "--check=crc32"],
-    "gz": ["gzip"],
-    "bz2": ["bzip2"],
-    "zstd": ["zstd"],
+compress_command_map: Mapping[str, tuple[str, ...]] = {
+    "xz": ("xz", "--check=crc32"),
+    "gz": ("gzip",),
+    "bz2": ("bzip2",),
+    "zstd": ("zstd",),
 }
-decompress_command_map = {
-    "xz": ["unxz"],
-    "gz": ["gunzip"],
-    "bz2": ["bunzip2"],
-    "zip": ["unzip"],
-    "zstd": ["unzstd"],
+decompress_command_map: Mapping[str, tuple[str, ...]] = {
+    "xz": ("unxz",),
+    "gz": ("gunzip",),
+    "bz2": ("bunzip2",),
+    "zip": ("unzip",),
+    "zstd": ("unzstd",),
 }
 
 

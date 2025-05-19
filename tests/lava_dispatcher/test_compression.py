@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import copy
 import hashlib
 import os
 from pathlib import Path
@@ -15,12 +14,11 @@ from unittest import TestCase
 import responses
 from responses import RequestsMock
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import JobError
 from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 from lava_dispatcher.utils.compression import (
     compress_command_map,
     compress_file,
-    decompress_command_map,
     decompress_file,
 )
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -154,24 +152,6 @@ class TestDecompression(LavaDispatcherTestCase):
         ):
             test_multiple_bad_checksums.validate()
             test_multiple_bad_checksums.run(None, None)
-
-
-class TestDownloadDecompressionMap(LavaDispatcherTestCase):
-    def test_download_decompression_map(self):
-        """
-        Previously had an issue with decompress_command_map being modified.
-        This should be a constant. If this is modified during calling decompress_file
-        then a regression has occurred.
-        :return:
-        """
-        # Take a complete copy of decompress_command_map before it has been modified
-        copy_of_command_map = copy.deepcopy(decompress_command_map)
-        # Call decompress_file, we only need it to create the command required,
-        # it doesn't need to complete successfully.
-        with self.assertRaises(InfrastructureError):
-            with TemporaryDirectory() as temp_dir:
-                decompress_file(f"{temp_dir}/test", "zip")  # nosec - unit test only.
-        self.assertEqual(copy_of_command_map, decompress_command_map)
 
 
 class TestCompressionBinaries(TestCase):
