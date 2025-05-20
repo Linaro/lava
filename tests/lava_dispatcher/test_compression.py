@@ -189,9 +189,7 @@ class TestCompressionBinaries(TestCase):
             test_input_file = tmp_dir_path / "test.zstd"
             test_input_file.write_text("🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡")
 
-            with self.assertRaisesRegex(
-                InfrastructureError, r"unable to decompress.*exit code"
-            ):
+            with self.assertRaisesRegex(JobError, r"unable to decompress.*exit code"):
                 decompress_file(str(test_input_file), "zstd")
 
     def test_compression_error(self) -> None:

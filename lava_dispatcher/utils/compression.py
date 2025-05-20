@@ -103,7 +103,7 @@ def decompress_file(infile: str, compression: str | None) -> str:
             )
         return out_file_path
     except subprocess.CalledProcessError as proc_exc:
-        raise InfrastructureError(
+        raise JobError(
             f"unable to decompress file {infile!r}, "
             f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
         )
