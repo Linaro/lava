@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import copy
 import hashlib
 import os
 from pathlib import Path
@@ -20,7 +19,6 @@ from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 from lava_dispatcher.utils.compression import (
     compress_command_map,
     compress_file,
-    decompress_command_map,
     decompress_file,
 )
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -156,24 +154,6 @@ class TestDecompression(LavaDispatcherTestCase):
             test_multiple_bad_checksums.run(None, None)
 
 
-class TestDownloadDecompressionMap(LavaDispatcherTestCase):
-    def test_download_decompression_map(self):
-        """
-        Previously had an issue with decompress_command_map being modified.
-        This should be a constant. If this is modified during calling decompress_file
-        then a regression has occurred.
-        :return:
-        """
-        # Take a complete copy of decompress_command_map before it has been modified
-        copy_of_command_map = copy.deepcopy(decompress_command_map)
-        # Call decompress_file, we only need it to create the command required,
-        # it doesn't need to complete successfully.
-        with self.assertRaises(InfrastructureError):
-            with TemporaryDirectory() as temp_dir:
-                decompress_file(f"{temp_dir}/test", "zip")  # nosec - unit test only.
-        self.assertEqual(copy_of_command_map, decompress_command_map)
-
-
 class TestCompressionBinaries(TestCase):
     def test_compression_binaries(self) -> None:
         for compression_format in compress_command_map.keys():
@@ -196,3 +176,25 @@ class TestCompressionBinaries(TestCase):
                 decompress_file(str(outfile), compression_format)
 
                 self.assertEqual(test_str, test_file_path.read_text())
+
+    def test_decompression_error(self) -> None:
+        with TemporaryDirectory("test-decompression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.subTest("decompression OSError"), self.assertRaisesRegex(
+                InfrastructureError, r"unable to decompress"
+            ):
+                decompress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
+
+            test_input_file = tmp_dir_path / "test.zstd"
+            test_input_file.write_text("🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡")
+
+            with self.assertRaisesRegex(JobError, r"unable to decompress.*exit code"):
+                decompress_file(str(test_input_file), "zstd")
+
+    def test_compression_error(self) -> None:
+        with TemporaryDirectory("test-compression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.assertRaisesRegex(InfrastructureError, r"unable to compress"):
+                compress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
