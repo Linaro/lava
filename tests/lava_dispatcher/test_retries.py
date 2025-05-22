@@ -201,6 +201,10 @@ class TestRetries(TestRetriesAndFailuresBase):
             self.assertNotIn("fail", retry_action.results)
             self.assertNotIn("fail", success_action.results)
 
+        with self.subTest("No recorded errors"):
+            self.assertFalse(retry_action.errors)
+            self.assertFalse(success_action.errors)
+
     def test_retry_action_all_fails(self) -> None:
         root_pipeline, job = self.create_job_and_root_pipeline()
 
@@ -227,6 +231,39 @@ class TestRetries(TestRetriesAndFailuresBase):
         with self.subTest("Failure in results"):
             self.assertIn("fail", retry_action.results)
             self.assertIn("fail", fail_action.results)
+
+        with self.subTest("Recorded errors"):
+            self.assertTrue(retry_action.errors)
+            self.assertFalse(fail_action.errors)
+
+    def test_retry_action_nested_eventual_success(self) -> None:
+        root_pipeline, job = self.create_job_and_root_pipeline()
+
+        success_action = RaisesErrorAction(job, retries_to_success=5)
+        retry_action_bottom = UnitTestRetryAction(job, [success_action])
+        retry_action_top = UnitTestRetryAction(job, [retry_action_bottom])
+
+        root_pipeline.add_action(retry_action_top, {"failure_retry": 3})
+
+        with self.subTest("Run success"):
+            job.run()
+
+        with self.subTest("Number of calls"):
+            self.assertEqual(success_action.num_calls, 5)
+
+        with self.subTest("Number of cleanups"):
+            # Cleanup called once by RetryAction on failure and once by Job on finish
+            self.assertEqual(success_action.num_cleanup_calls, 6)
+
+        with self.subTest("No failure in results"):
+            self.assertNotIn("fail", retry_action_top.results)
+            self.assertNotIn("fail", retry_action_bottom.results)
+            self.assertNotIn("fail", success_action.results)
+
+        with self.subTest("No recorded errors"):
+            self.assertFalse(retry_action_top.errors)
+            self.assertFalse(retry_action_bottom.errors)
+            self.assertFalse(success_action.errors)
 
 
 class SleepsTimeoutException(JobError):
