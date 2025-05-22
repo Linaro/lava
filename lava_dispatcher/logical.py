@@ -101,6 +101,11 @@ class RetryAction(Action):
                     break
                 # Wait some time before retrying
                 time.sleep(self.sleep)
+                # Reset self and all child actions results
+                self.results.clear()
+                for action in self.pipeline._iter_actions():
+                    action.results.clear()
+
                 self.logger.warning(
                     "Retrying: %s %s (timeout %s)",
                     self.level,

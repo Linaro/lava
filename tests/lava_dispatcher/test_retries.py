@@ -144,6 +144,9 @@ class TestRetries(TestRetriesAndFailuresBase):
             # Regular Actions .cleanup() is called once by the Job once it finishes
             self.assertEqual(fail_action.num_cleanup_calls, 1)
 
+        with self.subTest("Failure in results"):
+            self.assertIn("fail", fail_action.results)
+
     def test_retry_action_no_pipeline(self) -> None:
         # RetryAction must fail validation if no sub actions were added
         # but mock the Action.validate because it is not relevant
@@ -194,6 +197,10 @@ class TestRetries(TestRetriesAndFailuresBase):
             # Cleanup called once by RetryAction on failure and once by Job on finish
             self.assertEqual(success_action.num_cleanup_calls, 2)
 
+        with self.subTest("No failure in results"):
+            self.assertNotIn("fail", retry_action.results)
+            self.assertNotIn("fail", success_action.results)
+
     def test_retry_action_all_fails(self) -> None:
         root_pipeline, job = self.create_job_and_root_pipeline()
 
@@ -216,6 +223,10 @@ class TestRetries(TestRetriesAndFailuresBase):
                 fail_action.num_cleanup_calls,
                 4,
             )
+
+        with self.subTest("Failure in results"):
+            self.assertIn("fail", retry_action.results)
+            self.assertIn("fail", fail_action.results)
 
 
 class SleepsTimeoutException(JobError):
