@@ -276,6 +276,26 @@ class Job:
             )
         return ""
 
+    def finalize_timed_out(self) -> bool:
+        timeout = None
+        if desc_str := self.description():
+            with contextlib.suppress(yaml.YAMLError):
+                desc = yaml_safe_load(desc_str)
+                with contextlib.suppress(AttributeError):
+                    if pipeline := desc.get("pipeline", []):
+                        # Assume finalize always is the last action.
+                        action = pipeline[-1]
+                        if action.get("name") == "finalize":
+                            timeout = action.get("timeout", 0)
+
+        if timeout and time.monotonic() - self.last_update < timeout:
+            LOG.debug(
+                f"[{self.job_id}] Waiting for job to finalize (timeout {timeout}s)"
+            )
+            return False
+
+        return True
+
     def result(self) -> dict[str, Any]:
         with contextlib.suppress(OSError, yaml.YAMLError):
             data = yaml_safe_load((self.base_dir / "result.yaml").read_bytes())
@@ -517,11 +537,16 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
                 )
             LOG.info("[%d] canceling -> finished", job.job_id)
             jobs.update(job.job_id, Job.FINISHED)
-
-        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION:
+        elif (
+            time.monotonic() - job.last_update > FINISH_MAX_DURATION
+            and job.finalize_timed_out()
+        ):
             LOG.info("[%d] not finishing => killing", job.job_id)
             job.kill()
-        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2:
+        elif (
+            time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2
+            and job.finalize_timed_out()
+        ):
             LOG.info("[%d] not finishing => second signal", job.job_id)
             job.terminate()
 
