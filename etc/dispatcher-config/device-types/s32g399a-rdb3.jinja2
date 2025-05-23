@@ -12,7 +12,7 @@
 {% set baud_rate = baud_rate | default('115200') %}
 {% set extra_kernel_args = " earlycon " + extra_kernel_args|default('') %}
 
-{% set uboot_ipaddr_cmd = 'sleep 1; dhcp; if test $? -ne 0; then setenv ethact ethernet@4033c000; sleep 1; dhcp; if test $? -ne 0; then echo DHCP failed; fi; fi;' %}
+{% set uboot_ipaddr_cmd = 'sleep 1; dhcp; if test $? -ne 0; then setenv ethact ethernet@4033c000; sleep 1; dhcp; fi;' %}
 
 {% set uboot_error_messages = [
   'Resetting CPU',
@@ -27,5 +27,4 @@
   'TFTP error: trying to overwrite reserved memory',
   'ERROR: RD image overlaps OS image',
   'kernel_comp_addr_r or kernel_comp_size is not provided',
-  'DHCP failed'
 ] %}
