@@ -6,14 +6,6 @@
 import logging
 
 
-def indices(string, char):
-    """
-    Return the indices of the given character in the given string.
-    Return an empty list if the character cannot be found.
-    """
-    return [i for i, c in enumerate(string) if c == char]
-
-
 def substitute(command_list, dictionary, drop=False, drop_line=True):
     """
     Replace markup in the command_list which matches a key in the dictionary with the

@@ -4,17 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from lava_dispatcher.utils.strings import (
-    indices,
-    map_kernel_uboot,
-    seconds_to_str,
-    substitute,
-)
-
-
-def test_indices():
-    assert indices("abcdeabcdea", "a") == [0, 5, 10]
-    assert indices("abcdeabcdea", "q") == []
+from lava_dispatcher.utils.strings import map_kernel_uboot, seconds_to_str, substitute
 
 
 def test_substitute():
