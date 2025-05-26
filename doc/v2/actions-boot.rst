@@ -840,6 +840,11 @@ By default LAVA will reset the board power when executing this action. Users
 can skip this step by adding ``reset: false``. This can be useful when testing
 bootloader in interactive tests and then booting to the OS.
 
+When booting the board, LAVA monitors the boot log to detect kernel errors and
+board reset. If either is detected, the job will terminate with an error. Users
+can disable the detection by adding ``ignore_kernel_messages: true``. This can
+be useful in scennarios where a board reset is expected.
+
 .. code-block:: yaml
 
   - boot

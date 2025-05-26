@@ -20,6 +20,7 @@ def schema():
         Optional("pre_power_command"): bool,
         Optional("pre_os_command"): bool,
         Optional("reset"): bool,
+        Optional("ignore_kernel_messages"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
     }
     return {**boot.schema(), **base}
