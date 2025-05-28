@@ -20,6 +20,9 @@ from lava_scheduler_app.api.device_types import (
 )
 from lava_scheduler_app.api.devices import SchedulerDevicesAPI, SchedulerDevicesTagsAPI
 from lava_scheduler_app.api.jobs import SchedulerJobsAPI
+from lava_scheduler_app.api.remote_artifact_tokens import (
+    SchedulerRemoteArtifactTokensAPI,
+)
 from lava_scheduler_app.api.tags import SchedulerTagsAPI
 from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 from lava_server.api import LavaMapper
@@ -57,6 +60,7 @@ mapper.register(SchedulerDeviceTypesAliasesAPI, "scheduler.device_types.aliases"
 mapper.register(SchedulerJobsAPI, "scheduler.jobs")
 mapper.register(SchedulerTagsAPI, "scheduler.tags")
 mapper.register(SchedulerWorkersAPI, "scheduler.workers")
+mapper.register(SchedulerRemoteArtifactTokensAPI, "scheduler.remote_artifact_tokens")
 mapper.register(GroupsAPI, "auth.groups")
 mapper.register(GroupsPermissionsAPI, "auth.groups.perms")
 mapper.register(UsersAPI, "auth.users")
