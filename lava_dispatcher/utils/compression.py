@@ -136,13 +136,21 @@ def cpio(directory: str, filename: str) -> str:
 
     try:
         find = subprocess.Popen(
-            args=("find", "."),
+            args=("find", ".", "-depth", "-print0"),
             cwd=directory,
             stdout=subprocess.PIPE,
         )
         with find:
             cpio = subprocess.run(
-                args=("cpio", "--create", "--format", "newc", "--file", filename),
+                args=(
+                    "cpio",
+                    "--create",
+                    "--null",
+                    "--format",
+                    "newc",
+                    "--file",
+                    filename,
+                ),
                 cwd=directory,
                 check=True,
                 encoding="utf-8",

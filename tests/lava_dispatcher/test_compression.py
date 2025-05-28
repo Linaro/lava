@@ -238,6 +238,9 @@ class TestCpio(TestCase):
             test_file = test_dir / "bar"
             test_file.write_text("foobar")
 
+            newline_file = test_dir / "foo\nbar"
+            newline_file.write_text("one\ntwo\n")
+
             archive_file = tmp_dir_path / "foo.cpio"
 
             output = cpio(str(test_dir), str(archive_file))
@@ -251,3 +254,4 @@ class TestCpio(TestCase):
             uncpio(str(archive_file), str(unpack_dir))
 
             self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
+            self.assertEqual((unpack_dir / "foo\nbar").read_text(), "one\ntwo\n")
