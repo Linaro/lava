@@ -133,38 +133,46 @@ def untar_file(infile: str, outdir: str) -> None:
 def cpio(directory: str, filename: str) -> str:
     which("cpio")
     which("find")
-    with chdir(directory):
-        try:
-            find = subprocess.check_output(
-                ["find", "."], stderr=subprocess.STDOUT
-            )  # nosec
-            return subprocess.check_output(  # nosec
-                ["cpio", "--create", "--format", "newc", "--file", filename],
-                input=find,
-                stderr=subprocess.STDOUT,
-            ).decode("utf-8", errors="replace")
-        except Exception as exc:
-            raise InfrastructureError(
-                "Unable to create cpio archive %r: %s" % (filename, exc)
+
+    try:
+        find = subprocess.Popen(
+            args=("find", "."),
+            cwd=directory,
+            stdout=subprocess.PIPE,
+        )
+        with find:
+            cpio = subprocess.run(
+                args=("cpio", "--create", "--format", "newc", "--file", filename),
+                cwd=directory,
+                check=True,
+                encoding="utf-8",
+                errors="replace",
+                stdin=find.stdout,
+                stderr=subprocess.PIPE,
             )
+        return cpio.stderr
+    except Exception as exc:
+        raise InfrastructureError(
+            f"Unable to create cpio archive {filename!r}: %s"
+        ) from exc
 
 
 def uncpio(filename: str, directory: str) -> None:
     which("cpio")
-    with chdir(directory):
-        try:
-            subprocess.check_output(  # nosec
-                [
-                    "cpio",
-                    "--extract",
-                    "--make-directories",
-                    "--unconditional",
-                    "--file",
-                    filename,
-                ],
-                stderr=subprocess.STDOUT,
-            )
-        except subprocess.SubprocessError as exc:
-            raise InfrastructureError(
-                "Unable to extract cpio archive %r: %s" % (filename, exc)
-            )
+    try:
+        subprocess.run(
+            args=(
+                "cpio",
+                "--extract",
+                "--make-directories",
+                "--unconditional",
+                "--file",
+                filename,
+            ),
+            check=True,
+            cwd=directory,
+        )
+    except subprocess.CalledProcessError as exc:
+        raise InfrastructureError(
+            f"Unable to extract cpio archive {filename!r}"
+        ) from exc
