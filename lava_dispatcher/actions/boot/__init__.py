@@ -453,6 +453,8 @@ class BootloaderCommandOverlay(Action):
             "{DTB_BASE_ADDR}": None,
             "{DTB_BASE_RESIZE}": None,
             "{APPLY_DTBO_COMMANDS}": None,
+            "{LAVA_DISPATCHER_IP}": ip_addr,
+            "{LAVA_JOB_ID}": str(self.job.job_id),
         }
         self.bootcommand = self.get_namespace_data(
             action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
