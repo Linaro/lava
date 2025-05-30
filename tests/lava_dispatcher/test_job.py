@@ -3,10 +3,13 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 from pathlib import Path
 
-from .test_basic import LavaDispatcherTestCase
+from lava_dispatcher.actions.deploy.download import HttpDownloadAction
+
+from .test_basic import Factory, LavaDispatcherTestCase
 
 
 class TestJob(LavaDispatcherTestCase):
@@ -45,3 +48,104 @@ class TestJob(LavaDispatcherTestCase):
         self.assertNotEqual(first, second)
         self.assertEqual(first.parent, second.parent)
         self.assertEqual(first.parent.name, str(self.job.job_id))
+
+
+class TestJobTimeouts(LavaDispatcherTestCase):
+    def test_job_retry_timeout(self) -> None:
+        job = Factory().create_custom_job(
+            "juno-uboot-01.jinja2",
+            """
+job_name: test timeouts
+device_type: juno-uboot
+visibility: public
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 10
+actions:
+  - deploy:
+      to: tftp
+      failure_retry: 5
+      kernel:
+         url: http://images.validation.linaro.org/d02/20151209-1510/Image
+  - deploy:
+      to: tftp
+      failure_retry: 4
+      timeout:
+        minutes: 2
+      kernel:
+        url: http://images.validation.linaro.org/d02/20151209-1510/Image
+  - deploy:
+      to: tftp
+      failure_retry: 5
+      timeouts:
+        http-download:
+          minutes: 3
+      kernel:
+        url: http://images.validation.linaro.org/d02/20151209-1510/Image
+""",
+        )
+        (
+            no_timeout_set_action,
+            timeout_set_action,
+            named_timeout_action,
+        ) = job.pipeline.find_all_actions(HttpDownloadAction)
+        # Device sets download action timeout to 5 minutes.
+        # The HTTP download should be (5 minutes) / (5 retries) = 1 minutes
+        self.assertEqual(no_timeout_set_action.timeout.duration, 60)
+        # Action timeout set to 2 minutes.
+        # HTTP timeout should be (2 minutes) / (4 retries) = 30 seconds
+        self.assertEqual(timeout_set_action.timeout.duration, 30)
+        # HTTP timeout should be forced to 3 minutes
+        self.assertEqual(named_timeout_action.timeout.duration, 180)
+
+    def test_job_retry_timeout_named_priority(self) -> None:
+        job = Factory().create_custom_job(
+            "juno-uboot-01.jinja2",
+            """
+job_name: test timeouts
+device_type: juno-uboot
+visibility: public
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 10
+  actions:
+    http-download:
+      minutes: 2
+actions:
+  - deploy:
+      to: tftp
+      failure_retry: 5
+      kernel:
+         url: http://images.validation.linaro.org/d02/20151209-1510/Image
+  - deploy:
+      to: tftp
+      failure_retry: 4
+      timeout:
+        minutes: 5
+      kernel:
+        url: http://images.validation.linaro.org/d02/20151209-1510/Image
+  - deploy:
+      to: tftp
+      failure_retry: 3
+      timeouts:
+        http-download:
+          seconds: 20
+      kernel:
+        url: http://images.validation.linaro.org/d02/20151209-1510/Image
+""",
+        )
+        (
+            no_timeout_set_action,
+            timeout_set_action,
+            named_timeout_action,
+        ) = job.pipeline.find_all_actions(HttpDownloadAction)
+        # HTTP timeout should be forced to 2 minutes
+        self.assertEqual(no_timeout_set_action.timeout.duration, 120)
+        # HTTP timeout should be forced to 2 minutes
+        self.assertEqual(timeout_set_action.timeout.duration, 120)
+        # HTTP timeout should be forced to 20 seconds
+        self.assertEqual(named_timeout_action.timeout.duration, 20)

@@ -111,15 +111,15 @@ class Pipeline:
         action._override_action_timeout(job_timeouts.get("action"))
         # 2. Device named actions timeout
         action._override_action_timeout(device_named_actions_timeouts.get(action.name))
-        # 3. Job's global named action timeout
-        action._override_action_timeout(job_named_actions_timeouts.get(action.name))
-        # 4. Action block timeout
+        # 3. Action block timeout
         action._override_action_timeout(parameters.get("timeout"))
-        # 5. RetryAction child action timeout
+        # 4. RetryAction child action timeout
         if self.parent is not None and self.parent.max_retries > 1:
             action._override_action_timeout(
                 {"seconds": self.parent.timeout.duration // self.parent.max_retries}
             )
+        # 5. Job's global named action timeout
+        action._override_action_timeout(job_named_actions_timeouts.get(action.name))
         # 6. Action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(action_block_timeouts.get(action.name))
