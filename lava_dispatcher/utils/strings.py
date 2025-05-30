@@ -3,10 +3,21 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
 
 
-def substitute(command_list, dictionary, drop=False, drop_line=True):
+def substitute(
+    command_list: Iterable[str],
+    dictionary: Mapping[str, str | None],
+    drop: bool = False,
+    drop_line: bool = True,
+) -> list[str]:
     """
     Replace markup in the command_list which matches a key in the dictionary with the
     value of that key in the dictionary. Empty values leave the item unchanged.
@@ -18,21 +29,24 @@ def substitute(command_list, dictionary, drop=False, drop_line=True):
                drop - drop the value if a key is present but the value is None/empty
                drop_line - drop the entire command if a key is present but the value is None/empty
     """
-    parsed = []
-    for line in command_list:
+    parsed: list[str] = []
+
+    def process_line(line: str) -> None:
         for key, value in dictionary.items():
             if value:
                 line = line.replace(key, value)
             elif drop and key in line:
                 # If drop_line is activated or Value=None, remove the entire line
                 if drop_line or value is None:
-                    line = None
-                    break
-                # Otherwise, replace just the key by nothing
-                else:
+                    return
+                else:  # Otherwise, replace just the key by nothing
                     line = line.replace(key, value)
-        if line is not None:
-            parsed.append(line)
+
+        parsed.append(line)
+
+    for line in command_list:
+        process_line(line)
+
     return parsed
 
 
