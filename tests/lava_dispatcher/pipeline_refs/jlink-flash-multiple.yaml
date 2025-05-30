@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'https://myserver.com/binaries/test_unit_FSAbstraction.elf'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://myserver.com/binaries/test_unit_FSAbstraction.elf
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
@@ -25,9 +30,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'https://myserver.com/binaries/rw61xw_raw_cpu1_a1.bin'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://myserver.com/binaries/rw61xw_raw_cpu1_a1.bin
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
@@ -36,9 +46,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.3.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'https://myserver.com/binaries/rw61xn_raw_cpu2_ble_a1.bin'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.3.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://myserver.com/binaries/rw61xn_raw_cpu2_ble_a1.bin
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
@@ -47,9 +62,14 @@
     summary: download-retry
     timeout: 300
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.4.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 100,
-      url: 'https://myserver.com/binaries/rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.4.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://myserver.com/binaries/rw61xn_combo_raw_cpu2_ble_15_4_combo_a1.bin
 - class: BootJLinkRetry
   name: boot-jlink-image
   level: '2'
@@ -66,17 +86,34 @@
     summary: reboot the device
     timeout: 120
     pipeline:
-    - {class: PDUReboot, name: pdu-reboot, level: 2.1.1, max_retries: 1, description: issue
-        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 120}
-  - {class: WaitDeviceBoardID, name: wait-device-boardid, level: '2.2', max_retries: 1,
-    description: wait for udev device with board ID, summary: wait for udev device
-      with board ID, timeout: 120}
-  - {class: ConnectDevice, name: connect-device, level: '2.3', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 120}
-  - {class: FlashJLinkAction, name: flash-jlink, level: '2.4', max_retries: 1, description: flash
-      jlink to boot the image, summary: flash jlink to boot the image, timeout: 120}
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 2.1.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 120
+  - class: WaitDeviceBoardID
+    name: wait-device-boardid
+    level: '2.2'
+    max_retries: 1
+    description: wait for udev device with board ID
+    summary: wait for udev device with board ID
+    timeout: 120
+  - class: ConnectDevice
+    name: connect-device
+    level: '2.3'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 120
+  - class: FlashJLinkAction
+    name: flash-jlink
+    level: '2.4'
+    max_retries: 1
+    description: flash jlink to boot the image
+    summary: flash jlink to boot the image
+    timeout: 120
 - class: FinalizeAction
   name: finalize
   level: '3'
@@ -85,7 +122,17 @@
   summary: finalize the job
   timeout: 300
   pipeline:
-  - {class: PowerOff, name: power-off, level: '3.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '3.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 300}
+  - class: PowerOff
+    name: power-off
+    level: '3.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '3.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300

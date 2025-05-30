@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 180
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
-      url: 'http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 60
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin
 - class: BootCMSISRetry
   name: boot-cmsis-retry
   level: '2'
@@ -33,19 +38,41 @@
     summary: reboot the device
     timeout: 600
     pipeline:
-    - {class: PDUReboot, name: pdu-reboot, level: 2.1.1, max_retries: 1, description: issue
-        commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-      timeout: 600}
-  - {class: WaitDevicePathAction, name: wait-device-path, level: '2.2', max_retries: 1,
-    description: wait for udev device path, summary: wait for udev device path, timeout: 600}
-  - {class: FlashCMSISAction, name: flash-cmsis, level: '2.3', max_retries: 1, description: flash
-      cmsis to usb mass storage, summary: flash cmsis to usb mass storage, timeout: 600}
-  - {class: WaitUSBSerialDeviceAction, name: wait-usb-serial, level: '2.4', max_retries: 1,
-    description: wait for USB serial device, summary: wait for USB serial device,
-    timeout: 600}
-  - {class: ConnectDevice, name: connect-device, level: '2.5', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 600}
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 2.1.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 600
+  - class: WaitDevicePathAction
+    name: wait-device-path
+    level: '2.2'
+    max_retries: 1
+    description: wait for udev device path
+    summary: wait for udev device path
+    timeout: 600
+  - class: FlashCMSISAction
+    name: flash-cmsis
+    level: '2.3'
+    max_retries: 1
+    description: flash cmsis to usb mass storage
+    summary: flash cmsis to usb mass storage
+    timeout: 600
+  - class: WaitUSBSerialDeviceAction
+    name: wait-usb-serial
+    level: '2.4'
+    max_retries: 1
+    description: wait for USB serial device
+    summary: wait for USB serial device
+    timeout: 600
+  - class: ConnectDevice
+    name: connect-device
+    level: '2.5'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 600
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
@@ -54,8 +81,13 @@
   summary: Retry support for Lava Test Monitoring
   timeout: 180
   pipeline:
-  - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 180}
+  - class: TestMonitorAction
+    name: lava-test-monitor
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-monitor
+    summary: Lava Test Monitor
+    timeout: 180
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -64,7 +96,17 @@
   summary: finalize the job
   timeout: 180
   pipeline:
-  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 180

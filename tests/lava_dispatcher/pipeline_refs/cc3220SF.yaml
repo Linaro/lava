@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 180
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
-      url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 60
+      url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
@@ -25,9 +30,14 @@
     summary: download-retry
     timeout: 180
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.2.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
-      url: 'http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 60
+      url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg
 - class: BootGDB
   name: boot-gdb
   level: '2'
@@ -52,15 +62,27 @@
       summary: reboot the device
       timeout: 120
       pipeline:
-      - {class: PDUReboot, name: pdu-reboot, level: 2.1.1.1, max_retries: 1, description: issue
-          commands to a PDU to power cycle a device, summary: hard reboot using PDU,
-        timeout: 120}
-    - {class: WaitUSBSerialDeviceAction, name: wait-usb-serial, level: 2.1.2, max_retries: 1,
-      description: wait for USB serial device, summary: wait for USB serial device,
-      timeout: 120}
-    - {class: ConnectDevice, name: connect-device, level: 2.1.3, max_retries: 1, description: use
-        the configured command to connect serial to the device, summary: run connection
-        command, timeout: 120}
+      - class: PDUReboot
+        name: pdu-reboot
+        level: 2.1.1.1
+        max_retries: 1
+        description: issue commands to a PDU to power cycle a device
+        summary: hard reboot using PDU
+        timeout: 120
+    - class: WaitUSBSerialDeviceAction
+      name: wait-usb-serial
+      level: 2.1.2
+      max_retries: 1
+      description: wait for USB serial device
+      summary: wait for USB serial device
+      timeout: 120
+    - class: ConnectDevice
+      name: connect-device
+      level: 2.1.3
+      max_retries: 1
+      description: use the configured command to connect serial to the device
+      summary: run connection command
+      timeout: 120
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
@@ -69,8 +91,13 @@
   summary: Retry support for Lava Test Monitoring
   timeout: 480
   pipeline:
-  - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 480}
+  - class: TestMonitorAction
+    name: lava-test-monitor
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-monitor
+    summary: Lava Test Monitor
+    timeout: 480
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -79,7 +106,17 @@
   summary: finalize the job
   timeout: 30
   pipeline:
-  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 30}
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 30

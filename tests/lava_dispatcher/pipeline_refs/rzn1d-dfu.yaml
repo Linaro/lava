@@ -245,11 +245,20 @@
       summary: Reset the connection
       timeout: 300
       pipeline:
-      - {class: DisconnectDevice, name: disconnect-device, level: 6.2.1.1, max_retries: 1,
-        description: disconnect from console, summary: disconnect from console, timeout: 300}
-      - {class: ConnectDevice, name: connect-device, level: 6.2.1.2, max_retries: 1,
-        description: use the configured command to connect serial to the device, summary: run
-          connection command, timeout: 300}
+      - class: DisconnectDevice
+        name: disconnect-device
+        level: 6.2.1.1
+        max_retries: 1
+        description: disconnect from console
+        summary: disconnect from console
+        timeout: 300
+      - class: ConnectDevice
+        name: connect-device
+        level: 6.2.1.2
+        max_retries: 1
+        description: use the configured command to connect serial to the device
+        summary: run connection command
+        timeout: 300
     - class: ResetDevice
       name: reset-device
       level: 6.2.2
