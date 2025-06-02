@@ -28,6 +28,7 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.views import (
+    InPlaceTokenUpdater,
     device_report_data,
     job_report_data,
     type_report_data,
@@ -1503,3 +1504,130 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     )
     assert ret.status_code == 413
     assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
+
+
+class TestInPlaceTokenUpdater:
+    @pytest.fixture
+    def actions(self):
+        return yaml_safe_load(
+            """
+- deploy:
+    to: tftp
+    kernel:
+        url: https://example.com/Image.gz
+        headers:
+            Authorization: token_name
+    dtb:
+        url: https://example.com/device.dtb
+        headers:
+            Authorization: real_token
+- deploy:
+    to: downloads
+    images:
+        nfsrootfs:
+            url: https://example.com/rootfs.ext4.xz
+            headers:
+                Authorization: token_name
+            compression: xz
+            format: tar
+            overlays:
+                modules:
+                    url: https://example.com/modules.tar.xz
+                    path: "/usr/"
+                    format: tar
+                    compression: xz
+                    headers:
+                        Authorization: token_name
+- test:
+    definitions:
+    - name: test
+      compression: xz
+      from: url
+      path: test.yaml
+      repository: https://example.com/testdef.tar.xz
+      headers:
+        Authorization: token_name
+            """
+        )
+
+    @pytest.fixture
+    def expected_actions(self):
+        return yaml_safe_load(
+            """
+- deploy:
+    to: tftp
+    kernel:
+        url: https://example.com/Image.gz
+        headers:
+            Authorization: token_value
+    dtb:
+        url: https://example.com/device.dtb
+        headers:
+            Authorization: real_token
+- deploy:
+    to: downloads
+    images:
+        nfsrootfs:
+            url: https://example.com/rootfs.ext4.xz
+            headers:
+                Authorization: token_value
+            compression: xz
+            format: tar
+            overlays:
+                modules:
+                    url: https://example.com/modules.tar.xz
+                    path: "/usr/"
+                    format: tar
+                    compression: xz
+                    headers:
+                        Authorization: token_value
+- test:
+    definitions:
+    - name: test
+      compression: xz
+      from: url
+      path: test.yaml
+      repository: https://example.com/testdef.tar.xz
+      headers:
+        Authorization: token_value
+            """
+        )
+
+    @pytest.fixture
+    def secrets(self):
+        return yaml_safe_load(
+            """
+secrets:
+    secret1: secret1_name
+    secret2: real_secret
+            """
+        )
+
+    @pytest.fixture
+    def expected_secrets(self):
+        return yaml_safe_load(
+            """
+secrets:
+    secret1: secret1_value
+    secret2: real_secret
+            """
+        )
+
+    @pytest.fixture
+    def tokens(self):
+        return {
+            "token_name": "token_value",
+            "secret1_name": "secret1_value",
+        }
+
+    def test_update_headers(self, tokens, actions, expected_actions):
+        updater = InPlaceTokenUpdater(tokens)
+        for action in actions:
+            if "deploy" in action or "test" in action:
+                updater.update_headers(action)
+        assert actions == expected_actions
+
+    def test_update_secrets(self, tokens, secrets, expected_secrets):
+        updater = InPlaceTokenUpdater(tokens)
+        updater.update_secrets(secrets["secrets"])
+        assert secrets == expected_secrets
