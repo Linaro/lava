@@ -3,14 +3,15 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import csv
 
 from django.core.management.base import BaseCommand, CommandError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
-from lava_scheduler_app.models import Alias, DeviceType
+from lava_scheduler_app.models import Alias, DeviceType, TestJob
 from lava_server.files import File
 
 
@@ -91,6 +92,19 @@ class Command(BaseCommand):
             "--csv", dest="csv", default=False, action="store_true", help="Print as csv"
         )
 
+        # "prune" sub-command
+        prune_parser = sub.add_parser("prune", help="Delete unused device types")
+        prune_parser.add_argument(
+            "--dry-run",
+            action="store_true",
+            help="Do not remove any device types, simulate the output",
+        )
+        prune_parser.add_argument(
+            "--verbose",
+            action="store_true",
+            help="Print why device types are being kept",
+        )
+
     def available_device_types(self):
         """List available device types by looking at the configuration files"""
         available_types = []
@@ -113,8 +127,12 @@ class Command(BaseCommand):
             self.handle_details(options["name"], options["devices"])
         elif options["sub_command"] == "update":
             self.handle_update(options["device-type"], options["alias"])
-        else:
+        elif options["sub_command"] == "list":
             self.handle_list(options["show_all"], options["csv"])
+        elif options["sub_command"] == "prune":
+            self.handle_prune(dry_run=options["dry_run"], verbose=options["verbose"])
+        else:
+            raise ValueError(f"Unknown command: {options['sub_command']}")
 
     def handle_update(self, device_type, alias):
         """Update an existing device type"""
@@ -230,3 +248,31 @@ class Command(BaseCommand):
                 for dt in available_types:
                     if dt not in device_type_names:
                         self.stdout.write("* %s" % dt)
+
+    @transaction.atomic
+    def handle_prune(self, dry_run: bool, verbose: bool) -> None:
+        deleted_device_types = 0
+        device_types = DeviceType.objects.all().select_for_update().order_by("name")
+        for device_type in device_types:
+            device_type_name = device_type.name  # Save the name before deleting
+            if device_type.device_set.exists():
+                if verbose:
+                    self.stdout.write(
+                        f"Keeping {device_type_name} as it has associated devices."
+                    )
+                continue
+
+            if TestJob.objects.filter(requested_device_type=device_type).exists():
+                if verbose:
+                    self.stdout.write(
+                        f"Keeping {device_type_name} as it has associated jobs."
+                    )
+                continue
+
+            if not dry_run:
+                device_type.delete()
+
+            deleted_device_types += 1
+            self.stdout.write(f"Deleted {device_type_name}.")
+
+        self.stdout.write(f"Pruned {deleted_device_types} unused device types.")
