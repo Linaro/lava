@@ -22,6 +22,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -492,6 +493,7 @@ def job_report_data(start_day, end_day):
 
 
 @BreadCrumb("Reports", parent=index)
+@login_required
 def reports(request):
     health_day_report = []
     health_week_report = []
@@ -521,6 +523,7 @@ def reports(request):
 
 
 @BreadCrumb("Failure Report", parent=reports)
+@login_required
 def failure_report(request):
     data = FailedJobsTableView(request)
     ptable = FailedJobsTable(data.get_table_data())
@@ -1588,6 +1591,7 @@ def job_list(request):
 
 
 @BreadCrumb("Errors", parent=job_list)
+@login_required
 def job_errors(request):
     data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
     ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
