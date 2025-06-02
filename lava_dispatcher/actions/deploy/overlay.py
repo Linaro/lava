@@ -18,7 +18,6 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
-from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.network import dispatcher_ip
 
@@ -593,25 +592,21 @@ class CompressOverlay(Action):
             self.logger.error(self.errors)
             return connection
         connection = super().run(connection, max_end_time)
-        # This will split the path into two parts. Second part is only the
-        # bottom level directory. The first part is the rest.
-        # Example: /run/mount/lava/ will be split to /run/mount/ and lava/
-        # Used to create a tarball with only the bottom level dir included and
-        # not with the whole lava_test_results_dir property.
-        results_dir_list = os.path.split(os.path.normpath(lava_test_results_dir))
-        with chdir(
-            os.path.join(location, os.path.relpath(results_dir_list[0], os.sep))
-        ):
-            try:
-                with tarfile.open(output, "w:gz") as tar:
-                    tar.add("%s" % results_dir_list[1])
-                    # ssh authorization support
-                    if os.path.exists("./root/"):
-                        tar.add(".%s" % "/root/")
-            except tarfile.TarError as exc:
-                raise InfrastructureError(
-                    "Unable to create lava overlay tarball: %s" % exc
-                )
+
+        # For example, location="/foo/bar" and lava_test_results_dir="/lava-12345"
+        # The overlay working directory will be "/foo/bar/lava-12345".
+        # The tar archive will contain this directory as "lava-12345"
+        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
+        lava_dir_name = os.path.relpath(lava_path, location)
+        try:
+            with tarfile.open(output, "w:gz") as tar:
+                tar.add(lava_path, lava_dir_name)
+                # ssh authorization support
+                root_dir = os.path.join(location, "root")
+                if os.path.exists(root_dir):
+                    tar.add(root_dir, "./root")
+        except tarfile.TarError as exc:
+            raise InfrastructureError("Unable to create lava overlay tarball") from exc
 
         self.set_namespace_data(
             action=self.name, label="output", key="file", value=output
