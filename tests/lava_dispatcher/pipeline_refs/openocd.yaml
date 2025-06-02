@@ -14,9 +14,14 @@
     summary: download-retry
     timeout: 180
     pipeline:
-    - {class: HttpDownloadAction, name: http-download, level: 1.1.1, max_retries: 1,
-      description: use http to download the file, summary: http download, timeout: 60,
-      url: 'https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf'}
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 60
+      url: https://snapshots.linaro.org/components/kernel/zephyr/master/zephyr/cc3220sf_launchxl/5080/tests/subsys/logging/log_list/logging.log_list/zephyr/zephyr.elf
 - class: BootOpenOCDRetry
   name: boot-openocd-image
   level: '2'
@@ -25,12 +30,20 @@
   summary: boot openocd image
   timeout: 120
   pipeline:
-  - {class: ConnectDevice, name: connect-device, level: '2.1', max_retries: 1, description: use
-      the configured command to connect serial to the device, summary: run connection
-      command, timeout: 120}
-  - {class: FlashOpenOCDAction, name: flash-openocd, level: '2.2', max_retries: 1,
-    description: use openocd to flash the image, summary: use openocd to flash the
-      image, timeout: 120}
+  - class: ConnectDevice
+    name: connect-device
+    level: '2.1'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 120
+  - class: FlashOpenOCDAction
+    name: flash-openocd
+    level: '2.2'
+    max_retries: 1
+    description: use openocd to flash the image
+    summary: use openocd to flash the image
+    timeout: 120
 - class: TestMonitorRetry
   name: lava-test-monitor-retry
   level: '3'
@@ -39,8 +52,13 @@
   summary: Retry support for Lava Test Monitoring
   timeout: 120
   pipeline:
-  - {class: TestMonitorAction, name: lava-test-monitor, level: '3.1', max_retries: 1,
-    description: Executing lava-test-monitor, summary: Lava Test Monitor, timeout: 120}
+  - class: TestMonitorAction
+    name: lava-test-monitor
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-monitor
+    summary: Lava Test Monitor
+    timeout: 120
 - class: FinalizeAction
   name: finalize
   level: '4'
@@ -49,7 +67,17 @@
   summary: finalize the job
   timeout: 180
   pipeline:
-  - {class: PowerOff, name: power-off, level: '4.1', max_retries: 1, description: discontinue
-      power to device, summary: send power_off command, timeout: 10}
-  - {class: ReadFeedback, name: read-feedback, level: '4.2', max_retries: 1, description: Check
-      for messages on all other namespaces, summary: Read from other namespaces, timeout: 180}
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 180

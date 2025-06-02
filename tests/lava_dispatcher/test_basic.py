@@ -87,7 +87,7 @@ class LavaDispatcherTestCase(unittest.TestCase):
             sys.stderr.write("WARNING: modifying pipeline references!")
             with open(y_file, "w") as describe:
                 yaml_safe_dump(
-                    job.pipeline.describe(), describe, default_flow_style=None
+                    job.pipeline.describe(), describe, default_flow_style=False
                 )
         with open(y_file) as f_ref:
             return yaml_safe_load(f_ref)
