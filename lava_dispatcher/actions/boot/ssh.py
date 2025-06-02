@@ -33,7 +33,7 @@ class SshAction(RetryAction):
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
-        self.pipeline.add_action(Scp(self.job, "overlay"))
+        self.pipeline.add_action(Scp(self.job))
         self.pipeline.add_action(PrepareSsh(self.job))
         self.pipeline.add_action(ConnectSsh(self.job))
         self.pipeline.add_action(AutoLoginAction(self.job, booting=False))
@@ -55,9 +55,8 @@ class Scp(ConnectSsh):
     description = "copy a file to a known device using scp"
     summary = "scp over the ssh connection"
 
-    def __init__(self, job: Job, key):
+    def __init__(self, job: Job):
         super().__init__(job)
-        self.key = key
         self.scp = []
 
     def validate(self):
@@ -69,7 +68,7 @@ class Scp(ConnectSsh):
         if "ssh" not in self.job.device["actions"]["boot"]["methods"]:
             self.errors = "Unable to use %s without ssh boot" % self.name
         if self.get_namespace_data(
-            action="prepare-scp-overlay", label="prepare-scp-overlay", key=self.key
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
         ):
             self.primary = False
         elif "host" not in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
@@ -80,7 +79,7 @@ class Scp(ConnectSsh):
                 self.get_namespace_data(
                     action="prepare-scp-overlay",
                     label="prepare-scp-overlay",
-                    key=self.key,
+                    key="overlay",
                 )
             )
             != 1
@@ -105,15 +104,15 @@ class Scp(ConnectSsh):
 
     def run(self, connection, max_end_time):
         path = self.get_namespace_data(
-            action="prepare-scp-overlay", label="scp-deploy", key=self.key
+            action="prepare-scp-overlay", label="scp-deploy", key="overlay"
         )
         if not path:
-            error_msg = "%s: could not find details of '%s'" % (self.name, self.key)
+            error_msg = "%s: could not find details of '%s'" % (self.name, "overlay")
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
         overrides = self.get_namespace_data(
-            action="prepare-scp-overlay", label="prepare-scp-overlay", key=self.key
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
         )
         if self.primary:
             host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
@@ -135,7 +134,7 @@ class Scp(ConnectSsh):
         if not host_address:
             error_msg = "%s: could not find host for deployment using %s" % (
                 self.name,
-                self.key,
+                "overlay",
             )
             self.logger.error(error_msg)
             raise JobError(error_msg)
@@ -163,11 +162,11 @@ class Scp(ConnectSsh):
         command.append(path)
         command_str = " ".join(str(item) for item in command)
         self.logger.info(
-            "Copying %s using %s to %s", self.key, command_str, host_address
+            "Copying %s using %s to %s", "overlay", command_str, host_address
         )
         # add the remote as destination, with :/ top level directory
         command.extend(["%s@%s:%s" % (self.ssh_user, host_address, destination)])
-        self.run_cmd(command, error_msg="Unable to copy %s" % self.key)
+        self.run_cmd(command, error_msg="Unable to copy %s" % "overlay")
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
         self.set_namespace_data(
