@@ -11,14 +11,13 @@
 # vexpress recovery images: any compression though usually zip
 from __future__ import annotations
 
-import os
+import os.path
 import subprocess  # nosec - internal use.
 import tarfile
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
@@ -36,7 +35,6 @@ decompress_command_map: Mapping[str, tuple[str, ...]] = {
     "xz": ("unxz",),
     "gz": ("gunzip",),
     "bz2": ("bunzip2",),
-    "zip": ("unzip",),
     "zstd": ("unzstd", "-T0"),
 }
 
@@ -80,21 +78,38 @@ def compress_file(infile: str, compression: str) -> str:
 def decompress_file(infile: str, compression: str | None) -> str:
     if not compression:
         return infile
-    if compression not in decompress_command_map.keys():
-        raise JobError("Cannot find shell command to decompress: %s" % compression)
 
     # Assume infile is an absolute path
     out_file_path = infile.removesuffix(f".{compression}")
+
+    if compression == "zip":
+        # ZIP archives can extract multiple files
+        unzip_file(infile)
+        # Return fake output name. There is no guarantee that the
+        # ZIP file contained this name.
+        return out_file_path
+
+    if compression not in decompress_command_map.keys():
+        raise JobError("Cannot find shell command to decompress: %s" % compression)
 
     # Check that the command does exists
     which(decompress_command_map[compression][0])
     # local copy for idempotency
     cmd = decompress_command_map[compression][:]
-    cmd += (infile,)
 
     try:
-        with chdir(os.path.dirname(infile)):
-            subprocess.check_output(cmd)
+        with open(infile, mode="rb") as in_file, open(
+            out_file_path, mode="wb"
+        ) as out_file:
+            subprocess.run(
+                args=cmd,
+                stdin=in_file,
+                stdout=out_file,
+                check=True,
+                stderr=subprocess.PIPE,
+                encoding="utf-8",
+                errors="replace",
+            )
         return out_file_path
     except subprocess.CalledProcessError as proc_exc:
         raise JobError(
@@ -103,6 +118,26 @@ def decompress_file(infile: str, compression: str | None) -> str:
         )
     except OSError as os_exc:
         raise InfrastructureError(f"unable to decompress file {infile!r}") from os_exc
+
+
+def unzip_file(infile: str) -> None:
+    which("unzip")
+    try:
+        subprocess.run(
+            args=("unzip", infile),
+            cwd=os.path.dirname(infile),
+            check=True,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except subprocess.CalledProcessError as proc_exc:
+        raise JobError(
+            f"unable to unzip file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
+    except OSError as os_exc:
+        raise InfrastructureError(f"unable to unzip file {infile!r}") from os_exc
 
 
 def create_tarfile(indir: str, outfile: str, arcname: str | None = None) -> None:
