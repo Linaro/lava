@@ -198,3 +198,28 @@ class TestCompressionBinaries(TestCase):
 
             with self.assertRaisesRegex(InfrastructureError, r"unable to compress"):
                 compress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
+
+    def test_zip_multiple_files(self) -> None:
+        with TemporaryDirectory("test-decompression-zip-multiple") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            archive_path = tmp_dir_path / "foobar.zip"
+
+            import zipfile
+
+            with zipfile.ZipFile(archive_path, mode="x") as zf:
+                with zf.open("foo.txt", mode="w") as foo_f:
+                    foo_f.write(b"foo")
+
+                with zf.open("bar.txt", mode="w") as foo_f:
+                    foo_f.write(b"bar")
+
+            decompress_file(str(archive_path), "zip")
+
+            foo_file_path = tmp_dir_path / "foo.txt"
+            self.assertTrue(foo_file_path.exists())
+            self.assertEqual(foo_file_path.read_text(), "foo")
+
+            bar_file_path = tmp_dir_path / "bar.txt"
+            self.assertTrue(bar_file_path.exists())
+            self.assertEqual(bar_file_path.read_text(), "bar")
