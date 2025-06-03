@@ -181,16 +181,16 @@ class TestCompressionBinaries(TestCase):
         with TemporaryDirectory("test-decompression-failure") as tmp_dir:
             tmp_dir_path = Path(tmp_dir)
 
-            with self.subTest("decompression OSError"), self.assertRaisesRegex(
-                InfrastructureError, r"unable to decompress"
-            ):
-                decompress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
-
             test_input_file = tmp_dir_path / "test.zstd"
             test_input_file.write_text("🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡")
 
             with self.assertRaisesRegex(JobError, r"unable to decompress.*exit code"):
                 decompress_file(str(test_input_file), "zstd")
+
+            with self.subTest("decompression OSError"), self.assertRaisesRegex(
+                InfrastructureError, r"unable to decompress"
+            ):
+                decompress_file("does_not_exist_dir/does_not_exist.zstd", "zstd")
 
     def test_compression_error(self) -> None:
         with TemporaryDirectory("test-compression-failure") as tmp_dir:

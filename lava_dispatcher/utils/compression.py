@@ -11,6 +11,7 @@
 # vexpress recovery images: any compression though usually zip
 from __future__ import annotations
 
+import os
 import subprocess  # nosec - internal use.
 import tarfile
 from pathlib import Path
@@ -30,12 +31,13 @@ compress_command_map: Mapping[str, tuple[str, ...]] = {
     "bz2": ("bzip2",),
     "zstd": ("zstd", "-T0"),
 }
-decompress_command_map: Mapping[str, tuple[str, ...]] = {
-    "xz": ("unxz",),
-    "gz": ("gunzip",),
-    "bz2": ("bunzip2",),
-    "zip": ("unzip",),
-    "zstd": ("unzstd", "-T0"),
+
+decompress_command_map: Mapping[str, list[str]] = {
+    "xz": ["unxz"],
+    "gz": ["gunzip"],
+    "bz2": ["bunzip2"],
+    "zip": ["unzip"],
+    "zstd": ["unzstd"],
 }
 
 
@@ -88,19 +90,11 @@ def decompress_file(infile: str, compression: str | None) -> str:
     which(decompress_command_map[compression][0])
     # local copy for idempotency
     cmd = decompress_command_map[compression][:]
+    cmd.append(infile)
 
     try:
-        with open(infile, mode="rb") as in_file, open(
-            out_file_path, mode="wb"
-        ) as out_file:
-            subprocess.run(
-                args=cmd,
-                stdin=in_file,
-                stdout=out_file,
-                check=True,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
+        with chdir(os.path.dirname(infile)):
+            subprocess.check_output(cmd)
         return out_file_path
     except subprocess.CalledProcessError as proc_exc:
         raise JobError(
