@@ -32,12 +32,12 @@ compress_command_map: Mapping[str, tuple[str, ...]] = {
     "zstd": ("zstd", "-T0"),
 }
 
-decompress_command_map: Mapping[str, list[str]] = {
-    "xz": ["unxz"],
-    "gz": ["gunzip"],
-    "bz2": ["bunzip2"],
-    "zip": ["unzip"],
-    "zstd": ["unzstd"],
+decompress_command_map: Mapping[str, tuple[str, ...]] = {
+    "xz": ("unxz",),
+    "gz": ("gunzip",),
+    "bz2": ("bunzip2",),
+    "zip": ("unzip",),
+    "zstd": ("unzstd", "-T0"),
 }
 
 
@@ -90,7 +90,7 @@ def decompress_file(infile: str, compression: str | None) -> str:
     which(decompress_command_map[compression][0])
     # local copy for idempotency
     cmd = decompress_command_map[compression][:]
-    cmd.append(infile)
+    cmd += (infile,)
 
     try:
         with chdir(os.path.dirname(infile)):
