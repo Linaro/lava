@@ -278,6 +278,8 @@ specific connection timeout which can be longer or shorter than the default.
      http-download:
        minutes: 2
 
+.. _repeatable_action_timeout:
+
 Repeatable actions timeout division
 ***********************************
 
@@ -334,6 +336,19 @@ timeouts section within the block:
           minutes: 1
 
 .. _individual_action_block_timeout_overrides:
+
+Action timeout priority
+***********************
+
+Action timeout priority from lowest to highest:
+
+#. :ref:`Job generic action timeout.<default_action_timeouts>`
+#. Device named action timeout.
+#. :ref:`Action block generic timeout.<action_block_timeout_overrides>`
+#. :ref:`Repeatable action timeout division.<repeatable_action_timeout>`
+#. :ref:`Job named action timeout.<individual_action_timeout_overides>`
+#. Action block named action timeout.
+
 
 .. index:: timeouts - skipping
 
@@ -444,3 +459,4 @@ re-deploying the filesystem itself in a known clean state.)
     definitions:
 
  # ... rest of the second test action block
+
