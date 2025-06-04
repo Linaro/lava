@@ -31,6 +31,7 @@ from rest_framework.permissions import (
     BasePermission,
     DjangoModelPermissions,
     DjangoModelPermissionsOrAnonReadOnly,
+    IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
@@ -58,6 +59,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     Worker,
@@ -1142,3 +1144,15 @@ class SystemViewSet(viewsets.ViewSet):
         ```
         """
         return Response(data={"user": request.user.username})
+
+
+class RemoteArtifactTokenViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.RemoteArtifactTokenSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "name"
+
+    def get_queryset(self):
+        return RemoteArtifactsAuth.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
