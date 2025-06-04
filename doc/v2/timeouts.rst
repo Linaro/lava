@@ -278,6 +278,30 @@ specific connection timeout which can be longer or shorter than the default.
      http-download:
        minutes: 2
 
+Repeatable actions timeout division
+***********************************
+
+In order to have enough time to repeat or retry all attempts
+:ref:`actions that have repeat or retry failure set <repeat_action>`
+will divide the available time by number of retries.
+
+For example:
+
+.. code-block:: yaml
+
+  - boot:
+     failure_retry: 4
+     timeout:
+       minutes: 20
+
+This boot action will have a 5 minutes timeout for each of the 4 attempts.
+
+The timeout can be further divided when a repeatable action is nested inside
+another repeatable action.
+
+Some actions (``http-download``) or device types (``hp-x360-14-G1-sona``) set the
+default number retries larger than one.
+
 .. _action_block_timeout_overrides:
 
 Action block overrides
