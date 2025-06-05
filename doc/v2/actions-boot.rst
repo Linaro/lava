@@ -432,6 +432,10 @@ job in such circumstance ``ignore_kernel_messages`` should be set to ``true``.
 LAVA won't be able to detect any other "legitimate" kernel crashes in such
 situation. Default value is false.
 
+Pattern ``U-Boot SPL 20[0-9][0-9]`` is used to detect board reset. LAVA job
+will terminate on unexpected reset. Users can disable the detection using the
+same option. This can be useful in scenarios where a board reset is expected.
+
 .. index:: boot method
 
 .. _boot_ignore_kernel_messages:
@@ -839,11 +843,6 @@ The ``minimal`` method is used to power-on the :term:`DUT` and to let the
 By default LAVA will reset the board power when executing this action. Users
 can skip this step by adding ``reset: false``. This can be useful when testing
 bootloader in interactive tests and then booting to the OS.
-
-When booting the board, LAVA monitors the boot log to detect kernel errors and
-board reset. If either is detected, the job will terminate with an error. Users
-can disable the detection by adding ``ignore_kernel_messages: true``. This can
-be useful in scennarios where a board reset is expected.
 
 .. code-block:: yaml
 
