@@ -5,6 +5,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from pathlib import Path
+
 import yaml
 
 from lava_common.exceptions import ConfigurationError
@@ -108,11 +110,15 @@ class NewDevice(PipelineDevice):
                 data = yaml_safe_load(data)
             elif isinstance(target, dict):
                 data = target
-            else:
-                data = target.read()
+            elif isinstance(target, Path):
+                data = target.read_text(encoding="utf-8")
                 data = yaml_safe_load(data)
+            else:
+                raise ConfigurationError(
+                    f"Unsupported device configuration type: {type(target)}"
+                )
             if data is None:
-                raise ConfigurationError("Missing device configuration")
+                raise ConfigurationError("Empty device configuration")
             self.update(data)
         except yaml.parser.ParserError:
             raise ConfigurationError("%s could not be parsed" % target)
