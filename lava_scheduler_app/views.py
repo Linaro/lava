@@ -1430,8 +1430,9 @@ def internal_v1_workers(request, pk=None):
         fields = ["version"]
         worker.version = version
         if version_mismatch and not settings.ALLOW_VERSION_MISMATCH:
-            # If the version does not match, go offline
-            fields.extend(worker.go_state_offline())
+            # If the version does not match and worker is online, go offline
+            if worker.state == Worker.STATE_ONLINE:
+                fields.extend(worker.go_state_offline())
         else:
             # Set last_ping
             worker.last_ping = timezone.now()

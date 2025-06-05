@@ -499,6 +499,30 @@ def test_internal_v1_workers_get(client, mocker, settings):
     assert {"id": j5.id, "token": j5.token} in data["start"]
     assert {"id": j6.id, "token": j6.token} in data["start"]
 
+    # Test version mismatch with worker online and job running.
+    w.state = Worker.STATE_ONLINE
+    w.save()
+    worker_offline = mocker.patch("lava_scheduler_app.views.Worker.go_state_offline")
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.workers", args=["worker-01"]),
+        {"version": "v0.1"},
+        HTTP_LAVA_TOKEN=token,
+    )
+    assert ret.status_code == 200
+    worker_offline.assert_called_once()
+
+    # Test version mismatch with worker offline and job running.
+    w.state = Worker.STATE_OFFLINE
+    w.save()
+    worker_offline.reset_mock()
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.workers", args=["worker-01"]),
+        {"version": "v0.1"},
+        HTTP_LAVA_TOKEN=token,
+    )
+    assert ret.status_code == 200
+    worker_offline.assert_not_called()
+
 
 @pytest.mark.django_db
 def test_internal_v1_workers_post(client, mocker, settings):
