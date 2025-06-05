@@ -198,6 +198,9 @@ lava-dispatcher:
   bz2:  # Compression tests
     name: bzip2
     unittests: true
+  unzip:  # Compression tests
+    name: unzip
+    unittests: true
 
 lava-common:
   PyYAML:
