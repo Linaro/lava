@@ -19,7 +19,7 @@
     max_retries: 3
     description: download with retry
     summary: download-retry
-    timeout: 300
+    timeout: 900
     pipeline:
     - class: HttpDownloadAction
       name: http-download
@@ -27,7 +27,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: https://community.arm.com/cfs-file/__key/communityserver-wikis-components-files/00-00-00-00-10/MuscaBlinky_5F00_v002.hex
   - class: ResetDevice
     name: reset-device
