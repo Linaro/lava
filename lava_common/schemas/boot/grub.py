@@ -17,6 +17,7 @@ def base_schema():
             "auto_login"
         ): boot.auto_login(),  # TODO: if auto_login => prompt is required
         Optional("boot_finished"): Any(str, [str]),
+        Optional("reset"): bool,
         Optional("expect_shell"): bool,
         Optional("prompts"): boot.prompts(),
         Optional("use_bootscript"): bool,

@@ -80,6 +80,8 @@
 {% endif %}
 {% set uboot_common_cmds = uboot_common_cmds + base_uboot_dhcp_command  + base_uboot_tftp_commands %}
 
+{% set uboot_allow_chain_load_grub = uboot_allow_chain_load_grub|default(true) %}
+
 {% set additional_bcu_cleanup_commands = additional_bcu_cleanup_commands|default([]) -%}
 
 {# adds the parameters: top level block #}
@@ -334,6 +336,16 @@ actions:
           bcu_board_id_command: {{ bcu_board_id_command }}
           has_bcu_commands: "{{ has_bcu_commands }}"
           additional_bcu_cleanup_commands: {{ additional_bcu_cleanup_commands }}
+{% if uboot_allow_chain_load_grub %}
+      grub:
+        parameters:
+          bootloader_prompt: 'grub>'
+          needs_interrupt: true
+      grub-efi:
+        parameters:
+          bootloader_prompt: 'grub>'
+          needs_interrupt: true
+{% endif %}
 {% if extra_boot_methods %}
 {{ extra_boot_methods|indent(first=True,width=6) }}
 {% endif %}
