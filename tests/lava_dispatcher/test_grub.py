@@ -246,7 +246,7 @@ class TestGrubAction(LavaDispatcherTestCase):
         self.assertIsNotNone(test_dir)
         self.assertIn("/lava-", test_dir)
         self.assertIsNotNone(extract)
-        self.assertEqual(extract.timeout.duration, 600)
+        self.assertEqual(extract.timeout.duration, 90)
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

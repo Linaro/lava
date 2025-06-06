@@ -68,7 +68,7 @@
       max_retries: 1
       description: unpack nfsrootfs
       summary: unpack nfsrootfs, ready to apply lava overlay
-      timeout: 120
+      timeout: 90
     - class: ParsePersistentNFS
       name: parse-persistent-nfs
       level: 1.4.2
@@ -280,7 +280,7 @@
       max_retries: 1
       description: unpack nfsrootfs
       summary: unpack nfsrootfs, ready to apply lava overlay
-      timeout: 240
+      timeout: 90
     - class: ParsePersistentNFS
       name: parse-persistent-nfs
       level: 3.4.2

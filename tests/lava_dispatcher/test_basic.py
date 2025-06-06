@@ -239,20 +239,35 @@ class Factory:
         return self.render_device_dictionary(hostname, job_ctx), None
 
     def create_custom_job(
-        self, template, job_data, job_ctx=None, validate=True, dispatcher_config=None
-    ):
-        if validate:
-            validate_job(job_data, strict=self.validate_job_strict)
-        if job_ctx:
-            job_data["context"] = job_ctx
+        self,
+        template: str,
+        job_data: str | dict[str, Any],
+        job_ctx: dict[str, Any] | None = None,
+        validate: bool = True,
+        dispatcher_config: str | None = None,
+    ) -> Job:
+        if isinstance(job_data, str):
+            job_str = job_data
+            job_dict = yaml_safe_load(job_data)
         else:
-            job_ctx = job_data.get("context")
+            job_dict = job_data
+
+            if job_ctx:
+                job_dict["context"] = job_ctx
+            else:
+                job_ctx = job_dict.get("context")
+
+            job_str = yaml_safe_dump(job_data)
+
+        if validate:
+            validate_job(job_dict, strict=self.validate_job_strict)
+
         device_dict, _ = self.create_device(template, job_ctx)
         device = NewDevice(yaml_safe_load(device_dict))
         try:
             parser = JobParser()
             job = parser.parse(
-                yaml_safe_dump(job_data),
+                job_str,
                 device,
                 "4999",
                 YAMLLogger("lava_dispatcher_testcase_job_logger"),

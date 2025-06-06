@@ -43,7 +43,7 @@
     max_retries: 1
     description: wait for USB serial device
     summary: wait for USB serial device
-    timeout: 600
+    timeout: 40
   - class: ConnectDevice
     name: connect-device
     level: '2.3'
