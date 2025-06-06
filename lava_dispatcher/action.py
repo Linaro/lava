@@ -49,33 +49,6 @@ class InternalObject:
     pass
 
 
-_NOT_FOUND = object()
-
-
-def get_lastest_dict_value(list_of_dictionaries: list[dict], key: str):
-    for d in reversed(list_of_dictionaries):
-        value = d.get(key, _NOT_FOUND)
-        if value is not _NOT_FOUND:
-            return value
-
-    return None
-
-
-def get_lastest_subdict_value(
-    list_of_dictionaries: list[dict[str, dict]], key: str, subkey: str
-):
-    for d in reversed(list_of_dictionaries):
-        sub_dict = d.get(key, _NOT_FOUND)
-        if sub_dict is _NOT_FOUND:
-            continue
-
-        value = sub_dict.get(subkey, _NOT_FOUND)
-        if value is not _NOT_FOUND:
-            return value
-
-    return None
-
-
 class Pipeline:
     """
     Pipelines ensure that actions are run in the correct sequence whilst
@@ -126,37 +99,41 @@ class Pipeline:
         action.parameters = parameters
 
         # Compute the timeout
-        global_timeouts = []
-        # First, the device level overrides
-        global_timeouts.append(self.job.device.get("timeouts", {}))
-        # Then job level overrides
-        global_timeouts.append(self.job.parameters.get("timeouts", {}))
+        device_timeouts = self.job.device.get("timeouts", {})
+        device_named_actions_timeouts = device_timeouts.get("actions", {})
+        devices_named_connections_timeouts = device_timeouts.get("connections", {})
+        job_timeouts = self.job.parameters.get("timeouts", {})
+        job_named_actions_timeouts = job_timeouts.get("actions", {})
+        job_named_connections_timeouts = job_timeouts.get("connections", {})
 
-        # Set the timeout. The order is:
-        # 1. global action timeout
-        action._override_action_timeout(
-            get_lastest_dict_value(global_timeouts, "action")
-        )
-        # 2. global named action timeout
-        action._override_action_timeout(
-            get_lastest_subdict_value(global_timeouts, "actions", action.name)
-        )
-        # 3. action block timeout
+        # Set the action timeout. The order is from lowest priority to highest:
+        # 1. Job's global action timeout
+        action._override_action_timeout(job_timeouts.get("action"))
+        # 2. Device named actions timeout
+        action._override_action_timeout(device_named_actions_timeouts.get(action.name))
+        # 3. Job's global named action timeout
+        action._override_action_timeout(job_named_actions_timeouts.get(action.name))
+        # 4. Action block timeout
         action._override_action_timeout(parameters.get("timeout"))
-        # 4. RetryAction child action timeout
+        # 5. RetryAction child action timeout
         if self.parent is not None and self.parent.max_retries > 1:
             action._override_action_timeout(
                 {"seconds": self.parent.timeout.duration // self.parent.max_retries}
             )
-        # 5. action block named action timeout
+        # 6. Action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(action_block_timeouts.get(action.name))
 
+        # Set the action timeout. The order is from lowest priority to highest:
+        # 1. Job's global connection timeout
+        action._override_connection_timeout(job_timeouts.get("connection"))
+        # 2. Device named connection timeout
         action._override_connection_timeout(
-            get_lastest_dict_value(global_timeouts, "connection")
+            devices_named_connections_timeouts.get(action.name)
         )
+        # 3. Job's global named connection timeout
         action._override_connection_timeout(
-            get_lastest_subdict_value(global_timeouts, "connections", action.name)
+            job_named_connections_timeouts.get(action.name)
         )
 
         # If the action has an internal pipeline, initialise that here. Child
