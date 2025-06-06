@@ -7,7 +7,7 @@
 import logging
 import signal
 
-from lava_common.log import HTTPHandler, YAMLLogger, sender
+from lava_common.log import HTTPHandler, YAMLListFormatter, YAMLLogger, sender
 from lava_common.yaml import yaml_safe_load
 
 
@@ -206,3 +206,19 @@ def test_yaml_logger(mocker):
 
     logger.close()
     assert logger.handler is None
+
+
+def test_yaml_list_formatter():
+    formatter = YAMLListFormatter()
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="test.py",
+        lineno=1,
+        msg="test message",
+        args=(),
+        exc_info=None,
+    )
+
+    formatted = formatter.format(record)
+    assert formatted == "- test message"

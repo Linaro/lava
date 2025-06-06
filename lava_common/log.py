@@ -302,3 +302,9 @@ class YAMLLogger(logging.Logger):
             del self.markers[case]
 
         self.log_message(logging.INFO, "results", results, *args, **kwargs)
+
+
+class YAMLListFormatter(logging.Formatter):
+    def format(self, record):
+        msg = super().format(record)
+        return f"- {msg}"
