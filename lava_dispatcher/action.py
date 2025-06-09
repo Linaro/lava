@@ -33,9 +33,10 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
-    from typing import Iterator, Optional, TypeVar
+    from typing import Any, Iterator, Optional, TypeVar
 
     from .job import Job
+    from .shell import ShellSession
 
     TAction = TypeVar("TAction", bound="Action")
 
@@ -58,9 +59,14 @@ class Pipeline:
     of the per-action log handler.
     """
 
-    def __init__(self, job: Job, parent=None, parameters=None):
+    def __init__(
+        self,
+        job: Job,
+        parent: Action | None = None,
+        parameters: dict[str, Any] | None = None,
+    ):
         self.actions: list[Action] = []
-        self.parent = None
+        self.parent: Action | None = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
         if parent is not None:
@@ -73,7 +79,7 @@ class Pipeline:
                 )
             self.parent = parent
 
-    def _check_action(self, action):
+    def _check_action(self, action: Action) -> None:
         if not action:
             raise LAVABug("Need an action to add to the pipeline, not None.")
         elif not issubclass(type(action), Action):
@@ -81,7 +87,9 @@ class Pipeline:
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
-    def add_action(self, action: Action, parameters=None):
+    def add_action(
+        self, action: Action, parameters: dict[str, Any] | None = None
+    ) -> None:
         self._check_action(action)
         self.actions.append(action)
 
@@ -141,13 +149,13 @@ class Pipeline:
         # timeout should be set first.
         action.populate(parameters)
 
-    def describe(self):
+    def describe(self) -> list[dict[str, Any]]:
         """
         Describe the current pipeline, recursing through any
         internal pipelines.
         :return: a recursive dictionary
         """
-        desc = []
+        desc: list[dict[str, Any]] = []
         for action in self.actions:
             current = {
                 "class": type(action).__name__,
@@ -168,13 +176,13 @@ class Pipeline:
         return desc
 
     @property
-    def errors(self):
+    def errors(self) -> list[str]:
         sub_action_errors = [a.errors for a in self.actions]
         if not sub_action_errors:  # allow for jobs with no actions
             return []
         return reduce(lambda a, b: a + b, sub_action_errors)
 
-    def validate_actions(self):
+    def validate_actions(self) -> None:
         for action in self.actions:
             try:
                 action.validate()
@@ -185,7 +193,9 @@ class Pipeline:
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(
+        self, connection: ShellSession, max_end_time: int | None = None
+    ) -> None:
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
@@ -207,7 +217,7 @@ class Pipeline:
         if error:
             raise InfrastructureError("Failed to clean after job")
 
-    def run_actions(self, connection, max_end_time):
+    def run_actions(self, connection: ShellSession, max_end_time: int) -> ShellSession:
         for action in self.actions:
             failed = False
             namespace = action.parameters.get("namespace", "common")
@@ -359,7 +369,7 @@ class Action:
             self.name, self, exception=self.timeout_exception
         )
         # unless the strategy or the job parameters change this, do not retry
-        self.max_retries = 1
+        self.max_retries: int = 1
         # list of protocol objects supported by this action, full list in job.protocols
         self.protocols = []
         self.connection_timeout = Timeout(
