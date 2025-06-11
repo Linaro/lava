@@ -54,7 +54,7 @@ class VExpressMsdAction(Action):
     def validate(self):
         super().validate()
         if "recovery_image" not in self.parameters:
-            self.errors = "recovery_image is required"
+            self.errors_add("recovery_image is required")
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -104,12 +104,12 @@ class ExtractVExpressRecoveryImage(Action):
         if not self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
         ):
-            self.errors = "no file specified extract as %s" % self.param_key
+            self.errors_add("no file specified extract as %s" % self.param_key)
         self.compression = self.get_namespace_data(
             action="download-action", label=self.param_key, key="compression"
         )
         if not self.compression:
-            self.errors = "no compression set for recovery image"
+            self.errors_add("no compression set for recovery image")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -185,11 +185,11 @@ class EnterVExpressMCC(Action):
         self.autorun_prompt = self.device_params.get("autorun_prompt")
         self.mcc_reset_msg = self.device_params.get("mcc_reset_msg")
         if not isinstance(self.mcc_prompt, str):
-            self.errors = "Versatile Express MCC prompt unset"
+            self.errors_add("Versatile Express MCC prompt unset")
         if not isinstance(self.autorun_prompt, str):
-            self.errors = "Versatile Express autorun prompt unset"
+            self.errors_add("Versatile Express autorun prompt unset")
         if not isinstance(self.mcc_reset_msg, str):
-            self.errors = "Versatile Express MCC reset message unset"
+            self.errors_add("Versatile Express MCC reset message unset")
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -240,9 +240,9 @@ class EnableVExpressMassStorage(Action):
         self.mcc_prompt = device_params.get("mcc_prompt")
         self.mcc_cmd = device_params.get("msd_mount_cmd")
         if not isinstance(self.mcc_prompt, str):
-            self.errors = "Versatile Express MCC prompt unset"
+            self.errors_add("Versatile Express MCC prompt unset")
         if not isinstance(self.mcc_cmd, str):
-            self.errors = "Versatile Express USB Mass Storage mount command unset"
+            self.errors_add("Versatile Express USB Mass Storage mount command unset")
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -343,7 +343,7 @@ class MountVExpressMassStorageDevice(MountDeviceMassStorageDevice):
         super().validate()
         self.disk_identifier = self.job.device.get("usb_filesystem_label")
         if not isinstance(self.disk_identifier, str):
-            self.errors = "Filesystem %s unset for " + self.device_name
+            self.errors_add("Filesystem %s unset for " + self.device_name)
 
 
 class DeployVExpressRecoveryImage(Action):
@@ -461,17 +461,17 @@ class VExpressFlashErase(Action):
             "flash_exit_cmd"
         )
         if not isinstance(self.mcc_prompt, str):
-            self.errors = "Versatile Express MCC prompt unset"
+            self.errors_add("Versatile Express MCC prompt unset")
         if not isinstance(self.flash_prompt, str):
-            self.errors = "Versatile Express flash prompt unset"
+            self.errors_add("Versatile Express flash prompt unset")
         if not isinstance(self.flash_enter_cmd, str):
-            self.errors = "Versatile Express flash enter command unset"
+            self.errors_add("Versatile Express flash enter command unset")
         if not isinstance(self.flash_erase_cmd, str):
-            self.errors = "Versatile Express flash erase command unset"
+            self.errors_add("Versatile Express flash erase command unset")
         if not isinstance(self.flash_erase_msg, str):
-            self.errors = "Versatile Express flash erase message unset"
+            self.errors_add("Versatile Express flash erase message unset")
         if not isinstance(self.flash_exit_cmd, str):
-            self.errors = "Versatile Express flash exit command unset"
+            self.errors_add("Versatile Express flash exit command unset")
 
     def run(self, connection, max_end_time):
         if not connection:

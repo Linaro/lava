@@ -45,12 +45,12 @@ class CommandAction(Action):
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
                 return True
             else:
-                self.errors = "Command '%s' not defined for this device" % cmd_name
+                self.errors_add("Command '%s' not defined for this device" % cmd_name)
                 return False
 
         user_commands = self.job.device.get("commands", {}).get("users")
         if not user_commands:
-            self.errors = "Device has no configured user commands"
+            self.errors_add("Device has no configured user commands")
             return False
 
         try:
@@ -64,7 +64,7 @@ class CommandAction(Action):
                 )
             return True
         except KeyError:
-            self.errors = "Unknown user command '%s'" % cmd_name
+            self.errors_add("Unknown user command '%s'" % cmd_name)
             return False
 
     def run(self, connection, max_end_time):

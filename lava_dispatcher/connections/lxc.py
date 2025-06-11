@@ -43,7 +43,7 @@ class ConnectLxc(Action):
         super().validate()
         which("lxc-attach")
         if "lxc" not in self.job.device["actions"]["boot"]["connections"]:
-            self.errors = "Device not configured to support LXC connection."
+            self.errors_add("Device not configured to support LXC connection.")
 
     def run(self, connection, max_end_time):
         lxc_name = self.get_namespace_data(

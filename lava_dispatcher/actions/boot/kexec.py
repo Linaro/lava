@@ -109,7 +109,9 @@ class KexecAction(Action):
             for option in self.parameters["options"]:
                 self.load_command += " %s" % option
         if self.load_command == "/sbin/kexec":
-            self.errors = "Default kexec handler needs at least a kernel to pass to the --load command"
+            self.errors_add(
+                "Default kexec handler needs at least a kernel to pass to the --load command"
+            )
 
     def run(self, connection, max_end_time):
         """

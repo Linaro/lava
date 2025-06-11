@@ -148,20 +148,20 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
             value=self.reboot,
         )
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
-            self.errors = (
+            self.errors_add(
                 "Device not configured to support fastboot deployment connections."
             )
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
         if "flash_cmds_order" not in self.job.device:
-            self.errors = "device flash commands order missing"
+            self.errors_add("device flash commands order missing")
         if "fastboot_options" not in self.job.device:
-            self.errors = "device fastboot options missing"
+            self.errors_add("device fastboot options missing")
         elif not isinstance(self.job.device["fastboot_options"], list):
-            self.errors = "device fastboot options is not a list"
+            self.errors_add("device fastboot options is not a list")
 
 
 class FastbootFlashAction(OptionalContainerFastbootAction):
@@ -185,9 +185,9 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
     def validate(self):
         super().validate()
         if not self.command:
-            self.errors = "Invalid configuration - missing flash command"
+            self.errors_add("Invalid configuration - missing flash command")
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
-            self.errors = (
+            self.errors_add(
                 "Device not configured to support fastboot deployment connections."
             )
         device_methods = self.job.device["actions"]["deploy"]["methods"]
@@ -235,14 +235,14 @@ class FastbootReboot(OptionalContainerFastbootAction):
     def validate(self):
         super().validate()
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
-            self.errors = (
+            self.errors_add(
                 "Device not configured to support fastboot deployment connections."
             )
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -265,14 +265,14 @@ class FastbootRebootBootloader(OptionalContainerFastbootAction):
     def validate(self):
         super().validate()
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
-            self.errors = (
+            self.errors_add(
                 "Device not configured to support fastboot deployment connections."
             )
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -295,14 +295,14 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
     def validate(self):
         super().validate()
         if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
-            self.errors = (
+            self.errors_add(
                 "Device not configured to support fastboot deployment connections."
             )
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

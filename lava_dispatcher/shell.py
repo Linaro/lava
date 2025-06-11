@@ -418,7 +418,7 @@ class ExpectShellSession(Action):
     def validate(self):
         super().validate()
         if "prompts" not in self.parameters:
-            self.errors = "Unable to identify test image prompts from parameters."
+            self.errors_add("Unable to identify test image prompts from parameters.")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

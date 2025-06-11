@@ -107,7 +107,7 @@ class MenuConnect(ConnectDevice):
 
     def validate(self):
         if self.job.device.connect_command == "":
-            self.errors = "Unable to connect to device"
+            self.errors_add("Unable to connect to device")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -156,7 +156,7 @@ class SelectorMenuAction(Action):
         # check for allowed items, error if any are unrecognised
         item_keys = {}
         if not isinstance(self.items, list):
-            self.errors = "menu sequence must be a list"
+            self.errors_add("menu sequence must be a list")
         for item in self.items:
             if "select" in item:
                 for _ in item["select"]:
@@ -170,7 +170,7 @@ class SelectorMenuAction(Action):
             "fallback",
         }
         if disallowed:
-            self.errors = "Unable to recognise item %s" % disallowed
+            self.errors_add("Unable to recognise item %s" % disallowed)
 
     def _change_prompt(self, connection, change):
         if change:

@@ -95,11 +95,11 @@ class TestMonitorAction(Action):
         ret_val = False
         if event == "eof":
             self.logger.warning("err: lava test monitoring reached end of file")
-            self.errors = "lava test monitoring reached end of file"
+            self.errors_add("lava test monitoring reached end of file")
             raise ConnectionClosedError("Connection closed")
         elif event == "timeout":
             self.logger.warning("err: lava test monitoring has timed out")
-            self.errors = "lava test monitoring has timed out"
+            self.errors_add("lava test monitoring has timed out")
         elif event == "end":
             self.logger.info("ok: end string found, lava test monitoring stopped")
         elif event == "test_result":

@@ -83,7 +83,7 @@ class FlashPyOCDAction(Action):
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot["parameters"].get("options", []))
         if self.job.device["board_id"] == "0000000000":
-            self.errors = "[PYOCD] board_id unset"
+            self.errors_add("[PYOCD] board_id unset")
         substitutions = {}
         # '--uid' should be used with 'pyocd flash' for connecting to
         # a specific board. 'pyocd flash --board' doesn't work for
@@ -111,7 +111,7 @@ class FlashPyOCDAction(Action):
             )
             if image_arg:
                 if not isinstance(image_arg, str):
-                    self.errors = "image_arg is not a string (try quoting it)"
+                    self.errors_add("image_arg is not a string (try quoting it)")
                     continue
                 substitutions["{%s}" % action] = action_arg
                 pyocd_full_command.extend(self.base_command)
@@ -122,7 +122,7 @@ class FlashPyOCDAction(Action):
                 pyocd_full_command.extend([action_arg])
                 self.exec_list.append(pyocd_full_command)
         if not self.exec_list:
-            self.errors = "No PyOCD command to execute"
+            self.errors_add("No PyOCD command to execute")
 
         pre_os_command = self.job.device.pre_os_command
         if pre_os_command:

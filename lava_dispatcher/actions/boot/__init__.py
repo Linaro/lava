@@ -231,42 +231,44 @@ class AutoLoginAction(RetryAction):
         params = self.parameters.get("auto_login")
         if params:
             if not isinstance(params, dict):
-                self.errors = "'auto_login' should be a dictionary"
+                self.errors_add("'auto_login' should be a dictionary")
                 return
 
             if "login_prompt" not in params:
-                self.errors = "'login_prompt' is mandatory for auto_login"
+                self.errors_add("'login_prompt' is mandatory for auto_login")
             elif not params["login_prompt"]:
-                self.errors = "Value for 'login_prompt' cannot be empty"
+                self.errors_add("Value for 'login_prompt' cannot be empty")
 
             if "username" not in params:
-                self.errors = "'username' is mandatory for auto_login"
+                self.errors_add("'username' is mandatory for auto_login")
 
             if "password_prompt" in params:
                 if "password" not in params:
-                    self.errors = "'password' is mandatory if 'password_prompt' is used in auto_login"
+                    self.errors_add(
+                        "'password' is mandatory if 'password_prompt' is used in auto_login"
+                    )
 
             if "login_commands" in params:
                 login_commands = params["login_commands"]
                 if not isinstance(login_commands, list):
-                    self.errors = "'login_commands' must be a list"
+                    self.errors_add("'login_commands' must be a list")
                 if not login_commands:
-                    self.errors = "'login_commands' must not be empty"
+                    self.errors_add("'login_commands' must not be empty")
 
         prompts = self.parameters.get("prompts")
         if prompts is None:
-            self.errors = "'prompts' is mandatory for AutoLoginAction"
+            self.errors_add("'prompts' is mandatory for AutoLoginAction")
 
         if not isinstance(prompts, (list, str)):
-            self.errors = "'prompts' should be a list or a str"
+            self.errors_add("'prompts' should be a list or a str")
 
         if not prompts:
-            self.errors = "Value for 'prompts' cannot be empty"
+            self.errors_add("Value for 'prompts' cannot be empty")
 
         if isinstance(prompts, list):
             for prompt in prompts:
                 if not prompt:
-                    self.errors = "Items of 'prompts' can't be empty"
+                    self.errors_add("Items of 'prompts' can't be empty")
 
         methods = self.job.device["actions"]["boot"]["methods"]
         with contextlib.suppress(KeyError, TypeError):
@@ -355,9 +357,9 @@ class BootloaderCommandOverlay(Action):
             )
         else:
             if "commands" not in self.parameters:
-                self.errors = "missing commands"
+                self.errors_add("missing commands")
             elif self.parameters["commands"] not in device_methods[self.method]:
-                self.errors = (
+                self.errors_add(
                     "Command '%s' not found in supported methods"
                     % self.parameters["commands"]
                 )
@@ -365,7 +367,7 @@ class BootloaderCommandOverlay(Action):
                 "commands"
                 not in device_methods[self.method][self.parameters["commands"]]
             ):
-                self.errors = "No commands found in parameters"
+                self.errors_add("No commands found in parameters")
             else:
                 self.commands = device_methods[self.method][
                     self.parameters["commands"]
@@ -373,7 +375,7 @@ class BootloaderCommandOverlay(Action):
 
         for cmd in self.commands:
             if not isinstance(cmd, str):
-                self.errors = "Deploy Commands instruction is not a string: %r" % cmd
+                self.errors_add("Deploy Commands instruction is not a string: %r" % cmd)
 
         # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if "use_bootscript" in self.parameters:
@@ -386,7 +388,7 @@ class BootloaderCommandOverlay(Action):
             if re.match("([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", lava_mac, re.IGNORECASE):
                 self.lava_mac = lava_mac
             else:
-                self.errors = "lava_mac is not a valid mac address"
+                self.errors_add("lava_mac is not a valid mac address")
 
     def run(self, connection, max_end_time):
         """
@@ -664,13 +666,15 @@ class BootloaderSecondaryMedia(Action):
         if isinstance(commands, list) or commands not in media_keys:
             return
         if "kernel" not in self.parameters:
-            self.errors = "Missing kernel location"
+            self.errors_add("Missing kernel location")
         # ramdisk does not have to be specified, nor dtb
         if "root_uuid" not in self.parameters:
             # FIXME: root_node also needs to be supported
-            self.errors = "Missing UUID of the roofs inside the deployed image"
+            self.errors_add("Missing UUID of the roofs inside the deployed image")
         if "boot_part" not in self.parameters:
-            self.errors = "Missing boot_part for the partition number of the boot files inside the deployed image"
+            self.errors_add(
+                "Missing boot_part for the partition number of the boot files inside the deployed image"
+            )
         self.set_namespace_data(
             action="download-action",
             label="file",
@@ -726,12 +730,12 @@ class OverlayUnpack(Action):
     def validate(self):
         super().validate()
         if "transfer_overlay" not in self.parameters:
-            self.errors = "Unable to identify transfer commands for overlay."
+            self.errors_add("Unable to identify transfer commands for overlay.")
             return
         if "download_command" not in self.parameters["transfer_overlay"]:
-            self.errors = "Unable to identify download command for overlay."
+            self.errors_add("Unable to identify download command for overlay.")
         if "unpack_command" not in self.parameters["transfer_overlay"]:
-            self.errors = "Unable to identify unpack command for overlay."
+            self.errors_add("Unable to identify unpack command for overlay.")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -831,7 +835,7 @@ class BootloaderInterruptAction(Action):
             "parameters"
         ]
         if self.job.device.connect_command == "":
-            self.errors = "Unable to connect to device %s"
+            self.errors_add("Unable to connect to device %s")
         device_methods = self.job.device["actions"]["boot"]["methods"]
         if (
             self.parameters.get("method", "") == "grub-efi"
@@ -839,7 +843,7 @@ class BootloaderInterruptAction(Action):
         ):
             self.method = "grub-efi"
         if "bootloader_prompt" not in self.params:
-            self.errors = "Missing bootloader prompt for device"
+            self.errors_add("Missing bootloader prompt for device")
         self.bootloader_prompt = self.params["bootloader_prompt"]
         self.interrupt_prompt = self.params.get(
             "interrupt_prompt",
@@ -933,7 +937,9 @@ class BootloaderCommandsActionAltBank(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
+            self.errors_add(
+                "%s started without a connection already in use" % self.name
+            )
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
@@ -1003,7 +1009,9 @@ class BootloaderCommandsAction(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
+            self.errors_add(
+                "%s started without a connection already in use" % self.name
+            )
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
@@ -1066,9 +1074,9 @@ class AdbOverlayUnpack(Action):
     def validate(self):
         super().validate()
         if "adb_serial_number" not in self.job.device:
-            self.errors = "device adb serial number missing"
+            self.errors_add("device adb serial number missing")
             if self.job.device["adb_serial_number"] == "0000000000":
-                self.errors = "device adb serial number unset"
+                self.errors_add("device adb serial number unset")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

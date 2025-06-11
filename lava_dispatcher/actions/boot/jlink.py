@@ -89,15 +89,21 @@ class FlashJLinkAction(Action):
                     # Get coretype if exist else get supported_core_types[0]
                     coretype = self.parameters.get("coretype", supported_core_types[0])
                     if coretype not in supported_core_types:
-                        self.errors = f"[coretype = {coretype}] Not supported by current device (supported_core_types = {supported_core_types})."
+                        self.errors_add(
+                            f"[coretype = {coretype}] Not supported by current device (supported_core_types = {supported_core_types})."
+                        )
                     device_name = f"{processor_name}_{coretype}"
                     self.base_command.append(device_name)
                 else:
-                    self.errors = f"Invalid device-type definition, supported_core_types parameter needs to be a list."
+                    self.errors_add(
+                        f"Invalid device-type definition, supported_core_types parameter needs to be a list."
+                    )
             else:
                 self.base_command.append(processor_name)
         else:
-            self.errors = "Invalid device-type definition, missing processor parameter"
+            self.errors_add(
+                "Invalid device-type definition, missing processor parameter"
+            )
 
         for option in options:
             self.base_command.extend(shlex.split(option))
@@ -114,7 +120,7 @@ class FlashJLinkAction(Action):
         self.base_command.extend(["-CommanderScript", self.jlink_script])
         board_id = self.job.device["board_id"]
         if board_id == "0000000000":
-            self.errors = "[JLink] board_id unset"
+            self.errors_add("[JLink] board_id unset")
         self.base_command.extend(["-SelectEmuBySN", str(board_id)])
         # Set a namespace for the JlinkExe cmd
         self.set_namespace_data(

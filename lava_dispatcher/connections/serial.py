@@ -61,10 +61,12 @@ class ConnectDevice(Action):
                 "connect" in self.job.device["commands"]
                 and "must_use_connection" in self.job.device["commands"]
             ):
-                self.errors = "Unable to connect to shell - missing connections block."
+                self.errors_add(
+                    "Unable to connect to shell - missing connections block."
+                )
                 return
         if "serial" not in self.job.device["actions"]["boot"]["connections"]:
-            self.errors = "Device not configured to support serial connection."
+            self.errors_add("Device not configured to support serial connection.")
         if "connect" in self.job.device["commands"]:
             # deprecated but allowed for primary
             if self.primary:
@@ -72,12 +74,14 @@ class ConnectDevice(Action):
                     :
                 ]  # local copy to retain idempotency.
             else:
-                self.errors = "Device configuration retains deprecated connect command."
+                self.errors_add(
+                    "Device configuration retains deprecated connect command."
+                )
         elif "connections" in self.job.device["commands"]:
             # if not primary, takes account of the name from the job definition
             for hardware, value in self.job.device["commands"]["connections"].items():
                 if "connect" not in value:
-                    self.errors = "Misconfigured connection commands"
+                    self.errors_add("Misconfigured connection commands")
                     return
                 if self.primary:
                     if "primary" in value.get("tags", []):
@@ -102,10 +106,10 @@ class ConnectDevice(Action):
                         break
             if self.primary:
                 if not self.hardware:
-                    self.errors = "Unable to identify primary connection command."
+                    self.errors_add("Unable to identify primary connection command.")
             else:
                 if not matched:
-                    self.errors = (
+                    self.errors_add(
                         "Unable to identify connection command hardware. %s"
                         % self.hardware
                     )
@@ -215,7 +219,7 @@ class ConnectShell(ConnectDevice):
     def validate(self):
         super().validate()
         if "connections" not in self.job.device["commands"]:
-            self.errors = "Unable to connect to shell - missing connections block."
+            self.errors_add("Unable to connect to shell - missing connections block.")
             return
         self._check_command()
 
@@ -272,7 +276,7 @@ class DisconnectDevice(ConnectDevice):
                 if set(tags) & set(RECOGNIZED_TAGS):
                     primary_connection_has_correct_tags = True
         if not primary_connection_has_correct_tags:
-            self.errors = (
+            self.errors_add(
                 "LAVA does not know how to disconnect: "
                 "ensure that primary connection has one of the following tags: {}".format(
                     RECOGNIZED_TAGS

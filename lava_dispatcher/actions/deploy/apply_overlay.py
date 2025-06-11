@@ -65,7 +65,7 @@ class ApplyOverlayGuest(Action):
                 "parameters"
             ]
         ):
-            self.errors = (
+            self.errors_add(
                 "Device configuration does not specify size of guest filesystem."
             )
 
@@ -279,9 +279,9 @@ class ApplyOverlayTftp(Action):
         persist = self.parameters.get("persistent_nfs")
         if persist:
             if not isinstance(persist, dict):
-                self.errors = "Invalid persistent_nfs parameter."
+                self.errors_add("Invalid persistent_nfs parameter.")
             if "address" not in persist:
-                self.errors = "Missing address for persistent NFS"
+                self.errors_add("Missing address for persistent NFS")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -449,13 +449,13 @@ class ExtractNfsRootfs(ExtractRootfs):
         if not self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
         ):
-            self.errors = "no file specified extract as %s" % self.param_key
+            self.errors_add("no file specified extract as %s" % self.param_key)
         if "prefix" in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]["prefix"]
             if prefix.startswith("/"):
-                self.errors = "prefix must not be an absolute path"
+                self.errors_add("prefix must not be an absolute path")
             if not prefix.endswith("/"):
-                self.errors = "prefix must be a directory and end with /"
+                self.errors_add("prefix must be a directory and end with /")
 
     def run(self, connection, max_end_time):
         if not self.parameters.get(self.param_key):  # idempotency
@@ -654,13 +654,15 @@ class CompressRamdisk(Action):
                         "mkimage_arch"
                         not in self.job.device["actions"]["deploy"]["parameters"]
                     ):
-                        self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in deploy parameters)"
+                        self.errors_add(
+                            "Missing architecture for uboot mkimage support (mkimage_arch in deploy parameters)"
+                        )
                         return
                     self.mkimage_arch = self.job.device["actions"]["deploy"][
                         "parameters"
                     ]["mkimage_arch"]
                 elif self.add_header != "raw":
-                    self.errors = "ramdisk: add_header: unknown header type"
+                    self.errors_add("ramdisk: add_header: unknown header type")
 
     def run(self, connection, max_end_time):
         if not self.parameters.get("ramdisk"):  # idempotency
@@ -763,7 +765,7 @@ class ApplyLxcOverlay(Action):
         super().validate()
         which("tar")
         if not os.path.exists(self.lava_test_dir):
-            self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
+            self.errors_add("Missing lava-test-runner: %s" % self.lava_test_dir)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -1071,10 +1073,10 @@ class ParsePersistentNFS(Action):
         if not persist:
             return
         if "address" not in persist:
-            self.errors = "Missing address for persistent NFS"
+            self.errors_add("Missing address for persistent NFS")
             return
         if ":" not in persist["address"]:
-            self.errors = (
+            self.errors_add(
                 "Unrecognised NFS URL: '%s'"
                 % self.parameters["persistent_nfs"]["address"]
             )
@@ -1085,7 +1087,8 @@ class ParsePersistentNFS(Action):
         )
 
         nfs_server, dirname = persist["address"].split(":")
-        self.errors = rpcinfo_nfs(nfs_server)
+        if rpcinfo_error := rpcinfo_nfs(nfs_server):
+            self.errors_add(rpcinfo_error)
         self.set_namespace_data(
             action=self.name, label="nfs_address", key="nfsroot", value=dirname
         )

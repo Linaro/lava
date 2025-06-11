@@ -141,7 +141,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
             return
         super().validate()
         if "kernel_type" not in self.parameters:
-            self.errors = "Missing kernel_type for secondary media boot"
+            self.errors_add("Missing kernel_type for secondary media boot")
         self.logger.debug("Mapping kernel_type: %s", self.parameters["kernel_type"])
         bootcommand = map_kernel_uboot(
             self.parameters["kernel_type"], self.job.device.get("parameters")
@@ -169,11 +169,14 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
             )
             not in media_params
         ):
-            self.errors = "%s does not match requested media type %s" % (
-                self.get_namespace_data(
-                    action="storage-deploy", label="u-boot", key="device"
-                ),
-                self.parameters["commands"],
+            self.errors_add(
+                "%s does not match requested media type %s"
+                % (
+                    self.get_namespace_data(
+                        action="storage-deploy", label="u-boot", key="device"
+                    ),
+                    self.parameters["commands"],
+                )
             )
         if not self.valid:
             return
@@ -213,7 +216,7 @@ class UBootEnterFastbootAction(RetryAction):
     def validate(self):
         super().validate()
         if "u-boot" not in self.job.device["actions"]["deploy"]["methods"]:
-            self.errors = "uboot method missing"
+            self.errors_add("uboot method missing")
 
         self.params = self.job.device["actions"]["deploy"]["methods"]["u-boot"][
             "parameters"
@@ -224,7 +227,7 @@ class UBootEnterFastbootAction(RetryAction):
                 "parameters"
             ]["fastboot"]
         ):
-            self.errors = "uboot command missing"
+            self.errors_add("uboot command missing")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

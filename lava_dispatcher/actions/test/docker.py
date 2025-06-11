@@ -105,7 +105,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
                 or (item_num == 3 and bind_mount[2] != "rw")
                 or not all(isinstance(item, str) for item in bind_mount)
             ):
-                self.errors = (
+                self.errors_add(
                     "Invalid bind mount specification in dispatcher configuration: "
                     f"{bind_mount}; "
                     'Use [source,destination], or [source,destination,"rw"]'

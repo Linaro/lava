@@ -161,19 +161,19 @@ class TestValidation(LavaDispatcherTestCase):
     def test_action_is_valid_if_there_are_not_errors(self):
         job = self.create_job_mock()
         action = Action(job)
-        action.__errors__ = [1]
+        action._errors = [1]
         self.assertFalse(action.valid)
-        action.__errors__ = []
+        action._errors = []
         self.assertTrue(action.valid)
 
     def test_composite_action_aggregates_errors_from_sub_actions(self):
         job = self.create_simple_job()
         # Unable to call Action.validate() as there is no job in this unit test
         sub1 = Action(job)
-        sub1.__errors__ = [1]
+        sub1._errors = [1]
         sub2 = Action(job)
         sub2.name = "sub2"
-        sub2.__errors__ = [2]
+        sub2._errors = [2]
 
         pipe = Pipeline(job=self.create_simple_job())
         sub1.name = "sub1"

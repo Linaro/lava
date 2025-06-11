@@ -44,7 +44,7 @@ class RecoveryBootAction(Action):
             )
             self.pipeline.add_action(PowerOn(self.job))
         else:
-            self.errors = "Invalid recovery command"
+            self.errors_add("Invalid recovery command")
 
 
 class SwitchRecoveryCommand(Action):
@@ -61,10 +61,10 @@ class SwitchRecoveryCommand(Action):
         super().validate()
         self.recovery = self.job.device["actions"]["deploy"]["methods"]["recovery"]
         if "commands" not in self.recovery:
-            self.errors = "Missing commands to enter recovery mode"
+            self.errors_add("Missing commands to enter recovery mode")
         command = self.recovery["commands"].get(self.mode)
         if not command:
-            self.errors = "Unable to find %s recovery command" % self.mode
+            self.errors_add("Unable to find %s recovery command" % self.mode)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

@@ -77,9 +77,9 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         if sequences is not None:
             for sequence in sequences:
                 if not _fastboot_sequence_map(sequence):
-                    self.errors = "Unknown boot sequence '%s'" % sequence
+                    self.errors_add("Unknown boot sequence '%s'" % sequence)
         else:
-            self.errors = "fastboot_sequence undefined"
+            self.errors_add("fastboot_sequence undefined")
 
     def populate(self, parameters):
         self.parameters = parameters
@@ -152,19 +152,19 @@ class WaitFastBootInterrupt(Action):
     def validate(self):
         super().validate()
         if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
+            self.errors_add("device fastboot serial number missing")
         elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+            self.errors_add("device fastboot serial number unset")
         if "fastboot_options" not in self.job.device:
-            self.errors = "device fastboot options missing"
+            self.errors_add("device fastboot options missing")
         elif not isinstance(self.job.device["fastboot_options"], list):
-            self.errors = "device fastboot options is not a list"
+            self.errors_add("device fastboot options is not a list")
         device_methods = self.job.device["actions"]["deploy"]["methods"]
         if isinstance(device_methods.get("fastboot"), dict):
             self.prompt = device_methods["fastboot"].get("interrupt_prompt")
             self.string = device_methods["fastboot"].get("interrupt_string")
         if not self.prompt or not self.string:
-            self.errors = "Missing interrupt configuration for device."
+            self.errors_add("Missing interrupt configuration for device.")
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -192,13 +192,13 @@ class FastbootBootAction(OptionalContainerFastbootAction):
         super().validate()
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
         if "fastboot_options" not in self.job.device:
-            self.errors = "device fastboot options missing"
+            self.errors_add("device fastboot options missing")
         elif not isinstance(self.job.device["fastboot_options"], list):
-            self.errors = "device fastboot options is not a list"
+            self.errors_add("device fastboot options is not a list")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -237,13 +237,13 @@ class FastbootRebootAction(OptionalContainerFastbootAction):
         super().validate()
         if not self.job.device.get("fastboot_auto_detection", False):
             if "fastboot_serial_number" not in self.job.device:
-                self.errors = "device fastboot serial number missing"
+                self.errors_add("device fastboot serial number missing")
             elif self.job.device["fastboot_serial_number"] == "0000000000":
-                self.errors = "device fastboot serial number unset"
+                self.errors_add("device fastboot serial number unset")
         if "fastboot_options" not in self.job.device:
-            self.errors = "device fastboot options missing"
+            self.errors_add("device fastboot options missing")
         elif not isinstance(self.job.device["fastboot_options"], list):
-            self.errors = "device fastboot options is not a list"
+            self.errors_add("device fastboot options is not a list")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -276,17 +276,17 @@ class EnterFastbootAction(OptionalContainerFastbootAction, OptionalContainerAdbA
     def validate(self):
         super().validate()
         if "adb_serial_number" not in self.job.device:
-            self.errors = "device adb serial number missing"
+            self.errors_add("device adb serial number missing")
         elif self.job.device["adb_serial_number"] == "0000000000":
-            self.errors = "device adb serial number unset"
+            self.errors_add("device adb serial number unset")
         if "fastboot_serial_number" not in self.job.device:
-            self.errors = "device fastboot serial number missing"
+            self.errors_add("device fastboot serial number missing")
         elif self.job.device["fastboot_serial_number"] == "0000000000":
-            self.errors = "device fastboot serial number unset"
+            self.errors_add("device fastboot serial number unset")
         if "fastboot_options" not in self.job.device:
-            self.errors = "device fastboot options missing"
+            self.errors_add("device fastboot options missing")
         elif not isinstance(self.job.device["fastboot_options"], list):
-            self.errors = "device fastboot options is not a list"
+            self.errors_add("device fastboot options is not a list")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

@@ -49,9 +49,9 @@ class UEFIMenuInterrupt(MenuInterrupt):
             "parameters"
         ]
         if "interrupt_prompt" not in self.params:
-            self.errors = "Missing interrupt prompt"
+            self.errors_add("Missing interrupt prompt")
         if "interrupt_string" not in self.params:
-            self.errors = "Missing interrupt string"
+            self.errors_add("Missing interrupt string")
 
     def run(self, connection, max_end_time):
         if not connection:
@@ -90,10 +90,10 @@ class UefiMenuSelector(SelectorMenuAction):
             or "item_class" not in params
             or "separator" not in params
         ):
-            self.errors = "Missing device parameters for UEFI menu operations"
+            self.errors_add("Missing device parameters for UEFI menu operations")
             return
         if "commands" not in self.parameters and not self.commands:
-            self.errors = "Missing commands in action parameters"
+            self.errors_add("Missing commands in action parameters")
             return
         # UEFI menu cannot support command lists (due to renumbering issues)
         # but needs to ignore those which may exist for use with Grub later.
@@ -102,7 +102,7 @@ class UefiMenuSelector(SelectorMenuAction):
                 self.parameters["commands"]
                 not in self.job.device["actions"]["boot"]["methods"][self.method_name]
             ):
-                self.errors = "Missing commands for %s" % self.parameters["commands"]
+                self.errors_add("Missing commands for %s" % self.parameters["commands"])
                 return
             self.commands = self.parameters["commands"]
         if not self.commands:
@@ -126,7 +126,7 @@ class UefiMenuSelector(SelectorMenuAction):
                 self.commands
                 not in self.job.device["actions"]["boot"]["methods"][self.method_name]
             ):
-                self.errors = (
+                self.errors_add(
                     "No boot configuration called '%s' for boot method '%s'"
                     % (self.commands, self.method_name)
                 )
@@ -146,7 +146,7 @@ class UefiMenuSelector(SelectorMenuAction):
         elif uefi_type == "unix":
             self.line_sep = LINE_SEPARATOR
         else:
-            self.errors = "Unrecognised line separator configuration."
+            self.errors_add("Unrecognised line separator configuration.")
         super().validate()
 
     def run(self, connection, max_end_time):
@@ -195,15 +195,18 @@ class UefiSubstituteCommands(Action):
             self.parameters["commands"]
             not in self.job.device["actions"]["boot"]["methods"]["uefi-menu"]
         ):
-            self.errors = "Missing commands for %s" % self.parameters["commands"]
+            self.errors_add("Missing commands for %s" % self.parameters["commands"])
         self.items = self.job.device["actions"]["boot"]["methods"]["uefi-menu"][
             self.parameters["commands"]
         ]
         for item in self.items:
             if "select" not in item:
-                self.errors = "Invalid device configuration for %s: %s" % (
-                    self.name,
-                    item,
+                self.errors_add(
+                    "Invalid device configuration for %s: %s"
+                    % (
+                        self.name,
+                        item,
+                    )
                 )
 
     def run(self, connection, max_end_time):

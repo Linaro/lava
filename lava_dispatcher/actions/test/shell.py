@@ -155,7 +155,7 @@ class TestShellAction(Action):
 
         for testdef in self.parameters["definitions"]:
             if "repository" not in testdef:
-                self.errors = "Repository missing from test definition"
+                self.errors_add("Repository missing from test definition")
         self._reset_patterns()
         super().validate()
 
@@ -343,7 +343,7 @@ class TestShellAction(Action):
         self.logger.error(
             "Unable to start stage %s. Read the log for more details.", stage
         )
-        self.errors = "Unable to start test stage %s" % stage
+        self.errors_add("Unable to start test stage %s" % stage)
         # This is not accurate but required when exiting.
         self.start = time.monotonic()
         self.current_run = {

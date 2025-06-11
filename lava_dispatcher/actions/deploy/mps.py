@@ -44,18 +44,18 @@ class MpsAction(Action):
     def validate(self):
         super().validate()
         if "images" not in self.parameters:
-            self.errors = "Missing 'images'"
+            self.errors_add("Missing 'images'")
             return
         images = list(self.parameters["images"].keys())
         if len(images) == 1:
             if images[0] not in ["recovery_image", "test_binary"]:
-                self.errors = "Missing 'recovery_image' or 'test_binary'"
+                self.errors_add("Missing 'recovery_image' or 'test_binary'")
         else:
             for image in images:
                 if not image == "recovery_image" and not image.startswith(
                     "test_binary_"
                 ):
-                    self.errors = (
+                    self.errors_add(
                         "Missing 'recovery_image' or not starting with 'test_binary_'"
                     )
 
@@ -113,7 +113,7 @@ class DeployMPSTestBinary(Action):
     def validate(self):
         super().validate()
         if not self.parameters["images"].get(self.param_key):
-            self.errors = "Missing '%s' in 'images'" % self.param_key
+            self.errors_add("Missing '%s' in 'images'" % self.param_key)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -151,7 +151,7 @@ class DeployMPSRebootTxt(Action):
         params = self.job.device["actions"]["deploy"]["methods"]["mps"]["parameters"]
         self.reboot_string = params.get("reboot-string")
         if self.reboot_string is None:
-            self.errors = "Missing 'reboot_string' in device configuration"
+            self.errors_add("Missing 'reboot_string' in device configuration")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

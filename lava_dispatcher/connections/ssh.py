@@ -72,7 +72,7 @@ class ConnectSsh(Action):
         if not any(
             "ssh" in data for data in self.job.device["actions"]["deploy"]["methods"]
         ):
-            self.errors = (
+            self.errors_add(
                 "Invalid device configuration - no suitable deploy method for ssh"
             )
             return
@@ -80,11 +80,13 @@ class ConnectSsh(Action):
         if "identity_file" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             check = check_ssh_identity_file(params)
             if check[0]:
-                self.errors = check[0]
+                self.errors_add(check[0])
             elif check[1]:
                 self.identity_file = check[1]
         if "ssh" not in params:
-            self.errors = "Empty ssh parameter list in device configuration %s" % params
+            self.errors_add(
+                "Empty ssh parameter list in device configuration %s" % params
+            )
             return
         if "options" in params["ssh"]:
             if any(
@@ -99,7 +101,7 @@ class ConnectSsh(Action):
                     for option in params["ssh"]["options"]
                     if not isinstance(option, str)
                 ]
-                self.errors = (
+                self.errors_add(
                     "[%s] Invalid device configuration: all options must be only strings: %s"
                     % (self.name, msg)
                 )
@@ -119,7 +121,7 @@ class ConnectSsh(Action):
         params = self._check_params()
         which("ssh")
         if "serial" not in self.job.device["actions"]["boot"]["connections"]:
-            self.errors = "Device not configured to support serial connection."
+            self.errors_add("Device not configured to support serial connection.")
         if "host" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             self.primary = True
             self.host = self.job.device["actions"]["deploy"]["methods"]["ssh"]["host"]

@@ -54,7 +54,7 @@ class LxcAction(Action):
             self.logger.debug(
                 "Missing protocol '%s' in %s", LxcProtocol.name, protocols
             )
-            self.errors = "Missing protocol '%s'" % LxcProtocol.name
+            self.errors_add("Missing protocol '%s'" % LxcProtocol.name)
         which("lxc-create")
 
     def populate(self, parameters):
@@ -204,7 +204,7 @@ class LxcCreateUdevRuleAction(DeviceContainerMappingMixin):
         if "device_info" in self.job.device and not isinstance(
             self.job.device.get("device_info"), list
         ):
-            self.errors = "device_info unset"
+            self.errors_add("device_info unset")
         # If we are allowed to use a filesystem label, we don't require a board_id
         # By default, we do require a board_id (serial)
         requires_board_id = not allow_fs_label(self.job.device)
@@ -215,13 +215,13 @@ class LxcCreateUdevRuleAction(DeviceContainerMappingMixin):
                         usb_device.get("board_id", "") in ["", "0000000000"]
                         and requires_board_id
                     ):
-                        self.errors = "[LXC_CREATE] board_id unset"
+                        self.errors_add("[LXC_CREATE] board_id unset")
                     if usb_device.get("usb_vendor_id", "") == "0000":
-                        self.errors = "[LXC_CREATE] usb_vendor_id unset"
+                        self.errors_add("[LXC_CREATE] usb_vendor_id unset")
                     if usb_device.get("usb_product_id", "") == "0000":
-                        self.errors = "[LXC_CREATE] usb_product_id unset"
+                        self.errors_add("[LXC_CREATE] usb_product_id unset")
         except TypeError:
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

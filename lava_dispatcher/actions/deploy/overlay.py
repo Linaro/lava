@@ -349,7 +349,7 @@ class MultinodeOverlayAction(OverlayAction):
             if "target_group" not in self.job.parameters["protocols"][self.protocol]:
                 return
             if "role" not in self.job.parameters["protocols"][self.protocol]:
-                self.errors = "multinode job without a specified role"
+                self.errors_add("multinode job without a specified role")
             else:
                 self.role = self.job.parameters["protocols"][self.protocol]["role"]
 
@@ -466,9 +466,9 @@ class VlandOverlayAction(OverlayAction):
         if self.protocol not in [protocol.name for protocol in self.job.protocols]:
             return
         if "parameters" not in self.job.device:
-            self.errors = "Device lacks parameters"
+            self.errors_add("Device lacks parameters")
         elif "interfaces" not in self.job.device["parameters"]:
-            self.errors = "Device lacks vland interfaces data."
+            self.errors_add("Device lacks vland interfaces data.")
         if not self.valid:
             return
         # same as the parameters of the protocol itself.
@@ -652,7 +652,7 @@ class SshAuthorize(Action):
         params = self.job.device["actions"]["deploy"]["methods"]
         check = check_ssh_identity_file(params)
         if check[0]:
-            self.errors = check[0]
+            self.errors_add(check[0])
         elif check[1]:
             self.identity_file = check[1]
         if self.valid:

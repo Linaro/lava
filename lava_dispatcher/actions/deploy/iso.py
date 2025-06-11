@@ -93,22 +93,24 @@ class IsoEmptyImage(Action):
         super().validate()
         size_str = self.parameters["iso"]["installation_size"]
         if not isinstance(size_str, str):
-            self.errors = "installation size needs to be a string, e.g. 2G or 800M"
+            self.errors_add("installation size needs to be a string, e.g. 2G or 800M")
             return
         size = size_str[:-1]
         if not size.isdigit():
-            self.errors = "installation size needs to contain a digit, e.g. 2G or 800M"
+            self.errors_add(
+                "installation size needs to contain a digit, e.g. 2G or 800M"
+            )
             return
         if size_str.endswith("G"):
             self.size = int(size_str[:-1]) * 1024 * 1024 * 1024
         elif size_str.endswith("M"):
             self.size = int(size_str[:-1]) * 1024 * 1024
         else:
-            self.errors = (
+            self.errors_add(
                 "Unable to recognise size indication in %s - use M or G" % size_str
             )
         if self.size > INSTALLER_IMAGE_MAX_SIZE * 1024 * 1024:
-            self.errors = (
+            self.errors_add(
                 "Base installation size cannot exceed %s Mb" % INSTALLER_IMAGE_MAX_SIZE
             )
 
@@ -148,7 +150,7 @@ class IsoPullInstaller(Action):
             if key in self.parameters["iso"]:
                 filename = self.parameters["iso"][key]
                 if not filename.startswith("/"):
-                    self.errors = (
+                    self.errors_add(
                         "Paths to pull from the ISO need to start with / - check %s"
                         % key
                     )
@@ -165,7 +167,7 @@ class IsoPullInstaller(Action):
                 value=os.path.basename(value),
             )
         if len(unique_values) != len(self.files.values()):
-            self.errors = "filenames to extract from installer image must be unique."
+            self.errors_add("filenames to extract from installer image must be unique.")
 
     def run(self, connection, max_end_time):
         """
@@ -215,7 +217,7 @@ class QemuCommandLine(Action):
             self.console = "console=%s" % boot_opts["console"]
             self.boot_order = "-boot %s" % boot_opts["boot_order"]
         if not qemu_binary or not self.console or not self.boot_order:
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
         # create the preseed.cfg url
         # needs to be an IP address for DI, DNS is not available.
         # PRESEED_URL='http://10.15.0.32/tmp/d-i/jessie/preseed.cfg'

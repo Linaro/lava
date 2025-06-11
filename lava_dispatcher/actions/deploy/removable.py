@@ -48,36 +48,36 @@ class DDAction(Action):
     def validate(self):
         super().validate()
         if "device" not in self.parameters:
-            self.errors = "missing device for deployment"
+            self.errors_add("missing device for deployment")
 
         download_params = self.parameters.get("download")
         writer_params = self.parameters.get("writer")
         if not download_params and not writer_params:
-            self.errors = "Neither a download nor a write tool found in parameters"
+            self.errors_add("Neither a download nor a write tool found in parameters")
 
         if download_params:
             if "tool" not in download_params:
-                self.errors = "missing download or writer tool for deployment"
+                self.errors_add("missing download or writer tool for deployment")
             if "options" not in download_params:
-                self.errors = "missing options for download tool"
+                self.errors_add("missing options for download tool")
             if "prompt" not in download_params:
-                self.errors = "missing prompt for download tool"
+                self.errors_add("missing prompt for download tool")
             if not os.path.isabs(download_params["tool"]):
-                self.errors = "download tool parameter needs to be an absolute path"
+                self.errors_add("download tool parameter needs to be an absolute path")
 
         if writer_params:
             if "tool" not in writer_params:
-                self.errors = "missing writer tool for deployment"
+                self.errors_add("missing writer tool for deployment")
             if "options" not in writer_params:
-                self.errors = "missing options for writer tool"
+                self.errors_add("missing options for writer tool")
             if "download" not in self.parameters:
                 if "prompt" not in writer_params:
-                    self.errors = "missing prompt for writer tool"
+                    self.errors_add("missing prompt for writer tool")
             if not os.path.isabs(writer_params["tool"]):
-                self.errors = "writer tool parameter needs to be an absolute path"
+                self.errors_add("writer tool parameter needs to be an absolute path")
 
         if self.parameters["to"] not in self.job.device["parameters"].get("media", {}):
-            self.errors = (
+            self.errors_add(
                 "media '%s' unavailable for this device" % self.parameters["to"]
             )
 
@@ -87,7 +87,7 @@ class DDAction(Action):
         # parameter.
         img_params = self.parameters.get("images", self.parameters)
         if "image" not in img_params:
-            self.errors = "Missing image parameter"
+            self.errors_add("Missing image parameter")
 
         # No need to go further if an error was already detected
         if not self.valid:
@@ -101,20 +101,22 @@ class DDAction(Action):
             self.tool_prompts = DD_PROMPTS
 
         if not isinstance(self.tool_prompts, list):
-            self.errors = "'tool prompts' should be a list"
+            self.errors_add("'tool prompts' should be a list")
         else:
             for msg in self.tool_prompts:
                 if not msg:
-                    self.errors = "items of 'tool prompts' cannot be empty"
+                    self.errors_add("items of 'tool prompts' cannot be empty")
 
         self.boot_params = self.job.device["parameters"]["media"][self.parameters["to"]]
         uuid_required = self.boot_params.get("UUID-required", False)
 
         if uuid_required:  # FIXME unit test required
             if "uuid" not in self.boot_params[self.parameters["device"]]:
-                self.errors = "A UUID is required for %s" % (self.parameters["device"])
+                self.errors_add(
+                    "A UUID is required for %s" % (self.parameters["device"])
+                )
             if "root_part" in self.boot_params[self.parameters["device"]]:
-                self.errors = "'root_part' is not valid as a UUID is required"
+                self.errors_add("'root_part' is not valid as a UUID is required")
         if self.parameters["device"] in self.boot_params:
             self.set_namespace_data(
                 action=self.name,
@@ -219,7 +221,7 @@ class MassStorage(Action):
         # if 'image' not in self.parameters.keys():
         #     self.errors = "%s needs an image to deploy" % self.name
         if "device" not in self.parameters:
-            self.errors = "No device specified for mass storage deployment"
+            self.errors_add("No device specified for mass storage deployment")
         if not self.valid:
             return
 

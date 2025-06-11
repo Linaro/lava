@@ -66,25 +66,29 @@ class RunNodebooterContainer(Action):
         self.container = "nodebooter"
 
         if "docker" not in self.parameters:
-            self.errors = "Specify docker parameter"
+            self.errors_add("Specify docker parameter")
             raise JobError("Not specified 'docker' in parameters")
 
         if "environment" in self.job.device:
             if not isinstance(self.job.device["environment"], dict):
-                self.errors = "Incorrect environment format in device configuration"
+                self.errors_add("Incorrect environment format in device configuration")
             if "DUT_MAC" in self.job.device["environment"]:
                 self.dut_mac = self.job.device["environment"]["DUT_MAC"]
             if "DUT_IFACE" in self.job.device["environment"]:
                 self.dut_iface = self.job.device["environment"]["DUT_IFACE"]
         else:
-            self.errors = "Missing 'environment' variable in the device configuration"
+            self.errors_add(
+                "Missing 'environment' variable in the device configuration"
+            )
 
         if self.dut_mac is None:
-            self.errors = (
+            self.errors_add(
                 "Missing DUT_MAC parameter in the device config 'environment' variable"
             )
         if self.dut_iface is None:
-            self.errors = "Missing DUT_IFACE parameter in the device config 'environment' variable"
+            self.errors_add(
+                "Missing DUT_IFACE parameter in the device config 'environment' variable"
+            )
 
     def run(self, connection, max_end_time):
         volumes = {
@@ -162,14 +166,16 @@ class ConfigureNodebooter(Action):
         super().validate()
         if "environment" in self.job.device:
             if not isinstance(self.job.device["environment"], dict):
-                self.errors("Incorrect environment format in device configuration")
+                self.errors_add("Incorrect environment format in device configuration")
             if "DUT_MAC" in self.job.device["environment"]:
                 self.dut_mac = self.job.device["environment"]["DUT_MAC"]
         else:
-            self.errors = "Missing 'environment' variable in the device configuration"
+            self.errors_add(
+                "Missing 'environment' variable in the device configuration"
+            )
 
         if self.dut_mac is None:
-            self.errors = (
+            self.errors_add(
                 "Missing DUT_MAC parameter in the device config 'environment' variable"
             )
 
@@ -180,7 +186,9 @@ class ConfigureNodebooter(Action):
             )
             if image_file_path:
                 if f"NIC{counter}_MAC" not in self.job.device["environment"]:
-                    self.errors = f"Missing nic{counter} MAC address (NIC{counter}_MAC) from 'environment' variable"
+                    self.errors_add(
+                        f"Missing nic{counter} MAC address (NIC{counter}_MAC) from 'environment' variable"
+                    )
 
     def run(self, connection, max_end_time):
         # Make sure nodebooter container is stopped at the end.
@@ -203,7 +211,7 @@ class ConfigureNodebooter(Action):
                     stderr=subprocess.STDOUT,
                 )
             except subprocess.CalledProcessError as exc:
-                self.errors = str(exc)
+                self.errors_add(str(exc))
 
         # Add DUT to Nodebooter via API (on localhost)
         url = "http://localhost:12901/nodebooter/api/v2/machines/"

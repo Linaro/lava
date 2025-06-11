@@ -42,11 +42,11 @@ class MultinodeMixin(Action):
         if MultinodeProtocol.name not in [
             protocol.name for protocol in self.job.protocols
         ]:
-            self.errors = "Invalid job - missing protocol"
+            self.errors_add("Invalid job - missing protocol")
         if MultinodeProtocol.name not in [protocol.name for protocol in self.protocols]:
-            self.errors = "Missing protocol"
+            self.errors_add("Missing protocol")
         if not self.valid:
-            self.errors = "Invalid base class TestAction"
+            self.errors_add("Invalid base class TestAction")
             return
         self.patterns.update(self.multinode_dict)
         self.signal_director.setup(

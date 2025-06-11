@@ -150,13 +150,17 @@ class CallQemuAction(Action):
         if architecture is None:
             raise JobError("Missing 'arch' in job context")
         if "available_architectures" not in self.job.device:
-            self.errors = "Device lacks list of available architectures."
+            self.errors_add("Device lacks list of available architectures.")
         try:
             if architecture not in self.job.device["available_architectures"]:
-                self.errors = "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
+                self.errors_add(
+                    "Non existing architecture specified in context arch parameter. Please check the device configuration for available options."
+                )
                 return
         except KeyError:
-            self.errors = "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
+            self.errors_add(
+                "Arch parameter must be set in the context section. Please check the device configuration for available architectures."
+            )
             return
 
         if not self.get_debian_version(architecture):
@@ -165,7 +169,9 @@ class CallQemuAction(Action):
         if self.parameters["method"] in ["qemu", "qemu-nfs"]:
             if "prompts" not in self.parameters:
                 if self.test_has_shell(self.parameters):
-                    self.errors = "Unable to identify boot prompts from job definition."
+                    self.errors_add(
+                        "Unable to identify boot prompts from job definition."
+                    )
         self.methods = self.job.device["actions"]["boot"]["methods"]
         method = self.parameters["method"]
         boot = (
@@ -173,9 +179,9 @@ class CallQemuAction(Action):
         )
         try:
             if "parameters" not in boot or "command" not in boot["parameters"]:
-                self.errors = "Invalid device configuration - missing parameters"
+                self.errors_add("Invalid device configuration - missing parameters")
             elif not boot["parameters"]["command"]:
-                self.errors = "No QEMU binary command found - missing context."
+                self.errors_add("No QEMU binary command found - missing context.")
             # if qemu is ran under docker, qemu could not be installed and so which will fail
             qemu_binary = boot["parameters"]["command"]
             if "docker" not in self.parameters:
@@ -186,12 +192,15 @@ class CallQemuAction(Action):
                 ["%s" % item for item in boot["parameters"].get("extra", [])]
             )
         except AttributeError as exc:
-            self.errors = "Unable to parse device options: %s %s" % (
-                exc,
-                self.job.device["actions"]["boot"]["methods"][method],
+            self.errors_add(
+                "Unable to parse device options: %s %s"
+                % (
+                    exc,
+                    self.job.device["actions"]["boot"]["methods"][method],
+                )
             )
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
 
         for label in self.get_namespace_keys("download-action"):
             if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
@@ -209,7 +218,7 @@ class CallQemuAction(Action):
 
         # Check for enable-kvm command line option in device configuration.
         if method not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "Unknown boot method '%s'" % method
+            self.errors_add("Unknown boot method '%s'" % method)
             return
 
         options = self.job.device["actions"]["boot"]["methods"][method]["parameters"][
@@ -218,7 +227,9 @@ class CallQemuAction(Action):
         if "-enable-kvm" in options:
             # Check if the worker has kvm enabled.
             if not os.path.exists(SYS_CLASS_KVM):
-                self.errors = "Device configuration contains -enable-kvm option but kvm module is not enabled."
+                self.errors_add(
+                    "Device configuration contains -enable-kvm option but kvm module is not enabled."
+                )
 
     def run(self, connection, max_end_time):
         """

@@ -64,15 +64,15 @@ class Scp(ConnectSsh):
         params = self._check_params()
         which("scp")
         if "ssh" not in self.job.device["actions"]["deploy"]["methods"]:
-            self.errors = "Unable to use %s without ssh deployment" % self.name
+            self.errors_add("Unable to use %s without ssh deployment" % self.name)
         if "ssh" not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "Unable to use %s without ssh boot" % self.name
+            self.errors_add("Unable to use %s without ssh boot" % self.name)
         if self.get_namespace_data(
             action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
         ):
             self.primary = False
         elif "host" not in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
-            self.errors = "Invalid device or job configuration, missing host."
+            self.errors_add("Invalid device or job configuration, missing host.")
         if (
             not self.primary
             and len(
@@ -84,19 +84,19 @@ class Scp(ConnectSsh):
             )
             != 1
         ):
-            self.errors = "Invalid number of host_keys"
+            self.errors_add("Invalid number of host_keys")
         if self.primary:
             host_address = self.job.device["actions"]["deploy"]["methods"]["ssh"][
                 "host"
             ]
             if not host_address:
-                self.errors = (
+                self.errors_add(
                     "Unable to retrieve ssh_host address for primary connection."
                 )
         if "port" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             port = str(self.job.device["actions"]["deploy"]["methods"]["ssh"]["port"])
             if not port.isdigit():
-                self.errors = "Port was set but was not a digit"
+                self.errors_add("Port was set but was not a digit")
         if self.valid:
             self.scp.append("scp")
             if "options" in params:
@@ -281,16 +281,16 @@ class SchrootAction(Action):
         if "schroot" not in self.parameters:
             return
         if "schroot" not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "No schroot support in device boot methods"
+            self.errors_add("No schroot support in device boot methods")
             return
         which("schroot")
         # device parameters are for ssh
         params = self.job.device["actions"]["boot"]["methods"]
         if "command" not in params["schroot"]:
-            self.errors = "Missing schroot command in device configuration"
+            self.errors_add("Missing schroot command in device configuration")
             return
         if "name" not in params["schroot"]:
-            self.errors = "Missing schroot name in device configuration"
+            self.errors_add("Missing schroot name in device configuration")
             return
         self.schroot = params["schroot"]["name"]
         self.command = params["schroot"]["command"]

@@ -96,7 +96,7 @@ class UBootPrepareKernelAction(Action):
         self.bootcommand = None
         if "parameters" not in self.job.device:
             if self.kernel_type:
-                self.errors = "Kernel boot type is not supported by this device."
+                self.errors_add("Kernel boot type is not supported by this device.")
         if self.kernel_type:
             self.set_namespace_data(
                 action=self.name, label="prepared-kernel", key="exists", value=True
@@ -106,15 +106,19 @@ class UBootPrepareKernelAction(Action):
             )
             self.kernel_type = str(self.kernel_type).lower()
             if self.bootcommand not in self.job.device["parameters"]:
-                self.errors = (
+                self.errors_add(
                     "Requested kernel boot type '%s' is not supported by this device."
                     % self.bootcommand
                 )
             if self.kernel_type in ["bootm", "bootz", "booti"]:
-                self.errors = "booti, bootm and bootz are deprecated, please use 'image', 'uimage' or 'zimage'"
+                self.errors_add(
+                    "booti, bootm and bootz are deprecated, please use 'image', 'uimage' or 'zimage'"
+                )
             which("mkimage")
             if "mkimage_arch" not in self.params:
-                self.errors = "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
+                self.errors_add(
+                    "Missing architecture for uboot mkimage support (mkimage_arch in u-boot parameters)"
+                )
             if self.bootcommand == "bootm" and self.kernel_type != "uimage":
                 self.mkimage_conversion = True
         self.set_namespace_data(
@@ -195,9 +199,9 @@ class PrepareFITAction(Action):
 
         device_params = self.job.device.get("parameters")
         if device_params is None:
-            self.errors = "Missing device parameters"
+            self.errors_add("Missing device parameters")
         elif "load_address" not in device_params:
-            self.errors = "Missing load_address from device parameters"
+            self.errors_add("Missing load_address from device parameters")
         else:
             self.device_params = device_params
 

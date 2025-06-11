@@ -42,18 +42,22 @@ class NbdAction(Action):
     def validate(self):
         super().validate()
         if "kernel" not in self.parameters:
-            self.errors = "%s needs a kernel to deploy" % self.name
+            self.errors_add("%s needs a kernel to deploy" % self.name)
         if not self.valid:
             return
         if "nbdroot" not in self.parameters:
-            self.errors = "NBD deployment needs a 'nbdroot' parameter"
+            self.errors_add("NBD deployment needs a 'nbdroot' parameter")
         if "initrd" not in self.parameters:
-            self.errors = "NBD deployment needs an 'initrd' parameter"
+            self.errors_add("NBD deployment needs an 'initrd' parameter")
         # we cannot work with these when using nbd
         if "nfsrootfs" in self.parameters:
-            self.errors = "nfsrootfs cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'nbdroot=' parameter"
+            self.errors_add(
+                "nfsrootfs cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'nbdroot=' parameter"
+            )
         if "ramdisk" in self.parameters:
-            self.errors = "ramdisk cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'initrd' parameter"
+            self.errors_add(
+                "ramdisk cannot be used with NBD deployment, use a e.g. ext3/4 filesystem as 'initrd' parameter"
+            )
 
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
@@ -72,7 +76,9 @@ class NbdAction(Action):
         if not tftp_dir.startswith(tftpd_directory) and not tftp_dir.startswith(
             tmp_dir
         ):
-            self.errors = "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
+            self.errors_add(
+                "tftpd directory is not configured correctly, see /etc/default/tftpd-hpa"
+            )
 
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
@@ -153,7 +159,7 @@ class XnbdAction(Action):
             action="nbd-deploy", label="nbd", key="nbd_server_ip"
         )
         if self.nbd_server_port is None:
-            self.errors = "NBD server port is unset"
+            self.errors_add("NBD server port is unset")
             return connection
         self.logger.debug(
             "NBD-IP: %s, NBD-PORT: %s, NBD-ROOT: %s",

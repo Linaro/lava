@@ -92,7 +92,7 @@ class RetryAction(Action):
 
                 # re-raise if this is the last loop
                 if retries == self.max_retries:
-                    self.errors = "%s retries failed for %s" % (retries, self.name)
+                    self.errors_add("%s retries failed for %s" % (retries, self.name))
                     raise
 
                 # Stop retrying if parent timed out
@@ -102,10 +102,10 @@ class RetryAction(Action):
                 # Wait some time before retrying
                 time.sleep(self.sleep)
                 # Reset self and all child actions results and errors
-                self.__errors__.clear()
+                self._errors.clear()
                 self.results.clear()
                 for action in self.pipeline._iter_actions():
-                    action.__errors__.clear()
+                    action._errors.clear()
                     action.results.clear()
 
                 self.logger.warning(
