@@ -49,9 +49,9 @@ class EnterDFU(Action):
         super().validate()
         parameters = self.job.device["actions"]["boot"]["methods"]["dfu"]["parameters"]
         if "enter-commands" not in parameters:
-            self.errors = '"enter-commands" is not defined'
+            self.errors_add('"enter-commands" is not defined')
         elif not isinstance(parameters["enter-commands"], list):
-            self.errors = '"enter-commands" should be a list'
+            self.errors_add('"enter-commands" should be a list')
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -85,11 +85,11 @@ class FlashDFUAction(Action):
             self.base_command = [dfu_binary]
             self.base_command.extend(boot["parameters"].get("options", []))
             if self.job.device["board_id"] == "0000000000":
-                self.errors = "[FLASH_DFU] board_id unset"
+                self.errors_add("[FLASH_DFU] board_id unset")
             if self.job.device["usb_vendor_id"] == "0000":
-                self.errors = "[FLASH_DFU] usb_vendor_id unset"
+                self.errors_add("[FLASH_DFU] usb_vendor_id unset")
             if self.job.device["usb_product_id"] == "0000":
-                self.errors = "[FLASH_DFU] usb_product_id unset"
+                self.errors_add("[FLASH_DFU] usb_product_id unset")
             self.usb_vendor_id = self.job.device["usb_vendor_id"]
             self.usb_product_id = self.job.device["usb_product_id"]
             self.board_id = self.job.device["board_id"]
@@ -100,7 +100,7 @@ class FlashDFUAction(Action):
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
         substitutions = {}
         for action in self.get_namespace_keys("download-action"):
             dfu_full_command = []
@@ -111,17 +111,17 @@ class FlashDFUAction(Action):
                 action="download-action", label=action, key="file"
             )
             if not image_arg or not action_arg:
-                self.errors = "Missing image_arg for %s. " % action
+                self.errors_add("Missing image_arg for %s. " % action)
                 continue
             if not isinstance(image_arg, str):
-                self.errors = "image_arg is not a string (try quoting it)"
+                self.errors_add("image_arg is not a string (try quoting it)")
                 continue
             substitutions["{%s}" % action] = action_arg
             dfu_full_command.extend(self.base_command)
             dfu_full_command.extend(substitute([image_arg], substitutions))
             self.exec_list.append(dfu_full_command)
         if not self.exec_list:
-            self.errors = "No DFU command to execute"
+            self.errors_add("No DFU command to execute")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

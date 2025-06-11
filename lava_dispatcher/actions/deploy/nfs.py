@@ -29,7 +29,7 @@ class NfsAction(Action):
         if not self.valid:
             return
         if "nfsrootfs" in self.parameters and "persistent_nfs" in self.parameters:
-            self.errors = "Only one of nfsrootfs or persistent_nfs can be specified"
+            self.errors_add("Only one of nfsrootfs or persistent_nfs can be specified")
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()

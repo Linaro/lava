@@ -102,12 +102,12 @@ class FlashOpenOCDAction(Action):
             self.base_command.extend(["-c", item])
 
         if self.job.device["board_id"] == "00000000":
-            self.errors = "[FLASH_OPENOCD] board_id unset"
+            self.errors_add("[FLASH_OPENOCD] board_id unset")
 
         self.base_command = substitute(self.base_command, substitutions)
         self.exec_list.append(self.base_command)
         if not self.exec_list:
-            self.errors = "No OpenOCD command to execute"
+            self.errors_add("No OpenOCD command to execute")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

@@ -357,7 +357,7 @@ class MultinodeOverlayAction(OverlayAction):
             if "target_group" not in self.job.parameters["protocols"][self.protocol]:
                 return
             if "role" not in self.job.parameters["protocols"][self.protocol]:
-                self.errors = "multinode job without a specified role"
+                self.errors_add("multinode job without a specified role")
             else:
                 self.role = self.job.parameters["protocols"][self.protocol]["role"]
 
@@ -525,7 +525,7 @@ class SshAuthorize(Action):
         params = self.job.device["actions"]["deploy"]["methods"]
         check = check_ssh_identity_file(params)
         if check[0]:
-            self.errors = check[0]
+            self.errors_add(check[0])
         elif check[1]:
             self.identity_file = check[1]
         if self.valid:

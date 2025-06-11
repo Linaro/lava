@@ -51,7 +51,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             try:
                 self.cmdline = method_params["cmdline"]
             except KeyError:
-                self.errors = f"No cmdline found in {commands_name}"
+                self.errors_add(f"No cmdline found in {commands_name}")
 
     def create_cmdline_file(self, kernel_tftp: str | None) -> str | None:
         if kernel_tftp is None:
@@ -185,11 +185,11 @@ class DepthchargeStart(Action):
     def validate(self):
         super().validate()
         if self.job.device.connect_command == "":
-            self.errors = "Unable to connect to device"
+            self.errors_add("Unable to connect to device")
         method = self.job.device["actions"]["boot"]["methods"]["depthcharge"]
         self.start_message = method["parameters"].get("start_message")
         if self.start_message is None:
-            self.errors = "Missing Depthcharge start message for device"
+            self.errors_add("Missing Depthcharge start message for device")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

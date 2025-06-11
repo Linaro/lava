@@ -11,7 +11,7 @@ import subprocess  # nosec - internal
 import time
 import traceback
 import warnings
-from functools import reduce
+from itertools import chain
 from shlex import split as shlex_split
 from typing import TYPE_CHECKING
 
@@ -182,17 +182,14 @@ class Pipeline:
 
     @property
     def errors(self) -> list[str]:
-        sub_action_errors = [a.errors for a in self.actions]
-        if not sub_action_errors:  # allow for jobs with no actions
-            return []
-        return reduce(lambda a, b: a + b, sub_action_errors)
+        return list(chain(*(a.errors for a in self.actions)))
 
     def validate_actions(self) -> None:
         for action in self.actions:
             try:
                 action.validate()
             except JobError as exc:
-                action.errors = f"{action.level} {action.name}: {str(exc)}"
+                action.errors_add(f"{action.level} {action.name}: {str(exc)}")
 
         # If this is the root pipeline, raise the errors
         if self.parent is None and self.errors:
@@ -357,7 +354,7 @@ class Action:
         self.level = None
         self.pipeline: Pipeline | None = None
         self.__parameters__ = {}
-        self.__errors__ = []
+        self._errors: list[str] = []
         self.logger: YAMLLogger = job.logger
         self.__results__ = {}
         self.timeout: Timeout = Timeout(
@@ -406,16 +403,14 @@ class Action:
         self.job.context.update(value)
 
     @property
-    def errors(self):
+    def errors(self) -> list[str]:
         if self.pipeline:
-            return self.__errors__ + self.pipeline.errors
+            return self._errors + self.pipeline.errors
         else:
-            return self.__errors__
+            return self._errors
 
-    @errors.setter
-    def errors(self, error):
-        if error:
-            self.__errors__.append(error)
+    def errors_add(self, new_error: str) -> None:
+        self._errors.append(new_error)
 
     @property
     def valid(self):
@@ -504,25 +499,25 @@ class Action:
         """
         # Basic checks
         if not self.name:
-            self.errors = "%s action has no name set" % self
+            self.errors_add("%s action has no name set" % self)
         # have already checked that self.name is not None, but pylint gets confused.
         if " " in self.name:
-            self.errors = (
+            self.errors_add(
                 "Whitespace must not be used in action names, only descriptions or summaries: %s"
                 % self.name
             )
 
         if "_" in self.name:
-            self.errors = "Use - instead of _ in action names: %s" % self.name
+            self.errors_add("Use - instead of _ in action names: %s" % self.name)
 
         if not self.summary:
-            self.errors = f"action {self.name} ({self}) lacks a summary"
+            self.errors_add(f"action {self.name} ({self}) lacks a summary")
 
         if not self.description:
-            self.errors = f"action {self.name} ({self}) lacks a description"
+            self.errors_add(f"action {self.name} ({self}) lacks a description")
 
         if not self.section:
-            self.errors = f"action {self.name} ({self}) has no section set"
+            self.errors_add(f"action {self.name} ({self}) has no section set")
 
         # Collect errors from internal pipeline actions
         if self.pipeline:
@@ -628,7 +623,7 @@ class Action:
                 self.logger.info(msg)
             else:
                 for error in errors:
-                    self.errors = error
+                    self.errors_add(error)
                 self.logger.error(msg)
                 # if not allow_fail, fail the command with the specified exception.
                 raise self.command_exception(exc) from exc
@@ -785,7 +780,7 @@ class Action:
                 log = exc.output.strip().decode("utf-8", errors="replace")
             else:
                 for error in errors:
-                    self.errors = error
+                    self.errors_add(error)
                 self.logger.error(msg)
                 # if not allow_fail, fail the command
                 return False

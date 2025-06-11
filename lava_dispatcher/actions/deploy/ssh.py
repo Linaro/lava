@@ -43,11 +43,11 @@ class ScpOverlay(Action):
         super().validate()
         self.items = ["firmware", "kernel", "dtb", "rootfs", "modules"]
         if not self.test_has_shell(self.parameters):
-            self.errors = "Scp overlay needs a test action."
+            self.errors_add("Scp overlay needs a test action.")
             return
         connections = self.job.device["actions"]["deploy"]["connections"]
         if connections is None or "serial" not in connections:
-            self.errors = "Device not configured to support serial connection."
+            self.errors_add("Device not configured to support serial connection.")
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -113,17 +113,17 @@ class PrepareOverlayScp(Action):
             # set run to call the protocol, retrieve the data and store.
             for params in self.parameters["protocols"][MultinodeProtocol.name]:
                 if isinstance(params, str):
-                    self.errors = (
+                    self.errors_add(
                         "Invalid protocol action setting - needs to be a list."
                     )
                     continue
                 if "action" not in params or params["action"] != self.name:
                     continue
                 if "messageID" not in params:
-                    self.errors = "Invalid protocol block: %s" % params
+                    self.errors_add("Invalid protocol block: %s" % params)
                     return
                 if "message" not in params or not isinstance(params["message"], dict):
-                    self.errors = "Missing message block for scp deployment"
+                    self.errors_add("Missing message block for scp deployment")
                     return
                 self.host_keys.append(params["messageID"])
         self.set_namespace_data(

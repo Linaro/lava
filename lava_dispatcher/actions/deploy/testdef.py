@@ -98,7 +98,7 @@ class RepoAction(Action):
 
     def validate(self):
         if "test_name" not in self.parameters:
-            self.errors = "Unable to determine test_name"
+            self.errors_add("Unable to determine test_name")
             return
         if not isinstance(self, (InlineRepoAction, UrlRepoAction)):
             if self.vcs is None:
@@ -106,7 +106,9 @@ class RepoAction(Action):
                     "RepoAction validate called super without setting the vcs"
                 )
             if not os.path.exists(self.vcs.binary):
-                self.errors = "%s is not installed on the dispatcher." % self.vcs.binary
+                self.errors_add(
+                    "%s is not installed on the dispatcher." % self.vcs.binary
+                )
         super().validate()
 
         # FIXME: unused
@@ -254,9 +256,9 @@ class GitRepoAction(RepoAction):
 
     def validate(self):
         if "repository" not in self.parameters:
-            self.errors = "Git repository not specified in job definition"
+            self.errors_add("Git repository not specified in job definition")
         if "path" not in self.parameters:
-            self.errors = "Path to YAML file not specified in the job definition"
+            self.errors_add("Path to YAML file not specified in the job definition")
         if not self.valid:
             return
         self.vcs = GitHelper(self.parameters["repository"], self.logger)
@@ -350,9 +352,9 @@ class InlineRepoAction(RepoAction):
 
     def validate(self):
         if "repository" not in self.parameters:
-            self.errors = "Inline definition not specified in job definition"
+            self.errors_add("Inline definition not specified in job definition")
         if not isinstance(self.parameters["repository"], dict):
-            self.errors = "Invalid inline definition in job definition"
+            self.errors_add("Invalid inline definition in job definition")
         if not self.valid:
             return
         super().validate()
@@ -409,9 +411,9 @@ class UrlRepoAction(RepoAction):
 
     def validate(self):
         if "repository" not in self.parameters:
-            self.errors = "Url repository not specified in job definition"
+            self.errors_add("Url repository not specified in job definition")
         if "path" not in self.parameters:
-            self.errors = "Path to YAML file not specified in the job definition"
+            self.errors_add("Path to YAML file not specified in the job definition")
         super().validate()
 
     def populate(self, parameters):
@@ -580,10 +582,10 @@ class TestDefinitionAction(Action):
         Jobs with no test actions defined (empty test_list) are explicitly allowed.
         """
         if not self.job:
-            self.errors = "missing job object"
+            self.errors_add("missing job object")
             return
         if "actions" not in self.job.parameters:
-            self.errors = "No actions defined in job parameters"
+            self.errors_add("No actions defined in job parameters")
             return
         if not self.test_list:
             return
@@ -593,28 +595,32 @@ class TestDefinitionAction(Action):
             for testdef in testdefs:
                 if "parameters" in testdef:  # optional
                     if not isinstance(testdef["parameters"], dict):
-                        self.errors = "Invalid test definition parameters"
+                        self.errors_add("Invalid test definition parameters")
                 if "from" not in testdef:
-                    self.errors = "missing 'from' field in test definition %s" % testdef
+                    self.errors_add(
+                        "missing 'from' field in test definition %s" % testdef
+                    )
                 if "name" not in testdef:
-                    self.errors = "missing 'name' field in test definition %s" % testdef
+                    self.errors_add(
+                        "missing 'name' field in test definition %s" % testdef
+                    )
                 else:
                     res = exp.match(testdef["name"])
                     if not res:
-                        self.errors = (
+                        self.errors_add(
                             "Invalid characters found in test definition name: %s"
                             % testdef["name"]
                         )
                 if "expected" in testdef:
                     if not isinstance(testdef["expected"], list):
-                        self.errors = "'expected' should be a test case list"
+                        self.errors_add("'expected' should be a test case list")
         super().validate()
         for testdefs in self.test_list:
             for testdef in testdefs:
                 try:
                     RepoAction.select(testdef["from"])(self.job)
                 except JobError as exc:
-                    self.errors = str(exc)
+                    self.errors_add(str(exc))
 
     def run(self, connection, max_end_time):
         """
@@ -687,7 +693,7 @@ class TestOverlayAction(Action):
     def validate(self):
         super().validate()
         if "path" not in self.parameters:
-            self.errors = "Missing path in parameters"
+            self.errors_add("Missing path in parameters")
 
     def handle_parameters(self, testdef):
         def raise_if_not_dict(data, key):
@@ -812,7 +818,7 @@ class TestInstallAction(TestOverlayAction):
     def validate(self):
         if "skip_install" in self.parameters:
             if set(self.parameters["skip_install"]) - set(self.skip_list):
-                self.errors = "Unrecognised skip_install value"
+                self.errors_add("Unrecognised skip_install value")
             if "all" in self.parameters["skip_install"]:
                 self.skip_options = self.skip_list[:-1]  # without last item
             else:
@@ -994,17 +1000,17 @@ class TestRunnerAction(TestOverlayAction):
             action="test-definition", label="test-definition", key="testdef_index"
         )
         if not testdef_index:
-            self.errors = "Unable to identify test definition index"
+            self.errors_add("Unable to identify test definition index")
             return
         if len(testdef_index) != len(set(testdef_index)):
-            self.errors = "Test definition names need to be unique."
+            self.errors_add("Test definition names need to be unique.")
         # convert from testdef_index {0: 'smoke-tests', 1: 'singlenode-advanced'}
         # to self.testdef_levels {'1.3.4.1': '0_smoke-tests', ...}
         for count, name in enumerate(testdef_index):
             if self.parameters["name"] == name:
                 self.testdef_levels[self.level] = f"{count}_{name}"
         if not self.testdef_levels:
-            self.errors = "Unable to identify test definition names"
+            self.errors_add("Unable to identify test definition names")
         current = self.get_namespace_data(
             action=self.name, label=self.name, key="testdef_levels"
         )

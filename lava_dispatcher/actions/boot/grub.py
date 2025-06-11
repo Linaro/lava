@@ -61,7 +61,7 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
         )
         for sequence in sequences:
             if not _grub_sequence_map(sequence):
-                self.errors = "Unknown boot sequence '%s'" % sequence
+                self.errors_add("Unknown boot sequence '%s'" % sequence)
 
     def populate(self, parameters):
         super().populate(parameters)
@@ -154,11 +154,13 @@ class GrubMenuSelector(UefiMenuSelector):
 
     def validate(self):
         if self.method_name not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "No %s in device boot methods" % self.method_name
+            self.errors_add("No %s in device boot methods" % self.method_name)
             return
         self.params = self.job.device["actions"]["boot"]["methods"][self.method_name]
         if "menu_options" not in self.params:
-            self.errors = "Missing entry for menu item to use for %s" % self.method_name
+            self.errors_add(
+                "Missing entry for menu item to use for %s" % self.method_name
+            )
             return
         self.commands = self.params["menu_options"]
         super().validate()
@@ -193,7 +195,7 @@ class InstallerWait(Action):
     def validate(self):
         super().validate()
         if "boot_finished" not in self.parameters:
-            self.errors = "Missing boot_finished string"
+            self.errors_add("Missing boot_finished string")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

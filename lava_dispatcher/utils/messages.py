@@ -138,7 +138,7 @@ class LinuxKernelMessages:
             except (pexpect.EOF, TestError):
                 msg = "Failed to match - connection timed out handling messages."
                 action.logger.warning(msg)
-                action.errors = msg
+                action.errors_add(msg)
                 break
 
             if index:
@@ -176,7 +176,7 @@ class LinuxKernelMessages:
                 except (pexpect.EOF, TestError):
                     msg = "Failed to match end of kernel error"
                     action.logger.warning(msg)
-                    action.errors = msg
+                    action.errors_add(msg)
                     break
                 if sub_index != 0:
                     action.logger.warning("Unable to match end of the kernel message")
