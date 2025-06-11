@@ -3,14 +3,19 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 from stat import S_IXUSR
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
-def _which_check(path, match):
+
+def _which_check(path: str, match: Callable[[str], object]) -> str | None:
     """
     Simple replacement for the `which` command found on
     Debian based systems. Allows ordinary users to query
@@ -27,7 +32,7 @@ def _which_check(path, match):
     return None
 
 
-def which(path, match=os.path.isfile):
+def which(path: str, match: Callable[[str], object] = os.path.isfile) -> str:
     exefile = _which_check(path, match)
     if not exefile:
         raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
