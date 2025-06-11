@@ -21,7 +21,7 @@ def test_shell_reference(monkeypatch):
     factory = TestFVPActions()
     factory.setUp()
     factory.job.validate()
-    assert [] == factory.job.pipeline.errors  # nosec
+    assert not factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference("fvp_foundation.yaml", job=factory.job)
     assert description_ref == factory.job.pipeline.describe()  # nosec
 
@@ -31,7 +31,7 @@ def test_use_telnet(monkeypatch):
     factory = TestFVPActions()
     factory.setUp(job="sample_jobs/fvp_foundation_use_telnet.yaml")
     factory.job.validate()
-    assert [] == factory.job.pipeline.errors  # nosec
+    assert not factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference(
         "fvp_foundation_use_telnet.yaml", job=factory.job
     )
@@ -43,7 +43,7 @@ def test_transfer_overlay(monkeypatch):
     factory = TestFVPActions()
     factory.setUp(job="sample_jobs/fvp_foundation_transfer_overlay.yaml")
     factory.job.validate()
-    assert [] == factory.job.pipeline.errors  # nosec
+    assert not factory.job.pipeline.errors  # nosec
     description_ref = factory.pipeline_reference(
         "fvp_foundation_transfer_overlay.yaml", job=factory.job
     )

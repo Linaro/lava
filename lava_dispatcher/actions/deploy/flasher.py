@@ -47,7 +47,7 @@ class FlasherAction(Action):
         method = self.job.device["actions"]["deploy"]["methods"]["flasher"]
         self.commands = method.get("commands")
         if not isinstance(self.commands, list):
-            self.errors = "'commands' should be a list"
+            self.errors_add("'commands' should be a list")
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)

@@ -125,7 +125,7 @@ class MonitorInstallerSession(Action):
     def validate(self):
         super().validate()
         if "prompts" not in self.parameters:
-            self.errors = "Unable to identify test image prompts from parameters."
+            self.errors_add("Unable to identify test image prompts from parameters.")
 
     def run(self, connection, max_end_time):
         self.logger.debug(
@@ -147,7 +147,7 @@ class IsoRebootAction(Action):
     def validate(self):
         super().validate()
         if "prompts" not in self.parameters:
-            self.errors = "Unable to identify boot prompts from job definition."
+            self.errors_add("Unable to identify boot prompts from job definition.")
         try:
             boot = self.job.device["actions"]["boot"]["methods"]["qemu"]
             qemu_binary = which(boot["parameters"]["command"])
@@ -156,7 +156,7 @@ class IsoRebootAction(Action):
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
 
     def run(self, connection, max_end_time):
         """

@@ -52,10 +52,10 @@ class BootGDBRetry(RetryAction):
         super().validate()
         method = self.job.device["actions"]["boot"]["methods"]["gdb"]
         if "parameters" not in method:
-            self.errors = '"parameters" not defined in device configuration'
+            self.errors_add('"parameters" not defined in device configuration')
             return
         if "command" not in method["parameters"]:
-            self.errors = (
+            self.errors_add(
                 '"command" not defined under "parameters" in device configuration'
             )
             return
@@ -64,15 +64,15 @@ class BootGDBRetry(RetryAction):
 
         commands = self.parameters["commands"]
         if commands not in method:
-            self.errors = "'%s' not available" % commands
+            self.errors_add("'%s' not available" % commands)
             return
         self.commands = method[commands].get("commands")
         if not isinstance(self.commands, list):
-            self.errors = "'commands' should be a list"
+            self.errors_add("'commands' should be a list")
 
         self.arguments = method[commands].get("arguments")
         if not isinstance(self.arguments, list):
-            self.errors = "'arguments' should be a list"
+            self.errors_add("'arguments' should be a list")
         self.wait_before_continue = method["parameters"].get("wait_before_continue", 0)
 
         # If this is defined, we have to use docker
@@ -81,10 +81,10 @@ class BootGDBRetry(RetryAction):
             self.container = method[commands]["docker"].get("container")
             self.container = self.parameters.get("container", self.container)
             if self.container is None:
-                self.errors = "a docker container should be defined"
+                self.errors_add("a docker container should be defined")
             self.devices = method[commands]["docker"].get("devices", [])
         elif self.parameters.get("container"):
-            self.errors = (
+            self.errors_add(
                 "Requesting a docker container while docker is not used for this device"
             )
 

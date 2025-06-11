@@ -52,7 +52,7 @@ class CommandAction(Action):
                         cmd = " ".join(cmd)
                     self.cmd = {"do": cmd}
                 except KeyError:
-                    self.errors = (
+                    self.errors_add(
                         "Command 'usbg_ms_commands.disable' not defined for this device"
                     )
                 return
@@ -62,7 +62,7 @@ class CommandAction(Action):
                 ):
                     self.cmd = {"do": cmd_list}
                 else:
-                    self.errors = (
+                    self.errors_add(
                         "Command for 'stop_test_services' not found. "
                         "No 'test.services' action defined?"
                     )
@@ -72,12 +72,12 @@ class CommandAction(Action):
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
                 return
 
-            self.errors = "Command '%s' not defined for this device" % cmd_name
+            self.errors_add("Command '%s' not defined for this device" % cmd_name)
             return
 
         user_commands = self.job.device.get("commands", {}).get("users")
         if not user_commands:
-            self.errors = "Device has no configured user commands"
+            self.errors_add("Device has no configured user commands")
             return
         try:
             self.cmd = user_commands[cmd_name]
@@ -89,7 +89,7 @@ class CommandAction(Action):
                     "'do' and 'undo' should be strings" % cmd_name
                 )
         except KeyError:
-            self.errors = "Unknown user command '%s'" % cmd_name
+            self.errors_add("Unknown user command '%s'" % cmd_name)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

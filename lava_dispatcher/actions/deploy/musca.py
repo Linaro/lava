@@ -40,11 +40,11 @@ class MuscaAction(RetryAction):
     def validate(self):
         super().validate()
         if "images" not in self.parameters:
-            self.errors = "Missing 'images'"
+            self.errors_add("Missing 'images'")
             return
         images = self.parameters["images"]
         if "test_binary" not in images:
-            self.errors = "Missing 'test_binary'"
+            self.errors_add("Missing 'test_binary'")
 
     def populate(self, parameters):
         download_dir = self.mkdtemp()
@@ -121,7 +121,7 @@ class WaitMuscaMassStorageAction(Action):
     def validate(self):
         super().validate()
         if not isinstance(self.udev_action, str):
-            self.errors = "invalid device action"
+            self.errors_add("invalid device action")
         if "board_id" not in self.job.device:
             return (
                 False,
@@ -168,12 +168,14 @@ class MountMuscaMassStorageDevice(MountDeviceMassStorageDevice):
     def validate(self):
         super().validate()
         if "id_serial" not in self.job.device["actions"]["deploy"]["methods"]["musca"]:
-            self.errors = "id_serial parameter not set for actions.deploy.methods.musca"
+            self.errors_add(
+                "id_serial parameter not set for actions.deploy.methods.musca"
+            )
         self.disk_identifier = self.job.device["actions"]["deploy"]["methods"]["musca"][
             "id_serial"
         ]
         if not isinstance(self.disk_identifier, str):
-            self.errors = "USB ID unset for Musca"
+            self.errors_add("USB ID unset for Musca")
 
 
 class DeployMuscaTestBinary(Action):
@@ -192,7 +194,7 @@ class DeployMuscaTestBinary(Action):
     def validate(self):
         super().validate()
         if not self.parameters["images"].get(self.param_key):
-            self.errors = "Missing '%s' in 'images'" % self.param_key
+            self.errors_add("Missing '%s' in 'images'" % self.param_key)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -231,7 +233,7 @@ class DeployMuscaAutomationAction(Action):
     def validate(self):
         super().validate()
         if not self.automation_filename:
-            self.errors = "Musca deploy was not given an automation filename."
+            self.errors_add("Musca deploy was not given an automation filename.")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

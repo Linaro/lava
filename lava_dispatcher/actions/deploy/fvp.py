@@ -34,7 +34,9 @@ class FVPDeploy(Action):
             if "overlays" in image_params:
                 if self.parameters.get("format", None) == "disk":
                     if "partition" not in image_params:
-                        self.errors = "Missing partition value for 'overlays' value for FVPDeploy."
+                        self.errors_add(
+                            "Missing partition value for 'overlays' value for FVPDeploy."
+                        )
 
     def populate(self, parameters):
         self.image_path = self.mkdtemp()

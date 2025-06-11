@@ -36,7 +36,7 @@ class TestServices(Action):
         super().validate()
 
         if self.job.device.get("parameters", {}).get("allow_test_services") is not True:
-            self.errors = (
+            self.errors_add(
                 "Device 'allow_test_services' must be set to 'true' "
                 "for running test services on LAVA worker."
             )
@@ -44,11 +44,11 @@ class TestServices(Action):
 
         names = [service["name"] for service in self.parameters["services"]]
         if len(names) != len(set(names)):
-            self.errors = "Test service names need to be unique."
+            self.errors_add("Test service names need to be unique.")
         exp = re.compile(DEFAULT_TEST_NAME_CLASS)
         for name in names:
             if not exp.match(name):
-                self.errors = (
+                self.errors_add(
                     f"Invalid characters found in test service name {name!r}. "
                     "Allowed: letters, digits, underscore and hyphen."
                 )

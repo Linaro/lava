@@ -44,9 +44,9 @@ class EnterQDL(Action):
         super().validate()
         parameters = self.job.device["actions"]["boot"]["methods"]["qdl"]["parameters"]
         if "enter-commands" not in parameters:
-            self.errors = '"enter-commands" is not defined'
+            self.errors_add('"enter-commands" is not defined')
         elif not isinstance(parameters["enter-commands"], list):
-            self.errors = '"enter-commands" should be a list'
+            self.errors_add('"enter-commands" should be a list')
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -127,7 +127,7 @@ class FlashQDLAction(Action):
             if qdl_storage:
                 self.base_command.extend(["--storage", qdl_storage])
             if self.job.device["board_qdl_id"] == "00000000":
-                self.errors = "[FLASH_QDL] board_qdl_id unset"
+                self.errors_add("[FLASH_QDL] board_qdl_id unset")
             self.usb_vendor_id = self.job.device["usb_vendor_id"]
             self.usb_product_id = self.job.device["usb_product_id"]
             self.board_qdl_id = self.job.device["board_qdl_id"]
@@ -139,10 +139,10 @@ class FlashQDLAction(Action):
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors_add("Invalid parameters for %s" % self.name)
         self.exec_list.append(self.base_command)
         if not self.exec_list:
-            self.errors = "No QDL commands to execute"
+            self.errors_add("No QDL commands to execute")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

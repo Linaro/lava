@@ -78,7 +78,7 @@ class BaseFVPAction(Action):
         if "docker" not in self.parameters or "name" not in self.parameters.get(
             "docker", {}
         ):
-            self.errors = "Specify docker image name"
+            self.errors_add("Specify docker image name")
             raise JobError("Not specified 'docker' in parameters")
         self.docker_image = self.parameters["docker"]["name"]
         self.local_docker_image = self.parameters["docker"].get("local", False)
@@ -335,12 +335,12 @@ class StartFVPAction(BaseFVPAction):
     def validate(self):
         super().validate()
         if "console_string" not in self.parameters:
-            self.errors = "'console_string' is not set."
+            self.errors_add("'console_string' is not set.")
         else:
             self.fvp_console_string = self.parameters.get("console_string")
             self.fvp_feedbacks.add(self.fvp_console_string)
         if "arguments" not in self.parameters:
-            self.errors = "'arguments' is not set."
+            self.errors_add("'arguments' is not set.")
         if "feedbacks" in self.parameters:
             for feedback in self.parameters.get("feedbacks"):
                 self.fvp_feedbacks.add(feedback)
@@ -546,10 +546,10 @@ class RunFVPShellCommands(Action):
         super().validate()
         self.commands = self.parameters.get("commands", [])
         if not self.commands:
-            self.errors = "'commands' cannot be empty"
+            self.errors_add("'commands' cannot be empty")
             return
         if not isinstance(self.commands, list):
-            self.errors = "'commands' must be a list"
+            self.errors_add("'commands' must be a list")
 
     def run(self, connection, max_end_time):
         container = self.get_namespace_data(

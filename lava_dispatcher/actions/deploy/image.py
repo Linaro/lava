@@ -120,13 +120,13 @@ class ExtractNfsAction(Action):
         if not self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
         ):
-            self.errors = "no file specified extract as %s" % self.param_key
+            self.errors_add("no file specified extract as %s" % self.param_key)
         if "prefix" in self.parameters["images"][self.param_key]:
             prefix = self.parameters["images"][self.param_key]["prefix"]
             if prefix.startswith("/"):
-                self.errors = "prefix must not be an absolute path"
+                self.errors_add("prefix must not be an absolute path")
             if not prefix.endswith("/"):
-                self.errors = "prefix must be a directory and end with /"
+                self.errors_add("prefix must be a directory and end with /")
 
     def run(self, connection, max_end_time):
         if not self.parameters["images"].get(self.param_key):  # idempotency

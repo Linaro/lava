@@ -36,14 +36,14 @@ class DeployDeviceEnvironment(Action):
         super().validate()
         shell_file = self.get_constant("lava_test_shell_file", "posix")
         if not shell_file:
-            self.errors = "Invalid deployment data - missing lava_test_shell_file"
+            self.errors_add("Invalid deployment data - missing lava_test_shell_file")
 
         if "env_dut" in self.job.parameters and self.job.parameters["env_dut"]:
             # Check that the file is valid yaml
             try:
                 yaml_safe_load(self.job.parameters["env_dut"])
             except (TypeError, yaml.scanner.ScannerError) as exc:
-                self.errors = exc
+                self.errors_add(str(exc))
                 return
 
             self.env = self.job.parameters["env_dut"]

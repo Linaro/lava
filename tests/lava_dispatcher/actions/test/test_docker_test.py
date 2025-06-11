@@ -187,7 +187,7 @@ def test_docker_test_shell_validate(action):
     action.validate()
     assert action.valid is True
     for a in action.pipeline.actions:
-        a.__errors__.clear()
+        a._errors.clear()
 
     action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [
         ["foo", "bar", "rw"]
@@ -195,19 +195,19 @@ def test_docker_test_shell_validate(action):
     action.validate()
     assert action.valid is True
     for a in action.pipeline.actions:
-        a.__errors__.clear()
+        a._errors.clear()
 
     action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [["foo"]]
     action.validate()
     assert action.valid is False
     for a in action.pipeline.actions:
-        a.__errors__.clear()
+        a._errors.clear()
 
     action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [[["foo"], "bar"]]
     action.validate()
     assert action.valid is False
     for a in action.pipeline.actions:
-        a.__errors__.clear()
+        a._errors.clear()
 
     action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [
         ["foo", "bar", "foo"]
@@ -215,7 +215,7 @@ def test_docker_test_shell_validate(action):
     action.validate()
     assert action.valid is False
     for a in action.pipeline.actions:
-        a.__errors__.clear()
+        a._errors.clear()
 
 
 def test_multinode_docker_test_shell(action, multinode_action):

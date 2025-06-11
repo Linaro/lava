@@ -36,7 +36,9 @@ class QDLAction(Action):
     def validate(self):
         super().validate()
         if not self.parameters.get(self.param_key):
-            self.errors = f"action {self.name} can't work without {self.param_key} file"
+            self.errors_add(
+                f"action {self.name} can't work without {self.param_key} file"
+            )
 
     def populate(self, parameters):
         self.parameters = parameters

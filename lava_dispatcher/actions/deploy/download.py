@@ -236,9 +236,9 @@ class DownloadHandler(Action):
             )
 
         if compression and compression not in ["gz", "bz2", "xz", "zip", "zstd"]:
-            self.errors = "Unknown 'compression' format '%s'" % compression
+            self.errors_add("Unknown 'compression' format '%s'" % compression)
         if archive and archive not in ["tar"]:
-            self.errors = "Unknown 'archive' format '%s'" % archive
+            self.errors_add("Unknown 'archive' format '%s'" % archive)
         # pass kernel type to boot Action
         if self.key == "kernel" and ("kernel" in self.parameters):
             self.set_namespace_data(
@@ -550,8 +550,8 @@ class FileDownloadAction(DownloadHandler):
             self.logger.debug("Validating that %s exists", self.url.geturl())
             self.size = os.stat(self.url.path).st_size
         except OSError:
-            self.errors = "Image file '%s' does not exist or is not readable" % (
-                self.url.path
+            self.errors_add(
+                "Image file '%s' does not exist or is not readable" % (self.url.path)
             )
 
     def reader(self):
@@ -634,13 +634,13 @@ class HttpDownloadAction(DownloadHandler):
                     # Cache server available
                     return
                 elif not fallback_origin_url:
-                    self.errors = f"Unable to get {self.url.geturl()!r}"
+                    self.errors_add(f"Unable to get {self.url.geturl()!r}")
                     return
                 self.url = original_url
                 self.logger.info("Fallback to original URL : %s", self.url.geturl())
             except TypeError as exc:
                 self.logger.error("Invalid http_url_format_string: '%s'", exc)
-                self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
+                self.errors_add("Invalid http_url_format_string: '%s'" % str(exc))
                 return
 
         # validate url if cache not available or disabled
@@ -668,9 +668,12 @@ class HttpDownloadAction(DownloadHandler):
         try:
             res = self._head_or_get(self.url.geturl(), headers)
             if res.status_code != HTTP_CODE_OK:
-                self.errors = "Resource unavailable at '%s' (%d)" % (
-                    self.url.geturl(),
-                    res.status_code,
+                self.errors_add(
+                    "Resource unavailable at '%s' (%d)"
+                    % (
+                        self.url.geturl(),
+                        res.status_code,
+                    )
                 )
                 return
             self.size = int(res.headers.get("content-length", -1))
@@ -678,10 +681,10 @@ class HttpDownloadAction(DownloadHandler):
             return
         except requests.Timeout:
             self.logger.error("Request timed out")
-            self.errors = "'%s' timed out" % (self.url.geturl())
+            self.errors_add("'%s' timed out" % (self.url.geturl()))
         except requests.RequestException as exc:
             self.logger.error("Resource not available: %s", exc)
-            self.errors = f"Unable to get '{self.url.geturl()}': {exc}"
+            self.errors_add(f"Unable to get '{self.url.geturl()}': {exc}")
         finally:
             if res is not None:
                 res.close()
@@ -758,7 +761,7 @@ class ScpDownloadAction(DownloadHandler):
             )
             self.size = int(size)
         except subprocess.CalledProcessError as exc:
-            self.errors = str(exc)
+            self.errors_add(str(exc))
 
     def reader(self):
         process = None
@@ -846,7 +849,7 @@ class RcloneDownloadAction(DownloadHandler):
         try:
             rclone_path = self._get_rclone_path()
         except InfrastructureError as exc:
-            self.errors = str(exc)
+            self.errors_add(str(exc))
             return
         rclone_source = self._parse_rclone_url()
 
@@ -864,7 +867,9 @@ class RcloneDownloadAction(DownloadHandler):
             env=self._rclone_env(),
         )
         if result.returncode != 0:
-            self.errors = f"Unable to get file info from rclone: {result.stderr.decode('utf-8').strip()}"
+            self.errors_add(
+                f"Unable to get file info from rclone: {result.stderr.decode('utf-8').strip()}"
+            )
             return
 
         try:
@@ -925,9 +930,9 @@ class PreDownloadedAction(Action):
     def validate(self):
         super().validate()
         if self.url.scheme != "downloads":
-            self.errors = "downloads:// url scheme is invalid"
+            self.errors_add("downloads:// url scheme is invalid")
         if not self.url.path and not self.url.netloc:
-            self.errors = "Invalid path in downloads:// url"
+            self.errors_add("Invalid path in downloads:// url")
 
         image_arg = self.params.get("image_arg")
         if image_arg is not None:
