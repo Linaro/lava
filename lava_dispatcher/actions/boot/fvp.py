@@ -38,6 +38,8 @@ class BootFVPAction(BootHasMixin, RetryAction):
                 self.pipeline.add_action(ExpectShellSession(self.job))
                 if "transfer_overlay" in parameters:
                     self.pipeline.add_action(OverlayUnpack(self.job))
+        if parameters.get("erpc_app", ""):
+            self.pipeline.add_action(RunFVPeRPCApp(self.job))
 
 
 class BootFVPMain(Action):
@@ -488,3 +490,45 @@ class GetFVPSerialAction(Action):
             action="shared", label="shared", key="connection", value=shell_connection
         )
         return shell_connection
+
+
+class RunFVPeRPCApp(Action):
+    name = "run-fvp-erpc-app"
+    description = "run FVP eRPC app"
+    summary = "run FVP eRPC app"
+
+    def __init__(self, job: Job):
+        super().__init__(job)
+        self.app: str = ""
+
+    def validate(self):
+        super().validate()
+        self.app = self.parameters.get("erpc_app", "")
+        if not self.app:
+            raise JobError("'erpc_app' cannot be empty")
+
+    def run(self, connection, max_end_time):
+        container = self.get_namespace_data(
+            action=StartFVPAction.name, label="fvp", key="container"
+        )
+
+        app_path = self.get_namespace_data(
+            action="download-action", label="file", key=self.app
+        )
+        if app_path is None:
+            raise JobError(f"eRPC app '{self.app}' not deployed")
+        app_path = f"/{container}/{os.path.basename(app_path)}"
+
+        cmd = f"docker exec --tty {container} sh -c 'chmod +x {app_path} && {app_path}'"
+
+        self.logger.debug("Connect command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
+
+        connection = ShellSession(self.job, shell)
+        connection = super().run(connection, max_end_time)
+
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
+
+        return connection

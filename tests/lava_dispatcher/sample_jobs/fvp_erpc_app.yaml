@@ -1,0 +1,74 @@
+device_type: fvp
+job_name: fvp-erpc-app
+
+timeouts:
+  job:
+    minutes: 15
+
+priority: medium
+visibility: public
+
+context:
+  kernel_start_message: "Starting bootloader"
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: fvp
+    images:
+      APP:
+        url: https://example.com/bl2.axf
+      SERVER_APP:
+        url: https://example.com/tfm_s_ns_signed.bin
+      TEST_APP:
+        url: https://example.com/erpc_main
+
+- boot:
+    timeout:
+      minutes: 5
+    method: fvp
+    docker:
+      name: localhost/fvp-std-lib:erpc
+      local: true
+    version_string: "Fast Models [^\\n]+"
+    image: "/opt/model/FVP_ARM_Std_Library/FVP_MPS2/FVP_MPS2_AEMv8M"
+    ubl_license: "/root/swskt-linaro-root-20241031-365d.lic"
+    arguments:
+    - "--parameter fvp_mps2.platform_type=2"
+    - "--parameter cpu0.baseline=0"
+    - "--parameter cpu0.INITVTOR_S=0x10000000"
+    - "--parameter cpu0.semihosting-enable=0"
+    - "--parameter fvp_mps2.DISABLE_GATING=0"
+    - "--parameter fvp_mps2.telnetterminal0.start_telnet=1"
+    - "--parameter fvp_mps2.telnetterminal1.start_telnet=0"
+    - "--parameter fvp_mps2.telnetterminal2.start_telnet=0"
+    - "--parameter fvp_mps2.telnetterminal0.quiet=0"
+    - "--parameter fvp_mps2.telnetterminal1.quiet=1"
+    - "--parameter fvp_mps2.telnetterminal2.quiet=1"
+    - "--parameter fvp_mps2.telnetterminal0.start_port=5000"
+    - "--parameter fvp_mps2.telnetterminal1.start_port=5001"
+    - "--parameter fvp_mps2.telnetterminal1.mode=raw"
+    - "--parameter fvp_mps2.UART1.unbuffered_output=1"
+    - "--application cpu0={APP}"
+    - "--data cpu0={SERVER_APP}@0x10080000"
+    - "-M 1"
+    console_string: 'telnetterminal0: Listening for serial connection on port (?P<PORT>\d+)'
+    # Optional: check output from telnetterminal0
+    use_telnet: true
+    prompts:
+    - "Non-Secure system starting..."
+    erpc_app: "TEST_APP"
+
+- test:
+    timeout:
+      minutes: 5
+    monitors:
+    - name: "TEST_APP"
+      start: "Execute test suites for the Non-secure area"
+      end: "End of Non-secure test suites"
+      pattern: 'TEST: (?P<test_case_id>[\w\-]+) - (?P<result>PASSED|FAILED|SKIPPED)!'
+      fixupdict:
+         PASSED: pass
+         FAILED: fail
+         SKIPPED: skip
