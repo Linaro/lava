@@ -708,6 +708,14 @@ You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.
 ``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
 
+You can provide ``erpc_app: image_key`` field to run a eRPC app. Both the
+server and test apps must be deployed in advance. The ``image_key`` should be
+the name of the test app. eRPC-related parameters for communication between the
+apps should be configured at build time. Using a separate UART device is
+recommended to avoid collision with other data being sent on UART. A
+``monitors`` test action can be defined right after the boot action to enable
+log parsing and wait for run completion.
+
 .. note:: Previous to running an ``fvp`` boot, you should run an ``fvp`` deploy.
 
 .. note:: The docker image must have the fastmodel in it and must have the required tools, such as ``telnet``.

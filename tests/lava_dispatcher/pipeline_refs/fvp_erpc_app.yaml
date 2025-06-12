@@ -1,0 +1,167 @@
+- class: FVPDeploy
+  name: fvp-deploy
+  level: '1'
+  max_retries: 1
+  description: Download images for use with fvp
+  summary: download images for use with fvp
+  timeout: 300
+  pipeline:
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.1'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.1.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://example.com/bl2.axf
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.2'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.2.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://example.com/tfm_s_ns_signed.bin
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.3'
+    max_retries: 3
+    description: download with retry
+    summary: download-retry
+    timeout: 300
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.3.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 100
+      url: https://example.com/erpc_main
+- class: BootFVPAction
+  name: boot-fvp
+  level: '2'
+  max_retries: 1
+  description: boot fvp
+  summary: boot fvp
+  timeout: 300
+  pipeline:
+  - class: BootFVPMain
+    name: boot-fvp-main
+    level: '2.1'
+    max_retries: 1
+    description: boot fvp
+    summary: boot fvp
+    timeout: 300
+    pipeline:
+    - class: CheckFVPVersionAction
+      name: check-fvp-version
+      level: 2.1.1
+      max_retries: 1
+      description: call docker run with fvp version entry point
+      summary: check fvp version
+      timeout: 300
+    - class: StartFVPAction
+      name: run-fvp
+      level: 2.1.2
+      max_retries: 1
+      description: call docker run with fvp boot entry point
+      summary: run fvp model
+      timeout: 300
+    - class: GetFVPSerialAction
+      name: fvp-serial-connect
+      level: 2.1.3
+      max_retries: 1
+      description: connect to the fvp serial connection via telnet
+      summary: connect to the fvp serial output
+      timeout: 300
+    - class: ReadFeedback
+      name: read-feedback
+      level: 2.1.4
+      max_retries: 1
+      description: Check for messages on all other namespaces
+      summary: Read from other namespaces
+      timeout: 300
+  - class: ReadFeedback
+    name: read-feedback
+    level: '2.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 300
+  - class: AutoLoginAction
+    name: auto-login-action
+    level: '2.3'
+    max_retries: 1
+    description: automatically login after boot using job parameters and checking
+      for messages.
+    summary: Auto-login after boot with support for kernel messages.
+    timeout: 300
+    pipeline:
+    - class: LoginAction
+      name: login-action
+      level: 2.3.1
+      max_retries: 1
+      description: Real login action.
+      summary: Login after boot.
+      timeout: 300
+  - class: RunFVPeRPCApp
+    name: run-fvp-erpc-app
+    level: '2.4'
+    max_retries: 1
+    description: run FVP eRPC app
+    summary: run FVP eRPC app
+    timeout: 300
+- class: TestMonitorRetry
+  name: lava-test-monitor-retry
+  level: '3'
+  max_retries: 1
+  description: Retry wrapper for lava-test-monitor
+  summary: Retry support for Lava Test Monitoring
+  timeout: 300
+  pipeline:
+  - class: TestMonitorAction
+    name: lava-test-monitor
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-monitor
+    summary: Lava Test Monitor
+    timeout: 300
+- class: FinalizeAction
+  name: finalize
+  level: '4'
+  max_retries: 1
+  description: finish the process and cleanup
+  summary: finalize the job
+  timeout: 30
+  pipeline:
+  - class: PowerOff
+    name: power-off
+    level: '4.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '4.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 30
