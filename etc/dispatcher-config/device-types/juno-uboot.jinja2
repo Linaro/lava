@@ -109,7 +109,7 @@ actions:
       ssh:
       u-boot:
         parameters:
-          bootloader_prompt: VExpress64
+          bootloader_prompt: {{ bootloader_prompt | default('VExpress64') }}
           boot_message: {{ boot_message|default('Linux version') }}
           mkimage_arch: arm64
         ramdisk-local:
