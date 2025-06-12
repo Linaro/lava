@@ -482,3 +482,19 @@ class UUUBootAction(OptionalContainerUuuAction):
                 error_msg="Fail UUUBootAction on cmd : deinit",
             )
             self.cleanup_required = False
+
+            additional_bcu_cleanup_commands = self.job.device["actions"]["boot"][
+                "methods"
+            ]["uuu"]["options"].get("additional_bcu_cleanup_commands", [])
+            for additional_bcu_cleanup_command in additional_bcu_cleanup_commands:
+                exec_cmd = "{} {} -board={} -id={}".format(
+                    self.bcu,
+                    additional_bcu_cleanup_command,
+                    self.bcu_board_name,
+                    self.bcu_board_id,
+                )
+                self.run_bcu(
+                    exec_cmd.split(" "),
+                    allow_fail=False,
+                    error_msg="Fail UUUBootAction on cmd : additional_bcu_cleanup_command",
+                )
