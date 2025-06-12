@@ -18,6 +18,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     Worker,
@@ -306,3 +307,10 @@ class GroupDevicePermissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = GroupDevicePermission
         fields = "__all__"
+
+
+class RemoteArtifactTokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RemoteArtifactsAuth
+        fields = ["name", "token"]
+        read_only_fields = ["user"]

@@ -3,11 +3,13 @@
 # Author: Milosz Wasilewski <milosz.wasilewski@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import csv
 import json
 import xml.etree.ElementTree as ET
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
 import pytest
 from django.conf import settings
@@ -16,6 +18,7 @@ from django.contrib.auth.models import Group, User
 from django.http import FileResponse, HttpResponse
 from django.urls import reverse
 from django.utils import timezone
+from rest_framework import status
 from rest_framework.test import APIClient
 
 from lava_common.version import __version__
@@ -28,12 +31,16 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     Worker,
 )
 from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
+
+if TYPE_CHECKING:
+    from typing import Any
 
 EXAMPLE_JOB = """
 job_name: test
@@ -117,6 +124,7 @@ class TestRestApi:
         # create second token to check whether authentication still works
         AuthToken.objects.create(user=self.user, secret="userkey2")  # nosec - unittest
 
+        self.anonymousclient = APIClient()
         self.userclient = APIClient()
         self.userclient.credentials(HTTP_AUTHORIZATION="Token " + self.usertoken.secret)
         self.userclient_no_token = APIClient()
@@ -250,7 +258,15 @@ class TestRestApi:
         self.tag1 = Tag.objects.create(name="tag1", description="description1")
         self.tag2 = Tag.objects.create(name="tag2", description="description2")
 
-    def hit(self, client, url):
+        # create user1 remote artifact tokens
+        RemoteArtifactsAuth.objects.create(
+            user=self.user, name="token1", token="value1"
+        )
+        RemoteArtifactsAuth.objects.create(
+            user=self.user, name="token2", token="value2"
+        )
+
+    def hit(self, client: APIClient, url: str) -> dict[str, Any] | str:
         response = client.get(url)
         assert response.status_code == 200  # nosec - unit test support
 
@@ -1881,6 +1897,84 @@ ok 2 bar
             reverse("api-root", args=(self.version,)) + "workers/?format=api"
         )
         assert ret.status_code == 200
+
+    def test_remote_artifact_tokens_list_unauthorized(self, db):
+        ret = self.anonymousclient.get(
+            reverse("api-root", args=(self.version,)) + "remote-artifact-tokens/"
+        )
+        assert ret.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_remote_artifact_tokens_list(self, db):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=(self.version,)) + "remote-artifact-tokens/",
+        )
+        assert isinstance(data, dict)
+        assert data["results"] == [
+            {"name": "token1", "token": "value1"},
+            {"name": "token2", "token": "value2"},
+        ]
+
+    def test_remote_artifact_tokens_retrieve_unauthorized(self, db):
+        ret = self.anonymousclient.get(
+            reverse("api-root", args=(self.version,)) + "remote-artifact-tokens/token1/"
+        )
+        assert ret.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_remote_artifact_tokens_retrieve(self, db):
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=(self.version,))
+            + "remote-artifact-tokens/token1/",
+        )
+        assert data == {"name": "token1", "token": "value1"}
+
+    def test_remote_artifact_tokens_create_unauthorized(self, db):
+        ret = self.anonymousclient.post(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/",
+            {"name": "token3", "token": "value3"},
+        )
+        assert ret.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_remote_artifact_tokens_create(self, db):
+        ret = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/",
+            {"name": "token3", "token": "value3"},
+        )
+        assert ret.status_code == status.HTTP_201_CREATED
+
+    def test_remote_artifact_tokens_update_unauthorized(self, db):
+        ret = self.anonymousclient.put(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/token1/",
+            {"name": "token1", "token": "value11"},
+        )
+        assert ret.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_remote_artifact_tokens_update_value(self, db):
+        ret = self.userclient.put(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/token1/",
+            {"name": "token1", "token": "value11"},
+        )
+        assert ret.status_code == status.HTTP_200_OK
+
+    def test_remote_artifact_tokens_update_name(self, db):
+        ret = self.userclient.put(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/token1/",
+            {"name": "token11", "token": "value1"},
+        )
+        assert ret.status_code == status.HTTP_200_OK
+
+    def test_remote_artifact_tokens_delete_unauthorized(self, db):
+        ret = self.anonymousclient.delete(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/token1/"
+        )
+        assert ret.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_remote_artifact_tokens_delete(self, db):
+        ret = self.userclient.delete(
+            reverse("api-root", args=[self.version]) + "remote-artifact-tokens/token1/"
+        )
+        assert ret.status_code == status.HTTP_204_NO_CONTENT
 
 
 def test_serializers_partial():

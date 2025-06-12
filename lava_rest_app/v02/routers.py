@@ -35,3 +35,8 @@ router.register(r"permissions/devices", views.GroupDevicePermissionViewSet)
 router.register(r"system", views.SystemViewSet, basename="system")
 router.register(r"tags", views.TagViewSet)
 router.register(r"workers", views.WorkerViewSet)
+router.register(
+    r"remote-artifact-tokens",
+    views.RemoteArtifactTokenViewSet,
+    basename="remote-artifact-tokens",
+)
