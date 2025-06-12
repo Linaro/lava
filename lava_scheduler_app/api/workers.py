@@ -173,7 +173,7 @@ class SchedulerWorkersAPI(ExposedV2API):
 
         Return value
         ------------
-        This function returns the worker environment
+        This function returns the worker DUT environment
         """
         # Sanitize hostname as we will use it in a path
         if len(pathlib.Path(hostname).parts) != 1:
