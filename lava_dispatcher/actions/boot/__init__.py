@@ -963,6 +963,10 @@ class BootloaderCommandsActionAltBank(Action):
         final_message = self.job.device.get_constant(
             "final-message", prefix=self.method, missing_ok=True
         )
+        if job_final_message := self.parameters.get("parameters", {}).get(
+            "bootloader-final-message"
+        ):
+            final_message = job_final_message
         if error_messages:
             if isinstance(connection.prompt_str, str):
                 connection.prompt_str = [connection.prompt_str]
@@ -1032,6 +1036,10 @@ class BootloaderCommandsAction(Action):
         final_message = self.job.device.get_constant(
             "final-message", prefix=self.method, missing_ok=True
         )
+        if job_final_message := self.parameters.get("parameters", {}).get(
+            "bootloader-final-message"
+        ):
+            final_message = job_final_message
         if error_messages:
             if isinstance(connection.prompt_str, str):
                 connection.prompt_str = [connection.prompt_str]

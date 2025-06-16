@@ -828,6 +828,12 @@ looking at the same example ``shutdown-message`` parameter support in the
     timeout:
       minutes: 2
 
+Constants that can be overridden in job definition boot action parameters:
+
+  * ``bootloader-final-message`` - The message indicates the bootloader has finished
+  * ``kernel-start-message`` - The message indicates the kernel has started booting
+  * ``shutdown-message`` - The message indicates the system is shutting down or rebooting
+
 .. index:: add device admin
 
 .. _admin_adding_devices:
