@@ -156,13 +156,15 @@ class Command(BaseCommand):
             except Worker.DoesNotExist:
                 raise CommandError("No worker exists with hostname %s" % hostname)
 
+            updated_fields: list[str] = []
             if description is not None:
                 worker.description = description
+                updated_fields.append("description")
             if health is not None:
                 if health == "ACTIVE":
-                    fields = worker.go_health_active()
+                    updated_fields.extend(worker.go_health_active())
                 elif health == "MAINTENANCE":
-                    fields = worker.go_health_maintenance()
+                    updated_fields.extend(worker.go_health_maintenance())
                 else:
-                    fields = worker.go_health_retired()
-            worker.save(update_fields=fields)
+                    updated_fields.extend(worker.go_health_retired())
+            worker.save(update_fields=updated_fields)

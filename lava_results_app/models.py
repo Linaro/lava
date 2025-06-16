@@ -690,6 +690,8 @@ class Query(models.Model):
                 view = TestCaseViewFactory(self)
             elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
+            else:
+                raise ValueError(f"Unknown model {self.content_type.model_class()!r}")
 
             return (
                 view.__class__.objects.all()
@@ -1468,7 +1470,7 @@ class ChartQuery(models.Model):
                         "pass": measurement_results[result]["fail"] == 0,
                         "measurement": measurement_results[result]["measurement"],
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 
@@ -1487,7 +1489,7 @@ class ChartQuery(models.Model):
                         "pass": attribute_results[result]["fail"] == 0,
                         "attr_value": attribute_results[result]["value"],
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 

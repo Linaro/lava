@@ -4,6 +4,7 @@
 #         Senthil Kumaran <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import copy
@@ -284,6 +285,7 @@ def get_ldap_user_properties(ldap_user):
     attributes = ["uid", "givenName", "sn", "mail"]
     search_filter = "cn=*"
 
+    user_dn: str | None = None
     if user_dn_template:
         user_dn = user_dn_template % {"user": ldap_user}
     if user_search is not None:

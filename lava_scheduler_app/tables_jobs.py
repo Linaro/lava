@@ -52,6 +52,8 @@ class JobStateColumnMixin(LavaTable):
                 text = "text-danger"
             elif record.health == TestJob.HEALTH_CANCELED:
                 text = "text-warning"
+            else:
+                text = ""
             return format_html(
                 '<span class="{}"><strong>{}</strong></span>',
                 text,
