@@ -16,7 +16,7 @@ import subprocess
 def version(ref=None):
     root = pathlib.Path(__file__) / ".." / ".."
     root = root.resolve()
-    with contextlib.suppress(FileNotFoundError):
+    with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         if (root / ".git").exists():
             args = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
             if ref is not None:
