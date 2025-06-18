@@ -133,6 +133,10 @@ django_migrations:
   <<: *analyze
   image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
 
+mypy:
+  <<: *analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
+
 #########
 # Build #
 #########
