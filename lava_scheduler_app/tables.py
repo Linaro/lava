@@ -255,7 +255,7 @@ class DeviceTable(LavaTable):
     """
     )
     device_type = tables.Column()
-    state = ExpandedStatusColumn("state")
+    state = ExpandedStatusColumn(verbose_name="State")
     health = tables.Column(verbose_name="Health")
     tags = TagsColumn()
 
