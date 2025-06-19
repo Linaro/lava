@@ -3,7 +3,7 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
 import uuid
@@ -32,7 +32,7 @@ class DeviceContainerMappingMixin(Action):
     mappings.
     """
 
-    def __init__(self, job: "Job"):
+    def __init__(self, job: Job):
         super().__init__(job)
         self.containers: list[DockerContainer] = []
 
