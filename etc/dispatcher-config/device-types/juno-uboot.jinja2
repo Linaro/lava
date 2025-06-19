@@ -71,6 +71,11 @@ actions:
       add_header: u-boot
     # list of deployment methods which this device supports
     methods:
+{% if usbg_ms_commands %}
+      usbg-ms:
+        enable: {{ usbg_ms_commands["enable"] }}
+        disable: {{ usbg_ms_commands["disable"] }}
+{% endif %}
       lxc:
       nfs:
       tftp:
