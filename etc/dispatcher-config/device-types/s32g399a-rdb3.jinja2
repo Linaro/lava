@@ -28,3 +28,6 @@
   'ERROR: RD image overlaps OS image',
   'kernel_comp_addr_r or kernel_comp_size is not provided',
 ] %}
+
+{% set boot_character_delay = boot_character_delay | default(20) %}
+{% set test_character_delay = test_character_delay | default(20) %}
