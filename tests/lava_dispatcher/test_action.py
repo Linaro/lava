@@ -11,6 +11,7 @@ from tempfile import TemporaryDirectory
 from time import monotonic as time_monotonic
 from unittest.mock import patch
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
 
 from .test_basic import LavaDispatcherTestCase
@@ -100,3 +101,23 @@ class TestActionRunCmd(LavaDispatcherTestCase):
             non_existant_command,
             "".join(error_logs.output),
         )
+
+
+class TestParsedCommand(LavaDispatcherTestCase):
+    def setUp(self) -> None:
+        self.action = Action(self.create_job_mock())
+
+    def test_parsed_command_fail(self) -> None:
+        with self.assertRaises(JobError):
+            self.action.parsed_command(["bash", "-c", "echo test && false"])
+
+        self.assertEqual("test", self.action.results["output"])
+        self.assertEqual("1", self.action.results["returncode"])
+
+    def test_parsed_command_input(self) -> None:
+        self.assertEqual(
+            "Hello, world!", self.action.parsed_command(["cat"], input="Hello, world!")
+        )
+
+    def test_unicode_escape(self) -> None:
+        self.action.parsed_command(["printf", r"\xc3\x28"])

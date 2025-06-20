@@ -537,7 +537,7 @@ class Action:
         """
         pass
 
-    def parsed_command(self, command_list, allow_fail=False, cwd=None):
+    def parsed_command(self, command_list, allow_fail=False, cwd=None, input=None):
         """
         Support for external command operations on the dispatcher with output handling,
         without using a shell and with full structured logging.
@@ -563,13 +563,18 @@ class Action:
         command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            output = subprocess.check_output(  # nosec - internal
-                command_list,
+            output = subprocess.run(
+                args=command_list,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=cwd,
                 timeout=self.timeout.duration,
-            )
-            output = output.decode("utf-8", errors="replace")
+                check=True,
+                input=input,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+            ).stdout
             if allow_fail:
                 self.results = {"returncode": "0"}
                 self.results = {"output_len": len(output)}
@@ -589,7 +594,7 @@ class Action:
             # Have sane default for some exceptions
             returncode = getattr(exc, "returncode", 127)
             if getattr(exc, "output", None):
-                output = exc.output.strip().decode("utf-8", errors="replace")
+                output = exc.output.strip()
             else:
                 output = str(exc)
 
