@@ -196,6 +196,13 @@ class DockerDriver(NullDriver):
         name = self.get_container_name()
         docker.name(name)
         self.action.containers.append(docker)
+        docker_test_method_conf = (
+            self.action.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+        docker.add_device_docker_method_options(docker_test_method_conf)
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)
@@ -211,6 +218,13 @@ class DockerDriver(NullDriver):
         name = self.get_container_name()
         docker.name(name)
         self.action.containers.append(docker)
+        docker_test_method_conf = (
+            self.action.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+        docker.add_device_docker_method_options(docker_test_method_conf)
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)
