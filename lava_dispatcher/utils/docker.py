@@ -3,15 +3,19 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import random
 import subprocess
 import time
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
+
+if TYPE_CHECKING:
+    from typing import Iterable, Optional
 
 
 class DockerRun:
@@ -83,6 +87,32 @@ class DockerRun:
 
     def add_docker_run_options(self, *options):
         self.__docker_run_options__ += options
+
+    def add_device_docker_method_options(
+        self, docker_method_conf: dict[str, Iterable[None | list[str] | str]]
+    ) -> None:
+        # Preprocess docker option list, to better support partial
+        # overriding of them via device dict:
+        # 1. Filter out None, to make it easier to template
+        # YAML syntactic lists with Jinja2:
+        # '- {{ some_opt_from_device_dict }}'
+        # (if not default, will be set to None).
+        # 2. Flatten sublists, `- ['--opt1', '--opt2']`.
+        def preproc_opts(opts: Iterable[None | list[str] | str]) -> list[str]:
+            res = []
+            for o in opts:
+                if o is None:
+                    continue
+                elif isinstance(o, list):
+                    res.extend(o)
+                else:
+                    res.append(o)
+            return res
+
+        if "global_options" in docker_method_conf:
+            self.add_docker_options(*preproc_opts(docker_method_conf["global_options"]))
+        if "options" in docker_method_conf:
+            self.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
 
     def interactive(self):
         self.__interactive__ = True
@@ -287,7 +317,13 @@ class DockerContainer(DockerRun):
         if self.__started__:
             return
 
-        cmd = ["docker", *self.__docker_options__, "run", "--detach"]
+        cmd = [
+            "docker",
+            *self.__docker_options__,
+            "run",
+            *self.__docker_run_options__,
+            "--detach",
+        ]
         cmd += self.start_options()
         cmd.append(self.image)
         cmd += ["sleep", "infinity"]

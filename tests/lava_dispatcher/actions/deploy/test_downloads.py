@@ -104,6 +104,8 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
 
     def test_postprocess_with_docker_run(self):
         self.job.parameters["dispatcher"] = {}
+        self.job.device["dynamic_data"] = {}
+        self.job.device["actions"] = {}
         origconn = MagicMock()
         with patch("lava_dispatcher.utils.docker.DockerRun.run") as docker_run_mock:
             conn = self.action.run(origconn, 4242)
@@ -129,6 +131,8 @@ class TestPostprocessDocker(LavaDispatcherTestCase):
     def test_postprocess_with_docker_run_env_http_cache(self):
         url = "http://kisscache/api/v1/fetch/?url=%s"
         self.job.parameters["dispatcher"] = {"http_url_format_string": url}
+        self.job.device["dynamic_data"] = {}
+        self.job.device["actions"] = {}
         origconn = MagicMock()
 
         with patch("lava_dispatcher.utils.docker.DockerRun.run"):

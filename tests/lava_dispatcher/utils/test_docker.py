@@ -281,3 +281,39 @@ def test_wait(mocker):
     )
     inspect.assert_has_calls([call, call])
     sleep.assert_called_once()
+
+
+def test_add_device_method_options():
+    docker = DockerRun("myimage")
+    docker.add_device_docker_method_options(
+        {
+            "global_options": ["--debug"],
+            "options": ["--cap-add=NET_ADMIN"],
+        }
+    )
+    assert "--debug" in docker.__docker_options__
+    assert "--cap-add=NET_ADMIN" in docker.__docker_run_options__
+
+
+def test_add_device_method_options_none():
+    docker = DockerRun("myimage")
+    docker.add_device_docker_method_options(
+        {
+            "global_options": [None],
+            "options": [None],
+        }
+    )
+    assert None not in docker.__docker_options__
+    assert None not in docker.__docker_run_options__
+
+
+def test_add_device_method_options_sublist():
+    docker = DockerRun("myimage")
+    docker.add_device_docker_method_options(
+        {
+            "options": [["--network", "host"]],
+        }
+    )
+
+    assert "--network" in docker.__docker_run_options__
+    assert "host" in docker.__docker_run_options__
