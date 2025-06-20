@@ -14,14 +14,14 @@ other files which are part of the repository, inside the test image.
 .. code-block:: yaml
 
   - test:
-     role:
-     - server
-     - client
-     definitions:
-     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-       from: git
-       path: lava-test-shell/multi-node/multinode02.yaml
-       name: multinode-intermediate
+      role:
+      - server
+      - client
+      definitions:
+      - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+        from: git
+        path: lava-test-shell/multi-node/multinode02.yaml
+        name: multinode-intermediate
 
 When this test starts, the entire repository will be available in the current
 working directory of the test. Therefore, ``multinode/multinode02.yaml`` can
@@ -73,20 +73,20 @@ that revision of the repository will be used instead of HEAD.
 .. code-block:: yaml
 
  - test:
-    failure_retry: 3
-    timeout:
-      minutes: 10
-    name: kvm-basic-singlenode
-    definitions:
-        - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/smoke-tests-basic.yaml
-          name: smoke-tests
-        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/single-node/singlenode03.yaml
-          name: singlenode-advanced
-          revision: 441b61
+     failure_retry: 3
+     timeout:
+       minutes: 10
+     name: kvm-basic-singlenode
+     definitions:
+     - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/smoke-tests-basic.yaml
+       name: smoke-tests
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode03.yaml
+       name: singlenode-advanced
+       revision: 441b61
 
 Shallow clones in GIT
 *********************
@@ -112,16 +112,16 @@ will fail.
 .. code-block:: yaml
 
  - test:
-    failure_retry: 3
-    timeout:
-      minutes: 10
-    name: kvm-basic-singlenode
-    definitions:
-        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/single-node/singlenode03.yaml
-          name: singlenode-advanced
-          shallow: False
+     failure_retry: 3
+     timeout:
+       minutes: 10
+     name: kvm-basic-singlenode
+     definitions:
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode03.yaml
+       name: singlenode-advanced
+       shallow: False
 
 
 Using submodules
@@ -136,16 +136,16 @@ It will result in ``--recurse-submodules`` added to the ``git clone`` command.
 .. code-block:: yaml
 
  - test:
-    failure_retry: 3
-    timeout:
-      minutes: 10
-    name: kvm-basic-singlenode
-    definitions:
-        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/single-node/singlenode03.yaml
-          name: singlenode-advanced
-          recursive: true
+     failure_retry: 3
+     timeout:
+       minutes: 10
+     name: kvm-basic-singlenode
+     definitions:
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode03.yaml
+       name: singlenode-advanced
+       recursive: true
 
 
 Removing git history
@@ -160,16 +160,16 @@ If needed, this directory can be removed from the overlay by setting
 .. code-block:: yaml
 
  - test:
-    failure_retry: 3
-    timeout:
-      minutes: 10
-    name: kvm-basic-singlenode
-    definitions:
-        - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
-          from: git
-          path: lava-test-shell/single-node/singlenode03.yaml
-          name: singlenode-advanced
-          history: False
+     failure_retry: 3
+     timeout:
+       minutes: 10
+     name: kvm-basic-singlenode
+     definitions:
+     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
+       from: git
+       path: lava-test-shell/single-node/singlenode03.yaml
+       name: singlenode-advanced
+       history: False
 
 
 Sharing the contents of test definitions
@@ -181,13 +181,13 @@ address of the repository to clone
 .. code-block:: yaml
 
   install:
-      git-repos:
-          - git://git.linaro.org/people/davelong/lt_ti_lava.git
+    git-repos:
+      - git://git.linaro.org/people/davelong/lt_ti_lava.git
 
   run:
-      steps:
-          - cd lt_ti_lava
-          - echo "now in the git cloned directory"
+    steps:
+      - cd lt_ti_lava
+      - echo "now in the git cloned directory"
 
 This allows a collection of LAVA test definitions to reuse other YAML custom
 scripts without duplication. The tests inside the other repository will **not**
