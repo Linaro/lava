@@ -41,6 +41,8 @@ distribution := unstable
 endif
 
 override_dh_python3:
+	$(warning distribution is $(distribution))
+	$(warning distribution is $(DEB_DISTRIBUTION))
 	./share/requires.py --distribution debian --suite $(distribution) --package lava-dispatcher > dispatcher-requirements.txt
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-server > server-requirements.txt
 	./share/requires.py --distribution debian --suite $(DEB_DISTRIBUTION) --package lava-common > common-requirements.txt
