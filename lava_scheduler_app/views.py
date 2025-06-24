@@ -321,11 +321,22 @@ class ActiveJobsTableView(JobTableView):
 
 class DeviceTableView(JobTableView):
     def get_queryset(self):
+        last_job_end_time_subquery = Subquery(
+            TestJob.objects.filter(
+                actual_device__hostname=OuterRef("hostname"),
+                health_check__exact=False,
+                state__exact=TestJob.STATE_FINISHED,
+            )
+            .order_by("-end_time")
+            .values("end_time")[:1]
+        )
+
         q = (
             Device.objects.select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .visible_by_user(self.request.user)
             .order_by("hostname")
+            .annotate(last_job_end_time=last_job_end_time_subquery)
             .distinct()
         )
         return q.prefetch_related(
@@ -632,6 +643,16 @@ def passing_health_checks(request):
 
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
+        last_job_end_time_subquery = Subquery(
+            TestJob.objects.filter(
+                actual_device__hostname=OuterRef("hostname"),
+                health_check__exact=False,
+                state__exact=TestJob.STATE_FINISHED,
+            )
+            .order_by("-end_time")
+            .values("end_time")[:1]
+        )
+
         return (
             Device.objects.accessible_by_user(
                 self.request.user, Device.CHANGE_PERMISSION
@@ -639,6 +660,7 @@ class MyDeviceView(DeviceTableView):
             .select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .order_by("hostname")
+            .annotate(last_job_end_time=last_job_end_time_subquery)
         )
 
 
