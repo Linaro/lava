@@ -227,9 +227,9 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.guestfs.GuestFS"
-        ) as guestfs_mock, self.assertLogs(action.logger, level="DEBUG") as action_logs:
+        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
+            action.logger, level="DEBUG"
+        ) as action_logs:
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
@@ -381,13 +381,9 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.run_cmd = MagicMock()
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.guestfs.GuestFS"
-        ) as guestfs_mock, patch(
+        with patch("guestfs.GuestFS") as guestfs_mock, patch(
             "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
-        ) as replace_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
+        ) as replace_mock, self.assertLogs(action.logger, level="DEBUG") as action_logs:
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
@@ -552,9 +548,9 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.guestfs.GuestFS"
-        ) as guestfs_mock, self.assertLogs(action.logger, level="DEBUG") as action_logs:
+        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
+            action.logger, level="DEBUG"
+        ) as action_logs:
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
