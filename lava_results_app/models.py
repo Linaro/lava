@@ -306,6 +306,19 @@ class TestCase(models.Model, Queryable):
     """
 
     class Meta:
+        indexes = (
+            models.Index(
+                fields=("-suite",),
+                condition=(
+                    Q(name="job")
+                    & Q(result=1)  # HACK: Refers to RESULT_FAIL
+                    & Q(
+                        metadata__regex="error_type: (Configuration|Infrastructure|Bug)"
+                    )
+                ),
+                name="testcases_with_job_errors_idx",
+            ),
+        )
         constraints = (
             models.UniqueConstraint(
                 fields=("suite",),
