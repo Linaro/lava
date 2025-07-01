@@ -264,15 +264,19 @@ class Job:
 
     def errors(self) -> str:
         with contextlib.suppress(OSError, UnicodeDecodeError):
-            return (self.base_dir / "stderr").read_text(
-                encoding="utf-8", errors="replace"
+            return (
+                (self.base_dir / "stderr")
+                .read_text(encoding="utf-8", errors="backslashreplace")
+                .replace("\x00", "\ufffd")
             )
         return ""
 
     def description(self) -> str:
         with contextlib.suppress(OSError):
-            return (self.base_dir / "description.yaml").read_text(
-                encoding="utf-8", errors="backslashreplace"
+            return (
+                (self.base_dir / "description.yaml")
+                .read_text(encoding="utf-8", errors="backslashreplace")
+                .replace("\x00", "\ufffd")
             )
         return ""
 
