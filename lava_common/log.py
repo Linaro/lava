@@ -49,11 +49,13 @@ class JobOutputSender:
         url: str,
         token: str,
         max_time: int,
+        job_id: str,
     ):
         self.conn = conn
         self.url = url
         self.token = token
         self.max_time = max_time
+        self.job_id = job_id
         self.max_records = 1000
 
         self.headers = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
@@ -142,11 +144,10 @@ class JobOutputSender:
                     self.records[0:count] = []
                     self.index += count
             elif ret.status_code == 404:
-                job_id = self.url.strip("/").split("/")[-2]
                 json_data = {}
                 try:
                     json_data = ret.json()
-                    if json_data.get("error") == f"Unknown job '{job_id}'":
+                    if json_data.get("error") == f"Unknown job '{self.job_id}'":
                         self.records[:] = []
                         records_to_send.clear()
                         os.kill(os.getppid(), signal.SIGUSR1)
@@ -204,17 +205,19 @@ def run_output_sender(
     url: str,
     token: str,
     max_time: int,
+    job_id: str,
 ) -> None:
     JobOutputSender(
         conn=conn,
         url=url,
         token=token,
         max_time=max_time,
+        job_id=job_id,
     ).run()
 
 
 class HTTPHandler(logging.Handler):
-    def __init__(self, url, token, interval):
+    def __init__(self, url, token, interval, job_id):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
@@ -252,8 +255,8 @@ class YAMLLogger(logging.Logger):
         self.markers = {}
         self.line = 0
 
-    def addHTTPHandler(self, url, token, interval):
-        self.handler = HTTPHandler(url, token, interval)
+    def addHTTPHandler(self, url, token, interval, job_id):
+        self.handler = HTTPHandler(url, token, interval, job_id)
         self.addHandler(self.handler)
         return self.handler
 

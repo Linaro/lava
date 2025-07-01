@@ -28,7 +28,7 @@ def test_sender(mocker):
     conn.recv_bytes = mocker.MagicMock()
     conn.recv_bytes.side_effect = [f"{i:04}".encode() for i in range(0, 1001)] + [b""]
 
-    JobOutputSender(conn, "http://localhost", "my-token", 1).run()
+    JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
     assert len(conn.poll.mock_calls) == 2000
     assert len(conn.recv_bytes.mock_calls) == 1002
 
@@ -62,7 +62,7 @@ def test_sender_exceptions(mocker):
     conn.recv_bytes = mocker.MagicMock()
     conn.recv_bytes.side_effect = [b"hello world", b""]
 
-    JobOutputSender(conn, "http://localhost", "my-token", 1).run()
+    JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
     assert len(post.mock_calls) == 3
     for c in post.mock_calls:
         assert c[1] == ("http://localhost",)
@@ -94,6 +94,7 @@ def test_sender_404(mocker):
         f"http://localhost/scheduler/internal/v1/jobs/{job_id}/logs/",
         "my-token",
         1,
+        job_id,
     ).run()
 
     os_getppid.assert_called_once()
@@ -104,7 +105,7 @@ def test_http_handler(mocker):
     Process = mocker.Mock()
     mocker.patch("multiprocessing.Process", return_value=Process)
     mocker.patch("multiprocessing.Pipe", return_value=(mocker.Mock(), mocker.Mock()))
-    handler = HTTPHandler("http://localhost/", "token", 1)
+    handler = HTTPHandler("http://localhost/", "token", 1, "1234")
 
     assert len(Process.start.mock_calls) == 1
     assert len(Process.start.mock_calls) == 1
@@ -143,7 +144,7 @@ def test_yaml_logger(mocker):
 
     logger = YAMLLogger("lava")
     assert logger.handler is None
-    logger.addHTTPHandler("http://localhost/", "my-token", 1)
+    logger.addHTTPHandler("http://localhost/", "my-token", 1, "1234")
     assert isinstance(logger.handler, HTTPHandler) is True
 
     def check(logger, lvl, lvlno, msg=None, mock_calls=1):
