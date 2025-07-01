@@ -1,0 +1,6 @@
+{# device_type = 'acer-cp714-1hn-rex' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Karis...') %}
+{% set bootloader_prompt = bootloader_prompt | default('karis:') %}
+{% set console_device = console_device | default('ttyS0') %}
