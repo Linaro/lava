@@ -9,7 +9,6 @@ import argparse
 import re
 import socket
 from pathlib import Path
-from typing import NoReturn
 
 import sentry_sdk
 
@@ -156,5 +155,5 @@ def get_parser(docker_worker=False) -> argparse.ArgumentParser:
     return parser
 
 
-def init_sentry_sdk(dsn: str) -> NoReturn:
+def init_sentry_sdk(dsn: str) -> None:
     sentry_sdk.init(dsn=dsn, release=f"lava@{__version__}", traces_sample_rate=1.0)
