@@ -13,7 +13,6 @@ import shutil
 import tarfile
 import tempfile
 
-import magic
 from configobj import ConfigObj
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, LAVA_LXC_HOME, LXC_PATH
@@ -430,6 +429,8 @@ def is_sparse_image(image):
     """
     Returns True if the image is an 'Android sparse image' else False.
     """
+    import magic
+
     image_magic = magic.open(magic.MAGIC_NONE)
     image_magic.load()
     return bool(image_magic.file(image).split(",")[0] == "Android sparse image")
