@@ -130,6 +130,7 @@ def setup_logger(options):
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
             options.token,
             options.job_log_interval,
+            options.job_id,
         )
     else:
         logger.addHandler(logging.StreamHandler())
