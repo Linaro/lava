@@ -7,7 +7,7 @@
 import logging
 import signal
 
-from lava_common.log import HTTPHandler, YAMLListFormatter, YAMLLogger, sender
+from lava_common.log import HTTPHandler, JobOutputSender, YAMLListFormatter, YAMLLogger
 from lava_common.yaml import yaml_safe_load
 
 
@@ -15,9 +15,12 @@ def test_sender(mocker):
     response = mocker.Mock(status_code=200)
     response.json = mocker.Mock(side_effect=[{"line_count": 1000}, {"line_count": 1}])
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
+    mocker.patch("requests.Session", session)
 
     mocker.patch("requests.Session", session)
     conn = mocker.MagicMock()
@@ -25,7 +28,7 @@ def test_sender(mocker):
     conn.recv_bytes = mocker.MagicMock()
     conn.recv_bytes.side_effect = [f"{i:04}".encode() for i in range(0, 1001)] + [b""]
 
-    sender(conn, "http://localhost", "my-token", 1)
+    JobOutputSender(conn, "http://localhost", "my-token", 1).run()
     assert len(conn.poll.mock_calls) == 2000
     assert len(conn.recv_bytes.mock_calls) == 1002
 
@@ -47,17 +50,19 @@ def test_sender_exceptions(mocker):
         side_effect=[{}, {"line_count": "s"}, {"line_count": 1}]
     )
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
-
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
     mocker.patch("requests.Session", session)
+
     conn = mocker.MagicMock()
     conn.poll = mocker.MagicMock()
     conn.recv_bytes = mocker.MagicMock()
     conn.recv_bytes.side_effect = [b"hello world", b""]
 
-    sender(conn, "http://localhost", "my-token", 1)
+    JobOutputSender(conn, "http://localhost", "my-token", 1).run()
     assert len(post.mock_calls) == 3
     for c in post.mock_calls:
         assert c[1] == ("http://localhost",)
@@ -69,11 +74,13 @@ def test_sender_404(mocker):
     response = mocker.Mock(status_code=404)
     response.json.return_value = {"error": f"Unknown job '{job_id}'"}
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
-
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
     mocker.patch("requests.Session", session)
+
     conn = mocker.MagicMock()
     conn.poll = mocker.MagicMock()
     conn.recv_bytes = mocker.MagicMock()
@@ -82,12 +89,12 @@ def test_sender_404(mocker):
     os_getppid = mocker.patch("os.getppid", return_value=1)
     os_kill = mocker.patch("os.kill")
 
-    sender(
+    JobOutputSender(
         conn,
         f"http://localhost/scheduler/internal/v1/jobs/{job_id}/logs/",
         "my-token",
         1,
-    )
+    ).run()
 
     os_getppid.assert_called_once()
     os_kill.assert_called_once_with(1, signal.SIGUSR1)

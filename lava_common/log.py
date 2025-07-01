@@ -4,6 +4,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -16,7 +17,6 @@ import time
 
 import requests
 
-from lava_common.exceptions import RequestBodyTooLargeError
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
 
@@ -40,20 +40,63 @@ def dump(data: dict) -> str:
     return data_str
 
 
-def sender(conn, url: str, token: str, max_time: int) -> None:
-    HEADERS = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
-    MAX_RECORDS = 1000
+class JobOutputSender:
     FAILURE_SLEEP = 5
-    # Record the exception to prevent spamming
-    last_exception_type = None
-    exception_counter = 0
 
-    def post(session, records: list[str], index: int) -> tuple[list[str], int]:
-        nonlocal last_exception_type
-        nonlocal exception_counter
+    def __init__(
+        self,
+        conn: multiprocessing.connection.Connection,
+        url: str,
+        token: str,
+        max_time: int,
+    ):
+        self.conn = conn
+        self.url = url
+        self.token = token
+        self.max_time = max_time
+        self.max_records = 1000
 
+        self.headers = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
+        self.session = requests.Session()
+        # Record the exception to prevent spamming
+        self.last_exception_type: type[Exception] | None = None
+        self.exception_counter = 0
+
+        self.records: list[str] = []
+        self.index = 0
+
+    def read_and_send_records(self) -> None:
+        last_call = time.monotonic()
+        leaving = False
+        while not leaving:
+            # Listen for new messages if we don't have message yet or some
+            # messages are already in the socket.
+            if len(self.records) == 0 or self.conn.poll(self.max_time):
+                data = self.conn.recv_bytes()
+                if data == b"":
+                    leaving = True
+                else:
+                    self.records.append(data.decode("utf-8", errors="replace"))
+
+            records_limit = len(self.records) >= self.max_records
+            time_limit = (time.monotonic() - last_call) >= self.max_time
+            if self.records and (records_limit or time_limit):
+                last_call = time.monotonic()
+                # Send the data
+                self.post()
+
+    def run(self) -> None:
+        with self.session:
+            self.read_and_send_records()
+
+            # Flush remaining records
+            while self.records:
+                # Send the data
+                self.post()
+
+    def post(self) -> None:
         # limit the number of records to send in one call
-        data, remaining = records[:MAX_RECORDS], records[MAX_RECORDS:]
+        records_to_send = self.records[: self.max_records]
         with contextlib.suppress(requests.RequestException):
             # Do not specify a timeout so we wait forever for an answer. This is a
             # background process so waiting is not an issue.
@@ -64,26 +107,29 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             # raised multiple time in a row, record also the number of
             # occurrences.
             try:
-                ret = session.post(
-                    url,
-                    data={"lines": "- " + "\n- ".join(data), "index": index},
-                    headers=HEADERS,
+                ret = self.session.post(
+                    self.url,
+                    data={
+                        "lines": "- " + "\n- ".join(records_to_send),
+                        "index": self.index,
+                    },
+                    headers=self.headers,
                 )
-                if exception_counter > 0:
+                if self.exception_counter > 0:
                     now = datetime.datetime.utcnow().isoformat()
-                    sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
-                    last_exception_type = None
-                    exception_counter = 0
+                    sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
+                    self.last_exception_type = None
+                    self.exception_counter = 0
             except Exception as exc:
-                if last_exception_type == type(exc):
-                    exception_counter += 1
+                if self.last_exception_type == type(exc):
+                    self.exception_counter += 1
                 else:
                     now = datetime.datetime.utcnow().isoformat()
-                    if exception_counter:
-                        sys.stderr.write(f"{now}: <{exception_counter} skipped>\n")
+                    if self.exception_counter:
+                        sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
                     sys.stderr.write(f"{now}: {str(exc)}\n")
-                    last_exception_type = type(exc)
-                    exception_counter = 0
+                    self.last_exception_type = type(exc)
+                    self.exception_counter = 0
                     sys.stderr.flush()
 
                 # Empty response for the rest of the code
@@ -92,50 +138,44 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             if ret.status_code == 200:
                 with contextlib.suppress(KeyError, ValueError):
                     count = int(ret.json()["line_count"])
-                    data = data[count:]
-                    index += count
+                    # Discard records that were successfully sent
+                    self.records[0:count] = []
+                    self.index += count
             elif ret.status_code == 404:
-                job_id = url.strip("/").split("/")[-2]
+                job_id = self.url.strip("/").split("/")[-2]
                 json_data = {}
                 try:
                     json_data = ret.json()
                     if json_data.get("error") == f"Unknown job '{job_id}'":
-                        data, remaining = [], []
+                        self.records[:] = []
+                        records_to_send.clear()
                         os.kill(os.getppid(), signal.SIGUSR1)
                     else:
-                        time.sleep(FAILURE_SLEEP)
+                        time.sleep(self.FAILURE_SLEEP)
                 # When the 'ret.json()' fails to decode the response, requests
                 # v2.25.1 on Debian 11 returns 'json.JSONDecodeError' but
                 # requests >= 2.27.0 returns 'requests.exceptions.JSONDecodeError'
                 # which is an invalid attribute on Debian 11. 'ValueError' is
                 # used here until Debian 11 is dropped.
                 except ValueError:
-                    time.sleep(FAILURE_SLEEP)
+                    time.sleep(self.FAILURE_SLEEP)
+            elif ret.status_code == 413:
+                self._reduce_record_size()
             else:
-                if ret.status_code == 413:
-                    raise RequestBodyTooLargeError
                 # If the request fails, give some time for the server to
                 # recover from the failure.
-                time.sleep(FAILURE_SLEEP)
-        return (data + remaining, index)
+                time.sleep(self.FAILURE_SLEEP)
 
-    last_call = time.monotonic()
-    records: list[str] = []
-    leaving: bool = False
-    index: int = 0
-
-    def _reduce_record_size(
-        records: list[str], max_records: int
-    ) -> tuple[list[str], int]:
+    def _reduce_record_size(self) -> None:
         """
-        The method should only be called for handling `RequestBodyTooLargeError`. It
+        The method should only be called for handling 413 HTTP error code. It
         minus 100 records for every call. In case only one record left, the record will
         be replaced by a short "log-upload fail" result line and an error message also
         will be sent to kill the job.
         """
-        if max_records == 1:
-            record = records[0]
-            records = [
+        if self.max_records == 1:
+            record = self.records[0]
+            self.records[:] = [
                 dump(
                     {
                         "dt": datetime.datetime.utcnow().isoformat(),
@@ -156,37 +196,21 @@ def sender(conn, url: str, token: str, max_time: int) -> None:
             )
             sys.stderr.flush()
         else:
-            max_records = max(1, max_records - 100)
+            self.max_records = max(1, self.max_records - 100)
 
-        return (records, max_records)
 
-    with requests.Session() as session:
-        while not leaving:
-            # Listen for new messages if we don't have message yet or some
-            # messages are already in the socket.
-            if len(records) == 0 or conn.poll(max_time):
-                data = conn.recv_bytes()
-                if data == b"":
-                    leaving = True
-                else:
-                    records.append(data.decode("utf-8", errors="replace"))
-
-            records_limit = len(records) >= MAX_RECORDS
-            time_limit = (time.monotonic() - last_call) >= max_time
-            if records and (records_limit or time_limit):
-                last_call = time.monotonic()
-                # Send the data
-                try:
-                    (records, index) = post(session, records, index)
-                except RequestBodyTooLargeError:
-                    (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
-
-        while records:
-            # Send the data
-            try:
-                (records, index) = post(session, records, index)
-            except RequestBodyTooLargeError:
-                (records, MAX_RECORDS) = _reduce_record_size(records, MAX_RECORDS)
+def run_output_sender(
+    conn: multiprocessing.connection.Connection,
+    url: str,
+    token: str,
+    max_time: int,
+) -> None:
+    JobOutputSender(
+        conn=conn,
+        url=url,
+        token=token,
+        max_time=max_time,
+    ).run()
 
 
 class HTTPHandler(logging.Handler):
@@ -200,7 +224,7 @@ class HTTPHandler(logging.Handler):
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
         self.proc = multiprocessing.Process(
-            target=sender, args=(reader, url, token, interval)
+            target=run_output_sender, args=(reader, url, token, interval)
         )
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])

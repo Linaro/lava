@@ -120,11 +120,6 @@ class PermissionNameError(LAVAServerError):
     error_type = "Unexisting permission codename."
 
 
-class RequestBodyTooLargeError(LAVAError):
-    error_help = "RequestBodyTooLarge: Request body exceeds server settings param."
-    error_type = "RequestBodyTooLarge"
-
-
 class FastbootDeviceNotFound(LAVAError):
     error_help = "FastbootDeviceNotFound: fastboot devices found."
     error_type = "FastbootDeviceNotFound"
