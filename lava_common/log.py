@@ -227,7 +227,7 @@ class HTTPHandler(logging.Handler):
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
         self.proc = multiprocessing.Process(
-            target=run_output_sender, args=(reader, url, token, interval)
+            target=run_output_sender, args=(reader, url, token, interval, job_id)
         )
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
