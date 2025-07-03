@@ -118,7 +118,7 @@ class MultinodeProtocol(Protocol):
                 (self.settings["coordinator_hostname"], self.settings["port"])
             )
             return True
-        except socket.timeout:
+        except TimeoutError:
             self.logger.exception(
                 "socket connection timed out: %s %s",
                 self.settings["coordinator_hostname"],
@@ -150,7 +150,7 @@ class MultinodeProtocol(Protocol):
             if ret_bytes == 0:
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
-        except socket.timeout:
+        except TimeoutError:
             self.logger.exception("socket send timed out")
             self.sock.close()
             return False
@@ -172,7 +172,7 @@ class MultinodeProtocol(Protocol):
             while recv_count < msg_count:
                 response += self.sock.recv(self.blocks).decode("utf-8")
                 recv_count += self.blocks
-        except socket.timeout:
+        except TimeoutError:
             self.logger.exception("socket recv timed out")
             self.sock.close()
             return json.dumps({"response": "wait"})
