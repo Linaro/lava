@@ -101,6 +101,46 @@ def test_sender_404(mocker):
     os_kill.assert_called_once_with(1, signal.SIGUSR1)
 
 
+def test_sender_413(mocker):
+    response = mocker.Mock(status_code=413)
+    post = mocker.Mock(return_value=response)
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
+    mocker.patch("requests.Session", session)
+
+    conn = mocker.MagicMock()
+    sender = JobOutputSender(
+        conn,
+        "http://localhost/scheduler/internal/v1/jobs/123/logs/",
+        "my-token",
+        1,
+        "123",
+    )
+
+    # Test records are too large to upload
+    sender.max_records = 1000
+    sender.records = ["hello world"]
+    initial_max_records = sender.max_records
+    sender.post()
+    assert sender.max_records == initial_max_records - 100
+
+    # Test single record is still too large to upload
+    sender.max_records = 1
+    sender.records = ["very long single record line that exceeds server limits"]
+    sender.post()
+    assert len(sender.records) == 1
+    replaced_record = yaml_safe_load(sender.records[0])
+    assert replaced_record["lvl"] == "results"
+    assert replaced_record["msg"] == {
+        "definition": "lava",
+        "case": "log-upload",
+        "result": "fail",
+    }
+
+
 def test_http_handler(mocker):
     Process = mocker.Mock()
     mocker.patch("multiprocessing.Process", return_value=Process)
