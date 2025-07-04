@@ -133,8 +133,8 @@ class JobOutputSender:
                 self.exception_counter = 0
                 sys.stderr.flush()
 
-            # Empty response for the rest of the code
-            ret = requests.models.Response()
+            time.sleep(self.FAILURE_SLEEP)
+            return
 
         if ret.status_code == 200:
             with contextlib.suppress(KeyError, ValueError):
