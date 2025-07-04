@@ -14,6 +14,7 @@ import os
 import signal
 import sys
 import time
+from queue import Empty
 
 import requests
 
@@ -71,14 +72,25 @@ class JobOutputSender:
         last_call = time.monotonic()
         leaving = False
         while not leaving:
-            # Listen for new messages if we don't have message yet or some
-            # messages are already in the socket.
-            if len(self.records) == 0 or self.conn.poll(self.max_time):
-                data = self.conn.recv_bytes()
-                if data == b"":
-                    leaving = True
-                else:
-                    self.records.append(data.decode("utf-8", errors="replace"))
+            # Listen for new messages if we don't have message yet
+            if len(self.records) == 0:
+                with contextlib.suppress(Empty):
+                    data = self.conn.get(block=True, timeout=self.max_time)
+                    if data is None:
+                        leaving = True
+                    else:
+                        self.records.append(data)
+
+            # Drain the queue to collect records for batch uploading
+            while len(self.records) < self.max_records:
+                try:
+                    data = self.conn.get_nowait()
+                    if data is None:
+                        leaving = True
+                        break
+                    self.records.append(data)
+                except Empty:
+                    break
 
             records_limit = len(self.records) >= self.max_records
             time_limit = (time.monotonic() - last_call) >= self.max_time
@@ -221,13 +233,12 @@ class HTTPHandler(logging.Handler):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
-        (reader, writer) = multiprocessing.Pipe(duplex=False)
-        self.writer = writer
+        self.queue = multiprocessing.Queue()
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
         self.proc = multiprocessing.Process(
-            target=run_output_sender, args=(reader, url, token, interval, job_id)
+            target=run_output_sender, args=(self.queue, url, token, interval, job_id)
         )
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
@@ -238,13 +249,13 @@ class HTTPHandler(logging.Handler):
         # This can't happen as data is a dictionary dumped in yaml format
         if data == "":
             return
-        self.writer.send_bytes(data.encode("utf-8", errors="replace"))
+        self.queue.put(data)
 
     def close(self):
         super().close()
 
         # wait for the multiprocess
-        self.writer.send_bytes(b"")
+        self.queue.put(None)
         self.proc.join()
 
 

@@ -22,15 +22,16 @@ def test_sender(mocker):
     )
     mocker.patch("requests.Session", session)
 
-    mocker.patch("requests.Session", session)
     conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [f"{i:04}".encode() for i in range(0, 1001)] + [b""]
+    conn.get.side_effect = ["0000", "1000"]
+    conn.get_nowait.side_effect = [f"{i:04}" for i in range(1, 1000)] + [None]
 
     JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
-    assert len(conn.poll.mock_calls) == 2000
-    assert len(conn.recv_bytes.mock_calls) == 1002
+
+    assert len(conn.get.mock_calls) == 2
+    assert conn.get.mock_calls[0] == mocker.call(block=True, timeout=1)
+    assert conn.get.mock_calls[1] == mocker.call(block=True, timeout=1)
+    assert len(conn.get_nowait.mock_calls) == 1000
 
     assert len(post.mock_calls) == 2
     assert post.mock_calls[0][1] == ("http://localhost",)
@@ -58,9 +59,8 @@ def test_sender_exceptions(mocker):
     mocker.patch("requests.Session", session)
 
     conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [b"hello world", b""]
+    conn.get.side_effect = ["hello world"]
+    conn.get_nowait.side_effect = [None]
 
     JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
     assert len(post.mock_calls) == 3
@@ -82,20 +82,18 @@ def test_sender_404(mocker):
     mocker.patch("requests.Session", session)
 
     conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [b"hello world", b""]
-
     os_getppid = mocker.patch("os.getppid", return_value=1)
     os_kill = mocker.patch("os.kill")
 
-    JobOutputSender(
+    sender = JobOutputSender(
         conn,
         f"http://localhost/scheduler/internal/v1/jobs/{job_id}/logs/",
         "my-token",
         1,
         job_id,
-    ).run()
+    )
+    sender.records = ["hello world"]
+    sender.post()
 
     os_getppid.assert_called_once()
     os_kill.assert_called_once_with(1, signal.SIGUSR1)
@@ -103,11 +101,11 @@ def test_sender_404(mocker):
 
 def test_http_handler(mocker):
     Process = mocker.Mock()
+    Queue = mocker.Mock()
     mocker.patch("multiprocessing.Process", return_value=Process)
-    mocker.patch("multiprocessing.Pipe", return_value=(mocker.Mock(), mocker.Mock()))
+    mocker.patch("multiprocessing.Queue", return_value=Queue)
     handler = HTTPHandler("http://localhost/", "token", 1, "1234")
 
-    assert len(Process.start.mock_calls) == 1
     assert len(Process.start.mock_calls) == 1
 
     record = logging.LogRecord(
@@ -131,12 +129,12 @@ def test_http_handler(mocker):
     )
     handler.emit(record)
 
-    assert len(handler.writer.send_bytes.mock_calls) == 1
-    assert handler.writer.send_bytes.mock_calls[0][1] == (b"Hello world",)
+    assert len(handler.queue.put.mock_calls) == 1
+    assert handler.queue.put.mock_calls[0][1] == ("Hello world",)
 
     handler.close()
-    assert len(handler.writer.send_bytes.mock_calls) == 2
-    assert handler.writer.send_bytes.mock_calls[1][1] == (b"",)
+    assert len(handler.queue.put.mock_calls) == 2
+    assert handler.queue.put.mock_calls[1][1] == (None,)
 
 
 def test_yaml_logger(mocker):
