@@ -111,73 +111,72 @@ class JobOutputSender:
     def post(self) -> None:
         # limit the number of records to send in one call
         records_to_send = self.records[: self.max_records]
-        with contextlib.suppress(requests.RequestException):
-            # Do not specify a timeout so we wait forever for an answer. This is a
-            # background process so waiting is not an issue.
-            # Will avoid resending the same request a second time if gunicorn
-            # is too slow to answer.
-            # In case of exception, print the exception to stderr that will be
-            # forwarded to lava-server by lava-worker. If the same exception is
-            # raised multiple time in a row, record also the number of
-            # occurrences.
-            try:
-                ret = self.session.post(
-                    self.url,
-                    data={
-                        "lines": "- " + "\n- ".join(records_to_send),
-                        "index": self.index,
-                    },
-                    headers=self.headers,
-                )
-                if self.exception_counter > 0:
-                    now = datetime.datetime.utcnow().isoformat()
-                    sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
-                    self.last_exception_type = None
-                    self.exception_counter = 0
-            except Exception as exc:
-                if self.last_exception_type == type(exc):
-                    self.exception_counter += 1
-                else:
-                    now = datetime.datetime.utcnow().isoformat()
-                    if self.exception_counter:
-                        sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
-                    sys.stderr.write(f"{now}: {str(exc)}\n")
-                    self.last_exception_type = type(exc)
-                    self.exception_counter = 0
-                    sys.stderr.flush()
-
-                # Empty response for the rest of the code
-                ret = requests.models.Response()
-
-            if ret.status_code == 200:
-                with contextlib.suppress(KeyError, ValueError):
-                    count = int(ret.json()["line_count"])
-                    # Discard records that were successfully sent
-                    self.records[0:count] = []
-                    self.index += count
-            elif ret.status_code == 404:
-                json_data = {}
-                try:
-                    json_data = ret.json()
-                    if json_data.get("error") == f"Unknown job '{self.job_id}'":
-                        self.records[:] = []
-                        records_to_send.clear()
-                        os.kill(os.getppid(), signal.SIGUSR1)
-                    else:
-                        time.sleep(self.FAILURE_SLEEP)
-                # When the 'ret.json()' fails to decode the response, requests
-                # v2.25.1 on Debian 11 returns 'json.JSONDecodeError' but
-                # requests >= 2.27.0 returns 'requests.exceptions.JSONDecodeError'
-                # which is an invalid attribute on Debian 11. 'ValueError' is
-                # used here until Debian 11 is dropped.
-                except ValueError:
-                    time.sleep(self.FAILURE_SLEEP)
-            elif ret.status_code == 413:
-                self._reduce_record_size()
+        # Do not specify a timeout so we wait forever for an answer. This is a
+        # background process so waiting is not an issue.
+        # Will avoid resending the same request a second time if gunicorn
+        # is too slow to answer.
+        # In case of exception, print the exception to stderr that will be
+        # forwarded to lava-server by lava-worker. If the same exception is
+        # raised multiple time in a row, record also the number of
+        # occurrences.
+        try:
+            ret = self.session.post(
+                self.url,
+                data={
+                    "lines": "- " + "\n- ".join(records_to_send),
+                    "index": self.index,
+                },
+                headers=self.headers,
+            )
+            if self.exception_counter > 0:
+                now = datetime.datetime.utcnow().isoformat()
+                sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
+                self.last_exception_type = None
+                self.exception_counter = 0
+        except Exception as exc:
+            if self.last_exception_type == type(exc):
+                self.exception_counter += 1
             else:
-                # If the request fails, give some time for the server to
-                # recover from the failure.
+                now = datetime.datetime.utcnow().isoformat()
+                if self.exception_counter:
+                    sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
+                sys.stderr.write(f"{now}: {str(exc)}\n")
+                self.last_exception_type = type(exc)
+                self.exception_counter = 0
+                sys.stderr.flush()
+
+            time.sleep(self.FAILURE_SLEEP)
+            return
+
+        if ret.status_code == 200:
+            with contextlib.suppress(KeyError, ValueError):
+                count = int(ret.json()["line_count"])
+                # Discard records that were successfully sent
+                self.records[0:count] = []
+                self.index += count
+        elif ret.status_code == 404:
+            json_data = {}
+            try:
+                json_data = ret.json()
+                if json_data.get("error") == f"Unknown job '{self.job_id}'":
+                    self.records[:] = []
+                    records_to_send.clear()
+                    os.kill(os.getppid(), signal.SIGUSR1)
+                else:
+                    time.sleep(self.FAILURE_SLEEP)
+            # When the 'ret.json()' fails to decode the response, requests
+            # v2.25.1 on Debian 11 returns 'json.JSONDecodeError' but
+            # requests >= 2.27.0 returns 'requests.exceptions.JSONDecodeError'
+            # which is an invalid attribute on Debian 11. 'ValueError' is
+            # used here until Debian 11 is dropped.
+            except ValueError:
                 time.sleep(self.FAILURE_SLEEP)
+        elif ret.status_code == 413:
+            self._reduce_record_size()
+        else:
+            # If the request fails, give some time for the server to
+            # recover from the failure.
+            time.sleep(self.FAILURE_SLEEP)
 
     def _reduce_record_size(self) -> None:
         """
