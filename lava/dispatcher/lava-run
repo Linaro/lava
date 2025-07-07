@@ -280,7 +280,26 @@ def main():
             logger.error(error_help)
         logger.results(result_dict)
 
-    # TODO: change the signal handler
+    def logger_terminate_handler(*_):
+        logger.terminate()
+        sys.stderr.write(
+            "Job log upload process terminated due to timeout; logs may be incomplete.\n"
+        )
+        sys.stderr.flush()
+
+    # At this point, the job run/cancellation has finished. Change signal
+    # handler here to prevent 'JobCanceled' from being raised again. In case of
+    # job cancellation, the logger has FINISH_MAX_DURATION/2 seconds to finish
+    # log uploading and close itself. After that another SIGTERM signal will be
+    # sent by the worker to terminate the logger. If the logger is not
+    # terminated in FINISH_MAX_DURATION seconds, the lava-run process group
+    # will be killed by the worker.
+    signal.signal(signal.SIGHUP, logger_terminate_handler)
+    signal.signal(signal.SIGINT, logger_terminate_handler)
+    signal.signal(signal.SIGQUIT, logger_terminate_handler)
+    signal.signal(signal.SIGTERM, logger_terminate_handler)
+    signal.signal(signal.SIGUSR1, logger_terminate_handler)
+    signal.signal(signal.SIGUSR2, logger_terminate_handler)
 
     # Closing the socket. We are now sure that all messages were sent.
     logger.close()
