@@ -443,9 +443,10 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
                 with open(f_metadata["extra"]) as extra_file:
                     items = yaml_safe_load(extra_file)
                 # hide the !!python OrderedDict prefix from the output.
-                for key, value in items.items():
-                    extra_source.setdefault(extra_case.id, "")
-                    extra_source[extra_case.id] += "%s: %s\n" % (key, value)
+                if isinstance(items, dict):
+                    for key, value in items.items():
+                        extra_source.setdefault(extra_case.id, "")
+                        extra_source[extra_case.id] += "%s: %s\n" % (key, value)
         except (AttributeError, TypeError, yaml.YAMLError):
             # In some old version of LAVA, extra_data is not a string but an OrderedDict
             # In this case, just skip it.
