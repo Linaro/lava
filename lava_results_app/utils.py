@@ -118,8 +118,9 @@ def export_testcase(testcase):
             with contextlib.suppress(yaml.YAMLError):
                 items = yaml_safe_load(extra_file)
         # hide the !!python OrderedDict prefix from the output.
-        for key, value in items.items():
-            extra_source.append({key: value})
+        if isinstance(items, dict):
+            for key, value in items.items():
+                extra_source.append({key: value})
         metadata["extra"] = extra_source
     return {
         "name": str(testcase.name),
