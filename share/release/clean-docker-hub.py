@@ -12,17 +12,17 @@ import sys
 
 import requests
 
-PROJECT = {"lava": 2}
+PROJECT = {"lava": 47541627}
 
 REPOSITORIES = {
-    "aarch64/lava-dispatcher": 74,
-    "aarch64/lava-dispatcher-base": 149,
-    "aarch64/lava-server": 75,
-    "aarch64/lava-server-base": 152,
-    "amd64/lava-dispatcher": 72,
-    "amd64/lava-dispatcher-base": 150,
-    "amd64/lava-server": 73,
-    "amd64/lava-server-base": 151,
+    "aarch64/lava-dispatcher": 4378164,
+    "aarch64/lava-dispatcher-base": 4378155,
+    "aarch64/lava-server": 4378163,
+    "aarch64/lava-server-base": 4378158,
+    "amd64/lava-dispatcher": 4378168,
+    "amd64/lava-dispatcher-base": 4378160,
+    "amd64/lava-server": 4378169,
+    "amd64/lava-server-base": 4378166,
 }
 
 
@@ -75,11 +75,11 @@ def main():
     parser.add_argument(
         "--url",
         type=str,
-        default="https://git.lavasoftware.org/api/v4/",
+        default="https://gitlab.com/api/v4/",
         help="base url",
     )
     parser.add_argument("--token", type=str, default=None, help="private gitlab token")
-    parser.add_argument("project", type=str, default=2, help="project id 'lava'")
+    parser.add_argument("project", type=str, default=47541627, help="project id 'lava'")
     parser.add_argument(
         "repository",
         type=str,
