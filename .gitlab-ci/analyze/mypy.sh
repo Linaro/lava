@@ -14,6 +14,7 @@ else
     'lava_common/decorators.py'
     'lava_common/exceptions.py'
     'lava_common/timeout.py'
+    'lava_common/utils.py'
     'lava_common/version.py'
     'lava_common/worker.py'
     'lava_common/yaml.py'
