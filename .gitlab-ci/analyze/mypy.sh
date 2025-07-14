@@ -16,6 +16,7 @@ else
     'lava_common/timeout.py'
     'lava_common/version.py'
     'lava_common/worker.py'
+    'lava_common/yaml.py'
     # lava_dispatcher
     'lava_dispatcher/utils/shell.py'
   )
