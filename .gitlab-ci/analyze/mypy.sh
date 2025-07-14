@@ -10,6 +10,7 @@ else
   set -x
   FILES=(
     # lava_common
+    'lava_common/decorators.py'
     'lava_common/timeout.py'
     # lava_dispatcher
     'lava_dispatcher/utils/shell.py'
