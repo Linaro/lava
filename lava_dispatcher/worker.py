@@ -311,7 +311,7 @@ class Job:
         # If the pid is 0, just skip because lava-run was not started
         if self.pid == 0:
             return
-        os.kill(self.pid, Signals.SIGKILL)
+        os.killpg(self.pid, Signals.SIGKILL)
 
     def terminate(self) -> None:
         # If the pid is 0, just skip because lava-run was not started

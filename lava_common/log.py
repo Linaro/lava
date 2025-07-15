@@ -302,6 +302,10 @@ class HTTPHandler(logging.Handler):
         self.queue.put(None)
         self.proc.join()
 
+    def terminate(self):
+        self.proc.terminate()
+        self.proc.join()
+
 
 class YAMLLogger(logging.Logger):
     def __init__(self, name):
@@ -318,6 +322,15 @@ class YAMLLogger(logging.Logger):
     def close(self):
         if self.handler is not None:
             self.handler.close()
+            self.removeHandler(self.handler)
+            self.handler = None
+        # Close other handlers
+        for handler in self.handlers:
+            handler.close()
+
+    def terminate(self):
+        if self.handler is not None:
+            self.handler.terminate()
             self.removeHandler(self.handler)
             self.handler = None
 
