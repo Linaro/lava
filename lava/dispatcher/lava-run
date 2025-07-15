@@ -115,16 +115,29 @@ def setup_logger(options):
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger("dispatcher")
     # Save logs to a file for debugging/post-processing.
+    log_file = options.output_dir / "logs.yaml"
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setFormatter(YAMLListFormatter())
+    logger.addHandler(file_handler)
+
     prefix = ""
     if options.dispatcher is not None:
         prefix = get_prefix(
             yaml_safe_load(options.dispatcher.read_text(encoding="utf-8"))
         )
-    log_file = Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}/logs.yaml"
-    log_file.parent.mkdir(parents=True, exist_ok=True)
-    file_handler = logging.FileHandler(log_file, mode="w")
-    file_handler.setFormatter(YAMLListFormatter())
-    logger.addHandler(file_handler)
+    # Create the symlink for downloading via http
+    # SymLinks is allowed in the apache2 lava-dispatcher.conf
+    log_download_path = (
+        Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}/logs.yaml"
+    )
+    try:
+        log_download_path.parent.mkdir(parents=True, exist_ok=True)
+        if log_download_path.exists():
+            log_download_path.unlink()
+        log_download_path.symlink_to(log_file)
+    except OSError:
+        raise InfrastructureError(f"Unable to create {log_download_path}")
+
     if options.url is not None:
         logger.addHTTPHandler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
@@ -206,6 +219,14 @@ def main():
     # Set process title for easier debugging
     setproctitle("lava-run [job: %s]" % options.job_id)
 
+    # Should be an absolute directory
+    options.output_dir = options.output_dir.resolve()
+    # Create the output directory
+    try:
+        options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+    except OSError:
+        raise InfrastructureError("Unable to create %s" % options.output_dir)
+
     # Setup the logger as early as possible
     logger = setup_logger(options)
     if not logger:
@@ -223,14 +244,6 @@ def main():
         signal.signal(signal.SIGTERM, cancelling_handler)
         signal.signal(signal.SIGUSR1, job_not_found_handler)
         signal.signal(signal.SIGUSR2, cancelling_handler)
-
-        # Should be an absolute directory
-        options.output_dir = options.output_dir.resolve()
-        # Create the output directory
-        try:
-            options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
-        except OSError:
-            raise InfrastructureError("Unable to create %s" % options.output_dir)
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
@@ -275,8 +288,8 @@ def main():
             logger.info("Job finished correctly")
         else:
             result_dict["result"] = "fail"
-            result_dict["error_msg"] = error_msg
-            result_dict["error_type"] = error_type
+            result_dict["error_msg"] = error_msg or "Unknown error"
+            result_dict["error_type"] = error_type or "Unknown"
             logger.error(error_help)
         logger.results(result_dict)
 

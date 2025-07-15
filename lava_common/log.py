@@ -64,6 +64,8 @@ class JobOutputSender:
         # Record the exception to prevent spamming
         self.last_exception_type: type[Exception] | None = None
         self.exception_counter = 0
+        self.last_error_code: int = 0
+        self.error_counter: int = 0
 
         self.records: list[str] = []
         self.index = 0
@@ -108,6 +110,38 @@ class JobOutputSender:
                 # Send the data
                 self.post()
 
+    def record_post_result(self, ret: requests.Response) -> None:
+        status_code = ret.status_code
+        now = datetime.datetime.utcnow().isoformat()
+
+        if status_code == 200:
+            sys.stdout.write(
+                f"{now} INFO [LOGGER] POST: total records sent: {self.index}\n"
+            )
+            sys.stdout.flush()
+            if self.error_counter > 1:
+                sys.stderr.write(
+                    f"{now} ERROR [LOGGER] POST: "
+                    f"<{self.error_counter} consecutive errors skipped>\n"
+                )
+                self.error_counter = 0
+                sys.stderr.flush()
+        else:
+            if status_code == self.last_error_code:
+                self.error_counter += 1
+            else:
+                if self.error_counter > 1:
+                    sys.stderr.write(
+                        f"{now} ERROR [LOGGER] POST: "
+                        f"<{self.error_counter} consecutive errors skipped>\n"
+                    )
+                self.error_counter = 0
+                self.last_error_code = ret.status_code
+                sys.stderr.write(
+                    f"{now} ERROR [LOGGER] POST: {status_code} - {ret.text} \n"
+                )
+                sys.stderr.flush()
+
     def post(self) -> None:
         # limit the number of records to send in one call
         records_to_send = self.records[: self.max_records]
@@ -130,7 +164,11 @@ class JobOutputSender:
             )
             if self.exception_counter > 0:
                 now = datetime.datetime.utcnow().isoformat()
-                sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
+                sys.stderr.write(
+                    f"{now} EXCEPTION [LOGGER] POST: "
+                    f"<{self.exception_counter} consecutive exceptions skipped>\n"
+                )
+                sys.stderr.flush()
                 self.last_exception_type = None
                 self.exception_counter = 0
         except Exception as exc:
@@ -139,8 +177,11 @@ class JobOutputSender:
             else:
                 now = datetime.datetime.utcnow().isoformat()
                 if self.exception_counter:
-                    sys.stderr.write(f"{now}: <{self.exception_counter} skipped>\n")
-                sys.stderr.write(f"{now}: {str(exc)}\n")
+                    sys.stderr.write(
+                        f"{now} EXCEPTION [LOGGER] POST: "
+                        f"<{self.exception_counter} consecutive exceptions skipped>\n"
+                    )
+                sys.stderr.write(f"{now} EXCEPTION [LOGGER] POST: {str(exc)}\n")
                 self.last_exception_type = type(exc)
                 self.exception_counter = 0
                 sys.stderr.flush()
@@ -178,6 +219,8 @@ class JobOutputSender:
             # recover from the failure.
             time.sleep(self.FAILURE_SLEEP)
 
+        self.record_post_result(ret)
+
     def _reduce_record_size(self) -> None:
         """
         The method should only be called for handling 413 HTTP error code. It
@@ -201,8 +244,10 @@ class JobOutputSender:
                 )
             ]
 
+            now = datetime.datetime.utcnow().isoformat()
             sys.stderr.write(
-                "Error: Log post request body exceeds server settings param.\n"
+                f"{now} ERROR [LOGGER] POST: "
+                "Log post request body exceeds server settings param.\n"
                 f"Log line length: {len(record)}\n"
                 f"Truncated log line: {record[:1024]} ...\n"
             )

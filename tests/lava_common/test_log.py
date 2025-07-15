@@ -11,7 +11,7 @@ from lava_common.log import HTTPHandler, JobOutputSender, YAMLListFormatter, YAM
 from lava_common.yaml import yaml_safe_load
 
 
-def test_sender(mocker):
+def test_sender(mocker, capsys):
     response = mocker.Mock(status_code=200)
     response.json = mocker.Mock(side_effect=[{"line_count": 1000}, {"line_count": 1}])
     post = mocker.Mock(return_value=response)
@@ -44,6 +44,10 @@ def test_sender(mocker):
     assert post.mock_calls[0][2]["headers"]["LAVA-Token"] == "my-token"
     assert post.mock_calls[1][2]["headers"]["LAVA-Token"] == "my-token"
 
+    out, _ = capsys.readouterr()
+    assert "INFO [LOGGER] POST: total records sent: 1000" in out
+    assert "INFO [LOGGER] POST: total records sent: 1001" in out
+
 
 def test_sender_exceptions(mocker):
     response = mocker.Mock(status_code=200)
@@ -69,7 +73,7 @@ def test_sender_exceptions(mocker):
         assert c[2]["data"] == {"lines": "- hello world", "index": 0}
 
 
-def test_sender_404(mocker):
+def test_sender_404(mocker, capsys):
     job_id = "123"
     response = mocker.Mock(status_code=404)
     response.json.return_value = {"error": f"Unknown job '{job_id}'"}
@@ -98,8 +102,11 @@ def test_sender_404(mocker):
     os_getppid.assert_called_once()
     os_kill.assert_called_once_with(1, signal.SIGUSR1)
 
+    _, err = capsys.readouterr()
+    assert "ERROR [LOGGER] POST: 404 - " in err
 
-def test_sender_413(mocker):
+
+def test_sender_413(mocker, capsys):
     response = mocker.Mock(status_code=413)
     post = mocker.Mock(return_value=response)
     session = mocker.MagicMock(
@@ -137,6 +144,9 @@ def test_sender_413(mocker):
         "case": "log-upload",
         "result": "fail",
     }
+
+    _, err = capsys.readouterr()
+    assert "ERROR [LOGGER] POST: 413 - " in err
 
 
 def test_http_handler(mocker):
