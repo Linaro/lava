@@ -15,7 +15,7 @@ from lava_common.constants import ACTION_TIMEOUT
 from lava_common.exceptions import ConfigurationError, JobError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator, Optional
+    from typing import Any, Iterator
 
     from lava_dispatcher.action import Action
 
@@ -35,7 +35,7 @@ class Timeout:
     def __init__(
         self,
         name: str,
-        action: Optional[Action],
+        action: Action | None,
         duration: int = ACTION_TIMEOUT,
         exception: type[Exception] = JobError,
     ):
@@ -69,7 +69,9 @@ class Timeout:
         return int(duration.total_seconds())
 
     def can_skip(self, parameters: dict[str, Any]) -> bool:
-        return parameters.get("timeout", {}).get("skip", False)
+        return parameters.get("timeout", {}).get(  # type: ignore [no-any-return]
+            "skip", False
+        )
 
     def _timed_out(self, signum: Any, frame: Any) -> None:
         # Call on_timeout action function
@@ -81,7 +83,7 @@ class Timeout:
 
     @contextmanager
     def __call__(
-        self, parent: Optional[Action], action_max_end_time: int
+        self, parent: Action | None, action_max_end_time: float | None
     ) -> Iterator[float]:
         self.start = time.monotonic()
 
@@ -108,7 +110,7 @@ class Timeout:
 
             # Restore the parent handler and timeout
             # This will be None when called by Job class
-            if parent is None:
+            if parent is None or action_max_end_time is None:
                 signal.alarm(0)
             else:
                 signal.signal(signal.SIGALRM, parent.timeout._timed_out)
