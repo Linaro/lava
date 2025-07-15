@@ -5,12 +5,21 @@ set -e
 if [ "$1" = "setup" ]
 then
   apt-get -q update
-  apt-get install --no-install-recommends --yes mypy python3-typeshed
+  apt-get install --no-install-recommends --yes mypy python3-typeshed python3-sentry-sdk
 else
   set -x
   FILES=(
     # lava_common
+    'lava_common/constants.py'
+    'lava_common/converters.py'
+    'lava_common/decorators.py'
+    'lava_common/exceptions.py'
+    'lava_common/jinja.py'
     'lava_common/timeout.py'
+    'lava_common/utils.py'
+    'lava_common/version.py'
+    'lava_common/worker.py'
+    'lava_common/yaml.py'
     # lava_dispatcher
     'lava_dispatcher/utils/shell.py'
   )

@@ -4,6 +4,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import argparse
 import re
@@ -27,7 +28,7 @@ def get_fqdn() -> str:
         raise ValueError("Your FQDN contains invalid characters")
 
 
-def parse_mount(s: str) -> tuple:
+def parse_mount(s: str) -> tuple[str, str | None, str | None]:
     # Split at ':' and accept one, two or three parameters
     src, dst, opts, *extra = *s.split(":"), *(None, None)
     if not src or len(extra) > 2:
@@ -37,7 +38,7 @@ def parse_mount(s: str) -> tuple:
     return (src, dst, opts)
 
 
-def get_parser(docker_worker=False) -> argparse.ArgumentParser:
+def get_parser(docker_worker: bool = False) -> argparse.ArgumentParser:
     if docker_worker:
         description = "LAVA Docker Worker"
         log_file = "/var/log/lava-dispatcher-host/lava-docker-worker.log"

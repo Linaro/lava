@@ -5,6 +5,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import argparse
 import contextlib
@@ -13,12 +14,12 @@ import re
 import subprocess
 
 
-def version(ref=None):
+def version(ref: str | None = None) -> str:
     root = pathlib.Path(__file__) / ".." / ".."
     root = root.resolve()
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         if (root / ".git").exists():
-            args = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
+            args: list[str] = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
             if ref is not None:
                 args.append(ref)
             pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
