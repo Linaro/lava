@@ -15,14 +15,18 @@ import signal
 import sys
 import time
 from queue import Empty
+from typing import TYPE_CHECKING, TypedDict
 
 import requests
 
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
 
+if TYPE_CHECKING:
+    from typing import Any
 
-def dump(data: dict) -> str:
+
+def dump(data: dict[str, Any]) -> str:
     # Set width to a really large value in order to always get one line.
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
@@ -46,7 +50,7 @@ class JobOutputSender:
 
     def __init__(
         self,
-        conn: multiprocessing.connection.Connection,
+        conn: multiprocessing.Queue[str | None],
         url: str,
         token: str,
         max_time: int,
@@ -254,7 +258,7 @@ class JobOutputSender:
 
 
 def run_output_sender(
-    conn: multiprocessing.connection.Connection,
+    conn: multiprocessing.Queue[str | None],
     url: str,
     token: str,
     max_time: int,
@@ -270,11 +274,11 @@ def run_output_sender(
 
 
 class HTTPHandler(logging.Handler):
-    def __init__(self, url, token, interval, job_id):
+    def __init__(self, url: str, token: str, interval: int, job_id: str):
         super().__init__()
         self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
-        self.queue = multiprocessing.Queue()
+        self.queue: multiprocessing.Queue[str | None] = multiprocessing.Queue()
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
@@ -284,39 +288,59 @@ class HTTPHandler(logging.Handler):
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
 
-    def emit(self, record):
-        data = self.formatter.format(record)
-        # Skip empty strings
-        # This can't happen as data is a dictionary dumped in yaml format
-        if data == "":
-            return
-        self.queue.put(data)
+    def emit(self, record: logging.LogRecord) -> None:
+        if self.formatter is not None:
+            data = self.formatter.format(record)
+            # Skip empty strings
+            # This can't happen as data is a dictionary dumped in yaml format
+            if data == "":
+                return
+            self.queue.put(data)
 
-    def close(self):
+    def close(self) -> None:
         super().close()
 
         # wait for the multiprocess
         self.queue.put(None)
         self.proc.join()
 
-    def terminate(self):
+    def terminate(self) -> None:
         self.proc.terminate()
         self.proc.join()
 
 
+class MarkerDict(TypedDict):
+    case: str
+    type: str
+
+
+class ResultDict(TypedDict, total=False):
+    definition: str
+    namespace: str
+    case: str
+    level: str | None
+    duration: str
+    result: str
+    extra: dict[str, Any]
+    starttc: int | None
+    endtc: int | None
+
+
 class YAMLLogger(logging.Logger):
-    def __init__(self, name):
+    def __init__(self, name: str):
         super().__init__(name)
-        self.handler = None
-        self.markers = {}
+        self.handler: HTTPHandler | None = None
+        self.markers: dict[str, dict[str, int]] = {}
         self.line = 0
 
-    def addHTTPHandler(self, url, token, interval, job_id):
+    def addHTTPHandler(
+        self, url: str, token: str, interval: int, job_id: str
+    ) -> HTTPHandler:
         self.handler = HTTPHandler(url, token, interval, job_id)
         self.addHandler(self.handler)
         return self.handler
 
-    def close(self):
+    def close(self) -> None:
         if self.handler is not None:
             self.handler.close()
             self.removeHandler(self.handler)
@@ -325,17 +349,22 @@ class YAMLLogger(logging.Logger):
         for handler in self.handlers:
             handler.close()
 
-    def terminate(self):
+    def terminate(self) -> None:
         if self.handler is not None:
             self.handler.terminate()
             self.removeHandler(self.handler)
             self.handler = None
 
-    def log_message(self, level, level_name, message, *args, **kwargs):
+    def log_message(
+        self, level: int, level_name: str, message: object, *args: Any, **kwargs: Any
+    ) -> None:
         # Increment the line count
         self.line += 1
         # Build the dictionary
-        data = {"dt": datetime.datetime.utcnow().isoformat(), "lvl": level_name}
+        data: dict[str, Any] = {
+            "dt": datetime.datetime.utcnow().isoformat(),
+            "lvl": level_name,
+        }
 
         if isinstance(message, str) and args:
             data["msg"] = message % args
@@ -348,39 +377,49 @@ class YAMLLogger(logging.Logger):
         data_str = dump(data)
         self._log(level, data_str, ())
 
-    def exception(self, exc, *args, **kwargs):
+    def exception(  # type: ignore [override]
+        self, exc: object, *args: Any, **kwargs: Any
+    ) -> None:
         self.log_message(logging.ERROR, "exception", exc, *args, **kwargs)
 
-    def error(self, message, *args, **kwargs):
+    def error(  # type: ignore [override]
+        self, message: object, *args: Any, **kwargs: Any
+    ) -> None:
         self.log_message(logging.ERROR, "error", message, *args, **kwargs)
 
-    def warning(self, message, *args, **kwargs):
+    def warning(  # type: ignore [override]
+        self, message: object, *args: Any, **kwargs: Any
+    ) -> None:
         self.log_message(logging.WARNING, "warning", message, *args, **kwargs)
 
-    def info(self, message, *args, **kwargs):
+    def info(  # type: ignore [override]
+        self, message: object, *args: Any, **kwargs: Any
+    ) -> None:
         self.log_message(logging.INFO, "info", message, *args, **kwargs)
 
-    def debug(self, message, *args, **kwargs):
+    def debug(  # type: ignore [override]
+        self, message: object, *args: Any, **kwargs: Any
+    ) -> None:
         self.log_message(logging.DEBUG, "debug", message, *args, **kwargs)
 
-    def input(self, message, *args, **kwargs):
+    def input(self, message: object, *args: Any, **kwargs: Any) -> None:
         self.log_message(logging.INFO, "input", message, *args, **kwargs)
 
-    def target(self, message, *args, **kwargs):
+    def target(self, message: object, *args: Any, **kwargs: Any) -> None:
         self.log_message(logging.INFO, "target", message, *args, **kwargs)
 
-    def feedback(self, message, *args, **kwargs):
+    def feedback(self, message: object, *args: Any, **kwargs: Any) -> None:
         self.log_message(logging.INFO, "feedback", message, *args, **kwargs)
 
-    def event(self, message, *args, **kwargs):
+    def event(self, message: object, *args: Any, **kwargs: Any) -> None:
         self.log_message(logging.INFO, "event", message, *args, **kwargs)
 
-    def marker(self, message, *args, **kwargs):
+    def marker(self, message: MarkerDict, *args: Any, **kwargs: Any) -> None:
         case = message["case"]
         m_type = message["type"]
         self.markers.setdefault(case, {})[m_type] = self.line - 1
 
-    def results(self, results, *args, **kwargs):
+    def results(self, results: ResultDict, *args: Any, **kwargs: Any) -> None:
         if "extra" in results and "level" not in results:
             raise Exception("'level' is mandatory when 'extra' is used")
 
@@ -397,6 +436,6 @@ class YAMLLogger(logging.Logger):
 
 
 class YAMLListFormatter(logging.Formatter):
-    def format(self, record):
+    def format(self, record: logging.LogRecord) -> str:
         msg = super().format(record)
         return f"- {msg}"
