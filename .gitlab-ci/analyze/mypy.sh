@@ -16,6 +16,7 @@ else
     'lava_common/device_mappings.py'
     'lava_common/exceptions.py'
     'lava_common/jinja.py'
+    'lava_common/log.py'
     'lava_common/timeout.py'
     'lava_common/utils.py'
     'lava_common/version.py'
