@@ -33,8 +33,8 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
-    from collections.abc import KeysView
-    from typing import Any, ClassVar, Iterator, Optional, TypeVar
+    from collections.abc import Iterator, KeysView
+    from typing import Any, ClassVar, TypeVar
 
     from .job import Job
     from .shell import ShellSession
@@ -361,7 +361,7 @@ class Action:
         # subsequently except by RetryCommand.
         self.job = job
         self.level = None
-        self.pipeline: Optional[Pipeline] = None
+        self.pipeline: Pipeline | None = None
         self.__parameters__ = {}
         self.__errors__ = []
         self.logger = logging.getLogger("dispatcher")
