@@ -147,11 +147,9 @@ class ConnectSsh(Action):
 
         self._check_params()
         command = self.command[:]  # local copy for idempotency
-        overrides = None
-        if self.key:
-            overrides = self.get_namespace_data(
-                action="prepare-scp-overlay", label="prepare-scp-overlay", key=self.key
-            )
+        overrides = self.get_namespace_data(
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
+        )
         host_address = None
         if overrides:
             host_address = str(
