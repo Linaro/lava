@@ -145,10 +145,6 @@ class JobOutputSender:
     def post(self) -> None:
         # limit the number of records to send in one call
         records_to_send = self.records[: self.max_records]
-        # Do not specify a timeout so we wait forever for an answer. This is a
-        # background process so waiting is not an issue.
-        # Will avoid resending the same request a second time if gunicorn
-        # is too slow to answer.
         # In case of exception, print the exception to stderr that will be
         # forwarded to lava-server by lava-worker. If the same exception is
         # raised multiple time in a row, record also the number of
@@ -161,6 +157,7 @@ class JobOutputSender:
                     "index": self.index,
                 },
                 headers=self.headers,
+                timeout=120,
             )
             if self.exception_counter > 0:
                 now = datetime.datetime.utcnow().isoformat()
