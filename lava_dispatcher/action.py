@@ -33,6 +33,7 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
+    from collections.abc import KeysView
     from typing import Any, Iterator, Optional, TypeVar
 
     from .job import Job
@@ -858,13 +859,22 @@ class Action:
         if self.pipeline:
             self.pipeline.cleanup(connection, max_end_time)
 
-    def get_namespace_keys(self, action, parameters=None):
+    def get_namespace_keys(
+        self, action: str, parameters: dict[str, Any] | None = None
+    ) -> KeysView[str]:
         """Return the keys for the given action"""
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
         return self.data.get(namespace, {}).get(action, {}).keys()
 
-    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
+    def get_namespace_data(
+        self,
+        action: str,
+        label: str,
+        key: str,
+        deepcopy: bool = True,
+        parameters: dict[str, Any] | None = None,
+    ) -> Any | None:
         """
         Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
@@ -888,7 +898,14 @@ class Action:
             return None
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_namespace_data(self, action, label, key, value, parameters=None):
+    def set_namespace_data(
+        self,
+        action: str,
+        label: str,
+        key: str,
+        value: Any,
+        parameters: dict[str, Any] | None = None,
+    ) -> None:
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.
