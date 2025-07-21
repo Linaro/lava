@@ -300,11 +300,21 @@ class HTTPHandler(logging.Handler):
 
         # wait for the multiprocess
         self.queue.put(None)
-        self.proc.join()
+        self.proc.join(600)
+        if self.proc.exitcode is None:
+            sys.stderr.write("Job log subprocess failed to close\n")
+            sys.stderr.flush()
+            self.proc.kill()
+            self.proc.join(3)
 
     def terminate(self):
         self.proc.terminate()
-        self.proc.join()
+        self.proc.join(60)
+        if self.proc.exitcode is None:
+            sys.stderr.write("Job log subprocess failed to terminate\n")
+            sys.stderr.flush()
+            self.proc.kill()
+            self.proc.join(3)
 
 
 class YAMLLogger(logging.Logger):
