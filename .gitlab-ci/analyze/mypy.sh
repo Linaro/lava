@@ -13,6 +13,7 @@ else
     'lava_common/constants.py'
     'lava_common/converters.py'
     'lava_common/decorators.py'
+    'lava_common/device_mappings.py'
     'lava_common/exceptions.py'
     'lava_common/jinja.py'
     'lava_common/timeout.py'
