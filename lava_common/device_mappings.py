@@ -58,16 +58,6 @@ def validate_device_info(device_info):
         )
 
 
-def find_mapping(options):
-    for mapping in iter_mapping_paths():
-        data = load_mapping_data(mapping)
-        for item in data:
-            if match_mapping(item["device_info"], options):
-                job_id = str(Path(mapping).parent.name)
-                return item, job_id
-    return None, None
-
-
 def load_mapping_data(filename):
     try:
         with open(filename) as f:
@@ -77,16 +67,3 @@ def load_mapping_data(filename):
         return data
     except FileNotFoundError:
         return []
-
-
-def match_mapping(device_info, options):
-    matched = False
-    for k, v in device_info.items():
-        if v:
-            if k in options and getattr(options, k) == v:
-                matched = True
-            else:
-                return False
-        else:
-            matched = True
-    return matched

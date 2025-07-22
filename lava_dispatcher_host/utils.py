@@ -14,7 +14,7 @@ from pathlib import Path
 import pyudev
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
-from lava_common.device_mappings import find_mapping
+from lava_common.device_mappings import iter_mapping_paths, load_mapping_data
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
@@ -23,6 +23,29 @@ context = pyudev.Context()
 logger = logging.getLogger("lava-dispatcher-host")
 logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
+
+
+def match_mapping(device_info, options):
+    matched = False
+    for k, v in device_info.items():
+        if v:
+            if k in options and getattr(options, k) == v:
+                matched = True
+            else:
+                return False
+        else:
+            matched = True
+    return matched
+
+
+def find_mapping(options):
+    for mapping in iter_mapping_paths():
+        data = load_mapping_data(mapping)
+        for item in data:
+            if match_mapping(item["device_info"], options):
+                job_id = str(Path(mapping).parent.name)
+                return item, job_id
+    return None, None
 
 
 def share_device_with_container(options):
