@@ -2151,6 +2151,14 @@ class TestJob(models.Model):
         if "." in str(job_id):
             job = query.get(sub_id=job_id)
         else:
+            # Validate 'job_id' earlier. Raise 'TestJob.DoesNotExist' for
+            # invalid IDs. This exception is expected by job query APIs.
+            try:
+                int(job_id)
+            except (TypeError, ValueError):
+                raise TestJob.DoesNotExist(
+                    f"'job_id' expected a number but got {job_id}"
+                )
             job = query.get(pk=job_id)
         return job
 
