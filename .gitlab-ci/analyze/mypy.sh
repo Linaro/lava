@@ -23,6 +23,7 @@ else
     'lava_common/yaml.py'
     # lava_dispatcher
     'lava_dispatcher/utils/contextmanager.py'
+    'lava_dispatcher/utils/decorator.py'
     'lava_dispatcher/utils/network.py'
     'lava_dispatcher/utils/shell.py'
     'lava_dispatcher/utils/strings.py'
