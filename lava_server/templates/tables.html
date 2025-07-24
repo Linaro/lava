@@ -29,7 +29,7 @@
       {% endfor %}
       <div class="form-group">
         <label>Search</label>
-        <input type="text" name="{{ table.prefix }}search" placeholder="Press ? for search help">
+        <input type="text" name="{{ table.prefix }}search" value="{{ table|get_prefix_search:request.GET }}" placeholder="Press ? for search help">
       </div>
     </form>
   </div>
