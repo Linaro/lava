@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
+    from typing import Any
 
 
 def substitute(
@@ -50,28 +51,30 @@ def substitute(
     return parsed
 
 
-def substitute_address_with_static_info(address, static_info):
-    substitutions = {
+def substitute_address_with_static_info(
+    address: str, static_info: Iterable[Mapping[str, str | None]]
+) -> str:
+    substitutions: dict[str, str | None] = {
         "{" + k + "}": v for info in static_info for (k, v) in info.items()
     }
     return substitute([address], substitutions)[0]
 
 
-def seconds_to_str(time):
+def seconds_to_str(time: float) -> str:
     hours, remainder = divmod(int(round(time)), 3600)
     minutes, seconds = divmod(remainder, 60)
     return "%02d:%02d:%02d" % (hours, minutes, seconds)
 
 
-def safe_dict_format(string, dictionary):
+def safe_dict_format(string: str, dictionary: dict[str, str]) -> str:
     """
     Used to replace value in string using dictionary
     eg : '{foo}{bar}.safe_dict_format({'foo' : 'hello'})
     >>> 'hello{bar}'
     """
 
-    class SafeDict(dict):
-        def __missing__(self, key):
+    class SafeDict(dict[str, str]):
+        def __missing__(self, key: str) -> str:
             logger = logging.getLogger("dispatcher")
             logger.warning("Missing key : '{%s}' for string '%s'", key, string)
             return "{" + key + "}"
@@ -79,7 +82,9 @@ def safe_dict_format(string, dictionary):
     return string.format_map(SafeDict(dictionary))
 
 
-def map_kernel_uboot(kernel_type, device_params=None):
+def map_kernel_uboot(
+    kernel_type: str, device_params: dict[str, Any] | None = None
+) -> str:
     """
     Support conversion of kernels only if the device cannot
     handle what has been given by the test job writer.
