@@ -21,6 +21,14 @@ def get_prefix_length(table, string):
 
 
 @register.filter
+def get_prefix_search(table, string):
+    name = "%s%s" % (table.prefix, "search")
+    if name in string:
+        return string[name]
+    return ""
+
+
+@register.filter
 def get_length_select(table, string):
     select = ""
     val = [10, 25, 50, 100]
