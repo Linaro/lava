@@ -8,7 +8,7 @@
   <div class="col-md-6">
   <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET">
     {% for key,value in request.GET.items %}
-    <input type="hidden" name="{{ table.prefix }}{{ key }}" value="{{ value }}">
+    <input type="hidden" name="{{ key }}" value="{{ value }}">
     {% endfor %}
     <input type="hidden" name="{{ table.prefix }}search" value="{{ request.GET.search }}">
     <div class="form-group">
