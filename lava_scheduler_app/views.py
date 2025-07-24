@@ -728,7 +728,7 @@ class DeviceTypeOverView(JobTableView):
         )
 
 
-class NoDTDeviceView(DeviceTableView):
+class DTDeviceView(DeviceTableView):
     def get_queryset(self):
         q = (
             Device.objects.exclude(health=Device.HEALTH_RETIRED)
@@ -908,24 +908,24 @@ def device_type_detail(request, pk):
         {"Duration": "Month", "Complete": monthly_complete, "Failed": monthly_failed},
     ]
 
-    prefix = "no_dt_"
-    no_dt_data = NoDTDeviceView(request, model=Device, table_class=DeviceTable)
-    no_dt_ptable = DeviceTable(
-        no_dt_data.get_table_data(prefix).filter(device_type=dt),
+    prefix = "devices_"
+    devices_data = DTDeviceView(request, model=Device, table_class=DeviceTable)
+    devices_ptable = DeviceTable(
+        devices_data.get_table_data(prefix).filter(device_type=dt),
         request=request,
         prefix=prefix,
     )
-    config = RequestConfig(request, paginate={"per_page": no_dt_ptable.length})
-    config.configure(no_dt_ptable)
+    config = RequestConfig(request, paginate={"per_page": devices_ptable.length})
+    config.configure(devices_ptable)
 
-    prefix = "dt_"
-    dt_jobs_data = AllJobsView(request, model=TestJob, table_class=DeviceTypeJobsTable)
-    dt_jobs_ptable = DeviceTypeJobsTable(
-        dt_jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
+    prefix = "jobs_"
+    jobs_data = AllJobsView(request, model=TestJob, table_class=DeviceTypeJobsTable)
+    jobs_ptable = DeviceTypeJobsTable(
+        jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
         prefix=prefix,
     )
-    config = request_config(request, {"per_page": dt_jobs_ptable.length})
-    config.configure(dt_jobs_ptable)
+    config = request_config(request, {"per_page": jobs_ptable.length})
+    config.configure(jobs_ptable)
 
     prefix = "health_"
     health_table = HealthJobSummaryTable(
@@ -993,8 +993,8 @@ def device_type_detail(request, pk):
             "available_devices_label": available_devices_label,
             "queued_jobs_count": queued_jobs_count or 0,
             "health_job_summary_table": health_table,
-            "device_type_jobs_table": dt_jobs_ptable,
-            "devices_table_no_dt": no_dt_ptable,
+            "device_type_jobs_table": jobs_ptable,
+            "devices_table": devices_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             "context_help": BreadCrumbTrail.leading_to(device_type_detail, pk="help"),
             "health_freq": health_freq_str,
