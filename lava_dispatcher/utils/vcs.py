@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import os
@@ -14,18 +15,18 @@ from lava_dispatcher.utils.decorator import retry
 
 
 class VCSHelper:
-    def __init__(self, url):
+    def __init__(self, url: str):
         self.url = url
 
     def clone(
         self,
-        dest_path,
-        shallow=False,
-        revision=None,
-        branch=None,
-        history=True,
-        recursive=False,
-    ):
+        dest_path: str,
+        shallow: bool = False,
+        revision: str | None = None,
+        branch: str | None = None,
+        history: bool = True,
+        recursive: bool = False,
+    ) -> str:
         raise NotImplementedError
 
 
@@ -41,20 +42,20 @@ class GitHelper(VCSHelper):
     This helper will raise a InfrastructureError for any error encountered.
     """
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         super().__init__(url)
         self.binary = "/usr/bin/git"
 
     @retry(exception=InfrastructureError, retries=6, delay=5)
     def clone(
         self,
-        dest_path,
-        shallow=False,
-        revision=None,
-        branch=None,
-        history=True,
-        recursive=False,
-    ):
+        dest_path: str,
+        shallow: bool = False,
+        revision: str | None = None,
+        branch: str | None = None,
+        history: bool = True,
+        recursive: bool = False,
+    ) -> str:
         logger = logging.getLogger("dispatcher")
 
         # Clear the data
@@ -62,7 +63,7 @@ class GitHelper(VCSHelper):
             shutil.rmtree(dest_path)
 
         try:
-            cmd_args = [self.binary, "clone"]
+            cmd_args: list[str] = [self.binary, "clone"]
             if recursive:
                 cmd_args.append("--recurse-submodules")
             if branch is not None:
@@ -126,25 +127,25 @@ class GitHelper(VCSHelper):
 class TarHelper(VCSHelper):
     # TODO: implement TarHelper
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         super().__init__(url)
-        self.binary = None
+        self.binary: str | None = None
 
 
 class URLHelper(VCSHelper):
     # TODO: implement URLHelper
 
-    def __init__(self, url):
+    def __init__(self, url: str):
         super().__init__(url)
-        self.binary = None
+        self.binary: str | None = None
 
     def clone(
         self,
-        dest_path,
-        shallow=False,
-        revision=None,
-        branch=None,
-        history=True,
-        recursive=False,
-    ):
+        dest_path: str,
+        shallow: bool = False,
+        revision: str | None = None,
+        branch: str | None = None,
+        history: bool = True,
+        recursive: bool = False,
+    ) -> str:
         raise NotImplementedError
