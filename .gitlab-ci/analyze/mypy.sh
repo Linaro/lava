@@ -23,6 +23,7 @@ else
     'lava_common/yaml.py'
     # lava_dispatcher
     'lava_dispatcher/utils/shell.py'
+    'lava_dispatcher/utils/strings.py'
   )
   mypy --python-version 3.11 --pretty --strict --follow-imports=silent "${FILES[@]}"
 fi
