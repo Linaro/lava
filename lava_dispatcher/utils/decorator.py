@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 import time
 from functools import wraps
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,6 +33,26 @@ def replace_exception(
         return function_wrapper
 
     return replace_exception_wrapper
+
+
+@overload
+def retry(
+    exception: type[Exception],
+    expected: None = None,
+    retries: int = 3,
+    delay: int = 1,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ...
+
+
+@overload
+def retry(
+    exception: type[Exception],
+    expected: type[Exception] = Exception,
+    retries: int = 3,
+    delay: int = 1,
+) -> Callable[[Callable[P, R]], Callable[P, R | None]]:
+    ...
 
 
 def retry(
