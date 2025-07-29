@@ -20,11 +20,11 @@ class VCSHelper:
     def clone(
         self,
         dest_path,
-        shallow=None,
+        shallow=False,
         revision=None,
         branch=None,
-        history=None,
-        recursive=None,
+        history=True,
+        recursive=False,
     ):
         raise NotImplementedError
 
@@ -141,10 +141,10 @@ class URLHelper(VCSHelper):
     def clone(
         self,
         dest_path,
-        shallow=None,
+        shallow=False,
         revision=None,
         branch=None,
-        history=None,
-        recursive=None,
+        history=True,
+        recursive=False,
     ):
         raise NotImplementedError
