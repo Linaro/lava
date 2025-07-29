@@ -411,7 +411,7 @@ Optional arguments are:
 
  ./share/requires.py --distribution debian --suite buster --package lava-dispatcher --names
  python3-configobj python3-guestfs python3-jinja2 python3-magic
- python3-netifaces python3-pexpect python3-pyudev
+ python3-pexpect python3-pyudev
  python3-requests python3-setproctitle python3-yaml
  python3-zmq
 
