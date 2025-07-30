@@ -34,7 +34,7 @@ from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
     from collections.abc import KeysView
-    from typing import Any, Iterator, Optional, TypeVar
+    from typing import Any, ClassVar, Iterator, Optional, TypeVar
 
     from .job import Job
     from .shell import ShellSession
@@ -380,20 +380,20 @@ class Action:
         self.force_prompt = False
 
     # Section
-    section = None
+    section: str = ""
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
-    name = None
+    name: ClassVar[str] = ""
     # Used in the pipeline to explain what the commands will attempt to do.
-    description = None
+    description: ClassVar[str] = ""
     # A short summary of this instance of a class inheriting from Action.  May
     # be None.
-    summary = None
+    summary: ClassVar[str] = ""
     # Exception to raise when this action is timing out
-    timeout_exception = JobError
+    timeout_exception: ClassVar[type[Exception]] = JobError
     # Exception to raise when a command run by the action fails
-    command_exception = JobError
+    command_exception: ClassVar[type[Exception]] = JobError
 
     @property
     def data(self):
