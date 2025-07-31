@@ -270,7 +270,7 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     return path
 
 
-def dispatcher_download_dir(dispatcher_config):
+def dispatcher_download_dir(dispatcher_config) -> str:
     """
     Returns DISPATCHER_DOWNLOAD_DIR which is a constant, unless a dispatcher specific path is
     configured via dispatcher_download_dir key in dispatcher_config.

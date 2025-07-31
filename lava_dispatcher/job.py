@@ -24,12 +24,15 @@ from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-impo
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
-    from logging import Logger
     from typing import Any
 
+    from lava_common.log import YAMLLogger
     from lava_common.timeout import Timeout
 
-    from .device import Device
+    from .action import Pipeline
+    from .connection import Protocol
+    from .device import NewDevice
+    from .shell import ShellSession
 
 
 class Job:
@@ -52,8 +55,8 @@ class Job:
         self,
         job_id: int,
         parameters: dict[str, Any],
-        logger: Logger,
-        device: Device,
+        logger: YAMLLogger,
+        device: NewDevice,
         timeout: Timeout,
     ):
         self.job_id = job_id
@@ -61,39 +64,41 @@ class Job:
         self.device = device
         self.parameters = parameters
         self.__context__ = PipelineContext()
-        self.pipeline = None
-        self.connection = None
+        self.pipeline: Pipeline | None = None
+        self.connection: ShellSession | None = None
         self.timeout = timeout
-        self.protocols = []
+        self.protocols: list[Protocol] = []
         # Was the job cleaned
         self.cleaned = False
         # override in use
-        self.base_overrides = {}
+        self.base_overrides: dict[str, str] = {}
         self.started = False
-        self.test_info = {}
+        self.test_info: dict[str, list[dict[str, Any]]] = {}
 
     @property
-    def context(self):
+    def context(self) -> dict[str, Any]:
         return self.__context__.pipeline_data
 
     @context.setter
-    def context(self, data):
+    def context(self, data: dict[str, Any]) -> None:
         self.__context__.pipeline_data.update(data)
 
-    def describe(self):
-        return {"pipeline": self.pipeline.describe()}
+    def describe(self) -> dict[str, Any]:
+        return {
+            "pipeline": self.pipeline.describe() if self.pipeline is not None else []
+        }
 
     @property
-    def tmp_dir(self):
+    def tmp_dir(self) -> str:
         return self.get_basedir(
             filesystem.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
         )
 
-    def get_basedir(self, path):
+    def get_basedir(self, path: str) -> str:
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
         return os.path.join(path, "%s%s" % (prefix, self.job_id))
 
-    def mkdtemp(self, action_name, override=None):
+    def mkdtemp(self, action_name: str, override: str | None = None) -> str:
         """
         Create a tmp directory in <dispatcher_download_dir>/{job_id}/ because
         this directory will be removed when the job finished, making cleanup
@@ -122,7 +127,7 @@ class Job:
         os.chmod(tmp_dir, 0o755)  # nosec - automatic cleanup.
         return tmp_dir
 
-    def _validate(self):
+    def _validate(self) -> None:
         """
         Validate the pipeline and raise an exception (that inherit from
         LAVAError) if it fails.
@@ -166,9 +171,10 @@ class Job:
             raise JobError(msg)
 
         # validate the pipeline
-        self.pipeline.validate_actions()
+        if self.pipeline is not None:
+            self.pipeline.validate_actions()
 
-    def validate(self):
+    def validate(self) -> None:
         """
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
@@ -201,7 +207,7 @@ class Job:
             if not success:
                 self.cleanup(connection=None)
 
-    def _run(self):
+    def _run(self) -> None:
         """
         Run the pipeline under the run() wrapper that will catch the exceptions
         """
@@ -224,10 +230,14 @@ class Job:
                 raise JobError(msg)
 
         # Run the pipeline and wait for exceptions
+
+        if self.pipeline is None:
+            # Do not run anything if there is no pipeline
+            return
         with self.timeout(None, None) as max_end_time:
             self.pipeline.run_actions(self.connection, max_end_time)
 
-    def run(self):
+    def run(self) -> None:
         """
         Top level routine for the entire life of the Job, using the job level timeout.
         Python only supports one alarm on SIGALRM - any Action without a connection
@@ -240,12 +250,12 @@ class Job:
             # Cleanup now
             self.cleanup(self.connection)
 
-    def cleanup(self, connection):
+    def cleanup(self, connection: ShellSession | None) -> None:
         self.timeout.name = "job-cleanup"
         with self.timeout(None, time.monotonic() + CLEANUP_TIMEOUT) as max_end_time:
             return self._cleanup(connection, max_end_time)
 
-    def _cleanup(self, connection, max_end_time):
+    def _cleanup(self, connection: ShellSession | None, max_end_time: float) -> None:
         if self.cleaned:
             self.logger.info("Cleanup already called, skipping")
             return
@@ -254,7 +264,8 @@ class Job:
         # connection and poweroff the device (the cleanup action will do that
         # for us)
         self.logger.info("Cleaning after the job")
-        self.pipeline.cleanup(connection, max_end_time)
+        if self.pipeline is not None:
+            self.pipeline.cleanup(connection, max_end_time)
 
         for tmp_dir in self.base_overrides.values():
             self.logger.info("Removing override tmp directory at %s", tmp_dir)

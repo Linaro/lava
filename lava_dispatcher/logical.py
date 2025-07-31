@@ -13,7 +13,7 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Any, Optional
 
     from lava_dispatcher.job import Job
 
@@ -158,5 +158,5 @@ class PipelineContext:
     """
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
-    def __init__(self):
-        self.pipeline_data = {}
+    def __init__(self) -> None:
+        self.pipeline_data: dict[str, Any] = {}

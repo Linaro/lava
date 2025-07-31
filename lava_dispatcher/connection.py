@@ -3,12 +3,14 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import decimal
 import logging
 import os
 import signal
+from typing import TYPE_CHECKING
 
 from pexpect.exceptions import ExceptionPexpect
 
@@ -17,6 +19,10 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.action import InternalObject
 
 RECOGNIZED_TAGS = ("telnet", "ssh", "shell")
+
+if TYPE_CHECKING:
+    from .device import NewDevice
+    from .job import Job
 
 
 class SignalMatch(InternalObject):
@@ -223,10 +229,10 @@ class Protocol:
     def valid(self):
         return not bool([x for x in self.errors if x])
 
-    def set_up(self):
+    def set_up(self) -> None:
         raise LAVABug("'set_up' not implemented")
 
-    def configure(self, device, job):
+    def configure(self, device: NewDevice, job: Job) -> None:
         self.configured = True
 
     def finalise_protocol(self, device=None):

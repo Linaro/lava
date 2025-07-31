@@ -194,7 +194,7 @@ class Pipeline:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
     def cleanup(
-        self, connection: ShellSession, max_end_time: int | None = None
+        self, connection: ShellSession | None, max_end_time: float | None = None
     ) -> None:
         """
         Recurse through internal pipelines running action.cleanup(),
@@ -217,7 +217,9 @@ class Pipeline:
         if error:
             raise InfrastructureError("Failed to clean after job")
 
-    def run_actions(self, connection: ShellSession, max_end_time: int) -> ShellSession:
+    def run_actions(
+        self, connection: ShellSession | None, max_end_time: float
+    ) -> ShellSession:
         for action in self.actions:
             failed = False
             namespace = action.parameters.get("namespace", "common")
@@ -818,7 +820,7 @@ class Action:
                         value=message[1],
                     )
 
-    def run(self, connection, max_end_time):
+    def run(self, connection: ShellSession | None, max_end_time):
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -842,7 +844,7 @@ class Action:
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(self, connection: ShellSession | None, max_end_time=None):
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
