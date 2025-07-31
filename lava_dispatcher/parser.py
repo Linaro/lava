@@ -125,7 +125,7 @@ class JobParser:
             item[0](job.parameters, job_id, job.logger)
             for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])
         ]
-        pipeline = Pipeline(job=job)
+        pipeline = job.pipeline
 
         # deploy and boot classes can populate the pipeline differently depending
         # on the test action type they are linked with (via namespacing).
