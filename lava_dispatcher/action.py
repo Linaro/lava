@@ -196,7 +196,7 @@ class Pipeline:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
     def cleanup(
-        self, connection: ShellSession, max_end_time: float | None = None
+        self, connection: ShellSession | None, max_end_time: float | None = None
     ) -> None:
         """
         Recurse through internal pipelines running action.cleanup(),
@@ -221,9 +221,9 @@ class Pipeline:
 
     def run_actions(
         self,
-        connection: ShellSession,
+        connection: ShellSession | None,
         max_end_time: float | None,
-    ) -> ShellSession:
+    ) -> ShellSession | None:
         for action in self.actions:
             failed = False
             namespace = action.parameters.get("namespace", "common")
@@ -847,6 +847,8 @@ class Action:
                     "Making protocol call for %s using %s", self.name, protocol.name
                 )
                 reply = protocol(call_dict, action=self)
+                if reply is None:
+                    continue
                 message = protocol.collate(reply, call_dict)
                 if message:
                     self.logger.info(
@@ -859,7 +861,11 @@ class Action:
                         value=message[1],
                     )
 
-    def run(self, connection: ShellSession, max_end_time: float | None) -> ShellSession:
+    def run(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None,
+    ) -> ShellSession | None:
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -885,7 +891,7 @@ class Action:
 
     def cleanup(
         self,
-        connection: ShellSession,
+        connection: ShellSession | None,
         max_end_time: float | None = None,
     ) -> None:
         """
