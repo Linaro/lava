@@ -14,7 +14,6 @@ import lava_dispatcher.protocols.strategies
 from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot_strategy import BootStrategy
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy_strategy import DeployStrategy
@@ -125,7 +124,7 @@ class JobParser:
             item[0](job.parameters, job_id, job.logger)
             for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])
         ]
-        pipeline = Pipeline(job=job)
+        pipeline = job.pipeline
 
         # deploy and boot classes can populate the pipeline differently depending
         # on the test action type they are linked with (via namespacing).

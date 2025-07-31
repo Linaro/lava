@@ -101,8 +101,7 @@ class TestRetriesAndFailuresBase(LavaDispatcherTestCase):
         }
         job = self.create_simple_job(job_parameters=parameters)
         job.timeout = JobParser._parse_job_timeout(parameters)
-        pipeline = Pipeline(job)
-        job.pipeline = pipeline
+        pipeline = job.pipeline
 
         return pipeline, job
 

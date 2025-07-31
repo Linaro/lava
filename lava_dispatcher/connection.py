@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from lava_common.log import YAMLLogger
 
     from .action import Action
+    from .device import NewDevice
     from .job import Job
 
 RECOGNIZED_TAGS: tuple[str, ...] = ("telnet", "ssh", "shell")
@@ -123,7 +124,7 @@ class Protocol:
     def set_up(self) -> None:
         raise LAVABug("'set_up' not implemented")
 
-    def configure(self, device: dict[str, Any], job: Job) -> bool:
+    def configure(self, device: NewDevice, job: Job) -> bool:
         self.configured = True
         return True
 
@@ -159,5 +160,9 @@ class Protocol:
         # implementations will usually need a try: except: block around _api.select()
         return self._api_select(args, action=None)
 
-    def collate(self, reply_dict: dict[str, Any], params_dict: dict[str, Any]) -> None:
+    def collate(
+        self,
+        reply_dict: dict[str, Any],
+        params_dict: dict[str, Any],
+    ) -> tuple[str, Any] | None:
         return None

@@ -4,13 +4,18 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import yaml
 
 from lava_common.exceptions import ConfigurationError
 from lava_common.yaml import yaml_safe_load
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class PipelineDevice(dict):
@@ -67,7 +72,13 @@ class PipelineDevice(dict):
                     return value["connect"]
         return ""
 
-    def get_constant(self, const, prefix=None, missing_ok=False, missing_default=None):
+    def get_constant(
+        self,
+        const: str,
+        prefix: str | None = None,
+        missing_ok: bool = False,
+        missing_default: Any | None = None,
+    ) -> Any:
         if "constants" not in self:
             raise ConfigurationError(
                 "constants section not present in the device config."
