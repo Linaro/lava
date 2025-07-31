@@ -155,5 +155,5 @@ class PipelineContext:
     """
 
     # FIXME: needs to pick up minimal general purpose config, e.g. proxy or cookies
-    def __init__(self):
+    def __init__(self) -> None:
         self.pipeline_data: dict[str, Any] = {}

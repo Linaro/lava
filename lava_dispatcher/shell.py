@@ -475,7 +475,11 @@ class ExpectShellSession(Action):
         if "prompts" not in self.parameters:
             self.errors_add("Unable to identify test image prompts from parameters.")
 
-    def run(self, connection: ShellSession, max_end_time: float | None) -> ShellSession:
+    def run(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None,
+    ) -> ShellSession:
         connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
