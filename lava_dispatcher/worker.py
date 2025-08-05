@@ -95,9 +95,9 @@ def create_environ(env: str) -> dict[str, str]:
     return environ
 
 
-def get_prefix(cfg) -> str:
+def get_prefix(cfg: Any) -> str:
     if isinstance(cfg, dict):
-        return cfg.get("prefix", "")
+        return cfg.get("prefix", "")  # type: ignore [no-any-return]
     return ""
 
 
@@ -384,7 +384,7 @@ class JobsDB:
         row = self.conn.execute("SELECT * FROM jobs WHERE pid=?", (pid,)).fetchone()
         return None if row is None else Job(row)
 
-    def update(self, job_id: int, status) -> Job | None:
+    def update(self, job_id: int, status: int) -> Job | None:
         with contextlib.suppress(sqlite3.Error):
             self.conn.execute(
                 "UPDATE jobs SET status=?, last_update=? WHERE id=?",
@@ -559,7 +559,7 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
 
 
 class ServerUnavailable(Exception):
-    def __init__(self, message):
+    def __init__(self, message: object):
         super().__init__(message)
         sentry_sdk.capture_exception(self)
 
@@ -570,7 +570,7 @@ class VersionMismatch(Exception):
 
 async def ping(
     session: aiohttp.ClientSession, url: str, token: str, name: str
-) -> dict[str, list]:
+) -> dict[str, list[dict[str, Any]]]:
     LOG.debug("PING => server")
     ret = await aiohttp_get(
         session, f"{url}{URL_WORKERS}{name}/", token, params={"version": __version__}
@@ -585,7 +585,7 @@ async def ping(
         return {}
 
     try:
-        return ret.json()
+        return ret.json()  # type: ignore [no-any-return]
     except ValueError as exc:
         LOG.error("-> invalid response: %r", str(exc))
         return {}
@@ -607,7 +607,7 @@ async def register(
         LOG.debug("[INIT] Auto register as %r", name)
         ret = await aiohttp_post(session, f"{url}{URL_WORKERS}", None, data=data)
         if ret.status_code == 200:
-            return ret.json()["token"]
+            return ret.json()["token"]  # type: ignore [no-any-return]
         LOG.error("[INIT] -> server error: code %d", ret.status_code)
         LOG.debug("[INIT] --> %s", ret.text)
         await asyncio.sleep(5)

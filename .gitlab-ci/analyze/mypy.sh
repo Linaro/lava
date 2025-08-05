@@ -5,7 +5,13 @@ set -e
 if [ "$1" = "setup" ]
 then
   apt-get -q update
-  apt-get install --no-install-recommends --yes mypy python3-typeshed python3-sentry-sdk
+  DEB_PKGS=(
+    'mypy'
+    'python3-typeshed'
+    'python3-sentry-sdk'
+    'python3-aiohttp'
+  )
+  apt-get install --no-install-recommends --yes "${DEB_PKGS[@]}"
 else
   set -x
   FILES=(
@@ -24,6 +30,7 @@ else
     # lava_dispatcher
     'lava_dispatcher/utils/shell.py'
     'lava_dispatcher/utils/strings.py'
+    'lava_dispatcher/worker.py'
   )
   mypy --python-version 3.11 --pretty --strict --follow-imports=silent "${FILES[@]}"
 fi
