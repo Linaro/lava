@@ -19,7 +19,7 @@ from contextvars import ContextVar
 import netifaces
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
 from lava_common.constants import (
     VALID_DISPATCHER_IP_PROTOCOLS,
