@@ -567,7 +567,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.actions.deploy.fastboot.which",
+        "lava_dispatcher.utils.fastboot.which",
         return_value="/usr/bin/fastboot",
     )
     @patch("lava_dispatcher.utils.containers.DockerRun.prepare")
@@ -596,7 +596,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @patch(
-        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        "lava_dispatcher.utils.fastboot.subprocess.run",
         return_value=CompletedProcess(
             ["/usr/bin/fastboot", "devices"],
             0,
@@ -620,7 +620,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         self.assertEqual(self.job.device["device_info"], [{"board_id": "a2c22e48"}])
 
     @patch(
-        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        "lava_dispatcher.utils.fastboot.subprocess.run",
         return_value=CompletedProcess(
             ["/usr/bin/fastboot", "devices"],
             0,
@@ -641,7 +641,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.actions.deploy.fastboot.subprocess.run",
+        "lava_dispatcher.utils.fastboot.subprocess.run",
         return_value=CompletedProcess(
             ["/usr/bin/fastboot", "devices"],
             0,
