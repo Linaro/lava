@@ -15,8 +15,9 @@ import random
 import socket
 import subprocess  # nosec - internal use.
 from contextvars import ContextVar
+from json import loads as json_loads
+from typing import TYPE_CHECKING
 
-import netifaces
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
@@ -29,15 +30,52 @@ from lava_common.constants import (
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from typing import Any
 
-def dispatcher_gateway():
-    """
-    Retrieves the IP address of the current default gateway.
-    """
-    gateways = netifaces.gateways()
-    if "default" not in gateways:
-        raise InfrastructureError("Unable to find default gateway")
-    return gateways["default"][netifaces.AF_INET][0]
+
+def get_default_iface() -> str:
+    try:
+        ip_proc = subprocess.run(
+            args=("ip", "-json", "route", "show", "default"),
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InfrastructureError(
+            f"Unable to find default gateway: {e.stderr!r}"
+        ) from e
+
+    route_data: list[dict[str, str]] = json_loads(ip_proc.stdout)
+    try:
+        return route_data[0]["dev"]
+    except IndexError:
+        raise InfrastructureError("No default route found. Disconnected from network.")
+
+
+def get_iface_addr(iface: str) -> str:
+    try:
+        ip_proc = subprocess.run(
+            args=("ip", "-json", "addr", "show", "dev", iface),
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InfrastructureError(
+            f"Unable to find interface {iface!r} address: {e.stderr!r}"
+        ) from e
+
+    iface_data: list[dict[str, Any]] = json_loads(ip_proc.stdout)
+    addr_info: list[dict[str, str]] = iface_data[0]["addr_info"]
+    for ai in addr_info:
+        if ai["family"] == "inet":
+            return ai["local"]
+
+    raise InfrastructureError(f"Unable to find ip address for iface {iface!r}")
 
 
 def dispatcher_ip(dispatcher_config, protocol=None):
@@ -55,21 +93,9 @@ def dispatcher_ip(dispatcher_config, protocol=None):
             return dispatcher_config["dispatcher_%s_ip" % protocol]
     with contextlib.suppress(KeyError, TypeError):
         return dispatcher_config["dispatcher_ip"]
-    gateways = netifaces.gateways()
-    if "default" not in gateways:
-        raise InfrastructureError("Unable to find dispatcher 'default' gateway")
-    iface = gateways["default"][netifaces.AF_INET][1]
-    iface_addr = None
 
-    try:
-        addr = netifaces.ifaddresses(iface)
-        iface_addr = addr[netifaces.AF_INET][0]["addr"]
-    except KeyError:
-        # TODO: This only handles first alias interface can be extended
-        # to review all alias interfaces.
-        addr = netifaces.ifaddresses(iface + ":0")
-        iface_addr = addr[netifaces.AF_INET][0]["addr"]
-    return iface_addr
+    iface = get_default_iface()
+    return get_iface_addr(iface)
 
 
 def rpcinfo_nfs(server: str, version: int = 3) -> str | None:

@@ -58,9 +58,6 @@ lava-server:
   configobj:
     name: python3-configobj
     unittests: true
-  netifaces:
-    name: python3-netifaces
-    unittests: true
   pexpect:
     name: python3-pexpect
     unittests: true
@@ -109,8 +106,6 @@ lava-dispatcher:
     name: python3-magic
   jinja2:
     name: python3-jinja2
-  netifaces:
-    name: python3-netifaces
   pexpect:
     name: python3-pexpect
   pytest:
