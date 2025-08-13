@@ -198,6 +198,9 @@ class ConnectShell(ConnectDevice):
     kernel console, e.g. using ser2net
     """
 
+    name = "connect-shell"
+    summary = "run connection command"
+    description = "use the configured command to connect serial to a second shell"
     # wraps the pexpect and provides prompt_str access
     session_class = ShellSession
     # runs the command to initiate the connection
@@ -205,13 +208,8 @@ class ConnectShell(ConnectDevice):
 
     def __init__(self, job: Job, name=None):
         super().__init__(job)
-        self.name = "connect-shell"
         self.primary = False
         self.hardware = name
-        self.summary = "run connection command"
-        self.description = (
-            "use the configured command to connect serial to a second shell"
-        )
         self.message = "Connecting to shell using"
 
     def validate(self):
@@ -257,11 +255,9 @@ class DisconnectDevice(ConnectDevice):
     Breaks the serial connection made by ConnectDevice.
     """
 
-    def __init__(self, job: Job):
-        super().__init__(job)
-        self.name = "disconnect-device"
-        self.description = "disconnect from console"
-        self.summary = self.description
+    name = "disconnect-device"
+    description = "disconnect from console"
+    summary = "disconnect from console"
 
     def validate(self):
         super().validate()
