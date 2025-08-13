@@ -78,7 +78,9 @@ def get_iface_addr(iface: str) -> str:
     raise InfrastructureError(f"Unable to find ip address for iface {iface!r}")
 
 
-def dispatcher_ip(dispatcher_config, protocol=None):
+def dispatcher_ip(
+    dispatcher_config: dict[str, Any], protocol: str | None = None
+) -> str:
     """
     Retrieves the IP address of the interface associated
     with the current default gateway.
@@ -90,9 +92,11 @@ def dispatcher_ip(dispatcher_config, protocol=None):
                 "protocol should be one of %s" % VALID_DISPATCHER_IP_PROTOCOLS
             )
         with contextlib.suppress(KeyError, TypeError):
-            return dispatcher_config["dispatcher_%s_ip" % protocol]
+            protocol_ip: str = dispatcher_config["dispatcher_%s_ip" % protocol]
+            return protocol_ip
     with contextlib.suppress(KeyError, TypeError):
-        return dispatcher_config["dispatcher_ip"]
+        general_ip: str = dispatcher_config["dispatcher_ip"]
+        return general_ip
 
     iface = get_default_iface()
     return get_iface_addr(iface)
@@ -122,19 +126,19 @@ def rpcinfo_nfs(server: str, version: int = 3) -> str | None:
     return f"rpcinfo: {server} {rpcinfo_result.stderr}"
 
 
-def get_free_port(dispatcher_config):
+def get_free_port(dispatcher_config: dict[str, Any]) -> int:
     """
     Finds the next free port to use
     :param dispatcher_config: the dispatcher config to search for nbd_server_port
     :return: port number
     """
-    port = None
+    port: int | None = None
     with contextlib.suppress(KeyError, TypeError):
-        dcport = dispatcher_config["nbd_server_port"]
+        dcport: str = dispatcher_config["nbd_server_port"]
         if "auto" in dcport:
             pass
         elif dcport.isdigit():
-            return dcport
+            return int(dcport)
     # use random
     rng = random.Random()
     for _ in range(10):
@@ -154,11 +158,11 @@ def get_free_port(dispatcher_config):
     return 10809
 
 
-requests_session = ContextVar("requests_session")
+requests_session: ContextVar[requests.Session] = ContextVar("requests_session")
 
 
 # Retry 15 times over a period a bit longer than 10 minutes.
-def requests_retry(retries: int = 15) -> requests.session:
+def requests_retry(retries: int = 15) -> requests.Session:
     with contextlib.suppress(LookupError):
         return requests_session.get()
 
