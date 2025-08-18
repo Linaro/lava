@@ -111,6 +111,9 @@ lava-dispatcher:
   pytest:
     name: python3-pytest
     unittests: true
+  pytest-asyncio:
+    name: python3-pytest-asyncio
+    unittests: true
   pytest-mock:
     name: python3-pytest-mock
     unittests: true
