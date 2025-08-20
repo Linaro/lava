@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from typing import Any, Iterator
 
     from lava_dispatcher.action import Action
+    from lava_dispatcher.job import Job
 
 
 class Timeout:
@@ -83,7 +84,7 @@ class Timeout:
 
     @contextmanager
     def __call__(
-        self, parent: Action | None, action_max_end_time: float | None
+        self, parent: Action | Job | None, action_max_end_time: float | None
     ) -> Iterator[float]:
         self.start = time.monotonic()
 
