@@ -60,7 +60,7 @@ class FlashCMSISAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.filelist = []
+        self.filelist: list[str] = []
         self.usb_mass_device = None
 
     def validate(self):
@@ -74,10 +74,11 @@ class FlashCMSISAction(Action):
         if not self.usb_mass_device:
             self.errors = "usb_mass_device unset"
         for action in self.get_namespace_keys("download-action"):
-            action_arg = self.get_namespace_data(
+            action_arg: str | None = self.get_namespace_data(
                 action="download-action", label=action, key="file"
             )
-            self.filelist.extend([action_arg])
+            if action_arg is not None:
+                self.filelist.append(action_arg)
 
     def _sync_data(self, dstdir, method_parameters):
         """Make sure that data was actually written (programmed) to the
