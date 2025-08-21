@@ -46,6 +46,7 @@ else
     'lava_dispatcher/utils/ext4.py'
     'lava_dispatcher/utils/filesystem.py'
     'lava_dispatcher/utils/installers.py'
+    'lava_dispatcher/utils/messages.py'
     'lava_dispatcher/utils/network.py'
     'lava_dispatcher/utils/shell.py'
     'lava_dispatcher/utils/storage.py'

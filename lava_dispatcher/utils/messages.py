@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -13,8 +14,26 @@ from lava_common.exceptions import JobError, TestError
 from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
+if TYPE_CHECKING:
+    from typing import NotRequired, TypedDict
+
+    from lava_dispatcher.action import Action
+    from lava_dispatcher.shell import ShellSession
+
+    class KernelMessage(TypedDict):
+        start: str
+        end: str
+        kind: str | None
+        fatal: NotRequired[bool]
+        job_error_message: NotRequired[str]
+
+    class ParsingResult(TypedDict):
+        message: str
+        kind: NotRequired[str]
+
+
 # kernel boot monitoring
-KERNEL_MESSAGES = [
+KERNEL_MESSAGES: list[KernelMessage] = [
     {
         "start": r"-\[ cut here \]",
         "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
@@ -94,13 +113,18 @@ class LinuxKernelMessages:
     summary = "Check for kernel errors, faults and panics."
 
     @classmethod
-    def get_init_prompts(cls):
+    def get_init_prompts(cls) -> list[str]:
         return [msg["start"] for msg in KERNEL_MESSAGES]
 
     @classmethod
     def parse_failures(
-        cls, connection, action, max_end_time, fail_msg, auto_login=False
-    ):
+        cls,
+        connection: ShellSession,
+        action: Action,
+        max_end_time: float,
+        fail_msg: str,
+        auto_login: bool = False,
+    ) -> list[ParsingResult]:
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -118,7 +142,7 @@ class LinuxKernelMessages:
 
         Always returns a list, the list may be empty.
         """
-        results = []  # wrap inside a dict to use in results
+        results: list[ParsingResult] = []  # wrap inside a dict to use in results
         result = "pass"
         halt = None
         start = time.monotonic()
@@ -145,20 +169,25 @@ class LinuxKernelMessages:
                 action.logger.debug(
                     "Matched prompt #%s: %s", index, connection.prompt_str[index]
                 )
-            message = connection.raw_connection.after
+
+            message: str = (
+                connection.raw_connection.after
+                # If pexpect.EOF or pexpect.TIMEOUT is matched assume message is empty
+                if isinstance(connection.raw_connection.after, str)
+                else ""
+            )
             if index is None:
                 break
             if index < len(KERNEL_MESSAGES):
                 matched_kernel_message = KERNEL_MESSAGES[index]
 
                 # Capture the start of the line
-                if "\n" in connection.raw_connection.before:
-                    start_line = connection.raw_connection.before.rindex("\n")
-                    message = (
-                        connection.raw_connection.before[start_line + 1 :] + message
-                    )
+                message_before = connection.raw_connection.before or ""
+                if "\n" in message_before:
+                    start_line = message_before.rindex("\n")
+                    message = message_before[start_line + 1 :] + message
                 else:
-                    message = connection.raw_connection.before + message
+                    message = message_before + message
 
                 # Capture the end of the kernel message
                 previous_prompts = connection.prompt_str
@@ -181,10 +210,15 @@ class LinuxKernelMessages:
                 if sub_index != 0:
                     action.logger.warning("Unable to match end of the kernel message")
                     break
+
                 message = (
                     message
-                    + connection.raw_connection.before
-                    + connection.raw_connection.after[:-1]  # Remove ending "\r"
+                    + (connection.raw_connection.before or "")
+                    + (
+                        connection.raw_connection.after[:-1]  # Remove ending "\r"
+                        if isinstance(connection.raw_connection.after, str)
+                        else ""
+                    )
                 )
                 connection.prompt_str = previous_prompts
 
