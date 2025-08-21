@@ -6,6 +6,11 @@
 from __future__ import annotations
 
 import time
+from dataclasses import dataclass
+from enum import Enum
+from enum import auto as enum_auto
+from re import compile as re_compile
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -13,67 +18,240 @@ from lava_common.exceptions import JobError, TestError
 from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
-# kernel boot monitoring
-KERNEL_MESSAGES = [
-    {
-        "start": r"-\[ cut here \]",
-        "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
-        "kind": None,
-    },
-    {
-        "start": r"Unhandled fault",
-        "end": r"\r",
-        "kind": "fault",
-    },
-    {
-        "start": r"BUG: KCSAN:",
-        "end": r"=+\r",
-        "kind": "kcsan",
-    },
-    {
-        "start": r"BUG: KASAN:",
-        "end": r"=+\r",
-        "kind": "kasan",
-    },
-    {
-        "start": r"BUG: KFENCE:",
-        "end": r"=+\r",
-        "kind": "kfence",
-    },
-    {
-        "start": r"Oops(?: -|:)",
-        "end": r"\r",
-        "kind": "oops",
-    },
-    {
-        "start": r"WARNING:",
-        "end": r"end trace[^\r]*\r",
-        "kind": "warning",
-    },
-    {
-        "start": r"(kernel BUG at|BUG:)",
-        "end": r"\r",
-        "kind": "bug",
-    },
-    {
-        "start": r"invalid opcode:",
-        "end": r"\r",
-        "kind": "invalid opcode",
-    },
-    {
-        "start": r"Kernel panic - not syncing",
-        "end": r"end Kernel panic[^\r]*\r",
-        "kind": "panic",
-        "fatal": True,
-        "job_error_message": "Kernel panic - not syncing",
-    },
-    {
-        "start": r"U-Boot SPL 20[0-9][0-9]",
-        "end": r"\r",
-        "kind": "DUT_has_reset",
-        "fatal": True,
-    },
+if TYPE_CHECKING:
+    from re import Pattern
+    from typing import TypedDict
+
+    from ..action import Action
+    from ..shell import ShellSession
+
+    class ParsingResult(TypedDict):
+        message: str
+        kind: str
+
+
+class KernelMessageKind(Enum):
+    NONE = enum_auto()
+    TRACE = enum_auto()
+    FAULT = enum_auto()
+    KCSAN = enum_auto()
+    KASAN = enum_auto()
+    KFENCE = enum_auto()
+    WARNING = enum_auto()
+    BUG = enum_auto()
+    OOPS = enum_auto()
+    INVALID_OPCODE = enum_auto()
+    PANIC = enum_auto()
+    RESET = enum_auto()
+
+
+class KernelMessageType(Enum):
+    SINGLE_LINE = enum_auto()
+    MULTILINE_START = enum_auto()
+    MULTILINE_END = enum_auto()
+    MULTILINE_END_OR_SINGLE = enum_auto()
+    SINGLE_OR_MULTILINE_MOD = enum_auto()
+
+
+@dataclass(frozen=True)
+class KernelMessage:
+    pattern: Pattern[str]
+    kind: KernelMessageKind
+    fatal: bool = False
+    type: KernelMessageType = KernelMessageType.SINGLE_LINE
+    timeout_msg: str | None = None
+
+
+TRACE_START = KernelMessage(
+    pattern=re_compile(r"-\[ cut here \]-"),
+    kind=KernelMessageKind.TRACE,
+    type=KernelMessageType.MULTILINE_START,
+)
+TRACE_END = KernelMessage(
+    pattern=re_compile(r"-\[ end trace .*"),
+    kind=KernelMessageKind.TRACE,
+    type=KernelMessageType.MULTILINE_END,
+)
+UNHANDLED_FAULT = KernelMessage(
+    pattern=re_compile(r"Unhandled fault.*"),
+    kind=KernelMessageKind.FAULT,
+)
+BUG_KCSAN = KernelMessage(
+    pattern=re_compile(r"BUG: KCSAN:.*"),
+    kind=KernelMessageKind.KCSAN,
+    type=KernelMessageType.MULTILINE_START,
+)
+BUG_KASAN = KernelMessage(
+    pattern=re_compile(r"BUG: KASAN:.*"),
+    kind=KernelMessageKind.KASAN,
+    type=KernelMessageType.MULTILINE_START,
+)
+BUG_KFENCE = KernelMessage(
+    pattern=re_compile(r"BUG: KFENCE:.*"),
+    kind=KernelMessageKind.KFENCE,
+    type=KernelMessageType.MULTILINE_START,
+)
+KSAN_TERM = KernelMessage(  # KCSAN, KASAN, KFENCE termination
+    pattern=re_compile(r"={5,}"),
+    kind=KernelMessageKind.KFENCE,
+    type=KernelMessageType.MULTILINE_END,
+)
+KERNEL_OOPS = KernelMessage(
+    pattern=re_compile(r"Oops(?: -|:).*"),
+    kind=KernelMessageKind.OOPS,
+    type=KernelMessageType.SINGLE_OR_MULTILINE_MOD,
+)
+WARNING = KernelMessage(
+    pattern=re_compile(r"WARNING:"),
+    kind=KernelMessageKind.WARNING,
+    type=KernelMessageType.SINGLE_OR_MULTILINE_MOD,
+)
+BUG = KernelMessage(
+    pattern=re_compile(r"(kernel BUG at|BUG:).*"),
+    kind=KernelMessageKind.BUG,
+    type=KernelMessageType.SINGLE_OR_MULTILINE_MOD,
+)
+PANIC_START = KernelMessage(
+    pattern=re_compile(r"Kernel panic - not syncing"),
+    kind=KernelMessageKind.PANIC,
+    type=KernelMessageType.MULTILINE_START,
+    timeout_msg="Kernel panic - not syncing",
+)
+PANIC_END = KernelMessage(
+    pattern=re_compile(r"---\[ end Kernel panic - not syncing.*"),
+    kind=KernelMessageKind.PANIC,
+    fatal=True,
+    type=KernelMessageType.MULTILINE_END,
+)
+UBOOT_RESET = KernelMessage(
+    pattern=re_compile(r"U-Boot SPL 20[0-9][0-9].*"),
+    kind=KernelMessageKind.RESET,
+    fatal=True,
+)
+
+MULTILINE_MAP: dict[KernelMessage, KernelMessage] = {
+    TRACE_START: TRACE_END,
+    BUG_KCSAN: KSAN_TERM,
+    BUG_KASAN: KSAN_TERM,
+    BUG_KFENCE: KSAN_TERM,
+    PANIC_START: PANIC_END,
+}
+
+KERNEL_MESSAGES_FLAT: list[KernelMessage] = [
+    TRACE_START,
+    TRACE_END,
+    UNHANDLED_FAULT,
+    BUG_KCSAN,
+    BUG_KASAN,
+    BUG_KFENCE,
+    KSAN_TERM,
+    KERNEL_OOPS,
+    WARNING,
+    BUG,
+    PANIC_START,
+    PANIC_END,
+    UBOOT_RESET,
 ]
+
+
+def string_before_new_line(s: str) -> str:
+    return s[s.rfind("\n") + 1 :]
+
+
+class KernelMessageFactory:
+    def __init__(self, results: list[ParsingResult], connection: ShellSession) -> None:
+        self.results = results
+        self.connection = connection
+        self.fatal = False
+
+        self.current_message = ""
+        self.current_kind: KernelMessageKind = KernelMessageKind.NONE
+        self.current_multiline_end: KernelMessage | None = None
+        self.current_timeout_msg: str | None = None
+
+        self.last_message = ""
+        self.last_kind: KernelMessageKind = KernelMessageKind.NONE
+
+    def process_message(self, message: KernelMessage) -> None:
+        message_after = self.connection.raw_connection.after
+        if not isinstance(message_after, str):
+            message_after = ""
+        message_before = self.connection.raw_connection.before
+        if not isinstance(message_before, str):
+            message_before = ""
+
+        # Set fatal once and don't clear it
+        self.fatal = self.fatal | message.fatal
+
+        if message.type == KernelMessageType.SINGLE_LINE:
+            if self.current_kind.value > message.kind.value:
+                # Skip if current priority higher than message
+                self.current_message += message_before + message_after
+            else:
+                self.message_flush()
+                self.current_message = (
+                    string_before_new_line(message_before) + message_after
+                )
+                self.current_kind = message.kind
+                self.message_flush()
+        elif message.type == KernelMessageType.MULTILINE_START:
+            if self.current_kind.value >= message.kind.value:
+                # Skip if current priority higher or equal than current message
+                self.current_message += message_before + message_after
+            else:
+                self.current_message += (
+                    string_before_new_line(message_before) + message_after
+                )
+                self.current_kind = message.kind
+                self.current_multiline_end = MULTILINE_MAP[message]
+                self.current_timeout_msg = message.timeout_msg
+        elif message.type == KernelMessageType.MULTILINE_END:
+            # If message end encountered without accumulated text
+            # simply ignore it.
+            if not self.current_message:
+                return
+
+            self.current_message += message_before + message_after
+            if (
+                message.kind.value >= self.current_kind.value
+                or self.current_multiline_end == message
+            ):
+                # Flush multiline message if priority is equal or larger
+                # or matching end is found.
+                self.message_flush()
+        elif message.type == KernelMessageType.SINGLE_OR_MULTILINE_MOD:
+            if self.current_kind.value > message.kind.value:
+                self.current_message += message_before + message_after
+            else:
+                if self.current_message:
+                    self.current_kind = message.kind
+                    self.current_message += message_before + message_after
+                else:
+                    self.message_flush()
+                    self.current_message = (
+                        string_before_new_line(message_before) + message_after
+                    )
+                    self.current_kind = message.kind
+                    self.message_flush()
+        else:
+            raise ValueError(f"Unknown kernel message type: {message!r}")
+
+    def message_flush(self) -> None:
+        if self.current_message:
+            self.results.append(
+                {
+                    "kind": self.current_kind.name.lower().replace("_", " "),
+                    "message": self.current_message.removesuffix("\r"),
+                }
+            )
+
+        self.last_message = self.current_message
+        self.last_kind = self.current_kind
+
+        self.current_message = ""
+        self.current_kind = KernelMessageKind.NONE
+        self.current_multiline_end = None
+        self.current_timeout_msg = None
 
 
 class LinuxKernelMessages:
@@ -94,13 +272,18 @@ class LinuxKernelMessages:
     summary = "Check for kernel errors, faults and panics."
 
     @classmethod
-    def get_init_prompts(cls):
-        return [msg["start"] for msg in KERNEL_MESSAGES]
+    def get_init_prompts(cls) -> list[Pattern[str]]:
+        return [msg.pattern for msg in KERNEL_MESSAGES_FLAT]
 
     @classmethod
     def parse_failures(
-        cls, connection, action, max_end_time, fail_msg, auto_login=False
-    ):
+        cls,
+        connection: ShellSession,
+        action: Action,
+        max_end_time: float,
+        fail_msg: str,
+        auto_login: bool = False,
+    ) -> list[ParsingResult]:
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -118,10 +301,12 @@ class LinuxKernelMessages:
 
         Always returns a list, the list may be empty.
         """
-        results = []  # wrap inside a dict to use in results
+        results: list[ParsingResult] = []  # wrap inside a dict to use in results
         result = "pass"
-        halt = None
+        halt: str | None = None
         start = time.monotonic()
+
+        message_factory = KernelMessageFactory(results, connection)
 
         while True:
             remaining = max_end_time - time.monotonic()
@@ -134,81 +319,32 @@ class LinuxKernelMessages:
                 if action.force_prompt:
                     index = connection.force_prompt_wait(remaining)
                 else:
-                    index = connection.wait(max_end_time)
+                    index = connection.wait(
+                        max_end_time,
+                        job_error_message=message_factory.current_timeout_msg,
+                    )
             except (pexpect.EOF, TestError):
                 msg = "Failed to match - connection timed out handling messages."
                 action.logger.warning(msg)
                 action.errors = msg
                 break
 
-            if index:
-                action.logger.debug(
-                    "Matched prompt #%s: %s", index, connection.prompt_str[index]
-                )
-            message = connection.raw_connection.after
-            if index is None:
-                break
-            if index < len(KERNEL_MESSAGES):
-                matched_kernel_message = KERNEL_MESSAGES[index]
+            if index < len(KERNEL_MESSAGES_FLAT):
+                matched_kernel_message = KERNEL_MESSAGES_FLAT[index]
+                message_factory.process_message(matched_kernel_message)
 
-                # Capture the start of the line
-                if "\n" in connection.raw_connection.before:
-                    start_line = connection.raw_connection.before.rindex("\n")
-                    message = (
-                        connection.raw_connection.before[start_line + 1 :] + message
-                    )
-                else:
-                    message = connection.raw_connection.before + message
-
-                # Capture the end of the kernel message
-                previous_prompts = connection.prompt_str
-                connection.prompt_str = [
-                    matched_kernel_message["end"]
-                ] + previous_prompts[len(KERNEL_MESSAGES) :]
-                try:
-                    sub_index = connection.wait(
-                        max_end_time,
-                        max_searchwindowsize=True,
-                        job_error_message=matched_kernel_message.get(
-                            "job_error_message"
-                        ),
-                    )
-                except (pexpect.EOF, TestError):
-                    msg = "Failed to match end of kernel error"
-                    action.logger.warning(msg)
-                    action.errors = msg
-                    break
-                if sub_index != 0:
-                    action.logger.warning("Unable to match end of the kernel message")
-                    break
-                message = (
-                    message
-                    + connection.raw_connection.before
-                    + connection.raw_connection.after[:-1]  # Remove ending "\r"
-                )
-                connection.prompt_str = previous_prompts
-
-                # Classify the errors
-                kind = matched_kernel_message["kind"]
-                if kind is None:
-                    if "Oops" in message:
-                        kind = "oops"
-                    elif "BUG" in message:
-                        kind = "bug"
-                    elif "WARNING" in message:
-                        kind = "warning"
-                    else:
-                        kind = "unknown"
-
-                if matched_kernel_message.get("fatal"):
+                if message_factory.fatal:
                     result = "fail"
-                    action.logger.error("%s kernel %r" % (action.name, kind))
-                    halt = message
+                    action.logger.error(
+                        "%s kernel %r", action.name, message_factory.last_kind
+                    )
+                    halt = message_factory.last_message
                 else:
-                    action.logger.warning("%s: kernel %r" % (action.name, kind))
+                    action.logger.warning(
+                        "%s: kernel %r", action.name, message_factory.last_kind
+                    )
 
-                results.append({"kind": kind, "message": message})
-                if matched_kernel_message.get("fatal"):
+                if message_factory.fatal:
                     break
                 else:
                     continue
@@ -217,7 +353,7 @@ class LinuxKernelMessages:
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
                 action.logger.error("%s %s" % (action.name, halt))
-                results.append({"message": "kernel-messages"})
+                results.append({"message": "kernel-messages", "kind": "fail"})
                 break
             else:
                 break

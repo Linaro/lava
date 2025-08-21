@@ -302,3 +302,24 @@ class TestBootMessages(TestMessagesBase):
                 max_end_time=time.monotonic() + 0.1,
                 fail_msg="",
             )
+
+    def test_kernel_panic_and_reset_overlapped_failmsg(self):
+        logfile = os.path.join(
+            os.path.dirname(__file__), "kernel-panic-and-reset-overlapped.txt"
+        )
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        custom_fail_msg = r"coreboot-.*bootblock starting"
+        message_list.append(custom_fail_msg)
+        self.assertIsNotNone(message_list)
+        connection = self.create_shell_session_cat_file(
+            logfile, message_list, infinite_stream=True
+        )
+        action = Action(self.create_job_mock())
+        with self.assertRaisesRegex(JobError, "^Matched job-specific failure message"):
+            LinuxKernelMessages.parse_failures(
+                connection,
+                action=action,
+                max_end_time=self.max_end_time,
+                fail_msg=custom_fail_msg,
+            )
