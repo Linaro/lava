@@ -3,8 +3,10 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -12,8 +14,25 @@ from lava_common.exceptions import JobError, TestError
 from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
+if TYPE_CHECKING:
+    from typing import NotRequired, TypedDict
+
+    from ..action import Action
+    from ..shell import ShellSession
+
+    class KernelMessage(TypedDict):
+        start: str
+        end: str
+        kind: str | None
+        fatal: NotRequired[bool]
+
+    class ParsingResult(TypedDict):
+        message: str
+        kind: NotRequired[str]
+
+
 # kernel boot monitoring
-KERNEL_MESSAGES = [
+KERNEL_MESSAGES: list[KernelMessage] = [
     {
         "start": r"-\[ cut here \]",
         "end": r"-+\[ end trace \w* \]-+[^\n]*\r",
@@ -92,13 +111,18 @@ class LinuxKernelMessages:
     summary = "Check for kernel errors, faults and panics."
 
     @classmethod
-    def get_init_prompts(cls):
+    def get_init_prompts(cls) -> list[str]:
         return [msg["start"] for msg in KERNEL_MESSAGES]
 
     @classmethod
     def parse_failures(
-        cls, connection, action, max_end_time, fail_msg, auto_login=False
-    ):
+        cls,
+        connection: ShellSession,
+        action: Action,
+        max_end_time: float,
+        fail_msg: str,
+        auto_login: bool = False,
+    ) -> list[ParsingResult]:
         """
         Returns a list of dictionaries of matches for failure strings and
         other kernel messages.
@@ -116,7 +140,7 @@ class LinuxKernelMessages:
 
         Always returns a list, the list may be empty.
         """
-        results = []  # wrap inside a dict to use in results
+        results: list[ParsingResult] = []  # wrap inside a dict to use in results
         result = "pass"
         halt = None
         start = time.monotonic()
