@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import JobError
 
 if TYPE_CHECKING:
-    from typing import ClassVar, TypeVar
+    from typing import Any, ClassVar, TypeVar
 
     from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
@@ -28,16 +28,20 @@ class BaseStrategy:
         raise NotImplementedError(f"action() not implemented in {cls.__name__}")
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         """Must be implemented by subclasses."""
         raise NotImplementedError(f"accepts() not implemented in {cls.__name__}")
 
     @classmethod
-    def check_subclass(cls, device, parameters) -> None:
+    def check_subclass(cls, device: dict[str, Any], parameters: dict[str, Any]) -> None:
         raise NotImplementedError(f"check_subclass() not implemented in {cls.__name__}")
 
     @classmethod
-    def select(cls: type[TStrategy], device, parameters) -> type[TStrategy]:
+    def select(
+        cls: type[TStrategy], device: dict[str, Any], parameters: dict[str, Any]
+    ) -> type[TStrategy]:
         cls.check_subclass(device, parameters)
         candidates = cls.__subclasses__()
         replies: dict[str, str] = {}
