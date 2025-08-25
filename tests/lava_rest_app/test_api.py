@@ -1624,6 +1624,14 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job cancel signal sent."  # nosec - unit test support
 
+    def test_cancel_404(self):
+        response = self.adminclient.get(
+            reverse("api-root", args=[self.version]) + "jobs/52022/cancel/"
+        )
+        assert response.status_code == 404
+        msg = json.loads(response.content)
+        assert msg["detail"] == "Not found."
+
     def test_batch_cancel(self, mocker):
         mocker.patch("lava_scheduler_app.models.TestJob.cancel")
         response = self.adminclient.post(
