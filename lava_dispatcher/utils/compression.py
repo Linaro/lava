@@ -105,7 +105,7 @@ def decompress_file(infile: str, compression: str | None) -> str:
         raise InfrastructureError(f"unable to decompress file {infile!r}") from os_exc
 
 
-def create_tarfile(indir, outfile, arcname=None):
+def create_tarfile(indir: str, outfile: str, arcname: str | None = None) -> None:
     try:
         with tarfile.open(outfile, "w") as tar:
             tar.add(indir, arcname=arcname)
@@ -113,7 +113,7 @@ def create_tarfile(indir, outfile, arcname=None):
         raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
 
 
-def untar_file(infile, outdir):
+def untar_file(infile: str, outdir: str) -> None:
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
             # Check for path traversal
@@ -130,7 +130,7 @@ def untar_file(infile, outdir):
         raise InfrastructureError("Unable to unpack %s: %s" % (infile, str(exc)))
 
 
-def cpio(directory, filename):
+def cpio(directory: str, filename: str) -> str:
     which("cpio")
     which("find")
     with chdir(directory):
@@ -149,7 +149,7 @@ def cpio(directory, filename):
             )
 
 
-def uncpio(filename, directory):
+def uncpio(filename: str, directory: str) -> None:
     which("cpio")
     with chdir(directory):
         try:
