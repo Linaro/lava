@@ -1,4 +1,4 @@
-# Copyright 2020-2023 NXP
+# Copyright 2020-2023, 2025 NXP
 #
 # Author: Larry Shen <larry.shen@nxp.com>
 #
@@ -47,15 +47,17 @@ class OptionalContainerUuuAction(OptionalContainerAction):
         return which(path)
 
     def run_bcu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
-        return self.run_cmd(self.get_uuu_bcu_cmd(cmd), allow_fail, error_msg, cwd)
+        return self.run_cmd(
+            self.get_uuu_bcu_cmd(cmd, False), allow_fail, error_msg, cwd
+        )
 
     def run_uuu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
         return self.run_cmd(self.get_uuu_bcu_cmd(cmd), allow_fail, error_msg, cwd)
 
-    def get_uuu_bcu_cmd(self, cmd):
-        uuu_bcu_cmd = self.driver.get_command_prefix() + self.get_manipulated_command(
-            cmd
-        )
+    def get_uuu_bcu_cmd(self, cmd, copy_files=True):
+        uuu_bcu_cmd = self.driver.get_command_prefix(
+            copy_files
+        ) + self.get_manipulated_command(cmd)
         return uuu_bcu_cmd
 
     def get_manipulated_command(self, cmd):
