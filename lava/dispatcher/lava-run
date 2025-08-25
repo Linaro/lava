@@ -10,6 +10,7 @@
 import argparse
 import logging
 import os
+import shutil
 import signal
 import sys
 import traceback
@@ -127,13 +128,12 @@ def setup_logger(options):
         )
     # Create the symlink for downloading via http
     # SymLinks is allowed in the apache2 lava-dispatcher.conf
-    log_download_path = (
-        Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}/logs.yaml"
-    )
+    job_dir = Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}"
+    log_download_path = job_dir / "logs.yaml"
     try:
-        log_download_path.parent.mkdir(parents=True, exist_ok=True)
-        if log_download_path.exists():
-            log_download_path.unlink()
+        if job_dir.exists():
+            shutil.rmtree(job_dir)
+        job_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
         log_download_path.symlink_to(log_file)
     except OSError:
         raise InfrastructureError(f"Unable to create {log_download_path}")
