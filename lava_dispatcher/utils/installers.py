@@ -3,11 +3,16 @@
 # Author: Matthew Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
-def add_to_kickstart(preseedfile, extra_command):
+def add_to_kickstart(preseedfile: str | Path, extra_command: str) -> None:
     with open(preseedfile, "a") as pf:
         pf.write("\n")
         pf.write("%post\n")
@@ -17,7 +22,7 @@ def add_to_kickstart(preseedfile, extra_command):
     pf.close()
 
 
-def add_late_command(preseedfile, extra_command):
+def add_late_command(preseedfile: str | Path, extra_command: str) -> None:
     added = False
     with open(preseedfile) as pf:
         lines = pf.readlines()
@@ -46,7 +51,7 @@ def add_late_command(preseedfile, extra_command):
         pf.close()
 
 
-def endsin(lines, endstring):
+def endsin(lines: str | list[str], endstring: str) -> bool:
     match = False
     if type(lines) is list:
         for line in lines:
