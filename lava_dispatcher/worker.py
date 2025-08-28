@@ -27,7 +27,7 @@ from json import loads as json_loads
 from pathlib import Path
 from shutil import rmtree
 from signal import Signals
-from typing import Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import sentry_sdk
@@ -39,6 +39,10 @@ from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
 from lava_common.yaml import yaml_safe_load
+
+if TYPE_CHECKING:
+    from argparse import Namespace as argparse_ns
+    from typing import Any
 
 ###########
 # Constants
@@ -697,23 +701,30 @@ async def start(
         LOG.debug("[%d] --> %s", job_id, ret.text)
 
 
+async def get_job_data(
+    session: aiohttp.ClientSession, options: argparse_ns
+) -> dict[str, Any]:
+    try:
+        data = await ping(session, options.url, options.token, options.name)
+        return data
+    except ServerUnavailable:
+        LOG.error("-> server unavailable")
+        return {}
+    except VersionMismatch as exc:
+        if options.exit_on_version_mismatch:
+            raise exc
+        return {}
+
+
 ###############
 # Entrypoints #
 ###############
 async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> None:
-    name: str = options.name
-    token: str = options.token
     url: str = options.url
     job_log_interval: int = options.job_log_interval
 
-    try:
-        data = await ping(session, url, token, name)
-    except ServerUnavailable:
-        LOG.error("-> server unavailable")
-        return
-    except VersionMismatch as exc:
-        if options.exit_on_version_mismatch:
-            raise exc
+    data = await get_job_data(session, options)
+    if not data:
         return
 
     # running jobs
@@ -924,7 +935,14 @@ async def main() -> int:
             if options.wait_jobs:
                 LOG.info("[EXIT] Wait for jobs to finish")
                 while True:
-                    await check(session, options.url, jobs)
+                    data = await get_job_data(session, options)
+                    async with jobs.lock:
+                        if data:
+                            for job in data.get("cancel", []):
+                                cancel(options.url, jobs, job["id"], job["token"])
+
+                        await check(session, options.url, jobs)
+
                     all_ids = jobs.all_ids()
                     LOG.info(
                         "[EXIT] => %d jobs ([%s])",
