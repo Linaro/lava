@@ -239,3 +239,21 @@ class TestTestSuite(TestCaseWithFactory):
         self.assertEqual(
             "/scheduler/job/%s/multinode_definition" % job.id, job.get_definition_url()
         )
+
+
+class TestTestCase(TestCaseWithFactory):
+    def test_replacing_ctrl_chars(self):
+        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), self.user)
+        ret = map_scanned_results(
+            results={
+                "definition": "lava",
+                "case": "0_ltp-fcn\x04l-lock\x7ftests",
+                "result": "pass",
+            },
+            job=job,
+            starttc=None,
+            endtc=None,
+            meta_filename=None,
+        )
+        self.assertTrue(ret)
+        self.assertEqual(ret.name, "0_ltp-fcn_ctrl-char_l-lock_ctrl-char_tests")

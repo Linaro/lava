@@ -8,6 +8,7 @@
 import decimal
 import logging
 import os
+import re
 from urllib.parse import quote
 
 from lava_common.version import __version__
@@ -128,7 +129,11 @@ def map_scanned_results(results, job, starttc, endtc, meta_filename):
     suite, _ = TestSuite.objects.get_or_create(name=results["definition"], job=job)
     testset = _check_for_testset(results, suite)
 
-    name = results["case"].strip()
+    case_name = results["case"].strip()
+    # Case name is used assembling filename for exporting result, but control characters
+    # are invalid in http headers.
+    ctrl_char_re = re.compile(r"[\x00-\x1f\x7f]")
+    name = ctrl_char_re.sub("_ctrl-char_", case_name)
 
     test_case = None
     if suite.name == "lava":
