@@ -26,6 +26,8 @@ from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerRun
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -57,7 +59,7 @@ class CallAvhAction(Action):
         self.websocat_docker_image = "ghcr.io/vi/websocat:1.12.0"
         self.api_config = None
         self.bootargs = None
-        self.avh = {}
+        self.avh: dict[str, Any] = {}
         self.image_id = None
         self.instance_id = None
         self.instance_name = None
@@ -152,13 +154,14 @@ class CallAvhAction(Action):
             raise JobError("Upload thread terminated without providing a result")
 
     def run(self, connection, max_end_time):
-        self.avh = self.get_namespace_data(
+        avh_config: dict[str, Any] | None = self.get_namespace_data(
             action="deploy-avh", label="deploy-avh", key="avh"
         )
-        if self.avh is None:
+        if avh_config is None:
             raise JobError(
                 "AVH image attributes not found! Is 'deploy.avh' action defined before the 'boot.avh' action?"
             )
+        self.avh = avh_config
         self.instance_name = self.avh["image_name"]
 
         self.api_config = AvhApi.Configuration(self.avh["api_endpoint"])
