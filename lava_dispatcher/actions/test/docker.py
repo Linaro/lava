@@ -168,7 +168,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         self.logger.debug("Starting docker test shell container: %s" % cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection.prompt_str = "docker-test-shell:"
         self.parameters["connection-namespace"] = "docker-test-shell"
         self.set_namespace_data(

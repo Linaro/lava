@@ -236,7 +236,7 @@ class CallAvhAction(Action):
         self.docker_cleanup_required = True
         self.logger.info(f"Connecting to instance {self.instance_id} console ...")
         shell = ShellCommand(console_cmd, self.timeout, logger=self.logger)
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

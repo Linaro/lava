@@ -133,7 +133,7 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
             expected_cmd, self.action.timeout, logger=self.action.logger
         )
 
-        mock_shell_session_class.assert_called_once_with(self.job, mock_shell)
+        mock_shell_session_class.assert_called_once_with(mock_shell)
         mock_set_namespace_data.assert_called_once_with(
             action="shared", label="shared", key="connection", value=mock_shell_session
         )
