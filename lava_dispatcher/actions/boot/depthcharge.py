@@ -10,7 +10,7 @@ import os.path
 from typing import TYPE_CHECKING
 
 from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -58,16 +58,21 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
             self.logger.info("Skipping creating cmdline file as kernel is not defined")
             return None
 
-        kernel_path = self.get_namespace_data(
+        kernel_path: str | None = self.get_namespace_data(
             action="download-action", label="kernel", key="file"
         )  # Absolute kernel path
+        if kernel_path is None:
+            raise JobError("Kernel file not defined. Unable to create cmdline file.")
         cmdline_file_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
 
-        substitutions = self.get_namespace_data(
+        substitutions: dict[str, str | None] | None = self.get_namespace_data(
             action=self.name,
             label=self.method,
             key="substitutions",
         )
+        if substitutions is None:
+            # Only possible if super().run() not called
+            raise LAVABug("Substitutions dictionary not initialized")
 
         cmdline = substitute([self.cmdline], substitutions)[0]
 
@@ -82,30 +87,33 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        kernel_tftp = self.get_namespace_data(
+        kernel_tftp: str | None = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
         )
         # Substitute {CMDLINE} with the cmdline file TFTP path
         cmdline_tftp = self.create_cmdline_file(kernel_tftp)
 
         # Load FIT image if available, otherwise plain kernel image
-        fit_tftp = self.get_namespace_data(
+        fit_tftp: str | None = self.get_namespace_data(
             action="prepare-fit", label="file", key="fit"
         )
 
         # Also load ramdisk if available and not using a FIT image
-        ramdisk_tftp = self.get_namespace_data(
+        ramdisk_tftp: str | None = self.get_namespace_data(
             action="compress-ramdisk", label="file", key="ramdisk"
         )
 
-        substitutions = {
+        substitutions: dict[str, str | None] = {
             "{CMDLINE}": cmdline_tftp,
             "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
             "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp or "" if not fit_tftp else "",
         }
-        commands = self.get_namespace_data(
+        commands: list[str] | None = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
+        if commands is None:
+            # Only possible if super().run() not called
+            raise LAVABug("Bootloader commands not initialized")
         commands = substitute(commands, substitutions, drop=True, drop_line=False)
         self.set_namespace_data(
             action="bootloader-overlay",
