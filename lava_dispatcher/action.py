@@ -507,7 +507,7 @@ class Action:
     def on_timeout(self) -> None:
         ...
 
-    def validate(self):
+    def validate(self) -> None:
         """
         This method needs to validate the parameters to the action. For each
         validation that is found, an item should be added to self.errors.
@@ -833,7 +833,7 @@ class Action:
                         value=message[1],
                     )
 
-    def run(self, connection, max_end_time):
+    def run(self, connection: ShellSession, max_end_time: float | None) -> ShellSession:
         """
         This method is responsible for performing the operations that an action
         is supposed to do.
@@ -942,7 +942,9 @@ class Action:
         self.data[namespace][action].setdefault(label, {})
         self.data[namespace][action][label][key] = value
 
-    def wait(self, connection, max_end_time=None):
+    def wait(
+        self, connection: ShellSession | None, max_end_time: float | None = None
+    ) -> None:
         if not connection:
             return
         if not connection.connected:
