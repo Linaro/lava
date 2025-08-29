@@ -9,10 +9,11 @@ import contextlib
 import logging
 import time
 from os import killpg as os_killpg
+from re import Match
 from re import error as re_error
 from re import split as re_split
 from signal import SIGKILL
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import pexpect
 
@@ -29,7 +30,20 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Iterator
+    from re import Pattern
+    from typing import Literal
+
+    from pexpect import EOF, TIMEOUT
+
+    from lava_common.log import YAMLLogger
     from lava_dispatcher.job import Job
+
+    SpawnBase = pexpect.spawn[str]
+else:
+    # Workaround for real pexpect.spawn not being generic
+    # but typeshed hints being generic
+    SpawnBase = pexpect.spawn
 
 
 class ShellLogger:
@@ -38,13 +52,14 @@ class ShellLogger:
     using the logfile support built into pexpect.
     """
 
-    def __init__(self, logger, is_input: bool = False):
+    def __init__(self, logger: YAMLLogger, is_input: bool = False):
         self.line = ""
         self.logger = logger
         self.is_feedback = False
         self.is_input = is_input
+        self.namespace: str | None = None
 
-    def write(self, new_line):
+    def write(self, new_line: str) -> None:
         replacements = {"\x1b": ""}  # remove escape control characters
         lines = self.line + new_line
 
@@ -69,12 +84,12 @@ class ShellLogger:
             self.line = lines
         return
 
-    def flush(self, force=False):
+    def flush(self, force: bool = False) -> None:
         if force and self.line:
             self.write("\n")
 
 
-class ShellCommand(pexpect.spawn):
+class ShellCommand(SpawnBase):
     """
     Run a command over a connection using pexpect instead of
     subprocess, i.e. not on the dispatcher itself.
@@ -89,7 +104,12 @@ class ShellCommand(pexpect.spawn):
     """
 
     def __init__(
-        self, command, lava_timeout: Timeout, logger=None, cwd=None, window=2000
+        self,
+        command: str,
+        lava_timeout: Timeout,
+        logger: YAMLLogger | None = None,
+        cwd: str | None = None,
+        window: int = 2000,
     ):
         if isinstance(window, str):
             # constants need to be stored as strings.
@@ -116,8 +136,12 @@ class ShellCommand(pexpect.spawn):
             maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors="replace",
         )
-        self.logfile_read = ShellLogger(logger)
-        self.logfile_send = ShellLogger(logger, is_input=True)
+        # logfile_read and logfile_send can be None.
+        # Create new variables that cannot be None.
+        self.output_logger = ShellLogger(logger)
+        self.logfile_read = self.output_logger
+        self.input_logger = ShellLogger(logger, is_input=True)
+        self.logfile_send = self.input_logger
         self.name = "ShellCommand"
         self.logger = logger
         # delayafterterminate allow for some spare time for a process to terminate
@@ -127,12 +151,15 @@ class ShellCommand(pexpect.spawn):
         self.delaybeforesend = None  # LAVA implements its own delay between characters.
         # lava-run is single threaded, there is no concern about GIL not being released
         # between read calls. Remove delay after read.
-        self.delayafterread = None
+        # Typeshed type hints has incorrectly marked `delayafterread` as float only.
+        self.delayafterread = None  # type: ignore[assignment]
         # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 
-    def sendline(self, s="", delay=0):
+    def sendline(  # type: ignore[override]
+        self, s: str = "", delay: float = 0.0
+    ) -> int:
         """
         Extends pexpect.sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
@@ -147,13 +174,15 @@ class ShellCommand(pexpect.spawn):
             send_char = True
         self.logger.debug("Sending line: %r", s)
         self.send(s, delay, send_char)
-        self.send(self.linesep, delay)
+        return self.send(self.linesep, delay)
 
-    def sendcontrol(self, char):
+    def sendcontrol(self, char: str) -> int:
         self.logger.debug("Sending character: %r", char)
         return super().sendcontrol(char)
 
-    def send(self, string, delay=0, send_char=True):
+    def send(  # type: ignore[override]
+        self, string: str, delay: float = 0.0, send_char: bool = True
+    ) -> int:
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
@@ -162,6 +191,9 @@ class ShellCommand(pexpect.spawn):
             return sent
         delay = float(delay) / 1000
         if send_char:
+            # If string is bytes send one byte at a time.
+            # When iterating over bytes int gets yielded so convert it to a bytes
+            # with length of 1.
             for char in string:
                 sent += super().send(char)
                 time.sleep(delay)
@@ -169,15 +201,77 @@ class ShellCommand(pexpect.spawn):
             sent = super().send(string)
         return sent
 
-    def expect(self, *args, **kw):
+    # Copy pasted overloads from super class method
+    @overload
+    def expect(
+        self,
+        pattern: (
+            Pattern[str]
+            | Pattern[bytes]
+            | str
+            | bytes
+            | type[EOF]
+            | type[TIMEOUT]
+            | list[
+                Pattern[str] | Pattern[bytes] | str | bytes | type[EOF] | type[TIMEOUT]
+            ]
+        ),
+        timeout: float | None = -1,
+        searchwindowsize: int | None = None,
+        async_: Literal[False] = False,
+    ) -> int:
+        ...
+
+    @overload
+    def expect(
+        self,
+        pattern: (
+            Pattern[str]
+            | Pattern[bytes]
+            | str
+            | bytes
+            | type[EOF]
+            | type[TIMEOUT]
+            | list[
+                Pattern[str] | Pattern[bytes] | str | bytes | type[EOF] | type[TIMEOUT]
+            ]
+        ),
+        timeout: float | None = -1,
+        searchwindowsize: int | None = None,
+        async_: Literal[True] = True,
+    ) -> Awaitable[int]:
+        ...
+
+    def expect(
+        self,
+        pattern: (
+            Pattern[str]
+            | Pattern[bytes]
+            | str
+            | bytes
+            | type[EOF]
+            | type[TIMEOUT]
+            | list[
+                Pattern[str] | Pattern[bytes] | str | bytes | type[EOF] | type[TIMEOUT]
+            ]
+        ),
+        timeout: float | None = -1,
+        searchwindowsize: int | None = None,
+        async_: Literal[True] | Literal[False] = False,
+    ) -> int | Awaitable[int]:
         """
         No point doing explicit logging here, the SignalDirector can help
         the TestShellAction make much more useful reports of what was matched
         """
         try:
-            proc = super().expect(*args, **kw)
+            proc = super().expect(
+                pattern=pattern,
+                timeout=timeout,
+                searchwindowsize=searchwindowsize,
+                async_=async_,
+            )
         except re_error as exc:
-            msg = f"Invalid regular expression '{exc.pattern}': {exc.msg}"
+            msg = f"Invalid regular expression {exc.pattern!r}: {exc.msg}"
             raise TestError(msg)
         except pexpect.TIMEOUT:
             raise TestError("ShellCommand command timed out.")
@@ -188,10 +282,10 @@ class ShellCommand(pexpect.spawn):
             raise ConnectionClosedError("Connection closed")
         return proc
 
-    def flush(self):
+    def flush(self) -> None:
         """Will be called by pexpect itself when closing the connection"""
-        self.logfile_read.flush(force=True)
-        self.logfile_send.flush(force=True)
+        self.input_logger.flush(force=True)
+        self.output_logger.flush(force=True)
 
 
 class ShellSession:
@@ -210,11 +304,11 @@ class ShellSession:
         self.tags: list[str] = ["shell"]
 
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
-        self.__prompt_str__ = None
+        self.__prompt_str__: str | None = None
         self.timeout = shell_command.lava_timeout
         self.logger = logging.getLogger("dispatcher")
 
-    def send(self, character, disconnecting=False):
+    def send(self, character: str, disconnecting: bool = False) -> None:
         if self.connected:
             self.raw_connection.send(character)
         elif not disconnecting:
@@ -223,16 +317,16 @@ class ShellSession:
     def sendline(
         self,
         line: str,
-        delay: int = 0,
+        delay: float = 0.0,
         disconnecting: bool = False,
         check: bool = False,
         timeout: int | float = 15,
-    ):
+    ) -> None:
         if self.connected:
             if not check:
                 self.raw_connection.sendline(line, delay=delay)
             else:
-                signal: str = "LAVA_SIGNAL_RETRUNCODE"
+                signal = "LAVA_SIGNAL_RETRUNCODE"
                 self.raw_connection.sendline(
                     f'{line} ; printf "<{signal} $?>\\n"', delay=delay
                 )
@@ -240,19 +334,20 @@ class ShellSession:
                     f"Checking {line!r} return code... "
                     f"(timeout {seconds_to_str(timeout)})"
                 )
-                index: int = self.raw_connection.expect(
+                self.raw_connection.expect(
                     [
                         rf"<{signal} (\d+)>",
                         pexpect.TIMEOUT,
                     ],
                     timeout=timeout,
                 )
-                if index == 0:
-                    rc = self.raw_connection.match.group(1)
+                expect_match = self.raw_connection.match
+                if isinstance(expect_match, Match):
+                    rc = expect_match.group(1)
                     with contextlib.suppress(TypeError, ValueError):
                         if rc := int(rc):
                             raise JobError(f"{line!r} failed with return code {rc}!")
-                elif index == 1:
+                else:
                     # Instead of the default TestError, raise JobError with a
                     # specific error message.
                     raise JobError(f"Failed to check {line!r} return code!")
@@ -260,13 +355,13 @@ class ShellSession:
         elif not disconnecting:
             raise LAVABug("sendline called on disconnected connection")
 
-    def sendcontrol(self, char):
+    def sendcontrol(self, char: str) -> None:
         if self.connected:
             self.raw_connection.sendcontrol(char)
         else:
             raise LAVABug("sendcontrol called on disconnected connection")
 
-    def disconnect(self, reason: str):
+    def disconnect(self, reason: str) -> None:
         logger = self.logger
 
         if self.connected:
@@ -298,26 +393,26 @@ class ShellSession:
         if self.raw_connection:
             with contextlib.suppress(pexpect.ExceptionPexpect):
                 self.raw_connection.close(force=True)
-                self.raw_connection = None
 
-    def finalise(self):
+    def finalise(self) -> None:
         if self.raw_connection:
             try:
-                os_killpg(self.raw_connection.pid, SIGKILL)
+                pid = self.raw_connection.pid
+                if pid is not None:  # If shell never started the pid will be None.
+                    os_killpg(pid, SIGKILL)
             except OSError:
                 self.raw_connection.kill(SIGKILL)
             else:
                 self.connected = False
                 self.raw_connection.close(force=True)
-                self.raw_connection = None
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property
-    def prompt_str(self):
+    def prompt_str(self) -> str | None:
         return self.__prompt_str__
 
     @prompt_str.setter
-    def prompt_str(self, string):
+    def prompt_str(self, string: str) -> None:
         """
         pexpect allows the prompt to be a single string or a list of strings
         this property simply replaces the previous value with the new one
@@ -328,13 +423,13 @@ class ShellSession:
         self.__prompt_str__ = string
 
     @contextlib.contextmanager
-    def test_connection(self):
+    def test_connection(self) -> Iterator[ShellCommand]:
         """
         Yields the actual connection which can be used to interact inside this shell.
         """
         yield self.raw_connection
 
-    def force_prompt_wait(self, remaining=None):
+    def force_prompt_wait(self, remaining: float | None = None) -> int:
         """
         One of the challenges we face is that kernel log messages can appear
         half way through a shell prompt.  So, if things are taking a while,
@@ -352,11 +447,13 @@ class ShellSession:
             "Waiting using forced prompt support (timeout %s)"
             % seconds_to_str(partial_timeout)
         )
+        prompt_str = self.prompt_str
+        if prompt_str is None:
+            raise LAVABug("prompt_str is None")
+
         while True:
             try:
-                return self.raw_connection.expect(
-                    self.prompt_str, timeout=partial_timeout
-                )
+                return self.raw_connection.expect(prompt_str, timeout=partial_timeout)
             except (pexpect.TIMEOUT, TestError) as exc:
                 if prompt_wait_count < 6:
                     self.logger.warning(
@@ -366,7 +463,7 @@ class ShellSession:
                         seconds_to_str(remaining),
                         seconds_to_str(partial_timeout),
                     )
-                    self.logger.debug("pattern: %s", self.prompt_str)
+                    self.logger.debug("pattern: %s", prompt_str)
                     prompt_wait_count += 1
                     partial_timeout = remaining / 10
                     self.sendline(self.check_char)
@@ -380,35 +477,45 @@ class ShellSession:
 
     def wait(
         self,
-        max_end_time=None,
-        max_searchwindowsize=False,
+        max_end_time: float | None = None,
+        max_searchwindowsize: bool = False,
         job_error_message: str | None = None,
-    ):
+    ) -> int:
         """
         Simple wait without sending blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
         the menu to exit to an unrecognised prompt.
         """
         if not max_end_time:
-            timeout = self.timeout.duration
+            timeout: float = self.timeout.duration
         else:
             timeout = max_end_time - time.monotonic()
-        if timeout < 0:
+        if timeout < 0.0:
             raise LAVABug("Invalid max_end_time value passed to wait()")
+
+        prompt_str = self.prompt_str
+        if prompt_str is None:
+            raise LAVABug("prompt_str is None")
+
         try:
             if max_searchwindowsize:
                 return self.raw_connection.expect(
-                    self.prompt_str, timeout=timeout, searchwindowsize=None
+                    prompt_str,
+                    timeout=timeout,
+                    searchwindowsize=None,
+                    async_=False,
                 )
             else:
-                return self.raw_connection.expect(self.prompt_str, timeout=timeout)
+                return self.raw_connection.expect(
+                    prompt_str, timeout=timeout, async_=False
+                )
         except (TestError, pexpect.TIMEOUT):
             raise JobError(job_error_message or "wait for prompt timed out")
         except ConnectionClosedError as exc:
             self.connected = False
             raise InfrastructureError(str(exc))
 
-    def listen_feedback(self, timeout, namespace=None):
+    def listen_feedback(self, timeout: float, namespace: str | None = None) -> int:
         """
         Listen to output and log as feedback
         Returns the number of characters read.
@@ -417,20 +524,23 @@ class ShellSession:
         if not self.raw_connection:
             # connection has already been closed.
             return index
-        if timeout < 0:
+        if timeout < 0.0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
-            self.raw_connection.logfile_read.is_feedback = True
-            self.raw_connection.logfile_read.namespace = namespace
+            self.raw_connection.output_logger.is_feedback = True
+            self.raw_connection.output_logger.namespace = namespace
             index = self.raw_connection.expect(
                 [".+", pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
             )
         finally:
-            self.raw_connection.logfile_read.is_feedback = False
-            self.raw_connection.logfile_read.namespace = None
+            self.raw_connection.output_logger.is_feedback = False
+            self.raw_connection.output_logger.namespace = None
 
         if index == 0:
-            return len(self.raw_connection.after)
+            connection_after = self.raw_connection.after
+            # connection_after can be EOF or TIMEOUT
+            if isinstance(connection_after, str):
+                return len(connection_after)
         return 0
 
 
@@ -449,12 +559,12 @@ class ExpectShellSession(Action):
         super().__init__(job)
         self.force_prompt = True
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if "prompts" not in self.parameters:
             self.errors = "Unable to identify test image prompts from parameters."
 
-    def run(self, connection, max_end_time):
+    def run(self, connection: ShellSession, max_end_time: float | None) -> ShellSession:
         connection = super().run(connection, max_end_time)
         if not connection:
             raise JobError("No connection available.")
