@@ -64,7 +64,7 @@ fi
 
 RELEASE=9999
 if [ "${SUITE}" != "unstable" ] && [ "${SUITE}" != "sid" ]; then
-  RELEASE="$(distro-info --release --"$(distro-info --alias="${SUITE}")")"
+  RELEASE="$(distro-info --release --series="${SUITE}")"
 fi
 
 dpkg-checkbuilddeps
