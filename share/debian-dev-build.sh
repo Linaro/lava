@@ -4,31 +4,31 @@ set -e
 
 SUITE=unstable
 DIR="../build-area/"
-DEBUILD_OPTS=" -sa"
+DEBUILD_OPTS=("-sa")
 
 while getopts ":a:o:s:B" opt; do
   case $opt in
     a)
       ARCH=$OPTARG
       set +e
-      chk=`dpkg-architecture -a$ARCH > /dev/null 2>&1 ; echo $?`
+      chk=$(dpkg-architecture --host-arch "$ARCH" > /dev/null 2>&1 ; echo $?)
       set -e
-      if [ $chk != 0 ]; then
+      if [ "$chk" != 0 ]; then
           echo "Did not recognise ${ARCH} as a Debian architecture name. Exit."
           exit 1
       fi
       # preserve the .dsc
-      DEBUILD_OPTS=" -a${ARCH}"
+      DEBUILD_OPTS=("--host-arch" "${ARCH}")
       ;;
     B)
       # only build arch:any binary packages
-      DEBUILD_OPTS=" -B"
+      DEBUILD_OPTS=("-B")
       ;;
     s)
       SUITE=$OPTARG
       ;;
     o)
-      DIR=`readlink -f $OPTARG`
+      DIR=$(readlink -f "$OPTARG")
       ;;
     \?)
       echo "[LAVA-DEV] Invalid option: -$OPTARG" >&2
@@ -48,28 +48,28 @@ done
 
 # lintian is disabled because it will complain about the
 # change to a native build.
-DEBUILD_OPTS=" --no-lintian -uc -us ${DEBUILD_OPTS}"
+DEBUILD_OPTS=("--no-lintian" "-uc" "-us" "${DEBUILD_OPTS[@]}")
 
-if [ ! -d ${DIR} ]; then
-  mkdir ${DIR}
+if [ ! -d "${DIR}" ]; then
+  mkdir "${DIR}"
 fi
 
 if [ -x ./lava_common/version.py ]; then
   # native version for developer build
-  VERSION=`python3 ./lava_common/version.py |tr - .`
+  VERSION="$(python3 ./lava_common/version.py | tr - .)"
 else
   echo "[LAVA-DEV] Unable to find ./lava_common/version.py"
   exit 1
 fi
 
 RELEASE=9999
-if [ "${SUITE}" != "unstable" -a "${SUITE}" != "sid" ]; then
-  RELEASE="$(distro-info --release --$(distro-info --alias=${SUITE}))"
+if [ "${SUITE}" != "unstable" ] && [ "${SUITE}" != "sid" ]; then
+  RELEASE="$(distro-info --release --"$(distro-info --alias="${SUITE}")")"
 fi
 
 dpkg-checkbuilddeps
-LOCAL=`git diff | wc -l`
-if [ ${LOCAL} != 0 ]; then
+LOCAL=$(git diff | wc -l)
+if [ "${LOCAL}" != 0 ]; then
     echo "[LAVA-DEV] You have uncommitted changes in your source tree:"
     git status
     exit 3
@@ -80,10 +80,10 @@ if [ -d './dist/' ]; then
 fi
 
 if [ -d .git ]; then
-  LOG=`git log -n1 --pretty=format:"Last change %h by %an on %aD (%s)%n" --no-merges`
-  DATE=`git log -n1 --pretty=format:%aD --no-merges`
+  LOG=$(git log -n1 --pretty=format:"Last change %h by %an on %aD (%s)%n" --no-merges)
+  DATE=$(git log -n1 --pretty=format:%aD --no-merges)
 fi
-NAME=`dpkg-parsechangelog |grep Source|cut -d" " -f2`
+NAME=$(dpkg-parsechangelog | grep Source | cut -d" " -f2)
 
 BUILDDIR="${DIR}/lava-${VERSION}"
 mkdir -p "${BUILDDIR}"
@@ -103,7 +103,7 @@ echo "${VERSION}" > lava_common/VERSION
 # convert to a native package to include local changes.
 echo "3.0 (native)" > debian/source/format
 BUILD_SUITE="${SUITE}"
-dch --force-distribution -b -v "${VERSION}+${RELEASE}+${SUITE}" -D ${BUILD_SUITE} "Local developer native build for ${BUILD_SUITE}"
+dch --force-distribution -b -v "${VERSION}+${RELEASE}+${SUITE}" -D "${BUILD_SUITE}" "Local developer native build for ${BUILD_SUITE}"
 if [ -n "${LOG}" ]; then
   dch -a "${LOG}"
 fi
@@ -113,16 +113,16 @@ if [ -n "${DATE}" ]; then
     debian/changelog
 fi
 
-debuild ${DEBUILD_OPTS}
+debuild "${DEBUILD_OPTS[@]}"
 cd -
 
 CHANGES="${DIR}/${NAME}_${VERSION}*.changes"
 echo
-echo ${LOG}
+echo "${LOG}"
 echo
 echo Use "zless /usr/share/doc/${NAME}/changelog.Debian.gz"
 echo to view the changelog, once packages are installed.
 echo
 if [ -x /usr/bin/dcmd ]; then
-    dcmd ls ${CHANGES}
+    dcmd ls "${CHANGES}"
 fi
