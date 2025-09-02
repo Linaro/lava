@@ -431,6 +431,4 @@ def is_sparse_image(image):
     """
     import magic
 
-    image_magic = magic.open(magic.MAGIC_NONE)
-    image_magic.load()
-    return bool(image_magic.file(image).split(",")[0] == "Android sparse image")
+    return bool(magic.from_file(image).split(",")[0] == "Android sparse image")
