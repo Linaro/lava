@@ -61,7 +61,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
-from django.utils.html import escape
+from django.utils.html import escape, json_script
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -1762,9 +1762,15 @@ def job_detail(request, pk):
         if lava_job_obj.result == TestCase.RESULT_FAIL:
             lava_job_result = lava_job_obj.action_metadata
 
+    try:
+        json_log_data = json_script(log_data if log_data else [], "logs-initial")
+    except Exception:
+        log_data = None
+        json_log_data = json_script([], "logs-initial")
+
     data.update(
         {
-            "log_data": log_data if log_data else [],
+            "log_data": json_log_data,
             "invalid_log_data": log_data is None,
             "lava_job_result": lava_job_result,
         }
