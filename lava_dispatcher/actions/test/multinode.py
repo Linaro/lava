@@ -7,11 +7,16 @@ from __future__ import annotations
 
 import json
 import re
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import MultinodeProtocolTimeoutError, TestError
 from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 # TODO: This is a workaround allowing to run multinode jobs with "monitors"
 # and "interactive" test actions - simple scenarios, without cross-device
@@ -24,11 +29,11 @@ from lava_dispatcher.protocols.multinode import MultinodeProtocol
 # for those test actions ahead of heavy refactors above.
 
 
-class MultinodeMixin:
+class MultinodeMixin(Action):
     timeout_exception = TestError
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, job: Job):
+        super().__init__(job)
         self.multinode_dict = {"multinode": r"<LAVA_MULTI_NODE> <LAVA_(\S+) ([^>]+)>"}
 
     def validate(self):
