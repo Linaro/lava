@@ -19,7 +19,15 @@ def version(ref: str | None = None) -> str:
     root = root.resolve()
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         if (root / ".git").exists():
-            args: list[str] = ["git", "-C", str(root), "describe", "--match=[0-9]*"]
+            args: list[str] = [
+                "git",
+                "-C",
+                str(root),
+                "-c",
+                f"safe.directory={root}",
+                "describe",
+                "--match=[0-9]*",
+            ]
             if ref is not None:
                 args.append(ref)
             pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
