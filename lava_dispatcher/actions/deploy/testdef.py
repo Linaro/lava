@@ -11,6 +11,8 @@ import re
 import shutil
 from typing import TYPE_CHECKING
 
+import yaml
+
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
@@ -317,7 +319,7 @@ class GitRepoAction(RepoAction):
         try:
             with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
-        except OSError as exc:
+        except (OSError, yaml.YAMLError) as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
                 % (self.parameters["path"], str(exc))
