@@ -874,8 +874,9 @@ class TestDowload(LavaDispatcherTestCase):
         filename = Path(action.job.tmp_dir) / "downloads/common/zimage"
         filename.parent.mkdir(parents=True)
         filename.touch()
+        suffix = f"{job.job_id}/tftp-deploy-uid"
         action.set_namespace_data(
-            action="tftp-deploy", label="tftp", key="suffix", value="tftp-deploy-uid"
+            action="tftp-deploy", label="tftp", key="suffix", value=suffix
         )
 
         action.run(None, 4242)
@@ -884,7 +885,7 @@ class TestDowload(LavaDispatcherTestCase):
             action.get_namespace_data(
                 action="download-action", label="file", key="kernel"
             ),
-            "tftp-deploy-uid/kernel/zimage",
+            f"{suffix}/kernel/zimage",
         )
 
     def test_predownloaded_tftp_file_path_uniquify_false(self):
@@ -911,8 +912,9 @@ class TestDowload(LavaDispatcherTestCase):
         filename = Path(action.job.tmp_dir) / "downloads/common/zimage"
         filename.parent.mkdir(parents=True)
         filename.touch()
+        suffix = f"{job.job_id}/tftp-deploy-uid"
         action.set_namespace_data(
-            action="tftp-deploy", label="tftp", key="suffix", value="tftp-deploy-uid"
+            action="tftp-deploy", label="tftp", key="suffix", value=suffix
         )
 
         action.run(None, 4242)
@@ -921,7 +923,7 @@ class TestDowload(LavaDispatcherTestCase):
             action.get_namespace_data(
                 action="download-action", label="file", key="kernel"
             ),
-            "tftp-deploy-uid/zimage",
+            f"{suffix}/zimage",
         )
 
     def test_predownloaded_tftp_file_path_prefix_not_found(self):
