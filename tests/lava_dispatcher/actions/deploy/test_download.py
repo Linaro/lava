@@ -792,7 +792,7 @@ class TestDowload(LavaDispatcherTestCase):
         job.validate()
 
     def test_predownloaded_uniquify_false(self):
-        params = {
+        parameters = {
             "to": "tmpfs",
             "rootfs": {"url": "downloads://rootfs.xz"},
             "namespace": "common",
@@ -805,9 +805,9 @@ class TestDowload(LavaDispatcherTestCase):
             urlparse("downloads://rootfs.xz"),
             destdir,
             uniquify=False,
-            params=params,
+            params=parameters["rootfs"],
         )
-        action.parameters = params
+        action.parameters = parameters
 
         filename = Path(action.job.tmp_dir) / "downloads/common/rootfs.xz"
         filename.parent.mkdir(parents=True)
@@ -822,6 +822,135 @@ class TestDowload(LavaDispatcherTestCase):
         )
         self.assertEqual(mapped_path, (destdir + "/rootfs.xz"))
         self.assertTrue(Path(mapped_path).exists())
+
+    def test_predownloaded_validate_set_kernel_type(self):
+        parameters = {
+            "to": "tftp",
+            "kernel": {"url": "downloads://zimage", "type": "zimage"},
+            "namespace": "common",
+        }
+
+        job = self.create_simple_job()
+        destdir = job.mkdtemp("some-other-action")
+        action = PreDownloadedAction(
+            job,
+            "kernel",
+            urlparse("downloads://zimage"),
+            destdir,
+            uniquify=True,
+            params=parameters["kernel"],
+        )
+        action.parameters = parameters
+        action.validate()
+
+        self.assertEqual(
+            action.get_namespace_data(
+                action="download-action", label="type", key="kernel"
+            ),
+            "zimage",
+        )
+
+    def test_predownloaded_tftp_file_path(self):
+        parameters = {
+            "to": "tftp",
+            "kernel": {"url": "downloads://zimage", "type": "zimage"},
+            "namespace": "common",
+        }
+
+        job = self.create_simple_job()
+        destdir = job.mkdtemp("some-other-action")
+
+        action = PreDownloadedAction(
+            job,
+            "kernel",
+            urlparse("downloads://zimage"),
+            destdir,
+            uniquify=True,
+            params=parameters["kernel"],
+        )
+        action.parameters = parameters
+        action.data = {}
+        action.parameters = {"namespace": "common"}
+        filename = Path(action.job.tmp_dir) / "downloads/common/zimage"
+        filename.parent.mkdir(parents=True)
+        filename.touch()
+        action.set_namespace_data(
+            action="tftp-deploy", label="tftp", key="suffix", value="tftp-deploy-uid"
+        )
+
+        action.run(None, 4242)
+
+        self.assertEqual(
+            action.get_namespace_data(
+                action="download-action", label="file", key="kernel"
+            ),
+            "tftp-deploy-uid/kernel/zimage",
+        )
+
+    def test_predownloaded_tftp_file_path_uniquify_false(self):
+        parameters = {
+            "to": "tftp",
+            "kernel": {"url": "downloads://zimage", "type": "zimage"},
+            "namespace": "common",
+        }
+
+        job = self.create_simple_job()
+        destdir = job.mkdtemp("some-other-action")
+
+        action = PreDownloadedAction(
+            job,
+            "kernel",
+            urlparse("downloads://zimage"),
+            destdir,
+            uniquify=False,
+            params=parameters["kernel"],
+        )
+        action.parameters = parameters
+        action.data = {}
+        action.parameters = {"namespace": "common"}
+        filename = Path(action.job.tmp_dir) / "downloads/common/zimage"
+        filename.parent.mkdir(parents=True)
+        filename.touch()
+        action.set_namespace_data(
+            action="tftp-deploy", label="tftp", key="suffix", value="tftp-deploy-uid"
+        )
+
+        action.run(None, 4242)
+
+        self.assertEqual(
+            action.get_namespace_data(
+                action="download-action", label="file", key="kernel"
+            ),
+            "tftp-deploy-uid/zimage",
+        )
+
+    def test_predownloaded_tftp_file_path_prefix_not_found(self):
+        parameters = {
+            "to": "tftp",
+            "kernel": {"url": "downloads://zimage", "type": "zimage"},
+            "namespace": "common",
+        }
+
+        job = self.create_simple_job()
+        destdir = job.mkdtemp("some-other-action")
+
+        action = PreDownloadedAction(
+            job,
+            "kernel",
+            urlparse("downloads://zimage"),
+            destdir,
+            uniquify=True,
+            params=parameters["kernel"],
+        )
+        action.parameters = parameters
+        action.data = {}
+        action.parameters = {"namespace": "common"}
+        filename = Path(action.job.tmp_dir) / "downloads/common/zimage"
+        filename.parent.mkdir(parents=True)
+        filename.touch()
+
+        with self.assertRaises(JobError):
+            action.run(None, 4242)
 
     def test_predownloaded(self):
         params = {

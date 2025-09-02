@@ -152,16 +152,17 @@ class DownloadHandler(Action):
 
         self.path = path
         # Store the files in a sub-directory to keep the path unique.
-        if uniquify:
+        self.uniquify = uniquify
+        if self.uniquify:
             self.path = os.path.join(path, key)
-        self.fname = None
+        self.fname: str = ""
         self.params = params
 
     def reader(self):
         raise LAVABug("'reader' function unimplemented")
 
     def cleanup(self, connection):
-        if self.fname is not None and os.path.exists(self.fname):
+        if self.fname and os.path.exists(self.fname):
             self.logger.debug("Cleaning up downloaded image: %s", self.fname)
             try:
                 os.remove(self.fname)
@@ -177,7 +178,7 @@ class DownloadHandler(Action):
             return False
         return self.params.get("compression", False)
 
-    def _url_to_fname(self):
+    def _url_to_fname(self) -> str:
         compression = self._compression()
         filename = os.path.basename(self.url.path)
 
@@ -455,27 +456,31 @@ class DownloadHandler(Action):
             self._check_checksum("sha512", sha512.hexdigest(), sha512sum)
 
         # certain deployments need prefixes set
-        if self.parameters.get("to"):
-            if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
-                suffix = self.get_namespace_data(
+        # TFTP deploy base dir suffix (e.g., "job_id/tftp-deploy-uid") will be used as
+        # the TFTP file loading path prefix.
+        if self.parameters.get("to") in ["tftp", "nbd", "iso-installer"]:
+            if self.parameters["to"] in ["tftp", "nbd"]:
+                prefix: str | None = self.get_namespace_data(
                     action="tftp-deploy", label="tftp", key="suffix"
                 )
-                self.set_namespace_data(
-                    action="download-action",
-                    label="file",
-                    key=self.key,
-                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
-                )
             elif self.parameters["to"] == "iso-installer":
-                suffix = self.get_namespace_data(
+                prefix = self.get_namespace_data(
                     action="deploy-iso-installer", label="iso", key="suffix"
                 )
+
+            if prefix:
+                _path_dirs = [prefix]
+                if self.uniquify:
+                    _path_dirs.append(self.key)
+                _path_dirs.append(os.path.basename(self.fname))
                 self.set_namespace_data(
                     action="download-action",
                     label="file",
                     key=self.key,
-                    value=os.path.join(suffix, self.key, os.path.basename(self.fname)),
+                    value=os.path.join(*_path_dirs),
                 )
+            else:
+                raise JobError(f"'{self.key}' path prefix is required but not found")
 
         # xnbd protocol needs to know the location
         nbdroot = self.get_namespace_data(
@@ -772,7 +777,8 @@ class PreDownloadedAction(Action):
         self.key = key
         self.url = url
         self.path = path
-        if uniquify:
+        self.uniquify = uniquify
+        if self.uniquify:
             self.path = os.path.join(path, key)
         self.params = params
 
@@ -790,6 +796,14 @@ class PreDownloadedAction(Action):
                 label=self.key,
                 key="image_arg",
                 value=image_arg,
+            )
+
+        if self.key == "kernel" and ("kernel" in self.parameters):
+            self.set_namespace_data(
+                action="download-action",
+                label="type",
+                key=self.key,
+                value=self.parameters[self.key].get("type"),
             )
 
     def run(self, connection, max_end_time):
@@ -830,16 +844,22 @@ class PreDownloadedAction(Action):
         self.set_namespace_data(
             action="download-action", label="file", key=self.key, value=str(dest)
         )
-        if self.parameters["to"] == "tftp" or self.parameters["to"] == "nbd":
-            suffix = self.get_namespace_data(
+        if self.parameters.get("to") in ["tftp", "nbd"]:
+            if prefix := self.get_namespace_data(
                 action="tftp-deploy", label="tftp", key="suffix"
-            )
-            self.set_namespace_data(
-                action="download-action",
-                label="file",
-                key=self.key,
-                value=os.path.join(suffix, dest.name),
-            )
+            ):
+                _path_dirs = [prefix]
+                if self.uniquify:
+                    _path_dirs.append(self.key)
+                _path_dirs.append(os.path.basename(dest.name))
+                self.set_namespace_data(
+                    action="download-action",
+                    label="file",
+                    key=self.key,
+                    value=os.path.join(*_path_dirs),
+                )
+            else:
+                raise JobError(f"'{self.key}' path prefix is required but not found")
 
         if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
             self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
