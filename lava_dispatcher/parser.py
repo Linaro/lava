@@ -54,6 +54,8 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
             )
 
         action = cls.action(pipeline.job)
+    else:
+        raise ValueError(f"Unknown action {name!r}")
 
     action.section = cls.section
     pipeline.add_action(action, parameters)

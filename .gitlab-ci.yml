@@ -115,6 +115,7 @@ schemas:
 
 pylint:
   <<: *analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 sast:
   stage: analyze
