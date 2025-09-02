@@ -969,7 +969,10 @@ def test_job_detail(client, setup):
     )
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job.html"  # nosec
-    assert ret.context["log_data"] == []  # nosec
+    assert (
+        ret.context["log_data"]
+        == '<script id="logs-initial" type="application/json">[]</script>'
+    )  # nosec
 
 
 @pytest.mark.django_db
