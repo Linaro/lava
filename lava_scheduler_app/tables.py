@@ -10,6 +10,7 @@ import random
 import django_tables2 as tables
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
+from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
@@ -244,6 +245,9 @@ class DeviceTable(LavaTable):
                 '<span class="text-muted">Retired</span>'
             )
 
+    def render_last_job_end_time(self, record):
+        return mark_safe(f"{naturaltime(record.last_job_end_time)}")
+
     hostname = tables.TemplateColumn(
         """
     <a href="{{ record.get_absolute_url }}">{{ record.hostname }}</a>
@@ -255,8 +259,9 @@ class DeviceTable(LavaTable):
     """
     )
     device_type = tables.Column()
-    state = ExpandedStatusColumn("state")
+    state = ExpandedStatusColumn(verbose_name="State")
     health = tables.Column(verbose_name="Health")
+    last_job_end_time = tables.Column(verbose_name="Last Job")
     tags = TagsColumn()
 
     class Meta(LavaTable.Meta):

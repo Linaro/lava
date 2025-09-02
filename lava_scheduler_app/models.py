@@ -1406,6 +1406,13 @@ class TestJob(models.Model):
                 fields=("requested_device_type", "-submit_time", "id", "health"),
                 condition=Q(health_check=True),
             ),
+            models.Index(
+                name="device_finished_jobs_index",
+                fields=("actual_device", "-end_time"),
+                condition=Q(
+                    health_check=False, state=5
+                ),  # HACK: refers to TestJob.STATE_FINISHED
+            ),
         )
         constraints = (
             models.UniqueConstraint(
