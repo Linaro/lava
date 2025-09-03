@@ -28,8 +28,7 @@ actions:
       lxc:
       pyocd:
         parameters:
-          command:
-            {{ pyocd_command|default("pyocd-flashtool") }}
+          command: {{ pyocd_command|default(["pyocd", "pyocd-flashtool"])|yaml_quote }}
           options:
           - -d {{ debug|default('debug') }}
           - -t k64f

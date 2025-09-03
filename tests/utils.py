@@ -3,11 +3,16 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import os
 from stat import S_IXUSR
+from typing import TYPE_CHECKING
 
 from lava_dispatcher.utils.shell import _which_check
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 class DummyLogger:
@@ -65,18 +70,21 @@ class RecordingLogger:
         self.logs.append(("target", *args, {**kwargs}))
 
 
-def infrastructure_error(path):
+def infrastructure_error(path: str | Iterable[str]) -> str | None:
     """
     Extends which into a check which sets default messages for Action validation,
     without needing to raise an Exception (which is slow).
     Use for quick checks on whether essential tools are installed and usable.
     """
+    if isinstance(path, str):
+        path = (path,)
+
     exefile = _which_check(path, match=os.path.isfile)
     if not exefile:
-        return "Cannot find command '%s' in $PATH" % path
+        return f"Cannot find commands {path!r} in $PATH"
     # is the infrastructure call safe to make?
     if exefile and os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
-        return "%s is not executable" % exefile
+        return f"{exefile!r} is not executable"
     return None
 
 

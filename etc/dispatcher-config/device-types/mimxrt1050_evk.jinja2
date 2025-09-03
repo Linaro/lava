@@ -27,7 +27,7 @@ actions:
       pyocd:
         parameters:
           command:
-            {{ pyocd_command|default("pyocd-flashtool") }}
+            {{ pyocd_command|default(["pyocd", "pyocd-flashtool"])|yaml_quote }}
           options:
           - -d {{ debug|default('debug') }}
           - -t mimxrt1050_hyperflash

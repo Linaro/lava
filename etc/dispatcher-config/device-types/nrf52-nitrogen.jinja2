@@ -15,8 +15,7 @@ actions:
     methods:
       pyocd:
         parameters:
-          command:
-            {{ pyocd_command|default("pyocd-flashtool") }}
+          command: {{ pyocd_command|default(["pyocd", "pyocd-flashtool"])|yaml_quote }}
           options:
             {{ pyocd_options|default("['-d debug', '-t nrf52', '-f 3000000']")}}
           connect_before_flash:
