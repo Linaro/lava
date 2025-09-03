@@ -29,7 +29,7 @@ actions:
       pyocd:
         parameters:
           command:
-            {{ pyocd_command|default("pyocd-flashtool") }}
+            {{ pyocd_command|default("pyocd") }}
           options:
           - -d {{ debug|default('debug') }}
           - -t k64f
