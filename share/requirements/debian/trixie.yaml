@@ -43,6 +43,8 @@ lava-server:
     name: python3-requests
   tap:
     name: python3-tap
+  more-itertools:  # required for TAP13 support
+    name: python3-more-itertools
   junit.xml:
     name: python3-junit.xml
   voluptuous:
