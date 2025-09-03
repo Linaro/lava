@@ -3,12 +3,21 @@
 # Author: Matthew Hart <matthew.hart@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import unittest
 
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.actions.boot.pyocd import FlashPyOCDAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import infrastructure_error
+
+
+def is_pyocd_installed() -> bool:
+    try:
+        FlashPyOCDAction.find_pyocd_binary()
+        return True
+    except InfrastructureError:
+        return False
 
 
 class PyocdFactory(Factory):
@@ -18,14 +27,16 @@ class PyocdFactory(Factory):
     of any database objects.
     """
 
-    @unittest.skipIf(
-        infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
+    @unittest.skipUnless(
+        is_pyocd_installed(),
+        "pyocd or pyocd-flashtool is not installed",
     )
     def create_k64f_job(self, filename):
         return self.create_job("frdm-k64f-01.jinja2", filename)
 
-    @unittest.skipIf(
-        infrastructure_error("pyocd-flashtool"), "pyocd-flashtool not installed"
+    @unittest.skipUnless(
+        is_pyocd_installed(),
+        "pyocd or pyocd-flashtool is not installed",
     )
     def create_k64f_job_with_power(self, filename):
         return self.create_job("frdm-k64f-power-01.jinja2", filename)

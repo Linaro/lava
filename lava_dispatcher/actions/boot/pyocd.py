@@ -5,8 +5,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import TYPE_CHECKING
 
+from lava_common.exceptions import InfrastructureError
 from lava_common.utils import binary_version
 from lava_dispatcher.action import Action, JobError, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
@@ -62,11 +64,21 @@ class FlashPyOCDAction(Action):
         self.base_command = []
         self.exec_list = []
 
+    @classmethod
+    def find_pyocd_binary(cls) -> tuple[str, str]:
+        with suppress(InfrastructureError):
+            return "pyocd-flashtool", which("pyocd-flashtool")
+
+        return "pyocd", which("pyocd")
+
     def validate(self):
         super().validate()
         boot = self.job.device["actions"]["boot"]["methods"]["pyocd"]
         pyocd_binary = boot["parameters"]["command"]
-        binary = which(pyocd_binary)
+        if pyocd_binary is None:
+            pyocd_binary, binary = self.find_pyocd_binary()
+        else:
+            binary = which(pyocd_binary)
         self.logger.info(binary_version(binary, "--version"))
         self.base_command = [pyocd_binary]
         self.base_command.extend(boot["parameters"].get("options", []))
@@ -86,6 +98,8 @@ class FlashPyOCDAction(Action):
         connecting_option = "--uid"
         if pyocd_binary.startswith("pyocd-flashtool"):
             connecting_option = "--board"
+        else:
+            self.base_command.append("flash")
         self.base_command.extend([connecting_option, self.job.device["board_id"]])
         for action in self.get_namespace_keys("download-action"):
             pyocd_full_command = []
