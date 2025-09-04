@@ -127,7 +127,7 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
-  bmap-tools:
+  bmaptool:
     # Starting from Debian 13 package is called bmaptool.
     name: bmaptool
   pyocd:
