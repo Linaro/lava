@@ -166,6 +166,9 @@ lava-dispatcher:
   docker:
     name: docker.io
     unittests: true
+  docker-cli:
+    name: docker-cli
+    unittests: true
   telnet:
     name: telnet
     unittests: true
