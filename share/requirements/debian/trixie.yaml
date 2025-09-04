@@ -128,7 +128,8 @@ lava-dispatcher:
   guestfs:
     name: python3-guestfs
   bmap-tools:
-    name: bmap-tools
+    # Starting from Debian 13 package is called bmaptool.
+    name: bmaptool
   pyocd:
     name: python3-pyocd
     unittests: true
