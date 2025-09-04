@@ -12,7 +12,7 @@ from lava_common.exceptions import ConfigurationError, JobError
 from .base_strategy import BaseStrategy
 
 if TYPE_CHECKING:
-    from typing import ClassVar
+    from typing import Any, ClassVar
 
     from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
@@ -24,7 +24,7 @@ class DeployStrategy(BaseStrategy):
     uses_deployment_data: ClassVar[bool] = True
 
     @classmethod
-    def check_subclass(cls, device, parameters) -> None:
+    def check_subclass(cls, device: dict[str, Any], parameters: dict[str, Any]) -> None:
         if not device:
             raise JobError('job "device" was None')
         if "actions" not in device:
@@ -53,7 +53,9 @@ class Avh(DeployStrategy):
         return AvhRetryAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "avh" not in device["actions"]["deploy"]["methods"]:
             return False, "'avh' not in the device configuration deploy methods"
         if parameters["to"] != "avh":
@@ -71,7 +73,9 @@ class Docker(DeployStrategy):
         return DockerAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "docker" not in device["actions"]["deploy"]["methods"]:
             return False, "'docker' not in the device configuration deploy methods"
         if parameters["to"] != "docker":
@@ -96,7 +100,9 @@ class Download(DeployStrategy):
         return DownloadAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "download":
@@ -119,7 +125,9 @@ class Downloads(DeployStrategy):
         return DownloadsAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "downloads":
@@ -142,7 +150,9 @@ class Fastboot(DeployStrategy):
         return FastbootAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "fastboot":
@@ -174,7 +184,9 @@ class Flasher(DeployStrategy):
         return FlasherRetryAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "flasher" not in device["actions"]["deploy"]["methods"]:
             return False, "'flasher' not in the device configuration deploy methods"
         if parameters["to"] != "flasher":
@@ -192,7 +204,9 @@ class FVP(DeployStrategy):
         return FVPDeploy(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         to = parameters.get("to")
         if to != "fvp":
             return False, "'to' was not fvp"
@@ -214,7 +228,9 @@ class DeployQemuNfs(DeployStrategy):
         return DeployQemuNfsAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         """
         As a classmethod, this cannot set data
         in the instance of the class.
@@ -258,7 +274,9 @@ class DeployPosixImages(DeployStrategy):
         return DeployImagesAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         """
         As a classmethod, this cannot set data
         in the instance of the class.
@@ -288,7 +306,9 @@ class DeployIso(DeployStrategy):
         return DeployIsoAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "image" not in device["actions"]["deploy"]["methods"]:
             return False, '"image" is not in the device configuration deploy methods'
         if "to" in parameters and parameters["to"] == "iso-installer":
@@ -317,7 +337,9 @@ class Lxc(DeployStrategy):
         return LxcAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "lxc":
@@ -342,7 +364,9 @@ class Mps(DeployStrategy):
         return MpsAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "mps" not in device["actions"]["deploy"]["methods"]:
             return False, '"mps" was not in the device configuration deploy methods'
         if "to" not in parameters:
@@ -369,7 +393,9 @@ class Musca(DeployStrategy):
         return MuscaAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "musca" not in device["actions"]["deploy"]["methods"]:
             return False, '"musca" was not in the device configuration deploy methods'
         if "to" not in parameters:
@@ -399,7 +425,9 @@ class Nbd(DeployStrategy):
         return NbdAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "nbd":
@@ -424,7 +452,9 @@ class Nfs(DeployStrategy):
         return NfsAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "nfs":
@@ -446,7 +476,9 @@ class Overlay(DeployStrategy):
         return OverlayAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "overlay" not in device["actions"]["deploy"]["methods"]:
             return False, "'overlay' not in the device configuration deploy methods"
         if parameters["to"] != "overlay":
@@ -464,7 +496,9 @@ class RecoveryMode(DeployStrategy):
         return RecoveryModeAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "recovery" not in device["actions"]["deploy"]["methods"]:
             return False, "'recovery' not in the device configuration deploy methods"
         if parameters["to"] != "recovery":
@@ -496,7 +530,9 @@ class Removable(DeployStrategy):
         return MassStorage(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         media = parameters.get("to")
         job_device = parameters.get("device")
 
@@ -536,7 +572,9 @@ class Ssh(DeployStrategy):
         return ScpOverlay(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "ssh" not in device["actions"]["deploy"]["methods"]:
             return False, '"ssh" is not in the device configuration deploy methods'
         if parameters["to"] != "ssh":
@@ -561,7 +599,9 @@ class Tftp(DeployStrategy):
         return TftpAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "tftp":
@@ -586,7 +626,9 @@ class UBootUMS(DeployStrategy):
         return UBootUMSAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "u-boot-ums":
@@ -614,7 +656,9 @@ class USBGMS(DeployStrategy):
         return USBGMSAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["to"] != "usbg-ms":
             return False, '"to" parameter is not "usbg-ms"'
         if "usbg-ms" not in device["actions"]["deploy"]["methods"]:
@@ -642,7 +686,9 @@ class UUU(DeployStrategy):
         return UUUAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "uuu":
@@ -675,7 +721,9 @@ class VExpressMsd(DeployStrategy):
         return VExpressMsdRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "to" not in parameters:
             return False, '"to" is not in deploy parameters'
         if parameters["to"] != "vemsd":

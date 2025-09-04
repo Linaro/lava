@@ -12,6 +12,8 @@ from lava_common.exceptions import ConfigurationError, JobError
 from .base_strategy import BaseStrategy
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
 
@@ -21,7 +23,7 @@ class BootStrategy(BaseStrategy):
     name = "base-boot"
 
     @classmethod
-    def check_subclass(cls, device, parameters) -> None:
+    def check_subclass(cls, device: dict[str, Any], parameters: dict[str, Any]) -> None:
         if not device:
             raise JobError('job "device" was None')
         if "method" not in parameters:
@@ -48,7 +50,9 @@ class BootAvh(BootStrategy):
         return BootAvhAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "avh" not in device["actions"]["boot"]["methods"]:
             return False, "'avh' not in the device configuration boot methods"
         if parameters["method"] != "avh":
@@ -73,7 +77,9 @@ class Barebox(BootStrategy):
         return BareboxAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "barebox":
             return False, '"method" was not "barebox"'
         if "commands" not in parameters:
@@ -91,7 +97,9 @@ class BootBootloader(BootStrategy):
         return BootBootloaderRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "bootloader":
             return False, "'method' was not 'bootloader'"
         if "bootloader" not in parameters:
@@ -113,7 +121,9 @@ class CMSIS(BootStrategy):
         return BootCMSISRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "cmsis-dap" not in device["actions"]["boot"]["methods"]:
             return False, '"cmsis-dap" is not in the device configuration boot methods'
         if parameters["method"] != "cmsis-dap":
@@ -155,7 +165,9 @@ class Depthcharge(BootStrategy):
         return DepthchargeAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "depthcharge":
             return False, '"method" was not "depthcharge"'
         if "commands" not in parameters:
@@ -176,7 +188,9 @@ class DFU(BootStrategy):
         return BootDFURetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "dfu" not in device["actions"]["boot"]["methods"]:
             return False, '"dfu" was not in the device configuration boot methods'
         if parameters["method"] != "dfu":
@@ -194,7 +208,9 @@ class BootDocker(BootStrategy):
         return BootDockerAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "docker" not in device["actions"]["boot"]["methods"]:
             return False, '"docker" was not in the device configuration boot methods'
         if parameters["method"] != "docker":
@@ -216,7 +232,9 @@ class BootFastboot(BootStrategy):
         return BootFastbootAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "fastboot":
             return False, 'boot "method" was not "fastboot"'
 
@@ -231,7 +249,9 @@ class BootFVP(BootStrategy):
         return BootFVPAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "fvp" not in device["actions"]["boot"]["methods"]:
             return False, '"fvp" was not in the device configuration boot methods'
         if parameters["method"] != "fvp":
@@ -249,7 +269,9 @@ class GDB(BootStrategy):
         return BootGDB(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         methods = device["actions"]["boot"]["methods"]
         if "gdb" not in methods:
             return False, '"gdb" is not in the device configuration boot methods'
@@ -274,7 +296,9 @@ class GrubSequence(BootStrategy):
         return GrubSequenceAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
 
@@ -296,7 +320,9 @@ class Grub(BootStrategy):
         return GrubMainAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] not in ["grub", "grub-efi"]:
             return False, '"method" was not "grub" or "grub-efi"'
 
@@ -329,7 +355,9 @@ class IPXE(BootStrategy):
         return BootloaderAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "ipxe":
             return False, '"method" was not "ipxe"'
         if "ipxe" in device["actions"]["boot"]["methods"]:
@@ -346,7 +374,9 @@ class BootIsoInstaller(BootStrategy):
         return BootIsoInstallerAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "qemu-iso":
             return False, '"method" was not "qemu-iso"'
         if "media" not in parameters:
@@ -365,7 +395,9 @@ class JLink(BootStrategy):
         return BootJLinkRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "jlink" not in device["actions"]["boot"]["methods"]:
             return False, '"jlink" was not in the device configuration boot methods'
         if parameters["method"] != "jlink":
@@ -388,7 +420,9 @@ class BootKExec(BootStrategy):
         return BootKexecAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "kexec":
             return False, '"method" was not "kexec"'
 
@@ -407,7 +441,9 @@ class BootLxc(BootStrategy):
         return BootLxcAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "lxc":
             return False, '"method" was not "lxc"'
 
@@ -422,7 +458,9 @@ class Minimal(BootStrategy):
         return MinimalBoot(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "minimal" not in device["actions"]["boot"]["methods"]:
             return False, '"minimal" was not in device configuration boot methods'
         if parameters["method"] != "minimal":
@@ -438,7 +476,9 @@ class Musca(BootStrategy):
         return MuscaBoot(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "musca" not in device["actions"]["boot"]["methods"]:
             return False, '"musca" was not in device configuration boot methods'
         if parameters["method"] != "musca":
@@ -456,7 +496,9 @@ class BootNodebooter(BootStrategy):
         return BootNodebooterAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "nodebooter" not in device["actions"]["boot"]["methods"]:
             return (
                 False,
@@ -475,7 +517,9 @@ class OpenOCD(BootStrategy):
         return BootOpenOCDRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "openocd" not in device["actions"]["boot"]["methods"]:
             return False, '"openocd" was not in the device configuration boot methods'
         if parameters["method"] != "openocd":
@@ -493,7 +537,9 @@ class PyOCD(BootStrategy):
         return BootPyOCD(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "pyocd" not in device["actions"]["boot"]["methods"]:
             return False, '"pyocd" was not in the device configuration boot methods'
         if parameters["method"] != "pyocd":
@@ -520,7 +566,9 @@ class BootQEMU(BootStrategy):
         return BootQEMUImageAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         methods = device["actions"]["boot"]["methods"]
         if "qemu" not in methods and "qemu-nfs" not in methods:
             return (
@@ -540,7 +588,9 @@ class RecoveryBoot(BootStrategy):
         return RecoveryBootAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "recovery":
             return False, 'boot "method" was not "recovery"'
 
@@ -562,7 +612,9 @@ class SecondaryShell(BootStrategy):
         return SecondaryShellAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "new_connection":
             return False, "new_connection not in method"
         if "method" not in parameters:
@@ -583,7 +635,9 @@ class SshLogin(BootStrategy):
         return SshAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "ssh" not in device["actions"]["boot"]["methods"]:
             return False, '"ssh" not in device configuration boot methods'
         if "ssh" not in parameters["method"]:
@@ -599,7 +653,9 @@ class Schroot(BootStrategy):
         return SchrootAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "schroot" not in device["actions"]["boot"]["methods"]:
             return False, '"schroot" was not in the device configuration boot methods'
         if "schroot" not in parameters["method"]:
@@ -624,7 +680,9 @@ class UBoot(BootStrategy):
         return UBootAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "u-boot":
             return False, '"method" was not "u-boot"'
         if "commands" not in parameters:
@@ -642,7 +700,9 @@ class UefiShell(BootStrategy):
         return UefiShellAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "uefi":
             return False, '"method" was not "uefi"'
         if "uefi" in device["actions"]["boot"]["methods"]:
@@ -679,7 +739,9 @@ class UefiMenu(BootStrategy):
         return UefiMenuAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "uefi-menu":
             return False, '"method" was not "uefi-menu"'
         if "uefi-menu" in device["actions"]["boot"]["methods"]:
@@ -713,7 +775,9 @@ class UUUBoot(BootStrategy):
         return UUUBootRetryAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if parameters["method"] != "uuu":
             return False, '"method" was not "uuu"'
         if "commands" not in parameters:
