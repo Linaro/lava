@@ -149,21 +149,7 @@ doc:
     paths:
       - doc/v2/_build/html
 
-debian/11:
-  extends: .job
-  stage: build
-  except: []
-  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-11
-  artifacts:
-    paths:
-      - _build/*.deb
-      # handle native package - need to publish the source
-      - _build/*.tar.xz
-      - _build/*.dsc
-      - _build/*.changes
-      - _build/*.buildinfo
-
-debian/12:
+.debian_build:
   extends: .job
   stage: build
   except: []
@@ -176,6 +162,14 @@ debian/12:
       - _build/*.dsc
       - _build/*.changes
       - _build/*.buildinfo
+
+debian/11:
+  extends: .debian_build
+  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-11
+
+debian/12:
+  extends: .debian_build
+  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
 
 .docker:
   extends: .dind
