@@ -48,6 +48,6 @@ recursive-include lava_results_app/templates *.html
 recursive-include lava_results_app/static *.png *.js *.css *.gif
 recursive-include lava_scheduler_app/templates *.html *.txt
 recursive-include lava_scheduler_app/static *.js *.css *.gif *.png
-recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff *.woff2
+recursive-include lava_server *.gif *.png *.js *.css *.svg *.ico *.woff *.woff2 *.ttf *.eot
 recursive-include lava_server/templates *.html
 recursive-include tests/ *.py *.yaml *.txt *.jinja2
