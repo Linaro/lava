@@ -270,7 +270,7 @@ How to specify QEMU environment options
   environment variables are to be used for jobs in the file
   ``env.yaml``. See :ref:`simple_admin`.
 
-* One example is the use of ``-soundhw hda`` which emulates a soundcard
+* One example is the use of ``-soundhw had`` which emulates a soundcard
   on the target. To avoid having any sound output on the host (or
   worker), you can specify QEMU_AUDIO_DRV like so in
   ``/etc/lava-server/env.yaml``:

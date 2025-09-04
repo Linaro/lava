@@ -10,9 +10,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [
-        ("lava_scheduler_app", "0057_dt_permissions_worker_master_version"),
-    ]
+    dependencies = [("lava_scheduler_app", "0057_dt_permissions_worker_master_version")]
 
     operations = [
         migrations.AddIndex(

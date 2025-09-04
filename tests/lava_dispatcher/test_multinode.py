@@ -154,7 +154,7 @@ class TestMultinode(LavaDispatcherTestCase):
 
     def test_multinode_test_protocol(self):
         """
-        Test multinode procotol message handling against TestCoordinator
+        Test multinode protocol message handling against TestCoordinator
         """
         testshell = self.server_job.pipeline.find_action(MultinodeTestAction)
         testshell.validate()

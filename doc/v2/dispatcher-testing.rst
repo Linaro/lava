@@ -750,7 +750,7 @@ deployment actions will typically include a conditional to check if a Test
 action is required later so that the test definitions can be added to the
 overlay during deployment.
 
-Re-use existing Action classes wherever these can be used without changes.
+Reuse existing Action classes wherever these can be used without changes.
 
 If two or more Action classes have very similar behavior, re-factor to make a
 new base class for the common behavior and retain the specialized classes.

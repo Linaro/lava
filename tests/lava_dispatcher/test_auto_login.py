@@ -12,9 +12,7 @@ from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 class AutoLoginTestCase(LavaDispatcherTestCase):
     def _make_pipeline(self, params):
-        job = self.create_simple_job(
-            device_dict={"actions": {"boot": {"methods": []}}},
-        )
+        job = self.create_simple_job(device_dict={"actions": {"boot": {"methods": []}}})
         pipeline = Pipeline(parent=None, job=job)
         auto_login = AutoLoginAction(job)
         auto_login.section = "internal"

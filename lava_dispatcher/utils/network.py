@@ -15,11 +15,12 @@ import random
 import socket
 import subprocess  # nosec - internal use.
 from contextvars import ContextVar
+from json import loads as json_loads
+from typing import TYPE_CHECKING
 
-import netifaces
 import requests
 from requests.adapters import HTTPAdapter
-from requests.packages.urllib3.util.retry import Retry
+from urllib3.util.retry import Retry
 
 from lava_common.constants import (
     VALID_DISPATCHER_IP_PROTOCOLS,
@@ -29,18 +30,57 @@ from lava_common.constants import (
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.utils.shell import which
 
-
-def dispatcher_gateway():
-    """
-    Retrieves the IP address of the current default gateway.
-    """
-    gateways = netifaces.gateways()
-    if "default" not in gateways:
-        raise InfrastructureError("Unable to find default gateway")
-    return gateways["default"][netifaces.AF_INET][0]
+if TYPE_CHECKING:
+    from typing import Any
 
 
-def dispatcher_ip(dispatcher_config, protocol=None):
+def get_default_iface() -> str:
+    try:
+        ip_proc = subprocess.run(
+            args=("ip", "-json", "route", "show", "default"),
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InfrastructureError(
+            f"Unable to find default gateway: {e.stderr!r}"
+        ) from e
+
+    route_data: list[dict[str, str]] = json_loads(ip_proc.stdout)
+    try:
+        return route_data[0]["dev"]
+    except IndexError:
+        raise InfrastructureError("No default route found. Disconnected from network.")
+
+
+def get_iface_addr(iface: str) -> str:
+    try:
+        ip_proc = subprocess.run(
+            args=("ip", "-json", "addr", "show", "dev", iface),
+            check=True,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as e:
+        raise InfrastructureError(
+            f"Unable to find interface {iface!r} address: {e.stderr!r}"
+        ) from e
+
+    iface_data: list[dict[str, Any]] = json_loads(ip_proc.stdout)
+    addr_info: list[dict[str, str]] = iface_data[0]["addr_info"]
+    for ai in addr_info:
+        if ai["family"] == "inet":
+            return ai["local"]
+
+    raise InfrastructureError(f"Unable to find ip address for iface {iface!r}")
+
+
+def dispatcher_ip(
+    dispatcher_config: dict[str, Any], protocol: str | None = None
+) -> str:
     """
     Retrieves the IP address of the interface associated
     with the current default gateway.
@@ -52,24 +92,14 @@ def dispatcher_ip(dispatcher_config, protocol=None):
                 "protocol should be one of %s" % VALID_DISPATCHER_IP_PROTOCOLS
             )
         with contextlib.suppress(KeyError, TypeError):
-            return dispatcher_config["dispatcher_%s_ip" % protocol]
+            protocol_ip: str = dispatcher_config["dispatcher_%s_ip" % protocol]
+            return protocol_ip
     with contextlib.suppress(KeyError, TypeError):
-        return dispatcher_config["dispatcher_ip"]
-    gateways = netifaces.gateways()
-    if "default" not in gateways:
-        raise InfrastructureError("Unable to find dispatcher 'default' gateway")
-    iface = gateways["default"][netifaces.AF_INET][1]
-    iface_addr = None
+        general_ip: str = dispatcher_config["dispatcher_ip"]
+        return general_ip
 
-    try:
-        addr = netifaces.ifaddresses(iface)
-        iface_addr = addr[netifaces.AF_INET][0]["addr"]
-    except KeyError:
-        # TODO: This only handles first alias interface can be extended
-        # to review all alias interfaces.
-        addr = netifaces.ifaddresses(iface + ":0")
-        iface_addr = addr[netifaces.AF_INET][0]["addr"]
-    return iface_addr
+    iface = get_default_iface()
+    return get_iface_addr(iface)
 
 
 def rpcinfo_nfs(server: str, version: int = 3) -> str | None:
@@ -96,19 +126,19 @@ def rpcinfo_nfs(server: str, version: int = 3) -> str | None:
     return f"rpcinfo: {server} {rpcinfo_result.stderr}"
 
 
-def get_free_port(dispatcher_config):
+def get_free_port(dispatcher_config: dict[str, Any]) -> int:
     """
     Finds the next free port to use
     :param dispatcher_config: the dispatcher config to search for nbd_server_port
     :return: port number
     """
-    port = None
+    port: int | None = None
     with contextlib.suppress(KeyError, TypeError):
-        dcport = dispatcher_config["nbd_server_port"]
+        dcport: str = dispatcher_config["nbd_server_port"]
         if "auto" in dcport:
             pass
         elif dcport.isdigit():
-            return dcport
+            return int(dcport)
     # use random
     rng = random.Random()
     for _ in range(10):
@@ -128,16 +158,16 @@ def get_free_port(dispatcher_config):
     return 10809
 
 
-requests_session = ContextVar("requests_session")
+requests_session: ContextVar[requests.Session] = ContextVar("requests_session")
 
 
-def requests_retry():
+# Retry 15 times over a period a bit longer than 10 minutes.
+def requests_retry(retries: int = 15) -> requests.Session:
     with contextlib.suppress(LookupError):
         return requests_session.get()
 
     session = requests.Session()
-    # Retry 15 times over a period a bit longer than 10 minutes.
-    retries = 15
+    retries = retries
     backoff_factor = 0.1
     status_forcelist = [
         # See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes

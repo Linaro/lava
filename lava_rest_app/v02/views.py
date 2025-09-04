@@ -31,6 +31,7 @@ from rest_framework.permissions import (
     BasePermission,
     DjangoModelPermissions,
     DjangoModelPermissionsOrAnonReadOnly,
+    IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
 from rest_framework.response import Response
@@ -58,6 +59,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     Worker,
@@ -447,7 +449,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             )
         except voluptuous.MultipleInvalid as exc:
             return Response(
-                {"message": "Test defnition invalid: %s" % str(exc)},
+                {"message": "Test definition invalid: %s" % str(exc)},
                 status=status.HTTP_200_OK,
             )
 
@@ -499,7 +501,10 @@ class TestJobViewSet(viewsets.ModelViewSet):
         # this method would report as you successfully cancelled the job
         # even if you don't have required permissions.
         with transaction.atomic():
-            job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
+            try:
+                job = TestJob.objects.select_for_update().get(pk=kwargs["pk"])
+            except TestJob.DoesNotExist:
+                raise NotFound()
             job.cancel(request.user)
         return Response(
             {"message": "Job cancel signal sent."}, status=status.HTTP_200_OK
@@ -1142,3 +1147,15 @@ class SystemViewSet(viewsets.ViewSet):
         ```
         """
         return Response(data={"user": request.user.username})
+
+
+class RemoteArtifactTokenViewSet(viewsets.ModelViewSet):
+    serializer_class = serializers.RemoteArtifactTokenSerializer
+    permission_classes = [IsAuthenticated]
+    lookup_field = "name"
+
+    def get_queryset(self):
+        return RemoteArtifactsAuth.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

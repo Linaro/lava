@@ -37,7 +37,8 @@ class BootBootloaderAction(Action):
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(ResetConnection(self.job))
-        self.pipeline.add_action(ResetDevice(self.job))
+        if parameters.get("reset", True):
+            self.pipeline.add_action(ResetDevice(self.job))
         self.pipeline.add_action(
             BootloaderInterruptAction(self.job, method=parameters["bootloader"])
         )

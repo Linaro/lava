@@ -105,9 +105,7 @@ def testjob_submission(job_definition, user, original_job=None):
 
 def device_summary():
     device_stats = (
-        Device.objects.filter(
-            ~Q(health=Device.HEALTH_RETIRED),
-        )
+        Device.objects.filter(~Q(health=Device.HEALTH_RETIRED))
         .select_related("last_health_report_job")
         .aggregate(
             num_not_retired=Count("pk"),

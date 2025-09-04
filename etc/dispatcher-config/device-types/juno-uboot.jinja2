@@ -71,6 +71,11 @@ actions:
       add_header: u-boot
     # list of deployment methods which this device supports
     methods:
+{% if usbg_ms_commands %}
+      usbg-ms:
+        enable: {{ usbg_ms_commands["enable"] }}
+        disable: {{ usbg_ms_commands["disable"] }}
+{% endif %}
       lxc:
       nfs:
       tftp:
@@ -109,7 +114,7 @@ actions:
       ssh:
       u-boot:
         parameters:
-          bootloader_prompt: VExpress64
+          bootloader_prompt: {{ bootloader_prompt | default('VExpress64') }}
           boot_message: {{ boot_message|default('Linux version') }}
           mkimage_arch: arm64
         ramdisk-local:

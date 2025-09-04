@@ -11,8 +11,6 @@ import zipfile
 from functools import partial
 from typing import TYPE_CHECKING
 
-import guestfs
-
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.utils import debian_filename_version
@@ -354,6 +352,7 @@ class ApplyOverlayTftp(Action):
             )
         else:
             self.logger.debug("[%s] No overlay directory", namespace)
+            return connection
         if self.parameters.get("os") == "centos_installer":
             # centos installer ramdisk doesn't like having anything other
             # than the kickstart config being inserted. Instead, make the
@@ -375,6 +374,9 @@ class ApplyOverlayTftp(Action):
                 key="overlay",
                 value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)),
             )
+
+        if not directory:
+            return connection
 
         self.logger.debug(
             "[%s] Applying overlay %s to directory %s",
@@ -987,6 +989,8 @@ class AppendOverlays(Action):
             command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
             self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
             os.replace(f"{image}.non-sparse", image)
+
+        import guestfs
 
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)

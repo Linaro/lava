@@ -1,6 +1,6 @@
 # Dispatcher configuration
 
-The dispatcher configuration files allows you to configure some of the beavior
+The dispatcher configuration files allows you to configure some of the behavior
 of the dispatchers.
 
 Available files are:

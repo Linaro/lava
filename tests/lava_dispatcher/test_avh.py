@@ -30,10 +30,7 @@ def test_accepts_deploy():
     avh = Avh
     device = {"actions": {"deploy": {"methods": "avh"}}}
     params = {"to": "avh"}
-    assert avh.accepts(device, params) == (
-        True,
-        "accepted",
-    )
+    assert avh.accepts(device, params) == (True, "accepted")
 
     device = {"actions": {"deploy": {"methods": "tftp"}}}
     params = {"to": "avh"}
@@ -44,20 +41,14 @@ def test_accepts_deploy():
 
     device = {"actions": {"deploy": {"methods": "avh"}}}
     params = {"to": "tftp"}
-    assert avh.accepts(device, params) == (
-        False,
-        "'to' parameter is not 'avh'",
-    )
+    assert avh.accepts(device, params) == (False, "'to' parameter is not 'avh'")
 
 
 def test_accepts_boot():
     boot_avh = BootAvh
     device = {"actions": {"boot": {"methods": "avh"}}}
     params = {"method": "avh"}
-    assert boot_avh.accepts(device, params) == (
-        True,
-        "accepted",
-    )
+    assert boot_avh.accepts(device, params) == (True, "accepted")
 
     device = {"actions": {"boot": {"methods": "tftp"}}}
     params = {"method": "avh"}
@@ -68,10 +59,7 @@ def test_accepts_boot():
 
     device = {"actions": {"boot": {"methods": "avh"}}}
     params = {"method": "tftp"}
-    assert boot_avh.accepts(device, params) == (
-        False,
-        "'method' is not 'avh'",
-    )
+    assert boot_avh.accepts(device, params) == (False, "'method' is not 'avh'")
 
 
 class TestAvhActions(LavaDispatcherTestCase):
@@ -95,20 +83,17 @@ class TestAvhActions(LavaDispatcherTestCase):
     # Test deploy run.
     @patch("lava_dispatcher.actions.deploy.avh.Action.run")
     @patch("lava_dispatcher.actions.deploy.avh.random.choice", return_value="r")
-    @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile.write")
     @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile")
     @patch("lava_dispatcher.actions.deploy.avh.plistlib.dump")
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_projects",
         return_value=[
-            Project("d59db33d-27bd-4b22-878d-49e4758a648e", name="Default Project"),
+            Project("d59db33d-27bd-4b22-878d-49e4758a648e", name="Default Project")
         ],
     )
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_models",
-        return_value=[
-            Model("iot", "rpi4b", "rpi4b", "rpi4b"),
-        ],
+        return_value=[Model("iot", "rpi4b", "rpi4b", "rpi4b")],
     )
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_auth_login",
@@ -121,8 +106,8 @@ class TestAvhActions(LavaDispatcherTestCase):
         v1_get_projects,
         plist_dump,
         zip_file,
-        zf_write,
-        *args,
+        choice,
+        run,
     ):
         self.job.validate()
 
@@ -148,7 +133,7 @@ class TestAvhActions(LavaDispatcherTestCase):
         # ANY: image path with random string inside.
         # Zip file compression method 'ZIP_DEFLATED = 8'
         zip_file.assert_called_once_with(ANY, mode="w", compression=8)
-        zf_write.has_calls(
+        zip_file().__enter__().write.assert_has_calls(
             [
                 call(ANY, arcname="Info.plist"),
                 call(ANY, arcname="kernel"),
@@ -286,14 +271,12 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_projects",
         return_value=[
-            Project("d59db33d-27bd-4b22-878d-49e4758a648e", name="Default Project"),
+            Project("d59db33d-27bd-4b22-878d-49e4758a648e", name="Default Project")
         ],
     )
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_get_models",
-        return_value=[
-            Model("iot", "kronos", "kronos", "kronos"),
-        ],
+        return_value=[Model("iot", "kronos", "kronos", "kronos")],
     )
     @patch(
         "lava_dispatcher.actions.deploy.avh.arm_api.ArmApi.v1_auth_login",
@@ -337,7 +320,7 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
                 {
                     "name": "Primary Compute Non-Secure",
                     "info": "PrimaryComputeNonSecureInfo",
-                },
+                }
             ]
         },
     )

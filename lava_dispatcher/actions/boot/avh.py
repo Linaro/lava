@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import queue
+import threading
 import time
 from typing import TYPE_CHECKING
 from urllib.parse import urlparse
@@ -24,6 +26,8 @@ from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerRun
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -47,9 +51,7 @@ class CallAvhAction(Action):
     description = "call avh api"
     summary = "call avh api"
 
-    model_console_map = {
-        "kronos": "Primary Compute Non-Secure",
-    }
+    model_console_map = {"kronos": "Primary Compute Non-Secure"}
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -57,7 +59,7 @@ class CallAvhAction(Action):
         self.websocat_docker_image = "ghcr.io/vi/websocat:1.12.0"
         self.api_config = None
         self.bootargs = None
-        self.avh = {}
+        self.avh: dict[str, Any] = {}
         self.image_id = None
         self.instance_id = None
         self.instance_name = None
@@ -118,14 +120,48 @@ class CallAvhAction(Action):
 
         return f"wss://{parsed_url.netloc}/console/{console_info}"
 
+    def upload_image(self, api_instance, image_path):
+        result_queue = queue.Queue()
+
+        def upload_file():
+            try:
+                with open(image_path, "rb") as f:
+                    image = self.v1_create_image(
+                        api_instance,
+                        type="fwpackage",
+                        encoding="plain",
+                        name=self.avh["image_name"],
+                        project=self.avh["project_id"],
+                        file=f,
+                    )
+                result_queue.put(image)
+            except Exception as e:
+                result_queue.put(e)
+
+        upload_thread = threading.Thread(target=upload_file)
+        # Don't block the main thread to exits.
+        upload_thread.daemon = True
+        upload_thread.start()
+        # The join() method can be interrupted by exceptions.
+        upload_thread.join()
+
+        try:
+            result = result_queue.get(block=False)
+            if isinstance(result, Exception):
+                raise result
+            return result
+        except queue.Empty:
+            raise JobError("Upload thread terminated without providing a result")
+
     def run(self, connection, max_end_time):
-        self.avh = self.get_namespace_data(
+        avh_config: dict[str, Any] | None = self.get_namespace_data(
             action="deploy-avh", label="deploy-avh", key="avh"
         )
-        if self.avh is None:
+        if avh_config is None:
             raise JobError(
                 "AVH image attributes not found! Is 'deploy.avh' action defined before the 'boot.avh' action?"
             )
+        self.avh = avh_config
         self.instance_name = self.avh["image_name"]
 
         self.api_config = AvhApi.Configuration(self.avh["api_endpoint"])
@@ -139,16 +175,9 @@ class CallAvhAction(Action):
             # Upload firmware package
             image_path = self.avh["image_path"]
             self.logger.info(f"Uploading: {image_path}")
-            with open(image_path, "rb") as f:
-                uploaded_image = self.v1_create_image(
-                    api_instance,
-                    type="fwpackage",
-                    encoding="plain",
-                    name=self.avh["image_name"],
-                    project=self.avh["project_id"],
-                    file=f,
-                )
-                self.image_id = uploaded_image.id
+
+            uploaded_image = self.upload_image(api_instance, image_path)
+            self.image_id = uploaded_image.id
             self.logger.info(f"AVH image ID: {self.image_id}")
 
             # Assemble instance create options
@@ -210,7 +239,7 @@ class CallAvhAction(Action):
         self.docker_cleanup_required = True
         self.logger.info(f"Connecting to instance {self.instance_id} console ...")
         shell = ShellCommand(console_cmd, self.timeout, logger=self.logger)
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

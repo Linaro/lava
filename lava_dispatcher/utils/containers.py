@@ -3,7 +3,7 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import os
 import uuid
@@ -32,7 +32,7 @@ class DeviceContainerMappingMixin(Action):
     mappings.
     """
 
-    def __init__(self, job: "Job"):
+    def __init__(self, job: Job):
         super().__init__(job)
         self.containers: list[DockerContainer] = []
 
@@ -123,7 +123,7 @@ class NullDriver(InternalObject):
     def __init__(self, action):
         self.action = action
 
-    def get_command_prefix(self):
+    def get_command_prefix(self, copy_files=True):
         return []
 
     def maybe_copy_to_container(self, src):
@@ -146,7 +146,7 @@ class LxcDriver(NullDriver):
         super().__init__(action)
         self.lxc_name = lxc_name
 
-    def get_command_prefix(self):
+    def get_command_prefix(self, copy_files=True):
         return lxc_cmd_prefix(self.action.job)
 
     def maybe_copy_to_container(self, src):
@@ -177,18 +177,18 @@ class DockerDriver(NullDriver):
             + str(uuid.uuid4())
         )
 
-    def build(self, cls):
+    def build(self, cls, copy_files=True):
         docker = cls.from_parameters(self.params, self.action.job)
         docker.add_docker_options(*self.docker_options)
         docker.add_docker_run_options(*self.docker_run_options)
 
-        if not self.docker_options:
+        if not self.docker_options and copy_files:
             for f in self.copied_files:
                 docker.bind_mount(f)
         return docker
 
-    def get_command_prefix(self):
-        docker = self.build(DockerRun)
+    def get_command_prefix(self, copy_files=True):
+        docker = self.build(DockerRun, copy_files)
         return docker.cmdline()
 
     def run(self, cmd):
@@ -196,6 +196,13 @@ class DockerDriver(NullDriver):
         name = self.get_container_name()
         docker.name(name)
         self.action.containers.append(docker)
+        docker_test_method_conf = (
+            self.action.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+        docker.add_device_docker_method_options(docker_test_method_conf)
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)
@@ -211,6 +218,13 @@ class DockerDriver(NullDriver):
         name = self.get_container_name()
         docker.name(name)
         self.action.containers.append(docker)
+        docker_test_method_conf = (
+            self.action.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+        docker.add_device_docker_method_options(docker_test_method_conf)
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)

@@ -52,11 +52,7 @@ class AvhDeploy(Action):
         super().__init__(job)
         self.avh = {}
         self.path = None
-        self.required_images = [
-            "kernel",
-            "dtb",
-            "rootfs",
-        ]
+        self.required_images = ["kernel", "dtb", "rootfs"]
         self.api_config = None
 
     def validate(self):

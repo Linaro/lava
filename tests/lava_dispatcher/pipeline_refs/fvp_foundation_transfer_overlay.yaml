@@ -85,7 +85,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://example.com/bl1.bin
   - class: DownloaderAction
     name: download-retry
@@ -101,7 +101,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: https://releases.linaro.org/archive/15.05/members/arm/openembedded/aarch64/vexpress64-openembedded_minimal-armv8-gcc-4.9_20150522-720.img.gz
   - class: DownloaderAction
     name: download-retry
@@ -117,7 +117,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://example.com/fip.bin
   - class: DownloaderAction
     name: download-retry
@@ -133,7 +133,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://example.com/foundation-v8-gicv3.dtb
   - class: DownloaderAction
     name: download-retry
@@ -149,7 +149,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://example.com/Image
   - class: DownloaderAction
     name: download-retry
@@ -165,7 +165,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://example.com/ramdisk.img
 - class: BootFVPAction
   name: boot-fvp
@@ -225,7 +225,7 @@
     description: automatically login after boot using job parameters and checking
       for messages.
     summary: Auto-login after boot with support for kernel messages.
-    timeout: 420
+    timeout: 300
     pipeline:
     - class: LoginAction
       name: login-action

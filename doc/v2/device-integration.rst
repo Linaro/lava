@@ -448,13 +448,13 @@ Find a similar existing device type
 There are a number of places to check for similar types of device which
 are already supported in LAVA V2.
 
-#. https://master.lavasoftware.org/scheduler/
-
-#. https://staging.validation.linaro.org/scheduler/
-
 #. https://validation.linaro.org/scheduler/
 
-#. https://lng.validation.linaro.org/scheduler/
+#. https://ledge.validation.linaro.org/scheduler/
+
+#. https://lkft.validation.linaro.org/scheduler/
+
+#. https://staging.validation.linaro.org/scheduler/
 
 #. https://gitlab.com/lava/lava/tree/master/lava_scheduler_app/tests/device-types
 
@@ -476,7 +476,7 @@ currently boots and exactly how new files are deployed to the device.
 Do not resort to :ref:`simplistic testing
 <simplistic_testing_problems>`.
 
-.. caution:: Do not be tempted to re-use the existing support for
+.. caution:: Do not be tempted to reuse the existing support for
   something which is not actually using that support. Just because
   your custom system looks like U-Boot or fastboot does **not**
   mean you should mangle the existing support to fit. If you need

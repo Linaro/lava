@@ -68,24 +68,17 @@ def no_network(mocker, request):
         mocker.patch("requests.head", head)
         mocker.patch("requests.get", get)
         mocker.patch(
-            "lava_dispatcher.actions.deploy.download.requests_retry", lambda: requests
+            "lava_dispatcher.actions.deploy.download.requests_retry",
+            lambda retries=15: requests,
         )
 
-    # Fake netifaces to always return the same results
+    # Fake lava_dispatcher.utils.network to always return the same results
     def gateways():
-        return {"default": {2: ("192.168.0.2", "eth0")}}
+        return "eth0"
 
     def ifaddresses(iface):
         assert iface == "eth0"  # nosec - unit test support
-        return {
-            2: [
-                {
-                    "addr": "192.168.0.2",
-                    "netmask": "255.255.255.0",
-                    "broadcast": "192.168.0.255",
-                }
-            ]
-        }
+        return "192.168.0.2"
 
-    mocker.patch("netifaces.gateways", gateways)
-    mocker.patch("netifaces.ifaddresses", ifaddresses)
+    mocker.patch("lava_dispatcher.utils.network.get_default_iface", gateways)
+    mocker.patch("lava_dispatcher.utils.network.get_iface_addr", ifaddresses)

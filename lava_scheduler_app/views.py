@@ -5,6 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from __future__ import annotations
 
 import contextlib
 import datetime
@@ -15,6 +16,7 @@ import re
 import tarfile
 from json import dumps as json_dumps
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import voluptuous
 import yaml
@@ -22,6 +24,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.humanize.templatetags.humanize import naturaltime
@@ -34,6 +37,8 @@ from django.db import transaction
 from django.db.models import (
     Count,
     Exists,
+    ExpressionWrapper,
+    F,
     IntegerField,
     OuterRef,
     Prefetch,
@@ -56,7 +61,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
-from django.utils.html import escape
+from django.utils.html import escape, json_script
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -126,6 +131,9 @@ from lava_server.dbutils import YamlField, annotate_int_field_verbose
 from lava_server.files import File
 from lava_server.lavatable import LavaView
 from lava_server.views import index as lava_index
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def request_config(request, paginate):
@@ -315,11 +323,22 @@ class ActiveJobsTableView(JobTableView):
 
 class DeviceTableView(JobTableView):
     def get_queryset(self):
+        last_job_end_time_subquery = Subquery(
+            TestJob.objects.filter(
+                actual_device__hostname=OuterRef("hostname"),
+                health_check__exact=False,
+                state__exact=TestJob.STATE_FINISHED,
+            )
+            .order_by("-end_time")
+            .values("end_time")[:1]
+        )
+
         q = (
             Device.objects.select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .visible_by_user(self.request.user)
             .order_by("hostname")
+            .annotate(last_job_end_time=last_job_end_time_subquery)
             .distinct()
         )
         return q.prefetch_related(
@@ -335,30 +354,22 @@ class DeviceTableView(JobTableView):
 
 class JobErrorsView(LavaView):
     def get_job_errors_queryset(self):
-        metadata_subquery = Subquery(
-            TestCase.objects.filter(
-                Q(metadata__contains="error_type: Configuration")
-                | Q(metadata__contains="error_type: Infrastructure")
-                | Q(metadata__contains="error_type: Bug"),
-                suite=OuterRef("testsuite"),
-                result=TestCase.RESULT_FAIL,
-                name="job",
-            ).values("metadata")[:1],
-            # HACK: Add LIMIT to fix edge case
-            # when job has multiple failure testcases
-            output_field=YamlField(),
-        )
-
         return (
             TestJob.objects.filter(
-                health__in=(TestJob.HEALTH_INCOMPLETE, TestJob.HEALTH_CANCELED),
                 testsuite__name="lava",
+                testsuite__testcase__name="job",
+                testsuite__testcase__result=TestCase.RESULT_FAIL,
+                testsuite__testcase__metadata__regex=(
+                    "error_type: (Configuration|Infrastructure|Bug)"
+                ),
             )
             .annotate(
-                failure_metadata=metadata_subquery,
+                failure_metadata=ExpressionWrapper(
+                    F("testsuite__testcase__metadata"),
+                    output_field=YamlField(),
+                ),
             )
-            .filter(failure_metadata__isnull=False)
-            .order_by("-end_time")
+            .order_by("-testsuite__id")
         )
 
     def get_queryset(self):
@@ -494,6 +505,7 @@ def job_report_data(start_day, end_day):
 
 
 @BreadCrumb("Reports", parent=index)
+@login_required
 def reports(request):
     health_day_report = []
     health_week_report = []
@@ -523,6 +535,7 @@ def reports(request):
 
 
 @BreadCrumb("Failure Report", parent=reports)
+@login_required
 def failure_report(request):
     data = FailedJobsTableView(request)
     ptable = FailedJobsTable(data.get_table_data())
@@ -626,6 +639,16 @@ def passing_health_checks(request):
 
 class MyDeviceView(DeviceTableView):
     def get_queryset(self):
+        last_job_end_time_subquery = Subquery(
+            TestJob.objects.filter(
+                actual_device__hostname=OuterRef("hostname"),
+                health_check__exact=False,
+                state__exact=TestJob.STATE_FINISHED,
+            )
+            .order_by("-end_time")
+            .values("end_time")[:1]
+        )
+
         return (
             Device.objects.accessible_by_user(
                 self.request.user, Device.CHANGE_PERMISSION
@@ -633,6 +656,7 @@ class MyDeviceView(DeviceTableView):
             .select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .order_by("hostname")
+            .annotate(last_job_end_time=last_job_end_time_subquery)
         )
 
 
@@ -722,11 +746,11 @@ class DeviceTypeOverView(JobTableView):
                 .annotate(queued_jobs=Count("*"))
                 .values("queued_jobs"),
                 output_field=IntegerField(),
-            ),
+            )
         )
 
 
-class NoDTDeviceView(DeviceTableView):
+class DTDeviceView(DeviceTableView):
     def get_queryset(self):
         q = (
             Device.objects.exclude(health=Device.HEALTH_RETIRED)
@@ -906,24 +930,24 @@ def device_type_detail(request, pk):
         {"Duration": "Month", "Complete": monthly_complete, "Failed": monthly_failed},
     ]
 
-    prefix = "no_dt_"
-    no_dt_data = NoDTDeviceView(request, model=Device, table_class=DeviceTable)
-    no_dt_ptable = DeviceTable(
-        no_dt_data.get_table_data(prefix).filter(device_type=dt),
+    prefix = "devices_"
+    devices_data = DTDeviceView(request, model=Device, table_class=DeviceTable)
+    devices_ptable = DeviceTable(
+        devices_data.get_table_data(prefix).filter(device_type=dt),
         request=request,
         prefix=prefix,
     )
-    config = RequestConfig(request, paginate={"per_page": no_dt_ptable.length})
-    config.configure(no_dt_ptable)
+    config = RequestConfig(request, paginate={"per_page": devices_ptable.length})
+    config.configure(devices_ptable)
 
-    prefix = "dt_"
-    dt_jobs_data = AllJobsView(request, model=TestJob, table_class=DeviceTypeJobsTable)
-    dt_jobs_ptable = DeviceTypeJobsTable(
-        dt_jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
+    prefix = "jobs_"
+    jobs_data = AllJobsView(request, model=TestJob, table_class=DeviceTypeJobsTable)
+    jobs_ptable = DeviceTypeJobsTable(
+        jobs_data.get_table_data(prefix).filter(requested_device_type=pk),
         prefix=prefix,
     )
-    config = request_config(request, {"per_page": dt_jobs_ptable.length})
-    config.configure(dt_jobs_ptable)
+    config = request_config(request, {"per_page": jobs_ptable.length})
+    config.configure(jobs_ptable)
 
     prefix = "health_"
     health_table = HealthJobSummaryTable(
@@ -956,10 +980,7 @@ def device_type_detail(request, pk):
             "pk",
             filter=Q(state__in=(Device.STATE_RUNNING, Device.STATE_RESERVED)),
         ),
-        retired_devices_count=Count(
-            "pk",
-            filter=Q(health=Device.HEALTH_RETIRED),
-        ),
+        retired_devices_count=Count("pk", filter=Q(health=Device.HEALTH_RETIRED)),
     )
 
     if device_statistics["available_devices_count"]:
@@ -994,8 +1015,8 @@ def device_type_detail(request, pk):
             "available_devices_label": available_devices_label,
             "queued_jobs_count": queued_jobs_count or 0,
             "health_job_summary_table": health_table,
-            "device_type_jobs_table": dt_jobs_ptable,
-            "devices_table_no_dt": no_dt_ptable,
+            "device_type_jobs_table": jobs_ptable,
+            "devices_table": devices_ptable,
             "bread_crumb_trail": BreadCrumbTrail.leading_to(device_type_detail, pk=pk),
             "context_help": BreadCrumbTrail.leading_to(device_type_detail, pk="help"),
             "health_freq": health_freq_str,
@@ -1123,6 +1144,32 @@ def health_job_list(request, pk):
     )
 
 
+class InPlaceTokenUpdater:
+    def __init__(self, tokens: dict[str, str]):
+        self.tokens = tokens
+
+    def update_headers(self, data: list[dict[str, Any]] | dict[str, Any]) -> None:
+        if isinstance(data, list):
+            for item in data:
+                self.update_headers(item)
+        elif isinstance(data, dict):
+            # 'UrlRepoAction' adds 'url' as an alias to 'repository' for
+            # reusing the 'HttpDownloadAction'.
+            if "url" in data or (data.get("from") == "url" and "repository" in data):
+                if headers := data.get("headers"):
+                    if isinstance(headers, dict):
+                        for key, token_value in headers.items():
+                            if token_value in self.tokens:
+                                headers[key] = self.tokens[token_value]
+            for val in data.values():
+                self.update_headers(val)
+
+    def update_secrets(self, secrets: dict[str, str]) -> None:
+        for k, v in secrets.items():
+            if v in self.tokens.keys():
+                secrets[k] = self.tokens[v]
+
+
 @require_http_methods(["GET", "POST"])
 @csrf_exempt
 def internal_v1_jobs(request, pk):
@@ -1140,36 +1187,20 @@ def internal_v1_jobs(request, pk):
     if request.method == "GET":
         job_def = yaml_safe_load(job.definition)
 
-        tokens = {
+        if tokens := {
             x["name"]: x["token"]
             for x in RemoteArtifactsAuth.objects.filter(user=job.submitter).values(
                 "name", "token"
             )
-        }
+        }:
+            updater = InPlaceTokenUpdater(tokens)
+            if actions := job_def.get("actions"):
+                for action in actions:
+                    if "deploy" in action or "test" in action:
+                        updater.update_headers(action)
 
-        def update_token(headers_dict):
-            for key in headers_dict["headers"]:
-                token_name = headers_dict["headers"][key]
-                if token_name in tokens.keys():
-                    headers_dict["headers"][key] = tokens[token_name]
-
-        if "actions" in job_def:
-            for action in job_def["actions"]:
-                for k, v in action.items():
-                    if k == "deploy":
-                        for a, b in v.items():
-                            if isinstance(b, dict):
-                                if "url" in b and "headers" in b:
-                                    update_token(b)
-                                for i, j in b.items():
-                                    if isinstance(j, dict):
-                                        if "url" in j and "headers" in j:
-                                            update_token(j)
-
-        if "secrets" in job_def:
-            for k, v in job_def["secrets"].items():
-                if v in tokens.keys():
-                    job_def["secrets"][k] = tokens[v]
+            if secrets := job_def.get("secrets"):
+                updater.update_secrets(secrets)
 
         job_ctx = job_def.get("context", {})
 
@@ -1417,8 +1448,9 @@ def internal_v1_workers(request, pk=None):
         fields = ["version"]
         worker.version = version
         if version_mismatch and not settings.ALLOW_VERSION_MISMATCH:
-            # If the version does not match, go offline
-            fields.extend(worker.go_state_offline())
+            # If the version does not match and worker is online, go offline
+            if worker.state == Worker.STATE_ONLINE:
+                fields.extend(worker.go_state_offline())
         else:
             # Set last_ping
             worker.last_ping = timezone.now()
@@ -1593,6 +1625,7 @@ def job_list(request):
 
 
 @BreadCrumb("Errors", parent=job_list)
+@login_required
 def job_errors(request):
     data = JobErrorsView(request, model=TestCase, table_class=JobErrorsTable)
     ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
@@ -1751,9 +1784,15 @@ def job_detail(request, pk):
         if lava_job_obj.result == TestCase.RESULT_FAIL:
             lava_job_result = lava_job_obj.action_metadata
 
+    try:
+        json_log_data = json_script(log_data if log_data else [], "logs-initial")
+    except Exception:
+        log_data = None
+        json_log_data = json_script([], "logs-initial")
+
     data.update(
         {
-            "log_data": log_data if log_data else [],
+            "log_data": json_log_data,
             "invalid_log_data": log_data is None,
             "lava_job_result": lava_job_result,
         }

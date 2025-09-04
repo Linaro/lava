@@ -186,11 +186,7 @@ class ManagersTest(TestCaseWithFactory):
 
         # Test that qemu is not restricted by view permission.
         self.assertEqual(
-            set(
-                DeviceType.objects.visible_by_user(
-                    AnonymousUser(),
-                )
-            ),
+            set(DeviceType.objects.visible_by_user(AnonymousUser())),
             {self.qemu_device_type},
         )
 
@@ -605,7 +601,7 @@ class ManagersTest(TestCaseWithFactory):
 
     def test_device_manager_submit_through_device_type(self):
         # Restrict submission on qemu device type.
-        # user1 should be still able to submit to eveything, user2 to
+        # user1 should be still able to submit to everything, user2 to
         # non-restricted and anonymous to none.
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.SUBMIT_PERMISSION, self.group1, self.qemu_device_type

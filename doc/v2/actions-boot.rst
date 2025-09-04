@@ -432,6 +432,10 @@ job in such circumstance ``ignore_kernel_messages`` should be set to ``true``.
 LAVA won't be able to detect any other "legitimate" kernel crashes in such
 situation. Default value is false.
 
+Pattern ``U-Boot SPL 20[0-9][0-9]`` is used to detect board reset. LAVA job
+will terminate on unexpected reset. Users can disable the detection using the
+same option. This can be useful in scenarios where a board reset is expected.
+
 .. index:: boot method
 
 .. _boot_ignore_kernel_messages:
@@ -703,6 +707,14 @@ and the ``licence_variable`` set as an environment variable.
 You can use ``{IMAGE_NAME}`` which will be replaced with the path to the
 image with the same key under ``images`` in the previous ``fvp`` deploy stage.
 ``{ARTIFACT_DIR}`` can also be used for the directory where all images are deployed.
+
+You can provide ``erpc_app: image_key`` field to run a eRPC app. Both the
+server and test apps must be deployed in advance. The ``image_key`` should be
+the name of the test app. eRPC-related parameters for communication between the
+apps should be configured at build time. Using a separate UART device is
+recommended to avoid collision with other data being sent on UART. A
+``monitors`` test action can be defined right after the boot action to enable
+log parsing and wait for run completion.
 
 .. note:: Previous to running an ``fvp`` boot, you should run an ``fvp`` deploy.
 
@@ -1564,7 +1576,7 @@ If you also want to enable ``remote uuu`` feature, in which situation your devic
 
 * ``uuu_remote_options`` : This let docker client remotely operate an uuu docker container on a remote machine.
 
-You could follow https://docs.docker.com/engine/install/linux-postinstall/#configure-where-the-docker-daemon-listens-for-connections to configure remote docker support.
+You could follow https://docs.docker.com/engine/daemon/remote-access/ to configure remote docker support.
 
 You could follow https://docs.docker.com/engine/security/https/ to protect the docker daemon socket if you are also care about security.
 

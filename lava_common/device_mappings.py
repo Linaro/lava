@@ -13,11 +13,12 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any
 
 DISPATCHER_DOWNLOAD_PATH = Path(DISPATCHER_DOWNLOAD_DIR)
 
 
-def get_mapping_path(job_id) -> Path:
+def get_mapping_path(job_id: str) -> Path:
     return DISPATCHER_DOWNLOAD_PATH / str(job_id) / "usbmap.yaml"
 
 
@@ -25,9 +26,14 @@ def iter_mapping_paths() -> Iterator[Path]:
     yield from DISPATCHER_DOWNLOAD_PATH.glob("*/usbmap.yaml")
 
 
-def add_device_container_mapping(job_id, device_info, container, container_type="lxc"):
+def add_device_container_mapping(
+    job_id: str,
+    device_info: dict[str, Any],
+    container: str,
+    container_type: str = "lxc",
+) -> None:
     validate_device_info(device_info)
-    item = {
+    item: dict[str, Any] = {
         "device_info": device_info,
         "container": container,
         "container_type": container_type,
@@ -45,11 +51,11 @@ def add_device_container_mapping(job_id, device_info, container, container_type=
         f.write(yaml_safe_dump(newdata))
 
 
-def remove_device_container_mappings(job_id):
+def remove_device_container_mappings(job_id: str) -> None:
     get_mapping_path(job_id).unlink(missing_ok=True)
 
 
-def validate_device_info(device_info):
+def validate_device_info(device_info: dict[str, Any]) -> None:
     if not device_info:
         raise ValueError("Adding mapping for empty device info: %r" % device_info)
     if not any(device_info.values()):
@@ -58,17 +64,7 @@ def validate_device_info(device_info):
         )
 
 
-def find_mapping(options):
-    for mapping in iter_mapping_paths():
-        data = load_mapping_data(mapping)
-        for item in data:
-            if match_mapping(item["device_info"], options):
-                job_id = str(Path(mapping).parent.name)
-                return item, job_id
-    return None, None
-
-
-def load_mapping_data(filename):
+def load_mapping_data(filename: Path) -> list[dict[str, Any]]:
     try:
         with open(filename) as f:
             data = yaml_safe_load(f) or []
@@ -77,16 +73,3 @@ def load_mapping_data(filename):
         return data
     except FileNotFoundError:
         return []
-
-
-def match_mapping(device_info, options):
-    matched = False
-    for k, v in device_info.items():
-        if v:
-            if k in options and getattr(options, k) == v:
-                matched = True
-            else:
-                return False
-        else:
-            matched = True
-    return matched

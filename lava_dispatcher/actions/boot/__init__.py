@@ -134,7 +134,7 @@ class LoginAction(Action):
             connection.prompt_str.append(failure)
 
         # linesep should come from deployment_data as from now on it is OS dependent
-        linesep = self.get_namespace_data(
+        linesep: str | None = self.get_namespace_data(
             action="deploy-device-env", label="environment", key="line_separator"
         )
         connection.raw_connection.linesep = linesep if linesep else LINE_SEPARATOR
@@ -369,7 +369,7 @@ class BootloaderCommandOverlay(Action):
         if self.commands is not None:
             return
         if self.parameters["method"] == "bootloader":
-            self.commands = self.parameters["commands"]
+            self.commands = self.parameters.get("commands", [])
         elif isinstance(self.parameters["commands"], list):
             self.commands = self.parameters["commands"]
             self.logger.warning(
@@ -421,7 +421,7 @@ class BootloaderCommandOverlay(Action):
         connection = super().run(connection, max_end_time)
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
 
-        self.ram_disk = self.get_namespace_data(
+        self.ram_disk: str | None = self.get_namespace_data(
             action="compress-ramdisk", label="file", key="ramdisk"
         )
         # most jobs substitute RAMDISK, so also use this for the initrd
@@ -430,7 +430,7 @@ class BootloaderCommandOverlay(Action):
                 action="download-action", label="file", key="initrd"
             )
 
-        substitutions = {
+        substitutions: dict[str, str | None] = {
             "{SERVER_IP}": ip_addr,
             "{PRESEED_CONFIG}": self.get_namespace_data(
                 action="download-action", label="file", key="preseed"
@@ -453,13 +453,18 @@ class BootloaderCommandOverlay(Action):
             "{DTB_BASE_ADDR}": None,
             "{DTB_BASE_RESIZE}": None,
             "{APPLY_DTBO_COMMANDS}": None,
+            "{LAVA_DISPATCHER_IP}": ip_addr,
+            "{LAVA_JOB_ID}": str(self.job.job_id),
         }
-        self.bootcommand = self.get_namespace_data(
-            action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
+        self.bootcommand = (
+            self.get_namespace_data(
+                action="uboot-prepare-kernel", label="bootcommand", key="bootcommand"
+            )
+            or ""
         )
         if not self.bootcommand and "type" in self.parameters:
             raise JobError("Kernel image type can't be determined")
-        prepared_kernel = self.get_namespace_data(
+        prepared_kernel: str | None = self.get_namespace_data(
             action="prepare-kernel", label="file", key="kernel"
         )
         if prepared_kernel:
@@ -481,7 +486,7 @@ class BootloaderCommandOverlay(Action):
                 dtbo_pos = self.commands.index("{APPLY_DTBO_COMMANDS}")
                 index = 0
                 while True:
-                    file = self.get_namespace_data(
+                    file: str | None = self.get_namespace_data(
                         action="download-action", label="file", key=f"dtbo{index}"
                     )
                     if file:
@@ -580,10 +585,10 @@ class BootloaderCommandOverlay(Action):
                 "tee_addr": tee_addr,
             }
 
-        nfs_address = self.get_namespace_data(
+        nfs_address: str | None = self.get_namespace_data(
             action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
         )
-        nfs_root = self.get_namespace_data(
+        nfs_root: str | None = self.get_namespace_data(
             action="download-action", label="file", key="nfsrootfs"
         )
         if nfs_root:
@@ -626,12 +631,14 @@ class BootloaderCommandOverlay(Action):
 
         if self.use_bootscript:
             script = "/script.ipxe"
-            bootscript = (
-                self.get_namespace_data(
-                    action="tftp-deploy", label="tftp", key="tftp_dir"
-                )
-                + script
+            tftp_dir: str | None = self.get_namespace_data(
+                action="tftp-deploy", label="tftp", key="tftp_dir"
             )
+            if tftp_dir is None:
+                raise JobError(
+                    "TFTP deployment not defined. Unable to create bootscript file."
+                )
+            bootscript = tftp_dir + script
             bootscripturi = "tftp://%s/%s" % (
                 ip_addr,
                 os.path.dirname(substitutions["{KERNEL}"]) + script,
@@ -758,7 +765,7 @@ class OverlayUnpack(Action):
         )
 
         if transfer_method == "http":
-            overlay_full_path = self.get_namespace_data(
+            overlay_full_path: str | None = self.get_namespace_data(
                 action="compress-overlay", label="output", key="file"
             )
             if not overlay_full_path:
@@ -785,9 +792,11 @@ class OverlayUnpack(Action):
             connection.sendline(unpack + " " + overlay, delay=self.character_delay)
             connection.wait()
         elif transfer_method == "nfs":
-            location = self.get_namespace_data(
+            location: str | None = self.get_namespace_data(
                 action="test", label="shared", key="location"
             )
+            if location is None:
+                raise JobError("Test location not defined.")
 
             cmd = self.parameters["transfer_overlay"]["download_command"]
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
@@ -950,7 +959,7 @@ class BootloaderCommandsActionAltBank(Action):
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
-        at_bootloader_prompt = self.get_namespace_data(
+        at_bootloader_prompt: bool | None = self.get_namespace_data(
             action="interrupt", label="interrupt", key="at_bootloader_prompt"
         )
         if not at_bootloader_prompt:
@@ -961,6 +970,10 @@ class BootloaderCommandsActionAltBank(Action):
         final_message = self.job.device.get_constant(
             "final-message", prefix=self.method, missing_ok=True
         )
+        if job_final_message := self.parameters.get("parameters", {}).get(
+            "bootloader-final-message"
+        ):
+            final_message = job_final_message
         if error_messages:
             if isinstance(connection.prompt_str, str):
                 connection.prompt_str = [connection.prompt_str]
@@ -1016,20 +1029,28 @@ class BootloaderCommandsAction(Action):
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
-        at_bootloader_prompt = self.get_namespace_data(
+        at_bootloader_prompt: str | None = self.get_namespace_data(
             action="interrupt", label="interrupt", key="at_bootloader_prompt"
         )
         if not at_bootloader_prompt:
             self.wait(connection, max_end_time)
-        commands = self.get_namespace_data(
+        commands: list[str] | None = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
+        if commands is None:
+            raise JobError(
+                f"Bootloader commands for {self.method!r} method are not defined"
+            )
         error_messages = self.job.device.get_constant(
             "error-messages", prefix=self.method, missing_ok=True
         )
         final_message = self.job.device.get_constant(
             "final-message", prefix=self.method, missing_ok=True
         )
+        if job_final_message := self.parameters.get("parameters", {}).get(
+            "bootloader-final-message"
+        ):
+            final_message = job_final_message
         if error_messages:
             if isinstance(connection.prompt_str, str):
                 connection.prompt_str = [connection.prompt_str]
@@ -1075,7 +1096,7 @@ class AdbOverlayUnpack(Action):
         connection = super().run(connection, max_end_time)
         if not connection:
             raise LAVABug("Cannot transfer overlay, no connection available.")
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if not overlay_file:

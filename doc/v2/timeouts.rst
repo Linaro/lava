@@ -278,6 +278,32 @@ specific connection timeout which can be longer or shorter than the default.
      http-download:
        minutes: 2
 
+.. _repeatable_action_timeout:
+
+Repeatable actions timeout division
+***********************************
+
+In order to have enough time to repeat or retry all attempts
+:ref:`actions that have repeat or retry failure set <repeat_action>`
+will divide the available time by number of retries.
+
+For example:
+
+.. code-block:: yaml
+
+  - boot:
+     failure_retry: 4
+     timeout:
+       minutes: 20
+
+This boot action will have a 5 minutes timeout for each of the 4 attempts.
+
+The timeout can be further divided when a repeatable action is nested inside
+another repeatable action.
+
+Some actions (``http-download``) or device types (``hp-x360-14-G1-sona``) set the
+default number retries larger than one.
+
 .. _action_block_timeout_overrides:
 
 Action block overrides
@@ -310,6 +336,19 @@ timeouts section within the block:
           minutes: 1
 
 .. _individual_action_block_timeout_overrides:
+
+Action timeout priority
+***********************
+
+Action timeout priority from lowest to highest:
+
+#. :ref:`Job generic action timeout.<default_action_timeouts>`
+#. Device named action timeout.
+#. :ref:`Action block generic timeout.<action_block_timeout_overrides>`
+#. :ref:`Repeatable action timeout division.<repeatable_action_timeout>`
+#. :ref:`Job named action timeout.<individual_action_timeout_overides>`
+#. Action block named action timeout.
+
 
 .. index:: timeouts - skipping
 
@@ -375,7 +414,7 @@ deadlock of the currently executing test shell.
      failed in the middle of an operation which relies on filesystem
      locks.
 
-   Test writers are wholly responsible for cleaning up any artefacts of
+   Test writers are wholly responsible for cleaning up any artifacts of
    the failed test shell at the start of the second test shell. For
    example:
 
@@ -420,3 +459,4 @@ re-deploying the filesystem itself in a known clean state.)
     definitions:
 
  # ... rest of the second test action block
+

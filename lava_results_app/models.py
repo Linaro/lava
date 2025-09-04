@@ -132,9 +132,7 @@ class QueryMaterializedView(MaterializedView):
             # will be quoted with single quotes making
             # it incompatible with table_name identifier
             query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
-            cursor.execute(
-                f"REFRESH MATERIALIZED VIEW {query_id_str_quoted}",
-            )
+            cursor.execute(f"REFRESH MATERIALIZED VIEW {query_id_str_quoted}")
 
     @classmethod
     def drop(cls, query_id):
@@ -144,9 +142,7 @@ class QueryMaterializedView(MaterializedView):
             # will be quoted with single quotes making
             # it incompatible with table_name identifier
             query_id_str_quoted = quote_ident(query_id_str, cursor.cursor)
-            cursor.execute(
-                f"DROP MATERIALIZED VIEW IF EXISTS {query_id_str_quoted}",
-            )
+            cursor.execute(f"DROP MATERIALIZED VIEW IF EXISTS {query_id_str_quoted}")
 
     @classmethod
     def view_exists(cls, query_id):
@@ -192,22 +188,10 @@ class TestSuite(models.Model, Queryable):
         if not hasattr(self, "_testcase_count"):
             res = self.testcase_set.values("result")
             res = res.aggregate(
-                PASS=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_PASS),
-                ),
-                FAIL=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_FAIL),
-                ),
-                SKIP=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_SKIP),
-                ),
-                UNKNOWN=Count(
-                    "pk",
-                    filter=Q(result=TestCase.RESULT_UNKNOWN),
-                ),
+                PASS=Count("pk", filter=Q(result=TestCase.RESULT_PASS)),
+                FAIL=Count("pk", filter=Q(result=TestCase.RESULT_FAIL)),
+                SKIP=Count("pk", filter=Q(result=TestCase.RESULT_SKIP)),
+                UNKNOWN=Count("pk", filter=Q(result=TestCase.RESULT_UNKNOWN)),
             )
             self._testcase_count = {k.lower(): (v or 0) for (k, v) in res.items()}
 
@@ -322,6 +306,19 @@ class TestCase(models.Model, Queryable):
     """
 
     class Meta:
+        indexes = (
+            models.Index(
+                fields=("-suite",),
+                condition=(
+                    Q(name="job")
+                    & Q(result=1)  # HACK: Refers to RESULT_FAIL
+                    & Q(
+                        metadata__regex="error_type: (Configuration|Infrastructure|Bug)"
+                    )
+                ),
+                name="testcases_with_job_errors_idx",
+            ),
+        )
         constraints = (
             models.UniqueConstraint(
                 fields=("suite",),
@@ -693,6 +690,8 @@ class Query(models.Model):
                 view = TestCaseViewFactory(self)
             elif self.content_type.model_class() == TestSuite:
                 view = TestSuiteViewFactory(self)
+            else:
+                raise ValueError(f"Unknown model {self.content_type.model_class()!r}")
 
             return (
                 view.__class__.objects.all()
@@ -1471,7 +1470,7 @@ class ChartQuery(models.Model):
                         "pass": measurement_results[result]["fail"] == 0,
                         "measurement": measurement_results[result]["measurement"],
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 
@@ -1490,7 +1489,7 @@ class ChartQuery(models.Model):
                         "pass": attribute_results[result]["fail"] == 0,
                         "attr_value": attribute_results[result]["value"],
                     }
-                data.append(chart_item)
+                    data.append(chart_item)
 
         return data
 

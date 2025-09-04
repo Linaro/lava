@@ -23,6 +23,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
     Worker,
@@ -2556,3 +2557,99 @@ def test_workers_update(setup):
         server("admin", "admin").scheduler.workers.update("example.com", None, "wrong")
     assert exc.value.faultCode == 400  # nosec
     assert exc.value.faultString == "Invalid health: wrong"  # nosec
+
+
+@pytest.mark.django_db
+class TestRemoteArtifactTokens:
+    @pytest.fixture
+    def user(self):
+        return User.objects.create_user(username="user", password="user")
+
+    @pytest.fixture
+    def tokens(self, user):
+        RemoteArtifactsAuth.objects.create(user=user, name="n1", token="v1")
+        RemoteArtifactsAuth.objects.create(user=user, name="n2", token="v2")
+
+    def test_list_requires_auth(self):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server().scheduler.remote_artifact_tokens.list()
+        assert exc.value.faultCode == 401
+        assert (
+            exc.value.faultString
+            == "Authentication with user and token required for this API."
+        )
+
+    def test_list_empty(self, user):
+        assert server("user", "user").scheduler.remote_artifact_tokens.list() == []
+
+    def test_list(self, tokens):
+        assert server("user", "user").scheduler.remote_artifact_tokens.list() == [
+            {"name": "n1", "token": "v1"},
+            {"name": "n2", "token": "v2"},
+        ]
+
+    def test_show_requires_auth(self):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server().scheduler.remote_artifact_tokens.show("n1")
+        assert exc.value.faultCode == 401
+        assert (
+            exc.value.faultString
+            == "Authentication with user and token required for this API."
+        )
+
+    def test_show_not_found(self, setup):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server("user", "user").scheduler.remote_artifact_tokens.show("n1")
+        assert exc.value.faultCode == 404
+        assert exc.value.faultString == "Token 'n1' was not found."
+
+    def test_show(self, tokens):
+        srv = server("user", "user")
+        assert srv.scheduler.remote_artifact_tokens.show("n1") == "v1"
+        assert srv.scheduler.remote_artifact_tokens.show("n2") == "v2"
+
+    def test_add_requires_auth(self):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server().scheduler.remote_artifact_tokens.add("n1", "v1")
+        assert exc.value.faultCode == 401
+        assert (
+            exc.value.faultString
+            == "Authentication with user and token required for this API."
+        )
+
+    def test_add(self, setup):
+        server("user", "user").scheduler.remote_artifact_tokens.add("n1", "v1")
+
+        user = User.objects.get(username="user")
+        token = RemoteArtifactsAuth.objects.filter(user=user).get(name="n1")
+        assert token.name == "n1"
+        assert token.token == "v1"
+
+    def test_add_exists(self, tokens):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server("user", "user").scheduler.remote_artifact_tokens.add("n1", "v1")
+        assert exc.value.faultCode == 400
+        assert exc.value.faultString == "Bad request: token already exists?"
+
+    def test_delete_requires_auth(self):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server().scheduler.remote_artifact_tokens.delete("n1")
+        assert (
+            exc.value.faultString
+            == "Authentication with user and token required for this API."
+        )
+
+    def test_delete_not_found(self, setup):
+        with pytest.raises(xmlrpc.client.Fault) as exc:
+            server("user", "user").scheduler.remote_artifact_tokens.delete("n1")
+        assert exc.value.faultCode == 404
+        assert exc.value.faultString == "Token 'n1' was not found."
+
+    def test_delete(self, tokens):
+        srv = server("user", "user")
+        srv.scheduler.remote_artifact_tokens.delete("n1")
+        srv.scheduler.remote_artifact_tokens.delete("n2")
+
+        user = User.objects.get(username="user")
+        assert not RemoteArtifactsAuth.objects.filter(user=user, name="n1").exists()
+        assert not RemoteArtifactsAuth.objects.filter(user=user, name="n2").exists()

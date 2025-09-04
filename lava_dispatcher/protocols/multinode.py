@@ -109,12 +109,24 @@ class MultinodeProtocol(Protocol):
         """
         # FIXME: needs to comply with system timeout
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(
+            60
+        )  # timeout in seconds. We might use an external variable to define the timeout value
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try:
             self.sock.connect(
                 (self.settings["coordinator_hostname"], self.settings["port"])
             )
             return True
+        except TimeoutError:
+            self.logger.exception(
+                "socket connection timed out: %s %s",
+                self.settings["coordinator_hostname"],
+                self.settings["port"],
+            )
+            time.sleep(delay)
+            self.sock.close()
+            return False
         except OSError as exc:
             self.logger.exception(
                 "socket error on connect: %d %s %s",
@@ -138,6 +150,10 @@ class MultinodeProtocol(Protocol):
             if ret_bytes == 0:
                 self.logger.debug("zero bytes sent for message - connection closed?")
                 return False
+        except TimeoutError:
+            self.logger.exception("socket send timed out")
+            self.sock.close()
+            return False
         except OSError as exc:
             self.logger.exception("socket error '%s' on send", exc)
             self.sock.close()
@@ -156,6 +172,10 @@ class MultinodeProtocol(Protocol):
             while recv_count < msg_count:
                 response += self.sock.recv(self.blocks).decode("utf-8")
                 recv_count += self.blocks
+        except TimeoutError:
+            self.logger.exception("socket recv timed out")
+            self.sock.close()
+            return json.dumps({"response": "wait"})
         except OSError as exc:
             self.logger.exception("socket error '%d' on response", exc.errno)
             self.sock.close()

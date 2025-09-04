@@ -54,8 +54,10 @@
     "run bootcmd"]
 -%}
 
+{% set base_uboot_pci_commands = uboot_pci_commands|default(["pci enum"]) -%}
 {% set base_uboot_usb_commands = uboot_usb_commands|default(["usb start"]) -%}
 
+{% set uboot_needs_pci = uboot_needs_pci|default(false) %}
 {% set uboot_needs_usb = uboot_needs_usb|default(false) %}
 
 {% set usb_uuid = usb_uuid|default('') %}
@@ -70,6 +72,9 @@
 {% set uboot_set_mac = uboot_set_mac|default(false) %}
 
 {% set uboot_common_cmds = [] %}
+{% if uboot_needs_pci %}
+  {% set uboot_common_cmds = uboot_common_cmds + base_uboot_pci_commands %}
+{% endif %}
 {% if uboot_needs_usb %}
   {% set uboot_common_cmds = uboot_common_cmds + base_uboot_usb_commands %}
 {% endif %}
@@ -81,6 +86,10 @@
   {% set uboot_common_cmds = uboot_common_cmds + base_uboot_set_mac %}
 {% endif %}
 {% set uboot_common_cmds = uboot_common_cmds + base_uboot_dhcp_command  + base_uboot_tftp_commands %}
+
+{% set uboot_allow_chain_load_grub = uboot_allow_chain_load_grub|default(true) %}
+
+{% set additional_bcu_cleanup_commands = additional_bcu_cleanup_commands|default([]) -%}
 
 {# adds the parameters: top level block #}
 {% block vland %}
@@ -333,6 +342,21 @@ actions:
           bcu_board_id: "{{ bcu_board_id }}"
           bcu_board_id_command: {{ bcu_board_id_command }}
           has_bcu_commands: "{{ has_bcu_commands }}"
+          additional_bcu_cleanup_commands: {{ additional_bcu_cleanup_commands }}
+{% if uboot_allow_chain_load_grub %}
+      grub:
+        parameters:
+          bootloader_prompt: 'grub>'
+          needs_interrupt: true
+      grub-efi:
+        parameters:
+          bootloader_prompt: 'grub>'
+          needs_interrupt: true
+{% endif %}
+{% if extra_boot_methods %}
+{{ extra_boot_methods|indent(first=True,width=6) }}
+{% endif %}
+
   test:
     methods:
       docker:

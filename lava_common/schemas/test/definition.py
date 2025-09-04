@@ -33,6 +33,7 @@ def schema():
                     Optional("revision"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
+                    Optional("recursive"): bool,
                     **common,
                 },
                 {
@@ -41,6 +42,7 @@ def schema():
                     Optional("compression"): str,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
+                    Optional("headers"): dict,
                     **common,
                 },
                 {

@@ -6,12 +6,10 @@
 from __future__ import annotations
 
 import os
-import subprocess
-import time
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import FastbootDeviceNotFound, InfrastructureError, JobError
-from lava_dispatcher.action import Action, Pipeline
+from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot.fastboot import EnterFastbootAction
 from lava_dispatcher.actions.boot.u_boot import UBootEnterFastbootAction
 from lava_dispatcher.actions.deploy.apply_overlay import (
@@ -23,10 +21,11 @@ from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.power import PDUReboot, PrePower, ReadFeedback, ResetDevice
-from lava_dispatcher.utils.decorator import retry
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.fastboot import (
+    DetectFastbootDevice,
+    OptionalContainerFastbootAction,
+)
 from lava_dispatcher.utils.lxc import is_lxc_requested
-from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
@@ -59,20 +58,14 @@ class FastbootAction(
         if self.job.device.get("fastboot_via_uboot", False):
             self.pipeline.add_action(ConnectDevice(self.job))
             self.pipeline.add_action(UBootEnterFastbootAction(self.job))
-            if board_id == "0000000000" and self.job.device.get(
-                "fastboot_auto_detection", False
-            ):
-                self.pipeline.add_action(DetectFastbootDevice(self.job))
+            DetectFastbootDevice.add_if_needed(self)
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.pipeline.add_action(ConnectDevice(self.job))
             if not is_lxc_requested(self.job):
                 self.pipeline.add_action(PrePower(self.job))
             self.pipeline.add_action(ResetDevice(self.job))
-            if board_id == "0000000000" and self.job.device.get(
-                "fastboot_auto_detection", False
-            ):
-                self.pipeline.add_action(DetectFastbootDevice(self.job))
+            DetectFastbootDevice.add_if_needed(self)
         else:
             self.pipeline.add_action(EnterFastbootAction(self.job))
 
@@ -319,74 +312,4 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
 
         self.logger.info("fastboot reboot device to fastbootd.")
         self.run_fastboot(["reboot", "fastboot"])
-        return connection
-
-
-class DetectFastbootDevice(Action):
-    name = "detect-fastboot-device"
-    description = "Detect fastboot device serial number."
-    summary = "Set fastboot SN if only one device found."
-
-    def __init__(self, job: "Job"):
-        super().__init__(job)
-        self.fastboot_path = None
-
-    def validate(self):
-        super().validate()
-        self.fastboot_path = which("fastboot")
-
-    def set_sn(self, name: str, sn: str) -> None:
-        # Respect sn set in device dictionary.
-        if self.job.device.get(name, "0000000000") == "0000000000":
-            self.logger.info(f"'{name}' is set to '{sn}'")
-            self.job.device[name] = sn
-
-            if name == "board_id":
-                # Device passing to container needs 'device_info[0].board_id'.
-                self.job.device["device_info"] = [{"board_id": sn}]
-                self.logger.info(f"'device_info[0].board_id' is set to {sn}")
-
-    @retry(exception=FastbootDeviceNotFound, retries=10, delay=3)
-    def detect(self):
-        cmd = subprocess.run(
-            [self.fastboot_path, "devices"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-
-        if cmd.returncode == 0:
-            # 'fastboot devices' output line example: a2c22e48\tfastboot\n
-            output = cmd.stdout.strip().split("\n")
-            devices = [
-                str(line.split("\t")[0])
-                for line in output
-                if line.endswith("\tfastboot")
-            ]
-
-            if len(devices) > 1:
-                raise JobError(f"More then one fastboot devices found: {devices}")
-            if len(devices) < 1:
-                raise FastbootDeviceNotFound("Fastboot device not found.")
-
-            fastboot_serial_number = devices[0]
-            self.logger.info(
-                f"Detected fastboot serial number: {fastboot_serial_number}"
-            )
-
-            self.set_sn("fastboot_serial_number", fastboot_serial_number)
-            self.set_sn("adb_serial_number", fastboot_serial_number)
-            # wait-device-boardid needs board_id.
-            self.set_sn("board_id", fastboot_serial_number)
-        else:
-            raise JobError(f"Failed to detect fastboot device: {cmd.stderr}")
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-
-        # Wait a while for the device to enter fastboot.
-        time.sleep(3)
-        # Try the detection up to 10 times.
-        self.detect()
-
         return connection

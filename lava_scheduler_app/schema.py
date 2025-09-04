@@ -184,7 +184,7 @@ def _interactive_def_schema():
                 Required("name"): Match(
                     r"^[a-zA-Z0-9-_]+$", msg=INVALID_CHARACTER_ERROR_MSG
                 ),
-                Required("prompts"): list,
+                Required("prompts"): [All(str, Length(min=1))],
                 Optional("echo"): "discard",
                 Required("script"): _interactive_script_schema(),
             }

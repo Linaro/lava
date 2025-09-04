@@ -1,0 +1,21 @@
+# Raspberry Pi 3b
+{# set device_type = "bcm2837-rpi-3-b-plus" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set booti_kernel_addr = '0x01000000' %}
+{% set booti_ramdisk_addr = '0x04000000' %}
+{% set booti_dtb_addr = '0x03f00000' %}
+
+{% set bootm_kernel_addr = '0x01000000' %}
+{% set bootm_ramdisk_addr = '0x04000000' %}
+{% set bootm_dtb_addr = '0x03f00000' %}
+
+{% set uboot_mkimage_arch = 'arm64' %}
+
+{% set uboot_needs_usb = true %}
+{% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
+
+{% set extra_kernel_args = "earlycon=uart8250,mmio32,0x3f215040" %}
+
+{% set boot_character_delay = boot_character_delay | default(10) %}
+{% set test_character_delay = test_character_delay | default(10) %}

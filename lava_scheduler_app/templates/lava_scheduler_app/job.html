@@ -435,6 +435,9 @@
               if (key == 'extra') {
                 value = '...';
               }
+              if (key == 'starttc') {
+                results_node.setAttribute('id', `results_${value}`);
+              }
               results_node.appendChild(document.createTextNode(`${key}: ${value}`));
               results_node.appendChild(document.createElement('br'));
             }
@@ -699,5 +702,5 @@
     }
   };
 </script>
-{{ log_data|json_script:"logs-initial" }}
+{{ log_data }}
 {% endblock scripts %}

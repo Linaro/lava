@@ -52,6 +52,8 @@ class JobStateColumnMixin(LavaTable):
                 text = "text-danger"
             elif record.health == TestJob.HEALTH_CANCELED:
                 text = "text-warning"
+            else:
+                text = ""
             return format_html(
                 '<span class="{}"><strong>{}</strong></span>',
                 text,
@@ -65,9 +67,7 @@ class JobStateColumnMixin(LavaTable):
 
 
 class JobActualDeviceColumMixin(LavaTable):
-    actual_device_id = tables.Column(
-        verbose_name="Device",
-    )
+    actual_device_id = tables.Column(verbose_name="Device")
 
     def render_actual_device_id(self, record):
         if record.actual_device_id:
@@ -101,9 +101,7 @@ class JobRequestedDeviceTypeColumnMixin(LavaTable):
 
 
 class JobDescriptionColumnMixin(LavaTable):
-    description = tables.Column(
-        default="",
-    )
+    description = tables.Column(default="")
 
 
 class JobSubmitterColumnMixin(LavaTable):
@@ -128,9 +126,7 @@ class JobEndTimeColumnMixin(LavaTable):
 
 
 class JobDurationColumnMixin(LavaTable):
-    duration = tables.Column(
-        orderable=False,
-    )
+    duration = tables.Column(orderable=False)
 
 
 class JobPriorityColumnMixin(LavaTable):
@@ -266,9 +262,7 @@ class LongestJobsTable(
     JobSubmitterColumnMixin,
     JobPriorityColumnMixin,
 ):
-    start_time = tables.Column(
-        orderable=False,
-    )
+    start_time = tables.Column(orderable=False)
     running = tables.Column(
         accessor="start_time",
         verbose_name="Running",

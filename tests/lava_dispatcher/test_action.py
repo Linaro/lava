@@ -86,10 +86,7 @@ class TestActionRunCmd(LavaDispatcherTestCase):
             "".join(debug_logs.output),
         )
 
-        self.assertLess(
-            end_time - start_time,
-            1.0,
-        )
+        self.assertLess(end_time - start_time, 1.0)
 
     def test_command_does_not_exist(self) -> None:
         non_existant_command = "THIS_COMMAND_does_NOT_exist"

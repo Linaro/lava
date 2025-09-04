@@ -13,7 +13,12 @@ from django.db import IntegrityError
 from django.forms import ValidationError
 
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Alias, DeviceType, GroupDeviceTypePermission
+from lava_scheduler_app.models import (
+    Alias,
+    Device,
+    DeviceType,
+    GroupDeviceTypePermission,
+)
 from lava_server.api import check_staff
 from lava_server.files import File
 from linaro_django_xmlrpc.models import ExposedV2API
@@ -90,6 +95,53 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
             raise xmlrpc.client.Fault(
                 400, "Bad request: device-type name is already used."
             )
+
+    def devices(self, name, health=None):
+        """
+        Name
+        ----
+        `scheduler.device_types.devices` (`name`, `health`)
+
+        Description
+        -----------
+        List devices of a give device-type
+
+        Arguments
+        ---------
+        `name`: string
+          Name of the device-type
+        `health`: str
+          Filter by health, None by default (no filtering).
+          Values: [GOOD, UNKNOWN, LOOPING, BAD, MAINTENANCE]
+
+        Return value
+        ------------
+        This function returns an XML-RPC dictionary with devices
+        """
+        try:
+            dt = DeviceType.objects.get(name=name)
+        except DeviceType.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+        if not dt.can_view(self.user):
+            raise xmlrpc.client.Fault(404, "Device-type '%s' was not found." % name)
+
+        devices = dt.device_set.all()
+        if health:
+            try:
+                devices = devices.filter(health=Device.HEALTH_REVERSE[health.upper()])
+            except (AttributeError, KeyError) as exc:
+                raise xmlrpc.client.Fault(400, "Invalid health '%s'" % health)
+
+        devices = (d for d in devices if d.can_view(self.user))
+
+        return [
+            {
+                "hostname": d.hostname,
+                "health": d.get_health_display(),
+                "state": d.get_state_display(),
+            }
+            for d in devices
+        ]
 
     def get_health_check(self, name):
         """

@@ -1,0 +1,33 @@
+{# device_type: s32g399a-rdb3 #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set booti_kernel_addr  = booti_kernel_addr | default('0x80000000') %}
+{% set booti_dtb_addr = booti_dtb_addr | default('0x83000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x90000000') %}
+
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+{% set uboot_fdt_high = '0xffffffffffffffff' %}
+
+{% set console_device = 'ttyLF0' %}
+{% set baud_rate = baud_rate | default('115200') %}
+{% set extra_kernel_args = " earlycon " + extra_kernel_args|default('') %}
+
+{% set uboot_ipaddr_cmd = 'sleep 1; dhcp; if test $? -ne 0; then setenv ethact ethernet@4033c000; sleep 1; dhcp; fi;' %}
+
+{% set uboot_error_messages = [
+  'Resetting CPU',
+  'Must RESET board to recover',
+  'Retry time exceeded; starting again',
+  'ERROR: The remote end did not respond in time.',
+  'File not found',
+  'Bad Linux ARM64 Image magic!',
+  'Wrong Ramdisk Image Format',
+  'Ramdisk image is corrupt or invalid',
+  'ERROR: Failed to allocate',
+  'TFTP error: trying to overwrite reserved memory',
+  'ERROR: RD image overlaps OS image',
+  'kernel_comp_addr_r or kernel_comp_size is not provided',
+] %}
+
+{% set boot_character_delay = boot_character_delay | default(20) %}
+{% set test_character_delay = test_character_delay | default(20) %}

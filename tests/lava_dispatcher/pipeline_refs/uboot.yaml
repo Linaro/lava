@@ -352,7 +352,7 @@
     max_retries: 1
     description: Executing lava-test-runner
     summary: Lava Test Shell
-    timeout: 100
+    timeout: 420
 - class: FinalizeAction
   name: finalize
   level: '4'

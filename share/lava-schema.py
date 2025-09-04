@@ -172,7 +172,7 @@ def main():
                 ]
             # create the jinja2 environment once as this is a slow operation
             options.env = create_device_templates_env(
-                loader=FileSystemLoader(options.path),
+                loader=FileSystemLoader(options.path)
             )
             glob = "*.jinja2"
         else:

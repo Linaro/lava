@@ -20,6 +20,7 @@ def schema():
     base = {
         Required("to"): "downloads",
         Required("images"): {Required(str, "'images' is empty"): deploy.url()},
+        Optional("uniquify"): bool,
         Optional("postprocess"): {Required("docker"): postprocess_with_docker},
     }
     return {**deploy.schema(), **base}

@@ -168,16 +168,7 @@ class TestBuildImage:
             image, build_dir, use_cache=True
         )
         popen.assert_called_with(
-            [
-                "docker",
-                "build",
-                "--force-rm",
-                "-f",
-                "Dockerfile.lava",
-                "-t",
-                tag,
-                ".",
-            ],
+            ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag, "."],
             cwd=build_dir,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

@@ -45,8 +45,10 @@ def schema():
     return {
         **action(),
         Optional("parameters"): {
+            Optional("bootloader-final-message"): str,
             Optional("kernel-start-message"): str,
             Optional("shutdown-message"): str,
         },
         Optional("soft_reboot"): Any(str, [str]),
+        Optional("ignore_kernel_messages"): bool,
     }

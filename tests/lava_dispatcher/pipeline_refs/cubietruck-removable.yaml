@@ -387,7 +387,7 @@
     max_retries: 1
     description: deploy image to drive
     summary: write image to drive
-    timeout: 600
+    timeout: 480
 - class: UBootAction
   name: uboot-action
   level: '5'

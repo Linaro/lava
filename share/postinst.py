@@ -16,6 +16,7 @@ import shutil
 import subprocess  # nosec - controlled inputs.
 import sys
 from pathlib import Path
+from traceback import print_exc
 
 import psycopg2
 from django.core.management.utils import get_random_secret_key
@@ -54,9 +55,11 @@ def run(cmd_list, failure_msg, stdin=None):
 def is_pg_available():
     # is the database ready?
     try:
-        subprocess.check_call(["pg_isready"])
-        return True
-    except subprocess.CalledProcessError:
+        with using_account("postgres", "postgres"):
+            psycopg2.connect("").close()
+            return True
+    except Exception:
+        print_exc()
         print("Skipping database creation as PostgreSQL is not running")
         return False
 

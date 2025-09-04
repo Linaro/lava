@@ -19,7 +19,7 @@ variables:
 # make sure all jobs use  #
 # architecture tags.      #
 ###########################
-.job: &job
+.job:
   before_script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh setup
   needs: []
@@ -27,9 +27,9 @@ variables:
   script:
     - ./.gitlab-ci/$CI_JOB_STAGE/$CI_JOB_NAME.sh
 
-.dind: &dind
-  <<: *job
-  image: docker:24-dind
+.dind:
+  extends: .job
+  image: docker:24
   variables:
     DOCKER_DRIVER: overlay2
     DOCKER_BUILDKIT: 1
@@ -39,35 +39,35 @@ variables:
 #######
 # Tests
 #######
-.dispatcher: &dispatcher
-  <<: *job
+.dispatcher:
+  extends: .job
   stage: test
   image: registry.gitlab.com/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
       junit: dispatcher.xml
 
-.server: &server
-  <<: *job
+.server:
+  extends: .job
   stage: test
   image: registry.gitlab.com/lava/ci-images/$CI_JOB_NAME
   artifacts:
     reports:
       junit: server.xml
 
-amd64/dispatcher-debian-11: *dispatcher
-amd64/server-debian-11: *server
-amd64/dispatcher-debian-12: *dispatcher
-amd64/server-debian-12: *server
+amd64/dispatcher-debian-11: {"extends": ".dispatcher"}
+amd64/server-debian-11: {"extends": ".server"}
+amd64/dispatcher-debian-12: {"extends": ".dispatcher"}
+amd64/server-debian-12: {"extends": ".server"}
 aarch64/dispatcher-debian-11:
-  <<: *dispatcher
+  extends: .dispatcher
   tags:
     - saas-linux-medium-arm64
   only:
     refs:
       - master
 aarch64/server-debian-11:
-  <<: *server
+  extends: .server
   tags:
     - saas-linux-medium-arm64
   only:
@@ -77,8 +77,8 @@ aarch64/server-debian-11:
 ###########
 # Analyze #
 ###########
-.analyze: &analyze
-  <<: *job
+.analyze:
+  extends: .job
   image: registry.gitlab.com/lava/ci-images/amd64/analyze
   stage: analyze
   except:
@@ -86,16 +86,16 @@ aarch64/server-debian-11:
       - tags
 
 black:
-  <<: *analyze
+  extends: .analyze
 
 code_quality:
-  <<: *analyze
+  extends: .analyze
   artifacts:
     reports:
       codequality: gl-code-quality-report.json
 
 coverage:
-  <<: *analyze
+  extends: .analyze
   image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
@@ -108,13 +108,14 @@ coverage:
         path: coverage.xml
 
 dockerfiles:
-  <<: *analyze
+  extends: .analyze
 
 schemas:
-  <<: *analyze
+  extends: .analyze
 
 pylint:
-  <<: *analyze
+  extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 sast:
   stage: analyze
@@ -123,13 +124,25 @@ sast:
 
 
 codespell:
-  <<: *analyze
+  extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
+  variables:
+    GIT_DEPTH: 150
+    GIT_FETCH_EXTRA_FLAGS: "--quiet --prune $CI_DEFAULT_BRANCH"
+
+django_migrations:
+  extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
+
+mypy:
+  extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 #########
 # Build #
 #########
 doc:
-  <<: *job
+  extends: .job
   stage: build
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-11
   artifacts:
@@ -137,7 +150,7 @@ doc:
       - doc/v2/_build/html
 
 debian/11:
-  <<: *job
+  extends: .job
   stage: build
   except: []
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-11
@@ -151,7 +164,7 @@ debian/11:
       - _build/*.buildinfo
 
 debian/12:
-  <<: *job
+  extends: .job
   stage: build
   except: []
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
@@ -164,8 +177,8 @@ debian/12:
       - _build/*.changes
       - _build/*.buildinfo
 
-.docker: &docker
-  <<: *dind
+.docker:
+  extends: .dind
   stage: build
   before_script:
     - .gitlab-ci/$CI_JOB_STAGE/docker.sh setup
@@ -174,19 +187,24 @@ debian/12:
     - git fetch --prune --tags --unshallow
     - .gitlab-ci/$CI_JOB_STAGE/docker.sh "$SERVICE"
 
-.docker_aarch64: &docker_aarch64
-  <<: *docker
+.docker_aarch64:
+  extends: .docker
   only:
     refs:
       - master
       - tags
   tags:
     - saas-linux-medium-arm64
+  services:
+    - name: docker:24-dind
+      # Workaround for arm64 network connectivity issues
+      # https://gitlab.com/gitlab-org/gitlab/-/issues/473739#workaround
+      command: ["--mtu=1400"]
 
-docker-amd64-dispatcher: *docker
-docker-amd64-server: *docker
-docker-aarch64-dispatcher: *docker_aarch64
-docker-aarch64-server: *docker_aarch64
+docker-amd64-dispatcher: {"extends": ".docker"}
+docker-amd64-server: {"extends": ".docker"}
+docker-aarch64-dispatcher: {"extends": ".docker_aarch64"}
+docker-aarch64-server: {"extends": ".docker_aarch64"}
 
 ##########
 # Deploy #

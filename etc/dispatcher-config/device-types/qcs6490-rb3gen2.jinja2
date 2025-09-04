@@ -1,0 +1,5 @@
+{# device_type = 'qcs6490-rb3gen2' #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set boot_character_delay = boot_character_delay|default(10) %}
+{% set test_character_delay = test_character_delay|default(10) %}

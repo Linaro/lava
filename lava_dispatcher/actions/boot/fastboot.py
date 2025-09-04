@@ -24,7 +24,10 @@ from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import PreOs, ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.fastboot import (
+    DetectFastbootDevice,
+    OptionalContainerFastbootAction,
+)
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
@@ -93,10 +96,12 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         if self.job.device.get("fastboot_via_uboot", False):
             self.pipeline.add_action(ConnectDevice(self.job))
             self.pipeline.add_action(UBootEnterFastbootAction(self.job))
+            DetectFastbootDevice.add_if_needed(self)
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.pipeline.add_action(ConnectDevice(self.job))
             self.pipeline.add_action(ResetDevice(self.job))
+            DetectFastbootDevice.add_if_needed(self)
         else:
             self.pipeline.add_action(WaitDeviceBoardID(self.job, board_id))
             self.pipeline.add_action(EnterFastbootAction(self.job))

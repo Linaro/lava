@@ -417,7 +417,7 @@ class LavaCoordinator:
             self._waitResponse()
             return
         # clear the sync data for this messageID when the last client connects to
-        # allow the message to be re-used later for another sync
+        # allow the message to be reused later for another sync
         clear_syncs = True
         for pending in self.group["syncs"][messageID]:
             if self.group["syncs"][messageID][pending]:

@@ -10,6 +10,7 @@
 import argparse
 import logging
 import os
+import shutil
 import signal
 import sys
 import traceback
@@ -17,11 +18,13 @@ from pathlib import Path
 
 from setproctitle import setproctitle
 
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import YAMLLogger
-from lava_common.yaml import yaml_safe_dump
+from lava_common.log import YAMLListFormatter, YAMLLogger
+from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
+from lava_dispatcher.worker import get_prefix
 
 
 def parser():
@@ -38,6 +41,7 @@ def parser():
         "--output-dir",
         required=True,
         metavar="DIR",
+        type=Path,
         help="Directory for temporary resources",
     )
     p_obj.add_argument(
@@ -67,21 +71,21 @@ def parser():
     group.add_argument(
         "--device",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         required=True,
         help="Device configuration",
     )
     group.add_argument(
         "--dispatcher",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         default=None,
         help="Dispatcher configuration",
     )
     group.add_argument(
         "--env-dut",
         metavar="PATH",
-        type=argparse.FileType("r"),
+        type=Path,
         default=None,
         help="DUT environment",
     )
@@ -99,7 +103,7 @@ def parser():
         help="Start remote pdb right before running the job, for debugging",
     )
 
-    p_obj.add_argument("definition", type=argparse.FileType("r"), help="job definition")
+    p_obj.add_argument("definition", type=Path, help="Job definition")
 
     return p_obj
 
@@ -111,11 +115,35 @@ def setup_logger(options):
 
     # The logger can be used by the parser and the Job object in all phases.
     logger = logging.getLogger("dispatcher")
+    # Save logs to a file for debugging/post-processing.
+    log_file = options.output_dir / "logs.yaml"
+    file_handler = logging.FileHandler(log_file, mode="w")
+    file_handler.setFormatter(YAMLListFormatter())
+    logger.addHandler(file_handler)
+
+    prefix = ""
+    if options.dispatcher is not None:
+        prefix = get_prefix(
+            yaml_safe_load(options.dispatcher.read_text(encoding="utf-8"))
+        )
+    # Create the symlink for downloading via http
+    # SymLinks is allowed in the apache2 lava-dispatcher.conf
+    job_dir = Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}"
+    log_download_path = job_dir / "logs.yaml"
+    try:
+        if job_dir.exists():
+            shutil.rmtree(job_dir)
+        job_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+        log_download_path.symlink_to(log_file)
+    except OSError:
+        raise InfrastructureError(f"Unable to create {log_download_path}")
+
     if options.url is not None:
         logger.addHTTPHandler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
             options.token,
             options.job_log_interval,
+            options.job_id,
         )
     else:
         logger.addHandler(logging.StreamHandler())
@@ -137,14 +165,14 @@ def parse_job_file(logger, options):
     # Load the configuration files (this should *not* fail)
     env_dut = None
     if options.env_dut is not None:
-        env_dut = options.env_dut.read()
+        env_dut = options.env_dut.read_text(encoding="utf-8")
     dispatcher_config = None
     if options.dispatcher is not None:
-        dispatcher_config = options.dispatcher.read()
+        dispatcher_config = options.dispatcher.read_text(encoding="utf-8")
 
     # Generate the pipeline
     return parser.parse(
-        options.definition.read(),
+        options.definition.read_text(encoding="utf-8"),
         device,
         options.job_id,
         logger=logger,
@@ -191,6 +219,14 @@ def main():
     # Set process title for easier debugging
     setproctitle("lava-run [job: %s]" % options.job_id)
 
+    # Should be an absolute directory
+    options.output_dir = options.output_dir.resolve()
+    # Create the output directory
+    try:
+        options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+    except OSError:
+        raise InfrastructureError("Unable to create %s" % options.output_dir)
+
     # Setup the logger as early as possible
     logger = setup_logger(options)
     if not logger:
@@ -208,14 +244,6 @@ def main():
         signal.signal(signal.SIGTERM, cancelling_handler)
         signal.signal(signal.SIGUSR1, job_not_found_handler)
         signal.signal(signal.SIGUSR2, cancelling_handler)
-
-        # Should be an absolute directory
-        options.output_dir = Path(options.output_dir).resolve()
-        # Create the output directory
-        try:
-            options.output_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
-        except OSError:
-            raise InfrastructureError("Unable to create %s" % options.output_dir)
 
         # Parse the definition and create the job object
         job = parse_job_file(logger, options)
@@ -260,12 +288,31 @@ def main():
             logger.info("Job finished correctly")
         else:
             result_dict["result"] = "fail"
-            result_dict["error_msg"] = error_msg
-            result_dict["error_type"] = error_type
+            result_dict["error_msg"] = error_msg or "Unknown error"
+            result_dict["error_type"] = error_type or "Unknown"
             logger.error(error_help)
         logger.results(result_dict)
 
-    # TODO: change the signal handler
+    def logger_terminate_handler(*_):
+        logger.terminate()
+        sys.stderr.write(
+            "Job log upload process terminated due to timeout; logs may be incomplete.\n"
+        )
+        sys.stderr.flush()
+
+    # At this point, the job run/cancellation has finished. Change signal
+    # handler here to prevent 'JobCanceled' from being raised again. In case of
+    # job cancellation, the logger has FINISH_MAX_DURATION/2 seconds to finish
+    # log uploading and close itself. After that another SIGTERM signal will be
+    # sent by the worker to terminate the logger. If the logger is not
+    # terminated in FINISH_MAX_DURATION seconds, the lava-run process group
+    # will be killed by the worker.
+    signal.signal(signal.SIGHUP, logger_terminate_handler)
+    signal.signal(signal.SIGINT, logger_terminate_handler)
+    signal.signal(signal.SIGQUIT, logger_terminate_handler)
+    signal.signal(signal.SIGTERM, logger_terminate_handler)
+    signal.signal(signal.SIGUSR1, logger_terminate_handler)
+    signal.signal(signal.SIGUSR2, logger_terminate_handler)
 
     # Closing the socket. We are now sure that all messages were sent.
     logger.close()

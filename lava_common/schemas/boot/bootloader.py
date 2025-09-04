@@ -14,8 +14,9 @@ def schema():
     base = {
         Required("method"): Msg("bootloader", "'method' should be 'bootloader'"),
         Required("bootloader"): str,
-        Required("commands"): [str],
+        Optional("commands"): [str],
         Optional("use_bootscript"): bool,
         Optional("prompts"): boot.prompts(),
+        Optional("reset"): bool,
     }
     return {**boot.schema(), **base}

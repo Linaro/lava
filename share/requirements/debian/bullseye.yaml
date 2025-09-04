@@ -58,9 +58,6 @@ lava-server:
   configobj:
     name: python3-configobj
     unittests: true
-  netifaces:
-    name: python3-netifaces
-    unittests: true
   pexpect:
     name: python3-pexpect
     unittests: true
@@ -109,12 +106,13 @@ lava-dispatcher:
     name: python3-magic
   jinja2:
     name: python3-jinja2
-  netifaces:
-    name: python3-netifaces
   pexpect:
     name: python3-pexpect
   pytest:
     name: python3-pytest
+    unittests: true
+  pytest-asyncio:
+    name: python3-pytest-asyncio
     unittests: true
   pytest-mock:
     name: python3-pytest-mock
@@ -185,6 +183,21 @@ lava-dispatcher:
     unittests: true
   pytest-random-order:
     name: python3-pytest-random-order
+    unittests: true
+  zstd:  # Compression tests
+    name: zstd
+    unittests: true
+  xz:  # Compression tests
+    name: xz-utils
+    unittests: true
+  gz:  # Compression tests
+    name: gzip
+    unittests: true
+  bz2:  # Compression tests
+    name: bzip2
+    unittests: true
+  unzip:  # Compression tests
+    name: unzip
     unittests: true
 
 lava-common:

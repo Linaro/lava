@@ -90,7 +90,7 @@ class UBootPrepareKernelAction(Action):
         if "parameters" not in self.job.device["actions"]["deploy"]:
             return
         self.params = self.job.device["actions"]["deploy"]["parameters"]
-        self.kernel_type = self.get_namespace_data(
+        self.kernel_type: str | None = self.get_namespace_data(
             action="download-action", label="type", key="kernel"
         )
         self.bootcommand = None

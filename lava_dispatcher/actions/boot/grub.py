@@ -34,9 +34,7 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
-def _grub_sequence_map(
-    sequence: str,
-) -> tuple[Optional[type[Action]], Optional[str]]:
+def _grub_sequence_map(sequence: str) -> tuple[Optional[type[Action]], Optional[str]]:
     """Maps grub sequence with corresponding class."""
     sequence_map: dict[str, tuple[type[Action], Optional[str]]] = {
         "wait-fastboot-interrupt": (WaitFastBootInterrupt, "grub"),
@@ -117,11 +115,12 @@ class GrubMainAction(BootHasMixin, RetryAction):
             .get("grub-efi", {})
             .get("reset_device", True)
         )
-        if parameters["method"] == "grub-efi" and reset_device:
-            # added unless the device specifies not to reset the device in grub.
-            self.pipeline.add_action(ResetDevice(self.job))
-        elif parameters["method"] == "grub":
-            self.pipeline.add_action(ResetDevice(self.job))
+        if parameters.get("reset", True):
+            if parameters["method"] == "grub-efi" and reset_device:
+                # added unless the device specifies not to reset the device in grub.
+                self.pipeline.add_action(ResetDevice(self.job))
+            elif parameters["method"] == "grub":
+                self.pipeline.add_action(ResetDevice(self.job))
         if parameters["method"] == "grub-efi":
             self.pipeline.add_action(UEFIMenuInterrupt(self.job))
             self.pipeline.add_action(GrubMenuSelector(self.job))

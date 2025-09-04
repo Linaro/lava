@@ -137,37 +137,13 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         docker.prepare(action=self)
         docker.bind_mount(os.path.join(location, overlay), "/" + overlay)
 
-        docker_method_conf = (
+        docker_test_method_conf = (
             self.job.device["actions"]
             .get("test", {})
             .get("methods", {})
             .get("docker", {})
         )
-
-        # Preprocess docker option list, to better support partial
-        # overriding of them via device dict:
-        # 1. Filter out None, to make it easier to template
-        # YAML syntactic lists with Jinja2:
-        # '- {{ some_opt_from_device_dict }}'
-        # (if not default, will be set to None).
-        # 2. Flatten sublists, `- ['--opt1', '--opt2']`.
-        def preproc_opts(opts):
-            res = []
-            for o in opts:
-                if o is None:
-                    continue
-                elif isinstance(o, list):
-                    res += o
-                else:
-                    res.append(o)
-            return res
-
-        if "global_options" in docker_method_conf:
-            docker.add_docker_options(
-                *preproc_opts(docker_method_conf["global_options"])
-            )
-        if "options" in docker_method_conf:
-            docker.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
+        docker.add_device_docker_method_options(docker_test_method_conf)
 
         namespace = self.parameters.get(
             "downloads-namespace", self.parameters.get("namespace")
@@ -192,7 +168,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         self.logger.debug("Starting docker test shell container: %s" % cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection.prompt_str = "docker-test-shell:"
         self.parameters["connection-namespace"] = "docker-test-shell"
         self.set_namespace_data(
@@ -216,6 +192,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         for dev in devices:
             if not os.path.islink(dev):
                 self.trigger_share_device_with_container(dev)
+            else:
+                self.logger.debug(
+                    f"Device {dev} is a symlink, skipping sharing with container"
+                )
+                devices.remove(dev)
 
         for dev in devices:
             docker.wait_file(dev)

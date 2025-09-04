@@ -54,6 +54,8 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
             )
 
         action = cls.action(pipeline.job)
+    else:
+        raise ValueError(f"Unknown action {name!r}")
 
     action.section = cls.section
     pipeline.add_action(action, parameters)
@@ -69,7 +71,7 @@ class JobParser:
      - always add a new Action, usually with an internal pipeline, to implement the new behaviour
      - add a new Strategy class which creates a suitable pipeline to use that Action.
 
-    Re-use existing Action classes wherever these can be used without changes.
+    Reuse existing Action classes wherever these can be used without changes.
 
     If two or more Action classes have very similar behaviour, re-factor to make a
     new base class for the common behaviour and retain the specialised classes.

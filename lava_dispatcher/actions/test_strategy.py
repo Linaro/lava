@@ -12,6 +12,8 @@ from lava_common.decorators import nottest
 from .base_strategy import BaseStrategy
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
 
@@ -21,27 +23,35 @@ class LavaTestStrategy(BaseStrategy):
     name = "base-test"
 
     @classmethod
-    def check_subclass(cls, device, parameters) -> None:
+    def check_subclass(cls, device: dict[str, Any], parameters: dict[str, Any]) -> None:
         # No checks
         ...
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         raise NotImplementedError(f"action() not implemented in {cls.__name__}")
 
     @classmethod
-    def needs_deployment_data(cls, parameters) -> bool:
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         raise NotImplementedError(
             f"needs_deployment_data() not implemented in {cls.__name__}"
         )
 
     @classmethod
-    def needs_overlay(cls, parameters) -> bool:
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         raise NotImplementedError(f"needs_overlay() not implemented in {cls.__name__}")
 
     @classmethod
-    def has_shell(cls, parameters) -> bool:
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
         raise NotImplementedError(f"has_shell() not implemented in {cls.__name__}")
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
+        raise NotImplementedError(
+            f"needs_character_delay() not implemented in {cls.__name__}"
+        )
 
 
 class DockerTest(LavaTestStrategy):
@@ -52,29 +62,37 @@ class DockerTest(LavaTestStrategy):
     priority = 10
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         from lava_dispatcher.actions.test.docker import DockerTestAction
 
         return DockerTestAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "definition" in parameters or "definitions" in parameters:
             if "docker" in parameters:
                 return True, "accepted"
         return False, "docker or definition(s) not in parameters"
 
     @classmethod
-    def needs_deployment_data(cls, parameters) -> bool:
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         return False
 
     @classmethod
-    def needs_overlay(cls, parameters) -> bool:
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         return True
 
     @classmethod
-    def has_shell(cls, parameters) -> bool:
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
         return True
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
+        return False
 
 
 @nottest
@@ -84,13 +102,17 @@ class TestInteractive(LavaTestStrategy):
     """
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         from lava_dispatcher.actions.test.interactive import TestInteractiveRetry
 
         return TestInteractiveRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         required_parms = ["name", "prompts", "script"]
         if "interactive" in parameters:
             for script in parameters["interactive"]:
@@ -103,15 +125,19 @@ class TestInteractive(LavaTestStrategy):
         return False, '"interactive" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls, parameters) -> bool:
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         return False
 
     @classmethod
-    def needs_overlay(cls, parameters) -> bool:
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         return False
 
     @classmethod
-    def has_shell(cls, parameters) -> bool:
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
+        return False
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
         return False
 
 
@@ -122,13 +148,17 @@ class TestMonitor(LavaTestStrategy):
     """
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         from lava_dispatcher.actions.test.monitor import TestMonitorRetry
 
         return TestMonitorRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         # TODO: Add configurable timeouts
         required_parms = ["name", "start", "end", "pattern"]
         if "monitors" in parameters:
@@ -140,15 +170,19 @@ class TestMonitor(LavaTestStrategy):
         return False, '"monitors" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls, parameters) -> bool:
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         return False
 
     @classmethod
-    def needs_overlay(cls, parameters) -> bool:
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         return False
 
     @classmethod
-    def has_shell(cls, parameters) -> bool:
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
+        return False
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
         return False
 
 
@@ -161,7 +195,9 @@ class MultinodeTestShell(LavaTestStrategy):
     priority = 2
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         if "monitors" in parameters:
             return TestMonitor.action(job, parameters)
         if "interactive" in parameters:
@@ -172,7 +208,9 @@ class MultinodeTestShell(LavaTestStrategy):
         return MultinodeTestAction(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         # Avoid importing MultinodeProtocol
         multinode_protocol_name = "lava-multinode"
 
@@ -191,25 +229,31 @@ class MultinodeTestShell(LavaTestStrategy):
         return False, '"role" not in parameters'
 
     @staticmethod
-    def _get_subaction_class(parameters) -> type[LavaTestStrategy]:
+    def _get_subaction_class(parameters: dict[str, Any]) -> type[LavaTestStrategy]:
         if "monitors" in parameters:
             return TestMonitor
         if "interactive" in parameters:
             return TestInteractive
+        if "docker" in parameters:
+            return DockerTest
         return TestShell
 
     @classmethod
-    def needs_deployment_data(cls, parameters) -> bool:
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         """Some, not all, deployments will want deployment_data"""
         return cls._get_subaction_class(parameters).needs_deployment_data(parameters)
 
     @classmethod
-    def needs_overlay(cls, parameters) -> bool:
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         return cls._get_subaction_class(parameters).needs_overlay(parameters)
 
     @classmethod
-    def has_shell(cls, parameters) -> bool:
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
         return cls._get_subaction_class(parameters).has_shell(parameters)
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
+        return cls._get_subaction_class(parameters).needs_character_delay(parameters)
 
 
 class TestShell(LavaTestStrategy):
@@ -218,26 +262,34 @@ class TestShell(LavaTestStrategy):
     """
 
     @classmethod
-    def action(cls, job: Job, parameters) -> Action:
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
         from lava_dispatcher.actions.test.shell import TestShellRetry
 
         return TestShellRetry(job)
 
     @classmethod
-    def accepts(cls, device, parameters) -> tuple[bool, str]:
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
         if "definitions" in parameters:
             return True, "accepted"
         return False, '"definitions" not in parameters'
 
     @classmethod
-    def needs_deployment_data(cls, parameters):
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
         """Some, not all, deployments will want deployment_data"""
         return True
 
     @classmethod
-    def needs_overlay(cls, parameters):
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
         return True
 
     @classmethod
-    def has_shell(cls, parameters):
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
+        return True
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
         return True

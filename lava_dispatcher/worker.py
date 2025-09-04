@@ -27,7 +27,7 @@ from json import loads as json_loads
 from pathlib import Path
 from shutil import rmtree
 from signal import Signals
-from typing import Any
+from typing import TYPE_CHECKING
 
 import aiohttp
 import sentry_sdk
@@ -39,6 +39,10 @@ from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
 from lava_common.yaml import yaml_safe_load
+
+if TYPE_CHECKING:
+    from argparse import Namespace as argparse_ns
+    from typing import Any
 
 ###########
 # Constants
@@ -128,6 +132,9 @@ async def aiohttp_get(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
+    except asyncio.TimeoutError as exc:
+        LOG.error(f"Timeout during get request to {url}: {exc}")
+        return Response(504, f"Timeout error: {str(exc)}")
 
 
 async def aiohttp_post(
@@ -142,6 +149,9 @@ async def aiohttp_post(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
+    except asyncio.TimeoutError as exc:
+        LOG.error(f"Timeout during post request to {url}: {exc}")
+        return Response(504, f"Timeout error: {str(exc)}")
 
 
 ###############
@@ -230,11 +240,7 @@ async def cleanup_job(prefix: str, job_id: int) -> None:
         if not dir_path.exists():
             continue
         LOG.debug("[%d] Removing %s", job_id, dir_path)
-        await loop.run_in_executor(
-            THREAD_EXECUTOR,
-            rmtree_job_dir,
-            str(dir_path),
-        )
+        await loop.run_in_executor(THREAD_EXECUTOR, rmtree_job_dir, str(dir_path))
 
     LOG.debug("[%d] Finished cleanup", job_id)
 
@@ -262,17 +268,41 @@ class Job:
 
     def errors(self) -> str:
         with contextlib.suppress(OSError, UnicodeDecodeError):
-            return (self.base_dir / "stderr").read_text(
-                encoding="utf-8", errors="replace"
+            return (
+                (self.base_dir / "stderr")
+                .read_text(encoding="utf-8", errors="backslashreplace")
+                .replace("\x00", "\ufffd")
             )
         return ""
 
     def description(self) -> str:
         with contextlib.suppress(OSError):
-            return (self.base_dir / "description.yaml").read_text(
-                encoding="utf-8", errors="backslashreplace"
+            return (
+                (self.base_dir / "description.yaml")
+                .read_text(encoding="utf-8", errors="backslashreplace")
+                .replace("\x00", "\ufffd")
             )
         return ""
+
+    def finalize_timed_out(self) -> bool:
+        timeout = None
+        if desc_str := self.description():
+            with contextlib.suppress(yaml.YAMLError):
+                desc = yaml_safe_load(desc_str)
+                with contextlib.suppress(AttributeError):
+                    if pipeline := desc.get("pipeline", []):
+                        # Assume finalize always is the last action.
+                        action = pipeline[-1]
+                        if action.get("name") == "finalize":
+                            timeout = action.get("timeout", 0)
+
+        if timeout and time.monotonic() - self.last_update < timeout:
+            LOG.debug(
+                f"[{self.job_id}] Waiting for job to finalize (timeout {timeout}s)"
+            )
+            return False
+
+        return True
 
     def result(self) -> dict[str, Any]:
         with contextlib.suppress(OSError, yaml.YAMLError):
@@ -285,7 +315,7 @@ class Job:
         # If the pid is 0, just skip because lava-run was not started
         if self.pid == 0:
             return
-        os.kill(self.pid, Signals.SIGKILL)
+        os.killpg(self.pid, Signals.SIGKILL)
 
     def terminate(self) -> None:
         # If the pid is 0, just skip because lava-run was not started
@@ -471,6 +501,12 @@ async def finish_job(
         LOG.debug("[%d] --> %s", job.job_id, ret.text)
         if ret.status_code != 404:  # If the job is not present on lava-server delete it
             return
+        # Check if the '404' is returned by 'URL_JOBS' api.
+        json_data = {}
+        with contextlib.suppress(aiohttp.ContentTypeError):
+            json_data = ret.json()
+        if json_data.get("error") != f"Unknown job '{job.job_id}'":
+            return
 
     # Remove stale resources
     prefix = "" if job is None else job.prefix
@@ -509,11 +545,16 @@ async def check(session: aiohttp.ClientSession, url: str, jobs: JobsDB) -> None:
                 )
             LOG.info("[%d] canceling -> finished", job.job_id)
             jobs.update(job.job_id, Job.FINISHED)
-
-        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION:
+        elif (
+            time.monotonic() - job.last_update > FINISH_MAX_DURATION
+            and job.finalize_timed_out()
+        ):
             LOG.info("[%d] not finishing => killing", job.job_id)
             job.kill()
-        elif time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2:
+        elif (
+            time.monotonic() - job.last_update > FINISH_MAX_DURATION / 2
+            and job.finalize_timed_out()
+        ):
             LOG.info("[%d] not finishing => second signal", job.job_id)
             job.terminate()
 
@@ -660,23 +701,30 @@ async def start(
         LOG.debug("[%d] --> %s", job_id, ret.text)
 
 
+async def get_job_data(
+    session: aiohttp.ClientSession, options: argparse_ns
+) -> dict[str, Any]:
+    try:
+        data = await ping(session, options.url, options.token, options.name)
+        return data
+    except ServerUnavailable:
+        LOG.error("-> server unavailable")
+        return {}
+    except VersionMismatch as exc:
+        if options.exit_on_version_mismatch:
+            raise exc
+        return {}
+
+
 ###############
 # Entrypoints #
 ###############
 async def handle(options, session: aiohttp.ClientSession, jobs: JobsDB) -> None:
-    name: str = options.name
-    token: str = options.token
     url: str = options.url
     job_log_interval: int = options.job_log_interval
 
-    try:
-        data = await ping(session, url, token, name)
-    except ServerUnavailable:
-        LOG.error("-> server unavailable")
-        return
-    except VersionMismatch as exc:
-        if options.exit_on_version_mismatch:
-            raise exc
+    data = await get_job_data(session, options)
+    if not data:
         return
 
     # running jobs
@@ -835,8 +883,10 @@ async def main() -> int:
     async with aiohttp.ClientSession(
         headers={
             "User-Agent": f"lava-worker {__version__}",
+            "Connection": "keep-alive",
         },
-        timeout=aiohttp.ClientTimeout(total=TIMEOUT),
+        connector=aiohttp.TCPConnector(limit=10, keepalive_timeout=TIMEOUT),
+        timeout=aiohttp.ClientTimeout(total=ping_interval),
     ) as session:
         try:
             if options.username is not None:
@@ -872,10 +922,7 @@ async def main() -> int:
 
             LOG.debug(f"LAVA worker pid is {os.getpid()}")
             for sig in (Signals.SIGINT, Signals.SIGTERM):
-                loop.add_signal_handler(
-                    sig,
-                    partial(ask_exit, sig.name, group),
-                )
+                loop.add_signal_handler(sig, partial(ask_exit, sig.name, group))
 
             loop.add_signal_handler(
                 Signals.SIGCHLD, partial(sigchld_handler, session, options.url, jobs)
@@ -888,7 +935,14 @@ async def main() -> int:
             if options.wait_jobs:
                 LOG.info("[EXIT] Wait for jobs to finish")
                 while True:
-                    await check(session, options.url, jobs)
+                    data = await get_job_data(session, options)
+                    async with jobs.lock:
+                        if data:
+                            for job in data.get("cancel", []):
+                                cancel(options.url, jobs, job["id"], job["token"])
+
+                        await check(session, options.url, jobs)
+
                     all_ids = jobs.all_ids()
                     LOG.info(
                         "[EXIT] => %d jobs ([%s])",

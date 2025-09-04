@@ -17,10 +17,7 @@ from linaro_django_xmlrpc.models import ExposedV2API
 
 class GroupsAPI(ExposedV2API):
     @check_perm("auth.add_group")
-    def add(
-        self,
-        name,
-    ):
+    def add(self, name):
         try:
             group = Group.objects.create(name=name)
         except (IntegrityError, ValidationError) as exc:

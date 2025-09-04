@@ -7,27 +7,31 @@
 import logging
 import signal
 
-from lava_common.log import HTTPHandler, YAMLLogger, sender
+from lava_common.log import HTTPHandler, JobOutputSender, YAMLListFormatter, YAMLLogger
 from lava_common.yaml import yaml_safe_load
 
 
-def test_sender(mocker):
+def test_sender(mocker, capsys):
     response = mocker.Mock(status_code=200)
     response.json = mocker.Mock(side_effect=[{"line_count": 1000}, {"line_count": 1}])
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
-
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
     mocker.patch("requests.Session", session)
-    conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [f"{i:04}".encode() for i in range(0, 1001)] + [b""]
 
-    sender(conn, "http://localhost", "my-token", 1)
-    assert len(conn.poll.mock_calls) == 2000
-    assert len(conn.recv_bytes.mock_calls) == 1002
+    conn = mocker.MagicMock()
+    conn.get.side_effect = ["0000", "1000"]
+    conn.get_nowait.side_effect = [f"{i:04}" for i in range(1, 1000)] + [None]
+
+    JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
+
+    assert len(conn.get.mock_calls) == 2
+    assert conn.get.mock_calls[0] == mocker.call(block=True, timeout=1)
+    assert conn.get.mock_calls[1] == mocker.call(block=True, timeout=1)
+    assert len(conn.get_nowait.mock_calls) == 1000
 
     assert len(post.mock_calls) == 2
     assert post.mock_calls[0][1] == ("http://localhost",)
@@ -40,6 +44,10 @@ def test_sender(mocker):
     assert post.mock_calls[0][2]["headers"]["LAVA-Token"] == "my-token"
     assert post.mock_calls[1][2]["headers"]["LAVA-Token"] == "my-token"
 
+    out, _ = capsys.readouterr()
+    assert "INFO [LOGGER] POST: total records sent: 1000" in out
+    assert "INFO [LOGGER] POST: total records sent: 1001" in out
+
 
 def test_sender_exceptions(mocker):
     response = mocker.Mock(status_code=200)
@@ -47,52 +55,107 @@ def test_sender_exceptions(mocker):
         side_effect=[{}, {"line_count": "s"}, {"line_count": 1}]
     )
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
-
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
     mocker.patch("requests.Session", session)
-    conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [b"hello world", b""]
 
-    sender(conn, "http://localhost", "my-token", 1)
+    conn = mocker.MagicMock()
+    conn.get.side_effect = ["hello world"]
+    conn.get_nowait.side_effect = [None]
+
+    JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
     assert len(post.mock_calls) == 3
     for c in post.mock_calls:
         assert c[1] == ("http://localhost",)
         assert c[2]["data"] == {"lines": "- hello world", "index": 0}
 
 
-def test_sender_404(mocker):
+def test_sender_404(mocker, capsys):
+    job_id = "123"
     response = mocker.Mock(status_code=404)
+    response.json.return_value = {"error": f"Unknown job '{job_id}'"}
     post = mocker.Mock(return_value=response)
-    enter = mocker.MagicMock()
-    enter.__enter__ = mocker.Mock(return_value=mocker.Mock(post=post))
-    session = mocker.MagicMock(return_value=enter)
-
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
     mocker.patch("requests.Session", session)
-    conn = mocker.MagicMock()
-    conn.poll = mocker.MagicMock()
-    conn.recv_bytes = mocker.MagicMock()
-    conn.recv_bytes.side_effect = [b"hello world", b""]
 
+    conn = mocker.MagicMock()
     os_getppid = mocker.patch("os.getppid", return_value=1)
     os_kill = mocker.patch("os.kill")
 
-    sender(conn, "http://localhost", "my-token", 1)
+    sender = JobOutputSender(
+        conn,
+        f"http://localhost/scheduler/internal/v1/jobs/{job_id}/logs/",
+        "my-token",
+        1,
+        job_id,
+    )
+    sender.records = ["hello world"]
+    sender.post()
 
     os_getppid.assert_called_once()
     os_kill.assert_called_once_with(1, signal.SIGUSR1)
 
+    _, err = capsys.readouterr()
+    assert "ERROR [LOGGER] POST: 404 - " in err
+
+
+def test_sender_413(mocker, capsys):
+    response = mocker.Mock(status_code=413)
+    post = mocker.Mock(return_value=response)
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(
+            post=post,
+        )
+    )
+    mocker.patch("requests.Session", session)
+
+    conn = mocker.MagicMock()
+    sender = JobOutputSender(
+        conn,
+        "http://localhost/scheduler/internal/v1/jobs/123/logs/",
+        "my-token",
+        1,
+        "123",
+    )
+
+    # Test records are too large to upload
+    sender.max_records = 1000
+    sender.records = ["hello world"]
+    initial_max_records = sender.max_records
+    sender.post()
+    assert sender.max_records == initial_max_records - 100
+
+    # Test single record is still too large to upload
+    sender.max_records = 1
+    sender.records = ["very long single record line that exceeds server limits"]
+    sender.post()
+    assert len(sender.records) == 1
+    replaced_record = yaml_safe_load(sender.records[0])
+    assert replaced_record["lvl"] == "results"
+    assert replaced_record["msg"] == {
+        "definition": "lava",
+        "case": "log-upload",
+        "result": "fail",
+    }
+
+    _, err = capsys.readouterr()
+    assert "ERROR [LOGGER] POST: 413 - " in err
+
 
 def test_http_handler(mocker):
     Process = mocker.Mock()
+    Queue = mocker.Mock()
     mocker.patch("multiprocessing.Process", return_value=Process)
-    mocker.patch("multiprocessing.Pipe", return_value=(mocker.Mock(), mocker.Mock()))
-    handler = HTTPHandler("http://localhost/", "token", 1)
+    mocker.patch("multiprocessing.Queue", return_value=Queue)
+    handler = HTTPHandler("http://localhost/", "token", 1, "1234")
 
-    assert len(Process.start.mock_calls) == 1
     assert len(Process.start.mock_calls) == 1
 
     record = logging.LogRecord(
@@ -116,12 +179,12 @@ def test_http_handler(mocker):
     )
     handler.emit(record)
 
-    assert len(handler.writer.send_bytes.mock_calls) == 1
-    assert handler.writer.send_bytes.mock_calls[0][1] == (b"Hello world",)
+    assert len(handler.queue.put.mock_calls) == 1
+    assert handler.queue.put.mock_calls[0][1] == ("Hello world",)
 
     handler.close()
-    assert len(handler.writer.send_bytes.mock_calls) == 2
-    assert handler.writer.send_bytes.mock_calls[1][1] == (b"",)
+    assert len(handler.queue.put.mock_calls) == 2
+    assert handler.queue.put.mock_calls[1][1] == (None,)
 
 
 def test_yaml_logger(mocker):
@@ -129,7 +192,7 @@ def test_yaml_logger(mocker):
 
     logger = YAMLLogger("lava")
     assert logger.handler is None
-    logger.addHTTPHandler("http://localhost/", "my-token", 1)
+    logger.addHTTPHandler("http://localhost/", "my-token", 1, "1234")
     assert isinstance(logger.handler, HTTPHandler) is True
 
     def check(logger, lvl, lvlno, msg=None, mock_calls=1):
@@ -199,3 +262,19 @@ def test_yaml_logger(mocker):
 
     logger.close()
     assert logger.handler is None
+
+
+def test_yaml_list_formatter():
+    formatter = YAMLListFormatter()
+    record = logging.LogRecord(
+        name="test",
+        level=logging.INFO,
+        pathname="test.py",
+        lineno=1,
+        msg="test message",
+        args=(),
+        exc_info=None,
+    )
+
+    formatted = formatter.format(record)
+    assert formatted == "- test message"

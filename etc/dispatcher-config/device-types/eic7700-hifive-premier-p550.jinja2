@@ -1,0 +1,34 @@
+{# device_type = "eic7700-hifive-premier-p550" #}
+{% extends 'base-uboot.jinja2' %}
+
+{% set uboot_mkimage_arch = 'riscv' %}
+
+{% set bootloader_prompt = bootloader_prompt|default('=>') %}
+{% set boot_character_delay = boot_character_delay | default(10) %}
+
+{% set console_device = console_device|default('ttyS0') %}
+{% set baud_rate = baud_rate|default(115200) %}
+
+{% set uboot_fdt_high = '0xafffffff' %}
+{% set uboot_initrd_high = '0xffffffffffffffff' %}
+
+{% set bootz_kernel_addr  = '0x80200000' %}
+{% set bootz_ramdisk_addr = '0x88300000' %}
+{% set bootz_dtb_addr     = '0x83000000' %}
+
+{% set bootm_kernel_addr  = '0x80200000' %}
+{% set bootm_ramdisk_addr = '0x88300000' %}
+{% set bootm_dtb_addr     = '0x83000000' %}
+
+{% set booti_kernel_addr  = '0x84000000' %}
+{% set booti_ramdisk_addr = '0x88300000' %}
+{% set booti_dtb_addr     = '0x88000000' %}
+
+{% set uboot_tftp_commands = [
+    "tftpboot {KERNEL_ADDR} {KERNEL}",
+    "tftpboot {RAMDISK_ADDR} {RAMDISK}",
+    "setenv initrd_size ${filesize}",
+    "tftpboot {DTB_ADDR} {DTB}"]
+-%}
+
+{% set action_timeout_power_off = action_timeout_power_off|default(15) %}

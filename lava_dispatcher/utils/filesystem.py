@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import atexit
 import errno
@@ -12,18 +13,19 @@ import os
 import shutil
 import tarfile
 import tempfile
-
-import guestfs
-import magic
-from configobj import ConfigObj
+from typing import TYPE_CHECKING
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, LAVA_LXC_HOME, LXC_PATH
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
 
+if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import Any
 
-def rmtree(directory):
+
+def rmtree(directory: str | Path) -> None:
     """
     Wrapper around shutil.rmtree to remove a directory tree while ignoring most
     errors.
@@ -37,7 +39,9 @@ def rmtree(directory):
         raise LAVABug("Error when trying to remove '%s': %s" % (directory, exc))
 
 
-def mkdtemp(autoremove=True, basedir="/tmp"):  # nosec - internal use.
+def mkdtemp(
+    autoremove: bool = True, basedir: str = "/tmp"
+) -> str:  # nosec - internal use.
     """
     returns a temporary directory that's deleted when the process exits
 
@@ -49,7 +53,7 @@ def mkdtemp(autoremove=True, basedir="/tmp"):  # nosec - internal use.
     return tmpdir
 
 
-def check_ssh_identity_file(params):
+def check_ssh_identity_file(params: dict[str, Any]) -> tuple[str | None, str | None]:
     """
     Return a tuple based on if an identity file can be determine in the params.
     If the first value returned is not None, an error occurred.
@@ -75,7 +79,7 @@ def check_ssh_identity_file(params):
     return None, identity_file
 
 
-def tftpd_dir():
+def tftpd_dir() -> str:
     """
     read in 'TFTP_DIRECTORY' from /etc/default/tftpd-hpa
     Any file to be offered using tftp must use this directory or a
@@ -84,13 +88,15 @@ def tftpd_dir():
     """
     var_name = "TFTP_DIRECTORY"
     if os.path.exists("/etc/default/tftpd-hpa"):
+        from configobj import ConfigObj  # type: ignore[import-not-found]
+
         config = ConfigObj("/etc/default/tftpd-hpa")
-        value = config.get(var_name)
+        value: str = config.get(var_name)
         return os.path.realpath(value)
     raise InfrastructureError("Unable to identify tftpd directory")
 
 
-def write_bootscript(commands, filename):
+def write_bootscript(commands: list[str], filename: str | Path) -> None:
     with open(filename, "w") as bootscript:
         bootscript.write("#!ipxe\n\n")
         for line in commands:
@@ -98,7 +104,7 @@ def write_bootscript(commands, filename):
         bootscript.close()
 
 
-def _launch_guestfs(guest):
+def _launch_guestfs(guest: Any) -> None:
     # Launch guestfs and raise an InfrastructureError if needed
     try:
         guest.launch()
@@ -109,7 +115,9 @@ def _launch_guestfs(guest):
 
 
 @replace_exception(RuntimeError, JobError)
-def prepare_guestfs(output, overlay, mountpoint, size):
+def prepare_guestfs(
+    output: str, overlay: str | Path, mountpoint: str, size: int
+) -> str:
     """
     Applies the overlay, offset by expected mount point.
     This allows the booted device to mount at the
@@ -122,6 +130,8 @@ def prepare_guestfs(output, overlay, mountpoint, size):
     :param size: size of the filesystem in Mb
     :return blkid of the guest device
     """
+    import guestfs  # type: ignore[import-not-found]
+
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "qcow2", size * 1024 * 1024)
     guest.add_drive_opts(output, format="qcow2", readonly=False)
@@ -152,18 +162,20 @@ def prepare_guestfs(output, overlay, mountpoint, size):
     guest.tar_in(guest_tar, "/")
     os.unlink(guest_tar)
     guest.umount(guest_device)
-    device = guest.blkid(guest_device)["UUID"]
+    device: str = guest.blkid(guest_device)["UUID"]
     guest.close()
     return device
 
 
 @replace_exception(RuntimeError, JobError)
-def prepare_install_base(output, size):
+def prepare_install_base(output: str, size: int) -> None:
     """
     Create an empty image of the specified size (in bytes),
     ready for an installer to partition, create filesystem(s)
     and install files.
     """
+    import guestfs
+
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "raw", size)
     guest.add_drive_opts(output, format="raw", readonly=False)
@@ -175,7 +187,7 @@ def prepare_install_base(output, size):
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_out_files(image, filenames, destination):
+def copy_out_files(image: str, filenames: list[str], destination: str) -> None:
     """
     Copies a list of files out of the image to the specified
     destination which must exist. Launching the guestfs is
@@ -185,6 +197,9 @@ def copy_out_files(image, filenames, destination):
     """
     if not isinstance(filenames, list):
         raise LAVABug("filenames must be a list")
+
+    import guestfs
+
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
     _launch_guestfs(guest)
@@ -198,13 +213,15 @@ def copy_out_files(image, filenames, destination):
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_in_overlay(image, root_partition, overlay):
+def copy_in_overlay(image: str, root_partition: str | None, overlay: str) -> None:
     """
     Mounts test image partition as specified by the test
     writer and extracts overlay at the root, if root_partition
     is None the image is handled as a filesystem instead of
     partitioned image.
     """
+    import guestfs
+
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
     _launch_guestfs(guest)
@@ -236,18 +253,19 @@ def copy_in_overlay(image, root_partition, overlay):
     guest.close()
 
 
-def lxc_path(dispatcher_config):
+def lxc_path(dispatcher_config: dict[str, Any]) -> str:
     """
     Returns LXC_PATH which is a constant, unless a dispatcher specific path is
     configured via lxc_path key in dispatcher_config.
     """
     try:
-        return dispatcher_config["lxc_path"]
+        lxc_path: str = dispatcher_config["lxc_path"]
+        return lxc_path
     except (KeyError, TypeError):
         return LXC_PATH
 
 
-def lava_lxc_home(lxc_name, dispatcher_config):
+def lava_lxc_home(lxc_name: str, dispatcher_config: dict[str, Any]) -> str:
     """
     Creates lava_lxc_home if it is unavailable and Returns absolute path of
     LAVA_LXC_HOME as seen from the host machine.
@@ -263,18 +281,19 @@ def lava_lxc_home(lxc_name, dispatcher_config):
     return path
 
 
-def dispatcher_download_dir(dispatcher_config):
+def dispatcher_download_dir(dispatcher_config: dict[str, Any]) -> str:
     """
     Returns DISPATCHER_DOWNLOAD_DIR which is a constant, unless a dispatcher specific path is
     configured via dispatcher_download_dir key in dispatcher_config.
     """
     try:
-        return dispatcher_config["dispatcher_download_dir"]
+        dispatcher_download_dir: str = dispatcher_config["dispatcher_download_dir"]
+        return dispatcher_download_dir
     except (KeyError, TypeError):
         return DISPATCHER_DOWNLOAD_DIR
 
 
-def copy_to_lxc(lxc_name, src, dispatcher_config):
+def copy_to_lxc(lxc_name: str, src: str, dispatcher_config: dict[str, Any]) -> str:
     """Copies given file in SRC to LAVA_LXC_HOME with the provided LXC_NAME
     and configured lxc_path
 
@@ -309,7 +328,9 @@ def copy_to_lxc(lxc_name, src, dispatcher_config):
     return os.path.join(LAVA_LXC_HOME, filename)
 
 
-def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
+def copy_overlay_to_lxc(
+    lxc_name: str, src: str, dispatcher_config: dict[str, Any], namespace: str
+) -> str:
     """Copies given overlay tar file in SRC to LAVA_LXC_HOME with the provided
     LXC_NAME and configured lxc_path
 
@@ -352,13 +373,15 @@ def copy_overlay_to_lxc(lxc_name, src, dispatcher_config, namespace):
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_overlay_to_sparse_fs(image, overlay):
+def copy_overlay_to_sparse_fs(image: str, overlay: str) -> None:
     """copy_overlay_to_sparse_fs
 
     Only copies the overlay to an image
     which has already been converted from sparse.
     """
     logger = logging.getLogger("dispatcher")
+    import guestfs
+
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
     _launch_guestfs(guest)
@@ -383,7 +406,7 @@ def copy_overlay_to_sparse_fs(image, overlay):
         raise JobError("No space in image after applying overlay: %s" % image)
 
 
-def copy_directory_contents(root_dir, dst_dir):
+def copy_directory_contents(root_dir: str, dst_dir: str) -> None:
     """
     Copies the contents of the root directory to the destination directory
     but excludes the root directory's top level folder
@@ -400,7 +423,7 @@ def copy_directory_contents(root_dir, dst_dir):
             shutil.copy(fname, dst_dir)
 
 
-def remove_directory_contents(root_dir):
+def remove_directory_contents(root_dir: str) -> None:
     """
     Removes the contents of the root directory but not the root itself
     """
@@ -416,10 +439,10 @@ def remove_directory_contents(root_dir):
             os.remove(fname)
 
 
-def is_sparse_image(image):
+def is_sparse_image(image: str) -> bool:
     """
     Returns True if the image is an 'Android sparse image' else False.
     """
-    image_magic = magic.open(magic.MAGIC_NONE)
-    image_magic.load()
-    return bool(image_magic.file(image).split(",")[0] == "Android sparse image")
+    import magic
+
+    return bool(magic.from_file(image).split(",")[0] == "Android sparse image")

@@ -1406,6 +1406,13 @@ class TestJob(models.Model):
                 fields=("requested_device_type", "-submit_time", "id", "health"),
                 condition=Q(health_check=True),
             ),
+            models.Index(
+                name="device_finished_jobs_index",
+                fields=("actual_device", "-end_time"),
+                condition=Q(
+                    health_check=False, state=5
+                ),  # HACK: refers to TestJob.STATE_FINISHED
+            ),
         )
         constraints = (
             models.UniqueConstraint(
@@ -2151,6 +2158,14 @@ class TestJob(models.Model):
         if "." in str(job_id):
             job = query.get(sub_id=job_id)
         else:
+            # Validate 'job_id' earlier. Raise 'TestJob.DoesNotExist' for
+            # invalid IDs. This exception is expected by job query APIs.
+            try:
+                int(job_id)
+            except (TypeError, ValueError):
+                raise TestJob.DoesNotExist(
+                    f"'job_id' expected a number but got {job_id}"
+                )
             job = query.get(pk=job_id)
         return job
 

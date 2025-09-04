@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import ConfigurationError, InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.logical import RetryAction
@@ -44,11 +44,10 @@ class ConnectDevice(Action):
         self.tag_dict = {}
 
     def _check_command(self):
-        exe = ""
         try:
             exe = self.command.split(" ")[0]
         except AttributeError:
-            self.errors = "Unable to parse the connection command %s" % self.command
+            raise ConfigurationError("Invalid connection command: should be a string")
         which(exe)
 
     def validate(self):
@@ -170,7 +169,7 @@ class ConnectDevice(Action):
                 % (self.command, shell.exitstatus, shell.readlines())
             )
         # ShellSession monitors the pexpect
-        connection = self.session_class(self.job, shell)
+        connection = self.session_class(shell)
         connection.connected = True
         if self.hardware:
             connection.tags = self.tag_dict[self.hardware]
@@ -199,6 +198,9 @@ class ConnectShell(ConnectDevice):
     kernel console, e.g. using ser2net
     """
 
+    name = "connect-shell"
+    summary = "run connection command"
+    description = "use the configured command to connect serial to a second shell"
     # wraps the pexpect and provides prompt_str access
     session_class = ShellSession
     # runs the command to initiate the connection
@@ -206,13 +208,8 @@ class ConnectShell(ConnectDevice):
 
     def __init__(self, job: Job, name=None):
         super().__init__(job)
-        self.name = "connect-shell"
         self.primary = False
         self.hardware = name
-        self.summary = "run connection command"
-        self.description = (
-            "use the configured command to connect serial to a second shell"
-        )
         self.message = "Connecting to shell using"
 
     def validate(self):
@@ -238,8 +235,8 @@ class QemuSession(ShellSession):
 
     name = "QemuSession"
 
-    def __init__(self, job, raw_connection):
-        super().__init__(job, raw_connection)
+    def __init__(self, shell_command: ShellCommand):
+        super().__init__(shell_command)
         self.tags = ["qemu"]
 
     def finalise(self):
@@ -258,11 +255,9 @@ class DisconnectDevice(ConnectDevice):
     Breaks the serial connection made by ConnectDevice.
     """
 
-    def __init__(self, job: Job):
-        super().__init__(job)
-        self.name = "disconnect-device"
-        self.description = "disconnect from console"
-        self.summary = self.description
+    name = "disconnect-device"
+    description = "disconnect from console"
+    summary = "disconnect from console"
 
     def validate(self):
         super().validate()

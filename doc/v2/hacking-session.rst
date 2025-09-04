@@ -305,7 +305,7 @@ possible to launch virtual machines of different architectures or
 configurations for specific purposes.)
 
 Notifying users in this situation is more difficult but the existing support
-within the standard hacking session can be re-used as it is simply a script
+within the standard hacking session can be reused as it is simply a script
 being called with parameters from the test job. In particular, the notification
 will have to allow for declaring the IP address of the virtual machine for
 each user.

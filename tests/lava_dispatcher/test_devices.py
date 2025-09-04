@@ -221,6 +221,49 @@ overrides:
         self.assertTrue(found)
 
 
+class TestNewDeviceInit(LavaDispatcherTestCase):
+    def test_device_init_with_str_path(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("constants:", encoding="utf-8")
+        device = NewDevice(str(device_path))
+        self.assertIsInstance(device, NewDevice)
+        self.assertIn("constants", device)
+
+    def test_device_init_with_dict(self):
+        device = NewDevice({"constants": {}})
+        self.assertIsInstance(device, NewDevice)
+        self.assertIn("constants", device)
+
+    def test_device_init_with_pathlib_path(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("constants:", encoding="utf-8")
+        device = NewDevice(str(device_path))
+        self.assertIsInstance(device, NewDevice)
+        self.assertIn("constants", device)
+
+    def test_device_init_with_unsupported_type(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("constants:", encoding="utf-8")
+        with self.assertRaises(ConfigurationError) as context:
+            with open(str(device_path)) as f:
+                NewDevice(f)
+        self.assertIn("Unsupported device configuration type: ", str(context.exception))
+
+    def test_device_init_with_empty_file(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("", encoding="utf-8")
+        with self.assertRaises(ConfigurationError) as context:
+            NewDevice(device_path)
+        self.assertIn("Empty device configuration", str(context.exception))
+
+    def test_device_init_with_invalid_yaml(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("invalid_yaml: {", encoding="utf-8")
+        with self.assertRaises(ConfigurationError) as context:
+            NewDevice(device_path)
+        self.assertIn(" could not be parsed", str(context.exception))
+
+
 class TestCommand(LavaDispatcherTestCase):
     def test_silent(self):
         fake = FakeAction(self.create_job_mock())

@@ -5,18 +5,22 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import copy
 import hashlib
 import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest import TestCase
 
 import responses
 from responses import RequestsMock
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import HttpDownloadAction
-from lava_dispatcher.utils.compression import decompress_command_map, decompress_file
+from lava_dispatcher.utils.compression import (
+    compress_command_map,
+    compress_file,
+    decompress_file,
+)
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -150,19 +154,72 @@ class TestDecompression(LavaDispatcherTestCase):
             test_multiple_bad_checksums.run(None, None)
 
 
-class TestDownloadDecompressionMap(LavaDispatcherTestCase):
-    def test_download_decompression_map(self):
-        """
-        Previously had an issue with decompress_command_map being modified.
-        This should be a constant. If this is modified during calling decompress_file
-        then a regression has occurred.
-        :return:
-        """
-        # Take a complete copy of decompress_command_map before it has been modified
-        copy_of_command_map = copy.deepcopy(decompress_command_map)
-        # Call decompress_file, we only need it to create the command required,
-        # it doesn't need to complete successfully.
-        with self.assertRaises(InfrastructureError):
-            with TemporaryDirectory() as temp_dir:
-                decompress_file(f"{temp_dir}/test", "zip")  # nosec - unit test only.
-        self.assertEqual(copy_of_command_map, decompress_command_map)
+class TestCompressionBinaries(TestCase):
+    def test_compression_binaries(self) -> None:
+        for compression_format in compress_command_map.keys():
+            with self.subTest(compression=compression_format), TemporaryDirectory(
+                f"test-{compression_format}"
+            ) as tmp_dir:
+                test_str = f"Hello, {compression_format}!"
+                tmp_dir_path = Path(tmp_dir)
+                test_file_path = tmp_dir_path / f"{compression_format}_test"
+                test_file_path.write_text(test_str)
+                outfile = Path(compress_file(str(test_file_path), compression_format))
+                self.assertNotEqual(
+                    outfile.read_bytes(),
+                    b"",  # Check that at least some bytes are written
+                )
+
+                test_file_path.unlink()
+                self.assertFalse(test_file_path.exists())
+
+                decompress_file(str(outfile), compression_format)
+
+                self.assertEqual(test_str, test_file_path.read_text())
+
+    def test_decompression_error(self) -> None:
+        with TemporaryDirectory("test-decompression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_input_file = tmp_dir_path / "test.zstd"
+            test_input_file.write_text("🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡🤡")
+
+            with self.assertRaisesRegex(JobError, r"unable to decompress.*exit code"):
+                decompress_file(str(test_input_file), "zstd")
+
+            with self.subTest("decompression OSError"), self.assertRaisesRegex(
+                InfrastructureError, r"unable to decompress"
+            ):
+                decompress_file("does_not_exist_dir/does_not_exist.zstd", "zstd")
+
+    def test_compression_error(self) -> None:
+        with TemporaryDirectory("test-compression-failure") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.assertRaisesRegex(InfrastructureError, r"unable to compress"):
+                compress_file(str(tmp_dir_path / "does_not_exist.zstd"), "zstd")
+
+    def test_zip_multiple_files(self) -> None:
+        with TemporaryDirectory("test-decompression-zip-multiple") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            archive_path = tmp_dir_path / "foobar.zip"
+
+            import zipfile
+
+            with zipfile.ZipFile(archive_path, mode="x") as zf:
+                with zf.open("foo.txt", mode="w") as foo_f:
+                    foo_f.write(b"foo")
+
+                with zf.open("bar.txt", mode="w") as foo_f:
+                    foo_f.write(b"bar")
+
+            decompress_file(str(archive_path), "zip")
+
+            foo_file_path = tmp_dir_path / "foo.txt"
+            self.assertTrue(foo_file_path.exists())
+            self.assertEqual(foo_file_path.read_text(), "foo")
+
+            bar_file_path = tmp_dir_path / "bar.txt"
+            self.assertTrue(bar_file_path.exists())
+            self.assertEqual(bar_file_path.read_text(), "bar")

@@ -33,9 +33,11 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
-    from typing import Iterator, Optional, TypeVar
+    from collections.abc import Iterator, KeysView
+    from typing import Any, ClassVar, TypeVar
 
     from .job import Job
+    from .shell import ShellSession
 
     TAction = TypeVar("TAction", bound="Action")
 
@@ -49,33 +51,6 @@ class InternalObject:
     pass
 
 
-_NOT_FOUND = object()
-
-
-def get_lastest_dict_value(list_of_dictionaries: list[dict], key: str):
-    for d in reversed(list_of_dictionaries):
-        value = d.get(key, _NOT_FOUND)
-        if value is not _NOT_FOUND:
-            return value
-
-    return None
-
-
-def get_lastest_subdict_value(
-    list_of_dictionaries: list[dict[str, dict]], key: str, subkey: str
-):
-    for d in reversed(list_of_dictionaries):
-        sub_dict = d.get(key, _NOT_FOUND)
-        if sub_dict is _NOT_FOUND:
-            continue
-
-        value = sub_dict.get(subkey, _NOT_FOUND)
-        if value is not _NOT_FOUND:
-            return value
-
-    return None
-
-
 class Pipeline:
     """
     Pipelines ensure that actions are run in the correct sequence whilst
@@ -85,9 +60,14 @@ class Pipeline:
     of the per-action log handler.
     """
 
-    def __init__(self, job: Job, parent=None, parameters=None):
+    def __init__(
+        self,
+        job: Job,
+        parent: Action | None = None,
+        parameters: dict[str, Any] | None = None,
+    ):
         self.actions: list[Action] = []
-        self.parent = None
+        self.parent: Action | None = None
         self.parameters = {} if parameters is None else parameters
         self.job = job
         if parent is not None:
@@ -100,7 +80,7 @@ class Pipeline:
                 )
             self.parent = parent
 
-    def _check_action(self, action):
+    def _check_action(self, action: Action) -> None:
         if not action:
             raise LAVABug("Need an action to add to the pipeline, not None.")
         elif not issubclass(type(action), Action):
@@ -108,7 +88,9 @@ class Pipeline:
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
-    def add_action(self, action: Action, parameters=None):
+    def add_action(
+        self, action: Action, parameters: dict[str, Any] | None = None
+    ) -> None:
         self._check_action(action)
         self.actions.append(action)
 
@@ -126,39 +108,41 @@ class Pipeline:
         action.parameters = parameters
 
         # Compute the timeout
-        global_timeouts = []
-        # First, the device level overrides
-        global_timeouts.append(self.job.device.get("timeouts", {}))
-        # Then job level overrides
-        global_timeouts.append(self.job.parameters.get("timeouts", {}))
+        device_timeouts = self.job.device.get("timeouts", {})
+        device_named_actions_timeouts = device_timeouts.get("actions", {})
+        devices_named_connections_timeouts = device_timeouts.get("connections", {})
+        job_timeouts = self.job.parameters.get("timeouts", {})
+        job_named_actions_timeouts = job_timeouts.get("actions", {})
+        job_named_connections_timeouts = job_timeouts.get("connections", {})
 
-        # Set the timeout. The order is:
-        # 1. global action timeout
-        action._override_action_timeout(
-            get_lastest_dict_value(global_timeouts, "action")
-        )
-        # 2. global named action timeout
-        action._override_action_timeout(
-            get_lastest_subdict_value(global_timeouts, "actions", action.name)
-        )
-        # 3. action block timeout
+        # Set the action timeout. The order is from lowest priority to highest:
+        # 1. Job's global action timeout
+        action._override_action_timeout(job_timeouts.get("action"))
+        # 2. Device named actions timeout
+        action._override_action_timeout(device_named_actions_timeouts.get(action.name))
+        # 3. Action block timeout
         action._override_action_timeout(parameters.get("timeout"))
         # 4. RetryAction child action timeout
         if self.parent is not None and self.parent.max_retries > 1:
             action._override_action_timeout(
                 {"seconds": self.parent.timeout.duration // self.parent.max_retries}
             )
-        # 5. action block named action timeout
+        # 5. Job's global named action timeout
+        action._override_action_timeout(job_named_actions_timeouts.get(action.name))
+        # 6. Action block named action timeout
         if action_block_timeouts := parameters.get("timeouts"):
-            action._override_action_timeout(
-                action_block_timeouts.get(action.name),
-            )
+            action._override_action_timeout(action_block_timeouts.get(action.name))
 
+        # Set the action timeout. The order is from lowest priority to highest:
+        # 1. Job's global connection timeout
+        action._override_connection_timeout(job_timeouts.get("connection"))
+        # 2. Device named connection timeout
         action._override_connection_timeout(
-            get_lastest_dict_value(global_timeouts, "connection")
+            devices_named_connections_timeouts.get(action.name)
         )
+        # 3. Job's global named connection timeout
         action._override_connection_timeout(
-            get_lastest_subdict_value(global_timeouts, "connections", action.name)
+            job_named_connections_timeouts.get(action.name)
         )
 
         # If the action has an internal pipeline, initialise that here. Child
@@ -166,13 +150,13 @@ class Pipeline:
         # timeout should be set first.
         action.populate(parameters)
 
-    def describe(self):
+    def describe(self) -> list[dict[str, Any]]:
         """
         Describe the current pipeline, recursing through any
         internal pipelines.
         :return: a recursive dictionary
         """
-        desc = []
+        desc: list[dict[str, Any]] = []
         for action in self.actions:
             current = {
                 "class": type(action).__name__,
@@ -193,13 +177,13 @@ class Pipeline:
         return desc
 
     @property
-    def errors(self):
+    def errors(self) -> list[str]:
         sub_action_errors = [a.errors for a in self.actions]
         if not sub_action_errors:  # allow for jobs with no actions
             return []
         return reduce(lambda a, b: a + b, sub_action_errors)
 
-    def validate_actions(self):
+    def validate_actions(self) -> None:
         for action in self.actions:
             try:
                 action.validate()
@@ -210,7 +194,9 @@ class Pipeline:
         if self.parent is None and self.errors:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(
+        self, connection: ShellSession, max_end_time: int | None = None
+    ) -> None:
         """
         Recurse through internal pipelines running action.cleanup(),
         in order of the pipeline levels.
@@ -232,7 +218,7 @@ class Pipeline:
         if error:
             raise InfrastructureError("Failed to clean after job")
 
-    def run_actions(self, connection, max_end_time):
+    def run_actions(self, connection: ShellSession, max_end_time: int) -> ShellSession:
         for action in self.actions:
             failed = False
             namespace = action.parameters.get("namespace", "common")
@@ -364,7 +350,7 @@ class Action:
         data comes from the parameters. Actions with
         internal pipelines push parameters to actions
         within those pipelines. Parameters are to be
-        treated as inmutable.
+        treated as immutable.
         """
         # The level of this action within the pipeline. Levels start at one and
         # each pipeline within an command uses a level within the level of the
@@ -375,7 +361,7 @@ class Action:
         # subsequently except by RetryCommand.
         self.job = job
         self.level = None
-        self.pipeline: Optional[Pipeline] = None
+        self.pipeline: Pipeline | None = None
         self.__parameters__ = {}
         self.__errors__ = []
         self.logger = logging.getLogger("dispatcher")
@@ -384,7 +370,7 @@ class Action:
             self.name, self, exception=self.timeout_exception
         )
         # unless the strategy or the job parameters change this, do not retry
-        self.max_retries = 1
+        self.max_retries: int = 1
         # list of protocol objects supported by this action, full list in job.protocols
         self.protocols = []
         self.connection_timeout = Timeout(
@@ -394,20 +380,20 @@ class Action:
         self.force_prompt = False
 
     # Section
-    section = None
+    section: str = ""
     # public actions (i.e. those who can be referenced from a job file) must
     # declare a 'class-type' name so they can be looked up.
     # summary and description are used to identify instances.
-    name = None
+    name: ClassVar[str] = ""
     # Used in the pipeline to explain what the commands will attempt to do.
-    description = None
+    description: ClassVar[str] = ""
     # A short summary of this instance of a class inheriting from Action.  May
     # be None.
-    summary = None
+    summary: ClassVar[str] = ""
     # Exception to raise when this action is timing out
-    timeout_exception = JobError
+    timeout_exception: ClassVar[type[Exception]] = JobError
     # Exception to raise when a command run by the action fails
-    command_exception = JobError
+    command_exception: ClassVar[type[Exception]] = JobError
 
     @property
     def data(self):
@@ -873,13 +859,22 @@ class Action:
         if self.pipeline:
             self.pipeline.cleanup(connection, max_end_time)
 
-    def get_namespace_keys(self, action, parameters=None):
+    def get_namespace_keys(
+        self, action: str, parameters: dict[str, Any] | None = None
+    ) -> KeysView[str]:
         """Return the keys for the given action"""
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
         return self.data.get(namespace, {}).get(action, {}).keys()
 
-    def get_namespace_data(self, action, label, key, deepcopy=True, parameters=None):
+    def get_namespace_data(
+        self,
+        action: str,
+        label: str,
+        key: str,
+        deepcopy: bool = True,
+        parameters: dict[str, Any] | None = None,
+    ) -> Any | None:
         """
         Get a namespaced data value from dynamic job data using the specified key.
         By default, returns a deep copy of the value instead of a reference to allow actions to
@@ -903,7 +898,14 @@ class Action:
             return None
         return copy.deepcopy(value) if deepcopy else value
 
-    def set_namespace_data(self, action, label, key, value, parameters=None):
+    def set_namespace_data(
+        self,
+        action: str,
+        label: str,
+        key: str,
+        value: Any,
+        parameters: dict[str, Any] | None = None,
+    ) -> None:
         """
         Storage for filenames (on dispatcher or on device) and other common data (like labels and ID strings)
         which are set in one Action and used in one or more other Actions elsewhere in the same pipeline.

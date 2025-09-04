@@ -10,7 +10,7 @@ import os.path
 from typing import TYPE_CHECKING
 
 from lava_common.constants import BOOTLOADER_DEFAULT_CMD_TIMEOUT
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
@@ -25,7 +25,6 @@ from lava_dispatcher.connections.serial import ResetConnection
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 from lava_dispatcher.shell import ExpectShellSession
-from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
 if TYPE_CHECKING:
@@ -41,81 +40,80 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.cmdline = None
+        self.cmdline = ""
 
     def validate(self):
         super().validate()
         method = self.job.device["actions"]["boot"]["methods"][self.method]
         commands_name = self.parameters["commands"]
-        method_params = method[commands_name]
-        self.cmdline = method_params.get("cmdline")
-        if self.cmdline is None:
-            self.errors = f"No cmdline found in {commands_name}"
+        if isinstance(commands_name, str):
+            method_params = method[commands_name]
+            try:
+                self.cmdline = method_params["cmdline"]
+            except KeyError:
+                self.errors = f"No cmdline found in {commands_name}"
 
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
+    def create_cmdline_file(self, kernel_tftp: str | None) -> str | None:
+        if kernel_tftp is None:
+            self.logger.info("Skipping creating cmdline file as kernel is not defined")
+            return None
 
-        # Create the cmdline file, this is not set by any bootloader command
-        ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
-        kernel_path = self.get_namespace_data(
+        kernel_path: str | None = self.get_namespace_data(
             action="download-action", label="kernel", key="file"
-        )
-        cmdline_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
-        nfs_address = self.get_namespace_data(
-            action="parse-persistent-nfs", label="nfs_address", key="nfsroot"
-        )
-        nfs_root = self.get_namespace_data(
-            action="download-action", label="file", key="nfsrootfs"
-        )
+        )  # Absolute kernel path
+        if kernel_path is None:
+            raise JobError("Kernel file not defined. Unable to create cmdline file.")
+        cmdline_file_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
 
-        if nfs_root:
-            substitutions = {
-                "{NFSROOTFS}": self.get_namespace_data(
-                    action="extract-rootfs", label="file", key="nfsroot"
-                ),
-                "{NFS_SERVER_IP}": ip_addr,
-            }
-        elif nfs_address:
-            substitutions = {
-                "{NFSROOTFS}": nfs_address,
-                "{NFS_SERVER_IP}": self.get_namespace_data(
-                    action="parse-persistent-nfs", label="nfs_address", key="serverip"
-                ),
-            }
-        else:
-            substitutions = {}
+        substitutions: dict[str, str | None] | None = self.get_namespace_data(
+            action=self.name,
+            label=self.method,
+            key="substitutions",
+        )
+        if substitutions is None:
+            # Only possible if super().run() not called
+            raise LAVABug("Substitutions dictionary not initialized")
+
         cmdline = substitute([self.cmdline], substitutions)[0]
 
         if "extra_kernel_args" in self.parameters:
             cmdline = " ".join([cmdline, self.parameters["extra_kernel_args"]])
 
-        with open(cmdline_path, "w") as cmdline_file:
+        with open(cmdline_file_path, "w") as cmdline_file:
             cmdline_file.write(cmdline)
 
-        # Substitute {CMDLINE} with the cmdline file TFTP path
-        kernel_tftp = self.get_namespace_data(
+        return os.path.join(os.path.dirname(kernel_tftp), "cmdline")
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
+        kernel_tftp: str | None = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
         )
-        cmdline_tftp = os.path.join(os.path.dirname(kernel_tftp), "cmdline")
+        # Substitute {CMDLINE} with the cmdline file TFTP path
+        cmdline_tftp = self.create_cmdline_file(kernel_tftp)
 
         # Load FIT image if available, otherwise plain kernel image
-        fit_tftp = self.get_namespace_data(
+        fit_tftp: str | None = self.get_namespace_data(
             action="prepare-fit", label="file", key="fit"
         )
 
         # Also load ramdisk if available and not using a FIT image
-        ramdisk_tftp = self.get_namespace_data(
+        ramdisk_tftp: str | None = self.get_namespace_data(
             action="compress-ramdisk", label="file", key="ramdisk"
         )
 
-        substitutions = {
+        substitutions: dict[str, str | None] = {
             "{CMDLINE}": cmdline_tftp,
             "{DEPTHCHARGE_KERNEL}": fit_tftp or kernel_tftp,
             "{DEPTHCHARGE_RAMDISK}": ramdisk_tftp or "" if not fit_tftp else "",
         }
-        commands = self.get_namespace_data(
+        commands: list[str] | None = self.get_namespace_data(
             action="bootloader-overlay", label=self.method, key="commands"
         )
+        if commands is None:
+            # Only possible if super().run() not called
+            raise LAVABug("Bootloader commands not initialized")
         commands = substitute(commands, substitutions, drop=True, drop_line=False)
         self.set_namespace_data(
             action="bootloader-overlay",

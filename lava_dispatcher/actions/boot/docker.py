@@ -74,7 +74,7 @@ class CallDockerAction(Action):
         for cap in options["capabilities"]:
             self.extra_options += " --cap-add %s" % cap
         for device in options["devices"]:
-            self.extra_options += " --device %s" % device
+            self.extra_options += " --device %s" % os.path.realpath(device)
         for network in options["networks"]:
             self.extra_options += " --network %s" % network
         for volume in options["volumes"]:
@@ -131,7 +131,7 @@ class CallDockerAction(Action):
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
         self.cleanup_required = True
 
-        shell_connection = ShellSession(self.job, shell)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

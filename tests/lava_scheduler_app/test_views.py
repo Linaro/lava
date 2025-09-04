@@ -28,6 +28,7 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.views import (
+    InPlaceTokenUpdater,
     device_report_data,
     job_report_data,
     type_report_data,
@@ -789,6 +790,7 @@ def test_device_detail(client, setup):
 
 @pytest.mark.django_db
 def test_failure_report(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.failure_report"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
@@ -800,6 +802,14 @@ def test_failure_report(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/failure_report.html"  # nosec
     assert ret.context["device_type"] is None  # nosec
     assert ret.context["device"] == "juno-uboot-01"  # nosec
+
+
+@pytest.mark.django_db
+def test_failure_reports_anonymous(client, setup):
+    url = reverse("lava.scheduler.failure_report")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
@@ -934,10 +944,19 @@ def test_jobs_my_error(client, setup):
 
 @pytest.mark.django_db
 def test_job_errors(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.job.errors"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_errors.html"  # nosec
     assert len(ret.context["job_errors_table"].data) == 0  # nosec
+
+
+@pytest.mark.django_db
+def test_job_errors_anonymous(client, setup):
+    url = reverse("lava.scheduler.job.errors")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
@@ -950,7 +969,10 @@ def test_job_detail(client, setup):
     )
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job.html"  # nosec
-    assert ret.context["log_data"] == []  # nosec
+    assert (
+        ret.context["log_data"]
+        == '<script id="logs-initial" type="application/json">[]</script>'
+    )  # nosec
 
 
 @pytest.mark.django_db
@@ -1073,6 +1095,7 @@ def test_lab_health(client, setup):
 
 @pytest.mark.django_db
 def test_reports(client, setup):
+    assert client.login(username="tester", password="tester") is True
     ret = client.get(reverse("lava.scheduler.reports"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/reports.html"  # nosec
@@ -1080,6 +1103,14 @@ def test_reports(client, setup):
     assert len(ret.context["job_week_report"]) == 10  # nosec
     assert len(ret.context["health_day_report"]) == 7  # nosec
     assert len(ret.context["job_day_report"]) == 7  # nosec
+
+
+@pytest.mark.django_db
+def test_reports_anonymous(client, setup):
+    url = reverse("lava.scheduler.reports")
+    ret = client.get(url)
+    assert ret.status_code == 302
+    assert ret.url == f'{reverse("login")}?next={url}'
 
 
 @pytest.mark.django_db
@@ -1371,10 +1402,10 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     LOGS = """- {"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}
 - {"dt": "2023-06-01T05:24:00.060872", "lvl": "info", "msg": "start: 0 validate"}
 - {"dt": "2023-06-01T05:24:00.061082", "lvl": "info", "msg": "Start time: 2023-06-01 05:24:00.061063+00:00 (UTC)"}
-- {"dt": "2023-06-01T05:24:00.061300", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/bl1.bin exists"}
-- {"dt": "2023-06-01T05:24:00.435983", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/el3_payload.bin exists"}
-- {"dt": "2023-06-01T05:24:00.448713", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/fip.bin exists"}
-- {"dt": "2023-06-01T05:24:00.460928", "lvl": "debug", "msg": "Validating that http://example.com/artefacts/debug/ns_bl1u.bin exists"}
+- {"dt": "2023-06-01T05:24:00.061300", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/bl1.bin exists"}
+- {"dt": "2023-06-01T05:24:00.435983", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/el3_payload.bin exists"}
+- {"dt": "2023-06-01T05:24:00.448713", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/fip.bin exists"}
+- {"dt": "2023-06-01T05:24:00.460928", "lvl": "debug", "msg": "Validating that http://example.com/artifacts/debug/ns_bl1u.bin exists"}
 - {"dt": "2023-06-01T05:24:00.472695", "lvl": "info", "msg": "validate duration: 0.41"}
 - {"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
 - {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}
@@ -1476,3 +1507,130 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     )
     assert ret.status_code == 413
     assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
+
+
+class TestInPlaceTokenUpdater:
+    @pytest.fixture
+    def actions(self):
+        return yaml_safe_load(
+            """
+- deploy:
+    to: tftp
+    kernel:
+        url: https://example.com/Image.gz
+        headers:
+            Authorization: token_name
+    dtb:
+        url: https://example.com/device.dtb
+        headers:
+            Authorization: real_token
+- deploy:
+    to: downloads
+    images:
+        nfsrootfs:
+            url: https://example.com/rootfs.ext4.xz
+            headers:
+                Authorization: token_name
+            compression: xz
+            format: tar
+            overlays:
+                modules:
+                    url: https://example.com/modules.tar.xz
+                    path: "/usr/"
+                    format: tar
+                    compression: xz
+                    headers:
+                        Authorization: token_name
+- test:
+    definitions:
+    - name: test
+      compression: xz
+      from: url
+      path: test.yaml
+      repository: https://example.com/testdef.tar.xz
+      headers:
+        Authorization: token_name
+            """
+        )
+
+    @pytest.fixture
+    def expected_actions(self):
+        return yaml_safe_load(
+            """
+- deploy:
+    to: tftp
+    kernel:
+        url: https://example.com/Image.gz
+        headers:
+            Authorization: token_value
+    dtb:
+        url: https://example.com/device.dtb
+        headers:
+            Authorization: real_token
+- deploy:
+    to: downloads
+    images:
+        nfsrootfs:
+            url: https://example.com/rootfs.ext4.xz
+            headers:
+                Authorization: token_value
+            compression: xz
+            format: tar
+            overlays:
+                modules:
+                    url: https://example.com/modules.tar.xz
+                    path: "/usr/"
+                    format: tar
+                    compression: xz
+                    headers:
+                        Authorization: token_value
+- test:
+    definitions:
+    - name: test
+      compression: xz
+      from: url
+      path: test.yaml
+      repository: https://example.com/testdef.tar.xz
+      headers:
+        Authorization: token_value
+            """
+        )
+
+    @pytest.fixture
+    def secrets(self):
+        return yaml_safe_load(
+            """
+secrets:
+    secret1: secret1_name
+    secret2: real_secret
+            """
+        )
+
+    @pytest.fixture
+    def expected_secrets(self):
+        return yaml_safe_load(
+            """
+secrets:
+    secret1: secret1_value
+    secret2: real_secret
+            """
+        )
+
+    @pytest.fixture
+    def tokens(self):
+        return {
+            "token_name": "token_value",
+            "secret1_name": "secret1_value",
+        }
+
+    def test_update_headers(self, tokens, actions, expected_actions):
+        updater = InPlaceTokenUpdater(tokens)
+        for action in actions:
+            if "deploy" in action or "test" in action:
+                updater.update_headers(action)
+        assert actions == expected_actions
+
+    def test_update_secrets(self, tokens, secrets, expected_secrets):
+        updater = InPlaceTokenUpdater(tokens)
+        updater.update_secrets(secrets["secrets"])
+        assert secrets == expected_secrets

@@ -4,12 +4,16 @@
 # Author: Guillaume Tucker <guillaume.tucker@collabora.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import unittest
 from unittest.mock import patch
 
-from lava_dispatcher.actions.boot.depthcharge import DepthchargeAction, DepthchargeRetry
+from lava_dispatcher.actions.boot.depthcharge import (
+    DepthchargeAction,
+    DepthchargeCommandOverlay,
+    DepthchargeRetry,
+)
 from lava_dispatcher.actions.deploy.prepare import PrepareFITAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.utils import DummyLogger, infrastructure_error
@@ -93,3 +97,15 @@ class TestDepthchargeAction(LavaDispatcherTestCase):
                 "bootloader-commands",
             ],
         )
+
+    def test_depthcharge_commands_override(self) -> None:
+        job = self.factory.create_jaq_job(
+            "sample_jobs/depthcharge_commands_override.yaml"
+        )
+        self.assertIsNotNone(job)
+
+        with patch("lava_dispatcher.actions.deploy.tftp.which"):
+            job.validate()
+
+        command_overlay = job.pipeline.find_action(DepthchargeCommandOverlay)
+        self.assertEqual(["exit"], command_overlay.commands)

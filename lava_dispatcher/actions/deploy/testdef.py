@@ -11,6 +11,8 @@ import re
 import shutil
 from typing import TYPE_CHECKING
 
+import yaml
+
 from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
@@ -33,7 +35,11 @@ def identify_test_definitions(test_info, namespace):
     test_list = []
     for test in test_info.get(namespace, []):
         if "definitions" in test["parameters"]:
-            test_list.append(test["parameters"]["definitions"])
+            testdefs = test["parameters"]["definitions"]
+            needs_delay = test["class"].needs_character_delay(test["parameters"])
+            for testdef in testdefs:
+                testdef["needs_character_delay"] = needs_delay
+            test_list.append(testdefs)
     return test_list
 
 
@@ -285,12 +291,16 @@ class GitRepoAction(RepoAction):
         if not revision:
             shallow = self.parameters.get("shallow", True)
 
+        # clone submodules if recursive is set
+        recursive = self.parameters.get("recursive", False)
+
         commit_id = self.vcs.clone(
             runner_path,
             shallow=shallow,
             revision=revision,
             branch=branch,
             history=self.parameters.get("history", True),
+            recursive=recursive,
         )
         if commit_id is None:
             raise InfrastructureError(
@@ -309,7 +319,7 @@ class GitRepoAction(RepoAction):
         try:
             with open(yaml_file) as test_file:
                 testdef = yaml_safe_load(test_file)
-        except OSError as exc:
+        except (OSError, yaml.YAMLError) as exc:
             raise JobError(
                 "Unable to open test definition '%s': %s"
                 % (self.parameters["path"], str(exc))
@@ -1031,6 +1041,15 @@ class TestRunnerAction(TestOverlayAction):
             )
             runsh.write("UUID=`cat uuid`\n")
             runsh.write("set +x\n")
+            needs_delay = self.parameters.get("needs_character_delay")
+            delay = self.job.device.get("character_delays", {}).get("test", 0)
+            if needs_delay and delay:
+                self.logger.debug(
+                    f"A delay of {delay} milliseconds will be used for sending result signals"
+                )
+                delay = float(delay) / 1000
+                runsh.write(f"export CHARACTER_DELAY={delay}\n")
+                runsh.write(f"sleep {delay}\n")
             if lava_signal == "kmsg":
                 runsh.write("export KMSG=true\n")
                 runsh.write(
@@ -1046,6 +1065,8 @@ class TestRunnerAction(TestOverlayAction):
                         cmd = re.sub(r"\$(\d+)\b", r"\\$\1", cmd)
                     runsh.write("%s\n" % cmd)
             runsh.write("set +x\n")
+            if needs_delay and delay:
+                runsh.write(f"sleep {delay}\n")
             if lava_signal == "kmsg":
                 runsh.write("unset KMSG\n")
                 runsh.write(

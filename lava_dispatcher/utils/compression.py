@@ -9,78 +9,103 @@
 # rootfs, always tar, comp: gz,xz,bzip2
 # android images: tar + xz,bz2,gz, or just gz,xz,bzip2
 # vexpress recovery images: any compression though usually zip
+from __future__ import annotations
 
 import os
 import subprocess  # nosec - internal use.
 import tarfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.shell import which
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
 # https://www.kernel.org/doc/Documentation/xz.txt
-compress_command_map = {
-    "xz": ["xz", "--check=crc32"],
-    "gz": ["gzip"],
-    "bz2": ["bzip2"],
-    "zstd": ["zstd"],
+compress_command_map: Mapping[str, tuple[str, ...]] = {
+    "xz": ("xz", "--check=crc32"),
+    "gz": ("gzip",),
+    "bz2": ("bzip2",),
+    "zstd": ("zstd", "-T0"),
 }
-decompress_command_map = {
-    "xz": ["unxz"],
-    "gz": ["gunzip"],
-    "bz2": ["bunzip2"],
-    "zip": ["unzip"],
-    "zstd": ["unzstd"],
+
+decompress_command_map: Mapping[str, tuple[str, ...]] = {
+    "xz": ("unxz",),
+    "gz": ("gunzip",),
+    "bz2": ("bunzip2",),
+    "zip": ("unzip",),
+    "zstd": ("unzstd", "-T0"),
 }
 
 
-def compress_file(infile, compression):
+def compress_file(infile: str, compression: str) -> str:
     if not compression:
         return infile
     if compression not in compress_command_map.keys():
         raise JobError("Cannot find shell command to compress: %s" % compression)
 
+    # Assume infile is an absolute path
+    out_file_path = f"{infile}.{compression}"
+
     # Check that the command does exists
     which(compress_command_map[compression][0])
+    # local copy for idempotency
+    cmd = compress_command_map[compression][:]
 
-    with chdir(os.path.dirname(infile)):
-        # local copy for idempotency
-        cmd = compress_command_map[compression][:]
-        cmd.append(infile)
-        try:
-            subprocess.check_output(cmd)  # nosec - internal use.
-            return "%s.%s" % (infile, compression)
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError("unable to compress file %s: %s" % (infile, exc))
+    try:
+        with open(infile, mode="rb") as in_file, open(
+            out_file_path, mode="wb"
+        ) as out_file:
+            subprocess.run(
+                args=cmd,
+                stdin=in_file,
+                stdout=out_file,
+                check=True,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+        return out_file_path
+    except subprocess.CalledProcessError as proc_exc:
+        raise InfrastructureError(
+            f"unable to compress file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
+    except OSError as os_exc:
+        raise InfrastructureError(f"unable to compress file {infile!r}") from os_exc
 
 
-def decompress_file(infile, compression):
+def decompress_file(infile: str, compression: str | None) -> str:
     if not compression:
         return infile
     if compression not in decompress_command_map.keys():
         raise JobError("Cannot find shell command to decompress: %s" % compression)
 
+    # Assume infile is an absolute path
+    out_file_path = infile.removesuffix(f".{compression}")
+
     # Check that the command does exists
     which(decompress_command_map[compression][0])
+    # local copy for idempotency
+    cmd = decompress_command_map[compression][:]
+    cmd += (infile,)
 
-    with chdir(os.path.dirname(infile)):
-        # local copy for idempotency
-        cmd = decompress_command_map[compression][:]
-        cmd.append(infile)
-        outfile = infile
-        if infile.endswith(compression):
-            outfile = infile[: -(len(compression) + 1)]
-        try:
-            subprocess.check_output(cmd)  # nosec - internal use.
-            return outfile
-        except (OSError, subprocess.CalledProcessError) as exc:
-            raise InfrastructureError(
-                "unable to decompress file %s: %s" % (infile, exc)
-            )
+    try:
+        with chdir(os.path.dirname(infile)):
+            subprocess.check_output(cmd)
+        return out_file_path
+    except subprocess.CalledProcessError as proc_exc:
+        raise JobError(
+            f"unable to decompress file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
+    except OSError as os_exc:
+        raise InfrastructureError(f"unable to decompress file {infile!r}") from os_exc
 
 
-def create_tarfile(indir, outfile, arcname=None):
+def create_tarfile(indir: str, outfile: str, arcname: str | None = None) -> None:
     try:
         with tarfile.open(outfile, "w") as tar:
             tar.add(indir, arcname=arcname)
@@ -88,7 +113,7 @@ def create_tarfile(indir, outfile, arcname=None):
         raise InfrastructureError("Unable to create lava overlay tarball: %s" % exc)
 
 
-def untar_file(infile, outdir):
+def untar_file(infile: str, outdir: str) -> None:
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
             # Check for path traversal
@@ -105,7 +130,7 @@ def untar_file(infile, outdir):
         raise InfrastructureError("Unable to unpack %s: %s" % (infile, str(exc)))
 
 
-def cpio(directory, filename):
+def cpio(directory: str, filename: str) -> str:
     which("cpio")
     which("find")
     with chdir(directory):
@@ -124,7 +149,7 @@ def cpio(directory, filename):
             )
 
 
-def uncpio(filename, directory):
+def uncpio(filename: str, directory: str) -> None:
     which("cpio")
     with chdir(directory):
         try:

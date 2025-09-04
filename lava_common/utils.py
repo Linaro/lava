@@ -3,6 +3,7 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import re
@@ -11,7 +12,7 @@ import subprocess  # nosec dpkg
 from lava_common.exceptions import InfrastructureError
 
 
-def binary_version(binary, flags="", pattern=""):
+def binary_version(binary: str, flags: str = "", pattern: str = "") -> str:
     """
     Returns a string with the version of the binary by running it with
     the provided flags. If the output from running the binary is verbose
@@ -43,7 +44,7 @@ def binary_version(binary, flags="", pattern=""):
     return "%s, version %s" % (binary, ver_str)
 
 
-def debian_package_arch(pkg):
+def debian_package_arch(pkg: str) -> str:
     """
     Relies on Debian Policy rules for the existence of the
     changelog. Distributions not derived from Debian will
@@ -61,7 +62,7 @@ def debian_package_arch(pkg):
     return ""
 
 
-def debian_package_version(pkg):
+def debian_package_version(pkg: str) -> str:
     """
     Use dpkg-query to retrieve the version of the given package.
     Distributions not derived from Debian will return an empty string.
@@ -78,7 +79,7 @@ def debian_package_version(pkg):
     return ""
 
 
-def debian_filename_version(binary):
+def debian_filename_version(binary: str) -> str:
     """
     Relies on Debian Policy rules for the existence of the
     changelog. Distributions not derived from Debian will

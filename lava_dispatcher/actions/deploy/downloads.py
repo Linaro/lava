@@ -14,6 +14,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloadAction, DownloaderAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.utils.network import dispatcher_ip
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -83,6 +84,21 @@ class PostprocessWithDocker(Action):
                 script.append(
                     "export %s='%s'" % (key, self.job.device["dynamic_data"][key])
                 )
+        # Export job and dispatcher env vars.
+        environment = self.job.parameters.get("environment", {})
+        environment["LAVA_JOB_ID"] = self.job.job_id
+        environment["LAVA_DISPATCHER_IP"] = dispatcher_ip(
+            self.job.parameters["dispatcher"]
+        )
+        environment["LAVA_DISPATCHER_PREFIX"] = self.job.parameters.get(
+            "dispatcher", {}
+        ).get("prefix", "")
+        for key, value in environment.items():
+            script.append("export %s='%s'" % (key, value))
+        if http_cache := self.job.parameters["dispatcher"].get(
+            "http_url_format_string", ""
+        ):
+            script.append(f"export HTTP_CACHE='{http_cache}'")
 
         script = script + self.steps
         script = "\n".join(script) + "\n"
@@ -102,6 +118,13 @@ class PostprocessWithDocker(Action):
         docker = DockerRun.from_parameters(self.docker_parameters, self.job)
         docker.add_device("/dev/kvm", skip_missing=True)
         docker.bind_mount(self.path, LAVA_DOWNLOADS)
+        docker_test_method_conf = (
+            self.job.device["actions"]
+            .get("test", {})
+            .get("methods", {})
+            .get("docker", {})
+        )
+        docker.add_device_docker_method_options(docker_test_method_conf)
 
         docker.workdir(LAVA_DOWNLOADS)
 

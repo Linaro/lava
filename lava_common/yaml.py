@@ -12,9 +12,9 @@ from typing import TYPE_CHECKING
 from yaml import dump, load
 
 if TYPE_CHECKING:
-    from typing import Union  # For Python 3.9 compatibility
+    from typing import Any
 
-    from yaml import safe_dump, safe_load
+    from yaml import SafeDumper, safe_dump, safe_load
 
     yaml_safe_dump = safe_dump
     yaml_safe_load = safe_load
@@ -51,7 +51,7 @@ def _get_largest_width_possible() -> int:
     return c_uint(-1).value // 2
 
 
-def yaml_quote(obj: Union[str, int, float, dict, list]) -> str:
+def yaml_quote(obj: str | int | float | dict[str, Any] | list[Any]) -> str:
     try:
         stream, yaml_dumper = yaml_quote_dumper.get()
     except LookupError:
@@ -75,8 +75,4 @@ def yaml_quote(obj: Union[str, int, float, dict, list]) -> str:
     return stream.getvalue()[4:-1]  # Skip "--- " and newline
 
 
-__all__ = (
-    "yaml_quote",
-    "yaml_safe_dump",
-    "yaml_safe_load",
-)
+__all__ = ("yaml_quote", "yaml_safe_dump", "yaml_safe_load")

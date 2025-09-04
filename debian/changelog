@@ -1,3 +1,32 @@
+lava (2025.06-1) unstable; urgency=medium
+
+  * LAVA Software 2025.06 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 24 Jun 2025 15:12:27 +0200
+
+lava (2025.04-1) unstable; urgency=medium
+
+  * LAVA Software 2025.04 release
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 22 Apr 2025 14:47:27 +0200
+
+lava (2025.02-1) unstable; urgency=medium
+
+  * LAVA Software 2025.02 release
+
+  [ Antonio Terceiro ]
+  * [2ed06d4ce] debian/sort-search-index.py: fix SyntaxWarning: invalid escape sequence
+  * [30e5a65b5] debian/sort-search-index.py: sort by id
+  * [70abe5efd] debian/tests/control: testsuite: add new package needed for testing
+  * [915eef0ed] debian/tests/management: avoid interfering with debian/tests/testsuite
+  * [338665160] debian/tests/testsuite: ignore one failing test
+
+  [ Igor Ponomarev ]
+  * [7814f991e] Remove lava-server's postgresql-client dependency using psycopg2 directly
+  * [a32081ccc] debian: Avoid building man pages twice
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 18 Feb 2025 10:51:09 +0100
+
 lava (2024.09-1) unstable; urgency=medium
 
   * LAVA Software 2024.09 release
@@ -426,7 +455,7 @@ lava (2020.04-1) unstable; urgency=medium
     3305042e6 Allow device enter into fastbootd when fastboot images.
     4ad892ee9 schema: check test names
     2c07934cd Add authorization mechanism to Worker model
-    455f2d206 qemu: fix command line dupliction when retrying
+    455f2d206 qemu: fix command line duplication when retrying
     675108851 lava_dispatcher.utils.docker: encapsulate docker command lines
     d6efabed5 dispatcher: utils/fastboot: port docker calls to utils/docker
     50d2fd37a fixup! lava_dispatcher.utils.docker: encapsulate docker command lines
@@ -442,7 +471,7 @@ lava (2020.04-1) unstable; urgency=medium
     05af31736 dispatcher: ensure that Job.tmp_dir is never None
     1dd8f1bcf dispatcher: utils: docker: fix readonly flag
     714c07c4c deploy: test_download: split populate tests by scheme
-    61e771c67 qemu: do not finialise connection coming from other namespaces
+    61e771c67 qemu: do not finalise connection coming from other namespaces
     bcd18bc8e doc: update REST API docs to version 0.2
     aa9aea390 dispatcher: deploy: add supporting for postprocessing images with docker
     a9a392aa8 Boot QEMU from a user-defined docker image
@@ -1048,7 +1077,7 @@ lava (2019.10-1) unstable; urgency=medium
     01f646ee4 Expand on the authorization docs.
     b7c4ada0b Reorganize the django permissions and custom permissions.
     80bdab409 autopkgtest: run test suite "the new way"
-    9e80f439a rest api: add some documentation about submiting a test job
+    9e80f439a rest api: add some documentation about submitting a test job
     177b1c6b5 doc: fix spelling error
     7968337aa dragonboard-820c: flash every partition:%d tables right after the ptable
   * Fix unsafe use of yaml.load() (Closes: #933918)
@@ -2852,7 +2881,7 @@ lava-dispatcher (2017.1-1) unstable; urgency=medium
     36ca3c21 LAVA-818 - errors should set the job as Incomplete
     f5ac0328 Skip generation of invalid test_case_id
     9e5e56c6 Re-enable support for nose tests
-    bb89772f Merge and re-use BootloaderCommandOverlay and
+    bb89772f Merge and reuse BootloaderCommandOverlay and
      BootloaderCommandAction
     f3864c2f job: fix cleanup when validation failed
     8dd450c5 run_actions: clean error messages and exceptions
@@ -3918,7 +3947,7 @@ lava-server (2017.4-1) unstable; urgency=medium
     93d620a53 Explain how connection-namespace parameter works.
     9041b0dc0 Begin a section on common YAML syntax errors.
     6521cc0f8 LAVA-894 - Document lava lxc device add / wait command
-    ee3e5964f Fix documentation - punctuations, links, bullets.
+    ee3e5964f Fix documentation - punctuation, links, bullets.
     988d89a34 Add server side support for mustang EFI Grub.
     525d9ed47 Fix code blocks in Boot Action documentation.
     106f7f4fc LAVA-890 - Allow DUT to stay in Android OS
