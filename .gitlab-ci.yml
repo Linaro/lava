@@ -59,6 +59,8 @@ amd64/dispatcher-debian-11: {"extends": ".dispatcher"}
 amd64/server-debian-11: {"extends": ".server"}
 amd64/dispatcher-debian-12: {"extends": ".dispatcher"}
 amd64/server-debian-12: {"extends": ".server"}
+amd64/dispatcher-debian-13: {"extends": ".dispatcher"}
+amd64/server-debian-13: {"extends": ".server"}
 aarch64/dispatcher-debian-11:
   extends: .dispatcher
   tags:
@@ -170,6 +172,10 @@ debian/11:
 debian/12:
   extends: .debian_build
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
+
+debian/13:
+  extends: .debian_build
+  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-13
 
 .docker:
   extends: .dind
