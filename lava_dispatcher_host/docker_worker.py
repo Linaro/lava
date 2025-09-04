@@ -144,11 +144,23 @@ def build_customized_image(image, build_dir, use_cache=False):
                 f.write(instruction)
 
     tag = f"{image}.customized"
-    build_cmd = ["docker", "build", "--force-rm", "-f", "Dockerfile.lava", "-t", tag]
+    build_cmd = [
+        "docker",
+        "build",
+        # Always pull to avoid corruption in base image.
+        "--pull",
+        # Always remove intermediate containers.
+        "--force-rm",
+        "-f",
+        "Dockerfile.lava",
+        "-t",
+        tag,
+    ]
     if not use_cache:
         build_cmd.append("--no-cache")
     build_cmd.append(".")
     try:
+        subprocess.run(["docker", "rmi", "-f", tag], check=False)
         p = subprocess.Popen(
             build_cmd,
             cwd=build_dir,
@@ -160,9 +172,11 @@ def build_customized_image(image, build_dir, use_cache=False):
         p.communicate()
         rc = p.returncode
         if rc != 0:
+            subprocess.run(["docker", "image", "prune", "-f"], check=False)
             sys.exit(rc)
         return tag
     except subprocess.CalledProcessError:
+        subprocess.run(["docker", "image", "prune", "-f"], check=False)
         sys.exit(1)
 
 
