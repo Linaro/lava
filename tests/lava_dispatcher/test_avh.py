@@ -83,7 +83,6 @@ class TestAvhActions(LavaDispatcherTestCase):
     # Test deploy run.
     @patch("lava_dispatcher.actions.deploy.avh.Action.run")
     @patch("lava_dispatcher.actions.deploy.avh.random.choice", return_value="r")
-    @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile.write")
     @patch("lava_dispatcher.actions.deploy.avh.zipfile.ZipFile")
     @patch("lava_dispatcher.actions.deploy.avh.plistlib.dump")
     @patch(
@@ -107,8 +106,8 @@ class TestAvhActions(LavaDispatcherTestCase):
         v1_get_projects,
         plist_dump,
         zip_file,
-        zf_write,
-        *args,
+        choice,
+        run,
     ):
         self.job.validate()
 
@@ -134,7 +133,7 @@ class TestAvhActions(LavaDispatcherTestCase):
         # ANY: image path with random string inside.
         # Zip file compression method 'ZIP_DEFLATED = 8'
         zip_file.assert_called_once_with(ANY, mode="w", compression=8)
-        zf_write.has_calls(
+        zip_file().__enter__().write.assert_has_calls(
             [
                 call(ANY, arcname="Info.plist"),
                 call(ANY, arcname="kernel"),
