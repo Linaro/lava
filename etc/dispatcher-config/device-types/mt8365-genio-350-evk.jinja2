@@ -5,3 +5,5 @@
 {% set uboot_usb_commands = [
     "bind /soc/usb@11201000/ssusb@11200000 usb_ether"]
 -%}
+
+{% set uboot_fdt_extra_commands = ['fdt set /soc/ethernet status okay'] %}
