@@ -6,7 +6,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from yaml import YAMLError
 
@@ -15,10 +15,9 @@ from lava_common.yaml import yaml_safe_load
 
 if TYPE_CHECKING:
     from pathlib import Path
-    from typing import Any
 
 
-class DeviceDict(dict):
+class DeviceDict(dict[str, Any]):
     def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.setdefault("power_state", "off")  # assume power is off at start of job
@@ -42,42 +41,59 @@ class DeviceDict(dict):
             return cls.from_yaml_str(f.read())
 
     @property
-    def hard_reset_command(self):
-        return self.get("commands", {}).get("hard_reset", "")
+    def hard_reset_command(self) -> str | list[str]:
+        hard_reset_command: str | list[str] = self.get("commands", {}).get(
+            "hard_reset", ""
+        )
+        return hard_reset_command
 
     @property
-    def soft_reboot_command(self):
-        return self.get("commands", {}).get("soft_reboot", "")
+    def soft_reboot_command(self) -> str | list[str]:
+        soft_reboot_command: str | list[str] = self.get("commands", {}).get(
+            "soft_reboot", ""
+        )
+        return soft_reboot_command
 
     @property
-    def pre_os_command(self):
-        return self.get("commands", {}).get("pre_os_command")
+    def pre_os_command(self) -> str:
+        pre_os_command: str = self.get("commands", {}).get("pre_os_command")
+        return pre_os_command
 
     @property
-    def pre_power_command(self):
-        return self.get("commands", {}).get("pre_power_command")
+    def pre_power_command(self) -> str:
+        pre_power_command: str = self.get("commands", {}).get("pre_power_command")
+        return pre_power_command
 
     @property
-    def power_command(self):
-        return self.get("commands", {}).get("power_on", "")
+    def power_command(self) -> str | list[str]:
+        power_command: str | list[str] = self.get("commands", {}).get("power_on", "")
+        return power_command
 
     @property
-    def connect_command(self):
+    def connect_command(self) -> str:
         if "commands" not in self:
             raise ConfigurationError(
                 "commands section not present in the device config."
             )
         if "connect" in self["commands"]:
-            return self["commands"]["connect"]
+            commands_connect: str = self["commands"]["connect"]
+            return commands_connect
         elif "connections" in self["commands"]:
             for hardware, value in self["commands"]["connections"].items():
                 if "connect" not in value:
                     return ""
                 if "tags" in value and "primary" in value["tags"]:
-                    return value["connect"]
+                    hardware_value_connect: str = value["connect"]
+                    return hardware_value_connect
         return ""
 
-    def get_constant(self, const, prefix=None, missing_ok=False, missing_default=None):
+    def get_constant(
+        self,
+        const: str,
+        prefix: str | None = None,
+        missing_ok: bool = False,
+        missing_default: Any | None = None,
+    ) -> Any:
         if "constants" not in self:
             raise ConfigurationError(
                 "constants section not present in the device config."
