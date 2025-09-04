@@ -19,7 +19,9 @@ from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 from lava_dispatcher.utils.compression import (
     compress_command_map,
     compress_file,
+    cpio,
     decompress_file,
+    uncpio,
 )
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -223,3 +225,33 @@ class TestCompressionBinaries(TestCase):
             bar_file_path = tmp_dir_path / "bar.txt"
             self.assertTrue(bar_file_path.exists())
             self.assertEqual(bar_file_path.read_text(), "bar")
+
+
+class TestCpio(TestCase):
+    def test_cpio_cycle(self) -> None:
+        with TemporaryDirectory("test-cpio") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "foo"
+            test_dir.mkdir()
+
+            test_file = test_dir / "bar"
+            test_file.write_text("foobar")
+
+            newline_file = test_dir / "foo\nbar"
+            newline_file.write_text("one\ntwo\n")
+
+            archive_file = tmp_dir_path / "foo.cpio"
+
+            output = cpio(str(test_dir), str(archive_file))
+
+            # Check that cpio stderr was captured
+            self.assertIn("block", output)
+
+            unpack_dir = tmp_dir_path / "unpack"
+            unpack_dir.mkdir()
+
+            uncpio(str(archive_file), str(unpack_dir))
+
+            self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
+            self.assertEqual((unpack_dir / "foo\nbar").read_text(), "one\ntwo\n")
