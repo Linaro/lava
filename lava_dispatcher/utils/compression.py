@@ -156,12 +156,13 @@ def cpio(directory: str, filename: str) -> str:
                 encoding="utf-8",
                 errors="replace",
                 stdin=find.stdout,
-                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
             )
-        return cpio.stderr
+        return cpio.stdout
     except Exception as exc:
         raise InfrastructureError(
-            f"Unable to create cpio archive {filename!r}: %s"
+            f"Unable to create cpio archive {filename!r}: {exc}"
         ) from exc
 
 
@@ -179,8 +180,10 @@ def uncpio(filename: str, directory: str) -> None:
             ),
             check=True,
             cwd=directory,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError as exc:
         raise InfrastructureError(
-            f"Unable to extract cpio archive {filename!r}"
+            f"Unable to extract cpio archive {filename!r}: {exc}"
         ) from exc
