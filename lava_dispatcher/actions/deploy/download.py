@@ -12,6 +12,7 @@ import hashlib
 import math
 import os
 import pathlib
+import re
 import subprocess  # nosec - verified.
 import time
 from typing import TYPE_CHECKING
@@ -588,6 +589,40 @@ class HttpDownloadAction(DownloadHandler):
             use_cache = True
             if self.params:
                 use_cache = self.params.get("use_cache", True)
+
+            if http_cache and use_cache:
+                # cache rules
+                http_cache_include_rules = self.job.parameters["dispatcher"].get(
+                    "http_cache_include_rules", []
+                )
+                http_cache_exclude_rules = self.job.parameters["dispatcher"].get(
+                    "http_cache_exclude_rules", []
+                )
+                url_str = self.url.geturl()
+
+                # 1. If not match any include rule, disable cache
+                if http_cache_include_rules:
+                    if not any(
+                        re.search(rule, url_str) for rule in http_cache_include_rules
+                    ):
+                        self.logger.info(
+                            "Skipping caching service: '%s' does not match any http_cache_include_rules: %s",
+                            url_str,
+                            http_cache_include_rules,
+                        )
+                        use_cache = False
+
+                # 2. If still True, check exclude rules
+                if use_cache and http_cache_exclude_rules:
+                    if any(
+                        re.search(rule, url_str) for rule in http_cache_exclude_rules
+                    ):
+                        self.logger.info(
+                            "Skipping caching service: '%s' matches http_cache_exclude_rules: %s",
+                            url_str,
+                            http_cache_exclude_rules,
+                        )
+                        use_cache = False
 
             if http_cache and use_cache:
                 self.logger.info("Using caching service: '%s'", http_cache)
