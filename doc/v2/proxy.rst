@@ -39,6 +39,20 @@ Set ``http_url_format_string`` to the url of the local caching service.
 
     http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch?url=%s"
 
+After you enable the cache, you can optionally configure HTTP cache rules to control cache usage:
+
+``http_cache_include_rules``: if specified, only matched urls will use cache even cache service enabled
+
+.. code-block:: yaml
+
+    http_cache_include_rules: ["https://.*nxrm.com"]
+
+``http_cache_exclude_rules``: if specified, matched urls will be skipped even cache service enabled
+
+.. code-block:: yaml
+
+    http_cache_exclude_rules: ["https://10.*"]
+
 .. robots:
 
 Handling bots

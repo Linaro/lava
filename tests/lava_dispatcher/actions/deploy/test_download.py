@@ -6,8 +6,9 @@
 
 from pathlib import Path
 from unittest.mock import patch
-from urllib.parse import urlparse
+from urllib.parse import quote_plus, urlparse
 
+import pytest
 import requests
 
 from lava_common.constants import HTTP_DOWNLOAD_CHUNK_SIZE
@@ -1048,3 +1049,105 @@ class TestDowload(LavaDispatcherTestCase):
         action.params = action.parameters["images"]["key"]
         action.validate()
         assert action.params["url"] == "http://foobar/resource.img"
+
+
+class TestHttpCache:
+    @pytest.mark.parametrize(
+        "dispatcher_params,expected_url",
+        [
+            # No cache: http_url_format_string not set
+            ({}, "artifact_url"),
+            # With cache: only http_url_format_string set
+            (
+                {"http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s"},
+                "kisscache_url",
+            ),
+            # Include rules: should use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_include_rules": ["http://foobar", "http://example"],
+                },
+                "kisscache_url",
+            ),
+            # Include rules, but not matching: should NOT use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_include_rules": [
+                        "http://foobar",
+                        "http://foo",
+                        "http://bar",
+                    ],
+                },
+                "artifact_url",
+            ),
+            # Exclude rules: should NOT use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_exclude_rules": ["http://foobar", "http://example"],
+                },
+                "artifact_url",
+            ),
+            # Exclude rules, but not matching: should use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_exclude_rules": [
+                        "http://foobar",
+                        "http://foo",
+                        "http://bar",
+                    ],
+                },
+                "kisscache_url",
+            ),
+            # Both include and exclude rules, exclude matches: should NOT use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_include_rules": ["http://example.com"],
+                    "http_cache_exclude_rules": ["http://example.com"],
+                },
+                "artifact_url",
+            ),
+            # Both include and exclude rules, include matches but exclude does not: should use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_include_rules": ["http://example.com"],
+                    "http_cache_exclude_rules": ["http://foobar"],
+                },
+                "kisscache_url",
+            ),
+            # Both include and exclude rules, neither matches: should NOT use cache
+            (
+                {
+                    "http_url_format_string": "http://kisscache/api/v1/fetch/?url=%s",
+                    "http_cache_include_rules": ["http://foobar"],
+                    "http_cache_exclude_rules": ["http://barfoo"],
+                },
+                "artifact_url",
+            ),
+        ],
+    )
+    def test_http_cache(self, dispatcher_params, expected_url):
+        factory = Factory()
+        job = factory.create_job(
+            "kvm03.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
+        )
+        kisscache_url = "http://kisscache/api/v1/fetch/?url=%s"
+        artifact_url = "http://example.com/resource.img"
+        if dispatcher_params:
+            job.parameters["dispatcher"] = dispatcher_params
+        action = HttpDownloadAction(job, "key", "/path/to/save", urlparse(artifact_url))
+        action.parameters = {
+            "images": {"key": {"url": artifact_url}},
+            "namespace": "common",
+        }
+        action.params = action.parameters["images"]["key"]
+        action.validate()
+        if expected_url == "artifact_url":
+            assert action.url == urlparse(artifact_url)
+        else:
+            assert action.url == urlparse(kisscache_url % quote_plus(artifact_url))
