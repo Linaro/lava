@@ -12,7 +12,7 @@ from unittest.mock import MagicMock
 
 from pexpect import EOF as pexpect_eof
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
@@ -51,13 +51,23 @@ class TestBootMessages(LavaDispatcherTestCase):
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
-        with self.assertRaises(JobError):
+        with self.assertRaises(JobError) as exc:
             LinuxKernelMessages.parse_failures(
                 connection,
                 action=Action(self.create_job_mock()),
                 max_end_time=self.max_end_time,
                 fail_msg="",
             )
+        data = str(exc.exception).splitlines()
+        assert len(data) == 28
+        assert (
+            data[0]
+            == "[    4.946791] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200"
+        )
+        assert (
+            data[-1]
+            == "[    5.123884] ---[ end Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200"
+        )
 
     def test_kernel_1(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
@@ -103,27 +113,70 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertEqual(results[12]["kind"], "warning")
         self.assertEqual(results[13]["kind"], "warning")
 
+    def test_kernel_2_with_fail_msg(self):
+        logfile = os.path.join(os.path.dirname(__file__), "kernel-2.txt")
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = create_shell_session_cat_file(logfile, message_list)
+        results = LinuxKernelMessages.parse_failures(
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="Nothing to match",
+        )
+
+        self.assertEqual(len(results), 14)
+        self.assertEqual(results[0]["kind"], "warning")
+        self.assertTrue("cut here" in results[0]["message"])
+        self.assertTrue("end trace" in results[0]["message"])
+        self.assertEqual(results[1]["kind"], "warning")
+        self.assertEqual(results[2]["kind"], "warning")
+        self.assertEqual(results[3]["kind"], "warning")
+        self.assertEqual(results[4]["kind"], "warning")
+        self.assertEqual(results[5]["kind"], "warning")
+        self.assertEqual(results[6]["kind"], "warning")
+        self.assertEqual(results[7]["kind"], "warning")
+        self.assertEqual(results[8]["kind"], "bug")
+        self.assertEqual(results[9]["kind"], "warning")
+        self.assertEqual(results[10]["kind"], "warning")
+        self.assertEqual(results[11]["kind"], "warning")
+        self.assertEqual(results[12]["kind"], "warning")
+        self.assertEqual(results[13]["kind"], "warning")
+
     def test_kernel_4(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-4.txt")
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
         connection = create_shell_session_cat_file(logfile, message_list)
-        with self.assertRaises(JobError):
+        with self.assertRaises(JobError) as exc:
             LinuxKernelMessages.parse_failures(
                 connection,
                 action=Action(self.create_job_mock()),
                 max_end_time=self.max_end_time,
                 fail_msg="",
             )
+        assert (
+            str(exc.exception)
+            == """[  145.750074] Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200\r
+[  145.750074]\r
+[  145.759694] ---[ end Kernel panic - not syncing: Attempted to kill init! exitcode=0x00000200"""
+        )
 
     def test_kernel_5(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-5.txt")
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        create_shell_session_cat_file(logfile, message_list)
-        self.assertRaises(InfrastructureError)
+        connection = create_shell_session_cat_file(logfile, message_list)
+        results = LinuxKernelMessages.parse_failures(
+            connection,
+            action=Action(self.create_job_mock()),
+            max_end_time=self.max_end_time,
+            fail_msg="",
+        )
+        assert results == []
 
     def test_kernel_kasan(self):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-kasan.txt")
@@ -279,12 +332,40 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = FakeConnection(logfile, message_list)
+        connection = create_shell_session_cat_file(logfile, message_list)
         custom_fail_msg = r"coreboot-.*bootblock starting"
-        with self.assertRaises(JobError):
+        with self.assertRaises(JobError) as exc:
             LinuxKernelMessages.parse_failures(
                 connection,
-                action=Action(),
+                action=Action(self.create_job_mock()),
                 max_end_time=self.max_end_time,
                 fail_msg=custom_fail_msg,
             )
+        assert (
+            str(exc.exception)
+            == """[    5.867574] Kernel panic - not syncing: Fatal exception\r
+[    5.873722] Kernel Offset: 0x3bc00000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)\r
+[    5.886443] gsmi: Log Shutdown Reason 0x02\r
+coreboot-v1.9308_26_0.0.22-18730-gcb819b1082 Tue May  4 00:08:52 UTC 2021 bootblock starting"""
+        )
+
+    def test_kernel_kasan_and_reset_overlapped(self):
+        logfile = os.path.join(
+            os.path.dirname(__file__), "kernel-kasan-and-reset-overlap.txt"
+        )
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = create_shell_session_cat_file(logfile, message_list)
+        custom_fail_msg = r"coreboot-.*bootblock starting"
+        with self.assertRaises(JobError) as exc:
+            LinuxKernelMessages.parse_failures(
+                connection,
+                action=Action(self.create_job_mock()),
+                max_end_time=self.max_end_time,
+                fail_msg=custom_fail_msg,
+            )
+        assert (
+            str(exc.exception)
+            == "Matched job-specific failure message: 'coreboot-.*bootblock starting'"
+        )

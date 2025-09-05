@@ -175,14 +175,16 @@ class LinuxKernelMessages:
                     action.logger.warning(msg)
                     action.errors = msg
                     break
-                if sub_index != 0:
+                if sub_index > (1 if fail_msg else 0):
                     action.logger.warning("Unable to match end of the kernel message")
                     break
-                message = (
-                    message
-                    + connection.raw_connection.before
-                    + connection.raw_connection.after[:-1]  # Remove ending "\r"
-                )
+                message = message + connection.raw_connection.before
+                if fail_msg and sub_index == 0:
+                    message += connection.raw_connection.after
+                else:
+                    message += connection.raw_connection.after[
+                        :-1
+                    ]  # Remove ending "\r"
                 connection.prompt_str = previous_prompts
 
                 # Classify the errors
@@ -199,7 +201,9 @@ class LinuxKernelMessages:
 
                 if KERNEL_MESSAGES[index].get("fatal"):
                     result = "fail"
-                    action.logger.error("%s kernel %r" % (action.name, kind))
+                    action.logger.error(
+                        "%s kernel %r (fatal error)" % (action.name, kind)
+                    )
                     halt = message
                 else:
                     action.logger.warning("%s: kernel %r" % (action.name, kind))
@@ -210,6 +214,13 @@ class LinuxKernelMessages:
 
                 results.append({"kind": kind, "message": message})
                 if KERNEL_MESSAGES[index].get("fatal"):
+                    break
+                elif fail_msg and sub_index == 0:
+                    result = "fail"
+                    # user has declared this message to be terminal for this test job.
+                    halt = "Matched job-specific failure message: '%s'" % fail_msg
+                    action.logger.error("%s %s" % (action.name, halt))
+                    results.append({"message": "kernel-messages"})
                     break
                 else:
                     continue
