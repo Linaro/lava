@@ -39,6 +39,14 @@
 # instead of the original url.
 #http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"
 
+# Set additional http cache rules to include/exclude urls for caching.
+# if http_cache_include_rules specified, only matched urls will use cache even
+# cache service enabled
+# if http_cache_exclude_rules specified, matched urls will be skipped even cache
+# service enabled
+#http_cache_include_rules: ["https://.*nxrm.com"]
+#http_cache_exclude_rules: ["https://10.*"]
+
 # Directories to be bind mounted in test actions that run with docker.
 # Must be an array with exactly two/three items:
 # 1st item: the source directory in the host (mandatory)
