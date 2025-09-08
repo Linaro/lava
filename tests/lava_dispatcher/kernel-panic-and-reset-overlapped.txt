@@ -1,0 +1,28 @@
+[    5.765287] RIP: 0010:cros_ec_check_features+0xf/0xed
+[    5.771229] Code: 00 00 00 89 d8 5b c3 48 8b 7f 08 48 c7 c6 af ec f4 bd e8 2a 92 24 00 eb ea 0f 0b 0f 1f 44 00 00 41 57 41 56 53 89 f3 49 89 fe <83> bf 6c 03 00 00 ff 75 6e 41 83 be 70 03 00 00 ff 75 64 48 8b 3d
+[    5.792516] RSP: 0018:ffff9e7f809b7a30 EFLAGS: 00210202
+[    5.798645] RAX: ffff910046f8f000 RBX: 0000000000000029 RCX: 000000000005db60
+[    5.806908] RDX: 000000000005db40 RSI: 0000000000000029 RDI: 0000000000000000
+[    5.815172] RBP: ffff910041711800 R08: ffff910045c4cd80 R09: ffffffffc0252653
+[    5.823436] R10: ffff910045c4cd80 R11: ffffe66284171300 R12: ffff910046f254a8
+[    5.831699] R13: ffff9e7f80922b98 R14: 0000000000000000 R15: ffff910041711810
+[    5.839962] FS:  0000000000000000(0000) GS:ffff9101b8000000(0063) knlGS:00000000f70a4f80
+[    5.849292] CS:  0010 DS: 002b ES: 002b CR0: 0000000080050033
+[    5.856001] CR2: 000000000000036c CR3: 0000000101484002 CR4: 0000000000770ef0
+[    5.864254] PKRU: 55555554
+[    5.867574] Kernel panic - not syncing: Fatal exception
+[    5.873722] Kernel Offset: 0x3bc00000 from 0xffffffff81000000 (relocation range: 0xffffffff80000000-0xffffffffbfffffff)
+[    5.886443] gsmi: Log Shutdown Reason 0x02
+coreboot-v1.9308_26_0.0.22-18730-gcb819b1082 Tue May  4 00:08:52 UTC 2021 bootblock starting (log level: 8)...
+CPU: 11th Gen Intel(R) Core(TM) i5-1130G7 @ 1.10GHz
+CPU: ID 806c1, Tigerlake B0, ucode: 00000086
+CPU: AES supported, TXT NOT supported, VT supported
+MCH: device id 9a12 (rev 01) is Tigerlake-Y-4-2
+PCH: device id a087 (rev 20) is Tigerlake-Y Premium SKU
+IGD: device id 9a40 (rev 01) is Tigerlake Y GT2
+VBOOT: Loading verstage.
+FMAP: Found \\\"FLASH\\\" version 1.1 at 0x1804000.
+FMAP: base = 0x0 size = 0x2000000 #areas = 32
+FMAP: area COREBOOT found @ 1875000 (7909376 bytes)
+CBFS: mcache @0xfef45600 built for 70 files, used 0xfdc of 0x1800 bytes
+CBFS: Found 'fallback/verstage' @0x165e40 size 0x147ec in mcache @0xfef45984

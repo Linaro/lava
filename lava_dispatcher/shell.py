@@ -340,7 +340,12 @@ class ShellSession:
                 self.connected = False
                 raise InfrastructureError(str(exc))
 
-    def wait(self, max_end_time=None, max_searchwindowsize=False):
+    def wait(
+        self,
+        max_end_time=None,
+        max_searchwindowsize=False,
+        job_error_message: str | None = None,
+    ):
         """
         Simple wait without sending blank lines as that causes the menu
         to advance without data which can cause blank entries and can cause
@@ -360,7 +365,7 @@ class ShellSession:
             else:
                 return self.raw_connection.expect(self.prompt_str, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
-            raise JobError("wait for prompt timed out")
+            raise JobError(job_error_message or "wait for prompt timed out")
         except ConnectionClosedError as exc:
             self.connected = False
             raise InfrastructureError(str(exc))

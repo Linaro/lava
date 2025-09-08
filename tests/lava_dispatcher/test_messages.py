@@ -21,16 +21,22 @@ from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
 def create_shell_session_cat_file(
-    file_to_cat: str, pexpect_patterns: list[str]
+    file_to_cat: str, pexpect_patterns: list[str], infinite_stream: bool = False
 ) -> ShellSession:
+    cmd_str = f"cat {shlex_quote(file_to_cat)}"
+
+    if infinite_stream:
+        cmd_str += " -"
+    else:
+        pexpect_patterns.append(pexpect_eof)
+
     shell_command = ShellCommand(
-        f"cat {shlex_quote(file_to_cat)}",
+        cmd_str,
         Timeout("test-cat-command", None),
         logger=MagicMock(),
     )
 
     shell_session = ShellSession(shell_command)
-    pexpect_patterns.append(pexpect_eof)
     shell_session.prompt_str = pexpect_patterns
 
     return shell_session
@@ -271,3 +277,22 @@ class TestBootMessages(LavaDispatcherTestCase):
             fail_msg="",
         )
         self.assertEqual(len(results), 134)
+
+    def test_kernel_panic_and_reset_overlapped(self):
+        logfile = os.path.join(
+            os.path.dirname(__file__), "kernel-panic-and-reset-overlapped.txt"
+        )
+        self.assertTrue(os.path.exists(logfile))
+        message_list = LinuxKernelMessages.get_init_prompts()
+        self.assertIsNotNone(message_list)
+        connection = create_shell_session_cat_file(
+            logfile, message_list, infinite_stream=True
+        )
+        action = Action(self.create_job_mock())
+        with self.assertRaisesRegex(JobError, "^Kernel panic - not syncing$"):
+            LinuxKernelMessages.parse_failures(
+                connection,
+                action=action,
+                max_end_time=time.monotonic() + 0.1,
+                fail_msg="",
+            )
