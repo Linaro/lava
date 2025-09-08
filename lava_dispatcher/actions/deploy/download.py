@@ -580,99 +580,136 @@ class HttpDownloadAction(DownloadHandler):
 
     def validate(self):
         super().validate()
+        http_cache = self.job.parameters["dispatcher"].get("http_url_format_string", "")
+        fallback_origin_url = self.job.parameters["dispatcher"].get(
+            "http_cache_fallback_origin_url", False
+        )
+
+        use_cache = True
+        if self.params:
+            use_cache = self.params.get("use_cache", True)
+
+        if http_cache and use_cache:
+            # cache rules
+            http_cache_include_rules = self.job.parameters["dispatcher"].get(
+                "http_cache_include_rules", []
+            )
+            http_cache_exclude_rules = self.job.parameters["dispatcher"].get(
+                "http_cache_exclude_rules", []
+            )
+            url_str = self.url.geturl()
+
+            # 1. If not match any include rule, disable cache
+            if http_cache_include_rules:
+                if not any(
+                    re.search(rule, url_str) for rule in http_cache_include_rules
+                ):
+                    self.logger.info(
+                        "Skipping caching service: '%s' does not match any http_cache_include_rules: %s",
+                        url_str,
+                        http_cache_include_rules,
+                    )
+                    use_cache = False
+
+            # 2. If still True, check exclude rules
+            if use_cache and http_cache_exclude_rules:
+                if any(re.search(rule, url_str) for rule in http_cache_exclude_rules):
+                    self.logger.info(
+                        "Skipping caching service: '%s' matches http_cache_exclude_rules: %s",
+                        url_str,
+                        http_cache_exclude_rules,
+                    )
+                    use_cache = False
+
+        # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
+        headers = {"Accept-Encoding": ""}
+        if self.params and "headers" in self.params:
+            headers.update(self.params["headers"])
+
+        if http_cache and use_cache:
+            self.logger.info("Using caching service: '%s'", http_cache)
+            try:
+                original_url = self.url
+                self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
+                # call validate_cache_source
+                if self.validate_cache_source(headers):
+                    # Cache server available
+                    return
+                elif not fallback_origin_url:
+                    self.errors = f"Unable to get '{self.url.geturl()}'"
+                    return
+                self.url = original_url
+                self.logger.info("Fallback to original URL : %s", self.url.geturl())
+            except TypeError as exc:
+                self.logger.error("Invalid http_url_format_string: '%s'", exc)
+                self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
+                return
+
+        # validate url if cache not available or disabled
+        self.validate_url(headers)
+
+    def validate_cache_source(self, headers):
+        try:
+            res = self._head_or_get(self.url.geturl(), headers)
+            if res.status_code != requests.codes.OK:
+                self.logger.error(
+                    "Resource unavailable at '%s' (%d)",
+                    self.url.geturl(),
+                    res.status_code,
+                )
+                return False
+            self.size = int(res.headers.get("content-length", -1))
+            res.close()
+            return True
+        except (requests.Timeout, requests.RequestException) as exc:
+            self.logger.error("Unable to use cache %s", exc)
+            return False
+
+    def validate_url(self, headers):
         res = None
         try:
-            http_cache = self.job.parameters["dispatcher"].get(
-                "http_url_format_string", ""
-            )
-
-            use_cache = True
-            if self.params:
-                use_cache = self.params.get("use_cache", True)
-
-            if http_cache and use_cache:
-                # cache rules
-                http_cache_include_rules = self.job.parameters["dispatcher"].get(
-                    "http_cache_include_rules", []
-                )
-                http_cache_exclude_rules = self.job.parameters["dispatcher"].get(
-                    "http_cache_exclude_rules", []
-                )
-                url_str = self.url.geturl()
-
-                # 1. If not match any include rule, disable cache
-                if http_cache_include_rules:
-                    if not any(
-                        re.search(rule, url_str) for rule in http_cache_include_rules
-                    ):
-                        self.logger.info(
-                            "Skipping caching service: '%s' does not match any http_cache_include_rules: %s",
-                            url_str,
-                            http_cache_include_rules,
-                        )
-                        use_cache = False
-
-                # 2. If still True, check exclude rules
-                if use_cache and http_cache_exclude_rules:
-                    if any(
-                        re.search(rule, url_str) for rule in http_cache_exclude_rules
-                    ):
-                        self.logger.info(
-                            "Skipping caching service: '%s' matches http_cache_exclude_rules: %s",
-                            url_str,
-                            http_cache_exclude_rules,
-                        )
-                        use_cache = False
-
-            if http_cache and use_cache:
-                self.logger.info("Using caching service: '%s'", http_cache)
-                try:
-                    self.url = urlparse(http_cache % quote_plus(self.url.geturl()))
-                except TypeError as exc:
-                    self.logger.error("Invalid http_url_format_string: '%s'", exc)
-                    self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
-                    return
-
-            headers = {"Accept-Encoding": ""}
-            if self.params and "headers" in self.params:
-                headers.update(self.params["headers"])
-            self.logger.debug("Validating that %s exists", self.url.geturl())
-            # Force the non-use of Accept-Encoding: gzip, this will permit to know the final size
-            res = requests_retry(retries=9).head(
-                self.url.geturl(),
-                allow_redirects=True,
-                headers=headers,
-                timeout=HTTP_DOWNLOAD_TIMEOUT,
-            )
+            res = self._head_or_get(self.url.geturl(), headers)
             if res.status_code != requests.codes.OK:
-                # try using (the slower) get for services with broken redirect support
-                self.logger.debug("Using GET because HEAD is not supported properly")
-                res.close()
-                # Like for HEAD, we need get a size, so disable gzip
-                res = requests_retry(retries=9).get(
+                self.errors = "Resource unavailable at '%s' (%d)" % (
                     self.url.geturl(),
-                    allow_redirects=True,
-                    stream=True,
-                    headers=headers,
-                    timeout=HTTP_DOWNLOAD_TIMEOUT,
+                    res.status_code,
                 )
-                if res.status_code != requests.codes.OK:
-                    self.errors = "Resource unavailable at '%s' (%d)" % (
-                        self.url.geturl(),
-                        res.status_code,
-                    )
-                    return
-
+                return
             self.size = int(res.headers.get("content-length", -1))
+            res.close()
+            return
         except requests.Timeout:
             self.logger.error("Request timed out")
             self.errors = "'%s' timed out" % (self.url.geturl())
         except requests.RequestException as exc:
-            self.logger.error("Resource not available")
-            self.errors = "Unable to get '%s': %s" % (self.url.geturl(), str(exc))
+            self.logger.error("Resource not available: %s", exc)
+            self.errors = f"Unable to get '{self.url.geturl()}': {exc}"
         finally:
             if res is not None:
                 res.close()
+
+    def _head_or_get(self, url, headers):
+        """
+        Try HEAD first, fallback to GET if needed.
+        """
+        self.logger.debug("Validating that %s exists", self.url.geturl())
+        res = requests_retry(retries=9).head(
+            url,
+            allow_redirects=True,
+            headers=headers,
+            timeout=HTTP_DOWNLOAD_TIMEOUT,
+        )
+        if res.status_code != requests.codes.OK:
+            res.close()
+            self.logger.debug("Using GET because HEAD is not supported properly")
+            res = requests_retry(retries=9).get(
+                url,
+                allow_redirects=True,
+                stream=True,
+                headers=headers,
+                timeout=HTTP_DOWNLOAD_TIMEOUT,
+            )
+        return res
 
     def reader(self):
         res = None
