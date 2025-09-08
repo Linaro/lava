@@ -54,12 +54,12 @@ After you enable the cache, you can optionally configure HTTP cache rules to con
     http_cache_exclude_rules: ["https://10.*"]
 
 
-You can also define a fallback to the original URL using the ``fallback_origin_url`` 
+You can also define a fallback to the original URL using the ``http_cache_fallback_origin_url``
 parameter, in case your cache system becomes unavailable.
 
 .. code-block:: yaml
 
-   fallback_origin_url: True
+   http_cache_fallback_origin_url: True
 
 .. robots:
 

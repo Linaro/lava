@@ -582,7 +582,7 @@ class HttpDownloadAction(DownloadHandler):
         super().validate()
         http_cache = self.job.parameters["dispatcher"].get("http_url_format_string", "")
         fallback_origin_url = self.job.parameters["dispatcher"].get(
-            "fallback_origin_url", False
+            "http_cache_fallback_origin_url", False
         )
 
         use_cache = True
