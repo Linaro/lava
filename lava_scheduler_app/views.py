@@ -758,6 +758,7 @@ class DTDeviceView(DeviceTableView):
             .select_related("device_type", "worker_host")
             .prefetch_related("tags")
             .order_by("hostname")
+            .distinct()
         )
         return q.prefetch_related(
             Prefetch(
