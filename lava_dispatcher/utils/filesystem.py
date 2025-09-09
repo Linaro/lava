@@ -24,6 +24,8 @@ if TYPE_CHECKING:
     from pathlib import Path
     from typing import Any
 
+    from lava_dispatcher.action import Action
+
 
 def rmtree(directory: str | Path) -> None:
     """
@@ -116,7 +118,7 @@ def _launch_guestfs(guest: Any) -> None:
 
 @replace_exception(RuntimeError, JobError)
 def prepare_guestfs(
-    output: str, overlay: str | Path, mountpoint: str, size: int
+    action: Action, output: str, overlay: str, mountpoint: str, size: int
 ) -> str:
     """
     Applies the overlay, offset by expected mount point.
@@ -142,12 +144,12 @@ def prepare_guestfs(
     guest_device = devices[0]
     guest.mke2fs(guest_device, label="LAVA")
     # extract to a temp location
-    tar_output = mkdtemp()
+    tar_output = action.mkdtemp()
     # Now mount the filesystem so that we can add files.
     guest.mount(guest_device, "/")
     tarball = tarfile.open(overlay)
     tarball.extractall(tar_output)
-    guest_dir = mkdtemp()
+    guest_dir = action.mkdtemp()
     guest_tar = os.path.join(guest_dir, "guest.tar")
     root_tar = tarfile.open(guest_tar, "w")
 

@@ -93,7 +93,7 @@ class Job:
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
         return os.path.join(path, "%s%s" % (prefix, self.job_id))
 
-    def mkdtemp(self, action_name, override=None):
+    def mkdtemp(self, action_name: str, override: str | None = None) -> str:
         """
         Create a tmp directory in <dispatcher_download_dir>/{job_id}/ because
         this directory will be removed when the job finished, making cleanup

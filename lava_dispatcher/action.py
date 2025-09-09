@@ -951,7 +951,7 @@ class Action:
         else:
             return connection.wait(max_end_time)
 
-    def mkdtemp(self, override=None):
+    def mkdtemp(self, override: str | None = None) -> str:
         return self.job.mkdtemp(self.name, override=override)
 
     def _override_action_timeout(self, timeout):
