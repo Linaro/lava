@@ -136,7 +136,7 @@ def cpio(directory: str, filename: str) -> str:
 
     try:
         find = subprocess.Popen(
-            args=("find", ".", "-depth", "-print0"),
+            args=("find", ".", "-print0"),
             cwd=directory,
             stdout=subprocess.PIPE,
         )
