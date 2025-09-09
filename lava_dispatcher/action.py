@@ -133,6 +133,11 @@ class Pipeline:
         if action_block_timeouts := parameters.get("timeouts"):
             action._override_action_timeout(action_block_timeouts.get(action.name))
 
+        if action.timeout.duration > self.job.timeout.duration:
+            action.logger.warning(
+                "Action timeout for %s exceeds Job timeout", action.name
+            )
+
         # Set the action timeout. The order is from lowest priority to highest:
         # 1. Job's global connection timeout
         action._override_connection_timeout(job_timeouts.get("connection"))
@@ -968,8 +973,6 @@ class Action:
         if not isinstance(timeout, dict):
             raise JobError("Invalid timeout %s" % str(timeout))
         self.timeout.duration = Timeout.parse(timeout)
-        if self.timeout.duration > self.job.timeout.duration:
-            self.logger.warning("Action timeout for %s exceeds Job timeout", self.name)
 
     def _override_connection_timeout(self, timeout):
         """
