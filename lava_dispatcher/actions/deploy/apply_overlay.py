@@ -93,6 +93,7 @@ class ApplyOverlayGuest(Action):
         )
 
         blkid = prepare_guestfs(
+            self,
             guest_file,
             overlay_file,
             mountpoint,
