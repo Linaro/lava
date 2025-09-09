@@ -57,7 +57,7 @@ WORKER_DIR = Path(_WORKER_DIR_STR)
 # Globals
 #########
 # Create the logger that will be configured later
-logging.Formatter.convert = time.gmtime
+logging.Formatter.converter = time.gmtime
 LOG = logging.getLogger("lava-worker")
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
