@@ -487,11 +487,16 @@ class Action:
             raise LAVABug("Action results need to be a dictionary")
 
     def get_constant(self, key, prefix):
+        if context := self.job.parameters.get("context", {}):
+            if isinstance(context, dict) and key in context:
+                return context[key]
+
         # whilst deployment data is still supported, check if the key exists there.
         # once deployment_data is removed, merge with device.get_constant
         if self.parameters.get("deployment_data"):
             if key in self.parameters["deployment_data"]:
                 return self.parameters["deployment_data"][key]
+
         return self.job.device.get_constant(key, prefix=prefix)
 
     def on_timeout(self) -> None:
