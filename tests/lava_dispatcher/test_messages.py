@@ -20,29 +20,35 @@ from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
 
-def create_shell_session_cat_file(
-    file_to_cat: str, pexpect_patterns: list[str], infinite_stream: bool = False
-) -> ShellSession:
-    cmd_str = f"cat {shlex_quote(file_to_cat)}"
+class TestMessagesBase(LavaDispatcherTestCase):
+    def create_shell_session_cat_file(
+        self,
+        file_to_cat: str,
+        pexpect_patterns: list[str],
+        infinite_stream: bool = False,
+    ) -> ShellSession:
+        cmd_str = f"cat {shlex_quote(file_to_cat)}"
 
-    if infinite_stream:
-        cmd_str += " -"
-    else:
-        pexpect_patterns.append(pexpect_eof)
+        if infinite_stream:
+            cmd_str += " -"
+        else:
+            pexpect_patterns.append(pexpect_eof)
 
-    shell_command = ShellCommand(
-        cmd_str,
-        Timeout("test-cat-command", None),
-        logger=MagicMock(),
-    )
+        shell_command = ShellCommand(
+            cmd_str,
+            Timeout("test-cat-command", None),
+            logger=MagicMock(),
+        )
+        # Force cleanup otherwise race conditions might happen
+        self.addCleanup(shell_command.close, force=True)
 
-    shell_session = ShellSession(shell_command)
-    shell_session.prompt_str = pexpect_patterns
+        shell_session = ShellSession(shell_command)
+        shell_session.prompt_str = pexpect_patterns
 
-    return shell_session
+        return shell_session
 
 
-class TestBootMessages(LavaDispatcherTestCase):
+class TestBootMessages(TestMessagesBase):
     def setUp(self):
         super().setUp()
         self.max_end_time = time.monotonic() + 30
@@ -56,7 +62,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         with self.assertRaises(JobError):
             LinuxKernelMessages.parse_failures(
                 connection,
@@ -69,7 +75,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -83,7 +89,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -114,7 +120,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         with self.assertRaises(JobError):
             LinuxKernelMessages.parse_failures(
                 connection,
@@ -128,7 +134,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        create_shell_session_cat_file(logfile, message_list)
+        self.create_shell_session_cat_file(logfile, message_list)
         self.assertRaises(InfrastructureError)
 
     def test_kernel_kasan(self):
@@ -136,7 +142,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -161,7 +167,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -186,7 +192,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -203,7 +209,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -228,7 +234,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -269,7 +275,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(logfile, message_list)
+        connection = self.create_shell_session_cat_file(logfile, message_list)
         results = LinuxKernelMessages.parse_failures(
             connection,
             action=Action(self.create_job_mock()),
@@ -285,7 +291,7 @@ class TestBootMessages(LavaDispatcherTestCase):
         self.assertTrue(os.path.exists(logfile))
         message_list = LinuxKernelMessages.get_init_prompts()
         self.assertIsNotNone(message_list)
-        connection = create_shell_session_cat_file(
+        connection = self.create_shell_session_cat_file(
             logfile, message_list, infinite_stream=True
         )
         action = Action(self.create_job_mock())
