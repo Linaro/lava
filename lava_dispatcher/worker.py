@@ -37,10 +37,11 @@ from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.constants import WORKER_DIR as _WORKER_DIR_STR
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
-from lava_common.worker import LavaWorkerBaseOptions, get_parser, init_sentry_sdk
+from lava_common.worker import LavaWorkerBaseOptions, get_base_parser, init_sentry_sdk
 from lava_common.yaml import yaml_safe_load
 
 if TYPE_CHECKING:
+    from argparse import ArgumentParser
     from typing import Any
 
 ###########
@@ -845,9 +846,36 @@ def ask_exit(signame: str, group: asyncio.Future[Any]) -> None:
 
 @dataclass
 class LavaWorkerOptions(LavaWorkerBaseOptions):
+    url: str
     debug: bool
     wait_jobs: bool
     exit_on_version_mismatch: bool
+
+
+def get_parser() -> ArgumentParser:
+    parser, storage_group, net_group = get_base_parser(
+        description="LAVA Worker",
+        log_file="/var/log/lava-dispatcher/lava-worker.log",
+        worker_dir=WORKER_DIR,
+    )
+
+    parser.add_argument(
+        "--debug", action="store_true", default=False, help="Debug lava-run"
+    )
+    parser.add_argument(
+        "--exit-on-version-mismatch",
+        action="store_true",
+        help="Exit when there is a server mismatch between worker and server.",
+    )
+    parser.add_argument(
+        "--wait-jobs",
+        action="store_true",
+        help="Wait for jobs to finish prior to exit",
+    )
+
+    net_group.add_argument("--url", required=True, help="Base URL of the server")
+
+    return parser
 
 
 async def main() -> int:

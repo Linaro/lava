@@ -11,13 +11,13 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from lava_common.worker import get_parser
 from lava_dispatcher.worker import (
     Job,
     LavaWorkerOptions,
     ServerUnavailable,
     VersionMismatch,
     get_job_data,
+    get_parser,
 )
 
 

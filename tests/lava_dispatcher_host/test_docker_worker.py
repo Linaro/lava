@@ -3,14 +3,17 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import argparse
 import platform
 import subprocess
+from unittest import TestCase
 
 import pytest
 
 import lava_dispatcher_host.docker_worker
+from lava_dispatcher_host.docker_worker import LavaDockerWorkerOptions, get_parser
 
 
 @pytest.fixture
@@ -310,3 +313,16 @@ class TestOptions:
         )
         get_options.assert_called_with(docker_image.name)
         assert "--sentry-dsn" not in ret
+
+
+class TestDockerWorker(TestCase):
+    def test_docker_worker_args(self) -> None:
+        # Test that options dataclass can be initialized from the parsed
+        # arguments.
+        LavaDockerWorkerOptions(
+            **vars(
+                get_parser().parse_args(
+                    ["--name", "unittest_worker", "--url", "https://example.com"]
+                )
+            )
+        )

@@ -4,11 +4,11 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import logging.handlers
 import os
-import pathlib
 import platform
 import random
 import re
@@ -18,15 +18,21 @@ import string
 import subprocess
 import sys
 import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 import sentry_sdk
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, DOCKER_WORKER_DIR
 from lava_common.version import __version__
-from lava_common.worker import get_parser, init_sentry_sdk
+from lava_common.worker import LavaWorkerBaseOptions, get_base_parser, init_sentry_sdk
+
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
 
 #########
 # Globals
@@ -74,7 +80,7 @@ def get_options(image: str) -> list:
     return option_names
 
 
-def filter_options(options, image):
+def filter_options(options: LavaDockerWorkerOptions, image):
     image_available_options = get_options(image)
     ret = ["--worker-dir", options.worker_dir, "--url", options.url]
     if options.ws_url:
@@ -186,7 +192,7 @@ class Terminate(KeyboardInterrupt):
         raise cls()
 
 
-def start(version, options):
+def start(version, options: LavaDockerWorkerOptions):
     if RELEASE_PAT.match(version):
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"
@@ -225,7 +231,7 @@ def start(version, options):
     mounts = []
     mounts.append((DISPATCHER_DOWNLOAD_DIR, None, None))
 
-    tftp_dir = pathlib.Path("/srv/tftp")
+    tftp_dir = Path("/srv/tftp")
     if tftp_dir.exists():
         mounts.append((str(tftp_dir), None, None))
 
@@ -298,7 +304,7 @@ def start(version, options):
         sys.exit(0)
 
 
-def get_server_version(options):
+def get_server_version(options: LavaDockerWorkerOptions):
     server_version_url = re.sub(r"/$", "", options.url) + "/api/v0.2/system/version/"
     retries = Retry(total=3, backoff_factor=1)
     adapter = HTTPAdapter(max_retries=retries)
@@ -342,9 +348,74 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
+def parse_mount(s: str) -> tuple[str, str | None, str | None]:
+    # Split at ':' and accept one, two or three parameters
+    src, dst, opts, *extra = *s.split(":"), *(None, None)
+    if not src or len(extra) > 2:
+        raise TypeError("mount should have 1, 2 or 3 parts (separated by ':')")
+    return (src, dst, opts)
+
+
+@dataclass
+class LavaDockerWorkerOptions(LavaWorkerBaseOptions):
+    devel: bool
+    mount: list[tuple[str, str | None, str | None]]
+    build_dir: Path
+    use_cache: bool
+    url: str
+
+
+def get_parser() -> ArgumentParser:
+    parser, storage_group, net_group = get_base_parser(
+        description="LAVA Docker Worker",
+        log_file="/var/log/lava-dispatcher-host/lava-docker-worker.log",
+        worker_dir=DOCKER_WORKER_DIR,
+    )
+
+    parser.add_argument(
+        "-d",
+        "--devel",
+        action="store_true",
+        default=False,
+        help="Development mode; sets defaults to several options.",
+    )
+    parser.add_argument(
+        "-m",
+        "--mount",
+        metavar="SRC[:DST]",
+        type=parse_mount,
+        nargs="*",
+        action="extend",
+        help=(
+            "Bind mount SRC from the host (as DST in the container, if given). "
+            "Can be given multiple times"
+        ),
+    )
+
+    storage_group.add_argument(
+        "--build-dir",
+        type=Path,
+        default=Path("/etc/lava-dispatcher-host/build"),
+        help=(
+            "Path to a directory with a Dockerfile inside for building "
+            "customized lava-dispatcher docker image."
+        ),
+    )
+    storage_group.add_argument(
+        "--use-cache",
+        action="store_true",
+        default=False,
+        help="Use cache when building custom docker worker image.",
+    )
+
+    net_group.add_argument("--url", default="", help="Base URL of the server")
+
+    return parser
+
+
 def main():
     # Parse command line
-    options = get_parser(docker_worker=True).parse_args()
+    options = LavaDockerWorkerOptions(**vars(get_parser().parse_args()))
     if options.sentry_dsn:
         init_sentry_sdk(options.sentry_dsn)
     options.build_dir = options.build_dir.resolve()
@@ -352,7 +423,7 @@ def main():
     if options.devel:
         options.url = "http://localhost:8000/"
         options.ws_url = "http://localhost:8001/"
-        options.worker_dir = pathlib.Path.cwd() / "tmp" / "worker-docker"
+        options.worker_dir = Path.cwd() / "tmp" / "worker-docker"
         options.level = "DEBUG"
         options.log_file = "-"
     elif not options.url:
