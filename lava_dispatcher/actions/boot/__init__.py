@@ -8,6 +8,7 @@ from __future__ import annotations
 import contextlib
 import os
 import re
+import time
 from typing import TYPE_CHECKING
 
 from lava_common.constants import (
@@ -763,11 +764,18 @@ class OverlayUnpack(Action):
             connection.sendline(
                 "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
                 delay=self.character_delay,
+                check=True,
+                timeout=max_end_time - time.monotonic(),
             )
             connection.wait()
 
             unpack = self.parameters["transfer_overlay"]["unpack_command"]
-            connection.sendline(unpack + " " + overlay, delay=self.character_delay)
+            connection.sendline(
+                unpack + " " + overlay,
+                delay=self.character_delay,
+                check=True,
+                timeout=max_end_time - time.monotonic(),
+            )
             connection.wait()
         elif transfer_method == "nfs":
             location: str | None = self.get_namespace_data(
@@ -783,6 +791,8 @@ class OverlayUnpack(Action):
                 "mkdir -p %s; %s %s:%s %s"
                 % (mount_dir, cmd, ip_addr, location, mount_dir),
                 delay=self.character_delay,
+                check=True,
+                timeout=max_end_time - time.monotonic(),
             )
             connection.wait()
 
@@ -791,6 +801,8 @@ class OverlayUnpack(Action):
                 "%s %s/* /; umount %s; rm -fr %s"
                 % (unpack, mount_dir, mount_dir, mount_dir),
                 delay=self.character_delay,
+                check=True,
+                timeout=max_end_time - time.monotonic(),
             )
             connection.wait()
 

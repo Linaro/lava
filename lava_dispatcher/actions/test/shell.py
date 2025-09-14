@@ -262,7 +262,9 @@ class TestShellAction(Action):
 
         # source the environment file containing device-specific shell variables
         connection.sendline(
-            ". %s/environment" % lava_test_results_dir, delay=self.character_delay
+            ". %s/environment" % lava_test_results_dir,
+            delay=self.character_delay,
+            check=True,
         )
         connection.wait()
 
