@@ -125,6 +125,9 @@ class ShellCommand(pexpect.spawn):
         # See https://github.com/pexpect/pexpect/issues/462
         self.delayafterterminate = 1.0
         self.delaybeforesend = None  # LAVA implements its own delay between characters.
+        # lava-run is single threaded, there is no concern about GIL not being released
+        # between read calls. Remove delay after read.
+        self.delayafterread = None
         # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
