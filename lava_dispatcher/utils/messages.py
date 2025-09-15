@@ -207,10 +207,6 @@ class LinuxKernelMessages:
                 else:
                     action.logger.warning("%s: kernel %r" % (action.name, kind))
 
-                # TRACE may need a newline to force a prompt (only when not using auto-login)
-                if not auto_login and matched_kernel_message["kind"] == "trace":
-                    connection.sendline(connection.check_char)
-
                 results.append({"kind": kind, "message": message})
                 if matched_kernel_message.get("fatal"):
                     break
