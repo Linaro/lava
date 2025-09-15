@@ -4,10 +4,12 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import glob
 import os
 import unittest
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from pexpect import EOF as pexpect_eof
@@ -27,8 +29,11 @@ from lava_dispatcher.utils.filesystem import mkdtemp
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_defs import allow_missing_path, check_missing_path
-from tests.lava_dispatcher.test_messages import create_shell_session_cat_file
+from tests.lava_dispatcher.test_messages import TestMessagesBase
 from tests.utils import DummyLogger, infrastructure_error
+
+if TYPE_CHECKING:
+    from lava_dispatcher.shell import ShellSession
 
 
 class TestKVMSimulation(LavaDispatcherTestCase):
@@ -270,17 +275,6 @@ class TestKVMDeployOverlays(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
 
-def prepare_test_connection(failure=False):
-    if failure:
-        logfile = os.path.join(os.path.dirname(__file__), "kernel-login-error.txt")
-    else:
-        logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
-    if not os.path.exists(logfile):
-        raise OSError("Missing test support file.")
-    message_list = LinuxKernelMessages.get_init_prompts()
-    return create_shell_session_cat_file(logfile, message_list)
-
-
 class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
@@ -407,7 +401,17 @@ class TestKvmConnection(LavaDispatcherTestCase):
             self.assertEqual(call_qemu.session_class, QemuSession)
 
 
-class TestAutoLogin(LavaDispatcherTestCase):
+class TestAutoLogin(TestMessagesBase):
+    def prepare_test_connection(self, failure: bool = False) -> ShellSession:
+        if failure:
+            logfile = os.path.join(os.path.dirname(__file__), "kernel-login-error.txt")
+        else:
+            logfile = os.path.join(os.path.dirname(__file__), "kernel-1.txt")
+        if not os.path.exists(logfile):
+            raise OSError("Missing test support file.")
+        message_list = LinuxKernelMessages.get_init_prompts()
+        return self.create_shell_session_cat_file(logfile, message_list)
+
     def setUp(self):
         super().setUp()
         factory = Factory()
@@ -430,7 +434,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         autologinaction.populate(autologinaction.parameters)
 
         # initialise the first Connection object, a command line shell
-        shell_connection = prepare_test_connection()
+        shell_connection = self.prepare_test_connection()
         autologinaction.set_namespace_data(
             action="deploy-device-env",
             label="environment",
@@ -510,7 +514,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
-        shell_connection = prepare_test_connection()
+        shell_connection = self.prepare_test_connection()
 
         # Test the AutoLoginAction directly
         with autologinaction.timeout(None, None) as max_end_time:
@@ -541,7 +545,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         autologinaction.validate()
 
         # initialise the first Connection object, a command line shell
-        shell_connection = prepare_test_connection()
+        shell_connection = self.prepare_test_connection()
 
         # Test the AutoLoginAction directly
         with autologinaction.timeout(None, None) as max_end_time:
@@ -565,7 +569,7 @@ class TestAutoLogin(LavaDispatcherTestCase):
         loginaction.parameters = autologinaction.parameters
 
         # initialise the first Connection object, a command line shell
-        shell_connection = prepare_test_connection(True)
+        shell_connection = self.prepare_test_connection(True)
 
         # Test the AutoLoginAction directly
         with self.assertRaisesRegex(
