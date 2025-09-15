@@ -124,6 +124,7 @@ class ShellCommand(pexpect.spawn):
         # If the system is loaded
         # See https://github.com/pexpect/pexpect/issues/462
         self.delayafterterminate = 1.0
+        self.delaybeforesend = None  # LAVA implements its own delay between characters.
         # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
