@@ -3,28 +3,42 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import decimal
 import logging
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import LAVABug, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import InternalObject
 
-RECOGNIZED_TAGS = ("telnet", "ssh", "shell")
+if TYPE_CHECKING:
+    from typing import Any
+
+    from .action import Action
+    from .job import Job
+
+RECOGNIZED_TAGS: tuple[str, ...] = ("telnet", "ssh", "shell")
 
 
 class SignalMatch(InternalObject):
-    def match(self, data, fixupdict=None):
+    def match(
+        self, data: dict[str, str | None], fixupdict: dict[str, str] | None = None
+    ) -> dict[str, str | float | None]:
         if not fixupdict:
             fixupdict = {}
 
-        res = {}
+        res: dict[str, str | float | None] = {}
         for key in data:
             # Special cases for 'measurement'
             if key == "measurement":
                 try:
-                    measurement = decimal.Decimal(data["measurement"])
+                    measurement_value = data["measurement"]
+                    if measurement_value is None:
+                        raise decimal.InvalidOperation
+
+                    measurement = decimal.Decimal(measurement_value)
                 except decimal.InvalidOperation:
                     raise TestError("Invalid measurement %s" % data["measurement"])
                 res["measurement"] = float(measurement)
@@ -77,16 +91,20 @@ class Protocol:
     name = "protocol"
     level = 0
 
-    def __init__(self, parameters, job_id):
+    def __init__(self, parameters: dict[str, Any], job_id: str):
         self.logger = logging.getLogger("dispatcher")
         self.poll_timeout = Timeout(self.name, None)
-        self.__errors__ = []
+        self.__errors__: list[str] = []
         self.parameters = parameters
         self.configured = False
         self.job_id = job_id
 
     @classmethod
-    def select_all(cls, parameters):
+    def accepts(cls, parameters: dict[str, Any]) -> bool:
+        raise NotImplementedError
+
+    @classmethod
+    def select_all(cls, parameters: dict[str, Any]) -> list[tuple[type[Protocol], int]]:
         """
         Multiple protocols can apply to the same job, each with their own parameters.
         Jobs may have zero or more protocols selected.
@@ -95,30 +113,31 @@ class Protocol:
         return [(c, c.level) for c in candidates if c.accepts(parameters)]
 
     @property
-    def errors(self):
+    def errors(self) -> list[str]:
         return self.__errors__
 
     @errors.setter
-    def errors(self, error):
+    def errors(self, error: str) -> None:
         self.__errors__.append(error)
 
     @property
-    def valid(self):
+    def valid(self) -> bool:
         return not bool([x for x in self.errors if x])
 
-    def set_up(self):
+    def set_up(self) -> None:
         raise LAVABug("'set_up' not implemented")
 
-    def configure(self, device, job):
+    def configure(self, device: dict[str, Any], job: Job) -> bool:
         self.configured = True
+        return True
 
-    def finalise_protocol(self, device=None):
+    def finalise_protocol(self, device: dict[str, Any] | None = None) -> None:
         raise LAVABug("'finalise_protocol' not implemented")
 
-    def set_timeout(self, duration):
+    def set_timeout(self, duration: int) -> None:
         self.poll_timeout.duration = duration
 
-    def check_timeout(self, duration, data):
+    def check_timeout(self, duration: int, data: dict[str, Any]) -> bool:
         """
         Use if particular protocol calls can require a connection timeout
         larger than the default_connection_duration.
@@ -129,12 +148,12 @@ class Protocol:
         """
         return False
 
-    def _api_select(self, data, action=None):
+    def _api_select(self, data: Any | None, action: Action | None = None) -> Any | None:
         if not data:
             return None
         raise LAVABug("'_api_select' not implemented")
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
         """Makes the Protocol callable so that actions can send messages just using the protocol.
         This function may block until the specified API call returns. Some API calls may involve a
         substantial period of polling.
@@ -144,5 +163,5 @@ class Protocol:
         # implementations will usually need a try: except: block around _api.select()
         return self._api_select(args, action=None)
 
-    def collate(self, reply_dict, params_dict):
+    def collate(self, reply_dict: dict[str, Any], params_dict: dict[str, Any]) -> None:
         return None
