@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import decimal
 import logging
 from typing import TYPE_CHECKING
 
@@ -30,43 +29,40 @@ class SignalMatch(InternalObject):
             fixupdict = {}
 
         res: dict[str, str | float | None] = {}
-        for key in data:
+        for key, value in data.items():
             # Special cases for 'measurement'
             if key == "measurement":
                 try:
-                    measurement_value = data["measurement"]
-                    if measurement_value is None:
-                        raise decimal.InvalidOperation
+                    if value is None:
+                        raise ValueError
 
-                    measurement = decimal.Decimal(measurement_value)
-                except decimal.InvalidOperation:
-                    raise TestError("Invalid measurement %s" % data["measurement"])
-                res["measurement"] = float(measurement)
-
+                    res["measurement"] = float(value)
+                except ValueError:
+                    raise TestError(f"Invalid measurement {value!r}")
             # and 'result'
             elif key == "result":
-                res["result"] = data["result"]
-                if data["result"] in fixupdict:
-                    res["result"] = fixupdict[data["result"]]
-                if res["result"] not in ("pass", "fail", "skip", "unknown"):
-                    res["result"] = "unknown"
-                    raise TestError("Bad test result: %s" % data["result"])
+                if value in fixupdict:
+                    value = fixupdict[value]
 
+                res["result"] = value
+
+                if value not in ("pass", "fail", "skip", "unknown"):
+                    raise TestError(f"Bad test result: {value!r}")
             # or just copy the data
             else:
-                res[key] = data[key]
+                res[key] = value
 
         if "test_case_id" not in res:
             raise TestError(
                 "Test case results without test_case_id (probably a sign of an "
-                "incorrect parsing pattern being used): %s" % res
+                f"incorrect parsing pattern being used): {res!r}"
             )
 
         if "result" not in res:
             res["result"] = "unknown"
             raise TestError(
                 "Test case results without result (probably a sign of an "
-                "incorrect parsing pattern being used): %s" % res
+                f"incorrect parsing pattern being used): {res!r}"
             )
 
         return res
