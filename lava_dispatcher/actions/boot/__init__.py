@@ -94,17 +94,11 @@ class LoginAction(Action):
             fail_msg=fail_msg,
             auto_login=auto_login,
         )
-        if len(parsed) and "success" in parsed[0]:
-            self.results = {"success": parsed[0]["success"]}
-            if len(parsed) > 1:
-                # errors detected.
-                self.logger.warning("Kernel warnings or errors detected.")
-                self.results = {"extra": parsed}
-        elif not parsed:
-            self.results = {"success": "No kernel warnings or errors detected."}
-        else:
-            self.results = {"fail": parsed}
+        if parsed:
             self.logger.warning("Kernel warnings or errors detected.")
+            self.results = {"extra": parsed}
+        else:
+            self.results = {"success": "No kernel warnings or errors detected."}
 
     def _check_prompt_characters(self, chk_prompt: str | type) -> None:
         if not isinstance(chk_prompt, str):
@@ -146,18 +140,8 @@ class LoginAction(Action):
         params = self.parameters.get("auto_login")
         if not params:
             self.logger.debug("No login prompt set.")
-            # If auto_login is not enabled, login will time out if login
-            # details are requested.
-            connection.prompt_str.append(LOGIN_TIMED_OUT_MSG)
-            connection.prompt_str.append(LOGIN_INCORRECT_MSG)
             # wait for a prompt or kernel messages
             self.check_kernel_messages(connection, max_end_time, failure)
-            if "success" in self.results:
-                check = self.results["success"]
-                if LOGIN_TIMED_OUT_MSG in check or LOGIN_INCORRECT_MSG in check:
-                    raise JobError(
-                        "auto_login not enabled but image requested login details."
-                    )
             # clear kernel message prompt patterns
             connection.prompt_str = list(self.parameters.get("prompts", []))
             # already matched one of the prompts
@@ -170,12 +154,6 @@ class LoginAction(Action):
             self.check_kernel_messages(
                 connection, max_end_time, failure, auto_login=True
             )
-            if "success" in self.results:
-                if LOGIN_INCORRECT_MSG in self.results["success"]:
-                    self.logger.warning(
-                        "Login incorrect message matched before the login prompt. "
-                        "Please check that the login prompt is correct. Retrying login..."
-                    )
             self.logger.debug("Sending username %s", params["username"])
             connection.sendline(params["username"], delay=self.character_delay)
             # clear the kernel_messages patterns
