@@ -217,7 +217,7 @@ class LinuxKernelMessages:
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
                 action.logger.error("%s %s" % (action.name, halt))
-                results.append({"message": "kernel-messages"})
+                results.append({"kind": "custom-error", "message": fail_msg})
                 break
             else:
                 break
