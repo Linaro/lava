@@ -69,6 +69,7 @@ def device():
                 Required("ramdisk"): str,
                 Required("dtb"): str,
             },
+            Optional("dtb_base_resize"): int,
             Optional("load_address"): str,
             # FIXME: should be removed when the templates are fixed
             Optional("pass"): None,
