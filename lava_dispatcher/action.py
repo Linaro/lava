@@ -703,6 +703,11 @@ class Action:
                 timeout=self.timeout.duration,
                 searchwindowsize=10,
             )
+            # Disable pexpect's built in delays
+            proc.delaybeforesend = None
+            proc.delayafterread = None  # type: ignore[assignment]
+            proc.delayafterterminate = 0
+            proc.delayafterclose = 0
             ret = self._run_pexpect_popen(proc, start)
         except (OSError, pexpect.ExceptionPexpect) as exc:
             self.logger.error("Unable to run: %s", exc)
