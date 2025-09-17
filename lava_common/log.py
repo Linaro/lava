@@ -116,7 +116,7 @@ class JobOutputSender:
 
     def record_post_result(self, ret: requests.Response) -> None:
         status_code = ret.status_code
-        now = datetime.datetime.utcnow().isoformat()
+        now = datetime.datetime.now(datetime.UTC).isoformat()
 
         if status_code == 200:
             sys.stdout.write(
@@ -164,7 +164,7 @@ class JobOutputSender:
                 timeout=120,
             )
             if self.exception_counter > 0:
-                now = datetime.datetime.utcnow().isoformat()
+                now = datetime.datetime.now(datetime.UTC).isoformat()
                 sys.stderr.write(
                     f"{now} EXCEPTION [LOGGER] POST: "
                     f"<{self.exception_counter} consecutive exceptions skipped>\n"
@@ -176,7 +176,7 @@ class JobOutputSender:
             if self.last_exception_type == type(exc):
                 self.exception_counter += 1
             else:
-                now = datetime.datetime.utcnow().isoformat()
+                now = datetime.datetime.now(datetime.UTC).isoformat()
                 if self.exception_counter:
                     sys.stderr.write(
                         f"{now} EXCEPTION [LOGGER] POST: "
@@ -234,7 +234,7 @@ class JobOutputSender:
             self.records[:] = [
                 dump(
                     {
-                        "dt": datetime.datetime.utcnow().isoformat(),
+                        "dt": datetime.datetime.now(datetime.UTC).isoformat(),
                         "lvl": "results",
                         "msg": {
                             "definition": "lava",
@@ -245,7 +245,7 @@ class JobOutputSender:
                 )
             ]
 
-            now = datetime.datetime.utcnow().isoformat()
+            now = datetime.datetime.now(datetime.UTC).isoformat()
             sys.stderr.write(
                 f"{now} ERROR [LOGGER] POST: "
                 "Log post request body exceeds server settings param.\n"
@@ -362,7 +362,7 @@ class YAMLLogger(logging.Logger):
         self.line += 1
         # Build the dictionary
         data: dict[str, Any] = {
-            "dt": datetime.datetime.utcnow().isoformat(),
+            "dt": datetime.datetime.now(datetime.UTC).isoformat(),
             "lvl": level_name,
         }
 

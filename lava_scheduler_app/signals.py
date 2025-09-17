@@ -61,7 +61,7 @@ def send_event(topic, user, data):
         msg = [
             (settings.EVENT_TOPIC + topic).encode(),
             str(uuid.uuid1()).encode(),
-            datetime.datetime.utcnow().isoformat().encode(),
+            datetime.datetime.now(datetime.UTC).isoformat().encode(),
             user.encode(),
             json_dumps(data).encode(),
         ]
