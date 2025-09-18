@@ -98,7 +98,7 @@ code_quality:
 
 coverage:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-12
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
