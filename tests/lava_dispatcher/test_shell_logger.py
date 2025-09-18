@@ -48,6 +48,7 @@ class TestShellLogger(TestCase):
         command = self.create_shell_command(r"printf 'foo\nbar'")
         command.expect(pexpect_eof)
         command.flush()
+        command.wait()
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls([], ["foo", "bar"])
 
@@ -55,6 +56,7 @@ class TestShellLogger(TestCase):
         command = self.create_shell_command(r"printf 'foo\r\nbar'")
         command.expect(pexpect_eof)
         command.flush()
+        command.wait()
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls([], ["foo", "bar"])
 
@@ -69,6 +71,7 @@ class TestShellLogger(TestCase):
         command.sendline("Hello World")
         command.expect(pexpect_eof)
         command.flush()
+        command.wait()
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
@@ -86,6 +89,7 @@ class TestShellLogger(TestCase):
         command.sendline("World")
         command.expect(pexpect_eof)
         command.flush()
+        command.wait()
         self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
