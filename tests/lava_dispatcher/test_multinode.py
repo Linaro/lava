@@ -349,6 +349,7 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
             str(randint(0, 2**31)),
         )
         new_protocol.debug_setup()
+        new_protocol._connect(0)
         return new_protocol
 
     def test_multinode_protocol_init(self) -> None:

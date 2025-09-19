@@ -3,7 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import copy
 import json
@@ -13,17 +13,25 @@ import re
 import socket
 import time
 import traceback
+from typing import TYPE_CHECKING
 
 from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
 from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
     JobError,
+    LAVABug,
     MultinodeProtocolTimeoutError,
     TestError,
 )
 from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Protocol
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from ..action import Action
+    from ..job import Job
 
 
 class MultinodeProtocol(Protocol):
@@ -35,16 +43,16 @@ class MultinodeProtocol(Protocol):
 
     # FIXME: use errors and valid where old code just logged complaints
 
-    def __init__(self, parameters, job_id):
+    def __init__(self, parameters: dict[str, Any], job_id: str):
         super().__init__(parameters, job_id)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
         self.system_timeout = Timeout(
             "system", None, duration=LAVA_MULTINODE_SYSTEM_TIMEOUT
         )
-        self.settings = None
-        self.sock = None
-        self.base_message = None
+        self.settings = self.default_settings()
+        self.sock: socket.socket | None = None
+        self.base_message: dict[str, Any] | None = None
         self.logger = logging.getLogger("dispatcher")
         self.delayed_start = False
         params = parameters["protocols"][self.name]
@@ -62,7 +70,7 @@ class MultinodeProtocol(Protocol):
                 self.logger.warning(self.errors)
 
     @classmethod
-    def accepts(cls, parameters):
+    def accepts(cls, parameters: dict[str, Any]) -> bool:
         if "protocols" not in parameters:
             return False
         if "lava-multinode" not in parameters["protocols"]:
@@ -71,18 +79,22 @@ class MultinodeProtocol(Protocol):
             return True
         return False
 
-    def read_settings(self, filename):
-        """
-        NodeDispatchers need to use the same port and blocksize as the Coordinator,
-        so read the same conffile.
-        The protocol header is hard-coded into the server & here.
-        """
-        settings = {
+    @staticmethod
+    def default_settings() -> dict[str, Any]:
+        return {
             "port": 3079,
             "blocksize": 4 * 1024,
             "poll_delay": 1,
             "coordinator_hostname": "localhost",
         }
+
+    def read_settings(self, filename: str) -> dict[str, Any]:
+        """
+        NodeDispatchers need to use the same port and blocksize as the Coordinator,
+        so read the same conffile.
+        The protocol header is hard-coded into the server & here.
+        """
+        settings = self.default_settings()
         self.logger = logging.getLogger("dispatcher")
         json_default = {}
         with open(filename) as stream:
@@ -103,7 +115,7 @@ class MultinodeProtocol(Protocol):
             settings["coordinator_hostname"] = json_default["coordinator_hostname"]
         return settings
 
-    def _connect(self, delay):
+    def _connect(self, delay: float) -> bool:
         """
         create socket and connect
         """
@@ -138,7 +150,10 @@ class MultinodeProtocol(Protocol):
             self.sock.close()
             return False
 
-    def _send_message(self, message):
+    def _send_message(self, message: str) -> bool:
+        if self.sock is None:
+            raise LAVABug("Socket not initialized")
+
         msg_len = len(message)
         try:
             # send the length as 32bit hexadecimal
@@ -160,7 +175,10 @@ class MultinodeProtocol(Protocol):
             return False
         return True
 
-    def _recv_message(self):
+    def _recv_message(self) -> str:
+        if self.sock is None:
+            raise LAVABug("Socket not initialized")
+
         try:
             header = self.sock.recv(8).decode("utf-8")  # 32bit limit as a hexadecimal
             if not header or header == "":
@@ -182,13 +200,15 @@ class MultinodeProtocol(Protocol):
             return json.dumps({"response": "wait"})
         return response
 
-    def poll(self, message, timeout=None):
+    def poll(self, message: str, timeout: int | None = None) -> str:
         """
         Blocking, synchronous polling of the Coordinator on the configured port.
         Single send operations greater than 0xFFFF are rejected to prevent truncation.
         :param msg_str: The message to send to the Coordinator, as a JSON string.
         :return: a JSON string of the response to the poll
         """
+        if self.sock is None:
+            raise LAVABug("Socket not initialized")
         if not timeout:
             timeout = self.poll_timeout.duration
         if isinstance(timeout, float):
@@ -245,21 +265,24 @@ class MultinodeProtocol(Protocol):
                 raise MultinodeProtocolTimeoutError("protocol %s timed out" % self.name)
         return response
 
-    def configure(self, device, job):
+    def configure(self, device: dict[str, Any], job: Job) -> bool:
         """
         Called by job.validate() to populate internal data
         Returns True if configuration completed.
         """
-        action_list = [
-            action.section for action in job.pipeline.actions if action.section
-        ]
+        action_list: list[str] = []
+        job_pipeline = job.pipeline
+        if job_pipeline is not None:
+            action_list.extend(
+                action.section for action in job_pipeline.actions if action.section
+            )
         self.logger.debug(
             "This MultiNode test job contains top level actions, in order, of: %s",
             ", ".join(action_list),
         )
         return True
 
-    def set_up(self):
+    def set_up(self) -> None:
         """
         Called from the job at the start of the run step.
         """
@@ -305,7 +328,7 @@ class MultinodeProtocol(Protocol):
         else:
             self.logger.debug("%s protocol initialised", self.name)
 
-    def debug_setup(self):
+    def debug_setup(self) -> None:
         self.settings = {
             "blocksize": 4096,
             "port": 3179,  # debug port
@@ -331,7 +354,7 @@ class MultinodeProtocol(Protocol):
             )
         self.logger.debug("%s protocol initialised in debug mode", self.name)
 
-    def initialise_group(self):
+    def initialise_group(self) -> None:
         """
         Sends the first message to initialize the group data
         separated so that unit tests can choose whether to use debug_setup with or without it.
@@ -346,7 +369,7 @@ class MultinodeProtocol(Protocol):
         )
         self._send(init_msg, True)
 
-    def finalise_protocol(self, device=None):
+    def finalise_protocol(self, device: dict[str, Any] | None = None) -> None:
         # If the protocol hasn't been setup correctly
         if self.base_message is not None:
             fin_msg = {
@@ -356,7 +379,7 @@ class MultinodeProtocol(Protocol):
             self._send(fin_msg, True)
         self.logger.debug("%s protocol finalised.", self.name)
 
-    def _check_data(self, data):
+    def _check_data(self, data: str) -> dict[str, Any]:
         try:
             json_data = json.loads(data)
         except (ValueError, TypeError) as exc:
@@ -379,7 +402,7 @@ class MultinodeProtocol(Protocol):
             elif isinstance(json_data["timeout"], int) or isinstance(
                 json_data["timeout"], float
             ):
-                self.poll_timeout.duration = json_data["timeout"]
+                self.poll_timeout.duration = int(json_data["timeout"])
             else:
                 self.logger.debug(json_data["timeout"])
                 raise JobError("Invalid timeout request")
@@ -393,7 +416,7 @@ class MultinodeProtocol(Protocol):
 
         return json_data
 
-    def _api_select(self, data, action=None):
+    def _api_select(self, data: Any | None, action: Action | None = None) -> Any | None:
         """Determines which API call has been requested, makes the call, blocks and returns the reply.
         :param json_data: Python object of the API call
         :return: Python object containing the reply dict.
@@ -447,7 +470,7 @@ class MultinodeProtocol(Protocol):
         else:
             return reply["response"]
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
         # only the first argument is used.
         try:
             return self._api_select(json.dumps(args[0]))
@@ -457,7 +480,9 @@ class MultinodeProtocol(Protocol):
             logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))
 
-    def collate(self, reply, params):
+    def collate(
+        self, reply: str | dict[str, Any], params: dict[str, Any]
+    ) -> tuple[str, Any] | None:
         """
         Retrieve values from reply to the call for this action
         possibly multiple key:value pairs.
@@ -467,10 +492,10 @@ class MultinodeProtocol(Protocol):
         is the identifier to be used by other actions wanting this data (typically the API call or messageID)
         and the second value is the collated data from the call to the protocol.
         """
-        retval = {}
+        retval: dict[str, dict[str, Any]] = {}
         if reply == "ack":
             # Skip collate, if 'ack' got from lava-coordinator
-            return
+            return None
         if reply == {} or not isinstance(reply, dict):
             msg = "Unable to identify replaceable values in the parameters: %s" % params
             self.logger.error(msg)
@@ -506,19 +531,19 @@ class MultinodeProtocol(Protocol):
         self.logger.error(msg)
         raise JobError(msg)
 
-    def _send(self, msg, system=False):
+    def _send(self, msg: dict[str, Any], system: bool = False) -> Any:
         """Internal call to perform the API call via the Poller.
         :param msg: The call-specific message to be wrapped in the base_msg primitive.
         :return: Python object of the reply dict.
         """
-        new_msg = copy.deepcopy(self.base_message)
+        new_msg = copy.deepcopy(self.base_message or {})
         new_msg.update(msg)
         if system:
             return self.poll(json.dumps(new_msg), timeout=self.system_timeout.duration)
         self.logger.debug("final message: %s", json.dumps(new_msg))
         return self.poll(json.dumps(new_msg))
 
-    def request_wait_all(self, message_id, role=None):
+    def request_wait_all(self, message_id: str, role: str | None = None) -> Any:
         """
         Asks the Coordinator to send back a particular messageID
         and blocks until that messageID is available for all nodes in
@@ -534,7 +559,7 @@ class MultinodeProtocol(Protocol):
         else:
             return self._send({"request": "lava_wait_all", "messageID": message_id})
 
-    def request_wait(self, message_id):
+    def request_wait(self, message_id: str) -> Any:
         """
         Asks the Coordinator to send back a particular messageID
         and blocks until that messageID is available for this node
@@ -548,7 +573,9 @@ class MultinodeProtocol(Protocol):
         }
         return self._send(wait_msg)
 
-    def request_send(self, message_id, message=None):
+    def request_send(
+        self, message_id: str, message: dict[str, Any] | None = None
+    ) -> Any:
         """
         Sends a message to the group via the Coordinator. The
         message is guaranteed to be available to all members of the
@@ -566,7 +593,7 @@ class MultinodeProtocol(Protocol):
         self.logger.debug("Sending %s", send_msg)
         return self._send(send_msg)
 
-    def request_sync(self, msg):
+    def request_sync(self, msg: str) -> Any:
         """
         Creates and send a message requesting lava_sync
         """
@@ -574,7 +601,7 @@ class MultinodeProtocol(Protocol):
         sync_msg = {"request": "lava_sync", "messageID": msg}
         return self._send(sync_msg)
 
-    def request_lava_start(self, message):
+    def request_lava_start(self, message: str) -> Any:
         """
         Sends a message to the group via the Coordinator. All jobs with the matching role
         will receive the message and can then start the job.

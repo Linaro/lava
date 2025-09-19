@@ -159,5 +159,7 @@ class Protocol:
         # implementations will usually need a try: except: block around _api.select()
         return self._api_select(args, action=None)
 
-    def collate(self, reply_dict: dict[str, Any], params_dict: dict[str, Any]) -> None:
+    def collate(
+        self, reply_dict: dict[str, Any], params_dict: dict[str, Any]
+    ) -> tuple[str, Any] | None:
         return None
