@@ -19,11 +19,11 @@ from tests.utils import infrastructure_error_multi_paths
 class TestRecoveryMode(LavaDispatcherTestCase):
     def create_fastboot_job(self):
         return Factory().create_job(
-            "hi6220-hikey-bl-01.jinja2", "sample_jobs/hi6220-recovery.yaml"
+            "hi6220-hikey-bl-01", "sample_jobs/hi6220-recovery.yaml"
         )
 
     def create_uboot_job(self):
-        return Factory().create_job("x15-bl-01.jinja2", "sample_jobs/x15-recovery.yaml")
+        return Factory().create_job("x15-bl-01", "sample_jobs/x15-recovery.yaml")
 
     @unittest.skipIf(
         infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),

@@ -66,7 +66,7 @@ class TestAvhActions(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/avh-rpi4b.yaml"):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("avh-01.jinja2", job)
+        self.job = self.factory.create_job("avh-01", job)
 
     def test_validate(self):
         try:
@@ -122,10 +122,10 @@ class TestAvhActions(LavaDispatcherTestCase):
         plist_dump.assert_called_with(
             {
                 "Type": "iot",
-                "UniqueIdentifier": "lava-avh-rpi4b-1.1-4999-rrrrr",
+                "UniqueIdentifier": f"lava-avh-rpi4b-1.1-{self.job.job_id}-rrrrr",
                 "DeviceIdentifier": "rpi4b",
                 "Version": "1.1",
-                "Build": "4999",
+                "Build": self.job.job_id,
             },
             ANY,
         )
@@ -252,7 +252,7 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
     def setUp(self, job="sample_jobs/avh-kronos.yaml"):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job("avh-01.jinja2", job)
+        self.job = self.factory.create_job("avh-01", job)
 
     def test_validate(self):
         try:
@@ -305,7 +305,7 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
         assert avh_data["project_id"] == "d59db33d-27bd-4b22-878d-49e4758a648e"
         assert avh_data["model"] == "kronos"
         assert avh_data["image_version"] == "1.1"
-        assert avh_data["image_build"] == "4999"
+        assert avh_data["image_build"] == self.job.job_id
         assert "fw_package/fw-package-1.0.zip" in avh_data["image_path"]
         assert avh_data["image_name"] == "fw-package-1.0"
 

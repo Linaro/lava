@@ -16,9 +16,7 @@ class TestDownloadDeploy(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job(
-            "db410c-01.jinja2", "sample_jobs/download.yaml"
-        )
+        self.job = self.factory.create_job("db410c-01", "sample_jobs/download.yaml")
 
     def test_deploy_job(self):
         self.assertEqual(self.job.pipeline.job, self.job)
@@ -43,14 +41,12 @@ class TestDownloadDeploy(LavaDispatcherTestCase):
             self.assertEqual([], action.errors)
 
     def test_directories(self):
-        job = self.factory.create_job("bbb-01.jinja2", "sample_jobs/download_dir.yaml")
+        job = self.factory.create_job("bbb-01", "sample_jobs/download_dir.yaml")
         with self.assertRaises(JobError):
             job.validate()
 
     def test_download_tar(self):
-        job = self.factory.create_job(
-            "x86-01.jinja2", "sample_jobs/up2-tests-from-tar.yaml"
-        )
+        job = self.factory.create_job("x86-01", "sample_jobs/up2-tests-from-tar.yaml")
         with patch("lava_dispatcher.actions.deploy.nbd.which") as which_mock:
             job.validate()
 

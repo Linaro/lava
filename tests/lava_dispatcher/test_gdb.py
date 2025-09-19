@@ -29,10 +29,10 @@ def check_gdb_multipart():
 
 class GDBFactory(Factory):
     def create_cc3230SF_job(self, filename):
-        return self.create_job("cc3220SF-01.jinja2", filename)
+        return self.create_job("cc3220SF-01", filename)
 
     def create_cc3230SF_docker_job(self, filename):
-        return self.create_job("cc3220SF-docker-01.jinja2", filename)
+        return self.create_job("cc3220SF-docker-01", filename)
 
 
 class TestGDB(LavaDispatcherTestCase):

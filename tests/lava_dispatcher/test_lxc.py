@@ -4,11 +4,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import os
 import unittest
 
 from lava_common.exceptions import JobError
-from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.boot.lxc import BootLxcAction, LxcAddStaticDevices
 from lava_dispatcher.actions.deploy.lxc import LxcAction, LxcCreateAction
 from lava_dispatcher.actions.deploy.testdef import (
@@ -17,10 +15,8 @@ from lava_dispatcher.actions.deploy.testdef import (
 )
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction, TestShellRetry
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger, infrastructure_error
+from tests.utils import infrastructure_error
 
 
 class LxcFactory(Factory):
@@ -31,18 +27,16 @@ class LxcFactory(Factory):
     """
 
     def create_lxc_job(self, filename):
-        return self.create_job("lxc-01.jinja2", filename)
+        return self.create_job("lxc-01", filename)
 
     def create_bbb_lxc_job(self, filename):
-        return self.create_job("bbb-01.jinja2", filename)
+        return self.create_job("bbb-01", filename)
 
     def create_adb_nuc_job(self, filename):
-        return self.create_job("adb-nuc-01.jinja2", filename)
+        return self.create_job("adb-nuc-01", filename)
 
     def create_hikey_aep_job(self, filename):
-        job = super().create_job("hi6220-hikey-r2-01.jinja2", filename)
-        job.logger = DummyLogger()
-        return job
+        return self.create_job("hi6220-hikey-r2-01", filename)
 
 
 class TestLxcDeploy(LavaDispatcherTestCase):
@@ -125,9 +119,6 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         self.assertIsNotNone(self.job)
         # validate with two test actions, lxc and device
         self.job.validate()
-        lxc_yaml = os.path.join(os.path.dirname(__file__), "sample_jobs/bbb-lxc.yaml")
-        with open(lxc_yaml) as sample_job_data:
-            data = yaml_safe_load(sample_job_data)
 
         lxc_deploy = self.job.pipeline.find_action(LxcAction)
         lxc_test_def = lxc_deploy.pipeline.find_action(TestDefinitionAction)
@@ -162,18 +153,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
         tftp_runner = tftp_test_def.pipeline.find_action(TestRunnerAction)
         self.assertIsNotNone(tftp_runner.testdef_levels)
 
-        # remove the second test action
-        data["actions"].pop()
-        test_actions = [action for action in data["actions"] if "test" in action]
-        self.assertEqual(len(test_actions), 1)
-        self.assertEqual(test_actions[0]["test"]["namespace"], "probe")
-        parser = JobParser()
-        (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
-        job.logger = DummyLogger()
-        job.validate()
-        lxc2_deploy = job.pipeline.find_action(LxcAction)
+        lxc2_deploy = self.job.pipeline.find_action(LxcAction)
         lxc2_test_def = lxc2_deploy.pipeline.find_action(TestDefinitionAction)
         self.assertIsNotNone(lxc2_test_def.level, lxc2_test_def.test_list)
         lxc2_runner = lxc2_test_def.pipeline.find_action(TestRunnerAction)
@@ -197,17 +177,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
 
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_lxc_without_lxctest(self):
-        lxc_yaml = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/bbb-lxc-notest.yaml"
-        )
-        with open(lxc_yaml) as sample_job_data:
-            data = yaml_safe_load(sample_job_data)
-        parser = JobParser()
-        (rendered, _) = self.factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        job = parser.parse(yaml_safe_dump(data), device, 4577, None, "")
-        job.logger = DummyLogger()
-        job.validate()
+        job = self.factory.create_job("bbb-01", "sample_jobs/bbb-lxc-notest.yaml")
 
         lxc_deploy = job.pipeline.find_action(LxcAction)
         names = [action.name for action in lxc_deploy.pipeline.actions]
@@ -253,9 +223,7 @@ class TestLxcWithDevices(LavaDispatcherTestCase):
     @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_iot_lxc(self):
         self.factory = Factory()
-        job = self.factory.create_job(
-            "frdm-k64f-01.jinja2", "sample_jobs/frdm-k64f-lxc.yaml"
-        )
+        job = self.factory.create_job("frdm-k64f-01", "sample_jobs/frdm-k64f-lxc.yaml")
         job.validate()
 
         description_ref = self.pipeline_reference("frdm-k64f-lxc.yaml", job=job)

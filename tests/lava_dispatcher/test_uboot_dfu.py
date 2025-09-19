@@ -11,7 +11,7 @@ from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 class UBootDFUFactory(Factory):
     def create_rzn1d_job(self, filename):
-        return self.create_job("rzn1d-01.jinja2", filename)
+        return self.create_job("rzn1d-01", filename)
 
 
 class TestUbootDFUAction(LavaDispatcherTestCase):

@@ -9,7 +9,7 @@ from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 class MpsFactory(Factory):
     def create_mps_job(self, filename):
-        return self.create_job("mps2plus-01.jinja2", filename)
+        return self.create_job("mps2plus-01", filename)
 
 
 class TestMps(LavaDispatcherTestCase):

@@ -58,9 +58,7 @@ class TestDownloads(LavaDispatcherTestCase):
     def test_downloads_action_adds_docker_action(self):
         factory = Factory()
         factory.validate_job_strict = True
-        job = factory.create_job(
-            "qemu01.jinja2", "sample_jobs/qemu-download-postprocess.yaml"
-        )
+        job = factory.create_job("qemu01", "sample_jobs/qemu-download-postprocess.yaml")
 
         deploy = job.pipeline.actions[0]
         action = deploy.pipeline.actions[-1]

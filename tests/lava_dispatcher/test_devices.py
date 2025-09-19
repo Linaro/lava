@@ -4,19 +4,16 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import os
 import unittest
 from unittest.mock import patch
 
 from lava_common.exceptions import ConfigurationError, JobError
-from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import Action
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.actions.boot.u_boot import BootloaderInterruptAction, UBootAction
 from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import DummyLogger, infrastructure_error
+from tests.utils import infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 
@@ -24,8 +21,7 @@ from tests.utils import DummyLogger, infrastructure_error
 class TestDeviceParser(LavaDispatcherTestCase):
     def test_new_device(self):
         factory = Factory()
-        (rendered, _) = factory.create_device("kvm01.jinja2")
-        kvm01 = yaml_safe_load(rendered)
+        kvm01 = factory.load_device_configuration_dict("kvm01")
         try:
             self.assertIsNotNone(kvm01["actions"])
         except Exception:
@@ -54,9 +50,8 @@ class TestJobDeviceParameters(LavaDispatcherTestCase):
     """
 
     def test_device_parser(self):
-        job_parser = JobParser()
         factory = Factory()
-        job = factory.create_job("bbb-01.jinja2", "sample_jobs/uboot-ramdisk.yaml")
+        job = factory.create_job("bbb-01", "sample_jobs/uboot-ramdisk.yaml")
         uboot_action = None
         device = job.device
 
@@ -118,17 +113,16 @@ class TestJobDeviceParameters(LavaDispatcherTestCase):
 
     def test_device_power(self):
         factory = Factory()
-        (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = yaml_safe_load(rendered)
+
+        device = factory.load_device_configuration_dict("bbb-01")
         self.assertNotEqual(device["commands"].get("hard_reset", ""), "")
-        (rendered, _) = factory.create_device("kvm01.jinja2")
-        device = yaml_safe_load(rendered)
+
+        device = factory.load_device_configuration_dict("kvm01")
         self.assertNotIn("commands", device)
 
     def test_device_constants(self):
         factory = Factory()
-        (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
+        device = NewDevice(factory.load_device_configuration_dict("bbb-01"))
         self.assertIn("constants", device)
         self.assertEqual(
             device.get_constant("kernel-start-message"), "Linux version [0-9]"
@@ -145,17 +139,10 @@ class TestDeviceEnvironment(LavaDispatcherTestCase):
 
     def test_empty_device_environment(self):
         factory = Factory()
-        data = None
-        job_parser = JobParser()
-        (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
+        job = factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
         )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
-            )
         self.assertEqual(job.parameters["env_dut"], None)
 
     @unittest.skipIf(infrastructure_error("mkimage"), "u-boot-tools not installed")
@@ -171,17 +158,11 @@ overrides:
  DEBFULLNAME: "Neil Williams"
         """
         factory = Factory()
-        job_parser = JobParser()
-        (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
+        job = factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            env_dut=data,
         )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
-            )
-        job.logger = DummyLogger()
         self.assertEqual(job.parameters["env_dut"], data)
         with self.assertRaises(JobError):
             job.validate()
@@ -198,17 +179,11 @@ overrides:
  DEBFULLNAME: "Neil Williams"
         """
         factory = Factory()
-        job_parser = JobParser()
-        (rendered, _) = factory.create_device("bbb-01.jinja2")
-        device = NewDevice(yaml_safe_load(rendered))
-        sample_job_file = os.path.join(
-            os.path.dirname(__file__), "sample_jobs/uboot-ramdisk.yaml"
+        job = factory.create_job(
+            "bbb-01",
+            "sample_jobs/uboot-ramdisk.yaml",
+            env_dut=data,
         )
-        with open(sample_job_file) as sample_job_data:
-            job = job_parser.parse(
-                sample_job_data, device, 4212, None, "", env_dut=data
-            )
-        job.logger = DummyLogger()
         self.assertEqual(job.parameters["env_dut"], data)
         job.validate()
         boot_env = job.pipeline.find_action(ExportDeviceEnvironment)
@@ -216,7 +191,8 @@ overrides:
         for line in boot_env.env:
             if "DEBFULLNAME" in line:
                 found = True
-                # assert that the string containing a space still contains that space and is quoted
+                # assert that the string containing a space still contains
+                # that space and is quoted
                 self.assertIn("\\'Neil Williams\\'", line)
         self.assertTrue(found)
 

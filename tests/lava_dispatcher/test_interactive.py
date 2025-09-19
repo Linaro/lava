@@ -19,17 +19,10 @@ from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
-class InteractiveFactory(Factory):
-    def create_interactive_job(self, device, filename):
-        return self.create_job(device, filename)
-
-
 class TestInteractive(LavaDispatcherTestCase):
     def test_pipeline(self):
-        factory = InteractiveFactory()
-        job = factory.create_interactive_job(
-            "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
-        )
+        factory = Factory()
+        job = factory.create_job("b2260-01", "sample_jobs/b2260-interactive.yaml")
         job.validate()
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "b2260-interactive.yaml", job=job
@@ -37,10 +30,8 @@ class TestInteractive(LavaDispatcherTestCase):
         self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_bbb(self):
-        factory = InteractiveFactory()
-        job = factory.create_interactive_job(
-            "bbb-01.jinja2", "sample_jobs/bbb-uboot-interactive.yaml"
-        )
+        factory = Factory()
+        job = factory.create_job("bbb-01", "sample_jobs/bbb-uboot-interactive.yaml")
         job.validate()
         description_ref = LavaDispatcherTestCase.pipeline_reference(
             "bbb-uboot-interactive.yaml", job=job
@@ -51,10 +42,8 @@ class TestInteractive(LavaDispatcherTestCase):
         )
 
     def test_stages(self):
-        factory = InteractiveFactory()
-        job = factory.create_interactive_job(
-            "docker-01.jinja2", "sample_jobs/docker-interactive.yaml"
-        )
+        factory = Factory()
+        job = factory.create_job("docker-01", "sample_jobs/docker-interactive.yaml")
         with patch(
             "lava_dispatcher.actions.deploy.docker.which",
             return_value="/usr/bin/docker",
@@ -697,10 +686,8 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         self.assertEqual(test_connection.data, [])
 
     def test_namespace_connection(self):
-        factory = InteractiveFactory()
-        job = factory.create_interactive_job(
-            "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
-        )
+        factory = Factory()
+        job = factory.create_job("b2260-01", "sample_jobs/b2260-interactive.yaml")
         action = job.pipeline.find_action(TestInteractiveAction)
         action.logger = Logger(
             [
@@ -730,10 +717,8 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         self.assertEqual(new_connection, data_connection)
 
     def test_connection_namespace_connection(self):
-        factory = InteractiveFactory()
-        job = factory.create_interactive_job(
-            "b2260-01.jinja2", "sample_jobs/b2260-interactive.yaml"
-        )
+        factory = Factory()
+        job = factory.create_job("b2260-01", "sample_jobs/b2260-interactive.yaml")
         action = job.pipeline.find_action(TestInteractiveAction)
         action.parameters["connection-namespace"] = "foobar"
         action.logger = Logger(

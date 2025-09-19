@@ -17,10 +17,10 @@ class Cmsis_Factory(Factory):
     """
 
     def create_k64f_job(self, filename):
-        return self.create_job("frdm-k64f-01.jinja2", filename)
+        return self.create_job("frdm-k64f-01", filename)
 
     def create_k64f_job_with_power(self, filename):
-        return self.create_job("frdm-k64f-power-01.jinja2", filename)
+        return self.create_job("frdm-k64f-power-01", filename)
 
 
 class TestCMSISAction(LavaDispatcherTestCase):

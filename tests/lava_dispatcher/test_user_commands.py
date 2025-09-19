@@ -11,7 +11,7 @@ from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 class UserCommandFactory(Factory):
     def create_b2260_job(self, filename):
-        return self.create_job("b2260-01.jinja2", filename)
+        return self.create_job("b2260-01", filename)
 
 
 class TestUserCommand(LavaDispatcherTestCase):

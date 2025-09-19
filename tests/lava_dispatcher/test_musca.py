@@ -17,7 +17,7 @@ from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 class MuscaFactory(Factory):
     def create_musca_job(self, filename):
-        return self.create_job("musca-01.jinja2", filename)
+        return self.create_job("musca-01", filename)
 
 
 class TestMusca(LavaDispatcherTestCase):

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.deploy.download import HttpDownloadAction
 
 from .test_basic import Factory, LavaDispatcherTestCase
@@ -53,8 +54,9 @@ class TestJob(LavaDispatcherTestCase):
 class TestJobTimeouts(LavaDispatcherTestCase):
     def test_job_retry_timeout(self) -> None:
         job = Factory().create_custom_job(
-            "juno-uboot-01.jinja2",
-            """
+            "juno-uboot-01",
+            yaml_safe_load(
+                """
 job_name: test timeouts
 device_type: juno-uboot
 visibility: public
@@ -84,7 +86,8 @@ actions:
           minutes: 3
       kernel:
         url: http://images.validation.linaro.org/d02/20151209-1510/Image
-""",
+"""
+            ),
         )
         (
             no_timeout_set_action,
@@ -102,8 +105,9 @@ actions:
 
     def test_job_retry_timeout_named_priority(self) -> None:
         job = Factory().create_custom_job(
-            "juno-uboot-01.jinja2",
-            """
+            "juno-uboot-01",
+            yaml_safe_load(
+                """
 job_name: test timeouts
 device_type: juno-uboot
 visibility: public
@@ -120,7 +124,7 @@ actions:
       to: tftp
       failure_retry: 5
       kernel:
-         url: http://images.validation.linaro.org/d02/20151209-1510/Image
+        url: http://images.validation.linaro.org/d02/20151209-1510/Image
   - deploy:
       to: tftp
       failure_retry: 4
@@ -136,7 +140,8 @@ actions:
           seconds: 20
       kernel:
         url: http://images.validation.linaro.org/d02/20151209-1510/Image
-""",
+"""
+            ),
         )
         (
             no_timeout_set_action,
