@@ -3,6 +3,7 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import os
@@ -10,6 +11,7 @@ import re
 import shutil
 import subprocess  # nosec - internal
 import traceback
+from typing import TYPE_CHECKING
 
 import yaml
 
@@ -24,6 +26,11 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.utils.filesystem import lxc_path
 
+if TYPE_CHECKING:
+    from typing import Any
+
+    from ..action import Action
+
 
 class LxcProtocol(Protocol):
     """
@@ -32,7 +39,7 @@ class LxcProtocol(Protocol):
 
     name = LXC_PROTOCOL
 
-    def __init__(self, parameters, job_id):
+    def __init__(self, parameters: dict[str, Any], job_id: str):
         super().__init__(parameters, job_id)
         self.system_timeout = Timeout("system", None, duration=LAVA_LXC_TIMEOUT)
         self.persistence = parameters["protocols"][self.name].get("persist", False)
@@ -61,7 +68,7 @@ class LxcProtocol(Protocol):
         self.job_prefix = parameters["dispatcher"].get("prefix", "")
 
     @classmethod
-    def accepts(cls, parameters):
+    def accepts(cls, parameters: dict[str, Any]) -> bool:
         if "protocols" not in parameters:
             return False
         if "lava-lxc" not in parameters["protocols"]:
@@ -74,13 +81,13 @@ class LxcProtocol(Protocol):
             return False
         return True
 
-    def set_up(self):
+    def set_up(self) -> None:
         """
         Called from the job at the start of the run step.
         """
         pass
 
-    def _api_select(self, data, action=None):
+    def _api_select(self, data: Any | None, action: Action | None = None) -> Any | None:
         if not data:
             raise TestError("[%s] Protocol called without any data." % self.name)
         if not action:
@@ -120,9 +127,13 @@ class LxcProtocol(Protocol):
                     "[%s] Unrecognised protocol request: %s" % (self.name, item)
                 )
 
-    def __call__(self, *args, **kwargs):
-        action = kwargs.get("action")
-        logger = action.logger if action else logging.getLogger("dispatcher")
+        return None
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
+        action: Action | None = kwargs.get("action")
+        if action is None:
+            raise LAVABug("LXC protocol needs to be called from an action.")
+        logger = action.logger
         self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:
             return self._api_select(args, action=action)
@@ -131,7 +142,7 @@ class LxcProtocol(Protocol):
             logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))
 
-    def _call_handler(self, command):
+    def _call_handler(self, command: str) -> None:
         try:
             self.logger.debug("%s protocol: executing '%s'", self.name, command)
             output = subprocess.check_output(  # nosec - internal
@@ -142,7 +153,7 @@ class LxcProtocol(Protocol):
         except subprocess.CalledProcessError:
             self.logger.debug("%s protocol: FAILED executing '%s'", self.name, command)
 
-    def finalise_protocol(self, device=None):
+    def finalise_protocol(self, device: dict[str, Any] | None = None) -> None:
         """Called by Finalize action to power down and clean up the assigned
         device.
         """
@@ -151,6 +162,9 @@ class LxcProtocol(Protocol):
         # Do not reboot to bootloader if 'reboot_to_fastboot' is set to
         # 'false' in job definition.
         if self.fastboot_reboot:
+            if device is None:
+                raise LAVABug("Device dictionary not passed.")
+
             if "adb_serial_number" in device:
                 reboot_cmd = "lxc-attach -n {} -- adb reboot bootloader".format(
                     self.lxc_name
