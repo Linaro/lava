@@ -131,7 +131,7 @@ codespell:
 
 django_migrations:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-11
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-12
 
 mypy:
   extends: .analyze
