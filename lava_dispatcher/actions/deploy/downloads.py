@@ -33,7 +33,7 @@ class DownloadsAction(DownloadAction):
 
         namespace = parameters["namespace"]
         download_dir = Path(self.job.tmp_dir) / "downloads" / namespace
-        for image_key, image_params in parameters["images"].items():
+        for image_key, image_params in parameters.get("images", {}).items():
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
@@ -103,6 +103,7 @@ class PostprocessWithDocker(Action):
         script = script + self.steps
         script = "\n".join(script) + "\n"
 
+        self.path.mkdir(parents=True, exist_ok=True)
         scriptfile = self.path / "postprocess.sh"
         scriptfile.write_text(script)
         scriptfile.chmod(0o755)
