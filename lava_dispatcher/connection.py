@@ -162,7 +162,7 @@ class Protocol:
 
     def collate(
         self,
-        reply_dict: dict[str, Any] | None,
-        params_dict: dict[str, Any],
+        reply: str | dict[str, Any] | None,
+        params: dict[str, Any],
     ) -> tuple[str, Any] | None:
         return None

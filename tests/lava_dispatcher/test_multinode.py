@@ -13,7 +13,7 @@ from socket import socket
 from typing import Any
 from unittest.mock import Mock
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.actions.boot.qemu import BootQemuRetry, CallQemuAction
@@ -331,10 +331,9 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
 
         class MultinodeProtocolSocketMock(MultinodeProtocol):
             def _connect(self, delay):
-                self.sock = Mock(spec=socket)
-                return True
+                return Mock(spec=socket)
 
-            def _recv_message(self):
+            def _recv_message(self, sock):
                 return json_dumps(recv_object)
 
         base_params = {
@@ -371,3 +370,9 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
             json_loads(protocol.request_send("test_id")),
             test_message,
         )
+
+    def test_multinode_protocol_send_before_setup(self) -> None:
+        protocol = self.init_protocol()
+        protocol.base_message = None
+        with self.assertRaisesRegex(LAVABug, "used before set_up"):
+            protocol._send({"request": "lava_sync", "messageID": "test"})
