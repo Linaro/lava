@@ -721,7 +721,13 @@ class Action:
             raise self.command_exception(error_msg)
         return ret
 
-    def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):
+    def run_command(
+        self,
+        command_list: list[str],
+        allow_silent: bool = False,
+        allow_fail: bool = False,
+        cwd: str | None = None,
+    ) -> str | bool:
         """
         Deprecated - use run_cmd or parsed_command instead.
 
