@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import decimal
 import logging
 import re
 import time
@@ -469,10 +468,9 @@ class TestShellAction(Action):
         # check for measurements
         if "measurement" in res:
             try:
-                measurement = decimal.Decimal(res["measurement"])
-            except decimal.InvalidOperation:
+                res_data["measurement"] = float(res["measurement"])
+            except ValueError:
                 raise TestError("Invalid measurement %s" % res["measurement"])
-            res_data["measurement"] = float(measurement)
             if "units" in res:
                 res_data["units"] = res["units"]
 
@@ -569,10 +567,9 @@ class TestShellAction(Action):
             # check for measurements
             if "measurement" in res:
                 try:
-                    measurement = decimal.Decimal(res["measurement"])
-                except decimal.InvalidOperation:
+                    res_data["measurement"] = float(res["measurement"])
+                except ValueError:
                     raise TestError("Invalid measurement %s" % res["measurement"])
-                res_data["measurement"] = float(measurement)
                 if "units" in res:
                     res_data["units"] = res["units"]
 

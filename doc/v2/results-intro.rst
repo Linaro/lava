@@ -134,32 +134,12 @@ measurements and units. The name of the test case **must** be valid as part of
 the REST API so whitespace is not allowed.
 
 If a test case has a measurement, the measurement is represented as a python
-``Decimal`` value as this provides the best way to preserve precision through
-the various export handlers.
+``float`` value.
 
 .. code-block:: python
 
     >>> case.measurement
-    Decimal('112.2510000000')
-    >>> import decimal
-    >>> decimal.Decimal(case.measurement)
-    Decimal('112.2510000000')
-    >>> decimal.Decimal(case.measurement).normalize()
-    Decimal('112.251')
-    >>> float(decimal.Decimal(case.measurement).normalize())
     112.251
-
-Representation of some numbers in Decimal can look a little odd but these
-can be easily converted or compared:
-
-.. code-block:: python
-
-    >>> decimal.Decimal(0E-10) == 0
-    True
-
-.. seealso:: The python documentation on Decimal at
-   https://docs.python.org/2.7/library/decimal.html#module-decimal
-
 
 .. note:: Since test case name can be generated in such ways that no character
    validation is viable, the test case URL has been changed and is now

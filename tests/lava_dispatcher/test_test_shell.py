@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import decimal
 import os
 import re
 
@@ -113,8 +112,8 @@ class TestPatterns(LavaDispatcherTestCase):
         self.assertEqual(result["measurement"], "Z")
         with self.assertRaises(TestError):
             self.ret = self.test_shell.pattern_test_case_result(conn)
-        with self.assertRaises(decimal.InvalidOperation):
-            decimal.Decimal("Z")
+        with self.assertRaises(ValueError):
+            float("NOT VALID NUMBER")
         self.assertFalse(self.ret)
         del conn
 
