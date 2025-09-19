@@ -4,9 +4,14 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
-android = {
+if TYPE_CHECKING:
+    DeploymentData = dict[str, str | bool | None | list[str]]
+
+android: DeploymentData = {
     "TESTER_PS1": "root@linaro# ",
     "TESTER_PS1_PATTERN": "root@linaro# ",
     "TESTER_PS1_INCLUDES_RC": False,
@@ -21,7 +26,7 @@ android = {
     "lava_test_shell_file": None,
 }
 
-apertis = {
+apertis: DeploymentData = {
     "TESTER_PS1": r"apertis-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"apertis-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -37,7 +42,7 @@ apertis = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-archlinux = {
+archlinux: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -53,7 +58,7 @@ archlinux = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-centos = {
+centos: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -69,7 +74,7 @@ centos = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-centos_installer = {
+centos_installer: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -86,7 +91,7 @@ centos_installer = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-debian = {
+debian: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -102,7 +107,7 @@ debian = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-debian_installer = {
+debian_installer: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -129,7 +134,7 @@ debian_installer = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-fedora = {
+fedora: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -145,7 +150,7 @@ fedora = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-lede = {
+lede: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -160,7 +165,7 @@ lede = {
     "lava_test_shell_file": None,
 }
 
-oe = {
+oe: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -175,7 +180,7 @@ oe = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-qnx = {
+qnx: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -191,7 +196,7 @@ qnx = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-slackware = {
+slackware: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -207,7 +212,7 @@ slackware = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-ubuntu = {
+ubuntu: DeploymentData = {
     "TESTER_PS1": r"linaro-test [rc=$(echo \$?)]# ",
     "TESTER_PS1_PATTERN": r"linaro-test \[rc=(\d+)\]# ",
     "TESTER_PS1_INCLUDES_RC": True,
@@ -223,7 +228,7 @@ ubuntu = {
     "lava_test_shell_file": "~/.bashrc",
 }
 
-deployments = {
+deployments: dict[str, DeploymentData] = {
     "android": android,
     "apertis": apertis,
     "archlinux": archlinux,
@@ -240,7 +245,7 @@ deployments = {
 }
 
 
-def get_deployment_data(distro):
+def get_deployment_data(distro: str) -> DeploymentData:
     """
     Returns the deployment data by name
     """
