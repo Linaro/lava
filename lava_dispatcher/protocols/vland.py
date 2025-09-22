@@ -53,18 +53,6 @@ class VlandProtocol(Protocol):
         self.nodes_seen = []  # node == combination of switch & port
         self.multinode_protocol = None
 
-    @classmethod
-    def accepts(cls, parameters):
-        if "protocols" not in parameters:
-            return False
-        if "lava-multinode" not in parameters["protocols"]:
-            return False
-        if "target_group" not in parameters["protocols"][MultinodeProtocol.name]:
-            return False
-        if "lava-vland" not in parameters["protocols"]:
-            return False
-        return True
-
     def read_settings(self):
         # FIXME: support config file
         settings = {"port": 3080, "poll_delay": 1, "vland_hostname": "localhost"}

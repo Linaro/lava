@@ -14,7 +14,7 @@ import socket
 import time
 import traceback
 
-from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT
+from lava_common.constants import LAVA_MULTINODE_SYSTEM_TIMEOUT, MULTINODE_PROTOCOL
 from lava_common.exceptions import (
     ConfigurationError,
     InfrastructureError,
@@ -31,7 +31,7 @@ class MultinodeProtocol(Protocol):
     Multinode API protocol - one instance per Multinode job
     """
 
-    name = "lava-multinode"
+    name = MULTINODE_PROTOCOL
 
     # FIXME: use errors and valid where old code just logged complaints
 
@@ -60,16 +60,6 @@ class MultinodeProtocol(Protocol):
             else:
                 self.errors = "expect_role must not match the role declaring lava_start"
                 self.logger.warning(self.errors)
-
-    @classmethod
-    def accepts(cls, parameters):
-        if "protocols" not in parameters:
-            return False
-        if "lava-multinode" not in parameters["protocols"]:
-            return False
-        if "target_group" in parameters["protocols"][cls.name]:
-            return True
-        return False
 
     def read_settings(self, filename):
         """

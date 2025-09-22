@@ -95,19 +95,6 @@ class Protocol:
         self.configured = False
         self.job_id = job_id
 
-    @classmethod
-    def accepts(cls, parameters: dict[str, Any]) -> bool:
-        raise NotImplementedError
-
-    @classmethod
-    def select_all(cls, parameters: dict[str, Any]) -> list[tuple[type[Protocol], int]]:
-        """
-        Multiple protocols can apply to the same job, each with their own parameters.
-        Jobs may have zero or more protocols selected.
-        """
-        candidates = cls.__subclasses__()
-        return [(c, c.level) for c in candidates if c.accepts(parameters)]
-
     @property
     def errors(self) -> list[str]:
         return self.__errors__
