@@ -18,9 +18,6 @@ from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
-from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
-    MultinodeProtocol,
-)
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:

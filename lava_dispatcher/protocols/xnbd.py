@@ -33,14 +33,6 @@ class XnbdProtocol(Protocol):
         self.port = None
         self.ports = []
 
-    @classmethod
-    def accepts(cls, parameters):
-        if "protocols" not in parameters:
-            return False
-        if "lava-xnbd" not in parameters["protocols"]:
-            return False
-        return True
-
     def collate(self, reply, params):
         params.update(reply)
 

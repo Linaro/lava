@@ -12,8 +12,8 @@ from unittest.mock import patch
 from lava_common.exceptions import JobError
 from lava_dispatcher.actions.deploy.overlay import VlandOverlayAction
 from lava_dispatcher.actions.deploy.tftp import TftpAction
-from lava_dispatcher.connection import Protocol
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
+from lava_dispatcher.protocols.strategies import ProtocolStrategy, VlandStrategy
 from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -30,8 +30,8 @@ class TestVland(LavaDispatcherTestCase):
 
     def test_file_structure(self):
         self.assertIn("protocols", self.job.parameters)
-        self.assertTrue(VlandProtocol.accepts(self.job.parameters))
-        level_tuple = Protocol.select_all(self.job.parameters)
+        self.assertTrue(VlandStrategy.accepts(self.job.parameters))
+        level_tuple = ProtocolStrategy.select_all(self.job.parameters)
         self.assertEqual(len(level_tuple), 2)
         self.assertEqual(
             VlandProtocol,
@@ -104,7 +104,7 @@ class TestVland(LavaDispatcherTestCase):
 
     def test_configure(self):
         self.assertIn("protocols", self.job.parameters)
-        self.assertTrue(VlandProtocol.accepts(self.job.parameters))
+        self.assertTrue(VlandStrategy.accepts(self.job.parameters))
         vprotocol = VlandProtocol(self.job.parameters, self.job.job_id)
         vprotocol.set_up()
 

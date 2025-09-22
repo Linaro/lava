@@ -38,6 +38,9 @@ DISTINCTIVE_PROMPT_CHARACTERS = "\\:"
 # LAVA Coordinator setup and finalize timeout
 LAVA_MULTINODE_SYSTEM_TIMEOUT = 90
 
+# Multinode protocol name
+MULTINODE_PROTOCOL = "lava-multinode"
+
 # Default Action timeout
 ACTION_TIMEOUT = 30
 
