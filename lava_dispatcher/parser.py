@@ -3,22 +3,18 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-# Bring in the strategy subclass lists, ignore pylint warnings.
-# pylint: disable=unused-import
 from __future__ import annotations
 
-import lava_dispatcher.protocols.strategies
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.action import JobError, Pipeline, Timeout
 from lava_dispatcher.actions.boot_strategy import BootStrategy
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy_strategy import DeployStrategy
 from lava_dispatcher.actions.test_strategy import LavaTestStrategy
-from lava_dispatcher.connection import Protocol
 from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.job import Job
 from lava_dispatcher.power import FinalizeAction
+from lava_dispatcher.protocols.strategies import ProtocolStrategy
 
 
 def parse_action(job_data, name, device, pipeline, test_info, test_count):
@@ -104,7 +100,7 @@ class JobParser:
             if isinstance(config, dict):
                 job.parameters["dispatcher"] = config
 
-        level_tuple = Protocol.select_all(job.parameters)
+        level_tuple = ProtocolStrategy.select_all(job.parameters)
         # sort the list of protocol objects by the protocol class level.
         job.protocols = [
             item[0](job.parameters, job_id)

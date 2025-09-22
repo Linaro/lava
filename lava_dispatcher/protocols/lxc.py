@@ -60,20 +60,6 @@ class LxcProtocol(Protocol):
         self.logger = logging.getLogger("dispatcher")
         self.job_prefix = parameters["dispatcher"].get("prefix", "")
 
-    @classmethod
-    def accepts(cls, parameters):
-        if "protocols" not in parameters:
-            return False
-        if "lava-lxc" not in parameters["protocols"]:
-            return False
-        if "name" not in parameters["protocols"]["lava-lxc"]:
-            return False
-        if "distribution" not in parameters["protocols"]["lava-lxc"]:
-            return False
-        if "release" not in parameters["protocols"]["lava-lxc"]:
-            return False
-        return True
-
     def set_up(self):
         """
         Called from the job at the start of the run step.
