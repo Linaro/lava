@@ -7,6 +7,7 @@
 import contextlib
 
 import yaml
+from django.contrib.auth.models import Group, User
 from django.core.management.base import BaseCommand
 from django.db.models import Count, Q
 from jinja2 import TemplateError as JinjaTemplateError
@@ -22,10 +23,8 @@ from lava_scheduler_app.models import (
     Alias,
     Device,
     DeviceType,
-    Group,
     GroupDevicePermission,
     Tag,
-    User,
     Worker,
 )
 from lava_server.files import File
