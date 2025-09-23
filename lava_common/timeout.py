@@ -32,6 +32,8 @@ class Timeout:
     timeout applies for the entire run function of the action.
     """
 
+    __slots__ = ("action", "name", "start", "elapsed_time", "duration", "exception")
+
     def __init__(
         self,
         name: str,
