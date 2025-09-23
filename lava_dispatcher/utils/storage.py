@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_dispatcher.action import Action, JobError
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Action
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:

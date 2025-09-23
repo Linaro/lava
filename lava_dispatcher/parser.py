@@ -9,8 +9,10 @@
 from __future__ import annotations
 
 import lava_dispatcher.protocols.strategies
+from lava_common.exceptions import JobError
+from lava_common.timeout import Timeout
 from lava_common.yaml import yaml_safe_load
-from lava_dispatcher.action import JobError, Pipeline, Timeout
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.boot_strategy import BootStrategy
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.actions.deploy_strategy import DeployStrategy

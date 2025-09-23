@@ -6,12 +6,8 @@
 from __future__ import annotations
 
 from lava_dispatcher.action import Pipeline
-from lava_dispatcher.actions.boot import (
-    AutoLoginAction,
-    BootHasMixin,
-    ExportDeviceEnvironment,
-    OverlayUnpack,
-)
+from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
+from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice

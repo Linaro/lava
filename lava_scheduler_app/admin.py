@@ -11,7 +11,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Prefetch, Q
@@ -32,7 +32,6 @@ from lava_scheduler_app.models import (
     RemoteArtifactsAuth,
     Tag,
     TestJob,
-    User,
     Worker,
 )
 from linaro_django_xmlrpc.models import AuthToken

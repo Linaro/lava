@@ -8,9 +8,9 @@ from __future__ import annotations
 from contextlib import suppress
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.utils import binary_version
-from lava_dispatcher.action import Action, JobError, Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice

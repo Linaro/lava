@@ -4,7 +4,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from lava_dispatcher.action import Action, JobError
+from lava_common.exceptions import JobError
+from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 
