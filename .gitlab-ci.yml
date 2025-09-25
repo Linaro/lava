@@ -89,6 +89,7 @@ aarch64/server-debian-11:
 
 black:
   extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 code_quality:
   extends: .analyze

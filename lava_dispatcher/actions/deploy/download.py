@@ -274,9 +274,11 @@ class DownloadHandler(Action):
             return (
                 condition,
                 downloaded_sz,
-                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         def progress_known_total(downloaded_sz, last_val, last_update):
@@ -288,10 +290,12 @@ class DownloadHandler(Action):
             return (
                 condition,
                 percent,
-                "progress %3d %% (%d MB)"
-                % (percent, int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %3d %% (%d MB)"
+                    % (percent, int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         connection = super().run(connection, max_end_time)

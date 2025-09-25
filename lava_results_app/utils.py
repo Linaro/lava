@@ -133,9 +133,9 @@ def export_testcase(testcase):
         "url": str(testcase.get_absolute_url()),
         "id": str(testcase.id),
         "logged": str(testcase.logged),
-        "log_start_line": str(testcase.start_log_line)
-        if testcase.start_log_line
-        else "",
+        "log_start_line": (
+            str(testcase.start_log_line) if testcase.start_log_line else ""
+        ),
         "log_end_line": str(testcase.end_log_line) if testcase.end_log_line else "",
         "metadata": metadata,
     }

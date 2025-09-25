@@ -62,8 +62,7 @@ class TestJobResultsTable(ResultsTable):
         orderable=False,
     )
 
-    class Meta(ResultsTable.Meta):
-        ...
+    class Meta(ResultsTable.Meta): ...
 
 
 class SuiteTable(LavaTable):

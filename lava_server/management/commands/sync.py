@@ -42,9 +42,11 @@ class Command(BaseCommand):
             for pair in sync_dict.items:
                 if isinstance(pair.value, JinjaNodesList):
                     ret[pair.key.value] = [
-                        [sub_node.value for sub_node in node.items]
-                        if isinstance(node, JinjaNodesList)
-                        else node.value
+                        (
+                            [sub_node.value for sub_node in node.items]
+                            if isinstance(node, JinjaNodesList)
+                            else node.value
+                        )
                         for node in pair.value.items
                     ]
                 elif isinstance(pair.value, JinjaNodesConst):
