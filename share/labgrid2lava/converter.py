@@ -86,18 +86,15 @@ class SSHDriver:
 # labgrid strategies #
 ######################
 @dataclass(frozen=True)
-class UBootStrategy:
-    ...
+class UBootStrategy: ...
 
 
 @dataclass(frozen=True)
-class DockerStrategy:
-    ...
+class DockerStrategy: ...
 
 
 @dataclass(frozen=True)
-class ShellStrategy:
-    ...
+class ShellStrategy: ...
 
 
 ###############

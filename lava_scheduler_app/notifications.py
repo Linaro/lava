@@ -228,9 +228,9 @@ def get_notification_args(job):
                             suite=old_suite, name=testcase.name
                         )
                         if old_testcase and testcase.result != old_testcase.result:
-                            testcases_changed[
-                                testcase
-                            ] = old_testcase.get_result_display()
+                            testcases_changed[testcase] = (
+                                old_testcase.get_result_display()
+                            )
                     except TestCase.DoesNotExist:
                         continue  # No matching TestCase, move on.
                     except TestCase.MultipleObjectsReturned:

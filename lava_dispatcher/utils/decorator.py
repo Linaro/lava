@@ -41,8 +41,7 @@ def retry(
     expected: None = None,
     retries: int = 3,
     delay: int = 1,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 @overload
@@ -51,8 +50,7 @@ def retry(
     expected: type[Exception] = Exception,
     retries: int = 3,
     delay: int = 1,
-) -> Callable[[Callable[P, R]], Callable[P, R | None]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R | None]]: ...
 
 
 def retry(

@@ -32,8 +32,7 @@ def tempdir(monkeypatch, tmp_path):
     )
 
 
-class LavaTestOverwriteInConftest(NotImplementedError):
-    ...
+class LavaTestOverwriteInConftest(NotImplementedError): ...
 
 
 @pytest.fixture(autouse=True)
