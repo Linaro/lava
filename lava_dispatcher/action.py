@@ -574,13 +574,16 @@ class Action:
         command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            output = subprocess.check_output(  # nosec - internal
+            output = subprocess.run(
                 command_list,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 cwd=cwd,
                 timeout=self.timeout.duration,
-            )
-            output = output.decode("utf-8", errors="replace")
+                check=True,
+                encoding="utf-8",
+                errors="replace",
+            ).stdout
             if allow_fail:
                 self.results = {"returncode": "0"}
                 self.results = {"output_len": len(output)}
@@ -598,10 +601,11 @@ class Action:
 
             # Extract some data about the exception
             # Have sane default for some exceptions
-            returncode = getattr(exc, "returncode", 127)
-            if getattr(exc, "output", None):
-                output = exc.output.strip().decode("utf-8", errors="replace")
+            if isinstance(exc, subprocess.CalledProcessError):
+                returncode = exc.returncode
+                output = exc.output.strip() if exc.output else str(exc)
             else:
+                returncode = 127
                 output = str(exc)
 
             errors.append(output)
@@ -749,19 +753,24 @@ class Action:
         # FIXME: add option to only check stdout or stderr for failure output
         if not isinstance(command_list, list):
             raise LAVABug("commands to run_command need to be a list")
-        log = None
+        log: str | None = None
         command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            log = subprocess.check_output(  # nosec - managed
-                command_list, stderr=subprocess.STDOUT, cwd=cwd
-            )
-            log = log.decode("utf-8", errors="replace")
+            log = subprocess.run(
+                command_list,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd=cwd,
+                check=True,
+                encoding="utf-8",
+                errors="replace",
+            ).stdout
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
             errors = []
             if exc.output:
-                errors.append(exc.output.strip().decode("utf-8", errors="replace"))
+                errors.append(exc.output.strip())
             else:
                 errors.append(str(exc))
             msg = "action: %s\ncommand: %s\nmessage: %s\noutput: %s\n" % (
