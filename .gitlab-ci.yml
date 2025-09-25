@@ -87,6 +87,7 @@ aarch64/server-debian-13: {"extends": ".server-aarch64"}
 
 black:
   extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 code_quality:
   extends: .analyze

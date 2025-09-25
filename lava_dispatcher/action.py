@@ -504,8 +504,7 @@ class Action:
 
         return self.job.device.get_constant(key, prefix=prefix)
 
-    def on_timeout(self) -> None:
-        ...
+    def on_timeout(self) -> None: ...
 
     def validate(self):
         """

@@ -87,19 +87,21 @@ class Command(BaseCommand):
                         "submitter": t.submitter.username if t.submitter else None,
                         "description": t.description,
                         "health_check": t.health_check,
-                        "requested_device_type": t.requested_device_type.name
-                        if t.requested_device_type
-                        else None,
+                        "requested_device_type": (
+                            t.requested_device_type.name
+                            if t.requested_device_type
+                            else None
+                        ),
                         "tags": [tag.name for tag in t.tags.all()],
-                        "actual_device": t.actual_device.hostname
-                        if t.actual_device
-                        else None,
-                        "submit_time": t.submit_time.isoformat()
-                        if t.submit_time
-                        else None,
-                        "start_time": t.start_time.isoformat()
-                        if t.start_time
-                        else None,
+                        "actual_device": (
+                            t.actual_device.hostname if t.actual_device else None
+                        ),
+                        "submit_time": (
+                            t.submit_time.isoformat() if t.submit_time else None
+                        ),
+                        "start_time": (
+                            t.start_time.isoformat() if t.start_time else None
+                        ),
                         "end_time": t.end_time.isoformat() if t.end_time else None,
                         "state": t.get_state_display(),
                         "health": t.get_health_display(),

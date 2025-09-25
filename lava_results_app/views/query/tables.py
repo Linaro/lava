@@ -247,5 +247,4 @@ class QueryConditionsTable(LavaTable):
         orderable=False,
     )
 
-    class Meta(LavaTable.Meta):
-        ...
+    class Meta(LavaTable.Meta): ...

@@ -48,9 +48,9 @@ class PermissionAuth:
         fieldname = "group%spermission__group__user" % content_type.model
 
         filters = {fieldname: self.user}
-        filters[
-            "group%spermission__%s" % (content_type.model, content_type.model)
-        ] = obj
+        filters["group%spermission__%s" % (content_type.model, content_type.model)] = (
+            obj
+        )
 
         perms_queryset = perms_queryset.filter(**filters)
         perms = set(perms_queryset.values_list("codename", flat=True))
