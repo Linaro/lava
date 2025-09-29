@@ -4,6 +4,7 @@
 
 import contextlib
 import json
+import logging
 import os
 import subprocess
 from dataclasses import dataclass
@@ -22,6 +23,8 @@ except ImportError:
     # This can happen on Debian 10 and that's ok. The code path that uses this
     # will only be used on Debian 11 +
     pass
+
+logger = logging.getLogger(__name__)
 
 # XXX bcc.BPF should provide these (from include/uapi/linux/bpf.h in the kernel
 # tree)
@@ -161,27 +164,43 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
 
     def apply(self):
         existing = self.__get_existing_functions__()
+        fd = None
+        bpf = None
 
-        fd = os.open(self.__cgroup__, os.O_RDONLY)
-        program = bytes(self.expand_template(), "utf-8")
-        bpf = BPF(text=program)
-        func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
-        bpf.attach_func(func, fd, BPFAttachType.CGROUP_DEVICE, BPF_F_ALLOW_MULTI)
-        bpf.close()
-        os.close(fd)
+        try:
+            fd = os.open(self.__cgroup__, os.O_RDONLY)
+            program = bytes(self.expand_template(), "utf-8")
+            bpf = BPF(text=program)
+            func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
+            bpf.attach_func(func, fd, BPFAttachType.CGROUP_DEVICE, BPF_F_ALLOW_MULTI)
 
-        for fid in existing:
-            subprocess.check_call(
-                [
-                    "/usr/sbin/bpftool",
-                    "cgroup",
-                    "detach",
-                    self.__cgroup__,
-                    "device",
-                    "id",
-                    str(fid),
-                ]
-            )
+            for fid in existing:
+                subprocess.check_call(
+                    [
+                        "/usr/sbin/bpftool",
+                        "cgroup",
+                        "detach",
+                        self.__cgroup__,
+                        "device",
+                        "id",
+                        str(fid),
+                    ]
+                )
+
+        except Exception as exc:
+            logger.error(f"Failed to apply BPF for {self.__cgroup__}: {exc}")
+        finally:
+            if bpf is not None:
+                try:
+                    bpf.close()
+                except Exception as exc:
+                    logger.error(f"Failed to close BPF: {exc}")
+
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except Exception as exc:
+                    logger.error(f"Failed to close file descriptor: {exc}")
 
     def __get_existing_functions__(self):
         cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
