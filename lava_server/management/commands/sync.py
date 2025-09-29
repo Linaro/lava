@@ -94,7 +94,7 @@ class Command(BaseCommand):
 
             if sync_dict is None:
                 self.stdout.write(f"* {hostname} [SKIP]")
-                self.stdout.write(f"  -> missing '{self.SYNC_KEY}'")
+                self.stdout.write(f"  -> missing {self.SYNC_KEY!r}")
                 continue
 
             # Convert it to dictionary.
@@ -184,7 +184,7 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 device.physical_owner = None
                 if specified_owner:
-                    self.stdout.write(f"  -> user '{specified_owner}' does not exist")
+                    self.stdout.write(f"  -> user {specified_owner!r} does not exist")
             finally:
                 device.save()
 
@@ -197,7 +197,7 @@ class Command(BaseCommand):
             except Group.DoesNotExist:
                 device.physical_group = None
                 if specified_group:
-                    self.stdout.write(f"  -> group '{specified_group}' does not exist")
+                    self.stdout.write(f"  -> group {specified_group!r} does not exist")
             finally:
                 device.save()
 
@@ -217,9 +217,9 @@ class Command(BaseCommand):
                             f"  -> add group permission: ({perm}, {group})"
                         )
                     except PermissionNameError:
-                        self.stdout.write(f"  -> permission '{perm}' does not exist")
+                        self.stdout.write(f"  -> permission {perm!r} does not exist")
                 except Group.DoesNotExist:
-                    self.stdout.write(f"  -> group '{group}' does not exist")
+                    self.stdout.write(f"  -> group {group!r} does not exist")
 
             # Delete unused permission
             kwargs = {"device": device}

@@ -288,8 +288,9 @@ Following actions will be skipped :
 
         if uuu_options.get("usb_otg_path_command") is None:
             raise JobError(
-                "uuu_usb_otg_path '{}' does not match with uuu path pattern and 'uuu_usb_otg_path_command' not "
-                "defined in device".format(uuu_options.get("usb_otg_path"))
+                f"uuu_usb_otg_path {uuu_options.get('usb_otg_path')!r} does not match "
+                "with uuu path pattern and 'uuu_usb_otg_path_command' not defined "
+                "in device"
             )
         # Retrieve usb_otg_path from command execution
         else:
@@ -307,7 +308,7 @@ Following actions will be skipped :
                 self.logger.info("uuu_otg_path matched : %s", uuu_otg_paths)
                 return uuu_otg_paths
 
-            raise JobError(f"Unable to parse uuu_usb_otg_path from command '{cmd}'")
+            raise JobError(f"Unable to parse uuu_usb_otg_path from command {cmd!r}")
 
     def _get_protocols_from_commands(self, parameters):
         """
@@ -360,8 +361,8 @@ Following actions will be skipped :
 
         if uuu_options.get("bcu_board_id_command") is None:
             raise JobError(
-                "bcu_board_id '{}' do not respect bcu format or 'bcu_board_id_command' not "
-                "defined in device".format(uuu_options.get("bcu_board_id"))
+                f"bcu_board_id {uuu_options.get('bcu_board_id')!r} do not respect bcu "
+                "format or 'bcu_board_id_command' not defined in device"
             )
         else:
             bcu_board_id_command = uuu_options.get("bcu_board_id_command")
@@ -377,7 +378,7 @@ Following actions will be skipped :
             self.logger.info("Matched bcu_board_id : %s", bcu_id_expected)
             return bcu_id_expected
 
-        raise JobError(f"Unable to parse bcu_id from command '{bcu_board_id_command}'")
+        raise JobError(f"Unable to parse bcu_id from command {bcu_board_id_command!r}")
 
 
 class UUUBootAction(OptionalContainerUuuAction):

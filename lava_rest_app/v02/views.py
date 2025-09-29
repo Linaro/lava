@@ -943,7 +943,7 @@ class WorkerViewSet(viewsets.ModelViewSet):
             )
         except OSError as e:
             raise ParseError(
-                f"Error updating '{kind}' for worker {self.get_object().hostname}: {e}"
+                f"Error updating {kind!r} for worker {self.get_object().hostname}: {e}"
             )
 
     @action(detail=True, methods=("get", "post"), suffix="env")

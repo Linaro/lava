@@ -516,7 +516,7 @@ class RunFVPeRPCApp(Action):
             action="download-action", label="file", key=self.app
         )
         if app_path is None:
-            raise JobError(f"eRPC app '{self.app}' not deployed")
+            raise JobError(f"eRPC app {self.app!r} not deployed")
         app_path = f"/{container}/{os.path.basename(app_path)}"
 
         cmd = f"docker exec --tty {container} sh -c 'chmod +x {app_path} && {app_path}'"

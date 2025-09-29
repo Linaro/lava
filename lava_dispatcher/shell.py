@@ -177,7 +177,7 @@ class ShellCommand(pexpect.spawn):
         try:
             proc = super().expect(*args, **kw)
         except re_error as exc:
-            msg = f"Invalid regular expression '{exc.pattern}': {exc.msg}"
+            msg = f"Invalid regular expression {exc.pattern!r}: {exc.msg}"
             raise TestError(msg)
         except pexpect.TIMEOUT:
             raise TestError("ShellCommand command timed out.")

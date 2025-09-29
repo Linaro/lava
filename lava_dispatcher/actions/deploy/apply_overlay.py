@@ -142,9 +142,7 @@ class ApplyOverlayImage(Action):
                         )
                     else:
                         raise JobError(
-                            "Unable to find image configuration for '{image}'".format(
-                                image=self.image_key
-                            )
+                            f"Unable to find image configuration for {self.image_key!r}"
                         )
                 else:
                     root_partition = self.parameters[self.image_key].get(

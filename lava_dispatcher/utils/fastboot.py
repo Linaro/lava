@@ -72,7 +72,7 @@ class DetectFastbootDevice(Action):
     def set_sn(self, name: str, sn: str) -> None:
         # Respect sn set in device dictionary.
         if self.job.device.get(name, "0000000000") == "0000000000":
-            self.logger.info(f"'{name}' is set to '{sn}'")
+            self.logger.info(f"{name!r} is set to {sn!r}")
             self.job.device[name] = sn
 
             if name == "board_id":

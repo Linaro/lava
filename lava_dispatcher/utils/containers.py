@@ -249,16 +249,16 @@ class DockerDriver(NullDriver):
         """
         action.trigger_share_device_with_container(dev)
         action.logger.debug(
-            f"Waiting for device '{dev}' to appear in docker container {docker.__name__} ..."
+            f"Waiting for device {dev!r} to appear in docker container {docker.__name__} ..."
         )
         try:
             docker.wait_file(dev, 60)
         except CalledProcessError:
             raise LAVABug(
-                f"Failed to share device '{dev}' to docker container {docker.__name__}"
+                f"Failed to share device {dev!r} to docker container {docker.__name__}"
             )
         action.logger.info(
-            f"Shared device '{dev}' to docker container {docker.__name__}"
+            f"Shared device {dev!r} to docker container {docker.__name__}"
         )
 
     def __map_devices__(self, container_name, docker):

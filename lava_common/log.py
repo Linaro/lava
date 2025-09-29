@@ -200,6 +200,7 @@ class JobOutputSender:
             json_data = {}
             try:
                 json_data = ret.json()
+                # Error message must match exactly, can't use !r
                 if json_data.get("error") == f"Unknown job '{self.job_id}'":
                     self.records[:] = []
                     records_to_send.clear()
