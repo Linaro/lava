@@ -81,7 +81,7 @@ class AvhDeploy(Action):
                 raise JobError("'deploy.images' should be a dictionary")
             for image in self.required_images:
                 if image not in images.keys():
-                    raise JobError(f"No '{image}' image specified for AVH deploy")
+                    raise JobError(f"No {image!r} image specified for AVH deploy")
 
             if (
                 self.test_needs_overlay(self.parameters)
@@ -164,7 +164,7 @@ class AvhDeploy(Action):
                 if project.name == self.avh["project_name"]:
                     self.avh["project_id"] = project.id
             if self.avh.get("project_id") is None:
-                raise JobError(f"AVH project '{self.avh['project_name']}' NOT found!")
+                raise JobError(f"AVH project {self.avh['project_name']!r} NOT found!")
             self.logger.info(f"AVH project ID: {self.avh['project_id']}")
 
         self.avh["image_version"] = self.level

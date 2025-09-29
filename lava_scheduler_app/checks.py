@@ -119,15 +119,15 @@ def check_permission(path):
 
     if stat.S_IMODE(st.st_mode) != 416:
         return Error(
-            f"Invalid permissions (should be 0o640) for '{path}'", obj="permissions"
+            f"Invalid permissions (should be 0o640) for {path!r}", obj="permissions"
         )
     try:
         if getpwuid(st.st_uid).pw_name != "lavaserver":
             return Error(
-                f"Invalid owner (should be lavaserver) for '{path}'", obj="permissions"
+                f"Invalid owner (should be lavaserver) for {path!r}", obj="permissions"
             )
     except KeyError:
-        return Error(f"Unknown user id {st.st_uid} for '{path}'", obj="permissions")
+        return Error(f"Unknown user id {st.st_uid} for {path!r}", obj="permissions")
     return None
 
 
@@ -156,17 +156,17 @@ def _package_status(name, info=False):
             .split("\n")
         )
         if out[1] != "Status: install ok installed":
-            return Error(f"'{name}' not installed correctly", obj="debian pkg")
+            return Error(f"{name!r} not installed correctly", obj="debian pkg")
     except FileNotFoundError:
         return Warning(f"Unable to query {name}", obj="debian pkg")
     except subprocess.CalledProcessError:
         if info:
             return Info(
-                f"'{name}' not installed from a Debian package", obj="debian pkg"
+                f"{name!r} not installed from a Debian package", obj="debian pkg"
             )
         else:
             return Error(
-                f"'{name}' not installed from a Debian package", obj="debian pkg"
+                f"{name!r} not installed from a Debian package", obj="debian pkg"
             )
 
 

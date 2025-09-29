@@ -64,7 +64,7 @@ class KexecAction(Action):
 
         path = self.get_namespace_data(action="download-action", label=key, key="file")
         if path is None:
-            raise JobError(f"Missing '{key}' in deploy stage")
+            raise JobError(f"Missing {key!r} in deploy stage")
 
         path = path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
         cmd = f"wget http://{ip_addr}/tmp/{path} -O {self.parameters[key]}"

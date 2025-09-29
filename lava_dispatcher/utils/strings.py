@@ -76,7 +76,7 @@ def safe_dict_format(string: str, dictionary: dict[str, str]) -> str:
     class SafeDict(dict[str, str]):
         def __missing__(self, key: str) -> str:
             logger = logging.getLogger("dispatcher")
-            logger.warning("Missing key : '{%s}' for string '%s'", key, string)
+            logger.warning("Missing key : '{%s}' for string %r", key, string)
             return "{" + key + "}"
 
     return string.format_map(SafeDict(dictionary))
