@@ -59,7 +59,7 @@ class SchedulerRemoteArtifactTokensAPI(ExposedV2API):
             token = RemoteArtifactsAuth.objects.filter(user=self.user).get(name=name)
             return token.token
         except RemoteArtifactsAuth.DoesNotExist:
-            raise xmlrpc.client.Fault(404, f"Token '{name}' was not found.")
+            raise xmlrpc.client.Fault(404, f"Token {name!r} was not found.")
 
     def add(self, name, token):
         """
@@ -111,4 +111,4 @@ class SchedulerRemoteArtifactTokensAPI(ExposedV2API):
         try:
             RemoteArtifactsAuth.objects.get(user=self.user, name=name).delete()
         except RemoteArtifactsAuth.DoesNotExist:
-            raise xmlrpc.client.Fault(404, f"Token '{name}' was not found.")
+            raise xmlrpc.client.Fault(404, f"Token {name!r} was not found.")
