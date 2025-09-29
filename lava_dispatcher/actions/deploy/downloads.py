@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from shlex import quote as shlex_quote
 from shutil import copy
 from typing import TYPE_CHECKING
 
@@ -76,13 +77,14 @@ class PostprocessWithDocker(Action):
         return res
 
     def run(self, connection, max_end_time):
-        script = ["#!/bin/sh", "exec 2>&1", "set -ex"]
+        script: list[str] = ["#!/bin/sh", "exec 2>&1", "set -ex"]
 
         # Export data generated during run of the Pipeline like NFS settings
         if self.job.device:
             for key in self.job.device["dynamic_data"]:
                 script.append(
-                    "export %s='%s'" % (key, self.job.device["dynamic_data"][key])
+                    f"export {shlex_quote(key)}="
+                    f"{shlex_quote(str(self.job.device['dynamic_data'][key]))}"
                 )
         # Export job and dispatcher env vars.
         environment = self.job.parameters.get("environment", {})
@@ -94,18 +96,17 @@ class PostprocessWithDocker(Action):
             "dispatcher", {}
         ).get("prefix", "")
         for key, value in environment.items():
-            script.append("export %s='%s'" % (key, value))
+            script.append(f"export {shlex_quote(key)}={shlex_quote(str(value))}")
         if http_cache := self.job.parameters["dispatcher"].get(
             "http_url_format_string", ""
         ):
-            script.append(f"export HTTP_CACHE='{http_cache}'")
+            script.append(f"export HTTP_CACHE={shlex_quote(http_cache)}")
 
         script = script + self.steps
-        script = "\n".join(script) + "\n"
 
         self.path.mkdir(parents=True, exist_ok=True)
         scriptfile = self.path / "postprocess.sh"
-        scriptfile.write_text(script)
+        scriptfile.write_text("\n".join(script) + "\n")
         scriptfile.chmod(0o755)
 
         # make overlay available in the downloads directory
