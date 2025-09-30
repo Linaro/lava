@@ -13,6 +13,8 @@ from __future__ import annotations
 
 import re
 import time
+from shlex import split as shelx_split
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
@@ -21,8 +23,22 @@ from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice, DisconnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import PowerOff, ResetDevice
-from lava_dispatcher.utils.strings import safe_dict_format
+from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.uuu import OptionalContainerUuuAction
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+
+
+def build_uuu_path_monitoring_args(usb_otg_path: str | list[str]) -> Iterator[str]:
+    # See https://manpages.debian.org/trixie/uuu/uuu.1.en.html#m
+    if isinstance(usb_otg_path, str):
+        yield "-m"
+        yield usb_otg_path
+    else:
+        for single_path in usb_otg_path:
+            yield "-m"
+            yield single_path
 
 
 class CheckSerialDownloadMode(OptionalContainerUuuAction):
@@ -51,24 +67,28 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
         # Sleep 5 seconds before availability check
         time.sleep(5)
 
-        usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
-            "usb_otg_path"
+        usb_otg_path: str | list[str] = self.job.device["actions"]["boot"]["methods"][
+            "uuu"
+        ]["options"]["usb_otg_path"]
+        cmd: list[str] = [
+            self.linux_timeout,
+            "--preserve-status",
+            "10",
+            self.uuu,
+            *build_uuu_path_monitoring_args(usb_otg_path),
+            boot,
         ]
-        path_args = " -m ".join(usb_otg_path)
-        cmd = "{} --preserve-status 10 {} -m {} {}".format(
-            self.linux_timeout, self.uuu, path_args, boot
-        )
 
         self.maybe_copy_to_container(boot)
 
         # Board available if cmd terminates correctly
-        ret = self.run_uuu(cmd.split(" "), allow_fail=True)
+        ret = self.run_uuu(cmd, allow_fail=True)
         if ret == 0:
             return True
         elif ret == 143:
             return False
         else:
-            raise self.command_exception(f"Fail UUUBootAction on cmd : {cmd}")
+            raise self.command_exception(f"Fail UUUBootAction on cmd : {' '.join(cmd)}")
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -405,7 +425,7 @@ class UUUBootAction(OptionalContainerUuuAction):
         usb_otg_path = self.job.device["actions"]["boot"]["methods"]["uuu"]["options"][
             "usb_otg_path"
         ]
-        uuu_cmds = self.parameters["commands"]
+        uuu_cmds: list[dict[str, str]] = self.parameters["commands"]
         self.bcu_board_name = self.job.device["actions"]["boot"]["methods"]["uuu"][
             "options"
         ]["bcu_board_name"]
@@ -417,55 +437,57 @@ class UUUBootAction(OptionalContainerUuuAction):
         )
 
         # Use to replace {boot} identifier in cmd by correct 'boot' image path
-        templates = {}
+        templates: dict[str, str | None] = {}
         for image in images_name:
-            templates[image] = self.get_namespace_data(
+            image_path = self.get_namespace_data(
                 "download-action", label=image, key="file"
             )
-            self.maybe_copy_to_container(templates[image])
+            templates[f"{{{image}}}"] = image_path
+            self.maybe_copy_to_container(image_path)
 
         self.logger.info(templates)
 
-        uuu_cmd_list = []
+        protocol_cmd_list: list[tuple[str, list[str]]] = []
         for dico in uuu_cmds:
             for protocol, cmd in dico.items():
-                cmd = safe_dict_format(cmd, templates)
-                uuu_cmd_list.append(f"{protocol}: {cmd}")
-
-        uuu_cmds = uuu_cmd_list
+                cmd_list = substitute(shelx_split(cmd), templates)
+                protocol_cmd_list.append((protocol, cmd_list))
 
         if usb_otg_path is None:
             raise JobError("USB path of the device not set for uuu")
-        for cmd in uuu_cmds:
-            if "bcu:" in cmd:
+        for protocol, cmd_list in protocol_cmd_list:
+            if protocol == "bcu":
                 self.cleanup_required = True
-                cmd = cmd.replace("bcu: ", "")
-                exec_cmd = "{} {} -board={} -id={}".format(
-                    self.bcu, cmd, self.bcu_board_name, self.bcu_board_id
-                )
+                exec_cmd: list[str] = [
+                    self.bcu,
+                    *cmd_list,
+                    f"-board={self.bcu_board_name}",
+                    f"-id={self.bcu_board_id}",
+                ]
                 self.run_bcu(
-                    exec_cmd.split(" "),
+                    exec_cmd,
                     allow_fail=False,
-                    error_msg=f"Fail UUUBootAction on cmd : {cmd}",
+                    error_msg=f"Fail UUUBootAction on cmd : {' '.join(cmd_list)}",
                 )
                 continue
-            if "uuu:" in cmd:
-                # uuu can be used in 2 different ways, by using built-in scripts in a single command,
-                # or with a list of commands, each prefixed with a protocol type.
-                #   Example of built-in: uuu -b sd bootimage
-                #   Example of protocol: uuu SDP: boot -f flash.bin
-                # So it is more convenient for LAVA job writers to use uuu built-in script with a tuple (protocol, command), like uuu: -b sd_all
-                # In this last case, we remove the 'uuu: ' here
-                cmd = cmd.replace("uuu: ", "")
-
-            path_args = " -m ".join(usb_otg_path)
-            exec_cmd = f"{self.uuu} -m {path_args} {cmd}"
+            # uuu can be used in 2 different ways, by using built-in scripts in
+            # a single command,
+            # or with a list of commands, each prefixed with a protocol type.
+            #   Example of built-in: uuu -b sd bootimage
+            #   Example of protocol: uuu SDP: boot -f flash.bin
+            # So it is more convenient for LAVA job writers to use uuu built-in
+            # script with a tuple (protocol, command), like uuu: -b sd_all
+            exec_cmd = [
+                self.uuu,
+                *build_uuu_path_monitoring_args(usb_otg_path),
+                *cmd_list,
+            ]
 
             time.sleep(1)
             self.run_uuu(
-                exec_cmd.split(" "),
+                exec_cmd,
                 allow_fail=False,
-                error_msg=f"Fail UUUBootAction on cmd : {cmd}",
+                error_msg=f"Fail UUUBootAction on cmd : {' '.join(cmd_list)}",
             )
 
         return connection
