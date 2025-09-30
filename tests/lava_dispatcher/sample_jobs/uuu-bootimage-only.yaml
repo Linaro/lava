@@ -25,7 +25,7 @@ actions:
 - boot:
     method: uuu
     commands :
-      - uuu : -b sd {boot}
+      - uuu: -b sd {boot}
     timeout:
       minutes: 4
 

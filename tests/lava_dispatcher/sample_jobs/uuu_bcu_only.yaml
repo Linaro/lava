@@ -20,7 +20,7 @@ actions:
 - boot:
     method: uuu
     commands :
-      - bcu : set_boot_mode emmc_s
+      - bcu: set_boot_mode emmc_s
     timeout:
       minutes: 2
 - boot :

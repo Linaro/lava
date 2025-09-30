@@ -21,7 +21,7 @@ actions:
     method: uuu
     skip_uuu_if_bootloader_valid: true
     commands :
-      - bcu : set_boot_mode emmc_s
+      - bcu: set_boot_mode emmc_s
     timeout:
       minutes: 2
 - boot :

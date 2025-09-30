@@ -20,9 +20,9 @@ actions:
 - boot:
     method: uuu
     commands :
-      - bcu : reset usb
-      - uuu : -b sd {boot}
-      - bcu : set_boot_mode sd
+      - bcu: reset usb
+      - uuu: -b sd {boot}
+      - bcu: set_boot_mode sd
     timeout:
       minutes: 2
 - boot :
