@@ -26,10 +26,8 @@ from lava_common.exceptions import (
 )
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import SShSession
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.filesystem import write_bootscript
 from lava_dispatcher.utils.messages import LinuxKernelMessages
