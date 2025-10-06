@@ -1,0 +1,92 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2025 LAVA contributors
+
+# Pylint configuration
+[tool.pylint.main]
+jobs = 0  # Scale number of jobs to number of CPUs
+init-hook = "import django; django.setup()"  # Fix django apps not being initialized
+load-plugins = "pylint_django"
+recursive = true
+py-version = "3.9"  # Debian 11 (bullseye) Python version
+disable = [
+    "format",  # Formatting is handled by black and isort
+    "design",
+    "C0103",  # Method name doesn't conform to snake_case naming style
+    "C0104",  # Disallowed name
+    "C0114",  # Missing module docstring
+    "C0115",  # Missing class docstring
+    "C0116",  # Missing function or method docstring
+    "C0121",  # Comparison X should be Y if checking for the singleton value
+    "C0123",  # Use isinstance() rather than type() for a typecheck.
+    "C0201",  # Consider iterating the dictionary directly instead of calling .keys()
+    "C0206",  # Consider iterating with .items()
+    "C0207",  # Use .split(maxsplit=1)[0] instead
+    "C0209",  # Formatting a regular string which could be an f-string
+    "C0411",  # Wrong import order. This is handled by `isort --profile black`.
+    "C0412",  # Imports from package %s are not grouped
+    "C0415",  # Import outside toplevel
+    "C2801",  # Unnecessarily calls dunder method
+    "E0202",  # An attribute defined in %s line %s hides this method
+    "E0307",  # __str__ does not return str
+    "E0401",  # Unable to import '%s'
+    "E0611",  # No name '%s' in module '%s'
+    "E1101",  # Instance of x has no y member
+    "E1136",  # Value is unsubscriptable
+    "W1309",  # Using an f-string that does not have any interpolated variables
+    "W1510",  # 'subprocess.run' used without explicitly defining the value for 'check'.
+    "R0401",  # Cyclic import (%s -> %s)
+    "R0801",  # Duplicate code
+    "R1701",  # Consider merging these isinstance calls
+    "R1702",  # Too many nested blocks
+    "R1705",  # Unnecessary "else" after "return"
+    "R1710",  # Either all return statements in a function should return an expression,
+              # or none of them should.
+    "R1711",  # Useless return at end of function or method
+    "R1718",  # Consider using a set comprehension
+    "R1719",  # The if expression can be replaced with 'test'
+    "R1720",  # Unnecessary "elif" after "raise"
+    "R1721",  # Unnecessary use of a comprehension
+    "R1723",  # Unnecessary "else" after "break"
+    "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
+    "R1728",  # Consider using a generator
+    "R1729",  # Use a generator instead
+    "R1731",  # Consider using max instead of unnecessary if block
+    "R1732",  # Consider using 'with' for resource-allocating operations
+    "R1733",  # Unnecessary dictionary index lookup
+    "R1734",  # Consider using [] instead of list()
+    "R1735",  # Consider using '{}' instead of a call to 'dict'.
+    "W0101",  # Unreachable code
+    "W0102",  # Dangerous default value as argument
+    "W0106",  # Expression is assigned to nothing
+    "W0107",  # Unnecessary pass statement
+    "W0108",  # Lambda may not be necessary
+    "W0127",  # Assigning the same variable to itself
+    "W0130",  # Duplicate value in set
+    "W0201",  # Attribute defined outside __init__
+    "W0212",  # Access to a protected member of a client class
+    "W0221",  # Used when a method has a different number of arguments than
+              # the implemented interface or in an overridden method.
+    "W0223",  # Method is abstract in class but is not overridden in child class
+    "W0237",  # Parameter has been renamed in overriding method
+    "W0511",  # FIXME comments
+    "W0603",  # Using the global statement
+    "W0611",  # Unused import
+    "W0612",  # Unused variable
+    "W0613",  # Unused argument
+    "W0621",  # Redefining name from outer scope
+    "W0622",  # Redefining built-in
+    "W0640",  # Cell variable defined in loop
+    "W0632",  # Possible unbalanced tuple unpacking
+    "W0706",  # The except handler raises immediately
+    "W0707",  # Consider explicitly re-raising using 'raise x from y'
+    "W0715",  # Exception arguments suggest string formatting might be intended
+    "W0718",  # Catching too general exception
+    "W0719",  # Raising too general exception
+    "W1115",  # Non-string value assigned
+    "W1201",  # Use lazy % formatting in logging functions
+    "W1203",  # Use lazy % or % formatting in logging functions
+    "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
+    "W1514",  # Using open without explicitly specifying an encoding
+    "W3101",  # Missing timeout argument for method 'requests.get' can cause your program to hang indefinitely
+    "W4701",  # Iterated list is being modified inside for loop body, consider iterating through a copy of it instead.
+]
