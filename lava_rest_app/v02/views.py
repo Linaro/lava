@@ -553,7 +553,10 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         job_id = self.kwargs["parent_lookup_job_id"]
 
-        job = TestJob.objects.select_related("submitter").get(id=job_id)
+        try:
+            job = TestJob.objects.select_related("submitter").get(id=job_id)
+        except TestJob.DoesNotExist:
+            raise NotFound
 
         if not job.can_view(self.request.user):
             raise PermissionDenied
@@ -608,7 +611,10 @@ class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         job_id = self.kwargs["parent_lookup_suite__job_id"]
 
-        job = TestJob.objects.select_related("submitter").get(id=job_id)
+        try:
+            job = TestJob.objects.select_related("submitter").get(id=job_id)
+        except TestJob.DoesNotExist:
+            raise NotFound
 
         if not job.can_view(self.request.user):
             raise PermissionDenied
