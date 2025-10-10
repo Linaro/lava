@@ -195,7 +195,7 @@ class ConnectSsh(Action):
                 % (self.command, shell.exitstatus, shell.readlines())
             )
         # SshSession monitors the pexpect
-        connection = SShSession(self.job, shell)
+        connection = SShSession(shell)
         connection = super().run(connection, max_end_time)
         connection.prompt_str = list(self.parameters.get("prompts", []))
         connection.connected = True
