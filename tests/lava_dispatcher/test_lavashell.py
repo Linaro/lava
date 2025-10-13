@@ -8,11 +8,9 @@ from __future__ import annotations
 from typing import Any
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
 from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.job import Job
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
@@ -111,42 +109,3 @@ class TestMultiNodeOverlay(LavaDispatcherTestCase):
         for block in self.server_job.parameters["actions"]:
             key_list.extend(block.keys())
         self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
-
-
-class TestShellResults(LavaDispatcherTestCase):
-    class FakeJob(Job):
-        pass
-
-    class FakeDeploy:
-        """
-        Derived from object, *not* Deployment as this confuses
-        python -m unittest discover
-        - leads to the FakeDeploy being called instead.
-        """
-
-        def __init__(self, parent):
-            self.__parameters__ = {}
-            self.pipeline = parent
-            self.job = parent.job
-            self.action = TestShellResults.FakeAction()
-
-    class FakePipeline(Pipeline):
-        def __init__(self, parent=None, job=None):
-            super().__init__(parent, job)
-
-    class FakeAction(Action):
-        """
-        Isolated Action which can be used to generate artificial exceptions.
-        """
-
-        name = "fake-action"
-        description = "fake, do not use outside unit tests"
-        summary = "fake action for unit tests"
-
-        def __init__(self):
-            super().__init__()
-            self.count = 1
-
-        def run(self, connection, max_end_time):
-            self.count += 1
-            raise JobError("fake error")
