@@ -133,7 +133,7 @@ class RunNodebooterContainer(Action):
         docker.init(False)
 
         try:
-            docker.run(init_exec)
+            docker.run(init_exec, self)
         except subprocess.CalledProcessError as exc:
             raise JobError(f"docker run command exited: {exc}")
 
