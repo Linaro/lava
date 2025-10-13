@@ -277,7 +277,7 @@ class Command(BaseCommand):
         if state is not None:
             jobs = jobs.filter(state=self.job_state[state])
 
-        print("Listing jobs:")
+        self.stdout.write("Listing jobs:")
         for job in jobs:
             to_print = not lxc
             if lxc:
@@ -287,7 +287,7 @@ class Command(BaseCommand):
                         to_print = True
 
             if to_print:
-                print(
+                self.stdout.write(
                     f"* {job.submit_time} "
                     f"- {job.id}@{job.submitter} "
                     f"- {job.description}"
@@ -386,7 +386,7 @@ class Command(BaseCommand):
             data = yaml_safe_load(definition)
             try:
                 validate(data, strict, settings.EXTRA_CONTEXT_VARIABLES)
-                print(f"* {job.id}")
+                self.stdout.write(f"* {job.id}")
             except voluptuous.Invalid as exc:
                 invalid[job.id] = {
                     "submitter": job.submitter,
@@ -394,11 +394,11 @@ class Command(BaseCommand):
                     "key": exc.path,
                     "msg": exc.msg,
                 }
-                print(f"* {job.id} Invalid job definition")
-                print(f"    submitter: {job.submitter}")
-                print(f"    device-type: {job.requested_device_type}")
-                print(f"    key: {exc.path}")
-                print(f"    msg: {exc.msg}")
+                self.stdout.write(f"* {job.id} Invalid job definition")
+                self.stdout.write(f"    submitter: {job.submitter}")
+                self.stdout.write(f"    device-type: {job.requested_device_type}")
+                self.stdout.write(f"    key: {exc.path}")
+                self.stdout.write(f"    msg: {exc.msg}")
         if invalid:
             if should_mail_admins:
                 body = "Hello,\n\nthe following jobs schema are invalid:\n"

@@ -389,7 +389,9 @@ class Command(BaseCommand):
 
         destiny = device.load_configuration()
         if not destiny:
-            print("Reminder: device dictionary does not yet exist for %s" % target)
+            self.stderr.write(
+                "Reminder: device dictionary does not yet exist for %s" % target
+            )
 
     def handle_details(self, hostname):
         """Print device details"""

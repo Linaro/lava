@@ -81,11 +81,15 @@ class Command(BaseCommand):
                 user = User.objects.get(username=options["username"])
             except User.DoesNotExist:
                 raise CommandError("Unable to find user '%s'" % name)
-            print("Adding user '%s' to group '%s'" % (user.username, group.name))
+            self.stdout.write(
+                "Adding user '%s' to group '%s'" % (user.username, group.name)
+            )
             group.user_set.add(user)
         if options["submitting"]:
             for perm in submit:
-                print("Adding permission %s to group %s" % (perm, group.name))
+                self.stdout.write(
+                    "Adding permission %s to group %s" % (perm, group.name)
+                )
                 group.permissions.add(perm)
 
     def handle_add(self, options):
@@ -101,11 +105,15 @@ class Command(BaseCommand):
                 user = User.objects.get(username=options["username"])
             except User.DoesNotExist:
                 raise CommandError("Unable to find user '%s'" % name)
-            print("Adding user '%s' to group '%s'" % (user.username, group.name))
+            self.stdout.write(
+                "Adding user '%s' to group '%s'" % (user.username, group.name)
+            )
             group.user_set.add(user)
         if options["submitting"]:
             for perm in submit:
-                print("Adding permission %s to group %s" % (perm, group.name))
+                self.stdout.write(
+                    "Adding permission %s to group %s" % (perm, group.name)
+                )
                 group.permissions.add(perm)
 
     def handle_list(self, verbose=False):
