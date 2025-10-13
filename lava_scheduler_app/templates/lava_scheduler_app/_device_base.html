@@ -44,6 +44,20 @@
       </dd>
       <dt>Device-type</dt>
       <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dt>Worker</dt>
+      {% if device.worker_host %}
+      <dd>
+      {% if device.worker_host.state == device.worker_host.STATE_ONLINE and device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
+      <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
+      {% elif device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
+      <a href="{{ device.worker_host.get_absolute_url }}" class="text-danger">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-fire"></span></a>
+      {% else %}
+      <a href="{{ device.worker_host.get_absolute_url }}" class="text-warning">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-minus-sign"></span></a>
+      {% endif %}
+      </dd>
+      {% else %}
+      <dd><i>...</i></dd>
+      {% endif %}
       <dt>Tags</dt>
       {% if device.tags.all %}
       <dd>
@@ -113,20 +127,8 @@
         </div>
         {% endif %}
       </dd>
-      <dt>Worker</dt>
-      {% if device.worker_host %}
-      <dd>
-      {% if device.worker_host.state == device.worker_host.STATE_ONLINE and device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
-      <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
-      {% elif device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
-      <a href="{{ device.worker_host.get_absolute_url }}" class="text-danger">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-fire"></span></a>
-      {% else %}
-      <a href="{{ device.worker_host.get_absolute_url }}" class="text-warning">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-minus-sign"></span></a>
-      {% endif %}
-      </dd>
-      {% else %}
-      <dd><i>...</i></dd>
-      {% endif %}
+      <dt>Health reason</dt>
+      <dd>{{ device_health_reason|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
       <dt>Device dictionary</dt>
       <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
     </dl>
