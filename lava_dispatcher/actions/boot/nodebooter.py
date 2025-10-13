@@ -162,7 +162,7 @@ class ConfigureNodebooter(Action):
         super().validate()
         if "environment" in self.job.device:
             if not isinstance(self.job.device["environment"], dict):
-                self.errors("Incorrect environment format in device configuration")
+                self.errors = "Incorrect environment format in device configuration"
             if "DUT_MAC" in self.job.device["environment"]:
                 self.dut_mac = self.job.device["environment"]["DUT_MAC"]
         else:
