@@ -666,7 +666,7 @@ class USBGMS(DeployStrategy):
         keys = set(device["actions"]["deploy"]["methods"]["usbg-ms"].keys())
         if keys != {"disable", "enable"}:
             raise ConfigurationError(
-                "usbg-ms 'disable' and 'enable' commands missing: %s", keys
+                f"usbg-ms 'disable' and 'enable' commands missing: {keys}"
             )
         return True, "accepted"
 
