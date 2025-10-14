@@ -1223,7 +1223,6 @@ class VlanInterfaces(TestCaseWithFactory):
         self.assertIn("10M", client_job["protocols"]["lava-vland"]["vlan_one"]["tags"])
         self.assertIn("vlan_two", server_job["protocols"]["lava-vland"])
         self.assertIn("100M", server_job["protocols"]["lava-vland"]["vlan_two"]["tags"])
-        client_job["protocols"]["lava-vland"]["vlan_one"]
         bbb_01 = Device.objects.get(hostname="bbb-01")
         client_config = bbb_01.load_configuration()
         self.assertIn("eth0", client_config["parameters"]["interfaces"])
