@@ -211,7 +211,7 @@ def start_job(
             args.append("--env-dut=%s" % (base_dir / "env-dut.yaml"))
 
         proc = subprocess.Popen(
-            args, stdout=out_file, stderr=err_file, env=env, preexec_fn=os.setpgrp
+            args, stdout=out_file, stderr=err_file, env=env, process_group=0
         )
         return proc.pid
     except Exception as exc:  # pylint: disable=broad-except
