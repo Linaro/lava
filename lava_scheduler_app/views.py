@@ -752,23 +752,7 @@ class DeviceTypeOverView(JobTableView):
 
 class DTDeviceView(DeviceTableView):
     def get_queryset(self):
-        q = (
-            Device.objects.exclude(health=Device.HEALTH_RETIRED)
-            .visible_by_user(self.request.user)
-            .select_related("device_type", "worker_host")
-            .prefetch_related("tags")
-            .order_by("hostname")
-            .distinct()
-        )
-        return q.prefetch_related(
-            Prefetch(
-                "testjobs",
-                queryset=TestJob.objects.filter(
-                    ~Q(state=TestJob.STATE_FINISHED)
-                ).select_related("submitter"),
-                to_attr="running_jobs",
-            )
-        )
+        return super().get_queryset().exclude(health=Device.HEALTH_RETIRED)
 
 
 @BreadCrumb("Maintenance", parent=device_list)

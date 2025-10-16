@@ -261,7 +261,7 @@ class DeviceTable(LavaTable):
     device_type = tables.Column()
     state = ExpandedStatusColumn(verbose_name="State")
     health = tables.Column(verbose_name="Health")
-    last_job_end_time = tables.Column(verbose_name="Last Job", orderable=False)
+    last_job_end_time = tables.Column(verbose_name="Last Job")
     tags = TagsColumn()
 
     class Meta(LavaTable.Meta):
