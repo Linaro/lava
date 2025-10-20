@@ -361,6 +361,7 @@ class SchedulerDevicesAPI(ExposedV2API):
         health=None,
         description=None,
         device_type=None,
+        reason=None,
     ):
         """
         Name
@@ -368,7 +369,8 @@ class SchedulerDevicesAPI(ExposedV2API):
         `scheduler.devices.update` (`hostname`, `worker_hostname=None`,
                                     `user_name=None`, `group_name=None`,
                                     `public=True`,  `health=None`,
-                                    `description=None`, `device_type=None`)
+                                    `description=None`, `device_type=None`
+                                    `reason=None`)
 
         Description
         -----------
@@ -394,6 +396,8 @@ class SchedulerDevicesAPI(ExposedV2API):
           Device description
         `device_type`: string
           Device type
+        `reason`: string
+          Reason of health change
 
         Return value
         ------------
@@ -437,8 +441,12 @@ class SchedulerDevicesAPI(ExposedV2API):
                         fields.append("health")
                         device.log_admin_entry(
                             self.user,
-                            "%s → %s (xmlrpc api)"
-                            % (prev_health, device.get_health_display()),
+                            "%s → %s (%s)"
+                            % (
+                                prev_health,
+                                device.get_health_display(),
+                                reason or "xmlrpc api",
+                            ),
                         )
                 except KeyError:
                     raise xmlrpc.client.Fault(400, "Health '%s' is invalid" % health)
