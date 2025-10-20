@@ -1098,6 +1098,8 @@ def device_type_reports(request, pk):
 
 def device_dictionary_plain(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if not device.can_view(request.user):
+        raise PermissionDenied()
     device_configuration = device.load_configuration(output_format="yaml")
     response = HttpResponse(device_configuration, content_type="text/yaml")
     response["Content-Disposition"] = "attachment; filename=%s.yaml" % pk
@@ -1123,6 +1125,8 @@ def lab_health(request):
 @BreadCrumb("All Health Jobs on Device {pk}", parent=index, needs=["pk"])
 def health_job_list(request, pk):
     device = get_object_or_404(Device, pk=pk)
+    if not device.can_view(request.user):
+        raise PermissionDenied()
 
     health_data = AllJobsView(request)
     health_table = AllJobsTable(
@@ -2562,6 +2566,8 @@ def device_health(request, pk):
 @BreadCrumb("{pk}", parent=workers, needs=["pk"])
 def worker_detail(request, pk):
     worker = get_object_or_404(Worker, pk=pk)
+    if not worker.can_view(request.user):
+        raise PermissionDenied()
     data = DeviceTableView(request)
     ptable = NoWorkerDeviceTable(
         data.get_table_data()
