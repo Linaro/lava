@@ -244,7 +244,7 @@ class Command(BaseCommand):
                 fields = job.go_state_finished(TestJob.HEALTH_INCOMPLETE)
                 job.save(update_fields=fields)
         except TestJob.DoesNotExist:
-            raise CommandError("TestJob '%d' does not exists" % job_id)
+            raise CommandError(f"TestJob {job_id!r} does not exists")
 
     def handle_list(self, lxc, newer_than, state, submitter, no_submitter):
         jobs = TestJob.objects.all().order_by("-id")
@@ -252,14 +252,14 @@ class Command(BaseCommand):
             try:
                 user = User.objects.get(username=submitter)
             except User.DoesNotExist:
-                raise CommandError("Unable to find submitter '%s'" % submitter)
+                raise CommandError(f"Unable to find submitter {submitter!r}")
             jobs = jobs.filter(submitter=user)
 
         if no_submitter is not None:
             try:
                 user = User.objects.get(username=no_submitter)
             except User.DoesNotExist:
-                raise CommandError("Unable to find submitter '%s'" % no_submitter)
+                raise CommandError(f"Unable to find submitter {no_submitter!r}")
             jobs = jobs.exclude(submitter=user)
 
         if newer_than is not None:
@@ -288,7 +288,9 @@ class Command(BaseCommand):
 
             if to_print:
                 print(
-                    f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
+                    f"* {job.submit_time} "
+                    f"- {job.id}@{job.submitter} "
+                    f"- {job.description}"
                 )
 
     def handle_rm(
@@ -319,20 +321,20 @@ class Command(BaseCommand):
             try:
                 user = User.objects.get(username=submitter)
             except User.DoesNotExist:
-                raise CommandError("Unable to find submitter '%s'" % submitter)
+                raise CommandError(f"Unable to find submitter {submitter!r}")
             jobs = jobs.filter(submitter=user)
 
         if skip_favorite:
             jobs = jobs.exclude(testjobuser__is_favorite=True)
 
-        self.stdout.write("Removing %d jobs:" % jobs.count())
+        self.stdout.write(f"Removing {jobs.count()} jobs:")
 
         media_root = pathlib.Path(settings.MEDIA_ROOT)
         jobs = jobs.values("id", "end_time", "submit_time")
         index = None
         for index, job_data in enumerate(jobs.iterator(chunk_size=100)):
             job = TestJob(**job_data)
-            self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+            self.stdout.write(f"* {job.id} ({job.end_time}): {job.output_dir}")
             try:
                 if not simulate:
                     rmtree(job.output_dir)
@@ -343,9 +345,9 @@ class Command(BaseCommand):
                             if parent == media_root:
                                 break
                             parent.rmdir()
-                            self.stdout.write("  -> rmdir %s" % (parent))
+                            self.stdout.write(f"  -> rmdir {parent}")
             except OSError as exc:
-                self.stderr.write("  -> Unable to remove the directory: %s" % str(exc))
+                self.stderr.write(f"  -> Unable to remove the directory: {exc}")
 
             if not simulate and not logs_only:
                 job.delete()
@@ -372,7 +374,7 @@ class Command(BaseCommand):
             try:
                 user = User.objects.get(username=submitter)
             except User.DoesNotExist:
-                raise CommandError("Unable to find submitter '%s'" % submitter)
+                raise CommandError(f"Unable to find submitter {submitter!r}")
             jobs = jobs.filter(submitter=user)
 
         invalid = {}
@@ -384,7 +386,7 @@ class Command(BaseCommand):
             data = yaml_safe_load(definition)
             try:
                 validate(data, strict, settings.EXTRA_CONTEXT_VARIABLES)
-                print("* %s" % job.id)
+                print(f"* {job.id}")
             except voluptuous.Invalid as exc:
                 invalid[job.id] = {
                     "submitter": job.submitter,
@@ -392,19 +394,20 @@ class Command(BaseCommand):
                     "key": exc.path,
                     "msg": exc.msg,
                 }
-                print("* %s Invalid job definition" % job.id)
-                print("    submitter: %s" % job.submitter)
-                print("    device-type: %s" % job.requested_device_type)
-                print("    key: %s" % exc.path)
-                print("    msg: %s" % exc.msg)
+                print(f"* {job.id} Invalid job definition")
+                print(f"    submitter: {job.submitter}")
+                print(f"    device-type: {job.requested_device_type}")
+                print(f"    key: {exc.path}")
+                print(f"    msg: {exc.msg}")
         if invalid:
             if should_mail_admins:
                 body = "Hello,\n\nthe following jobs schema are invalid:\n"
-                for job_id in invalid.keys():
-                    body += "* %s\n" % job_id
-                    body += "  submitter: {submitter}\n  device-type: {dt}\n  key: {key}\n  msg: {msg}\n".format(
-                        **invalid[job_id]
-                    )
+                for job_id, job_values in invalid.items():
+                    body += f"* {job_id!r}\n"
+                    body += (
+                        "  submitter: {submitter}\n  device-type: {dt}\n  "
+                        "key: {key}\n  msg: {msg}\n"
+                    ).format(**job_values)
                 body += "\n-- \nlava-server manage jobs validate"
                 mail_admins("Invalid jobs", body)
             raise CommandError("Some jobs are invalid")
@@ -442,7 +445,7 @@ class Command(BaseCommand):
             try:
                 user = User.objects.get(username=submitter)
             except User.DoesNotExist:
-                raise CommandError("Unable to find submitter '%s'" % submitter)
+                raise CommandError(f"Unable to find submitter {submitter!r}")
             jobs = jobs.filter(submitter=user)
 
         # Only job.id, job.end_time, job.output_dir are used
@@ -456,12 +459,12 @@ class Command(BaseCommand):
             if not (base / "output.yaml").exists():
                 if (base / "output.yaml.size").exists():
                     self.stdout.write(
-                        "* %d (%s): %s [SKIP]" % (job.id, job.end_time, job.output_dir)
+                        f"* {job.id} ({job.end_time}): {job.output_dir} [SKIP]"
                     )
                 elif (base / "output.yaml.xz").exists():
                     self.stdout.write(
-                        "* %d (%s): %s [create size file]"
-                        % (job.id, job.end_time, job.output_dir)
+                        f"* {job.id} ({job.end_time}): {job.output_dir} "
+                        "[create size file]"
                     )
                     if not simulate:
                         with contextlib.suppress(FileNotFoundError):
@@ -469,7 +472,7 @@ class Command(BaseCommand):
                                 _create_output_size(base, f_in.seek(0, 2))
                 continue
 
-            self.stdout.write("* %d (%s): %s" % (job.id, job.end_time, job.output_dir))
+            self.stdout.write(f"* {job.id} ({job.end_time}): {job.output_dir}")
             try:
                 if not simulate:
                     # Read the logs
@@ -484,7 +487,7 @@ class Command(BaseCommand):
                     # Remove the original file
                     (base / "output.yaml").unlink()
             except OSError as exc:
-                self.stderr.write("  -> Unable to compress the logs: %s" % str(exc))
+                self.stderr.write(f"  -> Unable to compress the logs: {exc}")
 
             if slow and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
