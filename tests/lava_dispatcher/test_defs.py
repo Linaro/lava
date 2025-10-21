@@ -241,7 +241,6 @@ class TestDefinitionParams(LavaDispatcherTestCase):
                 "###test parameters from job submission###\n",
                 "VARIABLE_NAME_1='eth2'\n",
                 "VARIABLE_NAME_2='wlan0'\n",
-                "######\n",
             },
         )
         testdef = {
@@ -258,7 +257,6 @@ class TestDefinitionParams(LavaDispatcherTestCase):
                 "###test parameters from job submission###\n",
                 "VARIABLE_NAME_1='eth2'\n",
                 "VARIABLE_NAME_2='wlan0'\n",
-                "######\n",
             },
         )
 
