@@ -115,7 +115,7 @@ class RunNodebooterContainer(Action):
                 f.write(f"{key}={value}\n")
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
-        docker.network = "host"
+        docker.network("host")
 
         for vol, mnt in volumes.items():
             os.makedirs(vol, exist_ok=True)
