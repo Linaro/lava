@@ -82,7 +82,7 @@
     - class: DownloaderAction
       name: download-retry
       level: 1.1.2
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
       timeout: 1800
@@ -93,7 +93,7 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 600
+        timeout: 1800
         url: https://example.com/rpi4b/nand
     - class: ApplyOverlayImage
       name: apply-overlay-image
@@ -105,7 +105,7 @@
     - class: DownloaderAction
       name: download-retry
       level: 1.1.4
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
       timeout: 1800
@@ -116,12 +116,12 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 600
+        timeout: 1800
         url: https://example.com/rpi4b/kernel
     - class: DownloaderAction
       name: download-retry
       level: 1.1.5
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
       timeout: 1800
@@ -132,7 +132,7 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 600
+        timeout: 1800
         url: https://example.com/rpi4b/devicetree
 - class: BootAvhAction
   name: boot-avh

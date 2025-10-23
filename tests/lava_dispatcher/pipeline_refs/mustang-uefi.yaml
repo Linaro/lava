@@ -109,7 +109,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -120,12 +120,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://images.validation.linaro.org/mustang/uImage_1.11
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -136,12 +136,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://images.validation.linaro.org/mustang/mustang.dtb_1.11
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -152,7 +152,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay

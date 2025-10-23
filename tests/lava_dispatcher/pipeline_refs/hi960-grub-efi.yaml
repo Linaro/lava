@@ -124,7 +124,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1200
@@ -135,12 +135,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 400
+      timeout: 1200
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1200
@@ -151,12 +151,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 400
+      timeout: 1200
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1200
@@ -167,7 +167,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 400
+      timeout: 1200
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action

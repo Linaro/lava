@@ -138,7 +138,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -149,7 +149,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -161,7 +161,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.7'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -172,7 +172,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/linaro-buster-developer-dragonboard-410c-359.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

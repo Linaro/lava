@@ -272,7 +272,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -283,12 +283,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/55/hikey/release/hisi-idt.py
   - class: DownloaderAction
     name: download-retry
     level: '3.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -299,12 +299,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/55/hikey/release/l-loader.bin
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -315,12 +315,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/55/hikey/release/ptable-linux-8g.img
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -331,12 +331,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/55/hikey/release/fip.bin
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -347,7 +347,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/55/hikey/release/nvme.img
   - class: CopyToLxcAction
     name: copy-to-lxc
@@ -462,7 +462,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '7.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -473,12 +473,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/59/hikey/release/ptable-aosp-8g.img
   - class: DownloaderAction
     name: download-retry
     level: '7.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -489,12 +489,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/boot.img.xz
   - class: DownloaderAction
     name: download-retry
     level: '7.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -505,12 +505,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/cache.img.xz
   - class: DownloaderAction
     name: download-retry
     level: '7.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -521,12 +521,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/userdata.img.xz
   - class: DownloaderAction
     name: download-retry
     level: '7.7'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -537,7 +537,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/system.img.xz
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
@@ -831,7 +831,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '10.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -842,7 +842,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/49/hikey/release/ptable-linux-8g.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -854,7 +854,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '10.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -865,7 +865,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20180128213254-588.uefi.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -877,7 +877,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '10.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -888,7 +888,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/rpb-console-image-hikey-20180128213254-588.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

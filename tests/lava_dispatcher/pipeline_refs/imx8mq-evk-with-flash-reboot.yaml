@@ -260,7 +260,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -271,12 +271,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: https://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/u-boot-imx8mq.imx
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -287,12 +287,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/boot-imx8mq.img
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -303,12 +303,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vbmeta-imx8mq.img
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -319,12 +319,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/system.img.gz
   - class: DownloaderAction
     name: download-retry
     level: '3.7'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2700
@@ -335,7 +335,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 900
+      timeout: 2700
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/vendor.img
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action

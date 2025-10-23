@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -20,12 +20,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: https://example.com/dcsu/rom.bin
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -36,7 +36,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: https://example.com/dcsu/rse_bl1_tests.bin
 - class: BootFVPAction
   name: boot-fvp

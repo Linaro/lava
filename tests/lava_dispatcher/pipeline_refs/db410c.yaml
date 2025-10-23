@@ -282,7 +282,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -293,7 +293,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -305,7 +305,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -316,7 +316,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -328,7 +328,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -339,7 +339,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbc_1.0_8016.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -351,7 +351,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.10'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -362,7 +362,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -374,7 +374,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.12'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -385,7 +385,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -397,7 +397,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.14'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -408,7 +408,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -420,7 +420,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.16'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -431,7 +431,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -443,7 +443,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.18'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -454,7 +454,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/boot-linaro-buster-dragonboard-410c-305.img.gz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -466,7 +466,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.20'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2100
@@ -477,7 +477,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 700
+      timeout: 2100
       url: https://builds.96boards.org/snapshots/dragonboard410c/linaro/debian/305/linaro-buster-alip-dragonboard-410c-305.img.gz
   - class: DeployDeviceEnvironment
     name: deploy-device-env

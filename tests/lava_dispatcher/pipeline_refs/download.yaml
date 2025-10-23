@@ -238,7 +238,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -249,12 +249,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/gpt_both0.bin
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -265,12 +265,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/hyp.mbn
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -281,12 +281,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/NON-HLOS.bin
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -297,12 +297,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/rpm.mbn
   - class: DownloaderAction
     name: download-retry
     level: '3.7'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -313,12 +313,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sbl1.mbn
   - class: DownloaderAction
     name: download-retry
     level: '3.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -329,12 +329,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/sec.dat
   - class: DownloaderAction
     name: download-retry
     level: '3.9'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -345,12 +345,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/tz.mbn
   - class: DownloaderAction
     name: download-retry
     level: '3.10'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -361,12 +361,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/dragonboard410c/linaro/rescue/16.06/linux/emmc_appsboot.mbn
   - class: DownloaderAction
     name: download-retry
     level: '3.11'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -377,12 +377,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
   - class: DownloaderAction
     name: download-retry
     level: '3.12'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -393,7 +393,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
   - class: OverlayAction
     name: lava-overlay
@@ -594,7 +594,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -605,7 +605,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/gpt_both0.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -617,7 +617,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -628,7 +628,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/hyp.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -640,7 +640,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -651,7 +651,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/NON-HLOS.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -663,7 +663,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.10'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -674,7 +674,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/rpm.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -686,7 +686,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.12'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -697,7 +697,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/sbl1.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -709,7 +709,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.14'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -720,7 +720,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/sec.dat
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -732,7 +732,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.16'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -743,7 +743,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/tz.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -755,7 +755,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.18'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -766,7 +766,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/emmc_appsboot.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -778,7 +778,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.20'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -789,7 +789,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -801,7 +801,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.22'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -812,7 +812,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

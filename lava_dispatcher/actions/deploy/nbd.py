@@ -91,7 +91,7 @@ class NbdAction(Action):
                     self.job, key, path=self.tftp_dir, params=parameters[key]
                 )
                 download.max_retries = (
-                    3  # overridden by failure_retry in the parameters, if set.
+                    1  # overridden by failure_retry in the parameters, if set.
                 )
                 self.pipeline.add_action(download)
                 if key == "initrd":

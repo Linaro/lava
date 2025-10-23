@@ -216,7 +216,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -227,12 +227,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
   - class: DownloaderAction
     name: download-retry
     level: '3.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -243,12 +243,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/bbb/am335x-bone.dtb
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -259,7 +259,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/debian-jessie-arm64-rootfs.tar.gz
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay

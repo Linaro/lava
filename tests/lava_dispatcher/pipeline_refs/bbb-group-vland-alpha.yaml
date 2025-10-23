@@ -109,7 +109,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -125,7 +125,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -141,7 +141,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900

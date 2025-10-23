@@ -260,7 +260,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -271,12 +271,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/boot.img
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -287,12 +287,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/userdata.img
   - class: DownloaderAction
     name: download-retry
     level: '3.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -303,12 +303,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/system.img
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -319,7 +319,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/android/android-lcr-reference-x15-n/23/cache.img
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
