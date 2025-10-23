@@ -109,7 +109,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1200
@@ -120,7 +120,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 400
+      timeout: 1200
       url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
   - class: ApplyOverlayGuest
     name: apply-overlay-guest

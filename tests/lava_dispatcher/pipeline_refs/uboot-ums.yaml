@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -20,7 +20,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/mbl/linaro-master/imx7s-warp/70/rpb/rpb-console-image-imx7s-warp-20180131170405-70.rootfs.sdcard.gz
   - class: OverlayAction
     name: lava-overlay

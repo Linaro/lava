@@ -117,7 +117,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -128,7 +128,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -140,7 +140,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -151,7 +151,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -163,7 +163,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.10'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -174,7 +174,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/functional-test-images/nexus4/system.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env

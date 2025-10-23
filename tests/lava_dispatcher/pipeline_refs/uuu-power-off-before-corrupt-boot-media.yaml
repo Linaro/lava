@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 120
@@ -20,7 +20,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: https://images.validation.linaro.org/functional-test-images/common/linaro-image-minimal-initramfs-genericarmv7a.cpio.gz.u-boot
 - class: UUUBootRetryAction
   name: uuu-boot-retry

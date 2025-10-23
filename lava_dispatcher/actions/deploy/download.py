@@ -64,7 +64,6 @@ class DownloaderAction(RetryAction):
 
     def __init__(self, job: Job, key, path, params, uniquify=True):
         super().__init__(job)
-        self.max_retries = 3
         self.key = key  # the key in the parameters of what to download
         self.path = path  # where to download
         self.uniquify = uniquify

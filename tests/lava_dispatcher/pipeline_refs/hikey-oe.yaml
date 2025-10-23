@@ -310,7 +310,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1800
@@ -321,7 +321,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 600
+      timeout: 1800
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/bootloader/ptable-linux-8g.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -333,7 +333,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.6'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1800
@@ -344,7 +344,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 600
+      timeout: 1800
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/boot-0.0+AUTOINC+06e4def583-4adfdd06f1-r0-hikey-20170411131448-30.uefi.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -356,7 +356,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.8'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1800
@@ -367,7 +367,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 600
+      timeout: 1800
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/30/rpb-console-image-hikey-20170411131448-30.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

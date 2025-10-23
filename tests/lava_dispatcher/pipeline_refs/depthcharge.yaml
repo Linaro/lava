@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 120
@@ -20,12 +20,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://images.validation.linaro.org/functional-test-images/bbb/zImage
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 120
@@ -36,7 +36,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: http://images.validation.linaro.org/debian-jessie-rootfs.tar.gz
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay
