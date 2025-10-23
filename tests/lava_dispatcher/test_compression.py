@@ -301,5 +301,5 @@ class TestTar(TestCase):
             unpack_dir = tmp_dir_path / "unpack"
             unpack_dir.mkdir()
 
-            with self.assertRaisesRegex(JobError, "Attempted path traversal"):
+            with self.assertRaisesRegex(JobError, "unable to untar file"):
                 untar_file(str(output_tar_path), str(unpack_dir))

@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 import subprocess  # nosec - internal use.
 import tarfile
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -115,19 +114,19 @@ def create_tarfile(indir: str, outfile: str, arcname: str | None = None) -> None
 
 def untar_file(infile: str, outdir: str) -> None:
     try:
-        with tarfile.open(infile, encoding="utf-8") as tar:
-            # Check for path traversal
-            base = Path(outdir)
-            for member in tar.getmembers():
-                dest = (base / member.name).resolve()
-                if not dest.is_relative_to(base):
-                    raise JobError("Attempted path traversal in tar file at %s" % dest)
-            # Extract the tarfile
-            tar.extractall(outdir)
-    except tarfile.TarError as exc:
-        raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
-    except OSError as exc:
-        raise InfrastructureError("Unable to unpack %s: %s" % (infile, str(exc)))
+        subprocess.run(
+            args=("tar", "-xf", infile),
+            check=True,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="replace",
+            cwd=outdir,
+        )
+    except subprocess.CalledProcessError as proc_exc:
+        raise JobError(
+            f"unable to untar file {infile!r}, "
+            f"exit code {proc_exc.returncode}: {proc_exc.stderr!r}"
+        )
 
 
 def cpio(directory: str, filename: str) -> str:
