@@ -8,6 +8,7 @@ from __future__ import annotations
 import hashlib
 import os
 from pathlib import Path
+from tarfile import TarFile
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
@@ -20,8 +21,10 @@ from lava_dispatcher.utils.compression import (
     compress_command_map,
     compress_file,
     cpio,
+    create_tarfile,
     decompress_file,
     uncpio,
+    untar_file,
 )
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -255,3 +258,48 @@ class TestCpio(TestCase):
 
             self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
             self.assertEqual((unpack_dir / "foo\nbar").read_text(), "one\ntwo\n")
+
+
+class TestTar(TestCase):
+    def test_tar_cycle(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "foo"
+            test_dir.mkdir()
+
+            test_file = test_dir / "bar"
+            test_file.write_text("foobar")
+
+            output_tar_path = tmp_dir_path / "test.tar"
+            self.assertFalse(output_tar_path.exists())
+
+            # AppendOverlays uses arcname="."
+            create_tarfile(str(test_dir), str(output_tar_path), arcname=".")
+
+            self.assertTrue(output_tar_path.is_file())
+
+            unpack_dir = tmp_dir_path / "unpack"
+            unpack_dir.mkdir()
+
+            untar_file(str(output_tar_path), str(unpack_dir))
+
+            self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
+
+    def test_tar_path_traversal(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_file = tmp_dir_path / "foo"
+            test_file.write_text("foobar")
+
+            output_tar_path = tmp_dir_path / "test.tar"
+
+            with TarFile(output_tar_path, mode="x") as tar_f:
+                tar_f.add(test_file, arcname="../foo")
+
+            unpack_dir = tmp_dir_path / "unpack"
+            unpack_dir.mkdir()
+
+            with self.assertRaisesRegex(JobError, "Attempted path traversal"):
+                untar_file(str(output_tar_path), str(unpack_dir))
