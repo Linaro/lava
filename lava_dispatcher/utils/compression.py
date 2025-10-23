@@ -23,6 +23,7 @@ from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+    from tarfile import TarInfo
 
 # https://www.kernel.org/doc/Documentation/xz.txt
 compress_command_map: Mapping[str, tuple[str, ...]] = {
@@ -114,16 +115,19 @@ def create_tarfile(indir: str, outfile: str, arcname: str | None = None) -> None
 
 
 def untar_file(infile: str, outdir: str) -> None:
+    base = Path(outdir)
+
+    def untar_filter(member: TarInfo, path: str, /) -> TarInfo | None:
+        # Check for path traversal
+        dest = (base / member.name).resolve()
+        if not dest.is_relative_to(base):
+            raise JobError("Attempted path traversal in tar file at %s" % dest)
+
+        return member
+
     try:
         with tarfile.open(infile, encoding="utf-8") as tar:
-            # Check for path traversal
-            base = Path(outdir)
-            for member in tar.getmembers():
-                dest = (base / member.name).resolve()
-                if not dest.is_relative_to(base):
-                    raise JobError("Attempted path traversal in tar file at %s" % dest)
-            # Extract the tarfile
-            tar.extractall(outdir)
+            tar.extractall(outdir, filter=untar_filter)
     except tarfile.TarError as exc:
         raise JobError("Unable to unpack %s: %s" % (infile, str(exc)))
     except OSError as exc:
