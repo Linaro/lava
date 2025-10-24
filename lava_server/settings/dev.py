@@ -6,6 +6,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+# pylint: disable=wildcard-import
+# pylint: disable=unused-wildcard-import
+
 import contextlib
 import os
 from pathlib import Path

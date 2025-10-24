@@ -6,12 +6,15 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+# pylint: disable=unused-import
+# pylint: disable=possibly-unused-variable
+# pylint: disable=eval-used
+# pylint: disable=exec-used
+
 import contextlib
 import importlib
 import re
 
-# pylint: disable=unused-import
-# pylint: disable=unused-import
 from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 from django.core.exceptions import ImproperlyConfigured
 from yaml import YAMLError

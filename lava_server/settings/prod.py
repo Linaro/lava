@@ -5,6 +5,10 @@
 #         Milosz Wasilewski <milosz.wasilewski@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+
+# pylint: disable=wildcard-import
+# pylint: disable=unused-wildcard-import
+
 import base64
 import contextlib
 import json

@@ -117,7 +117,9 @@ schemas:
 
 pylint:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
+  # Server image must be used to have all dependencies installed
+  # because pylint imports everything.
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-13
 
 sast:
   stage: analyze
