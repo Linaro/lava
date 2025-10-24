@@ -299,39 +299,30 @@ def get_ldap_user_properties(ldap_user):
         conn = ldap.initialize(server_uri)
         if user_dn:
             conn.simple_bind_s(bind_dn, bind_password)
-            try:
-                result = conn.search_s(user_dn, search_scope, search_filter, attributes)
-                if len(result) == 1:
-                    result_type, result_data = result[0]
-                    user_properties["uid"] = result_data.get("uid", [None])[0]
-                    user_properties["mail"] = result_data.get("mail", [None])[0]
-                    user_properties["sn"] = result_data.get("sn", [None])[0]
-                    user_properties["given_name"] = result_data.get(
-                        "givenName", [None]
-                    )[0]
+            result = conn.search_s(user_dn, search_scope, search_filter, attributes)
+            if len(result) == 1:
+                result_type, result_data = result[0]
+                user_properties["uid"] = result_data.get("uid", [None])[0]
+                user_properties["mail"] = result_data.get("mail", [None])[0]
+                user_properties["sn"] = result_data.get("sn", [None])[0]
+                user_properties["given_name"] = result_data.get("givenName", [None])[0]
 
-                    user_properties = {
-                        k: v.decode() for (k, v) in user_properties.items()
-                    }
+                user_properties = {k: v.decode() for (k, v) in user_properties.items()}
 
-                    # Grab max_length and truncate first and last name.
-                    # For some users, first or last name is too long to create.
-                    first_name_max_length = User._meta.get_field(
-                        "first_name"
-                    ).max_length
-                    last_name_max_length = User._meta.get_field("last_name").max_length
-                    user_properties["sn"] = truncatechars(
-                        user_properties["sn"], last_name_max_length
-                    )
-                    user_properties["given_name"] = truncatechars(
-                        user_properties["given_name"], first_name_max_length
-                    )
+                # Grab max_length and truncate first and last name.
+                # For some users, first or last name is too long to create.
+                first_name_max_length = User._meta.get_field("first_name").max_length
+                last_name_max_length = User._meta.get_field("last_name").max_length
+                user_properties["sn"] = truncatechars(
+                    user_properties["sn"], last_name_max_length
+                )
+                user_properties["given_name"] = truncatechars(
+                    user_properties["given_name"], first_name_max_length
+                )
 
-                    return user_properties
-                elif len(result) == 0:
-                    raise ldap.NO_SUCH_OBJECT
-            except ldap.NO_SUCH_OBJECT:
-                raise
+                return user_properties
+            elif len(result) == 0:
+                raise ldap.NO_SUCH_OBJECT
     else:
         raise ldap.UNAVAILABLE
 
