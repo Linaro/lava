@@ -133,6 +133,7 @@ class TestAvhActions(LavaDispatcherTestCase):
         # ANY: image path with random string inside.
         # Zip file compression method 'ZIP_DEFLATED = 8'
         zip_file.assert_called_once_with(ANY, mode="w", compression=8)
+        # pylint: disable=unnecessary-dunder-call
         zip_file().__enter__().write.assert_has_calls(
             [
                 call(ANY, arcname="Info.plist"),
