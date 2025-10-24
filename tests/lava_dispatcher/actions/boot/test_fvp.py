@@ -31,7 +31,7 @@ class TestCheckFVPVersionAction:
         return job.pipeline.actions[1].pipeline.actions[0].pipeline.actions[0]
 
     def test_action_class(self, action):
-        assert type(action) is CheckFVPVersionAction
+        assert isinstance(action, CheckFVPVersionAction)
 
     def test_basic(self, action, mocker):
         action.validate()

@@ -170,9 +170,8 @@ class WaitDeviceBoardID(Action):
         connection = super().run(connection, max_end_time)
 
         wait_device_board_id = True
-        if (
-            "device_info" in self.job.device
-            and type(self.job.device["device_info"]) is list
+        if "device_info" in self.job.device and isinstance(
+            self.job.device["device_info"], list
         ):
             wait_device_board_id = self.job.device["device_info"][0].get(
                 "wait_device_board_id", True
