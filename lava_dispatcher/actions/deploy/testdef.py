@@ -1039,7 +1039,7 @@ class TestRunnerAction(TestOverlayAction):
                     action="uuid", label="runner_path", key=self.parameters["test_name"]
                 )
             )
-            runsh.write("UUID=`cat uuid`\n")
+            runsh.write('UUID="$(cat uuid)"\n')
             runsh.write("set +x\n")
             needs_delay = self.parameters.get("needs_character_delay")
             delay = self.job.device.get("character_delays", {}).get("test", 0)
