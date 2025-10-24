@@ -54,7 +54,6 @@ disable = [
     "R1732",  # Consider using 'with' for resource-allocating operations
     "R1733",  # Unnecessary dictionary index lookup
     "R1734",  # Consider using [] instead of list()
-    "R1735",  # Consider using '{}' instead of a call to 'dict'.
     "W0101",  # Unreachable code
     "W0102",  # Dangerous default value as argument
     "W0106",  # Expression is assigned to nothing

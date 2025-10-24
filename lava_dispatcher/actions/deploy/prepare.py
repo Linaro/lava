@@ -189,9 +189,7 @@ class PrepareFITAction(Action):
         super().validate()
         which("mkimage")
 
-        self.deploy_params = self.job.device["actions"]["deploy"].get(
-            "parameters", dict()
-        )
+        self.deploy_params = self.job.device["actions"]["deploy"].get("parameters", {})
 
         device_params = self.job.device.get("parameters")
         if device_params is None:
