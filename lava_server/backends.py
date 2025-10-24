@@ -15,11 +15,7 @@ def is_object_supported(obj):
     """
     Returns True if obj is supported. False if obj is None or not supported.
     """
-    return (
-        isinstance(obj, Device)
-        or isinstance(obj, DeviceType)
-        or isinstance(obj, Worker)
-    )
+    return isinstance(obj, (Device, DeviceType, Worker))
 
 
 class GroupPermissionBackend(ModelBackend):

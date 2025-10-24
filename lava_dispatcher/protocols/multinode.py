@@ -376,9 +376,7 @@ class MultinodeProtocol(Protocol):
         if "timeout" in json_data:
             if isinstance(json_data["timeout"], dict):
                 self.poll_timeout.duration = Timeout.parse(json_data["timeout"])
-            elif isinstance(json_data["timeout"], int) or isinstance(
-                json_data["timeout"], float
-            ):
+            elif isinstance(json_data["timeout"], (int, float)):
                 self.poll_timeout.duration = json_data["timeout"]
             else:
                 self.logger.debug(json_data["timeout"])
