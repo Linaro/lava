@@ -2399,9 +2399,8 @@ def device_detail(request, pk):
     device_log_data = DeviceLogView(
         device, request, model=LogEntry, table_class=DeviceLogEntryTable
     )
-    device_log_ptable = DeviceLogEntryTable(
-        device_log_data.get_table_data(), prefix="device_log_"
-    )
+    device_logs = device_log_data.get_table_data()
+    device_log_ptable = DeviceLogEntryTable(device_logs, prefix="device_log_")
     request_config(request, paginate={"per_page": device_log_ptable.length}).configure(
         device_log_ptable
     )
@@ -2413,11 +2412,16 @@ def device_detail(request, pk):
         mismatch = True
 
     device_can_change = device.can_change(request.user)
+    latest_device_log = device_logs.first()
+    device_health_reason = (
+        latest_device_log.get_change_message() if latest_device_log else None
+    )
     return render(
         request,
         "lava_scheduler_app/device.html",
         {
             "device": device,
+            "device_health_reason": device_health_reason,
             "recent_job_table": recent_ptable,
             "device_log_table": device_log_ptable,
             "can_change": device_can_change,
