@@ -88,10 +88,10 @@ class TestDecompression(LavaDispatcherTestCase):
             outputfile = output.split("/")[-1]
             sha256hash = hashlib.sha256()
             md5sumhash = hashlib.md5()  # nosec - not used for cryptography
-            with open(output, "rb", buffering=0) as f:
-                for b in iter(lambda: f.read(128 * 1024), b""):
-                    sha256hash.update(b)
-                    md5sumhash.update(b)
+            with open(output, "rb") as f:
+                while chunk := f.read(128 * 1024):
+                    sha256hash.update(chunk)
+                    md5sumhash.update(chunk)
             outputmd5 = md5sumhash.hexdigest()
             outputsha = sha256hash.hexdigest()
             outputsize = os.path.getsize(os.path.join(httpaction.path, output))
