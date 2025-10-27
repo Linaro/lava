@@ -4,6 +4,7 @@
 # Author: Rémi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import importlib
 
@@ -88,7 +89,9 @@ def validate_action(name, index, data, strict=True):
         raise Invalid(exc.msg, path=path) from exc
 
 
-def validate(data, strict=True, extra_context_variables=[]):
+def validate(data, strict=True, extra_context_variables: list[str] | None = None):
+    if extra_context_variables is None:
+        extra_context_variables = []
     schema = Schema(job(extra_context_variables), extra=not strict)
     schema(data)
     for index, action in enumerate(data["actions"]):
@@ -279,7 +282,7 @@ def check_namespace(data):
         raise Invalid("When using namespaces, every action should have a namespace")
 
 
-def job(extra_context_variables=[]):
+def job(extra_context_variables):
     context_variables = CONTEXT_VARIABLES + extra_context_variables
     lava_lxc = {
         Required("name"): str,
