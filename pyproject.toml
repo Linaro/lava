@@ -81,5 +81,4 @@ disable = [
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
     "W1514",  # Using open without explicitly specifying an encoding
     "W3101",  # Missing timeout argument for method 'requests.get' can cause your program to hang indefinitely
-    "W4701",  # Iterated list is being modified inside for loop body, consider iterating through a copy of it instead.
 ]

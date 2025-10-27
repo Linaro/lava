@@ -189,16 +189,17 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         # share all the devices as there isn't a 1:1 relationship between
         # the trigger and actual sharing of the devices
+        shared_devices: list[str] = []
         for dev in devices:
             if not os.path.islink(dev):
                 self.trigger_share_device_with_container(dev)
+                shared_devices.append(dev)
             else:
                 self.logger.debug(
                     f"Device {dev} is a symlink, skipping sharing with container"
                 )
-                devices.remove(dev)
 
-        for dev in devices:
+        for dev in shared_devices:
             docker.wait_file(dev)
             self.logger.info(
                 f"Shared device {dev} to docker container {docker.__name__}"
