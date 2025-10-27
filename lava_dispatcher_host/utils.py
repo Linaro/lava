@@ -3,6 +3,7 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import logging.handlers
@@ -83,7 +84,12 @@ def share_device_with_container_lxc(container, node, job_id):
             )
 
 
-def pass_device_into_container_lxc(container, node, links=[], job_id=None):
+def pass_device_into_container_lxc(
+    container, node, links: list[str] | None = None, job_id=None
+):
+    if links is None:
+        links = []
+
     try:
         nodeinfo = os.stat(node)
         uid = nodeinfo.st_uid
@@ -108,8 +114,11 @@ def pass_device_into_container_lxc(container, node, links=[], job_id=None):
 
 
 def pass_device_into_container_docker(
-    container, container_id, node, links=[], job_id=None
+    container, container_id, node, links: list[str] | None = None, job_id=None
 ):
+    if links is None:
+        links = []
+
     try:
         nodeinfo = os.stat(node)
         major = os.major(nodeinfo.st_rdev)

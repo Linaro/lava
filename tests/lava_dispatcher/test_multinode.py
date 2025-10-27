@@ -329,8 +329,16 @@ class TestMultinode(LavaDispatcherTestCase):
 
 class TestMultinodeProtocol(LavaDispatcherTestCase):
     def init_protocol(
-        self, params: dict[str, Any] = {}, recv_object: dict[str, Any] = {}
+        self,
+        params: dict[str, Any] | None = None,
+        recv_object: dict[str, Any] | None = None,
     ) -> MultinodeProtocol:
+        if params is None:
+            params = {}
+
+        if recv_object is None:
+            recv_object = {}
+
         class MultinodeProtocolSocketMock(MultinodeProtocol):
             def _connect(self, delay):
                 self.sock = Mock(spec=socket)
