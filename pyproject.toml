@@ -35,7 +35,6 @@ disable = [
     "W1510",  # 'subprocess.run' used without explicitly defining the value for 'check'.
     "R0401",  # Cyclic import (%s -> %s)
     "R0801",  # Duplicate code
-    "R1701",  # Consider merging these isinstance calls
     "R1702",  # Too many nested blocks
     "R1705",  # Unnecessary "else" after "return"
     "R1710",  # Either all return statements in a function should return an expression,
