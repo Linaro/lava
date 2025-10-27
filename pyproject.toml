@@ -78,7 +78,6 @@ disable = [
     "W0632",  # Possible unbalanced tuple unpacking
     "W0706",  # The except handler raises immediately
     "W0707",  # Consider explicitly re-raising using 'raise x from y'
-    "W0715",  # Exception arguments suggest string formatting might be intended
     "W0718",  # Catching too general exception
     "W0719",  # Raising too general exception
     "W1115",  # Non-string value assigned
