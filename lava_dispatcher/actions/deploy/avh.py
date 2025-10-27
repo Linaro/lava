@@ -175,13 +175,13 @@ class AvhDeploy(Action):
             fw_build = self.job.job_id
             rand = "".join(random.choice(string.hexdigits) for c in range(5))
             fw_name = f"lava-avh-{self.avh['model']}-{fw_version}-{fw_build}-{rand}"
-            pl = dict(
-                Type="iot",
-                UniqueIdentifier=fw_name,
-                DeviceIdentifier=self.avh["model"],
-                Version=fw_version,
-                Build=fw_build,
-            )
+            pl = {
+                "Type": "iot",
+                "UniqueIdentifier": fw_name,
+                "DeviceIdentifier": self.avh["model"],
+                "Version": fw_version,
+                "Build": fw_build,
+            }
             plist_file = Path(self.path) / "Info.plist"
             self.logger.info(f"Generating {plist_file}")
             with plist_file.open("wb") as bf:

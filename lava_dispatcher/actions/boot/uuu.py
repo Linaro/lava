@@ -417,7 +417,7 @@ class UUUBootAction(OptionalContainerUuuAction):
         )
 
         # Use to replace {boot} identifier in cmd by correct 'boot' image path
-        templates = dict()
+        templates = {}
         for image in images_name:
             templates[image] = self.get_namespace_data(
                 "download-action", label=image, key="file"

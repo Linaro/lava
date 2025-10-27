@@ -409,7 +409,7 @@ class UrlRepoAction(RepoAction):
 
         # Add 'url' as an alias to 'repository'. DownloaderAction requires an
         # 'url' key.
-        params = dict(**self.parameters, url=self.parameters["repository"])
+        params = {**self.parameters, "url": self.parameters["repository"]}
 
         self.download_dir = self.mkdtemp()
         self.action_key = "url_repo"
