@@ -743,9 +743,21 @@ class TestUbootAction(LavaDispatcherTestCase):
         class Connection:
             def __init__(self):
                 self.cmds = []
+                self.sendline_calls = []
 
-            def sendline(self, cmd, delay):
+            def sendline(
+                self, cmd, delay=0, disconnecting=False, check=False, timeout=15
+            ):
                 self.cmds.append(cmd)
+                self.sendline_calls.append(
+                    {
+                        "line": cmd,
+                        "delay": delay,
+                        "disconnecting": disconnecting,
+                        "check": check,
+                        "timeout": timeout,
+                    }
+                )
 
             def wait(self):
                 pass
@@ -762,6 +774,19 @@ class TestUbootAction(LavaDispatcherTestCase):
             ],
         )
 
+        self.assertEqual(len(http_transfer_connection.sendline_calls), 3)
+        self.assertEqual(http_transfer_connection.sendline_calls[0]["line"], "rm bar")
+        self.assertFalse(http_transfer_connection.sendline_calls[0]["check"])
+        self.assertEqual(
+            http_transfer_connection.sendline_calls[1]["line"],
+            "wget -S --progress=dot:giga http://foo/tmp/bar",
+        )
+        self.assertTrue(http_transfer_connection.sendline_calls[1]["check"])
+        self.assertEqual(
+            http_transfer_connection.sendline_calls[2]["line"], "tar -C / -xzf bar"
+        )
+        self.assertTrue(http_transfer_connection.sendline_calls[2]["check"])
+
         # nfs method
         self.assertIn("transfer_overlay", transfer.parameters)
         transfer.parameters["transfer_overlay"]["transfer_method"] = "nfs"
@@ -776,6 +801,18 @@ class TestUbootAction(LavaDispatcherTestCase):
                 "cp -rf /bar/* /; umount /bar; rm -fr /bar",
             ],
         )
+
+        self.assertEqual(len(nfs_transfer_connection.sendline_calls), 2)
+        self.assertEqual(
+            nfs_transfer_connection.sendline_calls[0]["line"],
+            "mkdir -p /bar; fs-nfs3 foo:/var/lib/lava/dispatcher/tmp/bar /bar",
+        )
+        self.assertTrue(nfs_transfer_connection.sendline_calls[0]["check"])
+        self.assertEqual(
+            nfs_transfer_connection.sendline_calls[1]["line"],
+            "cp -rf /bar/* /; umount /bar; rm -fr /bar",
+        )
+        self.assertTrue(nfs_transfer_connection.sendline_calls[1]["check"])
 
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"

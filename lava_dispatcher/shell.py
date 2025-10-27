@@ -220,9 +220,43 @@ class ShellSession:
         elif not disconnecting:
             raise LAVABug("send")
 
-    def sendline(self, line, delay=0, disconnecting=False):
+    def sendline(
+        self,
+        line: str,
+        delay: int = 0,
+        disconnecting: bool = False,
+        check: bool = False,
+        timeout: int | float = 15,
+    ):
         if self.connected:
-            self.raw_connection.sendline(line, delay=delay)
+            if not check:
+                self.raw_connection.sendline(line, delay=delay)
+            else:
+                signal: str = "LAVA_SIGNAL_RETRUNCODE"
+                self.raw_connection.sendline(
+                    f'{line} ; printf "<{signal} $?>\\n"', delay=delay
+                )
+                self.logger.debug(
+                    f"Checking {line!r} return code... "
+                    f"(timeout {seconds_to_str(timeout)})"
+                )
+                index: int = self.raw_connection.expect(
+                    [
+                        rf"<{signal} (\d+)>",
+                        pexpect.TIMEOUT,
+                    ],
+                    timeout=timeout,
+                )
+                if index == 0:
+                    rc = self.raw_connection.match.group(1)
+                    with contextlib.suppress(TypeError, ValueError):
+                        if rc := int(rc):
+                            raise JobError(f"{line!r} failed with return code {rc}!")
+                elif index == 1:
+                    # Instead of the default TestError, raise JobError with a
+                    # specific error message.
+                    raise JobError(f"Failed to check {line!r} return code!")
+
         elif not disconnecting:
             raise LAVABug("sendline called on disconnected connection")
 
