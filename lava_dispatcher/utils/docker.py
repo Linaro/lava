@@ -46,7 +46,7 @@ class DockerRun:
         run.suffix(suffix)
         run.network(params.get("network_from", None))
         run.local(params.get("local", False))
-        for device in params.get("devices", list()):
+        for device in params.get("devices", []):
             run.add_device(device)
         return run
 
