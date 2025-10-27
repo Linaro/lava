@@ -98,6 +98,6 @@ def debian_filename_version(binary: str) -> str:
         )
     if not pkg_str:
         raise InfrastructureError(msg)
-    pkg = pkg_str.split(":")[0]
+    pkg = pkg_str.split(":", maxsplit=1)[0]
     pkg_ver = debian_package_version(pkg)
     return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)
