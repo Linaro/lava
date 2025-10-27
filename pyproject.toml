@@ -75,7 +75,6 @@ disable = [
     "W0621",  # Redefining name from outer scope
     "W0622",  # Redefining built-in
     "W0632",  # Possible unbalanced tuple unpacking
-    "W0706",  # The except handler raises immediately
     "W0707",  # Consider explicitly re-raising using 'raise x from y'
     "W0718",  # Catching too general exception
     "W0719",  # Raising too general exception
