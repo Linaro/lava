@@ -297,11 +297,7 @@ class TestFastbootDeploy(LavaDispatcherTestCase):
         self.assertIn(LxcProtocol.name, select.parameters["protocols"].keys())
         self.assertEqual(len(select.parameters["protocols"][LxcProtocol.name]), 1)
         lxc_active = any(
-            [
-                protocol
-                for protocol in job.protocols
-                if protocol.name == LxcProtocol.name
-            ]
+            protocol for protocol in job.protocols if protocol.name == LxcProtocol.name
         )
         self.assertTrue(lxc_active)
         for calling in select.parameters["protocols"][LxcProtocol.name]:

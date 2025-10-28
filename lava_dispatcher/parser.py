@@ -43,10 +43,7 @@ def parse_action(job_data, name, device, pipeline, test_info, test_count):
         needs_deployment_data = False
         if ns in test_info and cls.uses_deployment_data:
             needs_deployment_data = any(
-                [
-                    t["class"].needs_deployment_data(t["parameters"])
-                    for t in test_info[ns]
-                ]
+                t["class"].needs_deployment_data(t["parameters"]) for t in test_info[ns]
             )
         if needs_deployment_data or "preseed" in parameters:
             parameters.update(

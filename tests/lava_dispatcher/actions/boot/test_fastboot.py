@@ -19,7 +19,7 @@ def test_skip_pre_os_command_on_lxc_job(factory):
     lxc_job = factory.create_job("hi6220-hikey-01", "sample_jobs/fastboot.yaml")
     boot = lxc_job.pipeline.actions[3]
     assert isinstance(boot, BootFastbootAction)
-    assert all([not isinstance(a, PreOs) for a in boot.pipeline.actions])
+    assert all(not isinstance(a, PreOs) for a in boot.pipeline.actions)
 
 
 def test_skip_pre_os_command_on_docker_job(factory):
@@ -28,4 +28,4 @@ def test_skip_pre_os_command_on_docker_job(factory):
     )
     boot = docker_job.pipeline.actions[1]
     assert isinstance(boot, BootFastbootAction)
-    assert all([not isinstance(a, PreOs) for a in boot.pipeline.actions])
+    assert all(not isinstance(a, PreOs) for a in boot.pipeline.actions)
