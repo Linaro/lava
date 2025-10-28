@@ -96,11 +96,7 @@ def split_multinode_yaml(submission, target_group):
 
     role_data = submission["protocols"]["lava-multinode"]["roles"]
     group_size = sum(
-        [
-            role_data[count]["count"]
-            for count in role_data
-            if "count" in role_data[count]
-        ]
+        role_data[count]["count"] for count in role_data if "count" in role_data[count]
     )
 
     # populate the lava-multinode protocol metadata
