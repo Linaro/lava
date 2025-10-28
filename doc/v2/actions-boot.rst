@@ -528,6 +528,10 @@ The ``commands`` parameter is required but can be kept empty.
 If some commands should be sent to the bootloader before the end of the action,
 give the list in the ``commands`` parameter.
 
+By default LAVA will reset the previous connection and the board power when executing
+this action. Users can skip this step by adding ``reset_connection: false`` and
+``reset_device: false`` respectively.
+
 .. index:: boot method cmsis-dap
 
 .. _boot_method_cmsis_dap:
