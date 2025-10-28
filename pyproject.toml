@@ -54,7 +54,6 @@ disable = [
     "W0106",  # Expression is assigned to nothing
     "W0107",  # Unnecessary pass statement
     "W0108",  # Lambda may not be necessary
-    "W0127",  # Assigning the same variable to itself
     "W0130",  # Duplicate value in set
     "W0201",  # Attribute defined outside __init__
     "W0212",  # Access to a protected member of a client class
