@@ -78,11 +78,11 @@ class TestLavaServerApi:
         server = self.server_proxy("test", "test")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
         assert (  # nosec
             self.user2.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
         server.system.assign_perm_device_type(
             "lava_scheduler_app.view_devicetype",
@@ -93,11 +93,11 @@ class TestLavaServerApi:
         delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == True
+            is True
         )
         assert (  # nosec
             self.user2.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
 
     def test_revoke_perm_devicetype_unauthorized(self):
@@ -125,11 +125,11 @@ class TestLavaServerApi:
         )
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == True
+            is True
         )
         assert (  # nosec
             self.user2.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
         server.system.revoke_perm_device_type(
             "lava_scheduler_app.view_devicetype",
@@ -140,11 +140,11 @@ class TestLavaServerApi:
         delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
         assert (  # nosec
             self.user2.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
-            == False
+            is False
         )
 
     def test_assign_perm_device_unauthorized(self):
@@ -164,10 +164,10 @@ class TestLavaServerApi:
         user = self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         assert (  # nosec
-            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
         assert (  # nosec
-            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
         server.system.assign_perm_device(
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
@@ -175,10 +175,10 @@ class TestLavaServerApi:
         delattr(self.user1, "_cached_has_perm")
         delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
-            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == True
+            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) is True
         )
         assert (  # nosec
-            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
 
     def test_revoke_perm_device_unauthorized(self):
@@ -201,10 +201,10 @@ class TestLavaServerApi:
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
         )
         assert (  # nosec
-            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == True
+            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) is True
         )
         assert (  # nosec
-            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
         server.system.revoke_perm_device(
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
@@ -212,10 +212,10 @@ class TestLavaServerApi:
         delattr(self.user1, "_cached_has_perm")
         delattr(self.user2, "_cached_has_perm")
         assert (  # nosec
-            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user1.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
         assert (  # nosec
-            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) == False
+            self.user2.has_perm("lava_scheduler_app.view_device", self.device1) is False
         )
 
     def test_auth_groups_add_unauthorized(self):

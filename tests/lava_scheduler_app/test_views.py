@@ -1020,19 +1020,19 @@ def test_job_submit(client, setup):
     ret = client.get(reverse("lava.scheduler.job.submit"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] == False  # nosec
+    assert ret.context["is_authorized"] is False  # nosec
     # Anonymous user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": ""})
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] == False  # nosec
+    assert ret.context["is_authorized"] is False  # nosec
 
     # Logged-user GET
     assert client.login(username="tester", password="tester") is True  # nosec
     ret = client.get(reverse("lava.scheduler.job.submit"))
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
-    assert ret.context["is_authorized"] == True  # nosec
+    assert ret.context["is_authorized"] is True  # nosec
 
     # Logged-user POST as JSON
     ret = client.post(
