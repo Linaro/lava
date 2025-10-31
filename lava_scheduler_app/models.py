@@ -1384,7 +1384,6 @@ class TestJob(models.Model):
 
     class Meta:
         index_together = ["health", "state", "requested_device_type"]
-        default_permissions = ("change", "delete")
         indexes = (
             models.Index(fields=("-submit_time",)),
             models.Index(fields=("-start_time",)),
