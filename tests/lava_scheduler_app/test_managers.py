@@ -837,6 +837,20 @@ class ManagersTest(TestCaseWithFactory):
             {self.bbb_job1, self.bbb_job2},
         )
 
+        # user2 should see all the jobs after TestJob.VIEW_PERMISSION is added.
+        self.user2.user_permissions.add(
+            Permission.objects.get(
+                codename=TestJob.VIEW_PERMISSION.rsplit(".", maxsplit=1)[-1]
+            )
+        )
+        self.assertTrue(
+            set(
+                TestJob.objects.all().visible_by_user(
+                    User.objects.get(id=self.user2.id)
+                )
+            ).issuperset({self.qemu_job2, self.bbb_job1, self.bbb_job2, self.user1_job})
+        )
+
     def test_testjob_manager_viewing_groups(self):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
