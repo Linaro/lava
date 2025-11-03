@@ -327,9 +327,7 @@ class TestConnection(LavaDispatcherTestCase):
         )
         if "protocols" in scp_overlay.parameters:
             for params in scp_overlay.parameters["protocols"][MultinodeProtocol.name]:
-                (replacement_key, placeholder) = [
-                    (key, value) for key, value in params["message"].items()
-                ][0]
+                replacement_key, placeholder = next(iter(params["message"].items()))
                 self.assertEqual(data[replacement_key], "172.16.200.165")
                 self.assertEqual(placeholder, "$ipaddr")
         environment = scp_overlay.get_namespace_data(

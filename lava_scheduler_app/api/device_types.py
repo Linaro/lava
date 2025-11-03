@@ -351,13 +351,13 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         """
         available_types = self._available_device_types()
 
-        device_types = [
-            dt
-            for dt in DeviceType.objects.all()
+        device_types = list(
+            DeviceType.objects.all()
             .visible_by_user(self.user)
             .prefetch_related("device_set")
             .order_by("name")
-        ]
+        )
+
         ret = []
         for dt in device_types:
             ret.append(
