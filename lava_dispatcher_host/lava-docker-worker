@@ -9,4 +9,5 @@
 
 from lava_dispatcher_host.docker_worker import run
 
-run()
+if __name__ == "__main__":
+    run()
