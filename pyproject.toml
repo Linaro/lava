@@ -80,5 +80,4 @@ disable = [
     "W1203",  # Use lazy % or % formatting in logging functions
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
     "W1514",  # Using open without explicitly specifying an encoding
-    "W3101",  # Missing timeout argument for method 'requests.get' can cause your program to hang indefinitely
 ]

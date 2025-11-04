@@ -213,6 +213,7 @@ class LogsMongo(Logs):
 
 class LogsElasticsearch(Logs):
     MAX_RESULTS = 1000000
+    TIMEOUT = 30.0
 
     def __init__(self) -> None:
         self.api_url = "%s%s/" % (
@@ -228,7 +229,9 @@ class LogsElasticsearch(Logs):
             "settings": {"index": {"max_result_window": self.MAX_RESULTS}},
             "mappings": {"properties": {"dt": {"type": "date"}}},
         }
-        requests.put(self.api_url, json_dumps(params), headers=self.headers)
+        requests.put(
+            self.api_url, json_dumps(params), headers=self.headers, timeout=self.TIMEOUT
+        )
         super().__init__()
 
     def _get_docs(
@@ -252,6 +255,7 @@ class LogsElasticsearch(Logs):
             "%s_search/" % self.api_url,
             data=json_dumps(params),
             headers=self.headers,
+            timeout=self.TIMEOUT,
         )
 
         response = json_loads(response.text)
@@ -272,6 +276,7 @@ class LogsElasticsearch(Logs):
         response = requests.get(
             "%s_search/" % self.api_url,
             params={"query": {"match": {"job_id": job.id}}, "_source": False},
+            timeout=self.TIMEOUT,
         )
         with contextlib.suppress(Exception):
             return response["hits"]["total"]["value"]
@@ -307,7 +312,12 @@ class LogsElasticsearch(Logs):
             line.update({"msg": str(line["msg"])})
         data = json_dumps(line)
 
-        requests.post("%s_doc/" % self.api_url, data=data, headers=self.headers)
+        requests.post(
+            "%s_doc/" % self.api_url,
+            data=data,
+            headers=self.headers,
+            timeout=self.TIMEOUT,
+        )
 
 
 class LogsFirestore(Logs):

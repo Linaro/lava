@@ -65,7 +65,9 @@ def wait_pipeline(options, commit):
     # Wait for the pipeline to finish
     while True:
         with contextlib.suppress(AttributeError):
-            ret = requests.get(GITLAB_API + "/repository/commits/" + commit)
+            ret = requests.get(
+                GITLAB_API + "/repository/commits/" + commit, timeout=60.0
+            )
             status = ret.json().get("last_pipeline", {}).get("status", "")
             if status == "success":
                 break

@@ -212,7 +212,14 @@ class ConfigureNodebooter(Action):
         self.logger.debug("Probing nodebooter API availability via %s", url)
         while True:
             try:
-                res = requests.get(url)
+                res = requests.get(
+                    url,
+                    timeout=(
+                        max_end_time - time.monotonic()
+                        if max_end_time is not None
+                        else 30.0
+                    ),
+                )
                 if res.status_code in (200, 302):
                     break
             except requests.exceptions.ConnectionError:
@@ -296,7 +303,16 @@ class ConfigureNodebooter(Action):
                         }
                     )
 
-            res = requests.post(url, json=json, headers=headers)
+            res = requests.post(
+                url,
+                json=json,
+                headers=headers,
+                timeout=(
+                    max_end_time - time.monotonic()
+                    if max_end_time is not None
+                    else 30.0
+                ),
+            )
 
         except requests.RequestException as exc:
             self.logger.error("Resource not available")
