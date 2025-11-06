@@ -498,7 +498,6 @@ class Command(BaseCommand):
             device.save()
 
     def handle_check(self, options):
-        rc = 0
         if options["all"]:
             devices = Device.objects.all()
         else:
@@ -514,27 +513,25 @@ class Command(BaseCommand):
                 "No devices to validate. Pass some device hostnames, or --all to validate all devices"
             )
 
+        failed_devices = 0
         for device in devices:
-            rc += self._handle_check(device)
-        if rc != 0:
-            raise CommandError("%d devices failed to validate" % rc)
+            hostname = device.hostname
+            self.stdout.write("* %s" % hostname)
+            data = device.load_configuration()
+            if data is None:
+                self.stdout.write("  -> invalid or missing template")
+                failed_devices += 1
+                continue
+            try:
+                validate_device(data)
+            except voluptuous.Invalid as exc:
+                self.stdout.write("  -> invalid configuration")
+                self.stdout.write("  -> %s" % exc.path)
+                self.stdout.write("  -> %s" % exc.msg)
+                failed_devices += 1
 
-    def _handle_check(self, device):
-        hostname = device.hostname
-        self.stdout.write("* %s" % hostname)
-        data = device.load_configuration()
-        if data is None:
-            self.stdout.write("  -> invalid or missing template")
-            return 1
-        try:
-            validate_device(data)
-        except voluptuous.Invalid as exc:
-            self.stdout.write("  -> invalid configuration")
-            self.stdout.write("  -> %s" % exc.path)
-            self.stdout.write("  -> %s" % exc.msg)
-            return 1
-
-        return 0
+        if failed_devices != 0:
+            raise CommandError(f"{failed_devices} devices failed to validate")
 
     def handle_control(self, options):
         device = Device.objects.get(hostname=options["hostname"])
