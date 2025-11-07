@@ -8,7 +8,7 @@ Status check for lava-coordinator
 #  Author Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import errno
 import json
@@ -47,75 +47,91 @@ def read_settings(filename):
     return settings
 
 
+def lava_connect(
+    host: str, port: int, errors: list[str], warnings: list[str]
+) -> socket.socket | None:
+    for _ in range(5):
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
+            sock.connect((host, port))
+            return sock
+        except OSError as exc:
+            if exc.errno == errno.ECONNRESET:
+                warnings.append("connection reset by peer: bug 1020")
+            errors.append("not connected, sleeping for 1 second")
+            time.sleep(1)
+            warnings.append("retrying port %s on %s" % (port, host))
+
+    return None
+
+
+def lava_poll_cycle(
+    sock: socket.socket, errors: list[str], warnings: list[str], name: str, request: str
+) -> bool:
+    msg = {
+        "group_name": "group1",
+        "group_size": 2,
+        "hostname": gethostname(),
+        "role": "client",
+        "client_name": name,
+        "request": request,
+        "message": None,
+    }
+    msg_str = json.dumps(msg)
+    msg_len = len(msg_str)
+    try:
+        # send the length as 32bit hexadecimal
+        ret_bytes = sock.send(b"%08X" % msg_len)
+        if ret_bytes == 0:
+            warnings.append("zero bytes sent for length - connection closed?")
+            return True
+        ret_bytes = sock.send(msg_str.encode("utf-8"))
+        if ret_bytes == 0:
+            warnings.append("zero bytes sent for message - connection closed?")
+            return True
+    except OSError as exc:
+        errors.append(f"socket error {exc.strerror!r} on send")
+        return True
+    try:
+        data = str(sock.recv(8))  # 32bit limit
+        data = sock.recv(1024)
+    except OSError as exc:
+        errors.append("Exception on receive: %s" % exc)
+        return True
+    try:
+        json_data = json.loads(data.decode("utf-8"))
+    except ValueError:
+        warnings.append("data not JSON %s" % data)
+        return False
+    if "response" not in json_data:
+        errors.append("no response field in data")
+        return False
+    if json_data["response"] != "wait":
+        return False
+
+    return False
+
+
 def lava_poll(port, host, name, request):
     """
     Modified poll equivalent
     """
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
+    sock = lava_connect(host, port, errors, warnings)
     while True:
-        sock = None
-        count = 0
-        while count < 5:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
-                sock.connect((host, port))
-                break
-            except OSError as exc:
-                if exc.errno == errno.ECONNRESET:
-                    warnings.append("connection reset by peer: bug 1020")
-                errors.append("not connected, sleeping for 1 second")
-                time.sleep(1)
-                sock = None
-                count += 1
-                warnings.append("retrying port %s on %s" % (port, host))
-        if count >= 5:
+        sock = lava_connect(host=host, port=port, errors=errors, warnings=warnings)
+        if sock is None:
             break
-        msg = {
-            "group_name": "group1",
-            "group_size": 2,
-            "hostname": gethostname(),
-            "role": "client",
-            "client_name": name,
-            "request": request,
-            "message": None,
-        }
-        msg_str = json.dumps(msg)
-        msg_len = len(msg_str)
-        try:
-            # send the length as 32bit hexadecimal
-            ret_bytes = sock.send(b"%08X" % msg_len)
-            if ret_bytes == 0:
-                warnings.append("zero bytes sent for length - connection closed?")
-                continue
-            ret_bytes = sock.send(msg_str.encode("utf-8"))
-            if ret_bytes == 0:
-                warnings.append("zero bytes sent for message - connection closed?")
-                continue
-        except OSError as exc:
-            errors.append(f"socket error {exc.strerror!r} on send")
-            sock.close()
-            continue
-        try:
-            data = str(sock.recv(8))  # 32bit limit
-            data = sock.recv(1024)
-        except OSError as exc:
-            errors.append("Exception on receive: %s" % exc)
-            continue
-        try:
-            json_data = json.loads(data.decode("utf-8"))
-        except ValueError:
-            warnings.append("data not JSON %s" % data)
+
+        with sock:
+            running = lava_poll_cycle(
+                sock=sock, errors=errors, warnings=warnings, name=name, request=request
+            )
+
+        if not running:
             break
-        if "response" not in json_data:
-            errors.append("no response field in data")
-            break
-        if json_data["response"] != "wait":
-            break
-        else:
-            break
-        sock.shutdown(socket.SHUT_RDWR)
-        sock.close()
+
     ret = 0
     if errors:
         ret = 2
