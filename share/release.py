@@ -249,7 +249,6 @@ def main():
             except Exception as exc:
                 print("%sexception: %s%s" % (COLORS["red"], str(exc), COLORS["reset"]))
                 raise
-                return 1
         else:
             raise NotImplementedError("Action '%s' does not exists" % action)
         first = False

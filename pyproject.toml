@@ -51,7 +51,6 @@ disable = [
     "R1732",  # Consider using 'with' for resource-allocating operations
     "R1733",  # Unnecessary dictionary index lookup
     "R1734",  # Consider using [] instead of list()
-    "W0101",  # Unreachable code
     "W0106",  # Expression is assigned to nothing
     "W0107",  # Unnecessary pass statement
     "W0108",  # Lambda may not be necessary
