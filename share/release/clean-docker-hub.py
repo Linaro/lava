@@ -33,13 +33,13 @@ def list_tags(options):
         options.project,
         options.repository,
     )
-    ret = requests.get(url, headers=headers)
+    ret = requests.get(url, headers=headers, timeout=60.0)
     assert ret.status_code == 200
     total_pages = int(ret.headers["X-Total-Pages"])
 
     tags = []
     for index in range(1, total_pages + 1):
-        ret = requests.get("%s?page=%d" % (url, index), headers=headers)
+        ret = requests.get("%s?page=%d" % (url, index), headers=headers, timeout=60.0)
         for tag in ret.json():
             tags.append(tag["name"])
     return tags
@@ -59,7 +59,7 @@ def delete_tags(options, tags):
     )
     for tag in tags:
         print("* %s" % tag)
-        ret = requests.delete("%s/%s/" % (url, tag), headers=headers)
+        ret = requests.delete("%s/%s/" % (url, tag), headers=headers, timeout=60.0)
         print("=> %d" % ret.status_code)
 
 

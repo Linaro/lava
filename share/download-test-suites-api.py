@@ -40,6 +40,7 @@ def main():
     summary_response = requests.get(
         "%s/yaml_summary" % (job_results_url),
         params={"user": args.username, "token": args.token},
+        timeout=60.0,
     )
 
     for test_suite in yaml.safe_load(summary_response.content):
@@ -48,6 +49,7 @@ def main():
             suite_response = requests.get(
                 "%s/%s/yaml" % (job_results_url, test_suite["name"]),
                 params={"user": args.username, "token": args.token},
+                timeout=60.0,
             )
 
             for test_case in yaml.safe_load(suite_response.content):
