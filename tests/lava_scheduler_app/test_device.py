@@ -149,7 +149,7 @@ class DeviceTypeTest(TestCaseWithFactory):
                 )
             ),
         )
-        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         self.assertFalse(invalid_template(device.device_type))
 
     def test_bbb_valid_template(self):
@@ -160,7 +160,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device = Device(device_type=dt, hostname="bbb-01", health=Device.HEALTH_GOOD)
         device.save()
         device.refresh_from_db()
-        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         self.assertTrue(File("device-type", name).exists())
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertIsNotNone(device.load_configuration())
@@ -175,7 +175,7 @@ class DeviceTypeTest(TestCaseWithFactory):
         device = Device(device_type=dt, hostname="test-01", health=Device.HEALTH_GOOD)
         device.save()
         device.refresh_from_db()
-        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         self.assertIsNone(device.load_configuration())
         self.assertIsNotNone([device in Device.objects.filter(device_type=dt)])
         self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
@@ -191,13 +191,11 @@ class DeviceTypeTest(TestCaseWithFactory):
         )
         device.save()
         device.refresh_from_db()
-        self.assertIsNotNone([d for d in Device.objects.filter(device_type=dt)])
+        self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
         self.assertFalse(File("device-type", "juno-r2").exists())
         self.assertEqual("juno-r2-01", device.hostname)
         self.assertIsNotNone(device.load_configuration())
-        self.assertEqual(
-            [device], [device for device in Device.objects.filter(device_type=dt)]
-        )
+        self.assertEqual([device], list(Device.objects.filter(device_type=dt)))
         self.assertEqual("juno", device.get_extends())
         self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
         self.assertFalse(invalid_template(device.device_type))

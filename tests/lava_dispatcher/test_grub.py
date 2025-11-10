@@ -321,7 +321,7 @@ class TestGrubAction(LavaDispatcherTestCase):
                 self.assertNotEqual(shell.parameters["namespace"], "isolation")
                 self.assertNotEqual(shell.parameters["namespace"], "tlxc")
                 self.assertEqual(shell.parameters["connection-namespace"], "isolation")
-                retry = [action for action in shell.pipeline.actions][0]
+                retry = shell.pipeline.actions[0]
                 self.assertEqual(retry.parameters["connection-namespace"], "isolation")
             else:
                 self.assertNotEqual(shell.parameters["namespace"], "hikey-oe")

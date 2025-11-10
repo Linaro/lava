@@ -43,7 +43,6 @@ disable = [
     "R1718",  # Consider using a set comprehension
     "R1719",  # The if expression can be replaced with 'test'
     "R1720",  # Unnecessary "elif" after "raise"
-    "R1721",  # Unnecessary use of a comprehension
     "R1723",  # Unnecessary "else" after "break"
     "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
     "R1728",  # Consider using a generator

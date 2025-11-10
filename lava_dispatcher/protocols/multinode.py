@@ -489,7 +489,7 @@ class MultinodeProtocol(Protocol):
                         val for val in reply["message"].items() if self.job_id in val
                     ]
                 else:
-                    target_list = [val for val in list(reply.items())]
+                    target_list = list(reply.items())
                 data = target_list[0][1]
                 if item not in data:
                     self.logger.warning("Skipping %s - not found in %s", item, data)

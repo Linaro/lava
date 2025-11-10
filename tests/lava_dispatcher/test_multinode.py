@@ -56,8 +56,8 @@ class TestMultinode(LavaDispatcherTestCase):
             ["lava-multinode"],
             [protocol.name for protocol in self.client_job.protocols],
         )
-        client_protocol = [protocol for protocol in self.client_job.protocols][0]
-        server_protocol = [protocol for protocol in self.server_job.protocols][0]
+        client_protocol = self.client_job.protocols[0]
+        server_protocol = self.server_job.protocols[0]
         self.assertEqual(client_protocol.name, server_protocol.name)
         self.assertIn(
             "target_group",
@@ -85,7 +85,7 @@ class TestMultinode(LavaDispatcherTestCase):
                 os.path.dirname(__file__), "../../etc/lava-coordinator.conf"
             )
         self.assertTrue(os.path.exists(filename))
-        client_protocol = [protocol for protocol in self.client_job.protocols][0]
+        client_protocol = self.client_job.protocols[0]
         settings = client_protocol.read_settings(filename)
         self.assertIn("blocksize", settings)
         self.assertIn("coordinator_hostname", settings)
@@ -101,24 +101,14 @@ class TestMultinode(LavaDispatcherTestCase):
         server_multinode.validate()
         self.assertEqual(server_multinode.role, "server")
 
-        client_protocol = [protocol for protocol in self.client_job.protocols][0]
-        server_protocol = [protocol for protocol in self.server_job.protocols][0]
+        client_protocol = self.client_job.protocols[0]
+        server_protocol = self.server_job.protocols[0]
         self.assertEqual(
-            {
-                client_name
-                for client_name in client_protocol.parameters["protocols"][
-                    client_protocol.name
-                ]["roles"]
-            },
+            set(client_protocol.parameters["protocols"][client_protocol.name]["roles"]),
             {"kvm02", "kvm01"},
         )
         self.assertEqual(
-            {
-                client_name
-                for client_name in server_protocol.parameters["protocols"][
-                    server_protocol.name
-                ]["roles"]
-            },
+            set(server_protocol.parameters["protocols"][server_protocol.name]["roles"]),
             {"kvm02", "kvm01"},
         )
         self.assertEqual(
@@ -312,7 +302,7 @@ class TestMultinode(LavaDispatcherTestCase):
             key for key, value in params["message"].items() if value.startswith("$")
         ]
         for item in replaceables:
-            target_list = [val for val in reply["message"].items()]
+            target_list = list(reply["message"].items())
             data = target_list[0][1]
             params["message"][item] = data[item]
 

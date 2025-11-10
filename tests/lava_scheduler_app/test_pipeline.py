@@ -225,7 +225,7 @@ class PipelineDeviceTags(TestCaseWithFactory):
             ),
             user,
         )
-        self.assertEqual({tag for tag in job.tags.all()}, set(tag_list))
+        self.assertEqual(set(job.tags.all()), set(tag_list))
 
 
 class TestPipelineSubmit(TestCaseWithFactory):
