@@ -14,5 +14,6 @@ def schema():
     docker_test_shell_base = {
         Required("docker"): docker(),
         Optional("downloads-namespace"): str,
+        Optional("disconnect_connection"): bool,
     }
     return {**base(), **docker_test_shell_base}

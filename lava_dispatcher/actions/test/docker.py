@@ -16,6 +16,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.overlay import CreateOverlay
 from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
+from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ReadFeedback
 from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
@@ -45,6 +46,8 @@ class DockerTestAction(GetBoardId):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DockerTestSetEnvironment(self.job))
         self.pipeline.add_action(CreateOverlay(self.job))
+        if parameters.get("disconnect_connection", False):
+            self.pipeline.add_action(DisconnectDevice(self.job))
         if "role" in parameters:
             self.pipeline.add_action(MultinodeDockerTestShell(self.job))
         else:
