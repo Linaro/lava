@@ -42,7 +42,7 @@ def no_network(mocker, request):
         assert allow_redirects is True  # nosec - unit test support
         assert stream is True  # nosec - unit test support
         res = requests.Response()
-        res.status_code = requests.codes.OK
+        res.status_code = requests.codes["OK"]
         res.close = lambda: None
         res.raw = LavaTestOverwriteInConftest()
         return res
@@ -51,7 +51,7 @@ def no_network(mocker, request):
         assert allow_redirects is True  # nosec - unit test support
         print(url)
         res = requests.Response()
-        res.status_code = requests.codes.OK
+        res.status_code = requests.codes["OK"]
         res.raw = LavaTestOverwriteInConftest()
         res.close = lambda: None
         return res
