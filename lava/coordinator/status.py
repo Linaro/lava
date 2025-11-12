@@ -93,7 +93,7 @@ def lava_poll(port, host, name, request):
                 warnings.append("zero bytes sent for message - connection closed?")
                 continue
         except OSError as exc:
-            errors.append("socket error '%d' on send" % exc.message)
+            errors.append(f"socket error {exc.strerror!r} on send")
             sock.close()
             continue
         try:
