@@ -39,7 +39,6 @@ def check_device(data, options, prefix=""):
     except JinjaTemplateError as exc:
         print("%sinvalide device template:" % prefix)
         print("%serror: %s" % (prefix, exc))
-        print("%serror at: %d" % (prefix, exc.lineno))
         return 1
     except yaml.YAMLError as exc:
         print("%sinvalid device definition:" % prefix)
