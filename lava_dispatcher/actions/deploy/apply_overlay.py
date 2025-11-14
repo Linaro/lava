@@ -142,9 +142,7 @@ class ApplyOverlayImage(Action):
                         )
                     else:
                         raise JobError(
-                            "Unable to find image configuration for '{image}'".format(
-                                image=self.image_key
-                            )
+                            f"Unable to find image configuration for {self.image_key!r}"
                         )
                 else:
                     root_partition = self.parameters[self.image_key].get(
@@ -199,16 +197,16 @@ class ApplyOverlaySparseImage(Action):
         # Check if the given image is an Android sparse image
         if not is_sparse_image(decompressed_image):
             raise JobError(
-                "Image is not an Android sparse image: %s" % decompressed_image
+                f"Image is not an Android sparse image: {decompressed_image}"
             )
         command_list = ["/usr/bin/simg2img", decompressed_image, ext4_img]
         self.run_cmd(
-            command_list, error_msg="simg2img failed for %s" % decompressed_image
+            command_list, error_msg=f"simg2img failed for {decompressed_image}"
         )
         self.logger.debug("Copying overlay")
         copy_overlay_to_sparse_fs(ext4_img, overlay_file)
         command_list = ["/usr/bin/img2simg", ext4_img, decompressed_image]
-        self.run_cmd(command_list, error_msg="img2simg failed for %s" % ext4_img)
+        self.run_cmd(command_list, error_msg=f"img2simg failed for {ext4_img}")
         os.remove(ext4_img)
         return connection
 
@@ -449,7 +447,7 @@ class ExtractNfsRootfs(ExtractRootfs):
         if not self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
         ):
-            self.errors = "no file specified extract as %s" % self.param_key
+            self.errors = f"no file specified extract as {self.param_key}"
         if "prefix" in self.parameters[self.param_key]:
             prefix = self.parameters[self.param_key]["prefix"]
             if prefix.startswith("/"):
@@ -588,17 +586,20 @@ class ExtractRamdisk(Action):
         compression = self.parameters["ramdisk"].get("compression")
         suffix = ""
         if compression:
-            suffix = ".%s" % compression
+            suffix = f".{compression}"
         ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
         if self.parameters["ramdisk"].get("header") == "u-boot":
-            cmd = (
-                "dd if=%s of=%s ibs=%s skip=1"
-                % (ramdisk, ramdisk_compressed_data, UBOOT_DEFAULT_HEADER_LENGTH)
-            ).split(" ")
+            cmd: list[str] = [
+                "dd",
+                f"if={ramdisk}",
+                f"of={ramdisk_compressed_data}",
+                f"ibs={UBOOT_DEFAULT_HEADER_LENGTH}",
+                "skip=1",
+            ]
             try:
                 self.run_command(cmd)
             except Exception:
-                raise LAVABug("Unable to remove uboot header: %s" % ramdisk)
+                raise LAVABug(f"Unable to remove uboot header: {ramdisk}")
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
@@ -712,10 +713,18 @@ class CompressRamdisk(Action):
         if self.add_header == "u-boot":
             ramdisk_uboot = final_file + ".uboot"
             self.logger.debug("Adding RAMdisk u-boot header.")
-            cmd = (
-                "mkimage -A %s -T ramdisk -C none -d %s %s"
-                % (self.mkimage_arch, final_file, ramdisk_uboot)
-            ).split(" ")
+            cmd: list[str] = [
+                "mkimage",
+                "-A",
+                str(self.mkimage_arch),
+                "-T",
+                "ramdisk",
+                "-C",
+                "none",
+                "-d",
+                str(final_file),
+                ramdisk_uboot,
+            ]
             if not self.run_command(cmd):
                 raise InfrastructureError("Unable to add uboot header to ramdisk")
             final_file = ramdisk_uboot
@@ -755,7 +764,7 @@ class ApplyLxcOverlay(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.lava_test_dir = os.path.realpath(
-            "%s/../../lava_test_shell" % os.path.dirname(__file__)
+            f"{os.path.dirname(__file__)}/../../lava_test_shell"
         )
         self.scripts_to_copy = ["lava-test-runner"]
 
@@ -763,7 +772,7 @@ class ApplyLxcOverlay(Action):
         super().validate()
         which("tar")
         if not os.path.exists(self.lava_test_dir):
-            self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
+            self.errors = f"Missing lava-test-runner: {self.lava_test_dir}"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -791,19 +800,19 @@ class ApplyLxcOverlay(Action):
         ]
         command_output = self.run_command(tar_cmd)
         if command_output and command_output != "":
-            raise JobError("Unable to untar overlay: %s" % command_output)
+            raise JobError(f"Unable to untar overlay: {command_output}")
 
         # FIXME: Avoid copying this special 'lava-test-runner' which does not
         #        have 'sync' in cleanup. This should be handled during the
         #        creation of the overlay instead. Make a special case to copy
         #        lxc specific scripts, with distro specific versions.
         fname = os.path.join(self.lava_test_dir, "lava-test-runner")
-        output_file = "%s/bin/%s" % (lxc_rootfs_path, os.path.basename(fname))
+        output_file = f"{lxc_rootfs_path}/bin/{os.path.basename(fname)}"
         self.logger.debug("Copying %s", output_file)
         try:
             shutil.copy(fname, output_file)
         except OSError:
-            raise InfrastructureError("Unable to copy: %s" % output_file)
+            raise InfrastructureError(f"Unable to copy: {output_file}")
 
         return connection
 
@@ -870,18 +879,17 @@ class AppendOverlays(Action):
                 continue
             if params.get("format") not in self.OVERLAY_FORMATS:
                 raise JobError(
-                    "Invalid 'format' (%r) for 'overlays.%s'"
-                    % (params.get("format", ""), overlay)
+                    f"Invalid 'format' ({params.get('format', '')!r}) for 'overlays.{overlay}'"
                 )
             path = params.get("path")
             if path is None:
-                raise JobError("Missing 'path' for 'overlays.%s'" % overlay)
+                raise JobError(f"Missing 'path' for 'overlays.{overlay}'")
             if not path.startswith("/") or ".." in path:
-                raise JobError("Invalid 'path': %r" % path)
+                raise JobError(f"Invalid 'path': {path!r}")
 
         # Check the image format
         if self.params.get("format") not in self.IMAGE_FORMATS:
-            raise JobError("Unsupported image format %r" % self.params.get("format"))
+            raise JobError(f"Unsupported image format {self.params.get('format')!r}")
 
         if self.params.get("sparse") and self.params.get("format") != "ext4":
             raise JobError("sparse=True is only available for ext4 images")
@@ -895,11 +903,11 @@ class AppendOverlays(Action):
                 self.update_guestfs()
             except RuntimeError as exc:
                 self.logger.exception(str(exc))
-                raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+                raise JobError(f"Unable to update image {self.key}: {exc!r}")
         elif self.params["format"] == "tar":
             self.update_tar()
         else:
-            raise LAVABug("Unknown format %r" % self.params["format"])
+            raise LAVABug(f"Unknown format {self.params['format']!r}")
         return connection
 
     def _update(self, f_uncompress, f_compress):
@@ -926,7 +934,7 @@ class AppendOverlays(Action):
         # Add overlays
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
+            label = f"{self.key}.{overlay}"
             overlay_image = None
             path = None
             if overlay == "lava":
@@ -988,7 +996,7 @@ class AppendOverlays(Action):
         if self.params.get("sparse", False):
             self.logger.debug("Calling simg2img on %r", image)
             command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
-            self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
+            self.run_cmd(command_list, error_msg=f"simg2img failed for {image}")
             os.replace(f"{image}.non-sparse", image)
 
         import guestfs
@@ -1001,17 +1009,17 @@ class AppendOverlays(Action):
                 try:
                     device = guest.list_partitions()[partition]
                 except (IndexError, TypeError) as exc:
-                    raise JobError("Invalid partition number '%s'" % partition) from exc
+                    raise JobError(f"Invalid partition number {partition!r}") from exc
             else:
                 device = guest.list_devices()[0]
             guest.mount(device, "/")
         except RuntimeError as exc:
             self.logger.exception(str(exc))
-            raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+            raise JobError(f"Unable to update image {self.key}: {exc!r}")
 
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
+            label = f"{self.key}.{overlay}"
             overlay_image = None
             if overlay == "lava":
                 overlay_image = self.get_namespace_data(
@@ -1051,7 +1059,7 @@ class AppendOverlays(Action):
         if self.params.get("sparse", False):
             self.logger.debug("Calling img2simg on %r", image)
             command_list = ["/usr/bin/img2simg", image, f"{image}.sparse"]
-            self.run_cmd(command_list, error_msg="img2simg failed for %s" % image)
+            self.run_cmd(command_list, error_msg=f"img2simg failed for {image}")
             os.replace(f"{image}.sparse", image)
 
 
@@ -1074,10 +1082,7 @@ class ParsePersistentNFS(Action):
             self.errors = "Missing address for persistent NFS"
             return
         if ":" not in persist["address"]:
-            self.errors = (
-                "Unrecognised NFS URL: '%s'"
-                % self.parameters["persistent_nfs"]["address"]
-            )
+            self.errors = f"Unrecognised NFS URL: {self.parameters['persistent_nfs']['address']!r}"
             return
 
         persist["address"] = substitute_address_with_static_info(

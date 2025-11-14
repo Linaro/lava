@@ -61,7 +61,7 @@ class GrubSequenceAction(BootHasMixin, RetryAction):
         )
         for sequence in sequences:
             if not _grub_sequence_map(sequence):
-                self.errors = "Unknown boot sequence '%s'" % sequence
+                self.errors = f"Unknown boot sequence {sequence!r}"
 
     def populate(self, parameters):
         super().populate(parameters)
@@ -154,11 +154,11 @@ class GrubMenuSelector(UefiMenuSelector):
 
     def validate(self):
         if self.method_name not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "No %s in device boot methods" % self.method_name
+            self.errors = f"No {self.method_name} in device boot methods"
             return
         self.params = self.job.device["actions"]["boot"]["methods"][self.method_name]
         if "menu_options" not in self.params:
-            self.errors = "Missing entry for menu item to use for %s" % self.method_name
+            self.errors = f"Missing entry for menu item to use for {self.method_name}"
             return
         self.commands = self.params["menu_options"]
         super().validate()

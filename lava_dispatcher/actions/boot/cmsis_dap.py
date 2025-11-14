@@ -88,7 +88,7 @@ class FlashCMSISAction(Action):
         # but we allow to bypass it in case that particular hardware
         # has problems with it.
         if method_parameters.get("skip_autoremount_wait", False):
-            self.run_cmd(["sync", dstdir], error_msg="Unable to sync %s" % dstdir)
+            self.run_cmd(["sync", dstdir], error_msg=f"Unable to sync {dstdir}")
         else:
             t_start = time.monotonic()
             self.logger.debug("Waiting for CMSIS-DAP MSD to self-unmount")
@@ -110,7 +110,8 @@ class FlashCMSISAction(Action):
                 time.sleep(0.5)
 
             self.logger.debug(
-                "CMSIS-DAP MSD self-remount cycle: %.2fs" % (time.monotonic() - t_start)
+                "CMSIS-DAP MSD self-remount cycle: %.2fs",
+                time.monotonic() - t_start,
             )
 
             if "FAIL.TXT" in flist:
@@ -130,16 +131,15 @@ class FlashCMSISAction(Action):
         # mount
         self.run_cmd(
             ["mount", "-t", "vfat", self.usb_mass_device, dstdir],
-            error_msg="Unable to mount USB device %s" % self.usb_mass_device,
+            error_msg=f"Unable to mount USB device {self.usb_mass_device}",
         )
         # log DAPLink metadata, to be able to correlate possible job issues
         # with bootloader version/options
-        self.logger.debug("DAPLink virtual disk files: %s" % os.listdir(dstdir))
+        self.logger.debug("DAPLink virtual disk files: %s", os.listdir(dstdir))
         if os.path.isfile(dstdir + "/DETAILS.TXT"):
             with open(dstdir + "/DETAILS.TXT") as f:
-                self.logger.debug(
-                    "DAPLink Firmware DETAILS.TXT:\n%s" % f.read().replace("\r\n", "\n")
-                )
+                details_contents = f.read().replace("\r\n", "\n")
+                self.logger.debug(f"DAPLink Firmware DETAILS.TXT:\n{details_contents}")
 
         try:
             # copy files
@@ -152,11 +152,11 @@ class FlashCMSISAction(Action):
             # umount
             self.run_cmd(
                 ["umount", self.usb_mass_device],
-                error_msg="Unable to unmount USB device %s" % self.usb_mass_device,
+                error_msg=f"Unable to unmount USB device {self.usb_mass_device}",
             )
 
         post_unmount_delay = method_parameters.get("post_unmount_delay", 1)
-        self.logger.debug("Post-unmount stabilization delay: %ss" % post_unmount_delay)
+        self.logger.debug("Post-unmount stabilization delay: %ss", post_unmount_delay)
         time.sleep(post_unmount_delay)
 
         return connection

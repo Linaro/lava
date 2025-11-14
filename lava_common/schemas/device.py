@@ -119,8 +119,9 @@ def extra_checks(data):
             for command in power_control_commands:
                 if command in data["commands"]:
                     raise Invalid(
-                        "When primary connection is used, power control commands (%s) should not be specified."
-                        % ", ".join(power_control_commands)
+                        "When primary connection is used, power control commands "
+                        f"({', '.join(power_control_commands)}) should not be "
+                        "specified."
                     )
 
 

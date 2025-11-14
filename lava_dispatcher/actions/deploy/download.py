@@ -73,9 +73,7 @@ class DownloaderAction(RetryAction):
         # Find the right action according to the url
         url = self.params.get("url")
         if url is None:
-            raise JobError(
-                "Invalid deploy action: 'url' is missing for '%s'" % self.key
-            )
+            raise JobError(f"Invalid deploy action: 'url' is missing for {self.key!r}")
 
         url = urlparse(url)
         if url.scheme == "scp":
@@ -97,7 +95,7 @@ class DownloaderAction(RetryAction):
                 self.job, self.key, url, self.path, self.uniquify, params=self.params
             )
         else:
-            raise JobError("Unsupported url protocol scheme: %s" % url.scheme)
+            raise JobError(f"Unsupported url protocol scheme: {url.scheme}")
         self.pipeline.add_action(action)
         overlays = self.params.get("overlays", [])
         for overlay in overlays:
@@ -108,7 +106,7 @@ class DownloaderAction(RetryAction):
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
-                    "%s.%s" % (self.key, overlay),
+                    f"{self.key}.{overlay}",
                     self.path,
                     params=overlays[overlay],
                 )
@@ -197,7 +195,7 @@ class DownloadHandler(Action):
         super().validate()
         # Check that self.key is not a path
         if len(pathlib.Path(self.key).parts) != 1:
-            raise JobError("Invalid key %r" % self.key)
+            raise JobError(f"Invalid key {self.key!r}")
 
         self.params["url"] = substitute_address_with_static_info(
             self.params["url"], self.job.device.get("static_info", [])
@@ -211,7 +209,7 @@ class DownloadHandler(Action):
 
         self.fname = self._url_to_fname()
         if self.fname.endswith("/"):
-            raise JobError("Cannot download a directory for %s" % self.key)
+            raise JobError(f"Cannot download a directory for {self.key}")
         # Save into the namespaced data
         self.set_namespace_data(
             action="download-action", label=self.key, key="file", value=self.fname
@@ -235,9 +233,9 @@ class DownloadHandler(Action):
             )
 
         if compression and compression not in ["gz", "bz2", "xz", "zip", "zstd"]:
-            self.errors = "Unknown 'compression' format '%s'" % compression
+            self.errors = f"Unknown 'compression' format {compression!r}"
         if archive and archive not in ["tar"]:
-            self.errors = "Unknown 'archive' format '%s'" % archive
+            self.errors = f"Unknown 'archive' format {archive!r}"
         # pass kernel type to boot Action
         if self.key == "kernel" and ("kernel" in self.parameters):
             self.set_namespace_data(
@@ -261,7 +259,7 @@ class DownloadHandler(Action):
         self.logger.info("expected: %s", expected)
 
         self.results = {"fail": {algorithm: expected, "download": actual}}
-        raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
+        raise JobError(f"{algorithm} for {self.url.geturl()!r} does not match.")
 
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val, last_update):
@@ -274,9 +272,11 @@ class DownloadHandler(Action):
             return (
                 condition,
                 downloaded_sz,
-                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    f"progress {int(downloaded_sz / (1024 * 1024))} MB"
+                    if condition
+                    else ""
+                ),
             )
 
         def progress_known_total(downloaded_sz, last_val, last_update):
@@ -288,8 +288,7 @@ class DownloadHandler(Action):
             return (
                 condition,
                 percent,
-                "progress %3d %% (%d MB)"
-                % (percent, int(downloaded_sz / (1024 * 1024)))
+                f"progress {percent:3d} % ({int(downloaded_sz / (1024 * 1024))} MB)"
                 if condition
                 else "",
             )
@@ -325,7 +324,7 @@ class DownloadHandler(Action):
         hash_constructors = tuple(h for h in (md5, sha256, sha512) if h is not None)
 
         if os.path.isdir(self.fname):
-            raise JobError("Download '%s' is a directory, not a file" % self.fname)
+            raise JobError(f"Download {self.fname!r} is a directory, not a file")
         if os.path.exists(self.fname):
             os.remove(self.fname)
 
@@ -409,8 +408,7 @@ class DownloadHandler(Action):
         # LAVA expects.
         if self.size > 0 and self.size != downloaded_size:
             raise InfrastructureError(
-                "Download finished (%i bytes) but was not expected size (%i bytes), check your networking."
-                % (downloaded_size, self.size)
+                f"Download finished ({downloaded_size} bytes) but was not expected size ({self.size} bytes), check your networking."
             )
 
         # set the dynamic data into the context
@@ -431,7 +429,7 @@ class DownloadHandler(Action):
         archive = self.params.get("archive")
         if archive:
             if archive != "tar":
-                raise JobError("Unknown archive format %r" % archive)
+                raise JobError(f"Unknown archive format {archive!r}")
 
             target_fname_path = os.path.join(os.path.dirname(self.fname), self.key)
             self.logger.debug("Extracting %s archive in %s", archive, target_fname_path)
@@ -552,8 +550,8 @@ class FileDownloadAction(DownloadHandler):
             self.logger.debug("Validating that %s exists", self.url.geturl())
             self.size = os.stat(self.url.path).st_size
         except OSError:
-            self.errors = "Image file '%s' does not exist or is not readable" % (
-                self.url.path
+            self.errors = (
+                f"Image file {self.url.path!r} does not exist or is not readable"
             )
 
     def reader(self):
@@ -564,9 +562,7 @@ class FileDownloadAction(DownloadHandler):
                     yield buff
                     buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
-            raise InfrastructureError(
-                "Unable to read from %s: %s" % (self.url.path, str(exc))
-            )
+            raise InfrastructureError(f"Unable to read from {self.url.path}: {exc}")
 
 
 class HttpDownloadAction(DownloadHandler):
@@ -642,7 +638,7 @@ class HttpDownloadAction(DownloadHandler):
                 self.logger.info("Fallback to original URL : %s", self.url.geturl())
             except TypeError as exc:
                 self.logger.error("Invalid http_url_format_string: '%s'", exc)
-                self.errors = "Invalid http_url_format_string: '%s'" % str(exc)
+                self.errors = f"Invalid http_url_format_string: {exc!r}"
                 return
 
         # validate url if cache not available or disabled
@@ -670,9 +666,8 @@ class HttpDownloadAction(DownloadHandler):
         try:
             res = self._head_or_get(self.url.geturl(), headers)
             if res.status_code != requests.codes.OK:
-                self.errors = "Resource unavailable at '%s' (%d)" % (
-                    self.url.geturl(),
-                    res.status_code,
+                self.errors = (
+                    f"Resource unavailable at {self.url.geturl()!r} ({res.status_code})"
                 )
                 return
             self.size = int(res.headers.get("content-length", -1))
@@ -680,7 +675,7 @@ class HttpDownloadAction(DownloadHandler):
             return
         except requests.Timeout:
             self.logger.error("Request timed out")
-            self.errors = "'%s' timed out" % (self.url.geturl())
+            self.errors = f"{self.url.geturl()!r} timed out"
         except requests.RequestException as exc:
             self.logger.error("Resource not available: %s", exc)
             self.errors = f"Unable to get '{self.url.geturl()}': {exc}"
@@ -729,13 +724,11 @@ class HttpDownloadAction(DownloadHandler):
             if res.status_code != requests.codes.OK:
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.
-                raise InfrastructureError(
-                    "Unable to download '%s'" % (self.url.geturl())
-                )
+                raise InfrastructureError(f"Unable to download {self.url.geturl()!r}")
             yield from res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE)
         except requests.RequestException as exc:
             raise InfrastructureError(
-                "Unable to download '%s': %s" % (self.url.geturl(), str(exc))
+                f"Unable to download {self.url.geturl()!r}: {exc}"
             )
         finally:
             if res is not None:
@@ -774,8 +767,7 @@ class ScpDownloadAction(DownloadHandler):
                 buff = process.stdout.read(SCP_DOWNLOAD_CHUNK_SIZE)
             if process.wait() != 0:
                 raise JobError(
-                    "Downloading '%s' failed with message '%s'"
-                    % (self.url.geturl(), process.stderr.read())
+                    f"Downloading {self.url.geturl()!r} failed with message {process.stderr.read()!r}"
                 )
         finally:
             if process is not None:
@@ -818,8 +810,7 @@ class LxcDownloadAction(Action):
             lxc_name = protocol.lxc_name
         if not lxc_name:
             raise JobError(
-                "Erroneous lxc url '%s' without protocol %s" % self.url,
-                LxcProtocol.name,
+                f"Erroneous lxc url {self.url!r} without protocol {LxcProtocol.name}"
             )
 
         fname = os.path.basename(self.url.path)
@@ -831,7 +822,7 @@ class LxcDownloadAction(Action):
                 action="download-action", label=self.key, key="file", value=file_path
             )
         else:
-            raise JobError("Resource unavailable: %s" % self.url.path)
+            raise JobError(f"Resource unavailable: {self.url.path}")
         return connection
 
 

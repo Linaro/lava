@@ -163,33 +163,18 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         media_params = self.job.device["parameters"]["media"][
             self.parameters["commands"]
         ]
-        if (
-            self.get_namespace_data(
-                action="storage-deploy", label="u-boot", key="device"
-            )
-            not in media_params
-        ):
-            self.errors = "%s does not match requested media type %s" % (
-                self.get_namespace_data(
-                    action="storage-deploy", label="u-boot", key="device"
-                ),
-                self.parameters["commands"],
-            )
+        media_storage = self.get_namespace_data(
+            action="storage-deploy", label="u-boot", key="device"
+        )
+        if media_storage not in media_params:
+            self.errors = f"{media_storage} does not match requested media type {self.parameters['commands']}"
         if not self.valid:
             return
         self.set_namespace_data(
             action=self.name,
             label="uuid",
             key="boot_part",
-            value="%s:%s"
-            % (
-                media_params[
-                    self.get_namespace_data(
-                        action="storage-deploy", label="u-boot", key="device"
-                    )
-                ]["device_id"],
-                self.parameters["boot_part"],
-            ),
+            value=f"{media_params[media_storage]['device_id']}:{self.parameters['boot_part']}",
         )
 
 

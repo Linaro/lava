@@ -95,12 +95,12 @@ class FlashDFUAction(Action):
             self.board_id = self.job.device["board_id"]
             self.base_command.extend(["--serial", self.board_id])
             self.base_command.extend(
-                ["--device", "%s:%s" % (self.usb_vendor_id, self.usb_product_id)]
+                ["--device", f"{self.usb_vendor_id}:{self.usb_product_id}"]
             )
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors = f"Invalid parameters for {self.name}"
         substitutions = {}
         for action in self.get_namespace_keys("download-action"):
             dfu_full_command = []
@@ -111,7 +111,7 @@ class FlashDFUAction(Action):
                 action="download-action", label=action, key="file"
             )
             if not image_arg or not action_arg:
-                self.errors = "Missing image_arg for %s. " % action
+                self.errors = f"Missing image_arg for {action}."
                 continue
             if not isinstance(image_arg, str):
                 self.errors = "image_arg is not a string (try quoting it)"
@@ -145,9 +145,9 @@ class FlashDFUAction(Action):
             # Check the output as dfu-util can return 0 in case of errors.
             if output:
                 if "No error condition is present\nDone!\n" not in output:
-                    raise InfrastructureError("command failed: %s" % dfu)
+                    raise InfrastructureError(f"command failed: {dfu}")
             else:
-                raise InfrastructureError("command failed: %s" % dfu)
+                raise InfrastructureError(f"command failed: {dfu}")
 
             # Wait only for non-hardware implementations
             # In fact, the bootloader will print some strings when the transfer

@@ -108,7 +108,7 @@ class BootBootloader(BootStrategy):
         if bootloader not in device["actions"]["boot"]["methods"]:
             return (
                 False,
-                "boot method '%s' not in the device configuration" % bootloader,
+                f"boot method {bootloader!r} not in the device configuration",
             )
         return True, "accepted"
 
@@ -282,7 +282,7 @@ class GDB(BootStrategy):
         if parameters["commands"] not in methods["gdb"]:
             return (
                 False,
-                'commands "%s" undefined for the device' % parameters["commands"],
+                f"commands {parameters['commands']!r} undefined for the device",
             )
 
         return True, "accepted"

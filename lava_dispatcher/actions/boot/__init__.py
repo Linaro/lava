@@ -306,10 +306,7 @@ class AutoLoginAction(RetryAction):
             if kernel_start_message:
                 res = self.wait(connection)
                 if res != 0:
-                    msg = "matched a bootloader error message: '%s' (%d)" % (
-                        connection.prompt_str[res],
-                        res,
-                    )
+                    msg = f"matched a bootloader error message: {connection.prompt_str[res]!r} ({res})"
                     raise InfrastructureError(msg)
 
         connection = super().run(connection, max_end_time)
@@ -358,10 +355,7 @@ class BootloaderCommandOverlay(Action):
             if "commands" not in self.parameters:
                 self.errors = "missing commands"
             elif self.parameters["commands"] not in device_methods[self.method]:
-                self.errors = (
-                    "Command '%s' not found in supported methods"
-                    % self.parameters["commands"]
-                )
+                self.errors = f"Command {self.parameters['commands']!r} not found in supported methods"
             elif (
                 "commands"
                 not in device_methods[self.method][self.parameters["commands"]]
@@ -374,7 +368,7 @@ class BootloaderCommandOverlay(Action):
 
         for cmd in self.commands:
             if not isinstance(cmd, str):
-                self.errors = "Deploy Commands instruction is not a string: %r" % cmd
+                self.errors = f"Deploy Commands instruction is not a string: {cmd!r}"
 
         # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if "use_bootscript" in self.parameters:
@@ -520,38 +514,24 @@ class BootloaderCommandOverlay(Action):
                 if self.get_namespace_data(
                     action="download-action", label="file", key="tee"
                 ):
-                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
-                        self.bootcommand,
-                        tee_addr,
-                        ramdisk_addr,
-                        "${initrd_size}",
-                        dtb_addr,
-                    )
+                    substitutions[
+                        "{BOOTX}"
+                    ] = f"{self.bootcommand} {tee_addr} {ramdisk_addr}:${{initrd_size}} {dtb_addr}"
                 else:
-                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
-                        self.bootcommand,
-                        kernel_addr,
-                        ramdisk_addr,
-                        "${initrd_size}",
-                        dtb_addr,
-                    )
+                    substitutions[
+                        "{BOOTX}"
+                    ] = f"{self.bootcommand} {kernel_addr} {ramdisk_addr}:${{initrd_size}} {dtb_addr}"
             else:
                 if self.get_namespace_data(
                     action="download-action", label="file", key="tee"
                 ):
-                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                        self.bootcommand,
-                        tee_addr,
-                        ramdisk_addr,
-                        dtb_addr,
-                    )
+                    substitutions[
+                        "{BOOTX}"
+                    ] = f"{self.bootcommand} {tee_addr} {ramdisk_addr} {dtb_addr}"
                 else:
-                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                        self.bootcommand,
-                        kernel_addr,
-                        ramdisk_addr,
-                        dtb_addr,
-                    )
+                    substitutions[
+                        "{BOOTX}"
+                    ] = f"{self.bootcommand} {kernel_addr} {ramdisk_addr} {dtb_addr}"
 
             substitutions["{KERNEL_ADDR}"] = kernel_addr
             substitutions["{DTB_ADDR}"] = dtb_addr
@@ -618,12 +598,9 @@ class BootloaderCommandOverlay(Action):
                     "TFTP deployment not defined. Unable to create bootscript file."
                 )
             bootscript = tftp_dir + script
-            bootscripturi = "tftp://%s/%s" % (
-                ip_addr,
-                os.path.dirname(substitutions["{KERNEL}"]) + script,
-            )
+            bootscripturi = f"tftp://{ip_addr}/{os.path.dirname(substitutions['{KERNEL}']) + script}"
             write_bootscript(substitute(self.commands, substitutions), bootscript)
-            bootscript_commands = ["dhcp net0", "chain %s" % bootscripturi]
+            bootscript_commands = ["dhcp net0", f"chain {bootscripturi}"]
             self.set_namespace_data(
                 action=self.name,
                 label=self.method,
@@ -756,13 +733,13 @@ class OverlayUnpack(Action):
             overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
             overlay = os.path.basename(overlay_path)
 
-            connection.sendline("rm %s" % overlay, delay=self.character_delay)
+            connection.sendline(f"rm {overlay}", delay=self.character_delay)
             connection.wait()
 
             cmd = self.parameters["transfer_overlay"]["download_command"]
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
             connection.sendline(
-                "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
+                f"{cmd} http://{ip_addr}/tmp/{overlay_path}",
                 delay=self.character_delay,
                 check=True,
                 timeout=max_end_time - time.monotonic(),
@@ -788,8 +765,7 @@ class OverlayUnpack(Action):
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "nfs")
             mount_dir = f"/{os.path.basename(location)}"
             connection.sendline(
-                "mkdir -p %s; %s %s:%s %s"
-                % (mount_dir, cmd, ip_addr, location, mount_dir),
+                f"mkdir -p {mount_dir}; {cmd} {ip_addr}:{location} {mount_dir}",
                 delay=self.character_delay,
                 check=True,
                 timeout=max_end_time - time.monotonic(),
@@ -798,8 +774,7 @@ class OverlayUnpack(Action):
 
             unpack = self.parameters["transfer_overlay"]["unpack_command"]
             connection.sendline(
-                "%s %s/* /; umount %s; rm -fr %s"
-                % (unpack, mount_dir, mount_dir, mount_dir),
+                f"{unpack} {mount_dir}/* /; umount {mount_dir}; rm -fr {mount_dir}",
                 delay=self.character_delay,
                 check=True,
                 timeout=max_end_time - time.monotonic(),
@@ -843,7 +818,7 @@ class BootloaderInterruptAction(Action):
             "parameters"
         ]
         if self.job.device.connect_command == "":
-            self.errors = "Unable to connect to device %s"
+            self.errors = "Unable to connect to device"
         device_methods = self.job.device["actions"]["boot"]["methods"]
         if (
             self.parameters.get("method", "") == "grub-efi"
@@ -882,7 +857,7 @@ class BootloaderInterruptAction(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            raise LAVABug("%s started without a connection already in use" % self.name)
+            raise LAVABug(f"{self.name} started without a connection already in use")
         connection = super().run(connection, max_end_time)
         if self.needs_interrupt:
             connection.prompt_str = [self.interrupt_prompt]
@@ -945,7 +920,7 @@ class BootloaderCommandsActionAltBank(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
+            self.errors = f"{self.name} started without a connection already in use"
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
@@ -1015,7 +990,7 @@ class BootloaderCommandsAction(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            self.errors = "%s started without a connection already in use" % self.name
+            self.errors = f"{self.name} started without a connection already in use"
         connection = super().run(connection, max_end_time)
         connection.raw_connection.linesep = self.line_separator()
         connection.prompt_str = [self.params["bootloader_prompt"]]
@@ -1058,10 +1033,7 @@ class BootloaderCommandsAction(Action):
                 )
             res = self.wait(connection, max_end_time)
             if res != 0:
-                msg = "matched a bootloader error message: '%s' (%d)" % (
-                    connection.prompt_str[res],
-                    res,
-                )
+                msg = f"matched a bootloader error message: {connection.prompt_str[res]!r} ({res})"
                 raise InfrastructureError(msg)
 
         self.set_namespace_data(
@@ -1099,7 +1071,7 @@ class AdbOverlayUnpack(Action):
         adb_cmd = ["adb", "-s", serial_number, "push", host_dir, target_dir]
         command_output = self.run_command(adb_cmd)
         if command_output and "pushed" not in command_output.lower():
-            raise JobError("Unable to push overlay files with adb: %s" % command_output)
+            raise JobError(f"Unable to push overlay files with adb: {command_output}")
         adb_cmd = [
             "adb",
             "-s",
@@ -1112,7 +1084,5 @@ class AdbOverlayUnpack(Action):
         ]
         command_output = self.run_command(adb_cmd)
         if command_output and "pushed" not in command_output.lower():
-            raise JobError(
-                "Unable to chmod overlay files with adb: %s" % command_output
-            )
+            raise JobError(f"Unable to chmod overlay files with adb: {command_output}")
         return connection

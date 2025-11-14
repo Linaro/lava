@@ -102,7 +102,7 @@ class UefiMenuSelector(SelectorMenuAction):
                 self.parameters["commands"]
                 not in self.job.device["actions"]["boot"]["methods"][self.method_name]
             ):
-                self.errors = "Missing commands for %s" % self.parameters["commands"]
+                self.errors = f"Missing commands for {self.parameters['commands']}"
                 return
             self.commands = self.parameters["commands"]
         if not self.commands:
@@ -126,10 +126,7 @@ class UefiMenuSelector(SelectorMenuAction):
                 self.commands
                 not in self.job.device["actions"]["boot"]["methods"][self.method_name]
             ):
-                self.errors = (
-                    "No boot configuration called '%s' for boot method '%s'"
-                    % (self.commands, self.method_name)
-                )
+                self.errors = f"No boot configuration called {self.commands!r} for boot method {self.method_name!r}"
                 return
             self.items = self.job.device["actions"]["boot"]["methods"][
                 self.method_name
@@ -161,7 +158,7 @@ class UefiMenuSelector(SelectorMenuAction):
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
             if not self.run_command(command.split(" "), allow_silent=True):
-                raise InfrastructureError("%s failed" % command)
+                raise InfrastructureError(f"{command} failed")
         if not connection:
             self.logger.debug("Existing connection in %s", self.name)
             return connection
@@ -195,16 +192,13 @@ class UefiSubstituteCommands(Action):
             self.parameters["commands"]
             not in self.job.device["actions"]["boot"]["methods"]["uefi-menu"]
         ):
-            self.errors = "Missing commands for %s" % self.parameters["commands"]
+            self.errors = f"Missing commands for {self.parameters['commands']}"
         self.items = self.job.device["actions"]["boot"]["methods"]["uefi-menu"][
             self.parameters["commands"]
         ]
         for item in self.items:
             if "select" not in item:
-                self.errors = "Invalid device configuration for %s: %s" % (
-                    self.name,
-                    item,
-                )
+                self.errors = f"Invalid device configuration for {self.name}: {item}"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -220,7 +214,7 @@ class UefiSubstituteCommands(Action):
             "{DTB}": self.get_namespace_data(
                 action="download-action", label="file", key="dtb"
             ),
-            "TEST_MENU_NAME": "LAVA %s test image" % self.parameters["commands"],
+            "TEST_MENU_NAME": f"LAVA {self.parameters['commands']} test image",
         }
         nfs_address = self.get_namespace_data(
             action="parse-persistent-nfs", label="nfs_address", key="nfsroot"

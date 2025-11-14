@@ -80,16 +80,16 @@ class PipelineDevice(dict):
             if missing_ok:
                 return missing_default
             raise ConfigurationError(
-                "Constant %s,%s does not exist in the device config 'constants' section."
-                % (prefix, const)
+                f"Constant {prefix},{const} does not exist in the "
+                "device config 'constants' section."
             )
         if const in constants:
             return constants[const]
         if missing_ok:
             return missing_default
         raise ConfigurationError(
-            "Constant %s does not exist in the device config 'constants' section."
-            % const
+            f"Constant {const} does not exist in the "
+            "device config 'constants' section."
         )
 
 
@@ -121,7 +121,7 @@ class NewDevice(PipelineDevice):
                 raise ConfigurationError("Empty device configuration")
             self.update(data)
         except yaml.parser.ParserError:
-            raise ConfigurationError("%s could not be parsed" % target)
+            raise ConfigurationError(f"{target} could not be parsed")
 
         self.setdefault("power_state", "off")  # assume power is off at start of job
         self.setdefault("dynamic_data", {})

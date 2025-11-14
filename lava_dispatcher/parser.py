@@ -162,7 +162,7 @@ class JobParser:
                     pipeline.add_action(action)
 
                 else:
-                    raise JobError("Unknown action name '%s'" % name)
+                    raise JobError(f"Unknown action name {name!r}")
 
         # there's always going to need to be a finalize_process action
         finalize = FinalizeAction(job)

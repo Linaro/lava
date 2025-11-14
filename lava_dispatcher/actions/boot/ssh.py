@@ -64,9 +64,9 @@ class Scp(ConnectSsh):
         params = self._check_params()
         which("scp")
         if "ssh" not in self.job.device["actions"]["deploy"]["methods"]:
-            self.errors = "Unable to use %s without ssh deployment" % self.name
+            self.errors = f"Unable to use {self.name} without ssh deployment"
         if "ssh" not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "Unable to use %s without ssh boot" % self.name
+            self.errors = f"Unable to use {self.name} without ssh boot"
         if self.get_namespace_data(
             action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
         ):
@@ -107,7 +107,7 @@ class Scp(ConnectSsh):
             action="prepare-scp-overlay", label="scp-deploy", key="overlay"
         )
         if not path:
-            error_msg = "%s: could not find details of '%s'" % (self.name, "overlay")
+            error_msg = f"{self.name}: could not find details of overlay"
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
@@ -132,10 +132,7 @@ class Scp(ConnectSsh):
             )
             self.logger.debug("Using common data for host: %s", host_address)
         if not host_address:
-            error_msg = "%s: could not find host for deployment using %s" % (
-                self.name,
-                "overlay",
-            )
+            error_msg = f"{self.name}: could not find host for deployment using overlay"
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
@@ -155,7 +152,7 @@ class Scp(ConnectSsh):
         )
 
         self.logger.debug("Create the remote directory %s", lava_test_results_dir)
-        connection.sendline("mkdir -p %s" % lava_test_results_dir)
+        connection.sendline(f"mkdir -p {lava_test_results_dir}")
         connection.wait()
 
         # add the local file as source
@@ -165,8 +162,8 @@ class Scp(ConnectSsh):
             "Copying %s using %s to %s", "overlay", command_str, host_address
         )
         # add the remote as destination, with :/ top level directory
-        command.extend(["%s@%s:%s" % (self.ssh_user, host_address, destination)])
-        self.run_cmd(command, error_msg="Unable to copy %s" % "overlay")
+        command.extend([f"{self.ssh_user}@{host_address}:{destination}"])
+        self.run_cmd(command, error_msg="Unable to copy overlay")
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
         self.set_namespace_data(
@@ -215,8 +212,7 @@ class PrepareSsh(Action):
             )
             if not host_data:
                 raise JobError(
-                    "Unable to retrieve %s - missing ssh deploy?"
-                    % self.parameters["parameters"]["hostID"]
+                    f"Unable to retrieve {self.parameters['parameters']['hostID']} - missing ssh deploy?"
                 )
             self.set_namespace_data(
                 action=self.name,
@@ -247,11 +243,7 @@ class ScpOverlayUnpack(Action):
             action="test", label="results", key="lava_test_results_dir"
         )
 
-        cmd = "tar %s -C %s -xzf %s" % (
-            tar_flags,
-            os.path.dirname(lava_test_results_dir),
-            filename,
-        )
+        cmd = f"tar {tar_flags} -C {os.path.dirname(lava_test_results_dir)} -xzf {filename}"
         connection.sendline(cmd)
         self.wait(connection)
         return connection
@@ -299,7 +291,7 @@ class SchrootAction(Action):
         if not connection:
             return connection
         self.logger.info("Entering %s schroot", self.schroot)
-        connection.prompt_str = "(%s)" % self.schroot
+        connection.prompt_str = f"({self.schroot})"
         connection.sendline(self.command)
         self.wait(connection)
         # TODO: not calling super?

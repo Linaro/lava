@@ -91,22 +91,22 @@ class BaseFVPAction(Action):
                 self.parameters["docker"]["container_name"] + "-lava-" + self.job.job_id
             )
         else:
-            self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+            self.container = f"lava-{self.job.job_id}-{self.level}"
 
         options = self.job.device["actions"]["boot"]["methods"]["fvp"]["options"]
 
         if options["cpus"]:
-            self.extra_options += " --cpus %s" % options["cpus"]
+            self.extra_options += f" --cpus {options['cpus']}"
         if options["memory"]:
-            self.extra_options += " --memory %s" % options["memory"]
+            self.extra_options += f" --memory {options['memory']}"
         if options.get("privileged", False):
             self.extra_options += " --privileged"
         for device in options.get("devices", []):
-            self.extra_options += " --device %s" % device
+            self.extra_options += f" --device {device}"
         for network in options.get("networks", []):
-            self.extra_options += " --network %s" % network
+            self.extra_options += f" --network {network}"
         for volume in options.get("volumes", []):
-            self.extra_options += " --volume %s" % volume
+            self.extra_options += f" --volume {volume}"
         if "license_variable" in self.parameters:
             self.fvp_license = shlex.quote(self.parameters["license_variable"])
         if "environment" in self.parameters and isinstance(
@@ -121,7 +121,7 @@ class BaseFVPAction(Action):
     def construct_docker_fvp_command(self, docker_image, fvp_arguments):
         substitutions = {}
         cmd = "docker run --rm --interactive --tty --hostname lava"
-        cmd += " --name %s" % self.container
+        cmd += f" --name {self.container}"
         self.logger.debug(
             "Download action namespace keys are: %s",
             self.get_namespace_keys("download-action"),
@@ -151,7 +151,7 @@ class BaseFVPAction(Action):
 
             # Add downloaded images to container, ensuring they are all in a single
             # directory.  This is required for FVP libraries.
-            cmd += " --volume %s:%s" % (filename, location_in_container)
+            cmd += f" --volume {filename}:{location_in_container}"
 
         substitutions["ARTIFACT_DIR"] = os.path.join("/", self.container)
         if not self.fvp_license:
@@ -160,7 +160,7 @@ class BaseFVPAction(Action):
                     "'license_variable' or 'ubl_license' not set, model may not function."
                 )
         else:
-            cmd += " -e %s" % self.fvp_license
+            cmd += f" -e {self.fvp_license}"
         for env in self.environment:
             cmd += f" -e {env}"
         fvp_image = self.parameters.get("image")
@@ -308,7 +308,7 @@ class CheckFVPVersionAction(BaseFVPAction):
             "level": self.level,
             "extra": {"fvp-version": matched_version_string},
             "result": "pass",
-            "duration": "%.02f" % (time.monotonic() - start),
+            "duration": f"{time.monotonic() - start:.02f}",
         }
         self.logger.results(result)
 
@@ -364,8 +364,7 @@ class StartFVPAction(BaseFVPAction):
             shell_connection.prompt_str = list(self.fvp_feedbacks)
             self.wait(shell_connection)
             self.logger.debug(
-                "Connection group(0) %s"
-                % shell_connection.raw_connection.match.group(0)
+                "Connection group(0) %s", shell_connection.raw_connection.match.group(0)
             )
             if re.match(
                 self.fvp_console_string, shell_connection.raw_connection.match.group(0)
@@ -452,10 +451,7 @@ class GetFVPSerialAction(Action):
             action=StartFVPAction.name, label="fvp", key="container"
         )
         for feedback_dict in feedback_ports:
-            cmd = (
-                "lava-outerr docker exec --interactive --tty %s telnet localhost %s"
-                % (container, feedback_dict["port"])
-            )
+            cmd = f"lava-outerr docker exec --interactive --tty {container} telnet localhost {feedback_dict['port']}"
 
             self.logger.debug("Feedback command: %s", cmd)
             shell = ShellCommand(cmd, self.timeout, logger=self.logger)
@@ -466,7 +462,7 @@ class GetFVPSerialAction(Action):
 
             feedback_name = feedback_dict.get("name")
             if not feedback_name:
-                feedback_name = "_namespace_feedback_%s" % feedback_dict["port"]
+                feedback_name = f"_namespace_feedback_{feedback_dict['port']}"
             self.set_namespace_data(
                 action="shared",
                 label="shared",
@@ -475,10 +471,7 @@ class GetFVPSerialAction(Action):
                 parameters={"namespace": feedback_name},
             )
 
-        cmd = "lava-outerr docker exec --interactive --tty %s telnet localhost %s" % (
-            container,
-            serial_port,
-        )
+        cmd = f"lava-outerr docker exec --interactive --tty {container} telnet localhost {serial_port}"
 
         self.logger.debug("Connect command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)

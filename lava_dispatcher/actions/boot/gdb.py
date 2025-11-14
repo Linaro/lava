@@ -64,7 +64,7 @@ class BootGDBRetry(RetryAction):
 
         commands = self.parameters["commands"]
         if commands not in method:
-            self.errors = "'%s' not available" % commands
+            self.errors = f"{commands!r} not available"
             return
         self.commands = method[commands].get("commands")
         if not isinstance(self.commands, list):
@@ -118,15 +118,12 @@ class BootGDBRetry(RetryAction):
         if self.container is None:
             cmd = self.gdb
         else:
-            cmd = "docker run --rm -it --name lava-%s-%s" % (
-                self.job.job_id,
-                self.level,
-            )
+            cmd = f"docker run --rm -it --name lava-{self.job.job_id}-{self.level}"
             for path in paths:
-                cmd += " --volume %s:%s" % (path, path)
+                cmd += f" --volume {path}:{path}"
             for device in self.devices:
-                cmd += " --device %s:%s:rw" % (device, device)
-            cmd += " %s %s" % (self.container, self.gdb)
+                cmd += f" --device {device}:{device}:rw"
+            cmd += f" {self.container} {self.gdb}"
 
         for arg in substitute(self.arguments, substitutions):
             cmd += " " + arg
@@ -172,6 +169,6 @@ class BootGDBRetry(RetryAction):
                 if self.container is None:
                     self.gdb_connection.finalise()
                 else:
-                    name = "lava-%s-%s" % (self.job.job_id, self.level)
+                    name = f"lava-{self.job.job_id}-{self.level}"
                     self.logger.debug("Stopping container %s", name)
                     self.run_command(["docker", "stop", name], allow_fail=True)

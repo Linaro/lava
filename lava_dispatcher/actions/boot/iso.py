@@ -94,8 +94,7 @@ class IsoCommandLine(Action):
         shell = ShellCommand(command_line, self.timeout, logger=self.logger)
         if shell.exitstatus:
             raise JobError(
-                "%s command exited %d: %s"
-                % (sub_command[0], shell.exitstatus, shell.readlines())
+                f"{sub_command[0]} command exited {shell.exitstatus}: {shell.readlines()}"
             )
         self.logger.debug("started a shell command")
 
@@ -156,7 +155,7 @@ class IsoRebootAction(Action):
         except AttributeError as exc:
             raise ConfigurationError(exc)
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors = f"Invalid parameters for {self.name}"
 
     def run(self, connection, max_end_time):
         """
@@ -166,14 +165,14 @@ class IsoRebootAction(Action):
         base_image = self.get_namespace_data(
             action="prepare-empty-image", label="prepare-empty-image", key="output"
         )
-        self.sub_command.append("-drive format=raw,file=%s" % base_image)
+        self.sub_command.append(f"-drive format=raw,file={base_image}")
         guest = self.get_namespace_data(
             action="apply-overlay-guest", label="guest", key="filename"
         )
         if guest:
             self.logger.info("Extending command line for qcow2 test overlay")
             self.sub_command.append(
-                "-drive format=qcow2,file=%s,media=disk" % (os.path.realpath(guest))
+                f"-drive format=qcow2,file={os.path.realpath(guest)},media=disk"
             )
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
@@ -181,8 +180,8 @@ class IsoRebootAction(Action):
             mountpoint = self.get_namespace_data(
                 action="test", label="results", key="lava_test_results_dir"
             )
-            shell_precommand_list.append("mkdir %s" % mountpoint)
-            shell_precommand_list.append("mount -L LAVA %s" % mountpoint)
+            shell_precommand_list.append(f"mkdir {mountpoint}")
+            shell_precommand_list.append(f"mount -L LAVA {mountpoint}")
             self.set_namespace_data(
                 action="test",
                 label="lava-test-shell",
@@ -196,8 +195,7 @@ class IsoRebootAction(Action):
         )
         if shell.exitstatus:
             raise JobError(
-                "%s command exited %d: %s"
-                % (self.sub_command, shell.exitstatus, shell.readlines())
+                f"{self.sub_command} command exited {shell.exitstatus}: {shell.readlines()}"
             )
         self.logger.debug("started a shell command")
 

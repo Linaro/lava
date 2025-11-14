@@ -85,7 +85,7 @@ def validate_action(name, index, data, strict=True):
     except ImportError:
         raise Invalid("unknown action type", path=["actions"] + name.split("."))
     except MultipleInvalid as exc:
-        path = ["actions[%d]" % index] + name.split(".") + exc.path
+        path = [f"actions[{index}]"] + name.split(".") + exc.path
         raise Invalid(exc.msg, path=path) from exc
 
 
@@ -116,7 +116,7 @@ def validate(data, strict=True, extra_context_variables: list[str] | None = None
             elif "monitors" in data:
                 cls = "test.monitor"
         if cls is None:
-            raise Invalid("invalid action", path=["actions[%s]" % index, action_type])
+            raise Invalid("invalid action", path=[f"actions[{index}]", action_type])
         cls = cls.replace("-", "_")
         validate_action(cls, index, data, strict=strict)
 
@@ -219,7 +219,7 @@ def check_job_timeouts(data):
             return
         duration = Timeout.parse(local_data)
         if duration > job_duration:
-            raise Invalid("%s timeout is larger than job timeout" % prefix, path=path)
+            raise Invalid(f"{prefix} timeout is larger than job timeout", path=path)
 
     # global timeouts
     _check_timeout("Global", ["timeouts", "action"], data["timeouts"].get("action"))

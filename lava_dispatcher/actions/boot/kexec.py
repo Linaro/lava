@@ -97,17 +97,17 @@ class KexecAction(Action):
         # If on_panic is set, use --load-panic instead of --load
         if "kernel" in self.parameters:
             if self.parameters.get("on_panic", False):
-                self.load_command += " --load-panic %s" % self.parameters["kernel"]
+                self.load_command += f" --load-panic {self.parameters['kernel']}"
             else:
-                self.load_command += " --load %s" % self.parameters["kernel"]
+                self.load_command += f" --load {self.parameters['kernel']}"
 
         if "dtb" in self.parameters:
-            self.load_command += " --dtb %s" % self.parameters["dtb"]
+            self.load_command += f" --dtb {self.parameters['dtb']}"
         if "initrd" in self.parameters:
-            self.load_command += " --initrd %s" % self.parameters["initrd"]
+            self.load_command += f" --initrd {self.parameters['initrd']}"
         if "options" in self.parameters:
             for option in self.parameters["options"]:
-                self.load_command += " %s" % option
+                self.load_command += f" {option}"
         if self.load_command == "/sbin/kexec":
             self.errors = "Default kexec handler needs at least a kernel to pass to the --load command"
 
@@ -125,7 +125,7 @@ class KexecAction(Action):
             self.wait(connection)
 
         if "kernel-config" in self.parameters:
-            cmd = "zgrep -i kexec %s |grep -v '^#'" % self.parameters["kernel-config"]
+            cmd = f"zgrep -i kexec {self.parameters['kernel-config']} |grep -v '^#'"
             self.logger.debug("Checking for kexec: %s", cmd)
             connection.sendline(cmd, delay=self.character_delay)
             self.wait(connection)

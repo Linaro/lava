@@ -68,7 +68,7 @@ def lava_poll(port, host, name, request):
                 time.sleep(1)
                 sock = None
                 count += 1
-                warnings.append("retrying port %s on %s" % (port, host))
+                warnings.append(f"retrying port {port} on {host}")
         if count >= 5:
             break
         msg = {
@@ -100,12 +100,12 @@ def lava_poll(port, host, name, request):
             data = str(sock.recv(8))  # 32bit limit
             data = sock.recv(1024)
         except OSError as exc:
-            errors.append("Exception on receive: %s" % exc)
+            errors.append(f"Exception on receive: {exc}")
             continue
         try:
             json_data = json.loads(data.decode("utf-8"))
         except ValueError:
-            warnings.append("data not JSON %s" % data)
+            warnings.append(f"data not JSON {data}")
             break
         if "response" not in json_data:
             errors.append("no response field in data")
@@ -122,8 +122,8 @@ def lava_poll(port, host, name, request):
     elif warnings:
         ret = 1
     if errors or warnings:
-        print("Using python%s" % sys.version_info[0])
-        print("E:%s W:%s" % (errors, warnings))
+        print(f"Using python {sys.version_info[0]}")
+        print(f"E:{errors} W:{warnings}")
         return ret
     else:
         return ret
@@ -140,7 +140,7 @@ def main():
     ret1 = lava_poll(port, host, "status", "group_data")
     ret2 = lava_poll(port, host, "status", "clear_group")
     if not ret1 and not ret2:
-        print("Using python%s" % sys.version_info[0])
+        print(f"Using python {sys.version_info[0]}")
         print("status check complete. No errors")
     if ret1 and ret1 >= ret2:
         sys.exit(ret1)

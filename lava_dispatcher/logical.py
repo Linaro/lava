@@ -59,7 +59,7 @@ class RetryAction(Action):
         super().validate()
         if not self.pipeline:
             raise LAVABug(
-                "Retry action %s needs to implement an internal pipeline" % self.name
+                f"Retry action {self.name} needs to implement an internal pipeline"
             )
 
     def run(self, connection, max_end_time):
@@ -90,7 +90,7 @@ class RetryAction(Action):
 
                 # re-raise if this is the last loop
                 if retries == self.max_retries:
-                    self.errors = "%s retries failed for %s" % (retries, self.name)
+                    self.errors = f"{retries} retries failed for {self.name}"
                     raise
 
                 # Stop retrying if parent timed out

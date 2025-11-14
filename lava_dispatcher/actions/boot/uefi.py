@@ -167,7 +167,7 @@ class UefiShellMenuSelector(UefiMenuSelector):
                 self.method_name
             ][self.commands]
         else:
-            self.errors = "Missing menu commands for %s" % self.commands
+            self.errors = f"Missing menu commands for {self.commands}"
         if "menu_boot_message" in params:
             self.boot_message = params["menu_boot_message"]
         super().validate()

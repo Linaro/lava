@@ -119,7 +119,7 @@ class RunNodebooterContainer(Action):
 
         for vol, mnt in volumes.items():
             os.makedirs(vol, exist_ok=True)
-            option = "--volume=%s:%s" % (vol, mnt)
+            option = f"--volume={vol}:{mnt}"
             docker.add_docker_run_options(option)
 
         docker.add_docker_run_options("--privileged")
@@ -331,12 +331,12 @@ class ConfigureNodebooter(Action):
         )
         self.logger.debug("Stopping container %s", container)
         # Stop nodebooter container
-        self.run_cmd("docker stop %s" % (container), allow_fail=True)
+        self.run_cmd(["docker", "stop", container], allow_fail=True)
         # Remove all files from nodebooter dir based on mac address
         # Nodebooter currently replaces ":" in mac address either with
         # "_" or "." delimiters to create initrd file names and images.
         mac_delimiters = [".", "_"]
-        patterns = ["*%s*" % self.dut_mac.replace(":", x) for x in mac_delimiters]
+        patterns = [f"*{self.dut_mac.replace(':', x)}*" for x in mac_delimiters]
         # Find all files that match the patterns in the directory tree
         file_list = []
         for pattern in patterns:

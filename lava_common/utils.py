@@ -21,7 +21,7 @@ def binary_version(binary: str, flags: str = "", pattern: str = "") -> str:
     substring that contains the version number.
     """
     # if binary is not absolute, fail.
-    msg = "Unable to retrieve version of %s" % binary
+    msg = f"Unable to retrieve version of {binary}"
     try:
         ver_str = (
             subprocess.check_output((binary, flags), stderr=subprocess.STDOUT)
@@ -41,7 +41,7 @@ def binary_version(binary: str, flags: str = "", pattern: str = "") -> str:
         else:
             raise InfrastructureError(msg)
 
-    return "%s, version %s" % (binary, ver_str)
+    return f"{binary}, version {ver_str}"
 
 
 def debian_package_arch(pkg: str) -> str:
@@ -53,7 +53,7 @@ def debian_package_arch(pkg: str) -> str:
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         return (
             subprocess.check_output(  # nosec dpkg-query
-                ("dpkg-query", "-W", "-f=${Architecture}\n", "%s" % pkg),
+                ("dpkg-query", "-W", "-f=${Architecture}\n", pkg),
                 stderr=subprocess.STDOUT,
             )
             .strip()
@@ -70,7 +70,7 @@ def debian_package_version(pkg: str) -> str:
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         return (
             subprocess.check_output(  # nosec dpkg-query
-                ("dpkg-query", "-W", "-f=${Version}\n", "%s" % pkg),
+                ("dpkg-query", "-W", "-f=${Version}\n", pkg),
                 stderr=subprocess.STDOUT,
             )
             .strip()
@@ -86,7 +86,7 @@ def debian_filename_version(binary: str) -> str:
     return an empty string.
     """
     # if binary is not absolute, fail.
-    msg = "Unable to retrieve version of %s" % binary
+    msg = f"Unable to retrieve version of {binary}"
     pkg_str = None
     with contextlib.suppress(FileNotFoundError, subprocess.CalledProcessError):
         pkg_str = (
@@ -100,4 +100,4 @@ def debian_filename_version(binary: str) -> str:
         raise InfrastructureError(msg)
     pkg = pkg_str.split(":", maxsplit=1)[0]
     pkg_ver = debian_package_version(pkg)
-    return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)
+    return f"{pkg} for <{binary}>, installed at version: {pkg_ver}"

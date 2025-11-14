@@ -97,8 +97,7 @@ class ShellCommand(pexpect.spawn):
                 window = int(window)
             except ValueError:
                 raise LAVABug(
-                    "ShellCommand was passed an invalid window size of %s bytes."
-                    % window
+                    f"ShellCommand was passed an invalid window size of {window} bytes."
                 )
         searchwindowsize = 2 * window
         if not lava_timeout or not isinstance(lava_timeout, Timeout):
@@ -288,7 +287,7 @@ class ShellSession:
                 elif self.name == "ShellSession":
                     logger.info("Disconnecting from shell: %s", reason)
                 else:
-                    raise LAVABug("'disconnect' not supported for %s" % self.tags)
+                    raise LAVABug(f"'disconnect' not supported for {self.tags}")
             except ValueError:  # protection against file descriptor == -1
                 logger.debug("Already disconnected")
         else:
@@ -324,7 +323,7 @@ class ShellSession:
         whether that is a string or a list of strings.
         To use + the instance of the existing prompt_str must be checked.
         """
-        self.logger.debug("Setting prompt string to %r" % string)
+        self.logger.debug("Setting prompt string to %r", string)
         self.__prompt_str__ = string
 
     @contextlib.contextmanager
@@ -349,8 +348,8 @@ class ShellSession:
         # connection_prompt_limit
         partial_timeout = remaining / 2.0
         self.logger.debug(
-            "Waiting using forced prompt support (timeout %s)"
-            % seconds_to_str(partial_timeout)
+            "Waiting using forced prompt support (timeout %s)",
+            seconds_to_str(partial_timeout),
         )
         while True:
             try:

@@ -19,7 +19,6 @@ disable = [
     "C0123",  # Use isinstance() rather than type() for a typecheck.
     "C0201",  # Consider iterating the dictionary directly instead of calling .keys()
     "C0206",  # Consider iterating with .items()
-    "C0209",  # Formatting a regular string which could be an f-string
     "C0411",  # Wrong import order. This is handled by `isort --profile black`.
     "C0412",  # Imports from package %s are not grouped
     "C0415",  # Import outside toplevel

@@ -107,7 +107,7 @@ class PDUReboot(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            self.run_cmd(cmd, error_msg="Unable to reboot: '%s' failed" % cmd)
+            self.run_cmd(cmd, error_msg=f"Unable to reboot: {cmd!r} failed")
         self.results = {"status": "success"}
         return connection
 
@@ -138,9 +138,7 @@ class PrePower(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                self.run_cmd(
-                    cmd, error_msg="Unable to run pre-power: '%s' failed" % cmd
-                )
+                self.run_cmd(cmd, error_msg=f"Unable to run pre-power: {cmd!r} failed")
         self.results = {"success": self.name}
         return connection
 
@@ -171,7 +169,7 @@ class PreOs(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                self.run_cmd(cmd, error_msg="Unable to run pre-os: '%s' failed" % cmd)
+                self.run_cmd(cmd, error_msg=f"Unable to run pre-os: {cmd!r} failed")
         self.results = {"success": self.name}
         return connection
 
@@ -199,14 +197,14 @@ class PowerOn(Action):
             if not isinstance(command, list):
                 command = [command]
             for cmd in command:
-                self.run_cmd(cmd, error_msg="Unable to power-on: '%s' failed" % cmd)
+                self.run_cmd(cmd, error_msg=f"Unable to power-on: {cmd!r} failed")
         command = self.job.device.power_command
         if not command:
             return connection
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            self.run_cmd(cmd, error_msg="Unable to power-on: '%s' failed" % cmd)
+            self.run_cmd(cmd, error_msg=f"Unable to power-on: {cmd!r} failed")
         self.results = {"success": self.name}
         return connection
 
@@ -232,7 +230,7 @@ class PowerOff(Action):
         if not isinstance(command, list):
             command = [command]
         for cmd in command:
-            self.run_cmd(cmd, error_msg="Unable to power-off: '%s' failed" % cmd)
+            self.run_cmd(cmd, error_msg=f"Unable to power-off: {cmd!r} failed")
         self.results = {"status": "success"}
         return connection
 

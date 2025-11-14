@@ -91,7 +91,7 @@ class Job:
 
     def get_basedir(self, path):
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
-        return os.path.join(path, "%s%s" % (prefix, self.job_id))
+        return os.path.join(path, f"{prefix}{self.job_id}")
 
     def mkdtemp(self, action_name: str, override: str | None = None) -> str:
         """
@@ -142,7 +142,7 @@ class Job:
                 raise LAVABug(exc)
 
             if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                msg = f"protocol {protocol.name} has errors: {protocol.errors}"
                 self.logger.exception(msg)
                 raise JobError(msg)
 
@@ -173,7 +173,7 @@ class Job:
         Public wrapper for the pipeline validation.
         Send a "fail" results if needed.
         """
-        label = "lava-dispatcher, installed at version: %s" % __version__
+        label = f"lava-dispatcher, installed at version: {__version__}"
         self.logger.info(label)
         self.logger.info("start: 0 validate")
         start = time.monotonic()
@@ -219,7 +219,7 @@ class Job:
                 raise LAVABug(exc)
 
             if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                msg = f"protocol {protocol.name} has errors: {protocol.errors}"
                 self.logger.exception(msg)
                 raise JobError(msg)
 

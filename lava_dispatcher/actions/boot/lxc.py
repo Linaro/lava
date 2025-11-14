@@ -85,7 +85,7 @@ class LxcAddStaticDevices(Action):
                 if usb_device.get("usb_product_id", "") == "0000":
                     self.errors = "[LXC_STATIC] usb_product_id unset"
         except TypeError:
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors = f"Invalid parameters for {self.name}"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -132,7 +132,7 @@ class LxcStartAction(Action):
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output != "":
             raise JobError(
-                "Unable to start lxc container: %s" % command_output
+                f"Unable to start lxc container: {command_output}"
             )  # FIXME: JobError needs a unit test
         lxc_cmd = ["lxc-info", "-sH", "-n", lxc_name]
         self.logger.debug("Wait until '%s' state becomes RUNNING", lxc_name)
@@ -177,6 +177,6 @@ class LxcStopAction(Action):
         command_output = self.run_command(lxc_cmd)
         if command_output and command_output != "":
             raise JobError(
-                "Unable to stop lxc container: %s" % command_output
+                f"Unable to stop lxc container: {command_output}"
             )  # FIXME: JobError needs a unit test
         return connection

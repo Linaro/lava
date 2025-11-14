@@ -204,7 +204,7 @@ class LavaCoordinator:
         except ValueError:
             return None
         # "header" calculation
-        msglen = "%08X" % len(msgstr)
+        msglen = f"{len(msgstr):08X}"
         if int(msglen, 16) > 0xFFFFFFFF:
             LOG.error(
                 "Message was too long to send! %d > %d", int(msglen, 16), 0xFFFFFFFF

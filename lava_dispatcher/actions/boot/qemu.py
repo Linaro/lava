@@ -87,8 +87,8 @@ class CallQemuAction(Action):
         if "docker" in self.parameters:
             # We will find it by get_raw_version()
             return False
-        ver_str = debian_package_version(pkg="qemu-system-%s" % pkg_suffix)
-        arch_str = debian_package_arch(pkg="qemu-system-%s" % pkg_suffix)
+        ver_str = debian_package_version(pkg=f"qemu-system-{pkg_suffix}")
+        arch_str = debian_package_arch(pkg=f"qemu-system-{pkg_suffix}")
         if ver_str == "":
             return False
         self.qemu_data = {
@@ -114,7 +114,7 @@ class CallQemuAction(Action):
             docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
             ver_strs = docker.run(
                 *shlex.split(
-                    "qemu-system-%s --version" % self.get_qemu_arch(architecture)
+                    f"qemu-system-{self.get_qemu_arch(architecture)} --version"
                 ),
                 action=self,
                 capture=True,
@@ -183,15 +183,12 @@ class CallQemuAction(Action):
             self.base_sub_command = [qemu_binary]
             self.base_sub_command.extend(boot["parameters"].get("options", []))
             self.base_sub_command.extend(
-                ["%s" % item for item in boot["parameters"].get("extra", [])]
+                [str(item) for item in boot["parameters"].get("extra", [])]
             )
         except AttributeError as exc:
-            self.errors = "Unable to parse device options: %s %s" % (
-                exc,
-                self.job.device["actions"]["boot"]["methods"][method],
-            )
+            self.errors = f"Unable to parse device options: {exc} {self.job.device['actions']['boot']['methods'][method]}"
         except (KeyError, TypeError):
-            self.errors = "Invalid parameters for %s" % self.name
+            self.errors = f"Invalid parameters for {self.name}"
 
         for label in self.get_namespace_keys("download-action"):
             if label in ["offset", "available_loops", "uefi", "nfsrootfs"]:
@@ -209,7 +206,7 @@ class CallQemuAction(Action):
 
         # Check for enable-kvm command line option in device configuration.
         if method not in self.job.device["actions"]["boot"]["methods"]:
-            self.errors = "Unknown boot method '%s'" % method
+            self.errors = f"Unknown boot method {method!r}"
             return
 
         options = self.job.device["actions"]["boot"]["methods"][method]["parameters"][
@@ -281,13 +278,13 @@ class CallQemuAction(Action):
             params = self.methods["qemu-nfs"]["parameters"]["append"]
             # console=ttyAMA0 root=/dev/nfs nfsroot=10.3.2.1:/var/lib/lava/dispatcher/tmp/dirname,tcp,hard,intr ip=dhcp
             append = [
-                "console=%s" % params["console"],
+                f"console={params['console']}",
                 "root=/dev/nfs",
-                "%s rw" % substitute([params["nfsrootargs"]], substitutions)[0],
-                "%s" % params["ipargs"],
+                f"{substitute([params['nfsrootargs']], substitutions)[0]} rw",
+                str(params["ipargs"]),
             ]
             self.sub_command.append("--append")
-            self.sub_command.append('"%s"' % " ".join(append))
+            self.sub_command.append(f"\"{' '.join(append)}\"")
         elif guest and not applied:
             self.logger.info("Extending command line for qcow2 test overlay")
             # interface is ide by default in qemu
@@ -298,8 +295,7 @@ class CallQemuAction(Action):
                 "parameters"
             ]["guest"].get("driveid", "lavatest")
             self.sub_command.append(
-                "-drive format=qcow2,file=%s,media=disk,if=%s,id=%s"
-                % (os.path.realpath(guest), interface, driveid)
+                f"-drive format=qcow2,file={os.path.realpath(guest)},media=disk,if={interface},id={driveid}"
             )
             # push the mount operation to the test shell pre-command to be run
             # before the test shell tries to execute.
@@ -307,15 +303,13 @@ class CallQemuAction(Action):
             mountpoint = self.get_namespace_data(
                 action="test", label="results", key="lava_test_results_dir"
             )
-            uuid = "/dev/disk/by-uuid/%s" % self.get_namespace_data(
-                action="apply-overlay-guest", label="guest", key="UUID"
-            )
-            shell_precommand_list.append("mkdir %s" % mountpoint)
+            uuid = f"/dev/disk/by-uuid/{self.get_namespace_data(action='apply-overlay-guest', label='guest', key='UUID')}"
+            shell_precommand_list.append(f"mkdir {mountpoint}")
             # prepare_guestfs always uses ext2
-            shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
+            shell_precommand_list.append(f"mount {uuid} -t ext2 {mountpoint}")
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
-            shell_precommand_list.append("ls -la %s/bin/lava-test-runner" % mountpoint)
+            shell_precommand_list.append(f"ls -la {mountpoint}/bin/lava-test-runner")
             self.set_namespace_data(
                 action="test",
                 label="lava-test-shell",
@@ -329,7 +323,7 @@ class CallQemuAction(Action):
             )
             if not self.parameters["docker"].get("container_name"):
                 docker.name(
-                    "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
+                    f"lava-docker-qemu-{self.job.job_id}-{self.level}-",
                     random_suffix=True,
                 )
             docker.interactive()
@@ -354,8 +348,7 @@ class CallQemuAction(Action):
         )
         if shell.exitstatus:
             raise JobError(
-                "%s command exited %d: %s"
-                % (self.sub_command, shell.exitstatus, shell.readlines())
+                f"{self.sub_command} command exited {shell.exitstatus}: {shell.readlines()}"
             )
         self.logger.debug("started a shell command")
 

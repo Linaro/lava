@@ -165,7 +165,7 @@ class TestMonitor(LavaTestStrategy):
             for monitor in parameters["monitors"]:
                 for param in required_parms:
                     if param not in monitor:
-                        return (False, "missing required parameter '%s'" % param)
+                        return (False, f"missing required parameter {param!r}")
             return True, "accepted"
         return False, '"monitors" not in parameters'
 
@@ -221,11 +221,10 @@ class MultinodeTestShell(LavaTestStrategy):
                 else:
                     return (
                         False,
-                        '"target_group" was not in parameters for %s'
-                        % multinode_protocol_name,
+                        f'"target_group" was not in parameters for {multinode_protocol_name}',
                     )
             else:
-                return False, "%s was not in parameters" % multinode_protocol_name
+                return False, f"{multinode_protocol_name} was not in parameters"
         return False, '"role" not in parameters'
 
     @staticmethod

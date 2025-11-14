@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from shlex import quote as shlex_quote
 from shutil import copy
 from typing import TYPE_CHECKING
 
@@ -82,7 +83,7 @@ class PostprocessWithDocker(Action):
         if self.job.device:
             for key in self.job.device["dynamic_data"]:
                 script.append(
-                    "export %s='%s'" % (key, self.job.device["dynamic_data"][key])
+                    f"export {key}={shlex_quote(self.job.device['dynamic_data'][key])}"
                 )
         # Export job and dispatcher env vars.
         environment = self.job.parameters.get("environment", {})
@@ -94,7 +95,7 @@ class PostprocessWithDocker(Action):
             "dispatcher", {}
         ).get("prefix", "")
         for key, value in environment.items():
-            script.append("export %s='%s'" % (key, value))
+            script.append(f"export {key}={shlex_quote(value)}")
         if http_cache := self.job.parameters["dispatcher"].get(
             "http_url_format_string", ""
         ):

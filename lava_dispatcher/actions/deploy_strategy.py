@@ -553,7 +553,7 @@ class Removable(DeployStrategy):
             return True, "accepted"
         return (
             False,
-            '"uuid" was not in the parameters for the media device %s' % job_device,
+            f'"uuid" was not in the parameters for the media device {job_device}',
         )
 
 

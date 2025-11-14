@@ -55,9 +55,7 @@ class CheckSerialDownloadMode(OptionalContainerUuuAction):
             "usb_otg_path"
         ]
         path_args = " -m ".join(usb_otg_path)
-        cmd = "{} --preserve-status 10 {} -m {} {}".format(
-            self.linux_timeout, self.uuu, path_args, boot
-        )
+        cmd = f"{self.linux_timeout} --preserve-status 10 {self.uuu} -m {path_args} {boot}"
 
         self.maybe_copy_to_container(boot)
 
@@ -288,8 +286,9 @@ Following actions will be skipped :
 
         if uuu_options.get("usb_otg_path_command") is None:
             raise JobError(
-                "uuu_usb_otg_path '{}' does not match with uuu path pattern and 'uuu_usb_otg_path_command' not "
-                "defined in device".format(uuu_options.get("usb_otg_path"))
+                f"uuu_usb_otg_path {uuu_options.get('usb_otg_path')!r} does not "
+                "match with uuu path pattern and 'uuu_usb_otg_path_command' not "
+                "defined in device"
             )
         # Retrieve usb_otg_path from command execution
         else:
@@ -360,8 +359,8 @@ Following actions will be skipped :
 
         if uuu_options.get("bcu_board_id_command") is None:
             raise JobError(
-                "bcu_board_id '{}' do not respect bcu format or 'bcu_board_id_command' not "
-                "defined in device".format(uuu_options.get("bcu_board_id"))
+                f"bcu_board_id {uuu_options.get('bcu_board_id')!r} do not respect bcu "
+                "format or 'bcu_board_id_command' not defined in device"
             )
         else:
             bcu_board_id_command = uuu_options.get("bcu_board_id_command")
@@ -440,9 +439,7 @@ class UUUBootAction(OptionalContainerUuuAction):
             if "bcu:" in cmd:
                 self.cleanup_required = True
                 cmd = cmd.replace("bcu: ", "")
-                exec_cmd = "{} {} -board={} -id={}".format(
-                    self.bcu, cmd, self.bcu_board_name, self.bcu_board_id
-                )
+                exec_cmd = f"{self.bcu} {cmd} -board={self.bcu_board_name} -id={self.bcu_board_id}"
                 self.run_bcu(
                     exec_cmd.split(" "),
                     allow_fail=False,
@@ -473,9 +470,7 @@ class UUUBootAction(OptionalContainerUuuAction):
     def cleanup(self, connection):
         super().cleanup(connection)
         if self.cleanup_required:
-            exec_cmd = "{} deinit -board={} -id={}".format(
-                self.bcu, self.bcu_board_name, self.bcu_board_id
-            )
+            exec_cmd = f"{self.bcu} deinit -board={self.bcu_board_name} -id={self.bcu_board_id}"
             self.run_bcu(
                 exec_cmd.split(" "),
                 allow_fail=False,
@@ -487,12 +482,7 @@ class UUUBootAction(OptionalContainerUuuAction):
                 "methods"
             ]["uuu"]["options"].get("additional_bcu_cleanup_commands", [])
             for additional_bcu_cleanup_command in additional_bcu_cleanup_commands:
-                exec_cmd = "{} {} -board={} -id={}".format(
-                    self.bcu,
-                    additional_bcu_cleanup_command,
-                    self.bcu_board_name,
-                    self.bcu_board_id,
-                )
+                exec_cmd = f"{self.bcu} {additional_bcu_cleanup_command} -board={self.bcu_board_name} -id={self.bcu_board_id}"
                 self.run_bcu(
                     exec_cmd.split(" "),
                     allow_fail=False,

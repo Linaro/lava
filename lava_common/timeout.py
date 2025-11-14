@@ -81,7 +81,7 @@ class Timeout:
             self.action.on_timeout()
         # Raise the exception
         duration = int(time.monotonic() - self.start)
-        raise self.exception("%s timed out after %s seconds" % (self.name, duration))
+        raise self.exception(f"{self.name} timed out after {duration} seconds")
 
     @contextmanager
     def __call__(

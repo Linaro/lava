@@ -45,7 +45,7 @@ class CommandAction(Action):
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
                 return True
             else:
-                self.errors = "Command '%s' not defined for this device" % cmd_name
+                self.errors = f"Command {cmd_name} not defined for this device"
                 return False
 
         user_commands = self.job.device.get("commands", {}).get("users")
@@ -59,12 +59,11 @@ class CommandAction(Action):
                 self.cmd.get("undo", ""), str
             ):
                 raise ConfigurationError(
-                    'User command "%s" is invalid: '
-                    "'do' and 'undo' should be strings" % cmd_name
+                    f"User command {cmd_name!r} is invalid: 'do' and 'undo' should be strings"
                 )
             return True
         except KeyError:
-            self.errors = "Unknown user command '%s'" % cmd_name
+            self.errors = f"Unknown user command {cmd_name!r}"
             return False
 
     def run(self, connection, max_end_time):

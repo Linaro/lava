@@ -64,7 +64,7 @@ class SwitchRecoveryCommand(Action):
             self.errors = "Missing commands to enter recovery mode"
         command = self.recovery["commands"].get(self.mode)
         if not command:
-            self.errors = "Unable to find %s recovery command" % self.mode
+            self.errors = f"Unable to find {self.mode} recovery command"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -74,7 +74,5 @@ class SwitchRecoveryCommand(Action):
             command = [command]
         for cmd in command:
             if not self.run_command(cmd.split(" "), allow_silent=True):
-                raise InfrastructureError(
-                    "[recovery] %s failed for %s" % (cmd, self.mode)
-                )
+                raise InfrastructureError(f"[recovery] {cmd} failed for {self.mode}")
         return connection

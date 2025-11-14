@@ -84,7 +84,7 @@ class Pipeline:
         if not action:
             raise LAVABug("Need an action to add to the pipeline, not None.")
         elif not issubclass(type(action), Action):
-            raise LAVABug("Only actions can be added to a pipeline: %s" % action)
+            raise LAVABug(f"Only actions can be added to a pipeline: {action}")
         # if isinstance(action, DiagnosticAction):
         #     raise LAVABug("Diagnostic actions need to be triggered, not added to a pipeline.")
 
@@ -96,10 +96,10 @@ class Pipeline:
 
         if self.parent:  # action
             self.parent.pipeline = self
-            action.level = "%s.%s" % (self.parent.level, len(self.actions))
+            action.level = f"{self.parent.level}.{len(self.actions)}"
             action.section = self.parent.section
         else:
-            action.level = "%s" % (len(self.actions))
+            action.level = str(len(self.actions))
 
         # Use the pipeline parameters if the function was walled without
         # parameters.
@@ -193,11 +193,11 @@ class Pipeline:
             try:
                 action.validate()
             except JobError as exc:
-                action.errors = "%s %s: %s" % (action.level, action.name, str(exc))
+                action.errors = f"{action.level} {action.name}: {exc!r}"
 
         # If this is the root pipeline, raise the errors
         if self.parent is None and self.errors:
-            raise JobError("Invalid job data: %s\n" % self.errors)
+            raise JobError(f"Invalid job data: {self.errors}\n")
 
     def cleanup(
         self, connection: ShellSession, max_end_time: int | None = None
@@ -234,12 +234,7 @@ class Pipeline:
                     # Add action start timestamp to the log message
                     # Log in INFO for root actions and in DEBUG for the other actions
                     timeout = seconds_to_str(action_max_end_time - action.timeout.start)
-                    msg = "start: %s %s (timeout %s) [%s]" % (
-                        action.level,
-                        action.name,
-                        timeout,
-                        namespace,
-                    )
+                    msg = f"start: {action.level} {action.name} (timeout {timeout}) [{namespace}]"
                     if self.parent is None:
                         action.logger.info(msg)
                     else:
@@ -254,8 +249,8 @@ class Pipeline:
                 if action.timeout.can_skip(action.parameters):
                     if self.parent is None:
                         action.logger.warning(
-                            "skip_timeout is set for %s - continuing to next action block."
-                            % (action.name)
+                            "skip_timeout is set for %s - continuing to next action block.",
+                            action.name,
                         )
                     else:
                         raise
@@ -278,12 +273,7 @@ class Pipeline:
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
-                msg = "end: %s %s (duration %s) [%s]" % (
-                    action.level,
-                    action.name,
-                    seconds_to_str(duration),
-                    namespace,
-                )
+                msg = f"end: {action.level} {action.name} (duration {seconds_to_str(duration)}) [{namespace}]"
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
@@ -516,25 +506,22 @@ class Action:
         """
         # Basic checks
         if not self.name:
-            self.errors = "%s action has no name set" % self
+            self.errors = f"{self} action has no name set"
         # have already checked that self.name is not None, but pylint gets confused.
         if " " in self.name:
-            self.errors = (
-                "Whitespace must not be used in action names, only descriptions or summaries: %s"
-                % self.name
-            )
+            self.errors = f"Whitespace must not be used in action names, only descriptions or summaries: {self.name}"
 
         if "_" in self.name:
-            self.errors = "Use - instead of _ in action names: %s" % self.name
+            self.errors = f"Use - instead of _ in action names: {self.name}"
 
         if not self.summary:
-            self.errors = "action %s (%s) lacks a summary" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) lacks a summary"
 
         if not self.description:
-            self.errors = "action %s (%s) lacks a description" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) lacks a description"
 
         if not self.section:
-            self.errors = "action %s (%s) has no section set" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) has no section set"
 
         # Collect errors from internal pipeline actions
         if self.pipeline:
@@ -585,8 +572,8 @@ class Action:
                 self.results = {"returncode": "0"}
                 self.results = {"output_len": len(output)}
                 self.logger.info(
-                    "Parsed command exited zero with allow_fail set, returning %s bytes."
-                    % len(output)
+                    "Parsed command exited zero with allow_fail set, returning %d bytes.",
+                    len(output),
                 )
         except (
             FileNotFoundError,
@@ -605,15 +592,15 @@ class Action:
                 output = str(exc)
 
             errors.append(output)
-            self.results = {"returncode": "%s" % returncode}
-            self.logger.info("Parsed command exited %s." % returncode)
-            base = (
-                "action: {0}\ncommand: {1}\nmessage: {2}\noutput: {3}\nreturn code: {4}"
+            self.results = {"returncode": str(returncode)}
+            self.logger.info(f"Parsed command exited {returncode}.")
+            msg_base = (
+                "action: %s\ncommand: %s\nmessage: %s\noutput: %s\nreturn code: %s"
             )
-            msg = base.format(
+            msg_args = (
                 self.name,
                 [i.strip() for i in command_list],
-                str(exc),
+                repr(exc),
                 "\n".join(errors),
                 returncode,
             )
@@ -621,11 +608,11 @@ class Action:
 
             # the exception is raised due to a non-zero returncode
             if allow_fail:
-                self.logger.info(msg)
+                self.logger.info(msg_base, *msg_args)
             else:
                 for error in errors:
                     self.errors = error
-                self.logger.error(msg)
+                self.logger.error(msg_base, *msg_args)
                 # if not allow_fail, fail the command with the specified exception.
                 raise self.command_exception(exc) from exc
 
@@ -932,7 +919,7 @@ class Action:
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
         if not label or not key:
-            raise LAVABug("Invalid call to set_namespace_data: %s" % action)
+            raise LAVABug(f"Invalid call to set_namespace_data: {action}")
         self.data.setdefault(namespace, {})
         self.data[namespace].setdefault(action, {})
         self.data[namespace][action].setdefault(label, {})
@@ -971,7 +958,7 @@ class Action:
         if timeout is None:
             return
         if not isinstance(timeout, dict):
-            raise JobError("Invalid timeout %s" % str(timeout))
+            raise JobError(f"Invalid timeout {timeout!r}")
         self.timeout.duration = Timeout.parse(timeout)
 
     def _override_connection_timeout(self, timeout):
@@ -981,7 +968,7 @@ class Action:
         if timeout is None:
             return
         if not isinstance(timeout, dict):
-            raise JobError("Invalid connection timeout %s" % str(timeout))
+            raise JobError(f"Invalid connection timeout {timeout!r}")
         self.connection_timeout.duration = Timeout.parse(timeout)
 
     def log_action_results(self, fail=False):
@@ -998,7 +985,7 @@ class Action:
                     "namespace": self.parameters.get("namespace", "common"),
                     "case": self.name,
                     "level": self.level,
-                    "duration": "%.02f" % self.timeout.elapsed_time,
+                    "duration": f"{self.timeout.elapsed_time:.02f}",
                     "result": res,
                     "extra": self.results,
                 }

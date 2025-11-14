@@ -208,7 +208,7 @@ def start_job(
         args.append(str(base_dir / "job.yaml"))
 
         if env_dut:
-            args.append("--env-dut=%s" % (base_dir / "env-dut.yaml"))
+            args.append(f"--env-dut={base_dir / 'env-dut.yaml'}")
 
         proc = subprocess.Popen(
             args, stdout=out_file, stderr=err_file, env=env, preexec_fn=os.setpgrp
@@ -221,7 +221,7 @@ def start_job(
             LOG.exception("[%d] %s", job_id, exc.child_traceback)
         else:
             LOG.exception("[%d] %s", job_id, exc)
-            err_file.write("%s\n%s\n" % (exc, traceback.format_exc()))
+            err_file.write(f"{exc}\n{traceback.format_exc()}\n")
         # The process has not started
         # The END message will be sent the next time
         # check_job_status is run
@@ -261,9 +261,7 @@ class Job:
         self.last_update: int = row["last_update"]
         self.token: str = row["token"]
         # Create the base directory
-        self.base_dir = tmp_dir / "{prefix}{job_id}".format(
-            prefix=self.prefix, job_id=str(self.job_id)
-        )
+        self.base_dir = tmp_dir / f"{self.prefix}{self.job_id}"
         self.base_dir.mkdir(mode=0o755, exist_ok=True, parents=True)
 
     def errors(self) -> str:
@@ -325,7 +323,7 @@ class Job:
 
     def is_running(self) -> bool:
         with contextlib.suppress(OSError):
-            with open("/proc/%d/cmdline" % self.pid) as fd:
+            with open(f"/proc/{self.pid}/cmdline") as fd:
                 return "lava-run" in fd.read()
         return False
 
@@ -954,7 +952,7 @@ async def main() -> int:
                     await asyncio.sleep(ping_interval)
             return 1
         except VersionMismatch as exc:
-            LOG.info("[EXIT] %s" % exc)
+            LOG.info("[EXIT] %s", exc)
             return 0
         except Exception as exc:
             LOG.error("[EXIT] %s", exc)

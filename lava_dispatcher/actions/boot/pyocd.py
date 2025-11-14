@@ -134,5 +134,5 @@ class FlashPyOCDAction(Action):
             pyocd = " ".join(pyocd_command)
             self.logger.info("PyOCD command: %s", pyocd)
             if not self.run_command(pyocd.split(" "), allow_silent=True):
-                raise JobError("%s command failed" % (pyocd.split(" ")))
+                raise JobError(f"{pyocd.split(' ')} command failed")
         return connection

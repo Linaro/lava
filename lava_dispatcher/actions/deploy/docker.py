@@ -50,7 +50,7 @@ class DockerAction(Action):
             out = out.decode("utf-8", errors="replace").strip("\n")
             self.logger.debug("docker client, installed at version: %s", out)
         except subprocess.CalledProcessError as exc:
-            raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
+            raise InfrastructureError(f"Unable to call {exc.cmd!r}: {exc.output}")
         except OSError:
             raise InfrastructureError("Command 'docker' does not exist")
 
@@ -66,7 +66,7 @@ class DockerAction(Action):
         # check docker image name
         # The string should be safe for command line inclusion
         if re.compile(docker_image_format_pattern).match(self.image_name) is None:
-            self.errors = "image name '%s' is invalid" % self.image_name
+            self.errors = f"image name {self.image_name!r} is invalid"
         self.set_namespace_data(
             action=self.name, label="image", key="name", value=self.image_name
         )
@@ -101,7 +101,7 @@ class DockerAction(Action):
         if pull:
             self.run_cmd(
                 ["docker"] + self.remote + ["pull", self.image_name],
-                error_msg="Unable to pull docker image '%s'" % self.image_name,
+                error_msg=f"Unable to pull docker image {self.image_name!r}",
             )
 
         return super().run(connection, max_end_time)

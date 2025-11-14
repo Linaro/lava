@@ -77,7 +77,7 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
         if sequences is not None:
             for sequence in sequences:
                 if not _fastboot_sequence_map(sequence):
-                    self.errors = "Unknown boot sequence '%s'" % sequence
+                    self.errors = f"Unknown boot sequence {sequence!r}"
         else:
             self.errors = "fastboot_sequence undefined"
 
@@ -168,7 +168,7 @@ class WaitFastBootInterrupt(Action):
 
     def run(self, connection, max_end_time):
         if not connection:
-            raise LAVABug("%s started without a connection already in use" % self.name)
+            raise LAVABug(f"{self.name} started without a connection already in use")
         connection = super().run(connection, max_end_time)
         # device is to be put into a reset state, either by issuing 'reboot' or power-cycle
         connection.prompt_str = self.prompt
@@ -210,7 +210,7 @@ class FastbootBootAction(OptionalContainerFastbootAction):
 
         command_output = self.get_fastboot_output(["boot", boot_img], allow_fail=True)
         if command_output and "booting" not in command_output.lower():
-            raise JobError("Unable to boot with fastboot: %s" % command_output)
+            raise JobError(f"Unable to boot with fastboot: {command_output}")
         else:
             lines = [
                 status
@@ -249,7 +249,7 @@ class FastbootRebootAction(OptionalContainerFastbootAction):
         connection = super().run(connection, max_end_time)
         command_output = self.get_fastboot_output(["reboot"], allow_fail=True)
         if command_output and "rebooting" not in command_output.lower():
-            raise JobError("Unable to fastboot reboot: %s" % command_output)
+            raise JobError(f"Unable to fastboot reboot: {command_output}")
         else:
             lines = [
                 status
@@ -312,9 +312,7 @@ class EnterFastbootAction(OptionalContainerFastbootAction, OptionalContainerAdbA
             self.logger.debug("Device is in fastboot: %s", command_output)
             command_output = self.get_fastboot_output(["reboot-bootloader"])
             if command_output and "okay" not in command_output.lower():
-                raise InfrastructureError(
-                    "Unable to enter fastboot: %s" % command_output
-                )
+                raise InfrastructureError(f"Unable to enter fastboot: {command_output}")
             else:
                 lines = [
                     status
