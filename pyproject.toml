@@ -43,7 +43,6 @@ disable = [
     "R1720",  # Unnecessary "elif" after "raise"
     "R1723",  # Unnecessary "else" after "break"
     "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
-    "R1728",  # Consider using a generator
     "R1729",  # Use a generator instead
     "R1731",  # Consider using max instead of unnecessary if block
     "R1732",  # Consider using 'with' for resource-allocating operations
