@@ -162,7 +162,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
                 docker.bind_mount(downloads_dir, LAVA_DOWNLOADS)
 
         for bind_mount in self.test_docker_bind_mounts:
-            read_only = True if len(bind_mount) == 2 else False
+            read_only = len(bind_mount) == 2
             docker.bind_mount(bind_mount[0], bind_mount[1], read_only)
 
         docker.interactive()
