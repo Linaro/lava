@@ -99,9 +99,7 @@ class RepoAction(Action):
         if "test_name" not in self.parameters:
             self.errors = "Unable to determine test_name"
             return
-        if not isinstance(self, InlineRepoAction) and not isinstance(
-            self, UrlRepoAction
-        ):
+        if not isinstance(self, (InlineRepoAction, UrlRepoAction)):
             if self.vcs is None:
                 raise LAVABug(
                     "RepoAction validate called super without setting the vcs"
