@@ -1710,7 +1710,7 @@ def test_device_types_update(setup):
         "qemu", None, None, None, None, None, None
     )
     dt = DeviceType.objects.get(name="qemu")
-    assert dt.description == None  # nosec
+    assert dt.description is None  # nosec
 
     server("admin", "admin").scheduler.device_types.update(
         "qemu", "emulated", True, None, 12, "jobs", True

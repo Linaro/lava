@@ -61,7 +61,7 @@ def test_get_available_dts(mocker):
 
     # Ending the loop
     cmd.sub.recv_multipart = mocker.Mock(side_effect=[zmq.ZMQError])
-    assert cmd.receive_events() == False
+    assert cmd.receive_events() is False
 
     # Ending the loop
     cmd.sub.recv_multipart = mocker.Mock(
@@ -87,7 +87,7 @@ def test_get_available_dts(mocker):
             zmq.ZMQError,
         ]
     )
-    assert cmd.receive_events() == True
+    assert cmd.receive_events() is True
 
 
 @pytest.mark.django_db

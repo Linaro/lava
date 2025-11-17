@@ -1989,10 +1989,10 @@ def test_serializers_partial():
     # make sure TestJob, Worker and Device serializers are always instantiated
     # with partial argument set to True
     worker_serializer = serializers.WorkerSerializer()
-    assert worker_serializer.partial == True
+    assert worker_serializer.partial is True
 
     testjob_serializer = serializers.TestJobSerializer()
-    assert testjob_serializer.partial == True
+    assert testjob_serializer.partial is True
 
     device_serializer = serializers.DeviceSerializer()
-    assert device_serializer.partial == True
+    assert device_serializer.partial is True
