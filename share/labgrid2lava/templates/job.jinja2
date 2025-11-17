@@ -1,0 +1,101 @@
+job_name: {{ name }}
+device_type: {{ device_type or name }}
+priority: high
+visibility: public
+timeouts:
+  action:
+    minutes: 30
+  actions:
+    power-off:
+      seconds: 30
+  job:
+    minutes: 60
+
+actions:
+{% if target.drivers.uboot_driver %}
+- boot:
+    method: bootloader
+    bootloader: 'u-boot'
+    timeout:
+      seconds: {{ target.drivers.uboot_driver.boot_timeout }}
+    prompts:
+    - '{{ target.drivers.uboot_driver.prompt }}'
+
+- test:
+    timeout:
+      seconds: {{ target.drivers.uboot_driver.login_timeout }}
+    interactive:
+    - name: smoke-tests
+      prompts:
+      - '{{ target.drivers.uboot_driver.prompt }}'
+      script:
+      - command: dhcp
+        name: dhcp
+        successes:
+        - message: "DHCP client bound to address"
+        failures:
+        - message: 'TIMEOUT'
+          exception: InfrastructureError
+          error: 'dhcp failed'
+{% endif %}
+
+{% if target.drivers.shell_driver %}
+- boot:
+    method: minimal
+    timeout:
+      seconds: {{ target.drivers.shell_driver.login_timeout }}
+    {% if target.drivers.uboot_driver.bootstring %}
+    parameters:
+      kernel-start-message: '{{ target.drivers.uboot_driver.bootstring }}'
+    {% endif %}
+    auto_login:
+      login_prompt: '{{ target.drivers.shell_driver.login_prompt }}'
+      username: '{{ target.drivers.shell_driver.username }}'
+      {% if target.drivers.shell_driver.password %}
+      password_prompt: 'Password: '
+      password: '{{ target.drivers.shell_driver.password }}'
+      {% endif %}
+    prompts:
+    - '{{ target.drivers.shell_driver.prompt }}'
+{% endif %}
+
+{% if target.drivers.docker_driver %}
+- deploy:
+    to: docker
+    image:
+      name: '{{ target.drivers.docker_driver.image_uri }}'
+      {% if target.drivers.docker_driver.pull == "never" %}
+      local: true
+      {% endif %}
+    timeout:
+      seconds: 600
+
+- boot:
+    method: docker
+    command: bash
+    prompts: ['root@lava:/']
+    timeout:
+      seconds: 300
+{% endif %}
+
+{% if target.drivers.shell_driver or target.drivers.docker_driver %}
+- test:
+    timeout:
+      seconds: 120
+    interactive:
+    - name: smoke-tests
+      prompts:
+      {% if target.drivers.shell_driver %}
+      - '{{ target.drivers.shell_driver.prompt }}'
+      {% elif target.drivers.docker_driver %}
+      - 'root@lava:/'
+      {% endif %}
+      script:
+      {% if target.drivers.docker_driver %}
+      - command: # match prompt
+      {% endif %}
+      - command: 'cat /proc/version'
+        name: cat-proc-version
+        successes:
+        - message: 'Linux version'
+{% endif %}

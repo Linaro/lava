@@ -1,0 +1,18 @@
+targets:
+  rpi3-ubuntu-shell:
+    drivers:
+      ExternalPowerDriver:
+        cmd_off: 'usbrelay -d 1_1=0'
+        cmd_on: 'usbrelay -d 1_1=1'
+        cmd_cycle: 'sh -c "usbrelay -d 1_1=0; sleep 3; usbrelay -d 1_1=1"'
+        delay: 2.0
+      ExternalConsoleDriver:
+        cmd: 'telnet localhost 2001'
+        txdelay: 0.05
+      ShellDriver:
+        prompt: 'root@\w+:[^ ]+ '
+        login_prompt: ' login: '
+        username: 'root'
+        password: 'root123'
+        login_timeout: 180
+      ShellStrategy: {}

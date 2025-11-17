@@ -1,0 +1,31 @@
+{# Choice base template #}
+{% if device_type %}
+    {% extends device_type + '.jinja2' %}
+{% elif target.drivers.uboot_strategy %}
+    {% extends 'base-uboot.jinja2' %}
+{% elif target.drivers.docker_strategy %}
+    {% extends 'docker.jinja2' %}
+{% else %}
+    {% extends 'base.jinja2' %}
+{% endif %}
+
+{# ExternalPowerDriver #}
+{% if target.drivers.external_power_driver %}
+    {% set power_off_command = target.drivers.external_power_driver.cmd_off %}
+    {% set power_on_command = target.drivers.external_power_driver.cmd_on %}
+    {% if target.drivers.external_power_driver.cmd_cycle %}
+        {% set hard_reset_command = target.drivers.external_power_driver.cmd_cycle %}
+    {% else %}
+        {% set hard_reset_command = [target.drivers.external_power_driver.cmd_off, "sleep " ~ target.drivers.external_power_driver.delay, target.drivers.external_power_driver.cmd_on] %}
+    {% endif %}
+{% endif %}
+
+{# ExternalConsoleDriver #}
+{% if target.drivers.external_console_driver %}
+    {% set connection_command = target.drivers.external_console_driver.cmd %}
+{% endif %}
+
+{# DockerDriver #}
+{% if target.drivers.docker_driver and target.drivers.docker_driver.volumes %}
+    {% set docker_volumes = target.drivers.docker_driver.volumes %}
+{% endif %}
