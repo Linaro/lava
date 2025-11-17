@@ -79,6 +79,7 @@ class RepoAction(Action):
         self.vcs = None
         self.runner = None
         self.uuid = None
+        self.stage = 0
 
     @classmethod
     def select(cls, repo_type):
