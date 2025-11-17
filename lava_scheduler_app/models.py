@@ -1059,10 +1059,10 @@ def _check_tags(taglist, device_type=None, hostname=None):
         return []
     q = models.Q()
     if device_type:
-        q = q.__and__(models.Q(device_type=device_type))
+        q &= models.Q(device_type=device_type)
     if hostname:
-        q = q.__and__(models.Q(hostname=hostname))
-    q = q.__and__(~models.Q(health=Device.HEALTH_RETIRED))
+        q &= models.Q(hostname=hostname)
+    q &= ~models.Q(health=Device.HEALTH_RETIRED)
     tag_devices = set(Device.objects.filter(q))
     matched_devices = []
     for device in tag_devices:

@@ -23,7 +23,6 @@ disable = [
     "C0411",  # Wrong import order. This is handled by `isort --profile black`.
     "C0412",  # Imports from package %s are not grouped
     "C0415",  # Import outside toplevel
-    "C2801",  # Unnecessarily calls dunder method
     "E0202",  # An attribute defined in %s line %s hides this method
     "E0307",  # __str__ does not return str
     "E0401",  # Unable to import '%s'
