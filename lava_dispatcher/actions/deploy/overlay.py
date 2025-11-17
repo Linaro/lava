@@ -155,7 +155,7 @@ class CreateOverlay(Action):
             if isinstance(data, bool):
                 data = "1" if data else "0"
             elif isinstance(data, int):
-                data = data
+                data = str(data)
             else:
                 data = shlex.quote(data)
             self.logger.debug("- %s=%s", prefix, data)

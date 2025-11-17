@@ -167,7 +167,6 @@ def requests_retry(retries: int = 15) -> requests.Session:
         return requests_session.get()
 
     session = requests.Session()
-    retries = retries
     backoff_factor = 0.1
     status_forcelist = [
         # See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
