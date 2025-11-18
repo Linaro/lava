@@ -78,10 +78,22 @@ class TestDocker(LavaDispatcherTestCase):
 
         call.run(connection, 0)
         shell_command.assert_called_with(
-            "docker run --rm --interactive --tty --hostname lava "
-            f"--name lava-{self.job.job_id}-2.1 "
-            "--volume foo/bar/foo/bar:foo/bar foo/bar bash",
-            call.timeout,
+            "docker",
+            args=[
+                "run",
+                "--rm",
+                "--interactive",
+                "--tty",
+                "--hostname",
+                "lava",
+                "--name",
+                f"lava-{self.job.job_id}-2.1",
+                "--volume",
+                "foo/bar/foo/bar:foo/bar",
+                "foo/bar",
+                "bash",
+            ],
+            lava_timeout=call.timeout,
             logger=call.logger,
         )
 
@@ -90,11 +102,24 @@ class TestDocker(LavaDispatcherTestCase):
         managed_downloads_dir.mkdir(parents=True)
         call.run(connection, 0)
         shell_command.assert_called_with(
-            "docker run --rm --interactive --tty --hostname lava "
-            f"--name lava-{self.job.job_id}-2.1 --volume foo/bar/foo/bar:foo/bar "
-            f"--volume {self.job.tmp_dir}/downloads/common:/lava-downloads "
-            "foo/bar bash",
-            call.timeout,
+            "docker",
+            args=[
+                "run",
+                "--rm",
+                "--interactive",
+                "--tty",
+                "--hostname",
+                "lava",
+                "--name",
+                f"lava-{self.job.job_id}-2.1",
+                "--volume",
+                "foo/bar/foo/bar:foo/bar",
+                "--volume",
+                f"{self.job.tmp_dir}/downloads/common:/lava-downloads",
+                "foo/bar",
+                "bash",
+            ],
+            lava_timeout=call.timeout,
             logger=call.logger,
         )
 
@@ -130,10 +155,22 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
 
         call.run(connection, 0)
         shell_command.assert_called_with(
-            "docker run --rm --interactive --tty --hostname lava "
-            f"--name lava-prefix-{self.job.job_id}-2.1 "
-            "--volume foo/bar/foo/bar:foo/bar foo/bar bash",
-            call.timeout,
+            "docker",
+            args=[
+                "run",
+                "--rm",
+                "--interactive",
+                "--tty",
+                "--hostname",
+                "lava",
+                "--name",
+                f"lava-prefix-{self.job.job_id}-2.1",
+                "--volume",
+                "foo/bar/foo/bar:foo/bar",
+                "foo/bar",
+                "bash",
+            ],
+            lava_timeout=call.timeout,
             logger=call.logger,
         )
 
