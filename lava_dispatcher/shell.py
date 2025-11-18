@@ -89,7 +89,13 @@ class ShellCommand(pexpect.spawn):
     """
 
     def __init__(
-        self, command, lava_timeout: Timeout, logger=None, cwd=None, window=2000
+        self,
+        command,
+        lava_timeout: Timeout,
+        logger=None,
+        cwd=None,
+        window=2000,
+        args: list[str] | None = None,
     ):
         if isinstance(window, str):
             # constants need to be stored as strings.
@@ -105,8 +111,11 @@ class ShellCommand(pexpect.spawn):
             raise LAVABug("ShellCommand needs a timeout set by the calling Action")
         if not logger:
             raise LAVABug("ShellCommand needs a logger")
+        if args is None:
+            args = []
         super().__init__(
             command,
+            args=args,
             timeout=lava_timeout.duration,
             cwd=cwd,
             logfile=None,  # Split logging
