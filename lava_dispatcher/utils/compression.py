@@ -133,6 +133,7 @@ def untar_file(infile: str, outdir: str) -> None:
 def cpio(directory: str, filename: str) -> str:
     which("cpio")
     which("find")
+    which("fakeroot")
 
     try:
         find = subprocess.Popen(
@@ -141,8 +142,10 @@ def cpio(directory: str, filename: str) -> str:
             stdout=subprocess.PIPE,
         )
         with find:
+            # Use fakeroot to allow creation of device nodes and preserve ownership
             cpio = subprocess.run(
                 args=(
+                    "fakeroot",
                     "cpio",
                     "--create",
                     "--null",
@@ -168,9 +171,12 @@ def cpio(directory: str, filename: str) -> str:
 
 def uncpio(filename: str, directory: str) -> None:
     which("cpio")
+    which("fakeroot")
     try:
+        # Use fakeroot to allow extraction of device nodes without root privileges
         subprocess.run(
             args=(
+                "fakeroot",
                 "cpio",
                 "--extract",
                 "--make-directories",
