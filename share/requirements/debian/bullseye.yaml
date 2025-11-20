@@ -96,6 +96,8 @@ lava-server:
     unittests: true
 
 lava-dispatcher:
+  fakeroot:
+    name: fakeroot
   aiohttp:
     name: python3-aiohttp
   PyYAML:

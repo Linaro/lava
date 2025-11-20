@@ -255,3 +255,152 @@ class TestCpio(TestCase):
 
             self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
             self.assertEqual((unpack_dir / "foo\nbar").read_text(), "one\ntwo\n")
+
+    def test_cpio_with_device_nodes(self) -> None:
+        with TemporaryDirectory("test-cpio-devices") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "rootfs"
+            test_dir.mkdir()
+
+            dev_dir = test_dir / "dev"
+            dev_dir.mkdir()
+
+            # Create regular files that would normally be device nodes
+            # In a real rootfs these would be device nodes, but we simulate
+            # the structure that cpio with fakeroot should handle
+            (dev_dir / "console").write_text("")
+            (dev_dir / "null").write_text("")
+            (dev_dir / "zero").write_text("")
+
+            (test_dir / "test.txt").write_text("test content")
+
+            archive_file = tmp_dir_path / "rootfs.cpio"
+
+            # Create cpio archive - should succeed with fakeroot
+            output = cpio(str(test_dir), str(archive_file))
+            self.assertIn("block", output)
+            self.assertTrue(archive_file.exists())
+
+            unpack_dir = tmp_dir_path / "extracted"
+            unpack_dir.mkdir()
+
+            uncpio(str(archive_file), str(unpack_dir))
+
+            self.assertTrue((unpack_dir / "test.txt").exists())
+            self.assertEqual((unpack_dir / "test.txt").read_text(), "test content")
+            self.assertTrue((unpack_dir / "dev" / "console").exists())
+            self.assertTrue((unpack_dir / "dev" / "null").exists())
+            self.assertTrue((unpack_dir / "dev" / "zero").exists())
+
+    def test_cpio_preserves_permissions(self) -> None:
+        with TemporaryDirectory("test-cpio-perms") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "data"
+            test_dir.mkdir()
+
+            # Create files with different permissions
+            executable = test_dir / "executable.sh"
+            executable.write_text("#!/bin/sh\necho test")
+            executable.chmod(0o755)
+
+            readonly = test_dir / "readonly.txt"
+            readonly.write_text("read only")
+            readonly.chmod(0o444)
+
+            regular = test_dir / "regular.txt"
+            regular.write_text("regular file")
+
+            archive_file = tmp_dir_path / "data.cpio"
+
+            cpio(str(test_dir), str(archive_file))
+
+            unpack_dir = tmp_dir_path / "unpacked"
+            unpack_dir.mkdir()
+            uncpio(str(archive_file), str(unpack_dir))
+
+            extracted_exec = unpack_dir / "executable.sh"
+            self.assertTrue(extracted_exec.exists())
+            # Check that executable bit is set (mode & 0o111 != 0)
+            self.assertNotEqual(extracted_exec.stat().st_mode & 0o111, 0)
+
+            extracted_ro = unpack_dir / "readonly.txt"
+            self.assertTrue(extracted_ro.exists())
+
+            extracted_reg = unpack_dir / "regular.txt"
+            self.assertTrue(extracted_reg.exists())
+            self.assertEqual(extracted_reg.read_text(), "regular file")
+
+    def test_cpio_error_handling(self) -> None:
+        with TemporaryDirectory("test-cpio-error") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            with self.assertRaisesRegex(
+                InfrastructureError, "Unable to create cpio archive"
+            ):
+                cpio("/nonexistent/directory", str(tmp_dir_path / "test.cpio"))
+
+    def test_uncpio_error_handling(self) -> None:
+        with TemporaryDirectory("test-uncpio-error") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            bad_cpio = tmp_dir_path / "bad.cpio"
+            bad_cpio.write_text("not a cpio archive")
+
+            extract_dir = tmp_dir_path / "extract"
+            extract_dir.mkdir()
+
+            with self.assertRaisesRegex(
+                InfrastructureError, "Unable to extract cpio archive"
+            ):
+                uncpio(str(bad_cpio), str(extract_dir))
+
+    def test_cpio_empty_directory(self) -> None:
+        with TemporaryDirectory("test-cpio-empty") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            empty_dir = tmp_dir_path / "empty"
+            empty_dir.mkdir()
+
+            archive_file = tmp_dir_path / "empty.cpio"
+            output = cpio(str(empty_dir), str(archive_file))
+
+            # Should succeed and create archive
+            self.assertTrue(archive_file.exists())
+            self.assertIn("block", output)
+
+            extract_dir = tmp_dir_path / "extracted"
+            extract_dir.mkdir()
+            uncpio(str(archive_file), str(extract_dir))
+
+    def test_cpio_special_filenames(self) -> None:
+        with TemporaryDirectory("test-cpio-special") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "data"
+            test_dir.mkdir()
+
+            (test_dir / "file with spaces.txt").write_text("spaces")
+            (test_dir / "file-with-dashes.txt").write_text("dashes")
+            (test_dir / "file_with_underscores.txt").write_text("underscores")
+
+            archive_file = tmp_dir_path / "special.cpio"
+            cpio(str(test_dir), str(archive_file))
+
+            extract_dir = tmp_dir_path / "extracted"
+            extract_dir.mkdir()
+            uncpio(str(archive_file), str(extract_dir))
+
+            self.assertTrue((extract_dir / "file with spaces.txt").exists())
+            self.assertEqual(
+                (extract_dir / "file with spaces.txt").read_text(), "spaces"
+            )
+            self.assertTrue((extract_dir / "file-with-dashes.txt").exists())
+            self.assertEqual(
+                (extract_dir / "file-with-dashes.txt").read_text(), "dashes"
+            )
+            self.assertTrue((extract_dir / "file_with_underscores.txt").exists())
+            self.assertEqual(
+                (extract_dir / "file_with_underscores.txt").read_text(), "underscores"
+            )

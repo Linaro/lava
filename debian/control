@@ -24,7 +24,8 @@ Vcs-Browser: https://gitlab.com/lava/lava
 
 Package: lava-dispatcher
 Architecture: all
-Depends: lava-common (= ${binary:Version}),
+Depends: fakeroot,
+         lava-common (= ${binary:Version}),
          systemd-sysv,
          tar (>= 1.27),
          ${misc:Depends},
