@@ -283,7 +283,7 @@ Following actions will be skipped :
                 otg_paths = raw_option
 
             # All path are matching with uuu path format
-            if None not in map(lambda p: otg_path_fsm.fullmatch(p), otg_paths):
+            if None not in map(otg_path_fsm.fullmatch, otg_paths):
                 return otg_paths
 
         if uuu_options.get("usb_otg_path_command") is None:
@@ -303,7 +303,7 @@ Following actions will be skipped :
             uuu_otg_paths = list(map(lambda p: p.strip(), command_output.splitlines()))
 
             # All path are matching with uuu path format
-            if None not in map(lambda p: otg_path_fsm.fullmatch(p), uuu_otg_paths):
+            if None not in map(otg_path_fsm.fullmatch, uuu_otg_paths):
                 self.logger.info("uuu_otg_path matched : %s", uuu_otg_paths)
                 return uuu_otg_paths
 
