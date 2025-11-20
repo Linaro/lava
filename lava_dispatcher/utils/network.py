@@ -118,6 +118,7 @@ def rpcinfo_nfs(server: str, version: int = 3) -> str | None:
         stderr=subprocess.PIPE,
         text=True,
         timeout=10,
+        check=False,
     )
     if rpcinfo_result.returncode == 0:
         # Success

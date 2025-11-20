@@ -1,6 +1,7 @@
 # Copyright (C) 2021 Linaro Limited
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import contextlib
 import json
@@ -204,7 +205,9 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
 
     def __get_existing_functions__(self):
         cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
-        data = subprocess.run(cmd, text=True, stdout=subprocess.PIPE).stdout
+        data = subprocess.run(
+            cmd, text=True, check=False, stdout=subprocess.PIPE
+        ).stdout
         result = []
         programs = []
         with contextlib.suppress(Exception):
