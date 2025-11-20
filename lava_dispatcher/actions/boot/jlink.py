@@ -62,7 +62,9 @@ class FlashJLinkAction(Action):
     def version(self, binary):
         try:
             # check version of Jlink
-            cmd_output = subprocess.run([binary, "-v"], capture_output=True, text=True)
+            cmd_output = subprocess.run(
+                [binary, "-v"], capture_output=True, text=True, check=False
+            )
             if not cmd_output.stdout:
                 raise JobError("command JLinkExe -v doesn't return an output")
             # parse cmd_output and print in logger info

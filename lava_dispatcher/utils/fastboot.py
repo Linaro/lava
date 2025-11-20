@@ -87,6 +87,7 @@ class DetectFastbootDevice(Action):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
+            check=False,
         )
 
         if cmd.returncode == 0:
