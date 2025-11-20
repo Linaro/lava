@@ -22,7 +22,6 @@ disable = [
     "C0415",  # Import outside toplevel
     "E0202",  # An attribute defined in %s line %s hides this method
     "E0401",  # Unable to import '%s'
-    "E1101",  # Instance of x has no y member
     "W1309",  # Using an f-string that does not have any interpolated variables
     "R0401",  # Cyclic import (%s -> %s)
     "R0801",  # Duplicate code
@@ -56,4 +55,7 @@ disable = [
     "W1203",  # Use lazy % or % formatting in logging functions
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
     "W1514",  # Using open without explicitly specifying an encoding
+]
+extension-pkg-allow-list = [
+    "_ldap",  # ldap module attrs
 ]
