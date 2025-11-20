@@ -24,7 +24,6 @@ disable = [
     "E0307",  # __str__ does not return str
     "E0401",  # Unable to import '%s'
     "E0611",  # No name '%s' in module '%s'
-    "E1101",  # Instance of x has no y member
     "E1136",  # Value is unsubscriptable
     "W1309",  # Using an f-string that does not have any interpolated variables
     "W1510",  # 'subprocess.run' used without explicitly defining the value for 'check'.
@@ -62,4 +61,7 @@ disable = [
     "W1203",  # Use lazy % or % formatting in logging functions
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
     "W1514",  # Using open without explicitly specifying an encoding
+]
+extension-pkg-allow-list = [
+    "_ldap",  # ldap module attrs
 ]
