@@ -307,7 +307,8 @@ class TestKVMInlineTestDeploy(LavaDispatcherTestCase):
         job.validate()
         qemu = job.pipeline.find_action(CallQemuAction)
         self.assertIsInstance(qemu.sub_command, list)
-        [self.assertIsInstance(item, str) for item in qemu.base_sub_command]
+        for item in qemu.base_sub_command:
+            self.assertIsInstance(item, str)
         self.assertIn("virtio-blk-device.scsi=off", qemu.base_sub_command)
         self.assertIn("1", qemu.base_sub_command)
         self.assertNotIn(1, qemu.base_sub_command)
