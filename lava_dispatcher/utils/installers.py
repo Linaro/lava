@@ -53,11 +53,11 @@ def add_late_command(preseedfile: str | Path, extra_command: str) -> None:
 
 def endsin(lines: str | list[str], endstring: str) -> bool:
     match = False
-    if type(lines) is list:
+    if isinstance(lines, list):
         for line in lines:
             if line.endswith(endstring):
                 match = True
-    elif type(lines) is str:
+    elif isinstance(lines, str):
         if lines.endswith(endstring):
             match = True
     return match
