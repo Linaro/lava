@@ -88,11 +88,9 @@ class ConnectSsh(Action):
             return
         if "options" in params["ssh"]:
             if any(
-                [
-                    option
-                    for option in params["ssh"]["options"]
-                    if not isinstance(option, str)
-                ]
+                option
+                for option in params["ssh"]["options"]
+                if not isinstance(option, str)
             ):
                 msg = [
                     (option, type(option))

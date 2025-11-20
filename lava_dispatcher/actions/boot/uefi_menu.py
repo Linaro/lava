@@ -151,11 +151,9 @@ class UefiMenuSelector(SelectorMenuAction):
 
     def run(self, connection, max_end_time):
         lxc_active = any(
-            [
-                protocol
-                for protocol in self.job.protocols
-                if protocol.name == LxcProtocol.name
-            ]
+            protocol
+            for protocol in self.job.protocols
+            if protocol.name == LxcProtocol.name
         )
         if self.job.device.pre_os_command and not lxc_active:
             self.logger.info("Running pre OS command.")

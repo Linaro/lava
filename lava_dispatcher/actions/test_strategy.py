@@ -116,7 +116,7 @@ class TestInteractive(LavaTestStrategy):
         required_parms = ["name", "prompts", "script"]
         if "interactive" in parameters:
             for script in parameters["interactive"]:
-                if not all([x for x in required_parms if x in script]):
+                if not all(x for x in required_parms if x in script):
                     return (
                         False,
                         "missing a required parameter from %s" % required_parms,

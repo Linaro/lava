@@ -388,10 +388,8 @@ def transition_multinode_jobs():
     for job in jobs:
         sub_jobs = job.sub_jobs_list
         if not all(
-            [
-                j.state == TestJob.STATE_SCHEDULING or j.dynamic_connection
-                for j in sub_jobs
-            ]
+            j.state == TestJob.STATE_SCHEDULING or j.dynamic_connection
+            for j in sub_jobs
         ):
             continue
 

@@ -64,7 +64,7 @@ class Command(BaseCommand):
                     stdout = StringIO()
                     call_command("showmigrations", plan=True, stdout=stdout)
                     stdout.seek(0, 0)
-                    if all(["[ ]" not in line for line in stdout.readlines()]):
+                    if all("[ ]" not in line for line in stdout.readlines()):
                         break
                 except OperationalError:
                     self.stdout.write(". (database connection closed)")
