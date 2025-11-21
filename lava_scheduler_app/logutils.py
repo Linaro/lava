@@ -337,7 +337,7 @@ class LogsFirestore(Logs):
             self.db.collection(self.root_collection)
             .document(
                 "%02d-%02d-%02d"
-                % (self.submit_time.year, self.submit_time.month, self.submit_time.day)
+                % (job.submit_time.year, job.submit_time.month, job.submit_time.day)
             )
             .collection(str(job.id))
         )
