@@ -323,9 +323,10 @@ class Mapper:
         @return A list of sorted method names
         """
         methods = []
-        for register_path in self.registered:
-            cls = self.registered[register_path]
-            for method_name, impl in inspect.getmembers(cls, inspect.isroutine):
+        for register_path, register_cls in self.registered.items():
+            for method_name, impl in inspect.getmembers(
+                register_cls, inspect.isroutine
+            ):
                 if method_name.startswith("_"):
                     continue
                 if register_path:

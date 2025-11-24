@@ -12,6 +12,7 @@ import errno
 import ipaddress
 import os
 import subprocess  # nosec verified
+from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -24,6 +25,10 @@ DEFAULT_IRC_PORT = 6667
 
 SERVICE_UNKNOWN_ERROR = "service not known"
 NO_SUCH_NICK_ERROR = "No such nick/channel"
+
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 class IRCSendError(Exception):
@@ -88,8 +93,8 @@ def split_multinode_yaml(submission, target_group):
     ]  # top level values to be preserved
     maps = ["count"]  # elements to be matched but not listed at top level.
 
-    roles = {}
-    actions = {}
+    roles: dict[str, dict[str, Any]] = {}
+    actions: dict[str, dict[str, Any]] = {}
     subid = 0
 
     # FIXME: check structure using a schema
@@ -100,21 +105,21 @@ def split_multinode_yaml(submission, target_group):
     )
 
     # populate the lava-multinode protocol metadata
-    for role, value in submission["protocols"]["lava-multinode"]["roles"].items():
-        roles[role] = {}
+    for role_name, value in submission["protocols"]["lava-multinode"]["roles"].items():
+        roles[role_name] = {}
         for item in copies:
             if item in submission:
-                roles[role][item] = submission[item]
+                roles[role_name][item] = submission[item]
         for name in maps:
             if name in value:
-                roles[role][name] = value[name]
+                roles[role_name][name] = value[name]
         for name in scheduling:
             if name in value:
-                roles[role][name] = value[name]
+                roles[role_name][name] = value[name]
         tags = set(value) - set(maps) - set(scheduling)
         params = {
             "target_group": target_group,
-            "role": role,
+            "role": role_name,
             "group_size": group_size,
             "sub_id": subid,
         }
@@ -122,11 +127,11 @@ def split_multinode_yaml(submission, target_group):
             params["essential"] = value
         for tag in tags:
             params[tag] = value[tag]
-        roles[role].update({"protocols": {"lava-multinode": params}})
+        roles[role_name].update({"protocols": {"lava-multinode": params}})
         subid += 1
 
     # split the submission based on the roles specified for the actions, retaining order.
-    for role in roles:
+    for role_name in roles:
         for action in submission["actions"]:
             for key, value in action.items():
                 try:
@@ -136,9 +141,9 @@ def split_multinode_yaml(submission, target_group):
                         "Invalid YAML - Did not find a role in action '%s', check for consistent use of whitespace indents."
                         % next(iter(action.keys()))
                     )
-                if role in value["role"]:
-                    actions.setdefault(role, {"actions": []})
-                    actions[role]["actions"].append(
+                if role_name in value["role"]:
+                    actions.setdefault(role_name, {"actions": []})
+                    actions[role_name]["actions"].append(
                         {copy.deepcopy(key): copy.deepcopy(value)}
                     )
 
@@ -146,35 +151,35 @@ def split_multinode_yaml(submission, target_group):
     for key, value in submission["protocols"]["lava-multinode"].items():
         if key in skip:
             continue
-        for role in roles:
-            roles[role]["protocols"]["lava-multinode"][key] = value
+        for role_dict in roles.values():
+            role_dict["protocols"]["lava-multinode"][key] = value
 
     # set the role for each action to the role of the job instead of the original list..
-    for role in actions:
-        for action in actions[role]["actions"]:
+    for role_name, action_dict in actions.items():
+        for action in action_dict["actions"]:
             for key, value in action.items():
-                value["role"] = role
+                value["role"] = role_name
 
     # jobs dictionary lists the jobs per role,
     jobs = {}
     # check the count of the host_roles
     check_count = None
-    for role in roles:
-        if "host_role" in roles[role]:
-            check_count = roles[role]["host_role"]
-    for role in roles:
-        if role == check_count:
-            if roles[role]["count"] != 1:
+    for role_dict in roles.values():
+        if "host_role" in role_dict:
+            check_count = role_dict["host_role"]
+    for role_name, role_dict in roles.items():
+        if role_name == check_count:
+            if role_dict["count"] != 1:
                 raise SubmissionException(
                     "The count for a role designated as a host_role must be 1."
                 )
     sub_id_count = 0
-    for role in roles:
-        jobs[role] = []
-        for sub in range(0, roles[role]["count"]):
+    for role_name, role_dict in roles.items():
+        jobs[role_name] = []
+        for sub in range(0, role_dict["count"]):
             job = {}
-            job.update(actions[role])
-            job.update(roles[role])
+            job.update(actions[role_name])
+            job.update(role_dict)
             # only here do multiple jobs for the same role differ
             params = job["protocols"]["lava-multinode"]
             params.update({"sub_id": sub_id_count})
@@ -183,7 +188,7 @@ def split_multinode_yaml(submission, target_group):
             for item in maps:
                 if item in job:
                     del job[item]
-            jobs[role].append(copy.deepcopy(job))
+            jobs[role_name].append(copy.deepcopy(job))
             sub_id_count += 1
 
     # populate the lava-vland protocol metadata

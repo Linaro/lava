@@ -79,9 +79,8 @@ class TestMultiDeploy(LavaDispatcherTestCase):
         job.pipeline = pipeline
         counts = {}
         for action_data in self.parsed_data["actions"]:
-            for name in action_data:
+            for name, parameters in action_data.items():
                 counts.setdefault(name, 1)
-                parameters = action_data[name]
                 test_deploy = TestMultiDeploy.TestDeploy(pipeline, parameters, job)
                 self.assertEqual({}, test_deploy.action.data)
                 counts[name] += 1
