@@ -635,9 +635,9 @@ def query_condition_form(request, query, bread_crumb_trail, instance=None):
     if form.is_valid():
         query_condition = form.save()
 
-        return HttpResponse(
-            serializers.serialize("json", [query_condition, query_condition.table]),
-            content_type="application/json",
+        return JsonResponse(
+            serializers.serialize("python", [query_condition, query_condition.table]),
+            safe=False,
         )
     else:
         return JsonResponse(["fail", form.errors], safe=False)
