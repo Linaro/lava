@@ -49,6 +49,9 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
+HTTP_CODE_OK: int = requests.codes["OK"]
+
+
 class DownloaderAction(RetryAction):
     """
     The retry pipeline for downloads.
@@ -651,7 +654,7 @@ class HttpDownloadAction(DownloadHandler):
     def validate_cache_source(self, headers):
         try:
             res = self._head_or_get(self.url.geturl(), headers)
-            if res.status_code != requests.codes.OK:
+            if res.status_code != HTTP_CODE_OK:
                 self.logger.error(
                     "Resource unavailable at '%s' (%d)",
                     self.url.geturl(),
@@ -669,7 +672,7 @@ class HttpDownloadAction(DownloadHandler):
         res = None
         try:
             res = self._head_or_get(self.url.geturl(), headers)
-            if res.status_code != requests.codes.OK:
+            if res.status_code != HTTP_CODE_OK:
                 self.errors = "Resource unavailable at '%s' (%d)" % (
                     self.url.geturl(),
                     res.status_code,
@@ -699,7 +702,7 @@ class HttpDownloadAction(DownloadHandler):
             headers=headers,
             timeout=HTTP_DOWNLOAD_TIMEOUT,
         )
-        if res.status_code != requests.codes.OK:
+        if res.status_code != HTTP_CODE_OK:
             res.close()
             self.logger.debug("Using GET because HEAD is not supported properly")
             res = requests_retry(retries=9).get(
@@ -726,7 +729,7 @@ class HttpDownloadAction(DownloadHandler):
                 headers=headers,
                 timeout=HTTP_DOWNLOAD_TIMEOUT,
             )
-            if res.status_code != requests.codes.OK:
+            if res.status_code != HTTP_CODE_OK:
                 # This is an Infrastructure error because the validate function
                 # checked that the file does exist.
                 raise InfrastructureError(

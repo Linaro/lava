@@ -14,6 +14,7 @@ import requests
 from lava_common.constants import HTTP_DOWNLOAD_CHUNK_SIZE
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import (
+    HTTP_CODE_OK,
     CopyToLxcAction,
     DownloaderAction,
     DownloadHandler,
@@ -460,7 +461,7 @@ class TestDowload(LavaDispatcherTestCase):
                 pass
 
         class DummyResponseOK:
-            status_code = requests.codes.OK
+            status_code = HTTP_CODE_OK
             headers = {"content-length": "4212"}
 
             def close(self):
@@ -613,7 +614,7 @@ class TestDowload(LavaDispatcherTestCase):
         # Working
         class DummyResponse:
             # pylint: disable=no-self-argument
-            status_code = requests.codes.OK
+            status_code = HTTP_CODE_OK
             headers = {"content-length": "4212"}
 
             def iter_content(self_, size):
