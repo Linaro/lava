@@ -332,7 +332,7 @@ class TestLavaServerApi:
         server = self.server_proxy("test", "test")
 
         group = Group.objects.get(name="group1")
-        group.permissions.filter(codename="change_devicetype") is None
+        assert not group.permissions.filter(codename="change_devicetype")
         server.auth.groups.perms.add(
             "group1", "lava_scheduler_app", "devicetype", "change_devicetype"
         )
@@ -828,7 +828,7 @@ class TestLavaServerApi:
         server = self.server_proxy("test", "test")
 
         user = User.objects.get(username="user1")
-        user.user_permissions.filter(codename="change_devicetype") is None
+        assert not user.user_permissions.filter(codename="change_devicetype")
         server.auth.users.perms.add(
             "user1", "lava_scheduler_app", "devicetype", "change_devicetype"
         )

@@ -793,11 +793,11 @@ def test_devices_add(setup):
 
     Worker.objects.create(hostname="worker01")
     server("admin", "admin").scheduler.devices.add("black01", "black", "worker01")
-    Device.objects.count() == 1
-    Device.objects.all()[0].hostname == "black01"
-    Device.objects.all()[0].device_type.name == "black"
-    Device.objects.all()[0].worker_host.hostname == "worker01"
-    Device.objects.all()[0].get_health_display() == "Unknown"
+    assert Device.objects.count() == 1
+    assert Device.objects.all()[0].hostname == "black01"
+    assert Device.objects.all()[0].device_type.name == "black"
+    assert Device.objects.all()[0].worker_host.hostname == "worker01"
+    assert Device.objects.all()[0].get_health_display() == "Unknown"
 
     # 2. test description, health
     server("admin", "admin").scheduler.devices.add(
@@ -811,12 +811,17 @@ def test_devices_add(setup):
         "second device",
     )
 
-    Device.objects.count() == 2
+    assert Device.objects.count() == 2
     # Should be ordered as black01, black02
-    Device.objects.all().order_by("hostname")[1].hostname == "black02"
-    Device.objects.all().order_by("hostname")[1].device_type.name == "black"
-    Device.objects.all().order_by("hostname")[1].worker_host.hostname == "worker01"
-    Device.objects.all().order_by("hostname")[1].get_health_display() == "Maintenance"
+    assert Device.objects.all().order_by("hostname")[1].hostname == "black02"
+    assert Device.objects.all().order_by("hostname")[1].device_type.name == "black"
+    assert (
+        Device.objects.all().order_by("hostname")[1].worker_host.hostname == "worker01"
+    )
+    assert (
+        Device.objects.all().order_by("hostname")[1].get_health_display()
+        == "Maintenance"
+    )
 
     # 3. wrong health
     with pytest.raises(xmlrpc.client.Fault) as exc:

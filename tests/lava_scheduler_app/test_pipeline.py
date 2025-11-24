@@ -635,7 +635,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
     def test_multinode_tags(self):
         Tag.objects.all().delete()
-        self.factory.ensure_tag("tap"),
+        self.factory.ensure_tag("tap")
         self.factory.ensure_tag("virtio")
         with open(
             os.path.join(
