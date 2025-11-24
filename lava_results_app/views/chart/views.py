@@ -12,12 +12,7 @@ from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError
-from django.http import (
-    HttpResponse,
-    HttpResponseBadRequest,
-    HttpResponseRedirect,
-    JsonResponse,
-)
+from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django_tables2 import RequestConfig
@@ -415,9 +410,9 @@ def chart_query_order_update(request, name):
             chart_query.relative_index = index
             chart_query.save()
     except Exception:
-        return HttpResponse("fail", content_type="application/json")
+        return JsonResponse("fail", safe=False)
 
-    return HttpResponse("success", content_type="application/json")
+    return JsonResponse("success", safe=False)
 
 
 @login_required
@@ -436,8 +431,8 @@ def settings_update(request, name, id):
     form = ChartQueryUserForm(request.user, request.POST, instance=instance)
     if form.is_valid():
         instance = form.save()
-        data = serializers.serialize("json", [instance])
-        return HttpResponse(data, content_type="application/json")
+        data = serializers.serialize("python", [instance])
+        return JsonResponse(data, safe=False)
     else:
         return HttpResponseBadRequest()
 
