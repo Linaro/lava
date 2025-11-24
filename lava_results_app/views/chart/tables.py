@@ -23,7 +23,7 @@ class UserChartTable(LavaTable):
 
     def render_description(self, value):
         value = " ".join(value.split(" ")[:15])
-        return value.split("\n")[0]
+        return value.split("\n", maxsplit=1)[0]
 
     owner = tables.TemplateColumn(
         """
@@ -73,7 +73,7 @@ class OtherChartTable(UserChartTable):
 
     def render_description(self, value):
         value = " ".join(value.split(" ")[:15])
-        return value.split("\n")[0]
+        return value.split("\n", maxsplit=1)[0]
 
     class Meta(UserChartTable.Meta):
         fields = ("name", "description", "owner")
@@ -96,7 +96,7 @@ class GroupChartTable(UserChartTable):
 
     def render_description(self, value):
         value = " ".join(value.split(" ")[:15])
-        return value.split("\n")[0]
+        return value.split("\n", maxsplit=1)[0]
 
     class Meta(UserChartTable.Meta):
         fields = ("name", "description", "owner")
