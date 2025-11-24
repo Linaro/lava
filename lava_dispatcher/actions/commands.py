@@ -28,6 +28,7 @@ class CommandAction(Action):
         "power_off",
         "recovery_mode",
         "recovery_exit",
+        "usbg_ms_commands_disable",
     ]
 
     def __init__(self, job: Job):
@@ -41,6 +42,20 @@ class CommandAction(Action):
         cmd_name = self.parameters["name"]
 
         if cmd_name in self.builtin_commands:
+            if cmd_name == "usbg_ms_commands_disable":
+                try:
+                    cmd = self.job.device["actions"]["deploy"]["methods"]["usbg-ms"][
+                        "disable"
+                    ]
+                    if isinstance(cmd, list):
+                        cmd = " ".join(cmd)
+                    self.cmd = {"do": cmd}
+                    return True
+                except KeyError:
+                    self.errors = (
+                        "Command 'usbg_ms_commands.disable' not defined for this device"
+                    )
+                    return False
             if cmd_name in self.job.device["commands"]:
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
                 return True
