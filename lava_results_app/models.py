@@ -668,7 +668,7 @@ class Query(models.Model):
     def has_view(self):
         return QueryMaterializedView.view_exists(self.id)
 
-    def get_results(self, user, order_by=["-id"]):
+    def get_results(self, user, order_by=("-id",)):
         """Used to get query results for persistent queries."""
 
         omitted_list = QueryOmitResult.objects.filter(query=self).values_list(
@@ -701,7 +701,7 @@ class Query(models.Model):
             )
 
     @classmethod
-    def get_queryset(cls, content_type, conditions, limit=None, order_by=["-id"]):
+    def get_queryset(cls, content_type, conditions, limit=None, order_by=("-id",)):
         """Return list of QuerySet objects for class 'content_type'.
 
         Be mindful when using this method directly as it does not apply the
