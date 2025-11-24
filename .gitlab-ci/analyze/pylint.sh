@@ -18,6 +18,7 @@ else
       lava_dispatcher \
       lava_dispatcher_host \
       lava_rest_app \
+      lava_results_app \
       lava_scheduler_app \
       lava_server \
       linaro_django_xmlrpc \
