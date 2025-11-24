@@ -466,7 +466,7 @@ class SchedulerWorkersAPI(ExposedV2API):
 
             if job_limit is not None:
                 if not isinstance(job_limit, int) or job_limit < 0:
-                    raise xmlrpc.client.fault(400, "Invalid job limit")
+                    raise xmlrpc.client.Fault(400, "Invalid job limit")
                 worker.job_limit = job_limit
                 fields.append("job_limit")
 
