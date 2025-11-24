@@ -196,7 +196,7 @@ class TestSuite(models.Model, Queryable):
             self._testcase_count = {k.lower(): (v or 0) for (k, v) in res.items()}
 
         if value is None:
-            return sum([v for (k, v) in self._testcase_count.items()])
+            return sum(self._testcase_count.values())
         return self._testcase_count[value]
 
     def get_passfail_results(self):
