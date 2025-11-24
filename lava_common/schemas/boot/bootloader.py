@@ -17,6 +17,8 @@ def schema():
         Optional("commands"): [str],
         Optional("use_bootscript"): bool,
         Optional("prompts"): boot.prompts(),
+        Optional("reset_connection"): bool,
+        Optional("reset_device"): bool,
         Optional("reset"): bool,
     }
     return {**boot.schema(), **base}
