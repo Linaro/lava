@@ -552,13 +552,9 @@ def query_include_result(request, username, name, id):
     query = get_object_or_404(Query, owner__username=username, name=name)
     result_object = get_object_or_404(query.content_type.model_class(), id=id)
 
-    try:
-        QueryOmitResult.objects.get(
-            query=query, object_id=result_object.id, content_type=query.content_type
-        ).delete()
-    except QueryOmitResult.DoesNotExist:
-        # Ignore does not exist violation.
-        raise
+    QueryOmitResult.objects.get(
+        query=query, object_id=result_object.id, content_type=query.content_type
+    ).delete()
 
     return HttpResponseRedirect(query.get_absolute_url())
 
