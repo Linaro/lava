@@ -78,7 +78,7 @@ class RepoAction(Action):
         super().__init__(job)
         self.vcs = None
         self.runner = None
-        self.uuid = None
+        self.uuid: str | None = None
         self.stage = 0
 
     @classmethod
@@ -216,6 +216,18 @@ class RepoAction(Action):
         self.set_namespace_data(
             action="test", label=self.uuid, key="testdef_metadata", value=val
         )
+        testdef_expected: list[str] = []
+        if "expected" in testdef:
+            testdef_expected = testdef["expected"]
+        if "expected" in self.parameters:
+            testdef_expected = self.parameters["expected"]
+        if testdef_expected:
+            self.set_namespace_data(
+                action="test",
+                label=self.uuid,
+                key="testdef_expected",
+                value=testdef_expected,
+            )
         if "parse" in testdef:
             pattern = testdef["parse"].get("pattern", "")
             fixup = testdef["parse"].get("fixupdict", "")
@@ -587,6 +599,9 @@ class TestDefinitionAction(Action):
                             "Invalid characters found in test definition name: %s"
                             % testdef["name"]
                         )
+                if "expected" in testdef:
+                    if not isinstance(testdef["expected"], list):
+                        self.errors = "'expected' should be a test case list"
         super().validate()
         for testdefs in self.test_list:
             for testdef in testdefs:

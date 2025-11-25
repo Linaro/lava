@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 from lava_common.exceptions import ConnectionClosedError, TestError
 from lava_dispatcher.actions.test.shell import TestShellAction
@@ -163,6 +163,76 @@ class TestTestShell(LavaDispatcherTestCase):
         data = ("ENDRUN", "0_DEFINITIO")
         with self.assertRaises(TestError):
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+
+    def test_signal_end_run_handle_expected(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        expected_tcs = ["tc1", "tc2", "tc3", "tc4"]
+        action.report = {
+            "tc1": "pass",
+            "tc2": "fail",
+            "tc5": "pass",
+            "tc6": {"set": "set1", "result": "fail"},
+        }
+
+        action.logger.results = MagicMock()
+        action.signal_end_run = MagicMock()
+        action.parameters = {"namespace": "common"}
+        action.data = {}
+        action.set_namespace_data(
+            action="test",
+            label="UUID",
+            key="testdef_expected",
+            value=expected_tcs,
+        )
+
+        # The expected test cases list handler is triggered on "signal.ENDRUN".
+        data = ("ENDRUN", "0_DEFINITION UUID")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+
+        # Test that missing test case are sorted and reported as 'fail'.
+        action.logger.results.assert_has_calls(
+            [
+                call(
+                    {
+                        "definition": "0_DEFINITION",
+                        "case": "tc3",
+                        "result": "fail",
+                        "level": None,
+                        "extra": {
+                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                        },
+                    }
+                ),
+                call(
+                    {
+                        "definition": "0_DEFINITION",
+                        "case": "tc4",
+                        "result": "fail",
+                        "level": None,
+                        "extra": {
+                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                        },
+                    }
+                ),
+            ],
+            any_order=False,
+        )
+
+        # Test that warning logs appear for both missing and unexpected test cases.
+        self.assertEqual(
+            [(r.levelname, r.message) for r in action_logs.records],
+            [
+                ("DEBUG", "Received signal: <ENDRUN> 0_DEFINITION UUID"),
+                ("WARNING", "Reporting missing expected test cases as 'fail' ..."),
+                ("WARNING", "Unexpected test result: tc5: pass"),
+                (
+                    "WARNING",
+                    "Unexpected test result: tc6: {'set': 'set1', 'result': 'fail'}",
+                ),
+            ],
+        )
 
     def test_signal_start_end_tc(self):
         job = self.create_simple_job()
