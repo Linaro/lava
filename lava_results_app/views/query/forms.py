@@ -19,13 +19,16 @@ from lava_results_app.models import Query, QueryCondition
 class QueryForm(forms.ModelForm):
     class Meta:
         model = Query
-        exclude = (
-            "is_published",
-            "query_group",
-            "group",
-            "is_changed",
-            "last_updated",
-            "is_updating",
+        fields = (
+            "owner",
+            "name",
+            "description",
+            "limit",
+            "content_type",
+            "is_live",
+            "group_by_attribute",
+            "target_goal",
+            "is_archived",
         )
         widgets = {"owner": forms.HiddenInput}
 

@@ -12,7 +12,7 @@ from lava_results_app.models import Chart, ChartQuery, ChartQueryUser, TestCase
 class ChartForm(forms.ModelForm):
     class Meta:
         model = Chart
-        exclude = ("is_published", "chart_group", "group", "queries")
+        fields = ("name", "owner", "description")
         widgets = {"owner": forms.HiddenInput}
 
     def __init__(self, owner, *args, **kwargs):
@@ -26,7 +26,19 @@ class ChartForm(forms.ModelForm):
 class ChartQueryForm(forms.ModelForm):
     class Meta:
         model = ChartQuery
-        exclude = ()
+        fields = (
+            "chart",
+            "query",
+            "chart_type",
+            "target_goal",
+            "chart_height",
+            "is_percentage",
+            "chart_visibility",
+            "xaxis_attribute",
+            "representation",
+            "relative_index",
+            "attributes",
+        )
         widgets = {
             "chart": forms.HiddenInput,
             "query": forms.HiddenInput,
@@ -64,7 +76,7 @@ class ChartQueryForm(forms.ModelForm):
 class ChartQueryUserForm(forms.ModelForm):
     class Meta:
         model = ChartQueryUser
-        exclude = ["user", "chart_query"]
+        fields = ("start_date", "is_legend_visible", "is_delta")
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
