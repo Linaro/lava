@@ -37,7 +37,7 @@ def pprint_templates_tree(templates_dirs: list[Path]) -> None:
             device_type_name_to_extends[device_type_name] = None
 
     each_device_type_node: dict[str, dict] = {
-        dt: {} for dt in device_type_name_to_extends.keys()
+        dt: {} for dt in device_type_name_to_extends
     }
     template_tree: dict[str, dict] = {}
 
