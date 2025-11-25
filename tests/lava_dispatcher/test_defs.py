@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import glob
 import os
@@ -24,6 +25,7 @@ from lava_dispatcher.actions.deploy.lxc import LxcAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import (
     GitRepoAction,
+    RepoAction,
     TestDefinitionAction,
     TestInstallAction,
     TestOverlayAction,
@@ -760,3 +762,75 @@ class TestRunScript(LavaDispatcherTestCase):
                         call('echo "<LAVA_SIGNAL_ENDRUN $TESTRUN_ID $UUID>"\n'),
                     ]
                 )
+
+
+class TestStoreTestdefExpectedList(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = RepoAction(self.job)
+        self.action.uuid = "UUID"
+        self.action.parameters = {
+            "namespace": "common",
+            "repository": "https://gitlab.com/lava/functional-tests.git",
+            "from": "git",
+            "path": "posix/smoke-tests-basic.yaml",
+            "name": "smoke-tests",
+        }
+        self.testdef: dict[str, dict | list] = {
+            "metadata": {
+                "format": "Lava-Test Test Definition 1.0",
+                "name": "test-expected-test-case-list",
+            }
+        }
+
+    def tes_no_expected_list(self):
+        data = self.action.get_namespace_data(
+            action="test", label="UUID", key="testdef_expected"
+        )
+
+        self.assertIsNone(data)
+
+    def test_empty_expected_list(self):
+        self.testdef["expected"] = []
+
+        self.action.store_testdef(self.testdef, "git")
+
+        data = self.action.get_namespace_data(
+            action="test", label="UUID", key="testdef_expected"
+        )
+
+        self.assertIsNone(data)
+
+    def test_expected_list_from_testdef(self):
+        self.testdef["expected"] = ["tc1", "tc2", "tc3"]
+
+        self.action.store_testdef(self.testdef, "git")
+
+        data = self.action.get_namespace_data(
+            action="test", label="UUID", key="testdef_expected"
+        )
+
+        self.assertEqual(data, self.testdef["expected"])
+
+    def test_expected_list_from_jobdef(self):
+        self.action.parameters["expected"] = ["tc2", "tc3", "tc4"]
+
+        self.action.store_testdef(self.testdef, "git")
+
+        data = self.action.get_namespace_data(
+            action="test", label="UUID", key="testdef_expected"
+        )
+
+        self.assertEqual(data, self.action.parameters["expected"])
+
+    def test_jobdef_overwrites_testdef_expected_list(self):
+        self.testdef["expected"] = ["tc1", "tc2", "tc3"]
+        self.action.parameters["expected"] = ["tc2", "tc3", "tc4"]
+
+        self.action.store_testdef(self.testdef, "git")
+
+        data = self.action.get_namespace_data(
+            action="test", label="UUID", key="testdef_expected"
+        )
+
+        self.assertEqual(data, self.action.parameters["expected"])
