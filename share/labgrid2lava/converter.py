@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import logging
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from pathlib import Path
 from typing import Any, Type
 
@@ -149,7 +149,7 @@ class LgConfig:
         raw_lg_env = yaml_safe_load(lg_env.read_text())
 
         for key in raw_lg_env:
-            if key not in cls.__dataclass_fields__:
+            if key not in (f.name for f in fields(cls)):
                 logger.warning(f"Top-level key {key!r} is not supported yet!")
 
         dataclass_map: dict[str, Type[Resources | Drivers]] = {
@@ -173,9 +173,8 @@ class LgConfig:
                         # Creates a copy of the keys.
                         for key in list(conf[section].keys()):
                             new_key = cls.camel_to_snake(key)
-                            if (
-                                new_key
-                                not in dataclass_map[section].__dataclass_fields__
+                            if new_key not in (
+                                f.name for f in fields(dataclass_map[section])
                             ):
                                 logger.warning(
                                     f"'{section}.{key}' is not supported yet!"
