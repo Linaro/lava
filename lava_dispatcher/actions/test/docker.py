@@ -210,7 +210,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         for dev in shared_devices:
             docker.wait_file(dev)
             self.logger.info(
-                f"Shared device {dev} to docker container {docker.__name__}"
+                f"Shared device {dev} to docker container {docker._container_name}"
             )
 
         try:
