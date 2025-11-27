@@ -40,7 +40,6 @@ disable = [
     "R1723",  # Unnecessary "else" after "break"
     "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
     "R1732",  # Consider using 'with' for resource-allocating operations
-    "R1733",  # Unnecessary dictionary index lookup
     "W0107",  # Unnecessary pass statement
     "W0201",  # Attribute defined outside __init__
     "W0212",  # Access to a protected member of a client class

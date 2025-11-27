@@ -721,16 +721,16 @@ class TestYamlMultinode(TestCaseWithFactory):
                 "mirror": "http://ftp.us.debian.org/debian/",
             }
         }
-        for role, _ in jobs.items():
-            if role == "server":
-                self.assertNotIn("lava-lxc", jobs[role][0]["protocols"])
-            elif role == "client":
-                self.assertIn("lava-lxc", jobs[role][0]["protocols"])
+        for role_name, role_dicts in jobs.items():
+            if role_name == "server":
+                self.assertNotIn("lava-lxc", role_dicts[0]["protocols"])
+            elif role_name == "client":
+                self.assertIn("lava-lxc", role_dicts[0]["protocols"])
                 self.assertEqual(
-                    jobs[role][0]["protocols"]["lava-lxc"], protocol_data["lava-lxc"]
+                    role_dicts[0]["protocols"]["lava-lxc"], protocol_data["lava-lxc"]
                 )
             else:
-                self.fail("Unrecognised role: %s" % role)
+                self.fail("Unrecognised role: %s" % role_name)
 
     def test_multinode_hikey(self):
         with open(
@@ -761,21 +761,21 @@ class TestYamlMultinode(TestCaseWithFactory):
                 "template": "debian",
             }
         }
-        for role, _ in jobs.items():
-            if role == "server":
-                self.assertIn("lava-lxc", jobs[role][0]["protocols"])
+        for role_name, role_dicts in jobs.items():
+            if role_name == "server":
+                self.assertIn("lava-lxc", role_dicts[0]["protocols"])
                 self.assertEqual(
-                    jobs[role][0]["protocols"]["lava-lxc"],
+                    role_dicts[0]["protocols"]["lava-lxc"],
                     server_protocol_data["lava-lxc"],
                 )
-            elif role == "client":
-                self.assertIn("lava-lxc", jobs[role][0]["protocols"])
+            elif role_name == "client":
+                self.assertIn("lava-lxc", role_dicts[0]["protocols"])
                 self.assertEqual(
-                    jobs[role][0]["protocols"]["lava-lxc"],
+                    role_dicts[0]["protocols"]["lava-lxc"],
                     client_protocol_data["lava-lxc"],
                 )
             else:
-                self.fail("Unrecognised role: %s" % role)
+                self.fail("Unrecognised role: %s" % role_name)
 
     def test_multinode_nexus4(self):
         with open(
@@ -795,9 +795,9 @@ class TestYamlMultinode(TestCaseWithFactory):
                 "distribution": "debian",
             }
         }
-        for role, _ in jobs.items():
-            if role == "device":
-                for job in jobs[role]:
+        for role_name, role_dicts in jobs.items():
+            if role_name == "device":
+                for job in role_dicts:
                     self.assertIn("lava-lxc", job["protocols"])
                     self.assertEqual(
                         job["protocols"]["lava-lxc"], device_protocol_data["lava-lxc"]
@@ -805,7 +805,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     self.assertIn("reboot_to_fastboot", job)
                     self.assertEqual(job["reboot_to_fastboot"], False)
             else:
-                self.fail("Unrecognised role: %s" % role)
+                self.fail("Unrecognised role: %s" % role_name)
 
     def test_multinode_protocols(self):
         user = self.factory.make_user()
