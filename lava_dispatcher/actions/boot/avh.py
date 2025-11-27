@@ -263,5 +263,7 @@ class CallAvhAction(Action):
                 self.v1_delete_instance(api_instance)
 
         if self.docker_cleanup_required:
-            self.logger.info(f"Stopping the websocat container {self.docker.__name__}")
+            self.logger.info(
+                f"Stopping the websocat container {self.docker._container_name}"
+            )
             self.docker.destroy()

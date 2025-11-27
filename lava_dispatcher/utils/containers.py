@@ -112,7 +112,9 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
 
         if isinstance(self.driver, DockerDriver):
             for container in self.containers:
-                self.logger.debug(f"Destroying docker container {container.__name__}")
+                self.logger.debug(
+                    f"Destroying docker container {container._container_name}"
+                )
                 container.destroy()
 
 
@@ -249,16 +251,16 @@ class DockerDriver(NullDriver):
         """
         action.trigger_share_device_with_container(dev)
         action.logger.debug(
-            f"Waiting for device '{dev}' to appear in docker container {docker.__name__} ..."
+            f"Waiting for device '{dev}' to appear in docker container {docker._container_name} ..."
         )
         try:
             docker.wait_file(dev, 60)
         except CalledProcessError:
             raise LAVABug(
-                f"Failed to share device '{dev}' to docker container {docker.__name__}"
+                f"Failed to share device '{dev}' to docker container {docker._container_name}"
             )
         action.logger.info(
-            f"Shared device '{dev}' to docker container {docker.__name__}"
+            f"Shared device '{dev}' to docker container {docker._container_name}"
         )
 
     def __map_devices__(self, container_name, docker):

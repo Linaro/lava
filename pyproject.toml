@@ -57,7 +57,6 @@ disable = [
     "W0707",  # Consider explicitly re-raising using 'raise x from y'
     "W0718",  # Catching too general exception
     "W0719",  # Raising too general exception
-    "W1115",  # Non-string value assigned
     "W1201",  # Use lazy % formatting in logging functions
     "W1203",  # Use lazy % or % formatting in logging functions
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads

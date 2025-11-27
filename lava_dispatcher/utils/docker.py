@@ -22,7 +22,7 @@ class DockerRun:
     def __init__(self, image):
         self.image = image
         self.__local__ = False
-        self.__name__ = None
+        self._container_name: str | None = None
         self.__network__ = None
         self.__suffix__ = ""
         self.__hostname__ = None
@@ -58,7 +58,7 @@ class DockerRun:
         if random_suffix:
             CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
             suffix = "".join(random.SystemRandom().choice(CHARS) for i in range(10))
-        self.__name__ = name + suffix
+        self._container_name = name + suffix
 
     def network(self, network):
         self.__network__ = network
@@ -150,8 +150,8 @@ class DockerRun:
         cmd = ["--rm"]
         if self.__init:
             cmd.append("--init")
-        if self.__name__:
-            cmd.append(f"--name={self.__name__}")
+        if self._container_name:
+            cmd.append(f"--name={self._container_name}")
         if self.__network__:
             cmd.append(f"--network=container:{self.__network__}{self.__suffix__}")
         if self.__hostname__:
@@ -216,7 +216,7 @@ class DockerRun:
                         *self.__docker_options__,
                         "inspect",
                         "--format=.",
-                        self.__name__,
+                        self._container_name,
                     ],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
@@ -236,7 +236,7 @@ class DockerRun:
                         "docker",
                         *self.__docker_options__,
                         "exec",
-                        self.__name__,
+                        self._container_name,
                         "test",
                         "-e",
                         filename,
@@ -252,9 +252,9 @@ class DockerRun:
                 delay = delay * 2  # exponential backoff
 
     def destroy(self):
-        if self.__name__:
+        if self._container_name:
             subprocess.call(
-                ["docker", *self.__docker_options__, "rm", "-f", self.__name__],
+                ["docker", *self.__docker_options__, "rm", "-f", self._container_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -298,7 +298,7 @@ class DockerContainer(DockerRun):
         self.start(action)
         cmd = ["docker", *self.__docker_options__, "exec"]
         cmd += self.interaction_options()
-        cmd.append(self.__name__)
+        cmd.append(self._container_name)
         cmd += args
         action.run_cmd(cmd)
 
@@ -306,7 +306,7 @@ class DockerContainer(DockerRun):
         self.start(action)
         cmd = ["docker", *self.__docker_options__, "exec"]
         cmd += self.interaction_options()
-        cmd.append(self.__name__)
+        cmd.append(self._container_name)
         cmd += args
         return action.parsed_command(cmd)
 
@@ -332,4 +332,6 @@ class DockerContainer(DockerRun):
         self.__started__ = True
 
     def stop(self, action):
-        action.run_cmd(["docker", *self.__docker_options__, "stop", self.__name__])
+        action.run_cmd(
+            ["docker", *self.__docker_options__, "stop", self._container_name]
+        )

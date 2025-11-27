@@ -255,7 +255,7 @@ def test_from_parameters_name_network(mocker):
         },
         job,
     )
-    assert docker_run.__name__ == "foocontainer-lava-123"
+    assert docker_run._container_name == "foocontainer-lava-123"
     assert docker_run.__network__ == "othercontainer"
 
 
