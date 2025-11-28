@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 import time
 from shlex import quote as shlex_quote
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from pexpect import EOF as pexpect_eof
 
@@ -295,10 +295,26 @@ class TestBootMessages(TestMessagesBase):
             logfile, message_list, infinite_stream=True
         )
         action = Action(self.create_job_mock())
-        with self.assertRaisesRegex(JobError, "^Kernel panic - not syncing$"):
+
+        start_time = time.monotonic()
+        end_time = start_time + 10
+
+        def monotonic_timeline():
+            yield start_time  # start = time.monotonic()
+            yield start_time + 0.1  # max_end_time - time.monotonic()
+            yield start_time + 0.1  # connection.wait(max_end_time)
+
+            yield end_time  # sub_index = connection.wait()
+            raise ValueError("Timeline misconfigured")
+
+        timeline_iter = monotonic_timeline()
+
+        with self.assertRaisesRegex(JobError, "^Kernel panic - not syncing$"), patch(
+            "time.monotonic", side_effect=lambda: next(timeline_iter)
+        ):
             LinuxKernelMessages.parse_failures(
                 connection,
                 action=action,
-                max_end_time=time.monotonic() + 0.1,
+                max_end_time=end_time,
                 fail_msg="",
             )
