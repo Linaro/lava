@@ -335,7 +335,11 @@ class TestShellAction(Action):
 
         # Only print if the report is not empty
         if self.report:
+            header = f"--- {self.definition} Test Report ---"
+            footer = " End ".center(len(header), "-")
+            self.logger.debug(header)
             self.logger.debug(yaml_safe_dump(self.report, default_flow_style=False))
+            self.logger.debug(footer)
         if self.errors:
             raise TestError(self.errors)
         return connection
@@ -441,6 +445,43 @@ class TestShellAction(Action):
 
         self.logger.results(res)
         self.start = None
+
+    def handle_expected(self, params):
+        try:
+            self.definition = params[0]
+            uuid = params[1]
+        except IndexError:
+            raise TestError("Invalid signal")
+
+        expected = self.get_namespace_data(
+            action="test", label=uuid, key="testdef_expected"
+        )
+        if expected is None:
+            return
+
+        expected_set = set(expected)
+        reported_set = set(self.report)
+
+        if expected_set == reported_set:
+            return
+
+        if missing := expected_set - reported_set:
+            self.logger.warning("Reporting missing expected test cases as 'fail' ...")
+            for test_case_id in sorted(missing):
+                res = {
+                    "definition": self.definition,
+                    "case": test_case_id,
+                    "result": "fail",
+                    "level": self.level,
+                    "extra": {
+                        "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                    },
+                }
+                self.report[test_case_id] = "fail"
+                self.logger.results(res)
+
+        for tc in sorted(reported_set - expected_set):
+            self.logger.warning(f"Unexpected test result: {tc}: {self.report[tc]}")
 
     @nottest
     def signal_test_case(self, params):
@@ -609,6 +650,7 @@ class TestShellAction(Action):
             if name == "STARTRUN":
                 self.signal_start_run(params)
             elif name == "ENDRUN":
+                self.handle_expected(params)
                 self.signal_end_run(params)
             elif name == "STARTTC":
                 self.logger.marker({"case": params[0], "type": "start_test_case"})

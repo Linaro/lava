@@ -112,7 +112,15 @@ def _job_boot_schema():
 
 
 def _inline_schema():
-    return Schema({"metadata": dict, "install": dict, "run": dict, "parse": dict})
+    return Schema(
+        {
+            "metadata": dict,
+            "install": dict,
+            "run": dict,
+            "parse": dict,
+            "expected": list,
+        }
+    )
 
 
 def _test_definition_schema():
