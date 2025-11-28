@@ -428,21 +428,19 @@ class VlandProtocol(Protocol):
         # create vlans by iterating and appending to self.base_group for the vlan name
         # run_admin_command --create_vlan test30 -1 false
         if self.sub_id != 0:
-            for friendly_name, _ in self.names.items():
+            for friendly_name, unique_name in self.names.items():
                 self.logger.info(
                     "Waiting for vlan %s : %s to be deployed.",
                     friendly_name,
-                    self.names[friendly_name],
+                    unique_name,
                 )
                 self.vlans[friendly_name], tag = self._wait_on_create(friendly_name)
                 self.logger.debug(
                     "vlan name: %s vlan tag: %s", self.vlans[friendly_name], tag
                 )
         else:
-            for friendly_name, _ in self.names.items():
-                self.logger.info(
-                    "Deploying vlan %s : %s", friendly_name, self.names[friendly_name]
-                )
+            for friendly_name, unique_name in self.names.items():
+                self.logger.info("Deploying vlan %s : %s", friendly_name, unique_name)
                 self.vlans[friendly_name], tag = self._create_vlan(friendly_name)
                 self.logger.debug(
                     "vlan name: %s vlan tag: %s", self.vlans[friendly_name], tag
@@ -451,7 +449,7 @@ class VlandProtocol(Protocol):
                     raise JobError("Unable to create vlan %s" % friendly_name)
                 # FIXME: _declare_created may return False but this is not checked.
                 self._declare_created(friendly_name, tag)
-        for friendly_name, _ in self.names.items():
+        for friendly_name in self.names:
             params = self.params[friendly_name]
             switch_id = self._lookup_switch_id(params["switch"])
             port_id = self._lookup_port_id(switch_id, params["port"])
