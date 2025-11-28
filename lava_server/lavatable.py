@@ -116,7 +116,7 @@ class LavaTable(tables.Table):
         return any((cls.Meta.searches, cls.Meta.queries, cls.Meta.times))
 
     def get_simple_text_searches(self) -> Iterator[str]:
-        for field_name in self.Meta.searches.keys():
+        for field_name in self.Meta.searches:
             yield self.prefix + field_name
 
     def get_query_searches(self) -> Iterator[str]:
@@ -124,7 +124,7 @@ class LavaTable(tables.Table):
             yield self.prefix + field_name
 
     def get_time_searches(self) -> Iterator[str]:
-        for field_name in self.Meta.times.keys():
+        for field_name in self.Meta.times:
             yield self.prefix + field_name
 
     class Meta:

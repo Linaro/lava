@@ -28,7 +28,7 @@ class FVPDeploy(Action):
 
     def validate(self):
         super().validate()
-        if "images" not in self.parameters.keys():
+        if "images" not in self.parameters:
             raise JobError("No 'images' specified on FVP deploy")
         for image_key, image_params in self.parameters["images"].items():
             if "overlays" in image_params:

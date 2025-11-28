@@ -133,8 +133,8 @@ class ApplyOverlayImage(Action):
 
             if self.use_root_partition:
                 if (
-                    self.image_key not in self.parameters.keys()
-                    and "images" in self.parameters.keys()
+                    self.image_key not in self.parameters
+                    and "images" in self.parameters
                 ):
                     if self.image_key in self.parameters["images"]:
                         root_partition = self.parameters["images"][self.image_key].get(

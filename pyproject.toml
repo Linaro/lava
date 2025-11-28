@@ -16,7 +16,6 @@ disable = [
     "C0114",  # Missing module docstring
     "C0115",  # Missing class docstring
     "C0116",  # Missing function or method docstring
-    "C0201",  # Consider iterating the dictionary directly instead of calling .keys()
     "C0209",  # Formatting a regular string which could be an f-string
     "C0411",  # Wrong import order. This is handled by `isort --profile black`.
     "C0412",  # Imports from package %s are not grouped
