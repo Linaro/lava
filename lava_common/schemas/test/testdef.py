@@ -34,6 +34,7 @@ def testdef():
             Optional("fixupdict"): {str: Any("pass", "fail", "skip", "unknown")}
         },
         Optional("run"): {Required("steps"): [str]},
+        Optional("expected"): [str],
     }
 
 
