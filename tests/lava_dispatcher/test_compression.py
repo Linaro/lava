@@ -158,7 +158,7 @@ class TestDecompression(LavaDispatcherTestCase):
 
 class TestCompressionBinaries(TestCase):
     def test_compression_binaries(self) -> None:
-        for compression_format in compress_command_map.keys():
+        for compression_format in compress_command_map:
             with self.subTest(compression=compression_format), TemporaryDirectory(
                 f"test-{compression_format}"
             ) as tmp_dir:

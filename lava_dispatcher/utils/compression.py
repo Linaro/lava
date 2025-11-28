@@ -44,7 +44,7 @@ decompress_command_map: Mapping[str, tuple[str, ...]] = {
 def compress_file(infile: str, compression: str) -> str:
     if not compression:
         return infile
-    if compression not in compress_command_map.keys():
+    if compression not in compress_command_map:
         raise JobError("Cannot find shell command to compress: %s" % compression)
 
     # Assume infile is an absolute path
@@ -80,7 +80,7 @@ def compress_file(infile: str, compression: str) -> str:
 def decompress_file(infile: str, compression: str | None) -> str:
     if not compression:
         return infile
-    if compression not in decompress_command_map.keys():
+    if compression not in decompress_command_map:
         raise JobError("Cannot find shell command to decompress: %s" % compression)
 
     # Assume infile is an absolute path
