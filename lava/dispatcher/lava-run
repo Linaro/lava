@@ -20,7 +20,7 @@ from setproctitle import setproctitle
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import YAMLListFormatter, YAMLLogger
+from lava_common.log import SECRETS_MASK, YAMLListFormatter, YAMLLogger
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -251,6 +251,11 @@ def main():
         # Add secrets to the environment
         for k, v in job.parameters.get("secrets", {}).items():
             os.environ[k] = v
+            SECRETS_MASK.add(v)
+
+        # Make job token also be masked
+        if options.token is not None:
+            SECRETS_MASK.add(options.token)
 
         # Generate the description
         description = yaml_safe_dump(job.describe())
