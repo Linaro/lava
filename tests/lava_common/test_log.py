@@ -7,7 +7,13 @@
 import logging
 import signal
 
-from lava_common.log import HTTPHandler, JobOutputSender, YAMLListFormatter, YAMLLogger
+from lava_common.log import (
+    SECRETS_MASK,
+    HTTPHandler,
+    JobOutputSender,
+    YAMLListFormatter,
+    YAMLLogger,
+)
 from lava_common.yaml import yaml_safe_load
 
 
@@ -259,6 +265,19 @@ def test_yaml_logger(mocker):
     logger._log = mocker.Mock()
     logger.info("a" * 10**7)
     check(logger, "info", logging.INFO, "<line way too long ...>")
+
+    # Check secrets
+    example_secret = "MySecretToken"
+    SECRETS_MASK.add(example_secret)
+    logger._log = mocker.Mock()
+    logger.info(f"downloading from example.com/myfile?token={example_secret}")
+    check(
+        logger,
+        "info",
+        logging.INFO,
+        "downloading from example.com/myfile?token=[MASKED]",
+    )
+    SECRETS_MASK.discard(example_secret)
 
     logger.close()
     assert logger.handler is None
