@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
+from lava_common.log import SECRETS_MASK
 from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
@@ -24,6 +25,7 @@ from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-impo
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from logging import Logger
     from typing import Any
 
@@ -71,6 +73,10 @@ class Job:
         self.base_overrides = {}
         self.started = False
         self.test_info = {}
+        self.secrets = SecretsContainer()
+        if param_secrets := parameters.get("secrets"):
+            for key, value in param_secrets.items():
+                self.secrets.add(key, value)
 
     @property
     def context(self):
@@ -278,3 +284,21 @@ class Job:
 
         # Mark cleanup as done to avoid calling it many times
         self.cleaned = True
+
+
+class SecretsContainer:
+    def __init__(self) -> None:
+        self._secrets_map: dict[str, str] = {}
+
+    def get(self, key: str) -> None:
+        return self._secrets_map[key]
+
+    def add(self, key: str, value: str) -> None:
+        self._secrets_map[key] = value
+        SECRETS_MASK.add(value)
+
+    def iterate(self) -> Iterator[tuple[str, str]]:
+        yield from self._secrets_map.items()
+
+    def is_empty(self) -> bool:
+        return bool(self._secrets_map)
