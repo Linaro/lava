@@ -71,6 +71,9 @@ class Job:
         self.base_overrides = {}
         self.started = False
         self.test_info = {}
+        self.secrets: dict[str, str] = {}
+        if param_secrets := parameters.get("secrets"):
+            self.secrets.update(param_secrets)
 
     @property
     def context(self):

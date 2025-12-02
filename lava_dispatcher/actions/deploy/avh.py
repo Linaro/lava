@@ -69,10 +69,9 @@ class AvhDeploy(Action):
                 "avh 'options.model' not provided in either device dictionary or job definition"
             )
 
-        secrets = self.job.parameters.get("secrets")
-        if "avh_api_token" not in secrets:
+        if "avh_api_token" not in self.job.secrets:
             raise JobError("'secrets.avh_api_token' key is required for AVH deploy")
-        self.avh["api_token"] = secrets["avh_api_token"]
+        self.avh["api_token"] = self.job.secrets["avh_api_token"]
         if not isinstance(self.avh["api_token"], str):
             raise JobError("'secrets.avh_api_token' should be a string")
 
