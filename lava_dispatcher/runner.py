@@ -240,9 +240,8 @@ def main():
         job = parse_job_file(options, logger)
 
         # Add secrets to the environment
-        for k, v in job.parameters.get("secrets", {}).items():
+        for k, v in job.secrets.iterate():
             os.environ[k] = v
-            logger.secrets_mask.add(v)
 
         # Make job token also be masked
         if options.token is not None:
