@@ -259,10 +259,10 @@ class CreateOverlay(Action):
                 self._export_data(fout, http_cache, "HTTP_CACHE")
 
         # Generate the file containing the secrets
-        if "secrets" in self.job.parameters:
+        if not self.job.secrets:
             self.logger.debug("Creating %s/secrets", lava_path)
             with open(os.path.join(lava_path, "secrets"), "w") as fout:
-                for key, value in self.job.parameters["secrets"].items():
+                for key, value in self.job.secrets.iterate():
                     fout.write(f"{key}={value}\n")
 
         if "env_dut" in self.job.parameters:

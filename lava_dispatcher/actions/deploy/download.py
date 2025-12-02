@@ -799,8 +799,7 @@ class RcloneDownloadAction(DownloadHandler):
 
     def _rclone_env(self):
         """Build env dict for rclone subprocess."""
-        secrets = self.job.parameters.get("secrets", {})
-        rclone_env = secrets.get("rclone_env")
+        rclone_env = self.job.secrets.get("rclone_env")
         if not rclone_env:
             return None
         env = os.environ.copy()
@@ -809,10 +808,9 @@ class RcloneDownloadAction(DownloadHandler):
 
     def _rclone_config_args(self):
         """Return --config args if a config file path is available."""
-        secrets = self.job.parameters.get("secrets", {})
-        if secrets.get("rclone_env"):
+        if self.job.secrets.get("rclone_env"):
             return []
-        if rclone_config_content := secrets.get("rclone_config"):
+        if rclone_config_content := self.job.secrets.get("rclone_config"):
             config_path = os.path.join(self.job.tmp_dir, "rclone.conf")
             with open(config_path, "w") as f:
                 f.write(rclone_config_content)
