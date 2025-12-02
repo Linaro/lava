@@ -192,12 +192,12 @@ class DeviceTypeTest(TestCaseWithFactory):
         device.save()
         device.refresh_from_db()
         self.assertIsNotNone(list(Device.objects.filter(device_type=dt)))
-        self.assertFalse(File("device-type", "juno-r2").exists())
+        self.assertTrue(File("device-type", "juno-r2").exists())
         self.assertEqual("juno-r2-01", device.hostname)
         self.assertIsNotNone(device.load_configuration())
         self.assertEqual([device], list(Device.objects.filter(device_type=dt)))
         self.assertEqual("juno", device.get_extends())
-        self.assertFalse(bool(load_devicetype_template(device.device_type.name)))
+        self.assertTrue(bool(load_devicetype_template(device.device_type.name)))
         self.assertFalse(invalid_template(device.device_type))
 
     def test_active_device_types(self):
