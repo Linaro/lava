@@ -25,6 +25,7 @@ from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-impo
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
+    from collections.abc import Iterator
     from typing import Any
 
     from lava_common.timeout import Timeout
@@ -71,6 +72,10 @@ class Job:
         self.base_overrides = {}
         self.started = False
         self.test_info = {}
+        self.secrets = SecretsContainer(self.logger)
+        if param_secrets := parameters.get("secrets"):
+            for key, value in param_secrets.items():
+                self.secrets.add(key, value)
 
     @property
     def context(self) -> dict[str, Any]:
@@ -276,3 +281,25 @@ class Job:
 
         # Mark cleanup as done to avoid calling it many times
         self.cleaned = True
+
+
+class SecretsContainer:
+    def __init__(self, yaml_logger: YAMLLogger) -> None:
+        self.yaml_logger = yaml_logger
+        self._secrets_map: dict[str, str] = {}
+
+    def get(self, key: str) -> str | None:
+        return self._secrets_map.get(key)
+
+    def get_required(self, key: str) -> str:
+        return self._secrets_map[key]
+
+    def add(self, key: str, value: str) -> None:
+        self._secrets_map[key] = value
+        self.yaml_logger.secrets_mask.add(value)
+
+    def iterate(self) -> Iterator[tuple[str, str]]:
+        yield from self._secrets_map.items()
+
+    def __len__(self) -> int:
+        return len(self._secrets_map)
