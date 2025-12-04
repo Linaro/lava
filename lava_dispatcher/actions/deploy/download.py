@@ -367,7 +367,7 @@ class DownloadHandler(Action):
         last_update = time.monotonic()  # time for rate limiting the progress output
 
         def update_progress(buff):
-            nonlocal downloaded_size, last_update, last_value, md5, sha256, sha512
+            nonlocal downloaded_size, last_update, last_value
             downloaded_size += len(buff)
             (printing, new_value, msg) = progress(
                 downloaded_size, last_value, last_update
