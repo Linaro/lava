@@ -8,9 +8,14 @@
 """
 Simple shell-sourcable configuration file class
 """
+from __future__ import annotations
 
-import os
-import re
+from shlex import split as shlex_split
+from typing import TYPE_CHECKING
+from warnings import warn
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class ConfigFile:
@@ -19,37 +24,23 @@ class ConfigFile:
     dbconfig-generate-include using sh format.
     """
 
-    _pattern = re.compile(
-        r"^(?P<key>[_a-zA-Z][_a-zA-Z0-9]*)=['\"](?P<value>[^']*)['\"]\s*(?:#.*)?$"
-    )
-
-    @classmethod
-    def load(cls, pathname):
+    @staticmethod
+    def load(pathname: str | Path) -> dict[str, str]:
         """
         Load file from pathname and store all the values as instance attributes
         """
-        self = cls()
-        for key, value in cls._parse(pathname):
-            setattr(self, key, value)
-        return self
+        config: dict[str, str] = {}
+        for lineno, line in enumerate(open(pathname)):
+            parsed_tokens = shlex_split(line, comments=True)
+            if not parsed_tokens:
+                # Skip empty lines
+                continue
 
-    @classmethod
-    def _parse(cls, pathname):
-        """
-        Parse the contents of pathname and return key-value pairs
-        """
-        with open(pathname) as stream:
-            for lineno, line in enumerate(stream, start=1):
-                match = cls._pattern.match(line)
-                if match:
-                    yield match.group("key"), match.group("value")
+            try:
+                key, value = parsed_tokens[0].split("=", maxsplit=1)
+            except (ValueError, IndexError):
+                warn(f"Failed to parse line {lineno} in file {pathname}: {line}")
+                continue
 
-    @classmethod
-    def serialize(cls, pathname, config):
-        """
-        Store all the values from config in the file from pathname
-        """
-        os.makedirs(os.path.dirname(pathname), exist_ok=True)
-        with open(pathname, "w+") as handle:
-            for key in config:
-                handle.write('%s="%s"\n' % (key, config[key]))
+            config[key] = value
+        return config

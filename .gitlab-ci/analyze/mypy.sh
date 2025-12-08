@@ -38,6 +38,8 @@ else
     'lava_dispatcher/utils/strings.py'
     'lava_dispatcher/utils/vcs.py'
     'lava_dispatcher/connection.py'
+    # lava_server
+    'lava_server/settings/config_file.py'
   )
   mypy --python-version 3.11 --pretty --strict --follow-imports=silent "${FILES[@]}"
 fi
