@@ -84,7 +84,7 @@ class OtherChartTable(UserChartTable):
 class GroupChartTable(UserChartTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.base_columns["chart_group"].visible = False
+        self.columns["chart_group"].column.visible = False
 
     name = tables.TemplateColumn(
         """
