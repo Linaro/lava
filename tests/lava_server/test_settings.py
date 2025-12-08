@@ -3,6 +3,13 @@
 # Author: Rémi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest import TestCase
+
+from lava_server.settings.config_file import ConfigFile
 
 
 def test_settings(mocker, monkeypatch):
@@ -25,3 +32,20 @@ def test_settings(mocker, monkeypatch):
 
     assert settings.HELLO == "world"
     assert settings.WORKER_AUTO_REGISTER_NETMASK == ["::1"]
+
+
+class TestConfigFile(TestCase):
+    def test_config_file(self) -> None:
+        with TemporaryDirectory() as tmpdir_name:
+            tempdir = Path(tmpdir_name)
+            config_file_path = tempdir / "settings.conf"
+            config_file_path.write_text(
+                """FOO='BAR'
+TEST123='456' # test setting
+SPACE="foo bar"
+"""
+            )
+            config = ConfigFile.load(config_file_path)
+            self.assertEqual(config.FOO, "BAR")
+            self.assertEqual(config.TEST123, "456")
+            self.assertEqual(config.SPACE, "foo bar")
