@@ -44,23 +44,23 @@ else:
         DATABASES = {
             "default": {
                 "ENGINE": "django.db.backends.postgresql",
-                "NAME": getattr(config, "LAVA_DB_NAME", ""),
-                "USER": getattr(config, "LAVA_DB_USER", ""),
-                "PASSWORD": getattr(config, "LAVA_DB_PASSWORD", ""),
-                "HOST": getattr(config, "LAVA_DB_SERVER", "127.0.0.1"),
-                "PORT": getattr(config, "LAVA_DB_PORT", "5432"),
+                "NAME": config.get("LAVA_DB_NAME", ""),
+                "USER": config.get("LAVA_DB_USER", ""),
+                "PASSWORD": config.get("LAVA_DB_PASSWORD", ""),
+                "HOST": config.get("LAVA_DB_SERVER", "127.0.0.1"),
+                "PORT": config.get("LAVA_DB_PORT", "5432"),
             }
         }
-        if conn_max_age_str := getattr(config, "CONN_MAX_AGE", None):
+        if conn_max_age_str := config.get("CONN_MAX_AGE", None):
             DATABASES["default"]["CONN_MAX_AGE"] = int(conn_max_age_str)
 
-        INSTANCE_NAME = config.LAVA_INSTANCE
+        INSTANCE_NAME = config["LAVA_INSTANCE"]
 
 if os.environ.get("SECRET_KEY"):
     SECRET_KEY = os.environ["SECRET_KEY"]
 else:
     with contextlib.suppress(FileNotFoundError):
-        SECRET_KEY = ConfigFile.load("/etc/lava-server/secret_key.conf").SECRET_KEY
+        SECRET_KEY = ConfigFile.load("/etc/lava-server/secret_key.conf")["SECRET_KEY"]
 
 if os.environ.get("ALLOWED_HOSTS"):
     ALLOWED_HOSTS += os.environ["ALLOWED_HOSTS"].split(",")

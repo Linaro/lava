@@ -43,9 +43,14 @@ class TestConfigFile(TestCase):
                 """FOO='BAR'
 TEST123='456' # test setting
 SPACE="foo bar"
+
+# Empty line
+
+NO_QUOTES=no_qoutes
 """
             )
             config = ConfigFile.load(config_file_path)
-            self.assertEqual(config.FOO, "BAR")
-            self.assertEqual(config.TEST123, "456")
-            self.assertEqual(config.SPACE, "foo bar")
+            self.assertEqual(config["FOO"], "BAR")
+            self.assertEqual(config["TEST123"], "456")
+            self.assertEqual(config["SPACE"], "foo bar")
+            self.assertEqual(config["NO_QUOTES"], "no_qoutes")
