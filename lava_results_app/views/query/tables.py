@@ -104,7 +104,13 @@ class GroupQueryTable(UserQueryTable):
 class QueryTestJobTable(AllJobsTable):
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """,
         orderable=False,
     )
@@ -131,7 +137,13 @@ class QueryTestCaseTable(SuiteTable):
 
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """
     )
     omit.orderable = False
@@ -183,7 +195,13 @@ class QueryTestSuiteTable(LavaTable):
     )
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """,
         orderable=False,
     )
