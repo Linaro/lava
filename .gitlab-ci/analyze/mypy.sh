@@ -28,6 +28,9 @@ else
     'lava_dispatcher/actions/deploy_strategy.py'
     'lava_dispatcher/actions/test/mixins.py'
     'lava_dispatcher/actions/test_strategy.py'
+    'lava_dispatcher/connection.py'
+    'lava_dispatcher/deployment_data.py'
+    'lava_dispatcher/shell.py'
     'lava_dispatcher/utils/compression.py'
     'lava_dispatcher/utils/contextmanager.py'
     'lava_dispatcher/utils/decorator.py'
@@ -38,9 +41,8 @@ else
     'lava_dispatcher/utils/shell.py'
     'lava_dispatcher/utils/strings.py'
     'lava_dispatcher/utils/vcs.py'
-    'lava_dispatcher/connection.py'
-    'lava_dispatcher/deployment_data.py'
-    'lava_dispatcher/shell.py'
+    # lava_server
+    'lava_server/settings/config_file.py'
   )
   mypy --python-version 3.11 --pretty --strict --follow-imports=silent "${FILES[@]}"
 fi

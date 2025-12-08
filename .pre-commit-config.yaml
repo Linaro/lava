@@ -161,6 +161,7 @@ repos:
           - "lava_dispatcher/actions/test_strategy.py"
           - "lava_dispatcher/connection.py"
           - "lava_dispatcher/deployment_data.py"
+          - "lava_dispatcher/shell.py"
           - "lava_dispatcher/utils/compression.py"
           - "lava_dispatcher/utils/contextmanager.py"
           - "lava_dispatcher/utils/decorator.py"
@@ -171,7 +172,7 @@ repos:
           - "lava_dispatcher/utils/shell.py"
           - "lava_dispatcher/utils/strings.py"
           - "lava_dispatcher/utils/vcs.py"
-          - "lava_dispatcher/shell.py"
+          - "lava_server/settings/config_file.py"
         pass_filenames: false
         always_run: true
 
