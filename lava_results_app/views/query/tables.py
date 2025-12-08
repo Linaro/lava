@@ -81,7 +81,7 @@ class OtherQueryTable(UserQueryTable):
 class GroupQueryTable(UserQueryTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.base_columns["query_group"].visible = False
+        self.columns["query_group"].column.visible = False
 
     name = tables.Column()
 
@@ -112,9 +112,9 @@ class QueryTestJobTable(AllJobsTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(AllJobsTable.Meta):
         attrs = {"class": "table table-hover", "id": "query-results-table"}
@@ -139,9 +139,9 @@ class QueryTestCaseTable(SuiteTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(SuiteTable.Meta):
         model = TestCase
@@ -191,9 +191,9 @@ class QueryTestSuiteTable(LavaTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(LavaTable.Meta):
         template_name = "lazytables.html"
