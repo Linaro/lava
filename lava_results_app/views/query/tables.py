@@ -81,7 +81,7 @@ class OtherQueryTable(UserQueryTable):
 class GroupQueryTable(UserQueryTable):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.base_columns["query_group"].visible = False
+        self.columns["query_group"].column.visible = False
 
     name = tables.Column()
 
@@ -104,7 +104,13 @@ class GroupQueryTable(UserQueryTable):
 class QueryTestJobTable(AllJobsTable):
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """,
         orderable=False,
     )
@@ -112,9 +118,9 @@ class QueryTestJobTable(AllJobsTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(AllJobsTable.Meta):
         attrs = {"class": "table table-hover", "id": "query-results-table"}
@@ -131,7 +137,13 @@ class QueryTestCaseTable(SuiteTable):
 
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """
     )
     omit.orderable = False
@@ -139,9 +151,9 @@ class QueryTestCaseTable(SuiteTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(SuiteTable.Meta):
         model = TestCase
@@ -183,7 +195,13 @@ class QueryTestSuiteTable(LavaTable):
     )
     omit = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" data-toggle="confirm" data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?"><span class="glyphicon glyphicon-remove"></span></a>
+    {% if query %}
+        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+            data-toggle="confirm"
+            data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?">
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+    {% endif %}
     """,
         orderable=False,
     )
@@ -191,9 +209,9 @@ class QueryTestSuiteTable(LavaTable):
     def __init__(self, query, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if query and query.is_accessible_by(user):
-            self.base_columns["omit"].visible = True
+            self.columns["omit"].column.visible = True
         else:
-            self.base_columns["omit"].visible = False
+            self.columns["omit"].column.visible = False
 
     class Meta(LavaTable.Meta):
         template_name = "lazytables.html"
