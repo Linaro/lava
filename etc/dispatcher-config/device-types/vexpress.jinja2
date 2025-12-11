@@ -57,7 +57,7 @@
 {% set boot_character_delay = boot_character_delay | default(30) %}
 
 {# adds the parameters: top level block #}
-{% block vland %}
+{% block parameters %}
 {{ super() -}}
 {% if text_offset %}
   text_offset: '{{text_offset}}'
@@ -115,8 +115,7 @@
         device_id: "{{ usb_device_id }}"  # the bootloader device id for this media on the 'usb' interface
 {% endif %}
 {%- endif %}
-{% endblock vland %}
-
+{% endblock parameters %}
 
 {% set action_timeout_auto_login = action_timeout_auto_login | default(5) %}
 {% set action_timeout_bootloader_commands = action_timeout_bootloader_commands | default(3) %}

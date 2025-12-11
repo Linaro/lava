@@ -8,10 +8,10 @@
 "          - tftpboot {SERVER_IP} {DEPTHCHARGE_KERNEL} {CMDLINE} {DEPTHCHARGE_RAMDISK}
 ") -%}
 
-{% block vland %}
+{% block parameters %}
 {{ super() }}
   load_address: '{{ fit_kernel_load_address | default('0') }}'
-{% endblock vland %}
+{% endblock parameters %}
 
 {% block body %}
 
