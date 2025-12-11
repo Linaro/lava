@@ -149,6 +149,32 @@ def _job_test_schema():
     )
 
 
+def _test_service_schema():
+    return Schema(
+        [
+            {
+                Required("name"): str,
+                Required("from"): str,
+                Required("repository"): str,
+                Required("path"): str,
+                Optional("service"): str,
+                Optional("timeout"): _timeout_schema(),
+            }
+        ],
+        extra=True,
+    )
+
+
+def _job_service_schema():
+    return Schema(
+        {
+            Required("services"): _test_service_schema(),
+            Optional("timeout"): _timeout_schema(),
+        },
+        extra=True,
+    )
+
+
 def _job_monitor_schema():
     return Schema(
         {
@@ -248,7 +274,10 @@ def _job_actions_schema():
                 "deploy": Any(_deploy_tftp_schema(), _job_deploy_schema()),
                 "boot": _job_boot_schema(),
                 "test": Any(
-                    _job_monitor_schema(), _job_interactive_schema(), _job_test_schema()
+                    _job_monitor_schema(),
+                    _job_interactive_schema(),
+                    _job_test_schema(),
+                    _job_service_schema(),
                 ),
                 "command": _job_command_schema(),
             }
