@@ -34,7 +34,8 @@ class TestCommands(LavaDispatcherTestCase):
 
     def do_something(self):
         self.action.parameters = {"name": "do_something"}
-        self.assertTrue(self.action.validate())
+        self.action.validate()
+        self.assertTrue(self.action.valid)
 
     def hard_reset(self):
         self.action.parameters = {"name": "hard_reset"}
@@ -53,8 +54,9 @@ class TestCommands(LavaDispatcherTestCase):
 
     def test_unknown_command(self):
         self.action.parameters = {"name": "unknown_command"}
-        self.assertFalse(self.action.validate())
-        self.assertIn("Unknown user command 'unknown_command'", self.action.errors)
+        self.action.validate()
+        self.assertFalse(self.action.valid)
+        self.assertEqual(["Unknown user command 'unknown_command'"], self.action.errors)
 
     def test_unconfigured_device(self):
         self.job.device = PipelineDevice({})
@@ -83,4 +85,33 @@ class TestCommands(LavaDispatcherTestCase):
         self.action.run(None, 600)
         self.action.run_cmd.assert_has_calls(
             (mock_call("something"), mock_call("something-else"))
+        )
+
+    def test_usbg_ms_commands_disable(self):
+        self.job.device = PipelineDevice(
+            {
+                "actions": {
+                    "deploy": {
+                        "methods": {
+                            "usbg-ms": {"disable": ["laacli", "usbg-ms", "off"]}
+                        }
+                    }
+                }
+            }
+        )
+        self.action.parameters = {"name": "usbg_ms_commands_disable"}
+        self.action.validate()
+        self.assertTrue(self.action.valid)
+        self.assertEqual({"do": "laacli usbg-ms off"}, self.action.cmd)
+        self.action.run(None, 600)
+        self.action.run_cmd.assert_called_with("laacli usbg-ms off")
+
+    def test_usbg_ms_commands_disable_missing(self):
+        self.job.device = PipelineDevice({})
+        self.action.parameters = {"name": "usbg_ms_commands_disable"}
+        self.action.validate()
+        self.assertFalse(self.action.valid)
+        self.assertEqual(
+            ["Command 'usbg_ms_commands.disable' not defined for this device"],
+            self.action.errors,
         )
