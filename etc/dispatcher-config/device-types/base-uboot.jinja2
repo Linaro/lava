@@ -92,7 +92,7 @@
 {% set additional_bcu_cleanup_commands = additional_bcu_cleanup_commands|default([]) -%}
 
 {# adds the parameters: top level block #}
-{% block vland %}
+{% block parameters %}
 {{ super() }}
 {% if text_offset %}
   text_offset: '{{text_offset}}'
@@ -140,7 +140,7 @@
     dtbo: '{{ bootz_dtbo_addr|default('0x93c00000') }}'
 {% endif %}
   dtb_base_resize: {{ dtb_base_resize|default(1048576) }}
-{% endblock vland %}
+{% endblock parameters %}
 
 {% block body %}
 

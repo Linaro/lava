@@ -377,9 +377,9 @@ The corresponding :term:`device type` template for nexus 10 is as follows::
  fastboot_options: {{ fastboot_options|default([]) }}
  device_info: [{'board_id': 'R32D300FRYP'}]
 
- {% block vland %}
+ {% block parameters %}
  {# skip the parameters dict at top level #}
- {% endblock %}
+ {% endblock parameters %}
 
  actions:
    deploy:

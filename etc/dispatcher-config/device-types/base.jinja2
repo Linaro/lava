@@ -284,7 +284,7 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
 {% endif -%}
 {% endblock fastboot -%}
 
-{% block vland %}
+{% block parameters %}
 parameters:
 {% if interfaces or device_ip or device_mac %}
   interfaces:
@@ -338,7 +338,7 @@ parameters:
 {% else %}
   pass:
 {%- endif %} # sata_uuid_sd_uuid_usb_uuid
-{% endblock vland -%}
+{% endblock parameters -%}
 
 {% block body %}{% endblock body -%}
 
