@@ -50,24 +50,22 @@ class CommandAction(Action):
                     if isinstance(cmd, list):
                         cmd = " ".join(cmd)
                     self.cmd = {"do": cmd}
-                    return True
                 except KeyError:
                     self.errors = (
                         "Command 'usbg_ms_commands.disable' not defined for this device"
                     )
-                    return False
+                return
             if cmd_name in self.job.device["commands"]:
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}
-                return True
-            else:
-                self.errors = "Command '%s' not defined for this device" % cmd_name
-                return False
+                return
+
+            self.errors = "Command '%s' not defined for this device" % cmd_name
+            return
 
         user_commands = self.job.device.get("commands", {}).get("users")
         if not user_commands:
             self.errors = "Device has no configured user commands"
-            return False
-
+            return
         try:
             self.cmd = user_commands[cmd_name]
             if not isinstance(self.cmd["do"], str) or not isinstance(
@@ -77,10 +75,8 @@ class CommandAction(Action):
                     'User command "%s" is invalid: '
                     "'do' and 'undo' should be strings" % cmd_name
                 )
-            return True
         except KeyError:
             self.errors = "Unknown user command '%s'" % cmd_name
-            return False
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
