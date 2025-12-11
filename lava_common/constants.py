@@ -96,7 +96,7 @@ UEFI_LINE_SEPARATOR = "\r\n"
 
 # valid characters in components of a test definition name
 # excludes whitespace and punctuation (except hyphen and underscore)
-DEFAULT_TESTDEF_NAME_CLASS = r"^[\w\d\_\-]+$"
+DEFAULT_TEST_NAME_CLASS = r"^[\w\d\_\-]+$"
 
 # Versatile Express autorun interrupt character
 VEXPRESS_AUTORUN_INTERRUPT_CHARACTER = " "

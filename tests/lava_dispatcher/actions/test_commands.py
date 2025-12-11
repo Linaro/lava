@@ -6,6 +6,7 @@
 
 from unittest.mock import MagicMock
 from unittest.mock import call as mock_call
+from unittest.mock import patch
 
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.device import PipelineDevice
@@ -113,5 +114,36 @@ class TestCommands(LavaDispatcherTestCase):
         self.assertFalse(self.action.valid)
         self.assertEqual(
             ["Command 'usbg_ms_commands.disable' not defined for this device"],
+            self.action.errors,
+        )
+
+    def test_stop_test_services(self):
+        self.action.parameters = {"name": "stop_test_services"}
+        stop_cmd = ["docker-compose", "-f", "/abs_path/docker-compose.yaml", "down"]
+
+        with patch(
+            "lava_dispatcher.actions.commands.CommandAction.get_namespace_data",
+            return_value=[stop_cmd],
+        ):
+            self.action.validate()
+
+        self.assertTrue(self.action.valid)
+        self.assertEqual({"do": [stop_cmd]}, self.action.cmd)
+        self.action.run(None, 600)
+        self.action.run_cmd.assert_called_with(stop_cmd)
+
+    def test_stop_test_services_missing(self):
+        self.action.parameters = {"name": "stop_test_services"}
+        with patch(
+            "lava_dispatcher.actions.commands.CommandAction.get_namespace_data",
+            return_value=None,
+        ):
+            self.action.validate()
+
+        self.assertFalse(self.action.valid)
+        self.assertEqual(
+            [
+                "Command for 'stop_test_services' not found. No 'test.services' action defined?"
+            ],
             self.action.errors,
         )
