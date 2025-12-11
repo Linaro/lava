@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from lava_common.constants import DEFAULT_TESTDEF_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DEFAULT_TEST_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -582,7 +582,7 @@ class TestDefinitionAction(Action):
         if not self.test_list:
             return
 
-        exp = re.compile(DEFAULT_TESTDEF_NAME_CLASS)
+        exp = re.compile(DEFAULT_TEST_NAME_CLASS)
         for testdefs in self.test_list:
             for testdef in testdefs:
                 if "parameters" in testdef:  # optional

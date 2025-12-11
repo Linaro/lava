@@ -293,3 +293,48 @@ class TestShell(LavaTestStrategy):
     @classmethod
     def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
         return True
+
+
+class TestService(LavaTestStrategy):
+    """
+    TestService Strategy object
+    """
+
+    @classmethod
+    def action(  # type: ignore[override]
+        cls, job: Job, parameters: dict[str, Any]
+    ) -> Action:
+        from lava_dispatcher.actions.test.service import TestServices
+
+        return TestServices(job)
+
+    @classmethod
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
+        if "services" not in parameters:
+            return False, '"services" not in parameters'
+
+        required_parms = {"name", "from", "repository", "path"}
+        for service in parameters["services"]:
+            missing = required_parms - service.keys()
+            if missing:
+                return False, f"missing required parameters {sorted(missing)}"
+
+        return True, "accepted"
+
+    @classmethod
+    def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
+        return False
+
+    @classmethod
+    def needs_overlay(cls, parameters: dict[str, Any]) -> bool:
+        return False
+
+    @classmethod
+    def has_shell(cls, parameters: dict[str, Any]) -> bool:
+        return False
+
+    @classmethod
+    def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
+        return False

@@ -29,6 +29,7 @@ class CommandAction(Action):
         "recovery_mode",
         "recovery_exit",
         "usbg_ms_commands_disable",
+        "stop_test_services",
     ]
 
     def __init__(self, job: Job):
@@ -54,6 +55,18 @@ class CommandAction(Action):
                     self.errors = (
                         "Command 'usbg_ms_commands.disable' not defined for this device"
                     )
+                return
+            if cmd_name == "stop_test_services":
+                if cmd_list := self.get_namespace_data(
+                    action="lava-test-service", label="stop-services", key="cmd-list"
+                ):
+                    self.cmd = {"do": cmd_list}
+                else:
+                    self.errors = (
+                        "Command for 'stop_test_services' not found. "
+                        "No 'test.services' action defined?"
+                    )
+
                 return
             if cmd_name in self.job.device["commands"]:
                 self.cmd = {"do": self.job.device["commands"][cmd_name]}

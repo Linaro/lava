@@ -43,6 +43,7 @@ def device():
         Required("parameters"): {
             # TODO: having a more precise schema make this fail on debian 9,
             # maybe due to the dictionary key ordering in python3.5
+            Optional("allow_test_services"): bool,
             Optional("interfaces"): dict,
             Optional("media"): {
                 Optional("sata"): {

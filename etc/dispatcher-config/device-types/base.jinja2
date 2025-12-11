@@ -286,6 +286,9 @@ flash_cmds_order: {{ flash_cmds_order|default(['update', 'ptable',
 
 {% block parameters %}
 parameters:
+{% if allow_test_services %}
+  allow_test_services: {{ allow_test_services }}
+{% endif %}
 {% if interfaces or device_ip or device_mac %}
   interfaces:
 {% if device_ip or device_mac %}

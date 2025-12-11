@@ -115,6 +115,9 @@ def validate(data, strict=True, extra_context_variables: list[str] | None = None
                 cls = "test.interactive"
             elif "monitors" in data:
                 cls = "test.monitor"
+            elif "services" in data:
+                cls = "test.service"
+
         if cls is None:
             raise Invalid("invalid action", path=["actions[%s]" % index, action_type])
         cls = cls.replace("-", "_")

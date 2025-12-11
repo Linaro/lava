@@ -1,0 +1,84 @@
+- class: TestServices
+  name: lava-test-services
+  level: '1'
+  max_retries: 1
+  description: Executing lava-test-services
+  summary: Lava Test Services
+  timeout: 420
+  pipeline:
+  - class: TestServiceRetry
+    name: lava-test-service-retry
+    level: '1.1'
+    max_retries: 2
+    description: Retry wrapper for lava-test-service
+    summary: Retry support for Lava Test Service
+    timeout: 420
+    pipeline:
+    - class: TestServiceAction
+      name: lava-test-service
+      level: 1.1.1
+      max_retries: 1
+      description: Executing lava-test-service
+      summary: Lava Test Service
+      timeout: 210
+      pipeline:
+      - class: DownloaderAction
+        name: download-retry
+        level: 1.1.1.1
+        max_retries: 2
+        description: download with retry
+        summary: download-retry
+        timeout: 420
+        pipeline:
+        - class: HttpDownloadAction
+          name: http-download
+          level: 1.1.1.1.1
+          max_retries: 1
+          description: use http to download the file
+          summary: http download
+          timeout: 210
+          url: https://example.com/srv1.tar.gz
+  - class: TestServiceRetry
+    name: lava-test-service-retry
+    level: '1.2'
+    max_retries: 2
+    description: Retry wrapper for lava-test-service
+    summary: Retry support for Lava Test Service
+    timeout: 420
+    pipeline:
+    - class: TestServiceAction
+      name: lava-test-service
+      level: 1.2.1
+      max_retries: 1
+      description: Executing lava-test-service
+      summary: Lava Test Service
+      timeout: 210
+- class: CommandAction
+  name: user-command
+  level: '2'
+  max_retries: 1
+  description: execute one of the commands listed by the admin
+  summary: execute commands
+  timeout: 30
+- class: FinalizeAction
+  name: finalize
+  level: '3'
+  max_retries: 1
+  description: finish the process and cleanup
+  summary: finalize the job
+  timeout: 30
+  pipeline:
+  - class: PowerOff
+    name: power-off
+    level: '3.1'
+    max_retries: 1
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 10
+  - class: ReadFeedback
+    name: read-feedback
+    level: '3.2'
+    max_retries: 1
+    description: Check for messages on all other namespaces
+    summary: Read from other namespaces
+    timeout: 30

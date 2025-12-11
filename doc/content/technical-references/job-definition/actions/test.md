@@ -14,7 +14,7 @@ parses results, and reports test outcomes.
 * Multiple test definitions can be listed within the same test block to run
   sequentially without rebooting the device.
 
-There are 3 types of test actions:
+There are 4 types of test actions:
 
 * [**Lava-test-shell definitions**](#definitions) (YAML directive: `definitions`)
   are used for POSIX compliant operating systems on the DUT. The deployed system
@@ -31,6 +31,10 @@ There are 3 types of test actions:
   output from a device, but also feeding some input. They are useful for
   non-POSIX shells like bootloaders (u-boot for instance) and other interactive
   command-line applications.
+
+* [**Test services**](#services) (YAML directive: services) are used for
+  starting docker-compose based containers on the LAVA worker. It enables
+  running custom services for the needs in test definitions.
 
 ## Definitions
 
@@ -591,5 +595,76 @@ logged as warnings.
 !!!note "Always reported"
     The expected test cases are always reported, even if the tests are not
     executed due to earlier job errors.
+
+## Services
+
+The feature is disabled by default. It must be explicitly enabled in the device
+dictionary by lab admin or device owner. And the worker that the device attached
+to should have access to the Docker images needed by the services.
+
+!!! danger
+    Enabling the feature allows the users of the device to run any Docker
+    containers with any permissions on the LAVA worker. Access to the device
+    should be strictly restricted to trusted users using LAVA user groups.
+
+```jinja2 title="Enable test services"
+{% set allow_test_services = true %}
+```
+
+The services are defined in a `test` action using the `services` key.
+
+```yaml title="Custom test services"
+- test:
+    services:
+    - name: srv1
+      from: git
+      repository: https://example.com/org/srv1.git
+      path: docker-compose.yml
+    - name: srv2
+      from: url
+      repository: https://example.com/srv2.tar.gz
+      path: docker-compose.yaml
+      service: srv-name
+      compression: gz
+```
+
+### name
+
+Unique test service name.
+
+### from
+
+The type of the repository. Supported: `git` or `url`.
+
+#### git
+
+See [git](#git)
+
+#### url
+
+See [url](#url)
+
+### repository
+
+A publicly readable repository location.
+
+### path
+
+Path to the Docker Compose file within the repository.
+
+### service
+
+A specific service to start. If not set, all services in the compose file are
+started.
+
+### Lifecycle
+
+Services started remain active until the end of the job. You can use command
+`stop_test_services` to stop services earlier.
+
+```yaml title="Stop test services"
+- command:
+    name: stop_test_services
+```
 
 --8<-- "refs.txt"
