@@ -1266,6 +1266,25 @@ def test_worker_health(client, setup):
     assert worker.health == 1  # nosec
 
 
+def test_worker_health_reason_escapsed(client, setup):
+    worker = Worker.objects.get(hostname="worker-01")
+    assert worker.health == 0
+    assert client.login(username="admin", password="admin") is True
+
+    reason = "<script>"
+    ret = client.post(
+        reverse("lava.scheduler.worker.health", kwargs={"pk": worker.hostname}),
+        {"health": "Maintenance", "reason": reason},
+    )
+    assert ret.status_code == 302
+
+    log_entry = LogEntry.objects.filter(object_id=worker.hostname).first()
+    assert log_entry is not None
+    msg = log_entry.get_change_message()
+    assert reason not in msg
+    assert "&lt;script&gt;" in msg
+
+
 @pytest.mark.django_db
 def test_username_list_json_no_auth(client, setup):
     ret = client.get(reverse("lava.scheduler.username_list_json"), {"term": "t"})
