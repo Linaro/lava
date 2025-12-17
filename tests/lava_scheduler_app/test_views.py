@@ -8,6 +8,7 @@ from json import loads as json_loads
 from pathlib import Path
 
 import pytest
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
@@ -1219,6 +1220,25 @@ def test_device_health(client, setup):
     assert ret.status_code == 302  # nosec
     device.refresh_from_db()
     assert device.health == 3  # nosec
+
+
+@pytest.mark.django_db
+def test_device_health_reason_escaped(client, setup):
+    device = Device.objects.get(hostname="qemu01")
+    assert client.login(username="admin", password="admin") is True
+
+    reason = "<script>"
+    ret = client.post(
+        reverse("lava.scheduler.device.health", kwargs={"pk": device.hostname}),
+        {"health": "bad", "reason": reason},
+    )
+    assert ret.status_code == 302
+
+    log_entry = LogEntry.objects.filter(object_id=device.hostname).first()
+    assert log_entry is not None
+    msg = log_entry.get_change_message()
+    assert reason not in msg
+    assert "&lt;script&gt;" in msg
 
 
 @pytest.mark.django_db
