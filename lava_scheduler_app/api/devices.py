@@ -11,6 +11,7 @@ from django.contrib.auth.models import Group, User
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import Prefetch, Q
+from django.utils.html import escape
 
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
@@ -445,7 +446,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                             % (
                                 prev_health,
                                 device.get_health_display(),
-                                reason or "xmlrpc api",
+                                escape(reason) or "xmlrpc api",
                             ),
                         )
                 except KeyError:

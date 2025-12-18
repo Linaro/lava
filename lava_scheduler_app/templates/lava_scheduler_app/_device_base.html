@@ -128,7 +128,7 @@
         {% endif %}
       </dd>
       <dt>Health reason</dt>
-      <dd>{{ device_health_reason|default:"..."|truncatewords_html:200|wordwrap:80|linebreaksbr }}</dd>
+      <dd class="overflow-wrap">{{ device_health_reason|default:"..."|truncatewords_html:200|linebreaksbr }}</dd>
       <dt>Device dictionary</dt>
       <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
     </dl>
