@@ -10,6 +10,7 @@ import xmlrpc.client
 from io import BytesIO as StringIO
 
 import pytest
+from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.test.client import Client
 from django.utils import timezone
@@ -1242,6 +1243,19 @@ def test_devices_update(setup):
     )
     device.refresh_from_db()
     assert device.description == "hello"  # nosec
+
+    # 7. update health reason escaped
+    reason = "<script>"
+    server("admin", "admin").scheduler.devices.update(
+        "black01", None, None, None, None, "GOOD", None, None, reason
+    )
+    device.refresh_from_db()
+    assert device.health == Device.HEALTH_GOOD
+    log_entry = LogEntry.objects.filter(object_id=device.hostname).first()
+    assert log_entry is not None
+    msg = log_entry.get_change_message()
+    assert reason not in msg
+    assert "&lt;script&gt;" in msg
 
 
 @pytest.mark.django_db
