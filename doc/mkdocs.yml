@@ -14,6 +14,7 @@ theme:
   include_sidebar: true
   features:
   - navigation.tabs
+  - content.code.copy
   palette:
     primary: "light-green"
     accent: "light-green"
