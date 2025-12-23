@@ -274,3 +274,125 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
                 ),
             ],
         )
+
+
+class TestMonitorExpected(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = TestMonitorAction(self.job)
+        self.action.logger = RecordingLogger()
+        self.action.level = "3.1"
+        self.test_suite_name = "ts1"
+
+    def test_handle_expected_all_match(self):
+        self.action.report = {"tc1": "pass", "tc2": "fail"}
+
+        self.action.handle_expected(["tc1", "tc2"], self.test_suite_name)
+
+        self.assertEqual(self.action.logger.logs, [])
+
+    def test_handle_expected_missing(self):
+        self.action.report = {"tc1": "pass"}
+
+        self.action.handle_expected(["tc1", "tc2", "tc3"], self.test_suite_name)
+
+        self.assertEqual(
+            self.action.logger.logs,
+            [
+                ("warning", "Reporting missing expected test cases as 'fail' ...", {}),
+                (
+                    "results",
+                    {
+                        "definition": self.test_suite_name,
+                        "case": "tc2",
+                        "result": "fail",
+                        "level": "3.1",
+                        "extra": {
+                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                        },
+                    },
+                    {},
+                ),
+                (
+                    "results",
+                    {
+                        "definition": self.test_suite_name,
+                        "case": "tc3",
+                        "result": "fail",
+                        "level": "3.1",
+                        "extra": {
+                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                        },
+                    },
+                    {},
+                ),
+            ],
+        )
+        self.assertEqual(self.action.report["tc2"], "fail")
+        self.assertEqual(self.action.report["tc3"], "fail")
+
+    def test_handle_expected_unexpected(self):
+        self.action.report = {"tc1": "pass", "tc2": "fail", "tc3": "pass"}
+
+        self.action.handle_expected(["tc1", "tc2"], self.test_suite_name)
+
+        self.assertEqual(
+            self.action.logger.logs,
+            [("warning", "Unexpected test result: tc3: pass", {})],
+        )
+
+    def test_handle_expected_missing_and_unexpected(self):
+        self.action.report = {"tc1": "pass", "tc3": "fail"}
+
+        self.action.handle_expected(["tc1", "tc2"], self.test_suite_name)
+
+        self.assertEqual(
+            self.action.logger.logs,
+            [
+                ("warning", "Reporting missing expected test cases as 'fail' ...", {}),
+                (
+                    "results",
+                    {
+                        "definition": self.test_suite_name,
+                        "case": "tc2",
+                        "result": "fail",
+                        "level": "3.1",
+                        "extra": {
+                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
+                        },
+                    },
+                    {},
+                ),
+                ("warning", "Unexpected test result: tc3: fail", {}),
+            ],
+        )
+
+
+class TestMonitorSummary(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = TestMonitorAction(self.job)
+        self.action.logger = RecordingLogger()
+        self.action.level = "3.1"
+        self.test_suite_name = "ts1"
+
+    def test_handle_summary(self):
+        self.action.report = {"tc1": "pass", "tc2": "fail"}
+
+        self.action.handle_summary(self.test_suite_name)
+
+        self.assertEqual(len(self.action.logger.logs), 3)
+        self.assertEqual(self.action.logger.logs[0][0], "debug")
+        self.assertEqual(self.action.logger.logs[0][1], "--- ts1 Test Report ---")
+        self.assertEqual(self.action.logger.logs[1][0], "debug")
+        self.assertIn("tc1: pass", self.action.logger.logs[1][1])
+        self.assertIn("tc2: fail", self.action.logger.logs[1][1])
+        self.assertEqual(self.action.logger.logs[2][0], "debug")
+        self.assertIn("End", self.action.logger.logs[2][1])
+
+    def test_handle_summary_empty(self):
+        self.action.report = {}
+
+        self.action.handle_summary(self.test_suite_name)
+
+        self.assertEqual(self.action.logger.logs, [])
