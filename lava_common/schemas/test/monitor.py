@@ -19,6 +19,7 @@ def schema():
                 Required("end"): str,
                 Required("pattern"): str,
                 Optional("fixupdict"): {str: Any("pass", "fail", "skip", "unknown")},
+                Optional("expected"): [str],
             }
         ]
     }
