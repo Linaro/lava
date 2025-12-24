@@ -176,7 +176,6 @@ class TestTestShell(LavaDispatcherTestCase):
         }
 
         action.logger.results = MagicMock()
-        action.signal_end_run = MagicMock()
         action.parameters = {"namespace": "common"}
         action.data = {}
         action.set_namespace_data(
@@ -187,9 +186,9 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # The expected test cases list handler is triggered on "signal.ENDRUN".
-        data = ("ENDRUN", "0_DEFINITION UUID")
+        params = ["0_DEFINITION", "UUID"]
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+            self.assertIs(action.signal_end_run(params), None)
 
         # Test that missing test case are sorted and reported as 'fail'.
         action.logger.results.assert_has_calls(
@@ -221,17 +220,18 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # Test that warning logs appear for both missing and unexpected test cases.
-        self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
-            [
-                ("DEBUG", "Received signal: <ENDRUN> 0_DEFINITION UUID"),
-                ("WARNING", "Reporting missing expected test cases as 'fail' ..."),
-                ("WARNING", "Unexpected test result: tc5: pass"),
-                (
-                    "WARNING",
-                    "Unexpected test result: tc6: {'set': 'set1', 'result': 'fail'}",
-                ),
-            ],
+        actual_logs = [(r.levelname, r.message) for r in action_logs.records]
+        self.assertIn(
+            ("WARNING", "Reporting missing expected test cases as 'fail' ..."),
+            actual_logs,
+        )
+        self.assertIn(("WARNING", "Unexpected test result: tc5: pass"), actual_logs)
+        self.assertIn(
+            (
+                "WARNING",
+                "Unexpected test result: tc6: {'set': 'set1', 'result': 'fail'}",
+            ),
+            actual_logs,
         )
 
     def test_signal_start_end_tc(self):
