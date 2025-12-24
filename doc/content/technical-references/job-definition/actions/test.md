@@ -341,6 +341,29 @@ fixupdict:
   SKIPPED: skip
 ```
 
+### expected
+
+(optional) Provide an expected test case list. After the test suite `end`
+matches, missing test cases are reported as fail. Extra test cases are logged
+as warnings.
+
+```yaml title="Expected test cases"
+- test:
+    monitors:
+    - name: "mcuboot_suite"
+      start: "Execute test suites for the MCUBOOT area"
+      end: "End of MCUBOOT test suites"
+      pattern: "TEST: (?P<test_case_id>.+?) - (?P<result>(PASSED|FAILED|SKIPPED))"
+      fixupdict:
+         'PASSED': pass
+         'FAILED': fail
+         'SKIPPED': skip
+      expected:
+      - "tfm_mcuboot_integration_test_0001"
+```
+
+See also [expected](/user/basic-tutorials/test-definition/#expected).
+
 ### monitors
 
 Multiple monitors can be defined for a single boot. LAVA processes each monitor

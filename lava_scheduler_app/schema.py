@@ -170,6 +170,7 @@ def _monitor_def_schema():
                 Required("end"): str,
                 Required("pattern"): str,
                 Optional("fixupdict"): dict,
+                Optional("expected"): [str],
             }
         ]
     )

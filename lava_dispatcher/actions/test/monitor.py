@@ -14,6 +14,7 @@ import pexpect
 from lava_common.decorators import nottest
 from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ class TestMonitorRetry(RetryAction):
 
 
 @nottest
-class TestMonitorAction(Action):
+class TestMonitorAction(ReportMixin, Action):
     """
     Watch the DUT output and match known results strings without any interaction.
     """
@@ -55,7 +56,8 @@ class TestMonitorAction(Action):
         if not connection:
             raise ConnectionClosedError("Connection closed")
         for monitor in self.parameters["monitors"]:
-            self.test_suite_name = monitor["name"]
+            self.report = {}
+            self.test_suite_name = monitor["name"].replace(" ", "-").lower()
 
             self.fixupdict = monitor.get("fixupdict")
 
@@ -79,6 +81,10 @@ class TestMonitorAction(Action):
                 ):
                     pass
 
+            if expected := monitor.get("expected"):
+                self.handle_expected(expected, self.test_suite_name)
+
+            self.handle_summary(self.test_suite_name)
         return connection
 
     def _keep_running(self, test_connection, timeout=120):
@@ -118,9 +124,7 @@ class TestMonitorAction(Action):
                         case_id = re.sub(r"\W+", "_", case_id)
                         self.logger.debug("test_case_id: %s", case_id)
                         results = {
-                            "definition": self.test_suite_name.replace(
-                                " ", "-"
-                            ).lower(),
+                            "definition": self.test_suite_name,
                             "case": case_id,
                             "level": self.level,
                             "result": match["result"],
@@ -130,6 +134,7 @@ class TestMonitorAction(Action):
                         if "units" in match:
                             results.update({"units": match["units"]})
                         self.logger.results(results)
+                        self.report[case_id] = match["result"]
             else:
                 if all(x in match for x in ["test_case_id", "measurement"]):
                     if match["measurement"] and match["test_case_id"]:
@@ -138,9 +143,7 @@ class TestMonitorAction(Action):
                         case_id = re.sub(r"\W+", "_", case_id)
                         self.logger.debug("test_case_id: %s", case_id)
                         results = {
-                            "definition": self.test_suite_name.replace(
-                                " ", "-"
-                            ).lower(),
+                            "definition": self.test_suite_name,
                             "case": case_id,
                             "level": self.level,
                             "result": "pass",
@@ -149,5 +152,6 @@ class TestMonitorAction(Action):
                         if "units" in match:
                             results.update({"units": match["units"]})
                         self.logger.results(results)
+                        self.report[case_id] = "pass"
             ret_val = True
         return ret_val
