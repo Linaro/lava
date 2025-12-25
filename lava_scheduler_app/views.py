@@ -1749,6 +1749,9 @@ def job_detail(request, pk):
         "job_tags": job.tags.all(),
         "size_limit": job.size_limit,
         "validation_errors": validation_errors,
+        "failure_comment": (
+            job.failure_comment if job.health != job.HEALTH_COMPLETE else None
+        ),
     }
 
     try:
@@ -1991,7 +1994,9 @@ def job_status(request, pk):
         "actual_device": "<i>...</i>",
         "duration": "<i>...</i>",
         "job_state": job.get_state_display(),
-        "failure_comment": job.failure_comment,
+        "failure_comment": (
+            job.failure_comment if job.health != job.HEALTH_COMPLETE else None
+        ),
         "started": "<i>...</i>",
         "subjobs": [],
     }

@@ -231,8 +231,8 @@
 </div>
 {% endif %}
 
-<div id="failure_block" {% if not job.failure_comment %}style="display: none;" {% endif %}>
-  <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
+<div id="failure_block" {% if not failure_comment %}style="display: none;" {% endif %}>
+  <pre class="alert alert-danger failure_comment">{{ failure_comment }}</pre>
 </div>
 <div class="alert alert-danger" id="size-warning" {% if not size_warning %}style="display: none;"{% endif %}>
 <p><strong>This log file is too large to view</strong>, (over {{ size_limit|filesizeformat }}).
@@ -660,7 +660,7 @@
           }
           if (data['failure_comment']) {
             $("#failure_block").show();
-            $(".failure_comment").html(data['failure_comment']);
+            $(".failure_comment").text(data['failure_comment']);
           }
         }
       });
