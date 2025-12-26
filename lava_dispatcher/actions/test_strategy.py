@@ -113,16 +113,16 @@ class TestInteractive(LavaTestStrategy):
     def accepts(
         cls, device: dict[str, Any], parameters: dict[str, Any]
     ) -> tuple[bool, str]:
-        required_parms = ["name", "prompts", "script"]
-        if "interactive" in parameters:
-            for script in parameters["interactive"]:
-                if not all(x for x in required_parms if x in script):
-                    return (
-                        False,
-                        "missing a required parameter from %s" % required_parms,
-                    )
-            return True, "accepted"
-        return False, '"interactive" not in parameters'
+        if "interactive" not in parameters:
+            return False, '"interactive" not in parameters'
+
+        required_parms = {"name", "prompts", "script"}
+        for script in parameters["interactive"]:
+            missing = required_parms - script.keys()
+            if missing:
+                return False, f"missing required parameters {sorted(missing)}"
+
+        return True, "accepted"
 
     @classmethod
     def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
@@ -160,14 +160,16 @@ class TestMonitor(LavaTestStrategy):
         cls, device: dict[str, Any], parameters: dict[str, Any]
     ) -> tuple[bool, str]:
         # TODO: Add configurable timeouts
-        required_parms = ["name", "start", "end", "pattern"]
-        if "monitors" in parameters:
-            for monitor in parameters["monitors"]:
-                for param in required_parms:
-                    if param not in monitor:
-                        return (False, "missing required parameter '%s'" % param)
-            return True, "accepted"
-        return False, '"monitors" not in parameters'
+        if "monitors" not in parameters:
+            return False, '"monitors" not in parameters'
+
+        required_parms = {"name", "start", "end", "pattern"}
+        for monitor in parameters["monitors"]:
+            missing = required_parms - monitor.keys()
+            if missing:
+                return False, f"missing required parameters {sorted(missing)}"
+
+        return True, "accepted"
 
     @classmethod
     def needs_deployment_data(cls, parameters: dict[str, Any]) -> bool:
@@ -214,19 +216,17 @@ class MultinodeTestShell(LavaTestStrategy):
         # Avoid importing MultinodeProtocol
         multinode_protocol_name = "lava-multinode"
 
-        if "role" in parameters:
-            if multinode_protocol_name in parameters:
-                if "target_group" in parameters[multinode_protocol_name]:
-                    return True, "accepted"
-                else:
-                    return (
-                        False,
-                        '"target_group" was not in parameters for %s'
-                        % multinode_protocol_name,
-                    )
-            else:
-                return False, "%s was not in parameters" % multinode_protocol_name
-        return False, '"role" not in parameters'
+        if "role" not in parameters:
+            return False, '"role" not in parameters'
+        if multinode_protocol_name not in parameters:
+            return False, f"{multinode_protocol_name} was not in parameters"
+        if "target_group" not in parameters[multinode_protocol_name]:
+            return (
+                False,
+                f'"target_group" was not in parameters for {multinode_protocol_name}',
+            )
+
+        return True, "accepted"
 
     @staticmethod
     def _get_subaction_class(parameters: dict[str, Any]) -> type[LavaTestStrategy]:
