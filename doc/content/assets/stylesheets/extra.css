@@ -1,0 +1,4 @@
+/* Make the logo more bright so it is visible on light-green header*/
+.md-header__button.md-logo img {
+  filter: brightness(2);
+}
