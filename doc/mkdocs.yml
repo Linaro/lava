@@ -1,10 +1,12 @@
-site_name: LAVA
+site_name: LAVA Documentation
 repo_url: https://gitlab.com/lava/lava/
 repo_name: GitLab
 site_author: LAVA team
 site_description: LAVA documentation
 
 docs_dir: content/
+extra_css:
+- assets/stylesheets/extra.css
 
 # https://squidfunk.github.io/mkdocs-material/
 # python3 -m pip install mkdocs-material
@@ -19,6 +21,8 @@ theme:
     primary: "light-green"
     accent: "light-green"
   font: false
+  logo: assets/images/logo.png
+  favicon: assets/images/favicon.png
 
 # https://squidfunk.github.io/mkdocs-material/getting-started/#customization
 markdown_extensions:
