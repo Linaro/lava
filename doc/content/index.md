@@ -8,7 +8,7 @@ Tests can be simple boot testing, bootloader testing and system level testing,
 although extra hardware may be required for some system tests.
 Results are tracked over time and data can be exported for further analysis.
 
-# Documentation layout
+## Documentation layout
 
 The documentation is made of five sections:
 
@@ -19,3 +19,10 @@ The documentation is made of five sections:
 * [Technical references](technical-references/architecture.md)
 
 The guides are targeting specific audiences: Users, Admins or Developers.
+Depending on how you expect to use LAVA, the **First steps** of each section
+describe several useful starting points.
+
+## Getting started
+
+New to LAVA? Start with the
+[Getting started](introduction/getting-started.md) guide.

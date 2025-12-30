@@ -5,13 +5,13 @@ Two installation methods are currently supported:
 * [docker](#docker)
 * [debian](#debian)
 
-We advice to use docker image for a first test of LAVA.
+We advise to use docker image for a first test of LAVA.
 
 For a production instance, both methods would be suitable.
 
 ## Docker
 
-In order to install LAVA using the official docker images, we advice to use the
+In order to install LAVA using the official docker images, we advise to use the
 provided **docker-compose** file.
 
 ### Dependencies
@@ -19,20 +19,46 @@ provided **docker-compose** file.
 Install the dependencies: `docker` and `docker-compose`:
 
 ```shell
-apt update
-apt install docker-compose
+sudo apt update
+sudo apt install docker-compose
+```
+
+The ports needed by the lava services must be available on the host. You can
+check if they are occupied with the below command. Stop the programs that using
+the port if any.
+
+```shell
+sudo ss -tulpn | grep -E ':(69|80|111|2049|3079|5500|7101|8001|35543)\s'
 ```
 
 ### Install
 
-Get the **docker-compose** files from [gitlab][lava-docker-compose] and use it.
+1. Get the **docker-compose** files from [gitlab][lava-docker-compose].
 
-```shell
-git clone https://gitlab.com/lava/pkg/docker-compose
-cd docker-compose/
-docker-compose pull
-docker-compose up
-```
+    ```shell
+    git clone https://gitlab.com/lava/pkg/docker-compose
+    cd docker-compose/
+    ```
+
+2. Configure the `.env` file to set LAVA admin username and password. You will
+need them for using and managing your LAVA instance.
+
+    ```shell
+    DC_LAVA_ADMIN_USERNAME=<your_user_name>
+    DC_LAVA_ADMIN_PASSWORD=<your_user_password>
+    ```
+
+3. Start the services
+
+    ```shell
+    docker-compose pull
+    docker-compose build
+    docker-compose up
+    ```
+
+    !!! tip
+        If `/dev/kvm` is unavailable on your host, comment out the `- /dev/kvm`
+        line in the `docker-compose.yaml`.
 
 The newly created instance is now available at [localhost].
 

@@ -3,28 +3,38 @@ job_name: simple docker test
 
 timeouts:
   job:
-    minutes: 10
+    minutes: 15
 visibility: public
 priority: medium
 
 actions:
 - deploy:
     to: docker
-    image: debian:bullseye
+    image: debian:trixie
     os: debian
+    timeout:
+      minutes: 10
+
 - boot:
     method: docker
     command: bash
     prompts: ['root@lava:/']
+    timeout:
+      minutes: 5
+
 - test:
+    timeout:
+      minutes: 5
     definitions:
     - from: inline
-      name: env-dut-inline
-      path: inline/env-dut.yaml
+      name: smoke-tests-basic-inline
+      path: inline/smoke-tests-basic.yaml
       repository:
         metadata:
           format: Lava-Test Test Definition 1.0
           name: smoke-tests-basic
         run:
           steps:
-          - printenv
+          - lava-test-case check-lava-env --shell printenv | grep 'LAVA_JOB_ID'
+          - lava-test-case check-sys-info --shell uname -a | grep 'Debian'
+          - lava-test-case run-lscpu --shell lscpu
