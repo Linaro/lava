@@ -46,6 +46,7 @@ markdown_extensions:
 nav:
 - Introduction:
   - Concepts: introduction/concepts.md
+  - Features: introduction/features.md
   - Glossary: introduction/glossary.md
   - Use cases:
     - Basic testing: introduction/use-cases/boot-testing.md
