@@ -32,7 +32,6 @@ class TestMonitorAccepts(LavaDispatcherTestCase):
                     "monitors": [
                         {
                             "start": "BOOTING ZEPHYR",
-                            "end": "PROJECT EXECUTION SUCCESSFUL",
                             "pattern": (
                                 "(?P<test_case_id>.*) (?P<measurement>.*) "
                                 "tcs = [0-9]* nsec"
@@ -42,7 +41,7 @@ class TestMonitorAccepts(LavaDispatcherTestCase):
                     ]
                 },
             ),
-            (False, "missing required parameter 'name'"),
+            (False, "missing required parameters ['end', 'name']"),
         )
 
         # Working example
