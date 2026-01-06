@@ -170,7 +170,7 @@ class TestServiceAction(Action):
         # clone/untar
         if repo_from == "git":
             self.logger.info(f"Fetching {self.parameters['repository']} ...")
-            vcs = GitHelper(self.parameters["repository"])
+            vcs = GitHelper(self.parameters["repository"], self.logger)
             if revision := self.parameters.get("revision"):
                 shallow = False
             else:

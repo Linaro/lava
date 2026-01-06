@@ -8,6 +8,8 @@
 # pylint: disable=unused-import
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import lava_dispatcher.protocols.strategies
 from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
@@ -21,6 +23,9 @@ from lava_dispatcher.connection import Protocol
 from lava_dispatcher.deployment_data import get_deployment_data
 from lava_dispatcher.job import Job
 from lava_dispatcher.power import FinalizeAction
+
+if TYPE_CHECKING:
+    from lava_common.log import YAMLLogger
 
 
 def parse_action(job_data, name, device, pipeline, test_info, test_count):
@@ -88,14 +93,22 @@ class JobParser:
         duration = Timeout.parse(timeouts_dict["job"])
         return Timeout("job", None, duration=duration)
 
-    def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
+    def parse(
+        self,
+        content,
+        device,
+        job_id,
+        dispatcher_config,
+        env_dut=None,
+        logger: YAMLLogger | None = None,
+    ):
         data = yaml_safe_load(content)
         job = Job(
             job_id=job_id,
             parameters=data,
-            logger=logger,
             device=device,
             timeout=self._parse_job_timeout(data),
+            logger=logger,
         )
         test_counts = {}
         job.parameters["env_dut"] = env_dut
@@ -109,7 +122,7 @@ class JobParser:
         level_tuple = Protocol.select_all(job.parameters)
         # sort the list of protocol objects by the protocol class level.
         job.protocols = [
-            item[0](job.parameters, job_id)
+            item[0](job.parameters, job_id, job.logger)
             for item in sorted(level_tuple, key=lambda level_tuple: level_tuple[1])
         ]
         pipeline = Pipeline(job=job)

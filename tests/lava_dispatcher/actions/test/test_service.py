@@ -295,7 +295,9 @@ class TestTestServiceAction(LavaDispatcherTestCase):
 
             srv2.run(None, 420)
 
-        GitHelper_mock.assert_called_once_with("https://example.com/org/srv2.git")
+        GitHelper_mock.assert_called_once_with(
+            "https://example.com/org/srv2.git", srv2.logger
+        )
 
         git_instance_mock.clone.assert_called_once_with(
             srv2.repo_dir,
