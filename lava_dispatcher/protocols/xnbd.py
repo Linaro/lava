@@ -4,9 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
-import logging
-
 import pexpect
 
 from lava_common.constants import XNBD_SYSTEM_TIMEOUT
@@ -24,11 +21,10 @@ class XnbdProtocol(Protocol):
 
     name = "lava-xnbd"
 
-    def __init__(self, parameters, job_id):
-        super().__init__(parameters, job_id)
+    def __init__(self, parameters, job_id, job_logger):
+        super().__init__(parameters, job_id, job_logger)
         # timeout in utils.constants, default 10000
         self.system_timeout = Timeout("system", None, duration=XNBD_SYSTEM_TIMEOUT)
-        self.logger = logging.getLogger("dispatcher")
         self.parameters = parameters
         self.port = None
         self.ports = []

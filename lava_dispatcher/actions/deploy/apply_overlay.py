@@ -157,7 +157,7 @@ class ApplyOverlayImage(Action):
                     )
                 self.logger.debug("root_partition: %s", root_partition)
 
-            copy_in_overlay(decompressed_image, root_partition, overlay_file)
+            copy_in_overlay(self, decompressed_image, root_partition, overlay_file)
         else:
             self.logger.debug("No overlay to deploy")
         return connection
@@ -206,7 +206,7 @@ class ApplyOverlaySparseImage(Action):
             command_list, error_msg="simg2img failed for %s" % decompressed_image
         )
         self.logger.debug("Copying overlay")
-        copy_overlay_to_sparse_fs(ext4_img, overlay_file)
+        copy_overlay_to_sparse_fs(self, ext4_img, overlay_file)
         command_list = ["/usr/bin/img2simg", ext4_img, decompressed_image]
         self.run_cmd(command_list, error_msg="img2simg failed for %s" % ext4_img)
         os.remove(ext4_img)
@@ -1146,7 +1146,7 @@ class ApplyOverlayAvh(Action):
             zf.extractall(tempdir)
 
         storage_file_path = f"{tempdir}/{self.storage_file}"
-        copy_in_overlay(storage_file_path, self.root_partition, overlay_file)
+        copy_in_overlay(self, storage_file_path, self.root_partition, overlay_file)
 
         shutil.make_archive(fw_package_path[:-4], "zip", tempdir)
 

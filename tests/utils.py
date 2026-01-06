@@ -7,10 +7,11 @@
 import os
 from stat import S_IXUSR
 
+from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.shell import _which_check
 
 
-class DummyLogger:
+class DummyLogger(YAMLLogger):
     def info(self, *args, **kwargs):
         pass
 

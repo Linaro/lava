@@ -66,7 +66,7 @@ class MultinodeMixin(Action):
             for protocol in self.job.protocols
             if protocol.name == MultinodeProtocol.name
         ]
-        self.signal_director = self.SignalDirector(self.protocols[0])
+        self.signal_director = self.SignalDirector(self.job, self.protocols[0])
 
     def check_patterns(self, event, test_connection):
         """
@@ -104,8 +104,8 @@ class MultinodeMixin(Action):
         return ret
 
     class SignalDirector(TestShellAction.SignalDirector):
-        def __init__(self, protocol):
-            super().__init__(protocol)
+        def __init__(self, job: Job, protocol):
+            super().__init__(job, protocol)
             self.character_delay = 0
             self.base_message = {}
 

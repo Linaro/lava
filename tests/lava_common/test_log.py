@@ -4,14 +4,13 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import logging
 import signal
 
 from lava_common.log import (
     SECRETS_MASK,
-    HTTPHandler,
     JobOutputSender,
-    YAMLListFormatter,
+    YAMLFileHandler,
+    YAMLHTTPHandler,
     YAMLLogger,
 )
 from lava_common.yaml import yaml_safe_load
@@ -160,30 +159,12 @@ def test_http_handler(mocker):
     Queue = mocker.Mock()
     mocker.patch("multiprocessing.Process", return_value=Process)
     mocker.patch("multiprocessing.Queue", return_value=Queue)
-    handler = HTTPHandler("http://localhost/", "token", 1, "1234")
+    handler = YAMLHTTPHandler("http://localhost/", "token", 1, "1234")
 
     assert len(Process.start.mock_calls) == 1
 
-    record = logging.LogRecord(
-        name="lava",
-        level=logging.ERROR,
-        lineno=0,
-        pathname=None,
-        msg="Hello world",
-        args=None,
-        exc_info=None,
-    )
-    handler.emit(record)
-    record = logging.LogRecord(
-        name="lava",
-        level=logging.ERROR,
-        lineno=0,
-        pathname=None,
-        msg="",
-        args=None,
-        exc_info=None,
-    )
-    handler.emit(record)
+    handler.emit("Hello world")
+    handler.emit("")
 
     assert len(handler.queue.put.mock_calls) == 1
     assert handler.queue.put.mock_calls[0][1] == ("Hello world",)
@@ -196,17 +177,18 @@ def test_http_handler(mocker):
 def test_yaml_logger(mocker):
     mocker.patch("multiprocessing.Process")
 
-    logger = YAMLLogger("lava")
-    assert logger.handler is None
-    logger.addHTTPHandler("http://localhost/", "my-token", 1, "1234")
-    assert isinstance(logger.handler, HTTPHandler) is True
+    logger = YAMLLogger()
+    assert len(logger.handlers) == 0
+    logger.add_http_handler("http://localhost/", "my-token", 1, "1234")
+    assert isinstance(logger.handlers[0], YAMLHTTPHandler) is True
 
-    def check(logger, lvl, lvlno, msg=None, mock_calls=1):
+    def check(logger, lvl, msg=None, mock_calls=1):
         assert len(logger._log.mock_calls) == mock_calls
         if mock_calls == 0:
             return
-        assert logger._log.mock_calls[0][1][0] == lvlno
-        data = yaml_safe_load(logger._log.mock_calls[0][1][1])
+
+        data = yaml_safe_load(logger._log.mock_calls[0][1][0])
+        assert data["lvl"] == lvl
         if lvl == "feedback":
             assert list(data.keys()) == ["dt", "lvl", "msg", "ns"]
         else:
@@ -219,44 +201,42 @@ def test_yaml_logger(mocker):
 
     logger._log = mocker.Mock()
     logger.exception("an exception")
-    check(logger, "exception", logging.ERROR)
+    check(logger, "exception")
 
     logger._log = mocker.Mock()
     logger.error("an error: %d", 1)
-    check(logger, "error", logging.ERROR, "an error: 1")
+    check(logger, "error", "an error: 1")
 
     logger._log = mocker.Mock()
     logger.warning("a warning")
-    check(logger, "warning", logging.WARNING, "a warning")
+    check(logger, "warning", "a warning")
 
     logger._log = mocker.Mock()
     logger.info("an info")
-    check(logger, "info", logging.INFO)
+    check(logger, "info")
 
     logger._log = mocker.Mock()
     logger.debug("a debug message")
-    check(logger, "debug", logging.DEBUG, "a debug message")
+    check(logger, "debug", "a debug message")
 
     logger._log = mocker.Mock()
     logger.input("an input")
-    check(logger, "input", logging.INFO)
+    check(logger, "input")
 
     logger._log = mocker.Mock()
     logger.target("a target message")
-    check(logger, "target", logging.INFO, "a target message")
+    check(logger, "target", "a target message")
 
     logger._log = mocker.Mock()
     logger.feedback("a feedback from namespace", namespace="ns")
-    check(logger, "feedback", logging.INFO, "a feedback from namespace")
+    check(logger, "feedback", "a feedback from namespace")
 
     logger._log = mocker.Mock()
     logger.marker({"case": "0_test", "type": "start_test_case"})
-    check(
-        logger, "marker", logging.INFO, {"case": "0_test", "type": "start_test_case"}, 0
-    )
+    check(logger, "marker", {"case": "0_test", "type": "start_test_case"}, 0)
 
     logger.event("an event")
-    check(logger, "event", logging.INFO)
+    check(logger, "event")
 
     logger.marker({"case": "0_test", "type": "end_test_case"})
     assert len(logger._log.mock_calls) == 1
@@ -264,7 +244,7 @@ def test_yaml_logger(mocker):
 
     logger._log = mocker.Mock()
     logger.info("a" * 10**7)
-    check(logger, "info", logging.INFO, "<line way too long ...>")
+    check(logger, "info", "<line way too long ...>")
 
     # Check secrets
     example_secret = "MySecretToken"
@@ -274,26 +254,16 @@ def test_yaml_logger(mocker):
     check(
         logger,
         "info",
-        logging.INFO,
         "downloading from example.com/myfile?token=[MASKED]",
     )
     SECRETS_MASK.discard(example_secret)
 
     logger.close()
-    assert logger.handler is None
+    assert len(logger.handlers) == 0
 
 
 def test_yaml_list_formatter():
-    formatter = YAMLListFormatter()
-    record = logging.LogRecord(
-        name="test",
-        level=logging.INFO,
-        pathname="test.py",
-        lineno=1,
-        msg="test message",
-        args=(),
-        exc_info=None,
-    )
+    formatter = YAMLFileHandler("/dev/null")
 
-    formatted = formatter.format(record)
+    formatted = formatter.format("test message")
     assert formatted == "- test message"

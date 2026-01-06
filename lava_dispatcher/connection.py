@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import LAVABug, TestError
@@ -14,6 +13,8 @@ from lava_dispatcher.action import InternalObject
 
 if TYPE_CHECKING:
     from typing import Any
+
+    from lava_common.log import YAMLLogger
 
     from .action import Action
     from .job import Job
@@ -87,8 +88,8 @@ class Protocol:
     name = "protocol"
     level = 0
 
-    def __init__(self, parameters: dict[str, Any], job_id: str):
-        self.logger = logging.getLogger("dispatcher")
+    def __init__(self, parameters: dict[str, Any], job_id: str, job_logger: YAMLLogger):
+        self.logger = job_logger
         self.poll_timeout = Timeout(self.name, None)
         self.__errors__: list[str] = []
         self.parameters = parameters

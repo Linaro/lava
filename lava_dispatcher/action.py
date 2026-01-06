@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import contextlib
 import copy
-import logging
 import subprocess  # nosec - internal
 import time
 import traceback
@@ -369,7 +368,7 @@ class Action:
         self.pipeline: Pipeline | None = None
         self.__parameters__ = {}
         self.__errors__ = []
-        self.logger = logging.getLogger("dispatcher")
+        self.logger: YAMLLogger = job.logger
         self.__results__ = {}
         self.timeout: Timeout = Timeout(
             self.name, self, exception=self.timeout_exception

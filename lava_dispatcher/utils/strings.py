@@ -5,12 +5,13 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
     from typing import Any
+
+    from lava_dispatcher.action import Action
 
 
 def substitute(
@@ -66,7 +67,7 @@ def seconds_to_str(time: float) -> str:
     return "%02d:%02d:%02d" % (hours, minutes, seconds)
 
 
-def safe_dict_format(string: str, dictionary: dict[str, str]) -> str:
+def safe_dict_format(action: Action, string: str, dictionary: dict[str, str]) -> str:
     """
     Used to replace value in string using dictionary
     eg : '{foo}{bar}.safe_dict_format({'foo' : 'hello'})
@@ -75,15 +76,14 @@ def safe_dict_format(string: str, dictionary: dict[str, str]) -> str:
 
     class SafeDict(dict[str, str]):
         def __missing__(self, key: str) -> str:
-            logger = logging.getLogger("dispatcher")
-            logger.warning("Missing key : '{%s}' for string '%s'", key, string)
+            action.logger.warning("Missing key : '{%s}' for string '%s'", key, string)
             return "{" + key + "}"
 
     return string.format_map(SafeDict(dictionary))
 
 
 def map_kernel_uboot(
-    kernel_type: str, device_params: dict[str, Any] | None = None
+    action: Action, kernel_type: str, device_params: dict[str, Any] | None = None
 ) -> str:
     """
     Support conversion of kernels only if the device cannot
@@ -95,21 +95,20 @@ def map_kernel_uboot(
     bootm is the last resort.
     """
     bootcommand = "bootm"
-    logger = logging.getLogger("dispatcher")
     if kernel_type == "uimage":
         return bootcommand
     elif kernel_type == "zimage":
         if device_params and "bootz" in device_params:
             bootcommand = "bootz"
         else:
-            logger.warning(
+            action.logger.warning(
                 "No bootz parameters available, falling back to bootm and converting zImage"
             )
     elif kernel_type == "image":
         if device_params and "booti" in device_params:
             bootcommand = "booti"
         else:
-            logger.warning(
+            action.logger.warning(
                 "No booti parameters available, falling back to bootm and converting zImage"
             )
     return bootcommand

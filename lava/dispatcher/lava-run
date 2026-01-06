@@ -6,9 +6,9 @@
 # Author: Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import argparse
-import logging
 import os
 import shutil
 import signal
@@ -20,7 +20,7 @@ from setproctitle import setproctitle
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import SECRETS_MASK, YAMLListFormatter, YAMLLogger
+from lava_common.log import SECRETS_MASK, YAMLLogger
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
@@ -108,18 +108,12 @@ def parser():
     return p_obj
 
 
-def setup_logger(options):
-    # Pipeline always log as YAML so change the base logger.
-    # Every calls to logging.getLogger will now return a YAMLLogger
-    logging.setLoggerClass(YAMLLogger)
-
+def setup_logger(options) -> YAMLLogger:
     # The logger can be used by the parser and the Job object in all phases.
-    logger = logging.getLogger("dispatcher")
+    logger = YAMLLogger()
     # Save logs to a file for debugging/post-processing.
     log_file = options.output_dir / "logs.yaml"
-    file_handler = logging.FileHandler(log_file, mode="w")
-    file_handler.setFormatter(YAMLListFormatter())
-    logger.addHandler(file_handler)
+    logger.add_file_handler(log_file)
 
     prefix = ""
     if options.dispatcher is not None:
@@ -139,19 +133,17 @@ def setup_logger(options):
         raise InfrastructureError(f"Unable to create {log_download_path}")
 
     if options.url is not None:
-        logger.addHTTPHandler(
+        logger.add_http_handler(
             f"{options.url}/scheduler/internal/v1/jobs/{options.job_id}/logs/",
             options.token,
             options.job_log_interval,
             options.job_id,
         )
-    else:
-        logger.addHandler(logging.StreamHandler())
 
     return logger
 
 
-def parse_job_file(logger, options):
+def parse_job_file(options, logger: YAMLLogger):
     """
     Uses the parsed device_config instead of the old Device class
     so it can fail before the Pipeline is made.
@@ -175,9 +167,9 @@ def parse_job_file(logger, options):
         options.definition.read_text(encoding="utf-8"),
         device,
         options.job_id,
-        logger=logger,
         dispatcher_config=dispatcher_config,
         env_dut=env_dut,
+        logger=logger,
     )
 
 
@@ -246,7 +238,7 @@ def main():
         signal.signal(signal.SIGUSR2, cancelling_handler)
 
         # Parse the definition and create the job object
-        job = parse_job_file(logger, options)
+        job = parse_job_file(options, logger)
 
         # Add secrets to the environment
         for k, v in job.parameters.get("secrets", {}).items():

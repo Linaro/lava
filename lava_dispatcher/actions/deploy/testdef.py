@@ -259,7 +259,7 @@ class GitRepoAction(RepoAction):
             self.errors = "Path to YAML file not specified in the job definition"
         if not self.valid:
             return
-        self.vcs = GitHelper(self.parameters["repository"])
+        self.vcs = GitHelper(self.parameters["repository"], self.logger)
         super().validate()
 
     @classmethod
@@ -853,7 +853,7 @@ class TestInstallAction(TestOverlayAction):
                     ".git", "", len(repo) - 1
                 )  # drop .git from the end, if present
                 dest_path = os.path.join(runner_path, os.path.basename(subdir))
-                commit_id = GitHelper(repo).clone(dest_path)
+                commit_id = GitHelper(repo, self.logger).clone(dest_path)
             elif isinstance(repo, dict):
                 # TODO: We use 'skip_by_default' to check if this
                 # specific repository should be skipped. The value
@@ -881,7 +881,9 @@ class TestInstallAction(TestOverlayAction):
                         raise TestError(
                             "Cannot mix string and url forms for the same repository."
                         )
-                    commit_id = GitHelper(url).clone(dest_path, branch=branch)
+                    commit_id = GitHelper(url, self.logger).clone(
+                        dest_path, branch=branch
+                    )
             else:
                 raise TestError("Unrecognised git-repos block.")
             if commit_id is None:

@@ -35,7 +35,6 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app.utils import split_multinode_yaml
 from tests.lava_dispatcher.test_defs import check_missing_path
 from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
-from tests.utils import DummyLogger
 
 # set to True to see extra processing details
 DEBUG = False
@@ -605,7 +604,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         parser_device = device_object
         try:
             pipeline_job = parser.parse(
-                host_job.definition, parser_device, host_job.id, DummyLogger(), ""
+                host_job.definition, parser_device, host_job.id, ""
             )
         except (
             AttributeError,
@@ -620,7 +619,7 @@ class TestYamlMultinode(TestCaseWithFactory):
 
         try:
             pipeline_job = parser.parse(
-                guest_job.definition, parser_device, guest_job.id, DummyLogger(), ""
+                guest_job.definition, parser_device, guest_job.id, ""
             )
         except (
             AttributeError,

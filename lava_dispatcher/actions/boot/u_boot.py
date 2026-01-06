@@ -144,7 +144,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
             self.errors = "Missing kernel_type for secondary media boot"
         self.logger.debug("Mapping kernel_type: %s", self.parameters["kernel_type"])
         bootcommand = map_kernel_uboot(
-            self.parameters["kernel_type"], self.job.device.get("parameters")
+            self, self.parameters["kernel_type"], self.job.device.get("parameters")
         )
         self.logger.debug("Using bootcommand: %s", bootcommand)
         self.set_namespace_data(

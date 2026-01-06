@@ -37,7 +37,7 @@ class TestVland(LavaDispatcherTestCase):
             VlandProtocol,
             [item[0] for item in sorted(level_tuple, key=lambda data: data[1])][1],
         )
-        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id)
+        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id, self.job.logger)
         self.assertIn("arbit", vprotocol.base_group)
         self.assertNotIn("group", vprotocol.base_group)
         vprotocol.set_up()
@@ -105,7 +105,7 @@ class TestVland(LavaDispatcherTestCase):
     def test_configure(self):
         self.assertIn("protocols", self.job.parameters)
         self.assertTrue(VlandProtocol.accepts(self.job.parameters))
-        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id)
+        vprotocol = VlandProtocol(self.job.parameters, self.job.job_id, self.job.logger)
         vprotocol.set_up()
 
         ret = vprotocol.configure(self.job.device, self.job)

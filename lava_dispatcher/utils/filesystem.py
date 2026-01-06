@@ -8,7 +8,6 @@ from __future__ import annotations
 import atexit
 import errno
 import glob
-import logging
 import os
 import shutil
 import tarfile
@@ -106,13 +105,12 @@ def write_bootscript(commands: list[str], filename: str | Path) -> None:
         bootscript.close()
 
 
-def _launch_guestfs(guest: Any) -> None:
+def _launch_guestfs(action: Action, guest: Any) -> None:
     # Launch guestfs and raise an InfrastructureError if needed
     try:
         guest.launch()
     except RuntimeError as exc:
-        logger = logging.getLogger("dispatcher")
-        logger.exception(str(exc))
+        action.logger.exception(str(exc))
         raise InfrastructureError("Unable to start libguestfs")
 
 
@@ -137,7 +135,7 @@ def prepare_guestfs(
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "qcow2", size * 1024 * 1024)
     guest.add_drive_opts(output, format="qcow2", readonly=False)
-    _launch_guestfs(guest)
+    _launch_guestfs(action, guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -170,7 +168,7 @@ def prepare_guestfs(
 
 
 @replace_exception(RuntimeError, JobError)
-def prepare_install_base(output: str, size: int) -> None:
+def prepare_install_base(action: Action, output: str, size: int) -> None:
     """
     Create an empty image of the specified size (in bytes),
     ready for an installer to partition, create filesystem(s)
@@ -181,7 +179,7 @@ def prepare_install_base(output: str, size: int) -> None:
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "raw", size)
     guest.add_drive_opts(output, format="raw", readonly=False)
-    _launch_guestfs(guest)
+    _launch_guestfs(action, guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -189,7 +187,9 @@ def prepare_install_base(output: str, size: int) -> None:
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_out_files(image: str, filenames: list[str], destination: str) -> None:
+def copy_out_files(
+    action: Action, image: str, filenames: list[str], destination: str
+) -> None:
     """
     Copies a list of files out of the image to the specified
     destination which must exist. Launching the guestfs is
@@ -204,7 +204,7 @@ def copy_out_files(image: str, filenames: list[str], destination: str) -> None:
 
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive_ro(image)
-    _launch_guestfs(guest)
+    _launch_guestfs(action, guest)
     devices = guest.list_devices()
     if len(devices) != 1:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -215,7 +215,9 @@ def copy_out_files(image: str, filenames: list[str], destination: str) -> None:
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_in_overlay(image: str, root_partition: str | None, overlay: str) -> None:
+def copy_in_overlay(
+    action: Action, image: str, root_partition: str | None, overlay: str
+) -> None:
     """
     Mounts test image partition as specified by the test
     writer and extracts overlay at the root, if root_partition
@@ -226,7 +228,7 @@ def copy_in_overlay(image: str, root_partition: str | None, overlay: str) -> Non
 
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
-    _launch_guestfs(guest)
+    _launch_guestfs(action, guest)
 
     if root_partition is not None:
         partitions = guest.list_partitions()
@@ -295,7 +297,9 @@ def dispatcher_download_dir(dispatcher_config: dict[str, Any]) -> str:
         return DISPATCHER_DOWNLOAD_DIR
 
 
-def copy_to_lxc(lxc_name: str, src: str, dispatcher_config: dict[str, Any]) -> str:
+def copy_to_lxc(
+    action: Action, lxc_name: str, src: str, dispatcher_config: dict[str, Any]
+) -> str:
     """Copies given file in SRC to LAVA_LXC_HOME with the provided LXC_NAME
     and configured lxc_path
 
@@ -316,22 +320,27 @@ def copy_to_lxc(lxc_name: str, src: str, dispatcher_config: dict[str, Any]) -> s
     """
     filename = os.path.basename(src)
     dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
-    logger = logging.getLogger("dispatcher")
     if src == dst:
-        logger.debug("Not copying since src: '%s' and dst: '%s' are same", src, dst)
+        action.logger.debug(
+            "Not copying since src: '%s' and dst: '%s' are same", src, dst
+        )
     else:
-        logger.debug("Copying %s to %s", filename, lxc_name)
+        action.logger.debug("Copying %s to %s", filename, lxc_name)
         try:
             shutil.copyfile(src, dst)
         except OSError as exc:
-            logger.error("Unable to copy %s to lxc: %s", src, exc.strerror)
+            action.logger.error("Unable to copy %s to lxc: %s", src, exc.strerror)
             raise JobError("Unable to copy %s to lxc: %s" % (src, exc.strerror))
 
     return os.path.join(LAVA_LXC_HOME, filename)
 
 
 def copy_overlay_to_lxc(
-    lxc_name: str, src: str, dispatcher_config: dict[str, Any], namespace: str
+    action: Action,
+    lxc_name: str,
+    src: str,
+    dispatcher_config: dict[str, Any],
+    namespace: str,
 ) -> str:
     """Copies given overlay tar file in SRC to LAVA_LXC_HOME with the provided
     LXC_NAME and configured lxc_path
@@ -360,8 +369,7 @@ def copy_overlay_to_lxc(
         namespace,
         "overlay.tar.gz",
     )
-    logger = logging.getLogger("dispatcher")
-    logger.debug("Copying %s to %s", os.path.basename(src), dst)
+    action.logger.debug("Copying %s to %s", os.path.basename(src), dst)
     try:
         shutil.copy(src, dst)
     except OSError as exc:
@@ -375,18 +383,17 @@ def copy_overlay_to_lxc(
 
 
 @replace_exception(RuntimeError, JobError)
-def copy_overlay_to_sparse_fs(image: str, overlay: str) -> None:
+def copy_overlay_to_sparse_fs(action: Action, image: str, overlay: str) -> None:
     """copy_overlay_to_sparse_fs
 
     Only copies the overlay to an image
     which has already been converted from sparse.
     """
-    logger = logging.getLogger("dispatcher")
     import guestfs
 
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.add_drive(image)
-    _launch_guestfs(guest)
+    _launch_guestfs(action, guest)
     devices = guest.list_devices()
     if not devices:
         raise InfrastructureError("Unable to prepare guestfs")
@@ -400,7 +407,7 @@ def copy_overlay_to_sparse_fs(image: str, overlay: str) -> None:
     guest.tar_in(decompressed_overlay, "/")
     # Check if we have space left on the mounted image.
     output = guest.df()
-    logger.debug(output)
+    action.logger.debug(output)
     _, _, _, available, percent, _ = output.split("\n")[1].split()
     guest.umount(devices[0])
     guest.close()
@@ -408,15 +415,14 @@ def copy_overlay_to_sparse_fs(image: str, overlay: str) -> None:
         raise JobError("No space in image after applying overlay: %s" % image)
 
 
-def copy_directory_contents(root_dir: str, dst_dir: str) -> None:
+def copy_directory_contents(action: Action, root_dir: str, dst_dir: str) -> None:
     """
     Copies the contents of the root directory to the destination directory
     but excludes the root directory's top level folder
     """
     files_to_copy = glob.glob(os.path.join(root_dir, "*"))
-    logger = logging.getLogger("dispatcher")
     for fname in files_to_copy:
-        logger.debug(
+        action.logger.debug(
             "copying %s to %s", fname, os.path.join(dst_dir, os.path.basename(fname))
         )
         if os.path.isdir(fname):
@@ -425,19 +431,18 @@ def copy_directory_contents(root_dir: str, dst_dir: str) -> None:
             shutil.copy(fname, dst_dir)
 
 
-def remove_directory_contents(root_dir: str) -> None:
+def remove_directory_contents(action: Action, root_dir: str) -> None:
     """
     Removes the contents of the root directory but not the root itself
     """
     files_to_remove = list(glob.glob(os.path.join(root_dir, "*")))
     files_to_remove += list(glob.glob(os.path.join(root_dir, ".*")))
-    logger = logging.getLogger("dispatcher")
     for fname in sorted(files_to_remove):
         if os.path.isdir(fname):
-            logger.debug("removing %s/", fname)
+            action.logger.debug("removing %s/", fname)
             shutil.rmtree(fname)
         else:
-            logger.debug("removing %s", fname)
+            action.logger.debug("removing %s", fname)
             os.remove(fname)
 
 

@@ -117,7 +117,7 @@ class IsoEmptyImage(Action):
         base_dir = self.mkdtemp()
         output = os.path.join(base_dir, "hd.img")
         self.logger.info("Creating base image of size: %s bytes", self.size)
-        prepare_install_base(output, self.size)
+        prepare_install_base(self, output, self.size)
         self.set_namespace_data(
             action=self.name, label=self.name, key="output", value=output
         )
@@ -179,7 +179,7 @@ class IsoPullInstaller(Action):
         if not iso_download:
             raise JobError("installer image path is not present in the namespace.")
         destination = os.path.dirname(iso_download)
-        copy_out_files(iso_download, list(self.files.values()), destination)
+        copy_out_files(self, iso_download, list(self.files.values()), destination)
         for key, value in self.files.items():
             filename = os.path.join(destination, os.path.basename(value))
             self.logger.info("filename: %s size: %s", filename, os.stat(filename)[6])

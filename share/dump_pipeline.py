@@ -48,7 +48,7 @@ def main():
 
     # Load the job definition
     parser = JobParser()
-    job = parser.parse(options.job.read(), device, 0, None, None, None)
+    job = parser.parse(options.job.read(), device, 0, None, None)
 
     sys.stdout.write(yaml_safe_dump(job.pipeline.describe()))
 

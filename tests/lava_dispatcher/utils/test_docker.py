@@ -113,8 +113,7 @@ def test_run_architecture_check_failure(mocker):
             raise RuntimeError(f"Unexpected mock call: {cmd}")
 
     check_output = mocker.patch("subprocess.check_output", side_effect=results)
-    getLogger = mocker.patch("logging.getLogger")
-    logger = getLogger.return_value
+
     action = mocker.MagicMock()
 
     action = mocker.MagicMock()
@@ -130,8 +129,7 @@ def test_run_architecture_check_failure(mocker):
         call(["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None),
     ]
 
-    getLogger.assert_called_with("dispatcher")
-    logger.warning.assert_called()
+    action.logger.warning.assert_called()
 
 
 def test_run_architecture_check_success(mocker):
