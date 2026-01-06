@@ -1031,7 +1031,7 @@ class CopyToLxcAction(Action):
             # can ignore safely, hence we continue on invalid src.
             if not src:
                 continue
-            copy_to_lxc(lxc_name, src, self.job.parameters["dispatcher"])
+            copy_to_lxc(self, lxc_name, src, self.job.parameters["dispatcher"])
         overlay_file = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
@@ -1039,6 +1039,7 @@ class CopyToLxcAction(Action):
             self.logger.debug("skipped %s", self.name)
         else:
             copy_overlay_to_lxc(
+                self,
                 lxc_name,
                 overlay_file,
                 self.job.parameters["dispatcher"],

@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from unittest.mock import MagicMock
+
 from lava_dispatcher.utils.strings import map_kernel_uboot, seconds_to_str, substitute
 
 
@@ -31,8 +33,8 @@ def test_seconds_to_str():
 
 
 def test_map_kernel_uboot():
-    assert map_kernel_uboot("uimage", {}) == "bootm"
-    assert map_kernel_uboot("zimage", {}) == "bootm"
-    assert map_kernel_uboot("zimage", {"bootz": None}) == "bootz"
-    assert map_kernel_uboot("image", {}) == "bootm"
-    assert map_kernel_uboot("image", {"booti": None}) == "booti"
+    assert map_kernel_uboot(MagicMock(), "uimage", {}) == "bootm"
+    assert map_kernel_uboot(MagicMock(), "zimage", {}) == "bootm"
+    assert map_kernel_uboot(MagicMock(), "zimage", {"bootz": None}) == "bootz"
+    assert map_kernel_uboot(MagicMock(), "image", {}) == "bootm"
+    assert map_kernel_uboot(MagicMock(), "image", {"booti": None}) == "booti"
