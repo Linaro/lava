@@ -1,0 +1,5 @@
+{# device_type = "osm-imx93" #}
+{% extends 'imx9-common.jinja2' %}
+
+{% set uboot_needs_interrupt = uboot_needs_interrupt | default(True) %}
+{% set bootloader_prompt = bootloader_prompt | default('=> ') %}
