@@ -376,7 +376,7 @@ class DeployVExpressRecoveryImage(Action):
             "Removing existing recovery image from Versatile Express mass storage device.."
         )
         try:
-            remove_directory_contents(mount_point)
+            remove_directory_contents(self, mount_point)
         except Exception:
             raise InfrastructureError("Failed to erase old recovery image")
 
@@ -384,7 +384,7 @@ class DeployVExpressRecoveryImage(Action):
             "Transferring new recovery image to Versatile Express mass storage device.."
         )
         try:
-            copy_directory_contents(src_dir, mount_point)
+            copy_directory_contents(self, src_dir, mount_point)
         except Exception:
             raise InfrastructureError(
                 "Failed to deploy recovery image to %s" % mount_point

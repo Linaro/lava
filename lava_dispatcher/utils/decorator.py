@@ -6,10 +6,11 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 import time
 from functools import wraps
 from typing import TYPE_CHECKING, overload
+
+from lava_common.log import YAMLLogger
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -33,6 +34,26 @@ def replace_exception(
         return function_wrapper
 
     return replace_exception_wrapper
+
+
+def _get_object_logger(*args: Any) -> YAMLLogger | None:
+    if len(args) < 1:
+        return None
+
+    try:
+        self_arg = args[0]
+    except IndexError:
+        return None
+
+    try:
+        logger = self_arg.logger
+    except AttributeError:
+        return None
+
+    if not isinstance(logger, YAMLLogger):
+        return None
+
+    return logger
 
 
 @overload
@@ -74,11 +95,12 @@ def retry(
             raise Exception("No exception provided for retrying")
         if expected is not None and issubclass(exception, expected):
             raise Exception(
-                f"'exception' shouldn't be a subclass of 'expected' exception"
+                "'exception' shouldn't be a subclass of 'expected' exception"
             )
 
         def wrapper(*args: Any, **kwargs: Any) -> Any:
-            logger = logging.getLogger("dispatcher")
+            logger = _get_object_logger(*args)
+
             for attempt in range(retries):
                 try:
                     if expected is not None:
@@ -89,7 +111,10 @@ def retry(
                     else:
                         return func(*args, **kwargs)
                 except exception as exc:
-                    logger.error(f"{str(exc)}: {attempt + 1} of {retries} attempts.")
+                    if logger is not None:
+                        logger.error(
+                            f"{str(exc)}: {attempt + 1} of {retries} attempts."
+                        )
                     if attempt == int(retries) - 1:
                         raise
                     attempt += 1
