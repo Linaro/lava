@@ -429,7 +429,7 @@ class UUUBootAction(OptionalContainerUuuAction):
         uuu_cmd_list = []
         for dico in uuu_cmds:
             for protocol, cmd in dico.items():
-                cmd = safe_dict_format(cmd, templates)
+                cmd = safe_dict_format(self, cmd, templates)
                 uuu_cmd_list.append(f"{protocol}: {cmd}")
 
         uuu_cmds = uuu_cmd_list

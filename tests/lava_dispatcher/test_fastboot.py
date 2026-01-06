@@ -198,7 +198,7 @@ class TestLxcDriver(unittest.TestCase):
     def test_maybe_copy_to_container(self, copy_to_lxc):
         src = "/path/to/file.img"
         dest = self.action.maybe_copy_to_container(src)
-        copy_to_lxc.assert_called_with(self.lxc_name, src, ANY)
+        copy_to_lxc.assert_called_with(self.action, self.lxc_name, src, ANY)
         self.assertEqual(dest, "/path/inside/container/to/file.img")
 
 

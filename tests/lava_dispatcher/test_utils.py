@@ -17,7 +17,7 @@ from lava_dispatcher.utils import installers, vcs
 from lava_dispatcher.utils.contextmanager import chdir
 from lava_dispatcher.utils.decorator import replace_exception
 from lava_dispatcher.utils.shell import which
-from tests.utils import infrastructure_error
+from tests.utils import DummyLogger, infrastructure_error
 
 
 @pytest.fixture
@@ -149,14 +149,14 @@ def setup(tmp_path):
 
 
 def test_simple_clone(setup):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
     assert git.clone("git.clone2") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
     assert git.clone("git.clone3") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
 
 
 def test_clone_submodule(setup, tmp_path):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert (
         git.clone("git.clone1", recursive=True)
         == "fc4a64b4403f8741641b1eada653bc4d63c77179"
@@ -165,7 +165,7 @@ def test_clone_submodule(setup, tmp_path):
 
 
 def test_clone_at_head(setup):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert (
         git.clone("git.clone1", revision="fc4a64b4403f8741641b1eada653bc4d63c77179")
         == "fc4a64b4403f8741641b1eada653bc4d63c77179"
@@ -173,7 +173,7 @@ def test_clone_at_head(setup):
 
 
 def test_clone_at_head_1(setup):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert (
         git.clone("git.clone1", revision="2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed")
         == "2f83e6d8189025e356a9563b8d78bdc8e2e9a3ed"
@@ -186,26 +186,26 @@ def test_clone_at_head_1(setup):
 
 def test_non_existing_git(setup, mocker):
     mocker.patch("lava_dispatcher.utils.decorator.time.sleep")
-    git = vcs.GitHelper("does_not_exists")
+    git = vcs.GitHelper("does_not_exists", DummyLogger())
     with pytest.raises(InfrastructureError):
         git.clone("foo.bar")
 
 
 def test_existing_destination(setup):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
     assert git.clone("git.clone1") == "fc4a64b4403f8741641b1eada653bc4d63c77179"
 
 
 def test_invalid_commit(setup, mocker):
     mocker.patch("lava_dispatcher.utils.decorator.time.sleep")
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     with pytest.raises(InfrastructureError):
         git.clone("foo.bar", True, "badhash")
 
 
 def test_branch(setup, tmp_path):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
 
     assert (
         git.clone("git.clone1", branch="testing")
@@ -215,7 +215,7 @@ def test_branch(setup, tmp_path):
 
 
 def test_no_history(setup, tmp_path):
-    git = vcs.GitHelper("git")
+    git = vcs.GitHelper("git", DummyLogger())
     assert (
         git.clone("git.clone1", history=False)
         == "fc4a64b4403f8741641b1eada653bc4d63c77179"
