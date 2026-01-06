@@ -86,12 +86,11 @@ class JobParser:
         duration = Timeout.parse(timeouts_dict["job"])
         return Timeout("job", None, duration=duration)
 
-    def parse(self, content, device, job_id, logger, dispatcher_config, env_dut=None):
+    def parse(self, content, device, job_id, dispatcher_config, env_dut=None):
         data = yaml_safe_load(content)
         job = Job(
             job_id=job_id,
             parameters=data,
-            logger=logger,
             device=device,
             timeout=self._parse_job_timeout(data),
         )

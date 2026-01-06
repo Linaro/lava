@@ -157,8 +157,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "lava_dispatcher.actions.deploy.apply_overlay.cpio"
         ) as cpio_mock, patch(
             "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
+        ) as compress_file_mock, self.collect_lava_logs(
+            action
         ) as action_logs:
             action.update_cpio()
 
@@ -174,22 +174,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         compress_file_mock.assert_called_once_with(decompress_file_mock(), "gz")
 
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.cpio.gz'"),
-                ("dispatcher", 10, "* decompressing (gz)"),
-                ("dispatcher", 10, f"* extracting {decompress_file_mock()}"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    (
-                        f"- rootfs.modules: untar '{tmp_dir_path}"
-                        f"/modules.tar' to '{tmp_dir_path}/'"
-                    ),
-                ),
-                ("dispatcher", 10, f"* archiving {decompress_file_mock()}"),
-                ("dispatcher", 10, "* compressing (gz)"),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "* decompressing (%s)"),
+                ("DEBUG", "* extracting %s"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: %r to %r"),
+                ("DEBUG", "* archiving %s"),
+                ("DEBUG", "* compressing (%s)"),
             ],
         )
 
@@ -227,8 +220,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
-            action.logger, level="DEBUG"
+        with patch("guestfs.GuestFS") as guestfs_mock, self.collect_lava_logs(
+            action
         ) as action_logs:
             action.update_guestfs()
 
@@ -246,15 +239,11 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             str(tmp_dir_path / "modules.tar"), "/lib", compress=None
         )
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.ext4'"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    f"- rootfs.modules: '{tmp_dir_path}/modules.tar' to '/lib'",
-                ),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: %r to %r"),
             ],
         )
 
@@ -303,8 +292,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
         ) as create_tarfile_mock, patch(
             "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
+        ) as compress_file_mock, self.collect_lava_logs(
+            action
         ) as action_logs:
             action.update_tar()
 
@@ -326,22 +315,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         compress_file_mock.assert_called_once_with(decompress_file_mock(), "gz")
 
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.tar.gz'"),
-                ("dispatcher", 10, "* decompressing (gz)"),
-                ("dispatcher", 10, f"* extracting {decompress_file_mock()}"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    (
-                        f"- nfsrootfs.modules: untar '{tmp_dir_path}"
-                        f"/modules.tar' to '{tmp_dir_path}/'"
-                    ),
-                ),
-                ("dispatcher", 10, f"* archiving {decompress_file_mock()}"),
-                ("dispatcher", 10, "* compressing (gz)"),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "* decompressing (%s)"),
+                ("DEBUG", "* extracting %r"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: untar %r to %r"),
+                ("DEBUG", "* archiving %r"),
+                ("DEBUG", "* compressing (%s)"),
             ],
         )
 
@@ -383,7 +365,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
 
         with patch("guestfs.GuestFS") as guestfs_mock, patch(
             "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
-        ) as replace_mock, self.assertLogs(action.logger, level="DEBUG") as action_logs:
+        ) as replace_mock, self.collect_lava_logs(action) as action_logs:
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
@@ -434,17 +416,13 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         )
 
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.ext4'"),
-                ("dispatcher", 10, f"Calling simg2img on '{tmp_dir_path}/rootfs.ext4'"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    f"- rootfs.modules: '{tmp_dir_path}/modules.tar' to '/lib'",
-                ),
-                ("dispatcher", 10, f"Calling img2simg on '{tmp_dir_path}/rootfs.ext4'"),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "Calling simg2img on %r"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: %r to %r"),
+                ("DEBUG", "Calling img2simg on %r"),
             ],
         )
 
@@ -486,8 +464,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             "lava_dispatcher.actions.deploy.apply_overlay.cpio"
         ) as cpio_mock, patch(
             "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
+        ) as compress_file_mock, self.collect_lava_logs(
+            action
         ) as action_logs:
             action.update_cpio()
 
@@ -503,22 +481,15 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         compress_file_mock.assert_called_once_with(decompress_file_mock(), "gz")
 
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.cpio.gz'"),
-                ("dispatcher", 10, "* decompressing (gz)"),
-                ("dispatcher", 10, f"* extracting {decompress_file_mock()}"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    (
-                        f"- rootfs.lava: untar '{tmp_dir_path}"
-                        f"/overlay.tar.gz' to '{tmp_dir_path}/'"
-                    ),
-                ),
-                ("dispatcher", 10, f"* archiving {decompress_file_mock()}"),
-                ("dispatcher", 10, "* compressing (gz)"),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "* decompressing (%s)"),
+                ("DEBUG", "* extracting %s"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: %r to %r"),
+                ("DEBUG", "* archiving %s"),
+                ("DEBUG", "* compressing (%s)"),
             ],
         )
 
@@ -548,8 +519,8 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
-            action.logger, level="DEBUG"
+        with patch("guestfs.GuestFS") as guestfs_mock, self.collect_lava_logs(
+            action
         ) as action_logs:
             action.update_guestfs()
 
@@ -567,14 +538,10 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             str(tmp_dir_path / "overlay.tar.gz"), "/", compress="gzip"
         )
         self.assertEqual(
-            [(r.name, r.levelno, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("dispatcher", 20, f"Modifying '{tmp_dir_path}/rootfs.ext4'"),
-                ("dispatcher", 10, "Overlays:"),
-                (
-                    "dispatcher",
-                    10,
-                    f"- rootfs.lava: '{tmp_dir_path}/overlay.tar.gz' to '/'",
-                ),
+                ("INFO", "Modifying %r"),
+                ("DEBUG", "Overlays:"),
+                ("DEBUG", "- %s: %r to %r"),
             ],
         )

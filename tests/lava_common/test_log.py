@@ -190,7 +190,7 @@ def test_http_handler(mocker):
 def test_yaml_logger(mocker):
     mocker.patch("multiprocessing.Process")
 
-    logger = YAMLLogger("lava")
+    logger = YAMLLogger()
     assert logger.handler is None
     logger.addHTTPHandler("http://localhost/", "my-token", 1, "1234")
     assert isinstance(logger.handler, HTTPHandler) is True

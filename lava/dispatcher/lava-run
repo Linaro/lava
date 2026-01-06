@@ -175,7 +175,6 @@ def parse_job_file(logger, options):
         options.definition.read_text(encoding="utf-8"),
         device,
         options.job_id,
-        logger=logger,
         dispatcher_config=dispatcher_config,
         env_dut=env_dut,
     )

@@ -273,10 +273,8 @@ def run_output_sender(
     ).run()
 
 
-class HTTPHandler(logging.Handler):
+class HTTPHandler:
     def __init__(self, url: str, token: str, interval: int, job_id: str):
-        super().__init__()
-        self.formatter = logging.Formatter("%(message)s")
         # Create the multiprocess sender
         self.queue: multiprocessing.Queue[str | None] = multiprocessing.Queue()
         # Block sigint so the sender function will not receive it.
@@ -288,18 +286,14 @@ class HTTPHandler(logging.Handler):
         self.proc.start()
         signal.pthread_sigmask(signal.SIG_UNBLOCK, [signal.SIGINT])
 
-    def emit(self, record: logging.LogRecord) -> None:
-        if self.formatter is not None:
-            data = self.formatter.format(record)
-            # Skip empty strings
-            # This can't happen as data is a dictionary dumped in yaml format
-            if data == "":
-                return
-            self.queue.put(data)
+    def emit(self, record: str) -> None:
+        # Skip empty strings
+        # This can't happen as data is a dictionary dumped in yaml format
+        if record == "":
+            return
+        self.queue.put(record)
 
     def close(self) -> None:
-        super().close()
-
         # wait for the multiprocess
         self.queue.put(None)
         self.proc.join()
@@ -326,9 +320,8 @@ class ResultDict(TypedDict, total=False):
     endtc: int | None
 
 
-class YAMLLogger(logging.Logger):
-    def __init__(self, name: str):
-        super().__init__(name)
+class YAMLLogger:
+    def __init__(self) -> None:
         self.handler: HTTPHandler | None = None
         self.markers: dict[str, dict[str, int]] = {}
         self.line = 0
@@ -337,26 +330,24 @@ class YAMLLogger(logging.Logger):
         self, url: str, token: str, interval: int, job_id: str
     ) -> HTTPHandler:
         self.handler = HTTPHandler(url, token, interval, job_id)
-        self.addHandler(self.handler)
         return self.handler
 
     def close(self) -> None:
         if self.handler is not None:
             self.handler.close()
-            self.removeHandler(self.handler)
             self.handler = None
-        # Close other handlers
-        for handler in self.handlers:
-            handler.close()
 
     def terminate(self) -> None:
         if self.handler is not None:
             self.handler.terminate()
-            self.removeHandler(self.handler)
             self.handler = None
 
+    def _log(self, data_str: str) -> None:
+        if self.handler is not None:
+            self.handler.emit(data_str)
+
     def log_message(
-        self, level: int, level_name: str, message: object, *args: Any, **kwargs: Any
+        self, level_name: str, message: object, *args: Any, **kwargs: Any
     ) -> None:
         # Increment the line count
         self.line += 1
@@ -375,44 +366,34 @@ class YAMLLogger(logging.Logger):
             data["ns"] = kwargs["namespace"]
 
         data_str = dump(data)
-        self._log(level, data_str, ())
+        self._log(data_str)
 
-    def exception(  # type: ignore [override]
-        self, exc: object, *args: Any, **kwargs: Any
-    ) -> None:
-        self.log_message(logging.ERROR, "exception", exc, *args, **kwargs)
+    def exception(self, exc: object, *args: Any, **kwargs: Any) -> None:
+        self.log_message("exception", exc, *args, **kwargs)
 
-    def error(  # type: ignore [override]
-        self, message: object, *args: Any, **kwargs: Any
-    ) -> None:
-        self.log_message(logging.ERROR, "error", message, *args, **kwargs)
+    def error(self, message: object, *args: Any, **kwargs: Any) -> None:
+        self.log_message("error", message, *args, **kwargs)
 
-    def warning(  # type: ignore [override]
-        self, message: object, *args: Any, **kwargs: Any
-    ) -> None:
-        self.log_message(logging.WARNING, "warning", message, *args, **kwargs)
+    def warning(self, message: object, *args: Any, **kwargs: Any) -> None:
+        self.log_message("warning", message, *args, **kwargs)
 
-    def info(  # type: ignore [override]
-        self, message: object, *args: Any, **kwargs: Any
-    ) -> None:
-        self.log_message(logging.INFO, "info", message, *args, **kwargs)
+    def info(self, message: object, *args: Any, **kwargs: Any) -> None:
+        self.log_message("info", message, *args, **kwargs)
 
-    def debug(  # type: ignore [override]
-        self, message: object, *args: Any, **kwargs: Any
-    ) -> None:
-        self.log_message(logging.DEBUG, "debug", message, *args, **kwargs)
+    def debug(self, message: object, *args: Any, **kwargs: Any) -> None:
+        self.log_message("debug", message, *args, **kwargs)
 
     def input(self, message: object, *args: Any, **kwargs: Any) -> None:
-        self.log_message(logging.INFO, "input", message, *args, **kwargs)
+        self.log_message("input", message, *args, **kwargs)
 
     def target(self, message: object, *args: Any, **kwargs: Any) -> None:
-        self.log_message(logging.INFO, "target", message, *args, **kwargs)
+        self.log_message("target", message, *args, **kwargs)
 
     def feedback(self, message: object, *args: Any, **kwargs: Any) -> None:
-        self.log_message(logging.INFO, "feedback", message, *args, **kwargs)
+        self.log_message("feedback", message, *args, **kwargs)
 
     def event(self, message: object, *args: Any, **kwargs: Any) -> None:
-        self.log_message(logging.INFO, "event", message, *args, **kwargs)
+        self.log_message("event", message, *args, **kwargs)
 
     def marker(self, message: MarkerDict, *args: Any, **kwargs: Any) -> None:
         case = message["case"]
@@ -432,7 +413,7 @@ class YAMLLogger(logging.Logger):
             results["endtc"] = markers.get("end_test_case", test_case)
             del self.markers[case]
 
-        self.log_message(logging.INFO, "results", results, *args, **kwargs)
+        self.log_message("results", results, *args, **kwargs)
 
 
 class YAMLListFormatter(logging.Formatter):

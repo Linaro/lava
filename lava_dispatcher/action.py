@@ -369,7 +369,7 @@ class Action:
         self.pipeline: Pipeline | None = None
         self.__parameters__ = {}
         self.__errors__ = []
-        self.logger = logging.getLogger("dispatcher")
+        self.logger = job.logger
         self.__results__ = {}
         self.timeout: Timeout = Timeout(
             self.name, self, exception=self.timeout_exception
