@@ -39,11 +39,11 @@ class TestTestShell(LavaDispatcherTestCase):
         job = self.create_simple_job()
         # "exit"
         action = TestShellAction(job)
-        with self.assertLogs(action.logger) as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("exit", None), False)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
-            [("INFO", "ok: lava_test_shell seems to have completed")],
+            action_logs,
+            [("INFO", "ok: lava_test_shell seems to have completed", [])],
         )
 
         # "eof"
@@ -53,10 +53,9 @@ class TestTestShell(LavaDispatcherTestCase):
 
         # "timeout"
         action = TestShellAction(job)
-        with self.assertRaisesRegex(AssertionError, "no logs"), self.assertLogs(
-            action.logger
-        ) as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("timeout", None), True)
+        self.assertFalse(action_logs)
 
     def test_signal_start_run(self):
         job = self.create_simple_job()
@@ -76,14 +75,14 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         data = ("STARTRUN", "0_DEFINITION UUID")
-        with self.assertLogs(action.logger, level="DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <STARTRUN> 0_DEFINITION UUID"),
-                ("INFO", "Starting test lava.0_DEFINITION (UUID)"),
-                ("INFO", "Skipping test definition patterns."),
+                ("DEBUG", "Received signal: <STARTRUN> 0_DEFINITION UUID", []),
+                ("INFO", "Starting test lava.%s (%s)", ["0_DEFINITION", "UUID"]),
+                ("INFO", "Skipping test definition patterns.", []),
             ],
         )
         self.assertEqual(
@@ -132,16 +131,20 @@ class TestTestShell(LavaDispatcherTestCase):
         test_suite = "0_DEFINITION"
         action.reports = {f"{test_suite}": {"results": {}, "ran": False}}
         data = ("ENDRUN", f"{test_suite} UUID")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs, patch(
+        with self.collect_lava_logs(action) as action_logs, patch(
             "time.monotonic", monotonic
         ):
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", f"Received signal: <ENDRUN> {test_suite} UUID"),
-                ("INFO", "Ending use of test pattern."),
-                ("INFO", f"Ending test lava.{test_suite} (UUID), duration 1.00"),
+                ("DEBUG", f"Received signal: <ENDRUN> {test_suite} UUID", []),
+                ("INFO", "Ending use of test pattern.", []),
+                (
+                    "INFO",
+                    "Ending test lava.%s (%s), duration %.02f",
+                    ["0_DEFINITION", "UUID", 1],
+                ),
             ],
         )
         action.logger.results.assert_called_once_with(
@@ -192,7 +195,7 @@ class TestTestShell(LavaDispatcherTestCase):
         test_suite = "0_DEFINITION"
         action.reports = {f"{test_suite}": {"results": {}, "ran": False}}
         params = [test_suite, "UUID"]
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.signal_end_run(params), None)
 
         # Test that missing test case are sorted and reported as 'fail'.
@@ -225,18 +228,18 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # Test that warning logs appear for both missing and unexpected test cases.
-        actual_logs = [(r.levelname, r.message) for r in action_logs.records]
         self.assertIn(
-            ("WARNING", "Reporting missing expected test cases as 'fail' ..."),
-            actual_logs,
+            ("WARNING", "Reporting missing expected test cases as 'fail' ...", []),
+            action_logs,
         )
-        self.assertIn(("WARNING", "Unexpected test result: tc5: pass"), actual_logs)
+        self.assertIn(("WARNING", "Unexpected test result: tc5: pass", []), action_logs)
         self.assertIn(
             (
                 "WARNING",
                 "Unexpected test result: tc6: {'set': 'set1', 'result': 'fail'}",
+                [],
             ),
-            actual_logs,
+            action_logs,
         )
 
         self.assertTrue(action.reports[test_suite]["ran"])
@@ -249,11 +252,11 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
 
         data = ("STARTTC", "TESTCASE")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
-            [("DEBUG", "Received signal: <STARTTC> TESTCASE")],
+            action_logs,
+            [("DEBUG", "Received signal: <STARTTC> TESTCASE", [])],
         )
         action.logger.marker.assert_called_once_with(
             {"case": "TESTCASE", "type": "start_test_case"}
@@ -264,11 +267,11 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
 
         data = ("ENDTC", "TESTCASE")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
-            [("DEBUG", "Received signal: <ENDTC> TESTCASE")],
+            action_logs,
+            [("DEBUG", "Received signal: <ENDTC> TESTCASE", [])],
         )
         action.logger.marker.assert_called_once_with(
             {"case": "TESTCASE", "type": "end_test_case"}
@@ -282,17 +285,18 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
 
         data = ("TESTCASE", "hello")
-        with self.assertRaises(TestError), self.assertLogs(
-            action.logger, "DEBUG"
+        with self.assertRaises(TestError), self.collect_lava_logs(
+            action
         ) as action_logs:
             action.check_patterns("signal", MockConnection(data))
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTCASE> hello"),
+                ("DEBUG", "Received signal: <TESTCASE> hello", []),
                 (
                     "ERROR",
                     "Unknown test uuid. The STARTRUN signal for this test action was not received correctly.",
+                    [],
                 ),
             ],
         )
@@ -306,13 +310,13 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "hello")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTCASE> hello"),
-                ("ERROR", 'Ignoring malformed parameter for signal: "hello". '),
+                ("DEBUG", "Received signal: <TESTCASE> hello", []),
+                ("ERROR", 'Ignoring malformed parameter for signal: "hello". ', []),
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -325,15 +329,16 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "TEST_CASE=e")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE=e"),
+                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE=e", []),
                 (
                     "ERROR",
                     "Test case results without test_case_id (probably a sign of an incorrect parsing pattern being used): {'test_case': 'e'}",
+                    [],
                 ),
             ],
         )
@@ -347,15 +352,16 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "TEST_CASE_ID=case-id")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE_ID=case-id"),
+                ("DEBUG", "Received signal: <TESTCASE> TEST_CASE_ID=case-id", []),
                 (
                     "ERROR",
                     "Test case results without result (probably a sign of an incorrect parsing pattern being used): {'test_case_id': 'case-id', 'result': 'unknown'}",
+                    [],
                 ),
             ],
         )
@@ -370,14 +376,15 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id",
+                    [],
                 ),
             ],
         )
@@ -395,14 +402,15 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234",
+                    [],
                 )
             ],
         )
@@ -425,14 +433,15 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
                 (
                     "DEBUG",
                     "Received signal: <TESTCASE> RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s",
+                    [],
                 )
             ],
         )
@@ -456,13 +465,14 @@ class TestTestShell(LavaDispatcherTestCase):
         action = TestShellAction(job)
 
         data = ("TESTFEEDBACK", "FEED1")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTFEEDBACK> FEED1"),
-                ("ERROR", "%s is not a valid namespace"),
+                ("DEBUG", "Received signal: <TESTFEEDBACK> FEED1", []),
+                ("ERROR", "%s is not a valid namespace", []),
             ],
         )
 
@@ -473,15 +483,15 @@ class TestTestShell(LavaDispatcherTestCase):
         action = TestShellAction(job)
 
         data = ("TESTREFERENCE", "")
-        with self.assertRaises(TestError), self.assertLogs(
-            action.logger, "DEBUG"
+        with self.assertRaises(TestError), self.collect_lava_logs(
+            action
         ) as action_logs:
             action.check_patterns("signal", MockConnection(data))
 
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
-                ("DEBUG", "Received signal: <TESTREFERENCE> "),
+                ("DEBUG", "Received signal: <TESTREFERENCE> ", []),
             ],
         )
 
@@ -490,14 +500,15 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.results = MagicMock()
 
         data = ("TESTREFERENCE", "case-id pass http://example.com")
-        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+        with self.collect_lava_logs(action) as action_logs:
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
-            [(r.levelname, r.message) for r in action_logs.records],
+            action_logs,
             [
                 (
                     "DEBUG",
                     "Received signal: <TESTREFERENCE> case-id pass http://example.com",
+                    [],
                 )
             ],
         )

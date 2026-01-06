@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import logging
 import os
 import re
 import shutil
@@ -32,8 +31,8 @@ class LxcProtocol(Protocol):
 
     name = LXC_PROTOCOL
 
-    def __init__(self, parameters, job_id):
-        super().__init__(parameters, job_id)
+    def __init__(self, parameters, job_id, job_logger):
+        super().__init__(parameters, job_id, job_logger)
         self.system_timeout = Timeout("system", None, duration=LAVA_LXC_TIMEOUT)
         self.persistence = parameters["protocols"][self.name].get("persist", False)
         if self.persistence:
@@ -57,7 +56,6 @@ class LxcProtocol(Protocol):
         self.custom_lxc_path = False
         if LXC_PATH != lxc_path(parameters["dispatcher"]):
             self.custom_lxc_path = True
-        self.logger = logging.getLogger("dispatcher")
         self.job_prefix = parameters["dispatcher"].get("prefix", "")
 
     @classmethod
@@ -122,7 +120,7 @@ class LxcProtocol(Protocol):
 
     def __call__(self, *args, **kwargs):
         action = kwargs.get("action")
-        logger = action.logger if action else logging.getLogger("dispatcher")
+        logger = action.logger if action else self.logger
         self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:
             return self._api_select(args, action=action)

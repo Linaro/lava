@@ -64,7 +64,7 @@ class TestPatterns(LavaDispatcherTestCase):
         self.job.validate()
         self.ret = False
         self.test_shell = self.job.pipeline.find_action(TestShellAction)
-        self.test_shell.logger = YAMLLogger("dispatcher")
+        self.test_shell.logger = YAMLLogger()
 
     def test_case_result(self):
         self.assertEqual([], self.job.pipeline.errors)
