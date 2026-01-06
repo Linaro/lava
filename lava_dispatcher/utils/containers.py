@@ -122,6 +122,7 @@ class NullDriver(InternalObject):
 
     def __init__(self, action):
         self.action = action
+        self.logger = action.logger
 
     def get_command_prefix(self, copy_files=True):
         return []
@@ -150,7 +151,9 @@ class LxcDriver(NullDriver):
         return lxc_cmd_prefix(self.action.job)
 
     def maybe_copy_to_container(self, src):
-        src = copy_to_lxc(self.lxc_name, src, self.action.job.parameters["dispatcher"])
+        src = copy_to_lxc(
+            self.action, self.lxc_name, src, self.action.job.parameters["dispatcher"]
+        )
         return src
 
 

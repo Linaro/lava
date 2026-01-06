@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 import re
 import time
 from typing import TYPE_CHECKING
@@ -128,7 +127,7 @@ class TestShellAction(ReportMixin, Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.signal_director = self.SignalDirector(None)  # no default protocol
+        self.signal_director = self.SignalDirector(job, None)  # no default protocol
         self.patterns = {}
         self.signal_match = SignalMatch()
         self.definition = None
@@ -709,7 +708,7 @@ class TestShellAction(ReportMixin, Action):
 
     class SignalDirector:
         # FIXME: create proxy handlers
-        def __init__(self, protocol=None):
+        def __init__(self, job: Job, protocol=None):
             """
             Base SignalDirector for singlenode jobs.
             MultiNode and LMP jobs need to create a suitable derived class as both also require
@@ -720,7 +719,7 @@ class TestShellAction(ReportMixin, Action):
             """
             self.protocol = protocol  # communicate externally over the protocol API
             self.connection = None  # communicate with the device
-            self.logger = logging.getLogger("dispatcher")
+            self.logger = job.logger
             self.test_uuid = None
 
         def setup(self, parameters, character_delay=0):

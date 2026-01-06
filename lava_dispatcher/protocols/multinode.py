@@ -7,7 +7,6 @@
 
 import copy
 import json
-import logging
 import os
 import re
 import socket
@@ -35,8 +34,8 @@ class MultinodeProtocol(Protocol):
 
     # FIXME: use errors and valid where old code just logged complaints
 
-    def __init__(self, parameters, job_id):
-        super().__init__(parameters, job_id)
+    def __init__(self, parameters, job_id, job_logger):
+        super().__init__(parameters, job_id, job_logger)
         self.blocks = 4 * 1024
         # how long between polls (in seconds)
         self.system_timeout = Timeout(
@@ -45,7 +44,6 @@ class MultinodeProtocol(Protocol):
         self.settings = None
         self.sock = None
         self.base_message = None
-        self.logger = logging.getLogger("dispatcher")
         self.delayed_start = False
         params = parameters["protocols"][self.name]
         if (
@@ -83,7 +81,6 @@ class MultinodeProtocol(Protocol):
             "poll_delay": 1,
             "coordinator_hostname": "localhost",
         }
-        self.logger = logging.getLogger("dispatcher")
         json_default = {}
         with open(filename) as stream:
             jobdata = stream.read()
@@ -451,8 +448,7 @@ class MultinodeProtocol(Protocol):
             return self._api_select(json.dumps(args[0]))
         except (ValueError, TypeError) as exc:
             msg = re.sub(r"\s+", " ", "".join(traceback.format_exc().split("\n")))
-            logger = logging.getLogger("dispatcher")
-            logger.exception(msg)
+            self.logger.exception(msg)
             raise JobError("Invalid call to %s %s" % (self.name, exc))
 
     def collate(self, reply, params):

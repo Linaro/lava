@@ -21,14 +21,11 @@ class TestActionRunCmd(LavaDispatcherTestCase):
         self.action = Action(self.create_job_mock())
 
     def test_simple_command_with_args(self) -> None:
-        with self.assertLogs(self.action.logger, "DEBUG") as logs:
+        with self.collect_lava_logs(self.action) as logs:
             ret = self.action.run_cmd(["printf", "Hello, world!"])
 
         self.assertEqual(ret, 0)
-        self.assertIn(
-            "Hello, world!",
-            "".join(logs.output),
-        )
+        self.assertEqual(logs[1], ("DEBUG", ">> %s", ["Hello, world!"]))
 
     def test_no_args_command_with_spaces(self) -> None:
         true_path = which("true")
@@ -46,16 +43,16 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.assertLogs(
-            self.action.logger, "ERROR"
+        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
+            self.action
         ) as error_logs:
             self.action.run_cmd(["sleep", "10"])
 
         end_time = time_monotonic()
 
-        self.assertIn(
-            "Timed out after",
-            "".join(error_logs.output),
+        self.assertEqual(
+            error_logs[-1],
+            ("ERROR", "Unable to run: %r", [["sleep", "10"]]),
         )
 
         self.assertLess(
@@ -68,8 +65,8 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.assertLogs(
-            self.action.logger, "DEBUG"
+        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
+            self.action
         ) as debug_logs, patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01):
             self.action.run_cmd(
                 [
@@ -81,9 +78,13 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         end_time = time_monotonic()
 
-        self.assertIn(
-            "IGNORING_SIGTERM",
-            "".join(debug_logs.output),
+        self.assertEqual(
+            debug_logs[-1],
+            (
+                "ERROR",
+                "Unable to run: %r",
+                [["sh", "-c", "trap 'echo IGNORING_SIGTERM' TERM KILL;sleep 10"]],
+            ),
         )
 
         self.assertLess(end_time - start_time, 1.0)
@@ -91,12 +92,12 @@ class TestActionRunCmd(LavaDispatcherTestCase):
     def test_command_does_not_exist(self) -> None:
         non_existant_command = "THIS_COMMAND_does_NOT_exist"
 
-        with self.assertRaises(self.action.command_exception), self.assertLogs(
-            self.action.logger, "ERROR"
+        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
+            self.action
         ) as error_logs:
             self.action.run_cmd([non_existant_command])
 
-        self.assertIn(
-            non_existant_command,
-            "".join(error_logs.output),
+        self.assertEqual(
+            error_logs[-1],
+            ("ERROR", "Unable to run: %r", [["THIS_COMMAND_does_NOT_exist"]]),
         )
