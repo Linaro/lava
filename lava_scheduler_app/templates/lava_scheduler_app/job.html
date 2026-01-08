@@ -231,9 +231,10 @@
 </div>
 {% endif %}
 
-<div id="failure_block" {% if not job.failure_comment %}style="display: none;" {% endif %}>
-  <pre class="alert alert-danger failure_comment">{{ job.failure_comment }}</pre>
+<div id="failure_block" {% if job.failure_comment and job.health != job.HEALTH_COMPLETE %}class="collapse in"{% else %}class="collapse"{% endif %}">
+  <pre class="alert alert-danger failure_comment"><strong>Job alert: </strong>{{ job.failure_comment }}</pre>
 </div>
+
 <div class="alert alert-danger" id="size-warning" {% if not size_warning %}style="display: none;"{% endif %}>
 <p><strong>This log file is too large to view</strong>, (over {{ size_limit|filesizeformat }}).
     It can only be downloaded:
@@ -251,6 +252,7 @@
   <li class="active"><a href="#Log" data-toggle="tab">Summary</a></li>
   <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
   <li class="pull-right"><a href="#bottom">End of page <span class="glyphicon glyphicon-chevron-down"></span></a></li>
+  <li class="pull-right" id="alert-link" {% if not job.failure_comment or job.health != job.HEALTH_COMPLETE %}style="display:none"{% endif %}><a href="#failure_block" data-toggle="collapse" aria-expanded="false" aria-controls="failure_block">Show alert <span class="glyphicon glyphicon-chevron-up"></span></a></li>
 </ul>
 
 <div class="tab-content">
@@ -659,8 +661,15 @@
             poll_status = 0;
           }
           if (data['failure_comment']) {
-            $("#failure_block").show();
-            $(".failure_comment").html(data['failure_comment']);
+            if (data['job_health'] == 1) {
+              // Collapse if job health is COMPLETE (1).
+              $("#failure_block").removeClass('in');
+              // Allow to show by clicking the Alert link.
+              $("#alert-link").show();
+            } else {
+              $("#failure_block").addClass('in');
+            }
+            $(".failure_comment").html('<strong>Job alert: </strong>' + data['failure_comment']);
           }
         }
       });

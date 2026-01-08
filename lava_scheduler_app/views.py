@@ -1992,6 +1992,7 @@ def job_status(request, pk):
         "duration": "<i>...</i>",
         "job_state": job.get_state_display(),
         "failure_comment": job.failure_comment,
+        "job_health": job.health,
         "started": "<i>...</i>",
         "subjobs": [],
     }
