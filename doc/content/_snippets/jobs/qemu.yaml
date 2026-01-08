@@ -19,7 +19,6 @@ actions:
       rootfs:
         url: http://images.validation.linaro.org/kvm/debian-sid-2014_08_21-amd64.qcow2.xz
         image_arg: -drive format=qcow2,file={rootfs}
-        format: qcow2
         compression: xz
     os: debian
 
@@ -41,8 +40,12 @@ actions:
     - repository: https://github.com/Linaro/test-definitions
       from: git
       path: automated/linux/smoke/smoke.yaml
+      parameters:
+        SKIP_INSTALL: true
       name: smoke-tests
     - repository: https://github.com/Linaro/test-definitions
       from: git
       path: automated/linux/meminfo/meminfo.yaml
+      parameters:
+        SKIP_INSTALL: true
       name: meminfo
