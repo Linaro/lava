@@ -55,6 +55,10 @@ dictionary. For a simple qemu job, this device dictionary would work:
 {% set memory = 1024 %}
 ```
 
+!!! tip
+    If `/dev/kvm` is unavailable on the worker, add `{% set no_kvm = True %}` to
+    the dictionary.
+
 This file should be pushed to the LAVA server under
 `/etc/lava-server/dispatcher-config/devices/<hostname>.jinja2`.
 

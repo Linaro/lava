@@ -10,6 +10,10 @@ You will start with this simple QEMU job:
 --8<-- "jobs/qemu.yaml"
 ```
 
+!!! tip
+    If `/dev/kvm` is unavailable on the worker, it can be disabled by adding
+    `no_kvm: true` to the job context.
+
 ## Web interface
 
 In order to submit from the web interface, you should first login and then go to
