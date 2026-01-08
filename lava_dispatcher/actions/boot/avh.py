@@ -56,7 +56,7 @@ class CallAvhAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.docker_cleanup_required = False
-        self.websocat_docker_image = "ghcr.io/vi/websocat:1.12.0"
+        self.websocat_docker_image = "ghcr.io/vi/websocat:v1.14.1"
         self.api_config = None
         self.bootargs = None
         self.avh: dict[str, Any] = {}
