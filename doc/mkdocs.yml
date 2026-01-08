@@ -61,6 +61,7 @@ nav:
 - User guide:
   - First steps: user/first-steps.md
   - Basic tutorials:
+    - Signing in: user/basic-tutorials/signing-in.md
     - Submit a job: user/basic-tutorials/submit.md
     - lavacli: user/basic-tutorials/lavacli.md
     - Job definition: user/basic-tutorials/job-definition.md
