@@ -466,7 +466,7 @@ models. Example definition:
       timeout:
         minutes: 20
       docker:
-        image: ghcr.io/vi/websocat:1.12.0
+        image: ghcr.io/vi/websocat:v1.14.1
         local: true
       prompts:
       - "pi@raspberrypi:"
@@ -491,7 +491,7 @@ Pi 4 to expand the root FS.
 docker
 ------
 ``avh`` boot method uses `websocat <https://github.com/vi/websocat>`_ for
-connecting to AVH device serial console. `ghcr.io/vi/websocat:1.12.0 <https://github.com/vi/websocat/pkgs/container/websocat>`_
+connecting to AVH device serial console. `ghcr.io/vi/websocat:v1.14.1 <https://github.com/vi/websocat/pkgs/container/websocat>`_
 docker image is used by default. A docker image specified here overrides the
 default image.
 
