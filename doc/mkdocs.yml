@@ -98,6 +98,7 @@ nav:
       - Permissions: admin/basic-tutorials/instance/permissions.md
     - lavacli: admin/basic-tutorials/lavacli.md
     - Device setup:
+      - AVH: admin/basic-tutorials/device-setup/avh.md
       - docker: admin/basic-tutorials/device-setup/docker.md
       - QEMU: admin/basic-tutorials/device-setup/qemu.md
       - RPi (u-boot): admin/basic-tutorials/device-setup/u-boot.md
@@ -144,10 +145,12 @@ nav:
       - Command: technical-references/job-definition/actions/command.md
       - Deploy:
         - Common: technical-references/job-definition/actions/deploy/index.md
+        - AVH: technical-references/job-definition/actions/deploy/to-avh.md
         - Docker: technical-references/job-definition/actions/deploy/to-docker.md
         - Downloads: technical-references/job-definition/actions/deploy/to-downloads.md
         - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
-      - Boot: technical-references/job-definition/actions/boot.md
+      - Boot:
+        - AVH: technical-references/job-definition/actions/boot/method-avh.md
       - Test: technical-references/job-definition/actions/test.md
     - Notifications: technical-references/job-definition/notifications.md
     - Protocols: technical-references/job-definition/protocols.md
