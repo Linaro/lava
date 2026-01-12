@@ -86,9 +86,68 @@ URLs **must** use one of the supported protocols:
 * `file://`
 * `scp://`
 * `downloads://`
+* `rclone://`
 
 URLs are checked during the test job validation to ensure that the file can be
 downloaded. Missing files will cause the test job to end as `Incomplete`.
+
+#### rclone
+
+The `rclone://` protocol allows downloading artifacts from any storage backend
+supported by [rclone](https://rclone.org/), including S3, Google Drive, Azure
+Blob Storage, SFTP, and 70+ other providers.
+
+The URL format is `rclone://remote-name/path/to/file` where `remote-name`
+corresponds to a configured remote in the rclone configuration.
+
+The rclone configuration can be provided in two ways via the job `secrets`
+block. The dispatcher must have rclone installed.
+
+**Option 1 — environment variables:**
+
+```yaml
+secrets:
+  rclone_env:
+    RCLONE_CONFIG_S3REMOTE_TYPE: "s3"
+    RCLONE_CONFIG_S3REMOTE_PROVIDER: "AWS"
+    RCLONE_CONFIG_S3REMOTE_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+    RCLONE_CONFIG_S3REMOTE_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+    RCLONE_CONFIG_S3REMOTE_REGION: "us-east-1"
+
+actions:
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        url: rclone://s3remote/bucket/images/rootfs.img.gz
+        compression: gz
+```
+
+The variable naming convention is `RCLONE_CONFIG_<REMOTE>_<OPTION>` where
+`<REMOTE>` is the remote name in uppercase.
+
+**Option 2 — inline config file:**
+
+```yaml
+secrets:
+  rclone_config: |
+    [s3remote]
+    type = s3
+    provider = AWS
+    access_key_id = AKIAIOSFODNN7EXAMPLE
+    secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    region = us-east-1
+
+actions:
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        url: rclone://s3remote/bucket/images/rootfs.img.gz
+        compression: gz
+```
+
+If both `rclone_env` and `rclone_config` are set, `rclone_env` takes priority.
 
 URLs allow placeholders for all supported protocols.
 
