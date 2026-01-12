@@ -98,6 +98,7 @@ nav:
       - Permissions: admin/basic-tutorials/instance/permissions.md
     - lavacli: admin/basic-tutorials/lavacli.md
     - Device setup:
+      - Common: admin/basic-tutorials/device-setup/common.md
       - AVH: admin/basic-tutorials/device-setup/avh.md
       - docker: admin/basic-tutorials/device-setup/docker.md
       - QEMU: admin/basic-tutorials/device-setup/qemu.md
