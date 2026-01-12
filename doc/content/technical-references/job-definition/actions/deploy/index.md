@@ -86,9 +86,41 @@ URLs **must** use one of the supported protocols:
 * `file://`
 * `scp://`
 * `downloads://`
+* `rclone://`
 
 URLs are checked during the test job validation to ensure that the file can be
 downloaded. Missing files will cause the test job to end as `Incomplete`.
+
+#### rclone
+
+The `rclone://` protocol allows downloading artifacts from any storage backend
+supported by [rclone](https://rclone.org/), including S3, Google Drive, Azure
+Blob Storage, SFTP, and 70+ other providers.
+
+The URL format is `rclone://remote-name/path/to/file` where `remote-name`
+corresponds to a configured remote in the rclone configuration.
+
+```yaml
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        url: rclone://s3remote/bucket/images/rootfs.img.gz
+        compression: gz
+
+secrets:
+  rclone_config: |
+    [s3remote]
+    type = s3
+    provider = AWS
+    access_key_id = AKIAIOSFODNN7EXAMPLE
+    secret_access_key = wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    region = us-east-1
+```
+
+The rclone configuration is provided via `secrets.rclone_config` in the job
+definition. This keeps credentials secure and allows per-job configuration.
+The dispatcher must have rclone installed.
 
 URLs allow placeholders for all supported protocols.
 

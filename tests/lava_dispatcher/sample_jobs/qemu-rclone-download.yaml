@@ -1,0 +1,45 @@
+device_type: qemu
+job_name: QEMU pipeline with rclone download
+
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 2
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+
+metadata:
+  docs-source: rclone-download
+  docs-filename: qemu-rclone-download.yaml
+
+secrets:
+  rclone_config: |
+    [myremote]
+    type = http
+    url = https://images.example.com/
+
+actions:
+- deploy:
+    to: tmpfs
+    timeout:
+      minutes: 5
+    images:
+      rootfs:
+        image_arg: -drive format=raw,file={rootfs}
+        url: rclone://myremote/images/debian-stretch.img
+
+- boot:
+    timeout:
+      minutes: 2
+    method: qemu
+    media: tmpfs
+    prompts: ["root@debian:"]
+    auto_login:
+      login_prompt: "login:"
+      username: root
