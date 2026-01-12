@@ -4,87 +4,21 @@ LAVA can use docker as a DUT and run test under Docker.
 
 ## Create device-type
 
-Create a device-type in the [admin interface](/admin/lava_scheduler_app/devicetype/add/).
-
-The only relevant information is the device-type name that should be **docker**.
-
-??? tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli device-types add docker
-        ```
-
-    === "lava-server"
-    ```shell
-    lava-server manage device-types add docker
-    ```
+[Create the device type](common.md#create-device-type) using the name **`docker`**.
 
 ## Create device
 
-Create a docker device in the [admin interface](/admin/lava_scheduler_app/device/add/):
+1. [Add the device](common.md#add-device) using the following settings:
+    * **Device Type:** `docker`
+    * **Hostname:** A unique name (e.g., `docker-01`)
+2. [Add the device configuration](common.md#add-device-configuration).
 
-* hostname: name of the device
-* device-type: **docker**
-* worker host: worker that will run the job
+    For a standard docker device and a simple docker job, the following device
+    dictionary should be sufficient:
 
-??? tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli devices add --type docker --worker <worker> <hostname>
-        ```
-
-    === "lava-server"
-        ```shell
-        lava-server manage devices add \
-            --device-type docker \
-            --worker <worker> \
-            <hostname>
-        ```
-
-## Device configuration
-
-In order to submit jobs to the newly created device, LAVA requires a device
-dictionary. For a simple docker job, this device dictionary would work:
-
-```jinja
-{% extends "docker.jinja2" %}
-```
-
-This file should be pushed to the LAVA server under
-`/etc/lava-server/dispatcher-config/devices/<hostname>.jinja2`.
-
-!!! tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli devices dict set <hostname> <filename>
-        ```
-
-    === "lava-server"
-        ```bash
-        cp <filename> /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-        chown lavaserver:lavaserver /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-        ```
-
-## Activate the device
-
-By default, a new device is put in maintenance.
-
-As the device is now configure, admins can put it online in the [device page](/scheduler/device/<hostname>).
-
-??? tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli devices update --health UNKNOWN <hostname>
-        ```
-
-    === "lava-server"
-        ```bash
-        lava-server manage devices update --health UNKNOWN <hostname>
-        ```
+    ```jinja
+    {% extends "docker.jinja2" %}
+    ```
 
 ## Submit a job
 

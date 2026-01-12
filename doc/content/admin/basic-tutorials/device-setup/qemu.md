@@ -4,94 +4,27 @@ LAVA can use qemu as a DUT and run test inside QEMU.
 
 ## Create device-type
 
-Create a device-type in the [admin interface](/admin/lava_scheduler_app/devicetype/add/).
-
-The only relevant information is the device-type name that should be **qemu**.
-
-!!! tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli device-types add qemu
-        ```
-
-    === "lava-server"
-        ```shell
-        lava-server manage device-types add qemu
-        ```
+[Create the device type](common.md#create-device-type) using the name **`qemu`**.
 
 ## Create device
 
-Create a qemu device in the [admin interface](/admin/lava_scheduler_app/device/add/):
+1. [Add the device](common.md#add-device) using the following settings:
+    * **Device Type:** `qemu`
+    * **Hostname:** A unique name (e.g., `qemu-01`)
+2. [Add the device configuration](common.md#add-device-configuration).
 
-* hostname: name of the device
-* device-type: **qemu**
-* worker host: worker that will run the job
+    For a simple qemu job, this device dictionary would work:
 
-!!! tip "Command line"
+    ```jinja
+    {% extends "qemu.jinja2" %}
 
-    === "lavacli"
-        ```shell
-        lavacli devices add --type qemu --worker <worker> <hostname>
-        ```
+    {% set netdevice = "user" %}
+    {% set memory = 1024 %}
+    ```
 
-    === "lava-server"
-        ```shell
-        lava-server manage devices add \
-            --device-type qemu \
-            --worker <worker> \
-            <hostname>
-        ```
-
-## Device configuration
-
-In order to submit jobs to the newly created device, LAVA requires a device
-dictionary. For a simple qemu job, this device dictionary would work:
-
-```jinja
-{% extends "qemu.jinja2" %}
-
-{% set netdevice = "user" %}
-{% set memory = 1024 %}
-```
-
-!!! tip
-    If `/dev/kvm` is unavailable on the worker, add `{% set no_kvm = True %}` to
-    the dictionary.
-
-This file should be pushed to the LAVA server under
-`/etc/lava-server/dispatcher-config/devices/<hostname>.jinja2`.
-
-!!! tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli devices dict set <hostname> <filename>
-        ```
-
-    === "lava-server"
-        ```bash
-        cp <filename> /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-        chown lavaserver:lavaserver /etc/lava-server/dispatcher-config/devices/<hostname>.jinja2
-        ```
-
-## Activate the device
-
-By default, a new device is put in maintenance.
-
-As the device is now configure, admins can put it online in the [device page](/scheduler/device/<hostname>).
-
-!!! tip "Command line"
-
-    === "lavacli"
-        ```shell
-        lavacli devices update --health UNKNOWN <hostname>
-        ```
-
-    === "lava-server"
-        ```bash
-        lava-server manage devices update --health UNKNOWN <hostname>
-        ```
+    !!! tip
+        If `/dev/kvm` is unavailable on the worker, add `{% set no_kvm = True %}` to
+        the dictionary.
 
 ## Submit a job
 
