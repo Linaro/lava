@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import json
 import math
 import os
 import pathlib
@@ -24,6 +25,7 @@ from lava_common.constants import (
     FILE_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_CHUNK_SIZE,
     HTTP_DOWNLOAD_TIMEOUT,
+    RCLONE_DOWNLOAD_CHUNK_SIZE,
     SCP_DOWNLOAD_CHUNK_SIZE,
 )
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
@@ -43,6 +45,7 @@ from lava_dispatcher.utils.filesystem import (
     lava_lxc_home,
 )
 from lava_dispatcher.utils.network import requests_retry
+from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
 if TYPE_CHECKING:
@@ -94,6 +97,10 @@ class DownloaderAction(RetryAction):
             )
         elif url.scheme == "lxc":
             action = LxcDownloadAction(self.job, self.key, self.path, url)
+        elif url.scheme == "rclone":
+            action = RcloneDownloadAction(
+                self.job, self.key, self.path, url, self.uniquify, params=self.params
+            )
         elif url.scheme == "downloads":
             action = PreDownloadedAction(
                 self.job, self.key, url, self.path, self.uniquify, params=self.params
@@ -276,9 +283,11 @@ class DownloadHandler(Action):
             return (
                 condition,
                 downloaded_sz,
-                "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %d MB" % (int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         def progress_known_total(downloaded_sz, last_val, last_update):
@@ -290,10 +299,12 @@ class DownloadHandler(Action):
             return (
                 condition,
                 percent,
-                "progress %3d %% (%d MB)"
-                % (percent, int(downloaded_sz / (1024 * 1024)))
-                if condition
-                else "",
+                (
+                    "progress %3d %% (%d MB)"
+                    % (percent, int(downloaded_sz / (1024 * 1024)))
+                    if condition
+                    else ""
+                ),
             )
 
         connection = super().run(connection, max_end_time)
@@ -778,6 +789,112 @@ class ScpDownloadAction(DownloadHandler):
                 raise JobError(
                     "Downloading '%s' failed with message '%s'"
                     % (self.url.geturl(), process.stderr.read())
+                )
+        finally:
+            if process is not None:
+                with contextlib.suppress(OSError):
+                    process.kill()
+
+
+class RcloneDownloadAction(DownloadHandler):
+    """
+    Download a resource using rclone
+    """
+
+    name = "rclone-download"
+    description = "use rclone to download the file"
+    summary = "rclone download"
+
+    def _get_rclone_path(self):
+        """Get the path to rclone binary from dispatcher config or find in PATH."""
+        configured_path = self.job.parameters["dispatcher"].get("rclone_path")
+        if configured_path:
+            return configured_path
+        return which("rclone")
+
+    def _get_rclone_config(self):
+        """Get rclone config from job secrets or dispatcher config."""
+        secrets = self.job.parameters.get("secrets", {})
+        if rclone_config_content := secrets.get("rclone_config"):
+            config_path = os.path.join(self.job.tmp_dir, "rclone.conf")
+            with open(config_path, "w") as f:
+                f.write(rclone_config_content)
+            os.chmod(config_path, 0o600)
+            return config_path
+        return self.job.parameters["dispatcher"].get("rclone_config")
+
+    def _parse_rclone_url(self):
+        """
+        Parse rclone:// URL and return the remote:path format.
+
+        URL format: rclone://remote/path/to/file
+        - url.netloc contains "remote"
+        - url.path contains "/path/to/file"
+
+        Returns: "remote:path/to/file"
+        """
+        remote = self.url.netloc
+        path = self.url.path
+        if remote.endswith(":"):
+            remote = remote[:-1]
+        if path.startswith("/"):
+            path = path[1:]
+        return f"{remote}:{path}"
+
+    def validate(self):
+        super().validate()
+        try:
+            rclone_path = self._get_rclone_path()
+        except InfrastructureError as exc:
+            self.errors = str(exc)
+            return
+        rclone_source = self._parse_rclone_url()
+        rclone_config = self._get_rclone_config()
+
+        cmd = [rclone_path, "size", "--json", rclone_source]
+        if rclone_config:
+            cmd.extend(["--config", rclone_config])
+
+        result = subprocess.run(  # nosec - internal.
+            cmd,
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            self.errors = f"Unable to get file info from rclone: {result.stderr.decode('utf-8').strip()}"
+            return
+
+        try:
+            size_info = json.loads(result.stdout.decode("utf-8"))
+            self.size = size_info.get("bytes", -1)
+        except (json.JSONDecodeError, KeyError) as exc:
+            self.logger.warning("Could not parse rclone size output: %s", exc)
+            self.size = -1
+
+    def reader(self):
+        rclone_path = self._get_rclone_path()
+        rclone_source = self._parse_rclone_url()
+        rclone_config = self._get_rclone_config()
+
+        cmd = [rclone_path, "cat", rclone_source]
+        if rclone_config:
+            cmd.extend(["--config", rclone_config])
+
+        process = None
+        try:
+            process = subprocess.Popen(  # nosec - internal.
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            buff = process.stdout.read(RCLONE_DOWNLOAD_CHUNK_SIZE)
+            while buff:
+                yield buff
+                buff = process.stdout.read(RCLONE_DOWNLOAD_CHUNK_SIZE)
+            if process.wait() != 0:
+                error_msg = process.stderr.read().decode("utf-8").strip()
+                raise InfrastructureError(
+                    f"Downloading {self.url.geturl()!r} failed: {error_msg}"
                 )
         finally:
             if process is not None:
