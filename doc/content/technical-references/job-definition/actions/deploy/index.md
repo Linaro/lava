@@ -12,7 +12,7 @@ downloads:
 * checksums
 * compression
 * headers
-* protocole
+* url
 
 ### Archive
 
@@ -75,10 +75,44 @@ For http(s) artifacts, you can provide additional headers:
           my-header1: value
 ```
 
-### Protocols
+### URL
 
-When downloading an artifact, LAVA supports the following protocols: `http`,
-`https`, `file` and `lxc`.
+Specifies the URL to download.
+
+URLs **must** use one of the supported protocols:
+
+* `http://`
+* `https://`
+* `file://`
+* `scp://`
+* `downloads://`
+
+URLs are checked during the test job validation to ensure that the file can be
+downloaded. Missing files will cause the test job to end as `Incomplete`.
+
+URLs allow placeholders for all supported protocols.
+
+```yaml
+- deploy:
+    to: tftp
+    kernel:
+      url: http://{FILE_SERVER_IP}/linux/Image-imx8mmevk.bin
+      type: image
+    persistent_nfs:
+      address: "{FILE_SERVER_IP}:/var/lib/lava/dispatcher/tmp/linux/imx8mm_rootfs"
+    dtb:
+      url: http://{FILE_SERVER_IP}/linux/imx8mm-evk.dtb
+    os: debian
+```
+
+!!! note
+    Admin can define any placeholder and assign an address to it in device
+    dictionary. LAVA then substitutes the placeholders in job with the
+    `static_info` to generate a new `url`.
+
+```jinja
+{% set static_info = [{'FILE_SERVER_IP': "10.192.244.104"}] %}
+```
 
 ## Overlays
 
