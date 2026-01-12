@@ -14,6 +14,7 @@ TestSuite is based on the test definition
 TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
+from __future__ import annotations
 
 import contextlib
 import logging
@@ -1007,7 +1008,7 @@ class QueryCondition(models.Model):
     }
 
     # Allowed fields for condition entities.
-    FIELD_CHOICES = {
+    FIELD_CHOICES: dict[type[models.Model], list[str]] = {
         TestJob: [
             "submitter",
             "start_time",
@@ -1074,7 +1075,7 @@ class QueryCondition(models.Model):
         # If job is supplied, return available metadata field names as well.
 
         condition_choices = {}
-        for model in cls.FIELD_CHOICES:
+        for model, field_choices in cls.FIELD_CHOICES.items():
             condition_choice = {}
             condition_choice["fields"] = {}
             content_type = ContentType.objects.get_for_model(model)
@@ -1088,7 +1089,7 @@ class QueryCondition(models.Model):
                         condition_choice["fields"][attribute.name] = {}
 
             else:
-                for field_name in cls.FIELD_CHOICES[model]:
+                for field_name in field_choices:
                     field = {}
 
                     field_object = content_type.model_class()._meta.get_field(
