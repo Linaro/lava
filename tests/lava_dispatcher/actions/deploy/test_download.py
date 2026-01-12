@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 from urllib.parse import quote_plus, urlparse
@@ -22,8 +24,10 @@ from lava_dispatcher.actions.deploy.download import (
     HttpDownloadAction,
     LxcDownloadAction,
     PreDownloadedAction,
+    RcloneDownloadAction,
     ScpDownloadAction,
 )
+from lava_dispatcher.job import Job
 
 from ...test_basic import Factory, LavaDispatcherTestCase
 
@@ -105,6 +109,42 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertIsInstance(action.pipeline.actions[0], ScpDownloadAction)
         self.assertEqual(
             action.pipeline.actions[0].url, urlparse("scp://user@host:/resource.img")
+        )
+
+    def test_downloader_populate_rclone(self):
+        job = self.create_simple_job()
+        # "images.key" with rclone
+        action = DownloaderAction(
+            job,
+            "key",
+            "/path/to/save",
+            params={"url": "rclone://myremote/bucket/resource.img"},
+        )
+        action.level = 1
+        action.populate(
+            {"images": {"key": {"url": "rclone://myremote/bucket/resource.img"}}}
+        )
+        self.assertEqual(len(action.pipeline.actions), 1)
+        self.assertIsInstance(action.pipeline.actions[0], RcloneDownloadAction)
+        self.assertEqual(
+            action.pipeline.actions[0].url,
+            urlparse("rclone://myremote/bucket/resource.img"),
+        )
+
+        # "key" with rclone
+        action = DownloaderAction(
+            job,
+            "key",
+            "/path/to/save",
+            params={"url": "rclone://myremote/bucket/resource.img"},
+        )
+        action.level = 1
+        action.populate({"key": {"url": "rclone://myremote/bucket/resource.img"}})
+        self.assertEqual(len(action.pipeline.actions), 1)
+        self.assertIsInstance(action.pipeline.actions[0], RcloneDownloadAction)
+        self.assertEqual(
+            action.pipeline.actions[0].url,
+            urlparse("rclone://myremote/bucket/resource.img"),
         )
 
     def test_downloader_populate_image_file(self):
@@ -1046,6 +1086,259 @@ class TestDowload(LavaDispatcherTestCase):
         action.params = action.parameters["images"]["key"]
         action.validate()
         assert action.params["url"] == "http://foobar/resource.img"
+
+
+class TestRcloneDownload(LavaDispatcherTestCase):
+    def test_rclone_url_parsing(self):
+        """Test that rclone URLs are parsed correctly."""
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
+
+        # Test standard URL format
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/bucket/path/file.img"),
+        )
+        action.section = "deploy"
+        action.parameters = {
+            "image": {"url": "rclone://myremote/bucket/path/file.img"},
+            "namespace": "common",
+        }
+        action.params = action.parameters["image"]
+        self.assertEqual(action._parse_rclone_url(), "myremote:bucket/path/file.img")
+
+        # Test URL with single file path
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/file.img"),
+        )
+        action.section = "deploy"
+        action.parameters = {
+            "image": {"url": "rclone://myremote/file.img"},
+            "namespace": "common",
+        }
+        action.params = action.parameters["image"]
+        self.assertEqual(action._parse_rclone_url(), "myremote:file.img")
+
+    def test_rclone_validate_missing_binary(self):
+        """Test that validation fails when rclone binary is not found."""
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/bucket/file.img"),
+        )
+        action.section = "deploy"
+        action.parameters = {
+            "image": {"url": "rclone://myremote/bucket/file.img"},
+            "namespace": "common",
+        }
+        action.params = action.parameters["image"]
+
+        def which_raises(*args, **kwargs):
+            raise InfrastructureError("Cannot find command 'rclone' in $PATH")
+
+        with patch("lava_dispatcher.actions.deploy.download.which", which_raises):
+            action.validate()
+
+        self.assertIn("Cannot find command 'rclone'", action.errors[0])
+
+    def test_rclone_validate_with_secrets_config(self):
+        """Test that rclone config from secrets is written and used."""
+        rclone_config_content = "[myremote]\ntype = http\nurl = https://example.com/"
+        job = self.create_simple_job(
+            job_parameters={
+                "dispatcher": {},
+                "secrets": {"rclone_config": rclone_config_content},
+            }
+        )
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            action = RcloneDownloadAction(
+                job,
+                "image",
+                "/path/to/file",
+                urlparse("rclone://myremote/bucket/file.img"),
+            )
+            action.section = "deploy"
+            action.parameters = {
+                "image": {"url": "rclone://myremote/bucket/file.img"},
+                "namespace": "common",
+            }
+            action.params = action.parameters["image"]
+
+            captured_cmds = []
+
+            class MockResult:
+                returncode = 0
+                stdout = b'{"count": 1, "bytes": 12345}'
+                stderr = b""
+
+            def capture_run(cmd, **kwargs):
+                captured_cmds.append(cmd)
+                return MockResult()
+
+            with patch(
+                "lava_dispatcher.actions.deploy.download.which",
+                return_value="/usr/bin/rclone",
+            ):
+                with patch.object(
+                    Job, "tmp_dir", new_callable=lambda: property(lambda self: tmp_dir)
+                ):
+                    with patch("subprocess.run", capture_run):
+                        action.validate()
+
+                    size_cmd = [c for c in captured_cmds if "size" in c][0]
+                    self.assertIn("--config", size_cmd)
+                    config_path = os.path.join(tmp_dir, "rclone.conf")
+                    self.assertIn(config_path, size_cmd)
+                    with open(config_path) as f:
+                        self.assertEqual(f.read(), rclone_config_content)
+            self.assertEqual(action.size, 12345)
+
+    def test_rclone_validate_with_dispatcher_config(self):
+        """Test that dispatcher rclone config path is used when specified."""
+        job = self.create_simple_job(
+            job_parameters={"dispatcher": {"rclone_config": "/etc/rclone/rclone.conf"}}
+        )
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/bucket/file.img"),
+        )
+        action.section = "deploy"
+        action.parameters = {
+            "image": {"url": "rclone://myremote/bucket/file.img"},
+            "namespace": "common",
+        }
+        action.params = action.parameters["image"]
+
+        captured_cmds = []
+
+        class MockResult:
+            returncode = 0
+            stdout = b'{"count": 1, "bytes": 12345}'
+            stderr = b""
+
+        def capture_run(cmd, **kwargs):
+            captured_cmds.append(cmd)
+            return MockResult()
+
+        with patch(
+            "lava_dispatcher.actions.deploy.download.which",
+            return_value="/usr/bin/rclone",
+        ):
+            with patch("subprocess.run", capture_run):
+                action.validate()
+
+        size_cmd = [c for c in captured_cmds if "size" in c][0]
+        self.assertIn("--config", size_cmd)
+        self.assertIn("/etc/rclone/rclone.conf", size_cmd)
+        self.assertEqual(action.size, 12345)
+
+    def test_rclone_download_reader(self):
+        """Test rclone reader streams data correctly."""
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/bucket/file.img"),
+        )
+        action.url = urlparse("rclone://myremote/bucket/file.img")
+
+        class MockProcess:
+            def __init__(self):
+                self.stdout = MockStdout()
+                self.stderr = MockStderr()
+                self.returncode = 0
+
+            def wait(self):
+                return 0
+
+            def kill(self):
+                pass
+
+        class MockStdout:
+            def __init__(self):
+                self.data = [b"hello", b"world", b""]
+                self.index = 0
+
+            def read(self, size):
+                if self.index < len(self.data):
+                    result = self.data[self.index]
+                    self.index += 1
+                    return result
+                return b""
+
+        class MockStderr:
+            def read(self):
+                return b""
+
+        def mock_popen(cmd, **kwargs):
+            self.assertIn("rclone", cmd[0])
+            self.assertIn("cat", cmd)
+            return MockProcess()
+
+        with patch(
+            "lava_dispatcher.actions.deploy.download.which",
+            return_value="/usr/bin/rclone",
+        ):
+            with patch("subprocess.Popen", mock_popen):
+                ite = action.reader()
+                self.assertEqual(next(ite), b"hello")
+                self.assertEqual(next(ite), b"world")
+                with self.assertRaises(StopIteration):
+                    next(ite)
+
+    def test_rclone_download_reader_failure(self):
+        """Test rclone reader handles failures correctly."""
+        job = self.create_simple_job(job_parameters={"dispatcher": {}})
+        action = RcloneDownloadAction(
+            job,
+            "image",
+            "/path/to/file",
+            urlparse("rclone://myremote/bucket/file.img"),
+        )
+        action.url = urlparse("rclone://myremote/bucket/file.img")
+
+        class MockProcess:
+            def __init__(self):
+                self.stdout = MockStdout()
+                self.stderr = MockStderr()
+                self.returncode = 1
+
+            def wait(self):
+                return 1
+
+            def kill(self):
+                pass
+
+        class MockStdout:
+            def read(self, size):
+                return b""
+
+        class MockStderr:
+            def read(self):
+                return b"remote not found"
+
+        def mock_popen(cmd, **kwargs):
+            return MockProcess()
+
+        with patch(
+            "lava_dispatcher.actions.deploy.download.which",
+            return_value="/usr/bin/rclone",
+        ):
+            with patch("subprocess.Popen", mock_popen):
+                ite = action.reader()
+                with self.assertRaisesRegex(
+                    InfrastructureError, "Downloading .* failed: remote not found"
+                ):
+                    next(ite)
 
 
 class TestHttpCache:
