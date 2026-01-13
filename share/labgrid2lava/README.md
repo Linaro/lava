@@ -79,3 +79,11 @@ the converter can be extended. Here are the steps:
 * In the `converter.py`, define a dataclass for each module.
 * Update the lava device and job templates to define the equivalent blocks for rendering.
 * Rerun the convert command.
+
+## Reference
+
+The converter is for converting labgrid configure into LAVA device and job
+definitions for running LAVA jobs natively.
+
+For running labgrid tests in a LAVA Test Shell like other test suites, you can
+use the [labgrid test definition](https://github.com/Linaro/test-definitions/tree/master/automated/linux/labgrid)
