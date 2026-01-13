@@ -92,7 +92,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         server = self.server_proxy("test", "test")
         self.assertEqual(
             {
-                "status": "offline",
+                "status": "idle",
                 "job": None,
                 "offline_since": None,
                 "hostname": "black01",
@@ -113,7 +113,7 @@ class TestSchedulerAPI(TestCaseWithFactory):
         server = self.server_proxy("test", "test")
         self.assertEqual(
             {
-                "status": "offline",
+                "status": "idle",
                 "job": None,
                 "offline_since": None,
                 "hostname": "black01_:'),;~",
@@ -957,7 +957,7 @@ def test_devices_list(setup):
         [  # nosec
             {
                 "current_job": None,
-                "health": "Maintenance",
+                "health": "Unknown",
                 "hostname": "device_:'),;~",
                 "pipeline": True,
                 "state": "Idle",
@@ -965,7 +965,7 @@ def test_devices_list(setup):
             },
             {
                 "current_job": None,
-                "health": "Maintenance",
+                "health": "Unknown",
                 "hostname": "device01",
                 "pipeline": True,
                 "state": "Idle",
@@ -1148,7 +1148,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
-        "health": "Maintenance",
+        "health": "Unknown",
         "health_job": False,
         "hostname": "device01",
         "pipeline": True,
@@ -1168,7 +1168,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
-        "health": "Maintenance",
+        "health": "Unknown",
         "health_job": False,
         "hostname": "device01",
         "pipeline": True,
@@ -1186,7 +1186,7 @@ def test_devices_show(setup):
         "description": None,
         "device_type": "black",
         "has_device_dict": False,
-        "health": "Maintenance",
+        "health": "Unknown",
         "health_job": False,
         "hostname": "device01",
         "pipeline": True,

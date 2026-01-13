@@ -879,20 +879,19 @@ ok 2 bar
         # Set health
         response = self.adminclient.put(
             reverse("api-root", args=[self.version]) + "devices/public02/",
-            {"device_type": "restricted_device_type1", "health": "Unknown"},
+            {"device_type": "restricted_device_type1", "health": "Bad"},
         )
         assert response.status_code == 200  # nosec - unit test support
         content = json.loads(response.content.decode("utf-8"))
         assert (
             content["device_type"] == "restricted_device_type1"
         )  # nosec - unit test support
-        assert content["health"] == "Unknown"  # nosec - unit test support
-        assert Device.objects.get(hostname="public02").get_health_display() == "Unknown"
+        assert content["health"] == "Bad"  # nosec - unit test support
+        assert Device.objects.get(hostname="public02").get_health_display() == "Bad"
         assert LogEntry.objects.filter(object_id="public02").count() == 1
         assert LogEntry.objects.get(object_id="public02").user == self.admin
         assert (
-            LogEntry.objects.get(object_id="public02").change_message
-            == "Maintenance → Unknown"
+            LogEntry.objects.get(object_id="public02").change_message == "Unknown → Bad"
         )
 
         # Set health again
@@ -909,7 +908,7 @@ ok 2 bar
             LogEntry.objects.filter(object_id="public02").order_by("action_time").last()
         )
         assert logentry.user == self.admin
-        assert logentry.change_message == "Unknown → Good"
+        assert logentry.change_message == "Bad → Good"
 
         # Update spec
         response = self.adminclient.put(

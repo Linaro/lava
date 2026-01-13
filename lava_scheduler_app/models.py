@@ -641,7 +641,7 @@ class Device(RestrictedObject):
         "MAINTENANCE": HEALTH_MAINTENANCE,
         "RETIRED": HEALTH_RETIRED,
     }
-    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_MAINTENANCE)
+    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_UNKNOWN)
 
     last_health_report_job = models.OneToOneField(
         "TestJob",

@@ -280,7 +280,7 @@ class Command(BaseCommand):
         except Worker.DoesNotExist:
             raise CommandError("Unable to find worker '%s'" % worker_name)
 
-        health = Device.HEALTH_GOOD if online else Device.HEALTH_MAINTENANCE
+        health = Device.HEALTH_UNKNOWN if online else Device.HEALTH_MAINTENANCE
         device = Device.objects.create(
             hostname=hostname,
             device_type=dt,

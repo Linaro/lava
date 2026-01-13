@@ -284,7 +284,7 @@ def test_retire(mocker):
     assert not DeviceType.objects.get(name="qemu").display
 
     assert Device.objects.get(hostname="bbb01").health == Device.HEALTH_RETIRED
-    assert Device.objects.get(hostname="bbb02").health == Device.HEALTH_MAINTENANCE
+    assert Device.objects.get(hostname="bbb02").health == Device.HEALTH_UNKNOWN
     assert DeviceType.objects.get(name="bbb").display
 
 
@@ -316,7 +316,7 @@ def test_sync_not_retire(mocker):
     sys.stdout = out
     call_command("sync")
 
-    assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_MAINTENANCE
+    assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_UNKNOWN
     assert Device.objects.get(hostname="qemu02").health == Device.HEALTH_RETIRED
     assert DeviceType.objects.get(name="qemu").display
 
@@ -335,7 +335,7 @@ def test_not_sync_not_retire(mocker):
     call_command("sync")
 
     assert Device.objects.get(hostname="qemu01").health == Device.HEALTH_RETIRED
-    assert Device.objects.get(hostname="qemu02").health == Device.HEALTH_MAINTENANCE
+    assert Device.objects.get(hostname="qemu02").health == Device.HEALTH_UNKNOWN
     assert not DeviceType.objects.get(name="qemu").display
 
 
