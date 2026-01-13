@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import re
-from collections import OrderedDict
 from typing import TYPE_CHECKING
 
 import pexpect
@@ -63,7 +62,7 @@ class TestMonitorAction(ReportMixin, Action):
 
             # pattern order is important because we want to match the end before
             # it can possibly get confused with a test result
-            self.patterns = OrderedDict()
+            self.patterns = {}
             self.patterns["eof"] = pexpect.EOF
             self.patterns["timeout"] = pexpect.TIMEOUT
             self.patterns["end"] = monitor["end"]

@@ -124,8 +124,7 @@ Sample pipeline description output
 
 .. code-block:: yaml
 
- !!python/object/apply:collections.OrderedDict
- - - - device
+  - - device
     - parameters:
         actions:
           boot:
@@ -642,7 +641,7 @@ the raw content of the output YAML.
  - {debug: 'start: 1.4.2.3.7 test-install-overlay (max 300s)', ts: '2015-09-07T09:40:46.720450'}
  - {debug: 'test-install-overlay duration: 0.02', ts: '2015-09-07T09:40:46.746036'}
  - results:
-     test-install-overlay: !!python/object/apply:collections.OrderedDict
+     test-install-overlay:
      - - [success, a9b2300d-0864-4f9c-ba78-c2594b567fc5]
        - [skipped, a9b2300d-0864-4f9c-ba78-c2594b567fc5]
        - [duration, 0.024679899215698242]
