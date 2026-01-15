@@ -75,7 +75,34 @@ number of devices for these device types should always be equal to or less than
 LAVA users can also overwrite the AVH project name in the device dictionary
 or in the job definition using the `deploy.options.project_name` key.
 
-## Job example
+## Creating device type
+
+[Create the device type](common.md#create-device-type) using the name **`avh`**.
+
+## Creating device
+
+1. [Add the device](common.md#add-device) using the following settings:
+    * **Device Type:** `avh`
+    * **Hostname:** A unique name (e.g., `avh-01`)
+2. [Add the device configuration](common.md#add-device-configuration).
+
+    For a minimal configuration, simply extend the base template:
+
+    ```jinja
+    {% extends "avh.jinja2" %}
+    ```
+
+    To set or override the
+    [default settings](../../../technical-references/job-definition/actions/deploy/to-avh.md#options),
+    define the additional variables below:
+
+    ```jinja
+    {% set avh_model = <value> %}
+    {% set avh_api_end_point = <value> %}
+    {% set avh_project_name = <value> %}
+    ```
+
+## Sample job definition
 
 ```yaml
 device_type: avh
