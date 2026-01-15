@@ -48,7 +48,6 @@ disable = [
     "W0237",  # Parameter has been renamed in overriding method
     "W0511",  # FIXME comments
     "W0603",  # Using the global statement
-    "W0611",  # Unused import
     "W0612",  # Unused variable
     "W0613",  # Unused argument
     "W0621",  # Redefining name from outer scope

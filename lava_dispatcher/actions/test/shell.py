@@ -19,7 +19,6 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
-from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.connection import SignalMatch

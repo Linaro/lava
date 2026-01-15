@@ -12,7 +12,7 @@ class LAVASchedulerConfig(AppConfig):
     verbose_name = "lava_scheduler_app"
 
     def ready(self):
-        import lava_scheduler_app.checks
+        import lava_scheduler_app.checks  # pylint: disable=unused-import
         from lava_scheduler_app.signals import register_scheduler_app_signals
 
         register_scheduler_app_signals()

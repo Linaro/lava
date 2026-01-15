@@ -6,21 +6,13 @@
 
 import lzma
 import unittest
+from importlib.util import find_spec
 
 import pytest
 from django.conf import settings
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.logutils import LogsElasticsearch, LogsFilesystem, LogsMongo
-
-
-def check_pymongo():
-    try:
-        import pymongo
-
-        return False
-    except ImportError:
-        return True
 
 
 @pytest.fixture
@@ -104,7 +96,7 @@ def test_write_logs(mocker, tmp_path, logs_filesystem):
         assert f_idx.read(8) == b"\x0c\x00\x00\x00\x00\x00\x00\x00"  # nosec
 
 
-@unittest.skipIf(check_pymongo(), "openocd not installed")
+@unittest.skipIf(find_spec("pymongo") is None, "pymongo not installed")
 def test_mongo_logs(mocker):
     mocker.patch("pymongo.database.Database.command")
     mocker.patch("pymongo.collection.Collection.create_index")

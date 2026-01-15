@@ -1661,8 +1661,6 @@ def test_device_types_show(setup):
     dt = DeviceType.objects.create(name="qemu")
     data = server("admin", "admin").scheduler.device_types.show("qemu")
 
-    from lava_server.files import File
-
     assert data == {  # nosec
         "name": "qemu",
         "description": None,
