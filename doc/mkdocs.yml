@@ -101,6 +101,7 @@ nav:
       - Common: admin/basic-tutorials/device-setup/common.md
       - AVH: admin/basic-tutorials/device-setup/avh.md
       - docker: admin/basic-tutorials/device-setup/docker.md
+      - FVP: admin/basic-tutorials/device-setup/fvp.md
       - QEMU: admin/basic-tutorials/device-setup/qemu.md
       - RPi (u-boot): admin/basic-tutorials/device-setup/u-boot.md
       - x15 (fastboot): admin/basic-tutorials/device-setup/fastboot.md
@@ -150,8 +151,10 @@ nav:
         - Docker: technical-references/job-definition/actions/deploy/to-docker.md
         - Downloads: technical-references/job-definition/actions/deploy/to-downloads.md
         - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
+        - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
+        - FVP: technical-references/job-definition/actions/boot/method-fvp.md
       - Test: technical-references/job-definition/actions/test.md
     - Notifications: technical-references/job-definition/notifications.md
     - Protocols: technical-references/job-definition/protocols.md
