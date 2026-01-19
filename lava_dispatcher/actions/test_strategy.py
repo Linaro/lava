@@ -88,7 +88,7 @@ class DockerTest(LavaTestStrategy):
 
     @classmethod
     def has_shell(cls, parameters: dict[str, Any]) -> bool:
-        return True
+        return False
 
     @classmethod
     def needs_character_delay(cls, parameters: dict[str, Any]) -> bool:
