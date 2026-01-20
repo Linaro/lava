@@ -35,6 +35,8 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                     "--privileged",
                     "--volume=/dev:/dev",
                     "--net=host",
+                    "-e",
+                    "DISABLE_SUMMARY=true",
                 ]
             else:
                 self.__driver__ = NullDriver(self)
@@ -51,7 +53,13 @@ class OptionalContainerUuuAction(OptionalContainerAction):
         )
 
     def run_uuu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
-        return self.run_cmd(self.get_uuu_bcu_cmd(cmd), allow_fail, error_msg, cwd)
+        return self.run_cmd(
+            self.get_uuu_bcu_cmd(cmd),
+            allow_fail,
+            error_msg,
+            cwd,
+            env={"DISABLE_SUMMARY": "true"},
+        )
 
     def get_uuu_bcu_cmd(self, cmd, copy_files=True):
         uuu_bcu_cmd = self.driver.get_command_prefix(
