@@ -1,4 +1,4 @@
-# Copyright 2020-2023, 2025 NXP
+# Copyright 2020-2023, 2025-2026 NXP
 #
 # Author: Larry Shen <larry.shen@nxp.com>
 #
@@ -32,7 +32,6 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 self.__driver__ = DockerDriver(self, params)
                 self.__driver__.docker_options = shlex.split(remote_options)
                 self.__driver__.docker_run_options = [
-                    "-t",
                     "--privileged",
                     "--volume=/dev:/dev",
                     "--net=host",
