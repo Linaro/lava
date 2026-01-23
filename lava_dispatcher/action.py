@@ -668,7 +668,9 @@ class Action:
 
         return
 
-    def run_cmd(self, command_list, allow_fail=False, error_msg=None, cwd=None):
+    def run_cmd(
+        self, command_list, allow_fail=False, error_msg=None, cwd=None, env=None
+    ):
         """
         Run the given command on the dispatcher. If the command fail, a
         JobError will be raised unless allow_fail is set to True.
@@ -678,6 +680,7 @@ class Action:
         :param: allow_fail - if True, do not raise a JobError when the command fail (return non 0)
         :param: error_msg - the exception message.
         :param: cwd - the current working directory for this command
+        :param: env - environment variables to pass to the command
         :return: return code of the command
         """
         # Build the command list
@@ -702,6 +705,7 @@ class Action:
                 logfile=cmd_logger,
                 timeout=self.timeout.duration,
                 searchwindowsize=10,
+                env=env,
             )
             ret = self._run_pexpect_popen(proc, start)
         except (OSError, pexpect.ExceptionPexpect) as exc:

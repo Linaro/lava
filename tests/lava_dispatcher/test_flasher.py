@@ -80,6 +80,7 @@ class TestFlasher(LavaDispatcherTestCase):
             self.assertEqual(call.kwargs["encoding"], "utf-8")
             self.assertEqual(call.kwargs["codec_errors"], "replace")
             self.assertEqual(call.kwargs["searchwindowsize"], 10)
+            self.assertIsNone(call.kwargs["env"])
 
         # Test InfrastructureError is raised on flashing failure.
         with pytest.raises(InfrastructureError) as exc:
