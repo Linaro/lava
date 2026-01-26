@@ -19,22 +19,22 @@ if TYPE_CHECKING:
 
 
 class DockerRun:
-    def __init__(self, image):
+    def __init__(self, image: str):
         self.image = image
-        self.__local__ = False
+        self._is_local_image = False
         self._container_name: str | None = None
-        self.__network__ = None
-        self.__suffix__ = ""
-        self.__hostname__ = None
-        self.__workdir__ = None
-        self.__devices__ = []
-        self.__bind_mounts__ = []
-        self.__environment__ = []
-        self.__interactive__ = False
-        self.__tty__ = False
-        self.__init = True
-        self.__docker_options__ = []
-        self.__docker_run_options__ = []
+        self._network_name: str | None = None
+        self._suffix = ""
+        self._hostname: str | None = None
+        self._workdir: str | None = None
+        self._shared_devices: list[str] = []
+        self._bind_mounts: list[str] = []
+        self._environment_vars: list[tuple[str, str]] = []
+        self._is_interactive = False
+        self._is_tty = False
+        self._has_init = True
+        self._docker_options: list[str] = []
+        self._docker_run_options: list[str] = []
 
     @classmethod
     def from_parameters(cls, params, job):
@@ -51,7 +51,7 @@ class DockerRun:
         return run
 
     def local(self, local):
-        self.__local__ = local
+        self._is_local_image = local
 
     def name(self, name, random_suffix=False):
         suffix = ""
@@ -61,32 +61,32 @@ class DockerRun:
         self._container_name = name + suffix
 
     def network(self, network):
-        self.__network__ = network
+        self._network_name = network
 
     def suffix(self, suffix):
-        self.__suffix__ = suffix
+        self._suffix = suffix
 
     def hostname(self, hostname):
-        self.__hostname__ = hostname
+        self._hostname = hostname
 
     def workdir(self, workdir):
-        self.__workdir__ = workdir
+        self._workdir = workdir
 
     def init(self, init):
-        self.__init = init
+        self._has_init = init
 
     def add_device(self, device, skip_missing=False):
         if not Path(device).exists() and skip_missing:
             return
         if ":" in device:
             return
-        self.__devices__.append(device)
+        self._shared_devices.append(device)
 
     def add_docker_options(self, *options):
-        self.__docker_options__ += options
+        self._docker_options += options
 
     def add_docker_run_options(self, *options):
-        self.__docker_run_options__ += options
+        self._docker_run_options += options
 
     def add_device_docker_method_options(
         self, docker_method_conf: dict[str, Iterable[None | list[str] | str]]
@@ -115,23 +115,21 @@ class DockerRun:
             self.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
 
     def interactive(self):
-        self.__interactive__ = True
+        self._is_interactive = True
 
     def tty(self):
-        self.__tty__ = True
+        self._is_tty = True
 
     def bind_mount(self, source, destination=None, read_only=False):
         if not destination:
             destination = source
-        self.__bind_mounts__.append((source, destination, read_only))
+        self._bind_mounts.append((source, destination, read_only))
 
     def environment(self, variable, value):
-        self.__environment__.append((variable, value))
+        self._environment_vars.append((variable, value))
 
     def cmdline(self, *args):
-        cmd = (
-            ["docker"] + self.__docker_options__ + ["run"] + self.__docker_run_options__
-        )
+        cmd = ["docker"] + self._docker_options + ["run"] + self._docker_run_options
         cmd += self.interaction_options()
         cmd += self.start_options()
         cmd.append(self.image)
@@ -140,32 +138,32 @@ class DockerRun:
 
     def interaction_options(self):
         cmd = []
-        if self.__interactive__:
+        if self._is_interactive:
             cmd.append("--interactive")
-        if self.__tty__:
+        if self._is_tty:
             cmd.append("--tty")
         return cmd
 
     def start_options(self):
         cmd = ["--rm"]
-        if self.__init:
+        if self._has_init:
             cmd.append("--init")
         if self._container_name:
             cmd.append(f"--name={self._container_name}")
-        if self.__network__:
-            cmd.append(f"--network=container:{self.__network__}{self.__suffix__}")
-        if self.__hostname__:
-            cmd.append(f"--hostname={self.__hostname__}")
-        if self.__workdir__:
-            cmd.append(f"--workdir={self.__workdir__}")
-        for dev in self.__devices__:
+        if self._network_name:
+            cmd.append(f"--network=container:{self._network_name}{self._suffix}")
+        if self._hostname:
+            cmd.append(f"--hostname={self._hostname}")
+        if self._workdir:
+            cmd.append(f"--workdir={self._workdir}")
+        for dev in self._shared_devices:
             cmd.append(f"--device={dev}")
-        for src, dest, read_only in self.__bind_mounts__:
+        for src, dest, read_only in self._bind_mounts:
             opt = f"--mount=type=bind,source={src},destination={dest}"
             if read_only:
                 opt += ",readonly=true"
             cmd.append(opt)
-        for variable, value in self.__environment__:
+        for variable, value in self._environment_vars:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
@@ -180,12 +178,12 @@ class DockerRun:
             return action.run_cmd(cmd, error_msg=error_msg)
 
     def prepare(self, action):
-        pull = not self.__local__
-        if self.__local__:
+        pull = not self._is_local_image
+        if self._is_local_image:
             if action.run_cmd(
                 [
                     "docker",
-                    *self.__docker_options__,
+                    *self._docker_options,
                     "image",
                     "inspect",
                     "--format",
@@ -199,8 +197,8 @@ class DockerRun:
                 )
                 pull = True
         if pull:
-            action.run_cmd(["docker", *self.__docker_options__, "pull", self.image])
-        self.__check_image_arch__()
+            action.run_cmd(["docker", *self._docker_options, "pull", self.image])
+        self._check_image_arch()
 
     def wait(self, shell=None):
         delay = 1
@@ -213,7 +211,7 @@ class DockerRun:
                 subprocess.check_call(
                     [
                         "docker",
-                        *self.__docker_options__,
+                        *self._docker_options,
                         "inspect",
                         "--format=.",
                         self._container_name,
@@ -234,7 +232,7 @@ class DockerRun:
                 subprocess.check_call(
                     [
                         "docker",
-                        *self.__docker_options__,
+                        *self._docker_options,
                         "exec",
                         self._container_name,
                         "test",
@@ -254,18 +252,18 @@ class DockerRun:
     def destroy(self):
         if self._container_name:
             subprocess.call(
-                ["docker", *self.__docker_options__, "rm", "-f", self._container_name],
+                ["docker", *self._docker_options, "rm", "-f", self._container_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
 
-    def __check_image_arch__(self):
+    def _check_image_arch(self):
         host = subprocess.check_output(["arch"], text=True).strip()
         try:
             container = subprocess.check_output(
                 [
                     "docker",
-                    *self.__docker_options__,
+                    *self._docker_options,
                     "inspect",
                     "--format",
                     "{{.Architecture}}",
@@ -292,11 +290,13 @@ class DockerRun:
 
 
 class DockerContainer(DockerRun):
-    __started__ = False
+    def __init__(self, image: str):
+        super().__init__(image)
+        self._started = False
 
     def run(self, args, action):
         self.start(action)
-        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
@@ -304,7 +304,7 @@ class DockerContainer(DockerRun):
 
     def get_output(self, args, action):
         self.start(action)
-        cmd = ["docker", *self.__docker_options__, "exec"]
+        cmd = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
@@ -314,14 +314,14 @@ class DockerContainer(DockerRun):
         return subprocess.check_output(cmd).decode("utf-8")
 
     def start(self, action):
-        if self.__started__:
+        if self._started:
             return
 
         cmd = [
             "docker",
-            *self.__docker_options__,
+            *self._docker_options,
             "run",
-            *self.__docker_run_options__,
+            *self._docker_run_options,
             "--detach",
         ]
         cmd += self.start_options()
@@ -329,9 +329,7 @@ class DockerContainer(DockerRun):
         cmd += ["sleep", "infinity"]
         action.run_cmd(cmd)
         self.wait()
-        self.__started__ = True
+        self._started = True
 
     def stop(self, action):
-        action.run_cmd(
-            ["docker", *self.__docker_options__, "stop", self._container_name]
-        )
+        action.run_cmd(["docker", *self._docker_options, "stop", self._container_name])

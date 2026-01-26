@@ -567,7 +567,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         )
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
-    @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    @patch("lava_dispatcher.utils.docker.DockerRun._check_image_arch")
     def test_docker_uuu_local_validate(self, _, mock_cmd):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
@@ -578,7 +578,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         mock_cmd.assert_called_with(["docker", "pull", "atline/uuu:1.3.191"])
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
-    @patch("lava_dispatcher.utils.docker.DockerRun.__check_image_arch__")
+    @patch("lava_dispatcher.utils.docker.DockerRun._check_image_arch")
     def test_docker_uuu_remote_validate(self, _, mock_cmd):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
