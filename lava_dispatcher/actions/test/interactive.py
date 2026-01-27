@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import time
+from typing import TYPE_CHECKING
 
 import pexpect
 
@@ -19,10 +20,14 @@ from lava_common.exceptions import (
     TestError,
 )
 from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 @nottest
@@ -37,11 +42,16 @@ class TestInteractiveRetry(RetryAction):
 
 
 @nottest
-class TestInteractiveAction(Action):
+class TestInteractiveAction(ReportMixin, Action):
     name = "lava-test-interactive"
     description = "Executing lava-test-interactive"
     summary = "Lava Test Interactive"
     timeout_exception = LAVATimeoutError
+
+    def __init__(self, job):
+        super().__init__(job)
+        self.reports: dict[str, dict[str, Any]] = {}
+        self.report: dict[str, Any] = {}
 
     def populate(self, parameters):
         super().populate(parameters)
@@ -51,6 +61,14 @@ class TestInteractiveAction(Action):
             if protocol.name == MultinodeProtocol.name
         ]
         self.multinode_proto = proto[0] if proto else None
+
+    @staticmethod
+    def _get_test_suite_name(stage, script_name: str) -> str:
+        # NOTE: Test 'stage' is only incremented for shell tests that need
+        # overlay, so using the test stage as the test suite prefix here cannot
+        # really guarantee unique test suite ID. The document is updated to ask
+        # users use unique script name across all interactive test actions.
+        return "%s_%s" % (stage, script_name)
 
     def run(self, connection, max_end_time):
         super().run(connection, max_end_time)
@@ -118,9 +136,15 @@ class TestInteractiveAction(Action):
             # Set the connection prompts
             connection.prompt_str = script["prompts"]
 
+            test_suite_name = self._get_test_suite_name(
+                self.parameters["stage"], script["name"]
+            )
+            self.report = {}
+            self.reports[test_suite_name] = {"results": self.report, "ran": False}
+
             result = {
                 "definition": "lava",
-                "case": "%s_%s" % (self.parameters["stage"], script["name"]),
+                "case": test_suite_name,
                 "result": "fail",
             }
             try:
@@ -134,6 +158,12 @@ class TestInteractiveAction(Action):
                     )
                     self.run_script(test_connection, script, substitutions)
                 result["result"] = "pass"
+
+                if expected := script.get("expected"):
+                    self.handle_expected(expected, test_suite_name)
+
+                self.reports[test_suite_name]["ran"] = True
+                self.handle_summary(test_suite_name)
             finally:
                 # Log the current script result (even in case of error)
                 result["duration"] = "%.02f" % (time.monotonic() - start)
@@ -209,7 +239,9 @@ class TestInteractiveAction(Action):
                 command = substitute([cmd["command"]], substitutions)[0]
             start = time.monotonic()
             result = {
-                "definition": "%s_%s" % (self.parameters["stage"], script["name"]),
+                "definition": self._get_test_suite_name(
+                    self.parameters["stage"], script["name"]
+                ),
                 "case": cmd.get("name", ""),
                 "result": "fail",
             }
@@ -282,6 +314,7 @@ class TestInteractiveAction(Action):
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.monotonic() - start)
                     self.logger.results(result)
+                    self.report[cmd["name"]] = result["result"]
 
     def listen_feedback(self, connection):
         if time.monotonic() - self.last_check <= connection.timeout:
@@ -309,6 +342,25 @@ class TestInteractiveAction(Action):
             if ret == len(expect):
                 continue
             return ret
+
+    def cleanup(self, connection, max_end_time=None):
+        super().cleanup(connection, max_end_time=None)
+
+        scripts = self.parameters.get("interactive", [])
+        for script in scripts:
+            expected = script.get("expected")
+            if not expected:
+                continue
+
+            test_suite_name = self._get_test_suite_name(
+                self.parameters["stage"], script["name"]
+            )
+
+            if self.reports.get(test_suite_name, {}).get("ran"):
+                continue
+
+            self.report = self.reports.get(test_suite_name, {}).get("results", {})
+            self.handle_expected(expected, test_suite_name)
 
     def raise_exception(self, exc_name, exc_message):
         if exc_name == "InfrastructureError":
