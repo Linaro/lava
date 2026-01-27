@@ -461,7 +461,8 @@ The workflow of the interactive test action is:
 
 ### name
 
-Unique test suite name.
+A unique test suite name across all interactive test actions in the same
+namespace.
 
 ### prompts
 
@@ -522,5 +523,28 @@ However, if `successes` is not defined, then matching a prompt will generate a
 passing result. This is useful for interactive commands which don't generate
 any output on success; of course, in this case you would need to specify
 `failures` to catch them.
+
+### expected
+
+(optional) A list of expected test cases. After the script or the job
+completes, missing test cases are reported as fail while extra test cases are
+logged as warnings.
+
+```yaml title="Expected test cases" hl_lines="9-11"
+- test:
+    interactive:
+    - name: network
+      prompts:
+      - "U-Boot>"
+      script:
+      - name: setenv-serverip
+        command: "setenv serverip {SERVER_IP}"
+      expected:
+      - setenv-serverip
+```
+
+!!!note "Always reported"
+    The expected test cases are always reported, even if the tests are not
+    executed due to earlier job errors.
 
 --8<-- "refs.txt"

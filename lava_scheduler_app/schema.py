@@ -195,6 +195,7 @@ def _interactive_def_schema():
                 ),
                 Required("prompts"): [All(str, Length(min=1))],
                 Optional("echo"): "discard",
+                Optional("expected"): [All(str, Length(min=1))],
                 Required("script"): _interactive_script_schema(),
             }
         ]
