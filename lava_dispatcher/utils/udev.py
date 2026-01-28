@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import select
 import time
 from typing import TYPE_CHECKING
 
@@ -200,26 +201,59 @@ def _dict_compare(d1, d2):
     return {o for o in intersect_keys if d1[o] == d2[o]}
 
 
+def get_device_serial(device):
+    """Get serial from udev properties or sysfs attributes (for containers)."""
+    serial = device.properties.get("ID_SERIAL_SHORT")
+    if serial:
+        return serial
+    try:
+        return device.attributes.asstring("serial")
+    except (KeyError, UnicodeDecodeError, ValueError):
+        return None
+
+
+def get_device_properties(device):
+    """Get device properties with sysfs fallbacks for containers."""
+    props = dict(device.properties)
+    if "ID_SERIAL_SHORT" not in props:
+        serial = get_device_serial(device)
+        if serial:
+            props["ID_SERIAL_SHORT"] = serial
+    if "ID_VENDOR_ID" not in props:
+        try:
+            props["ID_VENDOR_ID"] = device.attributes.asstring("idVendor")
+        except (KeyError, UnicodeDecodeError, ValueError):
+            pass
+    if "ID_MODEL_ID" not in props:
+        try:
+            props["ID_MODEL_ID"] = device.attributes.asstring("idProduct")
+        except (KeyError, UnicodeDecodeError, ValueError):
+            pass
+    return props
+
+
 def match(device, match_dict, devicepath):
-    same = _dict_compare(dict(device), match_dict)
+    device_props = get_device_properties(device)
+    same = _dict_compare(device_props, match_dict)
     if same == set(match_dict.keys()):
         if devicepath:
-            if devicepath in dict(device).get("DEVLINKS", "") or devicepath in dict(
-                device
-            ).get("DEVNAME", ""):
+            if devicepath in device_props.get(
+                "DEVLINKS", ""
+            ) or devicepath in device_props.get("DEVNAME", ""):
                 return True
         else:
             return True
     return False
 
 
-def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem):
+def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem, source="udev"):
     """
     Setup pyudev internals for use by wait_udev_event and wait_udev_change_event methods
     :param devicepath:
     :param devtype:
     :param match_dict:
     :param subsystem:
+    :param source: netlink source ("udev" or "kernel")
     :return: (context, match_dict, monitor)
         context is a pyudev.Context instance
         match_dict from input parameter (initialized to dict if unset)
@@ -239,49 +273,61 @@ def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem):
         raise LAVABug("Cannot filter udev by devtype without a subsystem")
     # Create and configure the monitor
     context = pyudev.Context()
-    monitor = pyudev.Monitor.from_netlink(context)
+    monitor = pyudev.Monitor.from_netlink(context, source=source)
     if devtype and subsystem:
         monitor.filter_by(subsystem, devtype)
-    else:
-        if subsystem:
-            monitor.filter_by(subsystem)
+    elif subsystem:
+        monitor.filter_by(subsystem)
     return context, match_dict, monitor
 
 
 def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=None):
-    context, match_dict, monitor = wait_udev_event_setup(
-        devicepath, devtype, match_dict, subsystem
+    context, match_dict, udev_monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict, subsystem, source="udev"
+    )
+    _, _, kernel_monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict.copy(), subsystem, source="kernel"
     )
 
     # Start to listen for events
-    monitor.start()
+    udev_monitor.start()
+    kernel_monitor.start()
 
     # Check if the device is already plugged-in
     for device in context.list_devices():
         if match(device, match_dict, devicepath):
             return
 
-    # Wait for events.
-    # Every events that happened since the call to start() will be handled now.
     match_dict["ACTION"] = "add"
-    for device in iter(monitor.poll, None):
-        if match(device, match_dict, devicepath):
-            return
+    while True:
+        ready, _, _ = select.select([udev_monitor, kernel_monitor], [], [])
+        for monitor in ready:
+            device = monitor.poll(timeout=0)
+            if device and match(device, match_dict, devicepath):
+                return
 
 
 def wait_udev_changed_event(
     match_dict=None, subsystem=None, devtype=None, devicepath=None
 ):
-    context, match_dict, monitor = wait_udev_event_setup(
-        devicepath, devtype, match_dict, subsystem
+    context, match_dict, udev_monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict, subsystem, source="udev"
+    )
+    _, _, kernel_monitor = wait_udev_event_setup(
+        devicepath, devtype, match_dict.copy(), subsystem, source="kernel"
     )
 
     # Start to listen for events
-    monitor.start()
+    udev_monitor.start()
+    kernel_monitor.start()
+
     match_dict["ACTION"] = "change"
-    for device in iter(monitor.poll, None):
-        if match(device, match_dict, devicepath):
-            return
+    while True:
+        ready, _, _ = select.select([udev_monitor, kernel_monitor], [], [])
+        for monitor in ready:
+            device = monitor.poll(timeout=0)
+            if device and match(device, match_dict, devicepath):
+                return
 
 
 def get_udev_devices(job=None, logger=None, device_info=None, required=False):
