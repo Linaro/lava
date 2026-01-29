@@ -18,6 +18,8 @@ from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -46,9 +48,14 @@ class TestMonitorAction(ReportMixin, Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.test_suite_name = None
+        self.reports: dict[str, dict[str, Any]] = {}
         self.report = {}
         self.fixupdict = {}
         self.patterns = {}
+
+    @staticmethod
+    def _normalize_monitor_name(monitor_name: str) -> str:
+        return monitor_name.replace(" ", "-").lower()
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -57,7 +64,8 @@ class TestMonitorAction(ReportMixin, Action):
             raise ConnectionClosedError("Connection closed")
         for monitor in self.parameters["monitors"]:
             self.report = {}
-            self.test_suite_name = monitor["name"].replace(" ", "-").lower()
+            self.test_suite_name = self._normalize_monitor_name(monitor["name"])
+            self.reports[self.test_suite_name] = {"results": self.report, "ran": False}
 
             self.fixupdict = monitor.get("fixupdict")
 
@@ -84,6 +92,7 @@ class TestMonitorAction(ReportMixin, Action):
             if expected := monitor.get("expected"):
                 self.handle_expected(expected, self.test_suite_name)
 
+            self.reports[self.test_suite_name]["ran"] = True
             self.handle_summary(self.test_suite_name)
         return connection
 
@@ -155,3 +164,20 @@ class TestMonitorAction(ReportMixin, Action):
                         self.report[case_id] = "pass"
             ret_val = True
         return ret_val
+
+    def cleanup(self, connection, max_end_time=None):
+        super().cleanup(connection, max_end_time=None)
+
+        monitors = self.parameters.get("monitors", [])
+        for monitor in monitors:
+            expected = monitor.get("expected")
+            if not expected:
+                continue
+
+            test_suite_name = self._normalize_monitor_name(monitor["name"])
+
+            if self.reports.get(test_suite_name, {}).get("ran"):
+                continue
+
+            self.report = self.reports.get(test_suite_name, {}).get("results", {})
+            self.handle_expected(expected, test_suite_name)

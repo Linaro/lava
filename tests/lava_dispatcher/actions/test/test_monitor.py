@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
+from unittest.mock import patch
+
 from lava_common.exceptions import ConnectionClosedError
 from lava_dispatcher.actions.test.monitor import TestMonitorAction
 from lava_dispatcher.actions.test_strategy import TestMonitor
@@ -395,3 +397,99 @@ class TestMonitorSummary(LavaDispatcherTestCase):
         self.action.handle_summary(self.test_suite_name)
 
         self.assertEqual(self.action.logger.logs, [])
+
+
+class TestMonitorCleanup(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = TestMonitorAction(self.job)
+
+    def test_cleanup_no_run(self):
+        monitors = [
+            {
+                "name": "monitor1",
+                "expected": ["tc1", "tc2"],
+            },
+            {
+                "name": "monitor2",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        self.action.parameters = {"monitors": monitors}
+        # No report for monitor2
+        self.action.reports = {
+            "monitor1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+        }
+
+        with patch.object(self.action, "handle_expected") as mock_handle_expected:
+            self.action.cleanup(None, None)
+            self.assertEqual(self.action.report, {})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "monitor2")
+
+    def test_cleanup_all_ran(self):
+        job = self.create_simple_job()
+        action = TestMonitorAction(job)
+        monitors = [
+            {
+                "name": "monitor1",
+                "expected": ["tc1", "tc2"],
+            },
+            {
+                "name": "monitor2",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        action.parameters = {"monitors": monitors}
+        action.reports = {
+            "monitor1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+            "monitor2": {"results": {"tc3": "pass", "tc4": "pass"}, "ran": True},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            mock_handle_expected.assert_not_called()
+
+    def test_cleanup_incomplete_run(self):
+        monitors = [
+            {
+                "name": "monitor1",
+                "expected": ["tc1", "tc2"],
+            },
+            {
+                "name": "monitor2",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        self.action.parameters = {"monitors": monitors}
+        self.action.reports = {
+            "monitor1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+            # monitor2 fails to finish and only one of two results saved.
+            "monitor2": {"results": {"tc3": "pass"}, "ran": False},
+        }
+
+        with patch.object(self.action, "handle_expected") as mock_handle_expected:
+            self.action.cleanup(None, None)
+            self.assertEqual(self.action.report, {"tc3": "pass"})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "monitor2")
+
+    def test_cleanup_no_expected(self):
+        job = self.create_simple_job()
+        action = TestMonitorAction(job)
+        monitors = [
+            {
+                "name": "monitor1",
+            },
+            {
+                "name": "monitor2",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        action.parameters = {"monitors": monitors}
+        action.reports = {
+            "monitor1": {"results": {}, "ran": False},
+            "monitor2": {"results": {"tc3": "pass"}, "ran": False},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "monitor2")
