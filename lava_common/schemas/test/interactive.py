@@ -17,6 +17,7 @@ def schema():
                 Required("name"): Match(r"^[-_a-zA-Z0-9.]+$"),
                 Required("prompts"): [All(str, Length(min=1))],
                 Optional("echo"): "discard",
+                Optional("expected"): [All(str, Length(min=1))],
                 Required("script"): [
                     {
                         Optional("command"): Any(str, None),
