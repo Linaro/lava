@@ -10,7 +10,11 @@ from unittest import mock
 import pytest
 
 from lava_common.exceptions import JobError
-from lava_dispatcher.actions.boot.fvp import CheckFVPVersionAction, RunFVPeRPCApp
+from lava_dispatcher.actions.boot.fvp import (
+    CheckFVPVersionAction,
+    RunFVPeRPCApp,
+    RunFVPShellCommands,
+)
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -139,3 +143,56 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
         )
 
         assert result == mock_shell_session
+
+
+class TestRunFVPShellCommands(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.factory = Factory()
+        self.job = self.factory.create_job(
+            "fvp-01", "sample_jobs/fvp-shell-commands.yaml"
+        )
+        self.action = self.job.pipeline.find_action(RunFVPShellCommands)
+
+    def test_pipeline(self):
+        description_ref = self.pipeline_reference(
+            "fvp-shell-commands.yaml", job=self.job
+        )
+        self.assertEqual(description_ref, self.job.pipeline.describe())
+
+    def test_validate(self):
+        self.action.validate()
+
+        self.assertTrue(self.action.valid)
+        self.assertEqual(self.action.errors, [])
+
+    def test_validate_invalid(self):
+        self.action.parameters["commands"] = "not list"
+        self.action.validate()
+
+        self.assertFalse(self.action.valid)
+        self.assertEqual(self.action.errors, ["'commands' must be a list"])
+
+    def test_run(self):
+        self.action.commands = ["cmd1", "cmd2"]
+
+        new_connection = mock.MagicMock()
+
+        with mock.patch.object(
+            self.action, "get_namespace_data", return_value="fvp-container"
+        ):
+            with mock.patch(
+                "lava_dispatcher.actions.boot.fvp.ShellCommand"
+            ) as mock_shell_command:
+                with mock.patch(
+                    "lava_dispatcher.actions.boot.fvp.ShellSession",
+                    return_value=new_connection,
+                ):
+                    connection = self.action.run(None, None)
+
+                    mock_shell_command.assert_called_once_with(
+                        "docker exec --tty fvp-container sh -c 'cmd1 && cmd2'",
+                        self.action.timeout,
+                        logger=self.action.logger,
+                    )
+                    assert connection == new_connection

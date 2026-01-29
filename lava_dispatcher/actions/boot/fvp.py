@@ -40,6 +40,8 @@ class BootFVPAction(BootHasMixin, RetryAction):
                     self.pipeline.add_action(OverlayUnpack(self.job))
         if parameters.get("erpc_app", ""):
             self.pipeline.add_action(RunFVPeRPCApp(self.job))
+        if parameters.get("commands"):
+            self.pipeline.add_action(RunFVPShellCommands(self.job))
 
 
 class BootFVPMain(Action):
@@ -522,6 +524,45 @@ class RunFVPeRPCApp(Action):
         cmd = f"docker exec --tty {container} sh -c 'chmod +x {app_path} && {app_path}'"
 
         self.logger.debug("Connect command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
+
+        connection = ShellSession(shell)
+        connection = super().run(connection, max_end_time)
+
+        self.set_namespace_data(
+            action="shared", label="shared", key="connection", value=connection
+        )
+
+        return connection
+
+
+class RunFVPShellCommands(Action):
+    name = "run-fvp-shell-commands"
+    description = "run shell commands in FVP docker container"
+    summary = "run shell commands in FVP docker container"
+
+    def __init__(self, job: Job):
+        super().__init__(job)
+        self.commands: list[str] = []
+
+    def validate(self):
+        super().validate()
+        self.commands = self.parameters.get("commands", [])
+        if not self.commands:
+            self.errors = "'commands' cannot be empty"
+            return
+        if not isinstance(self.commands, list):
+            self.errors = "'commands' must be a list"
+
+    def run(self, connection, max_end_time):
+        container = self.get_namespace_data(
+            action=StartFVPAction.name, label="fvp", key="container"
+        )
+
+        cmds = " && ".join(self.commands)
+        cmd = f"docker exec --tty {container} sh -c {shlex.quote(cmds)}"
+
+        self.logger.debug("Command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
         connection = ShellSession(shell)

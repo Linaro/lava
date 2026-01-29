@@ -140,3 +140,64 @@ actions:
     - "Non-Secure system starting..."
     erpc_app: "TEST_APP"
 ```
+
+## commands
+
+(optional) A list of shell commands to execute in the FVP Docker container after
+the FVP model has started. These commands are joined with `&&` and executed
+sequentially using `docker exec --tty fvp_container sh -c 'joined_commands'`.
+
+Example definition:
+
+```yaml
+- boot:
+    method: fvp
+    docker:
+      name: fvp_rd_v3_r1:xvfb
+      local: true
+    image: /opt/model/FVP_RD_V3_R1/models/Linux64_GCC-9.3/FVP_RD_V3_R1
+    version_string: Fast Models [^\n]+
+    timeout:
+      minutes: 15
+    console_string: 'terminal0: Listening for serial connection on port (?P<PORT>\d+)'
+    arguments:
+    - -C socket0.css0.sysctrl.rse.rom.raw_image='{ROM}'
+    - -C socket0.css1.sysctrl.rse.rom.raw_image='{ROM}'
+    - -C socket0.css0.sysctrl.rse.intchecker.ICBC_RESET_VALUE=0x0000011B
+    - -C socket0.css1.sysctrl.rse.intchecker.ICBC_RESET_VALUE=0x0000011B
+    - -C socket0.board0.rse2rse_mhu0.NUM_CH=16
+    - -C socket0.board1.rse2rse_mhu0.NUM_CH=16
+    - -C socket0.css0.sysctrl.rse.DISABLE_GATING=true
+    - -C socket0.css1.sysctrl.rse.DISABLE_GATING=true
+    - -C socket0.css0.sysctrl.rse_uart.out_file=rse_uart_css0.log
+    - -C socket0.css0.sysctrl.rse_uart.unbuffered_output=1
+    - -C socket0.css0.sysctrl.rse_uart.uart_enable=true
+    - -C socket0.css1.sysctrl.rse_uart.out_file=rse_uart_css1.log
+    - -C socket0.css1.sysctrl.rse_uart.unbuffered_output=1
+    - -C socket0.css1.sysctrl.rse_uart.uart_enable=true
+    - -C socket0.css0.sysctrl.otpw.GP_AON_0_INIT_VAL=0x80000000
+    - -C socket0.css1.sysctrl.otpw.GP_AON_0_INIT_VAL=0x80000000
+    - --data socket0.css0.sysctrl.rse.cpu='{TESTS}'@0x31000400
+    - -IRp
+    commands:
+    - export PYTHONPATH=$PYTHONPATH:/opt/model/FVP_RD_V3_R1/Iris/Python/
+    - python3 <path>/test_dcsu.py --backend iris --iris_dcsu_component_string socket0.css0.sysctrl.dcsu
+```
+
+A `monitors` test action can be defined after the boot action to enable
+log parsing and wait for the commands to finish.
+
+```yaml
+- test:
+    timeout:
+      minutes: 5
+    monitors:
+    - name: "rse_bl1_tests"
+      start: "INFO:DCSU:Using iris backend"
+      end: "TEST: Send completion PASSED"
+      pattern: 'TEST: (?P<test_case_id>.+?) (?P<result>PASSED|FAILED|SKIPPED)'
+      fixupdict:
+         PASSED: pass
+         FAILED: fail
+         SKIPPED: skip
+```
