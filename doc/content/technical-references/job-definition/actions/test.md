@@ -405,7 +405,9 @@ as warnings.
       - "tfm_mcuboot_integration_test_0001"
 ```
 
-See also [expected](/user/basic-tutorials/test-definition/#expected).
+!!!note "Always reported"
+    Expected test cases provided for the monitors are always reported, even if
+    the tests are not executed due to earlier job errors.
 
 ### monitors
 
