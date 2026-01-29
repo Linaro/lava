@@ -129,7 +129,9 @@ class TestTestShell(LavaDispatcherTestCase):
             action="repo-action", label="repo-action", key="uuid-list", value=["UUID"]
         )
 
-        data = ("ENDRUN", "0_DEFINITION UUID")
+        test_suite = "0_DEFINITION"
+        action.reports = {f"{test_suite}": {"results": {}, "ran": False}}
+        data = ("ENDRUN", f"{test_suite} UUID")
         with self.assertLogs(action.logger, "DEBUG") as action_logs, patch(
             "time.monotonic", monotonic
         ):
@@ -137,15 +139,15 @@ class TestTestShell(LavaDispatcherTestCase):
         self.assertEqual(
             [(r.levelname, r.message) for r in action_logs.records],
             [
-                ("DEBUG", "Received signal: <ENDRUN> 0_DEFINITION UUID"),
+                ("DEBUG", f"Received signal: <ENDRUN> {test_suite} UUID"),
                 ("INFO", "Ending use of test pattern."),
-                ("INFO", "Ending test lava.0_DEFINITION (UUID), duration 1.00"),
+                ("INFO", f"Ending test lava.{test_suite} (UUID), duration 1.00"),
             ],
         )
         action.logger.results.assert_called_once_with(
             {
                 "definition": "lava",
-                "case": "0_DEFINITION",
+                "case": test_suite,
                 "uuid": "UUID",
                 "repository": None,
                 "path": None,
@@ -156,6 +158,7 @@ class TestTestShell(LavaDispatcherTestCase):
             }
         )
         self.assertIsNone(action.current_run)
+        self.assertTrue(action.reports[test_suite]["ran"])
 
         # "signal.ENDRUN exception"
         action = TestShellAction(job)
@@ -186,7 +189,9 @@ class TestTestShell(LavaDispatcherTestCase):
         )
 
         # The expected test cases list handler is triggered on "signal.ENDRUN".
-        params = ["0_DEFINITION", "UUID"]
+        test_suite = "0_DEFINITION"
+        action.reports = {f"{test_suite}": {"results": {}, "ran": False}}
+        params = [test_suite, "UUID"]
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
             self.assertIs(action.signal_end_run(params), None)
 
@@ -195,7 +200,7 @@ class TestTestShell(LavaDispatcherTestCase):
             [
                 call(
                     {
-                        "definition": "0_DEFINITION",
+                        "definition": test_suite,
                         "case": "tc3",
                         "result": "fail",
                         "level": None,
@@ -206,7 +211,7 @@ class TestTestShell(LavaDispatcherTestCase):
                 ),
                 call(
                     {
-                        "definition": "0_DEFINITION",
+                        "definition": test_suite,
                         "case": "tc4",
                         "result": "fail",
                         "level": None,
@@ -233,6 +238,8 @@ class TestTestShell(LavaDispatcherTestCase):
             ),
             actual_logs,
         )
+
+        self.assertTrue(action.reports[test_suite]["ran"])
 
     def test_signal_start_end_tc(self):
         job = self.create_simple_job()
@@ -502,3 +509,126 @@ class TestTestShell(LavaDispatcherTestCase):
                 "reference": "http://example.com",
             }
         )
+
+    def test_cleanup_no_run(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        action.parameters = {"namespace": "common"}
+        testdefs = [
+            {
+                "name": "test1",
+                "from": "git",
+                "expected": ["tc1", "tc2"],
+            },
+            {
+                "name": "test2",
+                "from": "git",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        action.parameters = {
+            "definitions": testdefs,
+            "stage": 0,
+        }
+        action.set_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="test_list",
+            value=[testdefs],
+        )
+        # No report for test '1_test2'
+        action.reports = {
+            "0_test1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            self.assertEqual(action.report, {})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "1_test2")
+
+    def test_cleanup_incomplete_run(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        action.parameters = {"namespace": "common"}
+        testdefs = [
+            {
+                "name": "test1",
+                "from": "git",
+                "expected": ["tc1", "tc2"],
+            },
+            {
+                "name": "test2",
+                "from": "git",
+                "expected": ["tc3", "tc4"],
+            },
+        ]
+        action.parameters = {
+            "definitions": testdefs,
+            "stage": 0,
+        }
+        action.set_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="test_list",
+            value=[testdefs],
+        )
+        action.reports = {
+            "0_test1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+            # Test fails to finish and only one of two results saved.
+            "1_test2": {"results": {"tc3": "pass"}, "ran": False},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            self.assertEqual(action.report, {"tc3": "pass"})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "1_test2")
+
+    def test_cleanup_multi_stages(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        action.parameters = {"namespace": "common"}
+        testdefs = [
+            {
+                "name": "test3",
+                "from": "git",
+                "expected": ["tc5", "tc6"],
+            },
+            {
+                "name": "test4",
+                "from": "git",
+                "expected": ["tc7", "tc8"],
+            },
+        ]
+        action.parameters = {
+            "definitions": testdefs,
+            "stage": 1,
+        }
+        action.set_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="test_list",
+            value=[
+                [
+                    {
+                        "name": "test1",
+                        "from": "git",
+                        "expected": ["tc1", "tc2"],
+                    },
+                    {
+                        "name": "test2",
+                        "from": "git",
+                        "expected": ["tc3", "tc4"],
+                    },
+                ],
+                testdefs,
+            ],
+        )
+        # No run.
+        action.reports = {}
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+
+            self.assertEqual(mock_handle_expected.call_count, 2)
+            mock_handle_expected.assert_any_call(["tc5", "tc6"], "2_test3")
+            mock_handle_expected.assert_any_call(["tc7", "tc8"], "3_test4")

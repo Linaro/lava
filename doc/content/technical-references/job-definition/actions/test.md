@@ -145,8 +145,51 @@ to be made available to the test shell, the value is the value of that variable.
 
 ### expected
 
-(optional) Provide an expected test case list. See
-[expected](/user/basic-tutorials/test-definition/#expected).
+(optional) Provide an expected test case list. Missing test cases after test or
+job run are reported as fails while extra cases are logged as warnings.
+
+```yaml hl_lines="10-11"
+- test:
+  definitions:
+    - name: smoke-test-lsblk
+      from: git
+      repository: https://github.com/Linaro/test-definitions
+      path: automated/linux/smoke/smoke.yaml
+      parameters:
+        "SKIP_INSTALL": "true"
+        "TESTS": "lsblk"
+      expected:
+        - lsblk
+```
+
+For test definitions from `inline`, the expected list must be defined at the job
+level using the `expected` key, **not** inside the inline definition.
+
+```yaml hl_lines="14-16"
+  - test:
+      definitions:
+        - from: inline
+          repository:
+            metadata:
+                format: Lava-Test Test Definition 1.0
+                name: expected-tests
+            run:
+                steps:
+                    - lava-test-case tc1 --result pass
+                    - lava-test-case tc2 --result fail
+          name: expected-tests
+          path: inline/expected-tests.yaml
+          expected:
+            - tc1
+            - tc2
+```
+
+!!!note "Always reported"
+    Expected test cases defined in the job definition are always reported, even
+    if the tests are not executed due to earlier job errors.
+
+See also
+[expected test cases in the test definition](../../../user/basic-tutorials/test-definition.md#expected).
 
 ### Additional support
 

@@ -62,16 +62,14 @@ expected:
 The list can be defined in either the test definition or the job definition. If
 both are provided, the value in the job definition takes precedence.
 
-```yaml title="Job definition"
-- test:
-  definitions:
-    - repository: https://gitlab.com/lava/functional-tests.git
-      from: git
-      path: functional/expected-tests.yaml
-      name: expected-tests
-      expected:
-        - tc1
-        - tc2
-```
+!!!warning "Limitation"
+    Expected test cases defined in test definition from `git` are checked and
+    reported after test execution. If the test definition not get executed at
+    all, they are not reported. The limitation exists because these test
+    definitions and the expected test case lists defined inside may be
+    unreachable or not deployed yet when job exists on error. If you need
+    consistent and predictable job results for the test suites and cases, you
+    should provide the expected test cases in the
+    [job definition](../../technical-references/job-definition/actions/test.md#expected).
 
 --8<-- "refs.txt"
