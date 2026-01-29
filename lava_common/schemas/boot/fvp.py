@@ -27,5 +27,6 @@ def schema():
         Optional("transfer_overlay"): boot.transfer_overlay(),
         Optional("auto_login"): boot.auto_login(),
         Optional("erpc_app"): str,
+        Optional("commands"): [str],
     }
     return {**boot.schema(), **base}
