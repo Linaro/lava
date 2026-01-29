@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pexpect
 
@@ -314,6 +314,18 @@ class TestInteractiveScript(LavaDispatcherTestCase):
 
         self.assertEqual(action.logger.data, [])
         self.assertEqual(test_connection.data, [])
+
+        self.assertEqual(
+            action.report,
+            {
+                "wait prompt": "pass",
+                "network.help": "pass",
+                "network.dhcp": "pass",
+                "network.host": "fail",
+                "network.dig": "fail",
+                "network.ping": "fail",
+            },
+        )
 
     @patch("time.monotonic", Timing())
     def test_run_script_echo_discard(self):
@@ -750,3 +762,164 @@ class TestInteractiveScript(LavaDispatcherTestCase):
 
         new_connection = action.run(previous_connection, 10)
         self.assertEqual(new_connection, data_connection)
+
+
+class TestInteractiveReport(LavaDispatcherTestCase):
+    @patch("time.monotonic", Timing())
+    def test_run_with_expected(self):
+        action = TestInteractiveAction(self.create_simple_job())
+        action.parameters = {
+            "stage": 0,
+            "interactive": [
+                {
+                    "name": "network",
+                    "prompts": ["=> "],
+                    "script": [],
+                    "expected": ["tc1", "tc2"],
+                }
+            ],
+        }
+        mock_connection = MagicMock()
+        mock_connection.prompt_str = None
+
+        with patch.object(
+            action,
+            "get_namespace_data",
+            side_effect=[
+                mock_connection,
+                {"{SERVER_IP}": "serverip", "{JOB_ID}": "123"},
+            ],
+        ):
+            with patch.object(action, "run_script") as mock_run_script:
+                with patch.object(action, "handle_expected") as mock_handle_expected:
+                    with patch.object(action, "handle_summary") as mock_handle_summary:
+                        with patch.object(action, "logger"):
+                            action.run(mock_connection, None)
+
+                            self.assertIn("0_network", action.reports)
+                            self.assertIs(
+                                action.reports["0_network"]["results"],
+                                action.report,
+                            )
+                            mock_run_script.assert_called_once()
+                            mock_handle_expected.assert_called_once_with(
+                                ["tc1", "tc2"], "0_network"
+                            )
+                            self.assertTrue(action.reports["0_network"]["ran"])
+                            mock_handle_summary.assert_called_once_with("0_network")
+
+    @patch("time.monotonic", Timing())
+    def test_run_without_expected(self):
+        action = TestInteractiveAction(self.create_simple_job())
+        action.parameters = {
+            "stage": 0,
+            "interactive": [
+                {
+                    "name": "network",
+                    "prompts": ["=> "],
+                    "script": [],
+                }
+            ],
+        }
+        mock_connection = MagicMock()
+        mock_connection.prompt_str = None
+
+        with patch.object(
+            action,
+            "get_namespace_data",
+            side_effect=[
+                mock_connection,
+                {"{SERVER_IP}": "serverip", "{JOB_ID}": "123"},
+            ],
+        ):
+            with patch.object(action, "run_script") as mock_run_script:
+                with patch.object(action, "handle_expected") as mock_handle_expected:
+                    with patch.object(action, "handle_summary") as mock_handle_summary:
+                        with patch.object(action, "logger"):
+                            action.run(mock_connection, None)
+
+                            self.assertIn("0_network", action.reports)
+                            self.assertIs(
+                                action.reports["0_network"]["results"],
+                                action.report,
+                            )
+                            mock_run_script.assert_called_once()
+                            mock_handle_expected.assert_not_called()
+                            self.assertTrue(action.reports["0_network"]["ran"])
+                            mock_handle_summary.assert_called_once_with("0_network")
+
+
+class TestInteractiveCleanup(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = TestInteractiveAction(self.job)
+
+    def test_cleanup_no_run(self):
+        scripts = [
+            {"name": "script1", "expected": ["tc1", "tc2"]},
+            {"name": "script2", "expected": ["tc3", "tc4"]},
+        ]
+        self.action.parameters = {"interactive": scripts, "stage": 0}
+        # No report for script2
+        self.action.reports = {
+            "0_script1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+        }
+
+        with patch.object(self.action, "handle_expected") as mock_handle_expected:
+            self.action.cleanup(None, None)
+            self.assertEqual(self.action.report, {})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "0_script2")
+
+    def test_cleanup_incomplete_run(self):
+        job = self.create_simple_job()
+        action = TestInteractiveAction(job)
+        scripts = [
+            {"name": "script1", "expected": ["tc1", "tc2"]},
+            {"name": "script2", "expected": ["tc3", "tc4"]},
+        ]
+        action.parameters = {"interactive": scripts, "stage": 0}
+        action.reports = {
+            "0_script1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+            # Script fails to finish and only one of two results saved.
+            "0_script2": {"results": {"tc3": "pass"}, "ran": False},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            self.assertEqual(action.report, {"tc3": "pass"})
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "0_script2")
+
+    def test_cleanup_no_expected(self):
+        job = self.create_simple_job()
+        action = TestInteractiveAction(job)
+        scripts = [
+            {"name": "script1"},
+            {"name": "script2", "expected": ["tc3", "tc4"]},
+        ]
+        action.parameters = {"interactive": scripts, "stage": 0}
+        action.reports = {
+            "0_script1": {"results": {}, "ran": False},
+            "0_script2": {"results": {"tc3": "pass"}, "ran": False},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            # script1 has no expected, so handle_expected should not be called for it
+            mock_handle_expected.assert_called_once_with(["tc3", "tc4"], "0_script2")
+
+    def test_cleanup_all_ran(self):
+        job = self.create_simple_job()
+        action = TestInteractiveAction(job)
+        scripts = [
+            {"name": "script1", "expected": ["tc1", "tc2"]},
+            {"name": "script2", "expected": ["tc3", "tc4"]},
+        ]
+        action.parameters = {"interactive": scripts, "stage": 0}
+        action.reports = {
+            "0_script1": {"results": {"tc1": "pass", "tc2": "pass"}, "ran": True},
+            "0_script2": {"results": {"tc3": "pass", "tc4": "pass"}, "ran": True},
+        }
+
+        with patch.object(action, "handle_expected") as mock_handle_expected:
+            action.cleanup(None, None)
+            mock_handle_expected.assert_not_called()
