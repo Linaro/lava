@@ -26,6 +26,8 @@ from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.logical import RetryAction
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -131,6 +133,7 @@ class TestShellAction(ReportMixin, Action):
         self.signal_match = SignalMatch()
         self.definition = None
         self.testset_name = None
+        self.reports: dict[str, dict[str, Any]] = {}
         self.report = {}
         self.start = None
         self.testdef_dict = {}
@@ -362,6 +365,9 @@ class TestShellAction(ReportMixin, Action):
         uuid = params[1]
         self.start = time.monotonic()
         self.report = {}
+        # For each test definition, save what results were reported and
+        # run start/end status, so action cleanup knows what to do.
+        self.reports[self.definition] = {"results": self.report, "ran": False}
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
         # set the pattern for this run from pattern_dict
         testdef_index = self.get_namespace_data(
@@ -445,6 +451,8 @@ class TestShellAction(ReportMixin, Action):
             res["commit_id"] = commit_id
 
         self.logger.results(res)
+        if self.definition in self.reports:
+            self.reports[self.definition]["ran"] = True
         self.start = None
 
         self.handle_summary(self.definition)
@@ -658,6 +666,46 @@ class TestShellAction(ReportMixin, Action):
             )
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
         return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
+
+    def cleanup(self, connection, max_end_time=None):
+        super().cleanup(connection, max_end_time=None)
+
+        test_list = self.get_namespace_data(
+            action="test-definition",
+            label="test-definition",
+            key="test_list",
+        )
+        # Test list is set when test definition deploy actions are populated. It
+        # is needed for calculating test suite index.
+        if not test_list:
+            return
+
+        testdefs = self.parameters.get("definitions", [])
+        for sub_index, testdef in enumerate(testdefs):
+            # Since test definitions may be unreachable or not yet deployed,
+            # the feature is limited to expected test case list from job
+            # definitions, ensuring the output is always consistent.
+            expected = testdef.get("expected")
+            if not expected:
+                continue
+
+            # The index equals the number of all test definitions in all test
+            # actions defined before the current action within the same
+            # namespace, plus the index of the current test definition within
+            # the current test action.
+            index = (
+                sum(len(s) for s in test_list[: self.parameters["stage"]]) + sub_index
+            )
+            test_suite = f"{index}_{testdef['name']}"
+
+            # At the end of each successful test run, the expected test case
+            # list is already checked.
+            if self.reports.get(test_suite, {}).get("ran"):
+                continue
+
+            # Reset test report for comparison.
+            self.report = self.reports.get(test_suite, {}).get("results", {})
+            self.handle_expected(expected, test_suite)
 
     class SignalDirector:
         # FIXME: create proxy handlers
