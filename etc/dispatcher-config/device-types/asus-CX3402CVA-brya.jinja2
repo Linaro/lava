@@ -1,0 +1,6 @@
+{# device_type = 'asus-CX3402CVA-brya' #}
+{% extends 'base-depthcharge.jinja2' %}
+
+{% set start_message = start_message | default('Starting depthcharge on Marasov...') %}
+{% set bootloader_prompt = bootloader_prompt | default('marasov:') %}
+{% set console_device = console_device | default('ttyS0') %}
