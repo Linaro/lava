@@ -235,13 +235,6 @@ is possible to run test jobs using Docker if the persistence is handled
 correctly but this is usually only practical for single-user developer
 instances.
 
-``lava-lxc-mocker`` exists to solve the second problem. By mocking up
-the calls to ``lxc-*`` utilities, ``lava-lxc-mocker`` allows the same
-test job to be run on a device managed by a ``lava-worker`` in Docker
-as on a device managed by a ``lava-worker`` running on bare metal.
-
-``lava-lxc-mocker`` is pre-installed in all :ref:`lava_docker_images`.
-
 .. _docker_master:
 
 lava-server in docker
