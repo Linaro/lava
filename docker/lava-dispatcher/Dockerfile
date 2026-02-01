@@ -12,9 +12,6 @@ ARG lava_version=""
 RUN apt-get update && \
     apt-get install --no-install-recommends --yes python3 python3-setuptools
 
-# Install lava-lxc-mocker
-COPY lava/lxc-mocker/ /install/usr/bin/
-
 # Install lava_common and lava_dispatcher modules
 RUN --mount=type=bind,target=/app \
     cd /app && \
