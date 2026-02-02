@@ -1,3 +1,15 @@
+lava (2026.01-1) unstable; urgency=medium
+
+  * LAVA Software 2026.01 release
+
+  [ Anders Roxell ]
+  * [7c19daac3] utils: compression: use fakeroot for cpio operations
+
+  [ Rémi Duraffort ]
+  * [4758a0a2a] debian: fix missing bmap-tools dependency
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 02 Feb 2026 11:58:58 +0100
+
 lava (2025.10-1) unstable; urgency=medium
 
   * LAVA Software 2025.10 release
