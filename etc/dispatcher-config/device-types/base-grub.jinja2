@@ -12,6 +12,7 @@
 
 {% if efi_grub %}
 
+{% if net_commands is not defined %}
 {% if static_ip %}
 {% set net_commands = "          - net_add_addr lava efinet0 " + static_ip + "
           - net_add_route lava 0.0.0.0 gw " + static_gateway + "
@@ -33,6 +34,7 @@
 
 {# end static_ip #}
 {% endif %}
+{% endif %}
 
 {% if efinet %}
 
@@ -44,10 +46,12 @@
 {% else %}
 {# not efi_grub #}
 
+{% if net_commands is not defined %}
 {% if net_interface %}
 {% set net_commands = "          - net_bootp " + net_interface %}
 {% else %}
 {% set net_commands = "          - net_bootp" %}
+{% endif %}
 {% endif %}
 
 {% endif %}
