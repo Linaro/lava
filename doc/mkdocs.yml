@@ -154,6 +154,7 @@ nav:
         - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
       - Boot:
+        - Common: technical-references/job-definition/actions/boot/common.md
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
