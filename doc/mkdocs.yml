@@ -156,6 +156,7 @@ nav:
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
+        - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
       - Test: technical-references/job-definition/actions/test.md
     - Notifications: technical-references/job-definition/notifications.md
