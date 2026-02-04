@@ -155,6 +155,7 @@ nav:
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
+        - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
       - Test: technical-references/job-definition/actions/test.md
