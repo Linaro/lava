@@ -152,7 +152,9 @@ nav:
         - Downloads: technical-references/job-definition/actions/deploy/to-downloads.md
         - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
         - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
+        - MPS: technical-references/job-definition/actions/deploy/to-mps.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
+        - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
