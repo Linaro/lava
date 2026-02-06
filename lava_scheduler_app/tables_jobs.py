@@ -13,7 +13,7 @@ from django.utils.html import format_html
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import Device, TestJob
-from lava_scheduler_app.tables import TagsColumn
+from lava_scheduler_app.tables import TagsColumn, render_user_display
 from lava_server.lavatable import LavaTable
 
 
@@ -108,17 +108,7 @@ class JobSubmitterColumnMixin(LavaTable):
     submitter = tables.Column()
 
     def render_submitter(self, record):
-        user_name = record.submitter.username
-        full_name = record.submitter.get_full_name()
-
-        if settings.SHOW_SUBMITTER_FULL_NAME and full_name:
-            show_text = full_name
-            hover_text = user_name
-        else:
-            show_text = user_name
-            hover_text = full_name or user_name
-
-        return format_html('<span title="{}">{}</span>', hover_text, show_text)
+        return render_user_display(record.submitter)
 
 
 class JobEndTimeColumnMixin(LavaTable):
