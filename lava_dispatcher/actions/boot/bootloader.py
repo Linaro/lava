@@ -11,7 +11,7 @@ from lava_dispatcher.actions.boot import (
     BootloaderCommandsAction,
     BootloaderInterruptAction,
 )
-from lava_dispatcher.connections.serial import ResetConnection
+from lava_dispatcher.connections.serial import ConnectDevice, ResetConnection
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
 
@@ -38,6 +38,8 @@ class BootBootloaderAction(Action):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if parameters.get("reset_connection", True):
             self.pipeline.add_action(ResetConnection(self.job))
+        else:
+            self.pipeline.add_action(ConnectDevice(self.job))
         # 'reset' is retained for backward compatibility.
         if parameters.get("reset_device", True) and parameters.get("reset", True):
             self.pipeline.add_action(ResetDevice(self.job))
