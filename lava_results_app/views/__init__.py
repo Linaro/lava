@@ -15,7 +15,6 @@ import contextlib
 import csv
 import logging
 import os
-from collections import OrderedDict
 from json import dumps as json_dumps
 
 import yaml
@@ -150,7 +149,7 @@ def testjob(request, job):
     suite_table = TestJobResultsTable(
         data.get_table_data().filter(pk=job.id), request=request
     )
-    yaml_dict = OrderedDict()
+    yaml_dict = {}
 
     if hasattr(job, "testdata"):
         for data in job.testdata.attributes.all().order_by("name"):

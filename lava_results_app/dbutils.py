@@ -47,7 +47,7 @@ def append_failure_comment(job, msg):
 
 def create_metadata_store(results, job):
     """
-    Uses the OrderedDict import to correctly handle
+    Uses the dict import to correctly handle
     the yaml.load
     """
     if "extra" not in results:
