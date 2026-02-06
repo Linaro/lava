@@ -157,6 +157,7 @@ nav:
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
+        - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
