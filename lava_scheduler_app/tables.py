@@ -27,6 +27,22 @@ from lava_server.lavatable import LavaTable
 # functions need to go in views.py
 
 
+def render_user_display(user):
+    """Render a user with optional full-name display and hover tooltip."""
+
+    user_name = user.get_username()
+    full_name = user.get_full_name()
+
+    if settings.SHOW_SUBMITTER_FULL_NAME and full_name:
+        show_text = full_name
+        hover_text = user_name
+    else:
+        show_text = user_name
+        hover_text = full_name or user_name
+
+    return format_html('<span title="{}">{}</span>', hover_text, show_text)
+
+
 def pklink(record):
     pk = record.pk
     if isinstance(record, TestJob):
@@ -345,6 +361,9 @@ class LogEntryTable(LavaTable):
     object_id = tables.Column(verbose_name="Name")
     change_message = tables.Column(verbose_name="Reason", empty_values=[None])
     change_message.orderable = False
+
+    def render_user(self, record):
+        return render_user_display(record.user)
 
     def render_change_message(self, record):
         message = record.get_change_message()
