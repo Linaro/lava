@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 NXP
+# Copyright 2019-2020, 2026 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #
@@ -25,5 +25,6 @@ def schema():
             },
             Length(min=1),
         ),
+        Optional("uniquify"): bool,
     }
     return {**deploy.schema(), **base}
