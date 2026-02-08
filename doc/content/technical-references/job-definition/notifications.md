@@ -95,6 +95,37 @@ notify:
 
 ```
 
+### Restricting callback URLs
+
+By default, notification callbacks can target any URL. Administrators can
+restrict which hosts are permitted by setting `CALLBACK_ALLOWED_HOSTS` in
+`/etc/lava-server/settings.yaml` or a file in `/etc/lava-server/settings.d/`:
+
+```yaml
+CALLBACK_ALLOWED_HOSTS:
+  - "example.com"
+  - "*.example.com"
+  - "*.ci.example.com"
+```
+
+When this setting is defined, only callback URLs whose hostname matches one of
+the patterns will be accepted. All other callback URLs will be rejected and a
+warning logged. Shell-style wildcards are supported:
+
+- `example.com` — matches `example.com` only
+- `*.example.com` — matches `ci.example.com`, `api.example.com` but not
+  the bare `example.com`
+- `*.ci.example.com` — matches `build.ci.example.com`,
+  `test.ci.example.com`
+
+When `CALLBACK_ALLOWED_HOSTS` is not set, all callback URLs are permitted.
+
+!!! warning "Security recommendation"
+
+    It is recommended to configure `CALLBACK_ALLOWED_HOSTS` in production
+    deployments to prevent the LAVA server from being used to reach internal
+    network services via crafted callback URLs.
+
 ### Debugging notification callbacks
 
 The job data can also be retrieved using the REST API (which supports
