@@ -154,6 +154,7 @@ nav:
         - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
         - ISO Installer: technical-references/job-definition/actions/deploy/to-iso-installer.md
         - MPS: technical-references/job-definition/actions/deploy/to-mps.md
+        - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
