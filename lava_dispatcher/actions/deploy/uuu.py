@@ -1,4 +1,4 @@
-# Copyright 2019-2020 NXP
+# Copyright 2019-2020, 2026 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
@@ -37,10 +37,15 @@ class UUUAction(Action):
             action="uuu-deploy", label="uuu-images", key="images_names", value=images
         )
 
+        uniquify = parameters.get("uniquify", True)
         for image in images:
             self.pipeline.add_action(
                 DownloaderAction(
-                    self.job, image, path=path, params=parameters["images"][image]
+                    self.job,
+                    image,
+                    path=path,
+                    params=parameters["images"][image],
+                    uniquify=uniquify,
                 )
             )
             if images_param[image].get("apply-overlay", False):
