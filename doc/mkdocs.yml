@@ -153,6 +153,7 @@ nav:
         - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
         - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
         - MPS: technical-references/job-definition/actions/deploy/to-mps.md
+        - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
