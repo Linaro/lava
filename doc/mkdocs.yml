@@ -156,6 +156,7 @@ nav:
         - MPS: technical-references/job-definition/actions/deploy/to-mps.md
         - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
+        - TMPFS: technical-references/job-definition/actions/deploy/to-tmpfs.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
