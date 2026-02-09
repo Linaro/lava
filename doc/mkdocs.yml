@@ -163,6 +163,7 @@ nav:
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
         - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
+        - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
       - Test: technical-references/job-definition/actions/test.md
     - Notifications: technical-references/job-definition/notifications.md
