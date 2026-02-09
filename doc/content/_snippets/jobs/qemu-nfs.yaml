@@ -1,0 +1,59 @@
+device_type: qemu
+
+job_name: QEMU NFS example
+timeouts:
+  job:
+    minutes: 15
+
+priority: medium
+visibility: public
+
+context:
+  arch: arm64
+  netdevice: 'tap'
+  extra_options:
+  - '-smp'
+  - 1
+
+actions:
+- deploy:
+    timeout:
+      minutes: 5
+    to: nfs
+    images:
+      nfsrootfs:
+        url: https://storage.lavacloud.io/health-checks/qemu/nfs/jessie-arm64-nfs.tar.gz
+        compression: gz
+        image_arg: 'nfsroot={NFS_SERVER_IP}:{nfsrootfs},tcp,hard'
+      kernel:
+        url: https://storage.lavacloud.io/health-checks/qemu/nfs/vmlinuz-4.9.0-2-arm64
+        image_arg: -kernel {kernel}
+      initrd:
+        url: https://storage.lavacloud.io/health-checks/qemu/nfs/initrd.img-4.9.0-2-arm64
+        image_arg: -initrd {initrd}
+
+- boot:
+    timeout:
+      minutes: 5
+    method: qemu-nfs
+    auto_login:
+      login_prompt: 'login:'
+      username: 'root'
+    prompts:
+      - 'root@jessie:~#'
+
+- test:
+    timeout:
+      minutes: 5
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: test-definition-example
+        run:
+          steps:
+          - lava-test-case kernel-info --shell uname -a
+          - lava-test-case network-info --shell ip a
+      name: test-definition-example
+      path: inline/test-definition-example.yaml

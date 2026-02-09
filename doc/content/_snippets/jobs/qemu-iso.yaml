@@ -1,0 +1,64 @@
+device_type: qemu
+
+job_name: Debian Trixie amd64 netinst iso installer
+timeouts:
+  job:
+    minutes: 60
+  connection:
+    minutes: 30
+
+priority: medium
+visibility: public
+
+context:
+  arch: amd64
+  netdevice: tap
+
+actions:
+- deploy:
+    to: iso-installer
+    os: debian_installer
+    images:
+      iso:
+        image_arg: -drive file={iso},index=2,media=cdrom,readonly=on
+        url: https://cdimage.debian.org/debian-cd/13.3.0/amd64/iso-cd/debian-13.3.0-amd64-netinst.iso
+      preseed:
+        # Note: The preseed file example is configured to install SSH server and
+        # the standard utils. The SSH server can be logged in with the
+        # user:passwd 'linaro:linaro'.
+        url: https://storage.lavacloud.io/health-checks/qemu/iso/preseed.cfg
+    iso:
+      kernel: /install.amd/vmlinuz
+      initrd: /install.amd/initrd.gz
+      installation_size: 3G
+    timeout:
+      minutes: 30
+
+- boot:
+    method: qemu-iso
+    media: img
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+      password_prompt: 'Password:'
+      password: root
+    prompts:
+    - 'root@debian:'
+    timeout:
+      minutes: 30
+
+- test:
+    definitions:
+    - from: inline
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: test-definition-example
+        run:
+          steps:
+          - lava-test-case kernel-info --shell uname -a
+          - lava-test-case network-info --shell ip a
+      name: test-definition-example
+      path: inline/test-definition-example.yaml
+    timeout:
+      minutes: 5
