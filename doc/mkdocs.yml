@@ -159,6 +159,7 @@ nav:
         - TMPFS: technical-references/job-definition/actions/deploy/to-tmpfs.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
       - Boot:
+        - Common: technical-references/job-definition/actions/boot/common.md
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
