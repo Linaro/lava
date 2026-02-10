@@ -145,7 +145,8 @@ class FastbootFlashOrderAction(OptionalContainerFastbootAction):
             key="reboot",
             value=self.reboot,
         )
-        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+        connections = self.job.device["actions"]["deploy"]["connections"]
+        if connections is None or "fastboot" not in connections:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
@@ -184,7 +185,8 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
         super().validate()
         if not self.command:
             self.errors = "Invalid configuration - missing flash command"
-        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+        connections = self.job.device["actions"]["deploy"]["connections"]
+        if connections is None or "fastboot" not in connections:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
@@ -232,7 +234,8 @@ class FastbootReboot(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+        connections = self.job.device["actions"]["deploy"]["connections"]
+        if connections is None or "fastboot" not in connections:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
@@ -262,7 +265,8 @@ class FastbootRebootBootloader(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+        connections = self.job.device["actions"]["deploy"]["connections"]
+        if connections is None or "fastboot" not in connections:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )
@@ -292,7 +296,8 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
 
     def validate(self):
         super().validate()
-        if "fastboot" not in self.job.device["actions"]["deploy"]["connections"]:
+        connections = self.job.device["actions"]["deploy"]["connections"]
+        if connections is None or "fastboot" not in connections:
             self.errors = (
                 "Device not configured to support fastboot deployment connections."
             )

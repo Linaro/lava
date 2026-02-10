@@ -90,13 +90,13 @@ def device():
         Optional("usb_serial_driver"): str,
         Required("actions"): {
             Required("deploy"): {
-                Required("methods"): dict,
-                Optional("connections"): dict,
+                Required("methods"): Any(None, dict),
+                Optional("connections"): Any(None, dict),
                 Optional("parameters"): dict,
             },
             Required("boot"): {
-                Required("connections"): dict,
-                Required("methods"): dict,
+                Required("connections"): Any(None, dict),
+                Required("methods"): Any(None, dict),
             },
             Optional("test"): {
                 Required("methods"): {

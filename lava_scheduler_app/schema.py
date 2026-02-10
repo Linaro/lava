@@ -422,15 +422,15 @@ _job_schema = Schema(
 def _device_deploy_schema():
     return Schema(
         {
-            "connections": dict,
-            Required("methods"): dict,
+            "connections": Any(None, dict),
+            "methods": Any(None, dict),
             Optional("parameters"): _simple_params(),
         }
     )
 
 
 def _device_boot_schema():
-    return Schema({Required("connections"): dict, Required("methods"): dict})
+    return Schema({"connections": Any(None, dict), "methods": Any(None, dict)})
 
 
 def _device_test_schema():
@@ -553,15 +553,17 @@ def _validate_primary_connection_power_commands(data_object):
 
     # debug, tests don't pass. write docs.
     with contextlib.suppress(KeyError):
-        ssh_host = data_object["actions"]["deploy"]["methods"]["ssh"]["host"]
-        if ssh_host:
-            if "commands" in data_object:
-                for command in power_control_commands:
-                    if command in data_object["commands"]:
-                        raise SubmissionException(
-                            "When primary connection is used, power control commands (%s) should not be specified."
-                            % ", ".join(power_control_commands)
-                        )
+        methods = data_object["actions"]["deploy"]["methods"]
+        if methods is not None:
+            ssh_host = methods["ssh"]["host"]
+            if ssh_host:
+                if "commands" in data_object:
+                    for command in power_control_commands:
+                        if command in data_object["commands"]:
+                            raise SubmissionException(
+                                "When primary connection is used, power control commands (%s) should not be specified."
+                                % ", ".join(power_control_commands)
+                            )
 
 
 def validate_device(data_object):
