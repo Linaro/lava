@@ -29,11 +29,17 @@ def auto_login():
 
 
 def transfer_overlay():
-    return {
-        Required("download_command"): str,
-        Required("unpack_command"): str,
-        Optional("transfer_method"): str,
-    }
+    return Any(
+        {
+            Required("download_command"): str,
+            Required("unpack_command"): str,
+            Optional("transfer_method"): str,
+        },
+        {
+            Required("transfer_method"): Any("zmodem"),
+            Required("unpack_command"): str,
+        },
+    )
 
 
 def prompts():
