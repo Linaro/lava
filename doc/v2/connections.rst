@@ -28,7 +28,7 @@ as long as:
   run an ssh server
 
 USB connections for Android support can be implemented inside test
-shells using the :term:`LXC` support.
+shells using the docker support.
 
 .. index:: connections - device configuration
 
@@ -113,8 +113,6 @@ to tie related actions together. This is important - consider how an
 overlay created during a deploy action will be consumed by a test
 action somewhere down the job definition, for example.
 
-.. seealso:: :ref:`namespaces_with_lxc`.
-
 In a simple job, it is often not necessary to even consider this use
 of namespaces. If no other namespaces are defined explicitly in a test
 job, LAVA will create an implicit namespace called ``common``. The
@@ -124,17 +122,7 @@ block(s) will use it from there.
 
 If more than one connection is desired in a test job, then the way to
 control which connection is used in each action block is by explicitly
-defining appropriate namespaces. Here's an example using ``serial``
-and ``lxc`` connections with a Beaglebone device. Look for
-``namespace: inside_lxc`` and ``namespace: testdevice`` in the action
-blocks:
-
-.. literalinclude:: examples/test-jobs/namespace-connections-example1.yaml
-     :language: yaml
-     :linenos:
-     :lines: 31-90
-     :emphasize-lines: 3, 14, 31, 40, 52
-
+defining appropriate namespaces.
 
 Download or view the complete example:
 `examples/test-jobs/namespace-connections-example1.yaml
@@ -512,145 +500,6 @@ Finally, we start our tests.
 Download or view the complete example:
 `examples/test-jobs/bbb-2serial.yaml
 <examples/test-jobs/bbb-2serial.yaml>`_:
-
-.. index:: connections - multiple serial ports example
-
-.. _multiple_serial_ports_example2:
-
-Example job 2: A more complicated setup including LXC
-=====================================================
-
-Here's a more complicated example job, including the use of LXC for
-deployment. This was the first real-world use case for the multiple
-serial port support, running Linux kernel functional testing on a
-HiKey 6220. The HiKey 6220 hardware includes an extra serial port, but
-deploying to the board is more involved - we use fastboot in an LXC
-container, which means we have *another* namespace to track in the
-test job. Let's unpick the test job.
-
-#. :ref:`multiple_serial_ports_example2_define_container`
-
-#. :ref:`multiple_serial_ports_example2_boot_container`
-
-#. :ref:`multiple_serial_ports_example2_boot_device`
-
-#. :ref:`multiple_serial_ports_example2_boot_connection`
-
-#. :ref:`multiple_serial_ports_example2_test_connection`
-
-Download or view the complete example:
-`examples/test-jobs/multiple-serial-ports-lxc.yaml
-<examples/test-jobs/multiple-serial-ports-lxc.yaml>`_:
-
-.. _multiple_serial_ports_example2_define_container:
-
-Define the container
---------------------
-
-The distribution and suite of the container, as well as the name, are defined
-using the ``lava-lxc`` protocol block.
-
-.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
-     :language: yaml
-     :linenos:
-     :lines: 20-25
-
-.. _multiple_serial_ports_example2_boot_container:
-
-Deploy and boot the container
------------------------------
-
-The deploy and boot step for the LXC set the timeouts and prompts for this
-container. Note the name of the ``namespace`` used in these actions.
-
-The connection to the LXC is defined within the ``tlxc`` namespace and the
-connection is created in the ``boot`` action. In the case of LXC support, this
-is done by running ``lxc-attach`` on the dispatcher instead of a connection
-command from the device configuration.
-
-.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
-     :language: yaml
-     :linenos:
-     :lines: 27-44
-     :emphasize-lines: 3, 11
-
-.. seealso:: :ref:`boot_connection_namespace` and :ref:`namespaces_with_lxc`
-
-.. _multiple_serial_ports_example2_boot_device:
-
-Use the container to deploy and boot the device
------------------------------------------------
-
-Next, the dispatcher runs commands inside that LXC container to download and
-deploy an OE image to a HiKey 6220 board, then boot it. This example uses the
-``hikey-oe`` namespace. The details of how the HiKey 6220 is deployed and
-booted are not relevant to how the multiple serial support operates, but do
-take note of the ``namespace`` used to ``boot`` the device. The ``boot``
-operation is responsible for creating the connection (in this case by running
-a connection command specified in the device configuration).
-
-.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
-     :language: yaml
-     :linenos:
-     :lines: 46-87
-     :emphasize-lines: 2, 27
-
-.. _multiple_serial_ports_example2_boot_connection:
-
-Create the connection to the second serial port
------------------------------------------------
-
-As with making the connection to the LXC and making the connection to the
-primary :term:`UART` of the HiKey 6220 :term:`DUT`, making the connection to
-the second or additional serial ports involves a ``boot`` action. The action
-**must** create a new namespace to store the connection to the second serial
-port. (Any subsequent connections to other serial ports would similarly require
-a unique namespace for each connection.) This namespace will be used later to
-isolate a test shell from the primary connection used for the deployment and
-boot actions of the device.
-
-.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
-     :language: yaml
-     :linenos:
-     :lines: 89-103
-     :emphasize-lines: 4
-
-.. _multiple_serial_ports_example2_test_connection:
-
-Tell the test shell to use the new connection
----------------------------------------------
-
-This is where it all comes together.
-
-* The **namespace** of the test shell **matches** the namespace of the
-  **deployment and boot actions of the device**. This ensures that the test
-  shell has access to the dynamic data created by the correct deployment action
-  to be able to know what rootfs is in use and where to find the test shell
-  files on that rootfs.
-
-  In this example, the test shell needs a **namespace** of ``hikey-oe``
-
-  .. seealso:: :ref:`multiple_serial_ports_example2_boot_device`
-
-* The **connection-namespace** of the same test shell **matches** the namespace
-  of the **boot action of the second serial port**. This ensures that the test
-  shell communicates with the :term:`DUT` over the isolated connection instead
-  of the connection which is stored in the main namespace.
-
-  In this example, the test shell needs a **connection-namespace** of
-  ``isolation``
-
-  .. seealso:: :ref:`multiple_serial_ports_example2_boot_connection`
-
-.. literalinclude:: examples/test-jobs/multiple-serial-ports-lxc.yaml
-     :language: yaml
-     :linenos:
-     :lines: 105-113
-     :emphasize-lines: 1-2
-
-Download or view the complete example:
-`examples/test-jobs/multiple-serial-ports-lxc.yaml
-<examples/test-jobs/multiple-serial-ports-lxc.yaml>`_:
 
 .. index:: connections - limitations with multiple serial ports
 

@@ -35,13 +35,7 @@ from lava_dispatcher.actions.deploy.overlay import CreateOverlay, OverlayAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.compression import untar_file
-from lava_dispatcher.utils.filesystem import (
-    copy_overlay_to_lxc,
-    copy_to_lxc,
-    lava_lxc_home,
-)
 from lava_dispatcher.utils.network import requests_retry
 from lava_dispatcher.utils.strings import substitute_address_with_static_info
 
@@ -92,8 +86,6 @@ class DownloaderAction(RetryAction):
             action = FileDownloadAction(
                 self.job, self.key, self.path, url, self.uniquify, params=self.params
             )
-        elif url.scheme == "lxc":
-            action = LxcDownloadAction(self.job, self.key, self.path, url)
         elif url.scheme == "downloads":
             action = PreDownloadedAction(
                 self.job, self.key, url, self.path, self.uniquify, params=self.params
@@ -785,58 +777,6 @@ class ScpDownloadAction(DownloadHandler):
                     process.kill()
 
 
-class LxcDownloadAction(Action):
-    """
-    Map an already downloaded resource to the correct path.
-    """
-
-    name = "lxc-download"
-    description = "Map to the correct lxc path"
-    summary = "lxc download"
-
-    def __init__(self, job: Job, key, path, url):
-        super().__init__(job)
-        self.key = key
-        self.path = path
-        self.url = url
-
-    def validate(self):
-        super().validate()
-        if self.url.scheme != "lxc":
-            self.errors = "lxc:/// url scheme is invalid"
-        if not self.url.path:
-            self.errors = "Invalid path in lxc:/// url"
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocol = [
-            protocol
-            for protocol in self.job.protocols
-            if protocol.name == LxcProtocol.name
-        ][0]
-        if protocol:
-            lxc_name = protocol.lxc_name
-        if not lxc_name:
-            raise JobError(
-                "Erroneous lxc url '%s' without protocol %s" % self.url,
-                LxcProtocol.name,
-            )
-
-        fname = os.path.basename(self.url.path)
-        lxc_home = lava_lxc_home(lxc_name, self.job.parameters["dispatcher"])
-        file_path = os.path.join(lxc_home, fname)
-        self.logger.debug("Trying '%s' matching '%s'", file_path, fname)
-        if os.path.exists(file_path):
-            self.set_namespace_data(
-                action="download-action", label=self.key, key="file", value=file_path
-            )
-        else:
-            raise JobError("Resource unavailable: %s" % self.url.path)
-        return connection
-
-
 class PreDownloadedAction(Action):
     """
     Maps references to files in downloads:// to their full path.
@@ -943,7 +883,7 @@ class PreDownloadedAction(Action):
 
 class DownloadAction(Action):
     name = "download-deploy"
-    description = "download files and copy to LXC if available"
+    description = "download files"
     summary = "download deployment"
 
     def __init__(self, job: Job):
@@ -988,60 +928,3 @@ class DownloadAction(Action):
             )
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
-        self.pipeline.add_action(CopyToLxcAction(self.job))
-
-
-class CopyToLxcAction(Action):
-    """
-    Copy downloaded files to LXC within LAVA_LXC_HOME.
-    """
-
-    name = "copy-to-lxc"
-    description = "copy files to lxc"
-    summary = "copy to lxc"
-
-    def __init__(self, job: Job):
-        super().__init__(job)
-        self.retries = 3
-        self.sleep = 10
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-        # this is the device namespace - the lxc namespace is not accessible
-        lxc_name = None
-        protocols = [
-            protocol
-            for protocol in self.job.protocols
-            if protocol.name == LxcProtocol.name
-        ]
-        if protocols:
-            lxc_name = protocols[0].lxc_name
-        else:
-            return connection
-
-        # Copy each file to LXC.
-        for image in self.get_namespace_keys("download-action"):
-            src = self.get_namespace_data(
-                action="download-action", label=image, key="file"
-            )
-            # The archive extraction logic and some deploy logic in
-            # DownloadHandler will set a label 'file' in the namespace but
-            # that file would have been dealt with and the actual path may not
-            # exist, though the key exists as part of the namespace, which we
-            # can ignore safely, hence we continue on invalid src.
-            if not src:
-                continue
-            copy_to_lxc(lxc_name, src, self.job.parameters["dispatcher"])
-        overlay_file = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
-        if overlay_file is None:
-            self.logger.debug("skipped %s", self.name)
-        else:
-            copy_overlay_to_lxc(
-                lxc_name,
-                overlay_file,
-                self.job.parameters["dispatcher"],
-                self.parameters["namespace"],
-            )
-        return connection

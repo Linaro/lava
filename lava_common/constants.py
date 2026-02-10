@@ -44,24 +44,6 @@ ACTION_TIMEOUT = 30
 # Max cleanup timeout
 CLEANUP_TIMEOUT = 5 * 60
 
-# LXC protocol name
-LXC_PROTOCOL = "lava-lxc"
-
-# LXC container path
-LXC_PATH = "/var/lib/lxc"
-
-# LXC finalize timeout
-LAVA_LXC_TIMEOUT = 90
-
-# LXC templates with mirror option
-LXC_TEMPLATE_WITH_MIRROR = ["debian", "ubuntu"]
-
-# LXC default packages
-LXC_DEFAULT_PACKAGES = "systemd,systemd-sysv"
-
-# LAVA home in LXC
-LAVA_LXC_HOME = "/lava-lxc"
-
 # mount point for download directory when postprocessing images (e.g. within
 # docker containers)
 LAVA_DOWNLOADS = "/lava-downloads"

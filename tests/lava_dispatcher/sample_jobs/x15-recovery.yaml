@@ -11,37 +11,11 @@ timeouts:
 priority: medium
 visibility: public
 
-protocols:
-  lava-lxc:
-    name: lxc-x15-test
-    template: debian
-    distribution: debian
-    release: jessie
-    mirror: http://mirror.bytemark.co.uk/debian
-
 actions:
-- deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 5
-    to: lxc
-    os: debian
-
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    - 'shell@am57xevm:/'
-    timeout:
-      minutes: 5
-    method: lxc
-
 - deploy:
     timeout:
       minutes: 10
     to: recovery
-    namespace: recovery
-    connection: lxc
     images:
       mlo:
         url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/MLO
@@ -50,15 +24,12 @@ actions:
     os: debian
 
 - boot:
-    namespace: recovery
     timeout:
       minutes: 5
     method: recovery
     commands: recovery
 
 - test:
-    namespace: tlxc
-    connection: lxc
     timeout:
       minutes: 10
     definitions:
@@ -71,18 +42,18 @@ actions:
       name: x15-recovery
 
 - boot:
-    namespace: recovery
     timeout:
       minutes: 5
     method: recovery
     commands: exit
 
 - deploy:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 25
     to: fastboot
-    namespace: droid
-    connection: lxc
     images:
       userdata:
         url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz
@@ -91,7 +62,9 @@ actions:
     os: oe
 
 - boot:
-    namespace: droid
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     auto_login:
       login_prompt: 'am57xx-evm login:'
       username: root
@@ -109,7 +82,6 @@ actions:
     method: u-boot
 
 - test:
-    namespace: droid
     timeout:
       minutes: 60
     definitions:
@@ -117,5 +89,3 @@ actions:
       from: git
       path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests-x15
-
-

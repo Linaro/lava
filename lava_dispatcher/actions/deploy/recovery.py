@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 from lava_dispatcher.action import Action, Pipeline
-from lava_dispatcher.actions.deploy.download import CopyToLxcAction, DownloaderAction
+from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.connections.serial import ConnectDevice
 
 
@@ -24,7 +24,6 @@ class RecoveryModeAction(Action):
             self.pipeline.add_action(
                 DownloaderAction(self.job, image_key, recovery_dir, params=image_params)
             )
-        self.pipeline.add_action(CopyToLxcAction(self.job))
 
         tags = []
         if "tags" in recovery:

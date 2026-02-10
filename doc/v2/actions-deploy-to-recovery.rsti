@@ -6,7 +6,7 @@ to: recovery
 ************
 
 Deployment to ``recovery`` allows the use of device dictionary commands
-and an LXC test shell to automate recovery mode operations on some
+and an docker test shell to automate recovery mode operations on some
 DUTs.
 
 Successful use of recovery deployments require support by the admins
@@ -19,13 +19,13 @@ and by the test writers.
    mode.
 
    Additionally, recovery deployments are **blind** - there is ``udev``
-   support to add the device to the LXC but no serial connection, so no
+   support to add the device to the docker but no serial connection, so no
    output will be read from the DUT. All tools and libraries required
-   to execute the recovery test shell need to be added to the LXC. For
-   example, using an earlier test shell inside the LXC.
+   to execute the recovery test shell need to be added to the docker. For
+   example, using an earlier test shell inside the docker.
 
 #. Download scripts and binaries to transfer to the device
-#. Copy the downloaded artifacts into the LXC.
+#. Copy the downloaded artifacts into the docker.
 #. Ensure that power to the device is OFF
 #. Execute the ``recovery_mode_command`` to use relays or similar to
    put the device into recovery mode, in a dedicated :term:`namespace`.
@@ -51,7 +51,7 @@ The test job would then define a test action which executes the scripts
 using the downloaded files and completes recovery. This script may have
 to wait for the device to appear and as the device may then have an
 unpredictable device node name, an action to create a symlink with a
-known name is likely to be required. The use of LXC ensures that only
+known name is likely to be required. The use of docker ensures that only
 one suitable device exists, as long as the device configuration and
 recovery mode operations only require a single device matching the
 check in the recovery script.
@@ -65,12 +65,12 @@ could be executed as steps in the test shell as follows:
     run:
       steps:
       - find /dev/ -name 'ttyUSB*' -xdev -type c -quit -exec ln -s {} /dev/recovery ';'
-      - python /lava-lxc/hisi-idt.py --img1=/lava-lxc/l-loader.bin -d /dev/recovery
+      - python hisi-idt.py --img1=l-loader.bin -d /dev/recovery
       # fastboot should wait for the device to reset here
-      # udev rule copes with adding it to the LXC once it appears
-      - fastboot flash ptable /lava-lxc/ptable-linux.img
-      - fastboot flash ptable /lava-lxc/fip.bin
-      - fastboot flash ptable /lava-lxc/nvme.img
+      # udev rule copes with adding it to the docker once it appears
+      - fastboot flash ptable ptable-linux.img
+      - fastboot flash ptable fip.bin
+      - fastboot flash ptable nvme.img
       # next boot action takes care of exiting from recovery mode
 
 .. important:: Make these commands **portable** so that the same script

@@ -17,7 +17,7 @@ before, the temptation might be to immediately start thinking about
 adding a new device to LAVA. Beware: device integration is **the most
 difficult way to contribute** to the LAVA Software Community
 Project. Our recommendation is to start slowly, get familiar with
-devices like QEMU or LXC first and learn how to design a Test Plan
+devices like QEMU or docker first and learn how to design a Test Plan
 which suits your needs.
 
 Before you start

@@ -92,7 +92,6 @@ class TestGrubAction(LavaDispatcherTestCase):
                 "download-retry",
                 "download-retry",
                 "prepare-tftp-overlay",
-                "lxc-create-udev-rule-action",
                 "deploy-device-env",
             ],
         )
@@ -286,22 +285,23 @@ class TestGrubAction(LavaDispatcherTestCase):
         grub_efi = job.pipeline.find_action(GrubMenuSelector)
         self.assertEqual("pxe-grub", grub_efi.commands)
 
-    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey_grub_efi(self):
-        job = self.factory.create_hikey_job("sample_jobs/hikey-grub-lxc.yaml")
+        job = self.factory.create_hikey_job("sample_jobs/hikey-grub.yaml")
         self.assertIsNotNone(job)
-        job.validate()
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            job.validate()
         description_ref = self.pipeline_reference("hikey-grub-efi.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
     @unittest.skipIf(
-        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
-        "lxc or img2simg or simg2img not installed",
+        infrastructure_error_multi_paths(["img2simg", "simg2img"]),
+        "img2simg or simg2img not installed",
     )
     def test_hikey_uart(self):
         job = self.factory.create_hikey_job("sample_jobs/hikey-console.yaml")
         self.assertIsNotNone(job)
-        job.validate()
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            job.validate()
         description_ref = self.pipeline_reference("hikey-console.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
@@ -319,14 +319,12 @@ class TestGrubAction(LavaDispatcherTestCase):
             if cn:
                 self.assertEqual(shell.parameters["namespace"], "hikey-oe")
                 self.assertNotEqual(shell.parameters["namespace"], "isolation")
-                self.assertNotEqual(shell.parameters["namespace"], "tlxc")
                 self.assertEqual(shell.parameters["connection-namespace"], "isolation")
                 retry = shell.pipeline.actions[0]
                 self.assertEqual(retry.parameters["connection-namespace"], "isolation")
             else:
                 self.assertNotEqual(shell.parameters["namespace"], "hikey-oe")
                 self.assertNotEqual(shell.parameters["namespace"], "isolation")
-                self.assertEqual(shell.parameters["namespace"], "tlxc")
                 self.assertNotIn("connection-namespace", shell.parameters.keys())
 
         grub_menu = job.pipeline.find_action(GrubSequenceAction)
@@ -339,13 +337,12 @@ class TestGrubAction(LavaDispatcherTestCase):
         self.assertIsNotNone(secondary_autologin.parameters)
         self.assertIn("isolation", secondary_autologin.job.test_info)
         self.assertIn("hikey-oe", secondary_autologin.job.test_info)
-        self.assertIn("tlxc", secondary_autologin.job.test_info)
 
-    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_hikey960_grub(self):
         job = self.factory.create_hikey960_job("sample_jobs/hikey960-oe.yaml")
         self.assertIsNotNone(job)
-        job.validate()
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            job.validate()
         description_ref = self.pipeline_reference("hi960-grub-efi.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 

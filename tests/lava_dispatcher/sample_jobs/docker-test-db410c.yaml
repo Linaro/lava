@@ -20,6 +20,20 @@ actions:
         local: true
         image: lavalabteam/adb-fastboot
     images:
+      partition:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin
+      hyp:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn
+      cdt:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbc_1.0_8016.bin
+      rpm:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn
+      sbl1:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn
+      tz:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn
+      aboot:
+        url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn
       boot:
         url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz
         compression: gz
@@ -44,6 +58,7 @@ actions:
     docker:
         local: true
         image: lavalabteam/adb-fastboot
+
 - command:
     name: pre_os_command
     timeout:

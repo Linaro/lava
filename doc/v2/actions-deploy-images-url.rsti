@@ -12,7 +12,6 @@ URLs **must** use one of the supported schemes, the first element of the URL.
  * ``http://``
  * ``https://``
  * ``file://``
- * ``lxc://``
 
 URLs allow placeholder for `http`, `https` and `file` schema.
 

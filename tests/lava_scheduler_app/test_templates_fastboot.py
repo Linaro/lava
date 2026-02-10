@@ -276,12 +276,6 @@ class TestFastbootTemplates(BaseTemplateTest):
         self.assertIsInstance(template_dict["device_info"], list)
         self.assertIsInstance(template_dict["static_info"], list)
 
-    def test_nuc_template(self):
-        template_data = """{% extends 'adb-nuc.jinja2' %}
-{% set device_ip = '192.168.1.11' %}
-"""
-        self.render_device_dictionary_from_text(template_data)
-
     def test_ifc6410(self):
         data = """{% extends 'ifc6410.jinja2' %}
 {% set adb_serial_number = 'e080c212' %}

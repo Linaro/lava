@@ -346,9 +346,7 @@ class TestTemplates(BaseTemplateTest):
         self.assertEqual(
             "adb -s R42D300FRYP shell", template_dict["commands"]["connect"]
         )
-        self.assertIn("lxc", template_dict["actions"]["boot"]["methods"])
         self.assertIn("fastboot", template_dict["actions"]["boot"]["methods"])
-        self.assertIn("lxc", template_dict["actions"]["deploy"]["methods"])
         self.assertIn("fastboot", template_dict["actions"]["deploy"]["methods"])
         self.assertEqual(
             ["reboot"], template_dict["actions"]["boot"]["methods"]["fastboot"]

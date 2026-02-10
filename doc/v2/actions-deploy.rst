@@ -85,12 +85,10 @@ Parameter List
    :backlinks: top
 
 .. include:: actions-deploy-to-docker.rsti
-.. include:: actions-deploy-to-download.rsti
 .. include:: actions-deploy-to-fastboot.rsti
 .. include:: actions-deploy-to-fvp.rsti
 .. include:: actions-deploy-to-avh.rsti
 .. include:: actions-deploy-to-isoinstaller.rsti
-.. include:: actions-deploy-to-lxc.rsti
 .. include:: actions-deploy-to-musca.rsti
 .. include:: actions-deploy-to-nbd.rsti
 .. include:: actions-deploy-to-recovery.rsti
@@ -148,9 +146,8 @@ as the test definition is not expected to run on a DUT running Android.
    **on the DUT** then ``os: android`` will be needed so that the
    Android shell is used instead of ``/bin/sh``. Many AOSP images do
    not include ``busybox`` or other support for a shell on the DUT, so
-   test jobs using those images drive the test from the LXC by using
-   ``adb``. The deployment to the LXC does not need to specify ``os``
-   as long as the test shell is **portable**.
+   test jobs using those images drive the test by using
+   ``adb``.
 
  * ``ubuntu`` : **deprecated** - compatible with ``debian``.
 
