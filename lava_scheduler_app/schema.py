@@ -367,7 +367,6 @@ def _job_protocols_schema():
         {
             "lava-multinode": {"timeout": _timeout_schema(), "roles": dict},
             "lava-vland": {str: {vlan_name: {"tags": [str]}}},
-            "lava-lxc": dict,
             "lava-xnbd": dict,
         }
     )

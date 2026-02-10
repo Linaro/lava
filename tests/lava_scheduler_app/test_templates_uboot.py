@@ -301,27 +301,6 @@ class TestUbootTemplates(BaseTemplateTest):
         self.assertIsNone(template_dict["parameters"]["interfaces"]["target"]["ip"])
         self.assertIsNotNone(template_dict["parameters"]["interfaces"]["target"]["mac"])
 
-    @unittest.skipIf(infrastructure_error("lxc-info"), "lxc-info not installed")
-    def test_panda_lxc_template(self):
-        data = """{% extends 'panda.jinja2' %}
-{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command off --port 07' %}
-{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command reboot --port 07' %}
-{% set connection_command = 'telnet serial4 7010' %}
-{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu15 --command on --port 07' %}"""
-        template_dict = self.render_device_dictionary_from_text(data)
-        fdesc, device_yaml = tempfile.mkstemp()
-        os.write(fdesc, yaml_safe_dump(template_dict).encode())
-        panda = NewDevice(device_yaml)
-        lxc_yaml = os.path.join(
-            os.path.dirname(__file__), "sample_jobs", "panda-lxc-aep.yaml"
-        )
-        with open(lxc_yaml) as sample_job_data:
-            parser = JobParser()
-            job = parser.parse(sample_job_data, panda, 4577, None, "")
-        os.close(fdesc)
-        job.logger = DummyLogger()
-        job.validate()
-
     def test_ethaddr(self):
         data = """{% extends 'b2260.jinja2' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command reboot' %}

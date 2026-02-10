@@ -198,15 +198,6 @@ included in the prompt, this can be included in the ``prompt``:
       prompts:
       - 'root@debian:'
 
-When using the :term:`LXC` :term:`protocol`, the hostname element of the
-prompt will vary:
-
-.. code-block:: yaml
-
-  - boot:
-      prompts:
-      - 'root@(.*):'
-
 When using a ramdisk, the prompt is likely to need to contain brackets which
 will need to be escaped:
 
@@ -628,9 +619,6 @@ The ``fastboot`` boot method takes no arguments or parameters.
       timeout:
         minutes: 15
 
-.. note:: Since all fastboot :term:`DUT` depend on LXC to run jobs, it is
-          mandatory to have the namespace specified.
-
 .. index:: boot method fastboot commands
 
 .. _boot_method_fastboot_commands:
@@ -663,12 +651,12 @@ fastboot-nfs
 ============
 
 The ``fastboot-nfs`` boot is a method that allow you specify a ``nfs`` rootfs in
-a Android boot image via LXC image build and boot using ``fastboot`` boot method.
+a Android boot image via docker image build and boot using ``fastboot`` boot method.
 
 The job needs a require set of 3 primary actions:
 
 - Deploy rootfs over NFS
-- Download Kernel and DTB to LXC
+- Download Kernel and DTB to docker
 - Create Android boot image with NFS details provided by NFS_{ROOTFS,SERVER_IP}
   environment variables
 
@@ -780,24 +768,6 @@ The ``ipxe`` boot method takes no arguments or parameters.
       prompts:
       - 'root@debian:~#'
       - '/ #'
-
-.. index:: boot method lxc
-
-.. _boot_method_lxc:
-
-lxc
-===
-
-.. seealso:: :ref:`lxc_protocol_reference`
-
-.. code-block:: yaml
-
-  - boot:
-      method: lxc
-      prompts:
-      - 'root@(.*):/#'
-      timeout:
-        minutes: 5
 
 .. index:: boot method openocd
 
@@ -1087,7 +1057,7 @@ the device are both appropriately configured).
 .. include:: examples/test-jobs/hikey-new-connection.yaml
      :code: yaml
      :start-after: # test isolation block
-     :end-before: # test lxc block
+     :end-before: # test docker block
 
 .. index:: boot method qemu
 

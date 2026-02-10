@@ -18,8 +18,6 @@ from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, InternalObject
 from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerContainer, DockerRun
-from lava_dispatcher.utils.filesystem import copy_to_lxc
-from lava_dispatcher.utils.lxc import is_lxc_requested, lxc_cmd_prefix
 from lava_dispatcher.utils.udev import get_udev_devices
 
 if TYPE_CHECKING:
@@ -85,10 +83,7 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
     def driver(self):
         __driver__ = getattr(self, "__driver__", None)
         if not __driver__:
-            lxc = is_lxc_requested(self.job)
-            if lxc:
-                self.__driver__ = LxcDriver(self, lxc)
-            elif "docker" in self.parameters:
+            if "docker" in self.parameters:
                 params = self.parameters["docker"]
                 self.__driver__ = DockerDriver(self, params)
             else:
@@ -137,21 +132,6 @@ class NullDriver(InternalObject):
 
     def get_output(self, cmd):
         return self.action.parsed_command(self.get_command_prefix() + cmd)
-
-
-class LxcDriver(NullDriver):
-    is_container = True
-
-    def __init__(self, action, lxc_name):
-        super().__init__(action)
-        self.lxc_name = lxc_name
-
-    def get_command_prefix(self, copy_files=True):
-        return lxc_cmd_prefix(self.action.job)
-
-    def maybe_copy_to_container(self, src):
-        src = copy_to_lxc(self.lxc_name, src, self.action.job.parameters["dispatcher"])
-        return src
 
 
 class DockerDriver(NullDriver):

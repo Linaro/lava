@@ -176,7 +176,7 @@ What to include in your configuration management
   * ``/etc/udev/rules.d/*`` - any rules you might have defined for particular devices or services
   * ``/etc/lava-server/*`` - the rest of the files not already included as
     device configuration.
-  * ``/etc/default/`` - specifically, ``lxc``, ``tftpd-hpa``, ``ser2net``
+  * ``/etc/default/`` - specifically, ``tftpd-hpa``, ``ser2net``
   * ``/etc/lava-dispatcher/lava-worker``
   * ``/etc/lava-coordinator/lava-coordinator.conf``
   * ``/etc/apache2/sites-available/lava-server.conf`` (on the master)

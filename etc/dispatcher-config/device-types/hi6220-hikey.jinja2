@@ -15,7 +15,6 @@ flash_cmds_order: ['ptable', 'fastboot', 'nvme', 'boot', 'cache', 'system', 'use
 actions:
   deploy:
     methods:
-      lxc:
       fastboot:
       ssh:
         options:
@@ -26,12 +25,10 @@ actions:
         identity_file: {{ ssh_identity_file }}
     connections:
       fastboot:
-      lxc:
       serial:
   boot:
     connections:
       fastboot:
-      lxc:
       serial:
     methods:
       ssh:

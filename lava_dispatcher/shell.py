@@ -279,10 +279,6 @@ class ShellSession:
                     logger.info("Disconnecting from ssh: %s", reason)
                     self.sendline("", disconnecting=True)
                     self.sendline("~.", disconnecting=True)
-                elif self.name == "LxcSession":
-                    logger.info("Disconnecting from lxc: %s", reason)
-                    self.sendline("", disconnecting=True)
-                    self.sendline("exit", disconnecting=True)
                 elif self.name == "QemuSession":
                     logger.info("Disconnecting from qemu: %s", reason)
                 elif self.name == "ShellSession":

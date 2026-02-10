@@ -10,7 +10,6 @@ usb_product_id: '{{ usb_product_id }}'
 actions:
   deploy:
     methods:
-      lxc:
 {% if flasher_deploy_commands %}
       flasher:
         commands: {{ flasher_deploy_commands }}
@@ -19,9 +18,7 @@ actions:
   boot:
     connections:
       serial:
-      lxc:
     methods:
-      lxc:
       minimal:
 {% endblock body -%}
 

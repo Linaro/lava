@@ -157,7 +157,6 @@ class TestUbootAction(LavaDispatcherTestCase):
                 "download-retry",
                 "download-retry",
                 "prepare-tftp-overlay",
-                "lxc-create-udev-rule-action",
                 "deploy-device-env",
             ],
         )
@@ -227,7 +226,6 @@ class TestUbootAction(LavaDispatcherTestCase):
                 self.assertEqual(action.mkimage_arch, "arm")
             self.assertTrue(action.valid)
 
-    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_fastboot_uboot(self):
         job = self.factory.create_x15_job("sample_jobs/x15-uboot.yaml")
         job.validate()
@@ -239,7 +237,6 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertNotEqual(interrupt.params, {})
         self.assertEqual("u-boot", interrupt.method)
 
-    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
     def test_x15_uboot_nfs(self, which_mock):
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
@@ -941,11 +938,11 @@ class TestUbootAction(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference("zcu102-ramdisk.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
-    @unittest.skipIf(infrastructure_error("lxc-start"), "lxc-start not installed")
     def test_imx8m(self):
         job = self.factory.create_job("imx8mq-evk-01", "sample_jobs/imx8mq-evk.yaml")
         self.assertIsNotNone(job)
-        job.validate()
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            job.validate()
         self.assertEqual(job.pipeline.errors, [])
         description_ref = self.pipeline_reference("imx8mq-evk.yaml", job=job)
         self.assertEqual(description_ref, job.pipeline.describe())

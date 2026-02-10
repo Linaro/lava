@@ -22,7 +22,6 @@ from lava_dispatcher.actions.boot import (
     OverlayUnpack,
 )
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
-from lava_dispatcher.connections.lxc import ConnectLxc
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
@@ -208,7 +207,6 @@ class UBootEnterFastbootAction(RetryAction):
         self.pipeline.add_action(ResetDevice(self.job))
         # need to look for Hit any key to stop autoboot
         self.pipeline.add_action(BootloaderInterruptAction(self.job))
-        self.pipeline.add_action(ConnectLxc(self.job))
 
     def validate(self):
         super().validate()

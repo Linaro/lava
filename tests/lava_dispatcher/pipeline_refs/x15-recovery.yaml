@@ -1,157 +1,6 @@
-- class: LxcAction
-  name: lxc-deploy
-  level: '1'
-  max_retries: 1
-  description: download files and deploy using lxc
-  summary: lxc deployment
-  timeout: 300
-  pipeline:
-  - class: LxcCreateAction
-    name: lxc-create-action
-    level: '1.1'
-    max_retries: 1
-    description: create lxc action
-    summary: create lxc
-    timeout: 300
-  - class: LxcCreateUdevRuleAction
-    name: lxc-create-udev-rule-action
-    level: '1.2'
-    max_retries: 1
-    description: create lxc udev rule action
-    summary: create lxc udev rule
-    timeout: 300
-  - class: DeployDeviceEnvironment
-    name: deploy-device-env
-    level: '1.3'
-    max_retries: 1
-    description: deploy device environment
-    summary: deploy device environment
-    timeout: 300
-  - class: OverlayAction
-    name: lava-overlay
-    level: '1.4'
-    max_retries: 1
-    description: add lava scripts during deployment for test shell use
-    summary: overlay the lava support scripts
-    timeout: 300
-    pipeline:
-    - class: SshAuthorize
-      name: ssh-authorize
-      level: 1.4.1
-      max_retries: 1
-      description: include public key in overlay and authorize root user
-      summary: add public key to authorized_keys
-      timeout: 300
-    - class: VlandOverlayAction
-      name: lava-vland-overlay
-      level: 1.4.2
-      max_retries: 1
-      description: Populate specific vland scripts for tests to lookup vlan data.
-      summary: Add files detailing vlan configuration.
-      timeout: 300
-    - class: MultinodeOverlayAction
-      name: lava-multinode-overlay
-      level: 1.4.3
-      max_retries: 1
-      description: add lava scripts during deployment for multinode test shell use
-      summary: overlay the lava multinode scripts
-      timeout: 300
-    - class: TestDefinitionAction
-      name: test-definition
-      level: 1.4.4
-      max_retries: 1
-      description: load test definitions into image
-      summary: loading test definitions
-      timeout: 300
-      pipeline:
-      - class: GitRepoAction
-        name: git-repo-action
-        level: 1.4.4.1
-        max_retries: 1
-        description: apply git repository of tests to the test image
-        summary: clone git test repo
-        timeout: 300
-      - class: TestOverlayAction
-        name: test-overlay
-        level: 1.4.4.2
-        max_retries: 1
-        description: overlay test support files onto image
-        summary: applying LAVA test overlay
-        timeout: 300
-      - class: TestInstallAction
-        name: test-install-overlay
-        level: 1.4.4.3
-        max_retries: 1
-        description: overlay dependency installation support files onto image
-        summary: applying LAVA test install scripts
-        timeout: 300
-      - class: TestRunnerAction
-        name: test-runscript-overlay
-        level: 1.4.4.4
-        max_retries: 1
-        description: overlay run script onto image
-        summary: applying LAVA test run script
-        timeout: 300
-    - class: CompressOverlay
-      name: compress-overlay
-      level: 1.4.5
-      max_retries: 1
-      description: Create a lava overlay tarball and store alongside the job
-      summary: Compress the lava overlay files
-      timeout: 300
-  - class: ApplyLxcOverlay
-    name: apply-lxc-overlay
-    level: '1.5'
-    max_retries: 1
-    description: apply the overlay to the container by copying
-    summary: apply overlay on the container
-    timeout: 300
-- class: BootLxcAction
-  name: lxc-boot
-  level: '2'
-  max_retries: 1
-  description: lxc boot into the system
-  summary: lxc boot
-  timeout: 300
-  pipeline:
-  - class: LxcStartAction
-    name: boot-lxc
-    level: '2.1'
-    max_retries: 1
-    description: boot into lxc container
-    summary: attempt to boot
-    timeout: 300
-  - class: LxcAddStaticDevices
-    name: lxc-add-static
-    level: '2.2'
-    max_retries: 1
-    description: Add devices which are permanently powered by the worker to the LXC
-    summary: Add static devices to the LXC
-    timeout: 300
-  - class: ConnectLxc
-    name: connect-lxc
-    level: '2.3'
-    max_retries: 1
-    description: connect to the lxc container
-    summary: run connection command
-    timeout: 300
-  - class: ExpectShellSession
-    name: expect-shell-connection
-    level: '2.4'
-    max_retries: 1
-    description: Wait for a shell
-    summary: Expect a shell prompt
-    timeout: 300
-  - class: ExportDeviceEnvironment
-    name: export-device-env
-    level: '2.5'
-    max_retries: 1
-    description: Exports environment variables to the device
-    summary: Exports environment variables action
-    timeout: 300
 - class: RecoveryModeAction
   name: deploy-recovery-mode
-  level: '3'
+  level: '1'
   max_retries: 1
   description: deploy firmware by switching to recovery mode
   summary: deploy firmware in recovery mode
@@ -159,7 +8,7 @@
   pipeline:
   - class: DownloaderAction
     name: download-retry
-    level: '3.1'
+    level: '1.1'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -167,7 +16,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 3.1.1
+      level: 1.1.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -175,7 +24,7 @@
       url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/MLO
   - class: DownloaderAction
     name: download-retry
-    level: '3.2'
+    level: '1.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -183,18 +32,55 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 3.2.1
+      level: 1.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
       timeout: 600
       url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/u-boot.img
-  - class: CopyToLxcAction
-    name: copy-to-lxc
-    level: '3.3'
+- class: RecoveryBootAction
+  name: recovery-boot
+  level: '2'
+  max_retries: 1
+  description: handle entering and leaving recovery mode
+  summary: boot into or out of recovery mode
+  timeout: 300
+  pipeline:
+  - class: PowerOff
+    name: power-off
+    level: '2.1'
     max_retries: 1
-    description: copy files to lxc
-    summary: copy to lxc
+    description: discontinue power to device
+    summary: send power_off command
+    timeout: 300
+  - class: SwitchRecoveryCommand
+    name: switch-recovery
+    level: '2.2'
+    max_retries: 1
+    description: call commands to switch device into and out of recovery
+    summary: execute recovery mode commands
+    timeout: 300
+  - class: PowerOn
+    name: power-on
+    level: '2.3'
+    max_retries: 1
+    description: supply power to device
+    summary: send power_on command
+    timeout: 300
+- class: TestShellRetry
+  name: lava-test-retry
+  level: '3'
+  max_retries: 1
+  description: Retry wrapper for lava-test-shell
+  summary: Retry support for Lava Test Shell
+  timeout: 600
+  pipeline:
+  - class: TestShellAction
+    name: lava-test-shell
+    level: '3.1'
+    max_retries: 1
+    description: Executing lava-test-runner
+    summary: Lava Test Shell
     timeout: 600
 - class: RecoveryBootAction
   name: recovery-boot
@@ -225,53 +111,9 @@
     description: supply power to device
     summary: send power_on command
     timeout: 300
-- class: TestShellRetry
-  name: lava-test-retry
-  level: '5'
-  max_retries: 1
-  description: Retry wrapper for lava-test-shell
-  summary: Retry support for Lava Test Shell
-  timeout: 600
-  pipeline:
-  - class: TestShellAction
-    name: lava-test-shell
-    level: '5.1'
-    max_retries: 1
-    description: Executing lava-test-runner
-    summary: Lava Test Shell
-    timeout: 600
-- class: RecoveryBootAction
-  name: recovery-boot
-  level: '6'
-  max_retries: 1
-  description: handle entering and leaving recovery mode
-  summary: boot into or out of recovery mode
-  timeout: 300
-  pipeline:
-  - class: PowerOff
-    name: power-off
-    level: '6.1'
-    max_retries: 1
-    description: discontinue power to device
-    summary: send power_off command
-    timeout: 300
-  - class: SwitchRecoveryCommand
-    name: switch-recovery
-    level: '6.2'
-    max_retries: 1
-    description: call commands to switch device into and out of recovery
-    summary: execute recovery mode commands
-    timeout: 300
-  - class: PowerOn
-    name: power-on
-    level: '6.3'
-    max_retries: 1
-    description: supply power to device
-    summary: send power_on command
-    timeout: 300
 - class: FastbootAction
   name: fastboot-deploy
-  level: '7'
+  level: '5'
   max_retries: 1
   description: download files and deploy using fastboot
   summary: fastboot deployment
@@ -279,7 +121,7 @@
   pipeline:
   - class: OverlayAction
     name: lava-overlay
-    level: '7.1'
+    level: '5.1'
     max_retries: 1
     description: add lava scripts during deployment for test shell use
     summary: overlay the lava support scripts
@@ -287,28 +129,28 @@
     pipeline:
     - class: SshAuthorize
       name: ssh-authorize
-      level: 7.1.1
+      level: 5.1.1
       max_retries: 1
       description: include public key in overlay and authorize root user
       summary: add public key to authorized_keys
       timeout: 1500
     - class: VlandOverlayAction
       name: lava-vland-overlay
-      level: 7.1.2
+      level: 5.1.2
       max_retries: 1
       description: Populate specific vland scripts for tests to lookup vlan data.
       summary: Add files detailing vlan configuration.
       timeout: 1500
     - class: MultinodeOverlayAction
       name: lava-multinode-overlay
-      level: 7.1.3
+      level: 5.1.3
       max_retries: 1
       description: add lava scripts during deployment for multinode test shell use
       summary: overlay the lava multinode scripts
       timeout: 1500
     - class: TestDefinitionAction
       name: test-definition
-      level: 7.1.4
+      level: 5.1.4
       max_retries: 1
       description: load test definitions into image
       summary: loading test definitions
@@ -316,49 +158,77 @@
       pipeline:
       - class: GitRepoAction
         name: git-repo-action
-        level: 7.1.4.1
+        level: 5.1.4.1
         max_retries: 1
         description: apply git repository of tests to the test image
         summary: clone git test repo
         timeout: 1500
       - class: TestOverlayAction
         name: test-overlay
-        level: 7.1.4.2
+        level: 5.1.4.2
         max_retries: 1
         description: overlay test support files onto image
         summary: applying LAVA test overlay
         timeout: 1500
       - class: TestInstallAction
         name: test-install-overlay
-        level: 7.1.4.3
+        level: 5.1.4.3
         max_retries: 1
         description: overlay dependency installation support files onto image
         summary: applying LAVA test install scripts
         timeout: 1500
       - class: TestRunnerAction
         name: test-runscript-overlay
-        level: 7.1.4.4
+        level: 5.1.4.4
+        max_retries: 1
+        description: overlay run script onto image
+        summary: applying LAVA test run script
+        timeout: 1500
+      - class: GitRepoAction
+        name: git-repo-action
+        level: 5.1.4.5
+        max_retries: 1
+        description: apply git repository of tests to the test image
+        summary: clone git test repo
+        timeout: 1500
+      - class: TestOverlayAction
+        name: test-overlay
+        level: 5.1.4.6
+        max_retries: 1
+        description: overlay test support files onto image
+        summary: applying LAVA test overlay
+        timeout: 1500
+      - class: TestInstallAction
+        name: test-install-overlay
+        level: 5.1.4.7
+        max_retries: 1
+        description: overlay dependency installation support files onto image
+        summary: applying LAVA test install scripts
+        timeout: 1500
+      - class: TestRunnerAction
+        name: test-runscript-overlay
+        level: 5.1.4.8
         max_retries: 1
         description: overlay run script onto image
         summary: applying LAVA test run script
         timeout: 1500
     - class: CompressOverlay
       name: compress-overlay
-      level: 7.1.5
+      level: 5.1.5
       max_retries: 1
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 1500
   - class: ConnectDevice
     name: connect-device
-    level: '7.2'
+    level: '5.2'
     max_retries: 1
     description: use the configured command to connect serial to the device
     summary: run connection command
     timeout: 1500
   - class: UBootEnterFastbootAction
     name: uboot-enter-fastboot
-    level: '7.3'
+    level: '5.3'
     max_retries: 1
     description: interactive uboot enter fastboot action
     summary: uboot commands to enter fastboot mode
@@ -366,7 +236,7 @@
     pipeline:
     - class: ResetDevice
       name: reset-device
-      level: 7.3.1
+      level: 5.3.1
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
@@ -374,28 +244,21 @@
       pipeline:
       - class: PDUReboot
         name: pdu-reboot
-        level: 7.3.1.1
+        level: 5.3.1.1
         max_retries: 1
         description: issue commands to a PDU to power cycle a device
         summary: hard reboot using PDU
         timeout: 1500
     - class: BootloaderInterruptAction
       name: bootloader-interrupt
-      level: 7.3.2
+      level: 5.3.2
       max_retries: 1
       description: interrupt bootloader
       summary: interrupt bootloader to get an interactive shell
       timeout: 1500
-    - class: ConnectLxc
-      name: connect-lxc
-      level: 7.3.3
-      max_retries: 1
-      description: connect to the lxc container
-      summary: run connection command
-      timeout: 1500
   - class: DownloaderAction
     name: download-retry
-    level: '7.4'
+    level: '5.4'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -403,7 +266,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 7.4.1
+      level: 5.4.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -411,21 +274,21 @@
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image
-    level: '7.5'
+    level: '5.5'
     max_retries: 1
     description: apply overlay to sparse image
     summary: apply overlay to sparse image
     timeout: 1500
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '7.6'
+    level: '5.6'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 1500
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
-    level: '7.7'
+    level: '5.7'
     max_retries: 1
     description: Determine support for each flash operation
     summary: Handle reset and options for each flash url.
@@ -433,28 +296,28 @@
     pipeline:
     - class: ReadFeedback
       name: read-feedback
-      level: 7.7.1
+      level: 5.7.1
       max_retries: 1
       description: Check for messages on all other namespaces
       summary: Read from other namespaces
       timeout: 1500
     - class: WaitDeviceBoardID
       name: wait-device-boardid
-      level: 7.7.2
+      level: 5.7.2
       max_retries: 1
       description: wait for udev device with board ID
       summary: wait for udev device with board ID
       timeout: 1500
     - class: FastbootFlashAction
       name: fastboot-flash-action
-      level: 7.7.3
+      level: 5.7.3
       max_retries: 1
       description: Run a specified flash command
       summary: Execute fastboot flash command
       timeout: 1500
 - class: UBootAction
   name: uboot-action
-  level: '8'
+  level: '6'
   max_retries: 1
   description: interactive uboot action
   summary: pass uboot commands
@@ -462,7 +325,7 @@
   pipeline:
   - class: UBootSecondaryMedia
     name: uboot-from-media
-    level: '8.1'
+    level: '6.1'
     max_retries: 1
     description: let uboot know where to find the kernel in the image on secondary
       media
@@ -470,21 +333,21 @@
     timeout: 900
   - class: BootloaderCommandOverlay
     name: bootloader-overlay
-    level: '8.2'
+    level: '6.2'
     max_retries: 1
     description: substitute job data into bootloader command list
     summary: replace placeholders with job data
     timeout: 900
   - class: ConnectDevice
     name: connect-device
-    level: '8.3'
+    level: '6.3'
     max_retries: 1
     description: use the configured command to connect serial to the device
     summary: run connection command
     timeout: 900
   - class: UBootCommandsAction
     name: uboot-commands
-    level: '8.4'
+    level: '6.4'
     max_retries: 1
     description: interactive uboot commands action
     summary: uboot commands
@@ -492,7 +355,7 @@
     pipeline:
     - class: ResetDevice
       name: reset-device
-      level: 8.4.1
+      level: 6.4.1
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
@@ -500,28 +363,28 @@
       pipeline:
       - class: PDUReboot
         name: pdu-reboot
-        level: 8.4.1.1
+        level: 6.4.1.1
         max_retries: 1
         description: issue commands to a PDU to power cycle a device
         summary: hard reboot using PDU
         timeout: 900
     - class: BootloaderInterruptAction
       name: bootloader-interrupt
-      level: 8.4.2
+      level: 6.4.2
       max_retries: 1
       description: interrupt bootloader
       summary: interrupt bootloader to get an interactive shell
       timeout: 900
     - class: BootloaderCommandsAction
       name: bootloader-commands
-      level: 8.4.3
+      level: 6.4.3
       max_retries: 1
       description: send commands to bootloader
       summary: interactive bootloader
       timeout: 900
     - class: AutoLoginAction
       name: auto-login-action
-      level: 8.4.4
+      level: 6.4.4
       max_retries: 1
       description: automatically login after boot using job parameters and checking
         for messages.
@@ -530,28 +393,28 @@
       pipeline:
       - class: LoginAction
         name: login-action
-        level: 8.4.4.1
+        level: 6.4.4.1
         max_retries: 1
         description: Real login action.
         summary: Login after boot.
         timeout: 900
     - class: ExpectShellSession
       name: expect-shell-connection
-      level: 8.4.5
+      level: 6.4.5
       max_retries: 1
       description: Wait for a shell
       summary: Expect a shell prompt
       timeout: 900
     - class: ExportDeviceEnvironment
       name: export-device-env
-      level: 8.4.6
+      level: 6.4.6
       max_retries: 1
       description: Exports environment variables to the device
       summary: Exports environment variables action
       timeout: 900
 - class: TestShellRetry
   name: lava-test-retry
-  level: '9'
+  level: '7'
   max_retries: 1
   description: Retry wrapper for lava-test-shell
   summary: Retry support for Lava Test Shell
@@ -559,14 +422,14 @@
   pipeline:
   - class: TestShellAction
     name: lava-test-shell
-    level: '9.1'
+    level: '7.1'
     max_retries: 1
     description: Executing lava-test-runner
     summary: Lava Test Shell
     timeout: 3600
 - class: FinalizeAction
   name: finalize
-  level: '10'
+  level: '8'
   max_retries: 1
   description: finish the process and cleanup
   summary: finalize the job
@@ -574,14 +437,14 @@
   pipeline:
   - class: PowerOff
     name: power-off
-    level: '10.1'
+    level: '8.1'
     max_retries: 1
     description: discontinue power to device
     summary: send power_off command
     timeout: 10
   - class: ReadFeedback
     name: read-feedback
-    level: '10.2'
+    level: '8.2'
     max_retries: 1
     description: Check for messages on all other namespaces
     summary: Read from other namespaces

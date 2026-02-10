@@ -16,37 +16,14 @@ metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
   path: hikey-oe.yaml
 
-protocols:
-  lava-lxc:
-    name: lxc-hikey-oe
-    template: debian
-    distribution: debian
-    release: jessie
-
 actions:
 - deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 15
-    to: lxc
-    packages:
-    - android-tools-fastboot
-
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    - 'hikey:/'
-    timeout:
-      minutes: 5
-    method: lxc
-
-- deploy:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 30
     to: fastboot
-    namespace: hikey-oe
-    connection: lxc
     images:
       ptable:
         url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/bootloader/ptable-linux-8g.img
@@ -59,15 +36,8 @@ actions:
         compression: gz
         apply-overlay: true
         # ensure that this job raises a network interface with DHCP before relying on internet access
-    protocols:
-        lava-lxc:
-        - action: fastboot-deploy
-          request: pre-power-command
-          timeout:
-              minutes: 2
 
 - boot:
-    namespace: hikey-oe
     auto_login:
       login_prompt: 'login:'
       username: root
@@ -77,16 +47,8 @@ actions:
       minutes: 5
     method: uefi-menu
     commands: fastboot
-    protocols:
-      lava-lxc:
-      # other action could be boot-fastboot
-      - action: uefi-commands
-        request: pre-os-command
-        timeout:
-          minutes: 2
 
 - test:
-    namespace: hikey-oe
     timeout:
       minutes: 5
     definitions:
@@ -96,7 +58,9 @@ actions:
       name: smoke-tests-basic-oe
 
 - test:
-    namespace: tlxc
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 5
     definitions:

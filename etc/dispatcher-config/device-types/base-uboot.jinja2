@@ -180,7 +180,6 @@ actions:
       append_dtb: {{ append_dtb|default(false) }}
       use_xip: {{ use_xip|default(false) }}
     connections:
-      lxc:
       fastboot:
       serial:
     methods:
@@ -197,7 +196,6 @@ actions:
         commands: {{ flasher_deploy_commands }}
 {% endif %}
       image:
-      lxc:
       overlay:
       usb:
       tftp:
@@ -237,7 +235,6 @@ actions:
 
   boot:
     connections:
-      lxc:
       fastboot:
       serial:
     methods:

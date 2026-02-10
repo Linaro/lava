@@ -45,16 +45,11 @@ simple as seen below::
 
  - reboot
  - wait-usb-add
- - lxc-add-device
 
 When the device is still in fastboot mode after the deployment of images to the
 respective partitions ``fastboot reboot`` is issued which will reboot the Nexus
 device to the AOSP operating system. We wait for a udev add event and then once
-the event happens, we add the device to the LXC container using the device_info
-values.
-
-Thus the device is booted and ready for running tests via ADB from an LXC
-container.
+the event happens.
 
 Issues
 ======
@@ -182,8 +177,7 @@ allow the TYPE A ports to function.
 
 Irrespective of the operating system that is getting deployed we need to enable
 the USB OTG port which may have been disabled in the previous job run (Why this
-is done is explained in point 3 above). This is done using the
-``pre_power_command``, called via the lava-lxc protocol for deploy action.
+is done is explained in point 3 above).
 
 .. seealso:: :ref:`using_protocols_from_actions`
 
@@ -281,16 +275,12 @@ steps on the device dictionary::
 
     - boot
     - wait-usb-add
-    - lxc-add-device
     - auto-login
     - shell-session
     - export-env
 
 Since the HiKey has a serial connection we can watch the kernel boot log using
 the serial connection.
-
-AOSP provides ADB communication, hence the tests are run using lava-test-shell
-from within the LXC container communicating via ADB daemon on the HiKey.
 
 OE / Debian
 -----------
@@ -306,10 +296,6 @@ starts working and brings up the connected USB ethernet adapter.
 
 We won't require the OTG port henceforth since we have a serial connection to
 monitor and also ethernet is up for communicating to the internet.
-
-OE or Debian does not provide ADB communication, hence the tests are run using
-lava-test-shell directly on the HiKey using the serial connection where LXC is
-not used.
 
 Sample Job Runs
 AOSP - https://staging.validation.linaro.org/scheduler/job/179225
@@ -395,7 +381,7 @@ converted to a normal image we will apply the overlay and then do a normal
 image to sparse image conversion using a tool called img2simg. Both these tools
 simg2img and img2simg are available in Debian jessie and stretch. The
 conversions and application of overlay are done just before flashing these
-images within the LXC container which should have tools such as simg2img and
+images within the docker container which should have tools such as simg2img and
 img2simg installed.
 
 

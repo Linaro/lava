@@ -57,11 +57,11 @@ class ManagersTest(TestCaseWithFactory):
         # Create device types.
         self.qemu_device_type = self.factory.make_device_type(name="qemu")
         self.bbb_device_type = self.factory.make_device_type(name="bbb")
-        self.lxc_device_type = self.factory.make_device_type(name="lxc")
+        self.docker_device_type = self.factory.make_device_type(name="docker")
         self.all_device_types = [
             self.qemu_device_type,
             self.bbb_device_type,
-            self.lxc_device_type,
+            self.docker_device_type,
         ]
 
         # Create devices.
@@ -181,7 +181,7 @@ class ManagersTest(TestCaseWithFactory):
             DeviceType.VIEW_PERMISSION, self.group1, self.bbb_device_type
         )
         GroupDeviceTypePermission.objects.assign_perm(
-            DeviceType.VIEW_PERMISSION, self.group1, self.lxc_device_type
+            DeviceType.VIEW_PERMISSION, self.group1, self.docker_device_type
         )
 
         # Test that qemu is not restricted by view permission.
@@ -190,7 +190,7 @@ class ManagersTest(TestCaseWithFactory):
             {self.qemu_device_type},
         )
 
-        # Test that lxc and bbb are not restricted by admin permission.
+        # Test that docker and bbb are not restricted by admin permission.
         self.assertEqual(
             set(
                 DeviceType.objects.filter_by_perm(
@@ -199,7 +199,7 @@ class ManagersTest(TestCaseWithFactory):
                     include_objects_without_permissions=True,
                 )
             ),
-            {self.lxc_device_type, self.bbb_device_type},
+            {self.docker_device_type, self.bbb_device_type},
         )
 
         # Test that all are not restricted by submit permission.
@@ -211,7 +211,7 @@ class ManagersTest(TestCaseWithFactory):
                     include_objects_without_permissions=True,
                 )
             ),
-            {self.lxc_device_type, self.bbb_device_type, self.qemu_device_type},
+            {self.docker_device_type, self.bbb_device_type, self.qemu_device_type},
         )
 
     def test_filter_by_perm_single_group(self):
@@ -336,10 +336,10 @@ class ManagersTest(TestCaseWithFactory):
             set(DeviceType.objects.all().visible_by_user(self.user1)),
             set(self.all_device_types),
         )
-        # user2 can view only qemu and lxc device types.
+        # user2 can view only qemu and docker device types.
         self.assertEqual(
             set(DeviceType.objects.all().visible_by_user(self.user2)),
-            {self.qemu_device_type, self.lxc_device_type},
+            {self.qemu_device_type, self.docker_device_type},
         )
         # same as above, use different method.
         self.assertEqual(
@@ -348,13 +348,13 @@ class ManagersTest(TestCaseWithFactory):
                     self.user2, DeviceType.VIEW_PERMISSION
                 )
             ),
-            {self.qemu_device_type, self.lxc_device_type},
+            {self.qemu_device_type, self.docker_device_type},
         )
         # AnonymousUser can see also see all device types which are not view
         # restricted.
         self.assertEqual(
             set(DeviceType.objects.all().visible_by_user(AnonymousUser())),
-            {self.qemu_device_type, self.lxc_device_type},
+            {self.qemu_device_type, self.docker_device_type},
         )
 
     def test_devicetype_manager_accessible_wrong_permission(self):
@@ -404,7 +404,7 @@ class ManagersTest(TestCaseWithFactory):
                     self.user2, DeviceType.SUBMIT_PERMISSION
                 )
             ),
-            {self.bbb_device_type, self.lxc_device_type},
+            {self.bbb_device_type, self.docker_device_type},
         )
 
         # anonymous can not admin anything.

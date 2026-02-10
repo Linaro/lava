@@ -5,8 +5,6 @@
 to: fastboot
 ************
 
-.. seealso:: :ref:`deploy_using_lxc`
-
 .. index:: deploy to fastboot images
 
 .. _deploy_to_fastboot_images:
@@ -17,7 +15,7 @@ images
 Fastboot deployments support a range of images to be downloaded and deployed to
 the device. The list of images will depend on the test job and the test device.
 The available elements determine the command arguments passed to ``fastboot``
-inside the LXC i.e., the partition to be flashed.
+inside the docker i.e., the partition to be flashed.
 
 partition
 ---------
@@ -28,7 +26,7 @@ image will be flashed using the ``fastboot`` command.
 In the example, the partition to be flashed on the :term:`DUT` is ``system``.
 
 .. note:: The partition text is passed to fastboot command as given in the
-   job, for example, ``fastboot flash system /lava-lxc/rootfs.img``, hence
+   job, for example, ``fastboot flash system rootfs.img``, hence
    take caution to pass the right partition name.
 
 

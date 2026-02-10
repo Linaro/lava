@@ -30,7 +30,7 @@ def test_simple_mapping(tmp_path):
 
     assert data["device_info"] == device_info
     assert data["container"] == "mycontainer"
-    assert data["container_type"] == "lxc"
+    assert data["container_type"] == "docker"
 
 
 def test_add_mapping_without_job_dir(tmp_path):
@@ -55,21 +55,29 @@ def device_links(pyudev):
 
 
 @pytest.fixture
-def pass_device_lxc(mocker):
-    return mocker.patch("lava_dispatcher_host.utils.pass_device_into_container_lxc")
+def pass_device_docker(mocker):
+    return mocker.patch("lava_dispatcher_host.utils.pass_device_into_container_docker")
 
 
-def test_simple_share_device_with_container(mocker, pass_device_lxc, device_links):
+def test_simple_share_device_with_container(mocker, pass_device_docker, device_links):
+    mocker.patch(
+        "lava_dispatcher_host.utils.subprocess.check_output",
+        return_value="/dev/foo/bar",
+    )
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
-    pass_device_lxc.assert_called_once_with(
-        "mycontainer", "/dev/foo/bar", device_links, "1"
+    pass_device_docker.assert_called_once_with(
+        "mycontainer", "/dev/foo/bar", "/dev/foo/bar", device_links, "1"
     )
 
 
 def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(
-    mocker, pass_device_lxc, device_links
+    mocker, pass_device_docker, device_links
 ):
+    mocker.patch(
+        "lava_dispatcher_host.utils.subprocess.check_output",
+        return_value="/dev/foo/bar",
+    )
     add_device_container_mapping(
         "1",
         {
@@ -89,18 +97,22 @@ def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(
         )
     )
 
-    pass_device_lxc.assert_called_once_with(
-        "mycontainer", "/dev/foo/bar", device_links, "1"
+    pass_device_docker.assert_called_once_with(
+        "mycontainer", "/dev/foo/bar", "/dev/foo/bar", device_links, "1"
     )
 
 
-def test_two_concurrent_jobs(mocker, pass_device_lxc, device_links):
+def test_two_concurrent_jobs(mocker, pass_device_docker, device_links):
+    mocker.patch(
+        "lava_dispatcher_host.utils.subprocess.check_output",
+        return_value="/dev/baz/qux",
+    )
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "container1")
     add_device_container_mapping("2", {"serial_number": "9876543210"}, "container2")
     share_device_with_container(Namespace(device="baz/qux", serial_number="9876543210"))
 
-    pass_device_lxc.assert_called_once_with(
-        "container2", "/dev/baz/qux", device_links, "2"
+    pass_device_docker.assert_called_once_with(
+        "container2", "/dev/baz/qux", "/dev/baz/qux", device_links, "2"
     )
 
 
@@ -112,7 +124,11 @@ def test_no_device_found(mocker):
     check_call.assert_not_called()
 
 
-def test_map_by_vendor_id_and_product_id(mocker, pass_device_lxc, device_links):
+def test_map_by_vendor_id_and_product_id(mocker, pass_device_docker, device_links):
+    mocker.patch(
+        "lava_dispatcher_host.utils.subprocess.check_output",
+        return_value="/dev/bus/usb/001/099",
+    )
     add_device_container_mapping(
         "1", {"vendor_id": "aaaa", "product_id": "xxxx"}, "container1"
     )
@@ -124,8 +140,8 @@ def test_map_by_vendor_id_and_product_id(mocker, pass_device_lxc, device_links):
             product_id="xxxx",
         )
     )
-    pass_device_lxc.assert_called_once_with(
-        "container1", "/dev/bus/usb/001/099", device_links, "1"
+    pass_device_docker.assert_called_once_with(
+        "container1", "/dev/bus/usb/001/099", "/dev/bus/usb/001/099", device_links, "1"
     )
 
 
@@ -151,7 +167,9 @@ def test_unknown_container_type(mocker):
 
 
 def test_only_adds_slash_dev_if_needed(mocker):
-    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
+    share = mocker.patch(
+        "lava_dispatcher_host.utils.share_device_with_container_docker"
+    )
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
@@ -160,7 +178,9 @@ def test_only_adds_slash_dev_if_needed(mocker):
 
 
 def test_second_mapping_does_not_invalidate_first(mocker):
-    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
+    share = mocker.patch(
+        "lava_dispatcher_host.utils.share_device_with_container_docker"
+    )
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
     add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer1")
     share_device_with_container(
@@ -170,7 +190,9 @@ def test_second_mapping_does_not_invalidate_first(mocker):
 
 
 def test_two_devices_two_containers(mocker):
-    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
+    share = mocker.patch(
+        "lava_dispatcher_host.utils.share_device_with_container_docker"
+    )
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer1")
     add_device_container_mapping("1", {"serial_number": "badbeeb00c"}, "mycontainer2")
     share_device_with_container(
@@ -186,7 +208,9 @@ def test_two_devices_two_containers(mocker):
 
 
 def test_device_plus_parent(mocker):
-    share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_lxc")
+    share = mocker.patch(
+        "lava_dispatcher_host.utils.share_device_with_container_docker"
+    )
     add_device_container_mapping(
         "1",
         {

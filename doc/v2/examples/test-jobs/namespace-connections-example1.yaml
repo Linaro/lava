@@ -1,6 +1,6 @@
 device_type: beaglebone-black
 
-job_name: LXC and bbb example to show namespaces with multiple connections
+job_name: bbb example to show namespaces with multiple connections
 
 timeouts:
   job:
@@ -20,28 +20,9 @@ metadata:
   build-console: https://ci.linaro.org/view/lava-ci/job/lava-debian-armmp-armhf/4/console
   build-script: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/armmp-nfs.sh
 
-protocols:
-  lava-lxc:
-    name: lxc-bbb-test
-    template: debian
-    distribution: debian
-    release: jessie
-
 # ACTIONS_BLOCK
 actions:
 - deploy:
-    namespace: inside_lxc
-    timeout:
-      minutes: 5
-    to: lxc
-    packages:
-    - usbutils
-    - procps
-    - lsb-release
-    - util-linux
-
-- deploy:
-    namespace: testdevice
     timeout:
       minutes: 3
     to: tftp
@@ -58,17 +39,6 @@ actions:
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/dtbs/am335x-bone.dtb
 
 - boot:
-    namespace: inside_lxc
-    connection: lxc
-    prompts:
-    - 'root@(.*):/#'
-    timeout:
-      minutes: 5
-    method: lxc
-
-- boot:
-    namespace: testdevice
-    connection: serial
     method: u-boot
     commands: ramdisk
     prompts:
@@ -79,8 +49,6 @@ actions:
       minutes: 3
 
 - test:
-    namespace: testdevice
-    connection: serial
     timeout:
       minutes: 5
     definitions:

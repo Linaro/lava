@@ -36,7 +36,7 @@ support and execute a bootloader. Integration has involved using UEFI with:
 
 * fastboot (HiKey 620)
 
-  * involves the use of :term:`LXC` to run ``fastboot flash`` commands to
+  * involves the use of docker to run ``fastboot flash`` commands to
     deploy complete images, including ``boot``, ``system`` and ``userdata``
     amongst others.
 
@@ -257,7 +257,7 @@ does not describe UEFI at all, simply fastboot and then grub:
 
 .. code-block:: yaml
 
-      fastboot: ['boot', 'wait-usb-add', 'lxc-add-device']
+      fastboot: ['boot', 'wait-usb-add']
       grub:
         reset_device: False
         sequence:

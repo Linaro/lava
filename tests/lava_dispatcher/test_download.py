@@ -29,12 +29,13 @@ class TestDownloadDeploy(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @unittest.skipIf(
-        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
-        "lxc or img2simg or simg2img not installed",
+        infrastructure_error_multi_paths(["img2simg", "simg2img"]),
+        "img2simg or simg2img not installed",
     )
     def test_validate(self):
         try:
-            self.job.pipeline.validate_actions()
+            with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+                self.job.pipeline.validate_actions()
         except JobError as exc:
             self.fail(exc)
         for action in self.job.pipeline.actions:

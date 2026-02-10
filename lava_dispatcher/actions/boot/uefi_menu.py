@@ -24,7 +24,6 @@ from lava_dispatcher.menus.menus import (
     SelectorMenuAction,
 )
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.protocols.lxc import LxcProtocol
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.strings import substitute
 
@@ -150,12 +149,7 @@ class UefiMenuSelector(SelectorMenuAction):
         super().validate()
 
     def run(self, connection, max_end_time):
-        lxc_active = any(
-            protocol
-            for protocol in self.job.protocols
-            if protocol.name == LxcProtocol.name
-        )
-        if self.job.device.pre_os_command and not lxc_active:
+        if self.job.device.pre_os_command:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
             if not self.run_command(command.split(" "), allow_silent=True):

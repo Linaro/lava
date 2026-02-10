@@ -6,6 +6,7 @@
 
 
 import unittest
+from unittest.mock import patch
 
 from lava_dispatcher.actions.boot.recovery import (
     RecoveryBootAction,
@@ -26,13 +27,15 @@ class TestRecoveryMode(LavaDispatcherTestCase):
         return Factory().create_job("x15-bl-01", "sample_jobs/x15-recovery.yaml")
 
     @unittest.skipIf(
-        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
-        "lxc or img2simg or simg2img not installed",
+        infrastructure_error_multi_paths(["img2simg", "simg2img"]),
+        "img2simg or simg2img not installed",
     )
     def test_structure_fastboot(self):
         fastboot_job = self.create_fastboot_job()
         self.assertIsNotNone(fastboot_job)
-        fastboot_job.validate()
+
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            fastboot_job.validate()
 
         description_ref = self.pipeline_reference(
             "hi6220-recovery.yaml", job=fastboot_job
@@ -50,13 +53,14 @@ class TestRecoveryMode(LavaDispatcherTestCase):
                     self.fail("[LXC_CREATE] board_id unset")
 
     @unittest.skipIf(
-        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
-        "lxc or img2simg or simg2img not installed",
+        infrastructure_error_multi_paths(["img2simg", "simg2img"]),
+        "img2simg or simg2img not installed",
     )
     def test_structure_uboot(self):
         uboot_job = self.create_uboot_job()
         self.assertIsNotNone(uboot_job)
-        uboot_job.validate()
+        with patch("lava_dispatcher.utils.docker.DockerRun.prepare"):
+            uboot_job.validate()
 
         description_ref = self.pipeline_reference("x15-recovery.yaml", job=uboot_job)
         self.assertEqual(description_ref, uboot_job.pipeline.describe())

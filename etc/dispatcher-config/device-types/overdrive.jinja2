@@ -11,10 +11,8 @@
 actions:
   deploy:
     connections:
-      lxc:
       serial:
     methods:
-      lxc:
       tftp:
       ssh:
         options:
@@ -25,7 +23,6 @@ actions:
         identity_file: {{ ssh_identity_file }}
   boot:
     connections:
-      lxc:
       serial:
       ssh:
     methods:

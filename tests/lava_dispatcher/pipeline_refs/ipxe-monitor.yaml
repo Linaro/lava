@@ -105,13 +105,6 @@
       description: recreate a ramdisk with the overlay applied.
       summary: compress ramdisk with overlay
       timeout: 120
-  - class: LxcCreateUdevRuleAction
-    name: lxc-create-udev-rule-action
-    level: '1.5'
-    max_retries: 1
-    description: create lxc udev rule action
-    summary: create lxc udev rule
-    timeout: 120
 - class: BootloaderAction
   name: bootloader-action
   level: '2'

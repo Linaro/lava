@@ -155,7 +155,6 @@ actions:
       append_dtb: {{ append_dtb|default(false) }}
       use_xip: {{ use_xip|default(false) }}
     connections:
-      lxc:
       serial:
     methods:
 {% if usbg_ms_commands %}
@@ -167,7 +166,6 @@ actions:
       flasher:
         commands: {{ flasher_deploy_commands }}
 {% endif %}
-      lxc:
       nfs:
       ssh:
         options:
@@ -195,7 +193,6 @@ actions:
 {% endif %}
   boot:
     connections:
-      lxc:
       serial:
     methods:
 {% if vexpress_supports_grub %}

@@ -614,9 +614,8 @@ Dependency Requirements
 ***********************
 
 LAVA needs to control and output the list of dependencies in a variety
-of formats. Building Docker images and running unit tests in an LXC
-need an updated list of binary package names suitable for the
-distribution and suite of the LXC. Each needs to cope with dependencies
+of formats. Building Docker images and running unit tests in an docker
+need an updated list of binary package. Each needs to cope with dependencies
 outside the specified suite, e.g. stable releases which need backports.
 Building the LAVA Debian packages themselves also requires a properly
 up to date list of dependencies - including minimum versions. Each set
@@ -707,7 +706,7 @@ well as the base list of packages using ``--names``.
 ::
 
  $ ./share/requires.py --package lava-dispatcher --distribution debian --suite unstable --names --unittest
- pyocd-flashtool gdb-multiarch git schroot lxc img2simg simg2img u-boot-tools docker.io xnbd-server telnet qemu-system-x86 qemu-system-arm
+ pyocd-flashtool gdb-multiarch git schroot img2simg simg2img u-boot-tools docker.io xnbd-server telnet qemu-system-x86 qemu-system-arm
 
 .. index:: javascript
 

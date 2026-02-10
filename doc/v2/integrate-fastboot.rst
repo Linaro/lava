@@ -10,8 +10,6 @@ Fastboot
 Fastboot devices can be simple to integrate but fastboot deployment has several
 issues which can cause issues in automation.
 
-.. seealso:: :ref:`lxc_deploy` and :ref:`deploy_using_lxc`
-
 #. The fastboot protocol runs from the worker and *pushes* files to the device.
    This causes issues with :ref:`integration_scalability` compared to
    deployment methods which allow the :term:`DUT` to *pull* files over a
@@ -22,15 +20,15 @@ issues which can cause issues in automation.
      excessive load on the worker.
 
 #. Different fastboot devices can need different versions of fastboot to be
-   installed **on the worker**, so LAVA uses :term:`LXC` to isolate all
+   installed **on the worker**, so LAVA uses docker to isolate all
    fastboot operations on the worker.
 
 #. Each fastboot process tries to collect all of the fastboot devices which are
    visible in ``dev/bus/usb``. When fastboot is pushing files to one device, a
    second fastboot process would not be able to connect to a different device
-   on the same worker. This is the second reason why LAVA uses :term`LXC` with
+   on the same worker. This is the second reason why LAVA uses :term`docker` with
    fastboot as LAVA can then ensure that the only device node(s) which show up
-   in ``/dev`` inside the LXC are the nodes specifically related to a single
+   in ``/dev`` inside the docker are the nodes specifically related to a single
    fastboot device.
 
 #. Fastboot relies on every :term:`DUT` having a unique fastboot serial number

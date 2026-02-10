@@ -21,7 +21,6 @@ fastboot_via_uboot: True
 actions:
   deploy:
     methods:
-      lxc:
       ssh:
         options:
 {{ ssh_options }}
@@ -56,17 +55,14 @@ actions:
     connections:
       adb:
       fastboot:
-      lxc:
       serial:
   boot:
     connections:
       adb:
       fastboot:
-      lxc:
       serial:
       adb:
     methods:
-      lxc:
       ssh:
       minimal:
       u-boot:

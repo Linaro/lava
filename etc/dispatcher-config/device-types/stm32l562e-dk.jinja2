@@ -17,17 +17,14 @@ usb_product_id: '{{ usb_product_id | default('374e') }}'
 actions:
   deploy:
     methods:
-      lxc:
 {% if flasher_deploy_commands %}
       flasher:
         commands: {{ flasher_deploy_commands }}
 {% endif %}
   boot:
     connections:
-      lxc:
       serial:
     methods:
-      lxc:
       musca:
       minimal:
       cmsis-dap:

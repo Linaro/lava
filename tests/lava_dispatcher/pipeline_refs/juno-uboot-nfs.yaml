@@ -30,23 +30,16 @@
         summary: http download
         timeout: 600
         url: http://releases.linaro.org/members/arm/platforms/17.04/juno-latest-oe-uboot.zip
-    - class: LxcCreateUdevRuleAction
-      name: lxc-create-udev-rule-action
-      level: 1.1.2
-      max_retries: 1
-      description: create lxc udev rule action
-      summary: create lxc udev rule
-      timeout: 600
     - class: ConnectDevice
       name: connect-device
-      level: 1.1.3
+      level: 1.1.2
       max_retries: 1
       description: use the configured command to connect serial to the device
       summary: run connection command
       timeout: 600
     - class: ResetDevice
       name: reset-device
-      level: 1.1.4
+      level: 1.1.3
       max_retries: 1
       description: reboot or power-cycle the device
       summary: reboot the device
@@ -54,63 +47,63 @@
       pipeline:
       - class: PDUReboot
         name: pdu-reboot
-        level: 1.1.4.1
+        level: 1.1.3.1
         max_retries: 1
         description: issue commands to a PDU to power cycle a device
         summary: hard reboot using PDU
         timeout: 600
     - class: ExtractVExpressRecoveryImage
       name: extract-vexpress-recovery-image
-      level: 1.1.5
+      level: 1.1.4
       max_retries: 1
       description: unpack versatile express recovery image
       summary: unpack versatile express recovery image ready for deployment
       timeout: 600
     - class: EnterVExpressMCC
       name: enter-vexpress-mcc
-      level: 1.1.6
+      level: 1.1.5
       max_retries: 1
       description: enter Versatile Express MCC
       summary: enter Versatile Express MCC, interrupting autorun if needed
       timeout: 600
     - class: EnableVExpressMassStorage
       name: enable-vexpress-usbmsd
-      level: 1.1.7
+      level: 1.1.6
       max_retries: 1
       description: enable vexpress usb msd
       summary: enable vexpress usb mass storage device
       timeout: 600
     - class: WaitUSBMassStorageDeviceAction
       name: wait-usb-mass-storage-device
-      level: 1.1.8
+      level: 1.1.7
       max_retries: 1
       description: wait for USB mass storage device
       summary: wait for USB mass storage device
       timeout: 600
     - class: MountVExpressMassStorageDevice
       name: mount-vexpress-usbmsd
-      level: 1.1.9
+      level: 1.1.8
       max_retries: 1
       description: mount vexpress usb msd
       summary: mount vexpress usb mass storage device on the dispatcher
       timeout: 600
     - class: DeployVExpressRecoveryImage
       name: deploy-vexpress-recovery-image
-      level: 1.1.10
+      level: 1.1.9
       max_retries: 1
       description: deploy vexpress recovery image to usb msd
       summary: copy recovery image contents to vexpress usb mass storage device
       timeout: 600
     - class: UnmountVExpressMassStorageDevice
       name: unmount-vexpress-usbmsd
-      level: 1.1.11
+      level: 1.1.10
       max_retries: 1
       description: unmount vexpress usb msd
       summary: unmount vexpress usb mass storage device
       timeout: 600
     - class: VExpressFlashErase
       name: erase-vexpress-flash
-      level: 1.1.12
+      level: 1.1.11
       max_retries: 1
       description: erase vexpress flash
       summary: erase vexpress flash using the commands set by the user

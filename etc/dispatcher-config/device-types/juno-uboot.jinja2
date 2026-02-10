@@ -76,7 +76,6 @@ actions:
         enable: {{ usbg_ms_commands["enable"] }}
         disable: {{ usbg_ms_commands["disable"] }}
 {% endif %}
-      lxc:
       nfs:
       tftp:
       usb:
@@ -99,18 +98,15 @@ actions:
           autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
     connections:
       adb:
-      lxc:
       serial:
   boot:
     # list of connection methods which this device supports
     connections:
       adb:
-      lxc:
       serial:
       ssh:
     # list of boot methods which this device supports.
     methods:
-      lxc:
       ssh:
       u-boot:
         parameters:

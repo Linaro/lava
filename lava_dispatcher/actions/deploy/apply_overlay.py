@@ -28,7 +28,6 @@ from lava_dispatcher.utils.filesystem import (
     copy_in_overlay,
     copy_overlay_to_sparse_fs,
     is_sparse_image,
-    lxc_path,
     mkdtemp,
     prepare_guestfs,
 )
@@ -743,68 +742,6 @@ class CompressRamdisk(Action):
             self.set_namespace_data(
                 action=self.name, label="file", key="ramdisk", value=final_file
             )
-        return connection
-
-
-class ApplyLxcOverlay(Action):
-    name = "apply-lxc-overlay"
-    description = "apply the overlay to the container by copying"
-    summary = "apply overlay on the container"
-    timeout_exception = InfrastructureError
-
-    def __init__(self, job: Job):
-        super().__init__(job)
-        self.lava_test_dir = os.path.realpath(
-            "%s/../../lava_test_shell" % os.path.dirname(__file__)
-        )
-        self.scripts_to_copy = ["lava-test-runner"]
-
-    def validate(self):
-        super().validate()
-        which("tar")
-        if not os.path.exists(self.lava_test_dir):
-            self.errors = "Missing lava-test-runner: %s" % self.lava_test_dir
-
-    def run(self, connection, max_end_time):
-        connection = super().run(connection, max_end_time)
-        overlay_file = self.get_namespace_data(
-            action="compress-overlay", label="output", key="file"
-        )
-        if overlay_file is None:
-            self.logger.debug("skipped %s", self.name)
-            return connection
-        lxc_name = self.get_namespace_data(
-            action="lxc-create-action", label="lxc", key="name"
-        )
-        lxc_default_path = lxc_path(self.job.parameters["dispatcher"])
-        lxc_rootfs_path = os.path.join(lxc_default_path, lxc_name, "rootfs")
-        if not os.path.exists(lxc_rootfs_path):
-            raise LAVABug("Lxc container rootfs not found")
-        tar_cmd = [
-            "tar",
-            "--warning",
-            "no-timestamp",
-            "-C",
-            lxc_rootfs_path,
-            "-xaf",
-            overlay_file,
-        ]
-        command_output = self.run_command(tar_cmd)
-        if command_output and command_output != "":
-            raise JobError("Unable to untar overlay: %s" % command_output)
-
-        # FIXME: Avoid copying this special 'lava-test-runner' which does not
-        #        have 'sync' in cleanup. This should be handled during the
-        #        creation of the overlay instead. Make a special case to copy
-        #        lxc specific scripts, with distro specific versions.
-        fname = os.path.join(self.lava_test_dir, "lava-test-runner")
-        output_file = "%s/bin/%s" % (lxc_rootfs_path, os.path.basename(fname))
-        self.logger.debug("Copying %s", output_file)
-        try:
-            shutil.copy(fname, output_file)
-        except OSError:
-            raise InfrastructureError("Unable to copy: %s" % output_file)
-
         return connection
 
 

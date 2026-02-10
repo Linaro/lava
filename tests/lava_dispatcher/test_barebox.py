@@ -55,7 +55,6 @@ class TestBareboxAction(LavaDispatcherTestCase):
                 "download-retry",
                 "download-retry",
                 "prepare-tftp-overlay",
-                "lxc-create-udev-rule-action",
                 "deploy-device-env",
             ],
         )

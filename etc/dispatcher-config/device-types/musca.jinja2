@@ -16,16 +16,13 @@ usb_product_id: '{{ usb_product_id | default('0204') }}'
 actions:
   deploy:
     methods:
-      lxc:
       musca:
         # ID_SERIAL value (not ID_SERIAL_SHORT)
         id_serial: '{{ id_serial }}'
   boot:
     connections:
-      lxc:
       serial:
     methods:
-      lxc:
       musca:
       cmsis-dap:
         parameters:

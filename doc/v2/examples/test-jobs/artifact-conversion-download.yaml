@@ -1,5 +1,5 @@
 device_type: dragonboard-410c
-job_name: Boot artifact conversion in LXC with db410c
+job_name: Boot artifact conversion in with db410c
 timeouts:
   job:
     minutes: 60
@@ -13,15 +13,6 @@ visibility: public
 metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
   path: release/artifact-conversion-db410c.yaml
-
-protocols:
-  lava-lxc:
-    name: lxc-db410c-art-conv
-    template: debian
-    distribution: debian
-    release: jessie
-    verbose: true
-    mirror: http://mirror.bytemark.co.uk/debian
 
 notify:
   criteria:
@@ -49,27 +40,9 @@ notify:
 
 actions:
 - deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 5
-    to: lxc
-    packages:
-    - android-tools-adb
-    - android-tools-fastboot
-
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    timeout:
-      minutes: 5
-    method: lxc
-
-- deploy:
     timeout:
       minutes: 40
-    namespace: droid
-    to: download
+    to: downloads
     images:
       rootfs:
         url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
@@ -93,74 +66,53 @@ actions:
       boot:
         url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
         compression: gz
-
-- test:
-    namespace: tlxc
-    timeout:
-      minutes: 30
-    definitions:
-    - from: inline
-      name: db410c-images
-      path: inline/db410c-images.yaml
-      repository:
-        metadata:
-          description: db410c images
-          format: Lava-Test Test Definition 1.0
-          name: db410c-images
-        run:
-          steps:
-          - ls -alh /lava-lxc
+    postprocess:
+      docker:
+        image: debian
+        steps:
+          - ls -alh /
 
 - deploy:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 40
     to: fastboot
-    namespace: droid
     images:
       partition:
-        url: lxc:///gpt_both0.bin
+        url: downloads:///gpt_both0.bin
       hyp:
-        url: lxc:///hyp.mbn
+        url: downloads:///hyp.mbn
       modem:
-        url: lxc:///NON-HLOS.bin
+        url: downloads:///NON-HLOS.bin
       rpm:
-        url: lxc:///rpm.mbn
+        url: downloads:///rpm.mbn
       sbl1:
-        url: lxc:///sbl1.mbn
+        url: downloads:///sbl1.mbn
       sec:
-        url: lxc:///sec.dat
+        url: downloads:///sec.dat
       tz:
-        url: lxc:///tz.mbn
+        url: downloads:///tz.mbn
       aboot:
-        url: lxc:///emmc_appsboot.mbn
+        url: downloads:///emmc_appsboot.mbn
       boot:
-        url: lxc:///boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img
+        url: downloads:///boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img
       rootfs:
-        url: lxc:///linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
+        url: downloads:///linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
         apply-overlay: true
-    protocols:
-      lava-lxc:
-      - action: fastboot-deploy
-        request: pre-power-command
-        timeout:
-          minutes: 2
 
 - boot:
-    namespace: droid
     prompts:
     - 'root@linaro-developer:~#'
     timeout:
       minutes: 15
     method: fastboot
-    protocols:
-      lava-lxc:
-      - action: auto-login-action
-        request: pre-os-command
-        timeout:
-          minutes: 2
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
 
 - test:
-    namespace: droid
     timeout:
       minutes: 5
     definitions:
@@ -170,11 +122,13 @@ actions:
       name: smoke-tests-db-410c
 
 - test:
-    namespace: tlxc
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 5
     definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
       path: lava-test-shell/smoke-tests-basic.yaml
-      name: smoke-tests-lxc
+      name: smoke-tests

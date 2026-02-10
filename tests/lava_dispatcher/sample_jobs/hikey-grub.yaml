@@ -15,41 +15,14 @@ metadata:
     rpb.build: '16.12'
     reference.job: https://validation.linaro.org/scheduler/job/1490640/definition
 
-protocols:
-  lava-lxc:
-    name: lxc-hikey-grub
-    template: debian
-    distribution: debian
-    release: sid
-
 actions:
 - deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 5
-    to: lxc
-    packages:
-    - adb
-    - fastboot
-    - systemd  # needed for sid LXC
-    - systemd-sysv  # needed for sid LXC
-    os: debian
-
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    - 'hikey:/ $'
-    timeout:
-      minutes: 5
-    method: lxc
-
-- deploy:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 15
     to: fastboot
-    namespace: droid
-    connection: lxc
     images:
       # uses arbitrary image urls for quick download tests
       ptable:
@@ -63,8 +36,9 @@ actions:
     os: ubuntu
 
 - boot:
-    namespace: droid
-    connection: serial
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     prompts:
     - 'root@(.*):/#'
     - 'hikey:/ $'
@@ -77,8 +51,9 @@ actions:
     commands: installed
 
 - test:
-    namespace: tlxc
-    connection: lxc
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 10
     definitions:

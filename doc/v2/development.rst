@@ -587,9 +587,9 @@ test.
             self.factory = Factory()
 
         @unittest.skipIf(infrastructure_error_multi_paths(
-            ['lxc-info', 'img2simg', 'simg2img']),
-            "lxc or img2simg or simg2img not installed")
-        def test_lxc_api(self):
+            ['img2simg', 'simg2img']),
+            "img2simg or simg2img not installed")
+        def test_api(self):
             job = self.factory.create_job('d02-01.jinja2', 'sample_jobs/grub-ramdisk.yaml')
 
 

@@ -63,9 +63,6 @@ class Command(BaseCommand):
 
         list_p = sub.add_parser("list", help="List jobs")
         list_p.add_argument(
-            "--lxc", default=False, action="store_true", help="Only list lxc jobs"
-        )
-        list_p.add_argument(
             "--newer-than",
             default=None,
             type=str,
@@ -204,7 +201,6 @@ class Command(BaseCommand):
         """forward to the right sub-handler"""
         if options["sub_command"] == "list":
             self.handle_list(
-                options["lxc"],
                 options["newer_than"],
                 options["state"],
                 options["submitter"],
@@ -246,7 +242,7 @@ class Command(BaseCommand):
         except TestJob.DoesNotExist:
             raise CommandError(f"TestJob {job_id!r} does not exists")
 
-    def handle_list(self, lxc, newer_than, state, submitter, no_submitter):
+    def handle_list(self, newer_than, state, submitter, no_submitter):
         jobs = TestJob.objects.all().order_by("-id")
         if submitter is not None:
             try:
@@ -279,19 +275,11 @@ class Command(BaseCommand):
 
         self.stdout.write("Listing jobs:")
         for job in jobs:
-            to_print = not lxc
-            if lxc:
-                if "protocols:" in job.definition and "lava-lxc:" in job.definition:
-                    data = yaml_safe_load(job.definition)
-                    if data.get("protocols", {}).get("lava-lxc") is not None:
-                        to_print = True
-
-            if to_print:
-                self.stdout.write(
-                    f"* {job.submit_time} "
-                    f"- {job.id}@{job.submitter} "
-                    f"- {job.description}"
-                )
+            self.stdout.write(
+                f"* {job.submit_time} "
+                f"- {job.id}@{job.submitter} "
+                f"- {job.description}"
+            )
 
     def handle_rm(
         self, older_than, submitter, simulate, slow, logs_only, skip_favorite: bool

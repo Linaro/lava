@@ -7,7 +7,6 @@ usb_filesystem_label: '{{ usb_filesystem_label|default('V2M_MPS') }}'
 actions:
   deploy:
     methods:
-      lxc:
       mps:
         parameters:
           hard-reboot: {{ mps_hard_reboot|default(false) }}
@@ -18,9 +17,7 @@ actions:
 {% endif %}
   boot:
     connections:
-      lxc:
       serial:
     methods:
-      lxc:
       minimal:
 {% endblock body -%}

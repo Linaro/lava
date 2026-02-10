@@ -16,7 +16,6 @@ from lava_common.constants import VEXPRESS_AUTORUN_INTERRUPT_CHARACTER
 from lava_common.exceptions import InfrastructureError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
@@ -67,7 +66,6 @@ class VExpressMsdAction(Action):
                 params=parameters["recovery_image"],
             )
         )
-        self.pipeline.add_action(LxcCreateUdevRuleAction(self.job))
         self.force_prompt = True
         self.pipeline.add_action(ConnectDevice(self.job))
         self.pipeline.add_action(ResetDevice(self.job))

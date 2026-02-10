@@ -10,9 +10,7 @@ usb_product_id: '{{ usb_product_id }}'
 actions:
   deploy:
     connections:
-      lxc:
     methods:
-      lxc:
       image:
         parameters:
 {% if flasher_deploy_commands %}
@@ -23,10 +21,8 @@ actions:
   boot:
     connections:
       serial:
-      lxc:
       ssh:
     methods:
-      lxc:
       minimal:
       pyocd:
         parameters:

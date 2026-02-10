@@ -220,8 +220,6 @@ Some devices may need:
 
 * complex scripting around power control,
 
-* a need to use :term:`LXC` for automation.
-
 Any one of these burdens will make debugging issues on the worker and
 on the devices difficult. Any combination of these burdens make
 debugging many times more difficult than any one burden alone.
@@ -427,10 +425,6 @@ familiar with:
 
 * :ref:`pipeline_schema` - if your new device type needs changes to the
   test job submission schema.
-
-* :ref:`deploy_using_lxc`
-
-* :ref:`lava_lxc_protocol_android`
 
 * :ref:`debugging_multinode`
 

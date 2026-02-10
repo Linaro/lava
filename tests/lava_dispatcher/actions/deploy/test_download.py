@@ -15,12 +15,10 @@ from lava_common.constants import HTTP_DOWNLOAD_CHUNK_SIZE
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.deploy.download import (
     HTTP_CODE_OK,
-    CopyToLxcAction,
     DownloaderAction,
     DownloadHandler,
     FileDownloadAction,
     HttpDownloadAction,
-    LxcDownloadAction,
     PreDownloadedAction,
     ScpDownloadAction,
 )
@@ -131,32 +129,6 @@ class TestDowload(LavaDispatcherTestCase):
         self.assertIsInstance(action.pipeline.actions[0], FileDownloadAction)
         self.assertEqual(
             action.pipeline.actions[0].url, urlparse("file:///resource.img")
-        )
-
-    def test_downloader_populate_lxc_file(self):
-        job = self.create_simple_job()
-        # "images.key" with lxc
-        action = DownloaderAction(
-            job, "key", "/path/to/save", params={"url": "lxc:///resource.img"}
-        )
-        action.level = 1
-        action.populate({"images": {"key": {"url": "lxc:///resource.img"}}})
-        self.assertEqual(len(action.pipeline.actions), 1)
-        self.assertIsInstance(action.pipeline.actions[0], LxcDownloadAction)
-        self.assertEqual(
-            action.pipeline.actions[0].url, urlparse("lxc:///resource.img")
-        )
-
-        # "key" with lxc
-        action = DownloaderAction(
-            job, "key", "/path/to/save", params={"url": "lxc:///resource.img"}
-        )
-        action.level = 1
-        action.populate({"key": {"url": "lxc:///resource.img"}})
-        self.assertEqual(len(action.pipeline.actions), 1)
-        self.assertIsInstance(action.pipeline.actions[0], LxcDownloadAction)
-        self.assertEqual(
-            action.pipeline.actions[0].url, urlparse("lxc:///resource.img")
         )
 
     def test_downloader_unsupported_scheme(self):
@@ -1017,11 +989,6 @@ class TestDowload(LavaDispatcherTestCase):
         action.parameters = {"namespace": "common"}
         with self.assertRaises(JobError):
             action.run(None, 4242)
-
-    def test_copy_to_lxc_without_lxc_should_do_nothing(self):
-        job = self.create_simple_job()
-        action = CopyToLxcAction(job)
-        action.run(None, 4242)  # no crash = success
 
     def test_address_place_holder(self):
         factory = Factory()

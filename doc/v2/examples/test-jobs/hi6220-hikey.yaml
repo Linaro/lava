@@ -1,5 +1,5 @@
 device_type: hi6220-hikey
-job_name: lxc-hi6220-hikey
+job_name: hi6220-hikey
 timeouts:
   job:
     minutes: 60
@@ -14,41 +14,14 @@ metadata:
   source: https://git.linaro.org/lava-team/refactoring.git
   path: hi6220-hikey.yaml
 
-protocols:
-  lava-lxc:
-    name: lxc-hikey-test
-    template: debian
-    distribution: debian
-    release: jessie
-    mirror: http://mirror.bytemark.co.uk/debian
-    verbose: true
-
 actions:
-# DEPLOY_LXC_BLOCK
-- deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 5
-    to: lxc
-    packages:
-    - android-tools-adb
-    - android-tools-fastboot
-
-# BOOT_LXC_BLOCK
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):'
-    - 'hikey: '
-    timeout:
-      minutes: 5
-    method: lxc
-
 # DEPLOY_TARGET_BLOCK
 - deploy:
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 15
-    namespace: droid
     to: fastboot
     images:
       ptable:
@@ -68,16 +41,12 @@ actions:
         url: http://example.com/hikey/system.img.xz
         sha256sum: e0e82b5adfae84ff97f4f6488e5b4c64b0dfc7ad8a37b4bcbb887d9f85a6be0a
         compression: xz
-    protocols:
-      lava-lxc:
-      - action: fastboot-deploy
-        request: pre-power-command
-        timeout:
-          minutes: 2
 
 # BOOT_TARGET_BLOCK
 - boot:
-    namespace: droid
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     prompts:
     - 'root@(.*):/#'
     - 'hikey:/'
@@ -86,23 +55,13 @@ actions:
     method: fastboot
 
 - test:
-    namespace: tlxc
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 10
     definitions:
-    - from: inline
-      repository:
-        metadata:
-          format: Lava-Test Test Definition 1.0
-          name: check-devices
-          description: "LXC dev list"
-        run:
-          steps:
-          - /sbin/ifconfig
-      name: lxc-dev-inline
-      path: inline/lxc-dev.yaml
     - repository: https://git.linaro.org/lava-team/refactoring.git/
       from: git
-      path: android/lava-android-basic-lxc.yaml
+      path: android/lava-android-basic.yaml
       name: v2-make-adb-connection
-

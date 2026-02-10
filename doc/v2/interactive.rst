@@ -133,6 +133,3 @@ It is fully supported to then add an interactive test action:
 
 However, until Test Definition 2.0 is fully scoped and delivered, it
 is not possible to add another Lava-Test Test Definition 1.0 action.
-
-.. note:: This applies within any one :term:`namespace`, it does not
-   apply between different :ref:`namespaces <namespaces_with_lxc>`.

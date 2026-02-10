@@ -94,7 +94,6 @@ In addition, test jobs and device support can involve use of:
 * QEMU_
 * Grub_
 * SSH_
-* LXC_
 * Docker_
 
 A very wide variety of other systems and tools are used to access
@@ -119,7 +118,6 @@ devices and debug test jobs.
 .. _U-Boot: http://www.denx.de/wiki/U-Boot
 .. _SSH: http://www.openssh.com/
 .. _POSIX: http://www.opengroup.org/austin/papers/posix_faq.html
-.. _LXC: https://linuxcontainers.org/
 .. _Docker: https://www.docker.com/
 
 .. seealso:: :ref:`naming_conventions`

@@ -25,7 +25,6 @@ from lava_dispatcher.utils.fastboot import (
     DetectFastbootDevice,
     OptionalContainerFastbootAction,
 )
-from lava_dispatcher.utils.lxc import is_lxc_requested
 from lava_dispatcher.utils.udev import WaitDeviceBoardID
 
 if TYPE_CHECKING:
@@ -62,8 +61,7 @@ class FastbootAction(
         elif self.job.device.hard_reset_command:
             self.force_prompt = True
             self.pipeline.add_action(ConnectDevice(self.job))
-            if not is_lxc_requested(self.job):
-                self.pipeline.add_action(PrePower(self.job))
+            self.pipeline.add_action(PrePower(self.job))
             self.pipeline.add_action(ResetDevice(self.job))
             DetectFastbootDevice.add_if_needed(self)
         else:

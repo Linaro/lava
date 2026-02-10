@@ -288,8 +288,8 @@ def get_udev_devices(job=None, logger=None, device_info=None, required=False):
     """
     Get udev device nodes based on serial, vendor and product ID
     All subsystems are allowed so that additional hardware like
-    tty devices can be added to the LXC. The ID to match is controlled
-    by the lab admin.
+    tty devices can be added to the container.
+    The ID to match is controlled by the lab admin.
     """
     context = pyudev.Context()
     device_paths = set()

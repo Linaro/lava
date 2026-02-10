@@ -11,44 +11,14 @@ timeouts:
 priority: medium
 visibility: public
 
-metadata:
-  os: android
-  android.version: '8.1.0'
-  build-location: http://snapshots.linaro.org/android/imx8m/4/
-  target: M850D
-  build: 4
-
-protocols:
-  lava-lxc:
-    name: lxc-imx8m-test
-    template: debian
-    distribution: debian
-    release: stretch
-    persist: false
-
 actions:
-- deploy:
-    namespace: lxc
-    timeout:
-      minutes: 10
-    to: lxc
-    packages:
-    - adb
-    - fastboot
-
-- boot:
-    namespace: lxc
-    prompts:
-    - 'root@(.*):/#'
-    timeout:
-      minutes: 5
-    method: lxc
-
 - deploy:
     timeout:
       minutes: 45
     to: fastboot
-    namespace: imx8m
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     images:
       boot_a:
         url: http://images.validation.linaro.org/snapshots.linaro.org/android/imx8m/4/boot-imx8mq.img
@@ -67,8 +37,10 @@ actions:
         sparse: false
 
 - boot:
-    namespace: imx8m
     method: fastboot
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     commands:
     - --set-active=_a
     prompts:
@@ -77,7 +49,9 @@ actions:
       minutes: 5
 
 - test:
-    namespace: lxc
+    docker:
+        local: true
+        image: lavalabteam/adb-fastboot
     timeout:
       minutes: 10
     definitions:
@@ -88,4 +62,4 @@ actions:
     - repository: https://git.linaro.org/qa/test-definitions.git
       from: git
       path: automated/linux/smoke/smoke.yaml
-      name: smoke-tests-lxc
+      name: smoke-tests

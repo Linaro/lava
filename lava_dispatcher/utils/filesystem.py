@@ -15,7 +15,7 @@ import tarfile
 import tempfile
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, LAVA_LXC_HOME, LXC_PATH
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
@@ -255,34 +255,6 @@ def copy_in_overlay(image: str, root_partition: str | None, overlay: str) -> Non
     guest.close()
 
 
-def lxc_path(dispatcher_config: dict[str, Any]) -> str:
-    """
-    Returns LXC_PATH which is a constant, unless a dispatcher specific path is
-    configured via lxc_path key in dispatcher_config.
-    """
-    try:
-        lxc_path: str = dispatcher_config["lxc_path"]
-        return lxc_path
-    except (KeyError, TypeError):
-        return LXC_PATH
-
-
-def lava_lxc_home(lxc_name: str, dispatcher_config: dict[str, Any]) -> str:
-    """
-    Creates lava_lxc_home if it is unavailable and Returns absolute path of
-    LAVA_LXC_HOME as seen from the host machine.
-
-    Takes into account the dispatcher specific path configured via lxc_path
-    key in dispatcher_config.
-    """
-    path = os.path.join(
-        lxc_path(dispatcher_config), lxc_name, "rootfs", LAVA_LXC_HOME.lstrip("/")
-    )
-    # Create lava_lxc_home if it is unavailable
-    os.makedirs(path, 0o755, exist_ok=True)
-    return path
-
-
 def dispatcher_download_dir(dispatcher_config: dict[str, Any]) -> str:
     """
     Returns DISPATCHER_DOWNLOAD_DIR which is a constant, unless a dispatcher specific path is
@@ -293,85 +265,6 @@ def dispatcher_download_dir(dispatcher_config: dict[str, Any]) -> str:
         return dispatcher_download_dir
     except (KeyError, TypeError):
         return DISPATCHER_DOWNLOAD_DIR
-
-
-def copy_to_lxc(lxc_name: str, src: str, dispatcher_config: dict[str, Any]) -> str:
-    """Copies given file in SRC to LAVA_LXC_HOME with the provided LXC_NAME
-    and configured lxc_path
-
-    For example,
-
-    SRC such as:
-    '/var/lib/lava/dispatcher/tmp/tmpuuI_U0/system.img'
-
-    will get copied to:
-    '/var/lib/lxc/lxc-nexus4-test-None/rootfs/lava-lxc/system.img'
-
-    where, '/var/lib/lxc' is the lxc_path and 'lxc-nexus4-test-None' is the
-    LXC_NAME
-
-    Returns the destination path within lxc. For example, '/lava-lxc/boot.img'
-
-    Raises JobError if the copy failed.
-    """
-    filename = os.path.basename(src)
-    dst = os.path.join(lava_lxc_home(lxc_name, dispatcher_config), filename)
-    logger = logging.getLogger("dispatcher")
-    if src == dst:
-        logger.debug("Not copying since src: '%s' and dst: '%s' are same", src, dst)
-    else:
-        logger.debug("Copying %s to %s", filename, lxc_name)
-        try:
-            shutil.copyfile(src, dst)
-        except OSError as exc:
-            logger.error("Unable to copy %s to lxc: %s", src, exc.strerror)
-            raise JobError("Unable to copy %s to lxc: %s" % (src, exc.strerror))
-
-    return os.path.join(LAVA_LXC_HOME, filename)
-
-
-def copy_overlay_to_lxc(
-    lxc_name: str, src: str, dispatcher_config: dict[str, Any], namespace: str
-) -> str:
-    """Copies given overlay tar file in SRC to LAVA_LXC_HOME with the provided
-    LXC_NAME and configured lxc_path
-
-    For example,
-
-    SRC such as:
-    '/var/lib/lava/dispatcher/slave/tmp/523/overlay-1.8.4.tar.gz'
-
-    will get copied to:
-    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
-
-    where,
-    '/var/lib/lxc' is the lxc_path
-    'db410c-523' is the LXC_NAME
-    ${namespace} is the given NAMESPACE
-
-    Returns the destination path. For example,
-    '/var/lib/lxc/db410c-523/rootfs/lava-lxc/overlays/${namespace}/overlay.tar.gz'
-
-    Raises JobError if the copy failed.
-    """
-    dst = os.path.join(
-        lava_lxc_home(lxc_name, dispatcher_config),
-        "overlays",
-        namespace,
-        "overlay.tar.gz",
-    )
-    logger = logging.getLogger("dispatcher")
-    logger.debug("Copying %s to %s", os.path.basename(src), dst)
-    try:
-        shutil.copy(src, dst)
-    except OSError as exc:
-        # ENOENT(2): No such file or directory
-        if exc.errno != errno.ENOENT:
-            raise JobError("Unable to copy image: %s" % src)
-        # try creating parent directories
-        os.makedirs(os.path.dirname(dst), 0o755)
-        shutil.copy(src, dst)
-    return dst
 
 
 @replace_exception(RuntimeError, JobError)

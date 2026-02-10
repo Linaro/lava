@@ -285,18 +285,6 @@ def check_namespace(data):
 
 def job(extra_context_variables):
     context_variables = CONTEXT_VARIABLES + extra_context_variables
-    lava_lxc = {
-        Required("name"): str,
-        Required("distribution"): str,
-        Required("release"): str,
-        Optional("arch"): str,
-        Optional("mirror"): str,
-        Optional("persist"): bool,
-        Optional("security_mirror"): str,
-        Optional("template"): str,
-        Optional("timeout"): timeout(),
-        Optional("verbose"): bool,
-    }
 
     return All(
         {
@@ -320,7 +308,6 @@ def job(extra_context_variables):
             Optional("secrets"): {str: str},
             Optional("environment"): dict,
             Optional("protocols"): {
-                Optional("lava-lxc"): Any(lava_lxc, {str: lava_lxc}),
                 Optional("lava-multinode"): {
                     Required("roles"): {
                         str: Any(
