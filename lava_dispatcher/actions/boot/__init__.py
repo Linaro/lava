@@ -729,7 +729,14 @@ class OverlayUnpack(Action):
         if "transfer_overlay" not in self.parameters:
             self.errors = "Unable to identify transfer commands for overlay."
             return
-        if "download_command" not in self.parameters["transfer_overlay"]:
+        transfer_method = self.parameters["transfer_overlay"].get(
+            "transfer_method", "http"
+        )
+        # zmodem transfer does not use a download_command on the target
+        if (
+            transfer_method != "zmodem"
+            and "download_command" not in self.parameters["transfer_overlay"]
+        ):
             self.errors = "Unable to identify download command for overlay."
         if "unpack_command" not in self.parameters["transfer_overlay"]:
             self.errors = "Unable to identify unpack command for overlay."
@@ -800,6 +807,49 @@ class OverlayUnpack(Action):
             connection.sendline(
                 "%s %s/* /; umount %s; rm -fr %s"
                 % (unpack, mount_dir, mount_dir, mount_dir),
+                delay=self.character_delay,
+                check=True,
+                timeout=max_end_time - time.monotonic(),
+            )
+            connection.wait()
+        elif transfer_method == "zmodem":
+            overlay_full_path = self.get_namespace_data(
+                action="compress-overlay", label="output", key="file"
+            )
+            if not overlay_full_path:
+                raise JobError("No overlay file identified for the transfer.")
+            overlay = os.path.basename(overlay_full_path)
+
+            uart = None
+            if "device_info" in self.job.device and isinstance(
+                self.job.device["device_info"], list
+            ):
+                uart = self.job.device["device_info"][0].get("uart", None)
+            if uart is None:
+                raise JobError(
+                    "No UART device specified for the transfer in device_info."
+                )
+            self.logger.debug("Using UART device: %s", uart)
+
+            connection.sendline(
+                "rz",
+                delay=self.character_delay,
+            )
+
+            import subprocess
+
+            subprocess.run(
+                "sz --binary --escape -y {0} < {1} > {1}".format(
+                    overlay_full_path, uart
+                ),
+                shell=True,
+            )
+
+            connection.wait()
+
+            unpack = self.parameters["transfer_overlay"]["unpack_command"]
+            connection.sendline(
+                unpack + " " + overlay,
                 delay=self.character_delay,
                 check=True,
                 timeout=max_end_time - time.monotonic(),

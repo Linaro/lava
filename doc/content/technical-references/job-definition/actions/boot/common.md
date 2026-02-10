@@ -342,8 +342,11 @@ the DUT after boot.
 
 !!!note
     The overlay is transferred before any test shell operations run. Therefore,
-    the network, the download command, and the unpack command **must** be
-    available and functional after boot and before running the commands.
+    the commands required for the selected `transfer_method` must be available
+    and functional after boot and before running the test shell. For `http` and
+    `nfs` transfers this means the network, the download command and the
+    unpack command **must** work. For the `zmodem` transfer method only the
+    unpack command is required locally.
 
 The `download_command` and `unpack_command` can include one or more shell
 commands. Avoid using redirects (`>` or `>>`) or other complex shell syntax.
@@ -361,7 +364,8 @@ wait for the network needed for the transfer.
 
 ### transfer_method
 
-Optional. Defaults to `http`. Can be set to `nfs` for NFS-based transfer.
+Optional. Defaults to `http`. Can be set to `nfs` for NFS-based transfer or to
+`zmodem` for ZMODEM-based transfer.
 
 #### http
 
@@ -411,6 +415,37 @@ Example for installing the package for Debian at job runtime:
 
 When needed, you can append `-o Acquire::Check-Valid-Until=false` to the
 `apt update` command for skipping APT's repository time validity check.
+
+#### zmodem
+
+This will transfer overlay through the ZMODEM inline file transfer protocol
+from the worker to the target device.
+
+```yaml
+- boot:
+    transfer_overlay:
+      transfer_method: zmodem
+      unpack_command: tar -C / -xzf
+```
+
+The worker and target device **must** have respectively the `sz` and `rz`
+utilities installed. This is typically provided by:
+
+- `lrzsz` package on Debian-based or Fedora-based systems
+
+The `zmodem` transfer method is interesting for target device that does not
+have an Ethernet connection. As a consequence, the `rz` utility should be
+available by default in the flashed image.
+
+The worker and the target device communicate over a `UART`. This `UART` usually
+appears on the worker as `/dev/ttyUSB<N>` or `/dev/ttyACM<N>`. This value
+**must** be defined in the device dictionary using the `device_info` variable
+and the `uart` field. This is an example taken from a device dictionary.
+
+```jinja
+{% set device_info = [{'uart': '/dev/ttyUSB0'}] %}
+```
+
 
 ### download_command
 
