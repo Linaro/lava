@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.2
 
 # Argument for the FROM should be defined before the first stage in multi-stage
-# builds while argument used inside a build stage should be defined in tethe
-# given build stage.
+# builds while argument used inside a build stage should be defined in the given
+# build stage.
 # See https://github.com/moby/moby/issues/38379#issuecomment-447835596
 ARG base_image=""
 
 # Build the documentation
-FROM debian:bookworm-slim AS doc
+FROM debian:trixie-slim AS doc
 RUN apt-get update && \
     apt-get install --yes --no-install-recommends git make python3-sphinx python3-sphinx-bootstrap-theme
 

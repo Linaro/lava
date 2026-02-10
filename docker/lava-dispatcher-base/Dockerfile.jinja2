@@ -3,8 +3,8 @@
 {% set dependencies = [
     {"pkgs": requires("debian", "bullseye", "lava-common") },
     {"pkgs": requires("debian", "bullseye", "lava-dispatcher") },
-    {"pkgs": "android-sdk-libsparse-utils docker.io dfu-util git libguestfs-tools ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd rpcbind nfs-common fastboot" },
-    {"pkgs": "qemu-system-arm qemu-system-mips qemu-system-misc qemu-system-ppc qemu-system-sparc qemu-system-x86", "from": "bookworm-backports" },
+    {"pkgs": "android-sdk-libsparse-utils docker-cli dfu-util git libguestfs-tools ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd rpcbind nfs-common fastboot" },
+    {"pkgs": "qemu-system-arm qemu-system-mips qemu-system-misc qemu-system-ppc qemu-system-sparc qemu-system-x86", "from": "trixie-backports" },
 ] %}
 
 {% set pip_packages = ["avh-api==1.0.5"] %}
