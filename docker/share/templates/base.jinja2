@@ -1,10 +1,10 @@
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 LABEL maintainer="Rémi Duraffort <remi.duraffort@linaro.org>"
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN echo 'deb http://deb.debian.org/debian bookworm-backports main' > /etc/apt/sources.list.d/backports.list && \
+RUN echo 'deb http://deb.debian.org/debian trixie-backports main' > /etc/apt/sources.list.d/backports.list && \
     mkdir -p /usr/share/man/man1 /usr/share/man/man7 && \
 {%- if adduser_and_group|default(False) %}
     groupadd --system --gid 200 lavaserver && \
