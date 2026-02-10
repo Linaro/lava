@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1.2
 
 # Argument for the FROM should be defined before the first stage in multi-stage
-# builds while argument used inside a build stage should be defined in tethe
-# given build stage.
+# builds while argument used inside a build stage should be defined in the given
+# build stage.
 # See https://github.com/moby/moby/issues/38379#issuecomment-447835596
 ARG base_image=""
 
 # Call the install script in a empty image
-FROM debian:bookworm-slim as build
+FROM debian:trixie-slim as build
 ARG lava_version=""
 RUN apt-get update && \
     apt-get install --no-install-recommends --yes python3 python3-setuptools
