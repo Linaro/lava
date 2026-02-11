@@ -17,7 +17,7 @@
     - class: DownloaderAction
       name: download-retry
       level: 1.1.1
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
       timeout: 600
@@ -28,7 +28,7 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 200
+        timeout: 600
         url: http://releases.linaro.org/members/arm/platforms/17.04/juno-latest-oe-uboot.zip
     - class: LxcCreateUdevRuleAction
       name: lxc-create-udev-rule-action
@@ -126,7 +126,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '2.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 120
@@ -137,7 +137,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 40
+      timeout: 120
       url: https://files.lavasoftware.org/components/lava/standard/debian/sid/arm64/2/sid-arm64-nfs.tar.gz
   - class: ExtractNfsRootfs
     name: extract-nfsrootfs

@@ -210,7 +210,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -221,7 +221,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 800
+      timeout: 2400
       url: https://snapshots.linaro.org/member-builds/qcomlt/linux-integration/qcs404-evb-1000/250/boot-linux-integration-v5.0-rc7-233-g01d2757b1757-250-qcs404-evb-1000.img
   - class: OverlayAction
     name: lava-overlay
@@ -422,7 +422,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '5.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 2400
@@ -433,7 +433,7 @@
       max_retries: 1
       description: Map to the correct lxc path
       summary: lxc download
-      timeout: 800
+      timeout: 2400
       url: lxc:/boot-linux-integration-v5.0-rc7-233-g01d2757b1757-250-qcs404-evb-1000.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env

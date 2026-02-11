@@ -160,7 +160,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '3.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -171,12 +171,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/MLO
   - class: DownloaderAction
     name: download-retry
     level: '3.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 600
@@ -187,7 +187,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 200
+      timeout: 600
       url: http://images.validation.linaro.org/people.linaro.org/~maria.hogberg/x15-b75/u-boot.img
   - class: CopyToLxcAction
     name: copy-to-lxc
@@ -396,7 +396,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '7.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1500
@@ -407,7 +407,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 500
+      timeout: 1500
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

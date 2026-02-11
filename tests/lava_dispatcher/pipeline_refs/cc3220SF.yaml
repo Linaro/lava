@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 180
@@ -20,12 +20,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 60
+      timeout: 180
       url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/kernel_zephyr.elf
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 180
@@ -36,7 +36,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 60
+      timeout: 180
       url: http://ivoire.dinauz.org/linaro/lava/cc3220SF/cc3220_xds110.cfg
 - class: BootGDB
   name: boot-gdb

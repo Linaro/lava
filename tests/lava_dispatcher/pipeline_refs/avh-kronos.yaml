@@ -82,7 +82,7 @@
     - class: DownloaderAction
       name: download-retry
       level: 1.1.2
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
       timeout: 1800
@@ -93,7 +93,7 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 600
+        timeout: 1800
         url: https://example.com/kronos/fw-package-1.0.zip
     - class: ApplyOverlayAvh
       name: apply-overlay-avh
