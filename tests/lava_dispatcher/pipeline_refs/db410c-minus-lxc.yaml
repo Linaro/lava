@@ -110,7 +110,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.5'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -121,7 +121,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img.gz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
@@ -133,7 +133,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.7'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 900
@@ -144,7 +144,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 300
+      timeout: 900
       url: http://images.validation.linaro.org/builds.96boards.org/releases/dragonboard410c/linaro/debian/16.06/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image

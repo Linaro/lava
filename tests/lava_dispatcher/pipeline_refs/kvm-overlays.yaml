@@ -109,7 +109,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 1200
@@ -120,15 +120,15 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 400
+      timeout: 1200
       url: http://example.com/rootfs.ext4.xz
     - class: DownloaderAction
       name: download-retry
       level: 1.3.2
-      max_retries: 3
+      max_retries: 1
       description: download with retry
       summary: download-retry
-      timeout: 400
+      timeout: 1200
       pipeline:
       - class: HttpDownloadAction
         name: http-download
@@ -136,7 +136,7 @@
         max_retries: 1
         description: use http to download the file
         summary: http download
-        timeout: 133
+        timeout: 1200
         url: http://example.com/modules.tar.gz
     - class: AppendOverlays
       name: append-overlays
@@ -144,7 +144,7 @@
       max_retries: 1
       description: append overlays to an image
       summary: append overlays to an image
-      timeout: 400
+      timeout: 1200
   - class: ApplyOverlayGuest
     name: apply-overlay-guest
     level: '1.4'

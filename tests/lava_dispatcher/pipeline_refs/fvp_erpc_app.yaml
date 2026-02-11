@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -20,12 +20,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: https://example.com/bl2.axf
   - class: DownloaderAction
     name: download-retry
     level: '1.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -36,12 +36,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: https://example.com/tfm_s_ns_signed.bin
   - class: DownloaderAction
     name: download-retry
     level: '1.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 300
@@ -52,7 +52,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 100
+      timeout: 300
       url: https://example.com/erpc_main
 - class: BootFVPAction
   name: boot-fvp

@@ -9,7 +9,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '1.1'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 180
@@ -20,7 +20,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 60
+      timeout: 180
       url: http://images.validation.linaro.org/snapshots.linaro.org/components/kernel/zephyr/master/zephyr/frdm_kw41z/737/tests/kernel/libs/test/zephyr.bin
 - class: BootPyOCD
   name: boot-pyocd-image

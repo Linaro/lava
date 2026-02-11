@@ -88,7 +88,7 @@
   - class: DownloaderAction
     name: download-retry
     level: '2.2'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 240
@@ -99,12 +99,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 80
+      timeout: 240
       url: http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz
   - class: DownloaderAction
     name: download-retry
     level: '2.3'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 240
@@ -115,12 +115,12 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 80
+      timeout: 240
       url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/uImage
   - class: DownloaderAction
     name: download-retry
     level: '2.4'
-    max_retries: 3
+    max_retries: 1
     description: download with retry
     summary: download-retry
     timeout: 240
@@ -131,7 +131,7 @@
       max_retries: 1
       description: use http to download the file
       summary: http download
-      timeout: 80
+      timeout: 240
       url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb
   - class: PrepareOverlayTftp
     name: prepare-tftp-overlay
