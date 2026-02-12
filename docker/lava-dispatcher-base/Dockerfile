@@ -9,7 +9,7 @@ RUN echo 'deb http://deb.debian.org/debian trixie-backports main' > /etc/apt/sou
     apt-get update -q && \
     apt-get install --no-install-recommends --yes python3-sentry-sdk python3-voluptuous python3-yaml && \
     apt-get install --no-install-recommends --yes bmap-tools fakeroot python3-aiohttp python3-configobj python3-guestfs python3-jinja2 python3-magic python3-pexpect python3-pyudev python3-requests python3-setproctitle python3-yaml && \
-    apt-get install --no-install-recommends --yes android-sdk-libsparse-utils docker-cli dfu-util git libguestfs-tools ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd rpcbind nfs-common fastboot && \
+    apt-get install --no-install-recommends --yes android-sdk-libsparse-utils docker-cli dfu-util git libguestfs-tools ser2net telnet tftpd-hpa u-boot-tools unzip xz-utils zstd rpcbind nfs-common fastboot wget && \
     apt-get install --no-install-recommends --yes -t trixie-backports qemu-system-arm qemu-system-mips qemu-system-misc qemu-system-ppc qemu-system-sparc qemu-system-x86 && \
     apt-get install --no-install-recommends --yes python3-pip && \
     python3 -m pip install --break-system-packages avh-api==1.0.5 && \
