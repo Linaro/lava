@@ -16,7 +16,11 @@ def device():
     timeout_schema = timeout()
 
     return {
-        Optional("character_delays"): {Optional("boot"): int, Optional("test"): int},
+        Optional("character_delays"): {
+            Optional("deploy"): int,
+            Optional("boot"): int,
+            Optional("test"): int,
+        },
         Optional("commands"): {
             Optional("connect"): str,
             Optional("connections"): {
