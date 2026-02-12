@@ -54,6 +54,7 @@
 {% endif %}
 {% set uboot_common_cmds = uboot_common_cmds + base_uboot_tftp_commands %}
 
+{% set deploy_character_delay = deploy_character_delay | default(30) %}
 {% set boot_character_delay = boot_character_delay | default(30) %}
 
 {# adds the parameters: top level block #}
