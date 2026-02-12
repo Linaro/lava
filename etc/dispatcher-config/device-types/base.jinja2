@@ -55,9 +55,12 @@
 {% set base_menu_dictionary = {} -%}
 
 {% block character_delays %}
-{% if boot_character_delay or test_character_delay %}
+{% if deploy_character_delay or boot_character_delay or test_character_delay %}
 # in milliseconds
 character_delays:
+{% if deploy_character_delay %}
+      deploy: {{ deploy_character_delay }}
+{% endif -%}
 {% if boot_character_delay %}
       boot: {{ boot_character_delay }}
 {% endif -%}

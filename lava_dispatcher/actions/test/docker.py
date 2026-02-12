@@ -76,6 +76,8 @@ class DockerTestSetEnvironment(GetBoardId):
                 if "primary" in tags:
                     environment["LAVA_CONNECTION_COMMAND"] = connect
 
+        if deploy_delay := self.job.device.get("character_delays", {}).get("deploy"):
+            environment["LAVA_DEPLOY_CHARACTER_DELAYS"] = deploy_delay
         if boot_delay := self.job.device.get("character_delays", {}).get("boot"):
             environment["LAVA_BOOT_CHARACTER_DELAYS"] = boot_delay
         if test_delay := self.job.device.get("character_delays", {}).get("test"):
