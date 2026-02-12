@@ -14,6 +14,7 @@
 import contextlib
 import importlib
 import re
+from importlib.metadata import PackageNotFoundError, version
 
 from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
 from django.core.exceptions import ImproperlyConfigured
@@ -430,6 +431,25 @@ def update(values):
                 "allauth.account.auth_backends.AuthenticationBackend"
             )
             SOCIALACCOUNT_PROVIDERS = auth_socialaccount
+
+            # https://allauth.org/news/2023/09/django-allauth-0.56.0-released/
+            # 'django-allauth' >= 0.56.0 requires 'AccountMiddleware' in 'MIDDLEWARE'
+            # Trying to import 'AccountMiddleware' here raises 'AppRegistryNotReady',
+            # so we have to check the package version instead. The versions shipped
+            # by recent Debian releases are:
+            # Trixie: 65.0.2
+            # Bookworm: 0.51.0
+            # TODO: drop the version check when Bookworm is dropped.
+            with contextlib.suppress(PackageNotFoundError, ValueError):
+                major_version = int(version("django-allauth").split(".")[0])
+                if (
+                    # https://allauth.org/news/2024/07/django-allauth-64.0.0-released/
+                    # Because of the version schema change, version bumped from 0.63.6 to 64.0.0.
+                    # Check against '64' so it is less confusing.
+                    major_version >= 64
+                    and "allauth.account.middleware.AccountMiddleware" not in MIDDLEWARE
+                ):
+                    MIDDLEWARE.append("allauth.account.middleware.AccountMiddleware")
 
     # OIDC authentication
     if AUTH_OIDC is not None:
