@@ -31,7 +31,6 @@ actions:
             {{ pyocd_command|default("pyocd") }}
           options:
           - load
-          - -d {{ debug|default('debug') }}
           - -t {{ pyocd_target|default('cortex-m') }}
           - -f {{ pyocd_frequency|default('3000000') }}
           - -a {{ pyocd_address|default('0x0') }}
