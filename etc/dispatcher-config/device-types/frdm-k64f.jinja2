@@ -31,7 +31,6 @@ actions:
           command:
             {{ pyocd_command }}
           options:
-          - -d {{ debug|default('debug') }}
           - -t k64f
           - -f 3000000
       cmsis-dap:
