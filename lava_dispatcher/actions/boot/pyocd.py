@@ -81,7 +81,6 @@ class FlashPyOCDAction(Action):
             binary = which(pyocd_binary)
         self.logger.info(binary_version(binary, "--version"))
         self.base_command = [pyocd_binary]
-        self.base_command.extend(boot["parameters"].get("options", []))
         if self.job.device["board_id"] == "0000000000":
             self.errors = "[PYOCD] board_id unset"
         substitutions = {}
@@ -95,12 +94,13 @@ class FlashPyOCDAction(Action):
         # version of pyocd. Due to this, we need to maintain support
         # for both 'pyocd flash' and 'pyocd-flashtool' for the foreseeable
         # future.
-        connecting_option = "--uid"
         if pyocd_binary.startswith("pyocd-flashtool"):
-            connecting_option = "--board"
+            self.base_command.extend(boot["parameters"].get("options", []))
+            self.base_command.extend(["--board", self.job.device["board_id"]])
         else:
             self.base_command.append("flash")
-        self.base_command.extend([connecting_option, self.job.device["board_id"]])
+            self.base_command.extend(boot["parameters"].get("options", []))
+            self.base_command.extend(["--uid", self.job.device["board_id"]])
         for action in self.get_namespace_keys("download-action"):
             pyocd_full_command = []
             image_arg = self.get_namespace_data(
