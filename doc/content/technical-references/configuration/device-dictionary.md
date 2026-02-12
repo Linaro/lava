@@ -11,7 +11,10 @@ A device dictionary will contain device specific information like:
 * connection command
 * power On/off commands
 * bootloader prompt
+* character delays
 * ...
+
+See [Parameters](#parameters)
 
 ## Configuration file
 
@@ -23,6 +26,62 @@ Admin could update device dictionaries using lavacli:
 ```shell
 lavacli devices dict set qemu01 qemu01.jinja2
 ```
+
+## Parameters
+
+The variables you may define in a device dictionary depend on the
+[device-type template](./device-type-template.md) it extends. Common
+parameters include connection and power commands. See the device type template
+and its base template for the full set of supported parameters.
+
+### Character delays
+
+LAVA supports specifying character delays in the deploy, boot, and test
+actions to help with serial reliability (e.g. when the DUT or connection
+drops or corrupts characters when input is sent too quickly). These are
+device-specific, so they are best set in the device dictionary (or
+device-type template).
+
+The `deploy` and `boot` actions are affected more often than the `test`
+action, because they interacts with firmware or bootloader processes where
+input handling can be more limited than in a POSIX test environment.
+
+#### deploy_character_delay
+
+Set the number of milliseconds to add between each character of every
+string sent to the DUT during the `deploy` action. This is useful for
+deployment methods that use a connection (e.g. `vemsd`):
+
+```jinja
+{% set deploy_character_delay = 30 %}
+```
+
+#### boot_character_delay
+
+Set the number of milliseconds to add between each character of every
+string sent to the DUT during the `boot` action:
+
+```jinja
+{% set boot_character_delay = 20 %}
+```
+
+Some devices need more (e.g. 100 or 500 ms). For long delays, also consider
+the overall boot timeout and set a minimum for the relevant boot action in
+the device-type template.
+
+#### test_character_delay
+
+Set the number of milliseconds to add between each character of every
+string sent to the DUT during the `test` action:
+
+```jinja
+{% set test_character_delay = 10 %}
+```
+
+!!! note
+    LAVA also waits `test_character_delay` milliseconds before sending each
+    test signal. The delay can be helpful on slow serial connections to avoid
+    character interleaving with other inputs, such as kernel dmesg.
 
 ## Examples
 
