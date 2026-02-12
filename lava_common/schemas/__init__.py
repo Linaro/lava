@@ -56,6 +56,7 @@ CONTEXT_VARIABLES = [
     "bootz_kernel_addr",
     "bootz_ramdisk_addr",
     # others
+    "deploy_character_delay",
     "boot_character_delay",
     "boot_retry",
     "bootloader_prompt",

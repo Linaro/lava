@@ -433,3 +433,45 @@ class TestTemplates(BaseTemplateTest):
             "/sysroot/lava-%s",
             template_dict["constants"]["posix"]["lava_test_results_dir"],
         )
+
+    def test_deploy_character_delay_from_device(self):
+        job_ctx = {}
+        data = "{% extends 'x86.jinja2' %}\n{% set deploy_character_delay = 30 %}"
+
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        self.assertIn("character_delays", template_dict)
+        self.assertIn("deploy", template_dict["character_delays"])
+        self.assertEqual(30, template_dict["character_delays"]["deploy"])
+
+    def test_deploy_character_delay_from_job_ctx(self):
+        job_ctx = {"deploy_character_delay": 60}
+        data = "{% extends 'x86.jinja2' %}"
+
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        self.assertIn("character_delays", template_dict)
+        self.assertIn("deploy", template_dict["character_delays"])
+        self.assertEqual(60, template_dict["character_delays"]["deploy"])
+
+    def test_deploy_character_delay_from_job_ctx_override_allowed(self):
+        job_ctx = {"deploy_character_delay": 60}
+        data = """{% extends 'x86.jinja2' %}
+{% set deploy_character_delay = deploy_character_delay|default(30) %}"""
+
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        self.assertIn("character_delays", template_dict)
+        self.assertIn("deploy", template_dict["character_delays"])
+        self.assertEqual(60, template_dict["character_delays"]["deploy"])
+
+        job_ctx = {}
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        self.assertEqual(30, template_dict["character_delays"]["deploy"])
+
+    def test_deploy_character_delay_from_job_ctx_override_disallowed(self):
+        job_ctx = {"deploy_character_delay": 60}
+        data = """{% extends 'x86.jinja2' %}
+{% set deploy_character_delay = 30 %}"""
+
+        template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+        self.assertIn("character_delays", template_dict)
+        self.assertIn("deploy", template_dict["character_delays"])
+        self.assertEqual(30, template_dict["character_delays"]["deploy"])
