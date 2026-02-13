@@ -23,25 +23,55 @@ def noop(apps, schema_editor):
     pass
 
 
-class Migration(migrations.Migration):
-    dependencies = [("lava_results_app", "0007_auto_20160225_1256")]
-
-    operations = [
-        migrations.RunPython(remove_views, noop),
-        migrations.RunSQL(
-            sql=r"""CREATE OR REPLACE FUNCTION chartonumeric(convertvalue character varying)
+def create_chartonumeric(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute(
+            r"""CREATE OR REPLACE FUNCTION chartonumeric(convertvalue character varying)
   RETURNS numeric AS
     $BODY$
         SELECT CASE WHEN trim($1) SIMILAR TO '[0-9]+\.[0-9]+'
         THEN CAST(trim($1) AS numeric)
         ELSE NULL END;
     $BODY$
-LANGUAGE 'sql' IMMUTABLE STRICT;""",
-            reverse_sql="DROP FUNCTION chartonumeric(convertvalue character varying)",
-        ),
-        migrations.RunSQL(
-            sql="ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement SET DATA TYPE numeric using chartonumeric(measurement)",
-            reverse_sql="ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement SET DATA TYPE character varying(512)",
+LANGUAGE 'sql' IMMUTABLE STRICT;"""
+        )
+
+
+def drop_chartonumeric(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute(
+            "DROP FUNCTION chartonumeric(convertvalue character varying)"
+        )
+
+
+def alter_measurement_to_numeric(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute(
+            "ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement"
+            " SET DATA TYPE numeric using chartonumeric(measurement)"
+        )
+
+
+def alter_measurement_to_varchar(apps, schema_editor):
+    if schema_editor.connection.vendor == "postgresql":
+        schema_editor.execute(
+            "ALTER TABLE lava_results_app_testcase ALTER COLUMN measurement"
+            " SET DATA TYPE character varying(512)"
+        )
+
+
+class Migration(migrations.Migration):
+    dependencies = [("lava_results_app", "0007_auto_20160225_1256")]
+
+    operations = [
+        migrations.RunPython(remove_views, noop),
+        migrations.RunPython(create_chartonumeric, drop_chartonumeric),
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunPython(
+                    alter_measurement_to_numeric, alter_measurement_to_varchar
+                ),
+            ],
             state_operations=[
                 migrations.AlterField(
                     model_name="testcase",
@@ -54,7 +84,7 @@ LANGUAGE 'sql' IMMUTABLE STRICT;""",
                         null=True,
                         verbose_name="Measurement",
                     ),
-                )
+                ),
             ],
         ),
         migrations.RunPython(noop, remove_views),
