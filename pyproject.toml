@@ -73,3 +73,28 @@ line_length = 88
 
 [tool.pycodestyle]
 max-line-length = 88
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+junit_family = "xunit2"
+
+[tool.coverage.run]
+source = [
+    "lava_common",
+    "lava_dispatcher",
+    "lava_dispatcher_host",
+    "lava_rest_app",
+    "lava_results_app",
+    "lava_scheduler_app",
+    "lava_server",
+    "linaro_django_xmlrpc",
+]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
