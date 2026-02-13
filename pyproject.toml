@@ -1,6 +1,164 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2025 LAVA contributors
 
+[build-system]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lava"
+dynamic = ["version"]
+description = "LAVA is a continuous integration system for deploying operating systems onto physical and virtual hardware for running tests."
+readme = "README.md"
+license = {text = "GPL-2.0-or-later"}
+authors = [
+    {name = "LAVA team", email = "lava-team@linaro.org"}
+]
+maintainers = [
+    {name = "LAVA team", email = "lava-team@linaro.org"}
+]
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Framework :: Django",
+]
+keywords = ["testing", "ci", "continuous-integration", "automation", "embedded", "hardware"]
+
+dependencies = [
+    "PyYAML",
+    "voluptuous",
+    "sentry-sdk",
+]
+
+[project.optional-dependencies]
+dispatcher = [
+    "aiohttp",
+    "configobj",
+    "python-magic",
+    "Jinja2",
+    "pexpect",
+    "pyudev",
+    "requests",
+    "setproctitle",
+]
+server = [
+    "asgiref",
+    "celery",
+    "django-auth-ldap",
+    "defusedxml",
+    "django-allauth",
+    "django-filter",
+    "django-tables2",
+    "Django>=4.2,<5.0",
+    "django-environ",
+    "djangorestframework",
+    "djangorestframework-filters>=1.0.0.dev2",
+    "drf-extensions>=0.8.0",
+    "psycopg2-binary",
+    "pyzmq",
+    "tap.py",
+    "more-itertools",
+    "junit-xml",
+    "whitenoise",
+    "gunicorn",
+    "Jinja2",
+    "requests",
+    "aiohttp",
+]
+dispatcher-host = [
+    "Jinja2",
+    "requests",
+    "pyudev",
+]
+coordinator = []
+full = [
+    "lava[dispatcher]",
+    "lava[server]",
+    "lava[dispatcher-host]",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-django",
+    "pytest-mock",
+    "pytest-cov",
+    "pytest-asyncio",
+    "pytest-random-order",
+    "pytest-subtests",
+    "responses",
+]
+dev = [
+    "lava[full]",
+    "lava[test]",
+    "black",
+    "isort",
+    "pylint",
+    "pylint-django",
+    "mypy",
+    "django-stubs",
+    "types-PyYAML",
+    "types-requests",
+]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+]
+
+[project.urls]
+Homepage = "https://lavasoftware.org"
+Documentation = "https://docs.lavasoftware.org"
+Repository = "https://gitlab.com/lava/lava"
+Issues = "https://gitlab.com/lava/lava/-/issues"
+
+[project.scripts]
+lava-server = "manage:main"
+
+[tool.setuptools_scm]
+version_file = "lava_common/_version.py"
+local_scheme = "no-local-version"
+tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
+
+[tool.setuptools]
+include-package-data = true
+zip-safe = false
+py-modules = ["manage"]
+
+[tool.setuptools.packages.find]
+include = [
+    "lava*",
+    "linaro_django_xmlrpc*",
+]
+exclude = ["tests*", "doc*"]
+
+[tool.setuptools.package-data]
+lava_common = ["VERSION"]
+lava_dispatcher = [
+    "dynamic_vm_keys/lava*",
+    "lava_test_shell/**/*",
+]
+lava_rest_app = ["templates/**/*.html"]
+lava_results_app = [
+    "templates/**/*.html",
+    "static/**/*",
+]
+lava_scheduler_app = [
+    "templates/**/*.html",
+    "templates/**/*.txt",
+    "static/**/*",
+]
+lava_server = [
+    "templates/**/*.html",
+    "templates/robots.txt",
+    "static/**/*",
+]
+
 # Pylint configuration
 [tool.pylint.main]
 jobs = 0  # Scale number of jobs to number of CPUs

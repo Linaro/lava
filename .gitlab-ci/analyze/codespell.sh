@@ -27,7 +27,7 @@ else
   codespell \
     --enable-colors \
     --context 2 \
-    --skip='tmp,.git,*.svg,*.pyc,*.png,*.gif,*.doctree,*.pickle,*.po,*.woff,*.woff2,*.ico,*.odg,*.dia,*.sw*,tags,jquery*.js,anchor-v*.js,kernel*.txt' \
+    --skip='tmp,.git,*.svg,*.pyc,*.png,*.gif,*.doctree,*.pickle,*.po,*.woff,*.woff2,*.ico,*.odg,*.dia,*.sw*,*.lock,tags,jquery*.js,anchor-v*.js,kernel*.txt' \
     --ignore-words="$IGNORE_WORDS_FILENAME" \
     "$@"
 
