@@ -6,8 +6,8 @@
     {"pkgs": "apache2 gunicorn3 postgresql postgresql-client postgresql-common python3-setuptools" },
     {"pkgs": "libldap-common libsasl2-modules" },
     {"pkgs": "python3-boto3 python3-pycurl" },
-    {"pkgs": requires("debian", "bullseye", "lava-common") },
-    {"pkgs": requires("debian", "bullseye", "lava-server") },
+    {"pkgs": requires("debian", "trixie", "lava-common") },
+    {"pkgs": requires("debian", "trixie", "lava-server") },
 ] %}
 
 {% set pip_packages = ["django-matomo==0.1.6", "django-sync-github-teams==0.1.1"] %}
