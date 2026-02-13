@@ -13,7 +13,7 @@ RUN echo 'deb http://deb.debian.org/debian trixie-backports main' > /etc/apt/sou
     apt-get install --no-install-recommends --yes libldap-common libsasl2-modules && \
     apt-get install --no-install-recommends --yes python3-boto3 python3-pycurl && \
     apt-get install --no-install-recommends --yes python3-sentry-sdk python3-voluptuous python3-yaml && \
-    apt-get install --no-install-recommends --yes python3-aiohttp python3-asgiref python3-celery python3-defusedxml python3-django python3-django-allauth python3-django-auth-ldap python3-django-environ python3-django-filters python3-django-tables2 python3-djangorestframework python3-djangorestframework-extensions python3-djangorestframework-filters python3-jinja2 python3-junit.xml python3-psycopg2 python3-requests python3-tap python3-voluptuous python3-whitenoise python3-yaml python3-zmq && \
+    apt-get install --no-install-recommends --yes python3-aiohttp python3-asgiref python3-celery python3-defusedxml python3-django python3-django-allauth python3-django-auth-ldap python3-django-environ python3-django-filters python3-django-tables2 python3-djangorestframework python3-djangorestframework-extensions python3-djangorestframework-filters python3-jinja2 python3-junit.xml python3-more-itertools python3-psycopg2 python3-requests python3-tap python3-voluptuous python3-whitenoise python3-yaml python3-zmq && \
     apt-get install --no-install-recommends --yes python3-pip && \
     python3 -m pip install --break-system-packages django-matomo==0.1.6 django-sync-github-teams==0.1.1 && \
     find /usr/lib/python3/dist-packages/ -name '__pycache__' -type d -exec rm -r "{}" + && \
