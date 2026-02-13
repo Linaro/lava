@@ -11,15 +11,23 @@ import os
 
 import yaml
 from django.db import DataError
+from django.utils.text import format_lazy
 from django.utils.translation import ngettext_lazy
 
 from lava_common.yaml import yaml_safe_load
 
 
 def help_max_length(max_length):
-    return ngettext_lazy(
-        "Maximum length: {0} character", "Maximum length: {0} characters", max_length
-    ).format(max_length)
+    # Must use format_lazy here because this function is used in
+    # help_text of the fields of the models.
+    return format_lazy(
+        ngettext_lazy(
+            "Maximum length: {0} character",
+            "Maximum length: {0} characters",
+            max_length,
+        ),
+        max_length,
+    )
 
 
 class StreamEcho:
@@ -133,9 +141,9 @@ def export_testcase(testcase):
         "url": str(testcase.get_absolute_url()),
         "id": str(testcase.id),
         "logged": str(testcase.logged),
-        "log_start_line": str(testcase.start_log_line)
-        if testcase.start_log_line
-        else "",
+        "log_start_line": (
+            str(testcase.start_log_line) if testcase.start_log_line else ""
+        ),
         "log_end_line": str(testcase.end_log_line) if testcase.end_log_line else "",
         "metadata": metadata,
     }

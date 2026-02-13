@@ -34,7 +34,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy
 from psycopg2.extensions import quote_ident
 
 from lava_common.decorators import nottest
@@ -257,7 +257,7 @@ class TestSuite(models.Model, Queryable):
         """
         Human friendly name for the test suite
         """
-        return _("Test Suite {0}/{1}").format(self.job.id, self.name)
+        return gettext("Test Suite {0}/{1}").format(self.job.id, self.name)
 
 
 @nottest
@@ -294,7 +294,7 @@ class TestSet(models.Model):
         )
 
     def __str__(self):
-        return _("Test Set {0}/{1}/{2}").format(
+        return gettext("Test Set {0}/{1}/{2}").format(
             self.suite.job.id, self.suite.name, self.name
         )
 
@@ -350,20 +350,20 @@ class TestCase(models.Model, Queryable):
     }
 
     RESULT_CHOICES = (
-        (RESULT_PASS, _("Test passed")),
-        (RESULT_FAIL, _("Test failed")),
-        (RESULT_SKIP, _("Test skipped")),
-        (RESULT_UNKNOWN, _("Unknown outcome")),
+        (RESULT_PASS, gettext_lazy("Test passed")),
+        (RESULT_FAIL, gettext_lazy("Test failed")),
+        (RESULT_SKIP, gettext_lazy("Test skipped")),
+        (RESULT_UNKNOWN, gettext_lazy("Unknown outcome")),
     )
 
     name = models.TextField(
-        blank=True, help_text=help_max_length(100), verbose_name=_("Name")
+        blank=True, help_text=help_max_length(100), verbose_name=gettext_lazy("Name")
     )
 
     units = models.TextField(
         blank=True,
         help_text=(
-            _(
+            gettext_lazy(
                 """Units in which measurement value should be
                      interpreted, for example <q>ms</q>, <q>MB/s</q> etc.
                      There is no semantic meaning inferred from the value of
@@ -371,12 +371,12 @@ class TestCase(models.Model, Queryable):
             )
             + help_max_length(100)
         ),
-        verbose_name=_("Units"),
+        verbose_name=gettext_lazy("Units"),
     )
 
     result = models.PositiveSmallIntegerField(
-        verbose_name=_("Result"),
-        help_text=_("Result classification to pass/fail group"),
+        verbose_name=gettext_lazy("Result"),
+        help_text=gettext_lazy("Result classification to pass/fail group"),
         choices=RESULT_CHOICES,
         db_index=True,
     )
@@ -385,17 +385,21 @@ class TestCase(models.Model, Queryable):
         decimal_places=10,
         max_digits=30,
         blank=True,
-        help_text=_("Arbitrary value that was measured as a part of this test."),
+        help_text=gettext_lazy(
+            "Arbitrary value that was measured as a part of this test."
+        ),
         null=True,
-        verbose_name=_("Measurement"),
+        verbose_name=gettext_lazy("Measurement"),
     )
 
     metadata = models.CharField(
         blank=True,
         max_length=4096,
-        help_text=_("Metadata collected by the pipeline action, stored as YAML."),
+        help_text=gettext_lazy(
+            "Metadata collected by the pipeline action, stored as YAML."
+        ),
         null=True,
-        verbose_name=_("Action meta data as a YAML string"),
+        verbose_name=gettext_lazy("Action meta data as a YAML string"),
     )
 
     suite = models.ForeignKey(TestSuite, on_delete=models.CASCADE)
@@ -485,10 +489,10 @@ class TestCase(models.Model, Queryable):
         value = self._get_value()
         if self.test_set:
             # the set already includes the job & suite in the set name
-            return _("Test Case {0}/{1}/{2}/{3} {4}").format(
+            return gettext("Test Case {0}/{1}/{2}/{3} {4}").format(
                 self.suite.job.id, self.suite.name, self.test_set.name, self.name, value
             )
-        return _("Test Case {0}/{1}/{2} {3}").format(
+        return gettext("Test Case {0}/{1}/{2} {3}").format(
             self.suite.job.id, self.suite.name, self.name, value
         )
 
@@ -519,7 +523,7 @@ class NamedTestAttribute(models.Model):
     content_object = fields.GenericForeignKey("content_type", "object_id")
 
     def __str__(self):
-        return _("{name}: {value}").format(name=self.name, value=self.value)
+        return gettext("{name}: {value}").format(name=self.name, value=self.value)
 
     class Meta:
         unique_together = ("object_id", "name", "content_type")
@@ -542,7 +546,7 @@ class TestData(models.Model):
     attributes = fields.GenericRelation(NamedTestAttribute)
 
     def __str__(self):
-        return _("TestJob {0}").format(self.testjob.id)
+        return gettext("TestJob {0}").format(self.testjob.id)
 
 
 class QueryGroup(models.Model):
@@ -1049,7 +1053,7 @@ class QueryCondition(models.Model):
     operator = models.CharField(
         blank=False,
         default=EXACT,
-        verbose_name=_("Operator"),
+        verbose_name=gettext_lazy("Operator"),
         max_length=20,
         choices=OPERATOR_CHOICES,
     )
