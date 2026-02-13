@@ -20,7 +20,6 @@ from django.conf import settings
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.postgres.fields import ArrayField
 from django.contrib.sites.models import Site
 from django.core.exceptions import (
     ImproperlyConfigured,
@@ -2320,9 +2319,7 @@ class Notification(models.Model):
         default=None, null=True, blank=True, verbose_name="Template name"
     )
 
-    blacklist = ArrayField(
-        models.CharField(max_length=100, blank=True), null=True, blank=True
-    )
+    blacklist = models.JSONField(null=True, blank=True, default=list)
 
     time_sent = models.DateTimeField(
         verbose_name=_("Time sent"), auto_now=False, auto_now_add=True, editable=False

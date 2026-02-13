@@ -36,16 +36,21 @@ PROJECT_STATE_DIR.mkdir(parents=True, exist_ok=True)
 DJANGO_LOGFILE = str(PROJECT_STATE_DIR / "django.log")
 
 # Test database
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "devel",
-        "USER": "devel",
-        "PASSWORD": "devel",
-        "HOST": "localhost",
-        "PORT": "",
+if os.environ.get("DATABASE_URL"):
+    import environ
+
+    DATABASES = {"default": environ.Env().db()}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "devel",
+            "USER": "devel",
+            "PASSWORD": "devel",
+            "HOST": "localhost",
+            "PORT": "",
+        }
     }
-}
 
 # Absolute filesystem path to the directory that will hold user-uploaded files.
 # Example: "/home/media/media.lawrence.com/"
