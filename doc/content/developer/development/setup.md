@@ -7,12 +7,76 @@ assume that the version is Bullseye (or any more recent versions).
     Even if we assume the use of Debian, you can also use any non-Debian
     distributions. Just adapt the steps above to match your distribution.
 
-We currently recommend two methods for developing LAVA.
+We currently recommend three methods for developing LAVA.
 
+* [using uv and pyproject.toml](#using-uv) (recommended)
 * [from the Debian packages](#from-debian-packages)
 * [from sources](#from-sources)
 
-Both methods are currently used by LAVA core developers. Choosing one or the other is a matter of taste.
+## Using uv
+
+[uv](https://docs.astral.sh/uv/) is the recommended way to set up a
+development environment. LAVA provides a `pyproject.toml` with optional
+dependency groups for each component.
+
+Available dependency groups:
+
+* `dispatcher` -- dependencies for `lava-dispatcher`
+* `server` -- dependencies for `lava-server`
+* `dispatcher-host` -- dependencies for `lava-dispatcher-host`
+* `coordinator` -- dependencies for `lava-coordinator`
+* `full` -- all of the above
+* `test` -- test dependencies (pytest, coverage, etc.)
+* `dev` -- development tools (black, isort, pylint, mypy, etc.)
+* `docs` -- documentation build dependencies (sphinx)
+
+Fetch the sources and install dependencies:
+
+```shell
+git clone https://gitlab.com/lava/lava
+cd lava/
+uv sync --extra dev
+```
+
+### Running the development server
+
+LAVA uses PostgreSQL in production, but for local development you can
+use SQLite:
+
+```shell
+export DATABASE_URL="sqlite:////tmp/lava.sqlite3"
+uv run --extra server manage.py migrate
+uv run --extra server manage.py collectstatic --noinput
+uv run --extra server manage.py createsuperuser
+uv run --extra server manage.py runserver
+```
+
+LAVA is now accessible at [http://localhost:8000/](http://localhost:8000/)
+
+### Running tests and linters
+
+```shell
+uv run python -m pytest tests/
+uv run black --check .
+uv run isort --check .
+```
+
+!!! note
+    Production deployments use Debian packages, not pip or uv. The
+    `pyproject.toml` dependency groups are provided for development
+    convenience only. System-level files (systemd units, configuration
+    in `/etc`, etc.) are handled by the Debian packaging and `setup.py`,
+    not by `pyproject.toml`.
+
+### Using pip
+
+Alternatively, you can use pip in a virtual environment:
+
+```shell
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+```
 
 ## From Debian packages
 
