@@ -56,3 +56,14 @@ disable = [
     "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
     "W1514",  # Using open without explicitly specifying an encoding
 ]
+
+[tool.black]
+line-length = 88
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pycodestyle]
+max-line-length = 88
