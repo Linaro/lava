@@ -6,9 +6,9 @@ if [ "$1" = "setup" ]
 then
   set -x
   apt-get -q update
-  DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s trixie -n)
   apt-get install --no-install-recommends --yes $DEPS
-  DEPS=$(./share/requires.py -p lava-server -d debian -s bullseye -n -u)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s trixie -n -u)
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x

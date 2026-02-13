@@ -6,9 +6,9 @@ if [ "$1" = "setup" ]
 then
   set -x
   apt-get -q update
-  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bullseye -n)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s bookworm -n)
   apt-get install --no-install-recommends --yes $DEPS
-  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s bullseye -n -u)
+  DEPS=$(./share/requires.py -p lava-server -d debian -s bookworm -n -u)
   apt-get install --no-install-recommends --yes $DEPS
 else
   set -x
@@ -17,9 +17,12 @@ else
       --pythonwarnings=default \
       -r a \
       --cache-clear --verbose \
-      --junitxml=dispatcher.xml \
+      --junitxml=server.xml \
       --random-order --random-order-bucket=global \
-    tests/lava_dispatcher \
-    tests/lava_dispatcher_host \
-    tests/lava_coordinator "$@"
+    tests/lava_common \
+    tests/lava_scheduler_app \
+    tests/lava_results_app \
+    tests/linaro_django_xmlrpc \
+    tests/lava_rest_app \
+    tests/lava_server "$@"
 fi
