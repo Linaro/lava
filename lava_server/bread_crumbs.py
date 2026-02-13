@@ -89,7 +89,8 @@ class BreadCrumb:
         The name is formatted with the specified keyword arguments.
         """
         try:
-            return self.name.format(**kwargs)
+            # Use str to convert lazy translation string
+            return str(self.name).format(**kwargs)
         except Exception:
             logging.exception(
                 "Unable to construct breadcrumb name for view %r", self.view
