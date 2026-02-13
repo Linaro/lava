@@ -23,7 +23,7 @@ from django.http import (
 from django.shortcuts import render
 from django.template import loader
 from django.urls import reverse
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy
 from django.views.decorators.csrf import requires_csrf_token
 from django.views.decorators.http import require_POST
 
@@ -139,7 +139,7 @@ workers_active {worker_stats['num_active']}
     return HttpResponse(data, content_type="text/plain; version=0.0.4")
 
 
-@BreadCrumb(_("LAVA"))
+@BreadCrumb(gettext_lazy("LAVA"))
 def index(request):
     # Load and render the template
     return render(
@@ -147,7 +147,7 @@ def index(request):
     )
 
 
-@BreadCrumb(_("About you ({you})"), parent=index)
+@BreadCrumb(gettext_lazy("About you ({you})"), parent=index)
 @login_required
 def me(request):
     ExtendedUser.objects.get_or_create(user=request.user)

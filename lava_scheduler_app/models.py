@@ -36,7 +36,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import get_random_string
 from django.utils.html import escape
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext_lazy
 from jinja2 import FileSystemLoader
 from jinja2 import TemplateError as JinjaTemplateError
 from jinja2.nodes import Extends as JinjaNodesExtends
@@ -239,7 +239,7 @@ class DeviceType(RestrictedObject):
     objects = RestrictedDeviceTypeQuerySet.as_manager()
 
     name = models.CharField(
-        verbose_name=_("Name"),
+        verbose_name=gettext_lazy("Name"),
         max_length=50,
         primary_key=True,
         editable=True,
@@ -297,7 +297,7 @@ class DeviceType(RestrictedObject):
         super().full_clean(exclude=exclude, validate_unique=validate_unique)
 
     description = models.TextField(
-        verbose_name=_("Device Type Description"),
+        verbose_name=gettext_lazy("Device Type Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -371,7 +371,7 @@ class Worker(RestrictedObject):
     objects = RestrictedWorkerQuerySet.as_manager()
 
     hostname = models.CharField(
-        verbose_name=_("Hostname"),
+        verbose_name=gettext_lazy("Hostname"),
         max_length=200,
         primary_key=True,
         default=None,
@@ -400,7 +400,7 @@ class Worker(RestrictedObject):
     health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_ACTIVE)
 
     description = models.TextField(
-        verbose_name=_("Worker Description"),
+        verbose_name=gettext_lazy("Worker Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -408,12 +408,14 @@ class Worker(RestrictedObject):
         editable=True,
     )
 
-    last_ping = models.DateTimeField(verbose_name=_("Last ping"), default=timezone.now)
+    last_ping = models.DateTimeField(
+        verbose_name=gettext_lazy("Last ping"), default=timezone.now
+    )
 
     job_limit = models.PositiveIntegerField(default=0)
 
     version = models.CharField(
-        verbose_name=_("Dispatcher version"),
+        verbose_name=gettext_lazy("Dispatcher version"),
         max_length=50,
         null=True,
         default=None,
@@ -421,7 +423,7 @@ class Worker(RestrictedObject):
     )
 
     token = models.CharField(
-        max_length=32, default=auth_token, help_text=_("Authorization token")
+        max_length=32, default=auth_token, help_text=gettext_lazy("Authorization token")
     )
 
     # Add default values for _old values
@@ -552,7 +554,7 @@ class Device(RestrictedObject):
     objects = RestrictedDeviceQuerySet.as_manager()
 
     hostname = models.CharField(
-        verbose_name=_("Hostname"),
+        verbose_name=gettext_lazy("Hostname"),
         max_length=200,
         primary_key=True,
         editable=True,  # read-only after create via admin.py
@@ -560,11 +562,11 @@ class Device(RestrictedObject):
     )
 
     device_type = models.ForeignKey(
-        DeviceType, verbose_name=_("Device type"), on_delete=models.CASCADE
+        DeviceType, verbose_name=gettext_lazy("Device type"), on_delete=models.CASCADE
     )
 
     device_version = models.CharField(
-        verbose_name=_("Device Version"),
+        verbose_name=gettext_lazy("Device Version"),
         max_length=200,
         null=True,
         default=None,
@@ -577,7 +579,7 @@ class Device(RestrictedObject):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_("User with physical access"),
+        verbose_name=gettext_lazy("User with physical access"),
         on_delete=models.SET_NULL,
     )
 
@@ -587,12 +589,12 @@ class Device(RestrictedObject):
         null=True,
         blank=True,
         default=None,
-        verbose_name=_("Group with physical access"),
+        verbose_name=gettext_lazy("Group with physical access"),
         on_delete=models.CASCADE,
     )
 
     description = models.TextField(
-        verbose_name=_("Device Description"),
+        verbose_name=gettext_lazy("Device Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -657,7 +659,7 @@ class Device(RestrictedObject):
     # TODO: make this mandatory
     worker_host = models.ForeignKey(
         Worker,
-        verbose_name=_("Worker Host"),
+        verbose_name=gettext_lazy("Worker Host"),
         null=True,
         blank=True,
         default=None,
@@ -1452,12 +1454,14 @@ class TestJob(models.Model):
 
     id = models.AutoField(primary_key=True)
 
-    sub_id = models.CharField(verbose_name=_("Sub ID"), blank=True, max_length=200)
+    sub_id = models.CharField(
+        verbose_name=gettext_lazy("Sub ID"), blank=True, max_length=200
+    )
 
     is_public = models.BooleanField(default=False)
 
     target_group = models.CharField(
-        verbose_name=_("Target Group"),
+        verbose_name=gettext_lazy("Target Group"),
         blank=True,
         max_length=64,
         null=True,
@@ -1465,15 +1469,18 @@ class TestJob(models.Model):
     )
 
     submitter = models.ForeignKey(
-        User, verbose_name=_("Submitter"), related_name="+", on_delete=models.CASCADE
+        User,
+        verbose_name=gettext_lazy("Submitter"),
+        related_name="+",
+        on_delete=models.CASCADE,
     )
 
     viewing_groups = models.ManyToManyField(
         # functionally, may be restricted to only one group at a time
         # depending on implementation complexity
         Group,
-        verbose_name=_("Viewing groups"),
-        help_text=_(
+        verbose_name=gettext_lazy("Viewing groups"),
+        help_text=gettext_lazy(
             "Adding groups to an intersection of groups reduces visibility."
             "Adding groups to a union of groups expands visibility."
         ),
@@ -1484,7 +1491,7 @@ class TestJob(models.Model):
     )
 
     description = models.CharField(
-        verbose_name=_("Description"),
+        verbose_name=gettext_lazy("Description"),
         max_length=200,
         null=True,
         blank=True,
@@ -1540,13 +1547,13 @@ class TestJob(models.Model):
     )
 
     submit_time = models.DateTimeField(
-        verbose_name=_("Submit time"),
+        verbose_name=gettext_lazy("Submit time"),
         auto_now=False,
         auto_now_add=True,
         db_index=False,  # Descending index defined in Meta
     )
     start_time = models.DateTimeField(
-        verbose_name=_("Start time"),
+        verbose_name=gettext_lazy("Start time"),
         auto_now=False,
         auto_now_add=False,
         null=True,
@@ -1555,7 +1562,7 @@ class TestJob(models.Model):
         db_index=False,  # Descending index defined in Meta
     )
     end_time = models.DateTimeField(
-        verbose_name=_("End time"),
+        verbose_name=gettext_lazy("End time"),
         auto_now=False,
         auto_now_add=False,
         null=True,
@@ -1785,7 +1792,7 @@ class TestJob(models.Model):
     LOW, MEDIUM, HIGH = (0, 50, 100)
     PRIORITY_CHOICES = ((LOW, "Low"), (MEDIUM, "Medium"), (HIGH, "High"))
     priority = models.IntegerField(
-        choices=PRIORITY_CHOICES, default=MEDIUM, verbose_name=_("Priority")
+        choices=PRIORITY_CHOICES, default=MEDIUM, verbose_name=gettext_lazy("Priority")
     )
 
     definition = models.TextField(editable=False)
@@ -1798,7 +1805,10 @@ class TestJob(models.Model):
     pipeline_compatibility = models.IntegerField(default=0, editable=False)
 
     queue_timeout = models.BigIntegerField(
-        verbose_name=_("Queue timeout"), null=True, blank=True, editable=False
+        verbose_name=gettext_lazy("Queue timeout"),
+        null=True,
+        blank=True,
+        editable=False,
     )
 
     @property
@@ -1826,7 +1836,7 @@ class TestJob(models.Model):
     failure_comment = models.TextField(null=True, blank=True)
 
     token = models.CharField(
-        max_length=32, default=auth_token, help_text=_("Authorization token")
+        max_length=32, default=auth_token, help_text=gettext_lazy("Authorization token")
     )
 
     @property
@@ -2303,7 +2313,7 @@ class Notification(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_("Type"),
+        verbose_name=gettext_lazy("Type"),
     )
 
     VERBOSE = 0
@@ -2327,7 +2337,10 @@ class Notification(models.Model):
     )
 
     time_sent = models.DateTimeField(
-        verbose_name=_("Time sent"), auto_now=False, auto_now_add=True, editable=False
+        verbose_name=gettext_lazy("Time sent"),
+        auto_now=False,
+        auto_now_add=True,
+        editable=False,
     )
 
     query_owner = models.ForeignKey(
@@ -2395,7 +2408,7 @@ class NotificationRecipient(models.Model):
     STATUS_MAP = {"sent": SENT, "not sent": NOT_SENT}
 
     status = models.IntegerField(
-        choices=STATUS_CHOICES, default=NOT_SENT, verbose_name=_("Status")
+        choices=STATUS_CHOICES, default=NOT_SENT, verbose_name=gettext_lazy("Status")
     )
 
     EMAIL = 0
@@ -2409,7 +2422,7 @@ class NotificationRecipient(models.Model):
     METHOD_MAP = {EMAIL_STR: EMAIL, IRC_STR: IRC}
 
     method = models.IntegerField(
-        choices=METHOD_CHOICES, default=EMAIL, verbose_name=_("Method")
+        choices=METHOD_CHOICES, default=EMAIL, verbose_name=gettext_lazy("Method")
     )
 
     def __str__(self):
@@ -2469,7 +2482,7 @@ class NotificationCallback(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_("Callback method"),
+        verbose_name=gettext_lazy("Callback method"),
     )
 
     token = models.TextField(
@@ -2496,7 +2509,7 @@ class NotificationCallback(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_("Callback dataset"),
+        verbose_name=gettext_lazy("Callback dataset"),
     )
 
     URLENCODED = 0
@@ -2509,7 +2522,7 @@ class NotificationCallback(models.Model):
         default=None,
         null=True,
         blank=True,
-        verbose_name=_("Callback content-type"),
+        verbose_name=gettext_lazy("Callback content-type"),
     )
 
     @staticmethod
@@ -2695,8 +2708,12 @@ class RemoteArtifactsAuth(models.Model):
         db_index=False,  # UniqueConstraint defined in Meta
     )
 
-    name = models.CharField(max_length=100, null=False, verbose_name=_("Token name"))
-    token = models.CharField(max_length=200, null=False, verbose_name=_("Token value"))
+    name = models.CharField(
+        max_length=100, null=False, verbose_name=gettext_lazy("Token name")
+    )
+    token = models.CharField(
+        max_length=200, null=False, verbose_name=gettext_lazy("Token value")
+    )
 
     def __str__(self):
         return self.name
