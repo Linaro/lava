@@ -16,10 +16,8 @@ from django.db.models import (
     Exists,
     ExpressionWrapper,
     F,
-    IntegerField,
     OuterRef,
     Q,
-    Value,
 )
 from django.utils import timezone
 
@@ -70,9 +68,7 @@ def check_queue_timeout():
     LOGGER.info("Check queue timeouts:")
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(queue_timeout__isnull=False)
-    # TODO: use alias() once Debian 12 is required
-    # See https://docs.djangoproject.com/en/dev/ref/models/querysets/#alias
-    jobs = jobs.annotate(
+    jobs = jobs.alias(
         queue_timeout_date=ExpressionWrapper(
             F("submit_time") + datetime.timedelta(seconds=1) * F("queue_timeout"),
             output_field=DurationField(),
@@ -248,21 +244,15 @@ def schedule_health_check(device, definition):
 def schedule_jobs(available_devices, workers_limit):
     LOGGER.info("scheduling jobs:")
     dts = list(available_devices.keys())
-    for dt in (
-        DeviceType.objects.annotate(
-            _has_submitted_jobs=Exists(
-                TestJob.objects.filter(
-                    state=TestJob.STATE_SUBMITTED,
-                    requested_device_type_id=OuterRef("name"),
-                ).values("id")
-            )
-            # TODO: Pass Exists() directly to filter()
-            # once Debian 12 is minimal version
-        )
-        .filter(_has_submitted_jobs=True, name__in=dts)
-        .annotate(_has_submitted_jobs=Value(1, output_field=IntegerField()))
-        .order_by("name")
-    ):
+    for dt in DeviceType.objects.filter(
+        Exists(
+            TestJob.objects.filter(
+                state=TestJob.STATE_SUBMITTED,
+                requested_device_type_id=OuterRef("name"),
+            ).values("id")
+        ),
+        name__in=dts,
+    ).order_by("name"):
         with transaction.atomic():
             schedule_jobs_for_device_type(dt, available_devices[dt.name], workers_limit)
 
@@ -327,16 +317,12 @@ def schedule_jobs_for_device(device, print_header):
     )
     jobs = (
         TestJob.objects.select_for_update()
-        .annotate(_tags_are_subset=~job_extra_tags_subquery)
         .filter(
+            ~job_extra_tags_subquery,
             state=TestJob.STATE_SUBMITTED,
             actual_device__isnull=True,
             requested_device_type_id=device.device_type_id,
-            # TODO: Pass ~job_extra_tags_subquery directly to filter()
-            # once Debian 12 is minimal version
-            _tags_are_subset=True,
         )
-        .annotate(_tags_are_subset=Value(1, output_field=IntegerField()))
         .select_related("submitter")
         .order_by("-priority", "submit_time", "sub_id", "id")
     )

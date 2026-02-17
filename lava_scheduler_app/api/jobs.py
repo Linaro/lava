@@ -217,7 +217,7 @@ class SchedulerJobsAPI(ExposedV2API):
             jobs = jobs.filter(end_time__range=[start_time, end_time])
 
         if duration_at_least is not None:
-            jobs = jobs.annotate(
+            jobs = jobs.alias(
                 _duration=ExpressionWrapper(
                     Coalesce("end_time", Value(timezone.now())) - F("start_time"),
                     output_field=DurationField(),
