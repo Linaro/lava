@@ -124,11 +124,11 @@ class JobErrorsTable(LavaTable):
         default="",
     )
     error_type = tables.Column(
-        accessor=tables.A("failure_metadata.error_type"),
+        accessor=tables.A("failure_metadata__error_type"),
         orderable=False,
     )
     error_msg = tables.Column(
-        accessor=tables.A("failure_metadata.error_msg"),
+        accessor=tables.A("failure_metadata__error_msg"),
         orderable=False,
     )
 
