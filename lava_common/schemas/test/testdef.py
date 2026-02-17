@@ -23,7 +23,12 @@ def testdef():
         Optional("install"): {
             Optional("deps"): [str],
             Optional(Match(r"deps-.+")): [str],
-            Optional("git-repos"): [str],
+            Optional("git-repos"): [
+                Any(
+                    str,
+                    {"url": str, Optional("branch"): str, Optional("destination"): str},
+                )
+            ],
             Optional("keys"): [str],
             Optional("steps"): [str],
             Optional("sources"): [str],
