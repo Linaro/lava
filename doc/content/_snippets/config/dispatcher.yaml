@@ -4,6 +4,9 @@
 # as shown in the lava-server logs, and create the file in
 # /etc/lava-server/dispatcher.d on the *server*.
 
+# Dispatcher tmp directory
+#dispatcher_download_dir: /var/lib/lava/dispatcher/tmp
+
 # Only set this key, if this dispatcher has many IPs
 #dispatcher_ip: <this-dispatcher-ip>
 
@@ -35,6 +38,18 @@
 # When downloading resources, lava dispatcher will use this formatting string
 # instead of the original url.
 #http_url_format_string: "https://cache.lavasoftware.org/api/v1/fetch/?url=%s"
+
+# Set this variable to automatically fallback to the original url if the
+# caching service returns an error.
+#http_cache_fallback_origin_url: True
+
+# Set additional http cache rules to include/exclude urls for caching.
+# if http_cache_include_rules specified, only matched urls will use cache even
+# cache service enabled
+# if http_cache_exclude_rules specified, matched urls will be skipped even cache
+# service enabled
+#http_cache_include_rules: ["https://.*nxrm.com"]
+#http_cache_exclude_rules: ["https://10.*"]
 
 # Directories to be bind mounted in test actions that run with docker.
 # Must be an array with exactly two/three items:
