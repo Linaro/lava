@@ -654,3 +654,21 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
             str(context.exception),
             "More then one fastboot devices found: ['a2c22e48', '1de55d7f32c101b8']",
         )
+
+    @patch(
+        "lava_dispatcher.utils.fastboot.subprocess.run",
+        return_value=CompletedProcess(
+            ["/usr/bin/fastboot", "devices"],
+            0,
+            stdout="a2c22e48\t fastboot\n",
+            stderr="",
+        ),
+    )
+    @patch("time.sleep")
+    def test_fastboot_auto_detection_extra_whitespace(self, *args):
+        self.assertEqual(self.job.device["fastboot_serial_number"], "0000000000")
+
+        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action.run(None, None)
+
+        self.assertEqual(self.job.device["fastboot_serial_number"], "a2c22e48")

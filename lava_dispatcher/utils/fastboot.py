@@ -93,9 +93,9 @@ class DetectFastbootDevice(Action):
             # 'fastboot devices' output line example: a2c22e48\tfastboot\n
             output = cmd.stdout.strip().split("\n")
             devices = [
-                str(line.split("\t")[0])
+                str(line.split()[0])
                 for line in output
-                if line.endswith("\tfastboot")
+                if line.split()[-1:] == ["fastboot"]
             ]
 
             if len(devices) > 1:
