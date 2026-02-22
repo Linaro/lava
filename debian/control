@@ -1,6 +1,5 @@
 Source: lava
 Section: net
-Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
            Remi Duraffort <remi.duraffort@linaro.org>,
@@ -18,7 +17,7 @@ Build-Depends: debhelper-compat (= 12),
                python3-sphinx-bootstrap-theme,
                python3-yaml
 X-Python3-Version: >=3.6
-Standards-Version: 4.2.1
+Standards-Version: 4.7.3
 Homepage: https://www.lavasoftware.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
