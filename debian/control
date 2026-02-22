@@ -66,7 +66,7 @@ Description: Linaro Automated Validation Architecture dispatcher
  exported for further analysis.
  .
  This package provides lava-dispatcher to dispatch
- LAVA jobs to configured devices, for Python3 only.
+ LAVA jobs to configured devices.
  .
  A range of devices are supported for ARM and
  x86 architectures.
@@ -137,8 +137,6 @@ Description: Linaro Automated Validation Architecture server
  This package no longer supports configuration as a
  remote worker and needs to be removed from existing workers.
  Workers must only install lava-dispatcher.
- .
- This package no longer supports Python2.
 
 Package: lava-common
 Architecture: all
@@ -282,7 +280,7 @@ Description: Linaro Automated Validation Architecture developer support
  .
  This package provides a helper script to build LAVA packages
  from local git working copies and support for running the
- LAVA unit tests locally, using Python3.
+ LAVA unit tests locally.
 
 Package: lava-server-doc
 Architecture: all
