@@ -773,11 +773,11 @@ pep8
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
 
-  $ pep8 --ignore E501
+  $ black
 
-`pep8` can be installed in Debian based systems as follows::
+`black` can be installed in Debian based systems as follows::
 
-  $ apt install pep8
+  $ apt install black
 
 .. index:: unit tests
 
