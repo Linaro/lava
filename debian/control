@@ -53,10 +53,9 @@ Recommends: bridge-utils,
             unzip,
             xz-utils,
             zstd
-Suggests: apache2,
-          docker.io,
-          img2simg,
-          simg2img
+Suggests: android-sdk-libsparse-utils,
+          apache2,
+          docker.io
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -171,11 +170,10 @@ Depends: bridge-utils,
          telnet | telnet-client,
          tftpd-hpa,
          ${misc:Depends}
-Recommends: docker.io,
-            img2simg,
+Recommends: android-sdk-libsparse-utils,
+            docker.io,
             python3-docker,
-            schroot,
-            simg2img
+            schroot
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -258,7 +256,7 @@ Depends: build-essential,
          xsltproc,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: img2simg,
+Recommends: android-sdk-libsparse-utils,
             lxc | lava-lxc-mocker,
             nfs-kernel-server,
             python3-django-extensions,
@@ -266,7 +264,6 @@ Recommends: img2simg,
             python3-pytest-cov,
             rpcbind,
             sbuild,
-            simg2img,
             telnet | telnet-client,
             tftpd-hpa,
             u-boot-tools
