@@ -27,6 +27,7 @@ Depends: dh-python,
          telnet,
          tftpd-hpa,
          u-boot-tools,
+         unzip,
          @builddeps@
 Restrictions: allow-stderr, needs-root
 
