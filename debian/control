@@ -1,7 +1,7 @@
 Source: lava
 Section: net
 Priority: optional
-Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
            Remi Duraffort <remi.duraffort@linaro.org>
 Build-Depends: debhelper-compat (= 12),
