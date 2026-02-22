@@ -222,7 +222,6 @@ Architecture: all
 Section: devel
 Depends: build-essential,
          ca-certificates,
-         debhelper (>= 12),
          debootstrap,
          devscripts,
          dh-python,
