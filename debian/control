@@ -3,7 +3,8 @@ Section: net
 Priority: optional
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
-           Remi Duraffort <remi.duraffort@linaro.org>
+           Remi Duraffort <remi.duraffort@linaro.org>,
+           Christopher Obbard <obbardc@debian.org>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
                libjs-bootstrap,
