@@ -7,6 +7,7 @@
 from datetime import timedelta
 from io import StringIO
 from pathlib import Path
+from unittest.mock import PropertyMock
 
 import pytest
 from django.core.management import call_command
@@ -16,13 +17,29 @@ from lava_scheduler_app.models import TestJob, TestJobUser, User
 
 
 @pytest.fixture
-def job1(mocker, tmp_path):
-    media_root = tmp_path / "media"
-    mocker.patch(
-        "django.conf.settings.MEDIA_ROOT",
-        str(media_root),
-    )
+def job_output_root(tmp_path):
+    return tmp_path / "job-output"
 
+
+@pytest.fixture(autouse=True)
+def per_job_output_dir(mocker, tmp_path):
+    """
+    Force per-job output directories.
+
+    In this test case TestJob.output_dir resolves to a shared job-output path,
+    so removing one job deletes the other's logs too.
+    """
+    job_output_root = tmp_path / "job-output"
+
+    def _output_dir(self):
+        return str(job_output_root / str(self.id))
+
+    # Replace the attribute on the class with a genuine property
+    mocker.patch.object(TestJob, "output_dir", new=property(_output_dir))
+
+
+@pytest.fixture
+def job1(job_output_root):
     user1 = User.objects.create_user("user1")
     now = timezone.now()
     job1 = TestJob.objects.create(
@@ -41,13 +58,7 @@ def job1(mocker, tmp_path):
 
 
 @pytest.fixture
-def job2(mocker, tmp_path):
-    media_root = tmp_path / "media"
-    mocker.patch(
-        "django.conf.settings.MEDIA_ROOT",
-        str(media_root),
-    )
-
+def job2(job_output_root):
     user2 = User.objects.create_user("user2")
     now = timezone.now()
     job2 = TestJob.objects.create(
