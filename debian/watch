@@ -1,6 +1,4 @@
-# Compulsory line, this is a version 4 file
 version=4
 
-opts=filenamemangle=s/.*\/archive\/(\d\S+)\/lava.*\.tar\.gz/lava-$1\.tar\.gz/g \
-  https://gitlab.com/lava/lava/tags?sort=updated_desc .*/archive/(\d\S+)/.*\.tar\.gz.*
-
+opts="searchmode=plain" \
+ https://gitlab.com/lava/@PACKAGE@/tags?sort=updated_desc -/archive/v?\d[\d.]+/@PACKAGE@-@ANY_VERSION@@ARCHIVE_EXT@
