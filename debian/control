@@ -16,7 +16,6 @@ Build-Depends: debhelper-compat (= 12),
                python3-sphinx,
                python3-sphinx-bootstrap-theme,
                python3-yaml
-X-Python3-Version: >=3.6
 Standards-Version: 4.7.3
 Homepage: https://www.lavasoftware.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
