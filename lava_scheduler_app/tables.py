@@ -4,8 +4,7 @@
 #         Remi Duraffort <remi.duraffort@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
-import random
+from __future__ import annotations
 
 import django_tables2 as tables
 from django.conf import settings
@@ -141,24 +140,42 @@ class JobErrorsTable(LavaTable):
 
 class TagsColumn(tables.Column):
     def render(self, value):
-        tag_id = "tag-%s" % "".join(
-            random.choice("abcdefghijklmnopqrstuvwxyz")  # nosec - not crypto
-            for _ in range(8)
+        tags_query = value.values_list("description", "name")
+        if not tags_query:
+            return ""
+
+        tags_html: list[str] = []
+        for tag_description, tag_name in tags_query:
+            if tag_description:
+                tags_html.append(
+                    format_html(
+                        '<abbr data-toggle="tooltip" title="{}">{}</abbr>',
+                        tag_description,
+                        tag_name,
+                    )
+                )
+            else:
+                tags_html.append(
+                    format_html(
+                        "<abbr>{}</abbr>",
+                        tag_name,
+                    )
+                )
+
+        tags_str = mark_safe(",<br>".join(tags_html))
+
+        return format_html(
+            "<details>"
+            "<summary>"
+            '<a class="btn btn-xs btn-success">'
+            '<span class="glyphicon glyphicon-eye-open">'
+            "</span>"
+            "</a>"
+            "</summary>"
+            "{}"
+            "</details>",
+            tags_str,
         )
-        tags = ""
-        values = list(value.all())
-        if values:
-            tags = '<p class="collapse" id="%s">' % tag_id
-            tags += ",<br>".join(
-                '<abbr data-toggle="tooltip" title="%s">%s</abbr>'
-                % (tag.description, tag.name)
-                for tag in values
-            )
-            tags += (
-                '</p><a class="btn btn-xs btn-success" data-toggle="collapse" data-target="#%s"><span class="glyphicon glyphicon-eye-open"></span></a>'
-                % tag_id
-            )
-        return mark_safe(tags)  # nosec - internal data
 
 
 class DeviceHealthTable(LavaTable):
