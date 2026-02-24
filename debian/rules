@@ -105,14 +105,7 @@ override_dh_compress:
 	$(RM) -r debian/lava/usr/lib
 	$(RM) -r debian/lava/usr/bin
 
-override_dh_auto_clean:
-	python3 setup.py clean -a
-	find . -path '*/__pycache__/*' -delete
-	$(RM) -r lava.egg-info .idea/ build/
-	$(RM) -r .eggs/ versiontools-*.egg/ doc/build/ doc/html/
-	find . -type d -name '__pycache__' -empty -delete
-	$(RM) -r dist/
-	$(RM) debian/*.service
+execute_after_dh_auto_clean:
 	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
 	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
 	[ ! -f man/Makefile ] || make -C man/ clean
