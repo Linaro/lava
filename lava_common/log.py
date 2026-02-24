@@ -26,6 +26,10 @@ if TYPE_CHECKING:
     from typing import Any
 
 
+# Global variable so that no YAMLLogger escapes
+SECRETS_MASK: set[str] = set()
+
+
 def dump(data: dict[str, Any]) -> str:
     # Set width to a really large value in order to always get one line.
     # But keep this reasonable because the logs will be loaded by CLoader
@@ -42,6 +46,10 @@ def dump(data: dict[str, Any]) -> str:
         data_str = yaml_safe_dump(
             data, default_flow_style=True, default_style='"', width=10**6
         )[:-1]
+
+    for secret in SECRETS_MASK:
+        data_str = data_str.replace(secret, "[MASKED]")
+
     return data_str
 
 
