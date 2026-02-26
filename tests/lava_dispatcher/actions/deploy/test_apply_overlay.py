@@ -97,14 +97,14 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action = AppendOverlays(job, "rootfs", params)
         action.update_cpio = MagicMock()
-        action.update_guestfs = MagicMock()
+        action.update_ext4 = MagicMock()
         action.update_tar = MagicMock()
         self.assertIsNone(action.run(None, 0))
         action.update_cpio.assert_called_once_with()
 
         params["format"] = "ext4"
         self.assertIsNone(action.run(None, 0))
-        action.update_guestfs.assert_called_once_with()
+        action.update_ext4.assert_called_once_with()
 
         params["format"] = "tar"
         self.assertIsNone(action.run(None, 0))
@@ -145,21 +145,21 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.uncpio"
-        ) as uncpio_mock, patch(
-            "os.unlink"
-        ) as unlink_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.cpio"
-        ) as cpio_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio") as uncpio_mock,
+            patch("os.unlink") as unlink_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.cpio") as cpio_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
             action.update_cpio()
 
         decompress_file_mock.assert_called_once_with(
@@ -193,7 +193,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             ],
         )
 
-    def test_append_overlays_update_guestfs(self):
+    def test_append_overlays_update_ext4(self):
         job = self.create_simple_job()
         tmp_dir_path = self.create_temporary_directory()
 
@@ -227,23 +227,17 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
-            action.update_guestfs()
+        with (
+            patch("lava_dispatcher.utils.ext4.inject_tar") as inject_tar_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
+            action.update_ext4()
 
-        guestfs_mock.assert_called_once_with(python_return_dict=True)
-        guestfs_mock().launch.assert_called_once_with()
-        guestfs_mock().list_devices.assert_called_once_with()
-        guestfs_mock().add_drive.assert_called_once_with(
-            str(tmp_dir_path / "rootfs.ext4")
-        )
-        guestfs_mock().mount.assert_called_once_with(
-            guestfs_mock().list_devices()[0], "/"
-        )
-        guestfs_mock().mkdir_p.assert_called_once_with("/lib")
-        guestfs_mock().tar_in.assert_called_once_with(
-            str(tmp_dir_path / "modules.tar"), "/lib", compress=None
+        inject_tar_mock.assert_called_once_with(
+            str(tmp_dir_path / "rootfs.ext4"),
+            str(tmp_dir_path / "modules.tar"),
+            "/lib",
+            compress=None,
         )
         self.assertEqual(
             [(r.name, r.levelno, r.message) for r in action_logs.records],
@@ -293,19 +287,22 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "os.unlink"
-        ) as unlink_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
-        ) as create_tarfile_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("os.unlink") as unlink_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
+            ) as create_tarfile_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
             action.update_tar()
 
         decompress_file_mock.assert_called_once_with(
@@ -345,7 +342,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             ],
         )
 
-    def test_append_overlays_update_guestfs_sparse(self):
+    def test_append_overlays_update_ext4_sparse(self):
         job = self.create_simple_job()
         tmp_dir_path = self.create_temporary_directory()
 
@@ -381,23 +378,20 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.run_cmd = MagicMock()
 
-        with patch("guestfs.GuestFS") as guestfs_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
-        ) as replace_mock, self.assertLogs(action.logger, level="DEBUG") as action_logs:
-            action.update_guestfs()
+        with (
+            patch("lava_dispatcher.utils.ext4.inject_tar") as inject_tar_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
+            ) as replace_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
+            action.update_ext4()
 
-        guestfs_mock.assert_called_once_with(python_return_dict=True)
-        guestfs_mock().launch.assert_called_once_with()
-        guestfs_mock().list_devices.assert_called_once_with()
-        guestfs_mock().add_drive.assert_called_once_with(
-            str(tmp_dir_path / "rootfs.ext4")
-        )
-        guestfs_mock().mount.assert_called_once_with(
-            guestfs_mock().list_devices()[0], "/"
-        )
-        guestfs_mock().mkdir_p.assert_called_once_with("/lib")
-        guestfs_mock().tar_in.assert_called_once_with(
-            str(tmp_dir_path / "modules.tar"), "/lib", compress=None
+        inject_tar_mock.assert_called_once_with(
+            str(tmp_dir_path / "rootfs.ext4"),
+            str(tmp_dir_path / "modules.tar"),
+            "/lib",
+            compress=None,
         )
         self.assertEqual(
             action.run_cmd.mock_calls,
@@ -474,21 +468,21 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.uncpio"
-        ) as uncpio_mock, patch(
-            "os.unlink"
-        ) as unlick_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.cpio"
-        ) as cpio_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio") as uncpio_mock,
+            patch("os.unlink") as unlick_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.cpio") as cpio_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
             action.update_cpio()
 
         decompress_file_mock.assert_called_once_with(
@@ -522,7 +516,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             ],
         )
 
-    def test_append_lava_overlay_update_guestfs(self):
+    def test_append_lava_overlay_update_ext4(self):
         job = self.create_simple_job()
         tmp_dir_path = self.create_temporary_directory()
 
@@ -548,23 +542,17 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.assertLogs(
-            action.logger, level="DEBUG"
-        ) as action_logs:
-            action.update_guestfs()
+        with (
+            patch("lava_dispatcher.utils.ext4.inject_tar") as inject_tar_mock,
+            self.assertLogs(action.logger, level="DEBUG") as action_logs,
+        ):
+            action.update_ext4()
 
-        guestfs_mock.assert_called_once_with(python_return_dict=True)
-        guestfs_mock().launch.assert_called_once_with()
-        guestfs_mock().list_devices.assert_called_once_with()
-        guestfs_mock().add_drive.assert_called_once_with(
-            str(tmp_dir_path / "rootfs.ext4")
-        )
-        guestfs_mock().mount.assert_called_once_with(
-            guestfs_mock().list_devices()[0], "/"
-        )
-        guestfs_mock().mkdir_p.assert_called_once_with("/")
-        guestfs_mock().tar_in.assert_called_once_with(
-            str(tmp_dir_path / "overlay.tar.gz"), "/", compress="gzip"
+        inject_tar_mock.assert_called_once_with(
+            str(tmp_dir_path / "rootfs.ext4"),
+            str(tmp_dir_path / "overlay.tar.gz"),
+            "/",
+            compress="gzip",
         )
         self.assertEqual(
             [(r.name, r.levelno, r.message) for r in action_logs.records],

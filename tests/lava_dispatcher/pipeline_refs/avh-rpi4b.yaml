@@ -99,7 +99,7 @@
       name: apply-overlay-image
       level: 1.1.3
       max_retries: 1
-      description: apply overlay via guestfs to the test image
+      description: apply overlay to the test image
       summary: apply overlay to test image
       timeout: 1800
     - class: DownloaderAction

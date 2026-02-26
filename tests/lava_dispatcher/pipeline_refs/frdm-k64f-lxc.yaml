@@ -189,7 +189,7 @@
   name: deployimages
   level: '4'
   max_retries: 1
-  description: deploy images using guestfs
+  description: deploy images using debugfs
   summary: deploy images
   timeout: 180
   pipeline:

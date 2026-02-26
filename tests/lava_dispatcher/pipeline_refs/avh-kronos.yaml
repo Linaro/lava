@@ -99,7 +99,7 @@
       name: apply-overlay-avh
       level: 1.1.3
       max_retries: 1
-      description: apply overlay via guestfs to avh storage file
+      description: apply overlay to avh storage file
       summary: apply overlay to avh storage file
       timeout: 1800
 - class: BootAvhAction
