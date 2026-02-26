@@ -147,4 +147,49 @@ check run sets the device health to `Good`, while a failed run sets it to `Bad`.
 For more information about device state and health, refer to
 [device state and health](../../../technical-references/state-machine.md#devices).
 
+## Hardware setup
+
+### Power control
+
+LAVA needs to control power to the device to automate power on, off, and reset
+operations. Common options include:
+
+* USB or GPIO controlled relay
+* PDU (Power Distribution Unit)
+
+Configure your power control scripts and note the commands for power on, power
+off, and reset operations.
+
+### Serial console
+
+LAVA communicates with the device through a serial connection. You will need to
+connect the device's serial console to the LAVA worker (e.g., via USB-to-TTL adapter).
+
+Configure `ser2net` on the worker to expose the serial port over telnet by adding
+an entry to `/etc/ser2net.yaml`:
+
+```yaml
+connection: &device-01
+  accepter: telnet(rfc2217),tcp,2001
+  enable: on
+  connector: serialdev,/dev/serial/by-id/<your-serial-device>,115200n81,local
+  options:
+    banner: \r\nser2net port \p device \d [\B] \r\n\r\n
+    telnet-brk-on-sync: true
+    kickolduser: true
+    max-connections: 2
+```
+
+!!! tip
+    * Always use paths in `/dev/serial/by-id/` to ensure stable device naming
+    across reboots.
+    * Setting `max-connections: 2` allows both LAVA and you to connect to the
+    serial console simultaneously for debugging.
+
+Restart or reload ser2net service:
+
+```shell
+sudo systemctl restart ser2net.service
+```
+
 --8<-- "refs.txt"
