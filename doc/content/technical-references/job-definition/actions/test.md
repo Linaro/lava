@@ -115,9 +115,6 @@ parameters, this allows tests to run without needing external access.
             - lava-test-case lsblk --shell lsblk
 ```
 
-For more details, see
-[Using inline test definitions](/technical-references/test-definition/#using-inline-test-definitions)
-
 ### path
 
 The path within that repository to the YAML file containing the test definition.
@@ -263,8 +260,7 @@ results/1234/testset-def/first_set/mount
 A single test definition can start and stop different TestSets in sequence, as
 long as the name of each TestSet is unique for that test definition.
 
-For more details, see
-[Test definitions](/technical-references/test-definition/)
+See also [test definitions](../../../user/basic-tutorials/test-definition.md)
 
 ## Monitors
 
