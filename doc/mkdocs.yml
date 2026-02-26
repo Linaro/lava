@@ -104,7 +104,7 @@ nav:
       - FVP: admin/basic-tutorials/device-setup/fvp.md
       - QEMU: admin/basic-tutorials/device-setup/qemu.md
       - RPi (u-boot): admin/basic-tutorials/device-setup/u-boot.md
-      - x15 (fastboot): admin/basic-tutorials/device-setup/fastboot.md
+      - DB410c (fastboot): admin/basic-tutorials/device-setup/fastboot.md
   - Advanced tutorials:
     - LDAP: admin/advanced-tutorials/ldap.md
     - Proxy: admin/advanced-tutorials/proxy.md
