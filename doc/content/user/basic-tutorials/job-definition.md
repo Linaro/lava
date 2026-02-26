@@ -21,6 +21,7 @@ The job definition is made of:
 * `timeouts`: [timeout definition](../../technical-references/job-definition/timeouts.md)
 * `priority`: [job priority](../../technical-references/job-definition/job.md#priority)
 * `visibility`: [job visibility](../../technical-references/job-definition/job.md#visibility)
+* `environment`: [job environment](../../technical-references/job-definition/environment.md)
 * `actions`: list of actions to run
 
 In this definition, we request to run a job called `simple qemu tjob` on a `qemu` DUT.
