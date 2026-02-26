@@ -187,4 +187,3 @@ nav:
     - worker:
       - lava-docker-worker: technical-references/services/lava-docker-worker.md
       - lava-worker: technical-references/services/lava-worker.md
-  - Test definition: technical-references/test-definition.md

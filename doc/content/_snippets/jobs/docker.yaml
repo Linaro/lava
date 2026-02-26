@@ -35,6 +35,6 @@ actions:
           name: smoke-tests-basic
         run:
           steps:
-          - lava-test-case check-lava-env --shell printenv | grep 'LAVA_JOB_ID'
-          - lava-test-case check-sys-info --shell uname -a | grep 'Debian'
+          - lava-test-case check-lava-env --shell "printenv | grep 'LAVA_JOB_ID'"
+          - lava-test-case check-sys-info --shell "uname -a | grep 'Debian'"
           - lava-test-case run-lscpu --shell lscpu
