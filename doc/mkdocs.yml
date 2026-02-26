@@ -163,6 +163,7 @@ nav:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
+        - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
