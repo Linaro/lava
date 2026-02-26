@@ -7,7 +7,7 @@ LAVA has extensive support for devices that use U-Boot as their bootloader,
 allowing you to deploy kernel, ramdisk, device tree blob (DTB), and other
 files via `tftp` deploy action, and boot them using `u-boot` boot method.
 
-## Hadware setup
+## Hardware setup
 
 Before adding a Raspberry Pi to LAVA, you need to set up the required hardware.
 This includes configuring the serial console, network connectivity, power
@@ -15,42 +15,15 @@ control, and preparing an SD card with U-Boot installed.
 
 ### Serial console
 
-LAVA communicates with the Raspberry Pi through a serial connection. You will
-need to connect a USB to serial adapter from LAVA worker to the Raspberry Pi
-GPIO pins:
+[Setup serial console](common.md#serial-console).
+
+For Raspberry Pi, connect the USB to serial adapter to the GPIO pins:
 
 | RPi GPIO Pin | Signal | USB-Serial Adapter |
 |--------------|--------|--------------------|
 | Pin 6        | GND    | GND                |
 | Pin 8        | TXD    | RXD                |
 | Pin 10       | RXD    | TXD                |
-
-Configure `ser2net` on the worker to expose the serial port over telnet by
-adding an entry to `/etc/ser2net.yaml`:
-
-```yaml
- connection: &rpi3-01
-   accepter: telnet(rfc2217),tcp,2001
-   enable: on
-   connector: serialdev,/dev/serial/by-id/usb-FTDI_FT232R_USB_UART_AB0NGN83-if00-port0,115200n81,local
-   options:
-     banner: \r\nser2net port \p device \d [\B] \r\n\r\n
-     telnet-brk-on-sync: true
-     kickolduser: true
-     max-connections: 2
-```
-
-!!! tip
-    * Always use paths in `/dev/serial/by-id/` to ensure stable device naming
-      across reboots.
-    * Setting `max-connections: 2` allows both LAVA and you to connect to the
-      serial console simultaneously for debugging.
-
-Restart or reload ser2net service:
-
-```shell
-sudo systemctl restart ser2net.service
-```
 
 ### Network connectivity
 
@@ -61,13 +34,7 @@ LAVA worker.
 
 ### Power control
 
-LAVA needs to control power to the Raspberry Pi. Common options include:
-
-- USB or GPIO controlled relay
-- PDU (Power Distribution Unit)
-
-Configure your power control scripts and note the commands for power on, power
-off, and reset operations.
+[Setup power control](common.md#power-control).
 
 ### SD Card
 
