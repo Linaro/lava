@@ -110,7 +110,7 @@ class ApplyOverlayGuest(Action):
 
 class ApplyOverlayImage(Action):
     name = "apply-overlay-image"
-    description = "apply overlay via guestfs to the test image"
+    description = "apply overlay to the test image"
     summary = "apply overlay to test image"
     timeout_exception = InfrastructureError
 
@@ -849,7 +849,7 @@ class AppendOverlays(Action):
     description = "append overlays to an image"
     summary = "append overlays to an image"
 
-    # TODO: list libguestfs supported formats
+    # TODO: list supported image formats
     IMAGE_FORMATS = ["cpio.newc", "ext4", "tar"]
     OVERLAY_FORMATS = ["file", "tar"]
 
@@ -891,11 +891,7 @@ class AppendOverlays(Action):
         if self.params["format"] == "cpio.newc":
             self.update_cpio()
         elif self.params["format"] == "ext4":
-            try:
-                self.update_guestfs()
-            except RuntimeError as exc:
-                self.logger.exception(str(exc))
-                raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+            self.update_ext4()
         elif self.params["format"] == "tar":
             self.update_tar()
         else:
@@ -978,7 +974,16 @@ class AppendOverlays(Action):
     def update_tar(self):
         self._update(untar_file, partial(create_tarfile, arcname="."))
 
-    def update_guestfs(self):
+    def update_ext4(self):
+        import tempfile
+
+        from lava_dispatcher.utils.ext4 import (
+            extract_partition,
+            inject_file,
+            inject_tar,
+            write_partition_back,
+        )
+
         image = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
@@ -991,62 +996,56 @@ class AppendOverlays(Action):
             self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
             os.replace(f"{image}.non-sparse", image)
 
-        import guestfs
-
-        guest = guestfs.GuestFS(python_return_dict=True)
-        guest.add_drive(image)
-        try:
-            guest.launch()
+        target_image = image
+        start = 0
+        sector_size = 512
+        with tempfile.TemporaryDirectory(prefix="lava-part-") as tmpdir:
             if partition is not None:
-                try:
-                    device = guest.list_partitions()[partition]
-                except (IndexError, TypeError) as exc:
-                    raise JobError("Invalid partition number '%s'" % partition) from exc
-            else:
-                device = guest.list_devices()[0]
-            guest.mount(device, "/")
-        except RuntimeError as exc:
-            self.logger.exception(str(exc))
-            raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+                part_file, start, sector_size = extract_partition(
+                    image, partition, tmpdir
+                )
+                target_image = part_file
 
-        self.logger.debug("Overlays:")
-        for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
-            overlay_image = None
-            if overlay == "lava":
-                overlay_image = self.get_namespace_data(
-                    action="compress-overlay", label="output", key="file"
-                )
-                lava_test_results_dir = self.get_namespace_data(
-                    action="test", label="results", key="lava_test_results_dir"
-                )
-                path = os.path.dirname(lava_test_results_dir or "/")
-                compress = "gzip"
-            else:
-                overlay_image = self.get_namespace_data(
-                    action="download-action", label=label, key="file"
-                )
-                path = self.params["overlays"][overlay]["path"]
-                compress = None
-            if overlay_image:
-                self.logger.debug("- %s: %r to %r", label, overlay_image, path)
-                if (
-                    overlay == "lava"
-                    or self.params["overlays"][overlay]["format"] == "tar"
-                ):
-                    guest.mkdir_p(path)
-                    guest.tar_in(overlay_image, path, compress=compress)
-                else:
-                    guest.mkdir_p(os.path.dirname(path))
-                    guest.upload(overlay_image, path)
+            self.logger.debug("Overlays:")
+            for overlay in self.params["overlays"]:
+                label = "%s.%s" % (self.key, overlay)
+                overlay_image = None
                 if overlay == "lava":
-                    self.set_namespace_data(
-                        action=self.name, label="result", key="applied", value=True
+                    overlay_image = self.get_namespace_data(
+                        action="compress-overlay", label="output", key="file"
                     )
-            else:
-                self.logger.warning("- %s: <MISSING> to %r", label, path)
-        guest.umount(device)
-        guest.shutdown()
+                    lava_test_results_dir = self.get_namespace_data(
+                        action="test", label="results", key="lava_test_results_dir"
+                    )
+                    path = os.path.dirname(lava_test_results_dir or "/")
+                    compress = "gzip"
+                else:
+                    overlay_image = self.get_namespace_data(
+                        action="download-action", label=label, key="file"
+                    )
+                    path = self.params["overlays"][overlay]["path"]
+                    compress = None
+                if overlay_image:
+                    self.logger.debug("- %s: %r to %r", label, overlay_image, path)
+                    if (
+                        overlay == "lava"
+                        or self.params["overlays"][overlay]["format"] == "tar"
+                    ):
+                        inject_tar(target_image, overlay_image, path, compress=compress)
+                    else:
+                        inject_file(target_image, overlay_image, path)
+                    if overlay == "lava":
+                        self.set_namespace_data(
+                            action=self.name,
+                            label="result",
+                            key="applied",
+                            value=True,
+                        )
+                else:
+                    self.logger.warning("- %s: <MISSING> to %r", label, path)
+
+            if partition is not None:
+                write_partition_back(image, target_image, start, sector_size)
 
         if self.params.get("sparse", False):
             self.logger.debug("Calling img2simg on %r", image)
@@ -1103,7 +1102,7 @@ class ApplyOverlayAvh(Action):
     """
 
     name = "apply-overlay-avh"
-    description = "apply overlay via guestfs to avh storage file"
+    description = "apply overlay to avh storage file"
     summary = "apply overlay to avh storage file"
     timeout_exception = InfrastructureError
 
