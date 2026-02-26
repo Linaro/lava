@@ -170,6 +170,7 @@ nav:
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
       - Test: technical-references/job-definition/actions/test.md
+    - Environment: technical-references/job-definition/environment.md
     - Notifications: technical-references/job-definition/notifications.md
     - Protocols: technical-references/job-definition/protocols.md
     - Timeouts: technical-references/job-definition/timeouts.md
