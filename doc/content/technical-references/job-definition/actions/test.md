@@ -142,8 +142,8 @@ to be made available to the test shell, the value is the value of that variable.
 
 ### expected
 
-(optional) Provide an expected test case list. Missing test cases after test or
-job run are reported as fails while extra cases are logged as warnings.
+(optional) Provide an expected test case list. Both unexpected and missing test
+cases are reported as fail.
 
 ```yaml hl_lines="10-11"
 - test:
@@ -382,9 +382,8 @@ fixupdict:
 
 ### expected
 
-(optional) Provide an expected test case list. After the test suite `end`
-matches, missing test cases are reported as fail. Extra test cases are logged
-as warnings.
+(optional) Provide an expected test case list. Both unexpected and missing test
+cases are reported as fail.
 
 ```yaml title="Expected test cases"
 - test:
@@ -567,9 +566,8 @@ any output on success; of course, in this case you would need to specify
 
 ### expected
 
-(optional) A list of expected test cases. After the script or the job
-completes, missing test cases are reported as fail while extra test cases are
-logged as warnings.
+(optional) Provide an expected test case list. Both unexpected and missing test
+cases are reported as fail.
 
 ```yaml title="Expected test cases" hl_lines="9-11"
 - test:

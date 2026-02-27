@@ -174,8 +174,6 @@ class TestTestShell(LavaDispatcherTestCase):
         action.report = {
             "tc1": "pass",
             "tc2": "fail",
-            "tc5": "pass",
-            "tc6": {"set": "set1", "result": "fail"},
         }
 
         action.logger.results = MagicMock()
@@ -224,18 +222,9 @@ class TestTestShell(LavaDispatcherTestCase):
             any_order=False,
         )
 
-        # Test that warning logs appear for both missing and unexpected test cases.
         actual_logs = [(r.levelname, r.message) for r in action_logs.records]
         self.assertIn(
             ("WARNING", "Reporting missing expected test cases as 'fail' ..."),
-            actual_logs,
-        )
-        self.assertIn(("WARNING", "Unexpected test result: tc5: pass"), actual_logs)
-        self.assertIn(
-            (
-                "WARNING",
-                "Unexpected test result: tc6: {'set': 'set1', 'result': 'fail'}",
-            ),
             actual_logs,
         )
 
@@ -304,6 +293,7 @@ class TestTestShell(LavaDispatcherTestCase):
         action = TestShellAction(job)
         action.logger.marker = MagicMock()
         action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
 
         data = ("TESTCASE", "hello")
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
@@ -368,6 +358,7 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id")
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
@@ -393,6 +384,7 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234")
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
@@ -423,6 +415,7 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
         action.logger.results = MagicMock()
         action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
 
         data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=case_id MEASUREMENT=1234 UNITS=s")
         with self.assertLogs(action.logger, "DEBUG") as action_logs:
@@ -448,6 +441,42 @@ class TestTestShell(LavaDispatcherTestCase):
                 "units": "s",
             }
         )
+
+    def test_signal_testcase_handle_unexpected(self):
+        job = self.create_simple_job()
+
+        action = TestShellAction(job)
+        action.logger.marker = MagicMock()
+        action.logger.results = MagicMock()
+        action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
+        action.set_namespace_data(
+            action="test",
+            label="UUID",
+            key="testdef_expected",
+            value=["tc1"],
+        )
+
+        data = ("TESTCASE", "RESULT=pass TEST_CASE_ID=tc2")
+        with self.assertLogs(action.logger, "DEBUG") as action_logs:
+            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+
+        actual_logs = [(r.levelname, r.message) for r in action_logs.records]
+        self.assertIn(
+            ("WARNING", "'tc2' not found in expected test case list!"),
+            actual_logs,
+        )
+        self.assertIn(
+            (
+                "WARNING",
+                "Forcing unexpected 'tc2' result 'pass' to 'fail' ...",
+            ),
+            actual_logs,
+        )
+        action.logger.results.assert_called_once_with(
+            {"definition": None, "case": "tc2", "result": "fail"}
+        )
+        self.assertEqual(action.report, {"tc2": "fail"})
 
     def test_signal_test_feedback(self):
         job = self.create_simple_job()

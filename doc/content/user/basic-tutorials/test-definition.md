@@ -275,19 +275,24 @@ install:
 ## Expected
 
 The `expected` dictionary allows users to define a list of expected test cases.
-At the end of each test run, missing expected test cases from the test results
-are marked as fail. Conversely, test cases present in the results but not in the
-expected list are logged as warnings.
+Test case present in the results but not in the expected list is forcibly reported
+as `fail`. At the end of each test run, missing expected test cases from the test
+results are reported as `fail` as well.
 
-With the following test definition example, tc3 and tc4 will be reported as `fail`,
-and warnings will be logged for tc5 and tc6.
+With the following test definition example, tc5 and tc6 will be reported as
+`fail` because they are unexpected. Likewise, tc3 and tc4 will be reported as
+`fail` because they are missing.
 
 ```yaml title="Test definition"
 metadata:
   format: Lava-Test Test Definition 1.0
   name: expected-testdef-example
 run:
-  steps: []
+  steps:
+  - lava-test-case tc1 --result pass
+  - lava-test-case tc2 --result fail
+  - lava-test-case tc5 --result pass
+  - lava-test-case tc6 --result fail
 expected:
   - tc1
   - tc2
