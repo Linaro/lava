@@ -84,7 +84,7 @@ class TestMonitorAction(ReportMixin, Action):
 
             with connection.test_connection() as test_connection:
                 while self._keep_running(
-                    test_connection, timeout=test_connection.timeout
+                    test_connection, monitor, timeout=test_connection.timeout
                 ):
                     pass
 
@@ -95,12 +95,14 @@ class TestMonitorAction(ReportMixin, Action):
             self.handle_summary(self.test_suite_name)
         return connection
 
-    def _keep_running(self, test_connection, timeout=120):
+    def _keep_running(self, test_connection, monitor, timeout=120):
         self.logger.debug("test monitoring timeout: %d seconds", timeout)
         retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
-        return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
+        return self.check_patterns(
+            list(self.patterns.keys())[retval], test_connection, monitor
+        )
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event, test_connection, monitor):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -141,8 +143,12 @@ class TestMonitorAction(ReportMixin, Action):
                             results.update({"measurement": match["measurement"]})
                         if "units" in match:
                             results.update({"units": match["units"]})
+                        if expected := monitor.get("expected"):
+                            results["result"] = self.handle_unexpected(
+                                expected, results["case"], results["result"]
+                            )
                         self.logger.results(results)
-                        self.report[case_id] = match["result"]
+                        self.report[case_id] = results["result"]
             else:
                 if all(x in match for x in ["test_case_id", "measurement"]):
                     if match["measurement"] and match["test_case_id"]:
@@ -159,8 +165,12 @@ class TestMonitorAction(ReportMixin, Action):
                         }
                         if "units" in match:
                             results.update({"units": match["units"]})
+                        if expected := monitor.get("expected"):
+                            results["result"] = self.handle_unexpected(
+                                expected, results["case"], results["result"]
+                            )
                         self.logger.results(results)
-                        self.report[case_id] = "pass"
+                        self.report[case_id] = results["result"]
             ret_val = True
         return ret_val
 

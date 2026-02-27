@@ -27,13 +27,12 @@ class ReportMixin:
     level: str
 
     def handle_expected(self, expected: list[str], suite: str) -> None:
-        expected_set = set(expected)
-        reported_set = set(self.report)
+        """Report missing expected test cases as 'fail'.
 
-        if expected_set == reported_set:
-            return
-
-        if missing := expected_set - reported_set:
+        Should be called after a test suite completes to catch any expected
+        test cases that were not reported during the run.
+        """
+        if missing := set(expected) - set(self.report):
             self.logger.warning("Reporting missing expected test cases as 'fail' ...")
             for test_case_id in sorted(missing):
                 res: ResultDict = {
@@ -48,8 +47,24 @@ class ReportMixin:
                 self.report[test_case_id] = "fail"
                 self.logger.results(res)
 
-        for tc in sorted(reported_set - expected_set):
-            self.logger.warning(f"Unexpected test result: {tc}: {self.report[tc]}")
+    def handle_unexpected(self, expected: list[str], case: str, result: str) -> str:
+        """Force unexpected test cases to 'fail'.
+
+        For test cases not in the expected list, logs a warning and
+        changes non-fail results to 'fail'. Returns the adjusted result.
+        Should be called right before recording each test result.
+        """
+        if case in expected:
+            return result
+
+        self.logger.warning(f"{case!r} not found in expected test case list!")
+        if result == "fail":
+            return result
+
+        self.logger.warning(
+            f"Forcing unexpected {case!r} result {result!r} to 'fail' ..."
+        )
+        return "fail"
 
     def handle_summary(self, suite: str) -> None:
         # Only print if the report is not empty
