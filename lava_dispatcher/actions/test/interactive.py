@@ -313,6 +313,10 @@ class TestInteractiveAction(ReportMixin, Action):
                 # If the command is named, record the result
                 if "name" in cmd:
                     result["duration"] = "%.02f" % (time.monotonic() - start)
+                    if expected := script.get("expected"):
+                        result["result"] = self.handle_unexpected(
+                            expected, result["case"], result["result"]
+                        )
                     self.logger.results(result)
                     self.report[cmd["name"]] = result["result"]
 

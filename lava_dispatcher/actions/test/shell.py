@@ -491,14 +491,21 @@ class TestShellAction(ReportMixin, Action):
             if "units" in res:
                 res_data["units"] = res["units"]
 
+        if expected := self.get_namespace_data(
+            action="test", label=self.signal_director.test_uuid, key="testdef_expected"
+        ):
+            res_data["result"] = self.handle_unexpected(
+                expected, res_data["case"], res_data["result"]
+            )
+
         if self.testset_name:
             res_data["set"] = self.testset_name
-            self.report[res["test_case_id"]] = {
+            self.report[res_data["case"]] = {
                 "set": self.testset_name,
-                "result": res["result"],
+                "result": res_data["result"],
             }
         else:
-            self.report[res["test_case_id"]] = res["result"]
+            self.report[res_data["case"]] = res_data["result"]
         # Send the results back
         self.logger.results(res_data)
 

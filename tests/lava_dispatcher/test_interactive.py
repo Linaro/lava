@@ -131,6 +131,9 @@ class Logger:
     def info(self, line, *args):
         self._check(("info", line % args))
 
+    def warning(self, line, *args):
+        self._check(("warning", line % args))
+
     def results(self, res):
         self._check(("results", res))
 
@@ -326,6 +329,54 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 "network.ping": "fail",
             },
         )
+
+    @patch("time.monotonic", Timing())
+    def test_run_script_handle_unexpected(self):
+        action = TestInteractiveAction(self.create_simple_job())
+        action.last_check = 0
+        action.parameters = {"stage": 0}
+        action.logger = Logger(
+            [
+                ("info", "Sending nothing, waiting"),
+                ("debug", "Waiting for '=> '"),
+                ("debug", "Matched a prompt: '=> '"),
+                (
+                    "warning",
+                    "'wait prompt' not found in expected test case list!",
+                ),
+                (
+                    "warning",
+                    "Forcing unexpected 'wait prompt' result 'pass' to 'fail' ...",
+                ),
+                (
+                    "results",
+                    {
+                        "definition": "0_setup",
+                        "case": "wait prompt",
+                        "result": "fail",
+                        "duration": "2.00",
+                    },
+                ),
+            ]
+        )
+        action.validate()
+
+        conn_data = [("expect", ["=> ", pexpect.TIMEOUT], 0)]
+        script = {
+            "prompts": ["=> "],
+            "name": "setup",
+            "expected": ["tc1"],
+            "script": [
+                {"command": None, "name": "wait prompt"},
+            ],
+        }
+        test_connection = Connection(conn_data)
+        substitutions = {}
+        action.run_script(test_connection, script, substitutions)
+
+        self.assertEqual(action.logger.data, [])
+        self.assertEqual(test_connection.data, [])
+        self.assertEqual(action.report, {"wait prompt": "fail"})
 
     @patch("time.monotonic", Timing())
     def test_run_script_echo_discard(self):
