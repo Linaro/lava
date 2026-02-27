@@ -132,9 +132,11 @@ actions:
       local: true
     images:
       boot:
-        url: file:///root/lava/tmp/lava-run/1/images/boot-linaro-buster-dragonboard-410c-359.img
+        url: https://storage.lavacloud.io/health-checks/dragonboard-410c/boot-linaro-buster-359.img.gz
+        compression: gz
       rootfs:
-        url: file:///root/lava/tmp/lava-run/1/images/linaro-buster-developer-dragonboard-410c-359.img
+        url: https://storage.lavacloud.io/health-checks/dragonboard-410c/rootfs-linaro-buster-359.img.gz
+        compression: gz
         apply-overlay: true
     timeout:
       minutes: 15
@@ -163,11 +165,10 @@ actions:
           name: test-definition-example
         run:
           steps:
-          - lava-test-case kernel-info --shell uname -a
-          - lava-test-case network-info --shell ip a
-          - lava-test-case os-release --shell cat /etc/os-release
-      name: test-definition-example
+          - lava-test-case run-uname-a --shell uname -a
+          - lava-test-case check-os-id --shell 'cat /etc/os-release | grep "ID=debian"'
       path: inline/test-definition-example.yaml
+      name: test-suite-example
     timeout:
       minutes: 5
 ```
