@@ -218,7 +218,8 @@ Description: LAVA coordinator daemon
 Package: lava-dev
 Architecture: all
 Section: devel
-Depends: build-essential,
+Depends: black,
+         build-essential,
          ca-certificates,
          debootstrap,
          devscripts,
@@ -232,7 +233,6 @@ Depends: build-essential,
          libjs-jquery,
          libjs-jquery-flot,
          libjs-jquery-typeahead,
-         pycodestyle,
          python3-configobj,
          python3-guestfs,
          python3-magic,
