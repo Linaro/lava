@@ -180,8 +180,8 @@ class BaseFVPAction(Action):
 
             data += f"""
 echo "Finding the armlm binary"
-ARMLM="$(find /opt/model -maxdepth 1 -type d | grep -v license_terms | tail -n 1)/bin/arm_license_management_utilities/armlm"
-if [ -e "$ARMLM" ]; then
+ARMLM="$(find /opt/model/ -name armlm -type f 2>/dev/null | head -n 1)"
+if [ -n "$ARMLM" ] && [ -e "$ARMLM" ]; then
   echo "armlm at $ARMLM"
 
   ubl_license="{self.ubl_license}"
