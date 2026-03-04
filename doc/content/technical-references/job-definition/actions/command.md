@@ -15,6 +15,30 @@ actions:
     name: set_boot_to_nand
 ```
 
+## Creating a secret
+
+Set `create_secret` to store the output of the `do` command as a
+[job secret](../job.md#secrets):
+
+```yaml
+actions:
+- command:
+    name: generate_wifi_ssid
+    create_secret: LAVA_WIFI_SSID
+- command:
+    name: generate_wifi_ap
+    create_secret: LAVA_WIFI_PASSPHRASE
+```
+
+The output is stripped of surrounding whitespace and is not shown in the job
+log. The secret is then masked in the logs, exported to the environment of
+later commands on the dispatcher, and written to the `secrets` file of the
+overlay by later deploy actions. In this example, `generate_wifi_ap` can use
+`$LAVA_WIFI_SSID`.
+
+!!! note "Empty output"
+    If the command prints nothing, no secret is created.
+
 ## Device dictionary
 
 Admins should add the commands to the device dictionary:

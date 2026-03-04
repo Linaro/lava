@@ -5,10 +5,10 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from voluptuous import Required
+from voluptuous import Optional, Required
 
 from lava_common.schemas import action
 
 
 def schema():
-    return {**action(), Required("name"): str}
+    return {**action(), Required("name"): str, Optional("create_secret"): str}

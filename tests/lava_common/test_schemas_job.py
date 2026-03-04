@@ -198,3 +198,22 @@ class TestUefiBoot:
             ),
             strict=True,
         )
+
+
+def command_job(**params):
+    return {
+        "job_name": "command job",
+        "device_type": "qemu",
+        "visibility": "public",
+        "timeouts": {"job": {"minutes": 10}},
+        "actions": [{"command": {"name": "get_token", **params}}],
+    }
+
+
+class TestCommandCreateSecret:
+    def test_create_secret(self):
+        validate(command_job(create_secret="REGISTRY_TOKEN"), strict=True)
+
+    def test_create_secret_should_be_a_string(self):
+        with pytest.raises(Invalid):
+            validate(command_job(create_secret=True), strict=True)

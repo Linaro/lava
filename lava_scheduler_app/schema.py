@@ -255,6 +255,7 @@ def _job_command_schema():
             Required("name"): str,
             Optional("timeout"): _timeout_schema(),
             Optional("namespace"): str,
+            Optional("create_secret"): str,
         },
         extra=True,
     )
