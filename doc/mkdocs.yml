@@ -159,6 +159,7 @@ nav:
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
         - TMPFS: technical-references/job-definition/actions/deploy/to-tmpfs.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
+        - UUU: technical-references/job-definition/actions/deploy/to-uuu.md
       - Boot:
         - Common: technical-references/job-definition/actions/boot/common.md
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
@@ -172,6 +173,7 @@ nav:
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - SSH: technical-references/job-definition/actions/boot/method-ssh.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
+        - UUU: technical-references/job-definition/actions/boot/method-uuu.md
       - Test: technical-references/job-definition/actions/test.md
     - Environment: technical-references/job-definition/environment.md
     - Notifications: technical-references/job-definition/notifications.md
