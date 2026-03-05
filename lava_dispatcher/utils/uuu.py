@@ -1,4 +1,4 @@
-# Copyright 2020-2023, 2025 NXP
+# Copyright 2020-2023, 2025-2026 NXP
 #
 # Author: Larry Shen <larry.shen@nxp.com>
 #
@@ -32,10 +32,11 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 self.__driver__ = DockerDriver(self, params)
                 self.__driver__.docker_options = shlex.split(remote_options)
                 self.__driver__.docker_run_options = [
-                    "-t",
                     "--privileged",
                     "--volume=/dev:/dev",
                     "--net=host",
+                    "-e",
+                    "DISABLE_SUMMARY=true",
                 ]
             else:
                 self.__driver__ = NullDriver(self)
@@ -52,7 +53,13 @@ class OptionalContainerUuuAction(OptionalContainerAction):
         )
 
     def run_uuu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
-        return self.run_cmd(self.get_uuu_bcu_cmd(cmd), allow_fail, error_msg, cwd)
+        return self.run_cmd(
+            self.get_uuu_bcu_cmd(cmd),
+            allow_fail,
+            error_msg,
+            cwd,
+            env={"DISABLE_SUMMARY": "true"},
+        )
 
     def get_uuu_bcu_cmd(self, cmd, copy_files=True):
         uuu_bcu_cmd = self.driver.get_command_prefix(
