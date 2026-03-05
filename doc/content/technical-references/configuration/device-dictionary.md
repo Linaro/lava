@@ -370,6 +370,60 @@ action.
 {% set fastboot_sequence = ['no-flash-boot'] %}
 ```
 
+### SSH
+
+SSH device can be configured using the following parameters.
+
+```jinja
+{% extends 'ssh.jinja2' %}
+
+{% set ssh_host = '192.168.1.100' %}
+{% set ssh_port = 22 %}
+{% set ssh_user = 'root' %}
+{% set ssh_identity_file = '/<path>/private_key' %}
+```
+
+#### ssh_host
+
+Required. The hostname or IP address of the device.
+
+```jinja
+{% set ssh_host = '192.168.1.100' %}
+```
+
+#### ssh_port
+
+The SSH port on the device. Defaults to `22`.
+
+```jinja
+{% set ssh_port = 2222 %}
+```
+
+#### ssh_user
+
+The login user for SSH and SCP connections. Defaults to `root`.
+
+```jinja
+{% set ssh_user = 'testuser' %}
+```
+
+#### ssh_identity_file
+
+Path to the SSH private key on the LAVA worker. The matching public key must be
+added to the `~/.ssh/authorized_keys` file on the device for the SSH login
+authentication.
+
+```jinja
+{% set ssh_identity_file = '/root/.ssh/id_rsa' %}
+```
+
+If this parameter is not defined, the insecure `lava` private key distributed
+with LAVA is used by default. The corresponding public key is provided below.
+
+```plain
+ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLsQXteu02Mvs8Srs8TI/XJqTnfoNDjT5zJVQNI6BqUvvaHSna0iZpcPln9lbmRwAkf84rZAP3eAn051l+GYcRAVAH3bu9HDA8XXIbA4EkCZJ9aCPX7jqtSTBLaIUH28JRPhvP6iZWvqSQck4OmoyrBaMJByBm5CaPR4IhpcAyORF88AGmRW/qFIZTxNm/z1JN/WO+4+C/uM07T+KuInAPBQCTY9pYk4Vd2tZ4msWMYuWs3uVKRdN8aTgyqeyOE3zmXN8Tr2r5uFU0SAe1ZmVnex3s9ZF4YhgmX9SUBuxQw/FjNUajx2D18x/+RQuWXxZOpPQ5ecAysDKROTFWl6QB lava insecure public key
+```
+
 ## Examples
 
 ### Beaglebone-black
