@@ -1,4 +1,4 @@
-# Copyright 2019-2024 NXP
+# Copyright 2019-2024, 2026 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Gopalakrishnan RAJINE ANAND <gopalakrishnan.rajineanand@nxp.com>
@@ -497,7 +497,13 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         uuu_device_parameters = {"docker_image": "", "remote_options": ""}
         action = self.create_action(uuu_device_parameters)
         action.run_uuu(["foo", "bar"])
-        mock_cmd.assert_called_with(["foo", "bar"], False, None, None)
+        mock_cmd.assert_called_with(
+            ["foo", "bar"],
+            False,
+            None,
+            None,
+            env={"DISABLE_SUMMARY": "true"},
+        )
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_docker_uuu_local_cmd(self, mock_cmd):
@@ -511,10 +517,11 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
             [
                 "docker",
                 "run",
-                "-t",
                 "--privileged",
                 "--volume=/dev:/dev",
                 "--net=host",
+                "-e",
+                "DISABLE_SUMMARY=true",
                 "--rm",
                 "--init",
                 "atline/uuu:1.3.191",
@@ -524,6 +531,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
             False,
             None,
             None,
+            env={"DISABLE_SUMMARY": "true"},
         )
 
     @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="foo")
@@ -550,10 +558,11 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
                 "-H",
                 "10.192.244.5:2376",
                 "run",
-                "-t",
                 "--privileged",
                 "--volume=/dev:/dev",
                 "--net=host",
+                "-e",
+                "DISABLE_SUMMARY=true",
                 "--rm",
                 "--init",
                 "atline/uuu:1.3.191",
@@ -564,6 +573,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
             False,
             None,
             None,
+            env={"DISABLE_SUMMARY": "true"},
         )
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
