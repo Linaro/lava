@@ -424,6 +424,219 @@ with LAVA is used by default. The corresponding public key is provided below.
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLsQXteu02Mvs8Srs8TI/XJqTnfoNDjT5zJVQNI6BqUvvaHSna0iZpcPln9lbmRwAkf84rZAP3eAn051l+GYcRAVAH3bu9HDA8XXIbA4EkCZJ9aCPX7jqtSTBLaIUH28JRPhvP6iZWvqSQck4OmoyrBaMJByBm5CaPR4IhpcAyORF88AGmRW/qFIZTxNm/z1JN/WO+4+C/uM07T+KuInAPBQCTY9pYk4Vd2tZ4msWMYuWs3uVKRdN8aTgyqeyOE3zmXN8Tr2r5uFU0SAe1ZmVnex3s9ZF4YhgmX9SUBuxQw/FjNUajx2D18x/+RQuWXxZOpPQ5ecAysDKROTFWl6QB lava insecure public key
 ```
 
+### UUU
+
+The following variables should be used to configure UUU devices for using
+[`uuu`](../job-definition/actions/boot/method-uuu.md) boot method to flash
+these devices.
+
+#### uuu_usb_otg_path
+
+The USB OTG path of the device.
+
+```jinja
+{% set uuu_usb_otg_path = '2:143' %}
+```
+
+The path can be obtained using the command below:
+
+```shell
+$ uuu -lsusb
+uuu (Universal Update Utility) for nxp imx chips -- libuuu_1.3.102-1-gddf2649
+Connected Known USB Devices
+    Path	 Chip	 Pro	 Vid	 Pid	 BcdVersion
+    ==================================================
+    2:143	 MX8MQ	 SDP:	 0x1FC9	0x012B	 0x0001
+```
+
+Multiple paths can be provided as a list:
+
+```jinja
+{% set uuu_usb_otg_path = ['1:143', '2:143'] %}
+```
+
+#### uuu_usb_otg_path_command
+
+The command allows running a custom command on the worker to find the OTG paths
+on the LAVA worker at runtime so you don't have to modify the device template
+for changing device or USB port. In these cases, you will need to update the
+command to send the new paths.
+
+```jinja
+{% set uuu_usb_otg_path_command = ['echo', '2:143'] %}
+```
+
+For multiple OTG paths, your command must print a well formatted usb path
+accepted by `uuu` on each line with no new-line at the end of the output.
+
+```jinja
+{% set uuu_usb_otg_path_command = ['echo', '-ne', '1:143\n2:143'] %}
+```
+
+!!! note
+    In practice, the command would be a script that runs on the LAVA worker to
+    query and output the OTG paths in the required format, rather than a hardcoded
+    `echo` in the examples.
+
+!!! warning
+    If `uuu_usb_otg_path` is not set or does not match the expected format,
+    LAVA falls back to `uuu_usb_otg_path_command`. You must provide one of them
+    in your device dictionary.
+
+#### uuu_corrupt_boot_media_command
+
+Required. A list of commands to execute on the platform within U-Boot to corrupt
+the primary boot media. On the next reboot, serial download protocol must be
+available on the platform to flash future images using `uuu`.
+
+```jinja
+{% set uuu_corrupt_boot_media_command = ['mmc dev 1', 'mmc erase 0 0x400'] %}
+```
+
+#### uuu_power_off_before_corrupt_boot_media
+
+In case U-Boot continuously restarts, it will interfere with interrupting U-Boot
+while attempting to corrupt the boot media. Set this option to `true` to power
+off the device before the boot media corrupting action.
+
+```jinja
+{% set uuu_power_off_before_corrupt_boot_media = true %}
+```
+
+#### uuu_docker_image
+
+The Docker image used to run UUU commands. The image must contain the `uuu`
+binary.
+
+```jinja
+{% set uuu_docker_image = 'atline/uuu:1.5.239' %}
+```
+
+!!! note
+    A `docker` block in the job definition overrides this value. See
+    [docker](../job-definition/actions/boot/method-uuu.md#docker).
+
+#### uuu_remote_options
+
+When the UUU device is not directly connected to the LAVA worker, you can use
+this parameter to provide the Docker client options for running `uuu` inside a
+container on a remote machine.
+
+```jinja
+{% set uuu_remote_options = '--tlsverify --tlscacert=/certs/ca.pem --tlscert=/certs/cert.pem --tlskey=/certs/key.pem -H 10.192.244.5:2376' %}
+```
+
+See the Docker documentation for [remote access](https://docs.docker.com/engine/daemon/remote-access/)
+and [TLS protection](https://docs.docker.com/engine/security/https/).
+
+!!! note
+    The minimal Docker version to run uuu is 19.03. This is due to a bug in
+    earlier docker versions. See https://github.com/moby/moby/pull/37665.
+
+### BCU
+
+Most recent i.MX boards (imx8dxl, imx8mp, imx8ulp, imx93 as of july-2022)
+support BCU, a remote control utility. BCU allows changing the board's boot
+configuration (mainly SD card, eMMC or USB Serial Download Protocol) through a
+serial interface. You can use the following parameters to configure BCU.
+
+#### bcu_board_name
+
+Required. The BCU board model name.
+
+```jinja
+{% set bcu_board_name = 'imx93evk11b1' %}
+```
+
+The list of supported board model can be obtained with `bcu lsboard`:
+
+```shell
+$ bcu lsboard
+version bcu_1.1.128-0-ge7027dc
+
+list of supported board model:
+
+	imx8dxlevk
+	imx8dxlevkc1
+	imx8dxl_ddr3_evk
+	imx8dxl_obx
+	imx8mpevkpwra0
+	imx8mpevkpwra1
+	imx8mpevk
+	imx8mpddr4
+	imx8ulpevkb2
+	imx8ulpevk9
+	imx8ulpwatchval
+	imx8ulpwatchuwb
+	val_board_1
+	val_board_2
+	imx91qsb
+	imx91evk11
+	imx93evk11
+	imx93evk11b1
+	imx93wevk
+	val_board_3
+	imx93qsb
+	imx93evk14
+	imx95evk19
+	imx95evk15
+	imx952evk15
+	imx952evk19
+	nxp_custom
+	nxp_custom_revB
+	val_board_4
+	val_board_5
+	val_board_6
+	val_board_8
+	bench_imx8qm
+	bench_imx8qm_revB
+	bench_imx8qxp
+	bench_imx8qxp_revB
+	bench_imx8mq
+	bench_imx6ull
+	bench_mcu
+	imx943evk19a0
+	imx943evk19b1
+	imx943obx
+	val_board_7
+	val_board_9
+	val_board_10
+	val_board_11
+	val_board_12
+done
+```
+
+#### bcu_board_id
+
+The BCU board ID. It can be obtained with `bcu lsftdi`.
+
+```jinja
+{% set bcu_board_id = "1-3.2.1" %}
+```
+
+#### bcu_board_id_command
+
+A command that prints the BCU board identifier at runtime, allowing per-worker
+customisation. The command must print a single line with a valid board ID
+accepted by `bcu`.
+
+```jinja
+{% set bcu_board_id_command = ['echo', '2-1.3'] %}
+```
+
+!!! warning
+    If `bcu_board_id` is not set or does not match the expected format,
+    LAVA falls back to `bcu_board_id_command`. You must provide one of them
+    in your device dictionary.
+
+#### additional_bcu_cleanup_commands
+
+A list of additional BCU commands to run during `uuu` boot action cleanup.
+
+```jinja
+{% set additional_bcu_cleanup_commands = ["set_gpio ft_fta_sel 0"] %}
+```
+
 ## Examples
 
 ### Beaglebone-black
