@@ -12,7 +12,7 @@ Currently, supported Musca devices are:
     to: musca
     images:
       test_binary:
-        url: https://example.com/blinky.hex
+        url: https://storage.lavacloud.io/health-checks/musca-b/tfm.hex
 ```
 
 The board is powered on and its mass storage device (MSD) is mounted. The test
