@@ -8,7 +8,7 @@ The `musca` boot method is used to boot Musca devices deployed by the
     to: musca
     images:
       test_binary:
-        url: https://example.com/blinky.hex
+        url: https://storage.lavacloud.io/health-checks/musca-b/tfm.hex
 
 - boot:
     method: musca
@@ -34,3 +34,38 @@ specific string from the serial output before continuing.
 
 No shell is expected, and no boot string is checked. All checking should be
 done with [test monitors](../test.md#monitors).
+
+## Job example
+
+```yaml
+job_name: musca-b-health-check
+device_type: musca-b
+priority: medium
+visibility: public
+
+timeouts:
+  job:
+    minutes: 20
+  action:
+    minutes: 10
+
+actions:
+    - deploy:
+        to: musca
+        images:
+          test_binary:
+            url: https://storage.lavacloud.io/health-checks/musca-b/tfm.hex
+
+    - boot:
+        method: musca
+
+    - test:
+        monitors:
+        - name: "Secure_Test_Suites_Summary"
+          start: "Non-Secure system"
+          end: "starting\\.{3}"
+          pattern: "Non-Secure system starting\\.{3}"
+          fixupdict:
+              '!': pass
+              '': fail
+```
