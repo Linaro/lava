@@ -370,6 +370,33 @@ action.
 {% set fastboot_sequence = ['no-flash-boot'] %}
 ```
 
+### Secondary media
+
+Use `<media>_label` and `<media>_uuid` to configure a secondary media in your
+device dictionary. The `/dev/disk/by-id/<media>_uuid` must exist on the LAVA
+worker.
+
+#### USB
+
+```jinja2
+{% set usb_label = 'SanDiskCruzerBlade' %}
+{% set usb_uuid = 'usb-SanDisk_Cruzer_Blade_20060266531DA442AD42-0:0' %}
+```
+
+#### SATA
+
+```jinja2
+{% set sata_label = 'ST160LM003' %}
+{% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
+```
+
+#### SD
+
+```jinja2
+{% set sd_label = 'sdcard' %}
+{% set sd_uuid = 'mmc-SD16G_0xda85ac89' %}
+```
+
 ### SSH
 
 SSH device can be configured using the following parameters.
