@@ -155,6 +155,7 @@ nav:
         - ISO Installer: technical-references/job-definition/actions/deploy/to-iso-installer.md
         - MPS: technical-references/job-definition/actions/deploy/to-mps.md
         - Musca: technical-references/job-definition/actions/deploy/to-musca.md
+        - NBD: technical-references/job-definition/actions/deploy/to-nbd.md
         - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - SSH: technical-references/job-definition/actions/deploy/to-ssh.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
