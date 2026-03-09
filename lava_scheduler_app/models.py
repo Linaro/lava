@@ -1385,7 +1385,6 @@ class TestJob(models.Model):
     """
 
     class Meta:
-        index_together = ["health", "state", "requested_device_type"]
         default_permissions = ("change", "delete")
         indexes = (
             models.Index(fields=("-submit_time",)),
@@ -1597,7 +1596,7 @@ class TestJob(models.Model):
         "Finished": STATE_FINISHED,
     }
     state = models.IntegerField(
-        choices=STATE_CHOICES, default=STATE_SUBMITTED, editable=False
+        choices=STATE_CHOICES, default=STATE_SUBMITTED, editable=False, db_index=True
     )
 
     HEALTH_UNKNOWN, HEALTH_COMPLETE, HEALTH_INCOMPLETE, HEALTH_CANCELED = range(4)
@@ -1613,7 +1612,9 @@ class TestJob(models.Model):
         "Incomplete": HEALTH_INCOMPLETE,
         "Canceled": HEALTH_CANCELED,
     }
-    health = models.IntegerField(choices=HEALTH_CHOICES, default=HEALTH_UNKNOWN)
+    health = models.IntegerField(
+        choices=HEALTH_CHOICES, default=HEALTH_UNKNOWN, db_index=True
+    )
 
     def go_state_scheduling(self, device):
         """
