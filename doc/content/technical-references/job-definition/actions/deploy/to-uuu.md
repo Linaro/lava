@@ -97,6 +97,14 @@ The default is `false`. Set `sparse: true` if the image is a sparse image:
         apply-overlay: true
 ```
 
+### url
+
+See [url](./index.md#url)
+
+### compression
+
+See [compression](./index.md#compression)
+
 ## uniquify
 
 By default, LAVA stores each downloaded image in a separate subdirectory named
@@ -114,11 +122,3 @@ after the image key to avoid filename collisions. When needed, set
       system:
         url: https://example.com/imx-image-multimedia.rootfs.wic
 ```
-
-### url
-
-See [url](./index.md#url)
-
-### compression
-
-See [compression](./index.md#compression)
