@@ -20,7 +20,7 @@ def schema():
             Required("image"): deploy.url(),
             Optional(str): deploy.url(),
         },
-        Exclusive("image", "image"): deploy.url(),
+        Exclusive("image", "image"): deploy.url({Optional("root_partition"): int}),
         Required("device"): str,
         Optional("download"): {
             Required("tool"): str,
