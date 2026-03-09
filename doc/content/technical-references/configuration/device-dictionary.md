@@ -424,6 +424,31 @@ with LAVA is used by default. The corresponding public key is provided below.
 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDLsQXteu02Mvs8Srs8TI/XJqTnfoNDjT5zJVQNI6BqUvvaHSna0iZpcPln9lbmRwAkf84rZAP3eAn051l+GYcRAVAH3bu9HDA8XXIbA4EkCZJ9aCPX7jqtSTBLaIUH28JRPhvP6iZWvqSQck4OmoyrBaMJByBm5CaPR4IhpcAyORF88AGmRW/qFIZTxNm/z1JN/WO+4+C/uM07T+KuInAPBQCTY9pYk4Vd2tZ4msWMYuWs3uVKRdN8aTgyqeyOE3zmXN8Tr2r5uFU0SAe1ZmVnex3s9ZF4YhgmX9SUBuxQw/FjNUajx2D18x/+RQuWXxZOpPQ5ecAysDKROTFWl6QB lava insecure public key
 ```
 
+### USBG MS
+
+For using the [`usbg-ms`](../job-definition/actions/deploy/to-usbg-ms.md)
+deployment method, the device dictionary must define the `usbg_ms_commands`
+variable with `enable` and `disable` entries that accept a single string or a
+list of strings.
+
+```jinja
+{% set usbg_ms_commands = {
+    "enable": ["laacli usbg-ms on --image {IMAGE}"],
+    "disable": ["laacli usbg-ms off"],
+} %}
+```
+
+#### enable
+
+The commands for setting up the USB gadget.
+
+The `enable` commands should contain the `{IMAGE}` placeholder which LAVA
+replaces with the path to the downloaded image file.
+
+#### disable
+
+The commands for removing the USB gadget.
+
 ### UUU
 
 The following variables should be used to configure UUU devices for using

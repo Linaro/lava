@@ -150,6 +150,18 @@ You can also provide:
 In order to insert the LAVA overlay (that include the test definitions and
 helpers), use `lava: true` as overlay.
 
+```yaml
+- deploy:
+    to: usbg-ms
+    image:
+      url: https://raspi.debian.net/tested/20231109_raspi_4_bookworm.img.xz
+      compression: xz
+      format: ext4
+      partition: 1
+      overlays:
+        lava: true
+```
+
 ### Overlays
 
 You can insert a tar archive or a file in the artifact. You should provide:
