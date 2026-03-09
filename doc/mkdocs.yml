@@ -157,6 +157,7 @@ nav:
         - Musca: technical-references/job-definition/actions/deploy/to-musca.md
         - NBD: technical-references/job-definition/actions/deploy/to-nbd.md
         - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
+        - Secondary: technical-references/job-definition/actions/deploy/to-secondary.md
         - SSH: technical-references/job-definition/actions/deploy/to-ssh.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
         - TMPFS: technical-references/job-definition/actions/deploy/to-tmpfs.md
