@@ -160,6 +160,7 @@ nav:
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
         - TMPFS: technical-references/job-definition/actions/deploy/to-tmpfs.md
         - VEMSD: technical-references/job-definition/actions/deploy/to-vemsd.md
+        - USBG MS: technical-references/job-definition/actions/deploy/to-usbg-ms.md
         - UUU: technical-references/job-definition/actions/deploy/to-uuu.md
       - Boot:
         - Common: technical-references/job-definition/actions/boot/common.md
