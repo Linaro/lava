@@ -151,6 +151,7 @@ nav:
         - Docker: technical-references/job-definition/actions/deploy/to-docker.md
         - Downloads: technical-references/job-definition/actions/deploy/to-downloads.md
         - Fastboot: technical-references/job-definition/actions/deploy/to-fastboot.md
+        - Flasher: technical-references/job-definition/actions/deploy/to-flasher.md
         - FVP: technical-references/job-definition/actions/deploy/to-fvp.md
         - ISO Installer: technical-references/job-definition/actions/deploy/to-iso-installer.md
         - MPS: technical-references/job-definition/actions/deploy/to-mps.md
@@ -171,6 +172,7 @@ nav:
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
+        - GRUB: technical-references/job-definition/actions/boot/method-grub.md
         - iPXE: technical-references/job-definition/actions/boot/method-ipxe.md
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - Musca: technical-references/job-definition/actions/boot/method-musca.md
