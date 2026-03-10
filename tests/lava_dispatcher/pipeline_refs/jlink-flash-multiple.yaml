@@ -2,7 +2,7 @@
   name: deployimages
   level: '1'
   max_retries: 1
-  description: deploy images using guestfs
+  description: deploy images
   summary: deploy images
   timeout: 300
   pipeline:

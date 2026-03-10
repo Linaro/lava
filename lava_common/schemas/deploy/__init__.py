@@ -32,6 +32,7 @@ def url(extra=None):
             Required("format"): Any("cpio.newc", "ext4", "tar"),
             Optional("partition"): int,
             Optional("sparse"): bool,
+            Optional("overlay_backend"): Any("auto", "e2fsprogs", "guestfs"),
             Required("overlays"): {
                 Optional("lava"): bool,
                 str: {

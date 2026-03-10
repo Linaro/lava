@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
     name = "deployimages"
-    description = "deploy images using guestfs"
+    description = "deploy images"
     summary = "deploy images"
 
     def populate(self, parameters):

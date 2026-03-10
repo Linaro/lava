@@ -256,7 +256,7 @@ class DeployPosixImages(DeployStrategy):
     Uses existing Actions to download and checksum
     as well as creating a qcow2 image for the test files.
     Does not boot the device.
-    Requires guestfs instead of loopback support.
+    Requires e2fsprogs or libguestfs for overlay injection.
     Prepares the following actions and pipelines:
         retry-pipeline
             download-action
