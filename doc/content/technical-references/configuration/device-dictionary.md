@@ -198,6 +198,17 @@ addressable hardware.
 } %}
 ```
 
+#### static_info
+
+A list of dictionaries describing static information. A common use case is
+defining a file server address for URL substitution. For example:
+
+```jinja
+{% set static_info = [{'FILE_SERVER_IP': "10.192.244.104"}] %}
+```
+
+See also [URL placeholders](../job-definition/actions/deploy/index.md#url).
+
 #### storage_info
 
 A list of dictionaries, where each dictionary value can contain keys describing
@@ -369,6 +380,43 @@ action.
 ```jinja
 {% set fastboot_sequence = ['no-flash-boot'] %}
 ```
+
+### Flasher
+
+The following `flasher_deploy_commands` variable must be configured for using
+the [flasher](../job-definition/actions/deploy/to-flasher.md) deployment method.
+
+#### flasher_deploy_commands
+
+A list of commands that LAVA executes on the worker for flashing images onto the
+DUT. For example, using a USB-SD-Mux to write an image to the DUT's SD card:
+
+```jinja
+{% set flasher_deploy_commands = [
+        '/root/.local/bin/usbsdmux /dev/sg1 host',
+        'sleep 3',
+        '/root/.local/bin/usbsdmux /dev/sg1 info',
+        'dd if={RECOVERY_IMAGE} of=/dev/disk/by-id/usb-LinuxAut_sdmux_HS-SD_MMC_000000001156-0:0 bs=4M oflag=sync conv=nocreat',
+        'sleep 3',
+        '/root/.local/bin/usbsdmux /dev/sg1 client',
+    ]
+%}
+```
+
+The following placeholders can be used in the commands. LAVA substitutes them
+with the actual values at runtime.
+
+| Variable | Value |
+| --- | --- |
+| `{UPPER_CASE_IMAGE_KEY}` | Downloaded image path (e.g., `{RECOVERY_IMAGE}` for `images.recovery_image`) |
+| `{POWER_ON_COMMAND}` | [`power_on_command`](#power_on_command) |
+| `{POWER_OFF_COMMAND}` | [`power_off_command`](#power_off_command) |
+| `{SOFT_REBOOT_COMMAND}` | [soft_reboot_command](#soft_reboot_command) |
+| `{HARD_RESET_COMMAND}` | [`hard_reset_command`](#hard_reset_command) |
+| `{PRE_OS_COMMAND}` | [`pre_os_command`](#pre_os_command) |
+| `{PRE_POWER_COMMAND}` | [`pre_power_command`](#pre_power_command) |
+| `{DEVICE_INFO}` | YAML dump of [`device_info`](#device_info) |
+| `{STATIC_INFO}` | YAML dump of [`static_info`](#static_info) |
 
 ### Secondary media
 
