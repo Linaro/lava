@@ -181,6 +181,7 @@ nav:
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - SSH: technical-references/job-definition/actions/boot/method-ssh.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
+        - UEFI-Menu: technical-references/job-definition/actions/boot/method-uefi-menu.md
         - UUU: technical-references/job-definition/actions/boot/method-uuu.md
       - Test: technical-references/job-definition/actions/test.md
     - Environment: technical-references/job-definition/environment.md
