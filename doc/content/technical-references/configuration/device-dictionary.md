@@ -418,6 +418,16 @@ with the actual values at runtime.
 | `{DEVICE_INFO}` | YAML dump of [`device_info`](#device_info) |
 | `{STATIC_INFO}` | YAML dump of [`static_info`](#static_info) |
 
+### JLink
+
+#### board_id
+
+The serial number of the JLink probe or target board.
+
+```jinja
+{% set board_id = '000380000008' %}
+```
+
 ### Secondary media
 
 Use `<media>_label` and `<media>_uuid` to configure a secondary media in your
