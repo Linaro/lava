@@ -1,6 +1,6 @@
 # Health-Check
 
-An health-check is specific LAVA jobs that is automatically and regularly
+A health-check is specific LAVA jobs that is automatically and regularly
 scheduled to check the health of DUT.
 
 If for any reason the job fails, the DUT `health` will be set to `Bad` (see
@@ -16,7 +16,6 @@ report shows health-check failures and track the general health of the devices.
 
 There is also a table providing information on the fails checks at
 [http://localhost/scheduler/reports/failures?health-checks=1](http://localhost/scheduler/reports/failures?health-checks=1).
-
 
 ## Recommendations
 

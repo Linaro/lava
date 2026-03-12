@@ -1,4 +1,4 @@
-# cmsis-dap
+# CMSIS-DAP
 
 The `cmsis-dap` boot method takes no parameters. It is used to flash and boot
 a device by copying the images to the USB Mass Storage device exposed by the

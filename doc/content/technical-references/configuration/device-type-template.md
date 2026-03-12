@@ -26,8 +26,6 @@ LAVA will always look first in `/etc/lava-server/dispatcher-config/device-types/
 This mean that admins can override every device-type templates, including the
 ones provided by LAVA.
 
---8<-- "refs.txt"
-
 ## Base templates
 
 Every device-type template should inherit from `base.jinja2` which contains
@@ -70,3 +68,5 @@ will only define some memory address and prompts that are specific to the board.
 {% set bootloader_prompt = bootloader_prompt|default('U-Boot>') %}
 {% set console_device = console_device|default('ttyS1') %}
 ```
+
+--8<-- "refs.txt"

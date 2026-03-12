@@ -66,9 +66,9 @@ actions:
 
 - test:
     definitions:
-    - repository: https://gitlab.com/Linaro/lava-team/lava-functional-tests.git
-      from: git
-      path: lava-test-shell/smoke-tests-basic.yaml
+    - from: git
+      repository: https://gitlab.com/lava/functional-tests.git
+      path: posix/smoke-tests-basic.yaml
       name: smoke-tests
     timeout:
       minutes: 5

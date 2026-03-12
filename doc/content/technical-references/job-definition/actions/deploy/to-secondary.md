@@ -338,6 +338,6 @@ for testing if a disk image boots correctly from the SD card.
 See also:
 
 - [Prioritize RPi USB boot over SD](https://docs.lavacloud.io/devices/rpi-3-and-4.html#setup-a-simple-recovery-mechanism)
-- [usbg-ms deployment method](./to-usg-ms.md)
+- [usbg-ms deployment method](./to-usbg-ms.md)
 
 --8<-- "refs.txt"

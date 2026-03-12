@@ -1,6 +1,6 @@
 # Dispatcher configuration
 
-The dispatcher configuration files allows you to configure some of the behavior
+The dispatcher configuration files allow you to configure some of the behavior
 of the dispatchers.
 
 Available files are:
@@ -30,7 +30,7 @@ The dispatcher environment is used to set the process environment when spawning
 
 Environment configuration file is located on the server in:
 
-* `/etc/lava-server/env.yaml` default, for every dispatchers
+* `/etc/lava-server/env.yaml` default, for every dispatcher
 * `/etc/lava-server/dispatcher.d/<hostname>/env.yaml` for a specific dispatcher
 
 When loading the configuration, LAVA will look at the dispatcher specific
@@ -47,7 +47,7 @@ running tests.
 
 Environment configuration file is located on the server in:
 
-* `/etc/lava-server/env-dut.yaml` default, for every dispatchers
+* `/etc/lava-server/env-dut.yaml` default, for every dispatcher
 * `/etc/lava-server/dispatcher.d/<hostname>/env-dut.yaml` for a specific dispatcher
 
 When loading the configuration, LAVA will look at the dispatcher specific

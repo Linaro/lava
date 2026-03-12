@@ -1,8 +1,8 @@
 # Job definition
 
-The [job definition](../../technical-references/job-definition/job.md) is a `yaml` file that you submit to the LAVA server.
-This file is describing everything that LAVA needs to know to run your tests on
-a DUT.
+The [job definition](../../technical-references/job-definition/job.md) is a
+`yaml` file that you submit to the LAVA server. This file is describing everything
+that LAVA needs to know to run your tests on a DUT.
 
 ## QEMU example
 
@@ -37,7 +37,7 @@ Currently, LAVA support four type of actions:
 
 * [command](../../technical-references/job-definition/actions/command.md): run commands on the dispatcher
 * [deploy](../../technical-references/job-definition/actions/deploy/index.md): deploy software on the DUT
-* [boot](../../technical-references/job-definition/actions/boot.md): boot the DUT
+* [boot](../../technical-references/job-definition/actions/boot/common.md): boot the DUT
 * [test](../../technical-references/job-definition/actions/test.md): run some tests
 
 ### Deploy
