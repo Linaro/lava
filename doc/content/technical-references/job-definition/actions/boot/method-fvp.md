@@ -1,4 +1,4 @@
-# fvp
+# FVP
 
 The `fvp` boot method allows you to run Fixed Virtual Platforms.
 
