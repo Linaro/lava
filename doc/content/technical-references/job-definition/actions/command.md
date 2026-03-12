@@ -1,7 +1,7 @@
 # Command action
 
 The `command` action is used to execute a pre-defined command on the dispatcher
-itself. A typical use case would be to set the bootmode for a board by
+itself. A typical use case would be to set the boot mode for a board by
 controlling a relay.
 
 ## Job definition
@@ -50,5 +50,5 @@ When defined, the power commands are automatically added to the list of availabl
 * `recovery_mode`
 * `recovery_exit`
 
-!!! warn "`undo` is undefined"
+!!! warning "`undo` is undefined"
     When using such commands, LAVA will not run any `undo` command.
