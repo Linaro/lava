@@ -114,6 +114,34 @@ The final parsed and expanded boot commands are reported in the job logs:
 - bootz 0x01000000 0x04000000 0x03f00000
 ```
 
+Common placeholders used in multiple boot commands:
+
+| Placeholder | Description |
+| --- | --- |
+| `{LAVA_DISPATCHER_IP}` | IP address of the LAVA worker |
+| `{LAVA_JOB_ID}` | The numeric LAVA job ID |
+| `{LAVA_MAC}` | DUT MAC address configured in device dictionary |
+| `{SERVER_IP}` | Alias for `{LAVA_DISPATCHER_IP}` |
+| `{KERNEL}` | TFTP path to the `kernel` image |
+| `{RAMDISK}` | TFTP path to the `ramdisk` image |
+| `{DTB}` | TFTP path to the `dtb` file |
+| `{INITRD}` | Alias for `{RAMDISK}` |
+| `{TEE}` | TFTP path to the `tee` binary |
+| `{NFS_SERVER_IP}` | Alias for `{LAVA_DISPATCHER_IP}` |
+| `{NFSROOTFS}` | Path to the extracted `nfsroot` filesystem |
+| `{KERNEL_ADDR}` | Load address for the kernel |
+| `{RAMDISK_ADDR}` | Load address for the ramdisk |
+| `{DTB_ADDR}` | Load address for the device tree blob |
+| `{DTB_BASE_ADDR}` | Base address for the device tree (used with overlays) |
+| `{DTB_BASE_RESIZE}` | Resize value for the base device tree (used with overlays) |
+| `{DTBO_ADDR}` | Load address for device tree overlays |
+| `{TEE_ADDR}` | Load address for the TEE binary |
+| `{NBDSERVERIP}` | Alias for `{LAVA_DISPATCHER_IP}` |
+| `{NBDSERVERPORT}` | Port of the NBD server |
+| `{PRESEED_CONFIG}` | TFTP path to the preseed configuration file |
+| `{PRESEED_LOCAL}` | File name embedded in the ramdisk root |
+| `{BOOTX}` | The final boot command with appropriate addresses |
+
 ### Custom boot commands
 
 During testing and development, it can be useful to override the boot commands
