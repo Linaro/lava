@@ -1,4 +1,4 @@
-# avh
+# AVH
 
 Creates and boots Arm Virtual Hardware models.
 

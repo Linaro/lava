@@ -5,8 +5,8 @@ parses results, and reports test outcomes.
 
 **Key rules for using test actions:**
 
-* A test action **never** boots the device - a [boot action](boot.md) **must**
-  be defined before it.
+* A test action **never** boots the device - a [boot action](./boot/common.md)
+  **must** be defined before it.
 
 * LAVA support scripts are prepared by the [deploy action](deploy/index.md) and
   remain available for all test definitions until the next deploy block.
