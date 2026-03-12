@@ -170,6 +170,7 @@ nav:
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
         - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
+        - Depthcharge: technical-references/job-definition/actions/boot/method-depthcharge.md
         - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - GRUB: technical-references/job-definition/actions/boot/method-grub.md

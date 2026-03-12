@@ -288,6 +288,47 @@ string sent to the DUT during the `test` action:
     test signal. The delay can be helpful on slow serial connections to avoid
     character interleaving with other inputs, such as kernel dmesg.
 
+### Depthcharge
+
+The following variables can be used in a Depthcharge device dictionary to
+configure the [`depthcharge`](../job-definition/actions/boot/method-depthcharge.md)
+boot method.
+
+#### start_message
+
+The string that Depthcharge prints when it is ready to accept netboot
+commands. LAVA waits for this message after resetting the device.
+
+```jinja
+{% set start_message = start_message | default('Starting depthcharge on Volmar...') %}
+```
+
+Defaults to `Starting netboot`.
+
+#### bootloader_prompt
+
+The Depthcharge command line interface prompt string. LAVA uses this to detect
+when the bootloader is ready for sending the next command.
+
+```jinja
+{% set bootloader_prompt = bootloader_prompt | default('volmar:') %}
+```
+
+Defaults to `dpch:`.
+
+#### depthcharge_final_message
+
+The string that depthcharge prints when it has finished. LAVA waits for this
+message before continuing.
+
+```jinja
+{% set depthcharge_final_message = depthcharge_final_message | default('jumping to kernel') %}
+```
+
+Defaults to `Starting kernel`.
+
+See also [bootloader-final-message](../job-definition/actions/boot/common.md#bootloader-final-message).
+
 ### Fastboot
 
 The following variables can be used in fastboot device dictionary to configure
