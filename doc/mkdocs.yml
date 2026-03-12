@@ -176,6 +176,7 @@ nav:
         - iPXE: technical-references/job-definition/actions/boot/method-ipxe.md
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - Musca: technical-references/job-definition/actions/boot/method-musca.md
+        - New Connection: technical-references/job-definition/actions/boot/method-new-connection.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
         - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
