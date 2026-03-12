@@ -174,6 +174,7 @@ nav:
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - GRUB: technical-references/job-definition/actions/boot/method-grub.md
         - iPXE: technical-references/job-definition/actions/boot/method-ipxe.md
+        - JLink: technical-references/job-definition/actions/boot/method-jlink.md
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - Musca: technical-references/job-definition/actions/boot/method-musca.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
