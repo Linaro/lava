@@ -171,7 +171,7 @@ export LAVA_STORAGE_INFO_0_SATA='/dev/disk/by-id/ata-ST500DM002-1BD142_W3T79GCW'
 ```
 
 The environment can be overridden in the job definition, see
-[job environment](../job-definition/environment)
+[job environment](../job-definition/environment.md)
 
 #### device_info
 

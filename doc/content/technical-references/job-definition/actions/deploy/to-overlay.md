@@ -13,7 +13,7 @@ DUT.
 ## Use case
 
 The method is useful when the DUT is booted with a pre-installed OS. The overlay
-can be transfer to the running OS using
+can be transferred to the running OS using
 [`transfer_overlay`](../boot/common.md#transfer_overlay) in the subsequent boot
 method.
 
