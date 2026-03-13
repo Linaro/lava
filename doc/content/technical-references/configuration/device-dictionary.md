@@ -329,6 +329,14 @@ Defaults to `Starting kernel`.
 
 See also [bootloader-final-message](../job-definition/actions/boot/common.md#bootloader-final-message).
 
+### DFU
+
+`board_id` must be provided for adding a new DFU device.
+
+```jinja
+{% set board_id = "LCES2-0xf775916400000000" %}
+```
+
 ### Fastboot
 
 The following variables can be used in fastboot device dictionary to configure
