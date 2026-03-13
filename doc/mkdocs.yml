@@ -171,6 +171,7 @@ nav:
         - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - Depthcharge: technical-references/job-definition/actions/boot/method-depthcharge.md
+        - DFU: technical-references/job-definition/actions/boot/method-dfu.md
         - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - GRUB-EFI: technical-references/job-definition/actions/boot/method-grub-efi.md
