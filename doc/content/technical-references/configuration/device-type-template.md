@@ -40,9 +40,33 @@ For simplicity multiple base templates are provided for the most common bootload
 * `base-grub.jinja2`
 * `base-uboot.jinja2`
 
-## Examples
+## Device types
 
-For most device-types, extending a base template should be enough.
+For most device-types, extending a base template should be enough. Additional
+requirements are documented below.
+
+### DFU
+
+`usb_vendor_id` and `usb_product_id` must be provided.
+
+```jinja
+{% extends "base-uboot.jinja2" %}
+
+{% block body %}
+
+board_id: '{{ board_id|default('LCES2-0x0000000000000000') }}'
+usb_vendor_id: '045b'
+usb_product_id: '0239'
+
+{{ super() }}
+{% endblock body %}
+```
+
+`deploy_dfu_commands` is required for entering DFU from u-Boot.
+
+```jinja
+{% set deploy_dfu_commands = deploy_dfu_commands|default(["nand erase.part fs1", "dfu"]) %}
+```
 
 ### JLink
 
