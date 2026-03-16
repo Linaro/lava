@@ -371,6 +371,12 @@ class WorkerTable(LavaTable):
         model = Worker
         sequence = ["hostname", "state", "health", "description"]
         exclude = ["token"]
+        searches = {"hostname": "contains"}
+        queries = {
+            "worker_state_query": "state",
+            "worker_health_query": "health",
+            "worker_version_query": "version",
+        }
 
 
 class LogEntryTable(LavaTable):
