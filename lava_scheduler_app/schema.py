@@ -509,6 +509,8 @@ def _device_commands_schema():
 # controlled.
 _device_schema = Schema(
     {
+        "hostname": str,
+        "devicetype": str,
         "character_delays": dict,
         "commands": _device_commands_schema(),
         "constants": dict,

@@ -158,7 +158,8 @@ def test_internal_v1_jobs_get(client, mocker, settings):
     ]
     print(ret.json())
     assert yaml_safe_load(ret.json()["definition"]) == {"device_type": "qemu"}
-    assert "hostname: qemu05" not in ret.json()["device"]
+    assert "hostname: 'qemu01'" in ret.json()["device"]
+    assert "devicetype: 'qemu'" in ret.json()["device"]
     assert "available_architectures:" in ret.json()["device"]
 
     ret = client.get(
@@ -178,6 +179,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
         "host_role": "hello",
     }
     assert "hostname: qemu05" in ret.json()["device"]
+    assert "devicetype: qemu" in ret.json()["device"]
     assert "available_architectures:" not in ret.json()["device"]
 
 

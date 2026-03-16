@@ -913,9 +913,13 @@ class Device(RestrictedObject):
                 return File("device", self.hostname).read()
             return None
 
+        render_ctx = dict(job_ctx)
+        render_ctx["scheduled_device_name"] = self.hostname
+        render_ctx["scheduled_device_type"] = self.device_type.name
+
         try:
             template = DEVICES_JINJA_ENV.get_template("%s.jinja2" % self.hostname)
-            device_template = template.render(**job_ctx)
+            device_template = template.render(**render_ctx)
         except JinjaTemplateError:
             return None
 
@@ -940,6 +944,7 @@ class Device(RestrictedObject):
         data["constants"]["kernel-start-message"] = ""
         device_configuration = {
             "hostname": self.hostname,
+            "devicetype": self.device_type.name,
             "constants": data.get("constants", {}),
             "timeouts": data.get("timeouts", {}),
             "actions": {

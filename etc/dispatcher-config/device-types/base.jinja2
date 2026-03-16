@@ -70,6 +70,11 @@ character_delays:
 {% endif -%}
 {% endblock character_delays -%}
 
+{% block scheduler_metadata %}
+hostname: '{{ scheduled_device_name }}'
+devicetype: '{{ scheduled_device_type }}'
+{% endblock scheduler_metadata -%}
+
 {% block constants %}
 constants:
 
