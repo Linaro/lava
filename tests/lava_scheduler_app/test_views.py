@@ -100,9 +100,17 @@ def setup(db):
     dt_juno = DeviceType.objects.create(name="juno")
     dt_qemu_spec = DeviceType.objects.create(name="qemu_:'),;~")
 
-    worker_01 = Worker.objects.create(hostname="worker-01", state=Worker.STATE_OFFLINE)
-    worker_02 = Worker.objects.create(hostname="worker-02", state=Worker.STATE_ONLINE)
-    worker_spec = Worker.objects.create(hostname="worker_:')-,;~")
+    worker_01 = Worker.objects.create(
+        hostname="worker-01", state=Worker.STATE_OFFLINE, version="2024.01"
+    )
+    worker_02 = Worker.objects.create(
+        hostname="worker-02", state=Worker.STATE_ONLINE, version="2024.02"
+    )
+    worker_spec = Worker.objects.create(
+        hostname="worker_:')-,;~",
+        health=Worker.HEALTH_MAINTENANCE,
+        version="special-build",
+    )
 
     qemu_01 = Device.objects.create(
         hostname="qemu01",
@@ -1124,6 +1132,41 @@ def test_workers(client, setup):
     assert workers == set(
         ["worker_:')-,;~", "example.com", "worker-01", "worker-02"]
     )  # nosec
+
+
+@pytest.mark.django_db
+def test_workers_search(client, setup):
+    ret = client.get(reverse("lava.scheduler.workers"), {"worker_search": "worker-01"})
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["worker_table"].data) == 1  # nosec
+    assert ret.context["worker_table"].data[0].hostname == "worker-01"  # nosec
+
+
+@pytest.mark.django_db
+def test_workers_state_query(client, setup):
+    ret = client.get(reverse("lava.scheduler.workers"), {"worker_state": "Offline"})
+    assert ret.status_code == 200  # nosec
+    workers = {x.hostname for x in ret.context["worker_table"].data}
+    assert "worker-01" in workers  # nosec
+    assert "worker-02" not in workers  # nosec
+
+
+@pytest.mark.django_db
+def test_workers_health_query(client, setup):
+    ret = client.get(
+        reverse("lava.scheduler.workers"), {"worker_health": "Maintenance"}
+    )
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["worker_table"].data) == 1  # nosec
+    assert ret.context["worker_table"].data[0].hostname == "worker_:')-,;~"  # nosec
+
+
+@pytest.mark.django_db
+def test_workers_version_query(client, setup):
+    ret = client.get(reverse("lava.scheduler.workers"), {"worker_version": "2024.02"})
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["worker_table"].data) == 1  # nosec
+    assert ret.context["worker_table"].data[0].hostname == "worker-02"  # nosec
 
 
 @pytest.mark.django_db
