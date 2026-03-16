@@ -248,6 +248,10 @@ class CreateOverlay(Action):
                 self.job.parameters.get("dispatcher", {}).get("prefix", ""),
                 "LAVA_DISPATCHER_PREFIX",
             )
+            if hostname := self.job.device.get("hostname"):
+                self._export_data(fout, hostname, "LAVA_DEVICE_HOSTNAME")
+            if device_type := self.job.device.get("devicetype"):
+                self._export_data(fout, device_type, "LAVA_DEVICE_TYPE")
 
             if http_cache := self.job.parameters["dispatcher"].get(
                 "http_url_format_string", ""

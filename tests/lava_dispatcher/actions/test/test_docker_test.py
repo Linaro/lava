@@ -99,6 +99,9 @@ def test_run(action, mocker):
     )
     docker_destroy = mocker.patch("lava_dispatcher.utils.docker.DockerRun.destroy")
 
+    action.job.device["hostname"] = "hi6220-hikey-r2-01"
+    action.job.device["devicetype"] = "hi6220-hikey-r2"
+
     action.validate()
     with action.timeout(None, None) as max_end_time:
         action.run(connection, max_end_time)
@@ -127,6 +130,8 @@ def test_run(action, mocker):
         }
     assert env["export ANDROID_SERIAL"] == "0123456789"
     assert env["export LAVA_BOARD_ID"] == "0123456789"
+    assert env["export LAVA_DEVICE_HOSTNAME"] == "hi6220-hikey-r2-01"
+    assert env["export LAVA_DEVICE_TYPE"] == "hi6220-hikey-r2"
     assert env["export LAVA_CONNECTION_COMMAND_UART0"] == "'telnet localhost 4002'"
     assert env["export LAVA_CONNECTION_COMMAND_UART1"] == "'telnet 192.168.1.200 8001'"
     # primary connection:
