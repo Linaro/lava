@@ -50,7 +50,7 @@ variables:
 .dispatcher-aarch64:
   extends: .dispatcher
   tags:
-    - saas-linux-medium-arm64
+    - saas-linux-small-arm64
 
 .server:
   extends: .job
@@ -63,7 +63,7 @@ variables:
 .server-aarch64:
   extends: .server
   tags:
-    - saas-linux-medium-arm64
+    - saas-linux-small-arm64
 
 amd64/dispatcher-debian-12: {"extends": ".dispatcher"}
 amd64/server-debian-12: {"extends": ".server"}
@@ -183,7 +183,7 @@ debian/13:
 .docker_aarch64:
   extends: .docker
   tags:
-    - saas-linux-medium-arm64
+    - saas-linux-small-arm64
   services:
     - name: docker:24-dind
       # Workaround for arm64 network connectivity issues
