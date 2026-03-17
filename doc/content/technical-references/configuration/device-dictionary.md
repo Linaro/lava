@@ -614,6 +614,25 @@ Multiple paths can be provided as a list:
 {% set uuu_usb_otg_path = ['1:143', '2:143'] %}
 ```
 
+Multiple paths are needed when using USB 3.0 because UUU can use different USB
+protocols at different stages. During the initial `SDPS` stage, the device
+typically appears as a USB 2.0 device. After that, UUU may switch to the `FB`
+stage, where the device can re-enumerate on a different USB path, often as a
+USB 3.0 device for faster flashing.
+
+USB 3.0 is only used when both of the following are true:
+
+1. The board supports USB 3.0 in the relevant flashing stage.
+2. The board is connected to a USB 3.0-capable port on the worker, directly or
+   through a USB 3.0 hub.
+
+!!! note
+    If the flashing process hangs at `SDPS` completion or when entering `FB`, a
+    common cause is that the device has switched to a different USB path and the
+    device dictionary only contains the first one. You can run `uuu -lsusb` on the
+    LAVA worker while the device is transitioning to `FB` to identify the second
+    path and then add it to `uuu_usb_otg_path`.
+
 #### uuu_usb_otg_path_command
 
 The command allows running a custom command on the worker to find the OTG paths
