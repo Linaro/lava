@@ -406,7 +406,7 @@ class MultinodeOverlayAction(OverlayAction):
                             self.logger.debug(
                                 "group roles:\t%s\t%s", client_name, role_line
                             )
-                            fout.write(r"\t%s\t%s\n" % (client_name, role_line))
+                            fout.write(r"%s\t%s\n" % (client_name, role_line))
                         fout.write('"\n')
                     elif foutname == "lava-role":
                         fout.write(
