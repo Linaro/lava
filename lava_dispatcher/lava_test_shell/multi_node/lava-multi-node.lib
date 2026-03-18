@@ -233,14 +233,14 @@ for DEVICE in `lava-group| awk '{ if ($1 == "^[a-z]\t"); print $1 }'`; do
 	# dump disallowed characters out of the device name, it's used as a variable.
 	DEV_NAME=`printf $DEVICE | sed -e 's/[^a-z0-9]//g'`
 	# dump disallowed characters out of the role, it's used as a variable.
-	ROLE_NAME=`lava-group | grep ${DEVICE} | cut -f3 |  sed -e 's/[^a-z0-9]//g'`
+	ROLE_NAME=`lava-group | grep ${DEVICE} | cut -f2 |  sed -e 's/[^a-z0-9]//g'`
 	ROLE_SUFFIX=$ROLE_NAME`printf "%02d" $r`
 	while [ -n "`printf "${SEEN_ROLES}" | grep ${ROLE_SUFFIX}`" ]; do
 		r=`expr $r + 1`
 		ROLE_SUFFIX=$ROLE_NAME`printf "%02d" $r`
 	done
 	SEEN_ROLES="${SEEN_ROLES} ${ROLE_SUFFIX}"
-	for DEVROLE in `lava-group | grep ${DEVICE} | cut -f3`; do
+	for DEVROLE in `lava-group | grep ${DEVICE} | cut -f2`; do
 		eval $DEVROLE`printf "%02d" $r`="${ROLE_SUFFIX}"
 		ROLE_NAME="$DEVROLE"`printf "%02d" $r`
 	done
