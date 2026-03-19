@@ -465,36 +465,46 @@ class MultinodeProtocol(Protocol):
         is the identifier to be used by other actions wanting this data (typically the API call or messageID)
         and the second value is the collated data from the call to the protocol.
         """
-        retval = {}
+        self.logger.debug(f"Request: {params}")
+        self.logger.debug(f"Reply: {reply}")
+        # lava-send returns "ack".
         if reply == "ack":
-            # Skip collate, if 'ack' got from lava-coordinator
             return
+
+        # lava-sync returns the messageID string.
+        if isinstance(reply, str):
+            return
+
+        # Allow to wait for a messageID without any messages.
+        if "message" not in params:
+            return
+
         if reply == {} or not isinstance(reply, dict):
             msg = "Unable to identify replaceable values in the parameters: %s" % params
             self.logger.error(msg)
             raise JobError(msg)
-        self.logger.debug(
-            {
-                "Retrieving replaceable values from": "%s" % json.dumps(reply),
-                "params": "%s" % json.dumps(params),
-            }
-        )
-        if "message" in params and reply:
-            replaceables = [
-                key for key, value in params["message"].items() if value.startswith("$")
-            ]
-            for item in replaceables:
-                if "message" in reply:
-                    target_list = [
-                        val for val in reply["message"].items() if self.job_id in val
-                    ]
-                else:
-                    target_list = list(reply.items())
-                data = target_list[0][1]
-                if item not in data:
-                    self.logger.warning("Skipping %s - not found in %s", item, data)
-                    continue
-                retval.setdefault(params["messageID"], {item: data[item]})
+
+        replaceables = [
+            key for key, value in params["message"].items() if value.startswith("$")
+        ]
+        if not replaceables:
+            return
+
+        retval = {}
+        self.logger.debug(f"Processing the replaceable values: {params['message']}")
+        for item in replaceables:
+            if "message" in reply:
+                target_list = [
+                    val for val in reply["message"].items() if self.job_id in val
+                ]
+            else:
+                target_list = list(reply.items())
+            data = target_list[0][1]
+            if item not in data:
+                self.logger.warning("Skipping %s - not found in %s", item, data)
+                continue
+            retval.setdefault(params["messageID"], {item: data[item]})
+
         if "messageID" in params:
             ret_key = params["messageID"]
             if ret_key in retval:
