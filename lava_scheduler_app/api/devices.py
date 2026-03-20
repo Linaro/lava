@@ -558,6 +558,9 @@ class SchedulerDevicesTagsAPI(ExposedV2API):
         except Device.DoesNotExist:
             raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
 
+        if not device.can_view(self.user):
+            raise xmlrpc.client.Fault(404, "Device '%s' was not found." % hostname)
+
         return [t.name for t in device.tags.all()]
 
     def delete(self, hostname, name):

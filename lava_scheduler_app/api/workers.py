@@ -14,7 +14,7 @@ from yaml import YAMLError
 
 from lava_common.yaml import yaml_safe_load
 from lava_scheduler_app.api import check_perm
-from lava_scheduler_app.models import Worker
+from lava_scheduler_app.models import Device, Worker
 from lava_server.files import File
 from linaro_django_xmlrpc.models import ExposedV2API
 
@@ -403,7 +403,10 @@ class SchedulerWorkersAPI(ExposedV2API):
             "state": worker.get_state_display(),
             "health": worker.get_health_display(),
             "devices": [
-                d.hostname for d in worker.device_set.all().order_by("hostname")
+                d.hostname
+                for d in Device.objects.filter(worker_host=worker)
+                .visible_by_user(self.user)
+                .order_by("hostname")
             ],
             "last_ping": worker.last_ping,
             "job_limit": worker.job_limit,
