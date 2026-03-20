@@ -49,6 +49,7 @@ Recommends: bridge-utils,
             tftpd-hpa,
             u-boot-tools,
             unzip,
+            wget,
             xz-utils,
             zstd
 Suggests: android-sdk-libsparse-utils,
