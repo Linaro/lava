@@ -12,7 +12,9 @@ import gzip
 import logging
 import os
 import uuid
+from fnmatch import fnmatch
 from json import dump as json_dump
+from urllib.parse import urlparse
 
 import requests
 import yaml
@@ -2510,6 +2512,20 @@ class NotificationCallback(models.Model):
         verbose_name=_("Callback content-type"),
     )
 
+    @staticmethod
+    def _validate_callback_url(url):
+        allowed = getattr(settings, "CALLBACK_ALLOWED_HOSTS", None)
+        if not allowed:
+            return
+        parsed = urlparse(url)
+        hostname = parsed.hostname or ""
+        for pattern in allowed:
+            if fnmatch(hostname, pattern):
+                return
+        raise ValidationError(
+            "Callback URL host '%s' is not in CALLBACK_ALLOWED_HOSTS" % hostname
+        )
+
     def invoke_callback(self):
         logger = logging.getLogger("lava-scheduler")
         data = None
@@ -2538,6 +2554,7 @@ class NotificationCallback(models.Model):
                     with gzip.open(job_data_file, "wt") as output:
                         json_dump(data, output)
         try:
+            self._validate_callback_url(self.url)
             logger.info("Sending request to callback url %s" % self.url)
             headers = {}
             if self.token is not None:
