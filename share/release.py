@@ -104,7 +104,7 @@ def handle_prepare(options):
 
 
 def handle_build(options):
-    run(".gitlab-ci/build/debian/11.sh", options)
+    run(".gitlab-ci/build/debian/13.sh", options)
     run(".gitlab-ci/build/docker.sh dispatcher", options)
     run(".gitlab-ci/build/docker.sh server", options)
     run(".gitlab-ci/build/doc.sh", options)
@@ -114,8 +114,8 @@ def handle_test(options):
     run(".gitlab-ci/analyze/black.sh", options)
     run(".gitlab-ci/analyze/schemas.sh", options)
     run(".gitlab-ci/analyze/pylint.sh", options)
-    run(".gitlab-ci/test/dispatcher-debian-11.sh", options)
-    run(".gitlab-ci/test/server-debian-11.sh", options)
+    run(".gitlab-ci/test/amd64/dispatcher-debian-13.sh", options)
+    run(".gitlab-ci/test/amd64/server-debian-13.sh", options)
 
 
 def handle_push(options):
