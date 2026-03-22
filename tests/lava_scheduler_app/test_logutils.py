@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import lzma
+import struct
 import unittest
 
 import pytest
@@ -100,8 +101,8 @@ def test_write_logs(mocker, tmp_path, logs_filesystem):
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
     with open(str(tmp_path / "output.idx"), "rb") as f_idx:
-        assert f_idx.read(8) == b"\x00\x00\x00\x00\x00\x00\x00\x00"  # nosec
-        assert f_idx.read(8) == b"\x0c\x00\x00\x00\x00\x00\x00\x00"  # nosec
+        assert struct.unpack("=Q", f_idx.read(8))[0] == 0  # nosec
+        assert struct.unpack("=Q", f_idx.read(8))[0] == 12  # nosec
 
 
 @unittest.skipIf(check_pymongo(), "openocd not installed")
