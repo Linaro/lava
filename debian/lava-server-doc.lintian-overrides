@@ -1,3 +1,6 @@
-lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-2.3.2/js/bootstrap.js please use libjs-twitter-bootstrap
-lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-3.3.7/js/bootstrap.js please use libjs-twitter-bootstrap
-lava-server-doc: embedded-javascript-library usr/share/doc/lava-server-doc/html/v2/_static/js/jquery-1.11.0.min.js please use libjs-jquery
+# Generated Sphinx HTML documentation embeds upstream JavaScript assets
+# under _static.
+lava-server-doc: embedded-javascript-library please use libjs-bootstrap [usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-2.3.2/js/bootstrap.js]
+lava-server-doc: embedded-javascript-library please use libjs-bootstrap [usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-3.4.1/js/bootstrap.js]
+lava-server-doc: embedded-javascript-library please use libjs-bootstrap [usr/share/doc/lava-server-doc/html/v2/_static/bootstrap-3.4.1/js/bootstrap.min.js]
+lava-server-doc: embedded-javascript-library please use libjs-jquery [usr/share/doc/lava-server-doc/html/v2/_static/js/jquery-1.12.4.min.js]
