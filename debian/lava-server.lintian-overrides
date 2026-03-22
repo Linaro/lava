@@ -1,0 +1,6 @@
+# The upstream web UI vendors Bootstrap 3 static assets, including the
+# Glyphicons font referenced by bootstrap-3.4.1.css via a relative ../fonts/
+# path. Reworking the packaged UI to use the system-provided font is not
+# currently done in Debian packaging.
+lava-server: duplicate-font-file also in (fonts-glyphicons-halflings fonts-glyphicons-halflings) [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.ttf]
+lava-server: truetype-font-prohibits-installable-embedding (preview/print only) [usr/lib/python3/dist-packages/lava_server/static/lava_server/fonts/glyphicons-halflings-regular.ttf]
