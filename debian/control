@@ -243,8 +243,7 @@ Recommends: android-sdk-libsparse-utils,
             telnet | telnet-client,
             tftpd-hpa,
             u-boot-tools
-Suggests: black,
-          python3-bandit,
+Suggests: python3-bandit,
           python3-django-debug-toolbar,
           radon
 Description: Linaro Automated Validation Architecture developer support
