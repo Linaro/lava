@@ -10,6 +10,8 @@ extra_css:
 
 use_directory_urls: false
 
+copyright: Copyright &copy; 2010 - 2026 Linaro Limited
+
 # https://squidfunk.github.io/mkdocs-material/
 # python3 -m pip install mkdocs-material
 theme:
