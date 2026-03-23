@@ -27,7 +27,7 @@ python3 -m pip install lavacli
 
 In order to access to restricted API methods, lavacli will need a `token` to authenticate.
 
-In the web interface, go to [/api/tokens/](/api/tokens/).
+In the web interface, go to `/api/tokens/` on your LAVA server.
 
 ![submit](token-menu.png)
 

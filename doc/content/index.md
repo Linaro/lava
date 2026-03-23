@@ -1,6 +1,6 @@
 # Welcome to LAVA
 
-**LAVA** stand for **L**inaro **A**utomated **V**alidation **A**rchitecture.
+**LAVA** stands for **L**inaro **A**utomated **V**alidation **A**rchitecture.
 
 LAVA is a *continuous integration* system for deploying operating systems onto
 physical and virtual hardware for running tests.

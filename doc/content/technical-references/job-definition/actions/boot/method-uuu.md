@@ -35,7 +35,7 @@ The `uuu` boot method supports to run [`bcu`](https://github.com/NXPmicro/bcu)
 commands, see [using BCU commands](#using-bcu-commands). When needed, the tool
 can be installed in the same way.
 
-### Device configuration
+## Device configuration
 
 Follow the instructions in [UUU](../../../configuration/device-dictionary.md#uuu)
 and [BCU](../../../configuration/device-dictionary.md#bcu) to configure your
