@@ -27,7 +27,10 @@ Depends: dh-python,
          telnet,
          tftpd-hpa,
          u-boot-tools,
+         unzip,
          @builddeps@
+# TODO: Upstream testsuite isn't ran on archs other than amd64/arm64
+Architecture: any-amd64 any-arm64
 Restrictions: allow-stderr, needs-root
 
 Test-Command: python3 -c 'from lava_common import *'

@@ -1,9 +1,8 @@
 Source: lava
 Section: net
-Priority: optional
-Maintainer: Debian LAVA team <pkg-linaro-lava-devel@lists.alioth.debian.org>
-Uploaders: Antonio Terceiro <antonio.terceiro@linaro.org>,
-           Remi Duraffort <remi.duraffort@linaro.org>
+Maintainer: Debian Python Team <team+python@tracker.debian.org>
+Uploaders: Remi Duraffort <remi.duraffort@linaro.org>,
+           Christopher Obbard <obbardc@debian.org>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
                libjs-bootstrap,
@@ -16,11 +15,10 @@ Build-Depends: debhelper-compat (= 12),
                python3-sphinx,
                python3-sphinx-bootstrap-theme,
                python3-yaml
-X-Python3-Version: >=3.6
-Standards-Version: 4.2.1
+Standards-Version: 4.7.3
 Homepage: https://www.lavasoftware.org/
-Vcs-Git: https://gitlab.com/lava/lava.git
-Vcs-Browser: https://gitlab.com/lava/lava
+Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
+Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
 
 Package: lava-dispatcher
 Architecture: all
@@ -51,12 +49,12 @@ Recommends: bridge-utils,
             tftpd-hpa,
             u-boot-tools,
             unzip,
+            wget,
             xz-utils,
             zstd
-Suggests: apache2,
-          docker.io,
-          img2simg,
-          simg2img
+Suggests: android-sdk-libsparse-utils,
+          apache2,
+          docker.io
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -66,7 +64,7 @@ Description: Linaro Automated Validation Architecture dispatcher
  exported for further analysis.
  .
  This package provides lava-dispatcher to dispatch
- LAVA jobs to configured devices, for Python3 only.
+ LAVA jobs to configured devices.
  .
  A range of devices are supported for ARM and
  x86 architectures.
@@ -137,8 +135,6 @@ Description: Linaro Automated Validation Architecture server
  This package no longer supports configuration as a
  remote worker and needs to be removed from existing workers.
  Workers must only install lava-dispatcher.
- .
- This package no longer supports Python2.
 
 Package: lava-common
 Architecture: all
@@ -173,11 +169,10 @@ Depends: bridge-utils,
          telnet | telnet-client,
          tftpd-hpa,
          ${misc:Depends}
-Recommends: docker.io,
-            img2simg,
+Recommends: android-sdk-libsparse-utils,
+            docker.io,
             python3-docker,
-            schroot,
-            simg2img
+            schroot
 Description: Linaro Automated Validation Architecture metapackage
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
@@ -192,6 +187,7 @@ Description: Linaro Automated Validation Architecture metapackage
 
 Package: lava-lxc-mocker
 Architecture: all
+Multi-Arch: foreign
 Depends: ${misc:Depends}
 Conflicts: lxc
 Replaces: lxc
@@ -224,13 +220,12 @@ Description: LAVA coordinator daemon
 Package: lava-dev
 Architecture: all
 Section: devel
-Depends: build-essential,
+Depends: black,
+         build-essential,
          ca-certificates,
-         debhelper (>= 12),
          debootstrap,
          devscripts,
          dh-python,
-         docbook-xsl,
          dpkg-dev,
          fakeroot,
          git,
@@ -239,7 +234,6 @@ Depends: build-essential,
          libjs-jquery,
          libjs-jquery-flot,
          libjs-jquery-typeahead,
-         pep8 | python3-pep8,
          python3-configobj,
          python3-guestfs,
          python3-magic,
@@ -257,10 +251,9 @@ Depends: build-essential,
          python3-yaml,
          python3-zmq,
          python3:any,
-         xsltproc,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: img2simg,
+Recommends: android-sdk-libsparse-utils,
             lxc | lava-lxc-mocker,
             nfs-kernel-server,
             python3-django-extensions,
@@ -268,7 +261,6 @@ Recommends: img2simg,
             python3-pytest-cov,
             rpcbind,
             sbuild,
-            simg2img,
             telnet | telnet-client,
             tftpd-hpa,
             u-boot-tools
@@ -282,10 +274,11 @@ Description: Linaro Automated Validation Architecture developer support
  .
  This package provides a helper script to build LAVA packages
  from local git working copies and support for running the
- LAVA unit tests locally, using Python3.
+ LAVA unit tests locally.
 
 Package: lava-server-doc
 Architecture: all
+Multi-Arch: foreign
 Section: doc
 Depends: ${misc:Depends},
          ${sphinxdoc:Depends}
