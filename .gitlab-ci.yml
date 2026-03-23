@@ -146,7 +146,7 @@ doc:
   image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
   artifacts:
     paths:
-      - doc/v2/_build/html
+      - doc/site
 
 .debian_build:
   extends: .job
@@ -232,7 +232,7 @@ pages:
   needs:
     - doc
   script:
-    - cp -a doc/v2/_build/html public
+    - cp -a doc/site public
   artifacts:
     paths:
       - public

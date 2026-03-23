@@ -13,8 +13,7 @@ Build-Depends: debhelper-compat (= 12),
                po-debconf,
                python3,
                python3-setuptools,
-               python3-sphinx,
-               python3-sphinx-bootstrap-theme,
+               mkdocs-material,
                python3-yaml
 X-Python3-Version: >=3.6
 Standards-Version: 4.2.1
@@ -287,8 +286,7 @@ Description: Linaro Automated Validation Architecture developer support
 Package: lava-server-doc
 Architecture: all
 Section: doc
-Depends: ${misc:Depends},
-         ${sphinxdoc:Depends}
+Depends: ${misc:Depends}
 Description: Linaro Automated Validation Architecture documentation
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
