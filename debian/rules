@@ -32,7 +32,7 @@ PYTHON:=$(shell py3versions -r)
 install_dir=$(call py_libdir, $(PYTHON))
 
 %:
-	dh $@ --with sphinxdoc,python3 --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild
 
 ifeq ($(DEB_VENDOR),Debian)
 distribution := $(DEB_DISTRIBUTION)
@@ -50,9 +50,7 @@ override_dh_python3:
 
 override_dh_auto_build:
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j auto -D today=\"$(BUILD_DATE)\""
-	make -C doc/v2/ html SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j auto -D today=\"$(BUILD_DATE)\""
-	$(RM) doc/v2/_build/html/objects.inv
-	debian/sort-search-index.py doc/v2/_build/html/searchindex.js
+	mkdocs build -f doc/mkdocs.yml
 
 override_dh_auto_install:
 	find . -path '*/__pycache__/*' -delete
@@ -107,5 +105,5 @@ override_dh_compress:
 
 execute_after_dh_auto_clean:
 	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
-	[ ! -f doc/v2/Makefile ] || make -C doc/v2/ clean
+	$(RM) -r doc/site/
 	[ ! -f man/Makefile ] || make -C man/ clean
