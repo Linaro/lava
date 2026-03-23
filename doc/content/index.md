@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+---
+
 # Welcome to LAVA
 
 **LAVA** stands for **L**inaro **A**utomated **V**alidation **A**rchitecture.

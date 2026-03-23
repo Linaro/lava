@@ -8,6 +8,10 @@ docs_dir: content/
 extra_css:
 - assets/stylesheets/extra.css
 
+use_directory_urls: false
+
+copyright: Copyright &copy; 2010 - 2026 Linaro Limited
+
 # https://squidfunk.github.io/mkdocs-material/
 # python3 -m pip install mkdocs-material
 theme:
@@ -49,6 +53,7 @@ markdown_extensions:
 # Debugging ?
 # Job errors ?
 nav:
+- Home: index.md
 - Introduction:
   - Concepts: introduction/concepts.md
   - Features: introduction/features.md
