@@ -255,7 +255,7 @@ class TestRun:
         elif platform.machine() == "aarch64":
             arch = "aarch64"
         else:
-            raise NotImplementedError
+            pytest.skip(f"Unsupported arch: {platform.machine()}")
         mocker.patch("time.sleep")
         mocker.patch("lava_dispatcher_host.docker_worker.filter_options")
         has_image = mocker.patch(
