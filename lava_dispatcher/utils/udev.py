@@ -1,6 +1,8 @@
 # Copyright (C) 2017 Linaro Limited
+# Copyright (C) 2026 Qualcomm Inc.
 #
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
+# Author: Milosz Wasilewski <milosz.wasilewski@oss.qualcomm.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
@@ -96,6 +98,46 @@ class WaitDFUDeviceAction(Action):
         wait_udev_event(
             match_dict=self.dfu_device, subsystem="usb", devtype="usb_device"
         )
+        return connection
+
+
+class WaitQDLDeviceAction(Action):
+    name = "wait-qdl-device"
+    description = "wait for QDL device"
+    summary = "wait for QDL device"
+    timeout_exception = InfrastructureError
+
+    def __init__(self, job: Job):
+        super().__init__(job)
+        self.qdl_device = {}
+
+    def validate(self):
+        super().validate()
+        board_id = self.job.device.get("board_id", "")
+        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
+        usb_product_id = self.job.device.get("usb_product_id", "")
+        if board_id == "QUSB_BULK_CID:0420_SN:00000000":
+            # board_qdl_id is a part of board_id
+            # usual device dictionary entry should be as follows
+            # {% set board_qdl_id = 'BA9B2FEB' %}
+            # {% set board_id = "QUSB_BULK_CID:040E_SN:" + board_qdl_id %}
+            # board_qdl_id is used by qdl for flashing
+            # board_id is used by LAVA to detect the device enumeration
+            self.errors = "[QDL] board_id unset"
+        if usb_vendor_id == "0000":
+            self.errors = "usb_vendor_id unset"
+        if usb_product_id == "0000":
+            self.errors = "usb_product_id unset"
+        self.qdl_device = {
+            "ID_VENDOR_ID": str(usb_vendor_id),
+            "ID_MODEL_ID": str(usb_product_id),
+            "ID_PRODUCT": str(board_id),
+        }
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+        self.logger.debug("Waiting for QDL device: %s", self.qdl_device)
+        wait_udev_event(match_dict=self.qdl_device, subsystem="usb")
         return connection
 
 
@@ -212,6 +254,17 @@ def get_device_serial(device):
         return None
 
 
+def get_device_product(device):
+    """Get product field from USB descriptor using sysfs attributes"""
+    product = device.properties.get("ID_PRODUCT")
+    if product:
+        return product
+    try:
+        return device.attributes.asstring("product")
+    except (KeyError, UnicodeDecodeError, ValueError):
+        return None
+
+
 def get_device_properties(device):
     """Get device properties with sysfs fallbacks for containers."""
     props = dict(device.properties)
@@ -219,6 +272,10 @@ def get_device_properties(device):
         serial = get_device_serial(device)
         if serial:
             props["ID_SERIAL_SHORT"] = serial
+    if "ID_PRODUCT" not in props:
+        product = get_device_product(device)
+        if product:
+            props["ID_PRODUCT"] = product
     if "ID_VENDOR_ID" not in props:
         try:
             props["ID_VENDOR_ID"] = device.attributes.asstring("idVendor")

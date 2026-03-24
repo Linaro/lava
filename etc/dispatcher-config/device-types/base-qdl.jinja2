@@ -1,0 +1,56 @@
+{# device_type: QDL base type #}
+{% extends 'base.jinja2' %}
+
+{% set fastboot_sequence = ['no-flash-boot'] %}
+{% set fastboot_serial_number = fastboot_serial_number|default("'0000000000'") %}
+{% set device_info = device_info|default([{'board_id': fastboot_serial_number}]) %}
+{% set board_qdl_id = board_qdl_id|default('00000000') %}
+
+{% block body %}
+adb_serial_number: "{{ adb_serial_number|default('0000000000') }}"
+fastboot_serial_number: "{{ fastboot_serial_number|default('0000000000') }}"
+fastboot_options: {{ fastboot_options|default([]) }}
+board_qdl_id: '{{ board_qdl_id }}'
+board_id: '{{ board_id|default("QUSB_BULK_CID:0420_SN:" + board_qdl_id) }}'
+usb_vendor_id: '05c6'
+usb_product_id: '{{ usb_product_id|default('9008')}}'
+
+actions:
+  deploy:
+    methods:
+      nfs:
+      fastboot:
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
+      qdl:
+    connections:
+      adb:
+      fastboot:
+      lxc:
+      serial:
+
+  boot:
+    connections:
+      adb:
+      fastboot:
+      serial:
+    methods:
+      minimal:
+      fastboot: {{ fastboot_sequence }}
+      u-boot:
+        parameters:
+          bootloader_prompt: {{ bootloader_prompt|default('=>') }}
+          interrupt_prompt: {{ interrupt_prompt|default('Hit any key to stop autoboot') }}
+          interrupt_char: "{{ interrupt_char|default('') }}"
+          needs_interrupt: {{ uboot_needs_interrupt|default(True) }}
+      qdl:
+        parameters:
+          command: qdl
+          enter-commands: {{ qdl_enter_commands|default([]) }}
+  test:
+    methods:
+      docker:
+        options: {{ device_docker_options|default([]) }}
+{% endblock body -%}

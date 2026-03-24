@@ -459,6 +459,35 @@ class Overlay(DeployStrategy):
         return True, "accepted"
 
 
+class QDL(DeployStrategy):
+    """
+    Strategy class for a QDL deployment.
+    Downloads qcomflash tarball and applies overlay if needed.
+    """
+
+    name = "qdl"
+
+    @classmethod
+    def action(cls, job: Job) -> Action:
+        from lava_dispatcher.actions.deploy.qdl import QDLAction
+
+        return QDLAction(job)
+
+    @classmethod
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
+        if "to" not in parameters:
+            return False, '"to" is not in deploy parameters'
+        if parameters["to"] != "qdl":
+            return False, '"to" parameter is not "qdl"'
+        if "deploy" not in device["actions"]:
+            return False, '"deploy" is not in the device configuration actions'
+        if "qcomflash" not in parameters:
+            return False, "'qcomflash' not in deploy parameters"
+        return True, "accepted"
+
+
 class RecoveryMode(DeployStrategy):
     name = "recovery-mode"
 

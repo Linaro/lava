@@ -524,6 +524,7 @@ _device_schema = Schema(
         "flash_cmds_order": list,
         "parameters": dict,
         "board_id": str,
+        "board_qdl_id": str,  # for use with boot-to-qdl
         "usb_vendor_id": All(str, Length(min=4, max=4)),  # monitor type like arduino
         "usb_product_id": All(str, Length(min=4, max=4)),  # monitor type like arduino
         "usb_sleep": int,

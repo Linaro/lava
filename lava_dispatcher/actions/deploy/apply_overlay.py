@@ -9,6 +9,7 @@ import os
 import shutil
 import zipfile
 from functools import partial
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lava_common.constants import RAMDISK_FNAME, UBOOT_DEFAULT_HEADER_LENGTH
@@ -1170,5 +1171,76 @@ class ApplyOverlayAvh(Action):
         copy_in_overlay(self, storage_file_path, self.root_partition, overlay_file)
 
         shutil.make_archive(fw_package_path[:-4], "zip", tempdir)
+
+        return connection
+
+
+class ApplyQDLOverlay(Action):
+    """
+    Apply lava overlay to the specific image inside qcomflash tarball.
+    """
+
+    name = "apply-overlay-qdl"
+    description = "apply overlay to image in qcomflash tarball"
+    summary = "apply overlay to image in qcomflash tarball"
+    timeout_exception = InfrastructureError
+
+    def __init__(self, job: Job, rootfs_image="rootfs.img", overlay_path="/"):
+        super().__init__(job)
+        self.rootfs_image = rootfs_image
+        self.overlay_path = overlay_path
+
+    def validate(self):
+        super().validate()
+        # check if rootfs_image is not empty
+        if not self.rootfs_image:
+            self.errors = "rootfs_image is empty or missing"
+
+    def run(self, connection, max_end_time):
+        connection = super().run(connection, max_end_time)
+
+        overlay_file = self.get_namespace_data(
+            action="compress-overlay", label="output", key="file"
+        )
+        if overlay_file is None:
+            self.logger.warning("No overlay to apply")
+            return connection
+
+        qcomflash = None
+        for action in self.get_namespace_keys(  # pylint: disable=unused-variable
+            "download-action"
+        ):
+            qcomflash = self.get_namespace_data(
+                action="download-action", label="qcomflash", key="file"
+            )
+            break
+        if qcomflash is None:
+            raise JobError("QCOMflash file missing")
+
+        self.logger.info(
+            f"applying overlay to {self.rootfs_image} in {self.overlay_path}"
+        )
+        qdl_dir = self.get_namespace_data(
+            action="qdl-deploy", label="qdl-directory", key="directory"
+        )
+
+        dest = Path(qdl_dir)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+
+        # ToDo: take compression from download action?
+        out_path = decompress_file(qcomflash, "gz")
+        untar_file(out_path, qdl_dir)
+
+        if not os.path.isfile(f"{qdl_dir}/{self.rootfs_image}"):
+            self.logger.error(f"rootfs_image file '{self.rootfs_image}' doesn't exist")
+            raise JobError("rootfs_file missing from tarball")
+        copy_in_overlay(self, f"{qdl_dir}/{self.rootfs_image}", None, overlay_file)
+
+        self.set_namespace_data(
+            action="qdl-deploy",
+            label="directory-decompress",
+            key="directory-decompress",
+            value=True,
+        )
 
         return connection

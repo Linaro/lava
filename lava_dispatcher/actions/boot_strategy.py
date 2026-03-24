@@ -200,6 +200,26 @@ class DFU(BootStrategy):
         return True, "accepted"
 
 
+class QDL(BootStrategy):
+    @classmethod
+    def action(cls, job: Job) -> Action:
+        from lava_dispatcher.actions.boot.qdl import BootQDLRetry
+
+        return BootQDLRetry(job)
+
+    @classmethod
+    def accepts(
+        cls, device: dict[str, Any], parameters: dict[str, Any]
+    ) -> tuple[bool, str]:
+        if "qdl" not in device["actions"]["boot"]["methods"]:
+            return False, '"qdl" was not in the device configuration boot methods'
+        if parameters["method"] != "qdl":
+            return False, '"method" was not "qdl"'
+        if "board_qdl_id" not in device:
+            return False, '"board_qdl_id" is not in the device configuration'
+        return True, "accepted"
+
+
 class BootDocker(BootStrategy):
     @classmethod
     def action(cls, job: Job) -> Action:
