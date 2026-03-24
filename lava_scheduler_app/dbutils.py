@@ -9,6 +9,9 @@
 Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
+
+from __future__ import annotations
+
 import contextlib
 import logging
 
@@ -87,7 +90,9 @@ def match_vlan_interface(device, job_def):
 
 # TODO: check the list of exception that can be raised
 @nottest
-def testjob_submission(job_definition, user, original_job=None):
+def testjob_submission(
+    job_definition: str, user, original_job=None, secrets_yaml: str | None = None
+):
     """
     Single submission frontend for YAML
     :param job_definition: string of the job submission
@@ -99,7 +104,9 @@ def testjob_submission(job_definition, user, original_job=None):
     """
     validate_job(job_definition)
     # returns a single job or a list (not a QuerySet) of job objects.
-    job = TestJob.from_yaml_and_user(job_definition, user, original_job=original_job)
+    job = TestJob.from_yaml_and_user(
+        job_definition, user, original_job=original_job, secrets_yaml=secrets_yaml
+    )
     return job
 
 

@@ -23,6 +23,7 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDevicePermission,
+    JobSecret,
     RemoteArtifactsAuth,
     TestJob,
     TestJobUser,
@@ -1083,6 +1084,29 @@ def test_job_submit(client, setup):
 
 
 @pytest.mark.django_db
+def test_job_submit_with_secrets(client, setup):
+    # Logged-user GET
+    assert client.login(username="tester", password="tester") is True
+    ret = client.post(
+        reverse("lava.scheduler.job.submit"),
+        {
+            "definition-input": JOB_DEFINITION.replace("juno", "qemu"),
+            "secrets-input": "foo: bar\nfoz: baz",
+        },
+    )
+    assert ret.status_code == 302
+    last_job = TestJob.objects.last()
+    assert ret.url == f"/scheduler/job/{last_job.pk}"
+
+    job_secrets = last_job.secrets.all()
+    assert len(job_secrets) == 2
+    assert {s.name: s.value.tobytes() for s in job_secrets} == {
+        "foo": b"bar",
+        "foz": b"baz",
+    }
+
+
+@pytest.mark.django_db
 def test_lab_health(client, setup):
     ret = client.get(reverse("lava.scheduler.labhealth"))
     assert ret.status_code == 200  # nosec
@@ -1434,6 +1458,24 @@ def test_internal_v1_jobs_test_auth_token(client, setup, mocker):
     )
     assert ret.status_code == 200
     job_def = yaml_safe_load(ret.json()["definition"])
+
+
+@pytest.mark.django_db
+def test_internal_v1_job_get_with_secrets(client, setup, mocker):
+    job01 = TestJob.objects.get(description="test job 01")
+
+    JobSecret.objects.create(job=job01, name="foo", value=b"bar")
+
+    write_text = mocker.Mock()
+    mocker.patch("pathlib.Path.write_text", write_text)
+
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job01.id]),
+        HTTP_LAVA_TOKEN=job01.token,
+    )
+    assert ret.status_code == 200
+    secrets_def = yaml_safe_load(ret.json()["secrets"])
+    assert secrets_def == {"foo": b"bar"}
 
 
 @pytest.mark.django_db

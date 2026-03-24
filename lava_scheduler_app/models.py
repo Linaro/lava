@@ -14,6 +14,7 @@ import os
 import uuid
 from fnmatch import fnmatch
 from json import dump as json_dump
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 import requests
@@ -60,6 +61,9 @@ from lava_scheduler_app.managers import (
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_scheduler_app.validators import validate_non_slash
 from lava_server.files import File
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 def auth_token():
@@ -1163,6 +1167,7 @@ def _create_pipeline_job(
     target_group=None,
     orig=None,
     health_check=False,
+    secrets: dict[str, bytes] | None = None,
 ):
     if not isinstance(job_data, dict):
         # programming error
@@ -1243,6 +1248,14 @@ def _create_pipeline_job(
         # assigned
         job.tags.add(*taglist)
         job.viewing_groups.add(*viewing_groups)
+
+        if secrets:
+            JobSecret.objects.bulk_create(
+                [
+                    JobSecret(job=job, name=secret_name, value=secret_value)
+                    for secret_name, secret_value in secrets.items()
+                ]
+            )
 
     return job
 
@@ -1887,7 +1900,9 @@ class TestJob(models.Model):
         return reverse("lava.scheduler.job.definition", args=[self.display_id])
 
     @classmethod
-    def from_yaml_and_user(cls, yaml_data, user, original_job=None):
+    def from_yaml_and_user(
+        cls, yaml_data: str, user, original_job=None, secrets_yaml: str | None = None
+    ):
         """
         Runs the submission checks on incoming jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
@@ -1903,6 +1918,13 @@ class TestJob(models.Model):
         # visibility checks
         if "visibility" not in job_data:
             raise SubmissionException("Job visibility must be specified.")
+
+        secrets: dict[str, bytes] | None = None
+        if secrets_yaml:
+            try:
+                secrets = JobSecret.parse_secrets_dict(yaml_safe_load(secrets_yaml))
+            except ValueError as exc:
+                raise SubmissionException("Failed to parse secrets YAML") from exc
 
         # pipeline protocol handling, e.g. lava-multinode
         job_list = _pipeline_protocols(job_data, user, yaml_data)
@@ -1939,6 +1961,7 @@ class TestJob(models.Model):
             device=None,
             device_type=device_type,
             orig=yaml_data,
+            secrets=secrets,
         )
 
     def can_view(self, user):
@@ -2270,6 +2293,47 @@ class TestJob(models.Model):
         else:
             fields = self.go_state_canceling()
             self.save(update_fields=fields)
+
+
+class JobSecret(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    job = models.ForeignKey(TestJob, on_delete=models.CASCADE, related_name="secrets")
+    name = models.SlugField(verbose_name="Secret's name", max_length=50)
+    value = models.BinaryField(verbose_name="Secret's value")
+
+    class Meta:
+        constraints = (
+            # Only allow one unique secret name per job
+            models.UniqueConstraint(
+                fields=("job", "name"), name="job_secret_name_uniq"
+            ),
+        )
+
+    @staticmethod
+    def parse_secrets_dict(secrets_data: dict[Any, Any]) -> dict[str, bytes]:
+        secrets: dict[str, bytes] = {}
+        if not isinstance(secrets_data, dict):
+            raise ValueError("Expected dictionary of secrets.")
+
+        for secret_name, secret_value in secrets_data.items():
+            if not isinstance(secret_name, str):
+                raise ValueError(
+                    "Expected key of secrets dictionary to be string, "
+                    f"got {secret_name!r}."
+                )
+
+            match secret_value:
+                case str():
+                    secrets[secret_name] = secret_value.encode()
+                case bytes():
+                    secrets[secret_name] = secret_value
+                case _:
+                    raise ValueError(
+                        "Expected value of secrets dictionary to be string or bytes,"
+                        f"got {secret_value!r}."
+                    )
+
+        return secrets
 
 
 class Notification(models.Model):

@@ -155,6 +155,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
         "dispatcher",
         "env",
         "env-dut",
+        "secrets",
     ]
     print(ret.json())
     assert yaml_safe_load(ret.json()["definition"]) == {"device_type": "qemu"}
@@ -172,6 +173,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
         "dispatcher",
         "env",
         "env-dut",
+        "secrets",
     ]
     assert yaml_safe_load(ret.json()["definition"]) == {
         "connection": "ssh",
