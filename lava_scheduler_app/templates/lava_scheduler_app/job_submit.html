@@ -52,6 +52,7 @@
   {% csrf_token %}
   <div>
     <textarea id="definition-input" name="definition-input" placeholder="Enter your job definition here.">{{ definition_input }}</textarea>
+    <textarea id="secrets-input" name="secrets-input" placeholder="Enter your job secrets here as a YAML dictionary."></textarea>
     <div id="busyIndicator"></div>
     <div>
       <div id="valid_container">

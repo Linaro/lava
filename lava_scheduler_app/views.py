@@ -1223,6 +1223,8 @@ def internal_v1_jobs(request, pk):
         env_dut_str = config("env-dut")
         dispatcher_cfg = config("dispatcher")
 
+        job_secrets: dict[str, bytes] = dict(job.secrets.values_list("name", "value"))
+
         # Save the configuration
         path = Path(job.output_dir)
         path.mkdir(mode=0o755, parents=True, exist_ok=True)
@@ -1242,6 +1244,7 @@ def internal_v1_jobs(request, pk):
                 "dispatcher": dispatcher_cfg,
                 "env": env_str,
                 "env-dut": env_dut_str,
+                "secrets": yaml_safe_dump(job_secrets),
             }
         )
     else:
@@ -1681,7 +1684,10 @@ def job_submit(request):
         else:
             try:
                 definition_data = request.POST.get("definition-input")
-                job = testjob_submission(definition_data, request.user)
+                secrets_data = request.POST.get("secrets-input", None)
+                job = testjob_submission(
+                    definition_data, request.user, secrets_yaml=secrets_data
+                )
 
                 if isinstance(job, list):
                     response_data["job_list"] = [j.sub_id for j in job]
