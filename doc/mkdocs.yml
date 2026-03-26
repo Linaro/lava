@@ -100,7 +100,6 @@ nav:
       - Upgrade: admin/basic-tutorials/instance/upgrade.md
       - Backup: admin/basic-tutorials/instance/backup.md
       - Permissions: admin/basic-tutorials/instance/permissions.md
-    - lavacli: admin/basic-tutorials/lavacli.md
     - Device setup:
       - Common: admin/basic-tutorials/device-setup/common.md
       - AVH: admin/basic-tutorials/device-setup/avh.md
