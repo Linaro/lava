@@ -198,7 +198,7 @@ nav:
     - Notifications: technical-references/job-definition/notifications.md
     - Protocols: technical-references/job-definition/protocols.md
     - Timeouts: technical-references/job-definition/timeouts.md
-  - Results: technical-references/results.md
+  - Job results: technical-references/results.md
   - State machine: technical-references/state-machine.md
   - Services:
     - server:
