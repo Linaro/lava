@@ -116,6 +116,6 @@ More information in the [technical reference](../../../technical-references/conf
 
 ### Dispatcher
 
-!!! warning "TODO"
+See [dispatcher configuration](../../../technical-references/configuration/dispatcher.md).
 
 --8<-- "refs.txt"
