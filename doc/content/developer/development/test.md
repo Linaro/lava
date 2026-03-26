@@ -47,11 +47,13 @@ bandit -r .
 
 ## Job schema
 
-If you change the device or job schemas, you will have to ensure that the device and job schemas are valid.
+If you change the device or job schemas, you will have to ensure that the device
+and job schemas are valid.
 
 This is checked by:
 
 ```shell
+.gitlab-ci/analyze/schemas.sh
 ```
 
 --8<-- "refs.txt"
