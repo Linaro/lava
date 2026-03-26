@@ -7,7 +7,6 @@
 from datetime import timedelta
 from io import StringIO
 from pathlib import Path
-from unittest.mock import PropertyMock
 
 import pytest
 from django.core.management import call_command

@@ -290,8 +290,6 @@ def get_ldap_user_properties(ldap_user):
     if user_dn_template:
         user_dn = user_dn_template % {"user": ldap_user}
     if user_search is not None:
-        from django_auth_ldap.config import LDAPSearch
-
         user_dn = user_search.base_dn
         search_filter = user_search.filterstr % {"user": ldap_user}
 
