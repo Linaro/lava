@@ -21,7 +21,6 @@ disable = [
     "C0412",  # Imports from package %s are not grouped
     "C0415",  # Import outside toplevel
     "E0202",  # An attribute defined in %s line %s hides this method
-    "E0307",  # __str__ does not return str
     "E0401",  # Unable to import '%s'
     "E0611",  # No name '%s' in module '%s'
     "E1101",  # Instance of x has no y member
