@@ -92,7 +92,7 @@ nav:
     - Hardware: admin/recommendations/hardware.md
     - Health-checks: admin/recommendations/health-checks.md
     - Topology: admin/recommendations/topology.md
-    - Security: admin/recommendations/security.md # explain the security model
+    - Security: admin/recommendations/security.md
   - Basic Tutorials:
     - Instance:
       - Install: admin/basic-tutorials/instance/install.md
