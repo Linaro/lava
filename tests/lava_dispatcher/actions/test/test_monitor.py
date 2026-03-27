@@ -98,7 +98,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action = TestMonitorAction(job)
         action.logger = RecordingLogger()
         with self.assertRaises(ConnectionClosedError):
-            self.assertFalse(action.check_patterns("eof", None))
+            self.assertFalse(action.check_patterns("eof", None, {}))
         self.assertEqual(
             action.logger.logs,
             [("warning", "err: lava test monitoring reached end of file", {})],
@@ -108,7 +108,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         # "timeout"
         action = TestMonitorAction(job)
         action.logger = RecordingLogger()
-        self.assertFalse(action.check_patterns("timeout", None))
+        self.assertFalse(action.check_patterns("timeout", None, {}))
         self.assertEqual(
             action.logger.logs,
             [("warning", "err: lava test monitoring has timed out", {})],
@@ -118,7 +118,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         # "end"
         action = TestMonitorAction(job)
         action.logger = RecordingLogger()
-        self.assertFalse(action.check_patterns("end", None))
+        self.assertFalse(action.check_patterns("end", None, {}))
         self.assertEqual(
             action.logger.logs,
             [("info", "ok: end string found, lava test monitoring stopped", {})],
@@ -131,7 +131,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action.logger = RecordingLogger()
         action.level = "3.1"
         data = {"result": "pass", "test_case_id": "hello world"}
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -161,7 +161,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
             "measurement": 1.3,
             "units": "s",
         }
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -189,7 +189,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action.level = "3.1"
         action.fixupdict = {"PASS": "pass"}
         data = {"result": "PASS", "test_case_id": "hello world"}
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -214,7 +214,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action.logger = RecordingLogger()
         action.level = "3.1"
         data = {"result": "PASS", "test_case_id": "hello world"}
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -229,7 +229,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action.logger = RecordingLogger()
         action.level = "3.1"
         data = {"test_case_id": "hello world", "measurement": 45.6}
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -255,7 +255,7 @@ class TestMonitorPatterns(LavaDispatcherTestCase):
         action.logger = RecordingLogger()
         action.level = "3.1"
         data = {"test_case_id": "hello world", "measurement": 45.6, "units": "ms"}
-        self.assertTrue(action.check_patterns("test_result", MockConnection(data)))
+        self.assertTrue(action.check_patterns("test_result", MockConnection(data), {}))
         self.assertEqual(
             action.logger.logs,
             [
@@ -332,39 +332,38 @@ class TestMonitorExpected(LavaDispatcherTestCase):
         self.assertEqual(self.action.report["tc2"], "fail")
         self.assertEqual(self.action.report["tc3"], "fail")
 
-    def test_handle_expected_unexpected(self):
-        self.action.report = {"tc1": "pass", "tc2": "fail", "tc3": "pass"}
 
-        self.action.handle_expected(["tc1", "tc2"], self.test_suite_name)
+class TestMonitorUnexpected(LavaDispatcherTestCase):
+    def setUp(self):
+        self.job = self.create_simple_job()
+        self.action = TestMonitorAction(self.job)
+        self.action.logger = RecordingLogger()
 
+    def test_expected_case(self):
+        result = self.action.handle_unexpected(["tc1", "tc2"], "tc1", "pass")
+        self.assertEqual(result, "pass")
+        self.assertEqual(self.action.logger.logs, [])
+
+    def test_unexpected_fail(self):
+        result = self.action.handle_unexpected(["tc1"], "tc2", "fail")
+        self.assertEqual(result, "fail")
         self.assertEqual(
             self.action.logger.logs,
-            [("warning", "Unexpected test result: tc3: pass", {})],
+            [("warning", "'tc2' not found in expected test case list!", {})],
         )
 
-    def test_handle_expected_missing_and_unexpected(self):
-        self.action.report = {"tc1": "pass", "tc3": "fail"}
-
-        self.action.handle_expected(["tc1", "tc2"], self.test_suite_name)
-
+    def test_unexpected_pass(self):
+        result = self.action.handle_unexpected(["tc1"], "tc2", "pass")
+        self.assertEqual(result, "fail")
         self.assertEqual(
             self.action.logger.logs,
             [
-                ("warning", "Reporting missing expected test cases as 'fail' ...", {}),
+                ("warning", "'tc2' not found in expected test case list!", {}),
                 (
-                    "results",
-                    {
-                        "definition": self.test_suite_name,
-                        "case": "tc2",
-                        "result": "fail",
-                        "level": "3.1",
-                        "extra": {
-                            "reason": "missing expected test cases are reported as 'fail' by LAVA."
-                        },
-                    },
+                    "warning",
+                    "Forcing unexpected 'tc2' result 'pass' to 'fail' ...",
                     {},
                 ),
-                ("warning", "Unexpected test result: tc3: fail", {}),
             ],
         )
 
