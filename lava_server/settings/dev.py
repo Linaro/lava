@@ -82,7 +82,7 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 with contextlib.suppress(ImportError):
-    from lava_server.settings.local_settings import *  # noqa
+    from lava_server.settings.local_settings import *  # pylint: disable=no-name-in-module
 
 FILES = [
     Path(PROJECT_SRC_DIR) / "etc/settings.conf",
