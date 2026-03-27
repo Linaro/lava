@@ -29,6 +29,10 @@ if TYPE_CHECKING:
 # Global variable so that no YAMLLogger escapes
 SECRETS_MASK: set[str] = set()
 
+# Pylint doesn't understand that multiprocessing.Queue is subscriptable
+# for typing purposes.
+# pylint: disable=unsubscriptable-object
+
 
 def dump(data: dict[str, Any]) -> str:
     # Set width to a really large value in order to always get one line.
