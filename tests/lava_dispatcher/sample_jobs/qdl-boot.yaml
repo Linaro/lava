@@ -1,0 +1,34 @@
+device_type: qcs6490-rb3gen2
+job_name: qcs6490 qdl boot
+priority: 50
+timeouts:
+  job:
+    minutes: 210
+visibility: public
+
+actions:
+- deploy:
+    rootfs_image: "disk-sdcard.img2"
+    overlay_path: "/"
+    qcomflash:
+      url: 'https://example.com/qcomflash.tar.gz'
+#      apply-overlay: true
+    timeout:
+      minutes: 200
+    to: qdl
+- boot:
+    firehose_program: "prog_firehose_ddr.elf"
+    rawprogram: "rawprogram0.xml"
+    patch: "patch0.xml"
+    storage: "ufs"
+    path: "."
+    debug: true
+    timeout:
+      minutes: 5
+    method: qdl
+- boot:
+    method: minimal
+    prompts:
+    - root@debian
+    timeout:
+      minutes: 3
