@@ -843,6 +843,7 @@ class OverlayUnpack(Action):
                     overlay_full_path, uart
                 ),
                 shell=True,
+                check=True,
             )
 
             connection.wait()
