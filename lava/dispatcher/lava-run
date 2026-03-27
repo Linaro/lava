@@ -257,6 +257,9 @@ def main():
         if options.token is not None:
             SECRETS_MASK.add(options.token)
 
+        # add job_id to environment, useful for user_commands
+        os.environ["LAVA_JOB_ID"] = options.job_id
+
         # Generate the description
         description = yaml_safe_dump(job.describe())
         (options.output_dir / "description.yaml").write_text(
