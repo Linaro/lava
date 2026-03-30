@@ -15,3 +15,4 @@
 [DATABASES]: https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 [yaml]: https://yaml.org/
 [regex]: https://docs.python.org/3/howto/regex.html
+[LAA]: https://docs.lavacloud.io/generality/laa.html
