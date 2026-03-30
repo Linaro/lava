@@ -1,8 +1,10 @@
 # How to find issues
 
-* performances
-* crashes
-* logs
-* job not terminating
-* queue not empty
-* state machnie
+ When something is not working as expected, check the following areas:
+
+* Job logs
+* Job not terminating
+* [Crashes in LAVA logs](../../technical-references/services/lava-worker.md)
+* [State machine](../../technical-references/state-machine.md)
+* Job queue not empty
+* Performances
