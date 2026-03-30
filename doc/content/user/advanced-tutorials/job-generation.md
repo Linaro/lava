@@ -1,3 +1,4 @@
 # Generating job definitions
 
-https://github.com/Linaro/lava-test-plans
+[tuxlava](https://github.com/kernelci/tuxlava) is the recommended tool for
+generating LAVA job definitions.
