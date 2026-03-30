@@ -369,7 +369,9 @@ class CallQemuAction(Action):
 
     def cleanup(self, connection):
         if self.docker is not None:
-            self.logger.info("Stopping the qemu container %s", self.docker.__name__)
+            self.logger.info(
+                "Stopping the qemu container %s", self.docker._container_name
+            )
             self.docker.destroy()
 
 
