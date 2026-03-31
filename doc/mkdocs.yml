@@ -120,6 +120,7 @@ nav:
 
 - Developer guide:
   - First steps: developer/first-steps.md
+  - Code of Conduct: developer/code-of-conduct.md
   - Development:
     - Setup: developer/development/setup.md
     - Build: developer/development/build.md
