@@ -50,8 +50,6 @@ markdown_extensions:
     alternate_style: true
 - tables
 
-# Debugging ?
-# Job errors ?
 nav:
 - Home: index.md
 - Introduction:
@@ -66,7 +64,6 @@ nav:
     - LTP: introduction/use-cases/ltp.md
     - Kselftest: introduction/use-cases/kselftest.md
     - VTS/CTS: introduction/use-cases/vts-cts.md
-  - F.A.Q: introduction/faq.md
   - Contact: introduction/contact.md
 
 - User guide:
