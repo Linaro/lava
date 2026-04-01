@@ -38,6 +38,7 @@ For simplicity multiple base templates are provided for the most common bootload
 * `base-edk2.jinja2`
 * `base-fastboot.jinja2`
 * `base-grub.jinja2`
+* `base-nxp-mcu.jinja2`
 * `base-uboot.jinja2`
 
 ## Device types
