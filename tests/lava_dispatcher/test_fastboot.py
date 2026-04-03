@@ -14,7 +14,10 @@ from lava_dispatcher.actions.boot.fastboot import BootFastbootAction
 from lava_dispatcher.actions.deploy.fastboot import FastbootFlashAction
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
 from lava_dispatcher.utils.containers import DockerDriver
-from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
+from lava_dispatcher.utils.fastboot import (
+    DetectFastbootDevice,
+    OptionalContainerFastbootAction,
+)
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -306,7 +309,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         self.assertIsNone(self.job.device.get("board_id"))
         self.assertEqual(self.job.device["device_info"], [{"board_id": "0000000000"}])
 
-        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action = self.job.pipeline.find_action(DetectFastbootDevice)
         action.run(None, None)
 
         self.assertEqual(self.job.device["fastboot_serial_number"], "a2c22e48")
@@ -325,7 +328,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection_none(self, *args):
-        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action = self.job.pipeline.find_action(DetectFastbootDevice)
 
         with self.assertRaises(FastbootDeviceNotFound) as context:
             action.run(None, None)
@@ -346,7 +349,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection_multiple(self, *args):
-        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action = self.job.pipeline.find_action(DetectFastbootDevice)
 
         with self.assertRaises(JobError) as context:
             action.run(None, None)
@@ -369,7 +372,7 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
     def test_fastboot_auto_detection_extra_whitespace(self, *args):
         self.assertEqual(self.job.device["fastboot_serial_number"], "0000000000")
 
-        action = self.job.pipeline.actions[0].pipeline.actions[4]
+        action = self.job.pipeline.find_action(DetectFastbootDevice)
         action.run(None, None)
 
         self.assertEqual(self.job.device["fastboot_serial_number"], "a2c22e48")
