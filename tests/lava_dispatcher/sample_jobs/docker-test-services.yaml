@@ -1,0 +1,28 @@
+device_type: docker
+job_name: docker test services
+priority: medium
+visibility: public
+timeouts:
+  job:
+    minutes: 15
+
+actions:
+- test:
+    failure_retry: 2
+    failure_retry_interval: 2
+    timeout:
+      minutes: 7
+    services:
+    - name: srv1
+      from: url
+      repository: https://example.com/srv1.tar.gz
+      compression: gz
+      path: docker-compose.yaml
+      service: srv1
+    - name: srv2
+      from: git
+      repository: https://example.com/org/srv2.git
+      path: docker-compose.yml
+
+- command:
+    name: stop_test_services
