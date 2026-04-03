@@ -13,9 +13,9 @@ from lava_common.constants import (
     LXC_PATH,
     LXC_TEMPLATE_WITH_MIRROR,
 )
-from lava_common.exceptions import InfrastructureError, LAVABug
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_common.utils import debian_package_version
-from lava_dispatcher.action import Action, JobError, Pipeline
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot.lxc import LxcStartAction, LxcStopAction
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyLxcOverlay
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment

@@ -12,7 +12,9 @@ import os
 from typing import TYPE_CHECKING
 
 from lava_common.constants import DD_PROMPTS, DISPATCHER_DOWNLOAD_DIR
-from lava_dispatcher.action import Action, JobError, Pipeline, Timeout
+from lava_common.exceptions import JobError
+from lava_common.timeout import Timeout
+from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayImage
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
