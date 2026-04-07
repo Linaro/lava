@@ -346,7 +346,7 @@ Infrastructure effects
 
 Some devices have substantial requirements for infrastructure to
 support the automation: switchable USB hubs, relays, remote power
-control, multiple serial connections, :term:`VLANd` support, etc.
+control, multiple serial connections, etc.
 
 Triaging of test job failures in one automated system typically needs
 to be done on the same instance or, if using another instance, using

@@ -354,13 +354,6 @@ def _legacy_callback_schema():
     return Schema(CALLBACK_SCHEMA, extra=True)
 
 
-def vlan_name(value):
-    if re.match("^[_a-zA-Z0-9]+$", str(value)):
-        return str(value)
-    else:
-        raise Invalid(value)
-
-
 def _validate_multinode(data_object):
     if data_object.get("protocols", {}).get("lava-multinode") is None:
         return
@@ -395,7 +388,6 @@ def _job_protocols_schema():
     return Schema(
         {
             "lava-multinode": {"timeout": _timeout_schema(), "roles": dict},
-            "lava-vland": {str: {vlan_name: {"tags": [str]}}},
             "lava-xnbd": dict,
         }
     )

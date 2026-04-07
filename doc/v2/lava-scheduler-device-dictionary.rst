@@ -10,7 +10,7 @@ that device type, and how LAVA can use it. A :term:`device dictionary`
 customizes that template to include the data for one specific instance of that
 device. This includes details like the commands to connect specific serial
 ports for this device, commands to operate remote power control, device serial
-numbers and elements of the network topology for :term:`VLANd` support.
+numbers.
 
 Other fields can also be used in the templates. The only field which is
 compulsory is **extends** which links this device dictionary to a specific
@@ -91,33 +91,6 @@ Connections
 
 .. seealso:: :ref:`create_device_dictionary`, :ref:`configuring_serial_ports`
    and :ref:`viewing_device_dictionary_content`.
-
-VLANd support
-*************
-
-.. seealso:: :ref:`vlan_support`
-
-* **interfaces** - the list of interface labels supported by the device.
-
-* **tags** - a dictionary of interface labels containing a list of the
-  :term:`interface tags <interface tag>` for each label.
-
-* **map** - the :ref:`network map <vland_network_map>` as it relates to this
-  device. A dictionary of interface labels containing a dictionary of the
-  switch name and port number relating to the physical cable connection to the
-  interface associated with the interface label on that device.
-
-* **mac_addr** - a dictionary of interface labels containing the MAC address
-  of the interface associated with the interface label on that device.
-
-* **sysfs** - a dictionary of interface labels containing the ``sysfs`` path of
-  the interface associated with the interface label on that device.
-
-The "download" button present in the :term:`device dictionary` page is used to
-download a YAML file of the :term:`device dictionary`, which is the equivalent
-of contents returned by `lavacli devices dict get`. This file
-is not intended for admin support and cannot be used to modify the
-:term:`device dictionary` itself.
 
 .. index:: storage_info, device_ip, device_mac
 

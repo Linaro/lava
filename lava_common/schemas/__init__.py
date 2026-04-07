@@ -344,10 +344,6 @@ def job(extra_context_variables):
                     },
                     Optional("timeout"): timeout(),
                 },
-                Optional("lava-vland"): Any(
-                    {str: {str: {Required("tags"): [str]}}},
-                    {str: {Required("tags"): [str]}},
-                ),
                 Optional("lava-xnbd"): {
                     Required("port"): Any("auto", int),
                     Optional("timeout"): timeout(),

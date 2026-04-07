@@ -271,28 +271,6 @@ class TestUbootTemplates(BaseTemplateTest):
                 checked = True
         self.assertTrue(checked)
 
-    def test_juno_uboot_vland_template(self):
-        data = """{% extends 'juno-uboot.jinja2' %}
-{% set map = {'iface0': {'lngswitch03': 19}, 'iface1': {'lngswitch03': 8}} %}
-{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command reboot --port 19' %}
-{% set tags = {'iface0': [], 'iface1': ['RJ45', '10M', '100M']} %}
-{% set interfaces = ['iface0', 'iface1'] %}
-{% set device_mac = '90:59:af:5e:69:fd' %}
-{% set sysfs = {'iface0': '/sys/devices/platform/ocp/4a100000.ethernet/net/',
-'iface1': '/sys/devices/platform/ocp/47400000.usb/47401c00.usb/musb-hdrc.1.auto/usb1/1-1/1-1:1.0/net/'} %}
-{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command off --port 19' %}
-{% set mac_addr = {'iface0': '90:59:af:5e:69:fd', 'iface1': '00:e0:4c:53:44:58'} %}
-{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname lngpdu01 --command on --port 19' %}
-{% set connection_command = 'telnet localhost 7333' %}"""
-        template_dict = self.render_device_dictionary_from_text(data)
-        self.assertIn("interfaces", template_dict["parameters"])
-        self.assertIn("iface0", template_dict["parameters"]["interfaces"])
-        self.assertIn("port", template_dict["parameters"]["interfaces"]["iface0"])
-        self.assertIn("target", template_dict["parameters"]["interfaces"])
-        self.assertIn("ip", template_dict["parameters"]["interfaces"]["target"])
-        self.assertIsNone(template_dict["parameters"]["interfaces"]["target"]["ip"])
-        self.assertIsNotNone(template_dict["parameters"]["interfaces"]["target"]["mac"])
-
     def test_ethaddr(self):
         data = """{% extends 'b2260.jinja2' %}
 {% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --port 14 --hostname pdu18 --command reboot' %}

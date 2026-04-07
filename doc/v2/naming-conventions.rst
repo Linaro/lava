@@ -118,8 +118,7 @@ consistent in the use of the following terms:
   An API used by the python code inside ``lava_dispatcher`` to interact
   with external systems and daemons when a shell like environment is
   not supported. :term:`Protocols <protocol>` need to be supported
-  within the python codebase and currently include multinode, LXC and
-  vland.
+  within the python codebase and currently multinode.
 
 **server software**
   The server software relates to the ``lava_server``,

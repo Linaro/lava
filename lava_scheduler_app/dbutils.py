@@ -10,7 +10,6 @@ Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
 import contextlib
-import logging
 
 import yaml
 from django.contrib.auth.models import User
@@ -33,56 +32,6 @@ from lava_scheduler_app.models import (
     Worker,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_submission
-
-
-def match_vlan_interface(device, job_def):
-    if not isinstance(job_def, dict):
-        raise RuntimeError("Invalid vlan interface data")
-    if (
-        "protocols" not in job_def
-        or "lava-vland" not in job_def["protocols"]
-        or not device
-    ):
-        return False
-    interfaces = []
-    logger = logging.getLogger("lava-master")
-    device_dict = device.load_configuration()
-    if not device_dict or device_dict.get("parameters", {}).get("interfaces") is None:
-        return False
-
-    for vlan_name in job_def["protocols"]["lava-vland"]:
-        tag_list = job_def["protocols"]["lava-vland"][vlan_name]["tags"]
-        for interface in device_dict["parameters"]["interfaces"]:
-            tags = device_dict["parameters"]["interfaces"][interface]["tags"]
-            if not tags:
-                continue
-            logger.info(
-                "Job requests %s for %s, device %s provides %s for %s",
-                tag_list,
-                vlan_name,
-                device.hostname,
-                tags,
-                interface,
-            )
-            if (
-                set(tags) & set(tag_list) == set(tag_list)
-                and interface not in interfaces
-            ):
-                logger.info(
-                    "Matched vlan %s to interface %s on %s",
-                    vlan_name,
-                    interface,
-                    device,
-                )
-                interfaces.append(interface)
-                # matched, do not check any further interfaces of this device for this vlan
-                break
-
-    logger.info(
-        "Matched: %s",
-        (len(interfaces) == len(job_def["protocols"]["lava-vland"].keys())),
-    )
-    return len(interfaces) == len(job_def["protocols"]["lava-vland"].keys())
 
 
 # TODO: check the list of exception that can be raised

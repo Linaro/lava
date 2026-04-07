@@ -135,7 +135,6 @@ Writing tests for LAVA
    multinode
    writing-multinode
    multinodeapi
-   vland
    debugging
    pipeline-usecases
    templating
@@ -181,7 +180,6 @@ LAVA administration guide
    ipmi-pxe-deploy
    ipxe
    proxy
-   vland-admin
    pipeline-debug
    docker-admin
    fvp

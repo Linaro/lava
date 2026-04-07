@@ -69,23 +69,16 @@
       description: include public key in overlay and authorize root user
       summary: add public key to authorized_keys
       timeout: 900
-    - class: VlandOverlayAction
-      name: lava-vland-overlay
-      level: 1.4.2
-      max_retries: 1
-      description: Populate specific vland scripts for tests to lookup vlan data.
-      summary: Add files detailing vlan configuration.
-      timeout: 900
     - class: MultinodeOverlayAction
       name: lava-multinode-overlay
-      level: 1.4.3
+      level: 1.4.2
       max_retries: 1
       description: add lava scripts during deployment for multinode test shell use
       summary: overlay the lava multinode scripts
       timeout: 900
     - class: TestDefinitionAction
       name: test-definition
-      level: 1.4.4
+      level: 1.4.3
       max_retries: 1
       description: load test definitions into image
       summary: loading test definitions
@@ -93,7 +86,7 @@
       pipeline:
       - class: UrlRepoAction
         name: url-repo-action
-        level: 1.4.4.1
+        level: 1.4.3.1
         max_retries: 1
         description: apply a single test file to the test image
         summary: download file test
@@ -101,7 +94,7 @@
         pipeline:
         - class: DownloaderAction
           name: download-retry
-          level: 1.4.4.1.1
+          level: 1.4.3.1.1
           max_retries: 2
           description: download with retry
           summary: download-retry
@@ -109,7 +102,7 @@
           pipeline:
           - class: HttpDownloadAction
             name: http-download
-            level: 1.4.4.1.1.1
+            level: 1.4.3.1.1.1
             max_retries: 1
             description: use http to download the file
             summary: http download
@@ -117,28 +110,28 @@
             url: https://github.com/Linaro/test-definitions/archive/2019.03.tar.gz
       - class: TestOverlayAction
         name: test-overlay
-        level: 1.4.4.2
+        level: 1.4.3.2
         max_retries: 1
         description: overlay test support files onto image
         summary: applying LAVA test overlay
         timeout: 900
       - class: TestInstallAction
         name: test-install-overlay
-        level: 1.4.4.3
+        level: 1.4.3.3
         max_retries: 1
         description: overlay dependency installation support files onto image
         summary: applying LAVA test install scripts
         timeout: 900
       - class: TestRunnerAction
         name: test-runscript-overlay
-        level: 1.4.4.4
+        level: 1.4.3.4
         max_retries: 1
         description: overlay run script onto image
         summary: applying LAVA test run script
         timeout: 900
     - class: CompressOverlay
       name: compress-overlay
-      level: 1.4.5
+      level: 1.4.4
       max_retries: 1
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files

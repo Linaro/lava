@@ -28,23 +28,16 @@
       description: include public key in overlay and authorize root user
       summary: add public key to authorized_keys
       timeout: 240
-    - class: VlandOverlayAction
-      name: lava-vland-overlay
-      level: 1.2.2
-      max_retries: 1
-      description: Populate specific vland scripts for tests to lookup vlan data.
-      summary: Add files detailing vlan configuration.
-      timeout: 240
     - class: MultinodeOverlayAction
       name: lava-multinode-overlay
-      level: 1.2.3
+      level: 1.2.2
       max_retries: 1
       description: add lava scripts during deployment for multinode test shell use
       summary: overlay the lava multinode scripts
       timeout: 240
     - class: TestDefinitionAction
       name: test-definition
-      level: 1.2.4
+      level: 1.2.3
       max_retries: 1
       description: load test definitions into image
       summary: loading test definitions
@@ -52,28 +45,28 @@
       pipeline:
       - class: InlineRepoAction
         name: inline-repo-action
-        level: 1.2.4.1
+        level: 1.2.3.1
         max_retries: 1
         description: apply inline test definition to the test image
         summary: extract inline test definition
         timeout: 240
       - class: TestOverlayAction
         name: test-overlay
-        level: 1.2.4.2
+        level: 1.2.3.2
         max_retries: 1
         description: overlay test support files onto image
         summary: applying LAVA test overlay
         timeout: 240
       - class: TestInstallAction
         name: test-install-overlay
-        level: 1.2.4.3
+        level: 1.2.3.3
         max_retries: 1
         description: overlay dependency installation support files onto image
         summary: applying LAVA test install scripts
         timeout: 240
       - class: TestRunnerAction
         name: test-runscript-overlay
-        level: 1.2.4.4
+        level: 1.2.3.4
         max_retries: 1
         description: overlay run script onto image
         summary: applying LAVA test run script

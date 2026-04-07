@@ -112,15 +112,6 @@ console servers can be expensive; alternatives include ARMv7 boards
 with ``ser2net`` installed but the USB and ethernet support needs to
 be reliable for this to work well.
 
-.. _network_switch_infrastructure:
-
-Network switches
-----------------
-
-Simple unmanaged switches will work for small LAVA labs but managed switches
-are essential to use :ref:`vland_in_lava` and will also be important for medium
-to large LAVA labs.
-
 .. _power_supply_ups:
 
 Power supply
@@ -314,8 +305,8 @@ supports LAVA V1, PostgreSQL will need to be added to the
 updates and these updates **are** important to apply, ``unattended-upgrades``
 does not currently restart other services which are dependent on the service
 being upgraded. Admins still need to watch for security updates to PostgreSQL
-and apply the update manually, restarting services like ``lava-master``,
-``lava-server`` and ``vland`` afterwards::
+and apply the update manually, restarting services like ``lava-master`` and
+``lava-server`` afterwards::
 
    Unattended-Upgrade::Package-Blacklist {
         "postgresql-9.4";

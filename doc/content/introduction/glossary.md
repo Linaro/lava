@@ -27,7 +27,7 @@ the information.
 **H** [hacking session](#hacking-session) | [health check](#health-check) |
 [hidden device type](#hidden-device-type) | [hostname](#hostname)
 
-**I** [inline](#inline) | [interface tag](#interface-tag)
+**I** [inline](#inline)
 
 **J** [jinja2](#jinja2) | [job context](#job-context) |
 [job definition](#job-definition)
@@ -58,7 +58,7 @@ the information.
 
 **U** [UART](#uart)
 
-**V** [visibility](#visibility) | [VLANd](#vland)
+**V** [visibility](#visibility)
 
 **W** [worker](#worker)
 
@@ -217,13 +217,6 @@ A type of test definition which is contained within the job submission instead
 of being fetched from a URL. These are useful for debugging tests and are
 recommended for the synchronization support within MultiNode test jobs.
 
-## interface tag
-
-An interface tag is similar to [device tag](#device-tag) but operates **solely**
-within the VLANd support. An interface tag may be related to the link speed
-which is achievable on a particular switch and port - it may also embed
-information about that link.
-
 ## jinja2
 
 Jinja2 is a templating language for Python, modelled after Django's templates.
@@ -345,7 +338,7 @@ specified prompts **must** match before the test can be started.
 A protocol in LAVA is a method of interacting with external services using an
 API (Application Programming Interface) instead of with direct shell commands
 or via a test shell. Examples of services in LAVA which use protocols include
-MultiNode and VLANd. The protocol defines which API calls are available through
+MultiNode. The protocol defines which API calls are available through
 the LAVA interface and the Pipeline determines when the API call is made.
 
 ## query
@@ -488,12 +481,6 @@ visibility:
 
 In this example, users must be members of both `developers` group and `project`
 group. Groups must already exist in the Django configuration for the instance.
-
-## VLANd
-
-VLANd is a daemon to support virtual local area networks in LAVA. This support
-is specialized and requires careful configuration of the entire LAVA instance,
-including the physical layout of the switches and the devices of that instance.
 
 ## worker
 

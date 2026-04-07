@@ -43,19 +43,6 @@ class IRCHandleNotFoundError(IRCSendError):
     """Error raised when user handle is not found on specific server."""
 
 
-def _split_multinode_vland(submission, jobs):
-    for role, _ in jobs.items():
-        # populate the lava-vland protocol metadata
-        if len(jobs[role]) != 1:
-            raise SubmissionException(
-                "vland protocol only supports one device per role."
-            )
-        jobs[role][0]["protocols"].update(
-            {"lava-vland": submission["protocols"]["lava-vland"][role]}
-        )
-    return jobs
-
-
 def split_multinode_yaml(submission, target_group):
     """
     Handles the lava-multinode protocol requirements.
@@ -190,10 +177,6 @@ def split_multinode_yaml(submission, target_group):
                     del job[item]
             jobs[role_name].append(copy.deepcopy(job))
             sub_id_count += 1
-
-    # populate the lava-vland protocol metadata
-    if "lava-vland" in submission["protocols"]:
-        _split_multinode_vland(submission, jobs)
 
     return jobs
 
