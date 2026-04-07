@@ -22,7 +22,6 @@ from django.db.models import (
 from django.utils import timezone
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
@@ -331,14 +330,6 @@ def schedule_jobs_for_device(device, print_header):
         for job in jobs:
             if not device.can_submit(job.submitter):
                 continue
-
-            # Only load the yaml file if the string is in the document
-            # This will save many CPU cycles
-            if "lava-vland" in job.definition:
-                job_dict = yaml_safe_load(job.definition)
-                if "protocols" in job_dict and "lava-vland" in job_dict["protocols"]:
-                    if not match_vlan_interface(device, job_dict):
-                        continue
 
             if print_header:
                 LOGGER.debug("- %s", device.device_type.name)

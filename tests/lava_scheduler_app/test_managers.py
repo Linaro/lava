@@ -95,7 +95,7 @@ class ManagersTest(TestCaseWithFactory):
         self.qemu_job1 = TestJob.from_yaml_and_user(self.definition, self.admin_user)
         self.qemu_job2 = TestJob.from_yaml_and_user(self.definition, self.admin_user)
         self.all_bbb_jobs = TestJob.from_yaml_and_user(
-            self.factory.make_job_data_from_file("bbb-bbb-vland-group.yaml"),
+            self.factory.make_job_data_from_file("bbb-bbb-group.yaml"),
             self.admin_user,
         )
         self.bbb_job1 = self.all_bbb_jobs[0]

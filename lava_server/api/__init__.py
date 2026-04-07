@@ -453,39 +453,13 @@ class LavaSystemAPI(SystemAPI):
 
         """
         self._authenticate()
-        # get all device dictionaries, build the entire map.
-        dictionaries = [
-            (device.hostname, device.load_configuration())
-            for device in Device.objects.visible_by_user(self.user)
-        ]
         network_map = {"switches": {}}
-        for hostname, params in dictionaries:
-            if "interfaces" not in params:
-                continue
-            for interface in params["interfaces"]:
-                for map_switch, port in params["map"][interface].items():
-                    port_list = []
-                    device = {
-                        "interface": interface,
-                        "mac": params["mac_addr"][interface],
-                        "sysfs": params["sysfs"][interface],
-                        "hostname": hostname,
-                    }
-                    port_list.append({"port": port, "device": device})
-                    switch_port = network_map["switches"].setdefault(map_switch, [])
-                    # Any switch can only have one entry for one port
-                    if port not in switch_port:
-                        switch_port.extend(port_list)
-
         if switch:
-            if switch in network_map["switches"]:
-                return yaml_safe_dump(network_map["switches"][switch])
-            else:
-                return xmlrpc.client.Fault(
-                    404,
-                    "No switch '%s' was found in the network map of supported devices."
-                    % switch,
-                )
+            return xmlrpc.client.Fault(
+                404,
+                "No switch '%s' was found in the network map of supported devices."
+                % switch,
+            )
         return yaml_safe_dump(network_map)
 
     @check_staff

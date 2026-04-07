@@ -466,24 +466,3 @@ Protocol requests from actions
         messageID: ipv4
         timeout:
           minutes: 5
-
-
-VLANd protocol
-**************
-
-See :ref:`VLANd protocol <vland_in_lava>` - which uses the MultiNode protocol
-to interface with :term:`VLANd` to support virtual local area networks in LAVA.
-
-.. _vland_protocol_requests:
-
-Protocol requests from actions
-==============================
-
-* ``deploy_vlans``
-
-  .. code-block:: yaml
-
-    protocols:
-      lava-vland:
-      - action: lava-vland-overlay
-        request: deploy_vlans

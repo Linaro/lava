@@ -17,7 +17,6 @@ from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.protocols.vland import VlandProtocol
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.network import dispatcher_ip
 
@@ -125,7 +124,6 @@ class CreateOverlay(Action):
         ):
             # only devices supporting ssh deployments add this action.
             self.pipeline.add_action(SshAuthorize(self.job))
-        self.pipeline.add_action(VlandOverlayAction(self.job))
         self.pipeline.add_action(MultinodeOverlayAction(self.job))
         self.pipeline.add_action(TestDefinitionAction(self.job))
         # Skip compress-overlay for actions that mount overlay directory
@@ -423,141 +421,6 @@ class MultinodeOverlayAction(OverlayAction):
                         )
                         # always write out full debug logs
                         fout.write("LAVA_MULTI_NODE_DEBUG='yes'\n")
-                    fout.write(fin.read())
-                    os.fchmod(fout.fileno(), self.xmod)
-        self.call_protocols()
-        return connection
-
-
-class VlandOverlayAction(OverlayAction):
-    """
-    Adds data for vland interface locations, MAC addresses and vlan names
-    """
-
-    name = "lava-vland-overlay"
-    description = "Populate specific vland scripts for tests to lookup vlan data."
-    summary = "Add files detailing vlan configuration."
-
-    def __init__(self, job: Job):
-        super().__init__(job)
-        # vland-only
-        self.lava_vland_test_dir = os.path.realpath(
-            "%s/../../lava_test_shell/vland" % os.path.dirname(__file__)
-        )
-        self.lava_vland_cache_file = "/tmp/lava_vland_cache.txt"  # nosec - on the DUT
-        self.params = {}
-        self.sysfs = []
-        self.tags = []
-        self.names = []
-        self.protocol = VlandProtocol.name
-
-    def populate(self, parameters):
-        # override the populate function of overlay action which provides the
-        # lava test directory settings etc.
-        pass
-
-    def validate(self):
-        super().validate()
-        # idempotency
-        if "actions" not in self.job.parameters:
-            return
-        if "protocols" not in self.job.parameters:
-            return
-        if self.protocol not in [protocol.name for protocol in self.job.protocols]:
-            return
-        if "parameters" not in self.job.device:
-            self.errors = "Device lacks parameters"
-        elif "interfaces" not in self.job.device["parameters"]:
-            self.errors = "Device lacks vland interfaces data."
-        if not self.valid:
-            return
-        # same as the parameters of the protocol itself.
-        self.params = self.job.parameters["protocols"][self.protocol]
-        device_params = self.job.device["parameters"]["interfaces"]
-        vprotocol = [
-            vprotocol
-            for vprotocol in self.job.protocols
-            if vprotocol.name == self.protocol
-        ][0]
-        # needs to be the configured interface for each vlan.
-        for key, _ in self.params.items():
-            if key not in vprotocol.params:
-                continue
-            self.names.append(",".join([key, vprotocol.params[key]["iface"]]))
-        for interface in device_params:
-            self.sysfs.append(
-                ",".join(
-                    [
-                        interface,
-                        device_params[interface]["mac"],
-                        device_params[interface]["sysfs"],
-                    ]
-                )
-            )
-        for interface in device_params:
-            if not device_params[interface]["tags"]:
-                # skip primary interface
-                continue
-            for tag in device_params[interface]["tags"]:
-                self.tags.append(",".join([interface, tag]))
-
-    def run(self, connection, max_end_time):
-        """
-        Writes out file contents from lists, across multiple lines
-        VAR="VAL1\n
-        VAL2\n
-        "
-        The newline and escape characters are used to avoid unwanted whitespace.
-        \n becomes \\n, a single escape gets expanded and itself then needs \n to output:
-        VAL1
-        VAL2
-        """
-        if not self.params:
-            self.logger.debug("skipped %s", self.name)
-            return connection
-        location = self.get_namespace_data(
-            action="test", label="shared", key="location"
-        )
-        lava_test_results_dir = self.get_namespace_data(
-            action="test", label="results", key="lava_test_results_dir"
-        )
-        shell = self.get_namespace_data(
-            action="test", label="shared", key="lava_test_sh_cmd"
-        )
-        if not location:
-            raise LAVABug("Missing lava overlay location")
-        if not os.path.exists(location):
-            raise LAVABug("Unable to find overlay location")
-
-        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
-        scripts_to_copy = glob.glob(os.path.join(self.lava_vland_test_dir, "lava-*"))
-        self.logger.debug(self.lava_vland_test_dir)
-        self.logger.debug({"lava_path": lava_path, "scripts": scripts_to_copy})
-
-        for fname in scripts_to_copy:
-            with open(fname) as fin:
-                foutname = os.path.basename(fname)
-                output_file = "%s/bin/%s" % (lava_path, foutname)
-                self.logger.debug("Creating %s", output_file)
-                with open(output_file, "w") as fout:
-                    fout.write("#!%s\n\n" % shell)
-                    # Target-specific scripts (add ENV to the generic ones)
-                    if foutname == "lava-vland-self":
-                        fout.write(r'LAVA_VLAND_SELF="')
-                        for line in self.sysfs:
-                            fout.write(r"%s\n" % line)
-                    elif foutname == "lava-vland-names":
-                        fout.write(r'LAVA_VLAND_NAMES="')
-                        for line in self.names:
-                            fout.write(r"%s\n" % line)
-                    elif foutname == "lava-vland-tags":
-                        fout.write(r'LAVA_VLAND_TAGS="')
-                        if not self.tags:
-                            fout.write(r"\n")
-                        else:
-                            for line in self.tags:
-                                fout.write(r"%s\n" % line)
-                    fout.write('"\n\n')
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
         self.call_protocols()

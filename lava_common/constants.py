@@ -48,10 +48,6 @@ CLEANUP_TIMEOUT = 5 * 60
 # docker containers)
 LAVA_DOWNLOADS = "/lava-downloads"
 
-# Timeout used by the vland protocol when waiting for vland to
-# respond to the api.create_vlan request, in seconds.
-VLAND_DEPLOY_TIMEOUT = 120
-
 # bootloader default timeout for commands
 BOOTLOADER_DEFAULT_CMD_TIMEOUT = 90
 

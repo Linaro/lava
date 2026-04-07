@@ -154,8 +154,7 @@ able to run successfully.
    redeployed with a new environment, if that can be supported.
 
 #. Ensure that advanced LAVA software functionality is also covered by
-   submitting representative :term:`MultiNode` test jobs, especially if
-   the staging instance is capable of supporting :term:`VLANd`
+   submitting representative :term:`MultiNode` test jobs.
 
 #. Unreliable functional tests need to be triaged and removed if the
    problems cannot be fixed. This may lead to the underlying code

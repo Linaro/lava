@@ -1,0 +1,65 @@
+job_name: bbb-bbb-vland-group
+visibility: public
+priority: medium
+timeouts:
+  job:
+    minutes: 15
+  action:
+    minutes: 5
+  connection:
+    minutes: 3
+
+protocols:
+  lava-multinode:
+    roles:
+      client:
+        device_type: bbb
+        count: 1
+      server:
+        device_type: bbb
+        count: 1
+
+actions:
+- deploy:
+    role:
+    - client
+    - server
+    timeout:
+      minutes: 4
+    to: tftp
+    kernel:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/vmlinuz
+      type: zimage
+    ramdisk:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/initramfs.cpio.gz
+      compression: gz
+    nfsrootfs:
+      url: http://images.validation.linaro.org/snapshots.linaro.org/components/lava/standard/debian/jessie/armhf/4/jessie-armhf-nfs.tar.gz
+      compression: gz
+    os: debian
+
+- boot:
+    role:
+    - client
+    - server
+    method: u-boot
+    commands: nfs
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+    prompts:
+    - 'root@jessie:'
+    timeout:
+      minutes: 2
+
+- test:
+    role:
+    - client
+    - server
+    timeout:
+      minutes: 5
+    definitions:
+    - repository: git://git.linaro.org/lava-team/lava-functional-tests.git
+      from: git
+      path: lava-test-shell/smoke-tests-basic.yaml
+      name: smoke-tests

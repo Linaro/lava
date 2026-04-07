@@ -66,8 +66,8 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         testdef = overlay = None
         action = self.job.pipeline.actions[0]
         overlay = action.pipeline.actions[0]
-        testdef = overlay.pipeline.actions[2]
-        self.assertEqual(len(overlay.pipeline.actions), 4)
+        testdef = overlay.pipeline.actions[1]
+        self.assertEqual(len(overlay.pipeline.actions), 3)
         self.assertIsInstance(testdef, TestDefinitionAction)
         testdef.validate()
         self.assertEqual(
@@ -396,11 +396,11 @@ class TestDefinitions(LavaDispatcherTestCase):
                 label="test-runscript-overlay",
                 key="testdef_levels",
             ),
-            {"1.1.4.4": "0_smoke-tests", "1.1.4.8": "1_singlenode-advanced"},
+            {"1.1.3.4": "0_smoke-tests", "1.1.3.8": "1_singlenode-advanced"},
         )
         self.assertEqual(
             {repo.uuid for repo in git_repos},
-            {f"{self.job.job_id}_1.1.4.1", f"{self.job.job_id}_1.1.4.5"},
+            {f"{self.job.job_id}_1.1.3.1", f"{self.job.job_id}_1.1.3.5"},
         )
         self.assertEqual(
             set(
@@ -430,12 +430,12 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertEqual(
             self.job.context["test"],
             {
-                f"{self.job.job_id}_1.1.4.1": {
+                f"{self.job.job_id}_1.1.3.1": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
                 },
-                f"{self.job.job_id}_1.1.4.5": {
+                f"{self.job.job_id}_1.1.3.5": {
                     "testdef_pattern": {
                         "pattern": "(?P<test_case_id>.*-*):\\s+(?P<result>(pass|fail))"
                     }
@@ -452,7 +452,7 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
             if start_run == "%s_%s" % (key, value):
-                self.assertEqual(f"{self.job.job_id}_1.1.4.1", uuid_list[key])
+                self.assertEqual(f"{self.job.job_id}_1.1.3.1", uuid_list[key])
                 self.assertEqual(
                     self.job.context["test"][uuid_list[key]]["testdef_pattern"][
                         "pattern"

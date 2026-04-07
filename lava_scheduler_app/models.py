@@ -1292,7 +1292,6 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
 
         # Handle the requirements of the Multinode protocol
         # FIXME: needs a schema check
-        # FIXME: the vland protocol will affect the device_list
         if "roles" in job_data["protocols"]["lava-multinode"]:
             for role in job_data["protocols"]["lava-multinode"]["roles"]:
                 role_dictionary[role] = {"devices": [], "tags": []}

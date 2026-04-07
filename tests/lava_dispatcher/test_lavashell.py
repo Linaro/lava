@@ -8,11 +8,7 @@ from __future__ import annotations
 from typing import Any
 
 from lava_common.exceptions import InfrastructureError, JobError
-from lava_dispatcher.actions.deploy.testdef import get_test_action_namespaces
-from lava_dispatcher.actions.deploy.tftp import TftpAction
 from lava_dispatcher.actions.test.shell import TestShellAction
-from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_dispatcher.protocols.vland import VlandProtocol
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -63,49 +59,3 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
 class X86Factory(Factory):
     def create_x86_job(self, filename, device, validate=True):
         return self.create_job(device, filename, validate=validate)
-
-
-class TestMultiNodeOverlay(LavaDispatcherTestCase):
-    def setUp(self):
-        super().setUp()
-        factory = Factory()
-        self.server_job = factory.create_job(
-            "lng-generator-01",
-            "sample_jobs/test_action-1.yaml",
-            validate=False,
-        )
-        self.client_job = factory.create_job(
-            "lng-generator-02",
-            "sample_jobs/test_action-2.yaml",
-            validate=False,
-        )
-
-    def test_action_namespaces(self):
-        self.assertIsNotNone(self.server_job)
-        self.assertIsNotNone(self.client_job)
-
-        deploy_server = self.server_job.pipeline.find_action(TftpAction)
-        self.assertIn(MultinodeProtocol.name, deploy_server.parameters.keys())
-        self.assertIn(VlandProtocol.name, deploy_server.parameters.keys())
-        self.assertEqual(
-            ["common"], get_test_action_namespaces(self.server_job.parameters)
-        )
-        namespace = self.server_job.parameters.get("namespace")
-        self.assertIsNone(namespace)
-        namespace = self.client_job.parameters.get("namespace")
-        self.assertIsNone(namespace)
-
-        deploy_client = self.client_job.pipeline.find_action(TftpAction)
-        self.assertIn(MultinodeProtocol.name, deploy_client.parameters.keys())
-        self.assertIn(VlandProtocol.name, deploy_client.parameters.keys())
-        key_list = []
-        for block in self.client_job.parameters["actions"]:
-            key_list.extend(block.keys())
-        self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important
-        self.assertEqual(
-            ["common"], get_test_action_namespaces(self.client_job.parameters)
-        )
-        key_list = []
-        for block in self.server_job.parameters["actions"]:
-            key_list.extend(block.keys())
-        self.assertEqual(key_list, ["deploy", "boot", "test"])  # order is important

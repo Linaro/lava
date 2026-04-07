@@ -34,7 +34,7 @@ Glossary of terms
 **H** [ :term:`hacking session` ] [ :term:`health check` ]
 [:term:`hidden device type` ] [ :term:`hostname` ]
 
-**I** [ :term:`inline` ] [ :term:`interface tag` ]
+**I** [ :term:`inline` ]
 
 **J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
@@ -64,7 +64,7 @@ Glossary of terms
 
 **U** [ :term:`UART` ]
 
-**V** [ :term:`visibility`] [ :term:`VLANd` ]
+**V** [ :term:`visibility`]
 
 **W** [ :term:`worker` ]
 
@@ -234,14 +234,6 @@ Glossary of terms
 
     .. seealso:: :ref:`inline_test_definitions`
 
-  interface tag
-     An interface tag is similar to :term:`device tag` but operate **solely**
-     within the :term:`VLANd` support. An interface tag may be related to the
-     link speed which is achievable on a particular switch and port - it may
-     also embed information about that link.
-
-     .. seealso:: :ref:`vland_device_tags`.
-
   jinja2
     Jinja2 is a templating language for Python, modelled after Django’s
     templates. It is used in LAVA for device-type configuration, as it allows
@@ -361,7 +353,7 @@ Glossary of terms
     A protocol in LAVA is a method of interacting with external services using
     an :abbr:`API (Application Programming Interface)` instead of with direct
     shell commands or via a test shell. Examples of services in LAVA which use
-    protocols include :term:`MultiNode` and :term:`VLANd`. The
+    protocols :term:`MultiNode`. The
     protocol defines which API calls are available through the LAVA interface
     and the Pipeline determines when the API call is made.
 
@@ -511,14 +503,6 @@ Glossary of terms
     In this example, users must be members of both ``developers`` group
     and ``project`` group. Groups must already exist in the Django
     configuration for the instance.
-
-  VLANd
-    VLANd is a daemon to support virtual local area networks in LAVA. This
-    support is specialized and requires careful configuration of the entire
-    LAVA instance, including the physical layout of the switches and the
-    devices of that instance.
-
-    .. seealso:: :ref:`vland_in_lava` or :ref:`admin_vland_lava`.
 
   worker
     The worker is responsible for running the ``lava-worker`` daemon to start

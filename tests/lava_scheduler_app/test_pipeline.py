@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import yaml
 from django.conf import settings
-from django.contrib.auth.models import User
 from jinja2 import TemplateError as JinjaTemplateError
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -18,7 +17,6 @@ from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import PipelineDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
-from lava_scheduler_app.dbutils import match_vlan_interface
 from lava_scheduler_app.models import (
     Device,
     DevicesUnavailableException,
@@ -1073,60 +1071,3 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.assertTrue(job.essential_role)
             else:
                 self.fail("Unexpected role: %s" % role)
-
-
-class VlanInterfaces(TestCaseWithFactory):
-    def setUp(self):
-        super().setUp()
-        # YAML, pipeline only
-        user = User.objects.create_user("test", "e@mail.invalid", "test")
-        user.save()
-        bbb_type = self.factory.make_device_type("beaglebone-black")
-        self.factory.make_device(hostname="bbb-01", device_type=bbb_type)
-        ct_type = self.factory.make_device_type("cubietruck")
-        self.factory.make_device(hostname="ct-01", device_type=ct_type)
-        self.filename = os.path.join(
-            os.path.dirname(__file__), "sample_jobs", "bbb-cubie-vlan-group.yaml"
-        )
-
-    def test_vlan_interface(self):
-        with open(self.filename) as f:
-            submission = yaml_safe_load(f)
-        self.assertIn("protocols", submission)
-        self.assertIn("lava-vland", submission["protocols"])
-        roles = [role for role, _ in submission["protocols"]["lava-vland"].items()]
-        params = submission["protocols"]["lava-vland"]
-        vlans = {}
-        for role in roles:
-            for name, tags in params[role].items():
-                vlans[name] = tags
-        self.assertIn("vlan_one", vlans)
-        self.assertIn("vlan_two", vlans)
-        jobs = split_multinode_yaml(submission, "abcdefghijkl")
-        job_roles = {}
-        for role in roles:
-            self.assertEqual(len(jobs[role]), 1)
-            job_roles[role] = jobs[role][0]
-        for role in roles:
-            self.assertIn("device_type", job_roles[role])
-            self.assertIn("protocols", job_roles[role])
-            self.assertIn("lava-vland", job_roles[role]["protocols"])
-        client_job = job_roles["client"]
-        server_job = job_roles["server"]
-        self.assertIn("vlan_one", client_job["protocols"]["lava-vland"])
-        self.assertIn("10M", client_job["protocols"]["lava-vland"]["vlan_one"]["tags"])
-        self.assertIn("vlan_two", server_job["protocols"]["lava-vland"])
-        self.assertIn("100M", server_job["protocols"]["lava-vland"]["vlan_two"]["tags"])
-        bbb_01 = Device.objects.get(hostname="bbb-01")
-        client_config = bbb_01.load_configuration()
-        self.assertIn("eth0", client_config["parameters"]["interfaces"])
-        self.assertEqual(
-            "192.168.0.2", client_config["parameters"]["interfaces"]["eth0"]["switch"]
-        )
-        self.assertEqual(5, client_config["parameters"]["interfaces"]["eth0"]["port"])
-
-        # find_device_for_job would have a call to match_vlan_interface(device, job.definition) added
-        bbb1 = Device.objects.get(hostname="bbb-01")
-        self.assertTrue(match_vlan_interface(bbb1, client_job))
-        cubie1 = Device.objects.get(hostname="ct-01")
-        self.assertTrue(match_vlan_interface(cubie1, server_job))
