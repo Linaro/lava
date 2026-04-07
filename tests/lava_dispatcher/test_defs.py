@@ -20,7 +20,6 @@ from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.fastboot import FastbootAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import (
     GitRepoAction,
@@ -34,7 +33,7 @@ from lava_dispatcher.actions.test.shell import PatternFixup
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from tests.utils import infrastructure_error, infrastructure_error_multi_paths
+from tests.utils import infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 

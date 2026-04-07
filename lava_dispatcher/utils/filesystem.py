@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import atexit
-import errno
 import glob
 import logging
 import os

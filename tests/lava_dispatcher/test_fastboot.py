@@ -4,25 +4,18 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import glob
-import os
 import unittest
 from pathlib import Path
 from subprocess import CompletedProcess
 from unittest.mock import ANY, PropertyMock, patch
 
 from lava_common.exceptions import FastbootDeviceNotFound, InfrastructureError, JobError
-from lava_dispatcher.actions.boot import AutoLoginAction, BootloaderInterruptAction
 from lava_dispatcher.actions.boot.fastboot import BootFastbootAction
-from lava_dispatcher.actions.boot.grub import GrubSequenceAction
-from lava_dispatcher.actions.deploy.fastboot import FastbootAction, FastbootFlashAction
-from lava_dispatcher.actions.deploy.overlay import OverlayAction
-from lava_dispatcher.actions.deploy.testdef import TestDefinitionAction
+from lava_dispatcher.actions.deploy.fastboot import FastbootFlashAction
 from lava_dispatcher.utils.adb import OptionalContainerAdbAction
-from lava_dispatcher.utils.containers import DockerDriver, NullDriver
+from lava_dispatcher.utils.containers import DockerDriver
 from lava_dispatcher.utils.fastboot import OptionalContainerFastbootAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
-from tests.utils import infrastructure_error, infrastructure_error_multi_paths
 
 
 class FastBootFactory(Factory):

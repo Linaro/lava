@@ -4,15 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import os
-import tempfile
-import unittest
-
-from lava_common.yaml import yaml_safe_dump
 from lava_dispatcher.action import Timeout
-from lava_dispatcher.device import NewDevice
-from lava_dispatcher.parser import JobParser
-from tests.utils import DummyLogger, infrastructure_error
 
 from .test_templates import BaseTemplateTest
 
