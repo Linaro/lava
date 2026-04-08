@@ -14,7 +14,6 @@ include etc/logrotate.d/*
 include etc/settings.conf
 include lava/dispatcher/lava-run
 include lava/dispatcher/lava-worker
-include lava/lxc-mocker/*
 include lava_common/VERSION
 include lava_dispatcher/dynamic_vm_keys/*
 include lava_dispatcher/lava_test_shell/*

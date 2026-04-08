@@ -20,8 +20,6 @@ from lava_common.exceptions import InfrastructureError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
-from lava_dispatcher.actions.deploy.fastboot import FastbootAction
-from lava_dispatcher.actions.deploy.lxc import LxcAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.actions.deploy.testdef import (
     GitRepoAction,
@@ -35,7 +33,7 @@ from lava_dispatcher.actions.test.shell import PatternFixup
 from lava_dispatcher.power import FinalizeAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 from tests.lava_dispatcher.test_uboot import UBootFactory
-from tests.utils import infrastructure_error, infrastructure_error_multi_paths
+from tests.utils import infrastructure_error
 
 # Test the loading of test definitions within the deploy stage
 
@@ -491,48 +489,6 @@ test3a: skip
         self.assertEqual(child.after.encode("utf-8"), b"test2a: fail")
         child.expect([re_pat, pexpect.EOF])
         self.assertEqual(child.after, pexpect.EOF)
-
-    @unittest.skipIf(
-        infrastructure_error_multi_paths(["lxc-info", "img2simg", "simg2img"]),
-        "lxc or img2simg or simg2img not installed",
-    )
-    def test_deployment_data(self):
-        job = self.factory.create_job(
-            "hi960-hikey-01", "sample_jobs/hikey960-oe-aep.yaml"
-        )
-        job.validate()
-        description_ref = self.pipeline_reference("hikey960-oe-aep.yaml", job=job)
-        self.assertEqual(description_ref, job.pipeline.describe())
-
-        lxc_deploy = job.pipeline.find_action(LxcAction)
-        lxc_installscript = lxc_deploy.pipeline.find_action(TestInstallAction)
-
-        fastboot_deploy = job.pipeline.find_action(FastbootAction)
-        fastboot_installscript = fastboot_deploy.pipeline.find_action(TestInstallAction)
-
-        self.assertIn("distro", lxc_installscript.parameters["deployment_data"].keys())
-        self.assertIn(
-            "distro", list(lxc_installscript.parameters["deployment_data"].keys())
-        )
-        self.assertIn("distro", list(lxc_installscript.parameters["deployment_data"]))
-        self.assertIn("distro", dict(lxc_installscript.parameters["deployment_data"]))
-        self.assertEqual(
-            "debian", lxc_installscript.parameters["deployment_data"]["distro"]
-        )
-
-        self.assertIn(
-            "distro", fastboot_installscript.parameters["deployment_data"].keys()
-        )
-        self.assertIn(
-            "distro", list(fastboot_installscript.parameters["deployment_data"].keys())
-        )
-        self.assertIn("distro", fastboot_installscript.parameters["deployment_data"])
-        self.assertIn(
-            "distro", dict(fastboot_installscript.parameters["deployment_data"])
-        )
-        self.assertEqual(
-            "oe", fastboot_installscript.parameters["deployment_data"]["distro"]
-        )
 
 
 class TestRunScript(LavaDispatcherTestCase):

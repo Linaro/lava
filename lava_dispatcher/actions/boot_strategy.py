@@ -429,27 +429,6 @@ class BootKExec(BootStrategy):
         return True, "accepted"
 
 
-class BootLxc(BootStrategy):
-    """
-    Attaches to the lxc container.
-    """
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        from lava_dispatcher.actions.boot.lxc import BootLxcAction
-
-        return BootLxcAction(job)
-
-    @classmethod
-    def accepts(
-        cls, device: dict[str, Any], parameters: dict[str, Any]
-    ) -> tuple[bool, str]:
-        if parameters["method"] != "lxc":
-            return False, '"method" was not "lxc"'
-
-        return True, "accepted"
-
-
 class Minimal(BootStrategy):
     @classmethod
     def action(cls, job: Job) -> Action:

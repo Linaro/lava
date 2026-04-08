@@ -101,13 +101,13 @@ support remains available.
 
 One special case is where the external hardware is defined using
 ``static_info`` in the device dictionary and the test jobs (including
-health checks) use LXC:
+health checks) use docker:
 
 .. code-block:: jinja
 
  {% set static_info = [{'board_id': 'S_NO18080201'}] %}
 
-When the test job starts, this USB device needs to be added to the LXC,
+When the test job starts, this USB device needs to be added to the docker,
 so LAVA will raise an :ref:`infrastructure issue
 <infrastructure_issues_health>` if the device cannot be found in
 ``udev``.

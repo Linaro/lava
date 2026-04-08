@@ -12,19 +12,15 @@ character_delays:
 actions:
   deploy:
     connections:
-      lxc:
     methods:
-      lxc:
       image:
         parameters:
 
   boot:
     connections:
       serial:
-      lxc:
       ssh:
     methods:
-      lxc:
       pyocd:
         parameters:
           command:

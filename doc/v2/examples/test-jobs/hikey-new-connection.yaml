@@ -17,37 +17,12 @@ metadata:
   build: morty-83
   original.build: http://snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/
 
-protocols:
-  lava-lxc:
-    name: lxc-hikey-oe
-    template: debian
-    distribution: debian
-    release: jessie
-
 actions:
-- deploy:
-    namespace: tlxc
-    timeout:
-      minutes: 15
-    to: lxc
-    packages:
-    - android-tools-fastboot
-
-- boot:
-    namespace: tlxc
-    prompts:
-    - 'root@(.*):/#'
-    - 'hikey:/'
-    timeout:
-      minutes: 5
-    method: lxc
-
 - deploy:
     timeout:
       minutes: 30
     to: fastboot
     namespace: hikey-oe
-    connection: lxc
     images:
       ptable:
         url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/4.9/83/bootloader/ptable-linux-8g.img
@@ -80,17 +55,10 @@ actions:
       minutes: 5
     method: uefi-menu
     commands: fastboot
-    protocols:
-      lava-lxc:
-      # other action could be boot-fastboot
-      - action: uefi-commands
-        request: pre-os-command
-        timeout:
-          minutes: 2
 
 # test isolation block
 - test:
-    namespace: hikey-oe
+    namespace: isolation
     connection-namespace: isolation
     timeout:
       minutes: 5
@@ -100,12 +68,14 @@ actions:
       path: lava-test-shell/smoke-tests-basic.yaml
       name: smoke-tests-basic-oe
 
-# test lxc block
+# test docker block
 - test:
-   namespace: tlxc
-   timeout:
-     minutes: 5
-   definitions:
+    namespace: hikey-oe
+    docker:
+      image: fastboot:latest
+    timeout:
+      minutes: 5
+    definitions:
     - repository: http://git.linaro.org/lava-team/lava-functional-tests.git
       from: git
       path: lava-test-shell/smoke-tests-basic.yaml

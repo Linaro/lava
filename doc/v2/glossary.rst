@@ -38,8 +38,6 @@ Glossary of terms
 
 **J** [ :term:`jinja2` ] [ :term:`job context` ] [ :term:`job definition` ]
 
-**L** [ :term:`LAVA_LXC_HOME` ] [ :term:`LXC` ] [ :term:`lxc://` ]
-
 **M** [ :term:`messageID` ] [ :term:`metadata` ] [ :term:`MultiNode` ]
 
 **N** [ :term:`namespace` ]
@@ -159,8 +157,6 @@ Glossary of terms
     so these images are not typically deployed onto hardware which will be sold
     to the customer without having this image replaced with a production image.
 
-    .. seealso:: :ref:`lava_lxc_protocol_android`
-
   dispatcher
     A machine to which multiple devices are connected. The dispatcher has
     ``lava-dispatcher`` installed and passes the commands to the device and
@@ -277,36 +273,6 @@ Glossary of terms
     definition will be the parsed YAML for this particular device within the
     MultiNode job.
 
-  LAVA_LXC_HOME
-    The path within :term:`LXC` set to ``/lava-lxc`` by default. From the host
-    machine this path would be something like
-    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc``. Any files downloaded by
-    :ref:`deploy_to_download` will be copied to this location which can then be
-    accessible from within the container.
-
-  LXC
-    `Linux containers <https://en.wikipedia.org/wiki/LXC>`_ are used in LAVA to
-    allow custom configurations on the dispatcher for each use. The extra
-    utilities or services are transparently available to the pipeline code and
-    selected device nodes can also be made available, depending on admin
-    configuration of the devices.
-
-    .. seealso:: :ref:`deploy_using_lxc`, :ref:`lxc_deploy`,
-      :ref:`feedback_using_lxc` and :ref:`lxc_protocol_reference`
-
-  lxc://
-    This is a URL scheme specific to LAVA which points to files available in
-    :term:`LAVA_LXC_HOME`. An URL like ``lxc:///boot.img`` will refer to
-    ``/var/lib/lxc/{container-name}/rootfs/lava-lxc/boot.img`` on the host or
-    ``/lava-lxc/boot.img`` within the :term:`LXC`. This URL scheme is valid
-    only when :ref:`lxc_protocol_reference` is defined in the test job. It also
-    only makes sense for the ``deploy`` and ``boot`` actions.
-
-    .. note:: Pay attention to 3 forward slashes in the URL when referring to a
-              file.
-
-    .. seealso:: :ref:`deploy_to_download`
-
   messageID
     Each message sent using the :ref:`multinode_api` uses a ``messageID`` which
     is a string, unique within the group. It is recommended to make these
@@ -330,16 +296,12 @@ Glossary of terms
   namespace
     A simple text label which is used to tie related actions together within a
     test job submission where multiple deploy, boot or test actions are
-    defined. A common use case for namespaces is the use of :term:`LXC` in a
-    test job where some actions are to be executed inside the LXC and some on
-    the :term:`DUT`. The namespace is used to store the temporary locations of
-    files and other dynamic data during the running of the test job so that,
-    for example, the test runner is able to execute the correct test definition
-    YAML. Namespaces are set in the test job submission.
+    defined.  The namespace is used to store the temporary locations of files and
+    other dynamic data during the running of the test job so that, for example,
+    the test runner is able to execute the correct test definition YAML.
+    Namespaces are set in the test job submission.
 
-    .. seealso:: :term:`protocol in the glossary <protocol>`,
-      :ref:`namespaces_with_lxc`, :ref:`deploy_using_lxc` and
-      :ref:`lava_lxc_protocol_android`
+    .. seealso:: :term:`protocol in the glossary <protocol>`
 
   offline
     A status of a device which allows jobs to be submitted and reserved for the
@@ -390,8 +352,6 @@ Glossary of terms
     **not** visible to ``adb``. This is typically how a device is configured when
     first sold to the consumer.
 
-    .. seealso:: :ref:`lava_lxc_protocol_android`
-
   prompts
    A list of prompt strings which the test writer needs to specify in advance
    and which LAVA will use to determine whether the boot was successful. One of
@@ -401,7 +361,7 @@ Glossary of terms
     A protocol in LAVA is a method of interacting with external services using
     an :abbr:`API (Application Programming Interface)` instead of with direct
     shell commands or via a test shell. Examples of services in LAVA which use
-    protocols include :term:`LXC`, :term:`MultiNode` and :term:`VLANd`. The
+    protocols include :term:`MultiNode` and :term:`VLANd`. The
     protocol defines which API calls are available through the LAVA interface
     and the Pipeline determines when the API call is made.
 

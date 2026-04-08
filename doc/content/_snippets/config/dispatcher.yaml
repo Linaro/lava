@@ -22,11 +22,6 @@
 # or listening on a custom port.
 #dispatcher_tftp_ip: <dispatcher-tftp-ip>:<port>
 
-# Set this key, if you want to change the default lxc creation path
-# No trailing /
-# The default path is /var/lib/lxc
-#lxc_path: <custom-path>
-
 # Prefix for all temporary directories
 # If this variable is set, the temporary files will be created in
 # /var/lib/lava/dispatcher/tmp/<prefix><job_id> instead of

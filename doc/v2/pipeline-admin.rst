@@ -262,17 +262,6 @@ Current support includes:
 # or listening on a custom port.
 #dispatcher_tftp_ip: <dispatcher-tftp-ip>:<port>
 
-* Sets the container creation path.
-
-.. code-block:: yaml
-
- # Set this key, if you want to change the default lxc creation path
- # No trailing /
- # The default path is /var/lib/lxc
- #lxc_path: <custom-path>
-
-.. seealso:: :ref:`keep_dispatcher_dumb`
-
 * Add a prefix to tmp directories on a worker. This can be useful if
   a worker runs more than one ``lava-worker``, e.g. using docker.
 

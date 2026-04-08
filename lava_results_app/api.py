@@ -334,7 +334,7 @@ class ResultsAPI(ExposedAPI):
         [
             {'boot.0.hikey-oe.commands': 'fastboot'},
             {'source': 'https://git.linaro.org/lava-team/refactoring.git'},
-            {'test.0.tlxc.definition.path': 'ubuntu/smoke-tests-basic.yaml'}
+            {'test.0.docker.definition.path': 'ubuntu/smoke-tests-basic.yaml'}
         ]
         """
         self._authenticate()

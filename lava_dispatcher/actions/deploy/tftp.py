@@ -18,7 +18,6 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.apply_overlay import PrepareOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
-from lava_dispatcher.actions.deploy.lxc import LxcCreateUdevRuleAction
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
 from lava_dispatcher.utils import filesystem
 from lava_dispatcher.utils.shell import which
@@ -108,7 +107,6 @@ class TftpAction(Action):
 
         # TftpAction is a deployment, so once the files are in place, just do the overlay
         self.pipeline.add_action(PrepareOverlayTftp(self.job))
-        self.pipeline.add_action(LxcCreateUdevRuleAction(self.job))
         if self.test_needs_deployment(parameters):
             self.pipeline.add_action(DeployDeviceEnvironment(self.job))
 

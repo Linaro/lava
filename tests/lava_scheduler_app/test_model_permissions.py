@@ -45,11 +45,11 @@ class ModelPermissionsTest(TestCaseWithFactory):
         # Create device types.
         self.qemu_device_type = self.factory.make_device_type(name="qemu")
         self.bbb_device_type = self.factory.make_device_type(name="bbb")
-        self.lxc_device_type = self.factory.make_device_type(name="lxc")
+        self.docker_device_type = self.factory.make_device_type(name="docker")
         self.all_device_types = [
             self.qemu_device_type,
             self.bbb_device_type,
-            self.lxc_device_type,
+            self.docker_device_type,
         ]
 
         # Create devices.

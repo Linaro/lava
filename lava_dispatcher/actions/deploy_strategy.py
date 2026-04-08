@@ -88,7 +88,7 @@ class Docker(DeployStrategy):
 class Download(DeployStrategy):
     """
     Strategy class for a download deployment.
-    Downloads the relevant parts, copies to LXC if available.
+    Downloads the relevant parts.
     """
 
     name = "download"
@@ -320,33 +320,6 @@ class DeployIso(DeployStrategy):
             else:
                 return False, '"iso" was not in the parameters'
         return False, '"to" was not in parameters, or "to" was not "iso-installer"'
-
-
-class Lxc(DeployStrategy):
-    """
-    Strategy class for a lxc deployment.
-    Downloads the relevant parts, copies to the locations using lxc.
-    """
-
-    name = "lxc"
-
-    @classmethod
-    def action(cls, job: Job) -> Action:
-        from lava_dispatcher.actions.deploy.lxc import LxcAction
-
-        return LxcAction(job)
-
-    @classmethod
-    def accepts(
-        cls, device: dict[str, Any], parameters: dict[str, Any]
-    ) -> tuple[bool, str]:
-        if "to" not in parameters:
-            return False, '"to" is not in deploy parameters'
-        if parameters["to"] != "lxc":
-            return False, '"to" parameter is not "lxc"'
-        if "lxc" in device["actions"]["deploy"]["methods"]:
-            return True, "accepted"
-        return False, '"lxc" was not in the device configuration deploy methods'
 
 
 class Mps(DeployStrategy):

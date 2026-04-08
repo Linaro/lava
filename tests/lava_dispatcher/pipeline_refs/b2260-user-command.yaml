@@ -206,16 +206,9 @@
       description: recreate a ramdisk with the overlay applied.
       summary: compress ramdisk with overlay
       timeout: 240
-  - class: LxcCreateUdevRuleAction
-    name: lxc-create-udev-rule-action
-    level: '2.6'
-    max_retries: 1
-    description: create lxc udev rule action
-    summary: create lxc udev rule
-    timeout: 240
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.7'
+    level: '2.6'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment

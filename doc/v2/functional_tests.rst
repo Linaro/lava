@@ -191,7 +191,7 @@ able to run successfully.
 
 #. Test job definitions also remain static.
 
-   #. No changes in prompts, metadata, image files, checksums, LXC
+   #. No changes in prompts, metadata, image files, checksums,
       suites or submitter.
 
    #. Changes to timeouts only by code review to handle resource

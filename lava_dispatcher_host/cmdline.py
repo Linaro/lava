@@ -124,7 +124,7 @@ def main(argv):
         "map", help="Map a host device to a container (useful for debugging)"
     )
     devices_map.add_argument("container", help="Container name")
-    devices_map.add_argument("container_type", help="Container type (lxc or docker)")
+    devices_map.add_argument("container_type", help="Container type (docker)")
 
     # shared options between "devices share" and "devices map"
     for subparser in [devices_share, devices_map]:

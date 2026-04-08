@@ -150,7 +150,7 @@
       description: use http to download the file
       summary: http download
       timeout: 2400
-      url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/gpt_both0.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
     level: '1.6'
@@ -173,24 +173,185 @@
       description: use http to download the file
       summary: http download
       timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/hyp.mbn
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.8'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.9'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.9.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbc_1.0_8016.bin
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.10'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.11'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.11.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/rpm.mbn
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.12'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.13'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.13.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/sbl1.mbn
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.14'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.15'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.15.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/tz.mbn
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.16'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.17'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.17.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images-internal/dragonboard410c/linaro/rescue/17.09/linux/emmc_appsboot.mbn
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.18'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.19'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.19.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
+      url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/boot-linaro-buster-dragonboard-410c-359.img.gz
+  - class: DeployDeviceEnvironment
+    name: deploy-device-env
+    level: '1.20'
+    max_retries: 1
+    description: deploy device environment
+    summary: deploy device environment
+    timeout: 2400
+  - class: DownloaderAction
+    name: download-retry
+    level: '1.21'
+    max_retries: 1
+    description: download with retry
+    summary: download-retry
+    timeout: 2400
+    pipeline:
+    - class: HttpDownloadAction
+      name: http-download
+      level: 1.21.1
+      max_retries: 1
+      description: use http to download the file
+      summary: http download
+      timeout: 2400
       url: http://images.validation.linaro.org/releases.linaro.org/96boards/dragonboard410c/linaro/debian/18.01/linaro-buster-developer-dragonboard-410c-359.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image
-    level: '1.8'
+    level: '1.22'
     max_retries: 1
     description: apply overlay to sparse image
     summary: apply overlay to sparse image
     timeout: 2400
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '1.9'
+    level: '1.23'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
-    level: '1.10'
+    level: '1.24'
     max_retries: 1
     description: Determine support for each flash operation
     summary: Handle reset and options for each flash url.
@@ -198,35 +359,133 @@
     pipeline:
     - class: ReadFeedback
       name: read-feedback
-      level: 1.10.1
+      level: 1.24.1
       max_retries: 1
       description: Check for messages on all other namespaces
       summary: Read from other namespaces
       timeout: 2400
     - class: WaitDeviceBoardID
       name: wait-device-boardid
-      level: 1.10.2
+      level: 1.24.2
       max_retries: 1
       description: wait for udev device with board ID
       summary: wait for udev device with board ID
       timeout: 2400
     - class: FastbootFlashAction
       name: fastboot-flash-action
-      level: 1.10.3
+      level: 1.24.3
       max_retries: 1
       description: Run a specified flash command
       summary: Execute fastboot flash command
       timeout: 2400
     - class: WaitDeviceBoardID
       name: wait-device-boardid
-      level: 1.10.4
+      level: 1.24.4
       max_retries: 1
       description: wait for udev device with board ID
       summary: wait for udev device with board ID
       timeout: 2400
     - class: FastbootFlashAction
       name: fastboot-flash-action
-      level: 1.10.5
+      level: 1.24.5
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.6
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.7
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.8
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.9
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.10
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.11
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.12
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.13
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.14
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.15
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.16
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.17
+      max_retries: 1
+      description: Run a specified flash command
+      summary: Execute fastboot flash command
+      timeout: 2400
+    - class: WaitDeviceBoardID
+      name: wait-device-boardid
+      level: 1.24.18
+      max_retries: 1
+      description: wait for udev device with board ID
+      summary: wait for udev device with board ID
+      timeout: 2400
+    - class: FastbootFlashAction
+      name: fastboot-flash-action
+      level: 1.24.19
       max_retries: 1
       description: Run a specified flash command
       summary: Execute fastboot flash command

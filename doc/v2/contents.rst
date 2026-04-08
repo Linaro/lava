@@ -132,7 +132,6 @@ Writing tests for LAVA
    secondary-media
    connections
    dispatcher-actions
-   deploy-lxc
    multinode
    writing-multinode
    multinodeapi
@@ -179,7 +178,6 @@ LAVA administration guide
    hiddentypes
    bootimages
    pdudaemon
-   admin-lxc-deploy
    ipmi-pxe-deploy
    ipxe
    proxy
@@ -240,7 +238,6 @@ Migrating to V2
 .. toctree::
    :maxdepth: 1
 
-   migration
    pipeline-writer
    migrating-admin-example
 

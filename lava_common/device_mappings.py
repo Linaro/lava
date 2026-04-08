@@ -30,7 +30,7 @@ def add_device_container_mapping(
     job_id: str,
     device_info: dict[str, Any],
     container: str,
-    container_type: str = "lxc",
+    container_type: str = "docker",
 ) -> None:
     validate_device_info(device_info)
     item: dict[str, Any] = {

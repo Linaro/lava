@@ -21,7 +21,7 @@ To reduce the number of unit tests which are skipped, a number of other
 packages are listed as recommended by ``lava-dev`` and these should be
 installed as well::
 
- $ sudo apt -y install lxc u-boot-tools tftpd-hpa telnet nfs-kernel-server img2simg simg2img
+ $ sudo apt -y install u-boot-tools tftpd-hpa telnet nfs-kernel-server img2simg simg2img
 
 .. important:: For security reasons, each installation of
    ``lava-server`` sets the permissions of
