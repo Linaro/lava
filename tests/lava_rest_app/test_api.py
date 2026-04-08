@@ -1985,6 +1985,242 @@ ok 2 bar
         assert ret.status_code == status.HTTP_204_NO_CONTENT
 
 
+class TestGroupsApi:
+    @pytest.fixture(autouse=True)
+    def setUp(self, db):
+        self.version = "v0.2"
+        self.base_url = reverse("api-root", args=[self.version]) + "groups/"
+
+        self.admin = User.objects.create(username="admin", is_superuser=True)
+        admin_token = AuthToken.objects.create(user=self.admin, secret="adminkey")
+        self.adminclient = APIClient()
+        self.adminclient.credentials(HTTP_AUTHORIZATION="Token " + admin_token.secret)
+
+        self.user = User.objects.create(username="user1")
+        user_token = AuthToken.objects.create(user=self.user, secret="user1key")
+        self.userclient = APIClient()
+        self.userclient.credentials(HTTP_AUTHORIZATION="Token " + user_token.secret)
+
+        self.staff = User.objects.create(
+            username="staff", is_staff=True, is_superuser=False
+        )
+        staff_token = AuthToken.objects.create(user=self.staff, secret="staffkey")
+        self.staffclient = APIClient()
+        self.staffclient.credentials(HTTP_AUTHORIZATION="Token " + staff_token.secret)
+
+        self.anonymousclient = APIClient()
+        self.group = Group.objects.create(name="group1")
+
+    @pytest.mark.parametrize("client", ["anonymousclient", "userclient", "staffclient"])
+    @pytest.mark.parametrize(
+        "method,suffix,data",
+        [
+            ("get", "", None),
+            ("get", "{pk}/", None),
+            ("post", "", {"name": "new-group"}),
+            ("put", "{pk}/", {"name": "renamed"}),
+            ("delete", "{pk}/", None),
+        ],
+    )
+    def test_non_superuser_unauthorized(self, client, method, suffix, data):
+        url = self.base_url + suffix.format(pk=self.group.pk)
+        client = getattr(self, client)
+        request_method = getattr(client, method)
+        response = request_method(url, data)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_list(self):
+        response = self.adminclient.get(self.base_url)
+        assert response.status_code == status.HTTP_200_OK
+        names = [g["name"] for g in response.json()["results"]]
+        assert "group1" in names
+
+    def test_retrieve(self):
+        response = self.adminclient.get(f"{self.base_url}{self.group.pk}/")
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["name"] == "group1"
+
+    def test_create(self):
+        response = self.adminclient.post(self.base_url, {"name": "group2"})
+        assert response.status_code == status.HTTP_201_CREATED
+        assert Group.objects.filter(name="group2").exists()
+
+    def test_create_duplicated(self):
+        response = self.adminclient.post(self.base_url, {"name": "group1"})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update(self):
+        response = self.adminclient.put(
+            f"{self.base_url}{self.group.pk}/", {"name": "renamed"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self.group.refresh_from_db()
+        assert self.group.name == "renamed"
+
+    def test_delete(self):
+        response = self.adminclient.delete(f"{self.base_url}{self.group.pk}/")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Group.objects.filter(pk=self.group.pk).exists()
+
+    def test_filter_by_name(self):
+        response = self.adminclient.get(f"{self.base_url}?name=group1")
+        assert response.status_code == status.HTTP_200_OK
+        results = response.json()["results"]
+        assert len(results) == 1
+        assert results[0]["name"] == "group1"
+
+
+class TestUsersApi:
+    @pytest.fixture(autouse=True)
+    def setUp(self, db):
+        self.version = "v0.2"
+        self.base_url = reverse("api-root", args=[self.version]) + "users/"
+
+        self.admin = User.objects.create(username="admin", is_superuser=True)
+        admin_token = AuthToken.objects.create(user=self.admin, secret="adminkey")
+        self.adminclient = APIClient()
+        self.adminclient.credentials(HTTP_AUTHORIZATION="Token " + admin_token.secret)
+
+        self.user = User.objects.create(username="user1")
+        user_token = AuthToken.objects.create(user=self.user, secret="user1key")
+        self.userclient = APIClient()
+        self.userclient.credentials(HTTP_AUTHORIZATION="Token " + user_token.secret)
+
+        self.staff = User.objects.create(
+            username="staff", is_staff=True, is_superuser=False
+        )
+        staff_token = AuthToken.objects.create(user=self.staff, secret="staffkey")
+        self.staffclient = APIClient()
+        self.staffclient.credentials(HTTP_AUTHORIZATION="Token " + staff_token.secret)
+
+        self.anonymousclient = APIClient()
+        self.group = Group.objects.create(name="group1")
+
+        self.user2 = User.objects.create(username="user2", email="user2@example.com")
+
+    @pytest.mark.parametrize("client", ["anonymousclient", "userclient", "staffclient"])
+    @pytest.mark.parametrize(
+        "method,suffix,data",
+        [
+            ("get", "", None),
+            ("get", "{pk}/", None),
+            ("post", "", {"username": "user3", "password": "user3123"}),
+            ("patch", "{pk}/", {"email": "x@x.com"}),
+            ("delete", "{pk}/", None),
+        ],
+    )
+    def test_non_superuser_unauthorized(self, client, method, suffix, data):
+        url = self.base_url + suffix.format(pk=self.user2.pk)
+        client = getattr(self, client)
+        request_method = getattr(client, method)
+        response = request_method(url, data)
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_list(self):
+        response = self.adminclient.get(self.base_url)
+        assert response.status_code == status.HTTP_200_OK
+        results = response.json()["results"]
+        usernames = [u["username"] for u in results]
+        assert "user2" in usernames
+        for data in results:
+            assert "password" not in data
+
+    def test_retrieve(self):
+        response = self.adminclient.get(f"{self.base_url}{self.user2.pk}/")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["username"] == "user2"
+        assert data["email"] == "user2@example.com"
+        assert "password" not in data
+
+    def test_create(self):
+        response = self.adminclient.post(
+            self.base_url,
+            {"username": "user3", "email": "user3@example.com", "password": "user3123"},
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        created = User.objects.get(username="user3")
+        assert created.check_password("user3123")
+
+    def test_create_without_password(self):
+        response = self.adminclient.post(self.base_url, {"username": "user3"})
+        assert response.status_code == status.HTTP_201_CREATED
+        user3 = User.objects.get(username="user3")
+        assert not user3.has_usable_password()
+
+    def test_create_with_groups(self):
+        response = self.adminclient.post(
+            self.base_url,
+            {"username": "user3", "groups": [self.group.name]},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        user3 = User.objects.get(username="user3")
+        assert self.group in user3.groups.all()
+
+    def test_create_duplicated(self):
+        response = self.adminclient.post(self.base_url, {"username": "user2"})
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_update_email(self):
+        response = self.adminclient.patch(
+            f"{self.base_url}{self.user2.pk}/", {"email": "updated@example.com"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self.user2.refresh_from_db()
+        assert self.user2.email == "updated@example.com"
+
+    def test_update_password_is_hashed(self):
+        response = self.adminclient.patch(
+            f"{self.base_url}{self.user2.pk}/", {"password": "newpassword"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        self.user2.refresh_from_db()
+        assert self.user2.check_password("newpassword")
+
+    def test_update_groups(self):
+        response = self.adminclient.patch(
+            f"{self.base_url}{self.user2.pk}/",
+            {"groups": [self.group.name]},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert self.group in self.user2.groups.all()
+
+    def test_delete(self):
+        pk = self.user2.pk
+        response = self.adminclient.delete(f"{self.base_url}{pk}/")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not User.objects.filter(pk=pk).exists()
+
+    def test_filter_by_username(self):
+        response = self.adminclient.get(f"{self.base_url}?username=user2")
+        assert response.status_code == status.HTTP_200_OK
+        results = response.json()["results"]
+        assert len(results) == 1
+        assert results[0]["username"] == "user2"
+
+    def test_filter_by_is_active_false(self):
+        self.user2.is_active = False
+        self.user2.save()
+        response = self.adminclient.get(f"{self.base_url}?is_active=False")
+        assert response.status_code == status.HTTP_200_OK
+        usernames = [u["username"] for u in response.json()["results"]]
+        assert usernames == ["user2"]
+
+    def test_filter_by_is_superuser_false(self):
+        response = self.adminclient.get(f"{self.base_url}?is_superuser=False")
+        assert response.status_code == status.HTTP_200_OK
+        usernames = [u["username"] for u in response.json()["results"]]
+        assert "admin" not in usernames
+
+    def test_filter_by_is_superuser_true(self):
+        response = self.adminclient.get(f"{self.base_url}?is_superuser=True")
+        assert response.status_code == status.HTTP_200_OK
+        usernames = [u["username"] for u in response.json()["results"]]
+        assert usernames == ["admin"]
+
+
 def test_serializers_partial():
     # make sure TestJob, Worker and Device serializers are always instantiated
     # with partial argument set to True
