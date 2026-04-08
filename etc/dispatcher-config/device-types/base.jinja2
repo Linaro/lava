@@ -129,14 +129,14 @@ constants:
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
     interrupt-newline: {{ grub_interrupt_newline | default(False) }}
     error-messages:
-      - "error: missing (.*) symbol."
+      - "error: (.*)"
   grub-efi:
     interrupt-prompt: '{{ grub_autoboot_prompt | default("for a command-line") }}'
     interrupt-character: '{{ grub_interrupt_character | default ("c") }}'
     error-messages:
       - 'Undefined OpCode Exception PC at'
       - 'Synchronous Exception at'
-      - "error: missing (.*) symbol."
+      - "error: (.*)"
   ipxe:
     interrupt-prompt: '{{ ipxe_autoboot_prompt  | default("Press Ctrl-B for the iPXE command line") }}'
     interrupt_ctrl_list: {{ ipxe_interrupt_ctrl_list  | default(['b']) }}
