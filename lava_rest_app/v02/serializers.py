@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from django.contrib.auth.models import Group, Permission
+from django.contrib.auth.models import Group, Permission, User
 from django.db import transaction
 from rest_framework import serializers
 from rest_framework.reverse import reverse as rest_reverse
@@ -314,3 +314,61 @@ class RemoteArtifactTokenSerializer(serializers.ModelSerializer):
         model = RemoteArtifactsAuth
         fields = ["name", "token"]
         read_only_fields = ["user"]
+
+
+class GroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Group
+        fields = ("id", "name")
+
+
+class UserSerializer(serializers.ModelSerializer):
+    # allow to list/set groups by group name.
+    groups = serializers.SlugRelatedField(
+        many=True,
+        slug_field="name",
+        queryset=Group.objects.all(),
+        required=False,
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "username",
+            "first_name",
+            "last_name",
+            "email",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "groups",
+            "last_login",
+            "date_joined",
+            "password",
+        )
+        read_only_fields = ("last_login", "date_joined")
+        # Ensure "password" field not appear in GET responses
+        extra_kwargs = {"password": {"write_only": True, "required": False}}
+
+    def create(self, validated_data):
+        # Create the user first, then set groups.
+        groups = validated_data.pop("groups", [])
+        password = validated_data.pop("password", None)
+        user = User(**validated_data)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
+        user.save()
+        if groups:
+            user.groups.set(groups)
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        instance = super().update(instance, validated_data)
+        if password:
+            instance.set_password(password)
+            instance.save(update_fields=["password"])
+        return instance

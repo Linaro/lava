@@ -40,3 +40,5 @@ router.register(
     views.RemoteArtifactTokenViewSet,
     basename="remote-artifact-tokens",
 )
+router.register(r"groups", views.GroupViewSet, basename="groups")
+router.register(r"users", views.UserViewSet, basename="users")

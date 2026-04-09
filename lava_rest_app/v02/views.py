@@ -12,6 +12,7 @@ import tap
 import voluptuous
 import yaml
 from django.conf import settings
+from django.contrib.auth.models import Group, User
 from django.db import transaction
 from django.http import Http404
 from django.http.response import FileResponse, HttpResponse
@@ -1165,3 +1166,23 @@ class RemoteArtifactTokenViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+class GroupViewSet(viewsets.ModelViewSet):
+    queryset = Group.objects.all().order_by("name")
+
+    serializer_class = serializers.GroupSerializer
+    permission_classes = [IsSuperUser]
+
+    filterset_fields = ("name",)
+    ordering_fields = ("name",)
+
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all().order_by("username")
+
+    serializer_class = serializers.UserSerializer
+    permission_classes = [IsSuperUser]
+
+    filterset_fields = ("username", "email", "is_active", "is_staff", "is_superuser")
+    ordering_fields = ("username", "date_joined", "last_login")
