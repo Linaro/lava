@@ -168,7 +168,7 @@ class QueryTestSuiteTable(LavaTable):
         template_name="lava_results_app/query_suites_actions_field.html",
         orderable=False,
     )
-    submitter = tables.Column(accessor="job.submitter.username", orderable=False)
+    submitter = tables.Column(accessor="job__submitter__username", orderable=False)
     name = tables.TemplateColumn(
         "<a href='{{ record.get_absolute_url }}'>{{ record.name }}</a>",
         orderable=False,
@@ -190,7 +190,7 @@ class QueryTestSuiteTable(LavaTable):
 
     logged = tables.DateColumn(
         format=settings.DATETIME_FORMAT,
-        accessor="job.start_time",
+        accessor="job__start_time",
         verbose_name="Logged",
     )
     omit = tables.TemplateColumn(
@@ -220,7 +220,7 @@ class QueryTestSuiteTable(LavaTable):
 
 
 class QueryConditionsTable(LavaTable):
-    table_model = tables.Column(accessor="table.model", verbose_name="Entity")
+    table_model = tables.Column(accessor="table__model", verbose_name="Entity")
     field = tables.Column(verbose_name="Field")
     operator = tables.Column(verbose_name="Operator")
     value = tables.Column(verbose_name="Value")
