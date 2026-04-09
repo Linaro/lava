@@ -839,7 +839,7 @@ def ask_exit(signame: str, group: asyncio.Future[Any]) -> None:
     group.cancel()
 
 
-async def main() -> int:
+async def main() -> None:
     # Parse command line
     options = get_parser().parse_args()
     if options.sentry_dsn:
@@ -929,7 +929,7 @@ async def main() -> int:
             )
 
             await group
-            return 0
+            return
         except asyncio.CancelledError:
             LOG.info("[EXIT] Canceled")
             if options.wait_jobs:
@@ -952,22 +952,22 @@ async def main() -> int:
                     if not all_ids:
                         break
                     await asyncio.sleep(ping_interval)
-            return 1
+            raise SystemExit(1)
         except VersionMismatch as exc:
             LOG.info("[EXIT] %s" % exc)
-            return 0
+            return
         except Exception as exc:
             LOG.error("[EXIT] %s", exc)
             LOG.exception(exc)
-            return 1
+            raise SystemExit(1)
 
 
 def run() -> None:
     try:
-        sys.exit(asyncio.run(main()))
+        asyncio.run(main())
     except KeyboardInterrupt:
         LOG.info("[EXIT] Received Ctrl+C")
-        sys.exit(1)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":
