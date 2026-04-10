@@ -157,6 +157,7 @@ nav:
         - NBD: technical-references/job-definition/actions/deploy/to-nbd.md
         - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - Overlay: technical-references/job-definition/actions/deploy/to-overlay.md
+        - QDL: technical-references/job-definition/actions/deploy/to-qdl.md
         - Secondary: technical-references/job-definition/actions/deploy/to-secondary.md
         - SSH: technical-references/job-definition/actions/deploy/to-ssh.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
@@ -183,6 +184,7 @@ nav:
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
         - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
+        - QDL: technical-references/job-definition/actions/boot/method-qdl.md
         - SSH: technical-references/job-definition/actions/boot/method-ssh.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
         - UEFI-Menu: technical-references/job-definition/actions/boot/method-uefi-menu.md
