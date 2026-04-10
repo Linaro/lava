@@ -1,4 +1,4 @@
-# Copyright 2019-2025 NXP
+# Copyright 2019-2026 NXP
 #
 # Author: Thomas Mahe <thomas.mahe@nxp.com>
 #         Franck Lenormand <franck.lenormand@nxp.com>
@@ -494,7 +494,10 @@ class UUUBootAction(OptionalContainerUuuAction):
             self.run_uuu(
                 exec_cmd,
                 allow_fail=False,
-                error_msg=f"Fail UUUBootAction on cmd : {' '.join(cmd_list)}",
+                error_msg=(
+                    f"Fail UUUBootAction on cmd : "
+                    f"{' '.join([*build_uuu_protocol_args(protocol), *cmd_list])}"
+                ),
             )
 
         return connection
