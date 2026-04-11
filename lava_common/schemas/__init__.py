@@ -293,6 +293,8 @@ def job(extra_context_variables):
         {
             Required("job_name"): All(str, Length(min=1, max=200)),
             Optional("device_type"): All(str, Length(min=1, max=200)),
+            Optional("device"): All(str, Length(min=1, max=200)),
+            Optional("worker"): All(str, Length(min=1, max=200)),
             Required("timeouts"): {
                 Required("job"): timeout(),
                 Optional("action"): timeout(),
@@ -317,6 +319,8 @@ def job(extra_context_variables):
                             {
                                 Required("device_type"): str,
                                 Required("count"): Range(min=0),
+                                Optional("device"): str,
+                                Optional("worker"): str,
                                 Optional("context"): Schema(
                                     {In(context_variables): Any(int, str, [int, str])},
                                     extra=False,

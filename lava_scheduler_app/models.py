@@ -1086,13 +1086,18 @@ def _check_tags(taglist, device_type=None, hostname=None):
     return list(set(matched_devices))
 
 
-def _check_submit_to_devices(device_list, user):
+def _check_submit_to_devices(device_list, user, requested_device=None):
     """
     Handles the affects of Device Permissions on job submission
     :param device_list: A device queryset to check
     :param user: The user submitting the job
+    :param requested_device: the specific device requested by the job, if any.
+    When set, a permission failure is reported as a SubmissionException naming
+    the device instead of the generic pool message.
     :return: a subset of the device_list to which the user
     is allowed to submit a TestJob.
+    :raise: SubmissionException if a specific device was requested and the user
+    does not have permission to submit to it.
     :raise: DevicesUnavailableException if none of the
     devices in device_list are available for submission by this user.
     """
@@ -1101,6 +1106,11 @@ def _check_submit_to_devices(device_list, user):
         return allow
     allow = list(device_list.accessible_by_user(user, Device.SUBMIT_PERMISSION))
     if not allow:
+        if requested_device is not None:
+            raise SubmissionException(
+                "You do not have permission to submit jobs to device '%s'."
+                % requested_device.hostname
+            )
         raise DevicesUnavailableException(
             "No devices from %s pool are currently available to user %s"
             % (list(device_list.values_list("hostname", flat=True)), user)
@@ -1129,6 +1139,62 @@ def _check_tags_support(tag_devices, device_list, count=1):
         raise DevicesUnavailableException(
             "Not enough devices available matching the requested tags."
         )
+
+
+def _get_device(hostname):
+    try:
+        return Device.objects.select_related("device_type").get(hostname=hostname)
+    except Device.DoesNotExist:
+        raise SubmissionException("Device '%s' does not exist." % hostname)
+
+
+def _get_worker(hostname):
+    try:
+        return Worker.objects.get(hostname=hostname)
+    except Worker.DoesNotExist:
+        raise SubmissionException("Worker '%s' does not exist." % hostname)
+
+
+def _get_requested_devices(
+    user, device_type, device_name=None, worker_name=None, count=1
+):
+    requested_device = None
+    requested_worker = None
+    devices = Device.objects.filter(
+        Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED)
+    )
+
+    if worker_name is not None:
+        requested_worker = _get_worker(worker_name)
+        devices = devices.filter(worker_host=requested_worker)
+
+    if device_name is not None:
+        requested_device = _get_device(device_name)
+        if device_type != requested_device.device_type:
+            raise SubmissionException(
+                "Device '%s' is not of type '%s'."
+                % (requested_device.hostname, device_type.name)
+            )
+        if count != 1:
+            raise SubmissionException(
+                "Specific device '%s' cannot be used when count is greater than 1."
+                % requested_device.hostname
+            )
+        if (
+            requested_worker is not None
+            and requested_device.worker_host_id != requested_worker.pk
+        ):
+            raise SubmissionException(
+                "Device '%s' is not attached to worker '%s'."
+                % (requested_device.hostname, requested_worker.hostname)
+            )
+
+        if requested_worker is None:
+            requested_worker = requested_device.worker_host
+        devices = devices.filter(hostname=requested_device.hostname)
+
+    allowed_devices = _check_submit_to_devices(devices, user, requested_device)
+    return requested_device, requested_worker, allowed_devices
 
 
 def _get_device_type(user, name):
@@ -1161,6 +1227,8 @@ def _create_pipeline_job(
     job_data,
     user,
     taglist,
+    device=None,
+    worker=None,
     device_type=None,
     target_group=None,
     orig=None,
@@ -1232,6 +1300,8 @@ def _create_pipeline_job(
             original_definition=orig,
             submitter=user,
             requested_device_type=device_type,
+            requested_device=device,
+            requested_worker=worker,
             target_group=target_group,
             description=job_data["job_name"],
             health_check=health_check,
@@ -1312,10 +1382,19 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                 device_type = _get_device_type(user, params["device_type"])
                 role_dictionary[role]["device_type"] = device_type
 
-                device_list = Device.objects.filter(
-                    Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED)
+                (
+                    requested_device,
+                    requested_worker,
+                    allowed_devices,
+                ) = _get_requested_devices(
+                    user,
+                    device_type,
+                    device_name=params.get("device"),
+                    worker_name=params.get("worker"),
+                    count=params["count"],
                 )
-                allowed_devices = _check_submit_to_devices(device_list, user)
+                role_dictionary[role]["device"] = requested_device
+                role_dictionary[role]["worker"] = requested_worker
 
                 if len(allowed_devices) < params["count"]:
                     raise DevicesUnavailableException(
@@ -1324,9 +1403,15 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                     )
                 role_dictionary[role]["tags"] = _get_tag_list(params.get("tags", []))
                 if role_dictionary[role]["tags"]:
-                    supported = _check_tags(
-                        role_dictionary[role]["tags"], device_type=device_type
-                    )
+                    if requested_device is not None:
+                        supported = _check_tags(
+                            role_dictionary[role]["tags"],
+                            hostname=requested_device.hostname,
+                        )
+                    else:
+                        supported = _check_tags(
+                            role_dictionary[role]["tags"], device_type=device_type
+                        )
                     _check_tags_support(supported, allowed_devices, params["count"])
 
                 # FIXME: other protocols could need to remove devices from 'supported' here
@@ -1358,6 +1443,8 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
                         user,
                         target_group=target_group,
                         taglist=role_dict["tags"],
+                        device=role_dict.get("device"),
+                        worker=role_dict.get("worker"),
                         device_type=role_dict.get("device_type"),
                         orig=None,  # store the dump of the split yaml as the job definition
                     )
@@ -1502,6 +1589,24 @@ class TestJob(models.Model):
     # non-null. Dynamic connections have no device.
     requested_device_type = models.ForeignKey(
         DeviceType,
+        null=True,
+        default=None,
+        related_name="+",
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+
+    requested_device = models.ForeignKey(
+        Device,
+        null=True,
+        default=None,
+        related_name="+",
+        blank=True,
+        on_delete=models.CASCADE,
+    )
+
+    requested_worker = models.ForeignKey(
+        Worker,
         null=True,
         default=None,
         related_name="+",
@@ -1921,17 +2026,22 @@ class TestJob(models.Model):
             return job_list
         # singlenode only
         device_type = _get_device_type(user, job_data["device_type"])
-        devices = Device.objects.filter(
-            Q(device_type=device_type), ~Q(health=Device.HEALTH_RETIRED)
+        device, worker, allow = _get_requested_devices(
+            user,
+            device_type,
+            device_name=job_data.get("device"),
+            worker_name=job_data.get("worker"),
         )
-        allow = _check_submit_to_devices(devices, user)
         if not allow:
             raise DevicesUnavailableException(
                 "No devices of type %s are available." % device_type
             )
         taglist = _get_tag_list(job_data.get("tags", []))
         if taglist:
-            supported = _check_tags(taglist, device_type=device_type)
+            if device:
+                supported = _check_tags(taglist, hostname=device.hostname)
+            else:
+                supported = _check_tags(taglist, device_type=device_type)
             _check_tags_support(supported, allow)
         if original_job:
             # Add old job absolute url to metadata
@@ -1946,6 +2056,8 @@ class TestJob(models.Model):
             job_data,
             user,
             taglist,
+            device=device,
+            worker=worker,
             device_type=device_type,
             orig=yaml_data,
         )

@@ -364,8 +364,9 @@ def _validate_multinode(data_object):
     context_schema = _context_schema()
     # Check that "host_role" and "expect_role" does exist
     for role in roles:
-        host_role = multi["roles"][role].get("host_role")
-        expect_role = multi["roles"][role].get("expect_role")
+        params = multi["roles"][role]
+        host_role = params.get("host_role")
+        expect_role = params.get("expect_role")
         if host_role is not None:
             if host_role not in roles:
                 raise SubmissionException("'host_role' '%s' does not exist" % host_role)
@@ -379,8 +380,20 @@ def _validate_multinode(data_object):
                 )
         elif expect_role is not None:
             raise SubmissionException("'expect_role' without 'host_role'")
+        if "connection" in params and ("device" in params or "worker" in params):
+            raise SubmissionException(
+                "lava-multinode connection roles cannot specify device or worker."
+            )
+        if "device" in params and "device_type" not in params:
+            raise SubmissionException("'device' requires 'device_type'")
+        if "worker" in params and "device_type" not in params:
+            raise SubmissionException("'worker' requires 'device_type'")
+        if "device" in params and params.get("count") != 1:
+            raise SubmissionException(
+                "lava-multinode roles using a specific device must set count to 1."
+            )
         # Check context
-        context = multi["roles"][role].get("context", {})
+        context = params.get("context", {})
         context_schema(context)
 
 
@@ -423,6 +436,8 @@ _job_schema = Schema(
         "device_type": All(
             str, Length(min=1)
         ),  # not Required as some protocols encode it elsewhere
+        Optional("device"): All(str, Length(min=1)),
+        Optional("worker"): All(str, Length(min=1)),
         Required("job_name"): All(str, Length(min=1, max=200)),
         Optional("priority"): Any("high", "medium", "low", int),
         Optional("protocols"): _job_protocols_schema(),

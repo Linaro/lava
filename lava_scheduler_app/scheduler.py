@@ -231,6 +231,7 @@ def schedule_health_check(device, definition):
         yaml_safe_load(definition),
         user,
         [],
+        device=device,
         device_type=device.device_type,
         orig=definition,
         health_check=True,
@@ -317,6 +318,9 @@ def schedule_jobs_for_device(device, print_header):
         TestJob.objects.select_for_update()
         .filter(
             ~job_extra_tags_subquery,
+            Q(requested_device_id__isnull=True) | Q(requested_device_id=device.pk),
+            Q(requested_worker_id__isnull=True)
+            | Q(requested_worker_id=device.worker_host_id),
             state=TestJob.STATE_SUBMITTED,
             actual_device__isnull=True,
             requested_device_type_id=device.device_type_id,
