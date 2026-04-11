@@ -1161,7 +1161,6 @@ def _create_pipeline_job(
     job_data,
     user,
     taglist,
-    device=None,
     device_type=None,
     target_group=None,
     orig=None,
@@ -1173,7 +1172,7 @@ def _create_pipeline_job(
 
     if "connection" in job_data:
         device_type = None
-    elif not device and not device_type:
+    elif not device_type:
         # programming error
         return None
 
@@ -1947,7 +1946,6 @@ class TestJob(models.Model):
             job_data,
             user,
             taglist,
-            device=None,
             device_type=device_type,
             orig=yaml_data,
         )

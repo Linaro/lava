@@ -231,7 +231,6 @@ def schedule_health_check(device, definition):
         yaml_safe_load(definition),
         user,
         [],
-        device=device,
         device_type=device.device_type,
         orig=definition,
         health_check=True,
