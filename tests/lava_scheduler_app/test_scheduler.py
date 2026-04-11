@@ -370,6 +370,9 @@ class TestTagsScheduling(TestCase):
         self.worker01 = Worker.objects.create(
             hostname="worker-01", state=Worker.STATE_ONLINE
         )
+        self.worker03 = Worker.objects.create(
+            hostname="worker-03", state=Worker.STATE_ONLINE
+        )
         self.user = User.objects.create(username="user-01")
         self.device_type01 = DeviceType.objects.create(
             name="qemu", disable_health_check=True
@@ -384,6 +387,12 @@ class TestTagsScheduling(TestCase):
             hostname="qemu03",
             device_type=self.device_type01,
             worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device04 = Device.objects.create(
+            hostname="qemu04",
+            device_type=self.device_type01,
+            worker_host=self.worker03,
             health=Device.HEALTH_GOOD,
         )
 
@@ -402,6 +411,62 @@ class TestTagsScheduling(TestCase):
         job = self.create_job_with_tags(test_tag)
 
         schedule(["worker-01"])
+        job.refresh_from_db()
+
+        self.assertIsNone(job.actual_device_id)
+
+    def test_specific_device_schedules_only_on_requested_device(self) -> None:
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            requested_device=self.device03,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+        )
+
+        schedule(["worker-01"])
+        job.refresh_from_db()
+
+        self.assertEqual(job.actual_device_id, self.device03.pk)
+
+    def test_specific_device_does_not_fall_back_to_other_device(self) -> None:
+        self.device03.state = Device.STATE_RUNNING
+        self.device03.save(update_fields=["state"])
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            requested_device=self.device03,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+        )
+
+        schedule(["worker-01"])
+        job.refresh_from_db()
+
+        self.assertIsNone(job.actual_device_id)
+
+    def test_specific_worker_schedules_only_on_requested_worker(self) -> None:
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            requested_worker=self.worker03,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+        )
+
+        schedule(["worker-01", "worker-03"])
+        job.refresh_from_db()
+
+        self.assertEqual(job.actual_device_id, self.device04.pk)
+
+    def test_specific_worker_does_not_fall_back_to_other_worker(self) -> None:
+        self.device04.state = Device.STATE_RUNNING
+        self.device04.save(update_fields=["state"])
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            requested_worker=self.worker03,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+        )
+
+        schedule(["worker-01", "worker-03"])
         job.refresh_from_db()
 
         self.assertIsNone(job.actual_device_id)

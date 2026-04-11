@@ -21,8 +21,10 @@ from lava_scheduler_app.models import (
     Device,
     DevicesUnavailableException,
     DeviceType,
+    GroupDevicePermission,
     Tag,
     TestJob,
+    Worker,
     _pipeline_protocols,
 )
 from lava_scheduler_app.schema import (
@@ -223,6 +225,149 @@ class PipelineDeviceTags(TestCaseWithFactory):
             user,
         )
         self.assertEqual(set(job.tags.all()), set(tag_list))
+
+    def test_from_yaml_and_user_accepts_specific_device(self):
+        self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["device"] = "fakeqemu1"
+
+        validate_submission(data)
+        job = TestJob.from_yaml_and_user(yaml_safe_dump(data), user)
+
+        self.assertEqual(job.requested_device_id, "fakeqemu1")
+        self.assertEqual(job.requested_device_type, self.device_type)
+
+    def test_from_yaml_and_user_accepts_specific_worker(self):
+        worker = Worker.objects.create(hostname="worker-01")
+        self.factory.make_device(
+            self.device_type, hostname="fakeqemu1", worker_host=worker
+        )
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["worker"] = worker.hostname
+
+        validate_submission(data)
+        job = TestJob.from_yaml_and_user(yaml_safe_dump(data), user)
+
+        self.assertEqual(job.requested_worker, worker)
+        self.assertEqual(job.requested_device_type, self.device_type)
+
+    def test_from_yaml_and_user_rejects_specific_worker_device_mismatch(self):
+        worker1 = Worker.objects.create(hostname="worker-01")
+        Worker.objects.create(hostname="worker-02")
+        self.factory.make_device(
+            self.device_type, hostname="fakeqemu1", worker_host=worker1
+        )
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["device"] = "fakeqemu1"
+        data["worker"] = "worker-02"
+
+        self.assertRaises(
+            SubmissionException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_checks_tags_on_specific_worker(self):
+        tag = self.factory.ensure_tag("usb")
+        worker1 = Worker.objects.create(hostname="worker-01")
+        worker2 = Worker.objects.create(hostname="worker-02")
+        self.factory.make_device(
+            self.device_type, hostname="fakeqemu1", worker_host=worker1
+        )
+        self.factory.make_device(
+            device_type=self.device_type,
+            hostname="fakeqemu2",
+            worker_host=worker2,
+            tags=[tag],
+        )
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml(tags=["usb"]))
+        data["worker"] = worker1.hostname
+
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_rejects_specific_device_type_mismatch(self):
+        other_type = self.factory.make_device_type(name="bbb")
+        self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["device"] = "fakeqemu1"
+        data["device_type"] = other_type.name
+
+        self.assertRaises(
+            SubmissionException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_checks_tags_on_specific_device(self):
+        tag = self.factory.ensure_tag("usb")
+        self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        self.factory.make_device(
+            device_type=self.device_type, hostname="fakeqemu2", tags=[tag]
+        )
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml(tags=["usb"]))
+        data["device"] = "fakeqemu1"
+
+        self.assertRaises(
+            DevicesUnavailableException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_rejects_missing_device(self):
+        self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["device"] = "nonexistent"
+
+        self.assertRaises(
+            SubmissionException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_rejects_missing_worker(self):
+        self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["worker"] = "nonexistent"
+
+        self.assertRaises(
+            SubmissionException,
+            TestJob.from_yaml_and_user,
+            yaml_safe_dump(data),
+            user,
+        )
+
+    def test_from_yaml_and_user_rejects_specific_device_without_permission(self):
+        device = self.factory.make_device(self.device_type, hostname="fakeqemu1")
+        group = self.factory.make_group()
+        GroupDevicePermission.objects.assign_perm(
+            Device.SUBMIT_PERMISSION, group, device
+        )
+        user = self.factory.make_user()
+        data = yaml_safe_load(self.factory.make_job_yaml())
+        data["device"] = "fakeqemu1"
+
+        with self.assertRaisesMessage(
+            SubmissionException,
+            "You do not have permission to submit jobs to device 'fakeqemu1'.",
+        ):
+            TestJob.from_yaml_and_user(yaml_safe_dump(data), user)
 
 
 class TestPipelineSubmit(TestCaseWithFactory):
@@ -510,6 +655,16 @@ class TestYamlMultinode(TestCaseWithFactory):
         super().setUp()
         self.factory = YamlFactory()
 
+    def _load_multinode_submission(self):
+        with open(
+            os.path.join(os.path.dirname(__file__), "sample_jobs", "kvm-multinode.yaml")
+        ) as f:
+            submission = yaml_safe_load(f)
+        roles = submission["protocols"][MultinodeProtocol.name]["roles"]
+        for role in roles.values():
+            role.pop("tags", None)
+        return submission
+
     def test_multinode_split(self):
         """
         Test just the split of pipeline YAML
@@ -627,6 +782,40 @@ class TestYamlMultinode(TestCaseWithFactory):
             self.fail(f"[{guest_job.sub_id}] parser error: {exc}")
         pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
+
+    def test_multinode_role_accepts_specific_device(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type("qemu")
+        worker1 = Worker.objects.create(hostname="worker-01")
+        worker2 = Worker.objects.create(hostname="worker-02")
+        self.factory.make_device(device_type, "fakeqemu1", worker_host=worker1)
+        self.factory.make_device(device_type, "fakeqemu2", worker_host=worker2)
+        submission = self._load_multinode_submission()
+        roles = submission["protocols"][MultinodeProtocol.name]["roles"]
+        roles["client"]["device"] = "fakeqemu1"
+        roles["server"]["device"] = "fakeqemu2"
+
+        jobs = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
+
+        self.assertEqual(len(jobs), 2)
+        requested_workers = {
+            job.device_role: job.requested_worker.hostname for job in jobs
+        }
+        self.assertEqual(
+            requested_workers, {"client": "worker-01", "server": "worker-02"}
+        )
+
+    def test_multinode_role_rejects_specific_device_with_count_greater_than_one(self):
+        device_type = self.factory.make_device_type("qemu")
+        self.factory.make_device(device_type, "fakeqemu1")
+        self.factory.make_device(device_type, "fakeqemu2")
+        self.factory.make_device(device_type, "fakeqemu3")
+        submission = self._load_multinode_submission()
+        roles = submission["protocols"][MultinodeProtocol.name]["roles"]
+        roles["client"]["device"] = "fakeqemu1"
+        roles["client"]["count"] = 2
+
+        self.assertRaises(SubmissionException, validate_submission, submission)
 
     def test_multinode_tags(self):
         Tag.objects.all().delete()

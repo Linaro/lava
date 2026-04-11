@@ -45,6 +45,28 @@ timeouts:
 actions: []
 """
 
+SPECIFIC_DEVICE_JOB_DEFINITION = """
+device_type: juno
+device: juno-uefi-01
+job_name: test
+visibility: public
+timeouts:
+    job:
+        minutes: 10
+actions: []
+"""
+
+SPECIFIC_WORKER_JOB_DEFINITION = """
+device_type: juno
+worker: worker-02
+job_name: test
+visibility: public
+timeouts:
+    job:
+        minutes: 10
+actions: []
+"""
+
 TOKEN_JOB_DEFINITION = r"""
 device_type: juno
 actions:
@@ -1035,6 +1057,20 @@ def test_job_submit(client, setup):
     ret = client.post(
         reverse("lava.scheduler.job.submit"),
         {"definition-input": JOB_DEFINITION},
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert ret.status_code == 200  # nosec
+    assert ret.json() == {"result": "success", "errors": "", "warnings": ""}  # nosec
+    ret = client.post(
+        reverse("lava.scheduler.job.submit"),
+        {"definition-input": SPECIFIC_DEVICE_JOB_DEFINITION},
+        HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+    )
+    assert ret.status_code == 200  # nosec
+    assert ret.json() == {"result": "success", "errors": "", "warnings": ""}  # nosec
+    ret = client.post(
+        reverse("lava.scheduler.job.submit"),
+        {"definition-input": SPECIFIC_WORKER_JOB_DEFINITION},
         HTTP_X_REQUESTED_WITH="XMLHttpRequest",
     )
     assert ret.status_code == 200  # nosec
