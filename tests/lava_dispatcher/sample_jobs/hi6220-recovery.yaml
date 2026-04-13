@@ -11,7 +11,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
+  source: https://gitlab.com/lava/functional-tests.git
   path: hi6220-recovery.yaml
   recovery-build: '55'
 
@@ -43,7 +43,7 @@ actions:
     timeout:
       minutes: 10
     definitions:
-    - repository: https://git.linaro.org/lava-team/refactoring.git/
+    - repository: https://gitlab.com/lava/functional-tests.git/
       from: git
       path: testdefs/hikey-6220-recovery.yaml
       name: execute-recovery
@@ -92,7 +92,7 @@ actions:
     timeout:
       minutes: 10
     definitions:
-    - repository: https://git.linaro.org/lava-team/refactoring.git/
+    - repository: https://gitlab.com/lava/functional-tests.git/
       from: git
       path: android/lava-android-basic.yaml
       name: v2-make-adb-connection

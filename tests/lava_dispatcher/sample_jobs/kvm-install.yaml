@@ -35,7 +35,7 @@ actions:
           minutes: 5
         definitions:
             # the unit test ignores this anyway and uses install.yaml
-            - repository: https://git.linaro.org/lava-team/refactoring.git
+            - repository: https://gitlab.com/lava/functional-tests.git
               from: git
               path: install.yaml
               name: smoke-tests

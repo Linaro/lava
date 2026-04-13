@@ -1,7 +1,7 @@
 # This is not a usable job, it combines several jobs into one to support unit tests
 # a set of workable files will use the multinode protocol and also deploy the VM files
 # the tmpfs early so that the job can fail early if there is a 404.
-# See https://git.linaro.org/lava-team/refactoring.git
+# See https://gitlab.com/lava/functional-tests.git
 
 device_type: ssh
 job_name: ssh-boot
