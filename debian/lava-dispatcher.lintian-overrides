@@ -1,5 +1,7 @@
 # These files are shell helper resources shipped as package data for deployment
 # into test environments, not host-side executables in /usr/bin.
+lava-dispatcher: executable-not-elf-or-script [usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner]
+
 lava-dispatcher: script-not-executable [usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/apertis/lava-add-keys]
 lava-dispatcher: script-not-executable [usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/apertis/lava-add-sources]
 lava-dispatcher: script-not-executable [usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/apertis/lava-install-packages]
