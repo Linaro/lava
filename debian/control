@@ -15,7 +15,7 @@ Build-Depends: debhelper-compat (= 12),
                python3-sphinx,
                mkdocs-material,
                python3-yaml
-Standards-Version: 4.7.3
+Standards-Version: 4.7.4
 Homepage: https://www.lavasoftware.org/
 Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
