@@ -381,38 +381,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 2400
-  - class: ConnectDevice
-    name: connect-device
-    level: '2.2'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 2400
-  - class: PrePower
-    name: pre-power-command
-    level: '2.3'
-    max_retries: 1
-    description: issue pre power command
-    summary: send pre-power-command
-    timeout: 2400
-  - class: ResetDevice
-    name: reset-device
-    level: '2.4'
-    max_retries: 1
-    description: reboot or power-cycle the device
-    summary: reboot the device
-    timeout: 2400
-    pipeline:
-    - class: PDUReboot
-      name: pdu-reboot
-      level: 2.4.1
-      max_retries: 1
-      description: issue commands to a PDU to power cycle a device
-      summary: hard reboot using PDU
-      timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.5'
+    level: '2.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -420,7 +391,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.5.1
+      level: 2.2.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -428,14 +399,14 @@
       url: downloads:/gpt_both0.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.6'
+    level: '2.3'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.7'
+    level: '2.4'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -443,7 +414,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.7.1
+      level: 2.4.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -451,14 +422,14 @@
       url: downloads:/hyp.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.8'
+    level: '2.5'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.9'
+    level: '2.6'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -466,7 +437,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.9.1
+      level: 2.6.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -474,14 +445,14 @@
       url: downloads:/NON-HLOS.bin
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.10'
+    level: '2.7'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.11'
+    level: '2.8'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -489,7 +460,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.11.1
+      level: 2.8.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -497,14 +468,14 @@
       url: downloads:/rpm.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.12'
+    level: '2.9'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.13'
+    level: '2.10'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -512,7 +483,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.13.1
+      level: 2.10.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -520,14 +491,14 @@
       url: downloads:/sbl1.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.14'
+    level: '2.11'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.15'
+    level: '2.12'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -535,7 +506,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.15.1
+      level: 2.12.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -543,14 +514,14 @@
       url: downloads:/sec.dat
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.16'
+    level: '2.13'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.17'
+    level: '2.14'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -558,7 +529,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.17.1
+      level: 2.14.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -566,14 +537,14 @@
       url: downloads:/tz.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.18'
+    level: '2.15'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.19'
+    level: '2.16'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -581,7 +552,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.19.1
+      level: 2.16.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -589,14 +560,14 @@
       url: downloads:/emmc_appsboot.mbn
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.20'
+    level: '2.17'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.21'
+    level: '2.18'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -604,7 +575,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.21.1
+      level: 2.18.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -612,14 +583,14 @@
       url: downloads:/boot-linaro-jessie-qcom-snapdragon-arm64-20160630-110.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.22'
+    level: '2.19'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
   - class: DownloaderAction
     name: download-retry
-    level: '2.23'
+    level: '2.20'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -627,7 +598,7 @@
     pipeline:
     - class: PreDownloadedAction
       name: pre-downloaded
-      level: 2.23.1
+      level: 2.20.1
       max_retries: 1
       description: Map to the correct downloaded path
       summary: pre downloaded
@@ -635,18 +606,47 @@
       url: downloads:/linaro-jessie-developer-qcom-snapdragon-arm64-20160630-110.img
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image
-    level: '2.24'
+    level: '2.21'
     max_retries: 1
     description: apply overlay to sparse image
     summary: apply overlay to sparse image
     timeout: 2400
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '2.25'
+    level: '2.22'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2400
+  - class: ConnectDevice
+    name: connect-device
+    level: '2.23'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 2400
+  - class: PrePower
+    name: pre-power-command
+    level: '2.24'
+    max_retries: 1
+    description: issue pre power command
+    summary: send pre-power-command
+    timeout: 2400
+  - class: ResetDevice
+    name: reset-device
+    level: '2.25'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 2400
+    pipeline:
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 2.25.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 2400
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '2.26'

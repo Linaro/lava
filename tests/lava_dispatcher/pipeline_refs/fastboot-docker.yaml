@@ -78,16 +78,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 900
-  - class: EnterFastbootAction
-    name: enter-fastboot-action
-    level: '1.2'
-    max_retries: 1
-    description: enter fastboot bootloader
-    summary: enter fastboot
-    timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '1.3'
+    level: '1.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -95,7 +88,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.3.1
+      level: 1.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -103,14 +96,14 @@
       url: http://images.validation.linaro.org/functional-test-images/nexus4/boot.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '1.4'
+    level: '1.3'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '1.5'
+    level: '1.4'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -118,7 +111,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.5.1
+      level: 1.4.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -126,14 +119,14 @@
       url: http://images.validation.linaro.org/functional-test-images/nexus4/userdata.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '1.6'
+    level: '1.5'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '1.7'
+    level: '1.6'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -141,7 +134,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.7.1
+      level: 1.6.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -149,10 +142,17 @@
       url: http://images.validation.linaro.org/functional-test-images/nexus4/system.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '1.8'
+    level: '1.7'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
+    timeout: 900
+  - class: EnterFastbootAction
+    name: enter-fastboot-action
+    level: '1.8'
+    max_retries: 1
+    description: enter fastboot bootloader
+    summary: enter fastboot
     timeout: 900
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
