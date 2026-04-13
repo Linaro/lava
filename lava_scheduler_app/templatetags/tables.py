@@ -9,7 +9,22 @@ import contextlib
 from django import template
 from django.utils.safestring import mark_safe
 
+# django-tables2 < 2.9 used `querystring` and 2.9+ renamed it to `querystring_replace`.
+# Register whichever exists as `lava_querystring` for use in LAVA templates.
+from django_tables2.templatetags.django_tables2 import (
+    register as _django_tables2_register,
+)
+
+try:
+    from django_tables2.templatetags.django_tables2 import querystring as _querystring
+except ImportError:
+    from django_tables2.templatetags.django_tables2 import (
+        querystring_replace as _querystring,
+    )
+
 register = template.Library()
+
+_django_tables2_register.tag("lava_querystring", _querystring)
 
 
 @register.filter
