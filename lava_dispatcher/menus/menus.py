@@ -16,6 +16,8 @@ from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.shell import ShellSession
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from lava_dispatcher.job import Job
 
 
@@ -39,10 +41,10 @@ class MenuInterrupt(Action):
 
 class SelectorMenu:
     def __init__(self):
-        self.item_markup = None
-        self.item_class = None
-        self.separator = None
-        self.label_class = None
+        self.item_markup: Sequence[str] = ()
+        self.item_class: str = ""
+        self.separator: str = ""
+        self.label_class: str = ""
         self.prompt = None  # initial prompt
 
     @property
