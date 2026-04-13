@@ -51,20 +51,6 @@ class FastbootAction(
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
-        # Check if the device has a power command such as HiKey, Dragonboard,
-        # etc. against device that doesn't like Nexus, etc.
-        if self.job.device.get("fastboot_via_uboot", False):
-            self.pipeline.add_action(ConnectDevice(self.job))
-            self.pipeline.add_action(UBootEnterFastbootAction(self.job))
-            DetectFastbootDevice.add_if_needed(self)
-        elif self.job.device.hard_reset_command:
-            self.force_prompt = True
-            self.pipeline.add_action(ConnectDevice(self.job))
-            self.pipeline.add_action(PrePower(self.job))
-            self.pipeline.add_action(ResetDevice(self.job))
-            DetectFastbootDevice.add_if_needed(self)
-        else:
-            self.pipeline.add_action(EnterFastbootAction(self.job))
 
         fastboot_dir = self.mkdtemp()
         for image_key, image_params in parameters["images"].items():
@@ -89,6 +75,22 @@ class FastbootAction(
                 parameters
             ):
                 self.pipeline.add_action(DeployDeviceEnvironment(self.job))
+
+        # Check if the device has a power command such as HiKey, Dragonboard,
+        # etc. against device that doesn't like Nexus, etc.
+        if self.job.device.get("fastboot_via_uboot", False):
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(UBootEnterFastbootAction(self.job))
+            DetectFastbootDevice.add_if_needed(self)
+        elif self.job.device.hard_reset_command:
+            self.force_prompt = True
+            self.pipeline.add_action(ConnectDevice(self.job))
+            self.pipeline.add_action(PrePower(self.job))
+            self.pipeline.add_action(ResetDevice(self.job))
+            DetectFastbootDevice.add_if_needed(self)
+        else:
+            self.pipeline.add_action(EnterFastbootAction(self.job))
+
         self.pipeline.add_action(FastbootFlashOrderAction(self.job))
 
 
