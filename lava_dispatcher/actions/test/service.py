@@ -13,6 +13,7 @@ import subprocess
 from typing import TYPE_CHECKING
 
 from lava_common.constants import DEFAULT_TEST_NAME_CLASS
+from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVATimeoutError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
+@nottest
 class TestServices(Action):
     name = "lava-test-services"
     description = "Executing lava-test-services"
@@ -61,6 +63,7 @@ class TestServices(Action):
             )
 
 
+@nottest
 class TestServiceRetry(RetryAction):
     name = "lava-test-service-retry"
     description = "Retry wrapper for lava-test-service"
@@ -71,6 +74,7 @@ class TestServiceRetry(RetryAction):
         self.pipeline.add_action(TestServiceAction(self.job))
 
 
+@nottest
 class TestServiceAction(Action):
     name = "lava-test-service"
     description = "Executing lava-test-service"
