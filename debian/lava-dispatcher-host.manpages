@@ -1,0 +1,3 @@
+debian/lava-dispatcher-host-server.1
+debian/lava-dispatcher-host.1
+debian/lava-docker-worker.1

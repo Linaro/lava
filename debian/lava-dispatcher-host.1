@@ -1,0 +1,50 @@
+.TH LAVA-DISPATCHER-HOST 1 "April 2026" "lava-dispatcher-host" "User Commands"
+.SH NAME
+lava-dispatcher-host \- host-side helper for LAVA dispatcher operations
+
+.SH SYNOPSIS
+.B lava-dispatcher-host
+.RI [ options ] " {" rules " | " devices "} ..."
+
+.SH DESCRIPTION
+.B lava-dispatcher-host
+is a host-side helper used by LAVA to perform dispatcher-related operations on
+the worker or host system.
+
+It provides subcommands for managing device information and manipulating the
+udev rules used by LAVA dispatcher host support.
+.SH OPTIONS
+.TP
+.BR -h ", " --help
+Show a help message and exit.
+.TP
+.BI --debug-log " FILE"
+Log debugging information to
+.IR FILE .
+.SH SUBCOMMANDS
+.TP
+.B rules
+Manipulate the udev rules file.
+.TP
+.B devices
+Manage devices.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B Non-zero
+An error occurred.
+
+.SH SEE ALSO
+.BR lava-dispatcher-host-server (1),
+.BR lava-docker-worker (1),
+.BR lava-worker (1)
+
+.SH AUTHOR
+.PP
+This manual page was written by Christopher Obbard \c
+.MT obbardc@debian.org
+.ME \c
+\ for the Debian GNU/Linux system.

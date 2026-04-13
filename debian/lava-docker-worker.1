@@ -1,0 +1,100 @@
+.TH LAVA-DOCKER-WORKER 1 "April 2026" "lava-dispatcher-host" "User Commands"
+.SH NAME
+lava-docker-worker \- run a LAVA worker inside a Docker container
+
+.SH SYNOPSIS
+.B lava-docker-worker
+.RI [ options ]
+
+.SH DESCRIPTION
+.B lava-docker-worker
+runs and manages a LAVA worker inside a Docker environment.
+
+It connects to a LAVA server, retrieves jobs and executes them inside
+a containerised environment. It supports configuration of storage,
+network connectivity, authentication and logging.
+
+.SH OPTIONS
+.TP
+.BR -h ", " --help
+Show a help message and exit.
+.TP
+.BI --name " NAME"
+Name of the worker.
+.TP
+.BR -d ", " --devel
+Enable development mode; sets defaults for several options.
+.TP
+.BI "-m, --mount " "[SRC[:DST] ...]"
+Bind mount
+.I SRC
+from the host (as
+.I DST
+in the container, if given). Can be specified multiple times.
+.TP
+.BI --sentry-dsn " DSN"
+Sentry Data Source Name.
+.SH STORAGE OPTIONS
+.TP
+.BI --worker-dir " DIR"
+Path to data storage.
+.TP
+.BI --build-dir " DIR"
+Path to a directory containing a Dockerfile used to build a customised
+lava-dispatcher Docker image.
+.TP
+.B --use-cache
+Use cache when building the custom Docker worker image.
+.SH NETWORK OPTIONS
+.TP
+.BI --url " URL"
+Base URL of the LAVA server.
+.TP
+.BI --ws-url " URL"
+WebSocket URL.
+.TP
+.BI --http-timeout " SECONDS"
+HTTP timeout when communicating with the server. Should be longer than
+the server timeout.
+.TP
+.BI --ping-interval " SECONDS"
+Interval between ping requests to the server.
+.TP
+.BI --job-log-interval " SECONDS"
+Interval between job log submissions to the server.
+.TP
+.BI --username " USERNAME"
+Username for automatic registration.
+.TP
+.BI --token " TOKEN"
+Worker authentication token.
+.TP
+.BI --token-file " FILE"
+File containing the worker authentication token.
+.SH LOGGING OPTIONS
+.TP
+.BI --log-file " FILE"
+File to write worker logs to.
+.TP
+.BI "-l, --level " "{DEBUG,ERROR,INFO,WARN}"
+Set log level (default: INFO).
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B Non-zero
+An error occurred.
+
+.SH SEE ALSO
+.BR lava-worker (1),
+.BR lava-dispatcher-host (1),
+.BR docker (1)
+
+.SH AUTHOR
+.PP
+This manual page was written by Christopher Obbard \c
+.MT obbardc@debian.org
+.ME \c
+\ for the Debian GNU/Linux system.

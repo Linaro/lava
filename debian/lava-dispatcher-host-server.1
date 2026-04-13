@@ -1,0 +1,36 @@
+.TH LAVA-DISPATCHER-HOST-SERVER 1 "April 2026" "lava-dispatcher-host" "User Commands"
+.SH NAME
+lava-dispatcher-host-server \- server component for LAVA dispatcher host support
+
+.SH SYNOPSIS
+.B lava-dispatcher-host-server
+.RI [ options ]
+
+.SH DESCRIPTION
+.B lava-dispatcher-host-server
+provides server-side functionality for the LAVA dispatcher host support
+components.
+
+It is used as part of the LAVA worker and dispatcher infrastructure and is
+normally invoked by other LAVA components or service management tools rather
+than directly by users.
+
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B Non-zero
+An error occurred.
+
+.SH SEE ALSO
+.BR lava-dispatcher-host (1),
+.BR lava-docker-worker (1),
+.BR lava-worker (1)
+
+.SH AUTHOR
+.PP
+This manual page was written by Christopher Obbard \c
+.MT obbardc@debian.org
+.ME \c
+\ for the Debian GNU/Linux system.
