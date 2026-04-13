@@ -333,7 +333,7 @@ class ResultsAPI(ExposedAPI):
         For example:
         [
             {'boot.0.hikey-oe.commands': 'fastboot'},
-            {'source': 'https://git.linaro.org/lava-team/refactoring.git'},
+            {'source': 'https://gitlab.com/lava/functional-tests.git'},
             {'test.0.docker.definition.path': 'ubuntu/smoke-tests-basic.yaml'}
         ]
         """

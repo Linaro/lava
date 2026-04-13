@@ -11,7 +11,7 @@ metadata:
 
 install:
     git-repos:
-        - https://git.linaro.org/lava-team/refactoring.git
+        - https://gitlab.com/lava/functional-tests.git
         - url: https://git.linaro.org/qa/test-definitions.git
           skip_by_default: False
         - url: https://git.linaro.org/qa/test-definitions.git

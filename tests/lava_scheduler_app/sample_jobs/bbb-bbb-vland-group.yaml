@@ -13,7 +13,7 @@ visibility: public
 priority: medium
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
+  source: https://gitlab.com/lava/functional-tests.git
   path: bbb-multinode-vland.yaml
 
 protocols:

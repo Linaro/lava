@@ -11,7 +11,7 @@ priority: medium
 visibility: public
 
 metadata:
-  source: https://git.linaro.org/lava-team/refactoring.git
+  source: https://gitlab.com/lava/functional-tests.git
   path: release/artifact-conversion-db410c.yaml
 
 actions:
