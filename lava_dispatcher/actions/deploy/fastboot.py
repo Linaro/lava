@@ -51,7 +51,6 @@ class FastbootAction(
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.test_needs_overlay(parameters):
             self.pipeline.add_action(OverlayAction(self.job))
-        board_id = self.job.device["fastboot_serial_number"]
         # Check if the device has a power command such as HiKey, Dragonboard,
         # etc. against device that doesn't like Nexus, etc.
         if self.job.device.get("fastboot_via_uboot", False):
