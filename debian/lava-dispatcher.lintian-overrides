@@ -1,3 +1,6 @@
+# Private SSH key shipped for dynamic VM test support. It must not be world-readable.
+lava-dispatcher: non-standard-file-perm 0600 != 0644 [usr/lib/python3/dist-packages/lava_dispatcher/dynamic_vm_keys/lava]
+
 # These files are shell helper resources shipped as package data for deployment
 # into test environments, not host-side executables in /usr/bin.
 lava-dispatcher: executable-not-elf-or-script [usr/lib/python3/dist-packages/lava_dispatcher/lava_test_shell/distro/android/lava-test-runner]
