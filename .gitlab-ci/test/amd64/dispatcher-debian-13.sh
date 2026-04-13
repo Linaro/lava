@@ -16,7 +16,6 @@ else
   set -x
   python3 -m pytest \
       --color=yes \
-      --pythonwarnings=default \
       -r a \
       --cache-clear --verbose \
       --junitxml=dispatcher.xml \
