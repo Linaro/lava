@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.serializers.json import DjangoJSONEncoder
 from django.template.defaultfilters import truncatechars
 
 from lava_scheduler_app.schema import SubmissionException
@@ -337,3 +338,11 @@ def is_ip_allowed(ip, rules):
         if user_ip in ipaddress.ip_network(rule):
             return True
     return False
+
+
+class OmnivoreJSONEncoder(DjangoJSONEncoder):
+    def default(self, o):
+        try:
+            return super().default(o)
+        except TypeError:
+            return str(o)

@@ -125,7 +125,7 @@ from lava_scheduler_app.tables_jobs import (
     LongestJobsTable,
     QueuedJobsTable,
 )
-from lava_scheduler_app.utils import get_user_ip, is_ip_allowed
+from lava_scheduler_app.utils import OmnivoreJSONEncoder, get_user_ip, is_ip_allowed
 from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from lava_server.compat import djt2_paginator_class, is_ajax
 from lava_server.dbutils import YamlField, annotate_int_field_verbose
@@ -1775,10 +1775,12 @@ def job_detail(request, pk):
             lava_job_result = lava_job_obj.action_metadata
 
     try:
-        json_log_data = json_script(log_data if log_data else [], "logs-initial")
+        json_log_data = json_script(
+            log_data if log_data else [], "logs-initial", encoder=OmnivoreJSONEncoder
+        )
     except Exception:
         log_data = None
-        json_log_data = json_script([], "logs-initial")
+        json_log_data = json_script([], "logs-initial", encoder=OmnivoreJSONEncoder)
 
     data.update(
         {
@@ -2126,7 +2128,7 @@ def job_timing(request, pk):
 
         response_dict = {"timing": timing, "graph": pipeline}
 
-    return JsonResponse(response_dict)
+    return JsonResponse(response_dict, encoder=OmnivoreJSONEncoder)
 
 
 def job_configuration(request, pk):
@@ -2188,7 +2190,13 @@ def job_log_incremental(request, pk):
     except (OSError, StopIteration, yaml.YAMLError):
         data = []
 
-    response = JsonResponse(data, safe=False)
+    response = JsonResponse(
+        data,
+        safe=False,
+        # Force non-encodable objects to strings.
+        # This can happen if bytes leaked to job log.
+        encoder=OmnivoreJSONEncoder,
+    )
 
     if job.state == TestJob.STATE_FINISHED:
         response["X-Is-Finished"] = "1"
