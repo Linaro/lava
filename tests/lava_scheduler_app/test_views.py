@@ -1019,12 +1019,12 @@ def test_job_description(client, monkeypatch, setup, tmp_path):
 def test_job_submit(client, setup):
     # Anonymous user GET
     ret = client.get(reverse("lava.scheduler.job.submit"))
-    assert ret.status_code == 200  # nosec
+    assert ret.status_code == 401  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
     assert ret.context["is_authorized"] is False  # nosec
     # Anonymous user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": ""})
-    assert ret.status_code == 200  # nosec
+    assert ret.status_code == 401  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/job_submit.html"  # nosec
     assert ret.context["is_authorized"] is False  # nosec
 
@@ -1057,7 +1057,7 @@ def test_job_submit(client, setup):
 
     # Logged-user POST
     ret = client.post(reverse("lava.scheduler.job.submit"), {"definition-input": "re"})
-    assert ret.status_code == 200  # nosec
+    assert ret.status_code == 400  # nosec
     assert ret.context["error"] == "expected a dictionary"  # nosec
     assert ret.context["context_help"] == "lava scheduler submit job"  # nosec
     assert ret.context["definition_input"] == "re"  # nosec

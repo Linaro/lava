@@ -1655,64 +1655,68 @@ def job_submit(request):
         "bread_crumb_trail": BreadCrumbTrail.leading_to(job_submit),
     }
 
-    if request.method == "POST" and request.user.is_authenticated:
-        if is_ajax(request):
-            warnings = ""
-            errors = ""
-            try:
-                validate_job(request.POST.get("definition-input"))
-                try:
-                    validate(
-                        yaml_safe_load(request.POST.get("definition-input")),
-                        extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
-                    )
-                except voluptuous.Invalid as exc:
-                    warnings = str(exc)
-            except Exception as e:
-                errors = str(e)
-            return JsonResponse(
-                {
-                    "result": "failure" if errors else "success",
-                    "errors": errors,
-                    "warnings": warnings,
-                }
-            )
+    if request.method != "POST" or not request.user.is_authenticated:
+        return render(
+            request,
+            "lava_scheduler_app/job_submit.html",
+            response_data,
+            status=200 if request.user.is_authenticated else 401,
+        )
 
+    if is_ajax(request):
+        warnings = ""
+        errors = ""
+        try:
+            validate_job(request.POST.get("definition-input"))
+            try:
+                validate(
+                    yaml_safe_load(request.POST.get("definition-input")),
+                    extra_context_variables=settings.EXTRA_CONTEXT_VARIABLES,
+                )
+            except voluptuous.Invalid as exc:
+                warnings = str(exc)
+        except Exception as e:
+            errors = str(e)
+        return JsonResponse(
+            {
+                "result": "failure" if errors else "success",
+                "errors": errors,
+                "warnings": warnings,
+            }
+        )
+
+    try:
+        definition_data = request.POST.get("definition-input")
+        job = testjob_submission(definition_data, request.user)
+
+        if isinstance(job, list):
+            response_data["job_list"] = [j.sub_id for j in job]
+            # Refer to first job in list for job info.
+            job = job[0]
         else:
-            try:
-                definition_data = request.POST.get("definition-input")
-                job = testjob_submission(definition_data, request.user)
+            response_data["job_id"] = job.id
 
-                if isinstance(job, list):
-                    response_data["job_list"] = [j.sub_id for j in job]
-                    # Refer to first job in list for job info.
-                    job = job[0]
-                else:
-                    response_data["job_id"] = job.id
+        is_favorite = request.POST.get("is_favorite")
+        if is_favorite:
+            testjob_user, _ = TestJobUser.objects.get_or_create(
+                user=request.user, test_job=job
+            )
+            testjob_user.is_favorite = True
+            testjob_user.save(update_fields=["is_favorite"])
 
-                is_favorite = request.POST.get("is_favorite")
-                if is_favorite:
-                    testjob_user, _ = TestJobUser.objects.get_or_create(
-                        user=request.user, test_job=job
-                    )
-                    testjob_user.is_favorite = True
-                    testjob_user.save(update_fields=["is_favorite"])
+        return HttpResponseRedirect(reverse("lava.scheduler.job.detail", args=[job.pk]))
 
-                return HttpResponseRedirect(
-                    reverse("lava.scheduler.job.detail", args=[job.pk])
-                )
-
-            except Exception as e:
-                response_data["error"] = str(e)
-                response_data["context_help"] = "lava scheduler submit job"
-                response_data["definition_input"] = request.POST.get("definition-input")
-                response_data["is_favorite"] = request.POST.get("is_favorite")
-                return render(
-                    request, "lava_scheduler_app/job_submit.html", response_data
-                )
-
-    else:
-        return render(request, "lava_scheduler_app/job_submit.html", response_data)
+    except Exception as e:
+        response_data["error"] = str(e)
+        response_data["context_help"] = "lava scheduler submit job"
+        response_data["definition_input"] = request.POST.get("definition-input")
+        response_data["is_favorite"] = request.POST.get("is_favorite")
+        return render(
+            request,
+            "lava_scheduler_app/job_submit.html",
+            response_data,
+            status=400,
+        )
 
 
 @BreadCrumb("{pk}", parent=job_list, needs=["pk"])
