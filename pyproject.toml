@@ -7,7 +7,7 @@ jobs = 0  # Scale number of jobs to number of CPUs
 init-hook = "import django; django.setup()"  # Fix django apps not being initialized
 load-plugins = "pylint_django"
 recursive = true
-py-version = "3.9"  # Debian 11 (bullseye) Python version
+py-version = "3.11"  # Debian 12 (bookworm) Python version
 disable = [
     "format",  # Formatting is handled by black and isort
     "design",
