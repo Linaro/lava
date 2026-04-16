@@ -158,6 +158,23 @@ class TestServiceAction(Action):
         if service := self.parameters.get("service"):
             self.start_cmd.append(service)
 
+    def _write_dot_env(self):
+        envs = {
+            **self.job.device.get("environment", {}),
+            **self.job.parameters.get("environment", {}),
+        }
+        if not envs:
+            return
+
+        env_file = os.path.join(self.repo_dir, ".env")
+        with open(env_file, "a") as f:
+            self.logger.info(f"Adding environment variables to: {env_file}")
+            f.write("# Added by LAVA.\n")
+            for k, v in envs.items():
+                line = f"{k}={v}"
+                self.logger.info(line)
+                f.write(f"{line}\n")
+
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
@@ -201,6 +218,8 @@ class TestServiceAction(Action):
             raise JobError(
                 f"Repository from {repo_from!r} is not supported. Allowed: 'git' and 'url'."
             )
+
+        self._write_dot_env()
 
         self.logger.info(f"Starting test service {self.service_name} ...")
         self.started = True
