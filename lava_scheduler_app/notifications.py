@@ -22,15 +22,21 @@ from lava_scheduler_app.models import (
     Notification,
     NotificationCallback,
     NotificationRecipient,
+    RemoteArtifactsAuth,
     TestJob,
 )
 from linaro_django_xmlrpc.models import AuthToken
 
 
 def get_token_from_description(user, description):
-    tokens = AuthToken.objects.filter(user=user, description=description)
-    if tokens:
-        return tokens.first().secret
+    xml_rpc_tokens = AuthToken.objects.filter(user=user, description=description)
+    if xml_rpc_tokens:
+        return xml_rpc_tokens.first().secret
+    remote_artifact_tokens = RemoteArtifactsAuth.objects.filter(
+        user=user, name=description
+    )
+    if remote_artifact_tokens:
+        return remote_artifact_tokens.first().token
     return description
 
 
