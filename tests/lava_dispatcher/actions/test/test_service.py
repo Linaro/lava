@@ -4,7 +4,9 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import os
 import subprocess
+import tempfile
 from unittest.mock import MagicMock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
@@ -321,6 +323,72 @@ class TestTestServiceAction(LavaDispatcherTestCase):
             f"Repository from {repo_type!r} is not supported. Allowed: 'git' and 'url'.",
         ):
             srv.run(None, 420)
+
+    def test_write_dot_env_file_not_created(self):
+        srv = self.test_service_actions[1]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            srv.repo_dir = tmp_dir
+            srv._write_dot_env()
+            env_file = os.path.join(tmp_dir, ".env")
+            self.assertFalse(os.path.exists(env_file))
+
+    def test_write_dot_env_created(self):
+        srv = self.test_service_actions[1]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            srv.repo_dir = tmp_dir
+            self.job.device["environment"] = {"DEVICE_VAR": "D902AA38"}
+            self.job.parameters["environment"] = {"JOB_VAR": "D902AA39"}
+
+            srv._write_dot_env()
+
+            env_file = os.path.join(tmp_dir, ".env")
+            self.assertTrue(os.path.exists(env_file))
+            with open(env_file) as f:
+                content = f.read()
+
+        self.assertEqual(
+            content, "# Added by LAVA.\nDEVICE_VAR=D902AA38\nJOB_VAR=D902AA39\n"
+        )
+
+    def test_write_dot_env_override(self):
+        srv = self.test_service_actions[1]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            srv.repo_dir = tmp_dir
+            self.job.device["environment"] = {"ENV_VAR": "D902AA38"}
+            self.job.parameters["environment"] = {"ENV_VAR": "D902AA39"}
+
+            srv._write_dot_env()
+
+            env_file = os.path.join(tmp_dir, ".env")
+            self.assertTrue(os.path.exists(env_file))
+            with open(env_file) as f:
+                content = f.read()
+
+        self.assertEqual(content, "# Added by LAVA.\nENV_VAR=D902AA39\n")
+
+    def test_write_dot_env_appended(self):
+        srv = self.test_service_actions[1]
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            srv.repo_dir = tmp_dir
+            self.job.device["environment"] = {"DEVICE_VAR": "D902AA39"}
+
+            env_file = os.path.join(tmp_dir, ".env")
+            with open(env_file, "w") as f:
+                f.write("KEY1=val1\n")
+
+            srv._write_dot_env()
+
+            with open(env_file) as f:
+                content = f.read()
+
+        self.assertEqual(
+            content,
+            "KEY1=val1\n# Added by LAVA.\nDEVICE_VAR=D902AA39\n",
+        )
 
     def test_cleanup(self):
         srv = self.test_service_actions[1]

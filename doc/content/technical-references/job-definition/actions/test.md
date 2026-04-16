@@ -651,6 +651,35 @@ Path to the Docker Compose file within the repository.
 A specific service to start. If not set, all services in the compose file are
 started.
 
+### Environment
+
+LAVA dispatcher writes environment variables from both the
+[device dictionary](../../configuration/device-dictionary.md#environment)
+and the job-level [`environment`](../environment.md) to the repo's `.env`
+file. Values defined at the job level take precedence over those from the
+device dictionary.
+
+Docker Compose reads the `.evn` automatically. This means you can define
+an environment variable in the device or job:
+
+```jinja title="Device dictionary environment"
+{% set environment = { 'BOARD_QDL_ID': 'D902AA38'} %}
+```
+
+And then expose the variable to your Docker container:
+
+```yaml title="Docker Compose environment"
+services:
+  srv1:
+    environment:
+      - BOARD_QDL_ID
+```
+
+!!! note
+    This is defined in your Docker Compose file, not the LAVA job
+    definition. For more about exposing variables inside your container,
+    see [set environment variables](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/).
+
 ### Lifecycle
 
 Services started remain active until the end of the job. You can use command
