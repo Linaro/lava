@@ -76,9 +76,6 @@ class KexecAction(Action):
         self.load_command = self.command[:]  # local copy for idempotency
 
         if self.parameters.get("deploy", False):
-            initrd_path = self.get_namespace_data(
-                action="download-action", label="initrd", key="file"
-            )
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
 
             self.append_deploy_cmd("kernel", ip_addr)

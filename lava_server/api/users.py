@@ -49,8 +49,8 @@ class UsersAPI(ExposedV2API):
                 args["first_name"] = ldap_user.get("given_name", "")
                 args["last_name"] = ldap_user.get("sn", "")
                 args["email"] = ldap_user.get("mail", "")
-            user = User.objects.create(**args)
-        except (IntegrityError, ValidationError) as exc:
+            User.objects.create(**args)
+        except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request: user already exists?")
         except ldap.NO_SUCH_OBJECT:
             raise xmlrpc.client.Fault(
@@ -134,7 +134,7 @@ class UsersAPI(ExposedV2API):
             user.save()
         except User.DoesNotExist:
             raise xmlrpc.client.Fault(404, "User '%s' was not found." % username)
-        except (IntegrityError, ValidationError) as exc:
+        except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request")
 
 

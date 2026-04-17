@@ -769,7 +769,6 @@ class TestInteractiveScript(LavaDispatcherTestCase):
 
         conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         previous_connection = Connection(conn_previous)
-        conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         data_connection = Connection(conn_previous)
         action.set_namespace_data("shared", "shared", "connection", data_connection)
 
@@ -802,7 +801,6 @@ class TestInteractiveScript(LavaDispatcherTestCase):
 
         conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         previous_connection = Connection(conn_previous)
-        conn_data = [("expect", ["bar", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
         data_connection = Connection(conn_previous)
         action.set_namespace_data(
             "shared", "shared", "connection", data_connection, {"namespace": "foobar"}

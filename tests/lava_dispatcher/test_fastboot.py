@@ -157,7 +157,6 @@ class TestDockerDriver(unittest.TestCase):
         get_mapping_path.return_value = Path("/tmp/usbmap.yaml")  # FIXME
         self.action.maybe_copy_to_container("/path/to/image.img")
         self.action.run_fastboot(["wait-for-devices"])
-        cmd = run_cmd.call_args[0][0]
         assert len(run_cmd.mock_calls) == 4
 
         assert run_cmd.mock_calls[0].args[0][0:5] == [

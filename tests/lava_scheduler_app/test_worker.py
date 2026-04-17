@@ -128,7 +128,7 @@ def test_basic_db(client, mocker, settings):
 def test_internal_v1_jobs_get(client, mocker, settings):
     # Create objects
     objs = create_objects(Worker.objects.create(hostname="worker-01"))
-    (j1, j2, j3, j4, j5, j6) = objs["jobs"]
+    j1, _, _, _, _, j6 = objs["jobs"]
 
     # Test errors
     ret = client.get(reverse("lava.scheduler.internal.v1.jobs", args=["12345"]))
@@ -185,7 +185,7 @@ def test_internal_v1_jobs_get(client, mocker, settings):
 def test_internal_v1_jobs_post(client, mocker, settings):
     # Create objects
     objs = create_objects(Worker.objects.create(hostname="worker-01"))
-    (j1, j2, j3, j4, j5, j6) = objs["jobs"]
+    j1, j2, _, _, _, _ = objs["jobs"]
 
     # Test errors
     ret = client.post(reverse("lava.scheduler.internal.v1.jobs", args=["12345"]))
@@ -265,7 +265,7 @@ def test_internal_v1_jobs_post(client, mocker, settings):
 def test_internal_v1_jobs_logs(client, mocker, settings):
     # Create objects
     objs = create_objects(Worker.objects.create(hostname="worker-01"))
-    (j1, j2, j3, j4, j5, j6) = objs["jobs"]
+    j1, _, _, _, _, _ = objs["jobs"]
 
     # Test errors
     ret = client.post(reverse("lava.scheduler.internal.v1.jobs.logs", args=["0"]))
@@ -482,7 +482,7 @@ def test_internal_v1_workers_get(client, mocker, settings):
 
     # Add jobs and test again
     objs = create_objects(w)
-    (j1, j2, j3, j4, j5, j6) = objs["jobs"]
+    j1, j2, j3, _, j5, j6 = objs["jobs"]
 
     ret = client.get(
         reverse("lava.scheduler.internal.v1.workers", args=["worker-01"]),
@@ -577,7 +577,7 @@ def test_internal_v1_workers_post(client, mocker, settings):
     assert ret.json()["error"] == "Worker 'worker-01' already registered"
 
     # Use username and password as simple user
-    user = User.objects.create_user("simple-user", "user@example.com", "mypass")
+    User.objects.create_user("simple-user", "user@example.com", "mypass")
     ret = client.post(
         reverse("lava.scheduler.internal.v1.workers"),
         data={"name": "worker-02", "username": "simple-user", "password": "wrong pass"},
@@ -603,7 +603,7 @@ def test_internal_v1_workers_post(client, mocker, settings):
     assert ret.json() == {"error": "Worker 'worker-02' already registered"}
 
     # Create a super user
-    admin = User.objects.create_superuser("admin", "admin@example.com", "mypass")
+    User.objects.create_superuser("admin", "admin@example.com", "mypass")
     ret = client.post(
         reverse("lava.scheduler.internal.v1.workers"),
         data={"name": "worker-02", "username": "admin", "password": "mypass"},

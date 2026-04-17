@@ -815,7 +815,7 @@ async def listen_for_events(
                         continue
                     try:
                         data = json.loads(msg.data)
-                        (topic, _, dt, username, data) = data
+                        topic, _, _, _, data = data
                         data = json.loads(data)
                     except ValueError:
                         LOG.warning("[EVENT] Invalid message: %s", msg)

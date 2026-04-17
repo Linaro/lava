@@ -59,7 +59,7 @@ class LavaCoordinator:
         self.running = True
         while self.running:
             LOG.info("Ready to accept new connections")
-            self.conn, addr = s.accept()
+            self.conn, _ = s.accept()
             # read the header to get the size of the message to follow
             data = self.conn.recv(8).decode("utf-8")  # 32bit limit
             try:

@@ -371,7 +371,6 @@ def chart_query_edit(request, name, id):
 @ownership_required
 def chart_query_remove(request, name, id):
     chart_query = get_object_or_404(ChartQuery, id=id)
-    chart = chart_query.chart
     chart_query.delete()
 
     return HttpResponseRedirect(reverse("lava.results.chart_detail", args=(name,)))
@@ -402,7 +401,6 @@ def chart_query_order_update(request, name):
         raise PermissionDenied
 
     chart_query_order = request.POST.get("chart_query_order").split(",")
-    chart = get_object_or_404(Chart, name=name)
 
     try:
         for index, chart_query_id in enumerate(chart_query_order):

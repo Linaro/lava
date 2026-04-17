@@ -62,12 +62,12 @@ class Command(BaseCommand):
             return
         try:
             query.refresh_view()
-        except QueryUpdatedError as e:
+        except QueryUpdatedError:
             self.stderr.write(
                 "Query with name %s owned by user %s was recently refreshed."
                 % (query.name, query.owner.username)
             )
-        except RefreshLiveQueryError as e:
+        except RefreshLiveQueryError:
             self.stderr.write(
                 "Query with name %s owned by user %s cannot be refreshed since it's a live query."
                 % (query.name, query.owner.username)

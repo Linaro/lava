@@ -324,9 +324,7 @@ class Mapper:
         """
         methods = []
         for register_path, register_cls in self.registered.items():
-            for method_name, impl in inspect.getmembers(
-                register_cls, inspect.isroutine
-            ):
+            for method_name, _ in inspect.getmembers(register_cls, inspect.isroutine):
                 if method_name.startswith("_"):
                     continue
                 if register_path:

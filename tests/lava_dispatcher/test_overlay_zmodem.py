@@ -54,7 +54,7 @@ class TestOverlayZmodem(LavaDispatcherTestCase):
 
         # Run action
         mock_run.return_value = MagicMock(returncode=0)
-        res_conn = action.run(conn, max_end_time=time.monotonic() + 5)
+        action.run(conn, max_end_time=time.monotonic() + 5)
 
         # Verify subprocess.run was called to execute sz with overlay path and uart
         assert mock_run.called

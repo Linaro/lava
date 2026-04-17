@@ -40,7 +40,7 @@ def check_device(data, options, prefix=""):
         print("%sinvalide device template:" % prefix)
         print("%serror: %s" % (prefix, exc))
         return 1
-    except yaml.YAMLError as exc:
+    except yaml.YAMLError:
         print("%sinvalid device definition:" % prefix)
         print("%sinvalid yaml" % prefix)
         return 1
@@ -57,7 +57,7 @@ def check_device(data, options, prefix=""):
 def check_job(data, options, prefix=""):
     try:
         data = yaml.safe_load(data)
-    except yaml.YAMLError as exc:
+    except yaml.YAMLError:
         print("%sinvalid job definition:" % prefix)
         print("%sinvalid yaml" % prefix)
         return 1

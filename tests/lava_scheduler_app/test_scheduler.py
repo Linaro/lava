@@ -328,7 +328,7 @@ class TestHealthCheckScheduling(TestCase):
 
         # Create three jobs that should be scheduled with a healthcheck preceding the
         # last one
-        for i in range(0, 3):
+        for _ in range(0, 3):
             TestJob.objects.create(
                 requested_device_type=self.device_type01,
                 submitter=self.user,
@@ -871,7 +871,7 @@ class TestJobLimit(TestCase):
             self.devices.append(dev)
 
     def test_job_limit(self):
-        for i in range(0, 4):
+        for _ in range(0, 4):
             TestJob.objects.create(
                 requested_device_type=self.device_type01,
                 submitter=self.user,
@@ -888,7 +888,7 @@ class TestJobLimit(TestCase):
         )
 
     def test_job_limit_unlimited(self):
-        for i in range(0, 4):
+        for _ in range(0, 4):
             TestJob.objects.create(
                 requested_device_type=self.device_type01,
                 submitter=self.user,

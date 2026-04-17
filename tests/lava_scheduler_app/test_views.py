@@ -88,7 +88,7 @@ actions:
 @pytest.fixture
 def setup(db):
     group = Group.objects.create(name="group1")
-    admin = User.objects.create_user(
+    User.objects.create_user(
         username="admin", password="admin", is_superuser=True
     )  # nosec
     user = User.objects.create_user(username="tester", password="tester")  # nosec
@@ -118,7 +118,7 @@ def setup(db):
         health=Device.HEALTH_MAINTENANCE,
         worker_host=worker_01,
     )
-    qemu_spec = Device.objects.create(
+    Device.objects.create(
         hostname="qemu_:')-,;~",
         device_type=dt_qemu_spec,
         health=Device.HEALTH_MAINTENANCE,
@@ -140,7 +140,7 @@ def setup(db):
     )
     GroupDevicePermission.objects.assign_perm(Device.CHANGE_PERMISSION, group, juno_01)
 
-    job_01 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 01",
         definition=TOKEN_JOB_DEFINITION,
         submitter=user,
@@ -151,7 +151,7 @@ def setup(db):
         is_public=True,
         start_time=timezone.now(),
     )
-    job_02 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 02",
         definition=NON_TOKEN_JOB_DEFINITION,
         submitter=user,
@@ -161,13 +161,13 @@ def setup(db):
         is_public=True,
         start_time=timezone.now(),
     )
-    job_03 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 03",
         submitter=user,
         state=TestJob.STATE_SUBMITTED,
         requested_device_type=dt_juno,
     )
-    job_04 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 04",
         submitter=user,
         requested_device_type=dt_juno,
@@ -177,7 +177,7 @@ def setup(db):
         is_public=True,
         start_time=timezone.now(),
     )
-    job_05 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 05",
         submitter=user,
         requested_device_type=dt_juno,
@@ -187,7 +187,7 @@ def setup(db):
         start_time=timezone.now(),
         target_group="group",
     )
-    job_06 = TestJob.objects.create(
+    TestJob.objects.create(
         description="test job 06",
         submitter=user,
         requested_device_type=dt_juno,
@@ -1578,7 +1578,7 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
 
     # Test request data too big middleware
     data = []
-    for i in range(1, 300000):
+    for _ in range(1, 300000):
         data.append(
             '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2023.02"}'
         )

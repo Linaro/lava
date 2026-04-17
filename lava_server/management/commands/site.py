@@ -18,7 +18,7 @@ class Command(BaseCommand):
         )
         sub.required = True
 
-        list_parser = sub.add_parser("list", help="List the current Site")
+        sub.add_parser("list", help="List the current Site")
 
         update_parser = sub.add_parser("update", help="Update site properties")
         update_parser.add_argument("--name", type=str, help="Display name of the Site")

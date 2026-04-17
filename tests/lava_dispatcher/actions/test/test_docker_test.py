@@ -117,7 +117,7 @@ def test_run(action, mocker):
     lava_test_runner = overlay / "bin" / "lava-test-runner"
     assert lava_test_runner.exists()
     lava_test_0 = overlay / "0"
-    assert lava_test_runner.exists()
+    assert lava_test_0.exists()
 
     environmentfile = overlay / "environment"
     with environmentfile.open() as env_file:

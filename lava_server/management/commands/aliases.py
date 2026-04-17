@@ -26,7 +26,7 @@ class Command(BaseCommand):
         add_parser.add_argument("devicetype", help="Device type")
 
         # "list" sub-command
-        list_parser = sub.add_parser("list", help="List Aliases")
+        sub.add_parser("list", help="List Aliases")
 
         # "show" sub-command
         show_parser = sub.add_parser(

@@ -87,12 +87,12 @@ class Command(BaseCommand):
                             quoting=csv.QUOTE_MINIMAL,
                         )
                         for result in results:
-                            result_type, result_data = result
+                            _, result_data = result
                             file_handle.writerow(
                                 [result_data["uid"][0].decode("utf-8")]
                             )
                 else:
                     for result in results:
-                        result_type, result_data = result
+                        _, result_data = result
                         self.stdout.write(result_data["uid"][0].decode("utf-8"))
                 self.stdout.write('Total "%d" LDAP users' % len(results))

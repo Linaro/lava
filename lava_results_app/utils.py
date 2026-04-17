@@ -44,7 +44,7 @@ def description_data(job):
     try:
         with open(filename) as f_in:
             data = yaml_safe_load(f_in)
-    except yaml.YAMLError as exc:
+    except yaml.YAMLError:
         logger.warning("Unable to parse description for %s", job.id)
     except OSError as exc:
         logger.error("Unable to open description for %s", job.id)
@@ -133,9 +133,9 @@ def export_testcase(testcase):
         "url": str(testcase.get_absolute_url()),
         "id": str(testcase.id),
         "logged": str(testcase.logged),
-        "log_start_line": str(testcase.start_log_line)
-        if testcase.start_log_line
-        else "",
+        "log_start_line": (
+            str(testcase.start_log_line) if testcase.start_log_line else ""
+        ),
         "log_end_line": str(testcase.end_log_line) if testcase.end_log_line else "",
         "metadata": metadata,
     }

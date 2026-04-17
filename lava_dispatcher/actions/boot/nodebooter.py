@@ -298,7 +298,7 @@ class ConfigureNodebooter(Action):
                     json["boot_info"].append(
                         {
                             "node_entity_name": f"nic_control_node{counter}",
-                            "boot_file": nic_images[counter],
+                            "boot_file": nic_image,
                             "loader_file": "",
                         }
                     )

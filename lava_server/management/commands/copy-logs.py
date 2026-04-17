@@ -39,7 +39,7 @@ class Command(BaseCommand):
 
         try:
             logs_class = getattr(import_module(backend_str), options["db"])
-        except (AttributeError, ModuleNotFoundError) as exc:
+        except (AttributeError, ModuleNotFoundError):
             self.stdout.write("Please provide a valid database backend.")
 
         try:

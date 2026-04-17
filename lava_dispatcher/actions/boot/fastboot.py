@@ -55,7 +55,6 @@ class BootFastbootCommands(OptionalContainerFastbootAction):
     timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
-        serial_number = self.job.device["fastboot_serial_number"]
         self.logger.info("Running custom fastboot boot commands....")
         for command in self.parameters.get("commands"):
             self.run_fastboot(shlex.split(command))

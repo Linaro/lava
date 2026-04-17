@@ -163,7 +163,7 @@ class TestTestJob(TestCaseWithFactory):
                 break
             self.fail("Comments have not been preserved")
         dt = self.factory.make_device_type(name="qemu")
-        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        self.factory.make_device(device_type=dt, hostname="qemu-1")
         user = self.factory.make_user()
         job = TestJob.from_yaml_and_user(definition, user)
         job.refresh_from_db()
@@ -230,7 +230,7 @@ class TestTestJob(TestCaseWithFactory):
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()
         alias_name = "qemu_foo"
-        alias = self.factory.make_device_type_alias(dt, name=alias_name)
+        self.factory.make_device_type_alias(dt, name=alias_name)
         definition = self.factory.make_job_data_from_file("qemu-foo.yaml")
         job = testjob_submission(definition, user, None)
         self.assertEqual(job.requested_device_type, dt)
@@ -242,7 +242,7 @@ class TestTestJob(TestCaseWithFactory):
         device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         device.save()
         alias_name = "qemu_foo"
-        alias = self.factory.make_device_type_alias(dt, name=alias_name)
+        self.factory.make_device_type_alias(dt, name=alias_name)
         definition = self.factory.make_job_data_from_file("qemu-foo-nonexisting.yaml")
         self.assertRaises(
             DevicesUnavailableException, testjob_submission, definition, user, None
@@ -306,7 +306,7 @@ class TestNotificationBase(TestCaseWithFactory):
         dt = self.factory.make_device_type(name="qemu")
         self.device = self.factory.make_device(device_type=dt, hostname="qemu-1")
         user = self.factory.make_user()
-        token, _ = AuthToken.objects.get_or_create(
+        AuthToken.objects.get_or_create(
             user=user, description="secrettoken", secret="abc123"
         )
         self.job = TestJob.from_yaml_and_user(definition, user)

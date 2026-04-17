@@ -138,7 +138,7 @@ class DDAction(Action):
         if not d_file:
             self.logger.debug("Skipping %s - nothing downloaded")
             return connection
-        decompressed_image = os.path.basename(d_file)
+
         try:
             device_path = os.path.realpath(
                 "/dev/disk/by-id/%s"
