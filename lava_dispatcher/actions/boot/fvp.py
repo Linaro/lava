@@ -362,7 +362,7 @@ class StartFVPAction(BaseFVPAction):
 
         # Wait for the console string
         # shell_connection.prompt_str = self.fvp_console_string
-        for str_index in range(len(self.fvp_feedbacks)):
+        for _ in range(len(self.fvp_feedbacks)):
             shell_connection.prompt_str = list(self.fvp_feedbacks)
             self.wait(shell_connection)
             self.logger.debug(

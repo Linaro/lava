@@ -176,7 +176,7 @@ def split_multinode_yaml(submission, target_group):
     sub_id_count = 0
     for role_name, role_dict in roles.items():
         jobs[role_name] = []
-        for sub in range(0, role_dict["count"]):
+        for _ in range(0, role_dict["count"]):
             job = {}
             job.update(actions[role_name])
             job.update(role_dict)
@@ -289,7 +289,7 @@ def get_ldap_user_properties(ldap_user):
             conn.simple_bind_s(bind_dn, bind_password)
             result = conn.search_s(user_dn, search_scope, search_filter, attributes)
             if len(result) == 1:
-                result_type, result_data = result[0]
+                _, result_data = result[0]
                 user_properties["uid"] = result_data.get("uid", [None])[0]
                 user_properties["mail"] = result_data.get("mail", [None])[0]
                 user_properties["sn"] = result_data.get("sn", [None])[0]

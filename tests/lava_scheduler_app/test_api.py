@@ -677,11 +677,11 @@ protocols:
 @pytest.fixture
 def setup(db):
     user = User.objects.create_user(username="user", password="user")  # nosec
-    group = Group.objects.create(name="group")
-    admin = User.objects.create_user(
+    Group.objects.create(name="group")
+    User.objects.create_user(
         username="admin", password="admin", is_superuser=True
     )  # nosec
-    staff = User.objects.create_user(
+    User.objects.create_user(
         username="staff", password="staff", is_staff=True, is_superuser=False
     )
     user.user_permissions.add(Permission.objects.get(codename="add_alias"))
@@ -710,7 +710,7 @@ def test_aliases_add(setup):
     GroupDeviceTypePermission.objects.remove_perm("view_devicetype", group, dt)
 
     # 2. existing device-type visible
-    device = Device.objects.create(hostname="device01", device_type=dt)
+    Device.objects.create(hostname="device01", device_type=dt)
     assert (  # nosec
         server("admin", "admin").scheduler.aliases.add("kvm", "qemu") is None
     )
@@ -747,7 +747,7 @@ def test_aliases_add(setup):
 @pytest.mark.django_db
 def test_aliases_delete(setup):
     dt = DeviceType.objects.create(name="qemu")
-    alias = Alias.objects.create(name="kvm", device_type=dt)
+    Alias.objects.create(name="kvm", device_type=dt)
     assert server("admin", "admin").scheduler.aliases.delete("kvm") is None  # nosec
     with pytest.raises(xmlrpc.client.Fault) as exc:
         server("admin", "admin").scheduler.aliases.delete("kvm")
@@ -758,14 +758,14 @@ def test_aliases_delete(setup):
 @pytest.mark.django_db
 def test_aliases_list(setup):
     dt = DeviceType.objects.create(name="qemu")
-    alias = Alias.objects.create(name="kvm", device_type=dt)
+    Alias.objects.create(name="kvm", device_type=dt)
     assert server().scheduler.aliases.list() == ["kvm"]  # nosec
 
 
 @pytest.mark.django_db
 def test_aliases_show(setup):
     dt = DeviceType.objects.create(name="qemu")
-    alias = Alias.objects.create(name="kvm", device_type=dt)
+    Alias.objects.create(name="kvm", device_type=dt)
     assert server().scheduler.aliases.show("kvm") == {  # nosec
         "name": "kvm",
         "device_type": "qemu",
@@ -934,7 +934,7 @@ def test_devices_set_dictionary(setup, monkeypatch):
     assert exc.value.faultString.startswith("Device 'device01' was not found.")  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    device = Device.objects.create(hostname="device01", device_type=dt)
+    Device.objects.create(hostname="device01", device_type=dt)
     assert (  # nosec
         server("admin", "admin").scheduler.devices.set_dictionary("device01", "hello")
         is None
@@ -946,9 +946,9 @@ def test_devices_list(setup):
     assert server().scheduler.devices.list() == []  # nosec
 
     dt = DeviceType.objects.create(name="black")
-    device1 = Device.objects.create(hostname="device01", device_type=dt)
+    Device.objects.create(hostname="device01", device_type=dt)
     device2 = Device.objects.create(hostname="device02", device_type=dt)
-    device3 = Device.objects.create(hostname="device_:'),;~", device_type=dt)
+    Device.objects.create(hostname="device_:'),;~", device_type=dt)
     group = Group.objects.create(name="group1")
     GroupDevicePermission.objects.assign_perm("view_device", group, device2)
     assert sorted(
@@ -1765,7 +1765,7 @@ def test_device_types_aliases_add(setup):
     assert exc.value.faultString == "Device-type 'qemu' was not found."  # nosec
 
     # 2. Normal case
-    dt = DeviceType.objects.create(name="qemu")
+    DeviceType.objects.create(name="qemu")
     server("admin", "admin").scheduler.device_types.aliases.add("qemu", "kvm")
     assert Alias.objects.count() == 1  # nosec
     assert Alias.objects.all()[0].name == "kvm"  # nosec
@@ -1878,7 +1878,7 @@ def test_tags_delete(setup):
 @pytest.mark.django_db
 def test_tags_show(setup):
     tag1 = Tag.objects.create(name="hdd")
-    tag2 = Tag.objects.create(name="audio", description="audio capture")
+    Tag.objects.create(name="audio", description="audio capture")
 
     data = server().scheduler.tags.show("hdd")
     assert data == {"name": "hdd", "description": None, "devices": []}  # nosec

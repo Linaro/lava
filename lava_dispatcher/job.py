@@ -180,7 +180,7 @@ class Job:
 
         success = False
         try:
-            with self.timeout(None, None) as max_end_time:
+            with self.timeout(None, None):
                 self._validate()
                 success = True
         except LAVAError:

@@ -265,7 +265,7 @@ class ManagersTest(TestCaseWithFactory):
     def test_filter_by_perm_multiple_groups(self):
         group1 = self.factory.make_group(name="test_group1")
         group2 = self.factory.make_group(name="test_group2")
-        group3 = self.factory.make_group(name="test_group3")
+        self.factory.make_group(name="test_group3")
         user1 = self.factory.make_user()
         user1.groups.add(group1)
         user1.groups.add(group2)

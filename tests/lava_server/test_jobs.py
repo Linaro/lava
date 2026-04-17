@@ -111,7 +111,7 @@ def test_jobs_rm_slow(mocker):
     assert "sleeping 2s..." not in out.getvalue()
 
     now = timezone.now()
-    for i in range(101):
+    for _ in range(101):
         TestJob.objects.create(
             submitter=user1,
             state=TestJob.STATE_FINISHED,

@@ -105,7 +105,7 @@ class PermissionAuthTest(TestCaseWithFactory):
     def test_has_perm_unsupported_model(self):
         # Unsupported permission codename will raise PermissionNameError.
         user = self.factory.make_user()
-        auth = PermissionAuth(user)
+        PermissionAuth(user)
         with TestCase.assertRaises(self, PermissionNameError):
             GroupDevicePermission.objects.assign_perm(
                 "change_group", self.group, self.device

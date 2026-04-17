@@ -310,7 +310,7 @@ def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=No
 def wait_udev_changed_event(
     match_dict=None, subsystem=None, devtype=None, devicepath=None
 ):
-    context, match_dict, udev_monitor = wait_udev_event_setup(
+    _, match_dict, udev_monitor = wait_udev_event_setup(
         devicepath, devtype, match_dict, subsystem, source="udev"
     )
     _, _, kernel_monitor = wait_udev_event_setup(
