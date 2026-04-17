@@ -249,9 +249,6 @@ class FastbootReboot(OptionalContainerFastbootAction):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-
         self.logger.info("fastboot rebooting device.")
         self.run_fastboot(["reboot"])
         return connection
@@ -280,9 +277,6 @@ class FastbootRebootBootloader(OptionalContainerFastbootAction):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-
         self.logger.info("fastboot reboot device to bootloader.")
         self.run_fastboot(["reboot-bootloader"])
         return connection
@@ -310,9 +304,6 @@ class FastbootRebootFastboot(OptionalContainerFastbootAction):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
 
         self.logger.info("fastboot reboot device to fastbootd.")
         self.run_fastboot(["reboot", "fastboot"])

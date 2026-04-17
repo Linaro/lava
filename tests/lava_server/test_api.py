@@ -59,7 +59,7 @@ class TestLavaServerApi:
         )
 
     def test_assign_perm_devicetype_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         try:
             server.system.assign_perm_device_type(
@@ -74,7 +74,7 @@ class TestLavaServerApi:
             assert False  # nosec
 
     def test_assign_perm_devicetype(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_devicetype", self.device_type1)
@@ -101,7 +101,7 @@ class TestLavaServerApi:
         )
 
     def test_revoke_perm_devicetype_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         try:
             server.system.revoke_perm_device_type(
@@ -116,7 +116,7 @@ class TestLavaServerApi:
             assert False  # nosec
 
     def test_revoke_perm_devicetype(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         server.system.assign_perm_device_type(
             "lava_scheduler_app.view_devicetype",
@@ -148,7 +148,7 @@ class TestLavaServerApi:
         )
 
     def test_assign_perm_device_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         try:
             server.system.assign_perm_device(
@@ -161,7 +161,7 @@ class TestLavaServerApi:
             assert False  # nosec
 
     def test_assign_perm_device(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         assert (  # nosec
             self.user1.has_perm("lava_scheduler_app.view_device", self.device1) is False
@@ -182,7 +182,7 @@ class TestLavaServerApi:
         )
 
     def test_revoke_perm_device_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         try:
             server.system.revoke_perm_device(
@@ -195,7 +195,7 @@ class TestLavaServerApi:
             assert False  # nosec
 
     def test_revoke_perm_device(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         server.system.assign_perm_device(
             "lava_scheduler_app.view_device", self.device1.hostname, self.group.name
@@ -219,7 +219,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_add_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.add("group11")
@@ -229,13 +229,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_add(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         server.auth.groups.add("group11")
         assert Group.objects.filter(name="group11").exists()
 
     def test_auth_groups_add_already_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.add("group1")
@@ -243,7 +243,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Bad request: group already exists?"
 
     def test_auth_groups_delete_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.delete("group1")
@@ -254,13 +254,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_delete(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         server.auth.groups.delete("group1")
         assert Group.objects.filter(name="group1").first() is None
 
     def test_auth_groups_delete_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.delete("group11")
@@ -268,7 +268,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Bad request: group does not exists"
 
     def test_auth_groups_list_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.list()
@@ -279,13 +279,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_list(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         groups = server.auth.groups.list()
         assert "group1" in groups
 
     def test_auth_groups_show_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.show("group1")
@@ -296,7 +296,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_show(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         group_info = server.auth.groups.show("group1")
@@ -306,7 +306,7 @@ class TestLavaServerApi:
         assert group_info["users"] == ["user1"]
 
     def test_auth_groups_show_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -315,7 +315,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Group 'group11' was not found."
 
     def test_auth_groups_perms_add_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.add(
@@ -328,7 +328,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_perms_add(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         group = Group.objects.get(name="group1")
@@ -339,7 +339,7 @@ class TestLavaServerApi:
         assert group.permissions.filter(codename="change_devicetype")
 
     def test_auth_groups_perms_add_group_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -353,7 +353,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Group 'group_not_exist' was not found."
 
     def test_auth_groups_perms_add_app_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -367,7 +367,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
 
     def test_auth_groups_perms_add_model_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -384,7 +384,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_perms_add_perm_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -398,7 +398,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
 
     def test_auth_groups_perms_list_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.list("group1")
@@ -409,13 +409,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_perms_list(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         perms = server.auth.groups.perms.list("group1")
         assert perms == []
 
     def test_auth_groups_perms_list_group_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.groups.perms.list("group11")
@@ -423,7 +423,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Group 'group11' was not found."
 
     def test_auth_groups_perms_delete_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -437,7 +437,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_perms_delete(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         server.auth.groups.perms.add(
@@ -451,7 +451,7 @@ class TestLavaServerApi:
         assert not group.permissions.filter(codename="change_devicetype")
 
     def test_auth_groups_perms_delete_group_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -465,7 +465,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Group 'group_not_exist' was not found."
 
     def test_auth_groups_perms_delete_app_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -479,7 +479,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
 
     def test_auth_groups_perms_delete_model_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -496,7 +496,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_groups_perms_delete_perm_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -510,7 +510,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
 
     def test_auth_users_add_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -583,7 +583,7 @@ class TestLavaServerApi:
         assert user.email == "first.last@linaro.org"
 
     def test_auth_users_add_ldap_user_not_found(self, mocker):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         mocker.patch(
@@ -598,7 +598,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'first.last' was not found in LDAP."
 
     def test_auth_users_add_ldap_unavailable(self, mocker):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         mocker.patch(
@@ -616,7 +616,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_delete_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.delete("user1")
@@ -627,13 +627,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_delete(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         server.auth.users.delete("user1")
         assert Group.objects.filter(name="user1").first() is None
 
     def test_auth_users_delete_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.delete("user11")
@@ -641,7 +641,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Bad request: user does not exists"
 
     def test_auth_users_list_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.list()
@@ -651,13 +651,13 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_list(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
         users = server.auth.users.list()
         assert len(users) >= 2
 
     def test_auth_users_show_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.show("user1")
@@ -667,7 +667,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_show(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         user_info = server.auth.users.show("user1")
@@ -675,7 +675,7 @@ class TestLavaServerApi:
         assert user_info["username"] == "user1"
 
     def test_auth_users_show_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -684,7 +684,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user11' was not found."
 
     def test_auth_users_update_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -696,7 +696,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_update(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         assert User.objects.get(username="user1").first_name == ""
@@ -724,7 +724,7 @@ class TestLavaServerApi:
         assert User.objects.get(username="user1").is_superuser
 
     def test_auth_users_groups_add_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -745,7 +745,7 @@ class TestLavaServerApi:
         assert "group1" in [g.name for g in user.groups.all()]
 
     def test_auth_users_groups_add_user_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -754,7 +754,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user11' was not found."
 
     def test_auth_users_groups_list_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -765,14 +765,14 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_groups_list(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         groups = server.auth.users.groups.list("user1")
         assert "group1" in groups
 
     def test_auth_users_groups_delete_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -793,7 +793,7 @@ class TestLavaServerApi:
         assert "group1" not in [g.name for g in user.groups.all()]
 
     def test_auth_users_groups_delete_user_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -802,7 +802,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user11' was not found."
 
     def test_auth_users_groups_delete_group_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -811,7 +811,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Group 'group11' was not found."
 
     def test_auth_users_perms_add_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.add(
@@ -835,7 +835,7 @@ class TestLavaServerApi:
         assert user.user_permissions.filter(codename="change_devicetype")
 
     def test_auth_users_perms_add_user_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -849,7 +849,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user_not_exist' was not found."
 
     def test_auth_users_perms_add_app_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -863,7 +863,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
 
     def test_auth_users_perms_add_model_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -880,7 +880,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_perms_add_perm_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -894,7 +894,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid permission 'perm_not_exist'"
 
     def test_auth_users_perms_list_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
         with pytest.raises(xmlrpc.client.Fault) as exc:
             server.auth.users.perms.list("user1")
@@ -904,14 +904,14 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_perms_list(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         perms = server.auth.users.perms.list("user1")
         assert perms == []
 
     def test_auth_users_perms_list_user_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -920,7 +920,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user11' was not found."
 
     def test_auth_users_perms_delete_unauthorized(self):
-        user = self.ensure_user("test", "test@mail.net", "test")
+        self.ensure_user("test", "test@mail.net", "test")
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -948,7 +948,7 @@ class TestLavaServerApi:
         assert not user.user_permissions.filter(codename="change_devicetype")
 
     def test_auth_users_perms_delete_user_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -962,7 +962,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "User 'user_not_exist' was not found."
 
     def test_auth_users_perms_delete_app_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -976,7 +976,7 @@ class TestLavaServerApi:
         assert exc.value.faultString == "Invalid app.model 'app_not_exist.devicetype'"
 
     def test_auth_users_perms_delete_model_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:
@@ -993,7 +993,7 @@ class TestLavaServerApi:
         )
 
     def test_auth_users_perms_delete_perm_not_exist(self):
-        user = self.ensure_user("test", "test@mail.net", "test", True)
+        self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
 
         with pytest.raises(xmlrpc.client.Fault) as exc:

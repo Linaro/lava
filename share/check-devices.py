@@ -65,7 +65,7 @@ def main():
 
         try:
             template = env.get_template("%s.jinja2" % device_name)
-            device_template = template.render()
+            template.render()
         except JinjaTemplateNotFound as exc:
             print('* %s (ERROR): "%s" not found' % (device_name, exc))
             errors = True

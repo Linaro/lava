@@ -50,7 +50,7 @@ class TestTestTable(TestCase):
         self.assertEqual(table.length, 50)
 
     def test_empty_data(self):
-        table = TestTable(self.data)
+        TestTable(self.data)
         logging.debug("Testing preparation of search data on empty input")
 
 

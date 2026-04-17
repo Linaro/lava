@@ -44,7 +44,6 @@ class TestPipelineMenu(TestCaseWithFactory):
         self.assertIn("priority", data)
 
     def test_menu_device(self):
-        job_ctx = {}
         hostname = "fakemustang2"
         device = self.factory.make_device(self.device_type, hostname)
         self.assertEqual(device.device_type.name, "mustang-uefi")

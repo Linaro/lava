@@ -97,7 +97,6 @@ class TestVlandDevices(TestCaseWithFactory):
         self.cubie2 = self.factory.make_device(
             self.factory.cubie_type, hostname="cubie2"
         )
-        devices = [self.bbb3, self.cubie2]
         self.factory.ensure_tag("usb-eth")
         self.factory.ensure_tag("sata")
         self.factory.bbb1.tags.set(Tag.objects.filter(name="usb-eth"))
@@ -109,7 +108,6 @@ class TestVlandDevices(TestCaseWithFactory):
         with open(sample_job_file) as test_support:
             data = yaml_safe_load(test_support)
         vlan_job = TestJob.from_yaml_and_user(yaml_safe_dump(data), user)
-        assignments = {}
         for job in vlan_job:
             self.assertFalse(
                 match_vlan_interface(self.bbb3, yaml_safe_load(job.definition))

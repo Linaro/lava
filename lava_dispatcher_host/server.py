@@ -46,7 +46,6 @@ class ServerWrapper:
 
     async def start(self):
         logger.info("Starting")
-        loop = asyncio.get_running_loop()
 
         sd_sockets = os.getenv("LISTEN_FDS")
         if sd_sockets and int(os.getenv("LISTEN_PID")) == os.getpid():

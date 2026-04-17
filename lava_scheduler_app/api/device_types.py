@@ -129,7 +129,7 @@ class SchedulerDeviceTypesAPI(ExposedV2API):
         if health:
             try:
                 devices = devices.filter(health=Device.HEALTH_REVERSE[health.upper()])
-            except (AttributeError, KeyError) as exc:
+            except (AttributeError, KeyError):
                 raise xmlrpc.client.Fault(400, "Invalid health '%s'" % health)
 
         devices = (d for d in devices if d.can_view(self.user))

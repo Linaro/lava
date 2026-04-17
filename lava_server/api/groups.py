@@ -19,8 +19,8 @@ class GroupsAPI(ExposedV2API):
     @check_perm("auth.add_group")
     def add(self, name):
         try:
-            group = Group.objects.create(name=name)
-        except (IntegrityError, ValidationError) as exc:
+            Group.objects.create(name=name)
+        except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request: group already exists?")
 
     @check_perm("auth.change_group")

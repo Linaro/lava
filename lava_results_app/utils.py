@@ -44,7 +44,7 @@ def description_data(job):
     try:
         with open(filename) as f_in:
             data = yaml_safe_load(f_in)
-    except yaml.YAMLError as exc:
+    except yaml.YAMLError:
         logger.warning("Unable to parse description for %s", job.id)
     except OSError as exc:
         logger.error("Unable to open description for %s", job.id)

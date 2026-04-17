@@ -30,7 +30,7 @@ class FVPDeploy(Action):
         super().validate()
         if "images" not in self.parameters:
             raise JobError("No 'images' specified on FVP deploy")
-        for image_key, image_params in self.parameters["images"].items():
+        for image_params in self.parameters["images"].values():
             if "overlays" in image_params:
                 if self.parameters.get("format", None) == "disk":
                     if "partition" not in image_params:

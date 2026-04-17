@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import contextlib
 import logging
-from datetime import timedelta
 from urllib.parse import quote
 
 import yaml
@@ -808,8 +807,6 @@ class Query(models.Model):
     def refresh_view(self):
         if self.is_live:
             raise RefreshLiveQueryError("Refreshing live query not permitted.")
-
-        hour_ago = timezone.now() - timedelta(hours=1)
 
         with transaction.atomic():
             # Lock the selected row until the end of transaction.

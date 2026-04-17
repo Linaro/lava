@@ -176,11 +176,11 @@ class TestInteractiveAction(ReportMixin, Action):
         cmds = script["script"]
 
         def multinode2subst(msg):
-            for role_id, data in msg.items():
+            for data in msg.values():
                 for k, v in data.items():
                     substitutions["{%s}" % k] = v
 
-        for index, cmd in enumerate(cmds):
+        for cmd in cmds:
             if "delay" in cmd:
                 self.logger.info("Delaying for %ss", cmd["delay"])
                 time.sleep(cmd["delay"])
