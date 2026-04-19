@@ -311,7 +311,7 @@ class CallQemuAction(Action):
                 action="apply-overlay-guest", label="guest", key="UUID"
             )
             shell_precommand_list.append("mkdir %s" % mountpoint)
-            # prepare_guestfs always uses ext2
+            # prepare_guestfs creates ext2 (guestfs) or ext4 (e2fsprogs)
             shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.

@@ -10,6 +10,7 @@ import glob
 import logging
 import os
 import shutil
+import subprocess
 import tarfile
 import tempfile
 from typing import TYPE_CHECKING
@@ -115,6 +116,25 @@ def _launch_guestfs(guest: Any) -> None:
         raise InfrastructureError("Unable to start libguestfs")
 
 
+def _resolve_backend(params: dict[str, Any] | None = None) -> str:
+    import importlib.util
+
+    backend = "auto"
+    if params is not None:
+        backend = params.get("overlay_backend", "auto")
+    if backend == "e2fsprogs":
+        return "e2fsprogs"
+    if backend == "guestfs":
+        return "guestfs"
+    if shutil.which("debugfs"):
+        return "e2fsprogs"
+    if importlib.util.find_spec("guestfs") is not None:
+        return "guestfs"
+    raise InfrastructureError(
+        "Neither debugfs (e2fsprogs) nor python3-guestfs is available"
+    )
+
+
 @replace_exception(RuntimeError, JobError)
 def prepare_guestfs(
     action: Action, output: str, overlay: str, mountpoint: str, size: int
@@ -131,6 +151,43 @@ def prepare_guestfs(
     :param size: size of the filesystem in Mb
     :return blkid of the guest device
     """
+    if _resolve_backend() == "e2fsprogs":
+        from lava_dispatcher.utils.ext4 import create_ext4, inject_tar
+
+        raw_img = output + ".raw"
+        uuid = create_ext4(raw_img, size)
+
+        tar_output = action.mkdtemp()
+        tarball = tarfile.open(overlay)
+        tarball.extractall(tar_output)
+        guest_dir = action.mkdtemp()
+        guest_tar = os.path.join(guest_dir, "guest.tar")
+        root_tar = tarfile.open(guest_tar, "w")
+
+        results_dir_list = os.path.split(os.path.normpath(mountpoint))
+        sub_dir = os.path.join(tar_output, results_dir_list[1])
+        for dirname in os.listdir(sub_dir):
+            root_tar.add(os.path.join(sub_dir, dirname), arcname=dirname)
+
+        root_tar.close()
+        inject_tar(raw_img, guest_tar)
+        os.unlink(guest_tar)
+
+        try:
+            subprocess.run(
+                ["qemu-img", "convert", "-f", "raw", "-O", "qcow2", raw_img, output],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            raise InfrastructureError("qemu-img convert failed: %s" % exc.stderr[:500])
+        finally:
+            if os.path.exists(raw_img):
+                os.unlink(raw_img)
+
+        return uuid
+
     import guestfs  # type: ignore[import-not-found]
 
     guest = guestfs.GuestFS(python_return_dict=True)
@@ -199,6 +256,20 @@ def copy_out_files(image: str, filenames: list[str], destination: str) -> None:
     if not isinstance(filenames, list):
         raise LAVABug("filenames must be a list")
 
+    if _resolve_backend() == "e2fsprogs":
+        import magic
+
+        filetype = magic.from_file(image).split(",")[0]
+        if "ISO 9660" in filetype:
+            from lava_dispatcher.utils.ext4 import copy_out_iso
+
+            copy_out_iso(image, filenames, destination)
+        else:
+            from lava_dispatcher.utils.ext4 import copy_out
+
+            copy_out(image, filenames, destination)
+        return
+
     import guestfs
 
     guest = guestfs.GuestFS(python_return_dict=True)
@@ -221,6 +292,28 @@ def copy_in_overlay(image: str, root_partition: str | None, overlay: str) -> Non
     is None the image is handled as a filesystem instead of
     partitioned image.
     """
+    if _resolve_backend() == "e2fsprogs":
+        from lava_dispatcher.utils.ext4 import (
+            extract_partition,
+            inject_tar,
+            write_partition_back,
+        )
+
+        if os.path.exists(overlay[:-3]):
+            os.unlink(overlay[:-3])
+        decompressed_overlay = decompress_file(overlay, "gz")
+
+        if root_partition is not None:
+            with tempfile.TemporaryDirectory(prefix="lava-part-") as tmpdir:
+                part_file, start, sector_size = extract_partition(
+                    image, int(root_partition), tmpdir
+                )
+                inject_tar(part_file, decompressed_overlay)
+                write_partition_back(image, part_file, start, sector_size)
+        else:
+            inject_tar(image, decompressed_overlay)
+        return
+
     import guestfs
 
     guest = guestfs.GuestFS(python_return_dict=True)
@@ -274,6 +367,36 @@ def copy_overlay_to_sparse_fs(image: str, overlay: str) -> None:
     which has already been converted from sparse.
     """
     logger = logging.getLogger("dispatcher")
+    if _resolve_backend() == "e2fsprogs":
+        from lava_dispatcher.utils.ext4 import inject_tar
+
+        if os.path.exists(overlay[:-3]):
+            os.unlink(overlay[:-3])
+        decompressed_overlay = decompress_file(overlay, "gz")
+        inject_tar(image, decompressed_overlay)
+
+        result = subprocess.run(
+            ["dumpe2fs", "-h", image], capture_output=True, text=True, check=False
+        )
+        if result.returncode != 0:
+            logger.warning(
+                "dumpe2fs failed for %s (rc=%d), skipping free space check",
+                image,
+                result.returncode,
+            )
+            return
+        free_blocks = 0
+        block_size = 4096
+        for line in result.stdout.splitlines():
+            if line.startswith("Free blocks:"):
+                free_blocks = int(line.split(":")[1].strip())
+            elif line.startswith("Block size:"):
+                block_size = int(line.split(":")[1].strip())
+        available_kb = (free_blocks * block_size) // 1024
+        if available_kb == 0:
+            raise JobError("No space in image after applying overlay: %s" % image)
+        return
+
     import guestfs
 
     guest = guestfs.GuestFS(python_return_dict=True)

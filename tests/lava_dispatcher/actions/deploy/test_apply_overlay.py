@@ -98,14 +98,23 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         action = AppendOverlays(job, "rootfs", params)
         action.update_cpio = MagicMock()
         action.update_guestfs = MagicMock()
+        action.update_ext4 = MagicMock()
         action.update_tar = MagicMock()
         self.assertIsNone(action.run(None, 0))
         action.update_cpio.assert_called_once_with()
 
         params["format"] = "ext4"
+        params["overlay_backend"] = "guestfs"
         self.assertIsNone(action.run(None, 0))
         action.update_guestfs.assert_called_once_with()
 
+        params["overlay_backend"] = "e2fsprogs"
+        self.assertIsNone(action.run(None, 0))
+        action.update_ext4.assert_called_once_with()
+        # Guestfs path not taken on the second ext4 call.
+        action.update_guestfs.assert_called_once_with()
+
+        params.pop("overlay_backend")
         params["format"] = "tar"
         self.assertIsNone(action.run(None, 0))
         action.update_tar.assert_called_once_with()
