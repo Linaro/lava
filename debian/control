@@ -23,6 +23,7 @@ Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
 Package: lava-dispatcher
 Architecture: all
 Depends: bmap-tools,
+         e2fsprogs,
          fakeroot,
          lava-common (= ${binary:Version}),
          systemd-sysv,
