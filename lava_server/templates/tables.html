@@ -6,7 +6,7 @@
 {% block table %}
 <div class="row">
   <div class="col-md-6">
-  <form class="form-inline" id="{{ table.prefix }}search_form" action="{% querystring %}#{{ table.prefix|default:"table" }}" method="GET">
+  <form class="form-inline" id="{{ table.prefix }}search_form" action="{% lava_querystring %}#{{ table.prefix|default:"table" }}" method="GET">
     {% for key,value in request.GET.items %}
       {% if key != table.prefix|add:"length" %}
         <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -21,7 +21,7 @@
   </div>
 {%  if table.has_searches %}
   <div class="col-md-5">
-    <form class="form-inline pull-right" action="{% querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
+    <form class="form-inline pull-right" action="{% lava_querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
       {% for key,value in request.GET.items %}
         {% if key != table.prefix|add:"search" %}
           <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -81,7 +81,7 @@
         {% for column in table.columns %}
             {% if column.orderable %}
             <th {{ column.attrs.th.as_html }}>
-              <a href="{% querystring table.prefixed_order_by_field=column.order_by_alias.next %}#{{ table.prefix|default:"table" }}">{{ column.header }}
+              <a href="{% lava_querystring table.prefixed_order_by_field=column.order_by_alias.next %}#{{ table.prefix|default:"table" }}">{{ column.header }}
                 <small>
                 {% if column.is_ordered %}
                   {% if column.order_by_alias.0 == "-" %}
@@ -134,7 +134,7 @@
   {% block pagination.previous %}
     {% if table.page.has_previous %}
     <li class="previous">
-      <a href="{% querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
+      <a href="{% lava_querystring table.prefixed_page_field=table.page.previous_page_number %}#{{ table.prefix|default:"table" }}">
     {% else %}
     <li class="previous disabled">
       <a>
@@ -155,7 +155,7 @@
   {% block pagination.next %}
     {% if table.page.has_next %}
     <li class="next">
-      <a href="{% querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
+      <a href="{% lava_querystring table.prefixed_page_field=table.page.next_page_number %}#{{ table.prefix|default:"table" }}">
     {% else %}
     <li class="next disabled">
       <a href="#">
