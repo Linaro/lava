@@ -39,7 +39,7 @@ class MenuInterrupt(Action):
 
 class SelectorMenu:
     def __init__(self):
-        self.item_markup = None
+        self.item_markup = []
         self.item_class = None
         self.separator = None
         self.label_class = None
