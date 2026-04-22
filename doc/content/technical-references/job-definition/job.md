@@ -40,6 +40,43 @@ is defined per-role inside the `lava-multinode` protocol block.
     The device type **must** exist on the LAVA instance for the submission to
     be accepted by the scheduler.
 
+## device
+
+`string` (1–50 characters)
+
+Single node jobs can additionally specify ``device`` to target one exact
+device hostname. The specified device must belong to the requested
+``device_type``. When ``device`` is used, the scheduler will only run the job
+on that device and will not fall back to another device of the same type.
+
+For [multinode](../../user/advanced-tutorials/multinode.md) jobs, specify ``device``
+inside each ``lava-multinode`` role. Role-level ``device`` constraints require
+that role to use ``count: 1``.
+
+```yaml
+device: qemu-01
+```
+
+## worker
+
+`string` (1–50 characters)
+
+Single node jobs can additionally specify ``worker`` to restrict scheduling to
+devices attached to one exact worker hostname. The specified worker must exist
+on that instance. When ``worker`` is used, the scheduler will only run the job
+on devices of the requested ``device_type`` which are attached to that worker,
+and will not fall back to devices on other workers.
+
+For [multinode](../../user/advanced-tutorials/multinode.md) jobs, specify ``worker``
+inside each ``lava-multinode`` role.
+
+If both ``device`` and ``worker`` are specified, the selected ``device`` must
+also be attached to the selected ``worker``.
+
+```yaml
+worker: worker-01
+```
+
 ## tags
 
 `list[str]`
