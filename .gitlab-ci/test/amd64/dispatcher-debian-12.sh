@@ -17,7 +17,6 @@ else
   ulimit -n 1024
   python3 -m pytest \
       --color=yes \
-      --pythonwarnings=default \
       -r a \
       --cache-clear --verbose \
       --junitxml=dispatcher.xml \
