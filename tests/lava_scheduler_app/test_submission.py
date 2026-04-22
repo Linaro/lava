@@ -22,6 +22,7 @@ from lava_scheduler_app.models import (
     DevicesUnavailableException,
     DeviceType,
     NotificationCallback,
+    RemoteArtifactsAuth,
     Tag,
     TestJob,
 )
@@ -302,74 +303,152 @@ class TestNotificationBase(TestCaseWithFactory):
 
     def setUp(self) -> None:
         super().setUp()
-        definition = self.factory.make_job_data_from_file(self.JOB_DEFINITION_FILE)
+        self.definition = self.factory.make_job_data_from_file(self.JOB_DEFINITION_FILE)
         dt = self.factory.make_device_type(name="qemu")
         self.device = self.factory.make_device(device_type=dt, hostname="qemu-1")
-        user = self.factory.make_user()
-        token, _ = AuthToken.objects.get_or_create(
-            user=user, description="secrettoken", secret="abc123"
-        )
-        self.job = TestJob.from_yaml_and_user(definition, user)
-        create_notification(self.job, yaml_safe_load(definition)["notify"])
-        self.job.refresh_from_db()
-
+        self.user = self.factory.make_user()
+        self.job = TestJob.from_yaml_and_user(self.definition, self.user)
         self.job_temp_dir = TemporaryDirectory()
         self.addCleanup(self.job_temp_dir.cleanup)
         setattr(self.job, "output_dir", self.job_temp_dir.name)
+
+    def setup_notification_callback(
+        self, is_secret_auth_token=False, is_secret_remote_token=False
+    ):
+        if is_secret_auth_token:
+            token, _ = AuthToken.objects.get_or_create(
+                user=self.user, description="secrettoken", secret="xml_rpc_abc123"
+            )
+        if is_secret_remote_token:
+            remote_token, _ = RemoteArtifactsAuth.objects.get_or_create(
+                user=self.user, name="secrettoken", token="remote_abc123"
+            )
+        create_notification(self.job, yaml_safe_load(self.definition)["notify"])
+        self.job.refresh_from_db()
+
+    def check_notification_callback(self, method, header, token):
+        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
+        callback = self.job.notification.notificationcallback_set.first()
+        self.assertEqual(callback.method, method)
+        self.assertEqual(callback.url, "https://example.com/foo/bar")
+        self.assertEqual(callback.token, token)
+        self.assertEqual(callback.header, header)
+
+        with patch("lava_scheduler_app.models.requests") as mock_requests:
+            callback.invoke_callback()
+            if method == NotificationCallback.GET:
+                mock_requests.get.assert_called_once()
+                # Get requests do not generate compressed JSON
+                self.assertFalse(tuple(Path(self.job_temp_dir.name).iterdir()))
+            else:
+                mock_requests.post.assert_called_once()
+                # Post requests generate compressed JSON
+                self.assertTrue(tuple(Path(self.job_temp_dir.name).iterdir()))
 
 
 class TestNotificationGet(TestNotificationBase):
     JOB_DEFINITION_FILE = "qemu_callback_get.yaml"
 
-    def test_notification_callback_get(self):
-        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
-        callback = self.job.notification.notificationcallback_set.first()
-        self.assertEqual(callback.method, NotificationCallback.GET)
-        self.assertEqual(callback.url, "https://example.com/foo/bar")
-        self.assertEqual(callback.token, "abc123")
-        self.assertEqual(callback.header, "Authorization")
+    def test_notification_callback_get_no_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.GET, "Authorization", "secrettoken"
+        )
 
-        with patch("lava_scheduler_app.models.requests") as mock_requests:
-            callback.invoke_callback()
-            mock_requests.get.assert_called_once()
+    def test_notification_callback_get_auth_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.GET, "Authorization", "xml_rpc_abc123"
+        )
 
-            # Get requests do not generate compressed JSON
-            self.assertFalse(tuple(Path(self.job_temp_dir.name).iterdir()))
+    def test_notification_callback_get_remote_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.GET, "Authorization", "remote_abc123"
+        )
+
+    def test_notification_callback_get_duplicate_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.GET, "Authorization", "xml_rpc_abc123"
+        )
 
 
 class TestNotificationPost(TestNotificationBase):
     JOB_DEFINITION_FILE = "qemu_callback_post.yaml"
 
-    def test_notification_callback_post(self):
-        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
-        callback = self.job.notification.notificationcallback_set.first()
-        self.assertEqual(callback.method, NotificationCallback.POST)
-        self.assertEqual(callback.url, "https://example.com/foo/bar")
-        self.assertEqual(callback.token, "abc123")
-        self.assertEqual(callback.header, "Authorization")
+    def test_notification_callback_post_no_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "Authorization", "secrettoken"
+        )
 
-        with patch("lava_scheduler_app.models.requests") as mock_requests:
-            callback.invoke_callback()
-            mock_requests.post.assert_called_once()
+    def test_notification_callback_post_auth_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "Authorization", "xml_rpc_abc123"
+        )
 
-            # Post requests generate compressed JSON
-            self.assertTrue(tuple(Path(self.job_temp_dir.name).iterdir()))
+    def test_notification_callback_post_remote_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "Authorization", "remote_abc123"
+        )
+
+    def test_notification_callback_post_duplicate_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "Authorization", "xml_rpc_abc123"
+        )
 
 
 class TestNotificationCustomHeader(TestNotificationBase):
     JOB_DEFINITION_FILE = "qemu_callback_custom_header.yaml"
 
-    def test_notification_callback_custom_header(self):
-        self.assertIsNotNone(self.job.notification.notificationcallback_set.first())
-        callback = self.job.notification.notificationcallback_set.first()
-        self.assertEqual(callback.method, NotificationCallback.POST)
-        self.assertEqual(callback.url, "https://example.com/foo/bar")
-        self.assertEqual(callback.token, "abc123")
-        self.assertEqual(callback.header, "PRIVATE-TOKEN")
+    def test_notification_callback_custom_header_no_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "PRIVATE-TOKEN", "secrettoken"
+        )
 
-        with patch("lava_scheduler_app.models.requests") as mock_requests:
-            callback.invoke_callback()
-            mock_requests.post.assert_called_once()
+    def test_notification_callback_custom_header_auth_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=False
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "PRIVATE-TOKEN", "xml_rpc_abc123"
+        )
 
-            # Post requests generate compressed JSON
-            self.assertTrue(tuple(Path(self.job_temp_dir.name).iterdir()))
+    def test_notification_callback_custom_header_remote_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=False, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "PRIVATE-TOKEN", "remote_abc123"
+        )
+
+    def test_notification_callback_custom_header_duplicate_secret(self):
+        self.setup_notification_callback(
+            is_secret_auth_token=True, is_secret_remote_token=True
+        )
+        self.check_notification_callback(
+            NotificationCallback.POST, "PRIVATE-TOKEN", "xml_rpc_abc123"
+        )
