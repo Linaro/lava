@@ -430,6 +430,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                 if user_name is not None:
                     try:
                         device.physical_owner = User.objects.get(username=user_name)
+                        fields.append("physical_owner")
                     except User.DoesNotExist:
                         raise xmlrpc.client.Fault(
                             404, "Unable to find username '%s'" % user_name
