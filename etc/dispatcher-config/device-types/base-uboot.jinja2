@@ -286,7 +286,7 @@ actions:
           - "{{ (base_uboot_commands + base_uboot_dhcp_command)|join('"\n          - "') }}"
           - "tftp {KERNEL_ADDR} {KERNEL}"
           - "setenv bootargs '{{ console_device }}{{ baud_rate }} rootfstype=ramfs {{ base_kernel_args }}'"
-          - "bootm {KERNEL_ADDR}#conf@{{ bootm_device_tree_config }}"
+          - "bootm {KERNEL_ADDR}{% if bootm_device_tree_config %}#conf@{{ bootm_device_tree_config }}{% endif %}"
 {% endif %}
         nfs:
           commands:
