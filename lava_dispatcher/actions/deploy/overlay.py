@@ -668,7 +668,7 @@ class SshAuthorize(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        if not self.identity_file:
+        if not self.identity_file or not self.active:
             self.logger.debug("No authorisation required.")  # idempotency
             return connection
         # add the authorization keys to the overlay
@@ -686,9 +686,6 @@ class SshAuthorize(Action):
         output_file = "%s/%s" % (lava_path, os.path.basename(self.identity_file))
         shutil.copyfile(self.identity_file, output_file)
         shutil.copyfile("%s.pub" % self.identity_file, "%s.pub" % output_file)
-        if not self.active:
-            # secondary connections only
-            return connection
         self.logger.info(
             "Adding SSH authorisation for %s.pub", os.path.basename(output_file)
         )
