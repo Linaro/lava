@@ -506,7 +506,9 @@ def update(values):
         MIDDLEWARE.append("mozilla_django_oidc.middleware.SessionRefresh")
 
         OIDC_ENABLED = True
-        locals().update(AUTH_OIDC)
+        _oidc_settings = dict(AUTH_OIDC)
+    else:
+        _oidc_settings = {}
 
     # LDAP authentication config
     if AUTH_LDAP_SERVER_URI:
@@ -644,4 +646,6 @@ def update(values):
         )
 
     # Return settings
-    return {k: v for (k, v) in locals().items() if k.isupper()}
+    result = {k: v for (k, v) in locals().items() if k.isupper()}
+    result.update(_oidc_settings)
+    return result
