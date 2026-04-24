@@ -240,6 +240,17 @@ class FailedJobsTableView(JobTableView):
 
 
 class WorkerView(JobTableView):
+    def worker_state_query(self, term):
+        matches = [p[0] for p in Worker.STATE_CHOICES if term in p[1]]
+        return Q(state__in=matches)
+
+    def worker_health_query(self, term):
+        matches = [p[0] for p in Worker.HEALTH_CHOICES if term in p[1]]
+        return Q(health__in=matches)
+
+    def worker_version_query(self, term):
+        return Q(version__contains=term)
+
     def get_queryset(self):
         return (
             Worker.objects.exclude(health=Worker.HEALTH_RETIRED)
@@ -409,7 +420,7 @@ def index(request):
 def workers(request):
     worker_data = WorkerView(request, model=Worker, table_class=WorkerTable)
     worker_ptable = WorkerTable(
-        worker_data.get_table_data(), request=request, prefix="worker_"
+        worker_data.get_table_data("worker_"), request=request, prefix="worker_"
     )
     RequestConfig(request, paginate={"per_page": worker_ptable.length}).configure(
         worker_ptable
