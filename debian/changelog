@@ -1,3 +1,57 @@
+lava (2026.04-1) unstable; urgency=medium
+
+  * LAVA Software 2026.04 release
+
+  [ Christopher Obbard ]
+  * [f1e47fd03] d/gbp.conf: Update for DEP-14 branch names
+  * [4878bedb4] d/watch: Fix upstream tag scanning
+  * [edd603d6a] d/control: Set Maintainer to Debian Python Team
+  * [153256e26] d/control: Add myself to Uploaders
+  * [4d8663be2] d/control: Update Vcs-* fields
+  * [a4bdd5927] d/control: Bump Standards-version to 4.7.3
+  * [da3a932e1] d/salsa-ci.yml: Enable Salsa CI
+  * [2f6fa88a1] d/control: Replace pep8 with pycodestyle
+  * [985899486] d/t/control: Add unzip to Depends
+  * [82680bcb4] d/control: Remove references to old Python version
+    (Closes: #1088175)
+  * [4258c7670] d/control: Install android-sdk-libsparse-utils instead of img2simg/simg2img
+    (Closes: #1115427, #1115431)
+  * [de1c7a763] debian: add Swedish translation of debconf messages
+    (Closes: #1049978)
+  * [e28325ccf] debian: Add Catalan translation of debconf messages
+    (Closes: #1120092)
+  * [7987af06c] d/copyright: Update FSF address
+  * [c9959ab2b] d/lava-server.NEWS: Drop old news file
+  * [ae6b68b5a] d/control: Drop debhelper from lava-dev Depends
+  * [bf314d233] d/control: Drop X-Python3-Version
+  * [361af19c8] d/control: Depend on black instead of pycodestyle
+  * [ecf426e25] d/control: Apply Multiarch hinter suggestions
+  * [c6fd9fc0e] d/t/control: Restrict autopkgtests to amd64 and arm64
+  * [c2b4ed16d] d/control: Add wget to lava-dispatcher recommends
+  * [7fe5e5c7a] d/watch: migrate to version 5 format
+  * [9c770d9c2] d/control: Remove unused dependency on docbook-xml
+  * [eead20272] d/*.lintian-overrides: Update lintian overrides
+  * [c91fdf971] d/lava-server.lintian-overrides: Add override for bundled fonts
+
+  [ Luca ]
+  * [41481ff07] debian: add Italian translation of debconf messages
+
+  [ Santiago Vila ]
+  * [04656a67b] d/rules: Fix clean target (Closes: #1045287)
+
+  [ Antonio Terceiro ]
+  * [70a7b94ab] Drop myself from Uploaders:
+
+  [ Chase Qi ]
+  * [7097c6311] Build and embed mkdoc documentation
+  * [7d5c1a4a5] debian: add build depend python3-sphinx back
+
+  [ Rémi Duraffort ]
+  * [f091a2486] Drop lava-lxc-mocker
+  * [860dd65ce] Drop LXC support
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Fri, 24 Apr 2026 09:27:08 +0200
+
 lava (2026.02-1) unstable; urgency=medium
 
   * LAVA Software 2026.02 release
