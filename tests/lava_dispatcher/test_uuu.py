@@ -353,6 +353,39 @@ class TestUUUbootAction(
             )
 
     @patch("time.sleep", Mock())
+    def test_run_cmd_format(self):
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+        action = UUUBootAction(job)
+        action.uuu = "/bin/uuu"
+
+        def mocked_get_namespace_data(*args, **kwargs):
+            if kwargs.get("key") == "images_names":
+                return ["boot"]
+            if kwargs.get("label") == "boot":
+                return "image.boot"
+
+        action.get_namespace_data = MagicMock(side_effect=mocked_get_namespace_data)
+
+        action.parameters["commands"] = [{"SDP": "boot -f {boot}"}]
+
+        action.run_uuu = MagicMock(return_value=0)
+        action.run_bcu = MagicMock(return_value=0)
+        action.cleanup_required = False
+
+        action.run(connection=None, max_end_time=None)
+
+        action.run_uuu.assert_called_with(
+            ["/bin/uuu", "-m", "1:14", "SDP:", "boot", "-f", "image.boot"],
+            allow_fail=False,
+            error_msg="Fail UUUBootAction on cmd : SDP: boot -f image.boot",
+        )
+
+        action.cleanup(connection=None)
+        action.run_bcu.assert_not_called()
+
+    @patch("time.sleep", Mock())
     def test_run_single_path(self):
         job = self.factory.create_imx8mq_job(
             "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
