@@ -2253,6 +2253,19 @@ class TestJob(models.Model):
                 retval.append({attribute.name: attribute.value})
         return retval
 
+    def log_admin_entry(self, user, reason):
+        if user is None:
+            user = User.objects.get(username="lava-health")
+        testjob_ct = ContentType.objects.get_for_model(TestJob)
+        LogEntry.objects.log_action(
+            user_id=user.id,
+            content_type_id=testjob_ct.pk,
+            object_id=self.pk,
+            object_repr=str(self.display_id),
+            action_flag=CHANGE,
+            change_message=reason,
+        )
+
     @transaction.atomic
     def cancel(self, user):
         if not self.can_cancel(user):
@@ -2260,6 +2273,9 @@ class TestJob(models.Model):
                 # Don't do anything for jobs that ended already
                 return
             raise PermissionDenied("Insufficient permissions")
+
+        msg = "Cancel requested"
+
         if self.is_multinode:
             multinode_jobs = TestJob.objects.select_for_update().filter(
                 target_group=self.target_group
@@ -2267,9 +2283,11 @@ class TestJob(models.Model):
             for multinode_job in multinode_jobs:
                 fields = multinode_job.go_state_canceling()
                 multinode_job.save(update_fields=fields)
+                multinode_job.log_admin_entry(user, msg)
         else:
             fields = self.go_state_canceling()
             self.save(update_fields=fields)
+            self.log_admin_entry(user, msg)
 
 
 class Notification(models.Model):
