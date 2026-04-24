@@ -222,6 +222,7 @@ class DeviceTypeOverviewTable(LavaTable):
     class Meta(LavaTable.Meta):
         model = Device
         fields = ()
+        queries = {"device_type_query": "device_type"}
 
 
 class DeviceTable(LavaTable):

@@ -347,6 +347,15 @@ def test_device_types(client, setup):
 
 
 @pytest.mark.django_db
+def test_device_types_search(client, setup):
+    ret = client.get(reverse("lava.scheduler.device_types"), {"search": "qemu"})
+    assert ret.status_code == 200  # nosec
+    assert len(ret.context["dt_table"].data) == 2  # nosec
+    assert ret.context["dt_table"].data[0]["device_type"] == "qemu"  # nosec
+    assert ret.context["dt_table"].data[1]["device_type"] == "qemu_:'),;~"  # nosec
+
+
+@pytest.mark.django_db
 def test_device_type_health_history_log(client, setup):
     ret = client.get(
         reverse("lava.scheduler.device_type_health_history_log", args=["qemu"])
