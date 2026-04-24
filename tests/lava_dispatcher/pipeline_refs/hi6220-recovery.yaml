@@ -379,38 +379,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 900
-  - class: ConnectDevice
-    name: connect-device
-    level: '5.2'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 900
-  - class: PrePower
-    name: pre-power-command
-    level: '5.3'
-    max_retries: 1
-    description: issue pre power command
-    summary: send pre-power-command
-    timeout: 900
-  - class: ResetDevice
-    name: reset-device
-    level: '5.4'
-    max_retries: 1
-    description: reboot or power-cycle the device
-    summary: reboot the device
-    timeout: 900
-    pipeline:
-    - class: PDUReboot
-      name: pdu-reboot
-      level: 5.4.1
-      max_retries: 1
-      description: issue commands to a PDU to power cycle a device
-      summary: hard reboot using PDU
-      timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '5.5'
+    level: '5.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -418,7 +389,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.5.1
+      level: 5.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -426,14 +397,14 @@
       url: http://images.validation.linaro.org/snapshots.linaro.org/96boards/reference-platform/components/uefi-staging/59/hikey/release/ptable-aosp-8g.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.6'
+    level: '5.3'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '5.7'
+    level: '5.4'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -441,7 +412,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.7.1
+      level: 5.4.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -449,14 +420,14 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/boot.img.xz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.8'
+    level: '5.5'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '5.9'
+    level: '5.6'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -464,7 +435,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.9.1
+      level: 5.6.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -472,14 +443,14 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/cache.img.xz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.10'
+    level: '5.7'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '5.11'
+    level: '5.8'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -487,7 +458,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.11.1
+      level: 5.8.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -495,14 +466,14 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/userdata.img.xz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.12'
+    level: '5.9'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '5.13'
+    level: '5.10'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -510,7 +481,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.13.1
+      level: 5.10.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -518,11 +489,40 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/hikey/linaro/aosp-master/357/system.img.xz
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.14'
+    level: '5.11'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 900
+  - class: ConnectDevice
+    name: connect-device
+    level: '5.12'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 900
+  - class: PrePower
+    name: pre-power-command
+    level: '5.13'
+    max_retries: 1
+    description: issue pre power command
+    summary: send pre-power-command
+    timeout: 900
+  - class: ResetDevice
+    name: reset-device
+    level: '5.14'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 900
+    pipeline:
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 5.14.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 900
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '5.15'
@@ -916,38 +916,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 2700
-  - class: ConnectDevice
-    name: connect-device
-    level: '8.2'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 2700
-  - class: PrePower
-    name: pre-power-command
-    level: '8.3'
-    max_retries: 1
-    description: issue pre power command
-    summary: send pre-power-command
-    timeout: 2700
-  - class: ResetDevice
-    name: reset-device
-    level: '8.4'
-    max_retries: 1
-    description: reboot or power-cycle the device
-    summary: reboot the device
-    timeout: 2700
-    pipeline:
-    - class: PDUReboot
-      name: pdu-reboot
-      level: 8.4.1
-      max_retries: 1
-      description: issue commands to a PDU to power cycle a device
-      summary: hard reboot using PDU
-      timeout: 2700
   - class: DownloaderAction
     name: download-retry
-    level: '8.5'
+    level: '8.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -955,7 +926,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 8.5.1
+      level: 8.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -963,14 +934,14 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/49/hikey/release/ptable-linux-8g.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '8.6'
+    level: '8.3'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2700
   - class: DownloaderAction
     name: download-retry
-    level: '8.7'
+    level: '8.4'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -978,7 +949,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 8.7.1
+      level: 8.4.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -986,14 +957,14 @@
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/boot-0.0+AUTOINC+06e4def583-fb1158a365-r0-hikey-20180128213254-588.uefi.img
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '8.8'
+    level: '8.5'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2700
   - class: DownloaderAction
     name: download-retry
-    level: '8.9'
+    level: '8.6'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -1001,7 +972,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 8.9.1
+      level: 8.6.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -1009,18 +980,47 @@
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/hikey/rpb/linux-mainline/588/rpb-console-image-hikey-20180128213254-588.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image
-    level: '8.10'
+    level: '8.7'
     max_retries: 1
     description: apply overlay to sparse image
     summary: apply overlay to sparse image
     timeout: 2700
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '8.11'
+    level: '8.8'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 2700
+  - class: ConnectDevice
+    name: connect-device
+    level: '8.9'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 2700
+  - class: PrePower
+    name: pre-power-command
+    level: '8.10'
+    max_retries: 1
+    description: issue pre power command
+    summary: send pre-power-command
+    timeout: 2700
+  - class: ResetDevice
+    name: reset-device
+    level: '8.11'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 2700
+    pipeline:
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 8.11.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 2700
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '8.12'

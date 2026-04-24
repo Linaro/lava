@@ -219,46 +219,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 1500
-  - class: ConnectDevice
-    name: connect-device
-    level: '5.2'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 1500
-  - class: UBootEnterFastbootAction
-    name: uboot-enter-fastboot
-    level: '5.3'
-    max_retries: 1
-    description: interactive uboot enter fastboot action
-    summary: uboot commands to enter fastboot mode
-    timeout: 1500
-    pipeline:
-    - class: ResetDevice
-      name: reset-device
-      level: 5.3.1
-      max_retries: 1
-      description: reboot or power-cycle the device
-      summary: reboot the device
-      timeout: 1500
-      pipeline:
-      - class: PDUReboot
-        name: pdu-reboot
-        level: 5.3.1.1
-        max_retries: 1
-        description: issue commands to a PDU to power cycle a device
-        summary: hard reboot using PDU
-        timeout: 1500
-    - class: BootloaderInterruptAction
-      name: bootloader-interrupt
-      level: 5.3.2
-      max_retries: 1
-      description: interrupt bootloader
-      summary: interrupt bootloader to get an interactive shell
-      timeout: 1500
   - class: DownloaderAction
     name: download-retry
-    level: '5.4'
+    level: '5.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -266,7 +229,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 5.4.1
+      level: 5.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -274,18 +237,55 @@
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/631/rpb-console-image-am57xx-evm-20180205221320-631.rootfs.img.gz
   - class: ApplyOverlaySparseImage
     name: apply-overlay-sparse-image
-    level: '5.5'
+    level: '5.3'
     max_retries: 1
     description: apply overlay to sparse image
     summary: apply overlay to sparse image
     timeout: 1500
   - class: DeployDeviceEnvironment
     name: deploy-device-env
-    level: '5.6'
+    level: '5.4'
     max_retries: 1
     description: deploy device environment
     summary: deploy device environment
     timeout: 1500
+  - class: ConnectDevice
+    name: connect-device
+    level: '5.5'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 1500
+  - class: UBootEnterFastbootAction
+    name: uboot-enter-fastboot
+    level: '5.6'
+    max_retries: 1
+    description: interactive uboot enter fastboot action
+    summary: uboot commands to enter fastboot mode
+    timeout: 1500
+    pipeline:
+    - class: ResetDevice
+      name: reset-device
+      level: 5.6.1
+      max_retries: 1
+      description: reboot or power-cycle the device
+      summary: reboot the device
+      timeout: 1500
+      pipeline:
+      - class: PDUReboot
+        name: pdu-reboot
+        level: 5.6.1.1
+        max_retries: 1
+        description: issue commands to a PDU to power cycle a device
+        summary: hard reboot using PDU
+        timeout: 1500
+    - class: BootloaderInterruptAction
+      name: bootloader-interrupt
+      level: 5.6.2
+      max_retries: 1
+      description: interrupt bootloader
+      summary: interrupt bootloader to get an interactive shell
+      timeout: 1500
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '5.7'

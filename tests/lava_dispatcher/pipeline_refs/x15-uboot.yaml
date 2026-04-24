@@ -106,46 +106,9 @@
       description: Create a lava overlay tarball and store alongside the job
       summary: Compress the lava overlay files
       timeout: 900
-  - class: ConnectDevice
-    name: connect-device
-    level: '1.2'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 900
-  - class: UBootEnterFastbootAction
-    name: uboot-enter-fastboot
-    level: '1.3'
-    max_retries: 1
-    description: interactive uboot enter fastboot action
-    summary: uboot commands to enter fastboot mode
-    timeout: 900
-    pipeline:
-    - class: ResetDevice
-      name: reset-device
-      level: 1.3.1
-      max_retries: 1
-      description: reboot or power-cycle the device
-      summary: reboot the device
-      timeout: 900
-      pipeline:
-      - class: PDUReboot
-        name: pdu-reboot
-        level: 1.3.1.1
-        max_retries: 1
-        description: issue commands to a PDU to power cycle a device
-        summary: hard reboot using PDU
-        timeout: 900
-    - class: BootloaderInterruptAction
-      name: bootloader-interrupt
-      level: 1.3.2
-      max_retries: 1
-      description: interrupt bootloader
-      summary: interrupt bootloader to get an interactive shell
-      timeout: 900
   - class: DownloaderAction
     name: download-retry
-    level: '1.4'
+    level: '1.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -153,12 +116,49 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.4.1
+      level: 1.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
       timeout: 900
       url: http://images.validation.linaro.org/snapshots.linaro.org/openembedded/lkft/morty/am57xx-evm/rpb/linux-mainline/279/rpb-console-image-am57xx-evm-20170918074710-279.rootfs.img.gz
+  - class: ConnectDevice
+    name: connect-device
+    level: '1.3'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 900
+  - class: UBootEnterFastbootAction
+    name: uboot-enter-fastboot
+    level: '1.4'
+    max_retries: 1
+    description: interactive uboot enter fastboot action
+    summary: uboot commands to enter fastboot mode
+    timeout: 900
+    pipeline:
+    - class: ResetDevice
+      name: reset-device
+      level: 1.4.1
+      max_retries: 1
+      description: reboot or power-cycle the device
+      summary: reboot the device
+      timeout: 900
+      pipeline:
+      - class: PDUReboot
+        name: pdu-reboot
+        level: 1.4.1.1
+        max_retries: 1
+        description: issue commands to a PDU to power cycle a device
+        summary: hard reboot using PDU
+        timeout: 900
+    - class: BootloaderInterruptAction
+      name: bootloader-interrupt
+      level: 1.4.2
+      max_retries: 1
+      description: interrupt bootloader
+      summary: interrupt bootloader to get an interactive shell
+      timeout: 900
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '1.5'

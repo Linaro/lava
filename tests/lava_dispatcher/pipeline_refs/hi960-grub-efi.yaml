@@ -6,38 +6,9 @@
   summary: fastboot deployment
   timeout: 1200
   pipeline:
-  - class: ConnectDevice
-    name: connect-device
-    level: '1.1'
-    max_retries: 1
-    description: use the configured command to connect serial to the device
-    summary: run connection command
-    timeout: 1200
-  - class: PrePower
-    name: pre-power-command
-    level: '1.2'
-    max_retries: 1
-    description: issue pre power command
-    summary: send pre-power-command
-    timeout: 1200
-  - class: ResetDevice
-    name: reset-device
-    level: '1.3'
-    max_retries: 1
-    description: reboot or power-cycle the device
-    summary: reboot the device
-    timeout: 1200
-    pipeline:
-    - class: PDUReboot
-      name: pdu-reboot
-      level: 1.3.1
-      max_retries: 1
-      description: issue commands to a PDU to power cycle a device
-      summary: hard reboot using PDU
-      timeout: 1200
   - class: DownloaderAction
     name: download-retry
-    level: '1.4'
+    level: '1.1'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -45,7 +16,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.4.1
+      level: 1.1.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -53,7 +24,7 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/components/uefi-staging/23/hikey960/release/prm_ptable.img
   - class: DownloaderAction
     name: download-retry
-    level: '1.5'
+    level: '1.2'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -61,7 +32,7 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.5.1
+      level: 1.2.1
       max_retries: 1
       description: use http to download the file
       summary: http download
@@ -69,7 +40,7 @@
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/boot-0.0+AUTOINC+7efa39f363-c906d2a849-r0-hikey960-20170630062530-71.uefi.img
   - class: DownloaderAction
     name: download-retry
-    level: '1.6'
+    level: '1.3'
     max_retries: 1
     description: download with retry
     summary: download-retry
@@ -77,12 +48,41 @@
     pipeline:
     - class: HttpDownloadAction
       name: http-download
-      level: 1.6.1
+      level: 1.3.1
       max_retries: 1
       description: use http to download the file
       summary: http download
       timeout: 1200
       url: http://images.validation.linaro.org/builds.96boards.org/snapshots/reference-platform/openembedded/morty/hikey960/rpb/71/rpb-console-image-lava-hikey960-20170630062530-71.rootfs.img.gz
+  - class: ConnectDevice
+    name: connect-device
+    level: '1.4'
+    max_retries: 1
+    description: use the configured command to connect serial to the device
+    summary: run connection command
+    timeout: 1200
+  - class: PrePower
+    name: pre-power-command
+    level: '1.5'
+    max_retries: 1
+    description: issue pre power command
+    summary: send pre-power-command
+    timeout: 1200
+  - class: ResetDevice
+    name: reset-device
+    level: '1.6'
+    max_retries: 1
+    description: reboot or power-cycle the device
+    summary: reboot the device
+    timeout: 1200
+    pipeline:
+    - class: PDUReboot
+      name: pdu-reboot
+      level: 1.6.1
+      max_retries: 1
+      description: issue commands to a PDU to power cycle a device
+      summary: hard reboot using PDU
+      timeout: 1200
   - class: FastbootFlashOrderAction
     name: fastboot-flash-order-action
     level: '1.7'
