@@ -10,6 +10,7 @@ import django_tables2 as tables
 from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.db.models.functions import Lower
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
@@ -145,7 +146,7 @@ class TagsColumn(tables.Column):
             return ""
 
         tags_html: list[str] = []
-        for tag_description, tag_name in tags_query:
+        for tag_description, tag_name in tags_query.order_by(Lower("name")):
             if tag_description:
                 tags_html.append(
                     format_html(
