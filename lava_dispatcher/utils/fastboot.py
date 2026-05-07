@@ -5,12 +5,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import subprocess
 import time
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import FastbootDeviceNotFound, JobError
-from lava_dispatcher.action import Action
 from lava_dispatcher.power import PowerOff
 from lava_dispatcher.utils.containers import OptionalContainerAction
 from lava_dispatcher.utils.decorator import retry
@@ -39,14 +37,10 @@ class OptionalContainerFastbootAction(OptionalContainerAction):
         power_off.run(None, self.timeout.duration)
 
 
-class DetectFastbootDevice(Action):
+class DetectFastbootDevice(OptionalContainerFastbootAction):
     name = "detect-fastboot-device"
     description = "Detect fastboot device serial number."
     summary = "Set fastboot SN if only one device found."
-
-    def __init__(self, job: Job):
-        super().__init__(job)
-        self.fastboot_path = None
 
     @classmethod
     def add_if_needed(cls, action) -> None:
@@ -67,7 +61,8 @@ class DetectFastbootDevice(Action):
 
     def validate(self):
         super().validate()
-        self.fastboot_path = which("fastboot")
+        if not self.is_container():
+            which("fastboot")
 
     def set_sn(self, name: str, sn: str) -> None:
         # Respect sn set in device dictionary.
@@ -82,39 +77,26 @@ class DetectFastbootDevice(Action):
 
     @retry(exception=FastbootDeviceNotFound, retries=10, delay=3)
     def detect(self):
-        cmd = subprocess.run(
-            [self.fastboot_path, "devices"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-        )
+        # 'fastboot devices' output line example: a2c22e48\tfastboot\n
+        output = self.get_output_maybe_in_container(["fastboot", "devices"])
+        devices = [
+            str(line.split()[0])
+            for line in output.strip().split("\n")
+            if line.split()[-1:] == ["fastboot"]
+        ]
 
-        if cmd.returncode == 0:
-            # 'fastboot devices' output line example: a2c22e48\tfastboot\n
-            output = cmd.stdout.strip().split("\n")
-            devices = [
-                str(line.split()[0])
-                for line in output
-                if line.split()[-1:] == ["fastboot"]
-            ]
+        if len(devices) > 1:
+            raise JobError(f"More then one fastboot devices found: {devices}")
+        if len(devices) < 1:
+            raise FastbootDeviceNotFound("Fastboot device not found.")
 
-            if len(devices) > 1:
-                raise JobError(f"More then one fastboot devices found: {devices}")
-            if len(devices) < 1:
-                raise FastbootDeviceNotFound("Fastboot device not found.")
+        fastboot_serial_number = devices[0]
+        self.logger.info(f"Detected fastboot serial number: {fastboot_serial_number}")
 
-            fastboot_serial_number = devices[0]
-            self.logger.info(
-                f"Detected fastboot serial number: {fastboot_serial_number}"
-            )
-
-            self.set_sn("fastboot_serial_number", fastboot_serial_number)
-            self.set_sn("adb_serial_number", fastboot_serial_number)
-            # wait-device-boardid needs board_id.
-            self.set_sn("board_id", fastboot_serial_number)
-        else:
-            raise JobError(f"Failed to run 'fastboot devices': {cmd.stderr}")
+        self.set_sn("fastboot_serial_number", fastboot_serial_number)
+        self.set_sn("adb_serial_number", fastboot_serial_number)
+        # wait-device-boardid needs board_id.
+        self.set_sn("board_id", fastboot_serial_number)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

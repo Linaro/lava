@@ -6,7 +6,6 @@
 
 import unittest
 from pathlib import Path
-from subprocess import CompletedProcess
 from unittest.mock import ANY, PropertyMock, patch
 
 from lava_common.exceptions import FastbootDeviceNotFound, InfrastructureError, JobError
@@ -294,13 +293,8 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @patch(
-        "lava_dispatcher.utils.fastboot.subprocess.run",
-        return_value=CompletedProcess(
-            ["/usr/bin/fastboot", "devices"],
-            0,
-            stdout="a2c22e48\tfastboot\n",
-            stderr="",
-        ),
+        "lava_dispatcher.utils.fastboot.DetectFastbootDevice.get_output_maybe_in_container",
+        return_value="a2c22e48\tfastboot\n",
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection(self, *args):
@@ -318,13 +312,8 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         self.assertEqual(self.job.device["device_info"], [{"board_id": "a2c22e48"}])
 
     @patch(
-        "lava_dispatcher.utils.fastboot.subprocess.run",
-        return_value=CompletedProcess(
-            ["/usr/bin/fastboot", "devices"],
-            0,
-            stdout="",
-            stderr="",
-        ),
+        "lava_dispatcher.utils.fastboot.DetectFastbootDevice.get_output_maybe_in_container",
+        return_value="",
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection_none(self, *args):
@@ -339,13 +328,8 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.utils.fastboot.subprocess.run",
-        return_value=CompletedProcess(
-            ["/usr/bin/fastboot", "devices"],
-            0,
-            stdout="a2c22e48\tfastboot\n1de55d7f32c101b8\tfastboot\n",
-            stderr="",
-        ),
+        "lava_dispatcher.utils.fastboot.DetectFastbootDevice.get_output_maybe_in_container",
+        return_value="a2c22e48\tfastboot\n1de55d7f32c101b8\tfastboot\n",
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection_multiple(self, *args):
@@ -360,13 +344,8 @@ class TestFastbootDeployAutoDetection(LavaDispatcherTestCase):
         )
 
     @patch(
-        "lava_dispatcher.utils.fastboot.subprocess.run",
-        return_value=CompletedProcess(
-            ["/usr/bin/fastboot", "devices"],
-            0,
-            stdout="a2c22e48\t fastboot\n",
-            stderr="",
-        ),
+        "lava_dispatcher.utils.fastboot.DetectFastbootDevice.get_output_maybe_in_container",
+        return_value="a2c22e48\t fastboot\n",
     )
     @patch("time.sleep")
     def test_fastboot_auto_detection_extra_whitespace(self, *args):
