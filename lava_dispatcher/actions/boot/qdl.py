@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import os
 from typing import TYPE_CHECKING
 
 from lava_common.exceptions import ConfigurationError
@@ -91,6 +92,7 @@ class FlashQDLAction(Action):
             qdl_patch_path = self.parameters["patch"]
             qdl_storage = self.parameters.get("storage", None)
             qdl_debug = self.parameters.get("debug", False)
+            self.qcomflash_path = self.parameters.get("path", ".")
             self.base_command = [qdl_binary]
             if qdl_debug:
                 self.base_command.extend(["--debug"])
@@ -124,6 +126,7 @@ class FlashQDLAction(Action):
         # at this stage it's assumed that qcomflash tarball is decompressed
         for _, qdl_command in enumerate(self.exec_list):
             qdl_cmd = " ".join(qdl_command)
-            self.run_cmd(qdl_cmd.split(" "), cwd=qcomflash_dir.as_posix())
+            flash_dir = os.path.join(qcomflash_dir.as_posix(), self.qcomflash_path)
+            self.run_cmd(qdl_cmd.split(" "), cwd=flash_dir)
 
         return connection
