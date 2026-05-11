@@ -219,7 +219,7 @@ class DockerDriver(NullDriver):
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)
-            return docker.get_output(cmd, self.action)
+            return docker.run(cmd, self.action, capture=True)
         finally:
             remove_device_container_mappings(self.job_dir)
             self.action.logger.debug("Removed device container mappings")

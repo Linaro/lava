@@ -213,7 +213,13 @@ class DockerRun:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
-    def run(self, *args, action, capture=False, error_msg=None):
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: bool = False,
+        error_msg: str | None = None,
+    ) -> str | int | None:
         self.prepare(action)
         cmd = self.cmdline(*args)
         if capture:
@@ -347,21 +353,22 @@ class DockerContainer(DockerRun):
         super().__init__(image)
         self._started = False
 
-    def run(self, args, action):
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: bool = False,
+        error_msg: str | None = None,
+    ) -> str | int | None:
         self.start(action)
-        cmd = ["docker", *self._docker_options, "exec"]
+        cmd: list[str] = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
-        action.run_cmd(cmd)
+        if capture:
+            return action.parsed_command(cmd)
 
-    def get_output(self, args, action):
-        self.start(action)
-        cmd = ["docker", *self._docker_options, "exec"]
-        cmd += self.interaction_options()
-        cmd.append(self._container_name)
-        cmd += args
-        return action.parsed_command(cmd)
+        return action.run_cmd(cmd, error_msg=error_msg)
 
     def check_output(self, cmd):
         return subprocess.check_output(cmd).decode("utf-8")
