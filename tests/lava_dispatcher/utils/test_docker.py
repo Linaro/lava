@@ -119,7 +119,7 @@ def test_run_architecture_check_failure(mocker):
 
     action = mocker.MagicMock()
     docker = DockerRun("myimage")
-    docker.run("date", action=action)
+    docker.run(["date"], action=action)
 
     check_output.assert_any_call(["arch"], text=True)
     check_output.assert_any_call(
@@ -142,7 +142,7 @@ def test_run_architecture_check_success(mocker):
 
     action = mocker.MagicMock()
     docker = DockerRun("myimage")
-    docker.run("echo", action=action)  # no crash = success
+    docker.run(["echo"], action=action)  # no crash = success
 
     check_output.assert_any_call(["arch"], text=True)
     check_output.assert_any_call(
@@ -162,7 +162,7 @@ def test_run_with_action(mocker):
     action = mocker.MagicMock()
 
     docker = DockerRun("myimage")
-    docker.run("date", action=action)
+    docker.run(["date"], action=action)
 
     check_arch.assert_called()
     action.run_cmd.assert_has_calls(
@@ -181,7 +181,7 @@ def test_run_with_local_image_does_not_pull(mocker):
     docker.local(True)
     action = mocker.MagicMock()
     action.run_cmd.return_value = 0
-    docker.run("date", action=action)
+    docker.run(["date"], action=action)
     action.run_cmd.assert_has_calls(
         [
             mocker.call(
@@ -208,7 +208,7 @@ def test_run_with_local_image_does_not_pull_when_missing(mocker):
     docker.local(True)
     action = mocker.MagicMock()
     action.run_cmd.return_value = 1
-    docker.run("date", action=action)
+    docker.run(["date"], action=action)
     action.run_cmd.assert_has_calls(
         [
             mocker.call(

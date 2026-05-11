@@ -113,7 +113,7 @@ class CallQemuAction(Action):
         if "docker" in self.parameters:
             docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
             ver_strs = docker.run(
-                *shlex.split(
+                shlex.split(
                     "qemu-system-%s --version" % self.get_qemu_arch(architecture)
                 ),
                 action=self,
