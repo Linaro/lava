@@ -48,6 +48,8 @@ class DockerLogin:
         action.logger.debug("Login successful")
         return docker_home
 
+    from lava_dispatcher.action import Action
+
 
 class DockerRun:
     def __init__(self, image: str):
@@ -213,7 +215,13 @@ class DockerRun:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
-    def run(self, *args, action, capture=False, error_msg=None):
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: bool = False,
+        error_msg: str | None = None,
+    ) -> str | int | None:
         self.prepare(action)
         cmd = self.cmdline(*args)
         if capture:
@@ -347,13 +355,19 @@ class DockerContainer(DockerRun):
         super().__init__(image)
         self._started = False
 
-    def run(self, args, action):
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: bool = False,
+        error_msg: str | None = None,
+    ) -> str | int | None:
         self.start(action)
         cmd = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
-        action.run_cmd(cmd)
+        action.run_cmd(cmd, error_msg=error_msg)
 
     def get_output(self, args, action):
         self.start(action)
