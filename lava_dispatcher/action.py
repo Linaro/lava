@@ -669,8 +669,13 @@ class Action:
         return
 
     def run_cmd(
-        self, command_list, allow_fail=False, error_msg=None, cwd=None, env=None
-    ):
+        self,
+        command_list: str | list[str],
+        allow_fail: bool = False,
+        error_msg: str | None = None,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+    ) -> int | None:
         """
         Run the given command on the dispatcher. If the command fail, a
         JobError will be raised unless allow_fail is set to True.
