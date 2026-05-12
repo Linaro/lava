@@ -41,7 +41,7 @@ title="History of health changes"><span class="glyphicon glyphicon-heart"></span
 </div>
 
 <h2>Longest Running Jobs on {{ device_type }} type devices</h2>
-{% if long_running|length_is:"0" %}
+{% if long_running|length == 0 %}
 <p>There are no running jobs.</p>
 {% else %}
 <ul>
