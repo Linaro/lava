@@ -79,7 +79,7 @@ aarch64/server-debian-13: {"extends": ".server-aarch64"}
 ###########
 .analyze:
   extends: .job
-  image: registry.gitlab.com/lava/ci-images/amd64/analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
   stage: analyze
   except:
     refs:
@@ -128,7 +128,6 @@ sast:
 
 codespell:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 django_migrations:
   extends: .analyze
@@ -136,7 +135,6 @@ django_migrations:
 
 mypy:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
 
 #########
 # Build #
