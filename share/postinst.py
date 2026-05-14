@@ -68,9 +68,6 @@ def create_database(config):
     db = config["DATABASES"]["default"]["NAME"]
     password = config["DATABASES"]["default"]["PASSWORD"]
     user = config["DATABASES"]["default"]["USER"]
-    devel_db = "devel"
-    devel_password = "devel"
-    devel_user = "devel"
 
     with using_account("postgres", "postgres"):
         conn = psycopg2.connect("")
@@ -100,35 +97,6 @@ def create_database(config):
                 'LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" '
                 "OWNER %s TEMPLATE template0;",
                 (user,),
-            )
-
-        cur.execute(
-            "SELECT EXISTS(SELECT FROM pg_roles WHERE rolname=%s);", (devel_user,)
-        )
-        (devel_role_exists,) = cur.fetchone()
-        if devel_role_exists:
-            print(f"Database role {devel_user!r} already exists")
-        else:
-            print(f"Creating database role {devel_user!r}")
-            cur.execute(
-                f"CREATE ROLE {psycopg_quote_ident(devel_user, conn)} "
-                "NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN ENCRYPTED "
-                "PASSWORD %s;",
-                (devel_password,),
-            )
-        cur.execute(
-            "SELECT EXISTS(SELECT FROM pg_database WHERE datname=%s);", (devel_db,)
-        )
-        (devel_db_exists,) = cur.fetchone()
-        if devel_db_exists:
-            print(f"Database {devel_db!r} already exists")
-        else:
-            print(f"Creating database {devel_db!r}")
-            cur.execute(
-                f"CREATE DATABASE {psycopg_quote_ident(devel_db, conn)} "
-                'LC_COLLATE "C.UTF-8" LC_CTYPE "C.UTF-8" ENCODING "UTF-8" '
-                "OWNER %s TEMPLATE template0;",
-                (devel_user,),
             )
 
 
