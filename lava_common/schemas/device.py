@@ -76,6 +76,7 @@ def device():
             },
             Optional("dtb_base_resize"): int,
             Optional("load_address"): str,
+            Optional("text_offset"): str,
             # FIXME: should be removed when the templates are fixed
             Optional("pass"): None,
         },
