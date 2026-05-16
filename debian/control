@@ -31,7 +31,6 @@ Depends: bmap-tools,
          tar (>= 1.27),
          ${misc:Depends},
          ${python3:Depends}
-Multi-Arch: foreign
 Recommends: bridge-utils,
             debootstrap,
             dfu-util,
