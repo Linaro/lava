@@ -21,11 +21,11 @@ Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
 
 Package: lava-dispatcher
-Architecture: all
+Architecture: any
 Depends: bmap-tools,
          e2fsprogs,
          fakeroot,
-         lava-common (= ${binary:Version}),
+         lava-common (= ${source:Version}),
          systemd-sysv,
          tar (>= 1.27),
          ${misc:Depends},
@@ -112,7 +112,8 @@ Depends: adduser,
          ${python3:Depends}
 Recommends: apache2,
             lava-coordinator (= ${binary:Version}),
-            lava-dispatcher (= ${binary:Version}),
+            lava-dispatcher (>= ${source:Version}),
+            lava-dispatcher (<< ${source:Version}.1~),
             openssh-client,
             postgresql,
             postgresql-client,
@@ -160,7 +161,8 @@ Depends: bridge-utils,
          lava-coordinator (= ${binary:Version}),
          lava-dev (>= ${source:Version}),
          lava-dev (<< ${source:Version}.1~),
-         lava-dispatcher (= ${binary:Version}),
+         lava-dispatcher (>= ${source:Version}),
+         lava-dispatcher (<< ${source:Version}.1~),
          lava-server (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
          lavacli,
