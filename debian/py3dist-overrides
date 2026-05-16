@@ -7,7 +7,6 @@ lava_common lava-common; PEP386
 jinja2 python3-jinja2; PEP386
 ldap python3-pyldap; PEP386
 django_auth_ldap python3-django-auth-ldap; PEP386
-guestfs python3-guestfs; PEP386
 tap python3-tap; PEP386
 junit.xml python3-junit.xml; PEP386
 djangorestframework_filters python3-djangorestframework-filters; PEP386
@@ -22,3 +21,6 @@ pyudev python3-pyudev; PEP386
 requests python3-requests; PEP386
 setproctitle python3-setproctitle; PEP386
 voluptuous python3-voluptuous; PEP386
+
+# List dependencies that dh_python3 should ignore.
+guestfs
