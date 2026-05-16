@@ -158,7 +158,8 @@ Section: metapackages
 Depends: bridge-utils,
          debootstrap,
          lava-coordinator (= ${binary:Version}),
-         lava-dev (= ${binary:Version}),
+         lava-dev (>= ${source:Version}),
+         lava-dev (<< ${source:Version}.1~),
          lava-dispatcher (= ${binary:Version}),
          lava-server (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
@@ -199,7 +200,7 @@ Description: LAVA coordinator daemon
  lab.
 
 Package: lava-dev
-Architecture: all
+Architecture: any
 Section: devel
 Depends: black,
          build-essential,
