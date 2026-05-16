@@ -69,8 +69,8 @@ Description: Linaro Automated Validation Architecture dispatcher
  x86 architectures.
 
 Package: lava-dispatcher-host
-Architecture: all
-Depends: lava-common (= ${binary:Version}),
+Architecture: amd64 arm64 armhf riscv64 s390x
+Depends: lava-common (= ${source:Version}),
          base-files (<< 11.1) | python3-bpfcc (>= 0.21),
          base-files (<< 11.1) | linux-headers-amd64 | linux-headers-arm64 | linux-headers-generic,
          base-files (<< 11.1) | bpftool | linux-tools-generic,
