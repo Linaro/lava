@@ -23,4 +23,5 @@ setproctitle python3-setproctitle; PEP386
 voluptuous python3-voluptuous; PEP386
 
 # List dependencies that dh_python3 should ignore.
+fakeroot
 guestfs

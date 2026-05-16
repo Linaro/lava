@@ -9,4 +9,5 @@ pyzmq python3-zmq; PEP386
 jinja2 python3-jinja2; PEP386
 
 # List dependencies that dh_python3 should ignore.
+fakeroot
 guestfs
