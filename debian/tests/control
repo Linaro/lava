@@ -2,6 +2,7 @@ Tests: management
 Depends: postgresql, apache2, lava-dispatcher, lava-server
 Restrictions: allow-stderr, needs-root, isolation-container
 
+# Upstream only runs testsuite on amd64 & arm64
 Tests: testsuite
 Depends: dh-python,
          git,
@@ -30,7 +31,6 @@ Depends: dh-python,
          u-boot-tools,
          unzip,
          @builddeps@
-# TODO: Upstream testsuite isn't ran on archs other than amd64/arm64
 Architecture: any-amd64 any-arm64
 Restrictions: allow-stderr, needs-root
 
