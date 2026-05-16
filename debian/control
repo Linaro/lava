@@ -86,7 +86,6 @@ Depends: lava-common (= ${source:Version}),
          ${misc:Depends},
          ${python3:Depends}
 Recommends: docker.io
-Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools
  LAVA is a continuous integration system for deploying operating
