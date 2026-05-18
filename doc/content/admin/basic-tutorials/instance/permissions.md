@@ -6,7 +6,7 @@ For how LAVA manage user permissions, see [authorization](../../../technical-ref
 
 ## Private instance
 
-See [private instance](../../../technical-references/authorization.md#prviate-instance).
+See [private instance](../../../technical-references/authorization.md#private-instance).
 
 ## Private devices/device-types
 

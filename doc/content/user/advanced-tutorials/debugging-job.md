@@ -30,7 +30,7 @@ will tell the whole story:
 * A test shell may time out due to an earlier 'Command not found' or 'No such
   file or directory'.
 
-When writing tests, [make things verbose](#make-your-tests-and-setup-verbose) to
+When writing tests, [make things verbose](#be-verbose) to
 give yourself more useful logs in case they fail.
 
 ### Read the failure comment
