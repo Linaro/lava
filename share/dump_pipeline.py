@@ -9,6 +9,7 @@
 import argparse
 import os
 import sys
+from pathlib import Path
 
 from jinja2 import FileSystemLoader
 
@@ -20,11 +21,11 @@ from lava_dispatcher.parser import JobParser
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("device", type=argparse.FileType(), help="Device template")
+    parser.add_argument("device", type=Path, help="Device template")
     parser.add_argument(
         "--path", type=str, action="append", help="Templates lookup path"
     )
-    parser.add_argument("job", type=argparse.FileType(), help="Job definition")
+    parser.add_argument("job", type=Path, help="Job definition")
 
     options = parser.parse_args()
 
@@ -43,12 +44,14 @@ def main():
     # Rendre the device template
     env = create_device_templates_env(loader=FileSystemLoader(options.path))
     # Load the device configuration
-    data = env.from_string(options.device.read()).render()
+    data = env.from_string(options.device.read_text(encoding="utf-8")).render()
     device = NewDevice(yaml_safe_load(data))
 
     # Load the job definition
     parser = JobParser()
-    job = parser.parse(options.job.read(), device, 0, None, None, None)
+    job = parser.parse(
+        options.job.read_text(encoding="utf-8"), device, 0, None, None, None
+    )
 
     sys.stdout.write(yaml_safe_dump(job.pipeline.describe()))
 
