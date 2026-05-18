@@ -1,6 +1,7 @@
 # Copyright (C) 2019 Linaro Limited
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import argparse
 import os
@@ -8,8 +9,13 @@ import shlex
 import subprocess
 import sys
 import time
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.constants import UDEV_RULE_FILENAME
+
+if TYPE_CHECKING:
+    from typing import TextIO
 
 
 def handle_rules_show(options):
@@ -89,7 +95,7 @@ def main(argv):
         "--debug-log",
         help="Log debugging information to FILE",
         metavar="FILE",
-        type=argparse.FileType("a"),
+        type=Path,
     )
     sub = parser.add_subparsers(help="Sub commands")
 
@@ -168,15 +174,19 @@ def main(argv):
     options = parser.parse_args(argv[1:])
 
     if options.func:
+        debug_log_file: TextIO | None = None
         if options.debug_log:
+            debug_log_file = options.debug_log.open(mode="at")
             if not sys.stderr.isatty():
-                sys.stderr = options.debug_log
+                sys.stderr = debug_log_file
             timestamp = time.strftime("%c", time.gmtime())
             cmd = " ".join([shlex.quote(a) for a in argv])
-            options.debug_log.write("%s Called with: %s\n" % (timestamp, cmd))
+            debug_log_file.write("%s Called with: %s\n" % (timestamp, cmd))
+
         options.func(options)
-        if options.debug_log:
-            options.debug_log.close()
+
+        if debug_log_file is not None:
+            debug_log_file.close()
     else:
         options.usage_from.print_help()
 
