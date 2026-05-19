@@ -746,7 +746,7 @@ and [TLS protection](https://docs.docker.com/engine/security/https/).
 
 !!! note
     The minimal Docker version to run uuu is 19.03. This is due to a bug in
-    earlier docker versions. See https://github.com/moby/moby/pull/37665.
+    earlier docker versions. See [moby/moby#37665](https://github.com/moby/moby/pull/37665).
 
 ### BCU
 
