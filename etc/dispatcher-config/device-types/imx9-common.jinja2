@@ -1,6 +1,5 @@
 {% extends 'base-uboot.jinja2' %}
 
-{% set root_device = root_device|default('/dev/ttyLP0') %}
 {% set console_device = console_device|default('ttyLP0') %}
 {% if extra_kernel_args %}
 {% set extra_kernel_args = "earlycon " + extra_kernel_args %}

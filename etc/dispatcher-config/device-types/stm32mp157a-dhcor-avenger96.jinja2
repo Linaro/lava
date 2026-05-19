@@ -4,7 +4,6 @@
 {% set console_device = console_device|default('ttySTM0') %}
 {% set baud_rate = baud_rate|default(115200) %}
 {% set bootloader_prompt = bootloader_prompt|default('STM32MP>') %}
-{% set boot_message = 'Starting kernel' %}
 
 {% set bootm_kernel_addr = bootm_kernel_addr|default('0xc2000000') %}
 {% set bootm_ramdisk_addr = bootm_ramdisk_addr|default('0xc4400000') %}

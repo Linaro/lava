@@ -11,10 +11,7 @@
 {% set interrupt_prompt = 'Press <s>' %}
 {% set interrupt_char = 's' %}
 {% set boot_character_delay = boot_character_delay | default(100) %}
-{% set action_timeout_u_boot_commands = 3 %}
-{% set connection_timeout_u_boot_commands = 3 %}
 {% set bootloader_prompt = bootloader_prompt|default('Highbank #') %}
-{% set action_timeout_u_boot_commands = 90 %}
 {% set bootm_kernel_addr = '0x00800000' %}
 {% set bootm_ramdisk_addr = '0x02000000' %}
 {% set bootm_dtb_addr = '0x00001000' %}

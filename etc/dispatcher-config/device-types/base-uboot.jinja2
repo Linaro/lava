@@ -47,13 +47,6 @@
 
 {% set base_uboot_bootcmd = uboot_bootcmd|default(uboot_bootx_cmd|default('{BOOTX}')) -%}
 
-{% set base_uboot_nbd_bootcmd = [
-    "setenv loadnbd 'setenv serverip {SERVER_IP}; run loadkernel; run loadfdt; run loadinitrd';",
-    "setenv verify no"
-    "setenv bootcmd 'dhcp; run loadnbd; printenv; {BOOTX}'"
-    "run bootcmd"]
--%}
-
 {% set base_uboot_pci_commands = uboot_pci_commands|default(["pci enum"]) -%}
 {% set base_uboot_usb_commands = uboot_usb_commands|default(["usb start"]) -%}
 

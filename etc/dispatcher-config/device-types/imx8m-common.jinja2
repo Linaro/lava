@@ -1,6 +1,5 @@
 {% extends 'base-uboot.jinja2' %}
 
-{% set root_device = root_device|default('/dev/ttymxc0') %}
 {% set console_device = console_device|default('ttymxc0,115200 earlycon=ec_imx6q,0x30860000') %}
 {% set uboot_ums_flash = uboot_ums_flash|default(False) %}
 {% set ums_command = ums_command|default('ums 0 mmc 1') %}

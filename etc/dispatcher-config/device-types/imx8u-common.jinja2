@@ -1,6 +1,5 @@
 {% extends 'base-uboot.jinja2' %}
 
-{# set root_device = root_device|default('/dev/ttyLP0') #}
 {% set console_device = console_device|default('ttyLP1') %}
 {% set uboot_ums_flash = uboot_ums_flash|default(False) %}
 {# UMS on mmc 0 = MMC card on imx8ulp #}

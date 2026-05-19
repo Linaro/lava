@@ -10,7 +10,5 @@
 {% set bootm_kernel_addr = bootz_kernel_addr %}
 {% set bootm_ramdisk_addr = bootz_ramdisk_addr %}
 {% set bootm_dtb_addr = bootz_dtb_addr %}
-{% set boot_message = boot_message|default('Linux version') %}
 {% set uboot_needs_usb = true %}
-{% set action_timeout_u_boot_commands = 2 %}
 {% set uboot_mkimage_arch = 'arm' %}
