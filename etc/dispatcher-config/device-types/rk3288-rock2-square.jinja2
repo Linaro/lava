@@ -1,8 +1,6 @@
 # Radxa Rock square, running upstream u-boot (not the vendor u-boot)
 {% extends 'base-uboot.jinja2' %}
 
-{% set device_type = "rk3288-rock2-square" %}
-
 {% set console_device = console_device|default('ttyS2') %}
 
 {% set bootm_kernel_addr = '0x2000000' %}

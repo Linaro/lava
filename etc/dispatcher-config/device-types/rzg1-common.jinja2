@@ -1,7 +1,6 @@
 {% extends 'base-uboot.jinja2' %}
 
 {% set baud_rate = '115200' %}
-{% set kernel_file = kernel_file|default('uImage') %}
 {% set bootm_kernel_addr = '0x40007fc0' %}
 {% set bootm_ramdisk_addr = '0x41f00000' %}
 {% set bootm_dtb_addr = '0x48000000' %}

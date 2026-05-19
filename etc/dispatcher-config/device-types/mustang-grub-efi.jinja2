@@ -9,11 +9,6 @@
 {# method is 'pxe-grub' or 'grub' currently - see menu uefi-menu block #}
 {% set grub_efi_method = grub_efi_method|default('pxe-grub') %}
 
-{% set tftp_mac = tftp_mac | default('00:01:73:69:5A:EF') -%}
-
-{# declare placeholders for use in the UI #}
-{% set placeholders = [ 'tftp_mac', 'console_device', 'baud_rate'] -%}
-
 {# allow job context override - use a different variable name, undefined if not in job context #}
 {% set base_menu_interrupt_prompt = menu_interrupt_prompt | default(base_menu_interrupt_prompt) -%}
 {% set base_menu_interrupt_string = menu_interrupt_string | default(base_menu_interrupt_string) -%}
@@ -23,8 +18,6 @@
 {% set base_label_class = label_class | default(base_label_class) -%}
 {% set base_menu_bootloader_prompt = bootloader_prompt | default(base_menu_bootloader_prompt) -%}
 {% set base_menu_boot_message = boot_message | default(base_menu_boot_message) -%}
-{% set base_menu_dictionary =  menu_dictionary | default(base_menu_dictionary) -%}
-{% set base_early_printk = menu_early_printk | default('earlyprintk=uart8250-32bit,0x1c020000') -%}
 
 {% block body %}
 

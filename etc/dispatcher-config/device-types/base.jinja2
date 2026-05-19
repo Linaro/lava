@@ -32,14 +32,6 @@
 {# This is no longer a requirement, to support devices that allow login without authentication #}
 {% set ssh_identity_file = ssh_identity_file|default('dynamic_vm_keys/lava') -%}
 
-{% set schroot_options = (
-"          - 'schroot'
-          - '-d'
-          - '/'
-          - '-u'
-          - 'root'"
-) -%}
-
 {# UEFI menu support #}
 {% set base_menu_interrupt_prompt = 'The default boot selection will start in' -%}
 {% set base_menu_interrupt_string = ' ' -%}
@@ -52,7 +44,6 @@
 {% set base_label_class = 'a-zA-Z0-9\\s\\:' -%}
 {% set base_menu_bootloader_prompt = 'Start:' -%}
 {% set base_menu_boot_message = "Loaded: LinuxImage" -%}
-{% set base_menu_dictionary = {} -%}
 
 {% block character_delays %}
 {% if deploy_character_delay or boot_character_delay or test_character_delay %}

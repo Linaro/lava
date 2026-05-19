@@ -4,7 +4,6 @@
 {% set baud_rate = '115200' %}
 {% set bootloader_prompt = bootloader_prompt|default('=> ') %}
 {% set uboot_needs_interrupt = uboot_needs_interrupt|default(False) %}
-{% set kernel_file = kernel_file|default('zImage') %}
 {% set bootm_kernel_addr = '0x62000000' %}
 {% set bootm_ramdisk_addr = '0x68080000' %}
 {% set bootm_dtb_addr = '0x68000000' %}
