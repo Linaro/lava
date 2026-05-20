@@ -52,7 +52,10 @@ def dump(data: dict[str, Any]) -> str:
         )[:-1]
 
     for secret in SECRETS_MASK:
-        data_str = data_str.replace(secret, "[MASKED]")
+        # Only replace if secret value is non zero.
+        # If "secret" is empty, the "[MASKED]" string is inserted after each character
+        if secret:
+            data_str = data_str.replace(secret, "[MASKED]")
 
     return data_str
 

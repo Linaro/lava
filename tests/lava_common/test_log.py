@@ -279,6 +279,18 @@ def test_yaml_logger(mocker):
     )
     SECRETS_MASK.discard(example_secret)
 
+    # check if empty secrets are discarded
+    SECRETS_MASK.add("")
+    logger._log = mocker.Mock()
+    logger.info(f"downloading from example.com")
+    check(
+        logger,
+        "info",
+        logging.INFO,
+        "downloading from example.com",
+    )
+    SECRETS_MASK.clear()
+
     logger.close()
     assert logger.handler is None
 
