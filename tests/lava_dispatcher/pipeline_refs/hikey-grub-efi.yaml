@@ -243,20 +243,6 @@
       description: Real login action.
       summary: Login after boot.
       timeout: 900
-  - class: ExpectShellSession
-    name: expect-shell-connection
-    level: '2.3'
-    max_retries: 1
-    description: Wait for a shell
-    summary: Expect a shell prompt
-    timeout: 900
-  - class: ExportDeviceEnvironment
-    name: export-device-env
-    level: '2.4'
-    max_retries: 1
-    description: Exports environment variables to the device
-    summary: Exports environment variables action
-    timeout: 900
 - class: DockerTestAction
   name: lava-docker-test
   level: '3'
