@@ -219,7 +219,7 @@ def server_error(request, template_name="500.html"):
     context_dict = {
         "user": request.user,
         "request": request,
-        "exception_type": exc_type,
+        "exception_type": exc_type.__name__,
         "exception_value": value,
     }
     template = loader.get_template(template_name)
