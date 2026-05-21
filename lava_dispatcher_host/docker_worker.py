@@ -307,7 +307,10 @@ def get_server_version(options):
     http.mount("https://", adapter)
     server_version = http.get(
         server_version_url,
-        headers={"User-Agent": f"lava-docker-worker {__version__}"},
+        headers={
+            "User-Agent": f"lava-docker-worker {__version__}",
+            "Accept": "application/json",
+        },
         timeout=10,
     ).json()
     return server_version["version"]

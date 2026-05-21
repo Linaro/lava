@@ -75,7 +75,11 @@ class JobOutputSender:
         self.job_id = job_id
         self.max_records = 1000
 
-        self.headers = {"User-Agent": f"lava {__version__}", "LAVA-Token": token}
+        self.headers = {
+            "User-Agent": f"lava {__version__}",
+            "LAVA-Token": token,
+            "Accept": "application/json",
+        }
         self.session = requests.Session()
         # Record the exception to prevent spamming
         self.last_exception_type: type[Exception] | None = None

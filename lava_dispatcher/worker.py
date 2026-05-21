@@ -885,6 +885,7 @@ async def main() -> None:
         headers={
             "User-Agent": f"lava-worker {__version__}",
             "Connection": "keep-alive",
+            "Accept": "application/json",
         },
         connector=aiohttp.TCPConnector(limit=10, keepalive_timeout=TIMEOUT),
         timeout=aiohttp.ClientTimeout(total=ping_interval),
