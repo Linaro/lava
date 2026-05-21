@@ -216,6 +216,14 @@ def update_table_length_setting(request):
 @requires_csrf_token
 def server_error(request, template_name="500.html"):
     exc_type, value, _ = sys.exc_info()
+    if not request.accepts("text/html"):
+        # If client does not accept HTML return JSON.
+        # For example, lava-worker or lava-run.
+        return JsonResponse(
+            {"exception_type": exc_type.__name__, "exception_value": str(value)},
+            status=500,
+        )
+
     context_dict = {
         "user": request.user,
         "request": request,

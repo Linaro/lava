@@ -1600,6 +1600,25 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
 
 
+@pytest.mark.django_db
+def test_internal_v1_500_error(client, setup, mocker):
+    job01 = TestJob.objects.get(description="test job 01")
+    job01.definition = "{"  # Simulate corrupted YAML
+    job01.save()
+
+    client.raise_request_exception = False
+    ret = client.get(
+        reverse("lava.scheduler.internal.v1.jobs", args=[job01.id]),
+        HTTP_LAVA_TOKEN=job01.token,
+        HTTP_ACCEPT="application/json",
+    )
+    assert ret.status_code == 500
+    error_dict = ret.json()
+
+    assert error_dict["exception_type"] == "ParserError"
+    assert "line" in error_dict["exception_value"]
+
+
 class TestInPlaceTokenUpdater:
     @pytest.fixture
     def actions(self):
