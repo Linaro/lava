@@ -372,9 +372,12 @@ class BootloaderCommandOverlay(Action):
                     self.parameters["commands"]
                 ]["commands"]
 
-        for cmd in self.commands:
-            if not isinstance(cmd, str):
-                self.errors = "Deploy Commands instruction is not a string: %r" % cmd
+        if self.commands is not None:
+            for cmd in self.commands:
+                if not isinstance(cmd, str):
+                    self.errors = (
+                        "Deploy Commands instruction is not a string: %r" % cmd
+                    )
 
         # download-action will set ['dtb'] as tftp_path, tmpdir & filename later, in the run step.
         if "use_bootscript" in self.parameters:
