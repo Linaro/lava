@@ -7,7 +7,6 @@
 
 import copy
 import json
-import logging
 import os
 import socket
 import subprocess  # nosec - vland
@@ -34,9 +33,8 @@ class VlandProtocol(Protocol):
     name = "lava-vland"
     level = 5
 
-    def __init__(self, parameters, job_id):
-        super().__init__(parameters, job_id)
-        self.logger = logging.getLogger("dispatcher")
+    def __init__(self, parameters, job_id, job_logger):
+        super().__init__(parameters, job_id, job_logger)
         self.vlans = {}
         self.ports = []
         self.names = {}

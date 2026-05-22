@@ -102,7 +102,7 @@ class UBootPrepareKernelAction(Action):
                 action=self.name, label="prepared-kernel", key="exists", value=True
             )
             self.bootcommand = map_kernel_uboot(
-                self.kernel_type, self.job.device.get("parameters")
+                self, self.kernel_type, self.job.device.get("parameters")
             )
             self.kernel_type = str(self.kernel_type).lower()
             if self.bootcommand not in self.job.device["parameters"]:

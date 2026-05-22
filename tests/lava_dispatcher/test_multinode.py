@@ -345,6 +345,7 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
         new_protocol = MultinodeProtocolSocketMock(
             {"protocols": {MultinodeProtocolSocketMock.name: base_params}},
             str(randint(0, 2**31)),
+            DummyLogger(),
         )
         new_protocol.debug_setup()
         return new_protocol

@@ -440,7 +440,7 @@ class TestRemovable(LavaDispatcherTestCase):
         self.assertIsNotNone(device_id)
         kernel_type = u_boot_action.parameters["kernel_type"]
         bootcommand = map_kernel_uboot(
-            kernel_type, device_params=cubie.get("parameters")
+            self, kernel_type, device_params=cubie.get("parameters")
         )
         substitutions = {
             "{BOOTX}": "%s %s %s %s"

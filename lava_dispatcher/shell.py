@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import contextlib
-import logging
 import time
 from os import killpg as os_killpg
 from re import error as re_error
@@ -212,7 +211,7 @@ class ShellSession:
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
         self.__prompt_str__ = None
         self.timeout = shell_command.lava_timeout
-        self.logger = logging.getLogger("dispatcher")
+        self.logger = shell_command.logger
 
     def send(self, character, disconnecting=False):
         if self.connected:

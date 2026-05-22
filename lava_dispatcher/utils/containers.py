@@ -119,6 +119,7 @@ class NullDriver(InternalObject):
 
     def __init__(self, action):
         self.action = action
+        self.logger = action.logger
 
     def get_command_prefix(self, copy_files=True):
         return []

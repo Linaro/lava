@@ -95,7 +95,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
 
         mock_zipfile.assert_called_with("mock_fw_package.zip", "r")
         mock_copy_in_overlay.assert_called_once_with(
-            f"/mock/tempdir/virtio_0", 1, "mock_overlay_file"
+            action, "/mock/tempdir/virtio_0", 1, "mock_overlay_file"
         )
         mock_make_archive.assert_called_once_with(
             "mock_fw_package", "zip", "/mock/tempdir"

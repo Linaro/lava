@@ -5,18 +5,22 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 import os
 import shutil
 import subprocess  # nosec - internal use.
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher.utils.decorator import retry
 
+if TYPE_CHECKING:
+    from lava_common.log import YAMLLogger
+
 
 class VCSHelper:
-    def __init__(self, url: str):
+    def __init__(self, url: str, logger: YAMLLogger):
         self.url = url
+        self.logger = logger
 
     def clone(
         self,
@@ -42,8 +46,8 @@ class GitHelper(VCSHelper):
     This helper will raise a InfrastructureError for any error encountered.
     """
 
-    def __init__(self, url: str):
-        super().__init__(url)
+    def __init__(self, url: str, logger: YAMLLogger):
+        super().__init__(url, logger)
         self.binary = "/usr/bin/git"
 
     @retry(exception=InfrastructureError, retries=6, delay=5)
@@ -56,8 +60,6 @@ class GitHelper(VCSHelper):
         history: bool = True,
         recursive: bool = False,
     ) -> str:
-        logger = logging.getLogger("dispatcher")
-
         # Clear the data
         if os.path.exists(dest_path):
             shutil.rmtree(dest_path)
@@ -72,7 +74,7 @@ class GitHelper(VCSHelper):
                 cmd_args.append("--depth=1")
             cmd_args.extend([self.url, dest_path])
 
-            logger.debug("Running '%s'", " ".join(cmd_args))
+            self.logger.debug("Running '%s'", " ".join(cmd_args))
             # Replace shell variables by the corresponding environment variable
             cmd_args[-2] = os.path.expandvars(cmd_args[-2])
 
@@ -86,7 +88,7 @@ class GitHelper(VCSHelper):
                     and "does not support shallow capabilities"
                     in exc.stdout.decode("utf-8", errors="replace")
                 ):
-                    logger.warning(
+                    self.logger.warning(
                         "Tried shallow clone, but server doesn't support it. Retrying without..."
                     )
                     cmd_args.remove("--depth=1")
@@ -97,7 +99,7 @@ class GitHelper(VCSHelper):
                     raise
 
             if revision is not None:
-                logger.debug("Running '%s checkout %s", self.binary, str(revision))
+                self.logger.debug("Running '%s checkout %s", self.binary, str(revision))
                 subprocess.check_output(  # nosec - internal use.
                     [self.binary, "-C", dest_path, "checkout", str(revision)],
                     stderr=subprocess.STDOUT,
@@ -109,14 +111,14 @@ class GitHelper(VCSHelper):
             ).strip()
 
             if not history:
-                logger.debug("Removing '.git' directory in %s", dest_path)
+                self.logger.debug("Removing '.git' directory in %s", dest_path)
                 shutil.rmtree(os.path.join(dest_path, ".git"))
 
         except subprocess.CalledProcessError as exc:
             if exc.stdout:
-                logger.warning(exc.stdout.decode("utf-8", errors="replace"))
+                self.logger.warning(exc.stdout.decode("utf-8", errors="replace"))
             if exc.stderr:
-                logger.error(exc.stderr.decode("utf-8", errors="replace"))
+                self.logger.error(exc.stderr.decode("utf-8", errors="replace"))
             raise InfrastructureError(
                 "Unable to fetch git repository '%s'" % (self.url)
             )
@@ -127,16 +129,16 @@ class GitHelper(VCSHelper):
 class TarHelper(VCSHelper):
     # TODO: implement TarHelper
 
-    def __init__(self, url: str):
-        super().__init__(url)
+    def __init__(self, url: str, logger: YAMLLogger):
+        super().__init__(url, logger)
         self.binary: str | None = None
 
 
 class URLHelper(VCSHelper):
     # TODO: implement URLHelper
 
-    def __init__(self, url: str):
-        super().__init__(url)
+    def __init__(self, url: str, logger: YAMLLogger):
+        super().__init__(url, logger)
         self.binary: str | None = None
 
     def clone(

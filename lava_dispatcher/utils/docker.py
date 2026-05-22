@@ -5,7 +5,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import logging
 import random
 import subprocess
 import time
@@ -198,7 +197,7 @@ class DockerRun:
                 pull = True
         if pull:
             action.run_cmd(["docker", *self._docker_options, "pull", self.image])
-        self._check_image_arch()
+        self._check_image_arch(action)
 
     def wait(self, shell=None):
         delay = 1
@@ -257,7 +256,7 @@ class DockerRun:
                 stderr=subprocess.DEVNULL,
             )
 
-    def _check_image_arch(self):
+    def _check_image_arch(self, action):
         host = subprocess.check_output(["arch"], text=True).strip()
         try:
             container = subprocess.check_output(
@@ -283,8 +282,7 @@ class DockerRun:
         if container == "arm64":
             container = "aarch64"
         if host != container:
-            logger = logging.getLogger("dispatcher")
-            logger.warning(
+            action.logger.warning(
                 f"Architecture mismatch: host is {host}, container is {container}. This *might* work, but if it does, will probably be a lot slower than if the container image architecture matches the host."
             )
 

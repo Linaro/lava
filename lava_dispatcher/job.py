@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING
 
 from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
+from lava_common.log import YAMLLogger
 from lava_common.version import __version__
 from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
@@ -24,7 +25,6 @@ from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-impo
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
-    from logging import Logger
     from typing import Any
 
     from lava_common.timeout import Timeout
@@ -52,12 +52,12 @@ class Job:
         self,
         job_id: int,
         parameters: dict[str, Any],
-        logger: Logger,
         device: Device,
         timeout: Timeout,
+        logger: YAMLLogger | None = None,
     ):
         self.job_id = job_id
-        self.logger = logger
+        self.logger = logger if logger is not None else YAMLLogger()
         self.device = device
         self.parameters = parameters
         self.__context__ = PipelineContext()
