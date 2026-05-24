@@ -42,6 +42,7 @@ Restrictions: allow-stderr, superficial
 Tests: lava-dispatcher-host
 Depends: lava-dispatcher-host
 Restrictions: skippable
+Architecture: amd64 arm64 armhf riscv64 s390x
 
 Tests: lava-coordinator
 Depends: lava-coordinator
