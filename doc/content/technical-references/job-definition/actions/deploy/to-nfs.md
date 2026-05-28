@@ -15,6 +15,36 @@ deploy:
     compression: xz
 ```
 
+The `nfsrootfs` key also accepts the following optional parameters:
+
+### install_overlay
+
+Default: `true`. When set to `false`, LAVA will not apply the test overlay to
+the NFS root filesystem.
+
+### install_modules
+
+Default: `true`. When set to `false`, LAVA will not install kernel modules into
+the NFS root filesystem even if `modules` is specified.
+
+### prefix
+
+A subdirectory path (relative, ending with `/`) within the NFS root that LAVA
+will use as the effective root. Useful when the tarball contains a nested
+directory structure.
+
+```yaml
+deploy:
+  to: nfs
+  nfsrootfs:
+    url: https://example.com/rootfs.tar.xz
+    compression: xz
+    prefix: rootfs/
+```
+
+!!! note
+    `prefix` must not start with `/` and must end with `/`.
+
 ## modules
 
 Optional. A compressed tarball containing kernel modules.
@@ -57,6 +87,18 @@ Alternatively, you can specify a list of images to deploy. Here is an example
         image_arg: -initrd {initrd}
 ```
 
+Each image entry also accepts the following optional parameters:
+
 ### image_arg
 
 See [image_arg](./to-tmpfs.md#image_arg)
+
+### install_overlay
+
+Default: `true`. When set to `false`, LAVA will not apply the test overlay to
+this image even if it is the NFS root filesystem.
+
+### prefix
+
+A subdirectory path (relative, ending with `/`) within the extracted image that
+LAVA uses as the effective root. See [prefix](#prefix) above.
