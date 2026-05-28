@@ -24,7 +24,7 @@ job_name: network-smoke-test
 
 ## device_type
 
-`string` (1–50 characters)
+`string` (1–200 characters)
 
 **Required** by single node jobs. These jobs will fail to validate if no device
 type is given.

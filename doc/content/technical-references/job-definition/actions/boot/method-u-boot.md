@@ -84,6 +84,37 @@ resetting.
     - 'root@board:~#'
 ```
 
+## Secondary media boot
+
+When booting from secondary media (e.g., USB or SD card) that was deployed by a
+prior deploy action, the following parameters tell U-Boot where to find the
+kernel image within the deployed filesystem:
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `kernel_type` | `string` | Kernel image format: `image`, `uimage`, or `zimage` |
+| `kernel` | `string` | Path to the kernel image on the media |
+| `dtb` | `string` | Path to the device tree blob on the media |
+| `ramdisk` | `string` | Path to the ramdisk on the media |
+| `root_uuid` | `string` | UUID of the root partition on the media |
+| `boot_part` | `int` | Partition number containing the boot files |
+
+```yaml
+- boot:
+    method: u-boot
+    commands: usb
+    kernel_type: image
+    kernel: /boot/Image
+    dtb: /boot/board.dtb
+    root_uuid: 1234abcd-5678-ef01-2345-6789abcdef01
+    boot_part: 1
+    prompts:
+    - 'root@board:~#'
+```
+
+These parameters are only meaningful when the device configuration includes
+`media` parameters for secondary boot support.
+
 ## See also
 
 [Raspberry Pi (U-Boot) device setup](../../../../admin/basic-tutorials/device-setup/u-boot.md)

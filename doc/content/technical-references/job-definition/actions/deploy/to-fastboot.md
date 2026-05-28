@@ -109,6 +109,23 @@ treats it as a plain ext4 image:
         apply-overlay: true
 ```
 
+### root_partition
+
+Optional integer. When `apply-overlay: true` is set, specifies which partition
+number within the image contains the root filesystem. Use this when the image
+contains multiple partitions and the overlay must be applied to a specific one.
+
+```yaml
+- deploy:
+    to: fastboot
+    images:
+      system:
+        url: https://example.com/system.img.xz
+        compression: xz
+        apply-overlay: true
+        root_partition: 1
+```
+
 ### reboot
 
 If the device needs to be restarted after flashing a image, specify the reboot

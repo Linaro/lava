@@ -92,3 +92,20 @@ See [url](./index.md#url)
 ### compression
 
 See [compression](./index.md#compression)
+
+## uefi
+
+Optional. A UEFI firmware image downloaded to a directory on the worker and
+passed to QEMU so it can locate the firmware. Accepts the same artifact
+parameters as any image (`url`, `compression`, etc.).
+
+```yaml
+- deploy:
+    to: tmpfs
+    images:
+      rootfs:
+        image_arg: -drive format=qcow2,file={rootfs}
+        url: http://example.com/rootfs.qcow2
+    uefi:
+      url: http://example.com/OVMF.fd
+```
