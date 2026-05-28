@@ -4,17 +4,19 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 import re
 import subprocess
 import tarfile
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 
-logger = logging.getLogger("dispatcher")
+if TYPE_CHECKING:
+    from lava_dispatcher.action import Action
+
 
 DEBUGFS_BATCH_SIZE = 256
 
@@ -215,6 +217,7 @@ def _q(path: str) -> str:
 
 
 def _tar_to_debugfs_commands(
+    action: Action,
     tar_path: str,
     target_path: str,
     tmpdir: str,
@@ -311,13 +314,13 @@ def _tar_to_debugfs_commands(
                 commands.append("ln %s %s" % (_q(resolve(target_raw)), _q(ext4_path)))
 
             elif member.isblk() or member.ischr():
-                logger.warning(
+                action.logger.warning(
                     "Skipping device node %s (unsupported by debugfs batch mode)",
                     member.name,
                 )
 
             elif member.isfifo():
-                logger.warning("Skipping FIFO %s", member.name)
+                action.logger.warning("Skipping FIFO %s", member.name)
     finally:
         tar.close()
 
@@ -411,7 +414,11 @@ def write_partition_back(
 
 
 def inject_tar(
-    image: str, tar_path: str, target_path: str = "/", compress: str | None = None
+    action: Action,
+    image: str,
+    tar_path: str,
+    target_path: str = "/",
+    compress: str | None = None,
 ) -> None:
     if compress is not None and compress not in ("gzip", "xz"):
         raise JobError("inject_tar: unsupported compression %r" % compress)
@@ -434,7 +441,7 @@ def inject_tar(
         actual_tar = decompress_file(tar_path, "xz")
         decompressed = actual_tar
 
-    logger.debug("Injecting %s into %s at %s", actual_tar, image, target_path)
+    action.logger.debug("Injecting %s into %s at %s", actual_tar, image, target_path)
 
     free_bytes = _ext4_free_bytes(image)
     needed_bytes = _tar_payload_bytes(actual_tar)
@@ -446,9 +453,11 @@ def inject_tar(
         )
 
     with tempfile.TemporaryDirectory(prefix="lava-ext4-") as tmpdir:
-        commands = _tar_to_debugfs_commands(actual_tar, target_path, tmpdir, image)
+        commands = _tar_to_debugfs_commands(
+            action, actual_tar, target_path, tmpdir, image
+        )
         if commands:
-            logger.debug(
+            action.logger.debug(
                 "Running %d debugfs commands on %s in batches of %d (need %d MiB, "
                 "have %s MiB free)",
                 len(commands),
@@ -466,7 +475,7 @@ def inject_tar(
             pass
 
 
-def inject_file(image: str, src_path: str, dest_path: str) -> None:
+def inject_file(action: Action, image: str, src_path: str, dest_path: str) -> None:
     parent = os.path.dirname(dest_path)
     commands: list[str] = []
     if parent and parent != "/":
@@ -474,15 +483,17 @@ def inject_file(image: str, src_path: str, dest_path: str) -> None:
             commands.append("mkdir %s" % _q(part))
     commands.append("rm %s" % _q(dest_path))
     commands.append("write %s %s" % (_q(src_path), _q(dest_path)))
-    logger.debug("Injecting %s into %s at %s", src_path, image, dest_path)
+    action.logger.debug("Injecting %s into %s at %s", src_path, image, dest_path)
     _run_debugfs(image, commands)
 
 
-def copy_out(image: str, filenames: list[str], destination: str) -> None:
+def copy_out(
+    action: Action, image: str, filenames: list[str], destination: str
+) -> None:
     for filename in filenames:
         basename = os.path.basename(filename)
         host_path = os.path.join(destination, basename)
-        logger.debug("Extracting %s from %s", filename, image)
+        action.logger.debug("Extracting %s from %s", filename, image)
         result = subprocess.run(
             ["debugfs", "-R", 'dump "%s" "%s"' % (filename, host_path), image],
             capture_output=True,
@@ -498,11 +509,13 @@ def copy_out(image: str, filenames: list[str], destination: str) -> None:
             )
 
 
-def copy_out_iso(image: str, filenames: list[str], destination: str) -> None:
+def copy_out_iso(
+    action: Action, image: str, filenames: list[str], destination: str
+) -> None:
     for filename in filenames:
         basename = os.path.basename(filename)
         host_path = os.path.join(destination, basename)
-        logger.debug("Extracting %s from ISO %s", filename, image)
+        action.logger.debug("Extracting %s from ISO %s", filename, image)
         try:
             subprocess.run(
                 ["bsdtar", "-xf", image, "-C", destination, filename.lstrip("/")],

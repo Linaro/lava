@@ -978,9 +978,11 @@ class AppendOverlays(Action):
                         overlay == "lava"
                         or self.params["overlays"][overlay]["format"] == "tar"
                     ):
-                        inject_tar(target_image, overlay_image, path, compress=compress)
+                        inject_tar(
+                            self, target_image, overlay_image, path, compress=compress
+                        )
                     else:
-                        inject_file(target_image, overlay_image, path)
+                        inject_file(self, target_image, overlay_image, path)
                     if overlay == "lava":
                         self.set_namespace_data(
                             action=self.name,

@@ -432,7 +432,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             tar_path = self._make_tar(tmpdir, [info])
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn('mkdir "/mydir"', commands)
             self.assertIn('sif "/mydir" mode 040755', commands)
             self.assertIn('sif "/mydir" uid 0', commands)
@@ -453,7 +453,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
 
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn('rm "/hello.txt"', commands)
             self.assertTrue(
                 any(
@@ -479,7 +479,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             tar_path = self._make_tar(tmpdir, [info])
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn('symlink "/link" "target"', commands)
             self.assertIn('sif "/link" uid 0', commands)
 
@@ -491,7 +491,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             tar_path = self._make_tar(tmpdir, [info])
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn('ln "/original" "/hardlink"', commands)
 
     def test_nested_creates_parents(self):
@@ -504,7 +504,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             tar_path = self._make_tar(tmpdir, [info])
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             mkdir_cmds = [c for c in commands if c.startswith("mkdir")]
             self.assertIn('mkdir "/a"', mkdir_cmds)
             self.assertIn('mkdir "/a/b"', mkdir_cmds)
@@ -524,7 +524,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
             with self.assertRaises(JobError) as ctx:
-                _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+                _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn("Path traversal", str(ctx.exception))
 
     def test_invalid_tar_raises_job_error(self):
@@ -535,7 +535,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
             with self.assertRaises(JobError) as ctx:
-                _tar_to_debugfs_commands(bad_tar, "/", extract_dir)
+                _tar_to_debugfs_commands(MagicMock(), bad_tar, "/", extract_dir)
             self.assertIn("Failed to open tar", str(ctx.exception))
 
     def test_space_in_name_accepted_and_quoted(self):
@@ -548,7 +548,7 @@ class TestTarToDebugfsCommands(unittest.TestCase):
             tar_path = self._make_tar(tmpdir, [info])
             extract_dir = os.path.join(tmpdir, "extract")
             os.makedirs(extract_dir)
-            commands = _tar_to_debugfs_commands(tar_path, "/", extract_dir)
+            commands = _tar_to_debugfs_commands(MagicMock(), tar_path, "/", extract_dir)
             self.assertIn('rm "/Dell Inc.,XPS 13 9300.yaml"', commands)
             self.assertTrue(
                 any(
@@ -652,7 +652,7 @@ class TestInjectTar(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4._tar_to_debugfs_commands")
     def test_calls_debugfs(self, mock_cmds, mock_run):
         mock_cmds.return_value = ["mkdir /foo"]
-        inject_tar("/tmp/image.ext4", "/tmp/overlay.tar", "/")
+        inject_tar(MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar", "/")
         mock_cmds.assert_called_once()
         mock_run.assert_called_once()
         self.assertEqual(mock_run.call_args[0][0], "/tmp/image.ext4")
@@ -662,7 +662,7 @@ class TestInjectTar(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4._tar_to_debugfs_commands")
     def test_empty_commands_skips_debugfs(self, mock_cmds, mock_run):
         mock_cmds.return_value = []
-        inject_tar("/tmp/image.ext4", "/tmp/overlay.tar", "/")
+        inject_tar(MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar", "/")
         mock_run.assert_not_called()
 
     @patch("lava_dispatcher.utils.ext4._run_debugfs")
@@ -671,7 +671,7 @@ class TestInjectTar(unittest.TestCase):
         mock_cmds.return_value = [
             "mkdir /d%d" % i for i in range(DEBUGFS_BATCH_SIZE * 3 + 5)
         ]
-        inject_tar("/tmp/image.ext4", "/tmp/overlay.tar", "/")
+        inject_tar(MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar", "/")
         self.assertEqual(mock_run.call_count, 4)
 
     @patch("lava_dispatcher.utils.ext4._run_debugfs")
@@ -681,7 +681,7 @@ class TestInjectTar(unittest.TestCase):
         self, mock_payload, mock_free, mock_run
     ):
         with self.assertRaises(JobError) as ctx:
-            inject_tar("/tmp/image.ext4", "/tmp/overlay.tar", "/")
+            inject_tar(MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar", "/")
         self.assertIn("Not enough free space", str(ctx.exception))
         mock_run.assert_not_called()
 
@@ -692,7 +692,7 @@ class TestInjectTar(unittest.TestCase):
         self, mock_free, mock_cmds, mock_run
     ):
         mock_cmds.return_value = ["mkdir /foo"]
-        inject_tar("/tmp/image.ext4", "/tmp/overlay.tar", "/")
+        inject_tar(MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar", "/")
         mock_run.assert_called_once()
 
     @patch("lava_dispatcher.utils.ext4._run_debugfs")
@@ -705,19 +705,27 @@ class TestInjectTar(unittest.TestCase):
     ):
         mock_decompress.return_value = "/tmp/overlay.tar"
         mock_cmds.return_value = ["mkdir /foo"]
-        inject_tar("/tmp/image.ext4", "/tmp/overlay.tar.gz", "/", compress="gzip")
+        inject_tar(
+            MagicMock(), "/tmp/image.ext4", "/tmp/overlay.tar.gz", "/", compress="gzip"
+        )
         mock_decompress.assert_called_once_with("/tmp/overlay.tar.gz", "gz")
 
     def test_unsupported_compression(self):
         with self.assertRaises(JobError) as ctx:
-            inject_tar("/tmp/image.ext4", "/tmp/overlay.tar.bz2", "/", compress="bzip2")
+            inject_tar(
+                MagicMock(),
+                "/tmp/image.ext4",
+                "/tmp/overlay.tar.bz2",
+                "/",
+                compress="bzip2",
+            )
         self.assertIn("unsupported compression", str(ctx.exception))
 
 
 class TestInjectFile(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4._run_debugfs")
     def test_calls_debugfs(self, mock_run):
-        inject_file("/tmp/image.ext4", "/tmp/src.bin", "/boot/vmlinuz")
+        inject_file(MagicMock(), "/tmp/image.ext4", "/tmp/src.bin", "/boot/vmlinuz")
         commands = mock_run.call_args[0][1]
         self.assertIn('mkdir "/boot"', commands)
         self.assertIn('rm "/boot/vmlinuz"', commands)
@@ -728,7 +736,12 @@ class TestCopyOut(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_calls_debugfs_dump(self, mock_run):
         mock_run.return_value = MagicMock(returncode=0, stderr="")
-        copy_out("/tmp/image.ext4", ["/boot/vmlinuz", "/boot/initrd"], "/tmp/dest")
+        copy_out(
+            MagicMock(),
+            "/tmp/image.ext4",
+            ["/boot/vmlinuz", "/boot/initrd"],
+            "/tmp/dest",
+        )
         self.assertEqual(mock_run.call_count, 2)
         first_call = mock_run.call_args_list[0]
         self.assertEqual(first_call[0][0][0], "debugfs")
@@ -740,7 +753,7 @@ class TestCopyOut(unittest.TestCase):
             returncode=1, stderr="dump: File not found by ext2_lookup\n"
         )
         with self.assertRaises(JobError):
-            copy_out("/tmp/image.ext4", ["/missing"], "/tmp/dest")
+            copy_out(MagicMock(), "/tmp/image.ext4", ["/missing"], "/tmp/dest")
 
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_filename_with_error_not_flagged(self, mock_run):
@@ -748,7 +761,9 @@ class TestCopyOut(unittest.TestCase):
             returncode=0,
             stderr="dumped /lib/modules/x/error.ko\n",
         )
-        copy_out("/tmp/image.ext4", ["/lib/modules/x/error.ko"], "/tmp/dest")
+        copy_out(
+            MagicMock(), "/tmp/image.ext4", ["/lib/modules/x/error.ko"], "/tmp/dest"
+        )
 
 
 class TestCopyOutIso(unittest.TestCase):
@@ -756,7 +771,7 @@ class TestCopyOutIso(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_calls_bsdtar(self, mock_run, mock_exists):
         mock_run.return_value = MagicMock(returncode=0)
-        copy_out_iso("/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest")
+        copy_out_iso(MagicMock(), "/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest")
         args = mock_run.call_args[0][0]
         self.assertEqual(args[0], "bsdtar")
         self.assertIn("-xf", args)
@@ -765,7 +780,9 @@ class TestCopyOutIso(unittest.TestCase):
     def test_bsdtar_not_found(self, mock_run):
         mock_run.side_effect = FileNotFoundError()
         with self.assertRaises(InfrastructureError) as ctx:
-            copy_out_iso("/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest")
+            copy_out_iso(
+                MagicMock(), "/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest"
+            )
         self.assertIn("bsdtar not found", str(ctx.exception))
 
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
@@ -774,7 +791,9 @@ class TestCopyOutIso(unittest.TestCase):
             1, "bsdtar", stderr=b"file not found"
         )
         with self.assertRaises(JobError) as ctx:
-            copy_out_iso("/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest")
+            copy_out_iso(
+                MagicMock(), "/tmp/image.iso", ["/install/vmlinuz"], "/tmp/dest"
+            )
         self.assertIn("Failed to extract", str(ctx.exception))
 
 

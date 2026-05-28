@@ -168,7 +168,7 @@ def prepare_guestfs(
             root_tar.add(os.path.join(sub_dir, dirname), arcname=dirname)
 
         root_tar.close()
-        inject_tar(raw_img, guest_tar)
+        inject_tar(action, raw_img, guest_tar)
         os.unlink(guest_tar)
 
         try:
@@ -263,11 +263,11 @@ def copy_out_files(
         if "ISO 9660" in filetype:
             from lava_dispatcher.utils.ext4 import copy_out_iso
 
-            copy_out_iso(image, filenames, destination)
+            copy_out_iso(action, image, filenames, destination)
         else:
             from lava_dispatcher.utils.ext4 import copy_out
 
-            copy_out(image, filenames, destination)
+            copy_out(action, image, filenames, destination)
         return
 
     import guestfs
@@ -310,10 +310,10 @@ def copy_in_overlay(
                 part_file, start, sector_size = extract_partition(
                     image, int(root_partition), tmpdir
                 )
-                inject_tar(part_file, decompressed_overlay)
+                inject_tar(action, part_file, decompressed_overlay)
                 write_partition_back(image, part_file, start, sector_size)
         else:
-            inject_tar(image, decompressed_overlay)
+            inject_tar(action, image, decompressed_overlay)
         return
 
     import guestfs
@@ -374,7 +374,7 @@ def copy_overlay_to_sparse_fs(action: Action, image: str, overlay: str) -> None:
         if os.path.exists(overlay[:-3]):
             os.unlink(overlay[:-3])
         decompressed_overlay = decompress_file(overlay, "gz")
-        inject_tar(image, decompressed_overlay)
+        inject_tar(action, image, decompressed_overlay)
 
         result = subprocess.run(
             ["dumpe2fs", "-h", image], capture_output=True, text=True, check=False
