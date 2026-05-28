@@ -439,7 +439,7 @@ class TestShellAction(ReportMixin, Action):
         revision = self.get_namespace_data(action="test", label=uuid, key="revision")
         res["revision"] = revision if revision else "unspecified"
         res["namespace"] = self.parameters["namespace"]
-        connection_namespace = self.parameters.get("connection_namespace")
+        connection_namespace = self.parameters.get("connection-namespace")
         if connection_namespace:
             res["connection-namespace"] = connection_namespace
         commit_id = self.get_namespace_data(action="test", label=uuid, key="commit-id")
