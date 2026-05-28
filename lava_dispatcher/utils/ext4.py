@@ -52,7 +52,7 @@ def _is_out_of_space(error_lines: list[str]) -> bool:
 
 def _run_debugfs(
     image: str, commands: list[str], read_only: bool = False
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     with tempfile.NamedTemporaryFile(mode="w", suffix=".debugfs", delete=False) as f:
         f.write("\n".join(commands) + "\n")
         cmdfile = f.name
@@ -133,7 +133,7 @@ _STAT_FAST_LINK_RE = re.compile(r'Fast link dest:\s+"([^"]+)"')
 _STAT_NOT_FOUND_RE = re.compile(r"File not found", re.IGNORECASE)
 
 
-def _stat_path(image: str, path: str) -> dict | None:
+def _stat_path(image: str, path: str) -> dict[str, str | None] | None:
     """Return {'type': ..., 'target': ...} or None if the path does not exist."""
     result = subprocess.run(
         ["debugfs", "-R", 'stat "%s"' % path, image],

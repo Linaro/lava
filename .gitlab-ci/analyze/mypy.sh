@@ -31,6 +31,7 @@ else
     'lava_dispatcher/utils/compression.py'
     'lava_dispatcher/utils/contextmanager.py'
     'lava_dispatcher/utils/decorator.py'
+    'lava_dispatcher/utils/ext4.py'
     'lava_dispatcher/utils/filesystem.py'
     'lava_dispatcher/utils/installers.py'
     'lava_dispatcher/utils/network.py'
