@@ -42,3 +42,15 @@ issued by LAVA sequentially.
 ## prompts
 
 See [prompts](./common.md#prompts)
+
+## auto_login
+
+See [auto_login](./common.md#auto_login)
+
+## transfer_overlay
+
+See [transfer_overlay](./common.md#transfer_overlay)
+
+## use_bootscript
+
+See [use_bootscript](./method-bootloader.md#use_bootscript)

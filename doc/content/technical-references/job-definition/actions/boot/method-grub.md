@@ -51,6 +51,23 @@ After the string is matched the device is powered off.
     - 'reboot: Restarting system'
 ```
 
+## Secondary media boot
+
+When booting from secondary media that was deployed by a prior deploy action,
+the following parameters tell GRUB where to find the boot files within the
+deployed filesystem:
+
+| Parameter | Type | Description |
+| --------- | ---- | ----------- |
+| `kernel` | `string` | Path to the kernel image on the media |
+| `dtb` | `string` | Path to the device tree blob on the media |
+| `ramdisk` | `string` | Path to the ramdisk on the media |
+| `root_uuid` | `string` | UUID of the root partition on the media |
+| `boot_part` | `int` | Partition number containing the boot files |
+
+These parameters are only meaningful when the device configuration includes
+`media` parameters for secondary boot support.
+
 ## Example job
 
 ```yaml
