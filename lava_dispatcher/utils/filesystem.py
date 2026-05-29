@@ -149,7 +149,7 @@ def prepare_guestfs(
     :param size: size of the filesystem in Mb
     :return blkid of the guest device
     """
-    if _resolve_backend() == "e2fsprogs":
+    if _resolve_backend(action.parameters) == "e2fsprogs":
         from lava_dispatcher.utils.ext4 import create_ext4, inject_tar
 
         raw_img = output + ".raw"
@@ -256,7 +256,7 @@ def copy_out_files(
     if not isinstance(filenames, list):
         raise LAVABug("filenames must be a list")
 
-    if _resolve_backend() == "e2fsprogs":
+    if _resolve_backend(action.parameters) == "e2fsprogs":
         import magic
 
         filetype = magic.from_file(image).split(",")[0]
@@ -294,7 +294,7 @@ def copy_in_overlay(
     is None the image is handled as a filesystem instead of
     partitioned image.
     """
-    if _resolve_backend() == "e2fsprogs":
+    if _resolve_backend(action.parameters) == "e2fsprogs":
         from lava_dispatcher.utils.ext4 import (
             extract_partition,
             inject_tar,
@@ -368,7 +368,7 @@ def copy_overlay_to_sparse_fs(action: Action, image: str, overlay: str) -> None:
     Only copies the overlay to an image
     which has already been converted from sparse.
     """
-    if _resolve_backend() == "e2fsprogs":
+    if _resolve_backend(action.parameters) == "e2fsprogs":
         from lava_dispatcher.utils.ext4 import inject_tar
 
         if os.path.exists(overlay[:-3]):

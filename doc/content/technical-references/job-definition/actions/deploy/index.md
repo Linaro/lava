@@ -144,6 +144,15 @@ You can also provide:
 
 * `partition`: to update a given partition (for `ext4` with multiple partitions)
 * `sparse`: set to `true` if the artifact is a sparse image
+* `overlay_backend`: which tool to use to modify `ext4` images: `auto`
+  (the default), `e2fsprogs` or `guestfs`. With `auto`, LAVA uses `e2fsprogs`
+  (`debugfs`) when it is available on the worker and falls back to
+  `libguestfs`. Set this to override that choice, for example to force
+  `guestfs` if an image does not work with the `e2fsprogs` backend.
+
+`overlay_backend` can also be set directly under `deploy:` to apply to every
+image in the deployment; a per-image value takes precedence over the
+deploy-level one.
 
 ### LAVA overlay
 

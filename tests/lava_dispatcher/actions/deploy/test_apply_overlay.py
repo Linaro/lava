@@ -119,6 +119,28 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         self.assertIsNone(action.run(None, 0))
         action.update_tar.assert_called_once_with()
 
+    def test_append_overlays_deploy_level_backend(self):
+        # With no per-image overlay_backend, the deploy-level setting applies.
+        job = self.create_simple_job()
+        params = {
+            "format": "ext4",
+            "overlays": {
+                "modules": {
+                    "url": "http://example.com/modules.tar.xz",
+                    "compression": "xz",
+                    "format": "tar",
+                    "path": "/",
+                }
+            },
+        }
+        action = AppendOverlays(job, "rootfs", params)
+        action.update_guestfs = MagicMock()
+        action.update_ext4 = MagicMock()
+        action.parameters = {"overlay_backend": "guestfs"}
+        self.assertIsNone(action.run(None, 0))
+        action.update_guestfs.assert_called_once_with()
+        action.update_ext4.assert_not_called()
+
     def test_append_overlays_update_cpio(self):
         job = self.create_simple_job()
         tmp_dir_path = self.create_temporary_directory()

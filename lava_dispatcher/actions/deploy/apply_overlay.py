@@ -833,7 +833,10 @@ class AppendOverlays(Action):
         if self.params["format"] == "cpio.newc":
             self.update_cpio()
         elif self.params["format"] == "ext4":
-            backend = _resolve_backend(self.params)
+            # Per-image overlay_backend wins; otherwise use the deploy-level one.
+            backend = _resolve_backend(
+                self.params if self.params.get("overlay_backend") else self.parameters
+            )
             self.logger.info("Using %s backend for overlay injection", backend)
             if backend == "guestfs":
                 try:

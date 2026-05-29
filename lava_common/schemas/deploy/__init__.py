@@ -46,4 +46,9 @@ def url(extra=None):
 
 
 def schema():
-    return {**action(), Optional("os"): str, Optional("authorize"): "ssh"}
+    return {
+        **action(),
+        Optional("os"): str,
+        Optional("authorize"): "ssh",
+        Optional("overlay_backend"): Any("auto", "e2fsprogs", "guestfs"),
+    }
