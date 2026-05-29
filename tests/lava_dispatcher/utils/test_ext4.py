@@ -723,13 +723,46 @@ class TestInjectTar(unittest.TestCase):
 
 
 class TestInjectFile(unittest.TestCase):
+    @patch("lava_dispatcher.utils.ext4._stat_path", return_value=None)
     @patch("lava_dispatcher.utils.ext4._run_debugfs")
-    def test_calls_debugfs(self, mock_run):
+    def test_creates_missing_parent(self, mock_run, mock_stat):
         inject_file(MagicMock(), "/tmp/image.ext4", "/tmp/src.bin", "/boot/vmlinuz")
         commands = mock_run.call_args[0][1]
         self.assertIn('mkdir "/boot"', commands)
         self.assertIn('rm "/boot/vmlinuz"', commands)
         self.assertIn('write "/tmp/src.bin" "/boot/vmlinuz"', commands)
+
+    @patch("lava_dispatcher.utils.ext4._run_debugfs")
+    def test_existing_parent_not_recreated(self, mock_run):
+        # debugfs errors ("already exists") on mkdir of a present dir, so an
+        # existing parent must not be re-created.
+        existing = {"/boot": {"type": "dir", "target": None}}
+        with patch(
+            "lava_dispatcher.utils.ext4._stat_path",
+            side_effect=lambda image, path: existing.get(path),
+        ):
+            inject_file(MagicMock(), "/tmp/image.ext4", "/tmp/src.bin", "/boot/vmlinuz")
+        commands = mock_run.call_args[0][1]
+        self.assertNotIn('mkdir "/boot"', commands)
+        self.assertIn('write "/tmp/src.bin" "/boot/vmlinuz"', commands)
+
+    @patch("lava_dispatcher.utils.ext4._run_debugfs")
+    def test_resolves_usrmerge_symlink(self, mock_run):
+        table = {
+            "/lib": {"type": "symlink", "target": "usr/lib"},
+            "/usr/lib": {"type": "dir", "target": None},
+        }
+        with patch(
+            "lava_dispatcher.utils.ext4._stat_path",
+            side_effect=lambda image, path: table.get(path),
+        ):
+            inject_file(
+                MagicMock(), "/tmp/image.ext4", "/tmp/src.bin", "/lib/firmware/x.bin"
+            )
+        commands = mock_run.call_args[0][1]
+        self.assertIn('write "/tmp/src.bin" "/usr/lib/firmware/x.bin"', commands)
+        self.assertNotIn('mkdir "/usr/lib"', commands)
+        self.assertIn('mkdir "/usr/lib/firmware"', commands)
 
 
 class TestCopyOut(unittest.TestCase):

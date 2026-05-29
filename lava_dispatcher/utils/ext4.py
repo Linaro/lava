@@ -476,11 +476,14 @@ def inject_tar(
 
 
 def inject_file(action: Action, image: str, src_path: str, dest_path: str) -> None:
+    symlink_cache: dict[str, str] = {}
+    dest_path = _resolve_symlink(image, dest_path, symlink_cache)
     parent = os.path.dirname(dest_path)
     commands: list[str] = []
     if parent and parent != "/":
         for part in _path_parents(parent):
-            commands.append("mkdir %s" % _q(part))
+            if _stat_path(image, part) is None:
+                commands.append("mkdir %s" % _q(part))
     commands.append("rm %s" % _q(dest_path))
     commands.append("write %s %s" % (_q(src_path), _q(dest_path)))
     action.logger.debug("Injecting %s into %s at %s", src_path, image, dest_path)
