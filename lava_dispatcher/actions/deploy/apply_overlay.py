@@ -86,13 +86,16 @@ class ApplyOverlayGuest(Action):
         guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_namespace_data(
-            action=self.name, label="guest", key="filename", value=guest_file
+            action="apply-overlay-guest",
+            label="guest",
+            key="filename",
+            value=guest_file,
         )
         mountpoint = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
 
-        blkid = prepare_guestfs(
+        blkid, fs_type = prepare_guestfs(
             self,
             guest_file,
             overlay_file,
@@ -103,7 +106,10 @@ class ApplyOverlayGuest(Action):
         )
         self.results = {"success": blkid}
         self.set_namespace_data(
-            action=self.name, label="guest", key="UUID", value=blkid
+            action="apply-overlay-guest", label="guest", key="UUID", value=blkid
+        )
+        self.set_namespace_data(
+            action="apply-overlay-guest", label="guest", key="fs_type", value=fs_type
         )
         return connection
 

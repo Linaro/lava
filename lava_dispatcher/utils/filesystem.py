@@ -136,7 +136,7 @@ def _resolve_backend(params: dict[str, Any] | None = None) -> str:
 @replace_exception(RuntimeError, JobError)
 def prepare_guestfs(
     action: Action, output: str, overlay: str, mountpoint: str, size: int
-) -> str:
+) -> tuple[str, str]:
     """
     Applies the overlay, offset by expected mount point.
     This allows the booted device to mount at the
@@ -184,7 +184,7 @@ def prepare_guestfs(
             if os.path.exists(raw_img):
                 os.unlink(raw_img)
 
-        return uuid
+        return uuid, "ext4"
 
     import guestfs  # type: ignore[import-not-found]
 
@@ -220,7 +220,7 @@ def prepare_guestfs(
     guest.umount(guest_device)
     device: str = guest.blkid(guest_device)["UUID"]
     guest.close()
-    return device
+    return device, "ext2"
 
 
 @replace_exception(RuntimeError, JobError)
