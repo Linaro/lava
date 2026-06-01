@@ -7,7 +7,6 @@
 import signal
 
 from lava_common.log import (
-    SECRETS_MASK,
     JobOutputSender,
     YAMLFileHandler,
     YAMLHTTPHandler,
@@ -248,7 +247,7 @@ def test_yaml_logger(mocker):
 
     # Check secrets
     example_secret = "MySecretToken"
-    SECRETS_MASK.add(example_secret)
+    logger.secrets_mask.add(example_secret)
     logger._log = mocker.Mock()
     logger.info(f"downloading from example.com/myfile?token={example_secret}")
     check(
@@ -256,10 +255,10 @@ def test_yaml_logger(mocker):
         "info",
         "downloading from example.com/myfile?token=[MASKED]",
     )
-    SECRETS_MASK.discard(example_secret)
+    logger.secrets_mask.discard(example_secret)
 
     # check if empty secrets are discarded
-    SECRETS_MASK.add("")
+    logger.secrets_mask.add("")
     logger._log = mocker.Mock()
     logger.info("downloading from example.com")
     check(
@@ -267,7 +266,7 @@ def test_yaml_logger(mocker):
         "info",
         "downloading from example.com",
     )
-    SECRETS_MASK.clear()
+    logger.secrets_mask.clear()
 
     logger.close()
     assert len(logger.handlers) == 0

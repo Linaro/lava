@@ -22,18 +22,15 @@ from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from typing import Any
-
-
-# Global variable so that no YAMLLogger escapes
-SECRETS_MASK: set[str] = set()
 
 # Pylint doesn't understand that multiprocessing.Queue is subscriptable
 # for typing purposes.
 # pylint: disable=unsubscriptable-object
 
 
-def dump(data: dict[str, Any]) -> str:
+def dump(data: dict[str, Any], secrets_mask: Iterable[str] = ()) -> str:
     # Set width to a really large value in order to always get one line.
     # But keep this reasonable because the logs will be loaded by CLoader
     # that is limited to around 10**7 chars
@@ -50,7 +47,7 @@ def dump(data: dict[str, Any]) -> str:
             data, default_flow_style=True, default_style='"', width=10**6
         )[:-1]
 
-    for secret in SECRETS_MASK:
+    for secret in secrets_mask:
         # Only replace if secret value is non zero.
         # If "secret" is empty, the "[MASKED]" string is inserted after each character
         if secret:
@@ -387,6 +384,7 @@ class YAMLLogger:
         self.handlers: list[YAMLHTTPHandler | YAMLFileHandler | YAMLStderrHandler] = []
         self.markers: dict[str, dict[str, int]] = {}
         self.line = 0
+        self.secrets_mask: set[str] = set()
 
     def add_http_handler(
         self, url: str, token: str, interval: int, job_id: str
@@ -434,7 +432,7 @@ class YAMLLogger:
         if level_name == "feedback" and "namespace" in kwargs:
             data["ns"] = kwargs["namespace"]
 
-        data_str = dump(data)
+        data_str = dump(data, self.secrets_mask)
         self._log(data_str)
 
     def exception(self, exc: object, *args: Any, **kwargs: Any) -> None:
