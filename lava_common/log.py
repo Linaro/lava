@@ -324,7 +324,8 @@ class YAMLHTTPHandler:
 
 class YAMLFileHandler:
     def __init__(self, filename: str):
-        self.file = open(filename, mode="w")
+        # Use line buffering for the log file.
+        self.file = open(filename, mode="w", buffering=1)
 
     def format(self, msg: str) -> str:
         return f"- {msg}"
