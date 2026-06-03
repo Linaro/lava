@@ -116,8 +116,7 @@ class BootFastbootAction(BootHasMixin, RetryAction, OptionalContainerFastbootAct
             elif mapped[0]:
                 self.pipeline.add_action(mapped[0](self.job))
         if self.job.device.hard_reset_command:
-            if not self.is_container():
-                self.pipeline.add_action(PreOs(self.job))
+            self.pipeline.add_action(PreOs(self.job))
             if self.has_prompts(parameters):
                 self.pipeline.add_action(AutoLoginAction(self.job))
                 if self.test_has_shell(parameters):
