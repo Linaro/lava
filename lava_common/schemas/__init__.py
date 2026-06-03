@@ -375,4 +375,9 @@ def docker(image_key="image"):
         Optional("local"): bool,
         Optional("container_name"): str,
         Optional("network_from"): str,
+        Optional("login"): {
+            Required("registry"): str,
+            Required("user"): str,
+            Required("password"): str,
+        },
     }

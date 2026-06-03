@@ -5,16 +5,47 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import os
 import random
 import subprocess
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 
 if TYPE_CHECKING:
     from typing import Iterable, Optional
+
+    from lava_dispatcher.action import Action
+
+
+class DockerLogin:
+    def __init__(self, registry: str, user: str, password: str):
+        self.registry = registry
+        self.user = user
+        self.password = password
+
+    def _build_docker_login_command(self) -> list[str]:
+        return [
+            "docker",
+            "login",
+            "--username",
+            self.user,
+            "--password-stdin",
+            self.registry,
+        ]
+
+    def login(self, action: Action) -> str:
+        docker_home = action.mkdtemp()
+        action.logger.debug(f"Login in to remote registry {self.registry!r}")
+        action.parsed_command(
+            self._build_docker_login_command(),
+            env={**os.environ, "HOME": docker_home},
+            input=self.password,
+        )
+        action.logger.debug("Login successful")
+        return docker_home
 
 
 class DockerRun:
@@ -34,10 +65,11 @@ class DockerRun:
         self._has_init = True
         self._docker_options: list[str] = []
         self._docker_run_options: list[str] = []
+        self._docker_login: DockerLogin | None = None
 
     @classmethod
     def from_parameters(cls, params, job):
-        image = params["image"]
+        image: str = params["image"]
         run = cls(image)
         suffix = "-lava-" + str(job.job_id)
         if "container_name" in params:
@@ -47,6 +79,20 @@ class DockerRun:
         run.local(params.get("local", False))
         for device in params.get("devices", []):
             run.add_device(device)
+        if login_data := params.get("login"):
+            try:
+                user = login_data["user"]
+                password = login_data["password"]
+                registry = login_data["registry"]
+            except KeyError:
+                raise JobError(
+                    "Incorrect docker login dictionary. "
+                    "Expected 'registry', 'user' and 'password' entries."
+                )
+
+            run._docker_login = DockerLogin(
+                registry=registry, user=user, password=password
+            )
         return run
 
     def local(self, local):
@@ -176,7 +222,7 @@ class DockerRun:
         else:
             return action.run_cmd(cmd, error_msg=error_msg)
 
-    def prepare(self, action):
+    def prepare(self, action: Action):
         pull = not self._is_local_image
         if self._is_local_image:
             if action.run_cmd(
@@ -195,8 +241,16 @@ class DockerRun:
                     "Unable to inspect docker image '%s'" % self.image
                 )
                 pull = True
+
         if pull:
-            action.run_cmd(["docker", *self._docker_options, "pull", self.image])
+            docker_pull_env: dict[str, str] = {**os.environ}
+            if self._docker_login is not None:
+                docker_pull_env["HOME"] = self._docker_login.login(action)
+
+            action.run_cmd(
+                ["docker", *self._docker_options, "pull", self.image],
+                env=docker_pull_env,
+            )
         self._check_image_arch(action)
 
     def wait(self, shell=None):

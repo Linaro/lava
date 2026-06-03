@@ -3,13 +3,17 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import subprocess
-from unittest.mock import call
+from unittest.mock import ANY, call, patch
 
 import pytest
 
-from lava_dispatcher.utils.docker import DockerRun
+from lava_dispatcher.action import Action
+from lava_dispatcher.utils.docker import DockerLogin, DockerRun
+
+from ..test_basic import LavaDispatcherTestCase
 
 
 @pytest.fixture
@@ -125,7 +129,7 @@ def test_run_architecture_check_failure(mocker):
         ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"], text=True
     )
     assert action.run_cmd.call_args_list == [
-        call(["docker", "pull", "myimage"]),
+        call(["docker", "pull", "myimage"], env=ANY),
         call(["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None),
     ]
 
@@ -147,8 +151,11 @@ def test_run_architecture_check_success(mocker):
         ["docker", "inspect", "--format", "{{.Architecture}}", "myimage"], text=True
     )
     assert action.run_cmd.call_args_list == [
-        call(["docker", "pull", "myimage"]),
-        call(["docker", "run", "--rm", "--init", "myimage", "echo"], error_msg=None),
+        call(["docker", "pull", "myimage"], env=ANY),
+        call(
+            ["docker", "run", "--rm", "--init", "myimage", "echo"],
+            error_msg=None,
+        ),
     ]
     logger.warning.assert_not_called()
 
@@ -165,7 +172,7 @@ def test_run_with_action(mocker):
     check_arch.assert_called()
     action.run_cmd.assert_has_calls(
         [
-            mocker.call(["docker", "pull", "myimage"]),
+            mocker.call(["docker", "pull", "myimage"], env=ANY),
             mocker.call(
                 ["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None
             ),
@@ -220,7 +227,7 @@ def test_run_with_local_image_does_not_pull_when_missing(mocker):
                 ],
                 allow_fail=True,
             ),
-            mocker.call(["docker", "pull", "myimage"]),
+            mocker.call(["docker", "pull", "myimage"], env=ANY),
             mocker.call(
                 ["docker", "run", "--rm", "--init", "myimage", "date"], error_msg=None
             ),
@@ -317,3 +324,35 @@ def test_add_device_method_options_sublist():
 
     assert "--network" in docker._docker_run_options
     assert "host" in docker._docker_run_options
+
+
+class TestDockerLogin(LavaDispatcherTestCase):
+    def test_from_parameters(self) -> None:
+        job = self.create_simple_job()
+        docker_run = DockerRun.from_parameters(
+            {
+                "image": "example.com/debian:13",
+                "login": {
+                    "registry": "example.com",
+                    "user": "lavauser",
+                    "password": "lava_password",
+                },
+            },
+            job,
+        )
+        self.assertIsNotNone(docker_run._docker_login)
+        self.assertEqual(docker_run._docker_login.registry, "example.com")
+        self.assertEqual(docker_run._docker_login.user, "lavauser")
+        self.assertEqual(docker_run._docker_login.password, "lava_password")
+
+        action = Action(job)
+
+        with (
+            patch.object(
+                DockerLogin, "_build_docker_login_command", return_value=["true"]
+            ),
+            patch.object(action, "mkdtemp", return_value="/foo/bar"),
+        ):
+            docker_home = docker_run._docker_login.login(action)
+
+        self.assertEqual(docker_home, "/foo/bar")

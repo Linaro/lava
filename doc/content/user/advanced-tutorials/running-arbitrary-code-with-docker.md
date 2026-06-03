@@ -170,6 +170,25 @@ specified image, and the following applies:
   ```bash
   sh -c "${LAVA_HARD_RESET_COMMAND}"
   ```
+#### Using password protected docker images
+
+To pull images from a password protected registry add a login section
+with the registry domain name, username and password.
+
+```yaml
+# ...
+    - test:
+        docker:
+            image: example.com/my-adb-image
+                login:
+                    registry: example.com
+                    user: foobar
+                    password: my_password
+# ...
+```
+
+**Warning**: The pulled image will be cached on the local daemon and will
+be available to other jobs running on same worker.
 
 ## See also
 

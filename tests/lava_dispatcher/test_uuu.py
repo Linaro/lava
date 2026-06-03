@@ -6,7 +6,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import ANY, MagicMock, Mock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.actions.boot.uuu import (
@@ -618,7 +618,7 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         }
         action = self.create_action(uuu_device_parameters)
         action.driver.validate()
-        mock_cmd.assert_called_with(["docker", "pull", "atline/uuu:1.3.191"])
+        mock_cmd.assert_called_with(["docker", "pull", "atline/uuu:1.3.191"], env=ANY)
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
     @patch("lava_dispatcher.utils.docker.DockerRun._check_image_arch")
@@ -640,5 +640,6 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
                 "10.192.244.5:2376",
                 "pull",
                 "atline/uuu:1.3.191",
-            ]
+            ],
+            env=ANY,
         )
