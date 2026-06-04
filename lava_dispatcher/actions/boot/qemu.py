@@ -312,12 +312,7 @@ class CallQemuAction(Action):
             )
             shell_precommand_list.append("mkdir %s" % mountpoint)
             # prepare_guestfs creates ext2 (guestfs) or ext4 (e2fsprogs)
-            fs_type: str | None = self.get_namespace_data(
-                action="apply-overlay-guest", label="guest", key="fs_type"
-            )
-            if fs_type is None:
-                fs_type = "ext2"
-            shell_precommand_list.append(f"mount {uuid} -t {fs_type} {mountpoint}")
+            shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
             shell_precommand_list.append("ls -la %s/bin/lava-test-runner" % mountpoint)
