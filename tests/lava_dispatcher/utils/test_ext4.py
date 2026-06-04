@@ -852,6 +852,20 @@ class TestCreateExt4(unittest.TestCase):
         )
 
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
+    def test_fstype_ext2(self, mock_run):
+        mock_run.side_effect = [
+            MagicMock(returncode=0),
+            MagicMock(returncode=0),
+            MagicMock(returncode=0, stdout="abc-123\n"),
+        ]
+        create_ext4("/tmp/test.ext2", 256, fstype="ext2")
+        mkfs_call = mock_run.call_args_list[1]
+        self.assertEqual(
+            mkfs_call[0][0],
+            ["mkfs.ext2", "-q", "-L", "LAVA", "-F", "/tmp/test.ext2"],
+        )
+
+    @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_mkfs_failure(self, mock_run):
         mock_run.side_effect = [
             MagicMock(returncode=0),

@@ -153,7 +153,7 @@ def prepare_guestfs(
         from lava_dispatcher.utils.ext4 import create_ext4, inject_tar
 
         raw_img = output + ".raw"
-        uuid = create_ext4(raw_img, size)
+        uuid = create_ext4(raw_img, size, fstype="ext2")
 
         tar_output = action.mkdtemp()
         tarball = tarfile.open(overlay)

@@ -539,7 +539,9 @@ def copy_out_iso(
             os.rename(extracted, host_path)
 
 
-def create_ext4(path: str, size_mb: int, label: str = "LAVA") -> str:
+def create_ext4(
+    path: str, size_mb: int, label: str = "LAVA", fstype: str = "ext4"
+) -> str:
     try:
         subprocess.run(
             ["truncate", "-s", "%dM" % size_mb, path],
@@ -547,7 +549,7 @@ def create_ext4(path: str, size_mb: int, label: str = "LAVA") -> str:
             capture_output=True,
         )
         subprocess.run(
-            ["mkfs.ext4", "-q", "-L", label, "-F", path],
+            ["mkfs.%s" % fstype, "-q", "-L", label, "-F", path],
             check=True,
             capture_output=True,
         )
