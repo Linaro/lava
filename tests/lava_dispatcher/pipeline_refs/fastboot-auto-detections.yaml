@@ -284,6 +284,13 @@
     description: fastboot boot into system
     summary: attempt to fastboot boot
     timeout: 900
+  - class: PreOs
+    name: pre-os-command
+    level: '2.5'
+    max_retries: 1
+    description: issue pre os command
+    summary: send pre-os-command
+    timeout: 900
 - class: TestShellRetry
   name: lava-test-retry
   level: '3'

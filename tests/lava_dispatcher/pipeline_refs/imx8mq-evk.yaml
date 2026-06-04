@@ -344,9 +344,16 @@
     description: fastboot reboot into system
     summary: attempt to fastboot reboot
     timeout: 300
+  - class: PreOs
+    name: pre-os-command
+    level: '2.6'
+    max_retries: 1
+    description: issue pre os command
+    summary: send pre-os-command
+    timeout: 300
   - class: AutoLoginAction
     name: auto-login-action
-    level: '2.6'
+    level: '2.7'
     max_retries: 1
     description: automatically login after boot using job parameters and checking
       for messages.
@@ -355,7 +362,7 @@
     pipeline:
     - class: LoginAction
       name: login-action
-      level: 2.6.1
+      level: 2.7.1
       max_retries: 1
       description: Real login action.
       summary: Login after boot.

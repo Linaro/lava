@@ -846,9 +846,16 @@
     description: fastboot boot into system
     summary: attempt to fastboot boot
     timeout: 900
+  - class: PreOs
+    name: pre-os-command
+    level: '3.5'
+    max_retries: 1
+    description: issue pre os command
+    summary: send pre-os-command
+    timeout: 900
   - class: AutoLoginAction
     name: auto-login-action
-    level: '3.5'
+    level: '3.6'
     max_retries: 1
     description: automatically login after boot using job parameters and checking
       for messages.
@@ -857,21 +864,21 @@
     pipeline:
     - class: LoginAction
       name: login-action
-      level: 3.5.1
+      level: 3.6.1
       max_retries: 1
       description: Real login action.
       summary: Login after boot.
       timeout: 900
   - class: ExpectShellSession
     name: expect-shell-connection
-    level: '3.6'
+    level: '3.7'
     max_retries: 1
     description: Wait for a shell
     summary: Expect a shell prompt
     timeout: 900
   - class: ExportDeviceEnvironment
     name: export-device-env
-    level: '3.7'
+    level: '3.8'
     max_retries: 1
     description: Exports environment variables to the device
     summary: Exports environment variables action
