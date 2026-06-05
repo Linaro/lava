@@ -126,3 +126,9 @@ class TestParsedCommand(LavaDispatcherTestCase):
 
     def test_unicode_escape(self) -> None:
         self.action.parsed_command(["printf", r"\xc3\x28"])
+
+    def test_env(self) -> None:
+        output = self.action.parsed_command(
+            ["sh", "-c", "echo $FOOBAR"], env={"FOOBAR": "test"}
+        )
+        self.assertEqual(output, "test\n")

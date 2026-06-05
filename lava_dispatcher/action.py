@@ -546,7 +546,14 @@ class Action:
         """
         pass
 
-    def parsed_command(self, command_list, allow_fail=False, cwd=None, input=None):
+    def parsed_command(
+        self,
+        command_list,
+        allow_fail=False,
+        cwd=None,
+        input: str | None = None,
+        env: dict[str, str] | None = None,
+    ):
         """
         Support for external command operations on the dispatcher with output handling,
         without using a shell and with full structured logging.
@@ -562,6 +569,9 @@ class Action:
         :param: allow_fail - if True, the command may exist non-zero without
         being considered to have failed. Use to determine the kind of error
         by checking the output or in Finalize.
+        :param: cwd - the current working directory for this command
+        :param: input - input data to send to the command's stdin
+        :param: env - environment variables to pass to the command
         :return: On success (command exited zero), returns the command output.
         On failure (command exited non-zero and allow_fail not set)
           sets self.errors and raises self.command_exception
@@ -580,6 +590,7 @@ class Action:
                 timeout=self.timeout.duration,
                 check=True,
                 input=input,
+                env=env,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
