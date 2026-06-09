@@ -54,7 +54,8 @@ Recommends: bridge-utils,
             zstd
 Suggests: android-sdk-libsparse-utils,
           apache2,
-          docker.io
+          docker.io,
+          qdl (>= 2.0)
 Description: Linaro Automated Validation Architecture dispatcher
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
