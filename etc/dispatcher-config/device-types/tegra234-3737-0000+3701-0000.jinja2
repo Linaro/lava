@@ -1,0 +1,6 @@
+{# device_type = "tegra234-p3737-0000+p3701-0000" #}
+{% extends 'base-grub.jinja2' %}
+
+{% set action_timeout_bootloader_interrupt = action_timeout_bootloader_interrupt | default(300) %}
+{% set action_timeout_power_off = action_timeout_power_off | default(15) %}
+{% set console_device = console_device | default('ttyTCU0') %}
