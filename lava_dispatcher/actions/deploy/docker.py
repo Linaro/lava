@@ -6,14 +6,13 @@
 from __future__ import annotations
 
 import re
-import subprocess  # nosec - internal
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError
 from lava_common.schemas import docker_image_format_pattern
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.environment import DeployDeviceEnvironment
 from lava_dispatcher.actions.deploy.overlay import OverlayAction
+from lava_dispatcher.utils.docker import DockerContainer
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
@@ -27,48 +26,44 @@ class DockerAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.remote = []
+        # Dummy value
+        self.docker_container = DockerContainer("")
 
     def validate(self):
         super().validate()
         which("docker")
 
-        options = self.job.device["actions"]["deploy"]["methods"]["docker"]["options"]
-        if options["remote"]:
-            self.remote = ["--host"] + [options["remote"]]
-
-        # Print docker version
-        try:
-            out = subprocess.check_output(  # nosec - internal
-                ["docker"] + self.remote + ["version", "-f", "{{.Server.Version}}"]
-            )
-            out = out.decode("utf-8", errors="replace").strip("\n")
-            self.logger.debug("docker server, installed at version: %s", out)
-            out = subprocess.check_output(  # nosec - internal
-                ["docker", "version", "-f", "{{.Client.Version}}"]
-            )
-            out = out.decode("utf-8", errors="replace").strip("\n")
-            self.logger.debug("docker client, installed at version: %s", out)
-        except subprocess.CalledProcessError as exc:
-            raise InfrastructureError("Unable to call '%s': %s" % (exc.cmd, exc.output))
-        except OSError:
-            raise InfrastructureError("Command 'docker' does not exist")
-
         # "image" can be a dict or a string
         image = self.parameters["image"]
         if isinstance(image, str):
-            self.image_name = image
-            self.local = False
+            self.docker_container = DockerContainer(image)
         else:
-            self.image_name = image["name"]
-            self.local = image.get("local", False)
+            self.docker_container = DockerContainer.from_parameters(image, self.job)
+
+        options = self.job.device["actions"]["deploy"]["methods"]["docker"]["options"]
+        if options["remote"]:
+            self.docker_container.add_docker_options("--host", options["remote"])
+
+        # Print docker version
+        out = self.parsed_command(
+            [
+                *self.docker_container.docker_cmdline("version"),
+                "-f",
+                r"{{.Server.Version}}",
+            ],
+        ).strip("\n")
+        self.logger.debug("docker server, installed at version: %s", out)
+        out = self.parsed_command(  # nosec - internal
+            ["docker", "version", "-f", "{{.Client.Version}}"]
+        ).strip("\n")
+        self.logger.debug("docker client, installed at version: %s", out)
 
         # check docker image name
         # The string should be safe for command line inclusion
         if re.compile(docker_image_format_pattern).match(self.image_name) is None:
             self.errors = "image name '%s' is invalid" % self.image_name
         self.set_namespace_data(
-            action=self.name, label="image", key="name", value=self.image_name
+            action="deploy-docker", label="image", key="name", value=self.image_name
         )
 
     def populate(self, parameters):
@@ -80,28 +75,6 @@ class DockerAction(Action):
 
     def run(self, connection, max_end_time):
         # Pull the image
-        pull = not self.local
-        if self.local:
-            cmd = (
-                ["docker"]
-                + self.remote
-                + [
-                    "image",
-                    "inspect",
-                    "--format",
-                    f"Image {self.image_name} exists locally\nImage Id: {{{{.Id}}}}",
-                    self.image_name,
-                ]
-            )
-            if self.run_cmd(cmd, allow_fail=True):
-                self.logger.warning(
-                    "Unable to inspect docker image '%s'", self.image_name
-                )
-                pull = True
-        if pull:
-            self.run_cmd(
-                ["docker"] + self.remote + ["pull", self.image_name],
-                error_msg="Unable to pull docker image '%s'" % self.image_name,
-            )
+        self.docker_container.prepare(self)
 
         return super().run(connection, max_end_time)

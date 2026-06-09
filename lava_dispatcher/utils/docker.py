@@ -127,8 +127,11 @@ class DockerRun:
     def environment(self, variable, value):
         self._environment_vars.append((variable, value))
 
-    def cmdline(self, *args):
-        cmd = ["docker"] + self._docker_options + ["run"] + self._docker_run_options
+    def docker_cmdline(self, docker_command: str) -> list[str]:
+        return ["docker", *self._docker_options, docker_command]
+
+    def cmdline(self, *args: str) -> list[str]:
+        cmd = self.docker_cmdline("run") + self._docker_run_options
         cmd += self.interaction_options()
         cmd += self.start_options()
         cmd.append(self.image)
@@ -181,9 +184,7 @@ class DockerRun:
         if self._is_local_image:
             if action.run_cmd(
                 [
-                    "docker",
-                    *self._docker_options,
-                    "image",
+                    *self.docker_cmdline("image"),
                     "inspect",
                     "--format",
                     f"Image {self.image} exists locally",
@@ -196,7 +197,7 @@ class DockerRun:
                 )
                 pull = True
         if pull:
-            action.run_cmd(["docker", *self._docker_options, "pull", self.image])
+            action.run_cmd([*self.docker_cmdline("pull"), self.image])
         self._check_image_arch(action)
 
     def wait(self, shell=None):
@@ -209,9 +210,7 @@ class DockerRun:
                     raise InfrastructureError("Docker container unexpectedly exited")
                 subprocess.check_call(
                     [
-                        "docker",
-                        *self._docker_options,
-                        "inspect",
+                        *self.docker_cmdline("inspect"),
                         "--format=.",
                         self._container_name,
                     ],
@@ -230,9 +229,7 @@ class DockerRun:
             try:
                 subprocess.check_call(
                     [
-                        "docker",
-                        *self._docker_options,
-                        "exec",
+                        *self.docker_cmdline("exec"),
                         self._container_name,
                         "test",
                         "-e",
@@ -251,7 +248,7 @@ class DockerRun:
     def destroy(self):
         if self._container_name:
             subprocess.call(
-                ["docker", *self._docker_options, "rm", "-f", self._container_name],
+                [*self.docker_cmdline("rm"), "-f", self._container_name],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
@@ -261,9 +258,7 @@ class DockerRun:
         try:
             container = subprocess.check_output(
                 [
-                    "docker",
-                    *self._docker_options,
-                    "inspect",
+                    *self.docker_cmdline("inspect"),
                     "--format",
                     "{{.Architecture}}",
                     self.image,
@@ -294,7 +289,7 @@ class DockerContainer(DockerRun):
 
     def run(self, args, action):
         self.start(action)
-        cmd = ["docker", *self._docker_options, "exec"]
+        cmd = self.docker_cmdline("exec")
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
@@ -302,7 +297,7 @@ class DockerContainer(DockerRun):
 
     def get_output(self, args, action):
         self.start(action)
-        cmd = ["docker", *self._docker_options, "exec"]
+        cmd = self.docker_cmdline("exec")
         cmd += self.interaction_options()
         cmd.append(self._container_name)
         cmd += args
@@ -316,9 +311,7 @@ class DockerContainer(DockerRun):
             return
 
         cmd = [
-            "docker",
-            *self._docker_options,
-            "run",
+            *self.docker_cmdline("run"),
             *self._docker_run_options,
             "--detach",
         ]
@@ -330,4 +323,4 @@ class DockerContainer(DockerRun):
         self._started = True
 
     def stop(self, action):
-        action.run_cmd(["docker", *self._docker_options, "stop", self._container_name])
+        action.run_cmd([*self.docker_cmdline("stop"), self._container_name])
