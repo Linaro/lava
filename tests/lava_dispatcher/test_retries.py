@@ -132,8 +132,9 @@ class TestRetries(TestRetriesAndFailuresBase):
         fail_action = RaisesErrorAction(job)
         root_pipeline.add_action(fail_action)
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE),
         ):
             job.run()
 
@@ -154,9 +155,10 @@ class TestRetries(TestRetriesAndFailuresBase):
 
         root_pipeline.add_action(RetryAction(job))
 
-        with self.assertRaisesRegex(
-            LAVABug, "needs to implement an internal pipeline"
-        ), patch.object(Action, "validate") as action_validate_mock:
+        with (
+            self.assertRaisesRegex(LAVABug, "needs to implement an internal pipeline"),
+            patch.object(Action, "validate") as action_validate_mock,
+        ):
             root_pipeline.validate_actions()
 
         action_validate_mock.assert_called_once()
@@ -213,8 +215,9 @@ class TestRetries(TestRetriesAndFailuresBase):
 
         root_pipeline.add_action(retry_action, {"failure_retry": 3})
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE),
         ):
             job.run()
 
@@ -311,8 +314,9 @@ class TestRetryTimeout(TestRetriesAndFailuresBase):
 
         start_time = time.monotonic()
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            SleepsTimeoutException, "timed out after 1 seconds"
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(SleepsTimeoutException, "timed out after 1 seconds"),
         ):
             root_pipeline.job.run()
 
@@ -340,8 +344,9 @@ class TestRetryTimeout(TestRetriesAndFailuresBase):
 
         start_time = time.monotonic()
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            SleepsTimeoutException, "No time left for"
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(SleepsTimeoutException, "No time left for"),
         ):
             root_pipeline.job.run()
 
@@ -375,9 +380,12 @@ class TestRetryTimeout(TestRetriesAndFailuresBase):
 
         start_time = time.monotonic()
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            SleepsTimeoutException,
-            f"1 retries out of 10 failed for {UnitTestRetryAction.name}",
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(
+                SleepsTimeoutException,
+                f"1 retries out of 10 failed for {UnitTestRetryAction.name}",
+            ),
         ):
             job.run()
 
@@ -417,8 +425,9 @@ class TestFinalizeAction(TestRetriesAndFailuresBase):
 
         self.assertFalse(job.started)
 
-        with self.subTest("Raises error"), self.assertRaisesRegex(
-            RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE
+        with (
+            self.subTest("Raises error"),
+            self.assertRaisesRegex(RaisesErrorException, DEFAULT_TEST_ERROR_MESSAGE),
         ):
             job.run()
 

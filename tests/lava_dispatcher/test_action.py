@@ -44,9 +44,10 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
-            self.action
-        ) as error_logs:
+        with (
+            self.assertRaises(self.action.command_exception),
+            self.collect_lava_logs(self.action) as error_logs,
+        ):
             self.action.run_cmd(["sleep", "10"])
 
         end_time = time_monotonic()
@@ -66,9 +67,11 @@ class TestActionRunCmd(LavaDispatcherTestCase):
 
         start_time = time_monotonic()
 
-        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
-            self.action
-        ) as debug_logs, patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01):
+        with (
+            self.assertRaises(self.action.command_exception),
+            self.collect_lava_logs(self.action) as debug_logs,
+            patch.object(Action, "_SUBPROCESS_SIGTERM_TIMEOUT", 0.01),
+        ):
             self.action.run_cmd(
                 [
                     "sh",
@@ -93,9 +96,10 @@ class TestActionRunCmd(LavaDispatcherTestCase):
     def test_command_does_not_exist(self) -> None:
         non_existant_command = "THIS_COMMAND_does_NOT_exist"
 
-        with self.assertRaises(self.action.command_exception), self.collect_lava_logs(
-            self.action
-        ) as error_logs:
+        with (
+            self.assertRaises(self.action.command_exception),
+            self.collect_lava_logs(self.action) as error_logs,
+        ):
             self.action.run_cmd([non_existant_command])
 
         self.assertEqual(

@@ -44,10 +44,13 @@ class TestInteractive(LavaDispatcherTestCase):
     def test_stages(self):
         factory = Factory()
         job = factory.create_job("docker-01", "sample_jobs/docker-interactive.yaml")
-        with patch(
-            "lava_dispatcher.actions.deploy.docker.which",
-            return_value="/usr/bin/docker",
-        ), patch("subprocess.check_output", return_value=b""):
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.docker.which",
+                return_value="/usr/bin/docker",
+            ),
+            patch("subprocess.check_output", return_value=b""),
+        ):
             job.validate()
 
         description_ref = LavaDispatcherTestCase.pipeline_reference(

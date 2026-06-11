@@ -136,12 +136,10 @@ class TestCompressOverlay(LavaDispatcherTestCase):
             value=sample_test_results_dir,
         )
 
-        with TemporaryDirectory(
-            "sample_location"
-        ) as sample_location, TemporaryDirectory(
-            "mkdtemp"
-        ) as mkdtemp_dir, patch.object(
-            compress_overlay, "mkdtemp", return_value=mkdtemp_dir
+        with (
+            TemporaryDirectory("sample_location") as sample_location,
+            TemporaryDirectory("mkdtemp") as mkdtemp_dir,
+            patch.object(compress_overlay, "mkdtemp", return_value=mkdtemp_dir),
         ):
             compress_overlay.set_namespace_data(
                 action="test", label="shared", key="location", value=sample_location

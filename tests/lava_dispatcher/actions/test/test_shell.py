@@ -131,8 +131,9 @@ class TestTestShell(LavaDispatcherTestCase):
         test_suite = "0_DEFINITION"
         action.reports = {f"{test_suite}": {"results": {}, "ran": False}}
         data = ("ENDRUN", f"{test_suite} UUID")
-        with self.collect_lava_logs(action) as action_logs, patch(
-            "time.monotonic", monotonic
+        with (
+            self.collect_lava_logs(action) as action_logs,
+            patch("time.monotonic", monotonic),
         ):
             self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
         self.assertEqual(
@@ -273,9 +274,10 @@ class TestTestShell(LavaDispatcherTestCase):
         action.logger.marker = MagicMock()
 
         data = ("TESTCASE", "hello")
-        with self.assertRaises(TestError), self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            self.assertRaises(TestError),
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.check_patterns("signal", MockConnection(data))
         self.assertEqual(
             action_logs,
@@ -512,9 +514,10 @@ class TestTestShell(LavaDispatcherTestCase):
         action = TestShellAction(job)
 
         data = ("TESTREFERENCE", "")
-        with self.assertRaises(TestError), self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            self.assertRaises(TestError),
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.check_patterns("signal", MockConnection(data))
 
         self.assertEqual(

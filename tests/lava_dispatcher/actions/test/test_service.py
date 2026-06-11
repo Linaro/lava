@@ -196,10 +196,13 @@ class TestTestServiceAction(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     def test_validate(self):
-        with patch(
-            f"lava_dispatcher.actions.test.service.which",
-            return_value="/usr/bin/docker",
-        ), patch("lava_dispatcher.actions.test.service.subprocess.run"):
+        with (
+            patch(
+                f"lava_dispatcher.actions.test.service.which",
+                return_value="/usr/bin/docker",
+            ),
+            patch("lava_dispatcher.actions.test.service.subprocess.run"),
+        ):
             self.test_service_actions[0].validate()
             self.test_service_actions[1].validate()
 
@@ -222,12 +225,15 @@ class TestTestServiceAction(LavaDispatcherTestCase):
 
     def test_validate_compose_v1(self):
         action = self.test_service_actions[0]
-        with patch(
-            f"lava_dispatcher.actions.test.service.which",
-            side_effect=["/usr/bin/docker", "/usr/bin/docker-compose"],
-        ), patch(
-            "lava_dispatcher.actions.test.service.subprocess.run",
-            side_effect=subprocess.CalledProcessError(1, "docker compose version"),
+        with (
+            patch(
+                f"lava_dispatcher.actions.test.service.which",
+                side_effect=["/usr/bin/docker", "/usr/bin/docker-compose"],
+            ),
+            patch(
+                "lava_dispatcher.actions.test.service.subprocess.run",
+                side_effect=subprocess.CalledProcessError(1, "docker compose version"),
+            ),
         ):
             action.validate()
 
@@ -240,21 +246,23 @@ class TestTestServiceAction(LavaDispatcherTestCase):
         srv1.repo_dir = f"{self.tmp_path}/srv1"
         srv1.start_cmd = self.start_cmd_srv1
 
-        with self.subTest("Raise JobError"), self.assertRaisesRegex(
-            JobError, "Repo archive not found."
+        with (
+            self.subTest("Raise JobError"),
+            self.assertRaisesRegex(JobError, "Repo archive not found."),
         ):
             srv1.run(None, 420)
 
         self.assertFalse(srv1.started)
         fpath = f"{self.tmp_path}/lava-service/srv1.tar"
-        with self.subTest("Run success"), patch(
-            f"{self.action_path}.get_namespace_data",
-            return_value=fpath,
-        ), patch(
-            "lava_dispatcher.actions.test.service.untar_file"
-        ) as untar_file_mock, patch(
-            f"{self.action_path}.run_cmd"
-        ) as run_cmd_mock:
+        with (
+            self.subTest("Run success"),
+            patch(
+                f"{self.action_path}.get_namespace_data",
+                return_value=fpath,
+            ),
+            patch("lava_dispatcher.actions.test.service.untar_file") as untar_file_mock,
+            patch(f"{self.action_path}.run_cmd") as run_cmd_mock,
+        ):
             srv1.run(None, 420)
 
         untar_file_mock.assert_called_once_with(fpath, srv1.repo_dir)
@@ -268,9 +276,10 @@ class TestTestServiceAction(LavaDispatcherTestCase):
         srv2.repo_dir = f"{self.tmp_path}/srv2"
         srv2.start_cmd = self.start_cmd_srv2
 
-        with self.subTest("Raise error"), patch(
-            "lava_dispatcher.actions.test.service.GitHelper"
-        ) as GitHelper_mock:
+        with (
+            self.subTest("Raise error"),
+            patch("lava_dispatcher.actions.test.service.GitHelper") as GitHelper_mock,
+        ):
             git_instance_mock = MagicMock()
             git_instance_mock.clone.return_value = None  # Simulate failure
             GitHelper_mock.return_value = git_instance_mock
@@ -283,14 +292,15 @@ class TestTestServiceAction(LavaDispatcherTestCase):
 
         self.assertFalse(srv2.started)
         fpath = f"{self.tmp_path}/lava-service/srv2"
-        with self.subTest("Run success"), patch(
-            f"{self.action_path}.get_namespace_data",
-            return_value=fpath,
-        ), patch(
-            "lava_dispatcher.actions.test.service.GitHelper"
-        ) as GitHelper_mock, patch(
-            f"{self.action_path}.run_cmd"
-        ) as run_cmd_mock:
+        with (
+            self.subTest("Run success"),
+            patch(
+                f"{self.action_path}.get_namespace_data",
+                return_value=fpath,
+            ),
+            patch("lava_dispatcher.actions.test.service.GitHelper") as GitHelper_mock,
+            patch(f"{self.action_path}.run_cmd") as run_cmd_mock,
+        ):
             git_instance_mock = MagicMock()
             git_instance_mock.clone.return_value = "commitid"
             GitHelper_mock.return_value = git_instance_mock
@@ -397,31 +407,42 @@ class TestTestServiceAction(LavaDispatcherTestCase):
         srv.repo_dir = f"{self.tmp_path}/srv"
         srv.stop_cmd = self.stop_cmd_list[1]
 
-        with self.subTest("Service not started"), patch(
-            f"{self.action_path}.run_cmd"
-        ) as run_cmd_mock:
+        with (
+            self.subTest("Service not started"),
+            patch(f"{self.action_path}.run_cmd") as run_cmd_mock,
+        ):
             srv.cleanup(None, None)
         run_cmd_mock.assert_not_called()
 
-        with self.subTest("Service started"), patch(
-            f"{self.action_path}.run_cmd"
-        ) as run_cmd_mock:
+        with (
+            self.subTest("Service started"),
+            patch(f"{self.action_path}.run_cmd") as run_cmd_mock,
+        ):
             srv.started = True
             srv.cleanup(None, None)
         run_cmd_mock.assert_called_once_with(srv.stop_cmd, allow_fail=True)
 
-        with self.subTest("Repo not created"), patch(
-            "lava_dispatcher.actions.test.service.os.path.exists", return_value=False
-        ), patch(
-            "lava_dispatcher.actions.test.service.shutil.rmtree"
-        ) as shutil_rmtree_mock:
+        with (
+            self.subTest("Repo not created"),
+            patch(
+                "lava_dispatcher.actions.test.service.os.path.exists",
+                return_value=False,
+            ),
+            patch(
+                "lava_dispatcher.actions.test.service.shutil.rmtree"
+            ) as shutil_rmtree_mock,
+        ):
             srv.cleanup(None, None)
         shutil_rmtree_mock.assert_not_called()
 
-        with self.subTest("Repo created"), patch(
-            "lava_dispatcher.actions.test.service.os.path.exists", return_value=True
-        ), patch(
-            "lava_dispatcher.actions.test.service.shutil.rmtree"
-        ) as shutil_rmtree_mock:
+        with (
+            self.subTest("Repo created"),
+            patch(
+                "lava_dispatcher.actions.test.service.os.path.exists", return_value=True
+            ),
+            patch(
+                "lava_dispatcher.actions.test.service.shutil.rmtree"
+            ) as shutil_rmtree_mock,
+        ):
             srv.cleanup(None, None)
         shutil_rmtree_mock.assert_called_once_with(srv.repo_dir)

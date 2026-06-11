@@ -176,21 +176,21 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.uncpio"
-        ) as uncpio_mock, patch(
-            "os.unlink"
-        ) as unlink_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.cpio"
-        ) as cpio_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio") as uncpio_mock,
+            patch("os.unlink") as unlink_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.cpio") as cpio_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_cpio()
 
         decompress_file_mock.assert_called_once_with(
@@ -259,9 +259,10 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            patch("guestfs.GuestFS") as guestfs_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
@@ -325,19 +326,22 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
 
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "os.unlink"
-        ) as unlink_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
-        ) as create_tarfile_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("os.unlink") as unlink_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.create_tarfile"
+            ) as create_tarfile_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_tar()
 
         decompress_file_mock.assert_called_once_with(
@@ -414,9 +418,13 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
         action.run_cmd = MagicMock()
 
-        with patch("guestfs.GuestFS") as guestfs_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
-        ) as replace_mock, self.collect_lava_logs(action) as action_logs:
+        with (
+            patch("guestfs.GuestFS") as guestfs_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
+            ) as replace_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)
@@ -507,21 +515,21 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
         action.mkdtemp = MagicMock(return_value=str(tmp_dir_path))
-        with patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
-        ) as decompress_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.uncpio"
-        ) as uncpio_mock, patch(
-            "os.unlink"
-        ) as unlick_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
-        ) as untar_file_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.cpio"
-        ) as cpio_mock, patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
-        ) as compress_file_mock, self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.decompress_file"
+            ) as decompress_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio") as uncpio_mock,
+            patch("os.unlink") as unlick_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.untar_file"
+            ) as untar_file_mock,
+            patch("lava_dispatcher.actions.deploy.apply_overlay.cpio") as cpio_mock,
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.compress_file"
+            ) as compress_file_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_cpio()
 
         decompress_file_mock.assert_called_once_with(
@@ -582,9 +590,10 @@ class TestApplyOverlay(LavaDispatcherTestCase):
             }
         }
 
-        with patch("guestfs.GuestFS") as guestfs_mock, self.collect_lava_logs(
-            action
-        ) as action_logs:
+        with (
+            patch("guestfs.GuestFS") as guestfs_mock,
+            self.collect_lava_logs(action) as action_logs,
+        ):
             action.update_guestfs()
 
         guestfs_mock.assert_called_once_with(python_return_dict=True)

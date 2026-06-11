@@ -560,9 +560,10 @@ class TestAutoLogin(TestMessagesBase):
         shell_connection = self.prepare_test_connection(True)
 
         # Test the AutoLoginAction directly
-        with self.assertRaisesRegex(
-            JobError, "Login incorrect"
-        ), autologinaction.timeout(None, None) as max_end_time:
+        with (
+            self.assertRaisesRegex(JobError, "Login incorrect"),
+            autologinaction.timeout(None, None) as max_end_time,
+        ):
             autologinaction.run(shell_connection, max_end_time)
 
         self.assertIn("root@debian:~#", shell_connection.prompt_str)

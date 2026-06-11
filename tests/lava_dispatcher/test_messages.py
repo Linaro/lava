@@ -309,8 +309,9 @@ class TestBootMessages(TestMessagesBase):
 
         timeline_iter = monotonic_timeline()
 
-        with self.assertRaisesRegex(JobError, "^Kernel panic - not syncing$"), patch(
-            "time.monotonic", side_effect=lambda: next(timeline_iter)
+        with (
+            self.assertRaisesRegex(JobError, "^Kernel panic - not syncing$"),
+            patch("time.monotonic", side_effect=lambda: next(timeline_iter)),
         ):
             LinuxKernelMessages.parse_failures(
                 connection,

@@ -667,8 +667,12 @@ class TestDowload(LavaDispatcherTestCase):
         )
         action.url = urlparse("https://example.com/dtb")
 
-        with patch("requests.get", dummygetraise), self.assertRaisesRegex(
-            InfrastructureError, "Unable to download 'https://example.com/dtb': error"
+        with (
+            patch("requests.get", dummygetraise),
+            self.assertRaisesRegex(
+                InfrastructureError,
+                "Unable to download 'https://example.com/dtb': error",
+            ),
         ):
             ite = action.reader()
             next(ite)

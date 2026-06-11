@@ -56,9 +56,10 @@ def compress_file(infile: str, compression: str) -> str:
     cmd = compress_command_map[compression][:]
 
     try:
-        with open(infile, mode="rb") as in_file, open(
-            out_file_path, mode="wb"
-        ) as out_file:
+        with (
+            open(infile, mode="rb") as in_file,
+            open(out_file_path, mode="wb") as out_file,
+        ):
             subprocess.run(
                 args=cmd,
                 stdin=in_file,

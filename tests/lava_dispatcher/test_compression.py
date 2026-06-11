@@ -128,32 +128,37 @@ class TestDecompression(LavaDispatcherTestCase):
         test_bz2_bad_format = tests_dict["test_bz2_bad_format"]
         test_multiple_bad_checksums = tests_dict["test_multiple_bad_checksums"]
 
-        with self.subTest("Test bad sha256sum"), self.assertRaisesRegex(
-            JobError, "does not match"
+        with (
+            self.subTest("Test bad sha256sum"),
+            self.assertRaisesRegex(JobError, "does not match"),
         ):
             test_bad_sha256sum.validate()
             test_bad_sha256sum.run(None, None)
 
-        with self.subTest("Test bad XZ format"), self.assertRaisesRegex(
-            JobError, "subprocess exited with non-zero code"
+        with (
+            self.subTest("Test bad XZ format"),
+            self.assertRaisesRegex(JobError, "subprocess exited with non-zero code"),
         ):
             test_xz_bad_format.validate()
             test_xz_bad_format.run(None, None)
 
-        with self.subTest("Test bad GZ format"), self.assertRaisesRegex(
-            JobError, "subprocess exited with non-zero code"
+        with (
+            self.subTest("Test bad GZ format"),
+            self.assertRaisesRegex(JobError, "subprocess exited with non-zero code"),
         ):
             test_gz_bad_format.validate()
             test_gz_bad_format.run(None, None)
 
-        with self.subTest("Test bad BZ2 format"), self.assertRaisesRegex(
-            JobError, "subprocess exited with non-zero code"
+        with (
+            self.subTest("Test bad BZ2 format"),
+            self.assertRaisesRegex(JobError, "subprocess exited with non-zero code"),
         ):
             test_bz2_bad_format.validate()
             test_bz2_bad_format.run(None, None)
 
-        with self.subTest("Test multiple bad checksums"), self.assertRaisesRegex(
-            JobError, "md5.*does not match"
+        with (
+            self.subTest("Test multiple bad checksums"),
+            self.assertRaisesRegex(JobError, "md5.*does not match"),
         ):
             test_multiple_bad_checksums.validate()
             test_multiple_bad_checksums.run(None, None)
@@ -162,9 +167,10 @@ class TestDecompression(LavaDispatcherTestCase):
 class TestCompressionBinaries(TestCase):
     def test_compression_binaries(self) -> None:
         for compression_format in compress_command_map:
-            with self.subTest(compression=compression_format), TemporaryDirectory(
-                f"test-{compression_format}"
-            ) as tmp_dir:
+            with (
+                self.subTest(compression=compression_format),
+                TemporaryDirectory(f"test-{compression_format}") as tmp_dir,
+            ):
                 test_str = f"Hello, {compression_format}!"
                 tmp_dir_path = Path(tmp_dir)
                 test_file_path = tmp_dir_path / f"{compression_format}_test"
@@ -192,8 +198,9 @@ class TestCompressionBinaries(TestCase):
             with self.assertRaisesRegex(JobError, r"unable to decompress.*exit code"):
                 decompress_file(str(test_input_file), "zstd")
 
-            with self.subTest("decompression OSError"), self.assertRaisesRegex(
-                InfrastructureError, r"unable to decompress"
+            with (
+                self.subTest("decompression OSError"),
+                self.assertRaisesRegex(InfrastructureError, r"unable to decompress"),
             ):
                 decompress_file("does_not_exist_dir/does_not_exist.zstd", "zstd")
 

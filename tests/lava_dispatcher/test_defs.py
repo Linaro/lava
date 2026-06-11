@@ -362,12 +362,15 @@ class TestDefinitions(LavaDispatcherTestCase):
         self.assertTrue(pattern.valid())
 
     def test_definition_lists(self):
-        with patch(
-            "lava_dispatcher.actions.deploy.tftp.which",
-            return_value="/usr/bin/in.tftpd",
-        ), patch(
-            "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
-            return_value=None,
+        with (
+            patch(
+                "lava_dispatcher.actions.deploy.tftp.which",
+                return_value="/usr/bin/in.tftpd",
+            ),
+            patch(
+                "lava_dispatcher.actions.deploy.apply_overlay.rpcinfo_nfs",
+                return_value=None,
+            ),
         ):
             self.job.validate()
 
