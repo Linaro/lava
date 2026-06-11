@@ -12,6 +12,9 @@ actions:
       recovery_image:
         url: https://example.com/image.img.xz
         compression: xz
+      direct_url_image:
+        url: https://example.com/image.img.xz
+        download: false
     timeout:
       minutes: 15
 ```
@@ -23,6 +26,9 @@ The device dictionary must define the
 
 A dictionary of named images to download. Each image accepts the standard
 [artifact parameters](./index.md#artifacts).
+Additionally, each image supports an optional `download` parameter (default: `true`).
+When set to `false`, the image URL is not downloaded and is instead
+passed directly to the command substitution.
 
 ### overlays
 

@@ -13,7 +13,7 @@ from lava_common.schemas import deploy
 def schema():
     base = {
         Required("to"): "flasher",
-        Required("images"): {str: deploy.url()},
+        Required("images"): {str: deploy.url(extra={Optional("download"): bool})},
         Optional("uniquify"): bool,
     }
     return {**deploy.schema(), **base}

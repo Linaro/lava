@@ -59,6 +59,9 @@ class FlasherAction(Action):
         self.path = self.mkdtemp()
         uniquify = parameters.get("uniquify", True)
         for image in parameters["images"].keys():
+            # Skip download if 'download: false`
+            if not parameters["images"][image].get("download", True):
+                continue
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
@@ -77,11 +80,17 @@ class FlasherAction(Action):
         # Substitute in the device commands
         substitutions = {}
         for key in self.parameters["images"].keys():
-            filename = self.get_namespace_data(
-                action="download-action", label=key, key="file"
-            )
-            filename = filename[len(self.path) + 1 :]
-            substitutions["{%s}" % key.upper()] = filename
+            # Use the URL directly as the substitution value if 'download:false'
+            if not self.parameters["images"][key].get("download", True):
+                substitutions["{%s}" % key.upper()] = self.parameters["images"][key][
+                    "url"
+                ]
+            else:
+                filename = self.get_namespace_data(
+                    action="download-action", label=key, key="file"
+                )
+                filename = filename[len(self.path) + 1 :]
+                substitutions["{%s}" % key.upper()] = filename
 
         # Add power commands
         substitutions["{HARD_RESET_COMMAND}"] = str(self.job.device.hard_reset_command)

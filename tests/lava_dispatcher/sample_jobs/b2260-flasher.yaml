@@ -21,6 +21,10 @@ actions:
         url: http://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/armel/rootfs.cpio.gz
       dtb:
         url: https://images.validation.linaro.org/builds.96boards.org/snapshots/b2260/linaro/debian/21/stih410-b2260.dtb
+      some_direct_url:
+        url: https://images.validation.linaro.org/storage.kernelci.org/images/rootfs/buildroot/arm64/rootfs.cpio.gz
+        # Because download is false it will not produce an entry in the pipeline yaml
+        download: false
     os: debian
 - boot:
     method: minimal
