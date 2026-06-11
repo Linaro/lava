@@ -10,7 +10,8 @@ name = "lava"
 dynamic = ["version"]
 description = "LAVA is a continuous integration system for deploying operating systems onto physical and virtual hardware for running tests."
 readme = "README.md"
-license = {text = "GPL-2.0-or-later"}
+license = "GPL-2.0-or-later"
+license-files = ["COPYING"]
 authors = [
     {name = "LAVA team", email = "lava-team@linaro.org"}
 ]
