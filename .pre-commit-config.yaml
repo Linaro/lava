@@ -1,0 +1,17 @@
+exclude: "^tests/lava_dispatcher/kernel-.*txt$|uv.lock"
+minimum_pre_commit_version: "4.6.0"
+
+default_language_version:
+  python: python3.11
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+
+  - repo: https://github.com/tox-dev/pyproject-fmt
+    rev: v2.23.0
+    hooks:
+      - id: pyproject-fmt
