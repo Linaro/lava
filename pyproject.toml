@@ -121,17 +121,17 @@ version_file = "lava_common/_version.py"
 local_scheme = "no-local-version"
 tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
 
+# NOTE: package selection, py-modules and console scripts are deliberately
+# NOT declared here. The Debian packaging builds each binary package by
+# invoking setup.py once per component (see debian/rules), relying on the
+# per-component "packages"/"scripts" lists in setup.py to split the source
+# tree across lava-common, lava-dispatcher, lava-server, etc. Any of
+# [tool.setuptools.packages.find], py-modules or [project.scripts] declared
+# here would override those lists and end up installing every module/script
+# into every Debian package.
 [tool.setuptools]
 include-package-data = true
 zip-safe = false
-py-modules = ["manage"]
-
-[tool.setuptools.packages.find]
-include = [
-    "lava*",
-    "linaro_django_xmlrpc*",
-]
-exclude = ["tests*", "doc*"]
 
 [tool.setuptools.package-data]
 lava_common = ["VERSION"]
