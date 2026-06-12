@@ -1,122 +1,115 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2025 LAVA contributors
-
 [build-system]
-requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=61.0", "setuptools-scm>=8.0" ]
 
 [project]
 name = "lava"
-dynamic = ["version"]
-description = "LAVA is a continuous integration system for deploying operating systems onto physical and virtual hardware for running tests."
+description = """\
+  LAVA is a continuous integration system for deploying operating systems onto physical and virtual hardware for \
+  running tests.\
+  """
 readme = "README.md"
-license = {text = "GPL-2.0-or-later"}
-authors = [
-    {name = "LAVA team", email = "lava-team@linaro.org"}
-]
-maintainers = [
-    {name = "LAVA team", email = "lava-team@linaro.org"}
-]
+keywords = [ "automation", "ci", "continuous-integration", "embedded", "hardware", "testing" ]
+license = { text = "GPL-2.0-or-later" }
+maintainers = [ { name = "LAVA team", email = "lava-team@linaro.org" } ]
+authors = [ { name = "LAVA team", email = "lava-team@linaro.org" } ]
 requires-python = ">=3.11"
 classifiers = [
-    "Development Status :: 6 - Mature",
-    "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Software Development :: Testing",
-    "Framework :: Django",
+  "Development Status :: 6 - Mature",
+  "Framework :: Django",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Testing",
 ]
-keywords = ["testing", "ci", "continuous-integration", "automation", "embedded", "hardware"]
-
+dynamic = [ "version" ]
 dependencies = [
-    "PyYAML",
-    "voluptuous",
-    "sentry-sdk",
+  "pyyaml",
+  "sentry-sdk",
+  "voluptuous",
 ]
-
-[project.optional-dependencies]
-dispatcher = [
-    "aiohttp",
-    "configobj",
-    "python-magic",
-    "Jinja2",
-    "pexpect",
-    "pyudev",
-    "requests",
-    "setproctitle",
+optional-dependencies.coordinator = []
+optional-dependencies.dev = [
+  "black==25.1.0",
+  "django-stubs",
+  "isort==6.0.1",
+  "lava[full]",
+  "lava[test]",
+  "mypy",
+  "pre-commit==4.6.0",
+  "pylint",
+  "pylint",
+  "pylint-django",
+  "pylint-django",
+  "pyproject-fmt==2.23.0",
+  "types-pyyaml",
+  "types-requests",
 ]
-server = [
-    "asgiref",
-    "celery",
-    "defusedxml",
-    "django-allauth",
-    "django-filter",
-    "django-tables2",
-    "Django>=4.2,<5.0",
-    "django-environ",
-    "djangorestframework",
-    "djangorestframework-filters>=1.0.0.dev2",
-    "drf-extensions>=0.8.0",
-    "psycopg2-binary",
-    "pyzmq",
-    "tap.py",
-    "more-itertools",
-    "junit-xml",
-    "whitenoise",
-    "gunicorn",
-    "Jinja2",
-    "requests",
-    "aiohttp",
+optional-dependencies.dispatcher = [
+  "aiohttp",
+  "configobj",
+  "jinja2",
+  "pexpect",
+  "python-magic",
+  "pyudev",
+  "requests",
+  "setproctitle",
 ]
-dispatcher-host = [
-    "Jinja2",
-    "requests",
-    "pyudev",
+optional-dependencies.dispatcher-host = [
+  "jinja2",
+  "pyudev",
+  "requests",
 ]
-coordinator = []
-full = [
-    "lava[dispatcher]",
-    "lava[server]",
+optional-dependencies.docs = [
+  "mkdocs-material",
+  "pymdown-extensions",
 ]
-test = [
-    "pytest>=7.0",
-    "pytest-django",
-    "pytest-mock",
-    "pytest-cov",
-    "pytest-asyncio",
-    "pytest-random-order",
-    "pytest-subtests",
-    "responses",
+optional-dependencies.full = [
+  "lava[dispatcher]",
+  "lava[server]",
 ]
-dev = [
-    "lava[full]",
-    "lava[test]",
-    "black==25.1.0",
-    "isort==6.0.1",
-    "pylint",
-    "pylint-django",
-    "mypy",
-    "django-stubs",
-    "types-PyYAML",
-    "types-requests",
+optional-dependencies.server = [
+  "aiohttp",
+  "asgiref",
+  "celery",
+  "defusedxml",
+  "django>=4.2,<5.0",
+  "django-allauth",
+  "django-environ",
+  "django-filter",
+  "django-tables2",
+  "djangorestframework",
+  "djangorestframework-filters>=1.0.0.dev2",
+  "drf-extensions>=0.8.0",
+  "gunicorn",
+  "jinja2",
+  "junit-xml",
+  "more-itertools",
+  "psycopg2-binary",
+  "pyzmq",
+  "requests",
+  "tap-py",
+  "whitenoise",
 ]
-docs = [
-    "mkdocs-material",
-    "pymdown-extensions",
+optional-dependencies.test = [
+  "pytest>=7.0",
+  "pytest-asyncio",
+  "pytest-cov",
+  "pytest-django",
+  "pytest-mock",
+  "pytest-random-order",
+  "pytest-subtests",
+  "responses",
 ]
-
-[project.urls]
-Homepage = "https://lavasoftware.org"
-Documentation = "https://docs.lavasoftware.org"
-Repository = "https://gitlab.com/lava/lava"
-Issues = "https://gitlab.com/lava/lava/-/issues"
-
-[tool.setuptools_scm]
-version_file = "lava_common/_version.py"
-local_scheme = "no-local-version"
-tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
+urls.Documentation = "https://docs.lavasoftware.org"
+urls.Homepage = "https://lavasoftware.org"
+urls.Issues = "https://gitlab.com/lava/lava/-/issues"
+urls.Repository = "https://gitlab.com/lava/lava"
 
 # NOTE: package selection, py-modules and console scripts are deliberately
 # NOT declared here. The Debian packaging builds each binary package by
@@ -128,118 +121,122 @@ tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
 # into every Debian package.
 [tool.setuptools]
 include-package-data = true
+package-data.lava_common = [ "VERSION" ]
+package-data.lava_dispatcher = [
+  "dynamic_vm_keys/lava*",
+  "lava_test_shell/**/*",
+]
+package-data.lava_rest_app = [ "templates/**/*.html" ]
+package-data.lava_results_app = [
+  "static/**/*",
+  "templates/**/*.html",
+]
+package-data.lava_scheduler_app = [
+  "static/**/*",
+  "templates/**/*.html",
+  "templates/**/*.txt",
+]
+package-data.lava_server = [
+  "static/**/*",
+  "templates/**/*.html",
+  "templates/robots.txt",
+]
 zip-safe = false
 
-[tool.setuptools.package-data]
-lava_common = ["VERSION"]
-lava_dispatcher = [
-    "dynamic_vm_keys/lava*",
-    "lava_test_shell/**/*",
-]
-lava_rest_app = ["templates/**/*.html"]
-lava_results_app = [
-    "templates/**/*.html",
-    "static/**/*",
-]
-lava_scheduler_app = [
-    "templates/**/*.html",
-    "templates/**/*.txt",
-    "static/**/*",
-]
-lava_server = [
-    "templates/**/*.html",
-    "templates/robots.txt",
-    "static/**/*",
-]
-
-# Pylint configuration
-[tool.pylint.main]
-jobs = 0  # Scale number of jobs to number of CPUs
-init-hook = "import django; django.setup()"  # Fix django apps not being initialized
-load-plugins = "pylint_django"
-recursive = true
-py-version = "3.11"  # Debian 12 (bookworm) Python version
-disable = [
-    "format",  # Formatting is handled by black and isort
-    "design",
-    "C0103",  # Method name doesn't conform to snake_case naming style
-    "C0104",  # Disallowed name
-    "C0114",  # Missing module docstring
-    "C0115",  # Missing class docstring
-    "C0116",  # Missing function or method docstring
-    "C0209",  # Formatting a regular string which could be an f-string
-    "C0411",  # Wrong import order. This is handled by `isort --profile black`.
-    "C0412",  # Imports from package %s are not grouped
-    "C0415",  # Import outside toplevel
-    "E0202",  # An attribute defined in %s line %s hides this method
-    "E0401",  # Unable to import '%s'
-    "E1101",  # Instance of x has no y member
-    "W1309",  # Using an f-string that does not have any interpolated variables
-    "R0401",  # Cyclic import (%s -> %s)
-    "R0801",  # Duplicate code
-    "R1702",  # Too many nested blocks
-    "R1705",  # Unnecessary "else" after "return"
-    "R1710",  # Either all return statements in a function should return an expression,
-              # or none of them should.
-    "R1711",  # Useless return at end of function or method
-    "R1720",  # Unnecessary "elif" after "raise"
-    "R1723",  # Unnecessary "else" after "break"
-    "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
-    "R1732",  # Consider using 'with' for resource-allocating operations
-    "W0107",  # Unnecessary pass statement
-    "W0201",  # Attribute defined outside __init__
-    "W0212",  # Access to a protected member of a client class
-    "W0221",  # Used when a method has a different number of arguments than
-              # the implemented interface or in an overridden method.
-    "W0223",  # Method is abstract in class but is not overridden in child class
-    "W0237",  # Parameter has been renamed in overriding method
-    "W0511",  # FIXME comments
-    "W0603",  # Using the global statement
-    "W0613",  # Unused argument
-    "W0621",  # Redefining name from outer scope
-    "W0622",  # Redefining built-in
-    "W0632",  # Possible unbalanced tuple unpacking
-    "W0707",  # Consider explicitly re-raising using 'raise x from y'
-    "W0718",  # Catching too general exception
-    "W0719",  # Raising too general exception
-    "W1201",  # Use lazy % formatting in logging functions
-    "W1203",  # Use lazy % or % formatting in logging functions
-    "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
-    "W1514",  # Using open without explicitly specifying an encoding
-]
+[tool.setuptools_scm]
+version_file = "lava_common/_version.py"
+local_scheme = "no-local-version"
+tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
 
 [tool.black]
+target-version = [ "py311" ]
 line-length = 88
-target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
 line_length = 88
 
+[tool.pylint]
+main.disable = [
+  "C0103",  # Method name doesn't conform to snake_case naming style
+  "C0104",  # Disallowed name
+  "C0114",  # Missing module docstring
+  "C0115",  # Missing class docstring
+  "C0116",  # Missing function or method docstring
+  "C0209",  # Formatting a regular string which could be an f-string
+  "C0411",  # Wrong import order. This is handled by `isort --profile black`.
+  "C0412",  # Imports from package %s are not grouped
+  "C0415",  # Import outside toplevel
+  "design",
+  "E0202",  # An attribute defined in %s line %s hides this method
+  "E0401",  # Unable to import '%s'
+  "E1101",  # Instance of x has no y member
+  "format", # Formatting is handled by black and isort
+  "R0401",  # Cyclic import (%s -> %s)
+  "R0801",  # Duplicate code
+  "R1702",  # Too many nested blocks
+  "R1705",  # Unnecessary "else" after "return"
+  "R1710",  # Either all return statements in a function should return an expression,
+  # or none of them should.
+  "R1711",  # Useless return at end of function or method
+  "R1720",  # Unnecessary "elif" after "raise"
+  "R1723",  # Unnecessary "else" after "break"
+  "R1724",  # Unnecessary "else" after "continue", remove the "else" and de-indent the code inside it
+  "R1732",  # Consider using 'with' for resource-allocating operations
+  "W0107",  # Unnecessary pass statement
+  "W0201",  # Attribute defined outside __init__
+  "W0212",  # Access to a protected member of a client class
+  "W0221",  # Used when a method has a different number of arguments than
+  # the implemented interface or in an overridden method.
+  "W0223",  # Method is abstract in class but is not overridden in child class
+  "W0237",  # Parameter has been renamed in overriding method
+  "W0511",  # FIXME comments
+  "W0603",  # Using the global statement
+  "W0613",  # Unused argument
+  "W0621",  # Redefining name from outer scope
+  "W0622",  # Redefining built-in
+  "W0632",  # Possible unbalanced tuple unpacking
+  "W0707",  # Consider explicitly re-raising using 'raise x from y'
+  "W0718",  # Catching too general exception
+  "W0719",  # Raising too general exception
+  "W1201",  # Use lazy % formatting in logging functions
+  "W1203",  # Use lazy % or % formatting in logging functions
+  "W1309",  # Using an f-string that does not have any interpolated variables
+  "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
+  "W1514",  # Using open without explicitly specifying an encoding
+]
+main.init-hook = "import django; django.setup()"  # Fix django apps not being initialized
+# Pylint configuration
+main.jobs = 0  # Scale number of jobs to number of CPUs
+main.load-plugins = "pylint_django"
+main.py-version = "3.11"  # Debian 12 (bookworm) Python version
+main.recursive = true
+
+[tool.pyproject-fmt]
+keep_full_version = true
+
+[tool.pytest]
+ini_options.junit_family = "xunit2"
+ini_options.DJANGO_SETTINGS_MODULE = "tests.settings"
+
+[tool.coverage]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
+run.source = [
+  "lava_common",
+  "lava_dispatcher",
+  "lava_dispatcher_host",
+  "lava_rest_app",
+  "lava_results_app",
+  "lava_scheduler_app",
+  "lava_server",
+  "linaro_django_xmlrpc",
+]
+report.exclude_lines = [
+  "def __repr__",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "raise NotImplementedError",
+]
+
 [tool.pycodestyle]
 max-line-length = 88
-
-[tool.pytest.ini_options]
-DJANGO_SETTINGS_MODULE = "tests.settings"
-junit_family = "xunit2"
-
-[tool.coverage.run]
-source = [
-    "lava_common",
-    "lava_dispatcher",
-    "lava_dispatcher_host",
-    "lava_rest_app",
-    "lava_results_app",
-    "lava_scheduler_app",
-    "lava_server",
-    "linaro_django_xmlrpc",
-]
-omit = ["*/tests/*", "*/migrations/*"]
-
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "def __repr__",
-    "raise NotImplementedError",
-    "if TYPE_CHECKING:",
-]
