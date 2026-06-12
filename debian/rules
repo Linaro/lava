@@ -70,6 +70,9 @@ override_dh_auto_install:
 	rm -rf $(CURDIR)/build
 	python3 setup.py install --root=$(CURDIR)/debian/lava-server/ --no-compile --install-layout=deb lava-server
 	rm -rf $(CURDIR)/build
+	# all generated packages contain lava-*.egg-info; ship it only in lava-common
+	find $(CURDIR)/debian -depth -type d -name '*.egg-info' \
+		-not -path '*/lava-common/*' -exec rm -rf {} +
 	# handle embedded JS
 	python3 ./share/javascript.py -f ./share/javascript.yaml --remove
 
