@@ -122,10 +122,6 @@ class NbdAction(Action):
             value=True,
             parameters=parameters,
         )
-        # store in parameters for protocol 'xnbd' to tear-down nbd-server
-        # and store in namespace for boot action
-        # ip
-        parameters["lava-xnbd"] = {}
         # handle XnbdAction next - bring-up nbd-server
         self.pipeline.add_action(XnbdAction(self.job))
 
@@ -144,8 +140,15 @@ class XnbdAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         self.logger.debug("%s: starting nbd-server", self.name)
-        # pull from parameters - as previously set
-        self.nbd_root = self.parameters["lava-xnbd"]["nbdroot"]
+        # pull from namespace data - set by DownloaderAction
+        nbd_root: str = self.get_namespace_data(
+            action="download-action",
+            label="file",
+            key="nbdroot",
+        )
+        if nbd_root is None:
+            raise JobError("nbdroot was not downloaded")
+        self.nbd_root = nbd_root
         self.nbd_server_port = self.get_namespace_data(
             action="nbd-deploy", label="nbd", key="nbd_server_port"
         )

@@ -488,13 +488,6 @@ class DownloadHandler(Action):
             else:
                 raise JobError(f"{self.key!r} path prefix is required but not found")
 
-        # xnbd protocol needs to know the location
-        nbdroot = self.get_namespace_data(
-            action="download-action", label="file", key="nbdroot"
-        )
-        if "lava-xnbd" in self.parameters and nbdroot:
-            self.parameters["lava-xnbd"]["nbdroot"] = nbdroot
-
         self.results = {
             "label": self.key,
             "size": downloaded_size,
@@ -1007,9 +1000,6 @@ class PreDownloadedAction(Action):
                 )
             else:
                 raise JobError(f"{self.key!r} path prefix is required but not found")
-
-        if "lava-xnbd" in self.parameters and str(self.key) == "nbdroot":
-            self.parameters["lava-xnbd"]["nbdroot"] = str(dest)
 
         return connection
 
