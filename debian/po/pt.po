@@ -42,4 +42,3 @@ msgstr ""
 "Os dados de teste V2 nÃ£o serÃ£o afectados. Se tiver dados V1 remanescentes "
 "que queira manter, garanta que fez uma cÃ³pia de seguranÃ§a antes de "
 "continuar."
-

@@ -1,4 +1,4 @@
-# Multiple flash 
+# Multiple flash
 device_type: rw610bga
 job_name: health-check
 timeouts:

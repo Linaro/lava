@@ -519,4 +519,3 @@ OpenEmbedded deployment
 
 `Download / view complete x15
 <examples/test-jobs/x15-recovery.yaml>`_ complete test job YAML.
-

@@ -38,4 +38,3 @@ token" button in the Actions column on the above page.
 If a token is compromised, it can be removed by clicking on the red "delete
 this token" button in the Actions column. Anyone using that token will then no
 longer be able to authenticate as you in the system.
-

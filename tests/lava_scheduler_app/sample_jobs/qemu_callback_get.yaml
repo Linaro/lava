@@ -59,4 +59,4 @@ notify:
     - url: https://example.com/foo/bar
       method: GET
       dataset: minimal
-      token: secrettoken 
+      token: secrettoken

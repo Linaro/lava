@@ -66,4 +66,3 @@ timeouts:
   job:
     minutes: 30
 visibility: public
-

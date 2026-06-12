@@ -521,4 +521,3 @@ Always check whether the test result came back as a failure due to some cause
 other than the test definition itself. Particularly with MultiNode test jobs, a
 test can fail for other reasons like an unrelated failure on a different board
 within the group.
-

@@ -98,4 +98,3 @@ The syntax is::
 
    $ lavacli -i production jobs submit ../refactoring/standard/qemu-amd64-standard-stretch.yaml
    1865811
-

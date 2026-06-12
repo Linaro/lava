@@ -1,7 +1,7 @@
 $("#validate").click(function(){
-    $("#busyIndicator").show(); 
+    $("#busyIndicator").show();
     validate_input();
-    $("#busyIndicator").hide(); 
+    $("#busyIndicator").hide();
 });
 
 $(document).ajaxStart(function () {

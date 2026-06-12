@@ -528,4 +528,3 @@ Glossary of terms
     how many devices to assign to which worker. In large instances, it is
     common for all devices to be assigned to remote workers to manage the load
     on the master.
-

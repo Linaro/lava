@@ -80,4 +80,3 @@ The ramdisk may need adjustment for some bootloaders (like U-Boot), so mount
 the local media and use something like::
 
  mkimage -A arm -T ramdisk -C none -d /mnt/boot/init.. /mnt/boot/init..u-boot
-

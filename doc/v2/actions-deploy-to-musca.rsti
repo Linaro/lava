@@ -52,4 +52,3 @@ Download test binary to the Musca device.
 url *
 ^^^^^
 .. include:: actions-deploy-images-url.rsti
-

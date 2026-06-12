@@ -79,4 +79,3 @@ It is mandatory to have appropriate configuration variables set in LAVA settings
 !!! warning "copy-logs compatibility"
     Management command `copy-logs` is only applicable to the MongoDB and
     Elasticsearch database engines. Firestore is not yet supported.
-

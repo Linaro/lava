@@ -64,7 +64,7 @@ actions:
       - guest
     method: jlink
     commands :
-      - loadfile {boot} 
+      - loadfile {boot}
       - loadfile {cpu1} 0x8400000
       - loadfile {cpu2} 0x8540000
       - loadfile {combo} 0x85E0000
@@ -80,4 +80,3 @@ actions:
     - 'root@\w*:(.*)#'
     timeout:
       minutes: 2
-

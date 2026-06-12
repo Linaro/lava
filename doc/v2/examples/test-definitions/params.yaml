@@ -20,4 +20,3 @@ run:
         - echo $VARIABLE_NAME_2
         - echo $SPACED_VAR
         - echo $PUB_KEY
-

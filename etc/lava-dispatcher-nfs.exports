@@ -10,4 +10,3 @@
 #
 
 /var/lib/lava/dispatcher/tmp *(rw,no_root_squash,no_all_squash,async,no_subtree_check)
-

@@ -475,7 +475,7 @@ header. Example:
 
 .. code-block:: shell
 
-    $ curl -H "Authorization: Token xxxxxx" 
+    $ curl -H "Authorization: Token xxxxxx"
 
 Same token is used for REST API and XML-RPC API authentication.
 
@@ -575,4 +575,3 @@ pagination), you can use the testcase-count REST API method, like so:
 .. note:: Test cases will be ordered by ID regardless of whether pagination is
    used or not. This applies to downloading test cases for a particular test
    suite only.
-

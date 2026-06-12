@@ -27,5 +27,3 @@ Other users' favorite jobs
 ==========================
 
 In the ``Favorite jobs`` page you can see the link ``Favorite jobs by user``. When you click it, a dialog appears with a username field which is auto-complete and filrters the users in you LAVA server. Start typing the username of the user which faorite jobs you'd like to see and select that user. Upon clicking ``Save`` button, a page will be reloaded showing the list of the favorite jobs of this user.
-
-

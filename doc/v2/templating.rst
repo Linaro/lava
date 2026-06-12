@@ -291,7 +291,7 @@ LAVA job submissions.
   ensure that the output of the templates is submitted by an automated
   user and create sufficient automated users for each Test Plan or
   "Project" if multiple projects share a LAVA instance.
-  
+
   This will allow you to easily filter results later.
 
 * **Use checksums** - when referring to build artifacts like kernel

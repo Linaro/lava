@@ -44,7 +44,7 @@ actions:
             JLinkExe
           address:
             0x00000000
-          command: JLinkExe 
+          command: JLinkExe
           address: {{ load_address|default("0x00000000") }}
           processor: {{ processor|default("MCIMXRT1052") }}
           supported_core_types: {{ supported_core_types }}

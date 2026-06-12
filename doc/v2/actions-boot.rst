@@ -904,7 +904,7 @@ Installation
 
 To install ``jlink``, first download the "JLink Software and Documentation Pack" from the SEGGER website: https://www.segger.com/downloads/jlink/
 
-Device type configuration 
+Device type configuration
 --------------------------
 
 Example Configuration:
@@ -926,11 +926,11 @@ Example Configuration:
 
 ``It is important to fill in all the parameters present in jlink_options block.``
 
-.. note:: You can configure the `erase_command` (default: ["erase"]) and `reset_command` (default: ["r"]) parameters for each device type. 
+.. note:: You can configure the `erase_command` (default: ["erase"]) and `reset_command` (default: ["r"]) parameters for each device type.
   These parameters are mandatory for the jlink boot action, refer to the ``base-nxp-mcu.jinja2`` template for reference.
-  The `supported_core_types` parameter in the device type definition is optional (default = None). 
-  It is used by JLink to connect to the board in cases where the board has multiple cores, such as with the M33 and M7 cores. 
-  By default, the connection is made using the first core in the list, which in this case is the M33. 
+  The `supported_core_types` parameter in the device type definition is optional (default = None).
+  It is used by JLink to connect to the board in cases where the board has multiple cores, such as with the M33 and M7 cores.
+  By default, the connection is made using the first core in the list, which in this case is the M33.
   To connect to the second core (e.g., M7), you need to use the `coretype` parameter(optional) in the JLink boot method.
 
   .. code-block:: yaml
@@ -974,7 +974,7 @@ Usage
             hello_world:
               url: https://../hello_world.bin
 
-For the JLink boot method, there are two possibilities: 
+For the JLink boot method, there are two possibilities:
 
 ``flashing a single image``: It will flash the binary to the load address 0x0 by default.
 
@@ -1000,16 +1000,16 @@ For the JLink boot method, there are two possibilities:
 
 ``method`` (required): Specifies the method used for booting the device. Set this to "jlink" when using JLink.
 
-``prompts`` (optional): Specifies the prompts expected from the target device. This parameter is optional and is only used when the flashing binary behaves like a shell, allowing for interactive testing. It expects a list of strings representing the prompts. 
-    
+``prompts`` (optional): Specifies the prompts expected from the target device. This parameter is optional and is only used when the flashing binary behaves like a shell, allowing for interactive testing. It expects a list of strings representing the prompts.
+
 ``commands`` (optional): Specifies a list of commands to execute using JLink. These commands can include `loadfile` or any other valid JLink command. Additionally, you can use variables in the commands to reference binaries deployed during the deploy phase of tmpfs.
-    
+
 In this example, `{shell}` and `{hello_world}` are variables referencing binaries deployed during the deploy phase of tmpfs.
 
 Test Setup with Multiple MCUs
 -----------------------------------
 
-To set up a test requiring multiple MCUs, such as testing Bluetooth connectivity, the best solution is a multinode job. In this setup, MCU 1 and MCU 2 are placed on the same worker. 
+To set up a test requiring multiple MCUs, such as testing Bluetooth connectivity, the best solution is a multinode job. In this setup, MCU 1 and MCU 2 are placed on the same worker.
 Additionally, a Docker device is used to execute tests once both MCUs have completed their deployment and boot processes.
 
 .. figure:: images/multi_mcu_jlink_setup.png

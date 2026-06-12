@@ -10,4 +10,3 @@ need the ``archive`` option specified to unpack the system image correctly.
           url: http://example.com/boot.tar.xz
           compression: xz
           archive: tar
-

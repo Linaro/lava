@@ -2,4 +2,3 @@ test1a: pass
 test2a: fail
 test3a: skip
 \"test4a:\" \"unknown\"
-

@@ -412,4 +412,3 @@ Example for Qemu PPC bamboo:
      :linenos:
      :lines: 33-42
      :emphasize-lines: 6,7
-

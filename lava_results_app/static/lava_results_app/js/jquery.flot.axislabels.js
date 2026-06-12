@@ -145,7 +145,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
     HtmlAxisLabel.prototype.draw = function(box) {
         this.plot.getPlaceholder().find('#' + this.axisName + 'Label').remove();
-        var elem = $('<div id="' + this.axisName + 
+        var elem = $('<div id="' + this.axisName +
                      'Label" " class="axisLabels" style="position:absolute;">'
                      + this.opts.axisLabel + '</div>');
         this.plot.getPlaceholder().append(elem);
@@ -213,7 +213,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         s += ';';
         return s;
     };
- 
+
     CssTransformAxisLabel.prototype.calculateOffsets = function(box) {
         var offsets = { x: 0, y: 0, degrees: 0 };
         if (this.position == 'bottom') {
@@ -283,7 +283,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
         // adjust some values to take into account differences between
         // CSS and IE rotations.
         if (this.position == 'top') {
-            // FIXME: not sure why, but placing this exactly at the top causes 
+            // FIXME: not sure why, but placing this exactly at the top causes
             // the top axis label to flip to the bottom...
             offsets.y = box.top + 1;
         } else if (this.position == 'left') {
@@ -332,7 +332,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 $.each(plot.getAxes(), function(axisName, axis) {
                     var opts = axis.options // Flot 0.7
                         || plot.getOptions()[axisName] // Flot 0.6
-                        || plot.getOptions(); // Flot 1.1 
+                        || plot.getOptions(); // Flot 1.1
                     if (!opts || !opts.axisLabel || !axis.show)
                         return;
 
@@ -394,7 +394,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                 $.each(plot.getAxes(), function(axisName, axis) {
                     var opts = axis.options // Flot 0.7
                         || plot.getOptions()[axisName] // Flot 0.6
-                        || plot.getOptions(); // Flot 1.1 
+                        || plot.getOptions(); // Flot 1.1
                     if (!opts || !opts.axisLabel || !axis.show)
                         return;
 

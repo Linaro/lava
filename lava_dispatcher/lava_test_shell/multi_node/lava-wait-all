@@ -20,4 +20,3 @@ MESSAGE_NEED_ACK=
 lava_multi_node_send $1 $2
 
 lava_multi_node_wait_for_message
-
