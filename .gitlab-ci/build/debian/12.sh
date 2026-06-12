@@ -16,4 +16,11 @@ else
   .gitlab-ci/build/debian/check-debian-deps.py --suite bookworm --package lava-dispatcher _build/lava-dispatcher_*bookworm*
   .gitlab-ci/build/debian/check-debian-deps.py --suite bookworm --package lava-dispatcher-host _build/lava-dispatcher-host_*bookworm*
   .gitlab-ci/build/debian/check-debian-deps.py --suite bookworm --package lava-server _build/lava-server_*bookworm*
+
+  # Check each package only ships its own Python modules & /usr/bin scripts
+  .gitlab-ci/build/debian/check-debian-contents.sh lava-common _build/lava-common_*bookworm*.deb
+  .gitlab-ci/build/debian/check-debian-contents.sh lava-coordinator _build/lava-coordinator_*bookworm*.deb
+  .gitlab-ci/build/debian/check-debian-contents.sh lava-dispatcher _build/lava-dispatcher_*bookworm*.deb
+  .gitlab-ci/build/debian/check-debian-contents.sh lava-dispatcher-host _build/lava-dispatcher-host_*bookworm*.deb
+  .gitlab-ci/build/debian/check-debian-contents.sh lava-server _build/lava-server_*bookworm*.deb
 fi
