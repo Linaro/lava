@@ -2,7 +2,7 @@
 # Copyright (C) 2025 LAVA contributors
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = [ "setuptools>=61.0", "setuptools-scm>=8.0" ]
+requires = [ "setuptools>=66.1.1", "setuptools-scm>=7.1.0" ]
 
 [project]
 name = "lava"
