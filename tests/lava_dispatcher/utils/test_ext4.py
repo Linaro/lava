@@ -583,6 +583,11 @@ class TestExtractPartition(unittest.TestCase):
         self.assertEqual(part_file, "/tmp/work/partition.img")
         self.assertEqual(start, 2048)
         self.assertEqual(sector_size, 512)
+        dd_args = mock_run.call_args_list[1][0][0]
+        self.assertIn("bs=4M", dd_args)
+        self.assertIn("skip=%d" % (2048 * 512), dd_args)
+        self.assertIn("count=%d" % (1048576 * 512), dd_args)
+        self.assertIn("iflag=skip_bytes,count_bytes", dd_args)
 
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_invalid_partition_index(self, mock_run):
@@ -635,7 +640,8 @@ class TestWritePartitionBack(unittest.TestCase):
         args = mock_run.call_args[0][0]
         self.assertIn("if=/tmp/part.img", args)
         self.assertIn("of=/tmp/disk.img", args)
-        self.assertIn("seek=2048", args)
+        self.assertIn("seek=%d" % (2048 * 512), args)
+        self.assertIn("oflag=seek_bytes", args)
 
     @patch("lava_dispatcher.utils.ext4.subprocess.run")
     def test_dd_failure(self, mock_run):
