@@ -929,8 +929,19 @@ def device_type_detail(request, pk):
 
     prefix = "devices_"
     devices_data = DTDeviceView(request, model=Device, table_class=DeviceTable)
+    device_ct = ContentType.objects.get_for_model(Device)
+    dt_latest_health_reason = (
+        LogEntry.objects.filter(
+            content_type=device_ct,
+            object_id=OuterRef("pk"),
+        )
+        .order_by("-action_time")
+        .values("change_message")[:1]
+    )
     devices_ptable = DeviceTable(
-        devices_data.get_table_data(prefix).filter(device_type=dt),
+        devices_data.get_table_data(prefix)
+        .filter(device_type=dt)
+        .annotate(latest_health_reason=Subquery(dt_latest_health_reason)),
         request=request,
         prefix=prefix,
     )
@@ -2574,11 +2585,21 @@ def worker_detail(request, pk):
     if not worker.can_view(request.user):
         raise PermissionDenied()
     data = DeviceTableView(request)
+    device_ct = ContentType.objects.get_for_model(Device)
+    latest_health_reason = (
+        LogEntry.objects.filter(
+            content_type=device_ct,
+            object_id=OuterRef("pk"),
+        )
+        .order_by("-action_time")
+        .values("change_message")[:1]
+    )
     ptable = NoWorkerDeviceTable(
         data.get_table_data()
         .filter(worker_host=worker)
         .exclude(health=Device.HEALTH_RETIRED)
-        .order_by("hostname"),
+        .order_by("hostname")
+        .annotate(latest_health_reason=Subquery(latest_health_reason)),
         request=request,
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)

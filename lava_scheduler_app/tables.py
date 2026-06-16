@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.admin.models import LogEntry
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models.functions import Lower
-from django.utils.html import format_html
+from django.utils.html import format_html, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
@@ -260,25 +260,37 @@ class DeviceTable(LavaTable):
 
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
-            return mark_safe(  # nosec - static string
+            health_html = mark_safe(  # nosec - static string
                 '<strong class="text-success">Good</strong>'
             )
         elif record.health in [Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING]:
-            return format_html(
+            health_html = format_html(
                 '<span class="text-info">{}</span>', record.get_health_display()
             )
         elif record.health == Device.HEALTH_BAD:
-            return mark_safe(  # nosec - static string
+            health_html = mark_safe(  # nosec - static string
                 '<span class="text-danger">Bad</span>'
             )
         elif record.health == Device.HEALTH_MAINTENANCE:
-            return mark_safe(  # nosec - static string
+            health_html = mark_safe(  # nosec - static string
                 '<span class="text-warning">Maintenance</span>'
             )
         else:
-            return mark_safe(  # nosec - static string
+            health_html = mark_safe(  # nosec - static string
                 '<span class="text-muted">Retired</span>'
             )
+
+        # Wrap with tooltip showing the latest health-change reason from the log.
+        # The reason is pre-annotated on the queryset as latest_health_reason
+        # by the view, so no per-row SQL query is needed here.
+        reason = getattr(record, "latest_health_reason", None)
+        if reason:
+            return format_html(
+                '<span data-toggle="tooltip" title="{}">{}</span>',
+                strip_tags(reason),
+                health_html,
+            )
+        return health_html
 
     def render_last_job_end_time(self, record):
         return mark_safe(f"{naturaltime(record.last_job_end_time)}")
