@@ -53,7 +53,7 @@ class UBootFactory(Factory):
         return self.create_job("x15-01", filename)
 
     def create_juno_job(self, filename):
-        return self.create_job("juno-r2-01", filename)
+        return self.create_job("juno-01", filename)
 
     def create_zcu102_job(self, filename):
         return self.create_job("zcu102", filename)
