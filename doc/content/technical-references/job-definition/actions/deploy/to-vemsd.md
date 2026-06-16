@@ -7,7 +7,7 @@ new recovery image to the ARM Versatile Express Hardware Platforms like Juno.
 - deploy:
     to: vemsd
     recovery_image:
-      url: https://storage.lavacloud.io/health-checks/juno-r2/20.01-oe-uboot.zip
+      url: https://storage.lavacloud.io/health-checks/juno/20.01-oe-uboot.zip
       compression: zip
 ```
 

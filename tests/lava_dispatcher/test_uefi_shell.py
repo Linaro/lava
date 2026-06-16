@@ -24,9 +24,7 @@ class TestUefiShell(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()
         self.factory = Factory()
-        self.job = self.factory.create_job(
-            "juno-r2-01", "sample_jobs/juno-uefi-nfs.yaml"
-        )
+        self.job = self.factory.create_job("juno-01", "sample_jobs/juno-uefi-nfs.yaml")
 
     def test_shell_reference(self):
         self.job.validate()
@@ -70,7 +68,7 @@ class TestUefiShell(LavaDispatcherTestCase):
 
     def test_no_menu_reference(self):
         job = self.factory.create_job(
-            "juno-r2-01", "sample_jobs/juno-uefi-nfs-no-menu.yaml"
+            "juno-01", "sample_jobs/juno-uefi-nfs-no-menu.yaml"
         )
         self.assertEqual([], job.pipeline.errors)
         description_ref = self.pipeline_reference("juno-uefi-nfs-no-menu.yaml", job=job)
@@ -81,7 +79,7 @@ class TestUefiShell(LavaDispatcherTestCase):
         Tests that if shell_menu=='' that the menu is skipped
         """
         job = self.factory.create_job(
-            "juno-r2-01", "sample_jobs/juno-uefi-nfs-no-menu.yaml"
+            "juno-01", "sample_jobs/juno-uefi-nfs-no-menu.yaml"
         )
         job.validate()
         params = job.device["actions"]["boot"]["methods"]["uefi"]["parameters"]

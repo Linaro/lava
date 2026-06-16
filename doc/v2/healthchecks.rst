@@ -62,14 +62,14 @@ match a DeviceType name which exists in the database and which has devices
 available for health-check submissions. This can cause issues where admins want
 to share health checks between multiple instances.
 
-For example, if the DeviceType database object has the name ``juno-r2``, the
+For example, if the DeviceType database object has the name ``juno``, the
 device dictionary can use:
 
 .. code-block:: jinja
 
- {% extends 'juno.jinja2' %}
+ {% extends 'juno-uboot.jinja2' %}
 
-However, the health check YAML needs to use ``device_type: juno-r2`` or the
+However, the health check YAML needs to use ``device_type: juno`` or the
 health check will not run.
 
 Check ``/var/log/lava-server/django.log`` if you get a 404 when trying to force

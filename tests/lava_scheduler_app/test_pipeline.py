@@ -489,14 +489,12 @@ class TestExtendsSubmit(TestCaseWithFactory):
     def setUp(self):
         super().setUp()
         self.factory = YamlFactory()
-        self.device_type = self.factory.make_device_type(name="juno-r2")
-        self.factory.make_device(
-            device_type=self.device_type, hostname="juno-r2-uboot-01"
-        )
-        self.factory.make_device(device_type=self.device_type, hostname="juno-r2-01")
+        self.device_type = self.factory.make_device_type(name="juno")
+        self.factory.make_device(device_type=self.device_type, hostname="juno-02")
+        self.factory.make_device(device_type=self.device_type, hostname="juno-01")
 
     def test_health_checks_extends(self):
-        device1 = Device.objects.get(hostname="juno-r2-01")
+        device1 = Device.objects.get(hostname="juno-01")
         self.assertIsNotNone(device1.load_configuration(output_format="raw"))
         self.assertEqual("juno", device1.get_extends())
         self.assertTrue(
