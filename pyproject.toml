@@ -113,9 +113,6 @@ Documentation = "https://docs.lavasoftware.org"
 Repository = "https://gitlab.com/lava/lava"
 Issues = "https://gitlab.com/lava/lava/-/issues"
 
-[project.scripts]
-lava-server = "manage:main"
-
 [tool.setuptools_scm]
 version_file = "lava_common/_version.py"
 local_scheme = "no-local-version"
