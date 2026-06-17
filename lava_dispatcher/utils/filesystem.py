@@ -162,8 +162,7 @@ def prepare_guestfs(
         guest_tar = os.path.join(guest_dir, "guest.tar")
         root_tar = tarfile.open(guest_tar, "w")
 
-        results_dir_list = os.path.split(os.path.normpath(mountpoint))
-        sub_dir = os.path.join(tar_output, results_dir_list[1])
+        sub_dir = os.path.join(tar_output, os.path.normpath(mountpoint).lstrip("/"))
         for dirname in os.listdir(sub_dir):
             root_tar.add(os.path.join(sub_dir, dirname), arcname=dirname)
 
@@ -207,10 +206,9 @@ def prepare_guestfs(
     guest_tar = os.path.join(guest_dir, "guest.tar")
     root_tar = tarfile.open(guest_tar, "w")
 
-    # Get only the bottom tier subdirectory from mountpoint.
+    # Get only the full path from mountpoint.
     # Check CompressOverlay action for reference.
-    results_dir_list = os.path.split(os.path.normpath(mountpoint))
-    sub_dir = os.path.join(tar_output, results_dir_list[1])
+    sub_dir = os.path.join(tar_output, os.path.normpath(mountpoint).lstrip("/"))
     for dirname in os.listdir(sub_dir):
         root_tar.add(os.path.join(sub_dir, dirname), arcname=dirname)
 

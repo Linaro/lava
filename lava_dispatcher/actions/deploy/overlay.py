@@ -599,7 +599,7 @@ class CompressOverlay(Action):
         lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
         try:
             with tarfile.open(output, "w:gz") as tar:
-                tar.add(lava_path, os.path.basename(lava_path))
+                tar.add(lava_path, lava_test_results_dir)
                 # ssh authorization support
                 root_dir = os.path.join(location, "root")
                 if os.path.exists(root_dir):
