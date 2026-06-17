@@ -123,12 +123,18 @@ def test_persist_nfs_place_holder():
 
 
 class TestCompressOverlay(LavaDispatcherTestCase):
-    def test_compress_overlay(self) -> None:
+    def _run_compress_overlay(self, sample_test_results_dir: str):
+        """Run CompressOverlay with a populated overlay location.
+
+        Creates ``<location>/<lava_test_results_dir>/foo`` and
+        ``<location>/root/bar`` then runs the action. Returns a dict mapping
+        every archive member name to its ``TarInfo`` (read before the temp
+        directories holding the tarball are cleaned up).
+        """
         job = self.create_simple_job()
         compress_overlay = CompressOverlay(job)
         compress_overlay.parameters = {"namespace": "common"}
 
-        sample_test_results_dir = "/lava-12345"
         compress_overlay.set_namespace_data(
             action="test",
             label="results",
@@ -146,9 +152,12 @@ class TestCompressOverlay(LavaDispatcherTestCase):
             )
             sample_location_path = Path(sample_location)
 
-            # Results dir that should be added to tar
-            results_dir_path = Path(f"{sample_location_path}/{sample_test_results_dir}")
-            results_dir_path.mkdir(exist_ok=False)
+            # Results dir that should be added to tar. lava_test_results_dir is
+            # an absolute path so strip the leading "/" before joining.
+            results_dir_path = sample_location_path / sample_test_results_dir.lstrip(
+                "/"
+            )
+            results_dir_path.mkdir(parents=True, exist_ok=False)
             (results_dir_path / "foo").write_text("foo")
 
             # "root" dir that should be added to tar
@@ -157,6 +166,7 @@ class TestCompressOverlay(LavaDispatcherTestCase):
             (root_dir_path / "bar").write_text("bar")
 
             compress_overlay.run(None, None)
+
             # Tar archive should be created in mkdtemp_dir
             mkdtemp_path = Path(mkdtemp_dir)
             compress_output_path = Path(
@@ -164,11 +174,47 @@ class TestCompressOverlay(LavaDispatcherTestCase):
                     action=compress_overlay.name, label="output", key="file"
                 )
             )
-
             self.assertTrue(compress_output_path.is_relative_to(mkdtemp_path))
 
             with tarfile_open(compress_output_path, mode="r") as overlay_tar:
-                self.assertTrue(overlay_tar.getmember("lava-12345").isdir())
-                self.assertTrue(overlay_tar.getmember("lava-12345/foo").isfile())
-                self.assertTrue(overlay_tar.getmember("./root").isdir())
-                self.assertTrue(overlay_tar.getmember("./root/bar").isfile())
+                return {m.name: m for m in overlay_tar.getmembers()}
+
+    def test_compress_overlay(self) -> None:
+        members = self._run_compress_overlay("/lava-12345")
+
+        self.assertTrue(members["lava-12345"].isdir())
+        self.assertTrue(members["lava-12345/foo"].isfile())
+        self.assertTrue(members["./root"].isdir())
+        self.assertTrue(members["./root/bar"].isfile())
+
+    def test_compress_overlay_nested_results_dir(self) -> None:
+        # When lava_test_results_dir is overridden to a nested path, the whole
+        # path (minus the leading "/") must be preserved in the archive instead
+        # of being collapsed to just the final "lava-XXXX" directory. This is
+        # the behaviour fixed in commit 44e815f4a.
+        members = self._run_compress_overlay("/var/lib/lava/lava-12345")
+
+        self.assertTrue(members["var/lib/lava/lava-12345"].isdir())
+        self.assertTrue(members["var/lib/lava/lava-12345/foo"].isfile())
+        self.assertTrue(members["./root"].isdir())
+        self.assertTrue(members["./root/bar"].isfile())
+
+        # The basename-only entry that the old code produced must be absent.
+        self.assertNotIn("lava-12345", members)
+
+    def test_compress_overlay_member_names(self) -> None:
+        # The exact set of archive members for a nested results dir: the results
+        # dir is stored under its full path (minus the leading "/"). Intermediate
+        # path components are not added as separate members, and nothing is added
+        # at the collapsed basename location.
+        members = self._run_compress_overlay("/results/lava-99999")
+
+        self.assertEqual(
+            set(members),
+            {
+                "results/lava-99999",
+                "results/lava-99999/foo",
+                "./root",
+                "./root/bar",
+            },
+        )
