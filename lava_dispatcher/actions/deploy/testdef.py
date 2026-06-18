@@ -424,6 +424,7 @@ class UrlRepoAction(RepoAction):
 
         self.download_dir = self.mkdtemp()
         self.action_key = "url_repo"
+        self.strip_components = self.parameters.get("strip-components", 0)
         self.internal_pipeline = Pipeline(parent=self, job=self.job, parameters=params)
         self.internal_pipeline.add_action(
             DownloaderAction(
@@ -447,8 +448,13 @@ class UrlRepoAction(RepoAction):
                 "Directory already exists and is not empty - duplicate Action?"
             )
 
-        self.logger.info("Untar tests from file %s to directory %s", fname, runner_path)
-        untar_file(fname, runner_path)
+        self.logger.info(
+            "Untar tests from file %s to directory %s, stripping %i components",
+            fname,
+            runner_path,
+            self.strip_components,
+        )
+        untar_file(fname, runner_path, self.strip_components)
 
         # now read the YAML to create a testdef dict to retrieve metadata
         yaml_file = os.path.join(runner_path, self.parameters["path"])

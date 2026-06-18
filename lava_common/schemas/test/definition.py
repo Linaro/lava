@@ -41,6 +41,7 @@ def schema():
                     Required("repository"): str,
                     Required("from"): "url",
                     Optional("compression"): str,
+                    Optional("strip-components"): int,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
                     Optional("headers"): dict,

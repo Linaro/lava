@@ -28,6 +28,7 @@ from lava_dispatcher.actions.deploy.testdef import (
     TestInstallAction,
     TestOverlayAction,
     TestRunnerAction,
+    UrlRepoAction,
 )
 from lava_dispatcher.actions.test.shell import PatternFixup
 from lava_dispatcher.power import FinalizeAction
@@ -792,3 +793,28 @@ class TestStoreTestdefExpectedList(LavaDispatcherTestCase):
         )
 
         self.assertEqual(data, self.action.parameters["expected"])
+
+
+class TestUrlRepoAction(LavaDispatcherTestCase):
+    def make_action(self, parameters):
+        job = self.create_simple_job()
+        action = UrlRepoAction(job)
+        action.level = "1.1.4.8"
+        action.parameters = {
+            "from": "url",
+            "repository": "https://example.com/test-definitions.tar.gz",
+            "path": "automated/linux/smoke/smoke.yaml",
+            "name": "smoke",
+            "test_name": "1_smoke",
+            **parameters,
+        }
+        action.populate(action.parameters)
+        return action
+
+    def test_strip_components_default(self):
+        action = self.make_action({})
+        self.assertEqual(action.strip_components, 0)
+
+    def test_strip_components_from_parameters(self):
+        action = self.make_action({"strip-components": 1})
+        self.assertEqual(action.strip_components, 1)

@@ -95,6 +95,22 @@ The repository must be a tar archive containing the test definitions.
 `compression` is an optional string for providing decompression method to apply
 before extracting. Supported: `bz2`, `gz`, `xz` and `zstd`.
 
+`strip-components` is an optional integer that removes leading path components
+from each member when extracting. Useful for GitHub/GitLab archives that wrap
+their contents in a directory (for example `test-definitions-2019.03/`). Set
+`strip-components: 1` so `path` is relative to the repository root.
+
+```yaml title="Test definition from a GitHub archive tarball" hl_lines="5"
+- test:
+    definitions:
+    - name: smoke-tests
+      from: url
+      repository: https://github.com/Linaro/test-definitions/archive/2019.03.tar.gz
+      compression: gz
+      strip-components: 1
+      path: automated/linux/smoke/smoke.yaml
+```
+
 #### inline
 
 A simple test definition present in the same file as the job submission,

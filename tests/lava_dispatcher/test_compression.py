@@ -459,3 +459,66 @@ class TestTar(TestCase):
 
             with self.assertRaisesRegex(JobError, "unable to untar file"):
                 untar_file(str(output_tar_path), str(unpack_dir))
+
+    def test_tar_strip_components(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            top_dir = tmp_dir_path / "test-definitions-2019.03"
+            nested_dir = top_dir / "automated" / "linux"
+            nested_dir.mkdir(parents=True)
+
+            (top_dir / "README").write_text("readme")
+            (nested_dir / "smoke.yaml").write_text("smoke")
+
+            output_tar_path = tmp_dir_path / "test.tar"
+            create_tarfile(str(top_dir), str(output_tar_path), arcname=top_dir.name)
+
+            unpack_dir = tmp_dir_path / "unpack"
+            unpack_dir.mkdir()
+
+            untar_file(str(output_tar_path), str(unpack_dir), strip_components=1)
+
+            self.assertFalse((unpack_dir / "test-definitions-2019.03").exists())
+            self.assertEqual((unpack_dir / "README").read_text(), "readme")
+            self.assertEqual(
+                (unpack_dir / "automated" / "linux" / "smoke.yaml").read_text(),
+                "smoke",
+            )
+
+    def test_tar_strip_components_skips_shallow_members(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            top_dir = tmp_dir_path / "top"
+            top_dir.mkdir()
+            (top_dir / "keep").write_text("keep")
+
+            output_tar_path = tmp_dir_path / "test.tar"
+            create_tarfile(str(top_dir), str(output_tar_path), arcname=top_dir.name)
+
+            unpack_dir = tmp_dir_path / "unpack"
+            unpack_dir.mkdir()
+
+            untar_file(str(output_tar_path), str(unpack_dir), strip_components=1)
+
+            self.assertEqual(sorted(os.listdir(unpack_dir)), ["keep"])
+            self.assertEqual((unpack_dir / "keep").read_text(), "keep")
+
+    def test_tar_creates_missing_outdir(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            test_dir = tmp_dir_path / "foo"
+            test_dir.mkdir()
+            (test_dir / "bar").write_text("foobar")
+
+            output_tar_path = tmp_dir_path / "test.tar"
+            create_tarfile(str(test_dir), str(output_tar_path), arcname=".")
+
+            unpack_dir = tmp_dir_path / "does" / "not" / "exist"
+            self.assertFalse(unpack_dir.exists())
+
+            untar_file(str(output_tar_path), str(unpack_dir))
+
+            self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
