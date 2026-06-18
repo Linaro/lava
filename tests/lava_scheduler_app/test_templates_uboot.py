@@ -359,7 +359,10 @@ class TestUbootTemplates(BaseTemplateTest):
     {% set usb_device_id = 0 %}"""
         template_dict = self.render_device_dictionary_from_text(data)
         self.assertIsNotNone(template_dict)
-        self.assertEqual({"deploy": 30, "boot": 30}, template_dict["character_delays"])
+        self.assertEqual(
+            {"deploy": 30, "boot": 30, "test": 30},
+            template_dict["character_delays"],
+        )
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
             "juno#",
@@ -384,7 +387,10 @@ class TestUbootTemplates(BaseTemplateTest):
             data, {"bootloader_prompt": "vexpress>"}
         )
         self.assertIsNotNone(template_dict)
-        self.assertEqual({"deploy": 30, "boot": 30}, template_dict["character_delays"])
+        self.assertEqual(
+            {"deploy": 30, "boot": 30, "test": 30},
+            template_dict["character_delays"],
+        )
         self.assertIn("error-messages", template_dict["constants"]["u-boot"])
         self.assertEqual(
             "vexpress>",
