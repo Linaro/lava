@@ -6,6 +6,7 @@
 
 import logging
 import sys
+from uuid import uuid4
 
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpRequest
@@ -151,3 +152,58 @@ class TestHiddenDevicesInDeviceTable(TestCase):
         device.save()
         view = TestDeviceView(HttpRequest())
         self.assertEqual(len(view.get_queryset()), 1)
+
+
+class TestDeviceHealthTooltip(TestCase):
+    """Tests for DeviceTable.render_health tooltip on latest_health_reason."""
+
+    def _device(self, health, hostname="test-dev"):
+        dt, _ = DeviceType.objects.get_or_create(name="generic")
+        if hostname == "test-dev":
+            hostname = f"test-dev-{uuid4().hex[:8]}"
+        return Device.objects.create(
+            device_type=dt,
+            hostname=hostname,
+            health=health,
+            state=Device.STATE_IDLE,
+        )
+
+    def _table(self, devices):
+        return TestDeviceTable(devices, prefix="devices_")
+
+    def _render(self, record):
+        return self._table([record]).render_health(record)
+
+    def test_health_states(self):
+        """Each health state renders correct badge + tooltip when annotated."""
+        cases = [
+            (Device.HEALTH_GOOD, "text-success", "Good", True),
+            (Device.HEALTH_BAD, "text-danger", "Bad", True),
+            (Device.HEALTH_MAINTENANCE, "text-warning", "Maintenance", True),
+            (Device.HEALTH_UNKNOWN, "text-info", None, True),
+            (Device.HEALTH_RETIRED, "text-muted", "Retired", True),
+        ]
+        for health, cls, label, has_tooltip in cases:
+            d = self._device(health)
+            d.latest_health_reason = "reason"
+            result = self._render(d)
+            self.assertIn(cls, result, f"{health}")
+            if label:
+                self.assertIn(label, result, f"{health}")
+            if has_tooltip:
+                self.assertIn('data-toggle="tooltip"', result, f"{health}")
+            else:
+                self.assertNotIn("data-toggle", result, f"{health}")
+
+    def test_strips_html_from_reason(self):
+        d = self._device(Device.HEALTH_BAD)
+        d.latest_health_reason = '<script>alert("xss")</script> Bad boot'
+        result = self._render(d)
+        self.assertIn('data-toggle="tooltip"', result)
+        self.assertNotIn("<script>", result)
+
+    def test_no_annotation_no_tooltip(self):
+        d = self._device(Device.HEALTH_BAD)
+        result = self._render(d)
+        self.assertIn("text-danger", result)
+        self.assertNotIn("data-toggle", result)
