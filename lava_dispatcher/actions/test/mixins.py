@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from lava_common.yaml import yaml_safe_dump
 
@@ -22,9 +22,10 @@ class ReportMixin:
     - provide 'self.logger' and 'self.level' attrs.
     """
 
-    report: dict[str, str | dict[str, str]]
+    report: dict[str, Any]
     logger: YAMLLogger
     level: str
+    testset_name: str | None = None
 
     def handle_expected(self, expected: list[str], suite: str) -> None:
         """Report missing expected test cases as 'fail'.
@@ -44,7 +45,11 @@ class ReportMixin:
                         "reason": "missing expected test cases are reported as 'fail' by LAVA."
                     },
                 }
-                self.report[test_case_id] = "fail"
+                self.report[test_case_id] = {"result": "fail"}
+                if self.testset_name:
+                    res["set"] = self.testset_name
+                    self.report[test_case_id]["set"] = self.testset_name
+
                 self.logger.results(res)
 
     def handle_unexpected(self, expected: list[str], case: str, result: str) -> str:
