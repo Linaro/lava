@@ -329,8 +329,8 @@ class TestMonitorExpected(LavaDispatcherTestCase):
                 ),
             ],
         )
-        self.assertEqual(self.action.report["tc2"], "fail")
-        self.assertEqual(self.action.report["tc3"], "fail")
+        self.assertEqual(self.action.report["tc2"], {"result": "fail"})
+        self.assertEqual(self.action.report["tc3"], {"result": "fail"})
 
 
 class TestMonitorUnexpected(LavaDispatcherTestCase):

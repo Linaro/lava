@@ -381,6 +381,7 @@ class ResultDict(TypedDict, total=False):
     extra: dict[str, Any]
     starttc: int | None
     endtc: int | None
+    set: str
 
 
 class YAMLLogger:
