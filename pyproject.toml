@@ -78,7 +78,7 @@ optional-dependencies.server = [
   "asgiref",
   "celery",
   "defusedxml",
-  "django>=4.2,<5.0",
+  "django>=4.2.30,<5.0",
   "django-allauth",
   "django-environ",
   "django-filter",
