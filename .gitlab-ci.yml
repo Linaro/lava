@@ -85,6 +85,27 @@ aarch64/server-debian-13: {"extends": ".server-aarch64"}
     refs:
       - tags
 
+.pre-commit:
+  extends: .analyze
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
+  variables:
+    UV_PYTHON: "3.11"
+    UV_CACHE_DIR: "${CI_PROJECT_DIR}/.cache/uv"
+    PRE_COMMIT_HOME: "${CI_PROJECT_DIR}/.cache/pre-commit"
+  cache:
+    - key:
+        files:
+          - .pre-commit-config.yaml
+          - uv.lock
+      paths:
+        - "${PRE_COMMIT_HOME}"
+        - "${UV_CACHE_DIR}"
+  after_script:
+    - uv cache prune --ci
+
+pre-commit:
+  extends: .pre-commit
+
 black:
   extends: .analyze
   image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
