@@ -2,15 +2,14 @@
 
 ## Code style
 
-We use [black] to format the LAVA source code.
+We use [ruff format] to format the LAVA source code.
 
-The GitLab CI will run black on every merge request.
+The GitLab CI will run ruff on every merge request.
 
 You can run it locally:
 
 ```shell
-apt-get install black
-black lava/
+uvx ruff format lava/
 ```
 
 ## Unittests

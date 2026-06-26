@@ -1,5 +1,5 @@
 [bandit]: https://bandit.readthedocs.io/en/latest/
-[black]: https://black.readthedocs.io/en/stable/
+[ruff]: https://docs.astral.sh/ruff/
 [jinja2]: https://jinja.palletsprojects.com/
 [KissCache]: https://gitlab.com/ivoire/kisscache/
 [lava-debian]: https://apt.lavasoftware.org/release/

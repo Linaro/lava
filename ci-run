@@ -13,8 +13,8 @@ fi
 while getopts ":bcdopst" opt; do
   case $opt in
     b)
-      # run black
-      BLACK=true
+      # run ruff format
+      RUFF=true
       ;;
     c)
       # clean only
@@ -40,7 +40,7 @@ while getopts ":bcdopst" opt; do
     *)
       echo "Usage:"
       echo "-c - clean targets only"
-      echo "-b - run black"
+      echo "-b - run ruff format"
       echo "-d - test dispatcher"
       echo "-o - test common"
       echo "-s - test server"
@@ -53,9 +53,9 @@ done
 
 shift $((OPTIND -1))
 
-if [ -z "${BLACK}" ] && [ -z "${CLEAN}" ] && [ -z "${DISPATCH}" ] && [ -z "${COMMON}" ] && [ -z "${SERVER}" ] && [ -z "${TEMPLATE}" ]
+if [ -z "${RUFF}" ] && [ -z "${CLEAN}" ] && [ -z "${DISPATCH}" ] && [ -z "${COMMON}" ] && [ -z "${SERVER}" ] && [ -z "${TEMPLATE}" ]
 then
-    BLACK=true
+    RUFF=true
     COMMON=true
     DISPATCH=true
     SERVER=true
@@ -71,11 +71,11 @@ rm -rf .pytest_cache/
 find . -name __pycache__ -exec rmdir "{}" \; 2>/dev/null || true
 [ -n "${CLEAN}" ] && exit 0
 
-if [ "${BLACK}" ]
+if [ "${RUFF}" ]
 then
-    echo "Calling black"
+    echo "Calling ruff"
     echo
-    .gitlab-ci/analyze/black.sh
+    .gitlab-ci/analyze/ruff.sh
 fi
 
 if [ -n "${TEMPLATE}" ]
