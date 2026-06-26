@@ -656,6 +656,7 @@ class TestRunScript(LavaDispatcherTestCase):
                         call("cd /lava-1/1/tests/1_test1\n"),
                         call('UUID="$(cat uuid)"\n'),
                         call("set +x\n"),
+                        call("# USE_KMSG\n"),
                         call("export KMSG=true\n"),
                         call(
                             'echo "<0><LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'
