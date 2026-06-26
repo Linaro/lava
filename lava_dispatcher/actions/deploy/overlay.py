@@ -250,8 +250,16 @@ class CreateOverlay(Action):
             )
             if hostname := self.job.device.get("hostname"):
                 self._export_data(fout, hostname, "LAVA_DEVICE_HOSTNAME")
+            else:
+                self.logger.debug(
+                    "No hostname in device config, skipping LAVA_DEVICE_HOSTNAME"
+                )
             if device_type := self.job.device.get("devicetype"):
                 self._export_data(fout, device_type, "LAVA_DEVICE_TYPE")
+            else:
+                self.logger.debug(
+                    "No devicetype in device config, skipping LAVA_DEVICE_TYPE"
+                )
 
             if http_cache := self.job.parameters["dispatcher"].get(
                 "http_url_format_string", ""
