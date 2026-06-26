@@ -1067,6 +1067,8 @@ class TestRunnerAction(TestOverlayAction):
                 runsh.write(f"export CHARACTER_DELAY={delay}\n")
                 runsh.write(f"sleep {delay}\n")
             if lava_signal == "kmsg":
+                # Add a KMSG tag used by lava-test-runner
+                runsh.write("# USE_KMSG\n")
                 runsh.write("export KMSG=true\n")
                 runsh.write(
                     'echo "<0><LAVA_SIGNAL_STARTRUN $TESTRUN_ID $UUID>" > /dev/kmsg\n'

@@ -34,10 +34,19 @@ if [ -z "${SHELL}" ]; then
     SHELL=/bin/sh
 fi
 
+
 for line in $(cat ${WORKFILE} | grep -v LAVA_SIGNAL); do
 	test=`basename $line`
 	odir=${RESULTSDIR}/${test}-`date +%s`
 	mkdir ${odir}
+
+	# If the test is using KMSG, also use it in the test-runner.
+	# Only revert to non-kmsg if the next test is not using it.
+	if grep -q "# USE_KMSG" "${line}/run.sh"; then
+		export KMSG=true
+	else
+		unset KMSG
+	fi
 
 	if [ -f ${line}/install.sh ]; then
 		/bin/sh ${line}/install.sh
