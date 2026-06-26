@@ -39,4 +39,3 @@ actions:
       path: hacking-session-debian.yaml
       repository: https://gitlab.com/lava/hacking-session.git
     timeout: {minutes: 60}
-
