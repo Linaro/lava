@@ -63,13 +63,13 @@ See also
 
 ### Source code formatting
 
-`black` and `isort` should be applied to **all** LAVA source code files.
-Merge requests will **fail** CI if a change breaks the formatting.
-`isort` should be run with `--profile black` option to ensure compatibility
-with `black`.
+`ruff check` and `ruff format` should be applied to **all** LAVA source code
+files. Merge requests will **fail** CI if a change breaks the formatting.
+`ruff check` should be run with `--select I` option before `ruff format` to
+ensure compatibility.
 
-When changing files formatted by `black`, make your changes and then run
-`black` on all modified Python files before pushing the branch to GitLab.
+When changing files formatted by `ruff format`, make your changes and then run
+`ruff format` on all modified Python files before pushing the branch to GitLab.
 
 ### Signing off your commits
 

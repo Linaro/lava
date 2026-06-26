@@ -71,27 +71,27 @@ Make your changes
 
   * Use comments in the code in preference to detailed commit messages.
 
-.. index:: codestyle, black
+.. index:: codestyle, ruff
 
-.. _running_black:
+.. _running_ruff:
 
 Source code formatting
 ----------------------
 
-`black` and `isort` should be applied to **all** LAVA source code files.
-Merge requests will **fail** CI if a change breaks the formatting.
+``ruff check`` and ``ruff format`` should be applied to **all** LAVA source
+code files. Merge requests will **fail** CI if a change breaks the formatting.
 
-`isort` should be run with `--profile black` option to ensure
-compatibility with black.
+``ruff check`` should be run with ``--select I`` option before ``ruff format``
+to ensure compatibility.
 
-When changing files formatted by black, make your changes and then run
-``black`` on all modified Python files before pushing the branch to
-GitLab. In some situations, ``black`` and ``pylint`` can disagree on
+When changing files formatted by ``ruff format``, make your changes and then
+run ``ruff format`` on all modified Python files before pushing the branch to
+GitLab. In some situations, ``ruff format`` and ``pylint`` can disagree on
 continuation of long lines, particularly when using multiple operators
-and bracketing. In case of conflict, **black is always correct**. If
-you disagree with how `black` has formatted your change, consider
-expanding list comprehensions and other syntax until you and black can
-agree.
+and bracketing. In case of conflict, **ruff format is always correct**. If
+you disagree with how ``ruff format`` has formatted your change, consider
+expanding list comprehensions and other syntax until you and ``ruff format``
+can agree.
 
 .. index:: developer: adding unit tests
 
@@ -773,11 +773,11 @@ pep8
 In order to check for `PEP 008`_ compliance the following command is
 recommended::
 
-  $ black
+  $ ruff
 
-`black` can be installed in Debian based systems as follows::
+`ruff` can be launched as follows::
 
-  $ apt install black
+  $ uvx ruff format
 
 .. index:: unit tests
 

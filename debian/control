@@ -209,8 +209,7 @@ Description: LAVA coordinator daemon
 Package: lava-dev
 Architecture: any
 Section: devel
-Depends: black,
-         build-essential,
+Depends: build-essential,
          ca-certificates,
          debootstrap,
          devscripts,
@@ -253,7 +252,8 @@ Recommends: android-sdk-libsparse-utils,
             u-boot-tools
 Suggests: python3-bandit,
           python3-django-debug-toolbar,
-          radon
+          radon,
+          ruff
 Description: Linaro Automated Validation Architecture developer support
  LAVA is a continuous integration system for deploying operating
  systems onto physical and virtual hardware for running tests.
