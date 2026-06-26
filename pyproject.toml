@@ -46,7 +46,7 @@ optional-dependencies.dev = [
   "pylint",
   "pylint-django",
   "pylint-django",
-  "pyproject-fmt==2.23.0",
+  "pyproject-fmt==2.25.1",
   "types-pyyaml",
   "types-requests",
 ]

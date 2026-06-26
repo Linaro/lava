@@ -125,7 +125,6 @@ sast:
   variables:
     SAST_DEFAULT_ANALYZERS: "bandit"
 
-
 codespell:
   extends: .analyze
 
