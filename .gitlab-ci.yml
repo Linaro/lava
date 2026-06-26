@@ -106,9 +106,8 @@ aarch64/server-debian-13: {"extends": ".server-aarch64"}
 pre-commit:
   extends: .pre-commit
 
-black:
-  extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
+ruff:
+  extends: .pre-commit
 
 code_quality:
   extends: .analyze

@@ -415,7 +415,7 @@ Optional arguments are:
  python3-requests python3-setproctitle python3-yaml
  python3-zmq
 
-.. seealso:: :ref:`developer_workflow` and :ref:`running_black`
+.. seealso:: :ref:`developer_workflow` and :ref:`running_ruff`
 
 .. _quick_fixes:
 

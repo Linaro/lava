@@ -45,6 +45,7 @@ optional-dependencies.dev = [
   "pylint",
   "pylint-django",
   "pyproject-fmt==2.25.1",
+  "ruff==0.15.20",
   "types-pyyaml",
   "types-requests",
 ]
@@ -146,13 +147,23 @@ version_file = "lava_common/_version.py"
 local_scheme = "no-local-version"
 tag_regex = "^(?P<version>[0-9]+\\.[0-9]+)$"
 
-[tool.black]
-target-version = [ "py311" ]
+[tool.ruff]
+target-version = "py311"
 line-length = 88
-
-[tool.isort]
-profile = "black"
-line_length = 88
+lint.select = [
+  # "B",   # flake8-bugbear
+  # "E",   # pycodestyle errors
+  # "F",   # pyflakes
+  "I", # isort
+  # "SIM", # flake8-simplify
+  # "UP",  # pyupgrade
+  # "W",   # pycodestyle warnings
+]
+lint.ignore = [
+  "E501", # line too long (test data strings, URLs, commands)
+  "F403", # wildcard imports in Django settings are intentional
+  "F405", # undefined names from wildcard imports in Django settings
+]
 
 [tool.pylint]
 main.disable = [
@@ -162,14 +173,14 @@ main.disable = [
   "C0115",  # Missing class docstring
   "C0116",  # Missing function or method docstring
   "C0209",  # Formatting a regular string which could be an f-string
-  "C0411",  # Wrong import order. This is handled by `isort --profile black`.
+  "C0411",  # Wrong import order. This is handled by `ruff`.
   "C0412",  # Imports from package %s are not grouped
   "C0415",  # Import outside toplevel
   "design",
   "E0202",  # An attribute defined in %s line %s hides this method
   "E0401",  # Unable to import '%s'
   "E1101",  # Instance of x has no y member
-  "format", # Formatting is handled by black and isort
+  "format", # Formatting is handled by `ruff`
   "R0401",  # Cyclic import (%s -> %s)
   "R0801",  # Duplicate code
   "R1702",  # Too many nested blocks
