@@ -43,8 +43,6 @@ optional-dependencies.dev = [
   "mypy",
   "pre-commit==4.6.0",
   "pylint",
-  "pylint",
-  "pylint-django",
   "pylint-django",
   "pyproject-fmt==2.25.1",
   "types-pyyaml",
