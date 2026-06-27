@@ -16,7 +16,6 @@ device configuration is valid for each pipeline device on a specified instance.
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
 
-
 import argparse
 import xmlrpc.client
 

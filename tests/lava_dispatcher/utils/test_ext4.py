@@ -240,8 +240,7 @@ class TestStatPath(unittest.TestCase):
         mock_run.return_value = MagicMock(
             returncode=0,
             stdout=(
-                "Inode: 794   Type: symlink    Mode:  0777\n"
-                'Fast link dest: "usr/lib"\n'
+                'Inode: 794   Type: symlink    Mode:  0777\nFast link dest: "usr/lib"\n'
             ),
             stderr="",
         )

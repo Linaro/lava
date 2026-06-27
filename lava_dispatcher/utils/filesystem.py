@@ -40,9 +40,7 @@ def rmtree(directory: str | Path) -> None:
         raise LAVABug("Error when trying to remove '%s': %s" % (directory, exc))
 
 
-def mkdtemp(
-    autoremove: bool = True, basedir: str = "/tmp"
-) -> str:  # nosec - internal use.
+def mkdtemp(autoremove: bool = True, basedir: str = "/tmp") -> str:  # nosec - internal use.
     """
     returns a temporary directory that's deleted when the process exits
 

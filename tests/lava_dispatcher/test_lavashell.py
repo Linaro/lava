@@ -29,14 +29,13 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
 
     def test_missing_handler(self):
         def set_test_from_to_bad_value(job_dict: dict[str, Any]) -> None:
-            job_dict["actions"][-1]["test"]["definitions"][0][
-                "from"
-            ] = "unusable-handler-test"
+            job_dict["actions"][-1]["test"]["definitions"][0]["from"] = (
+                "unusable-handler-test"
+            )
 
         with self.assertRaisesRegex(
             JobError,
-            "(?=No testdef_repo handler is available for)"
-            "(?=.*unusable-handler-test)",
+            "(?=No testdef_repo handler is available for)(?=.*unusable-handler-test)",
         ):
             self.factory.create_job(
                 "kvm01",

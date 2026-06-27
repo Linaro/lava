@@ -15,7 +15,6 @@ device configuration is valid YAML syntax for each device.
 
 # pylint gets confused: commands have no shebang, but the file is not a module.
 
-
 import argparse
 import glob
 import os

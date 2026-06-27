@@ -91,7 +91,7 @@ class TestKVMSimulation(LavaDispatcherTestCase):
             "cmd_line": [
                 "qemu-system-x86_64",
                 "-machine accel=kvm:tcg",
-                "-hda" "%s" % "tbd",
+                "-hda%s" % "tbd",
                 "-nographic",
                 "-net",
                 "nic,model=virtio",

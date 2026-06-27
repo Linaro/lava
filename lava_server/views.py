@@ -80,17 +80,17 @@ def prometheus(request):
 
     (device_stats, running_jobs_count) = device_summary()
     data += f"""# TYPE devices_online counter
-devices_online {device_stats['num_online']}
+devices_online {device_stats["num_online"]}
 # TYPE devices_not_retired counter
-devices_not_retired {device_stats['num_not_retired']}
+devices_not_retired {device_stats["num_not_retired"]}
 # TYPE devices_running counter
-devices_running {device_stats['active_devices']}
+devices_running {device_stats["active_devices"]}
 # TYPE jobs_running counter
 jobs_running {running_jobs_count}
 # TYPE devices_health_check_total counter
-devices_health_check_total {device_stats['health_checks_total']}
+devices_health_check_total {device_stats["health_checks_total"]}
 # TYPE devices_health_check_complete counter
-devices_health_check_complete {device_stats['health_checks_complete']}
+devices_health_check_complete {device_stats["health_checks_complete"]}
 """
 
     # Device-types
@@ -110,11 +110,11 @@ devices_health_check_complete {device_stats['health_checks_complete']}
     data += "# TYPE device_type counter"
     for dt in dts:
         data += f"""
-device_type{{name="{dt['device_type']}",state="idle"}} {dt['idle']}
-device_type{{name="{dt['device_type']}",state="busy"}} {dt['busy']}
-device_type{{name="{dt['device_type']}",state="offline"}} {dt['offline']}
-device_type{{name="{dt['device_type']}",state="maintenance"}} {dt['maintenance']}
-device_type{{name="{dt['device_type']}",state="queue"}} {dt['queued_jobs'] or 0}"""
+device_type{{name="{dt["device_type"]}",state="idle"}} {dt["idle"]}
+device_type{{name="{dt["device_type"]}",state="busy"}} {dt["busy"]}
+device_type{{name="{dt["device_type"]}",state="offline"}} {dt["offline"]}
+device_type{{name="{dt["device_type"]}",state="maintenance"}} {dt["maintenance"]}
+device_type{{name="{dt["device_type"]}",state="queue"}} {dt["queued_jobs"] or 0}"""
 
     worker_stats = Worker.objects.exclude(health=Worker.HEALTH_RETIRED).aggregate(
         num_not_retired=Count("pk"),
@@ -125,15 +125,15 @@ device_type{{name="{dt['device_type']}",state="queue"}} {dt['queued_jobs'] or 0}
     )
     data += f"""
 # TYPE workers_not_retired counter
-workers_not_retired {worker_stats['num_not_retired']}
+workers_not_retired {worker_stats["num_not_retired"]}
 # TYPE workers_online counter
-workers_online {worker_stats['num_online']}
+workers_online {worker_stats["num_online"]}
 # TYPE workers_offline counter
-workers_offline {worker_stats['num_offline']}
+workers_offline {worker_stats["num_offline"]}
 # TYPE workers_maintenance counter
-workers_maintenance {worker_stats['num_maintenance']}
+workers_maintenance {worker_stats["num_maintenance"]}
 # TYPE workers_active counter
-workers_active {worker_stats['num_active']}
+workers_active {worker_stats["num_active"]}
 """
 
     return HttpResponse(data, content_type="text/plain; version=0.0.4")

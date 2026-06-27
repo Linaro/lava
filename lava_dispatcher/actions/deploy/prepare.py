@@ -75,10 +75,12 @@ class UBootPrepareKernelAction(Action):
             entry_addr = load_addr + 64
         else:
             entry_addr = load_addr
-        cmd = (
-            "mkimage -A %s -O linux -T kernel"
-            " -C none -a 0x%x -e 0x%x"
-            " -d %s %s" % (arch, load_addr, entry_addr, kernel, uimage_path)
+        cmd = "mkimage -A %s -O linux -T kernel -C none -a 0x%x -e 0x%x -d %s %s" % (
+            arch,
+            load_addr,
+            entry_addr,
+            kernel,
+            uimage_path,
         )
         if self.run_command(cmd.split(" ")):
             return uimage_path

@@ -111,9 +111,7 @@ class ConnectDevice(Action):
                     )
             self.command = self.job.device["commands"]["connections"][self.hardware][
                 "connect"
-            ][
-                :
-            ]  # local copy to retain idempotency.
+            ][:]  # local copy to retain idempotency.
         self._check_command()
 
     def run(self, connection, max_end_time):

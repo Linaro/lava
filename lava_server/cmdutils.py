@@ -22,7 +22,7 @@ class LAVADaemonCommand(BaseCommand):
             "--level",
             choices=["ERROR", "WARN", "INFO", "DEBUG"],
             default="DEBUG",
-            help="Logging level (ERROR, WARN, INFO, DEBUG) " "Default: DEBUG",
+            help="Logging level (ERROR, WARN, INFO, DEBUG) Default: DEBUG",
         )
 
         log.add_argument(

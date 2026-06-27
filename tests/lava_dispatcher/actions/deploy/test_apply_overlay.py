@@ -5,9 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from unittest.mock import call as mock_call
-from unittest.mock import patch
 
 from lava_common.exceptions import JobError
 from lava_dispatcher.actions.deploy.apply_overlay import AppendOverlays
