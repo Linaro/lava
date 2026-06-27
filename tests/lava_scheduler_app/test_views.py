@@ -88,9 +88,7 @@ actions:
 @pytest.fixture
 def setup(db):
     group = Group.objects.create(name="group1")
-    User.objects.create_user(
-        username="admin", password="admin", is_superuser=True
-    )  # nosec
+    User.objects.create_user(username="admin", password="admin", is_superuser=True)  # nosec
     user = User.objects.create_user(username="tester", password="tester")  # nosec
     user.groups.add(group)
 
@@ -218,9 +216,7 @@ def test_devices(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/alldevices.html"  # nosec
     assert len(ret.context["devices_table"].data) == 4  # nosec
     hostnames = {x.hostname for x in ret.context["devices_table"].data}
-    assert hostnames == set(
-        ["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"]
-    )  # nosec
+    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
 
 
 @pytest.mark.django_db
@@ -230,9 +226,7 @@ def test_devices_active(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/activedevices.html"  # nosec
     assert len(ret.context["active_devices_table"].data) == 4  # nosec
     hostnames = {x.hostname for x in ret.context["active_devices_table"].data}
-    assert hostnames == set(
-        ["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"]
-    )  # nosec
+    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
 
 
 @pytest.mark.django_db
@@ -241,12 +235,8 @@ def test_devices_online(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/onlinedevices.html"  # nosec
     assert len(ret.context["online_devices_table"].data) == 2  # nosec
-    assert (
-        ret.context["online_devices_table"].data[0].hostname == "juno-uboot-01"
-    )  # nosec
-    assert (
-        ret.context["online_devices_table"].data[1].hostname == "juno-uefi-01"
-    )  # nosec
+    assert ret.context["online_devices_table"].data[0].hostname == "juno-uboot-01"  # nosec
+    assert ret.context["online_devices_table"].data[1].hostname == "juno-uefi-01"  # nosec
 
 
 @pytest.mark.django_db
@@ -428,15 +418,9 @@ def test_longest_jobs(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/longestjobs.html"  # nosec
     assert len(ret.context["longestjobs_table"].data) == 3  # nosec
-    assert (
-        ret.context["longestjobs_table"].data[0].description == "test job 02"
-    )  # nosec
-    assert (
-        ret.context["longestjobs_table"].data[1].description == "test job 05"
-    )  # nosec
-    assert (
-        ret.context["longestjobs_table"].data[2].description == "test job 06"
-    )  # nosec
+    assert ret.context["longestjobs_table"].data[0].description == "test job 02"  # nosec
+    assert ret.context["longestjobs_table"].data[1].description == "test job 05"  # nosec
+    assert ret.context["longestjobs_table"].data[2].description == "test job 06"  # nosec
 
 
 @pytest.mark.django_db
@@ -448,9 +432,7 @@ def test_favorite_jobs_other_user(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.context["username"] == "tester"  # nosec
     assert len(ret.context["favoritejobs_table"].data) == 1  # nosec
-    assert (
-        ret.context["favoritejobs_table"].data[0].description == "test job 01"
-    )  # nosec
+    assert ret.context["favoritejobs_table"].data[0].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db
@@ -463,9 +445,7 @@ def test_favorite_jobs(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/favorite_jobs.html"  # nosec
     assert len(ret.context["favoritejobs_table"].data) == 1  # nosec
-    assert (
-        ret.context["favoritejobs_table"].data[0].description == "test job 01"
-    )  # nosec
+    assert ret.context["favoritejobs_table"].data[0].description == "test job 01"  # nosec
 
 
 @pytest.mark.django_db
@@ -486,10 +466,12 @@ def test_job_status(client, setup):
 def test_job_timing(client, monkeypatch, setup):
     monkeypatch.setattr(
         "lava_scheduler_app.logutils.logs_instance.read",
-        lambda dir_name: """
+        lambda dir_name: (
+            """
 - {"dt": "2019-11-05T09:06:14.952630", "lvl": "debug", "msg": "start: 1.1 deploy-device-env (timeout 00:03:52) [common]"}
 - {"dt": "2019-11-05T09:06:14.953059", "lvl": "debug", "msg": "end: 1.1 deploy-device-env (duration 00:00:10) [common]"}
-""",
+"""
+        ),
     )
     job_1 = TestJob.objects.get(description="test job 01")
     ret = client.post(reverse("lava.scheduler.job.timing", args=[job_1.pk]))
@@ -515,17 +497,17 @@ def test_job_log_file_plain_no_log_file(client, setup):
 def test_job_log_file_plain(client, monkeypatch, setup):
     monkeypatch.setattr(
         "lava_scheduler_app.logutils.logs_instance.open",
-        lambda dir_name: """
+        lambda dir_name: (
+            """
 line one
 line two
-""",
+"""
+        ),
     )
     job_1 = TestJob.objects.get(description="test job 01")
     ret = client.post(reverse("lava.scheduler.job.log_file.plain", args=[job_1.pk]))
     assert ret.status_code == 200  # nosec
-    assert (
-        ret["Content-Disposition"] == "attachment; filename=job_%d.log" % job_1.id
-    )  # nosec
+    assert ret["Content-Disposition"] == "attachment; filename=job_%d.log" % job_1.id  # nosec
 
 
 @pytest.mark.django_db
@@ -548,10 +530,12 @@ def test_job_log_incremental(client, monkeypatch, setup):
     )
     monkeypatch.setattr(
         "lava_scheduler_app.logutils.logs_instance.read",
-        lambda dir_name, first_line: """
+        lambda dir_name, first_line: (
+            """
 - {"dt": "2019-11-04T15:39:52.345099", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
 - {"dt": "2019-11-04T15:39:52.345794", "lvl": "info", "msg": "start: 1 lxc-deploy (timeout 00:05:00) [tlxc]"}
-""",
+"""
+        ),
     )
     job_1 = TestJob.objects.get(description="test job 01")
     ret = client.post(reverse("lava.scheduler.job.log_incremental", args=[job_1.pk]))
@@ -770,9 +754,7 @@ def test_job_annotate_failure_get(client, setup):
         )
     )
     assert ret.status_code == 200  # nosec
-    assert (
-        ret.templates[0].name == "lava_scheduler_app/job_annotate_failure.html"
-    )  # nosec
+    assert ret.templates[0].name == "lava_scheduler_app/job_annotate_failure.html"  # nosec
 
 
 @pytest.mark.django_db
@@ -827,7 +809,7 @@ def test_failure_reports_anonymous(client, setup):
     url = reverse("lava.scheduler.failure_report")
     ret = client.get(url)
     assert ret.status_code == 302
-    assert ret.url == f'{reverse("login")}?next={url}'
+    assert ret.url == f"{reverse('login')}?next={url}"
 
 
 @pytest.mark.django_db
@@ -859,15 +841,9 @@ def test_jobs_active(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/active_jobs.html"  # nosec
     assert len(ret.context["active_jobs_table"].data) == 3  # nosec
-    assert (
-        ret.context["active_jobs_table"].data[0].description == "test job 06"
-    )  # nosec
-    assert (
-        ret.context["active_jobs_table"].data[1].description == "test job 05"
-    )  # nosec
-    assert (
-        ret.context["active_jobs_table"].data[2].description == "test job 02"
-    )  # nosec
+    assert ret.context["active_jobs_table"].data[0].description == "test job 06"  # nosec
+    assert ret.context["active_jobs_table"].data[1].description == "test job 05"  # nosec
+    assert ret.context["active_jobs_table"].data[2].description == "test job 02"  # nosec
 
 
 @pytest.mark.django_db
@@ -904,15 +880,9 @@ def test_jobs_my_active(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/myjobs_active.html"  # nosec
     assert len(ret.context["myjobs_active_table"].data) == 3  # nosec
-    assert (
-        ret.context["myjobs_active_table"].data[0].description == "test job 06"
-    )  # nosec
-    assert (
-        ret.context["myjobs_active_table"].data[1].description == "test job 05"
-    )  # nosec
-    assert (
-        ret.context["myjobs_active_table"].data[2].description == "test job 02"
-    )  # nosec
+    assert ret.context["myjobs_active_table"].data[0].description == "test job 06"  # nosec
+    assert ret.context["myjobs_active_table"].data[1].description == "test job 05"  # nosec
+    assert ret.context["myjobs_active_table"].data[2].description == "test job 02"  # nosec
 
     assert client.login(username="admin", password="admin") is True  # nosec
     ret = client.get(reverse("lava.scheduler.myjobs.active"))
@@ -931,9 +901,7 @@ def test_jobs_my_queued(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/myjobs_queued.html"  # nosec
     assert len(ret.context["myjobs_queued_table"].data) == 1  # nosec
-    assert (
-        ret.context["myjobs_queued_table"].data[0].description == "test job 03"
-    )  # nosec
+    assert ret.context["myjobs_queued_table"].data[0].description == "test job 03"  # nosec
 
     assert client.login(username="admin", password="admin") is True  # nosec
     ret = client.get(reverse("lava.scheduler.myjobs.queued"))
@@ -974,7 +942,7 @@ def test_job_errors_anonymous(client, setup):
     url = reverse("lava.scheduler.job.errors")
     ret = client.get(url)
     assert ret.status_code == 302
-    assert ret.url == f'{reverse("login")}?next={url}'
+    assert ret.url == f"{reverse('login')}?next={url}"
 
 
 @pytest.mark.django_db
@@ -1106,9 +1074,7 @@ def test_lab_health(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"  # nosec
     assert len(ret.context["device_health_table"].data) == 4  # nosec
     hostnames = {x["hostname"] for x in ret.context["device_health_table"].data}
-    assert hostnames == set(
-        ["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"]
-    )  # nosec
+    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
 
 
 @pytest.mark.django_db
@@ -1128,7 +1094,7 @@ def test_reports_anonymous(client, setup):
     url = reverse("lava.scheduler.reports")
     ret = client.get(url)
     assert ret.status_code == 302
-    assert ret.url == f'{reverse("login")}?next={url}'
+    assert ret.url == f"{reverse('login')}?next={url}"
 
 
 @pytest.mark.django_db
@@ -1138,9 +1104,7 @@ def test_workers(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/allworkers.html"  # nosec
     assert len(ret.context["worker_table"].data) == 4  # nosec
     workers = {x.hostname for x in ret.context["worker_table"].data}
-    assert workers == set(
-        ["worker_:')-,;~", "example.com", "worker-01", "worker-02"]
-    )  # nosec
+    assert workers == set(["worker_:')-,;~", "example.com", "worker-01", "worker-02"])  # nosec
 
 
 @pytest.mark.django_db
@@ -1358,9 +1322,7 @@ def test_healthcheck(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/health_check_jobs.html"  # nosec
     assert len(ret.context["health_check_table"].data) == 1  # nosec
-    assert (
-        ret.context["health_check_table"].data[0].description == "test job 06"
-    )  # nosec
+    assert ret.context["health_check_table"].data[0].description == "test job 06"  # nosec
 
 
 @pytest.mark.django_db

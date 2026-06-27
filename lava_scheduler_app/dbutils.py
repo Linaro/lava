@@ -9,6 +9,7 @@
 Database utility functions which use but are not actually models themselves
 Used to allow models.py to be shortened and easier to follow.
 """
+
 import contextlib
 
 import yaml
@@ -151,9 +152,7 @@ if list(Device.objects.filter(Q(device_type=dt), ~Q(health=Device.HEALTH_RETIRED
     retired_devices = Device.objects.filter(
         Q(device_type__display=True), health=Device.HEALTH_RETIRED
     ).select_related("device_type")
-    not_all_retired = (
-        set()
-    )  # set of device_type.names where some devices of that device_type are retired but *not* all.
+    not_all_retired = set()  # set of device_type.names where some devices of that device_type are retired but *not* all.
     for device in retired_devices:
         # identify device_types which can be added back because not all devices of that type are retired.
         if list(

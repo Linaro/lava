@@ -117,8 +117,7 @@ class RetryAction(Action):
         if has_failed_exc:
             # tried and failed
             exception_text = (
-                f"{retries} retries out of "
-                f"{self.max_retries} failed for {self.name}"
+                f"{retries} retries out of {self.max_retries} failed for {self.name}"
             )
             if has_parent_timed_out:
                 exception_text = (

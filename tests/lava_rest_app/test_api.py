@@ -442,9 +442,7 @@ class TestRestApi:
             + "jobs/%s/suites/%s/"
             % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
         )
-        assert (
-            data["id"] == self.public_testjob1.testsuite_set.first().id
-        )  # nosec - unit test support
+        assert data["id"] == self.public_testjob1.testsuite_set.first().id  # nosec - unit test support
 
     def test_testjob_suite_tests(self):
         data = self.hit(
@@ -519,9 +517,7 @@ class TestRestApi:
         )
         data = self.hit(self.userclient, csv_url)
         csv_data = csv.reader(data.splitlines())
-        assert list(csv_data)[1][0] == str(
-            self.public_testjob1.id
-        )  # nosec - unit test support
+        assert list(csv_data)[1][0] == str(self.public_testjob1.id)  # nosec - unit test support
 
         # Test limit
         data_with_limit = self.hit(
@@ -546,9 +542,7 @@ class TestRestApi:
             yaml_url,
         )
         data = yaml_safe_load(data)
-        assert data[0]["job"] == str(
-            self.public_testjob1.id
-        )  # nosec - unit test support
+        assert data[0]["job"] == str(self.public_testjob1.id)  # nosec - unit test support
 
         # Test limit
         data_with_limit = self.hit(
@@ -660,9 +654,7 @@ ok 2 bar
             % (self.public_testjob1.id, self.public_testjob1.testsuite_set.first().id),
         )
         data = yaml_safe_load(data)
-        assert (
-            data[0]["suite"] == self.public_testjob1.testsuite_set.first().name
-        )  # nosec - unit test support
+        assert data[0]["suite"] == self.public_testjob1.testsuite_set.first().name  # nosec - unit test support
 
     def test_testjob_validate(self):
         response = self.userclient.post(
@@ -789,9 +781,7 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
         assert len(data["results"]) == 4  # nosec - unit test support
-        assert (
-            data["results"][0]["hostname"] == "device:.'][~;!"
-        )  # nosec - unit test support
+        assert data["results"][0]["hostname"] == "device:.'][~;!"  # nosec - unit test support
         assert data["results"][1]["hostname"] == "public01"  # nosec - unit test support
         assert data["results"][2]["hostname"] == "public02"  # nosec - unit test support
 
@@ -801,14 +791,10 @@ ok 2 bar
             reverse("api-root", args=[self.version]) + "devices/?ordering=hostname",
         )
         assert len(data["results"]) == 5  # nosec - unit test support
-        assert (
-            data["results"][0]["hostname"] == "device:.'][~;!"
-        )  # nosec - unit test support
+        assert data["results"][0]["hostname"] == "device:.'][~;!"  # nosec - unit test support
         assert data["results"][1]["hostname"] == "public01"  # nosec - unit test support
         assert data["results"][2]["hostname"] == "public02"  # nosec - unit test support
-        assert (
-            data["results"][3]["hostname"] == "restricted_device1"
-        )  # nosec - unit test support
+        assert data["results"][3]["hostname"] == "restricted_device1"  # nosec - unit test support
 
     def test_devices_retrieve(self):
         data = self.hit(
@@ -883,9 +869,7 @@ ok 2 bar
         )
         assert response.status_code == 200  # nosec - unit test support
         content = json.loads(response.content.decode("utf-8"))
-        assert (
-            content["device_type"] == "restricted_device_type1"
-        )  # nosec - unit test support
+        assert content["device_type"] == "restricted_device_type1"  # nosec - unit test support
         assert content["health"] == "Unknown"  # nosec - unit test support
         assert Device.objects.get(hostname="public02").get_health_display() == "Unknown"
         assert LogEntry.objects.filter(object_id="public02").count() == 1
@@ -1132,9 +1116,7 @@ ok 2 bar
             {"template": "hello world"},
         )
         assert response.status_code == 204  # nosec - unit test support
-        assert (tmp_path / "qemu.jinja2").read_text(
-            encoding="utf-8"
-        ) == "hello world"  # nosec
+        assert (tmp_path / "qemu.jinja2").read_text(encoding="utf-8") == "hello world"  # nosec
 
     def test_devicetype_get_health_check(self, mocker, tmp_path):
         (tmp_path / "qemu.yaml").write_text("hello", encoding="utf-8")
@@ -1175,9 +1157,7 @@ ok 2 bar
             {"config": "hello world"},
         )
         assert response.status_code == 204  # nosec - unit test support
-        assert (tmp_path / "qemu.yaml").read_text(
-            encoding="utf-8"
-        ) == "hello world"  # nosec
+        assert (tmp_path / "qemu.yaml").read_text(encoding="utf-8") == "hello world"  # nosec
 
     def test_devicetype_filters(self):
         data = self.hit(
@@ -1218,9 +1198,7 @@ ok 2 bar
         assert (  # nosec - unit test support
             data["results"][0]["hostname"] == "example.com"
         )
-        assert (
-            data["results"][1]["hostname"] == "worker!~`@[].'"
-        )  # nosec - unit test support
+        assert data["results"][1]["hostname"] == "worker!~`@[].'"  # nosec - unit test support
         assert data["results"][1]["health"] == "Active"  # nosec - unit test support
         assert data["results"][1]["state"] == "Online"  # nosec - unit test support
         assert data["results"][2]["hostname"] == "worker1"  # nosec - unit test support
@@ -1586,9 +1564,7 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec - unit test support
         content = json.loads(response.content.decode("utf-8"))
-        assert (
-            content["message"] == "job submission failed: 'device_type'."
-        )  # nosec - unit test support
+        assert content["message"] == "job submission failed: 'device_type'."  # nosec - unit test support
 
     def test_submit_admin(self):
         response = self.adminclient.post(
@@ -1641,9 +1617,7 @@ ok 2 bar
         )
         assert response.status_code == 200  # nosec - unit test support
         msg = json.loads(response.content)
-        assert (
-            msg["message"] == "Job cancel signal sent for job ids."
-        )  # nosec - unit test support
+        assert msg["message"] == "Job cancel signal sent for job ids."  # nosec - unit test support
         assert msg["job_ids"] == [self.public_testjob1.pk, self.private_testjob1.pk]
         assert msg["invalid_job_ids"] == [-2]
 
@@ -1703,9 +1677,7 @@ ok 2 bar
             + "permissions/devicetypes/?ordering=id",
         )
         assert len(data["results"]) == 2  # nosec - unit test support
-        assert (
-            data["results"][0]["devicetype"] == "restricted_device_type1"
-        )  # nosec - unit test support
+        assert data["results"][0]["devicetype"] == "restricted_device_type1"  # nosec - unit test support
 
     def test_devicetype_permissions_retrieve_unauthorized(self):
         response = self.userclient.get(
@@ -1720,12 +1692,8 @@ ok 2 bar
             + "permissions/devicetypes/%s/"
             % GroupDeviceTypePermission.objects.first().id,
         )
-        assert (
-            data["id"] == GroupDeviceTypePermission.objects.first().id
-        )  # nosec - unit test support
-        assert (
-            data["devicetype"] == "restricted_device_type1"
-        )  # nosec - unit test support
+        assert data["id"] == GroupDeviceTypePermission.objects.first().id  # nosec - unit test support
+        assert data["devicetype"] == "restricted_device_type1"  # nosec - unit test support
 
     def test_devicetype_permissions_create(self):
         response = self.adminclient.post(
@@ -1767,9 +1735,7 @@ ok 2 bar
             + "permissions/devices/?ordering=id",
         )
         assert len(data["results"]) == 2  # nosec - unit test support
-        assert (
-            data["results"][0]["device"] == "restricted_device1"
-        )  # nosec - unit test support
+        assert data["results"][0]["device"] == "restricted_device1"  # nosec - unit test support
 
     def test_device_permissions_retrieve_unauthorized(self):
         response = self.userclient.get(
@@ -1783,9 +1749,7 @@ ok 2 bar
             reverse("api-root", args=[self.version])
             + "permissions/devices/%s/" % GroupDevicePermission.objects.first().id,
         )
-        assert (
-            data["id"] == GroupDevicePermission.objects.first().id
-        )  # nosec - unit test support
+        assert data["id"] == GroupDevicePermission.objects.first().id  # nosec - unit test support
         assert data["device"] == "restricted_device1"  # nosec - unit test support
 
     def test_device_permissions_create(self):

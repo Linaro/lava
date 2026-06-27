@@ -7,6 +7,7 @@
 """
 Unit tests for Linaro Django XML-RPC Application
 """
+
 import re
 import xmlrpc.client
 

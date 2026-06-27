@@ -31,9 +31,7 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
-class FastbootAction(
-    OptionalContainerFastbootAction
-):  # pylint:disable=too-many-instance-attributes
+class FastbootAction(OptionalContainerFastbootAction):  # pylint:disable=too-many-instance-attributes
     name = "fastboot-deploy"
     description = "download files and deploy using fastboot"
     summary = "fastboot deployment"

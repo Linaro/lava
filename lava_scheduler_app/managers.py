@@ -165,7 +165,7 @@ class RestrictedWorkerQuerySet(RestrictedObjectQuerySet):
         return self.filter_by_perm(
             perm,
             user,
-            include_objects_without_permissions=((perm == self.model.VIEW_PERMISSION)),
+            include_objects_without_permissions=(perm == self.model.VIEW_PERMISSION),
         )
 
 

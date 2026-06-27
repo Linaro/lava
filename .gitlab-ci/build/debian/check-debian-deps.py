@@ -12,6 +12,7 @@ import pathlib
 import re
 import subprocess
 import sys
+
 import yaml
 
 
@@ -70,7 +71,12 @@ def main():
     parser.add_argument(
         "--package",
         required=True,
-        choices=["lava-common", "lava-dispatcher", "lava-dispatcher-host", "lava-server"],
+        choices=[
+            "lava-common",
+            "lava-dispatcher",
+            "lava-dispatcher-host",
+            "lava-server",
+        ],
         help="debian package",
     )
     parser.add_argument("filename", type=str, help="debian package")

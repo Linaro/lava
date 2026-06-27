@@ -87,10 +87,12 @@ class TestIsoJob(LavaDispatcherTestCase):
         sub_command = substitute(sub_command, substitutions)
         self.assertNotIn("{emptyimage}", sub_command)
         self.assertNotIn(
-            "/tmp/tmp.00000/hd.img", sub_command  # nosec unit test support.
+            "/tmp/tmp.00000/hd.img",
+            sub_command,  # nosec unit test support.
         )
         self.assertIn(
-            "/tmp/tmp.00000/hd.img", " ".join(sub_command)  # nosec unit test support.
+            "/tmp/tmp.00000/hd.img",
+            " ".join(sub_command),  # nosec unit test support.
         )
 
     def test_timeout_inheritance(self):

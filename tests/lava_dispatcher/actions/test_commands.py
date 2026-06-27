@@ -4,9 +4,8 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from unittest.mock import call as mock_call
-from unittest.mock import patch
 
 from lava_dispatcher.actions.commands import CommandAction
 from lava_dispatcher.device import PipelineDevice

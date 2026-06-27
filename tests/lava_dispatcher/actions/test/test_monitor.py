@@ -67,7 +67,7 @@ class TestMonitorAccepts(LavaDispatcherTestCase):
                             "start": "Running test suite common_test",
                             "end": "PROJECT EXECUTION SUCCESSFUL",
                             "pattern": (
-                                "(?P<result>(PASS|FAIL)) - " "(?P<test_case_id>.*)\\."
+                                "(?P<result>(PASS|FAIL)) - (?P<test_case_id>.*)\\."
                             ),
                             "fixupdict": {"PASS: pass", "FAIL,: ,fail"},
                         },
