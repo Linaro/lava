@@ -980,9 +980,7 @@ class TestRunnerAction(TestOverlayAction):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.testdef_levels = (
-            {}
-        )  # allow looking up the testname from the level of this action
+        self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
     def validate(self):
         super().validate()

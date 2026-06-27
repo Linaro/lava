@@ -14,6 +14,7 @@ TestSuite is based on the test definition
 TestSet can be enabled within a test definition run step
 TestCase is a single lava-test-case record or Action result.
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -598,9 +599,7 @@ class Query(models.Model):
 
     name = models.SlugField(
         max_length=1024,
-        help_text=(
-            "The <b>name</b> of a query is used to refer to it in the " "web UI."
-        ),
+        help_text=("The <b>name</b> of a query is used to refer to it in the web UI."),
     )
 
     description = models.TextField(blank=True, null=True)
@@ -799,8 +798,7 @@ class Query(models.Model):
             .order_by(*order_by)
             .extra(
                 select={
-                    "%s_ptr_id"
-                    % content_type.model: "%s.id"
+                    "%s_ptr_id" % content_type.model: "%s.id"
                     % content_type.model_class()._meta.db_table
                 }
             )[:limit]

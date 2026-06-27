@@ -32,9 +32,7 @@ def version(ref: str | None = None) -> str:
                 args.append(ref)
             pattern = re.compile(r"(?P<tag>.+)-(?P<commits>\d+)-g(?P<hash>[abcdef\d]+)")
             describe = (
-                subprocess.check_output(args)
-                .strip()
-                .decode("utf-8")  # nosec - internal
+                subprocess.check_output(args).strip().decode("utf-8")  # nosec - internal
             )
             m = pattern.match(describe)
             if m is None:

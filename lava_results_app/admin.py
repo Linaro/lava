@@ -7,6 +7,7 @@
 """
 Administration interface of the LAVA Results application.
 """
+
 from django.conf import settings
 from django.contrib import admin
 

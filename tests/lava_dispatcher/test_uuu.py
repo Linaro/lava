@@ -196,9 +196,7 @@ class TestCheckSerialDownloadMode(LavaDispatcherTestCase):
 @patch(
     "lava_dispatcher.utils.uuu.OptionalContainerUuuAction.which", Mock("/bin/test_uuu")
 )
-class TestUUUbootAction(
-    LavaDispatcherTestCase
-):  # pylint: disable=too-many-public-methods
+class TestUUUbootAction(LavaDispatcherTestCase):  # pylint: disable=too-many-public-methods
     def setUp(self):
         super().setUp()
         self.factory = UUUBootFactory()

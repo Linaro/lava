@@ -26,18 +26,12 @@ def setup(tmp_path):
 
     with chdir(tmp_path):
         # Create a Git repository to be used as submodule
-        subprocess.check_output(
-            ["git", "init", "submodule"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "init", "submodule"])  # nosec - unit test support.
         os.chdir("submodule")
-        subprocess.check_output(
-            ["git", "checkout", "-b", "master"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "checkout", "-b", "master"])  # nosec - unit test support.
         with open("submodule.txt", "w") as testfile:
             testfile.write("Some data")
-        subprocess.check_output(
-            ["git", "add", "submodule.txt"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "add", "submodule.txt"])  # nosec - unit test support.
         subprocess.check_output(  # nosec - unit test support.
             ["git", "commit", "submodule.txt", "-m", "First commit"],
             env={
@@ -58,14 +52,10 @@ def setup(tmp_path):
         # Create a Git repository with two commits
         subprocess.check_output(["git", "init", "git"])  # nosec - unit test support.
         os.chdir("git")
-        subprocess.check_output(
-            ["git", "checkout", "-b", "master"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "checkout", "-b", "master"])  # nosec - unit test support.
         with open("test.txt", "w") as testfile:
             testfile.write("Some data")
-        subprocess.check_output(
-            ["git", "add", "test.txt"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "add", "test.txt"])  # nosec - unit test support.
         subprocess.check_output(  # nosec - unit test support.
             ["git", "commit", "test.txt", "-m", "First commit"],
             env={
@@ -79,9 +69,7 @@ def setup(tmp_path):
         )
         with open("second.txt", "w") as datafile:
             datafile.write("Some more data")
-        subprocess.check_output(
-            ["git", "add", "second.txt"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "add", "second.txt"])  # nosec - unit test support.
         subprocess.check_output(  # nosec - unit test support.
             ["git", "commit", "second.txt", "-m", "Second commit"],
             env={
@@ -120,9 +108,7 @@ def setup(tmp_path):
         )
         with open("third.txt", "w") as datafile:
             datafile.write("333")
-        subprocess.check_output(
-            ["git", "add", "third.txt"]
-        )  # nosec - unit test support.
+        subprocess.check_output(["git", "add", "third.txt"])  # nosec - unit test support.
         subprocess.check_output(  # nosec - unit test support.
             ["git", "commit", "third.txt", "-m", "Third commit"],
             env={

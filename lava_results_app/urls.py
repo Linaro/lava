@@ -8,6 +8,7 @@
 """
 URL mappings for the LAVA Results application
 """
+
 from django.urls import path, register_converter
 
 from lava_common.converters import JobIdConverter

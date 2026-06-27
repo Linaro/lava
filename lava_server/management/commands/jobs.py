@@ -276,9 +276,7 @@ class Command(BaseCommand):
         self.stdout.write("Listing jobs:")
         for job in jobs:
             self.stdout.write(
-                f"* {job.submit_time} "
-                f"- {job.id}@{job.submitter} "
-                f"- {job.description}"
+                f"* {job.submit_time} - {job.id}@{job.submitter} - {job.description}"
             )
 
     def handle_rm(
@@ -481,4 +479,4 @@ class Command(BaseCommand):
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
 
-        self.stdout.write(f"Compressed {index+1} jobs.")
+        self.stdout.write(f"Compressed {index + 1} jobs.")

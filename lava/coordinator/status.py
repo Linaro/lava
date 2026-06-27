@@ -9,7 +9,6 @@ Status check for lava-coordinator
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
 import errno
 import json
 import os

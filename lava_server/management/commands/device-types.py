@@ -85,8 +85,7 @@ class Command(BaseCommand):
             dest="show_all",
             default=False,
             action="store_true",
-            help="Show all device types in the database, "
-            "including non-installed ones",
+            help="Show all device types in the database, including non-installed ones",
         )
         list_parser.add_argument(
             "--csv", dest="csv", default=False, action="store_true", help="Print as csv"

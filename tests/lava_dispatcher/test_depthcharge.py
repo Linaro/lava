@@ -75,9 +75,7 @@ class TestDepthchargeAction(LavaDispatcherTestCase):
 -a {load_addr} \
 -b {dtb} \
 -i {ramdisk} \
-{fit_path}'.format(
-            **params
-        )
+{fit_path}'.format(**params)
         cmd = prep_fit._make_mkimage_command(params)
         self.assertEqual(cmd_ref, " ".join(cmd))
 
