@@ -46,6 +46,16 @@ repos:
         additional_dependencies:
           - "tomli==2.4.1"
 
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.9.4
+    hooks:
+      - id: bandit
+        additional_dependencies:
+          - "bandit[toml]"
+        args:
+          - "--configfile=pyproject.toml"
+          - "--severity-level=medium"
+
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: v2.25.1
     hooks:
