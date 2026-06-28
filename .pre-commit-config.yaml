@@ -33,6 +33,13 @@ repos:
         args: [ "--fix", "--exit-non-zero-on-fix" ]
       - id: ruff-format
 
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.2
+    hooks:
+      - id: codespell
+        additional_dependencies:
+          - "tomli==2.4.1"
+
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: v2.25.1
     hooks:
