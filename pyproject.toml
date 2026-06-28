@@ -221,6 +221,15 @@ main.load-plugins = "pylint_django"
 main.py-version = "3.11"  # Debian 12 (bookworm) Python version
 main.recursive = true
 
+[tool.codespell]
+ignore-words-list = [ "distroname", "hart", "Hart", "Nd", "NotIn" ]
+skip = [
+  ".gitlab-ci/analyze/codespell.ignore",
+  "debian/po/*.po",
+  "doc/v2/images/*.svg",
+  "lava_*/static/lava_*/js/*.js",
+]
+
 [tool.pyproject-fmt]
 keep_full_version = true
 
