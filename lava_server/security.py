@@ -107,7 +107,7 @@ class LavaRequireLoginMiddleware:
             return self.get_response(request)
 
         if self.is_token_authenticated_path(path) and self.passthrough_valid_token(
-            request.META.get("HTTP_AUTHORIZATION", "")
+            request.headers.get("authorization", "")
         ):
             return self.get_response(request)
 

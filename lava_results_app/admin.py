@@ -14,6 +14,7 @@ from django.contrib import admin
 from lava_results_app.models import Query, TestCase, TestSet, TestSuite
 
 
+@admin.register(Query)
 class QueryAdmin(admin.ModelAdmin):
     list_display = ("name", "owner", "query_group", "is_published", "is_archived")
     ordering = ("name", "owner", "query_group", "is_published", "is_archived")
@@ -26,6 +27,7 @@ class QueryAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
+@admin.register(TestCase)
 class TestCaseAdmin(admin.ModelAdmin):
     list_display = ("job_pk", "suite_name", "name", "result")
     list_select_related = ("suite", "suite__job")
@@ -46,6 +48,7 @@ class TestCaseAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
+@admin.register(TestSet)
 class TestSetAdmin(admin.ModelAdmin):
     list_display = ("suite", "name")
     raw_id_fields = ("suite",)
@@ -58,6 +61,7 @@ class TestSetAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
+@admin.register(TestSuite)
 class TestSuiteAdmin(admin.ModelAdmin):
     list_display = ("job_pk", "name")
     list_select_related = ("job",)
@@ -73,9 +77,3 @@ class TestSuiteAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
-
-
-admin.site.register(Query, QueryAdmin)
-admin.site.register(TestCase, TestCaseAdmin)
-admin.site.register(TestSet, TestSetAdmin)
-admin.site.register(TestSuite, TestSuiteAdmin)

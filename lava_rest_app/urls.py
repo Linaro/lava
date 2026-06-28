@@ -4,8 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from django.conf.urls import include
-from django.urls import re_path
+from django.urls import include, re_path
 
 from lava_rest_app.v02.routers import router as router_v02
 from lava_rest_app.v02.views import LavaObtainAuthToken
