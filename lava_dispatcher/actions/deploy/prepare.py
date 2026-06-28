@@ -70,18 +70,12 @@ class UBootPrepareKernelAction(Action):
 
     def create_uimage(self, kernel, load_addr, xip, arch, output):
         load_addr = int(load_addr, 16)
-        uimage_path = "%s/%s" % (os.path.dirname(kernel), output)
+        uimage_path = f"{os.path.dirname(kernel)}/{output}"
         if xip:
             entry_addr = load_addr + 64
         else:
             entry_addr = load_addr
-        cmd = "mkimage -A %s -O linux -T kernel -C none -a 0x%x -e 0x%x -d %s %s" % (
-            arch,
-            load_addr,
-            entry_addr,
-            kernel,
-            uimage_path,
-        )
+        cmd = f"mkimage -A {arch} -O linux -T kernel -C none -a 0x{load_addr:x} -e 0x{entry_addr:x} -d {kernel} {uimage_path}"
         if self.run_command(cmd.split(" ")):
             return uimage_path
         else:

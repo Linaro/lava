@@ -107,7 +107,7 @@ class Command(BaseCommand):
         else:
             self.stdout.write("Tokens for user '%s':" % username)
             for token in tokens:
-                self.stdout.write("* %s (%s)" % (token.secret, token.description))
+                self.stdout.write(f"* {token.secret} ({token.description})")
 
     def handle_rm(self, token, days):
         """Remove a specific token or clean up old tokens"""

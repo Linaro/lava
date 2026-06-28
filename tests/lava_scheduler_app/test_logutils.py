@@ -164,7 +164,7 @@ def test_elasticsearch_logs(mocker, logs_elasticsearch):
     line = '- {"dt": "2020-03-25T19:44:36.209", "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02"}'
     logs_elasticsearch.write(job, line)
     post.assert_called_with(
-        "%s%s/_doc/" % (settings.ELASTICSEARCH_URI, settings.ELASTICSEARCH_INDEX),
+        f"{settings.ELASTICSEARCH_URI}{settings.ELASTICSEARCH_INDEX}/_doc/",
         data='{"dt": 1585165476209, "lvl": "info", "msg": "lava-dispatcher, installed at version: 2020.02", "job_id": 1}',
         headers={"Content-type": "application/json"},
         timeout=LogsElasticsearch.TIMEOUT,

@@ -93,7 +93,7 @@ class ExtendedUser(models.Model):
     )
 
     def __str__(self):
-        return "%s: %s@%s" % (self.user, self.irc_handle, self.irc_server)
+        return f"{self.user}: {self.irc_handle}@{self.irc_server}"
 
 
 class GroupObjectPermission(models.Model):
@@ -453,7 +453,7 @@ class Worker(RestrictedObject):
     def go_health_active(self, user, reason=None):
         if reason:
             self.log_admin_entry(
-                user, "%s → Active (%s)" % (self.get_health_display(), reason)
+                user, f"{self.get_health_display()} → Active ({reason})"
             )
         else:
             self.log_admin_entry(user, "%s → Active" % self.get_health_display())
@@ -468,7 +468,7 @@ class Worker(RestrictedObject):
     def go_health_maintenance(self, user, reason=None):
         if reason:
             self.log_admin_entry(
-                user, "%s → Maintenance (%s)" % (self.get_health_display(), reason)
+                user, f"{self.get_health_display()} → Maintenance ({reason})"
             )
         else:
             self.log_admin_entry(user, "%s → Maintenance" % self.get_health_display())
@@ -478,7 +478,7 @@ class Worker(RestrictedObject):
     def go_health_retired(self, user, reason=None):
         if reason:
             self.log_admin_entry(
-                user, "%s → Retired (%s)" % (self.get_health_display(), reason)
+                user, f"{self.get_health_display()} → Retired ({reason})"
             )
         else:
             self.log_admin_entry(user, "%s → Retired" % self.get_health_display())
@@ -676,11 +676,7 @@ class Device(RestrictedObject):
     )
 
     def __str__(self):
-        return "%s (%s, health %s)" % (
-            self.hostname,
-            self.get_state_display(),
-            self.get_health_display(),
-        )
+        return f"{self.hostname} ({self.get_state_display()}, health {self.get_health_display()})"
 
     # Add default values for _old values
     _old_health: int | None = None
@@ -813,11 +809,7 @@ class Device(RestrictedObject):
             if job.sub_jobs_list:
                 pk = job.sub_id
             verbose_name = job._meta.verbose_name.capitalize()
-            job_url = '<a href="%s" title="%s summary">%s</a>' % (
-                job.get_absolute_url(),
-                escape(verbose_name),
-                escape(pk),
-            )
+            job_url = f'<a href="{job.get_absolute_url()}" title="{escape(verbose_name)} summary">{escape(pk)}</a>'
 
             self.state = Device.STATE_IDLE
 
@@ -1159,7 +1151,7 @@ def _get_device_type(user, name):
             raise DevicesUnavailableException(msg)
 
     if not device_type.can_view(user):
-        msg = "Device type '%s' is unavailable to user '%s'" % (name, user.username)
+        msg = f"Device type '{name}' is unavailable to user '{user.username}'"
         logger.error(msg)
         raise DevicesUnavailableException(msg)
     return device_type
@@ -1947,7 +1939,7 @@ class TestJob(models.Model):
             job_url = str(original_job.get_absolute_url())
             with contextlib.suppress(Site.DoesNotExist, ImproperlyConfigured):
                 site = Site.objects.get_current()
-                job_url = "http://%s%s" % (site.domain, job_url)
+                job_url = f"http://{site.domain}{job_url}"
 
             job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
@@ -2452,13 +2444,9 @@ class NotificationRecipient(models.Model):
 
     def __str__(self):
         if self.method == self.EMAIL:
-            return "[email] %s (%s)" % (self.email_address, self.get_status_display())
+            return f"[email] {self.email_address} ({self.get_status_display()})"
         else:
-            return "[irc] %s@%s (%s)" % (
-                self.irc_handle_name,
-                self.irc_server_name,
-                self.get_status_display(),
-            )
+            return f"[irc] {self.irc_handle_name}@{self.irc_server_name} ({self.get_status_display()})"
 
     @property
     def email_address(self):
@@ -2619,7 +2607,7 @@ class NotificationCallback(models.Model):
             ret.raise_for_status()
 
         except Exception as ex:
-            logger.warning("Problem sending request to %s: %s" % (self.url, ex))
+            logger.warning(f"Problem sending request to {self.url}: {ex}")
 
 
 @nottest
@@ -2667,9 +2655,8 @@ class GroupDeviceTypePermission(GroupObjectPermission):
     )
 
     def __str__(self):
-        return "Permission '%s' for device type %s" % (
-            self.permission.codename,
-            self.devicetype,
+        return (
+            f"Permission '{self.permission.codename}' for device type {self.devicetype}"
         )
 
 
@@ -2691,7 +2678,7 @@ class GroupDevicePermission(GroupObjectPermission):
     )
 
     def __str__(self):
-        return "Permission '%s' for device %s" % (self.permission.codename, self.device)
+        return f"Permission '{self.permission.codename}' for device {self.device}"
 
 
 class GroupWorkerPermission(GroupObjectPermission):
@@ -2712,7 +2699,7 @@ class GroupWorkerPermission(GroupObjectPermission):
     )
 
     def __str__(self):
-        return "Permission '%s' for worker %s" % (self.permission.codename, self.worker)
+        return f"Permission '{self.permission.codename}' for worker {self.worker}"
 
 
 class RemoteArtifactsAuth(models.Model):

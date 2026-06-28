@@ -52,4 +52,4 @@ class ConfigFile:
         os.makedirs(os.path.dirname(pathname), exist_ok=True)
         with open(pathname, "w+") as handle:
             for key in config:
-                handle.write('%s="%s"\n' % (key, config[key]))
+                handle.write(f'{key}="{config[key]}"\n')

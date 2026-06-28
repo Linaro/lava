@@ -37,7 +37,7 @@ def rmtree(directory: str | Path) -> None:
     try:
         shutil.rmtree(directory)
     except OSError as exc:
-        raise LAVABug("Error when trying to remove '%s': %s" % (directory, exc))
+        raise LAVABug(f"Error when trying to remove '{directory}': {exc}")
 
 
 def mkdtemp(autoremove: bool = True, basedir: str = "/tmp") -> str:  # nosec - internal use.

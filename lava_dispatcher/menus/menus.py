@@ -56,13 +56,7 @@ class SelectorMenu:
         Derive a new class if you have Shell [2]
         :return: A regex pattern to identify the selector for the matching label.
         """
-        return "%s([%s]+)%s%s([%s]*)" % (
-            re.escape(self.item_markup[0]),
-            self.item_class,
-            re.escape(self.item_markup[1]),
-            self.separator,
-            self.label_class,
-        )
+        return f"{re.escape(self.item_markup[0])}([{self.item_class}]+){re.escape(self.item_markup[1])}{self.separator}([{self.label_class}]*)"
 
     def select(self, output, label):
         output_list = output.split("\n")

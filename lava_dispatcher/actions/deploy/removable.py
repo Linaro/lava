@@ -155,7 +155,7 @@ class DDAction(Action):
         # Providing the download URL as a substitution option gets round this
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
         path = d_file[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
-        download_url = "http://%s/tmp/%s" % (ip_addr, path)
+        download_url = f"http://{ip_addr}/tmp/{path}"
         substitutions = {"{DOWNLOAD_URL}": download_url, "{DEVICE}": device_path}
 
         download_cmd = None

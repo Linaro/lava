@@ -180,8 +180,8 @@ def main(argv):
             if not sys.stderr.isatty():
                 sys.stderr = debug_log_file
             timestamp = time.strftime("%c", time.gmtime())
-            cmd = " ".join([shlex.quote(a) for a in argv])
-            debug_log_file.write("%s Called with: %s\n" % (timestamp, cmd))
+            cmd = shlex.join(argv)
+            debug_log_file.write(f"{timestamp} Called with: {cmd}\n")
 
         options.func(options)
 

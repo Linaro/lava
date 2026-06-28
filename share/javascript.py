@@ -67,7 +67,7 @@ def handle_embedded(os_name, data, dirname, simulate=False):
                         os.symlink(ext_path, our_path)
                     else:
                         print("rm %s" % our_path)
-                        print("ln -s %s %s" % (ext_path, our_path))
+                        print(f"ln -s {ext_path} {our_path}")
     return dependencies
 
 
@@ -97,7 +97,7 @@ def main():
     dep_list = []
     for package, constraint in dependencies.items():
         if constraint:
-            dep_list.append("%s %s" % (package, constraint))
+            dep_list.append(f"{package} {constraint}")
         else:
             dep_list.append(package)
     if args.simulate:

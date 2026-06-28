@@ -210,7 +210,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 tc = junit_xml.TestCase(
                     case.name,
                     elapsed_sec=duration,
-                    classname="%s%s" % (classname_prefix, case.suite.name),
+                    classname=f"{classname_prefix}{case.suite.name}",
                     timestamp=case.logged.isoformat(),
                 )
                 if case.result == TestCase.RESULT_FAIL:
@@ -427,7 +427,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
             return Response({"message": "Job valid."}, status=status.HTTP_200_OK)
         except voluptuous.Invalid as exc:
             return Response(
-                {"message": "Job invalid: %s @ %s" % (exc.msg, exc.path)},
+                {"message": f"Job invalid: {exc.msg} @ {exc.path}"},
                 status=status.HTTP_200_OK,
             )
 
@@ -836,7 +836,7 @@ class DeviceViewSet(viewsets.ModelViewSet):
                     job_ctx = yaml_safe_load(context)
                 except yaml.YAMLError as exc:
                     raise ParseError(
-                        "Job Context '%s' is not valid: %s" % (context, str(exc))
+                        f"Job Context '{context}' is not valid: {str(exc)}"
                     )
 
             config = self.get_object().load_configuration(

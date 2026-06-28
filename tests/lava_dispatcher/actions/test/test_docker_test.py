@@ -149,7 +149,7 @@ def test_run(action, mocker):
     # overlay gets passed into docker
     assert (
         re.match(
-            r".* --mount=type=bind,source=%s,destination=/%s" % (overlay, overlay.name),
+            rf".* --mount=type=bind,source={overlay},destination=/{overlay.name}",
             docker_call,
         )
         is not None

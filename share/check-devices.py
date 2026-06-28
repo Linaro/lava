@@ -66,10 +66,10 @@ def main():
             template = env.get_template("%s.jinja2" % device_name)
             template.render()
         except JinjaTemplateNotFound as exc:
-            print('* %s (ERROR): "%s" not found' % (device_name, exc))
+            print(f'* {device_name} (ERROR): "{exc}" not found')
             errors = True
         except JinjaTemplateRuntimeError as exc:
-            print('* %s (ERROR): rendering error "%s"' % (device_name, exc))
+            print(f'* {device_name} (ERROR): rendering error "{exc}"')
             errors = True
         except JinjaTemplateSyntaxError as exc:
             print(

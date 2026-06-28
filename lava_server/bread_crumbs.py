@@ -64,10 +64,8 @@ class BreadCrumb:
         self.needs = needs or []
 
     def __str__(self):
-        return "<BreadCrumb name=%r view=%r parent=%r>" % (
-            self.name,
-            self.view,
-            self.parent,
+        return (
+            f"<BreadCrumb name={self.name!r} view={self.view!r} parent={self.parent!r}>"
         )
 
     def __call__(self, view):

@@ -127,7 +127,7 @@ def handle_push(options):
         .rstrip("\n")
     )
 
-    print("%s# wait for CI%s" % (COLORS["purple"], COLORS["reset"]))
+    print("{}# wait for CI{}".format(COLORS["purple"], COLORS["reset"]))
     if not options.dry_run and not options.skip >= options.count:
         wait_pipeline(options, commit)
     print("done\n")
@@ -138,7 +138,7 @@ def handle_push(options):
 
 def handle_publish(options):
     # Check that the CI was a success
-    print("%s# wait for CI%s" % (COLORS["purple"], COLORS["reset"]))
+    print("{}# wait for CI{}".format(COLORS["purple"], COLORS["reset"]))
     if not options.dry_run and not options.skip >= options.count:
         commit = (
             subprocess.check_output(["git", "rev-parse", options.version])
@@ -158,7 +158,7 @@ def handle_publish(options):
             % (COLORS["purple"], name, arch, COLORS["reset"])
         )
         run(
-            "docker pull %s/%s/lava-%s:%s" % (REGISTRY, arch, name, options.version),
+            f"docker pull {REGISTRY}/{arch}/lava-{name}:{options.version}",
             options,
         )
         run(
@@ -167,7 +167,7 @@ def handle_publish(options):
             options,
         )
         run(
-            "docker push lavasoftware/%s-lava-%s:%s" % (arch, name, options.version),
+            f"docker push lavasoftware/{arch}-lava-{name}:{options.version}",
             options,
         )
         run(
@@ -175,9 +175,9 @@ def handle_publish(options):
             % (REGISTRY, arch, name, options.version, arch, name),
             options,
         )
-        run("docker push lavasoftware/%s-lava-%s:latest" % (arch, name), options)
+        run(f"docker push lavasoftware/{arch}-lava-{name}:latest", options)
 
-    print("%s# push docker manifests%s" % (COLORS["purple"], COLORS["reset"]))
+    print("{}# push docker manifests{}".format(COLORS["purple"], COLORS["reset"]))
     for name in ["dispatcher", "server"]:
         run(
             "docker manifest create lavasoftware/lava-%s:%s lavasoftware/aarch64-lava-%s:%s lavasoftware/amd64-lava-%s:%s"
@@ -242,12 +242,16 @@ def main():
         if action in handlers:
             if not first:
                 print("")
-            print("%s%s%s" % (COLORS["yellow"], action.capitalize(), COLORS["reset"]))
-            print("%s%s%s" % (COLORS["yellow"], "-" * len(action), COLORS["reset"]))
+            print(
+                "{}{}{}".format(COLORS["yellow"], action.capitalize(), COLORS["reset"])
+            )
+            print("{}{}{}".format(COLORS["yellow"], "-" * len(action), COLORS["reset"]))
             try:
                 handlers[action](options)
             except Exception as exc:
-                print("%sexception: %s%s" % (COLORS["red"], str(exc), COLORS["reset"]))
+                print(
+                    "{}exception: {}{}".format(COLORS["red"], str(exc), COLORS["reset"])
+                )
                 raise
         else:
             raise NotImplementedError("Action '%s' does not exists" % action)

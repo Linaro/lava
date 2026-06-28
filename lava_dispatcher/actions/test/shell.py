@@ -87,7 +87,7 @@ class PatternFixup:
         try:
             self.pat = re.compile(pattern, re.M)
         except re.error as exc:
-            raise TestError("Error parsing regular expression %r: %s" % (self.pat, exc))
+            raise TestError(f"Error parsing regular expression {self.pat!r}: {exc}")
         self.fixup = fixupdict
 
     def fixupdict(self):
@@ -105,9 +105,7 @@ class PatternFixup:
             try:
                 self.pat = re.compile(self.pat, re.M)
             except re.error as exc:
-                raise TestError(
-                    "Error parsing regular expression %r: %s" % (self.pat, exc)
-                )
+                raise TestError(f"Error parsing regular expression {self.pat!r}: {exc}")
         return self.pat
 
 
@@ -375,7 +373,7 @@ class TestShellAction(ReportMixin, Action):
             action="repo-action", label="repo-action", key="uuid-list"
         )
         for key, value in enumerate(testdef_index):
-            if self.definition == "%s_%s" % (key, value):
+            if self.definition == f"{key}_{value}":
                 pattern_dict = self.get_namespace_data(
                     action="test", label=uuid_list[key], key="testdef_pattern"
                 )
@@ -624,7 +622,7 @@ class TestShellAction(ReportMixin, Action):
 
         elif event == "signal":
             name, params = test_connection.match.groups()
-            self.logger.debug("Received signal: <%s> %s" % (name, params))
+            self.logger.debug(f"Received signal: <{name}> {params}")
             params = params.split()
             if name == "STARTRUN":
                 self.signal_start_run(params)

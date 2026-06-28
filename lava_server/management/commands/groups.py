@@ -81,15 +81,11 @@ class Command(BaseCommand):
                 user = User.objects.get(username=options["username"])
             except User.DoesNotExist:
                 raise CommandError("Unable to find user '%s'" % name)
-            self.stdout.write(
-                "Adding user '%s' to group '%s'" % (user.username, group.name)
-            )
+            self.stdout.write(f"Adding user '{user.username}' to group '{group.name}'")
             group.user_set.add(user)
         if options["submitting"]:
             for perm in submit:
-                self.stdout.write(
-                    "Adding permission %s to group %s" % (perm, group.name)
-                )
+                self.stdout.write(f"Adding permission {perm} to group {group.name}")
                 group.permissions.add(perm)
 
     def handle_add(self, options):
@@ -105,15 +101,11 @@ class Command(BaseCommand):
                 user = User.objects.get(username=options["username"])
             except User.DoesNotExist:
                 raise CommandError("Unable to find user '%s'" % name)
-            self.stdout.write(
-                "Adding user '%s' to group '%s'" % (user.username, group.name)
-            )
+            self.stdout.write(f"Adding user '{user.username}' to group '{group.name}'")
             group.user_set.add(user)
         if options["submitting"]:
             for perm in submit:
-                self.stdout.write(
-                    "Adding permission %s to group %s" % (perm, group.name)
-                )
+                self.stdout.write(f"Adding permission {perm} to group {group.name}")
                 group.permissions.add(perm)
 
     def handle_list(self, verbose=False):
@@ -124,5 +116,5 @@ class Command(BaseCommand):
         for group in groups:
             out = "* %s" % group.name
             if verbose:
-                out = "%s (%s)" % (out, [perm.name for perm in group.permissions.all()])
+                out = f"{out} ({[perm.name for perm in group.permissions.all()]})"
             self.stdout.write(out)

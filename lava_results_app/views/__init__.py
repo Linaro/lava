@@ -445,7 +445,7 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
                 if isinstance(items, dict):
                     for key, value in items.items():
                         extra_source.setdefault(extra_case.id, "")
-                        extra_source[extra_case.id] += "%s: %s\n" % (key, value)
+                        extra_source[extra_case.id] += f"{key}: {value}\n"
         except (AttributeError, TypeError, yaml.YAMLError):
             # In some old version of LAVA, extra_data is not a string but an OrderedDict
             # In this case, just skip it.

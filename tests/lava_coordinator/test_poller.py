@@ -111,7 +111,7 @@ class TestSignals:
         if isinstance(reply, dict):
             for target, messages in reply.items():
                 for key, value in messages.items():
-                    self.message_str += " %s:%s=%s" % (target, key, value)
+                    self.message_str += f" {target}:{key}={value}"
         return self.message_str
 
     def checkMessage(self, reply):

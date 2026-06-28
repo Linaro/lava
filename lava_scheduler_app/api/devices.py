@@ -143,7 +143,7 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         if not device.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Device '%s' not available to user '%s'." % (hostname, self.user)
+                403, f"Device '{hostname}' not available to user '{self.user}'."
             )
 
         job_ctx = None
@@ -152,7 +152,7 @@ class SchedulerDevicesAPI(ExposedV2API):
                 job_ctx = yaml_safe_load(context)
             except yaml.YAMLError as exc:
                 raise xmlrpc.client.Fault(
-                    400, "Job Context '%s' is not valid: %s" % (context, str(exc))
+                    400, f"Job Context '{context}' is not valid: {str(exc)}"
                 )
 
         config = device.load_configuration(
@@ -323,7 +323,7 @@ class SchedulerDevicesAPI(ExposedV2API):
 
         if not device.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Device '%s' not available to user '%s'." % (hostname, self.user)
+                403, f"Device '{hostname}' not available to user '{self.user}'."
             )
 
         current_job = device.current_job()

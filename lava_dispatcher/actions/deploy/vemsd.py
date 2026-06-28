@@ -276,10 +276,7 @@ class MountDeviceMassStorageDevice(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        device_path = "/dev/disk/by-%s/%s" % (
-            self.disk_identifier_type,
-            self.disk_identifier,
-        )
+        device_path = f"/dev/disk/by-{self.disk_identifier_type}/{self.disk_identifier}"
         if not os.path.exists(device_path):
             raise InfrastructureError(
                 "Unable to find disk by %s %s"
@@ -298,7 +295,7 @@ class MountDeviceMassStorageDevice(Action):
 
         self.run_cmd(
             ["mount", device_path, mount_point],
-            error_msg="Failed to mount device %s to %s" % (device_path, mount_point),
+            error_msg=f"Failed to mount device {device_path} to {mount_point}",
         )
 
         self.set_namespace_data(

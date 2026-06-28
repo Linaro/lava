@@ -95,7 +95,7 @@ class FlashDFUAction(Action):
             self.board_id = self.job.device["board_id"]
             self.base_command.extend(["--serial", self.board_id])
             self.base_command.extend(
-                ["--device", "%s:%s" % (self.usb_vendor_id, self.usb_product_id)]
+                ["--device", f"{self.usb_vendor_id}:{self.usb_product_id}"]
             )
         except AttributeError as exc:
             raise ConfigurationError(exc)

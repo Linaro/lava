@@ -202,10 +202,10 @@ class LinuxKernelMessages:
 
                 if matched_kernel_message.get("fatal"):
                     result = "fail"
-                    action.logger.error("%s kernel %r" % (action.name, kind))
+                    action.logger.error(f"{action.name} kernel {kind!r}")
                     halt = message
                 else:
-                    action.logger.warning("%s: kernel %r" % (action.name, kind))
+                    action.logger.warning(f"{action.name}: kernel {kind!r}")
 
                 results.append({"kind": kind, "message": message})
                 if matched_kernel_message.get("fatal"):
@@ -216,7 +216,7 @@ class LinuxKernelMessages:
                 result = "fail"
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
-                action.logger.error("%s %s" % (action.name, halt))
+                action.logger.error(f"{action.name} {halt}")
                 results.append({"kind": "custom-error", "message": fail_msg})
                 break
             else:

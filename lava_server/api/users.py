@@ -183,7 +183,7 @@ class UsersPermissionsAPI(ExposedV2API):
         try:
             ct = ContentType.objects.get(app_label=app, model=model)
         except ContentType.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Invalid app.model '%s.%s'" % (app, model))
+            raise xmlrpc.client.Fault(404, f"Invalid app.model '{app}.{model}'")
         try:
             perm = Permission.objects.get(content_type=ct, codename=codename)
         except Permission.DoesNotExist:
@@ -214,7 +214,7 @@ class UsersPermissionsAPI(ExposedV2API):
         try:
             ct = ContentType.objects.get(app_label=app, model=model)
         except ContentType.DoesNotExist:
-            raise xmlrpc.client.Fault(404, "Invalid app.model '%s.%s'" % (app, model))
+            raise xmlrpc.client.Fault(404, f"Invalid app.model '{app}.{model}'")
         try:
             perm = Permission.objects.get(content_type=ct, codename=codename)
         except Permission.DoesNotExist:

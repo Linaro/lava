@@ -48,9 +48,7 @@ class PermissionAuth:
         fieldname = "group%spermission__group__user" % content_type.model
 
         filters = {fieldname: self.user}
-        filters["group%spermission__%s" % (content_type.model, content_type.model)] = (
-            obj
-        )
+        filters[f"group{content_type.model}permission__{content_type.model}"] = obj
 
         perms_queryset = perms_queryset.filter(**filters)
         perms = set(perms_queryset.values_list("codename", flat=True))
@@ -58,7 +56,7 @@ class PermissionAuth:
         for perm in perms.copy():
             for idx, lower_perm in enumerate(obj.PERMISSIONS_PRIORITY):
                 if idx > obj.PERMISSIONS_PRIORITY.index(
-                    "%s.%s" % (content_type.app_label, perm)
+                    f"{content_type.app_label}.{perm}"
                 ):
                     perms.add(lower_perm.split(".", 1)[-1])
 

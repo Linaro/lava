@@ -186,7 +186,7 @@ class CallQemuAction(Action):
                 ["%s" % item for item in boot["parameters"].get("extra", [])]
             )
         except AttributeError as exc:
-            self.errors = "Unable to parse device options: %s %s" % (
+            self.errors = "Unable to parse device options: {} {}".format(
                 exc,
                 self.job.device["actions"]["boot"]["methods"][method],
             )
@@ -312,7 +312,7 @@ class CallQemuAction(Action):
             )
             shell_precommand_list.append("mkdir %s" % mountpoint)
             # prepare_guestfs creates an ext2 filesystem (both backends)
-            shell_precommand_list.append("mount %s -t ext2 %s" % (uuid, mountpoint))
+            shell_precommand_list.append(f"mount {uuid} -t ext2 {mountpoint}")
             # debug line to show the effect of the mount operation
             # also allows time for kernel messages from the mount operation to be processed.
             shell_precommand_list.append("ls -la %s/bin/lava-test-runner" % mountpoint)
@@ -329,7 +329,7 @@ class CallQemuAction(Action):
             )
             if not self.parameters["docker"].get("container_name"):
                 docker.name(
-                    "lava-docker-qemu-%s-%s-" % (self.job.job_id, self.level),
+                    f"lava-docker-qemu-{self.job.job_id}-{self.level}-",
                     random_suffix=True,
                 )
             docker.interactive()

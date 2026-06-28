@@ -64,7 +64,7 @@ class RetryAction(Action):
 
     def run(self, connection, max_end_time):
         retries = 0
-        has_failed_exc: Optional[Exception] = None
+        has_failed_exc: Exception | None = None
         has_parent_timed_out = False
         self.call_protocols()
         while retries < self.max_retries:
@@ -90,7 +90,7 @@ class RetryAction(Action):
 
                 # re-raise if this is the last loop
                 if retries == self.max_retries:
-                    self.errors = "%s retries failed for %s" % (retries, self.name)
+                    self.errors = f"{retries} retries failed for {self.name}"
                     raise
 
                 # Stop retrying if parent timed out

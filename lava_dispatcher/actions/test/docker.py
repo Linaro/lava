@@ -134,13 +134,11 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             action="test", label="results", key="lava_test_results_dir"
         ).strip("/")
 
-        container = "lava-docker-test-shell-%s-%s" % (self.job.job_id, self.level)
+        container = f"lava-docker-test-shell-{self.job.job_id}-{self.level}"
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
         if prefix:
-            container = "lava-docker-test-shell-%s-%s-%s" % (
-                prefix,
-                self.job.job_id,
-                self.level,
+            container = (
+                f"lava-docker-test-shell-{prefix}-{self.job.job_id}-{self.level}"
             )
 
         docker = DockerRun.from_parameters(self.parameters["docker"], self.job)
@@ -174,7 +172,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         docker_cmd = docker.cmdline("bash", "--norc", "-i")
 
-        cmd = " ".join([shlex.quote(s) for s in docker_cmd])
+        cmd = shlex.join(docker_cmd)
         self.logger.debug("Starting docker test shell container: %s" % cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 

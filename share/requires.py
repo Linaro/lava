@@ -64,7 +64,7 @@ def debian(args, depends):
     for item in depends[args.package].keys():
         if depends[args.package][item].get("unittests"):
             continue
-        print("%s%s" % (item, depends[args.package][item].get("version", "")))
+        print("{}{}".format(item, depends[args.package][item].get("version", "")))
 
 
 def load_depends(args, parent):
@@ -72,7 +72,7 @@ def load_depends(args, parent):
         os.path.dirname(__file__), "requirements", args.distribution, "%s.yaml" % parent
     )
     if not os.path.exists(req):
-        msg = "Unsupported suite|distribution: %s %s\n\n" % (args.distribution, parent)
+        msg = f"Unsupported suite|distribution: {args.distribution} {parent}\n\n"
         sys.stderr.write(msg)
         raise RuntimeError(msg)
     with open(req) as data:

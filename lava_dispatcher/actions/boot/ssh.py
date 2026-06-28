@@ -107,7 +107,9 @@ class Scp(ConnectSsh):
             action="prepare-scp-overlay", label="scp-deploy", key="overlay"
         )
         if not path:
-            error_msg = "%s: could not find details of '%s'" % (self.name, "overlay")
+            error_msg = "{}: could not find details of '{}'".format(
+                self.name, "overlay"
+            )
             self.logger.error(error_msg)
             raise JobError(error_msg)
 
@@ -132,7 +134,7 @@ class Scp(ConnectSsh):
             )
             self.logger.debug("Using common data for host: %s", host_address)
         if not host_address:
-            error_msg = "%s: could not find host for deployment using %s" % (
+            error_msg = "{}: could not find host for deployment using {}".format(
                 self.name,
                 "overlay",
             )
@@ -165,7 +167,7 @@ class Scp(ConnectSsh):
             "Copying %s using %s to %s", "overlay", command_str, host_address
         )
         # add the remote as destination, with :/ top level directory
-        command.extend(["%s@%s:%s" % (self.ssh_user, host_address, destination)])
+        command.extend([f"{self.ssh_user}@{host_address}:{destination}"])
         self.run_cmd(command, error_msg="Unable to copy %s" % "overlay")
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
@@ -247,11 +249,7 @@ class ScpOverlayUnpack(Action):
             action="test", label="results", key="lava_test_results_dir"
         )
 
-        cmd = "tar %s -C %s -xzf %s" % (
-            tar_flags,
-            os.path.dirname(lava_test_results_dir),
-            filename,
-        )
+        cmd = f"tar {tar_flags} -C {os.path.dirname(lava_test_results_dir)} -xzf {filename}"
         connection.sendline(cmd)
         self.wait(connection)
         return connection

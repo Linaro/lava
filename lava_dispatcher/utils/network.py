@@ -40,8 +40,7 @@ def get_default_iface() -> str:
             args=("ip", "-json", "route", "show", "default"),
             check=True,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
     except subprocess.CalledProcessError as e:
         raise InfrastructureError(
@@ -61,8 +60,7 @@ def get_iface_addr(iface: str) -> str:
             args=("ip", "-json", "addr", "show", "dev", iface),
             check=True,
             text=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
         )
     except subprocess.CalledProcessError as e:
         raise InfrastructureError(

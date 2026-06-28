@@ -63,7 +63,7 @@ def get_query_link(notification):
         return query.get_absolute_url()
     else:
         # Make absolute URL manually.
-        return "%s?entity=%s&conditions=%s" % (
+        return "{}?entity={}&conditions={}".format(
             reverse("lava.results.query_custom"),
             notification.entity.model,
             notification.conditions,
@@ -288,10 +288,7 @@ def send_notifications(job):
                         job.id,
                         recipient.email_address,
                     )
-                    title = "LAVA notification for Test Job %s %s" % (
-                        job.id,
-                        job.description[:200],
-                    )
+                    title = f"LAVA notification for Test Job {job.id} {job.description[:200]}"
                     kwargs["user"] = get_recipient_args(recipient)
                     body = create_notification_body(notification.template, **kwargs)
                     result = send_mail(
@@ -433,7 +430,7 @@ def create_notification(job, data):
                 if "conditions" in query_data:
                     # Save conditions as a string.
                     conditions = [
-                        "%s%s%s" % (key, Query.CONDITION_DIVIDER, value)
+                        f"{key}{Query.CONDITION_DIVIDER}{value}"
                         for (key, value) in query_data["conditions"].items()
                     ]
                     notification.conditions = Query.CONDITIONS_SEPARATOR.join(

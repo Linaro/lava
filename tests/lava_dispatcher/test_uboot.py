@@ -565,7 +565,9 @@ class TestUbootAction(LavaDispatcherTestCase):
             "{KERNEL_ADDR}": kernel_addr,
             "{DTB_ADDR}": dtb_addr,
             "{RAMDISK_ADDR}": ramdisk_addr,
-            "{BOOTX}": "%s %s %s %s" % ("bootz", kernel_addr, ramdisk_addr, dtb_addr),
+            "{BOOTX}": "{} {} {} {}".format(
+                "bootz", kernel_addr, ramdisk_addr, dtb_addr
+            ),
             "{RAMDISK}": ramdisk,
             "{KERNEL}": kernel,
             "{DTB}": dtb,
@@ -628,7 +630,9 @@ class TestUbootAction(LavaDispatcherTestCase):
             "{KERNEL_ADDR}": kernel_addr,
             "{DTB_ADDR}": dtb_addr,
             "{RAMDISK_ADDR}": ramdisk_addr,
-            "{BOOTX}": "%s %s %s %s" % ("bootz", kernel_addr, ramdisk_addr, dtb_addr),
+            "{BOOTX}": "{} {} {} {}".format(
+                "bootz", kernel_addr, ramdisk_addr, dtb_addr
+            ),
             "{RAMDISK}": ramdisk,
             "{KERNEL}": kernel,
             "{DTB}": dtb,
@@ -904,7 +908,7 @@ class TestUbootAction(LavaDispatcherTestCase):
             action="storage-deploy", label="u-boot", key="device"
         )
         self.assertIsNotNone(device)
-        part_reference = "%s:%s" % (
+        part_reference = "{}:{}".format(
             job.device["parameters"]["media"]["usb"][device]["device_id"],
             u_boot_media.parameters["boot_part"],
         )

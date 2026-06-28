@@ -838,9 +838,7 @@ class AppendOverlays(Action):
                     self.update_guestfs()
                 except RuntimeError as exc:
                     self.logger.exception(str(exc))
-                    raise JobError(
-                        "Unable to update image %s: %r" % (self.key, str(exc))
-                    )
+                    raise JobError(f"Unable to update image {self.key}: {str(exc)!r}")
             else:
                 self.update_ext4()
         elif self.params["format"] == "tar":
@@ -873,7 +871,7 @@ class AppendOverlays(Action):
         # Add overlays
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
+            label = f"{self.key}.{overlay}"
             overlay_image = None
             path = None
             if overlay == "lava":
@@ -959,7 +957,7 @@ class AppendOverlays(Action):
 
             self.logger.debug("Overlays:")
             for overlay in self.params["overlays"]:
-                label = "%s.%s" % (self.key, overlay)
+                label = f"{self.key}.{overlay}"
                 overlay_image = None
                 if overlay == "lava":
                     overlay_image = self.get_namespace_data(
@@ -1032,11 +1030,11 @@ class AppendOverlays(Action):
             guest.mount(device, "/")
         except RuntimeError as exc:
             self.logger.exception(str(exc))
-            raise JobError("Unable to update image %s: %r" % (self.key, str(exc)))
+            raise JobError(f"Unable to update image {self.key}: {str(exc)!r}")
 
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
-            label = "%s.%s" % (self.key, overlay)
+            label = f"{self.key}.{overlay}"
             overlay_image = None
             if overlay == "lava":
                 overlay_image = self.get_namespace_data(

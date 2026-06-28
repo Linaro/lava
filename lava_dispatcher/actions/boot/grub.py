@@ -34,9 +34,9 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
-def _grub_sequence_map(sequence: str) -> tuple[Optional[type[Action]], Optional[str]]:
+def _grub_sequence_map(sequence: str) -> tuple[type[Action] | None, str | None]:
     """Maps grub sequence with corresponding class."""
-    sequence_map: dict[str, tuple[type[Action], Optional[str]]] = {
+    sequence_map: dict[str, tuple[type[Action], str | None]] = {
         "wait-fastboot-interrupt": (WaitFastBootInterrupt, "grub"),
         "auto-login": (AutoLoginAction, None),
         "shell-session": (ExpectShellSession, None),

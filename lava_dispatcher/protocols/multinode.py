@@ -88,7 +88,7 @@ class MultinodeProtocol(Protocol):
                 json_default = json.loads(jobdata)
             except ValueError as exc:
                 raise ConfigurationError(
-                    "Invalid JSON settings for %s: %s" % (self.name, exc)
+                    f"Invalid JSON settings for {self.name}: {exc}"
                 )
         if "port" in json_default:
             settings["port"] = json_default["port"]
@@ -192,7 +192,7 @@ class MultinodeProtocol(Protocol):
             timeout = int(timeout)
         elif not isinstance(timeout, int):
             raise ConfigurationError(
-                "Invalid timeout duration type: %s %s" % (type(timeout), timeout)
+                f"Invalid timeout duration type: {type(timeout)} {timeout}"
             )
         msg_len = len(message)
         if msg_len > 0xFFFE:
@@ -357,11 +357,9 @@ class MultinodeProtocol(Protocol):
         try:
             json_data = json.loads(data)
         except (ValueError, TypeError) as exc:
-            raise JobError(
-                "Invalid data for %s protocol: %s %s" % (self.name, data, exc)
-            )
+            raise JobError(f"Invalid data for {self.name} protocol: {data} {exc}")
         if not isinstance(json_data, dict):
-            raise JobError("Invalid data type %s for protocol %s" % (data, self.name))
+            raise JobError(f"Invalid data type {data} for protocol {self.name}")
         if not json_data:
             raise JobError("No data to be sent over protocol %s" % self.name)
         if "request" not in json_data:
@@ -449,7 +447,7 @@ class MultinodeProtocol(Protocol):
         except (ValueError, TypeError) as exc:
             msg = re.sub(r"\s+", " ", "".join(traceback.format_exc().split("\n")))
             self.logger.exception(msg)
-            raise JobError("Invalid call to %s %s" % (self.name, exc))
+            raise JobError(f"Invalid call to {self.name} {exc}")
 
     def collate(self, reply, params):
         """

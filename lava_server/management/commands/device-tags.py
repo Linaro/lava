@@ -100,7 +100,7 @@ class Command(BaseCommand):
             self.stdout.write("Hostname: %s" % hostname)
         for tag in device.tags.all():
             self.stdout.write(
-                "Tag name: '%s' Description: '%s'" % (tag.name, tag.description)
+                f"Tag name: '{tag.name}' Description: '{tag.description}'"
             )
 
     def handle_remove(self, options):
@@ -119,7 +119,7 @@ class Command(BaseCommand):
                     raise CommandError("Tag '%s' does NOT exist!" % tag)
                 if tag not in device.tags.all():
                     raise CommandError(
-                        "Device %s does not have tag %s" % (hostname, tag.name)
+                        f"Device {hostname} does not have tag {tag.name}"
                     )
                 device.tags.remove(tag)
         device.save()
@@ -135,6 +135,4 @@ class Command(BaseCommand):
 
     def handle_list(self, options):
         for tag in Tag.objects.all():
-            self.stdout.write(
-                "Name: '%s' Description: '%s'" % (tag.name, tag.description)
-            )
+            self.stdout.write(f"Name: '{tag.name}' Description: '{tag.description}'")

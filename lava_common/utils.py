@@ -41,7 +41,7 @@ def binary_version(binary: str, flags: str = "", pattern: str = "") -> str:
         else:
             raise InfrastructureError(msg)
 
-    return "%s, version %s" % (binary, ver_str)
+    return f"{binary}, version {ver_str}"
 
 
 def debian_package_arch(pkg: str) -> str:
@@ -100,4 +100,4 @@ def debian_filename_version(binary: str) -> str:
         raise InfrastructureError(msg)
     pkg = pkg_str.split(":", maxsplit=1)[0]
     pkg_ver = debian_package_version(pkg)
-    return "%s for <%s>, installed at version: %s" % (pkg, binary, pkg_ver)
+    return f"{pkg} for <{binary}>, installed at version: {pkg_ver}"

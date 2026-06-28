@@ -204,7 +204,7 @@ def _validate_tar_member(member: tarfile.TarInfo) -> None:
     for attr in ("name", "linkname"):
         value = getattr(member, attr, "") or ""
         if "\n" in value or "\r" in value:
-            raise JobError("Tar member %s contains newline: %r" % (attr, value))
+            raise JobError(f"Tar member {attr} contains newline: {value!r}")
         if '"' in value or "\\" in value:
             raise JobError(
                 'Tar member %s contains unsupported character (" or \\): %r'
@@ -237,7 +237,7 @@ def _tar_to_debugfs_commands(
     try:
         tar = tarfile.open(tar_path)
     except tarfile.TarError as exc:
-        raise JobError("Failed to open tar %s: %s" % (tar_path, exc)) from exc
+        raise JobError(f"Failed to open tar {tar_path}: {exc}") from exc
 
     try:
         members = sorted(tar.getmembers(), key=lambda m: m.name)
@@ -272,12 +272,12 @@ def _tar_to_debugfs_commands(
                     if not already:
                         commands.append("mkdir %s" % _q(ext4_path))
                 mode = 0o040000 | (member.mode & 0o7777)
-                commands.append("sif %s mode 0%o" % (_q(ext4_path), mode))
+                commands.append(f"sif {_q(ext4_path)} mode 0{mode:o}")
                 commands.append("sif %s uid %d" % (_q(ext4_path), member.uid))
                 commands.append("sif %s gid %d" % (_q(ext4_path), member.gid))
 
             elif member.issym():
-                commands.append("symlink %s %s" % (_q(ext4_path), _q(member.linkname)))
+                commands.append(f"symlink {_q(ext4_path)} {_q(member.linkname)}")
                 commands.append("sif %s uid %d" % (_q(ext4_path), member.uid))
                 commands.append("sif %s gid %d" % (_q(ext4_path), member.gid))
 
@@ -302,9 +302,9 @@ def _tar_to_debugfs_commands(
                         pass
 
                 commands.append("rm %s" % _q(ext4_path))
-                commands.append("write %s %s" % (_q(host_path), _q(ext4_path)))
+                commands.append(f"write {_q(host_path)} {_q(ext4_path)}")
                 mode = 0o100000 | (member.mode & 0o7777)
-                commands.append("sif %s mode 0%o" % (_q(ext4_path), mode))
+                commands.append(f"sif {_q(ext4_path)} mode 0{mode:o}")
                 commands.append("sif %s uid %d" % (_q(ext4_path), member.uid))
                 commands.append("sif %s gid %d" % (_q(ext4_path), member.gid))
 
@@ -312,7 +312,7 @@ def _tar_to_debugfs_commands(
                 target_raw = os.path.normpath(
                     os.path.join(target_path, member.linkname)
                 )
-                commands.append("ln %s %s" % (_q(resolve(target_raw)), _q(ext4_path)))
+                commands.append(f"ln {_q(resolve(target_raw))} {_q(ext4_path)}")
 
             elif member.isblk() or member.ischr():
                 action.logger.warning(
@@ -488,7 +488,7 @@ def inject_file(action: Action, image: str, src_path: str, dest_path: str) -> No
             if _stat_path(image, part) is None:
                 commands.append("mkdir %s" % _q(part))
     commands.append("rm %s" % _q(dest_path))
-    commands.append("write %s %s" % (_q(src_path), _q(dest_path)))
+    commands.append(f"write {_q(src_path)} {_q(dest_path)}")
     action.logger.debug("Injecting %s into %s at %s", src_path, image, dest_path)
     _run_debugfs(image, commands)
 
@@ -501,7 +501,7 @@ def copy_out(
         host_path = os.path.join(destination, basename)
         action.logger.debug("Extracting %s from %s", filename, image)
         result = subprocess.run(
-            ["debugfs", "-R", 'dump "%s" "%s"' % (filename, host_path), image],
+            ["debugfs", "-R", f'dump "{filename}" "{host_path}"', image],
             capture_output=True,
             text=True,
             check=False,
@@ -511,7 +511,9 @@ def copy_out(
         ]
         if error_lines:
             raise JobError(
-                "debugfs dump failed for %s: %s" % (filename, "; ".join(error_lines))
+                "debugfs dump failed for {}: {}".format(
+                    filename, "; ".join(error_lines)
+                )
             )
 
 

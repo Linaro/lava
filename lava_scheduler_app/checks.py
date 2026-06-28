@@ -49,7 +49,7 @@ def check_health_checks(app_configs, **kwargs):
         except yaml.YAMLError as exc:
             errors.append(
                 Error(
-                    "Invalid YAML syntax for '%s': '%s'" % (device.hostname, exc),
+                    f"Invalid YAML syntax for '{device.hostname}': '{exc}'",
                     obj="health-checks",
                 )
             )
@@ -65,7 +65,7 @@ def check_health_checks(app_configs, **kwargs):
         except Invalid as exc:
             errors.append(
                 Error(
-                    "Invalid schema for '%s': '%s'" % (device.hostname, exc),
+                    f"Invalid schema for '{device.hostname}': '{exc}'",
                     obj="health-checks",
                 )
             )
@@ -75,7 +75,7 @@ def check_health_checks(app_configs, **kwargs):
         except SubmissionException as exc:
             errors.append(
                 Error(
-                    "Invalid schema for '%s': '%s'" % (device.hostname, exc),
+                    f"Invalid schema for '{device.hostname}': '{exc}'",
                     obj="health-checks",
                 )
             )

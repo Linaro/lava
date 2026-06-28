@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 from unittest import TestCase
 
 from lava_common.yaml import yaml_safe_load
@@ -17,7 +17,7 @@ class BaseTemplateTest(TestCase):
     def render_device_dictionary_from_text(
         self,
         text: str,
-        job_ctx: Optional[dict[str, Any]] = None,
+        job_ctx: dict[str, Any] | None = None,
         validate: bool = True,
         use_device_templates: bool = False,
     ) -> dict[str, Any]:
@@ -38,7 +38,7 @@ class BaseTemplateTest(TestCase):
     def render_device_dictionary(
         self,
         device_name: str,
-        job_ctx: Optional[dict[str, Any]] = None,
+        job_ctx: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if job_ctx is None:
             job_ctx = {}

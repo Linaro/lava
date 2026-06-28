@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 from unittest.mock import patch
 
 from lava_common.exceptions import JobError, LAVABug
@@ -37,7 +37,7 @@ class RaisesErrorAction(Action):
         job: Job,
         retries_to_success: int = 100,
         error_message: str = DEFAULT_TEST_ERROR_MESSAGE,
-        populate_actions: Optional[list[Action]] = None,
+        populate_actions: list[Action] | None = None,
         exception_class: type[Exception] = RaisesErrorException,
     ):
         super().__init__(job)

@@ -291,7 +291,7 @@ def _update_devices_health(request, queryset, health):
             device.save(update_fields=["health"])
             device.log_admin_entry(
                 request.user,
-                "%s → %s" % (old_health_display, device.get_health_display()),
+                f"{old_health_display} → {device.get_health_display()}",
             )
 
 
@@ -517,7 +517,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
 
     def list_of_cores(self, obj):
         if obj.core_count:
-            return "%s x %s" % (
+            return "{} x {}".format(
                 obj.core_count,
                 ",".join([core.name for core in obj.cores.all().order_by("name")]),
             )
@@ -652,7 +652,7 @@ class NotificationRecipientAdmin(admin.ModelAdmin):
         if obj.method == NotificationRecipient.EMAIL:
             return obj.email_address
         else:
-            return "%s@%s" % (obj.irc_handle, obj.irc_server_name)
+            return f"{obj.irc_handle}@{obj.irc_server_name}"
 
     list_display = ("method", "handle", "status")
     list_filter = ("method", "status")

@@ -29,16 +29,16 @@ def check_device(data, options, prefix=""):
         data = yaml.safe_load(data)
     except JinjaTemplateNotFound as exc:
         print("%sinvalide device template:" % prefix)
-        print("%smissing template: %s" % (prefix, exc))
+        print(f"{prefix}missing template: {exc}")
         return 1
     except JinjaTemplateSyntaxError as exc:
         print("%sinvalide device template:" % prefix)
-        print("%serror: %s" % (prefix, exc))
+        print(f"{prefix}error: {exc}")
         print("%sline: %d" % (prefix, exc.lineno))
         return 1
     except JinjaTemplateError as exc:
         print("%sinvalide device template:" % prefix)
-        print("%serror: %s" % (prefix, exc))
+        print(f"{prefix}error: {exc}")
         return 1
     except yaml.YAMLError:
         print("%sinvalid device definition:" % prefix)
@@ -48,8 +48,8 @@ def check_device(data, options, prefix=""):
         validate_device(data)
     except v.Invalid as exc:
         print("%sinvalid device definition:" % prefix)
-        print("%skey: %s" % (prefix, exc.path))
-        print("%smgs: %s" % (prefix, exc.msg))
+        print(f"{prefix}key: {exc.path}")
+        print(f"{prefix}mgs: {exc.msg}")
         return 1
     return 0
 
@@ -65,8 +65,8 @@ def check_job(data, options, prefix=""):
         validate_job(data, options.strict, options.context)
     except v.Invalid as exc:
         print("%sinvalid job definition:" % prefix)
-        print("%skey: %s" % (prefix, exc.path))
-        print("%smgs: %s" % (prefix, exc.msg))
+        print(f"{prefix}key: {exc.path}")
+        print(f"{prefix}mgs: {exc.msg}")
         return 1
     return 0
 

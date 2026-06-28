@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Linaro Limited
 #
@@ -34,7 +33,7 @@ def main(args):
         radon.write("[\n%s\n]" % data_str.replace("}{", "},\n{"))
 
     ret = []
-    with open(FILENAME, "r") as f_in:
+    with open(FILENAME) as f_in:
         data = json.load(f_in)
     for line in data:
         ret.append(

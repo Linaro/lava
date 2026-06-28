@@ -29,13 +29,7 @@ class TestSelectorMenu(LavaDispatcherTestCase):
         self.menu.prompt = None
 
     def test_menu_parser(self):
-        pattern = "%s([%s]+)%s%s([%s]*)" % (
-            re.escape(self.menu.item_markup[0]),
-            self.menu.item_class,
-            re.escape(self.menu.item_markup[1]),
-            self.menu.separator,
-            self.menu.label_class,
-        )
+        pattern = f"{re.escape(self.menu.item_markup[0])}([{self.menu.item_class}]+){re.escape(self.menu.item_markup[1])}{self.menu.separator}([{self.menu.label_class}]*)"
         serial_input = """
     [1] debian
     [2] tester
