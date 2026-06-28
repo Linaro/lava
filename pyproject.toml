@@ -154,15 +154,16 @@ lint.select = [
   # "B",   # flake8-bugbear
   # "E",   # pycodestyle errors
   # "F",   # pyflakes
-  "I", # isort
+  "I",  # isort
   # "SIM", # flake8-simplify
-  # "UP",  # pyupgrade
+  "UP", # pyupgrade
   # "W",   # pycodestyle warnings
 ]
 lint.ignore = [
-  "E501", # line too long (test data strings, URLs, commands)
-  "F403", # wildcard imports in Django settings are intentional
-  "F405", # undefined names from wildcard imports in Django settings
+  "E501",  # line too long (test data strings, URLs, commands)
+  "F403",  # wildcard imports in Django settings are intentional
+  "F405",  # undefined names from wildcard imports in Django settings
+  "UP031", # use format specifiers instead of percent format
 ]
 
 [tool.pylint]
