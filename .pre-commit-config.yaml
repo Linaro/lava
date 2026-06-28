@@ -37,6 +37,12 @@ repos:
   #   hooks:
   #     - id: djangofmt
 
+  - repo: https://github.com/adamchainz/django-upgrade
+    rev: 1.31.1
+    hooks:
+      - id: django-upgrade
+        args: ["--target-version", "4.2"]
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.20
     hooks:
