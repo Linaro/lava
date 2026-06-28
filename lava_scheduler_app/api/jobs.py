@@ -83,7 +83,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         if job.state not in [
@@ -130,7 +130,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         if job.is_multinode:
@@ -356,7 +356,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         job_finished = job.state == TestJob.STATE_FINISHED
@@ -393,7 +393,7 @@ class SchedulerJobsAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         device_hostname = None

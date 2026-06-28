@@ -38,7 +38,7 @@ def main():
 
     protocol = "https" if args.https else "http"
 
-    connection = xmlrpc.client.ServerProxy("%s://%s//RPC2" % (protocol, args.instance))
+    connection = xmlrpc.client.ServerProxy(f"{protocol}://{args.instance}//RPC2")
     if args.hostname:
         print(connection.scheduler.validate_pipeline_devices(args.hostname))
     else:

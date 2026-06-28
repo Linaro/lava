@@ -80,16 +80,14 @@ class MultinodeMixin(Action):
                 params = re.split(r"\s+(?=\w+(?:=))", params)
             else:
                 params = params.split()
-            test_case_name = "%s-%s" % (name, params[0])  # use the messageID
+            test_case_name = f"{name}-{params[0]}"  # use the messageID
             self.logger.debug("messageID: %s", test_case_name)
 
             test_case_params = "TEST_CASE_ID=multinode-{} RESULT={}"
             try:
                 ret = self.signal_director.signal(name, params)
             except MultinodeProtocolTimeoutError as exc:
-                self.logger.warning(
-                    "Sync error in %s signal: %s %s" % (event, exc, name)
-                )
+                self.logger.warning(f"Sync error in {event} signal: {exc} {name}")
 
                 self.signal_test_case(
                     test_case_params.format(test_case_name.lower(), "fail").split()
@@ -173,7 +171,7 @@ class MultinodeMixin(Action):
             else:
                 for target, messages in reply.items():
                     for key, value in messages.items():
-                        message_str += " %s:%s=%s" % (target, key, value)
+                        message_str += f" {target}:{key}={value}"
             self.connection.sendline(
                 "<LAVA_WAIT_COMPLETE%s>" % message_str, delay=self.character_delay
             )
@@ -193,7 +191,7 @@ class MultinodeMixin(Action):
                 #  target2:{key1:value, key2:value2, key3:value3}}"
                 for target, messages in reply.items():
                     for key, value in messages.items():
-                        message_str += " %s:%s=%s" % (target, key, value)
+                        message_str += f" {target}:{key}={value}"
             self.connection.sendline(
                 "<LAVA_WAIT_ALL_COMPLETE%s>" % message_str, delay=self.character_delay
             )

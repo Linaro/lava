@@ -193,10 +193,7 @@ class UefiSubstituteCommands(Action):
         ]
         for item in self.items:
             if "select" not in item:
-                self.errors = "Invalid device configuration for %s: %s" % (
-                    self.name,
-                    item,
-                )
+                self.errors = f"Invalid device configuration for {self.name}: {item}"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)

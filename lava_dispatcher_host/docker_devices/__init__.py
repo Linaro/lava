@@ -66,7 +66,7 @@ def DeviceFilter(*args, **kwargs):
 
 
 class DeviceFilterCommon:
-    def __init__(self, container, state_file: Optional[Path] = None):
+    def __init__(self, container, state_file: Path | None = None):
         self.__devices__ = set()
         if state_file:
             self.load(state_file)
@@ -136,7 +136,7 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         Device(136),  # /dev/pts/[0-9]*
     ]
 
-    def __init__(self, container: str, state_file: Optional[Path] = None):
+    def __init__(self, container: str, state_file: Path | None = None):
         super().__init__(container, state_file)
         self.__cgroup__ = (
             f"/sys/fs/cgroup/system.slice/docker-{self.container_id}.scope"

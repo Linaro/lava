@@ -65,7 +65,7 @@ class ModelFactory:
     def make_user(self):
         return User.objects.create_user(
             self.get_unique_user(),
-            "%s@mail.invalid" % (self.getUniqueString(),),
+            f"{self.getUniqueString()}@mail.invalid",
             self.getUniqueString(),
         )
 

@@ -119,7 +119,7 @@ class RunNodebooterContainer(Action):
 
         for vol, mnt in volumes.items():
             os.makedirs(vol, exist_ok=True)
-            option = "--volume=%s:%s" % (vol, mnt)
+            option = f"--volume={vol}:{mnt}"
             docker.add_docker_run_options(option)
 
         docker.add_docker_run_options("--privileged")

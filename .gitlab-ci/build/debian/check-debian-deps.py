@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-# -*- coding: utf-8 -*-
 #
 # Copyright (C) 2019 Linaro Limited
 #
@@ -100,7 +99,7 @@ def main():
             ok_str = "OK" if ok else "NOK"
         failures += not ok
         string_str = " (%s)" % reqs[req] if reqs[req] else ""
-        print("* %s%s [%s]" % (req, string_str, ok_str))
+        print(f"* {req}{string_str} [{ok_str}]")
 
     return failures
 

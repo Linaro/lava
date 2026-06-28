@@ -38,6 +38,6 @@ def which(path: str, match: Callable[[str], object] = os.path.isfile) -> str:
         raise InfrastructureError("Cannot find command '%s' in $PATH" % path)
 
     if os.stat(exefile).st_mode & S_IXUSR != S_IXUSR:
-        raise InfrastructureError("Cannot execute '%s' at '%s'" % (path, exefile))
+        raise InfrastructureError(f"Cannot execute '{path}' at '{exefile}'")
 
     return exefile

@@ -42,9 +42,7 @@ STATUS_CHOICES = (
 # main_function
 def main(args):
     # change https to http when testing with localhost
-    connection = xmlrpc.client.ServerProxy(
-        "https://%s:%s@%s/RPC2" % (USER, TOKEN, HOSTNAME)
-    )
+    connection = xmlrpc.client.ServerProxy(f"https://{USER}:{TOKEN}@{HOSTNAME}/RPC2")
     data = connection.results.run_query(QUERY, 20, QUERY_USER)
     if not data:
         return 0
@@ -58,11 +56,13 @@ def main(args):
         if result["status"] == INCOMPLETE:
             error_type = job_lava["metadata"]["error_type"]
             msg = job_lava["metadata"]["error_msg"]
-            print("%s, '%s', '%s', '%s'" % (job_id, error_type, msg, logged))
+            print(f"{job_id}, '{error_type}', '{msg}', '{logged}'")
             continue
         elif result["status"] == COMPLETE:
             continue
-        print("[%s] %s" % (job_lava["job"], STATUS_CHOICES[int(result["status"])][1]))
+        print(
+            "[{}] {}".format(job_lava["job"], STATUS_CHOICES[int(result["status"])][1])
+        )
     return 0
 
 

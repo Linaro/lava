@@ -439,14 +439,14 @@ class TestPipelineSubmit(TestCaseWithFactory):
             device_config = device.load_configuration(job_ctx)  # raw dict
         except (JinjaTemplateError, yaml.YAMLError, OSError) as exc:
             # FIXME: report the exceptions as useful user messages
-            self.fail("[%s] jinja2 error: %s" % (job.id, exc))
+            self.fail(f"[{job.id}] jinja2 error: {exc}")
         if not device_config or not isinstance(device_config, dict):
             # it is an error to have a pipeline device without a device dictionary as it will never get any jobs.
             msg = (
                 "Administrative error. Device '%s' has no device dictionary."
                 % device.hostname
             )
-            self.fail("[%s] device-dictionary error: %s" % (job.id, msg))
+            self.fail(f"[{job.id}] device-dictionary error: {msg}")
 
         self.assertTrue(device.is_valid())
         device_object = PipelineDevice(
@@ -467,7 +467,7 @@ class TestPipelineSubmit(TestCaseWithFactory):
             KeyError,
             TypeError,
         ) as exc:
-            self.fail("[%s] parser error: %s" % (job.sub_id, exc))
+            self.fail(f"[{job.sub_id}] parser error: {exc}")
 
     def reset_job_device(
         self,
@@ -609,7 +609,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             KeyError,
             TypeError,
         ) as exc:
-            self.fail("[%s] parser error: %s" % (host_job.sub_id, exc))
+            self.fail(f"[{host_job.sub_id}] parser error: {exc}")
         pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
@@ -624,7 +624,7 @@ class TestYamlMultinode(TestCaseWithFactory):
             KeyError,
             TypeError,
         ) as exc:
-            self.fail("[%s] parser error: %s" % (guest_job.sub_id, exc))
+            self.fail(f"[{guest_job.sub_id}] parser error: {exc}")
         pipeline_job._validate()
         self.assertEqual([], pipeline_job.pipeline.errors)
 
@@ -925,7 +925,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                     KeyError,
                     TypeError,
                 ) as exc:
-                    self.fail("[%s] parser error: %s" % (check_job.sub_id, exc))
+                    self.fail(f"[{check_job.sub_id}] parser error: {exc}")
                 with TestCase.assertRaises(
                     self, (JobError, InfrastructureError)
                 ) as check:
@@ -1027,7 +1027,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 KeyError,
                 TypeError,
             ) as exc:
-                self.fail("[%s] parser error: %s" % (job.sub_id, exc))
+                self.fail(f"[{job.sub_id}] parser error: {exc}")
 
             with patch("lava_dispatcher.actions.boot.qemu.SYS_CLASS_KVM", "/"):
                 pipeline_job.pipeline.validate_actions()

@@ -50,10 +50,10 @@ class CallDockerAction(Action):
 
     def validate(self):
         super().validate()
-        self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+        self.container = f"lava-{self.job.job_id}-{self.level}"
         prefix = self.job.parameters.get("dispatcher", {}).get("prefix", "")
         if prefix:
-            self.container = "lava-%s-%s-%s" % (prefix, self.job.job_id, self.level)
+            self.container = f"lava-{prefix}-{self.job.job_id}-{self.level}"
 
         options = self.job.device["actions"]["boot"]["methods"]["docker"]["options"]
 
@@ -99,7 +99,7 @@ class CallDockerAction(Action):
                 action="test", label="results", key="lava_test_results_dir"
             )
             if not self.remote:
-                cmd += " --volume %s:%s" % (
+                cmd += " --volume {}:{}".format(
                     os.path.join(location, overlay.strip("/")),
                     overlay,
                 )
@@ -119,13 +119,10 @@ class CallDockerAction(Action):
         if namespace:
             downloads_dir = pathlib.Path(self.job.tmp_dir) / "downloads" / namespace
             if downloads_dir.exists():
-                self.extra_options += " --volume %s:%s" % (
-                    downloads_dir,
-                    LAVA_DOWNLOADS,
-                )
+                self.extra_options += f" --volume {downloads_dir}:{LAVA_DOWNLOADS}"
 
         cmd += self.extra_options
-        cmd += " %s %s" % (docker_image, self.parameters["command"])
+        cmd += " {} {}".format(docker_image, self.parameters["command"])
 
         self.logger.debug("Boot command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)
@@ -143,7 +140,5 @@ class CallDockerAction(Action):
         super().cleanup(connection)
         if self.cleanup_required:
             self.logger.debug("Stopping container %s", self.container)
-            self.run_cmd(
-                "docker %s stop %s" % (self.remote, self.container), allow_fail=True
-            )
+            self.run_cmd(f"docker {self.remote} stop {self.container}", allow_fail=True)
             self.cleanup_required = False

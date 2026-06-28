@@ -216,7 +216,7 @@ async def zmq_proxy(app):
             except zmq.error.ZMQError as exc:
                 logger.error("[EXIT] Received a ZMQ error: %s", exc)
                 break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.info("[EXIT] Timing out")
                 break
             except OSError as exc:

@@ -268,10 +268,8 @@ class WorkersLogView(LavaView):
         worker_ct = ContentType.objects.get_for_model(Worker)
         return (
             LogEntry.objects.filter(
-                (
-                    Q(content_type=worker_ct)
-                    & Q(object_id__in=self.workers.visible_by_user(self.request.user))
-                )
+                Q(content_type=worker_ct)
+                & Q(object_id__in=self.workers.visible_by_user(self.request.user))
             )
             .order_by("-action_time")
             .select_related("user")
@@ -486,19 +484,19 @@ def report_data(start_day, end_day, devices, url_param):
     )
 
     url = reverse("lava.scheduler.failure_report")
-    params = "start=%s&end=%s%s" % (start_day, end_day, url_param)
+    params = f"start={start_day}&end={end_day}{url_param}"
     return (
         {
             "pass": res["health_pass"] or 0,
             "fail": res["health_fail"] or 0,
             "date": start_date.strftime("%m-%d"),
-            "failure_url": "%s?%s&health_check=1" % (url, params),
+            "failure_url": f"{url}?{params}&health_check=1",
         },
         {
             "pass": res["job_pass"] or 0,
             "fail": res["job_fail"] or 0,
             "date": start_date.strftime("%m-%d"),
-            "failure_url": "%s?%s&health_check=0" % (url, params),
+            "failure_url": f"{url}?{params}&health_check=0",
         },
     )
 
@@ -965,7 +963,7 @@ def device_type_detail(request, pk):
     config.configure(health_table)
 
     if dt.cores.all():
-        core_string = "%s x %s" % (
+        core_string = "{} x {}".format(
             dt.core_count if dt.core_count else 1,
             ",".join([core.name for core in dt.cores.all().order_by("name")]),
         )
@@ -2026,7 +2024,7 @@ def job_status(request, pk):
     if job.actual_device:
         url = job.actual_device.get_absolute_url()
         host = job.actual_device.hostname
-        html = '<a href="%s">%s</a> ' % (url, host)
+        html = f'<a href="{url}">{host}</a> '
         html += '<a href="%s"><span class="glyphicon glyphicon-stats"></span></a>' % (
             reverse("lava.scheduler.device_report", args=[job.actual_device.pk])
         )
@@ -2557,7 +2555,7 @@ def __set_device_health__(device, user, health, reason):
             )
         else:
             device.log_admin_entry(
-                user, "%s → %s" % (old_health_display, device.get_health_display())
+                user, f"{old_health_display} → {device.get_health_display()}"
             )
 
 

@@ -59,7 +59,7 @@ def delete_tags(options, tags):
     )
     for tag in tags:
         print("* %s" % tag)
-        ret = requests.delete("%s/%s/" % (url, tag), headers=headers, timeout=60.0)
+        ret = requests.delete(f"{url}/{tag}/", headers=headers, timeout=60.0)
         print("=> %d" % ret.status_code)
 
 

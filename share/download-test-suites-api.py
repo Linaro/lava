@@ -36,7 +36,7 @@ def main():
 
     protocol = "https" if args.https else "http"
 
-    job_results_url = "%s://%s/results/%s" % (protocol, args.instance, args.job_id)
+    job_results_url = f"{protocol}://{args.instance}/results/{args.job_id}"
     summary_response = requests.get(
         "%s/yaml_summary" % (job_results_url),
         params={"user": args.username, "token": args.token},
@@ -47,7 +47,7 @@ def main():
         if test_suite["name"] in args.testsuites:
             print("Test case list for suite '%s':" % test_suite["name"])
             suite_response = requests.get(
-                "%s/%s/yaml" % (job_results_url, test_suite["name"]),
+                "{}/{}/yaml".format(job_results_url, test_suite["name"]),
                 params={"user": args.username, "token": args.token},
                 timeout=60.0,
             )

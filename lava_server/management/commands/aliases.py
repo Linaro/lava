@@ -67,7 +67,7 @@ class Command(BaseCommand):
     def handle_list(self, options):
         self.stdout.write("Aliases:")
         for alias in Alias.objects.all():
-            self.stdout.write("* %s: %s" % (alias.name, alias.device_type.name))
+            self.stdout.write(f"* {alias.name}: {alias.device_type.name}")
 
     def handle_show(self, options):
         alias_name = options["alias"]

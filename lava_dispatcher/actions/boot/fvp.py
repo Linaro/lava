@@ -93,7 +93,7 @@ class BaseFVPAction(Action):
                 self.parameters["docker"]["container_name"] + "-lava-" + self.job.job_id
             )
         else:
-            self.container = "lava-%s-%s" % (self.job.job_id, self.level)
+            self.container = f"lava-{self.job.job_id}-{self.level}"
 
         options = self.job.device["actions"]["boot"]["methods"]["fvp"]["options"]
 
@@ -153,7 +153,7 @@ class BaseFVPAction(Action):
 
             # Add downloaded images to container, ensuring they are all in a single
             # directory.  This is required for FVP libraries.
-            cmd += " --volume %s:%s" % (filename, location_in_container)
+            cmd += f" --volume {filename}:{location_in_container}"
 
         substitutions["ARTIFACT_DIR"] = os.path.join("/", self.container)
         if not self.fvp_license:
@@ -477,10 +477,7 @@ class GetFVPSerialAction(Action):
                 parameters={"namespace": feedback_name},
             )
 
-        cmd = "lava-outerr docker exec --interactive --tty %s telnet localhost %s" % (
-            container,
-            serial_port,
-        )
+        cmd = f"lava-outerr docker exec --interactive --tty {container} telnet localhost {serial_port}"
 
         self.logger.debug("Connect command: %s", cmd)
         shell = ShellCommand(cmd, self.timeout, logger=self.logger)

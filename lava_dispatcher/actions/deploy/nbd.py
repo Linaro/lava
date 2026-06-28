@@ -167,9 +167,8 @@ class XnbdAction(Action):
         if re.search(filesystem.tftpd_dir(), self.nbd_root):
             fullpath_nbdroot = self.nbd_root
         else:
-            fullpath_nbdroot = "%s/%s" % (
-                os.path.realpath(filesystem.tftpd_dir()),
-                self.nbd_root,
+            fullpath_nbdroot = (
+                f"{os.path.realpath(filesystem.tftpd_dir())}/{self.nbd_root}"
             )
         # on debian, nbd-server change user to nbd
         if os.path.exists("/etc/nbd-server/config"):

@@ -15,7 +15,8 @@ from django.db.models import Q
 from django.utils import timezone
 
 if TYPE_CHECKING:
-    from typing import ClassVar, Iterator
+    from collections.abc import Iterator
+    from typing import ClassVar
 
     from django.http import HttpRequest
 

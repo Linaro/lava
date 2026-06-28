@@ -44,7 +44,7 @@ class rename_scripts(setuptools.command.install_scripts.install_scripts):
             for key in self.SCRIPTS:
                 if script.endswith(key):
                     new_name = script.replace(key, self.SCRIPTS[key])
-                    print("Rename %r to %r" % (script, new_name))
+                    print(f"Rename {script!r} to {new_name!r}")
                     shutil.move(script, new_name)
                     continue
 

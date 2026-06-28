@@ -168,7 +168,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
             )
             not in media_params
         ):
-            self.errors = "%s does not match requested media type %s" % (
+            self.errors = "{} does not match requested media type {}".format(
                 self.get_namespace_data(
                     action="storage-deploy", label="u-boot", key="device"
                 ),

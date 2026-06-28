@@ -54,7 +54,7 @@ class XnbdProtocol(Protocol):
         try:
             return self._api_select(args, action=action)
         except (ValueError, TypeError) as exc:
-            raise JobError("Invalid call to %s %s" % (self.name, exc))
+            raise JobError(f"Invalid call to {self.name} {exc}")
 
     def _api_select(self, data, action=None):
         if not data:

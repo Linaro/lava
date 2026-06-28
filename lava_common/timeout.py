@@ -15,7 +15,8 @@ from lava_common.constants import ACTION_TIMEOUT
 from lava_common.exceptions import ConfigurationError, JobError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterator
+    from collections.abc import Iterator
+    from typing import Any
 
     from lava_dispatcher.action import Action
 
@@ -81,7 +82,7 @@ class Timeout:
             self.action.on_timeout()
         # Raise the exception
         duration = int(time.monotonic() - self.start)
-        raise self.exception("%s timed out after %s seconds" % (self.name, duration))
+        raise self.exception(f"{self.name} timed out after {duration} seconds")
 
     @contextmanager
     def __call__(

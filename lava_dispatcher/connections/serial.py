@@ -272,9 +272,7 @@ class DisconnectDevice(ConnectDevice):
         if not primary_connection_has_correct_tags:
             self.errors = (
                 "LAVA does not know how to disconnect: "
-                "ensure that primary connection has one of the following tags: {}".format(
-                    RECOGNIZED_TAGS
-                )
+                f"ensure that primary connection has one of the following tags: {RECOGNIZED_TAGS}"
             )
 
     def run(self, connection, max_end_time):

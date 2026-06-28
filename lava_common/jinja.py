@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 
 def create_device_templates_env(
-    loader: Optional[BaseLoader] = None, cache_size: int = 400
+    loader: BaseLoader | None = None, cache_size: int = 400
 ) -> JinjaSandboxEnv:
     new_env = JinjaSandboxEnv(
         loader=loader,

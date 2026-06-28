@@ -59,7 +59,7 @@ class Command(BaseCommand):
             prev_health = device.get_health_display()
             device.health = Device.HEALTH_MAINTENANCE
             device.log_admin_entry(
-                user, "%s → %s (cmdline)" % (prev_health, device.get_health_display())
+                user, f"{prev_health} → {device.get_health_display()} (cmdline)"
             )
             device.save()
             self.stdout.write("* %s" % device.hostname)

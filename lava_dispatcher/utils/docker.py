@@ -15,7 +15,8 @@ from typing import TYPE_CHECKING
 from lava_common.exceptions import InfrastructureError, JobError
 
 if TYPE_CHECKING:
-    from typing import Iterable, Optional
+    from collections.abc import Iterable
+    from typing import Optional
 
     from lava_dispatcher.action import Action
 
@@ -277,7 +278,7 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
-    def wait_file(self, filename: str, timeout: Optional[int] = None) -> None:
+    def wait_file(self, filename: str, timeout: int | None = None) -> None:
         delay = 1
         start = time.monotonic()
         while True:
