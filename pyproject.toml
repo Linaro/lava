@@ -280,3 +280,6 @@ report.exclude_lines = [
 
 [tool.pycodestyle]
 max-line-length = 88
+
+[tool.djangofmt]
+profile = "django"
