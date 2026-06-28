@@ -181,6 +181,7 @@ main.disable = [
   "E0202",  # An attribute defined in %s line %s hides this method
   "E0401",  # Unable to import '%s'
   "E1101",  # Instance of x has no y member
+  "E5142",  # User model imported from django.contrib.auth.models (imported-auth-user)
   "format", # Formatting is handled by `ruff`
   "R0401",  # Cyclic import (%s -> %s)
   "R0801",  # Duplicate code
@@ -215,7 +216,10 @@ main.disable = [
   "W1509",  # Using preexec_fn keyword which may be unsafe in the presence of threads
   "W1514",  # Using open without explicitly specifying an encoding
 ]
-main.init-hook = "import django; django.setup()"  # Fix django apps not being initialized
+main.init-hook = """\
+  import os, sys; os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'lava_server.settings.dev'); sys.path.insert(0, \
+  os.getcwd()); import django; django.setup()\
+  """  # Fix django apps not being initialized
 # Pylint configuration
 main.jobs = 0  # Scale number of jobs to number of CPUs
 main.load-plugins = "pylint_django"
