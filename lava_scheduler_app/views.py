@@ -1188,7 +1188,7 @@ def internal_v1_jobs(request, pk):
     except TestJob.DoesNotExist:
         return JsonResponse({"error": f"Unknown job '{pk}'"}, status=404)
 
-    token = request.META.get("HTTP_LAVA_TOKEN")
+    token = request.headers.get("lava-token")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
     if not constant_time_compare(token, job.token):
@@ -1323,7 +1323,7 @@ def internal_v1_jobs_logs(request, pk):
         return JsonResponse({"error": f"Unknown job '{pk}'"}, status=404)
 
     # Check authentication
-    token = request.META.get("HTTP_LAVA_TOKEN")
+    token = request.headers.get("lava-token")
     if token is None:
         return JsonResponse({"error": "Missing 'token'"}, status=400)
     if not constant_time_compare(token, job.token):
@@ -1440,7 +1440,7 @@ def internal_v1_workers(request, pk=None):
         except Worker.DoesNotExist:
             return JsonResponse({"error": f"Unknown worker '{pk}'"}, status=404)
 
-        token = request.META.get("HTTP_LAVA_TOKEN")
+        token = request.headers.get("lava-token")
         if token is None:
             return JsonResponse({"error": "Missing 'token'"}, status=400)
         if not constant_time_compare(token, worker.token):

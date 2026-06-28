@@ -72,6 +72,7 @@ class GroupWorkerPermissionInline(GroupObjectPermissionInline):
     extra = 0
 
 
+@admin.register(Alias)
 class AliasAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -81,6 +82,7 @@ class AliasAdmin(admin.ModelAdmin):
     list_display = ("name", "device_type")
 
 
+@admin.register(Architecture)
 class ArchitectureAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -88,6 +90,7 @@ class ArchitectureAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
+@admin.register(BitWidth)
 class BitWidthAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -95,6 +98,7 @@ class BitWidthAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
+@admin.register(Core)
 class CoreAdmin(admin.ModelAdmin):
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
@@ -102,6 +106,7 @@ class CoreAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
+@admin.action(description="Expire user account")
 def expire_user_action(modeladmin, request, queryset):
     for user in queryset.filter(is_active=True):
         AuthToken.objects.filter(user=user).delete()
@@ -113,9 +118,6 @@ def expire_user_action(modeladmin, request, queryset):
         for permission in user.user_permissions.all():
             user.user_permissions.remove(permission)
         user.save()
-
-
-expire_user_action.short_description = "Expire user account"
 
 
 class CustomGroupAdminForm(forms.ModelForm):
@@ -165,6 +167,7 @@ admin.site.unregister(Group)
 admin.site.register(Group, CustomGroupAdmin)
 
 
+@admin.action(description="cancel selected jobs")
 def cancel_action(modeladmin, request, queryset):
     with transaction.atomic():
         for testjob in queryset:
@@ -185,9 +188,7 @@ def cancel_action(modeladmin, request, queryset):
                     testjob.save(update_fields=fields)
 
 
-cancel_action.short_description = "cancel selected jobs"
-
-
+@admin.action(description="fail selected jobs")
 def fail_action(modeladmin, request, queryset):
     if request.user.is_superuser:
         with transaction.atomic():
@@ -201,9 +202,6 @@ def fail_action(modeladmin, request, queryset):
                 testjob = TestJob.objects.select_for_update().get(pk=testjob.pk)
                 fields = testjob.go_state_finished(TestJob.HEALTH_INCOMPLETE)
                 testjob.save(update_fields=fields)
-
-
-fail_action.short_description = "fail selected jobs"
 
 
 class ActiveDevicesFilter(admin.SimpleListFilter):
@@ -295,30 +293,27 @@ def _update_devices_health(request, queryset, health):
             )
 
 
+@admin.action(description="Update health of selected devices to Good")
 def device_health_good(modeladmin, request, queryset):
     _update_devices_health(request, queryset, Device.HEALTH_GOOD)
 
 
+@admin.action(description="Update health of selected devices to Unknown")
 def device_health_unknown(modeladmin, request, queryset):
     _update_devices_health(request, queryset, Device.HEALTH_UNKNOWN)
 
 
+@admin.action(description="Update health of selected devices to Maintenance")
 def device_health_maintenance(modeladmin, request, queryset):
     _update_devices_health(request, queryset, Device.HEALTH_MAINTENANCE)
 
 
+@admin.action(description="Update health of selected devices to Retired")
 def device_health_retired(modeladmin, request, queryset):
     _update_devices_health(request, queryset, Device.HEALTH_RETIRED)
 
 
-device_health_good.short_description = "Update health of selected devices to Good"
-device_health_unknown.short_description = "Update health of selected devices to Unknown"
-device_health_maintenance.short_description = (
-    "Update health of selected devices to Maintenance"
-)
-device_health_retired.short_description = "Update health of selected devices to Retired"
-
-
+@admin.register(Device)
 class DeviceAdmin(admin.ModelAdmin):
     list_filter = (
         DeviceTypeFilter,
@@ -344,28 +339,31 @@ class DeviceAdmin(admin.ModelAdmin):
             )
         )
 
+    @admin.display(
+        description="HC",
+        boolean=True,
+    )
     def has_health_check(self, obj):
         return bool(obj.get_health_check())
 
-    has_health_check.boolean = True
-    has_health_check.short_description = "HC"
-
+    @admin.display(
+        description="HC enabled",
+        boolean=True,
+    )
     def health_check_enabled(self, obj):
         return not obj.device_type.disable_health_check
-
-    health_check_enabled.boolean = True
-    health_check_enabled.short_description = "HC enabled"
 
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
             return self.readonly_fields + ("hostname",)
         return self.readonly_fields
 
+    @admin.display(
+        description="Config",
+        boolean=True,
+    )
     def valid_device(self, obj):
         return bool(obj.is_valid())
-
-    valid_device.boolean = True
-    valid_device.short_description = "Config"
 
     def device_dictionary_jinja(self, obj):
         return obj.load_configuration(output_format="raw")
@@ -425,6 +423,7 @@ class DeviceAdmin(admin.ModelAdmin):
     inlines = [GroupDevicePermissionInline]
 
 
+@admin.register(TestJob)
 class TestJobAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
@@ -433,6 +432,7 @@ class TestJobAdmin(admin.ModelAdmin):
             .select_related("requested_device_type", "actual_device", "submitter")
         )
 
+    @admin.display(description="Request device type")
     def requested_device_type_name(self, obj):
         return "" if obj.requested_device_type is None else obj.requested_device_type
 
@@ -442,7 +442,6 @@ class TestJobAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
-    requested_device_type_name.short_description = "Request device type"
     actions = [cancel_action, fail_action]
     list_filter = ("state", RequestedDeviceTypeFilter, ActualDeviceFilter, "submitter")
     fieldsets = (
@@ -472,13 +471,12 @@ class TestJobAdmin(admin.ModelAdmin):
     show_full_result_count = False
 
 
+@admin.action(description="disable health checks")
 def disable_health_check_action(modeladmin, request, queryset):
     queryset.update(disable_health_check=False)
 
 
-disable_health_check_action.short_description = "disable health checks"
-
-
+@admin.register(DeviceType)
 class DeviceTypeAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return (
@@ -487,34 +485,31 @@ class DeviceTypeAdmin(admin.ModelAdmin):
             .select_related("architecture", "bits", "processor")
         )
 
+    @admin.display(description="arch")
     def architecture_name(self, obj):
         if obj.architecture:
             return obj.architecture
         return ""
 
-    architecture_name.short_description = "arch"
-
+    @admin.display(description="proc")
     def processor_name(self, obj):
         if obj.processor:
             return obj.processor
         return ""
 
-    processor_name.short_description = "proc"
-
+    @admin.display(description="cpu")
     def cpu_model_name(self, obj):
         if obj.cpu_model:
             return obj.cpu_model
         return ""
 
-    cpu_model_name.short_description = "cpu"
-
+    @admin.display(description="bits")
     def bit_count(self, obj):
         if obj.bits:
             return obj.bits
         return ""
 
-    bit_count.short_description = "bits"
-
+    @admin.display(description="cores")
     def list_of_cores(self, obj):
         if obj.core_count:
             return "{} x {}".format(
@@ -523,25 +518,23 @@ class DeviceTypeAdmin(admin.ModelAdmin):
             )
         return ""
 
-    list_of_cores.short_description = "cores"
-
     def get_readonly_fields(self, _, obj=None):
         if obj:  # editing an existing object
             return self.readonly_fields + ("name",)
         return self.readonly_fields
 
+    @admin.display(
+        description="HC enabled",
+        boolean=True,
+    )
     def health_check_enabled(self, obj):
         return not obj.disable_health_check
 
-    health_check_enabled.boolean = True
-    health_check_enabled.short_description = "HC enabled"
-
+    @admin.display(description="HC frequency")
     def health_check_frequency(self, device_type):
         if device_type.health_denominator == DeviceType.HEALTH_PER_JOB:
             return "every %d jobs" % device_type.health_frequency
         return "every %d hours" % device_type.health_frequency
-
-    health_check_frequency.short_description = "HC frequency"
 
     actions = [disable_health_check_action]
     list_filter = ("name", "display", "cores", "architecture", "processor")
@@ -584,6 +577,7 @@ class DeviceTypeAdmin(admin.ModelAdmin):
     inlines = [GroupDeviceTypePermissionInline]
 
 
+@admin.action(description="Update health of selected workers to Active")
 def worker_health_active(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
@@ -591,6 +585,7 @@ def worker_health_active(ModelAdmin, request, queryset):
             worker.save(update_fields=fields)
 
 
+@admin.action(description="Update health of selected workers to Maintenance")
 def worker_health_maintenance(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
@@ -598,6 +593,7 @@ def worker_health_maintenance(ModelAdmin, request, queryset):
             worker.save(update_fields=fields)
 
 
+@admin.action(description="Update health of selected workers to Retired")
 def worker_health_retired(ModelAdmin, request, queryset):
     with transaction.atomic():
         for worker in queryset.select_for_update():
@@ -605,13 +601,7 @@ def worker_health_retired(ModelAdmin, request, queryset):
             worker.save(update_fields=fields)
 
 
-worker_health_active.short_description = "Update health of selected workers to Active"
-worker_health_maintenance.short_description = (
-    "Update health of selected workers to Maintenance"
-)
-worker_health_retired.short_description = "Update health of selected workers to Retired"
-
-
+@admin.register(Worker)
 class WorkerAdmin(admin.ModelAdmin):
     list_display = ("hostname", "state", "health")
     readonly_fields = ("state",)
@@ -636,6 +626,7 @@ class TagLowerForm(forms.ModelForm):
         return name
 
 
+@admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     form = TagLowerForm
     list_display = ("name", "description")
@@ -647,6 +638,7 @@ class TagAdmin(admin.ModelAdmin):
         return self.readonly_fields
 
 
+@admin.register(NotificationRecipient)
 class NotificationRecipientAdmin(admin.ModelAdmin):
     def handle(self, obj):
         if obj.method == NotificationRecipient.EMAIL:
@@ -664,15 +656,5 @@ class NotificationRecipientAdmin(admin.ModelAdmin):
         return settings.ALLOW_ADMIN_DELETE
 
 
-admin.site.register(Alias, AliasAdmin)
-admin.site.register(Architecture, ArchitectureAdmin)
-admin.site.register(BitWidth, BitWidthAdmin)
-admin.site.register(Core, CoreAdmin)
-admin.site.register(Device, DeviceAdmin)
-admin.site.register(DeviceType, DeviceTypeAdmin)
 admin.site.register(JobFailureTag)
-admin.site.register(NotificationRecipient, NotificationRecipientAdmin)
 admin.site.register(ProcessorFamily)
-admin.site.register(TestJob, TestJobAdmin)
-admin.site.register(Tag, TagAdmin)
-admin.site.register(Worker, WorkerAdmin)

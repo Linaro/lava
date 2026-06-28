@@ -299,11 +299,9 @@ def get_ldap_user_properties(ldap_user):
 
 
 def get_user_ip(request):
-    if "HTTP_X_FORWARDED_FOR" in request.META:
+    if "x-forwarded-for" in request.headers:
         ips = [
-            ip.strip(" ")
-            for ip in request.META["HTTP_X_FORWARDED_FOR"].split(",")
-            if ip
+            ip.strip(" ") for ip in request.headers["x-forwarded-for"].split(",") if ip
         ]
         with contextlib.suppress(IndexError):
             return ips[settings.HTTP_X_FORWARDED_FOR_INDEX]

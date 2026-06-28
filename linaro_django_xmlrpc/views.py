@@ -43,7 +43,7 @@ def handler(request, mapper, help_view):
     raw_data = request.body
     dispatcher = Dispatcher(mapper)
 
-    auth_string = request.META.get("HTTP_AUTHORIZATION")
+    auth_string = request.headers.get("authorization")
 
     if auth_string is not None:
         if " " not in auth_string:
