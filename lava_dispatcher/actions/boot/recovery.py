@@ -74,7 +74,5 @@ class SwitchRecoveryCommand(Action):
             command = [command]
         for cmd in command:
             if not self.run_command(cmd.split(" "), allow_silent=True):
-                raise InfrastructureError(
-                    "[recovery] %s failed for %s" % (cmd, self.mode)
-                )
+                raise InfrastructureError(f"[recovery] {cmd} failed for {self.mode}")
         return connection

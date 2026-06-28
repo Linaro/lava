@@ -169,7 +169,7 @@ class ConnectSsh(Action):
                 host_address,
                 command_str,
             )
-            command.append("%s@%s" % (self.ssh_user, host_address))
+            command.append(f"{self.ssh_user}@{host_address}")
         elif self.host and self.primary:
             self.logger.info("Using device data host_address for primary connection.")
             command_str = " ".join(str(item) for item in command)
@@ -180,7 +180,7 @@ class ConnectSsh(Action):
                 self.host,
                 command_str,
             )
-            command.append("%s@%s" % (self.ssh_user, self.host))
+            command.append(f"{self.ssh_user}@{self.host}")
         else:
             raise JobError(
                 "Unable to identify host address. Primary? %s" % self.primary

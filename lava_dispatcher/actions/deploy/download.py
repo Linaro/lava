@@ -109,7 +109,7 @@ class DownloaderAction(RetryAction):
             self.pipeline.add_action(
                 DownloaderAction(
                     self.job,
-                    "%s.%s" % (self.key, overlay),
+                    f"{self.key}.{overlay}",
                     self.path,
                     params=overlays[overlay],
                 )
@@ -262,7 +262,7 @@ class DownloadHandler(Action):
         self.logger.info("expected: %s", expected)
 
         self.results = {"fail": {algorithm: expected, "download": actual}}
-        raise JobError("%s for '%s' does not match." % (algorithm, self.url.geturl()))
+        raise JobError(f"{algorithm} for '{self.url.geturl()}' does not match.")
 
     def run(self, connection, max_end_time):
         def progress_unknown_total(downloaded_sz, last_val, last_update):
@@ -563,7 +563,7 @@ class FileDownloadAction(DownloadHandler):
                     buff = reader.read(FILE_DOWNLOAD_CHUNK_SIZE)
         except OSError as exc:
             raise InfrastructureError(
-                "Unable to read from %s: %s" % (self.url.path, str(exc))
+                f"Unable to read from {self.url.path}: {str(exc)}"
             )
 
 
@@ -733,7 +733,7 @@ class HttpDownloadAction(DownloadHandler):
             yield from res.iter_content(HTTP_DOWNLOAD_CHUNK_SIZE)
         except requests.RequestException as exc:
             raise InfrastructureError(
-                "Unable to download '%s': %s" % (self.url.geturl(), str(exc))
+                f"Unable to download '{self.url.geturl()}': {str(exc)}"
             )
         finally:
             if res is not None:

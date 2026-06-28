@@ -93,7 +93,7 @@ class CreateOverlay(Action):
         # Add distro support scripts - only if deployment_data is set
         distro = self.parameters.get("deployment_data", {}).get("distro")
         if distro:
-            distro_support_dir = "%s/distro/%s" % (self.lava_test_dir, distro)
+            distro_support_dir = f"{self.lava_test_dir}/distro/{distro}"
             self.scripts_to_copy += sorted(
                 glob.glob(os.path.join(distro_support_dir, "lava-*"))
             )
@@ -143,12 +143,12 @@ class CreateOverlay(Action):
             if prefix:
                 prefix += "_"
             for key, value in data.items():
-                self._export_data(fout, value, "%s%s" % (prefix, key))
+                self._export_data(fout, value, f"{prefix}{key}")
         elif isinstance(data, (list, tuple)):
             if prefix:
                 prefix += "_"
             for index, value in enumerate(data):
-                self._export_data(fout, value, "%s%s" % (prefix, index))
+                self._export_data(fout, value, f"{prefix}{index}")
         else:
             if isinstance(data, bool):
                 data = "1" if data else "0"
@@ -157,7 +157,7 @@ class CreateOverlay(Action):
             else:
                 data = shlex.quote(data)
             self.logger.debug("- %s=%s", prefix, data)
-            fout.write("export %s=%s\n" % (prefix, data))
+            fout.write(f"export {prefix}={data}\n")
 
     def run(self, connection, max_end_time):
         tmp_dir = self.mkdtemp()
@@ -174,17 +174,17 @@ class CreateOverlay(Action):
         )
         namespace = self.parameters.get("namespace")
         self.logger.debug("[%s] Preparing overlay tarball in %s", namespace, tmp_dir)
-        lava_path = os.path.abspath("%s/%s" % (tmp_dir, lava_test_results_dir))
+        lava_path = os.path.abspath(f"{tmp_dir}/{lava_test_results_dir}")
         for runner_dir in ["bin", "tests", "results"]:
             # avoid os.path.join as lava_test_results_dir startswith / so location is *dropped* by join.
-            path = os.path.abspath("%s/%s" % (lava_path, runner_dir))
+            path = os.path.abspath(f"{lava_path}/{runner_dir}")
             if not os.path.exists(path):
                 os.makedirs(path, 0o755)
                 self.logger.debug("makedir: %s", path)
         for fname in self.scripts_to_copy:
             with open(fname) as fin:
                 foutname = os.path.basename(fname)
-                output_file = "%s/bin/%s" % (lava_path, foutname)
+                output_file = f"{lava_path}/bin/{foutname}"
                 if "distro" in fname:
                     distribution = os.path.basename(os.path.dirname(fname))
                     self.logger.debug("Updating %s (%s)", output_file, distribution)
@@ -207,7 +207,7 @@ class CreateOverlay(Action):
                                 self.logger.debug(
                                     "storage methods:\t%s\t%s", key, value
                                 )
-                                fout.write(r"\t%s\t%s\n" % (key, value))
+                                fout.write(rf"\t{key}\t{value}\n")
                         fout.write('"\n')
                     fout.write(fin.read())
                     os.fchmod(fout.fileno(), self.xmod)
@@ -259,7 +259,7 @@ class CreateOverlay(Action):
             self.logger.debug("Creating %s/secrets", lava_path)
             with open(os.path.join(lava_path, "secrets"), "w") as fout:
                 for key, value in self.job.parameters["secrets"].items():
-                    fout.write("%s=%s\n" % (key, value))
+                    fout.write(f"{key}={value}\n")
 
         if "env_dut" in self.job.parameters:
             environment = self.get_namespace_data(
@@ -270,7 +270,7 @@ class CreateOverlay(Action):
                 with open(os.path.join(lava_path, "secrets"), "a") as fout:
                     for key in environment:
                         self.logger.debug("Handling %s", key)
-                        fout.write("%s=%s\n" % (key, environment[key]))
+                        fout.write(f"{key}={environment[key]}\n")
 
         connection = super().run(connection, max_end_time)
         return connection
@@ -375,7 +375,7 @@ class MultinodeOverlayAction(OverlayAction):
             )
 
         # Generic scripts
-        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
+        lava_path = os.path.abspath(f"{location}/{lava_test_results_dir}")
         scripts_to_copy = glob.glob(
             os.path.join(self.lava_multi_node_test_dir, "lava-*")
         )
@@ -386,7 +386,7 @@ class MultinodeOverlayAction(OverlayAction):
         for fname in scripts_to_copy:
             with open(fname) as fin:
                 foutname = os.path.basename(fname)
-                output_file = "%s/bin/%s" % (lava_path, foutname)
+                output_file = f"{lava_path}/bin/{foutname}"
                 self.logger.debug("Creating %s", output_file)
                 with open(output_file, "w") as fout:
                     fout.write("#!%s\n\n" % shell)
@@ -402,7 +402,7 @@ class MultinodeOverlayAction(OverlayAction):
                             self.logger.debug(
                                 "group roles:\t%s\t%s", client_name, role_line
                             )
-                            fout.write(r"%s\t%s\n" % (client_name, role_line))
+                            fout.write(rf"{client_name}\t{role_line}\n")
                         fout.write('"\n')
                     elif foutname == "lava-role":
                         fout.write(
@@ -457,7 +457,7 @@ class CompressOverlay(Action):
         # For example, location="/foo/bar" and lava_test_results_dir="/lava-12345"
         # The overlay working directory will be "/foo/bar/lava-12345".
         # The tar archive will contain this directory as "lava-12345"
-        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
+        lava_path = os.path.abspath(f"{location}/{lava_test_results_dir}")
         try:
             with tarfile.open(output, "w:gz") as tar:
                 tar.add(lava_path, lava_test_results_dir)
@@ -543,8 +543,8 @@ class SshAuthorize(Action):
             raise LAVABug("Missing lava overlay location")
         if not os.path.exists(location):
             raise LAVABug("Unable to find overlay location")
-        lava_path = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
-        output_file = "%s/%s" % (lava_path, os.path.basename(self.identity_file))
+        lava_path = os.path.abspath(f"{location}/{lava_test_results_dir}")
+        output_file = f"{lava_path}/{os.path.basename(self.identity_file)}"
         shutil.copyfile(self.identity_file, output_file)
         shutil.copyfile("%s.pub" % self.identity_file, "%s.pub" % output_file)
         self.logger.info(

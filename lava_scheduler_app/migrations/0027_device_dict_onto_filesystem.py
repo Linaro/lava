@@ -28,7 +28,7 @@ def devicedictionary_to_jinja2(data_dict, extends):
     for key, value in data_dict.items():
         if key == "extends":
             continue
-        data += "{%% set %s = %s %%}\n" % (str(key), pp.pformat(value).strip())
+        data += f"{{% set {str(key)} = {pp.pformat(value).strip()} %}}\n"
     return data
 
 

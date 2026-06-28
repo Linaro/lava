@@ -338,7 +338,7 @@ def query_export(request, username, name):
     query = get_object_or_404(Query, owner__username=username, name=name)
 
     results = query.get_results(request.user)
-    filename = "query_%s_%s_export" % (query.owner.username, query.name)
+    filename = f"query_{query.owner.username}_{query.name}_export"
     return _export_query(results, query.content_type, filename)
 
 

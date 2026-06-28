@@ -68,7 +68,7 @@ class TestInteractiveAction(ReportMixin, Action):
         # overlay, so using the test stage as the test suite prefix here cannot
         # really guarantee unique test suite ID. The document is updated to ask
         # users use unique script name across all interactive test actions.
-        return "%s_%s" % (stage, script_name)
+        return f"{stage}_{script_name}"
 
     def run(self, connection, max_end_time):
         super().run(connection, max_end_time)
@@ -374,4 +374,4 @@ class TestInteractiveAction(ReportMixin, Action):
         elif exc_name == "TestError":
             raise TestError(exc_message)
         else:
-            raise JobError("Unknown exception '%s' with '%s'" % (exc_name, exc_message))
+            raise JobError(f"Unknown exception '{exc_name}' with '{exc_message}'")

@@ -132,7 +132,7 @@ async def aiohttp_get(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
-    except asyncio.TimeoutError as exc:
+    except TimeoutError as exc:
         LOG.error(f"Timeout during get request to {url}: {exc}")
         return Response(504, f"Timeout error: {str(exc)}")
 
@@ -149,7 +149,7 @@ async def aiohttp_post(
             return Response(request.status, await request.text())
     except aiohttp.ClientError as exc:
         return Response(503, str(exc))
-    except asyncio.TimeoutError as exc:
+    except TimeoutError as exc:
         LOG.error(f"Timeout during post request to {url}: {exc}")
         return Response(504, f"Timeout error: {str(exc)}")
 
@@ -221,7 +221,7 @@ def start_job(
             LOG.exception("[%d] %s", job_id, exc.child_traceback)
         else:
             LOG.exception("[%d] %s", job_id, exc)
-            err_file.write("%s\n%s\n" % (exc, traceback.format_exc()))
+            err_file.write(f"{exc}\n{traceback.format_exc()}\n")
         # The process has not started
         # The END message will be sent the next time
         # check_job_status is run
@@ -261,9 +261,7 @@ class Job:
         self.last_update: int = row["last_update"]
         self.token: str = row["token"]
         # Create the base directory
-        self.base_dir = tmp_dir / "{prefix}{job_id}".format(
-            prefix=self.prefix, job_id=str(self.job_id)
-        )
+        self.base_dir = tmp_dir / f"{self.prefix}{str(self.job_id)}"
         self.base_dir.mkdir(mode=0o755, exist_ok=True, parents=True)
 
     def errors(self) -> str:
@@ -828,7 +826,7 @@ async def listen_for_events(
                     if data.get("state") in ["Scheduled", "Canceling"]:
                         LOG.info("[EVENT] Worker mentioned")
                         event.set()
-        except (aiohttp.ClientError, asyncio.TimeoutError):
+        except (aiohttp.ClientError, TimeoutError):
             retry_interval = min(60, retry_interval * 2)
         await asyncio.sleep(retry_interval)
 

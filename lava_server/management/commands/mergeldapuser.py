@@ -56,6 +56,6 @@ class Command(BaseCommand):
             lava_user.last_name = user_properties.get("sn", "")
             lava_user.first_name = user_properties.get("given_name", "")
             lava_user.save()
-            self.stdout.write('User "%s" merged with "%s"' % (ldap_user, old_lava_user))
+            self.stdout.write(f'User "{ldap_user}" merged with "{old_lava_user}"')
         except User.DoesNotExist:
             self.stderr.write('User "%s" does not exist in LAVA' % lava_user)

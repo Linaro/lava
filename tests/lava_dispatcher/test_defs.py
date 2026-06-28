@@ -161,7 +161,7 @@ class TestDefinitionHandlers(LavaDispatcherTestCase):
         self.assertIsInstance(overlay, OverlayAction)
         # Generic scripts
         scripts_to_copy = glob.glob(os.path.join(overlay.lava_test_dir, "lava-*"))
-        distro_support_dir = "%s/distro/%s" % (overlay.lava_test_dir, "debian")
+        distro_support_dir = "{}/distro/{}".format(overlay.lava_test_dir, "debian")
         for script in glob.glob(os.path.join(distro_support_dir, "lava-*")):
             scripts_to_copy.append(script)
         check_list = list({os.path.basename(scr) for scr in scripts_to_copy})
@@ -454,7 +454,7 @@ class TestDefinitions(LavaDispatcherTestCase):
         )
         self.assertIsNotNone(uuid_list)
         for key, value in enumerate(testdef_index):
-            if start_run == "%s_%s" % (key, value):
+            if start_run == f"{key}_{value}":
                 self.assertEqual(f"{self.job.job_id}_1.1.3.1", uuid_list[key])
                 self.assertEqual(
                     self.job.context["test"][uuid_list[key]]["testdef_pattern"][

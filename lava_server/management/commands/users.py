@@ -217,7 +217,7 @@ class Command(BaseCommand):
                 out = "* %s" % user.username
 
                 if user.get_full_name():
-                    out = "%s (%s)" % (out, user.get_full_name())
+                    out = f"{out} ({user.get_full_name()})"
                 if not user.is_active:
                     out = "%s [inactive]" % out
 

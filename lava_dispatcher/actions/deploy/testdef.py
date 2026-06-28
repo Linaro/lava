@@ -519,7 +519,7 @@ class TestDefinitionAction(Action):
                 handler.job = self.job
                 handler.parameters = testdef
                 # store the correct test_name before appending to the local index
-                handler.parameters["test_name"] = "%s_%s" % (
+                handler.parameters["test_name"] = "{}_{}".format(
                     len(index),
                     handler.parameters["name"],
                 )
@@ -527,7 +527,7 @@ class TestDefinitionAction(Action):
                 # a genuinely unique ID based on the *database* JobID and
                 # pipeline level for reproducibility and tracking -
                 # {DB-JobID}_{PipelineLevel}, e.g. 15432.0_3.5.4
-                handler.uuid = "%s_%s" % (self.job.job_id, handler.level)
+                handler.uuid = f"{self.job.job_id}_{handler.level}"
                 handler.stage = self.stages
                 self.run_levels[testdef["name"]] = self.stages
 
@@ -631,7 +631,7 @@ class TestDefinitionAction(Action):
         self.logger.info("Loading test definitions")
 
         # overlay_path is the location of the files before boot
-        overlay_base = os.path.abspath("%s/%s" % (location, lava_test_results_dir))
+        overlay_base = os.path.abspath(f"{location}/{lava_test_results_dir}")
         self.set_namespace_data(
             action="test",
             label="test-definition",
@@ -643,12 +643,12 @@ class TestDefinitionAction(Action):
 
         self.logger.info("Creating lava-test-runner.conf files")
         for stage in range(self.stages):
-            path = "%s/%s" % (overlay_base, stage)
+            path = f"{overlay_base}/{stage}"
             self.logger.debug(
                 "Using lava-test-runner path: %s for stage %d", path, stage
             )
             with open(
-                "%s/%s/lava-test-runner.conf" % (overlay_base, stage), "a"
+                f"{overlay_base}/{stage}/lava-test-runner.conf", "a"
             ) as runner_conf:
                 for handler in self.pipeline.actions:
                     if isinstance(handler, RepoAction) and handler.stage == stage:
@@ -696,13 +696,13 @@ class TestOverlayAction(Action):
             for def_param_name, def_param_value in list(testdef["params"].items()):
                 if def_param_value is None:
                     def_param_value = ""
-                ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
+                ret_val.append(f"{def_param_name}='{def_param_value}'\n")
         if "parameters" in testdef:
             raise_if_not_dict(testdef, "parameters")
             for def_param_name, def_param_value in list(testdef["parameters"].items()):
                 if def_param_value is None:
                     def_param_value = ""
-                ret_val.append("%s='%s'\n" % (def_param_name, def_param_value))
+                ret_val.append(f"{def_param_name}='{def_param_value}'\n")
         ret_val.append("######\n")
         # inject the parameters that were set in job submission.
         ret_val.append("###test parameters from job submission###\n")
@@ -712,7 +712,7 @@ class TestOverlayAction(Action):
             for param_name, param_value in list(self.parameters["parameters"].items()):
                 if param_value is None:
                     param_value = ""
-                ret_val.append("%s='%s'\n" % (param_name, param_value))
+                ret_val.append(f"{param_name}='{param_value}'\n")
                 self.logger.debug("%s='%s'", param_name, param_value)
         if "params" in self.parameters:
             raise_if_not_dict(self.parameters, "params")
@@ -720,7 +720,7 @@ class TestOverlayAction(Action):
             for param_name, param_value in list(self.parameters["params"].items()):
                 if param_value is None:
                     param_value = ""
-                ret_val.append("%s='%s'\n" % (param_name, param_value))
+                ret_val.append(f"{param_name}='{param_value}'\n")
                 self.logger.debug("%s='%s'", param_name, param_value)
         ret_val.append("######\n")
         return ret_val
@@ -996,7 +996,7 @@ class TestRunnerAction(TestOverlayAction):
         # to self.testdef_levels {'1.3.4.1': '0_smoke-tests', ...}
         for count, name in enumerate(testdef_index):
             if self.parameters["name"] == name:
-                self.testdef_levels[self.level] = "%s_%s" % (count, name)
+                self.testdef_levels[self.level] = f"{count}_{name}"
         if not self.testdef_levels:
             self.errors = "Unable to identify test definition names"
         current = self.get_namespace_data(

@@ -521,7 +521,7 @@ class BootloaderCommandOverlay(Action):
                 if self.get_namespace_data(
                     action="download-action", label="file", key="tee"
                 ):
-                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
+                    substitutions["{BOOTX}"] = "{} {} {}:{} {}".format(
                         self.bootcommand,
                         tee_addr,
                         ramdisk_addr,
@@ -529,7 +529,7 @@ class BootloaderCommandOverlay(Action):
                         dtb_addr,
                     )
                 else:
-                    substitutions["{BOOTX}"] = "%s %s %s:%s %s" % (
+                    substitutions["{BOOTX}"] = "{} {} {}:{} {}".format(
                         self.bootcommand,
                         kernel_addr,
                         ramdisk_addr,
@@ -540,18 +540,12 @@ class BootloaderCommandOverlay(Action):
                 if self.get_namespace_data(
                     action="download-action", label="file", key="tee"
                 ):
-                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                        self.bootcommand,
-                        tee_addr,
-                        ramdisk_addr,
-                        dtb_addr,
+                    substitutions["{BOOTX}"] = (
+                        f"{self.bootcommand} {tee_addr} {ramdisk_addr} {dtb_addr}"
                     )
                 else:
-                    substitutions["{BOOTX}"] = "%s %s %s %s" % (
-                        self.bootcommand,
-                        kernel_addr,
-                        ramdisk_addr,
-                        dtb_addr,
+                    substitutions["{BOOTX}"] = (
+                        f"{self.bootcommand} {kernel_addr} {ramdisk_addr} {dtb_addr}"
                     )
 
             substitutions["{KERNEL_ADDR}"] = kernel_addr
@@ -619,7 +613,7 @@ class BootloaderCommandOverlay(Action):
                     "TFTP deployment not defined. Unable to create bootscript file."
                 )
             bootscript = tftp_dir + script
-            bootscripturi = "tftp://%s/%s" % (
+            bootscripturi = "tftp://{}/{}".format(
                 ip_addr,
                 os.path.dirname(substitutions["{KERNEL}"]) + script,
             )
@@ -770,7 +764,7 @@ class OverlayUnpack(Action):
             cmd = self.parameters["transfer_overlay"]["download_command"]
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
             connection.sendline(
-                "%s http://%s/tmp/%s" % (cmd, ip_addr, overlay_path),
+                f"{cmd} http://{ip_addr}/tmp/{overlay_path}",
                 delay=self.character_delay,
                 check=True,
                 timeout=max_end_time - time.monotonic(),
@@ -840,9 +834,7 @@ class OverlayUnpack(Action):
             import subprocess
 
             subprocess.run(
-                "sz --binary --escape -y {0} < {1} > {1}".format(
-                    overlay_full_path, uart
-                ),
+                f"sz --binary --escape -y {overlay_full_path} < {uart} > {uart}",
                 shell=True,
                 check=True,
             )

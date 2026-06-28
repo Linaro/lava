@@ -125,7 +125,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         self.assertEqual(perms, auth.get_perms(self.device))
         for perm in perms:
             self.assertTrue(
-                auth.has_perm("%s.%s" % (content_type.app_label, perm), self.device)
+                auth.has_perm(f"{content_type.app_label}.{perm}", self.device)
             )
 
     def test_not_active_superuser(self):
@@ -144,7 +144,7 @@ class PermissionAuthTest(TestCaseWithFactory):
         self.assertEqual(check.get_perms(self.device), [])
         for perm in perms:
             self.assertFalse(
-                check.has_perm("%s.%s" % (content_type.app_label, perm), self.device)
+                check.has_perm(f"{content_type.app_label}.{perm}", self.device)
             )
 
     def test_not_active_user(self):

@@ -67,7 +67,7 @@ def lava_poll(port, host, name, request):
                 time.sleep(1)
                 sock = None
                 count += 1
-                warnings.append("retrying port %s on %s" % (port, host))
+                warnings.append(f"retrying port {port} on {host}")
         if count >= 5:
             break
         msg = {
@@ -122,7 +122,7 @@ def lava_poll(port, host, name, request):
         ret = 1
     if errors or warnings:
         print("Using python%s" % sys.version_info[0])
-        print("E:%s W:%s" % (errors, warnings))
+        print(f"E:{errors} W:{warnings}")
         return ret
     else:
         return ret

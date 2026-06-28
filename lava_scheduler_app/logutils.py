@@ -216,10 +216,7 @@ class LogsElasticsearch(Logs):
     TIMEOUT = 30.0
 
     def __init__(self) -> None:
-        self.api_url = "%s%s/" % (
-            settings.ELASTICSEARCH_URI,
-            settings.ELASTICSEARCH_INDEX,
-        )
+        self.api_url = f"{settings.ELASTICSEARCH_URI}{settings.ELASTICSEARCH_INDEX}/"
         self.headers = {"Content-type": "application/json"}
         if settings.ELASTICSEARCH_APIKEY:
             self.headers.update(

@@ -52,7 +52,7 @@ def check_perm(perm):
             if not self.user.has_perm(perm):
                 raise xmlrpc.client.Fault(
                     403,
-                    "User '%s' is missing permission %s." % (self.user.username, perm),
+                    f"User '{self.user.username}' is missing permission {perm}.",
                 )
             return f(self, *args, **kwargs)
 
@@ -146,7 +146,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         if job.is_multinode:
@@ -185,7 +185,7 @@ class SchedulerAPI(ExposedV2API):
 
             if not job.can_view(self.user):
                 raise xmlrpc.client.Fault(
-                    403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                    403, f"Job '{job_id}' not available to user '{self.user}'."
                 )
 
             try:
@@ -259,7 +259,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         # Open the logs
@@ -493,7 +493,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not device_obj.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Device '%s' not available to user '%s'." % (device, self.user)
+                403, f"Device '{device}' not available to user '{self.user}'."
             )
         job_qs = (
             TestJob.objects.filter(state=TestJob.STATE_FINISHED)
@@ -792,7 +792,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         metadata = None
@@ -852,7 +852,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         job_health = {"job_id": job.id, "job_health": job.get_health_display()}
@@ -893,7 +893,7 @@ class SchedulerAPI(ExposedV2API):
 
         if not job.can_view(self.user):
             raise xmlrpc.client.Fault(
-                403, "Job '%s' not available to user '%s'." % (job_id, self.user)
+                403, f"Job '{job_id}' not available to user '{self.user}'."
             )
 
         job_state = {"job_id": job.id, "job_state": job.get_state_display()}
@@ -985,7 +985,7 @@ class SchedulerAPI(ExposedV2API):
                 job_ctx = yaml_safe_load(context)
             except yaml.YAMLError as exc:
                 raise xmlrpc.client.Fault(
-                    400, "Job context '%s' is not valid. %s" % (context, exc)
+                    400, f"Job context '{context}' is not valid. {exc}"
                 )
         try:
             device = Device.objects.get(hostname=device_hostname)

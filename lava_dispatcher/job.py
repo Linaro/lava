@@ -91,7 +91,7 @@ class Job:
 
     def get_basedir(self, path):
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")
-        return os.path.join(path, "%s%s" % (prefix, self.job_id))
+        return os.path.join(path, f"{prefix}{self.job_id}")
 
     def mkdtemp(self, action_name: str, override: str | None = None) -> str:
         """
@@ -127,9 +127,7 @@ class Job:
         Validate the pipeline and raise an exception (that inherit from
         LAVAError) if it fails.
         """
-        self.logger.info(
-            "Start time: %s (UTC)", datetime.datetime.now(datetime.timezone.utc)
-        )
+        self.logger.info("Start time: %s (UTC)", datetime.datetime.now(datetime.UTC))
         for protocol in self.protocols:
             try:
                 protocol.configure(self.device, self)
@@ -142,7 +140,7 @@ class Job:
                 raise LAVABug(exc)
 
             if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                msg = f"protocol {protocol.name} has errors: {protocol.errors}"
                 self.logger.exception(msg)
                 raise JobError(msg)
 
@@ -219,7 +217,7 @@ class Job:
                 raise LAVABug(exc)
 
             if not protocol.valid:
-                msg = "protocol %s has errors: %s" % (protocol.name, protocol.errors)
+                msg = f"protocol {protocol.name} has errors: {protocol.errors}"
                 self.logger.exception(msg)
                 raise JobError(msg)
 

@@ -95,7 +95,7 @@ class Pipeline:
 
         if self.parent:  # action
             self.parent.pipeline = self
-            action.level = "%s.%s" % (self.parent.level, len(self.actions))
+            action.level = f"{self.parent.level}.{len(self.actions)}"
             action.section = self.parent.section
         else:
             action.level = "%s" % (len(self.actions))
@@ -192,7 +192,7 @@ class Pipeline:
             try:
                 action.validate()
             except JobError as exc:
-                action.errors = "%s %s: %s" % (action.level, action.name, str(exc))
+                action.errors = f"{action.level} {action.name}: {str(exc)}"
 
         # If this is the root pipeline, raise the errors
         if self.parent is None and self.errors:
@@ -233,12 +233,7 @@ class Pipeline:
                     # Add action start timestamp to the log message
                     # Log in INFO for root actions and in DEBUG for the other actions
                     timeout = seconds_to_str(action_max_end_time - action.timeout.start)
-                    msg = "start: %s %s (timeout %s) [%s]" % (
-                        action.level,
-                        action.name,
-                        timeout,
-                        namespace,
-                    )
+                    msg = f"start: {action.level} {action.name} (timeout {timeout}) [{namespace}]"
                     if self.parent is None:
                         action.logger.info(msg)
                     else:
@@ -277,12 +272,7 @@ class Pipeline:
             finally:
                 # Add action end timestamp to the log message
                 duration = round(action.timeout.elapsed_time)
-                msg = "end: %s %s (duration %s) [%s]" % (
-                    action.level,
-                    action.name,
-                    seconds_to_str(duration),
-                    namespace,
-                )
+                msg = f"end: {action.level} {action.name} (duration {seconds_to_str(duration)}) [{namespace}]"
                 if self.parent is None:
                     action.logger.info(msg)
                 else:
@@ -526,13 +516,13 @@ class Action:
             self.errors = "Use - instead of _ in action names: %s" % self.name
 
         if not self.summary:
-            self.errors = "action %s (%s) lacks a summary" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) lacks a summary"
 
         if not self.description:
-            self.errors = "action %s (%s) lacks a description" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) lacks a description"
 
         if not self.section:
-            self.errors = "action %s (%s) has no section set" % (self.name, self)
+            self.errors = f"action {self.name} ({self}) has no section set"
 
         # Collect errors from internal pipeline actions
         if self.pipeline:
@@ -782,7 +772,7 @@ class Action:
                 errors.append(exc.output.strip().decode("utf-8", errors="replace"))
             else:
                 errors.append(str(exc))
-            msg = "action: %s\ncommand: %s\nmessage: %s\noutput: %s\n" % (
+            msg = "action: {}\ncommand: {}\nmessage: {}\noutput: {}\n".format(
                 self.name,
                 [i.strip() for i in exc.cmd],
                 str(exc),

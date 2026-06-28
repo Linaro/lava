@@ -52,4 +52,4 @@ class Command(BaseCommand):
                 user.is_superuser = True
                 superuser_msg = "with superuser status"
             user.save()
-            self.stdout.write('User "%s" added %s' % (username, superuser_msg))
+            self.stdout.write(f'User "{username}" added {superuser_msg}')

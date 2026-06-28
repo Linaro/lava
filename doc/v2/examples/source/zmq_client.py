@@ -95,7 +95,7 @@ def lookup_publisher(hostname, https):
         sys.stderr.write("ERROR %s\n" % exc)
         return None
     port = urlsplit(socket).port
-    listener_url = "tcp://%s:%s" % (hostname, port)
+    listener_url = f"tcp://{hostname}:{port}"
     print("Using %s" % listener_url)
     return listener_url
 

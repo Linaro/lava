@@ -40,7 +40,7 @@ class ExportDeviceEnvironment(Action):
         # Retain quotes into the final shell.
         for key in environment:
             self.env.append(
-                "echo export %s=\\'%s\\' >> %s" % (key, environment[key], shell_file)
+                f"echo export {key}=\\'{environment[key]}\\' >> {shell_file}"
             )
 
     def run(self, connection, max_end_time):
@@ -64,7 +64,7 @@ class ExportDeviceEnvironment(Action):
         # Export data generated during run of the Pipeline like NFS settings
         for key in self.job.device["dynamic_data"]:
             connection.sendline(
-                "export %s='%s'" % (key, self.job.device["dynamic_data"][key]),
+                "export {}='{}'".format(key, self.job.device["dynamic_data"][key]),
                 delay=self.character_delay,
             )
             connection.wait()

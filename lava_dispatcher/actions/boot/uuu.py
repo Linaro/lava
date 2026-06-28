@@ -506,9 +506,7 @@ class UUUBootAction(OptionalContainerUuuAction):
     def cleanup(self, connection):
         super().cleanup(connection)
         if self.cleanup_required:
-            exec_cmd = "{} deinit -board={} -id={}".format(
-                self.bcu, self.bcu_board_name, self.bcu_board_id
-            )
+            exec_cmd = f"{self.bcu} deinit -board={self.bcu_board_name} -id={self.bcu_board_id}"
             self.run_bcu(
                 exec_cmd.split(" "),
                 allow_fail=False,
@@ -520,12 +518,7 @@ class UUUBootAction(OptionalContainerUuuAction):
                 "methods"
             ]["uuu"]["options"].get("additional_bcu_cleanup_commands", [])
             for additional_bcu_cleanup_command in additional_bcu_cleanup_commands:
-                exec_cmd = "{} {} -board={} -id={}".format(
-                    self.bcu,
-                    additional_bcu_cleanup_command,
-                    self.bcu_board_name,
-                    self.bcu_board_id,
-                )
+                exec_cmd = f"{self.bcu} {additional_bcu_cleanup_command} -board={self.bcu_board_name} -id={self.bcu_board_id}"
                 self.run_bcu(
                     exec_cmd.split(" "),
                     allow_fail=False,

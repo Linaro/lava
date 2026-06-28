@@ -93,7 +93,7 @@ class NotEqual(Lookup):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return "%s <> %s" % (lhs, rhs), params
+        return f"{lhs} <> {rhs}", params
 
 
 class QueryMaterializedView(MaterializedView):
@@ -289,9 +289,7 @@ class TestSet(models.Model):
     )
 
     def get_absolute_url(self):
-        return quote(
-            "/results/%s/%s/%s" % (self.suite.job.id, self.suite.name, self.name)
-        )
+        return quote(f"/results/{self.suite.job.id}/{self.suite.name}/{self.name}")
 
     def __str__(self):
         return gettext("Test Set {0}/{1}/{2}").format(
@@ -473,7 +471,7 @@ class TestCase(models.Model, Queryable):
         if self.measurement:
             value = "%s" % self.measurement
             if self.units:
-                value = "%s%s" % (self.measurement, self.units)
+                value = f"{self.measurement}{self.units}"
         elif self.metadata:
             value = self.metadata
         else:
@@ -561,7 +559,7 @@ def TestJobViewFactory(query):
         objects = models.Manager.from_queryset(RestrictedTestJobQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
-            db_table = "%s%s" % (QueryMaterializedView.QUERY_VIEW_PREFIX, query.id)
+            db_table = f"{QueryMaterializedView.QUERY_VIEW_PREFIX}{query.id}"
 
     return TestJobMaterializedView()
 
@@ -571,7 +569,7 @@ def TestCaseViewFactory(query):
         objects = models.Manager.from_queryset(RestrictedTestCaseQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
-            db_table = "%s%s" % (QueryMaterializedView.QUERY_VIEW_PREFIX, query.id)
+            db_table = f"{QueryMaterializedView.QUERY_VIEW_PREFIX}{query.id}"
 
     return TestCaseMaterializedView()
 
@@ -581,7 +579,7 @@ def TestSuiteViewFactory(query):
         objects = models.Manager.from_queryset(RestrictedTestSuiteQuerySet)()
 
         class Meta(QueryMaterializedView.Meta):
-            db_table = "%s%s" % (QueryMaterializedView.QUERY_VIEW_PREFIX, query.id)
+            db_table = f"{QueryMaterializedView.QUERY_VIEW_PREFIX}{query.id}"
 
     return TestSuiteMaterializedView()
 
@@ -625,7 +623,7 @@ class Query(models.Model):
 
     @property
     def owner_name(self):
-        return "~%s/%s" % (self.owner.username, self.name)
+        return f"~{self.owner.username}/{self.name}"
 
     class Meta:
         constraints = (
@@ -666,7 +664,7 @@ class Query(models.Model):
     is_archived = models.BooleanField(default=False, verbose_name="Archived")
 
     def __str__(self):
-        return "<Query ~%s/%s>" % (self.owner.username, self.name)
+        return f"<Query ~{self.owner.username}/{self.name}>"
 
     def has_view(self):
         return QueryMaterializedView.view_exists(self.id)
@@ -737,7 +735,7 @@ class Query(models.Model):
                 # we're comparing the key(name) and the value.
                 filter_key_name = f"{relation_string}__name"
                 filter_key_value = f"{relation_string}__value"
-                filter_key_value = "{}__{}".format(filter_key_value, condition.operator)
+                filter_key_value = f"{filter_key_value}__{condition.operator}"
 
                 filters[filter_key_name] = condition.field
                 filters[filter_key_value] = condition.value
@@ -937,9 +935,7 @@ class Query(models.Model):
             )
         condition_list = []
         for key in conditions:
-            condition_list.append(
-                "%s%s%s" % (key, cls.CONDITION_DIVIDER, conditions[key])
-            )
+            condition_list.append(f"{key}{cls.CONDITION_DIVIDER}{conditions[key]}")
         conditions = cls.CONDITIONS_SEPARATOR.join(condition_list)
         cls.parse_conditions(content_type, conditions)
 

@@ -195,7 +195,7 @@ class DeviceSerializer(PartialUpdateSerializerMixin, serializers.ModelSerializer
         if old_health_display is not None:
             device.log_admin_entry(
                 self.context["request"].user,
-                "%s → %s" % (old_health_display, device.get_health_display()),
+                f"{old_health_display} → {device.get_health_display()}",
             )
         return device
 

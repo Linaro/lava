@@ -12,7 +12,7 @@ import logging
 import re
 from dataclasses import dataclass, fields
 from pathlib import Path
-from typing import Any, Type
+from typing import Any
 
 import jinja2
 from dacite import Config as DaciteConfig
@@ -149,7 +149,7 @@ class LgConfig:
             if key not in (f.name for f in fields(cls)):
                 logger.warning(f"Top-level key {key!r} is not supported yet!")
 
-        dataclass_map: dict[str, Type[Resources | Drivers]] = {
+        dataclass_map: dict[str, type[Resources | Drivers]] = {
             "resources": Resources,
             "drivers": Drivers,
         }

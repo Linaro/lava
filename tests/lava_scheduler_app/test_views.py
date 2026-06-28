@@ -216,7 +216,7 @@ def test_devices(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/alldevices.html"  # nosec
     assert len(ret.context["devices_table"].data) == 4  # nosec
     hostnames = {x.hostname for x in ret.context["devices_table"].data}
-    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
+    assert hostnames == {"qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"}  # nosec
 
 
 @pytest.mark.django_db
@@ -226,7 +226,7 @@ def test_devices_active(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/activedevices.html"  # nosec
     assert len(ret.context["active_devices_table"].data) == 4  # nosec
     hostnames = {x.hostname for x in ret.context["active_devices_table"].data}
-    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
+    assert hostnames == {"qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"}  # nosec
 
 
 @pytest.mark.django_db
@@ -313,7 +313,7 @@ def test_devices_maintenance(client, setup):
     )
     assert len(ret.context["maintenance_devices_table"].data) == 2  # nosec
     hostnames = {x.hostname for x in ret.context["maintenance_devices_table"].data}
-    assert hostnames == set(["qemu_:')-,;~", "qemu01"])  # nosec
+    assert hostnames == {"qemu_:')-,;~", "qemu01"}  # nosec
 
 
 @pytest.mark.django_db
@@ -1074,7 +1074,7 @@ def test_lab_health(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/labhealth.html"  # nosec
     assert len(ret.context["device_health_table"].data) == 4  # nosec
     hostnames = {x["hostname"] for x in ret.context["device_health_table"].data}
-    assert hostnames == set(["qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"])  # nosec
+    assert hostnames == {"qemu_:')-,;~", "qemu01", "juno-uboot-01", "juno-uefi-01"}  # nosec
 
 
 @pytest.mark.django_db
@@ -1104,7 +1104,7 @@ def test_workers(client, setup):
     assert ret.templates[0].name == "lava_scheduler_app/allworkers.html"  # nosec
     assert len(ret.context["worker_table"].data) == 4  # nosec
     workers = {x.hostname for x in ret.context["worker_table"].data}
-    assert workers == set(["worker_:')-,;~", "example.com", "worker-01", "worker-02"])  # nosec
+    assert workers == {"worker_:')-,;~", "example.com", "worker-01", "worker-02"}  # nosec
 
 
 @pytest.mark.django_db

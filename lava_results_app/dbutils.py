@@ -57,7 +57,7 @@ def create_metadata_store(results, job):
         return None
 
     logger = logging.getLogger("lava-master")
-    stub = "%s-%s-%s.yaml" % (results["definition"], results["case"], level)
+    stub = "{}-{}-{}.yaml".format(results["definition"], results["case"], level)
     meta_filename = os.path.join(job.output_dir, "metadata", stub)
     os.makedirs(os.path.dirname(meta_filename), mode=0o755, exist_ok=True)
     if os.path.exists(meta_filename):
