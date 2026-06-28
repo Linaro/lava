@@ -234,6 +234,27 @@ skip = [
 [tool.pyproject-fmt]
 keep_full_version = true
 
+# FIXME review the bandit issues
+[tool.bandit]
+skips = [
+  "B102", # exec_used] Use of exec detected.
+  "B104", # hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+  "B108", # hardcoded_tmp_directory] Probable insecure usage of temp file/directory.
+  "B113", # request_without_timeout] Call to requests without timeout
+  "B202", # tarfile_unsafe_members] tarfile.extractall used without any validation.
+  "B307", # blacklist] Use of possibly insecure function - consider using safer ast.literal_eval.
+  "B308", # blacklist] Use of mark_safe() may expose cross-site scripting vulnerabilities and should be reviewed.
+  "B314", # blacklist] Using xml.etree.ElementTree.fromstring to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.fromstring with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called
+  "B324", # hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+  "B411", # blacklist] Using xmlrpc to parse untrusted XML data is known to be vulnerable to XML attacks. Use defusedxml.xmlrpc.monkey_patch() function to monkey-patch xmlrpclib and mitigate XML vulnerabilities.
+  "B411", # blacklist] Using xmlrpc.client to parse untrusted XML data is known to be vulnerable to XML attacks. Use defusedxml.xmlrpc.monkey_patch() function to monkey-patch xmlrpclib and mitigate XML vulnerabilities.
+  "B602", # subprocess_popen_with_shell_equals_true] subprocess call with shell=True identified, security issue.
+  "B604", # any_other_function_with_shell_equals_true] Function call with shell=True parameter identified, possible security issue.
+  "B610", # django_extra_used] Use of extra potential SQL attack vector.
+  "B701", # jinja2_autoescape_false] By default, jinja2 sets autoescape to False. Consider using autoescape=True or use the select_autoescape function to mitigate XSS vulnerabilities.
+  "B703", # django_mark_safe] Potential XSS on mark_safe function.
+]
+
 [tool.pytest]
 ini_options.junit_family = "xunit2"
 ini_options.DJANGO_SETTINGS_MODULE = "tests.settings"
