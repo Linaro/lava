@@ -17,10 +17,12 @@ admin.site.site_title = "LAVA"
 admin.site.site_header = "LAVA Administration"
 
 
+@admin.register(LogEntry)
 class LogEntryAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return settings.ALLOW_ADMIN_DELETE
 
+    @admin.display(description="Action")
     def get_action_flag_display(self, obj):
         if obj.is_addition():
             return "+"
@@ -28,8 +30,6 @@ class LogEntryAdmin(admin.ModelAdmin):
             return "~"
         else:
             return "x"
-
-    get_action_flag_display.short_description = "Action"
 
     list_display = (
         "action_time",
@@ -40,6 +40,3 @@ class LogEntryAdmin(admin.ModelAdmin):
         "get_action_flag_display",
     )
     list_filter = ("action_time", "user")
-
-
-admin.site.register(LogEntry, LogEntryAdmin)
