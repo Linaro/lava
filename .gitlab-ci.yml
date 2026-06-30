@@ -109,6 +109,17 @@ pre-commit:
 ruff:
   extends: .pre-commit
 
+security-scan:
+  extends: .analyze
+  artifacts:
+    reports:
+      sarif: vuln-scan.sarif
+    paths:
+      - sbom.spdx.json
+      - vuln-scan.txt
+    expire_in: 1 week
+  allow_failure: true
+
 code_quality:
   extends: .analyze
   artifacts:
