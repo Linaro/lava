@@ -243,6 +243,9 @@ STATEMENT_TIMEOUT = 30000
 # Default queue timeout in hours
 QUEUE_TIMEOUT_HOURS = None
 
+# Default health frequency in hours
+HEALTH_FREQUENCY_HOURS = 24
+
 # Default length value for all tables
 DEFAULT_TABLE_LENGTH = 25
 
