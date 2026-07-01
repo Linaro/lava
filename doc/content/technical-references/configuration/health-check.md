@@ -44,14 +44,6 @@ For instance, we recommend to test:
 The health-checks are stored on the server in
 `/etc/lava-server/dispatcher-config/health-checks/<name>.yaml`
 
-By default, LAVA creates device-types with a routine health-check frequency of
-24 hours. Admins can change this default for an instance by setting
-`HEALTH_FREQUENCY_HOURS` in one of the [LAVA settings files](../../admin/basic-tutorials/instance/configure.md#configuration-files), for example:
-
-```yaml
-HEALTH_FREQUENCY_HOURS: 168
-```
-
 Admin could update device-type health-check using [lavacli]:
 
 ```shell
