@@ -66,10 +66,6 @@ def auth_token():
     return get_random_string(32)
 
 
-def default_health_frequency():
-    return settings.HEALTH_FREQUENCY_HOURS
-
-
 class DevicesUnavailableException(UserWarning):
     """Error raised when required number of devices are unavailable."""
 
@@ -309,8 +305,7 @@ class DeviceType(RestrictedObject):
     )
 
     health_frequency = models.IntegerField(
-        verbose_name="How often to run health checks",
-        default=default_health_frequency,
+        verbose_name="How often to run health checks", default=24
     )
 
     disable_health_check = models.BooleanField(
