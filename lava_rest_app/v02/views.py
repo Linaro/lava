@@ -15,7 +15,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.db import transaction
 from django.http import Http404
-from django.http.response import FileResponse, HttpResponse
+from django.http.response import HttpResponse
 from rest_framework import status, viewsets
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.decorators import action
@@ -251,7 +251,7 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 job = self.get_object()
                 data = logs_instance.open(job)
                 size = logs_instance.size(job)
-                response = FileResponse(data, content_type="application/yaml")
+                response = HttpResponse(data, content_type="application/yaml")
                 response["Content-Length"] = size
             else:
                 data = logs_instance.read(self.get_object(), start, end)
