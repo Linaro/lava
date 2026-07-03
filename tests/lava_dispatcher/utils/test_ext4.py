@@ -557,6 +557,98 @@ class TestTarToDebugfsCommands(unittest.TestCase):
                 )
             )
 
+    def test_file_leaves_not_statted(self):
+        statted = []
+
+        def fake_stat(image, path):
+            statted.append(path)
+            return None
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dir_info = tarfile.TarInfo(name="a")
+            dir_info.type = tarfile.DIRTYPE
+            dir_info.mode = 0o755
+            tar_path = os.path.join(tmpdir, "test.tar")
+            with tarfile.open(tar_path, "w") as tar:
+                tar.addfile(dir_info)
+                for i in range(3):
+                    info = tarfile.TarInfo(name="a/f%d" % i)
+                    info.size = 1
+                    info.mode = 0o644
+                    tar.addfile(info, io.BytesIO(b"x"))
+            extract_dir = os.path.join(tmpdir, "extract")
+            os.makedirs(extract_dir)
+            with patch("lava_dispatcher.utils.ext4._stat_path", side_effect=fake_stat):
+                commands = _tar_to_debugfs_commands(
+                    MagicMock(), tar_path, "/", extract_dir, "/tmp/img.ext4"
+                )
+        for i in range(3):
+            self.assertNotIn("/a/f%d" % i, statted)
+            self.assertTrue(
+                any(
+                    c.startswith("write ") and c.endswith(' "/a/f%d"' % i)
+                    for c in commands
+                )
+            )
+        self.assertLessEqual(len(statted), 5)
+
+    def test_file_parent_usrmerge_symlink_resolved(self):
+        table = {
+            "/lib": {"type": "symlink", "target": "usr/lib"},
+            "/usr/lib": {"type": "dir", "target": None},
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            info = tarfile.TarInfo(name="lib/firmware/blob.bin")
+            info.size = 1
+            info.mode = 0o644
+            tar_path = os.path.join(tmpdir, "test.tar")
+            with tarfile.open(tar_path, "w") as tar:
+                tar.addfile(info, io.BytesIO(b"x"))
+            extract_dir = os.path.join(tmpdir, "extract")
+            os.makedirs(extract_dir)
+            with patch(
+                "lava_dispatcher.utils.ext4._stat_path",
+                side_effect=lambda image, path: table.get(path),
+            ):
+                commands = _tar_to_debugfs_commands(
+                    MagicMock(), tar_path, "/", extract_dir, "/tmp/img.ext4"
+                )
+        self.assertTrue(
+            any(
+                c.startswith("write ") and c.endswith(' "/usr/lib/firmware/blob.bin"')
+                for c in commands
+            )
+        )
+        self.assertNotIn('mkdir "/usr/lib"', commands)
+        self.assertIn('mkdir "/usr/lib/firmware"', commands)
+
+    def test_existing_leaf_symlink_replaced_not_followed(self):
+        table = {
+            "/etc": {"type": "dir", "target": None},
+            "/etc/foo": {"type": "symlink", "target": "bar"},
+        }
+        with tempfile.TemporaryDirectory() as tmpdir:
+            info = tarfile.TarInfo(name="etc/foo")
+            info.size = 1
+            info.mode = 0o644
+            tar_path = os.path.join(tmpdir, "test.tar")
+            with tarfile.open(tar_path, "w") as tar:
+                tar.addfile(info, io.BytesIO(b"x"))
+            extract_dir = os.path.join(tmpdir, "extract")
+            os.makedirs(extract_dir)
+            with patch(
+                "lava_dispatcher.utils.ext4._stat_path",
+                side_effect=lambda image, path: table.get(path),
+            ):
+                commands = _tar_to_debugfs_commands(
+                    MagicMock(), tar_path, "/", extract_dir, "/tmp/img.ext4"
+                )
+        self.assertIn('rm "/etc/foo"', commands)
+        self.assertTrue(
+            any(c.startswith("write ") and c.endswith(' "/etc/foo"') for c in commands)
+        )
+        self.assertFalse(any(c.endswith(' "/etc/bar"') for c in commands))
+
 
 class TestExtractPartition(unittest.TestCase):
     @patch("lava_dispatcher.utils.ext4.subprocess.run")

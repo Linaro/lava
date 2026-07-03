@@ -234,6 +234,15 @@ def _tar_to_debugfs_commands(
             return p
         return _resolve_symlink(image, p, symlink_cache)
 
+    def resolve_parent(p: str) -> str:
+        if image is None:
+            return p
+        parent, base = os.path.split(p)
+        if parent in ("", "/"):
+            return "/" + base
+        resolved = _resolve_symlink(image, parent, symlink_cache)
+        return resolved.rstrip("/") + "/" + base
+
     try:
         tar = tarfile.open(tar_path)
     except tarfile.TarError as exc:
@@ -250,7 +259,10 @@ def _tar_to_debugfs_commands(
             if not raw_path.startswith("/"):
                 raw_path = "/" + raw_path
 
-            ext4_path = resolve(raw_path)
+            if member.isdir():
+                ext4_path = resolve(raw_path)
+            else:
+                ext4_path = resolve_parent(raw_path)
 
             parent = os.path.dirname(ext4_path)
             if parent and parent != "/" and parent not in seen_dirs:
@@ -312,7 +324,7 @@ def _tar_to_debugfs_commands(
                 target_raw = os.path.normpath(
                     os.path.join(target_path, member.linkname)
                 )
-                commands.append(f"ln {_q(resolve(target_raw))} {_q(ext4_path)}")
+                commands.append(f"ln {_q(resolve_parent(target_raw))} {_q(ext4_path)}")
 
             elif member.isblk() or member.ischr():
                 action.logger.warning(
