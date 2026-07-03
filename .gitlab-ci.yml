@@ -106,9 +106,6 @@ aarch64/server-debian-13: {"extends": ".server-aarch64"}
 pre-commit:
   extends: .pre-commit
 
-ruff:
-  extends: .pre-commit
-
 security-scan:
   extends: .analyze
   artifacts:

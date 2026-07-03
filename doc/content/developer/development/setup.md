@@ -1,7 +1,7 @@
 # Developer setup
 
 In this document, we assume that you are developing on a Debian system. We also
-assume that the version is Bullseye (or any more recent versions).
+assume that the version is Trixie (or any more recent versions).
 
 ??? note "Other distributions"
     Even if we assume the use of Debian, you can also use any non-Debian
@@ -27,7 +27,7 @@ Available dependency groups:
 * `coordinator` -- dependencies for `lava-coordinator`
 * `full` -- all of the above
 * `test` -- test dependencies (pytest, coverage, etc.)
-* `dev` -- development tools (black, isort, pylint, mypy, etc.)
+* `dev` -- development tools (ruff, pylint, etc.)
 * `docs` -- documentation build dependencies (sphinx)
 
 Fetch the sources and install dependencies:
@@ -35,7 +35,7 @@ Fetch the sources and install dependencies:
 ```shell
 git clone https://gitlab.com/lava/lava
 cd lava/
-uv sync --extra dev
+uv sync --all-extras
 ```
 
 ### Running the development server
@@ -56,9 +56,8 @@ LAVA is now accessible at [http://localhost:8000/](http://localhost:8000/)
 ### Running tests and linters
 
 ```shell
+uv run --frozen --all-extras -- pre-commit run --show-diff-on-failure --color=always --all-files
 uv run python -m pytest tests/
-uv run black --check .
-uv run isort --check .
 ```
 
 !!! note
@@ -164,7 +163,7 @@ LAVA is now accessible at [http://localhost/](http://localhost/)
 Install basic tools:
 
 ```shell
-apt-get install black git nfs-kernel-server \
+apt-get install git nfs-kernel-server \
     postgresql postgresql-client \
     python3 python3-yaml python3-django-extensions python3-werkzeug \
     ruby-foreman
@@ -182,12 +181,12 @@ Install `lava-dispatcher` and  `lava-server` dependencies:
 
 ```shell
 apt-get install \
-    $(python3 share/requires.py  -p lava-common -d debian -s bullseye -n) \
-    $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n) \
-    $(python3 share/requires.py  -p lava-dispatcher -d debian -s bullseye -n -u) \
-    $(python3 share/requires.py  -p lava-dispatcher-host -d debian -s bullseye -n) \
-    $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n) \
-    $(python3 share/requires.py  -p lava-server -d debian -s bullseye -n -u)
+    $(python3 share/requires.py  -p lava-common -d debian -s trixie -n) \
+    $(python3 share/requires.py  -p lava-dispatcher -d debian -s trixie -n) \
+    $(python3 share/requires.py  -p lava-dispatcher -d debian -s trixie -n -u) \
+    $(python3 share/requires.py  -p lava-dispatcher-host -d debian -s trixie -n) \
+    $(python3 share/requires.py  -p lava-server -d debian -s trixie -n) \
+    $(python3 share/requires.py  -p lava-server -d debian -s trixie -n -u)
 ```
 
 Create the test database:

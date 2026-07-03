@@ -35,9 +35,7 @@ dependencies = [
 ]
 optional-dependencies.coordinator = []
 optional-dependencies.dev = [
-  "black==25.1.0",
   "django-stubs",
-  "isort==6.0.1",
   "lava[full]",
   "lava[test]",
   "mypy",
