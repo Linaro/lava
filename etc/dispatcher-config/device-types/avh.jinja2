@@ -12,8 +12,6 @@ actions:
           project_name: {{ avh_project_name|default('Default Project') }}
           model: {{ avh_model|default('') }}
   boot:
-    connections:
-      serial:
     methods:
       avh:
 {% endblock body %}
