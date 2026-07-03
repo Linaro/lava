@@ -31,6 +31,10 @@ if TYPE_CHECKING:
     from lava_scheduler_app.models import TestJob
 
 
+def fileno_unsupported() -> int:
+    raise io.UnsupportedOperation("fileno disabled")
+
+
 class Logs:
     def line_count(self, job: TestJob) -> int:
         raise NotImplementedError("Should implement this method")
@@ -91,7 +95,14 @@ class LogsFilesystem(Logs):
         directory = pathlib.Path(job.output_dir)
         with contextlib.suppress(FileNotFoundError):
             return open(str(directory / self.log_filename), "rb")
-        return lzma.open(str(directory / self.compressed_log_filename), "rb")
+        lzma_stream = lzma.open(str(directory / self.compressed_log_filename), "rb")
+        # HACK: Make fileno() raise io.UnsupportedOperation to prevent
+        # file descriptor use. Otherwise the underlying file descriptor might be
+        # used in `sendfile` kernel call which will result in compressed data
+        # being returned in a response.
+        # This exception raised is equivalent to io.BytesIO.fileno().
+        lzma_stream.fileno = fileno_unsupported
+        return lzma_stream
 
     def read(self, job: TestJob, start: int = 0, end: int | None = None) -> str:
         directory = pathlib.Path(job.output_dir)
