@@ -1,3 +1,49 @@
+lava (2026.06-1) unstable; urgency=medium
+
+  * LAVA Software 2026.06 release
+
+  [ Christopher Obbard ]
+  * [c3784316d] d/control: Remove duplicate dependency on black
+  * [837ff555b] d/control: Replace libguestfs-tools with python3-guestfs in lava-dispatcher
+  * [cfc846627] d/lintian-overrides: add override for android test runner
+  * [c246ee307] d/lintian-overrides: add override for SSH key permissions
+  * [5d3f1e473] d/manpages: add missing manpages
+  * [d065ad0a3] d/control: bump Standards-Version to 4.7.4
+  * [45fdc5607] debian: switch doc generator from sphinx to mkdocs
+  * [f3268a191] d/py3dist-overrides: fix grammar in comments
+  * [78025c121] d/t/control: add openssh-client to autopkgtest depends
+  * [16123c285] d/t/control: add python3-guestfs to autopkgtest depends
+  * [9e35a564d] d/control: make lava-dev arch-dependent
+  * [b994dfbc3] d/control: restrict lava-dev dep python3-guestfs to supported arches
+  * [98b524a55] d/control: switch lava-dispatcher to Architecture: any
+  * [8b72f9c85] d/control: restrict lava-dispatcher dep python3-guestfs to supported arches
+  * [0987ba638] d/control: move python3-guestfs to lava-dispatcher Depends
+  * [1e4526b74] d/control: drop Multi-Arch: foreign from lava-dispatcher
+  * [48f917903] d/control: restrict lava-dispatcher-host to bpfcc-supported arches
+  * [8c95326e7] d/control: relax lava-dispatcher-host deps and add per-arch kernel headers
+  * [75e252b4d] d/control: drop Multi-Arch: foreign from lava-dispatcher-host
+  * [33f48ddc2] d/control: update lava-dispatcher dep bmap-tools to bmaptool
+  * [159919362] d/control: relax lava-server gunicorn dep
+  * [8832ba65b] d/t/control: add missing arches to python3-guestfs
+  * [0a534c962] d/t/control: relax deps
+  * [2188d270b] d/t/control: update comment about upstream test suite
+  * [e639649e0] d/py3dist-overrides: ignore guestfs
+  * [a143fe241] d/py3dist-overrides: ignore fakeroot
+  * [f55e29a79] d/tests: restrict lava-dispatcher-host test architectures
+  * [b69cac1be] d/rules: ship lava egg-info only in lava-common
+
+  [ Ben Copeland ]
+  * [675161c89] dispatcher: deploy: rclone Add rclone download support for deploy actions
+
+  [ Rémi Duraffort ]
+  * [6c731ee1a] debian: fix dependency on bmaptool in bookworm
+  * [8579e1d3f] Drop VLANd code
+
+  [ Milosz Wasilewski ]
+  * [a6bdcd0cf] debian: Update control file to suggested qdl
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Fri, 03 Jul 2026 13:38:45 +0200
+
 lava (2026.05-1) unstable; urgency=medium
 
   * LAVA Software 2026.05 release
