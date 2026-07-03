@@ -17,13 +17,9 @@ actions:
     parameters:
       append_dtb: {{ append_dtb|default(false) }}
       use_xip: {{ use_xip|default(false) }}
-    connections:
-      serial:
     methods:
       tftp:
   boot:
-    connections:
-      serial:
     methods:
       barebox:
         parameters:

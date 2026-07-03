@@ -98,11 +98,9 @@ def device():
         Required("actions"): {
             Required("deploy"): {
                 Required("methods"): Any(None, dict),
-                Optional("connections"): Any(None, dict),
                 Optional("parameters"): dict,
             },
             Required("boot"): {
-                Required("connections"): Any(None, dict),
                 Required("methods"): Any(None, dict),
             },
             Optional("test"): {

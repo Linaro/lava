@@ -79,15 +79,7 @@ actions:
           flash_erase_msg: '{{ flash_erase_msg|default('Erasing Flash') }}'
           flash_exit_cmd: '{{ flash_exit_cmd|default('exit') }}'
           autorun_prompt: '{{ autorun_prompt|default('Press Enter to stop auto boot...') }}'
-    connections:
-      adb:
-      serial:
   boot:
-    # list of connection methods which this device supports
-    connections:
-      adb:
-      serial:
-      ssh:
     # list of boot methods which this device supports.
     methods:
       ssh:

@@ -26,8 +26,6 @@ class ConnectAdb(Action):
             return
         if "adb_serial_number" not in self.job.device:
             self.errors_add("device adb serial number missing")
-        if "adb" not in self.job.device["actions"]["boot"]["connections"]:
-            self.errors_add("Device not configured to support adb connection.")
         super().validate()
         which("adb")
 

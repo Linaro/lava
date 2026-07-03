@@ -65,8 +65,6 @@ class ConnectDevice(Action):
                     "Unable to connect to shell - missing connections block."
                 )
                 return
-        if "serial" not in self.job.device["actions"]["boot"]["connections"]:
-            self.errors_add("Device not configured to support serial connection.")
         if "connect" in self.job.device["commands"]:
             # deprecated but allowed for primary
             if self.primary:

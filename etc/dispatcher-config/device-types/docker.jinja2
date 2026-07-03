@@ -5,8 +5,6 @@
 
 actions:
   deploy:
-    connections:
-      serial:
     methods:
       docker:
         options:
@@ -22,8 +20,6 @@ actions:
         identity_file: "{{ ssh_identity_file }}"
 
   boot:
-    connections:
-      serial:
     methods:
       docker:
         options:

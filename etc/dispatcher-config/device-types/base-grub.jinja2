@@ -78,14 +78,10 @@
 
 actions:
   deploy:
-    connections:
-      serial:
     methods:
       tftp:
       nbd:
   boot:
-    connections:
-      serial:
     methods:
       minimal:
 {{ nodebooter_action }}
