@@ -125,6 +125,7 @@ class QueryResultView(LavaView):
 
 
 @BreadCrumb("Queries", parent=index)
+@login_required
 def query_list(request):
     group_tables = {}
     for group in QueryGroup.objects.all():
@@ -170,6 +171,7 @@ def query_list(request):
 
 
 @BreadCrumb("Query ~{username}/{name}", parent=query_list, needs=["username", "name"])
+@login_required
 def query_display(request, username, name):
     query = get_object_or_404(Query, owner__username=username, name=name)
 

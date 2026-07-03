@@ -93,6 +93,7 @@ def json_serializer(obj):
 
 
 @BreadCrumb("Charts", parent=index)
+@login_required
 def chart_list(request):
     group_tables = {}
     for group in ChartGroup.objects.all():
