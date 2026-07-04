@@ -5,6 +5,7 @@ Uploaders: Remi Duraffort <remi.duraffort@linaro.org>,
            Christopher Obbard <obbardc@debian.org>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
+               dh-sequence-installsysusers,
                libjs-bootstrap,
                libjs-jquery,
                libjs-jquery-flot,
@@ -104,8 +105,7 @@ Description: LAVA dispatcher host tools
 Package: lava-server
 Architecture: all
 Pre-Depends: debconf | debconf-2.0
-Depends: adduser,
-         gunicorn,
+Depends: gunicorn,
          lava-common (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
          libjs-bootstrap,
