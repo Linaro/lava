@@ -19,7 +19,17 @@ def setup(mocker, tmp_path):
     os.makedirs(tmp_path / "1")
     os.makedirs(tmp_path / "2")
     mocker.patch("lava_common.device_mappings.DISPATCHER_DOWNLOAD_PATH", Path(tmp_path))
-    mocker.patch("os.path.exists", return_value=True)
+    # Python 3.14's pathlib.Path.exists() calls os.path.exists(), so an
+    # unconditional mock would make Path.exists() lie about files under
+    # tmp_path. Force True only outside tmp_path (device nodes), and defer
+    # to the real check inside tmp_path.
+    real_exists = os.path.exists
+    mocker.patch(
+        "os.path.exists",
+        side_effect=lambda path: (
+            real_exists(path) if Path(path).is_relative_to(tmp_path) else True
+        ),
+    )
 
 
 def test_simple_mapping(tmp_path):
