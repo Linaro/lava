@@ -82,6 +82,10 @@ MIDDLEWARE = [
 
 LAVA_REQUIRE_LOGIN_MIDDLEWARE = "lava_server.security.LavaRequireLoginMiddleware"
 
+LAVA_REQUIRE_LOGIN_PATHS_MIDDLEWARE = (
+    "lava_server.security.LavaRequireLoginPathsMiddleware"
+)
+
 ROOT_URLCONF = "lava_server.urls"
 
 TEMPLATES = [
@@ -379,6 +383,15 @@ def update(values):
     SYNC_GITHUB_TEAMS = values.get("SYNC_GITHUB_TEAMS")
     USE_DEBUG_TOOLBAR = values.get("USE_DEBUG_TOOLBAR")
     REQUIRE_LOGIN = values.get("REQUIRE_LOGIN")
+    REQUIRE_LOGIN_PATHS = values.get("REQUIRE_LOGIN_PATHS")
+    if REQUIRE_LOGIN_PATHS is None:
+        REQUIRE_LOGIN_PATHS = []
+    if not isinstance(REQUIRE_LOGIN_PATHS, list) or not all(
+        isinstance(path, str) and path.strip("/") for path in REQUIRE_LOGIN_PATHS
+    ):
+        raise ImproperlyConfigured(
+            "REQUIRE_LOGIN_PATHS must be a list of non-empty URL path prefixes"
+        )
 
     # Fix mount point
     # Remove the leading slash and keep only one trailing slash
@@ -572,6 +585,9 @@ def update(values):
 
     if REQUIRE_LOGIN and LAVA_REQUIRE_LOGIN_MIDDLEWARE not in MIDDLEWARE:
         MIDDLEWARE.append(LAVA_REQUIRE_LOGIN_MIDDLEWARE)
+
+    if REQUIRE_LOGIN_PATHS and LAVA_REQUIRE_LOGIN_PATHS_MIDDLEWARE not in MIDDLEWARE:
+        MIDDLEWARE.append(LAVA_REQUIRE_LOGIN_PATHS_MIDDLEWARE)
 
     # List of compiled regular expression objects representing User-Agent strings
     # that are not allowed to visit any page, systemwide. Use this for bad

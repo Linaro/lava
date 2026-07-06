@@ -10,7 +10,13 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
+import pytest
+from django.core.exceptions import ImproperlyConfigured
+
 from lava_server.settings.config_file import ConfigFile
+
+FULL_MIDDLEWARE = "lava_server.security.LavaRequireLoginMiddleware"
+PATHS_MIDDLEWARE = "lava_server.security.LavaRequireLoginPathsMiddleware"
 
 
 def test_settings(mocker, monkeypatch):
@@ -80,3 +86,40 @@ NO_QUOTES=no_quotes
             self.assertEqual(config["TEST123"], "456")
             self.assertEqual(config["SPACE"], "foo bar")
             self.assertEqual(config["NO_QUOTES"], "no_quotes")
+
+
+def _run_update(**overrides):
+    import lava_server.settings.dev
+    from lava_server.settings.common import update
+
+    values = {k: v for k, v in vars(lava_server.settings.dev).items() if k.isupper()}
+    values["MIDDLEWARE"] = list(values["MIDDLEWARE"])
+    values["INSTALLED_APPS"] = list(values["INSTALLED_APPS"])
+    values.update(overrides)
+    return update(values)
+
+
+def test_require_login_paths_default_empty():
+    result = _run_update()
+    assert result["REQUIRE_LOGIN_PATHS"] == []
+    assert PATHS_MIDDLEWARE not in result["MIDDLEWARE"]
+
+
+def test_require_login_paths_adds_middleware():
+    result = _run_update(REQUIRE_LOGIN_PATHS=["results/query"])
+    assert PATHS_MIDDLEWARE in result["MIDDLEWARE"]
+
+
+def test_require_login_runs_before_require_login_paths():
+    result = _run_update(REQUIRE_LOGIN=True, REQUIRE_LOGIN_PATHS=["results/query"])
+    middleware = result["MIDDLEWARE"]
+    assert middleware.index(FULL_MIDDLEWARE) < middleware.index(PATHS_MIDDLEWARE)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["results/query", [""], ["/"], [123], [None], ["results/query", ""]],
+)
+def test_require_login_paths_invalid_configuration(value):
+    with pytest.raises(ImproperlyConfigured):
+        _run_update(REQUIRE_LOGIN_PATHS=value)

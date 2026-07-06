@@ -112,3 +112,19 @@ class LavaRequireLoginMiddleware:
             return self.get_response(request)
 
         return self.require_login(request)
+
+
+class LavaRequireLoginPathsMiddleware(LavaRequireLoginMiddleware):
+    def __init__(self, get_response):
+        super().__init__(get_response)
+        self.require_login_paths = tuple(
+            self.HOME_PATH / path.strip("/") for path in settings.REQUIRE_LOGIN_PATHS
+        )
+
+    def __call__(self, request):
+        path = PurePosixPath(request.path)
+
+        if not any(path.is_relative_to(prefix) for prefix in self.require_login_paths):
+            return self.get_response(request)
+
+        return super().__call__(request)
