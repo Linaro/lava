@@ -109,6 +109,17 @@ outside of the home page, documentation pages and the login page itself by
 setting the ``REQUIRE_LOGIN`` variable in any YAML configuration
 file under ``/etc/lava-server/settings.d/*.yaml``.
 
+If gating the entire instance is too broad, the ``REQUIRE_LOGIN_PATHS``
+variable can instead require login only for specific parts of the UI. It
+takes a list of URL path prefixes, relative to the instance mount point,
+and each prefix covers itself and everything below it. This is useful to
+protect expensive pages, for example the query UI, from anonymous users
+and web crawlers while keeping the rest of the instance public:
+
+.. code-block:: yaml
+
+    REQUIRE_LOGIN_PATHS: ["results/query", "results/chart"]
+
 But if the object is ``permission restricted`` for **view** permission, or it
 inherits the permission restriction, anonymous users will not be able to see
 that particular object any more.
