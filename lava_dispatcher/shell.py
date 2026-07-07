@@ -135,12 +135,8 @@ class ShellCommand(SpawnBase):
             maxread=window,  # limit the size of the buffer. 1 to turn off buffering
             codec_errors="replace",
         )
-        # logfile_read and logfile_send can be None.
-        # Create new variables that cannot be None.
         self.output_logger = ShellLogger(logger)
-        self.logfile_read = self.output_logger
         self.input_logger = ShellLogger(logger, is_input=True)
-        self.logfile_send = self.input_logger
         self.name = "ShellCommand"
         self.logger = logger
         # delayafterterminate allow for some spare time for a process to terminate
