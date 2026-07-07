@@ -464,7 +464,7 @@ class GetFVPSerialAction(Action):
 
             shell_connection = ShellSession(shell)
             shell_connection = super().run(shell_connection, max_end_time)
-            shell_connection.raw_connection.logfile_read.is_feedback = True
+            shell_connection.raw_connection.output_logger.is_feedback = True
 
             feedback_name = feedback_dict.get("name")
             if not feedback_name:
