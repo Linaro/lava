@@ -150,15 +150,12 @@ class ShellCommand(SpawnBase):
         self.delaybeforesend = None  # LAVA implements its own delay between characters.
         # lava-run is single threaded, there is no concern about GIL not being released
         # between read calls. Remove delay after read.
-        # Typeshed type hints has incorrectly marked `delayafterread` as float only.
-        self.delayafterread = None  # type: ignore[assignment]
+        self.delayafterread = None
         # set a default newline character, but allow actions to override as necessary
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 
-    def sendline(  # type: ignore[override]
-        self, s: str = "", delay: float = 0.0
-    ) -> int:
+    def sendline(self, s: str = "", delay: float = 0.0) -> int:
         """
         Extends pexpect.sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
@@ -179,9 +176,7 @@ class ShellCommand(SpawnBase):
         self.logger.debug("Sending character: %r", char)
         return super().sendcontrol(char)
 
-    def send(  # type: ignore[override]
-        self, string: str, delay: float = 0.0, send_char: bool = True
-    ) -> int:
+    def send(self, string: str, delay: float = 0.0, send_char: bool = True) -> int:
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
