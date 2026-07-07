@@ -14,7 +14,7 @@ from re import split as re_split
 from signal import SIGKILL
 from typing import TYPE_CHECKING, overload
 
-import pexpect
+import pexpect  # type: ignore[import-untyped]
 
 from lava_common.constants import LINE_SEPARATOR
 from lava_common.exceptions import (
@@ -37,12 +37,6 @@ if TYPE_CHECKING:
 
     from lava_common.log import YAMLLogger
     from lava_dispatcher.job import Job
-
-    SpawnBase = pexpect.spawn[str]
-else:
-    # Workaround for real pexpect.spawn not being generic
-    # but typeshed hints being generic
-    SpawnBase = pexpect.spawn
 
 
 class ShellLogger:
@@ -88,7 +82,7 @@ class ShellLogger:
             self.write("\n")
 
 
-class ShellCommand(SpawnBase):
+class ShellCommand(pexpect.spawn):  # type: ignore[misc]
     """
     Run a command over a connection using pexpect instead of
     subprocess, i.e. not on the dispatcher itself.
@@ -170,7 +164,7 @@ class ShellCommand(SpawnBase):
 
     def sendcontrol(self, char: str) -> int:
         self.logger.debug("Sending character: %r", char)
-        return super().sendcontrol(char)
+        return super().sendcontrol(char)  # type: ignore[no-any-return]
 
     def send(self, string: str, delay: float = 0.0, send_char: bool = True) -> int:
         """
@@ -268,7 +262,7 @@ class ShellCommand(SpawnBase):
         except pexpect.EOF:
             # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
             raise ConnectionClosedError("Connection closed")
-        return proc
+        return proc  # type: ignore[no-any-return]
 
     def flush(self) -> None:
         """Will be called by pexpect itself when closing the connection"""
