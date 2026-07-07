@@ -70,6 +70,7 @@ def split_multinode_yaml(submission, target_group):
         "notify",
         "metadata",
         "reboot_to_fastboot",
+        "secrets",
     ]
     skip = ["role", "roles"]
     scheduling = [

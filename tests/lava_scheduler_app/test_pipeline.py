@@ -699,6 +699,22 @@ class TestYamlMultinode(TestCaseWithFactory):
                     with open(server_check) as f:
                         self.assertEqual(job, yaml_safe_load(f))
 
+    def test_multinode_secrets(self):
+        with open(
+            os.path.join(
+                os.path.dirname(__file__), "sample_jobs", "secrets-multinode.yaml"
+            ),
+        ) as f:
+            submission = yaml_safe_load(f)
+        target_group = "arbitrary-group-id"  # for unit tests only
+
+        jobs_dict = split_multinode_yaml(submission, target_group)
+        self.assertIsNotNone(jobs_dict)
+        for _, job_list in jobs_dict.items():
+            for job in job_list:
+                self.assertTrue("secrets" in job, f"No secrets found in job {job}")
+                self.assertEqual(job["secrets"], {"foo": "bar"})
+
     def test_secondary_connection(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name="mustang")
