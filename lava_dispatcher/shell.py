@@ -14,7 +14,7 @@ from re import split as re_split
 from signal import SIGKILL
 from typing import TYPE_CHECKING, overload
 
-import pexpect  # type: ignore[import-untyped]
+import pexpect
 
 from lava_common.constants import LINE_SEPARATOR
 from lava_common.exceptions import (
@@ -31,12 +31,16 @@ from lava_dispatcher.utils.strings import seconds_to_str
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Iterator
     from re import Pattern
-    from typing import Literal
+    from typing import Literal, TypeAlias
 
     from pexpect import EOF, TIMEOUT
 
     from lava_common.log import YAMLLogger
     from lava_dispatcher.job import Job
+
+    SpawnBase: TypeAlias = pexpect.spawn[str]
+else:
+    SpawnBase = pexpect.spawn
 
 
 class ShellLogger:
@@ -82,7 +86,7 @@ class ShellLogger:
             self.write("\n")
 
 
-class ShellCommand(pexpect.spawn):  # type: ignore[misc]
+class ShellCommand(SpawnBase):
     """
     Run a command over a connection using pexpect instead of
     subprocess, i.e. not on the dispatcher itself.
@@ -145,7 +149,9 @@ class ShellCommand(pexpect.spawn):  # type: ignore[misc]
         self.linesep = LINE_SEPARATOR
         self.lava_timeout = lava_timeout
 
-    def sendline(self, s: str = "", delay: float = 0.0) -> int:
+    def sendline(  # type: ignore[override]
+        self, s: str = "", delay: float = 0.0
+    ) -> int:
         """
         Extends pexpect.sendline so that it can support the delay argument which allows a delay
         between sending each character to get around slow serial problems (iPXE).
@@ -164,9 +170,11 @@ class ShellCommand(pexpect.spawn):  # type: ignore[misc]
 
     def sendcontrol(self, char: str) -> int:
         self.logger.debug("Sending character: %r", char)
-        return super().sendcontrol(char)  # type: ignore[no-any-return]
+        return super().sendcontrol(char)
 
-    def send(self, string: str, delay: float = 0.0, send_char: bool = True) -> int:
+    def send(  # type: ignore[override]
+        self, string: str, delay: float = 0.0, send_char: bool = True
+    ) -> int:
         """
         Extends pexpect.send to support extra arguments, delay and send by character flags.
         """
@@ -262,7 +270,7 @@ class ShellCommand(pexpect.spawn):  # type: ignore[misc]
         except pexpect.EOF:
             # FIXME: deliberately closing the connection (and starting a new one) needs to be supported.
             raise ConnectionClosedError("Connection closed")
-        return proc  # type: ignore[no-any-return]
+        return proc
 
     def flush(self) -> None:
         """Will be called by pexpect itself when closing the connection"""
