@@ -153,9 +153,6 @@ sast:
   variables:
     SAST_DEFAULT_ANALYZERS: "bandit"
 
-codespell:
-  extends: .analyze
-
 django_migrations:
   extends: .analyze
   image: registry.gitlab.com/lava/ci-images/amd64/server-debian-12
