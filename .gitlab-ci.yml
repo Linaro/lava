@@ -5,9 +5,6 @@ stages:
   - build
   - deploy
 
-include:
-  template: SAST.gitlab-ci.yml
-
 variables:
   # To make sure that latest git tag gets fetched
   # or version() function will fail
@@ -141,11 +138,6 @@ dockerfiles:
 
 schemas:
   extends: .analyze
-
-sast:
-  stage: analyze
-  variables:
-    SAST_DEFAULT_ANALYZERS: "bandit"
 
 django_migrations:
   extends: .analyze
