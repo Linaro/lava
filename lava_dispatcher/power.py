@@ -332,7 +332,7 @@ class FinalizeAction(Action):
 
     def run(self, connection, max_end_time):
         """
-        The pexpect.spawn here is the ShellCommand not the ShellSession connection object.
+        The pexpect.spawn here is the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
         The pipeline of FinalizeAction is special - it needs to run even in the case of error / cancel.
         """

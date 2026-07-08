@@ -171,6 +171,7 @@ repos:
           - "lava_dispatcher/utils/shell.py"
           - "lava_dispatcher/utils/strings.py"
           - "lava_dispatcher/utils/vcs.py"
+          - "lava_dispatcher/shell.py"
         pass_filenames: false
         always_run: true
 

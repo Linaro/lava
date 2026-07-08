@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action
-from lava_dispatcher.shell import ShellCommand, ShellSession
+from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.shell import which
 
@@ -141,7 +141,7 @@ class ConnectSsh(Action):
         if connection:
             self.logger.debug("Already connected")
             return connection
-        # ShellCommand executes the connection command
+        # ShellSession executes the connection command and monitors the pexpect
 
         self._check_params()
         command = self.command[:]  # local copy for idempotency
@@ -186,14 +186,8 @@ class ConnectSsh(Action):
                 "Unable to identify host address. Primary? %s" % self.primary
             )
         command_str = " ".join(str(item) for item in command)
-        shell = ShellCommand("%s\n" % command_str, self.timeout, logger=self.logger)
-        if shell.exitstatus:
-            raise JobError(
-                "%s command exited %d: %s"
-                % (self.command, shell.exitstatus, shell.readlines())
-            )
         # SshSession monitors the pexpect
-        connection = SShSession(shell)
+        connection = SShSession(f"{command_str}\n", self.timeout, logger=self.logger)
         connection = super().run(connection, max_end_time)
         connection.prompt_str = list(self.parameters.get("prompts", []))
         connection.connected = True

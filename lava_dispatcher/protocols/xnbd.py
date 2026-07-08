@@ -10,7 +10,7 @@ from lava_common.constants import XNBD_SYSTEM_TIMEOUT
 from lava_common.exceptions import JobError, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Protocol
-from lava_dispatcher.shell import ShellCommand
+from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip, get_free_port
 
 
@@ -104,10 +104,11 @@ class XnbdProtocol(Protocol):
             for port in self.ports:
                 self.logger.debug("clean NBD port %s", port)
                 nbd_cmd = "pkill -f nbd-server.*%s" % (port)
-                shell = ShellCommand(
-                    "%s\n" % nbd_cmd, self.system_timeout, logger=self.logger
+                shell = ShellSession(
+                    f"{nbd_cmd}\n", self.system_timeout, logger=self.logger
                 )
-                shell.expect(pexpect.EOF)
+                with shell._expect_exc_wrapper():
+                    shell.raw_connection.expect(pexpect.EOF)
         except Exception as e:
             self.logger.debug(str(e))
             self.logger.debug("xnbd-finalize-protocol failed, but continuing anyway.")

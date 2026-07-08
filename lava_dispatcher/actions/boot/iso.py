@@ -14,7 +14,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.shell import ExpectShellSession, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 
@@ -91,15 +91,9 @@ class IsoCommandLine(Action):
         command_line += " ".join(append_args)
 
         self.logger.info(command_line)
-        shell = ShellCommand(command_line, self.timeout, logger=self.logger)
-        if shell.exitstatus:
-            raise JobError(
-                "%s command exited %d: %s"
-                % (sub_command[0], shell.exitstatus, shell.readlines())
-            )
         self.logger.debug("started a shell command")
 
-        shell_connection = ShellSession(shell)
+        shell_connection = ShellSession(command_line, self.timeout, logger=self.logger)
         shell_connection.prompt_str = self.get_namespace_data(
             action="prepare-qemu-commands", label="prepare-qemu-commands", key="prompts"
         )
@@ -191,17 +185,11 @@ class IsoRebootAction(Action):
             )
 
         self.logger.info("Boot command: %s", " ".join(self.sub_command))
-        shell = ShellCommand(
+
+        shell_connection = ShellSession(
             " ".join(self.sub_command), self.timeout, logger=self.logger
         )
-        if shell.exitstatus:
-            raise JobError(
-                "%s command exited %d: %s"
-                % (self.sub_command, shell.exitstatus, shell.readlines())
-            )
         self.logger.debug("started a shell command")
-
-        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
         shell_connection.prompt_str = [INSTALLER_QUIET_MSG]
         self.wait(shell_connection)

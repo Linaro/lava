@@ -80,9 +80,10 @@ class MenuSession(ShellSession):
         """
         while True:
             try:
-                self.raw_connection.expect(
-                    self.prompt_str, timeout=self.timeout.duration
-                )
+                with self._expect_exc_wrapper():
+                    self.raw_connection.expect(
+                        self.prompt_str, timeout=self.timeout.duration
+                    )
             except pexpect.TIMEOUT:
                 raise JobError("wait for prompt timed out")
             else:
