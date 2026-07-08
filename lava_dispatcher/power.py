@@ -352,7 +352,9 @@ class FinalizeAction(Action):
     def cleanup(self, connection, max_end_time=None):
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
-            if max_end_time is None:
+            # ensure device is powered off, even if previous cleanups have
+            # used up the CLEANUP_TIMEOUT setting
+            if max_end_time is None or max_end_time <= time.monotonic():
                 max_end_time = time.monotonic() + self.timeout.duration
             with self.timeout(self.job, max_end_time) as action_max_end_time:
                 self.run(connection, action_max_end_time)
