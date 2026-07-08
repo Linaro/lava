@@ -46,6 +46,7 @@ optional-dependencies.dev = [
   "pyrefly==1.1.1",
   "ruff==0.15.20",
   "ty==0.0.55",
+  "types-pexpect",
   "types-pyyaml",
   "types-requests",
 ]

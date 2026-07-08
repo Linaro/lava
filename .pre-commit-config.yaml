@@ -123,6 +123,57 @@ repos:
           - "--configfile=pyproject.toml"
           - "--severity-level=medium"
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.2.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - "django-stubs==6.0.6"
+          - "jinja2==3.1.6"
+          - "python-magic==0.4.27"
+          - "pyyaml==6.0.3"
+          - "requests==2.34.2"
+          - "sentry-sdk==2.63.0"
+          - "types-pexpect==4.9.0.20260518"
+          - "types-pyyaml==6.0.12.20260518"
+          - "types-requests==2.33.0.20260518"
+        args:
+          - "--python-version=3.11"
+          - "--pretty"
+          - "--strict"
+          - "--follow-imports=silent"
+          - "lava_common/constants.py"
+          - "lava_common/converters.py"
+          - "lava_common/decorators.py"
+          - "lava_common/device_mappings.py"
+          - "lava_common/exceptions.py"
+          - "lava_common/jinja.py"
+          - "lava_common/log.py"
+          - "lava_common/timeout.py"
+          - "lava_common/utils.py"
+          - "lava_common/version.py"
+          - "lava_common/worker.py"
+          - "lava_common/yaml.py"
+          - "lava_dispatcher/actions/base_strategy.py"
+          - "lava_dispatcher/actions/boot_strategy.py"
+          - "lava_dispatcher/actions/deploy_strategy.py"
+          - "lava_dispatcher/actions/test/mixins.py"
+          - "lava_dispatcher/actions/test_strategy.py"
+          - "lava_dispatcher/connection.py"
+          - "lava_dispatcher/deployment_data.py"
+          - "lava_dispatcher/utils/compression.py"
+          - "lava_dispatcher/utils/contextmanager.py"
+          - "lava_dispatcher/utils/decorator.py"
+          - "lava_dispatcher/utils/ext4.py"
+          - "lava_dispatcher/utils/filesystem.py"
+          - "lava_dispatcher/utils/installers.py"
+          - "lava_dispatcher/utils/network.py"
+          - "lava_dispatcher/utils/shell.py"
+          - "lava_dispatcher/utils/strings.py"
+          - "lava_dispatcher/utils/vcs.py"
+        pass_filenames: false
+        always_run: true
+
   # - repo: https://github.com/facebook/pyrefly-pre-commit
   #   rev: 1.1.1
   #   hooks:
