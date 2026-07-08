@@ -40,8 +40,8 @@ We use [pylint] and [bandit] for static analysis.
 You can run them locally:
 
 ```shell
-.gitlab-ci/analyze/pylint.sh
-bandit -r .
+uv run --frozen --all-extras -- pre-commit run pylint --show-diff-on-failure --color=always --all-files
+uv run --frozen --all-extras -- pre-commit run bandit --show-diff-on-failure --color=always --all-files
 ```
 
 ## Job schema

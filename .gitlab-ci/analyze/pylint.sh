@@ -1,30 +1,10 @@
 #!/bin/sh
 
-set -e
+set -ex
 
 if [ "$1" = "setup" ]
 then
-  set -x
-  apt-get -q update
-  apt-get install --no-install-recommends --yes pylint python3-pylint-django
+  uv sync --frozen --all-extras
 else
-  set -x
-  # See pyproject.toml for the list of enabled and disabled checks
-  DJANGO_SETTINGS_MODULE=lava_server.settings.dev \
-  PYTHONPATH=. \
-    pylint --verbose \
-      lava \
-      lava_common \
-      lava_dispatcher \
-      lava_dispatcher_host \
-      lava_rest_app \
-      lava_results_app \
-      lava_scheduler_app \
-      lava_server \
-      linaro_django_xmlrpc \
-      share \
-      tests \
-      lava/dispatcher/lava-run \
-      lava/dispatcher/lava-worker \
-      "$@"
+  uv run --frozen --all-extras -- pre-commit run pylint --show-diff-on-failure --color=always --all-files
 fi
