@@ -34,6 +34,8 @@ class VExpressMsdRetry(RetryAction):
     name = "vexpress-fw-deploy-retry"
     description = "deploy vexpress board recovery image with retry"
     summary = "VExpress FW deployment with retry"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -49,6 +51,8 @@ class VExpressMsdAction(Action):
     name = "vexpress-fw-deploy"
     description = "deploy vexpress board recovery image"
     summary = "VExpress FW deployment"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def validate(self):
         super().validate()
@@ -90,6 +94,8 @@ class ExtractVExpressRecoveryImage(Action):
     name = "extract-vexpress-recovery-image"
     description = "unpack versatile express recovery image"
     summary = "unpack versatile express recovery image ready for deployment"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -160,6 +166,8 @@ class EnterVExpressMCC(Action):
     name = "enter-vexpress-mcc"
     description = "enter Versatile Express MCC"
     summary = "enter Versatile Express MCC, interrupting autorun if needed"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -224,6 +232,8 @@ class EnableVExpressMassStorage(Action):
     name = "enable-vexpress-usbmsd"
     description = "enable vexpress usb msd"
     summary = "enable vexpress usb mass storage device"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -326,6 +336,8 @@ class MountVExpressMassStorageDevice(MountDeviceMassStorageDevice):
     name = "mount-vexpress-usbmsd"
     description = "mount vexpress usb msd"
     summary = "mount vexpress usb mass storage device on the dispatcher"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -350,6 +362,8 @@ class DeployVExpressRecoveryImage(Action):
     name = "deploy-vexpress-recovery-image"
     description = "deploy vexpress recovery image to usb msd"
     summary = "copy recovery image contents to vexpress usb mass storage device"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
@@ -428,6 +442,8 @@ class VExpressFlashErase(Action):
     name = "erase-vexpress-flash"
     description = "erase vexpress flash"
     summary = "erase vexpress flash using the commands set by the user"
+    command_exception = InfrastructureError
+    timeout_exception = InfrastructureError
 
     def __init__(self, job: Job):
         super().__init__(job)
