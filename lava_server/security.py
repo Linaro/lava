@@ -17,7 +17,6 @@ from linaro_django_xmlrpc.models import AuthToken
 
 class LavaRequireLoginMiddleware:
     HOME_PATH: ClassVar[PurePosixPath] = PurePosixPath("/") / settings.MOUNT_POINT
-    LOGIN_PATH: ClassVar[PurePosixPath] = PurePosixPath(settings.LOGIN_URL)
     HEALTHZ_PATH: ClassVar[PurePosixPath] = HOME_PATH / "v1/healthz"
     SYSTEM_VERSION_PATH: ClassVar[PurePosixPath] = HOME_PATH / "api/v0.2/system/version"
     # Token authenticated paths
@@ -34,11 +33,16 @@ class LavaRequireLoginMiddleware:
         self.require_login = login_required(get_response)
 
     @classmethod
+    def login_path(cls) -> PurePosixPath:
+        """Return the login page path, including the mount point."""
+        return PurePosixPath(settings.LOGIN_URL)
+
+    @classmethod
     def is_login_not_required(cls, path: PurePosixPath) -> bool:
         if path in [
             cls.HEALTHZ_PATH,
             cls.HOME_PATH,
-            cls.LOGIN_PATH,
+            cls.login_path(),
             cls.SYSTEM_VERSION_PATH,
         ]:
             return True

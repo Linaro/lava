@@ -17,6 +17,7 @@ import re
 from importlib.metadata import PackageNotFoundError, version
 
 from django.conf.global_settings import DISALLOWED_USER_AGENTS, INTERNAL_IPS
+from django.conf.global_settings import LOGIN_URL as DEFAULT_LOGIN_URL
 from django.core.exceptions import ImproperlyConfigured
 from yaml import YAMLError
 
@@ -396,6 +397,10 @@ def update(values):
     # Fix mount point
     # Remove the leading slash and keep only one trailing slash
     MOUNT_POINT = (MOUNT_POINT.rstrip("/") + "/").lstrip("/")
+
+    # Build LOGIN_URL with the mount point so that Django's login_required
+    # redirects land inside the LAVA instance (not outside at /accounts/login/).
+    LOGIN_URL = "/" + MOUNT_POINT.lstrip("/") + DEFAULT_LOGIN_URL.lstrip("/")
 
     # Set the session cookie path according to the mount point.
     # Hence cookies from two lava servers hosted on the same domain name but with
