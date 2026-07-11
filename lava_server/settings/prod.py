@@ -75,7 +75,10 @@ FILES = [
 for filename in FILES:
     try:
         with contextlib.suppress(FileNotFoundError):
-            for k, v in yaml.safe_load(filename.read_text(encoding="utf-8")).items():
+            settings = yaml.safe_load(filename.read_text(encoding="utf-8"))
+            if not isinstance(settings, dict):
+                continue
+            for k, v in settings.items():
                 globals()[k] = v
     except yaml.YAMLError as exc:
         print(f"[INIT] Unable to load {filename.name}: invalid yaml")
