@@ -112,6 +112,10 @@ VALID_DISPATCHER_IP_PROTOCOLS = ["http", "nfs", "tftp"]
 WORKER_DIR = "/var/lib/lava/dispatcher/worker"
 DOCKER_WORKER_DIR = "/var/lib/lava/dispatcher/docker-worker"
 
+# QEMU PC machine has an IDE controller only on these x86 architectures;
+# all other machine types require virtio.
+X86_ARCHS = ("amd64", "x86_64", "i386")
+
 # RequestDataTooBig error msg
 REQUEST_DATA_TOO_BIG_MSG = (
     "The dataset provided is too large. Please reduce size and try again."
