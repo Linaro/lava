@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+# mypy: disable-error-code="misc,no-untyped-def,no-untyped-call,union-attr,index,operator,import-untyped,attr-defined,assignment,no-any-return,type-arg,call-arg,arg-type"
 from __future__ import annotations
 
 import contextlib
@@ -329,7 +330,7 @@ class ShellSession:
         """
         yield self.raw_connection
 
-    def force_prompt_wait(self, remaining=None):
+    def force_prompt_wait(self, remaining: float | None = None) -> int:
         """
         One of the challenges we face is that kernel log messages can appear
         half way through a shell prompt.  So, if things are taking a while,
