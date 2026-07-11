@@ -693,6 +693,115 @@ class TestQemuNFS(LavaDispatcherTestCase):
         self.assertIn("{NFSROOTFS}", args)
 
 
+class TestQemuGuestFsFallback(LavaDispatcherTestCase):
+    """Test that CallQemuAction falls back to 'virtio' for the guest drive interface."""
+
+    def setUp(self):
+        super().setUp()
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/kvm-qcow2.yaml")
+        self.job.logger = DummyLogger()
+
+    @patch(f"{CallQemuAction.__module__}.SYS_CLASS_KVM", "/")
+    def test_qemu_guest_fs_interface_fallback(self) -> None:
+        """When device dict has no 'interface' key, CallQemuAction defaults per-arch."""
+        # Remove the interface key so the fallback in qemu.py is exercised.
+        del self.job.device["actions"]["deploy"]["methods"]["image"]["parameters"][
+            "guest"
+        ]["interface"]
+
+        self.job.validate()
+        execute = self.job.pipeline.find_action(CallQemuAction)
+
+        # Set up namespace data that simulates ApplyOverlayGuest having run
+        # but AppendOverlays NOT having set 'applied', so the guest drive branch is taken.
+        execute.set_namespace_data(
+            action="apply-overlay-guest",
+            label="guest",
+            key="filename",
+            value="/tmp/lava-guest.qcow2",
+        )
+        # Do NOT set 'applied' so that 'not applied' is True.
+
+        execute.run(None, 1)
+
+        # Check the guest overlay drive (contains lava-guest)
+        guest_drive = [
+            arg
+            for arg in execute.sub_command
+            if arg.startswith("-drive") and "lava-guest" in arg
+        ]
+        self.assertGreaterEqual(len(guest_drive), 1)
+        # amd64 is x86 → falls back to 'ide' (legacy PC IDE controller)
+        self.assertIn("if=ide", guest_drive[0])
+
+    @patch(f"{CallQemuAction.__module__}.SYS_CLASS_KVM", "/")
+    def test_qemu_guest_fs_interface_explicit(self) -> None:
+        """When device dict specifies 'interface', CallQemuAction uses that value."""
+        factory = Factory()
+        self.job = factory.create_kvm_job("sample_jobs/kvm-qcow2.yaml")
+        self.job.logger = DummyLogger()
+
+        # Override the device dict to specify an explicit interface
+        self.job.device["actions"]["deploy"]["methods"]["image"]["parameters"]["guest"][
+            "interface"
+        ] = "scsi"
+
+        self.job.validate()
+        execute = self.job.pipeline.find_action(CallQemuAction)
+
+        execute.set_namespace_data(
+            action="apply-overlay-guest",
+            label="guest",
+            key="filename",
+            value="/tmp/lava-guest.qcow2",
+        )
+
+        execute.run(None, 1)
+
+        # Check the guest overlay drive (contains lava-guest)
+        guest_drive = [
+            arg
+            for arg in execute.sub_command
+            if arg.startswith("-drive") and "lava-guest" in arg
+        ]
+        self.assertGreaterEqual(len(guest_drive), 1)
+        self.assertIn("if=scsi", guest_drive[0])
+
+    @patch(f"{CallQemuAction.__module__}.SYS_CLASS_KVM", "/")
+    def test_qemu_guest_fs_interface_fallback_non_x86(self) -> None:
+        """Non-x86 arch falls back to 'virtio' when no interface key."""
+        factory = Factory()
+        job = factory.create_kvm_job("sample_jobs/kvm-qcow2.yaml")
+        job.logger = DummyLogger()
+
+        # Change arch to arm64 and remove the interface key
+        job.parameters["context"]["arch"] = "arm64"
+        del job.device["actions"]["deploy"]["methods"]["image"]["parameters"]["guest"][
+            "interface"
+        ]
+
+        job.validate()
+        execute = job.pipeline.find_action(CallQemuAction)
+
+        execute.set_namespace_data(
+            action="apply-overlay-guest",
+            label="guest",
+            key="filename",
+            value="/tmp/lava-guest.qcow2",
+        )
+
+        execute.run(None, 1)
+
+        guest_drive = [
+            arg
+            for arg in execute.sub_command
+            if arg.startswith("-drive") and "lava-guest" in arg
+        ]
+        self.assertGreaterEqual(len(guest_drive), 1)
+        self.assertIn("if=virtio", guest_drive[0])
+
+
 class TestMonitor(LavaDispatcherTestCase):
     def setUp(self):
         super().setUp()

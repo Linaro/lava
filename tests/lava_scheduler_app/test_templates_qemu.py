@@ -85,6 +85,38 @@ class TestQemuTemplates(BaseTemplateTest):
         self.assertIn("-global", options)
         self.assertIn("-cpu cortex-a57", options)
 
+    def test_qemu_guest_fs_interface(self):
+        data = "{% extends 'qemu.jinja2' %}"
+
+        # First render with a dummy arch to extract the full architecture list.
+        template_dict = self.render_device_dictionary_from_text(data, {"arch": "arm64"})
+        all_arches = template_dict["available_architectures"]
+
+        _X86_ARCHS = ("amd64", "x86_64", "i386")
+
+        def guest_interface(job_ctx):
+            template_dict = self.render_device_dictionary_from_text(data, job_ctx)
+            return template_dict["actions"]["deploy"]["methods"]["image"]["parameters"][
+                "guest"
+            ]["interface"]
+
+        # Iterate over every architecture declared in the template.
+        for arch in all_arches:
+            expected = "ide" if arch in _X86_ARCHS else "virtio"
+            self.assertEqual(
+                expected,
+                guest_interface({"arch": arch}),
+                f"{arch}: expected {expected}, got {guest_interface({'arch': arch})}",
+            )
+
+        # the default is still overridable from the job context.
+        self.assertEqual(
+            "none", guest_interface({"arch": "arm64", "guestfs_interface": "none"})
+        )
+        self.assertEqual(
+            "scsi", guest_interface({"arch": "amd64", "guestfs_interface": "scsi"})
+        )
+
     def test_qemu_cortex_a57_nfs(self):
         data = """{% extends 'qemu.jinja2' %}
 {% set memory = 2048 %}

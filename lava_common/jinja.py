@@ -10,12 +10,25 @@ from typing import TYPE_CHECKING
 
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
+from . import constants
 from .yaml import yaml_quote
 
 if TYPE_CHECKING:
     from typing import Optional
 
     from jinja2 import BaseLoader
+
+
+def qemu_guest_fs_interface(arch: str, guestfs_interface: str | None) -> str:
+    """Return the default guest filesystem interface for QEMU/KVM.
+
+    Only x86 PC machines have an IDE controller; all other machine types
+    require virtio. The result can be overridden by passing a non-empty
+    ``guestfs_interface`` value.
+    """
+    if guestfs_interface:
+        return guestfs_interface
+    return "ide" if arch in constants.X86_ARCHS else "virtio"
 
 
 def create_device_templates_env(
@@ -29,4 +42,5 @@ def create_device_templates_env(
     )
     new_env.filters["shlex_quote"] = shlex_quote
     new_env.filters["yaml_quote"] = yaml_quote
+    new_env.filters["qemu_guest_fs_interface"] = qemu_guest_fs_interface
     return new_env

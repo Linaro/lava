@@ -10,7 +10,7 @@ import shlex
 import subprocess
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM
+from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM, X86_ARCHS
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Action, Pipeline
@@ -280,10 +280,13 @@ class CallQemuAction(Action):
             self.sub_command.append('"%s"' % " ".join(append))
         elif guest and not applied:
             self.logger.info("Extending command line for qcow2 test overlay")
-            # interface is ide by default in qemu
+            # interface defaults to virtio (universal across all QEMU machine types);
+            # x86 templates override to ide for backwards compatibility.
+            arch = self.job.parameters.get("context", {}).get("arch", "")
+            fallback = "ide" if arch in X86_ARCHS else "virtio"
             interface = self.job.device["actions"]["deploy"]["methods"]["image"][
                 "parameters"
-            ]["guest"].get("interface", "ide")
+            ]["guest"].get("interface", fallback)
             driveid = self.job.device["actions"]["deploy"]["methods"]["image"][
                 "parameters"
             ]["guest"].get("driveid", "lavatest")
