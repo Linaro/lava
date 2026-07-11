@@ -3,10 +3,12 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+# mypy: disable-error-code="operator,union-attr,index,no-untyped-call"
+# pylint: disable=used-before-assignment
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 import pexpect
 
@@ -15,20 +17,21 @@ from lava_common.log import YAMLLogger
 from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
-    from typing import NotRequired, TypedDict
-
     from ..action import Action
     from ..shell import ShellSession
 
-    class KernelMessage(TypedDict):
-        start: str
-        end: str
-        kind: str | None
-        fatal: NotRequired[bool]
 
-    class ParsingResult(TypedDict):
-        message: str
-        kind: NotRequired[str]
+class KernelMessage(TypedDict):
+    start: str
+    end: str
+    kind: str | None
+    fatal: NotRequired[bool]
+    job_error_message: NotRequired[str]
+
+
+class ParsingResult(TypedDict):
+    message: str
+    kind: NotRequired[str]
 
 
 # kernel boot monitoring

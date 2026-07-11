@@ -3,6 +3,7 @@
 # Author: Neil Williams <neil.williams@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+# mypy: disable-error-code="misc,no-untyped-def,no-untyped-call,union-attr,index,operator,import-untyped,attr-defined,assignment,no-any-return,type-arg,call-arg,arg-type"
 from __future__ import annotations
 
 import contextlib
