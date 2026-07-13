@@ -16,7 +16,7 @@ import struct
 from importlib import import_module
 from json import dumps as json_dumps
 from json import loads as json_loads
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NoReturn
 
 import requests
 from django.conf import settings
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from lava_scheduler_app.models import TestJob
 
 
-def fileno_unsupported() -> int:
+def fileno_unsupported() -> NoReturn:
     raise io.UnsupportedOperation("fileno disabled")
 
 
