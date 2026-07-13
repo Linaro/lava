@@ -38,20 +38,20 @@ repos:
   #     - id: djangofmt
 
   - repo: https://github.com/adamchainz/django-upgrade
-    rev: 1.31.1
+    rev: 1.32.0
     hooks:
       - id: django-upgrade
         args: ["--target-version", "4.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+    rev: v0.16.6
     hooks:
       - id: ruff-check
         args: [ "--fix", "--exit-non-zero-on-fix" ]
       - id: ruff-format
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.6
+    rev: v4.0.8
     hooks:
       - id: pylint
         additional_dependencies:
@@ -66,7 +66,7 @@ repos:
           - "django-tables2==3.0.0"
           - "django==4.2.30"
           - "djangorestframework-filters==1.0.0.dev2"
-          - "djangorestframework==3.17.1"
+          - "djangorestframework==3.17.2"
           - "drf-extensions==0.8.0"
           - "gunicorn==26.0.0"
           - "jinja2==3.1.6"
@@ -74,8 +74,8 @@ repos:
           - "more-itertools==11.1.0"
           - "pexpect==4.9.0"
           - "psycopg2-binary==2.9.12"
-          - "pylint-django==2.7.0"
-          - "pylint==4.0.6"
+          - "pylint-django==2.8.0"
+          - "pylint==4.0.8"
           - "python-magic==0.4.27"
           - "pyudev==0.24.4"
           - "pyyaml==6.0.3"
@@ -124,18 +124,18 @@ repos:
           - "--severity-level=medium"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.0
+    rev: v2.3.1
     hooks:
       - id: mypy
         additional_dependencies:
-          - "django-stubs==6.0.6"
+          - "django-stubs==6.1.0"
           - "jinja2==3.1.6"
           - "python-magic==0.4.27"
           - "pyyaml==6.0.3"
           - "requests==2.34.2"
           - "sentry-sdk==2.63.0"
           - "types-pexpect==4.9.0.20260518"
-          - "types-pyyaml==6.0.12.20260518"
+          - "types-pyyaml==6.0.12.20260815"
           - "types-requests==2.33.0.20260518"
         args:
           - "--python-version=3.11"
@@ -154,12 +154,12 @@ repos:
           - "lava_common/version.py"
           - "lava_common/worker.py"
           - "lava_common/yaml.py"
+          - "lava_dispatcher/action.py"
           - "lava_dispatcher/actions/base_strategy.py"
           - "lava_dispatcher/actions/boot_strategy.py"
           - "lava_dispatcher/actions/deploy_strategy.py"
           - "lava_dispatcher/actions/test/mixins.py"
           - "lava_dispatcher/actions/test_strategy.py"
-          - "lava_dispatcher/action.py"
           - "lava_dispatcher/connection.py"
           - "lava_dispatcher/deployment_data.py"
           - "lava_dispatcher/shell.py"
