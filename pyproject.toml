@@ -36,15 +36,16 @@ dependencies = [
 optional-dependencies.coordinator = []
 optional-dependencies.dev = [
   "django-stubs",
+  "djangorestframework-stubs",
   "lava[full]",
   "lava[test]",
   "mypy",
   "pre-commit==4.6.1",
   "pylint",
   "pylint-django",
-  "pyproject-fmt==2.26.0",
+  "pyproject-fmt==2.29.3",
   "pyrefly==1.2.0",
-  "ruff==0.16.1",
+  "ruff==0.16.6",
   "types-pexpect",
   "types-pyyaml",
   "types-requests",
@@ -315,6 +316,7 @@ run.source = [
   "lava_server",
   "linaro_django_xmlrpc",
 ]
+run.omit = [ "*/migrations/*", "*/tests/*" ]
 report.exclude_lines = [
   "def __repr__",
   "if TYPE_CHECKING:",
