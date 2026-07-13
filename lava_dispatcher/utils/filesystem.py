@@ -318,17 +318,19 @@ def copy_in_overlay(
     guest.add_drive(image)
     _launch_guestfs(action, guest)
 
+    mount_point: str
     if root_partition is not None:
         partitions = guest.list_partitions()
         if not partitions:
             raise InfrastructureError("Unable to prepare guestfs")
-        guest_partition = partitions[root_partition]
-        guest.mount(guest_partition, "/")
+        mount_point = partitions[root_partition]
+        guest.mount(mount_point, "/")
     else:
         devices = guest.list_devices()
         if not devices:
             raise InfrastructureError("Unable to prepare guestfs")
-        guest.mount(devices[0], "/")
+        mount_point = devices[0]
+        guest.mount(mount_point, "/")
 
     # FIXME: max message length issues when using tar_in
     # on tar.gz.  Works fine with tar so decompressing
@@ -338,10 +340,7 @@ def copy_in_overlay(
     decompressed_overlay = decompress_file(overlay, "gz")
     guest.tar_in(decompressed_overlay, "/")
 
-    if root_partition is not None:
-        guest.umount(guest_partition)
-    else:
-        guest.umount(devices[0])
+    guest.umount(mount_point)
     guest.close()
 
 

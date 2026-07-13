@@ -7,17 +7,17 @@
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Any, ParamSpec, TypeVar, overload
 
 from lava_common.log import YAMLLogger
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Any, ParamSpec, TypeVar
+P = ParamSpec("P")
+R = TypeVar("R")
 
-    P = ParamSpec("P")
-    R = TypeVar("R")
+if TYPE_CHECKING:
+    pass
 
 
 def replace_exception(
@@ -25,7 +25,7 @@ def replace_exception(
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     def replace_exception_wrapper(func: Callable[P, R]) -> Callable[P, R]:
         @wraps(func)
-        def function_wrapper(*args: Any, **kwargs: Any) -> Any:
+        def function_wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             try:
                 return func(*args, **kwargs)
             except cls_from as exc:
@@ -88,7 +88,7 @@ def retry(
     :param delay: Delay in seconds between retries. Defaults to 1.
     """
 
-    def decorator(func: Callable[P, R]) -> Callable[P, R]:
+    def decorator(func: Callable[P, R]) -> Callable[P, R | None]:
         if exception is None:
             raise Exception("No exception provided for retrying")
         if expected is not None and issubclass(exception, expected):
@@ -96,7 +96,9 @@ def retry(
                 "'exception' shouldn't be a subclass of 'expected' exception"
             )
 
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        _exception = exception
+
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> R | None:
             logger = _get_object_logger(*args)
 
             for attempt in range(retries):
@@ -108,15 +110,16 @@ def retry(
                             return None
                     else:
                         return func(*args, **kwargs)
-                except exception as exc:
+                except _exception as exc:
                     if logger is not None:
                         logger.error(
                             f"{str(exc)}: {attempt + 1} of {retries} attempts."
                         )
                     if attempt == int(retries) - 1:
                         raise
-                    attempt += 1
                     time.sleep(delay)
+
+            assert False, "unreachable"  # unreachable when retries > 0
 
         return wrapper
 
