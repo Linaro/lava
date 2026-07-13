@@ -261,8 +261,6 @@ skips = [
 ]
 
 [tool.pyrefly]
-# guestfs requires libguestfs-dev (C headers) not available in pre-commit env
-errors.missing-import = false
 project-includes = [
   "lava_common/constants.py",
   "lava_common/converters.py",
@@ -276,11 +274,15 @@ project-includes = [
   "lava_common/version.py",
   "lava_common/worker.py",
   "lava_common/yaml.py",
+  "lava_dispatcher/action.py",
   "lava_dispatcher/actions/base_strategy.py",
   "lava_dispatcher/actions/boot_strategy.py",
   "lava_dispatcher/actions/deploy_strategy.py",
   "lava_dispatcher/actions/test/mixins.py",
   "lava_dispatcher/actions/test_strategy.py",
+  "lava_dispatcher/connection.py",
+  "lava_dispatcher/deployment_data.py",
+  "lava_dispatcher/shell.py",
   "lava_dispatcher/utils/compression.py",
   "lava_dispatcher/utils/contextmanager.py",
   "lava_dispatcher/utils/decorator.py",
@@ -291,16 +293,18 @@ project-includes = [
   "lava_dispatcher/utils/shell.py",
   "lava_dispatcher/utils/strings.py",
   "lava_dispatcher/utils/vcs.py",
-  "lava_dispatcher/connection.py",
-  "lava_dispatcher/deployment_data.py",
+  "lava_server/settings/config_file.py",
 ]
+errors.missing-import = false  # guestfs requires libguestfs-dev (C headers) not available in pre-commit env
+check-unannotated-defs = true
+infer-return-types = "never"
+permissive-ignores = true
 
 [tool.pytest]
 ini_options.junit_family = "xunit2"
 ini_options.DJANGO_SETTINGS_MODULE = "tests.settings"
 
 [tool.coverage]
-run.omit = [ "*/migrations/*", "*/tests/*" ]
 run.source = [
   "lava_common",
   "lava_dispatcher",
