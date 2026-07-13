@@ -150,7 +150,7 @@ def _stat_path(image: str, path: str) -> dict[str, str | None] | None:
     m = _STAT_TYPE_RE.search(result.stdout)
     if not m:
         return None
-    info = {"type": m.group(1), "target": None}
+    info: dict[str, str | None] = {"type": m.group(1), "target": None}
     if info["type"] == "symlink":
         tm = _STAT_FAST_LINK_RE.search(result.stdout)
         if tm:
