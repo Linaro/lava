@@ -259,7 +259,7 @@ results:
 ```
 
 ```python
-{'results': {'first_set': {'date': 'pass', 'mount': 'pass'}, 'uname': 'pass'}}
+{"results": {"first_set": {"date": "pass", "mount": "pass"}, "uname": "pass"}}
 ```
 
 Each TestSet name must be valid as a URL.
@@ -374,7 +374,7 @@ test_case_id: 1 - Measure time to switch from ISR back to interrupted thread    
     <https://pexpect.readthedocs.io/en/stable/overview.html#find-the-end-of-line-cr-lf-conventions>
 
 ```python
-r'(?P<test_case_id>\d+ *- [^-]+) (?P<measurement>\d+) tcs = [0-9]+ nsec'
+r"(?P<test_case_id>\d+ *- [^-]+) (?P<measurement>\d+) tcs = [0-9]+ nsec"
 ```
 
 The test_case_id will be formed from the match of the expression `\d+ *- [^-]+`
