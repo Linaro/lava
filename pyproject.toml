@@ -36,6 +36,7 @@ dependencies = [
 optional-dependencies.coordinator = []
 optional-dependencies.dev = [
   "django-stubs",
+  "djangorestframework-stubs",
   "lava[full]",
   "lava[test]",
   "mypy",
@@ -260,8 +261,10 @@ skips = [
 ]
 
 [tool.pyrefly]
-# guestfs requires libguestfs-dev (C headers) not available in pre-commit env
-errors.missing-import = false
+errors.missing-import = false  # guestfs requires libguestfs-dev (C headers) not available in pre-commit env
+check-unannotated-defs = true
+infer-return-types = "never"
+permissive-ignores = true
 project-includes = [
   "lava_common/constants.py",
   "lava_common/converters.py",
@@ -275,11 +278,15 @@ project-includes = [
   "lava_common/version.py",
   "lava_common/worker.py",
   "lava_common/yaml.py",
+  "lava_dispatcher/action.py",
   "lava_dispatcher/actions/base_strategy.py",
   "lava_dispatcher/actions/boot_strategy.py",
   "lava_dispatcher/actions/deploy_strategy.py",
   "lava_dispatcher/actions/test/mixins.py",
   "lava_dispatcher/actions/test_strategy.py",
+  "lava_dispatcher/connection.py",
+  "lava_dispatcher/deployment_data.py",
+  "lava_dispatcher/shell.py",
   "lava_dispatcher/utils/compression.py",
   "lava_dispatcher/utils/contextmanager.py",
   "lava_dispatcher/utils/decorator.py",
@@ -290,8 +297,7 @@ project-includes = [
   "lava_dispatcher/utils/shell.py",
   "lava_dispatcher/utils/strings.py",
   "lava_dispatcher/utils/vcs.py",
-  "lava_dispatcher/connection.py",
-  "lava_dispatcher/deployment_data.py",
+  "lava_server/settings/config_file.py",
 ]
 
 [tool.pytest]

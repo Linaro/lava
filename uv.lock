@@ -765,6 +765,20 @@ wheels = [
 ]
 
 [[package]]
+name = "djangorestframework-stubs"
+version = "3.17.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django-stubs" },
+    { name = "types-pyyaml" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/8a/4b/1bee065c6c87ee04b905732deb53acdfc43d0e5673f43a5f75ec4deb7f6f/djangorestframework_stubs-3.17.1.tar.gz", hash = "sha256:5b67655090e2976b778bad572840b732a87ab2911402530d0dca2fbf72f891c5", size = 33470, upload-time = "2026-07-28T21:27:52.071Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/86/38/6a04ffca56e24220bf37494fe9f75ce9abe8115776a90c924732bb37823a/djangorestframework_stubs-3.17.1-py3-none-any.whl", hash = "sha256:40f1f22ec1965d1caff17c66794b87799eb8f42e0628ea46b501dcd565d8a803", size = 57562, upload-time = "2026-07-28T21:27:50.58Z" },
+]
+
+[[package]]
 name = "drf-extensions"
 version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1015,6 +1029,7 @@ dev = [
     { name = "django-tables2" },
     { name = "djangorestframework" },
     { name = "djangorestframework-filters" },
+    { name = "djangorestframework-stubs" },
     { name = "drf-extensions" },
     { name = "gunicorn" },
     { name = "jinja2" },
@@ -1145,6 +1160,7 @@ requires-dist = [
     { name = "django-tables2", marker = "extra == 'server'" },
     { name = "djangorestframework", marker = "extra == 'server'" },
     { name = "djangorestframework-filters", marker = "extra == 'server'", specifier = ">=1.0.0.dev2" },
+    { name = "djangorestframework-stubs", marker = "extra == 'dev'" },
     { name = "drf-extensions", marker = "extra == 'server'", specifier = ">=0.8.0" },
     { name = "gunicorn", marker = "extra == 'server'" },
     { name = "jinja2", marker = "extra == 'dispatcher'" },
