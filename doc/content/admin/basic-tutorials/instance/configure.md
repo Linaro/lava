@@ -78,9 +78,7 @@ encoded.
 import base64
 import json
 
-data = {
-  "WORKER_AUTO_REGISTER_NETMASK": ["::1"]
-}
+data = {"WORKER_AUTO_REGISTER_NETMASK": ["::1"]}
 print(base64.b64encode(json.dumps(data).encode("utf-8")).decode("utf-8"))
 ```
 

@@ -101,7 +101,7 @@ When adding new classes, use hyphens (`-`) as separators in `self.name`,
 not underscores (`_`). Action names need to all be lowercase:
 
 ```python
-self.name = 'do-something-at-runtime'
+self.name = "do-something-at-runtime"
 ```
 
 Use namespaces for all dynamic data. Parameters of actions are
@@ -120,7 +120,5 @@ self.set_namespace_data(
 The data can be retrieved in the following actions in the pipeline:
 
 ```python
-serial_port = self.get_namespace_data(
-            action="run-fvp", label="fvp", key="serial_port"
-        )
+serial_port = self.get_namespace_data(action="run-fvp", label="fvp", key="serial_port")
 ```
