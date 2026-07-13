@@ -5,15 +5,13 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Callable
+from typing import Any, TypeVar
 
-if TYPE_CHECKING:
-    from typing import Any, TypeVar
-
-    F = TypeVar("F", bound=Any)
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 # Decorator from nose.tools package
 def nottest(f: F) -> F:
-    f.__test__ = False
+    setattr(f, "__test__", False)
     return f
