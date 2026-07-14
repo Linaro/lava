@@ -32,16 +32,6 @@ class TestFlasher(LavaDispatcherTestCase):
         self.assertEqual(description_ref, job.pipeline.describe())
 
     def test_run(self):
-        class Proc:
-            # pylint: disable=no-self-argument
-            def wait(self_):
-                return 0
-
-            def expect(self_, arg):
-                self.assertEqual(arg, pexpect.EOF)
-
-            proc = MagicMock()
-
         commands = [
             ["/home/lava/bin/PiCtrl.py", "PowerPlug", "0", "off"],
             ["touch"],
@@ -68,11 +58,15 @@ class TestFlasher(LavaDispatcherTestCase):
         self.assertFalse(action.errors)
 
         # Run the action
+        proc_mock = MagicMock()
+        proc_mock.wait.return_value = 0
+        proc_mock.proc.wait.return_value = 0
         with patch(
-            "lava_dispatcher.action.PexpectPopenSpawn", return_value=Proc()
+            "lava_dispatcher.action.PexpectPopenSpawn", return_value=proc_mock
         ) as mock_spawn:
             action.run(None, 10)
 
+        proc_mock.expect.assert_called_with(pexpect.EOF)
         self.assertEqual(mock_spawn.call_count, 2)
 
         for i, call in enumerate(mock_spawn.mock_calls):

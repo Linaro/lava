@@ -73,11 +73,11 @@ class Job:
         self.test_info = {}
 
     @property
-    def context(self):
+    def context(self) -> dict[str, Any]:
         return self.__context__.pipeline_data
 
     @context.setter
-    def context(self, data):
+    def context(self, data: dict[str, Any]) -> None:
         self.__context__.pipeline_data.update(data)
 
     def describe(self):

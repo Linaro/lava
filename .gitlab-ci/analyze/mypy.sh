@@ -28,6 +28,7 @@ else
     'lava_dispatcher/actions/deploy_strategy.py'
     'lava_dispatcher/actions/test/mixins.py'
     'lava_dispatcher/actions/test_strategy.py'
+    'lava_dispatcher/action.py'
     'lava_dispatcher/connection.py'
     'lava_dispatcher/deployment_data.py'
     'lava_dispatcher/shell.py'

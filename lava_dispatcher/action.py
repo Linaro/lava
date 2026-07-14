@@ -196,7 +196,7 @@ class Pipeline:
             raise JobError("Invalid job data: %s\n" % self.errors)
 
     def cleanup(
-        self, connection: ShellSession, max_end_time: int | None = None
+        self, connection: ShellSession, max_end_time: float | None = None
     ) -> None:
         """
         Recurse through internal pipelines running action.cleanup(),
@@ -219,7 +219,11 @@ class Pipeline:
         if error:
             raise InfrastructureError("Failed to clean after job")
 
-    def run_actions(self, connection: ShellSession, max_end_time: int) -> ShellSession:
+    def run_actions(
+        self,
+        connection: ShellSession,
+        max_end_time: float | None,
+    ) -> ShellSession:
         for action in self.actions:
             failed = False
             namespace = action.parameters.get("namespace", "common")
@@ -309,11 +313,11 @@ class CommandLogger:
     Grab output of a command line tool and stream it to the logger
     """
 
-    def __init__(self, logger):
+    def __init__(self, logger: YAMLLogger):
         self.line = ""
         self.logger = logger
 
-    def write(self, new_line):
+    def write(self, new_line: str) -> None:
         if not isinstance(new_line, str):
             new_line = str(new_line)
         lines = self.line + new_line
@@ -328,7 +332,7 @@ class CommandLogger:
         else:
             self.line = lines
 
-    def flush(self, force=False):
+    def flush(self, force: bool = False) -> None:
         if force and self.line:
             self.write("\n")
 
@@ -353,17 +357,17 @@ class Action:
         self.job = job
         self.level = None
         self.pipeline: Pipeline | None = None
-        self.__parameters__ = {}
+        self.__parameters__: dict[str, Any] = {}
         self._errors: list[str] = []
         self.logger: YAMLLogger = job.logger
-        self.__results__ = {}
+        self.__results__: dict[str, Any] = {}
         self.timeout: Timeout = Timeout(
             self.name, self, exception=self.timeout_exception
         )
         # unless the strategy or the job parameters change this, do not retry
         self.max_retries: int = 1
         # list of protocol objects supported by this action, full list in job.protocols
-        self.protocols = []
+        self.protocols: list[object] = []
         self.connection_timeout = Timeout(
             self.name, self, exception=self.timeout_exception
         )
@@ -387,16 +391,14 @@ class Action:
     command_exception: ClassVar[type[Exception]] = JobError
 
     @property
-    def data(self):
+    def data(self) -> dict[str, Any]:
         """
         Shortcut to the job.context
         """
-        if not self.job:
-            return None
         return self.job.context
 
     @data.setter
-    def data(self, value):
+    def data(self, value: dict[str, Any]) -> None:
         """
         Accepts a dict to be updated in the job.context
         """
@@ -413,11 +415,11 @@ class Action:
         self._errors.append(new_error)
 
     @property
-    def valid(self):
+    def valid(self) -> bool:
         return not bool([x for x in self.errors if x])
 
     @property
-    def parameters(self):
+    def parameters(self) -> dict[str, Any]:
         """
         All data which this action needs to have available for
         the prepare, run or post_process functions needs to be
@@ -433,7 +435,14 @@ class Action:
         """
         return self.__parameters__
 
-    def __set_parameters__(self, data):
+    @parameters.setter
+    def parameters(self, data: dict[str, Any]) -> None:
+        self.__set_parameters__(data)
+        if self.pipeline:
+            for action in self.pipeline.actions:
+                action.parameters = self.parameters
+
+    def __set_parameters__(self, data: dict[str, Any]) -> None:
         try:
             self.__parameters__.update(data)
         except ValueError:
@@ -454,28 +463,21 @@ class Action:
                 self.section, 0
             )
 
-    @parameters.setter
-    def parameters(self, data):
-        self.__set_parameters__(data)
-        if self.pipeline:
-            for action in self.pipeline.actions:
-                action.parameters = self.parameters
-
     @property
-    def results(self):
+    def results(self) -> dict[str, Any]:
         """
         Updated dictionary of results for this action.
         """
         return self.__results__
 
     @results.setter
-    def results(self, data):
+    def results(self, data: dict[str, Any]) -> None:
         try:
             self.__results__.update(data)
         except ValueError:
             raise LAVABug("Action results need to be a dictionary")
 
-    def get_constant(self, key, prefix):
+    def get_constant(self, key: str, prefix: str) -> Any:
         if context := self.job.parameters.get("context", {}):
             if isinstance(context, dict) and key in context:
                 return context[key]
@@ -523,7 +525,7 @@ class Action:
         if self.pipeline:
             self.pipeline.validate_actions()
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         """
         This method allows an action to add an internal pipeline.
         The parameters are used to configure the internal pipeline on the
@@ -533,12 +535,12 @@ class Action:
 
     def parsed_command(
         self,
-        command_list,
-        allow_fail=False,
-        cwd=None,
+        command_list: list[str],
+        allow_fail: bool = False,
+        cwd: str | None = None,
         input: str | None = None,
         env: dict[str, str] | None = None,
-    ):
+    ) -> str:
         """
         Support for external command operations on the dispatcher with output handling,
         without using a shell and with full structured logging.
@@ -597,8 +599,15 @@ class Action:
 
             # Extract some data about the exception
             # Have sane default for some exceptions
-            returncode = getattr(exc, "returncode", 127)
-            if getattr(exc, "output", None):
+            returncode = 127
+            if isinstance(exc, subprocess.CalledProcessError):
+                returncode = exc.returncode
+            if (
+                isinstance(
+                    exc, (subprocess.CalledProcessError, subprocess.TimeoutExpired)
+                )
+                and exc.output
+            ):
                 output = exc.output.strip()
             else:
                 output = str(exc)
@@ -636,7 +645,7 @@ class Action:
 
     def _run_pexpect_popen(
         self,
-        pexpect_popen: PexpectPopenSpawn,
+        pexpect_popen: PexpectPopenSpawn[str],
         start: float,
     ) -> int | None:
         proc = pexpect_popen.proc
@@ -659,17 +668,22 @@ class Action:
             try:
                 pexpect_popen.expect(pexpect.EOF)
                 # wait for the process and record the return value
-                return pexpect_popen.wait()
+                return proc.wait()
             except pexpect.TIMEOUT:
                 self.logger.error(
                     "Timed out after %s seconds", int(time.monotonic() - start)
                 )
 
-        return
+        return None
 
     def run_cmd(
-        self, command_list, allow_fail=False, error_msg=None, cwd=None, env=None
-    ):
+        self,
+        command_list: list[str],
+        allow_fail: bool = False,
+        error_msg: str | None = None,
+        cwd: str | None = None,
+        env: dict[str, str] | None = None,
+    ) -> int | None:
         """
         Run the given command on the dispatcher. If the command fail, a
         JobError will be raised unless allow_fail is set to True.
@@ -704,7 +718,9 @@ class Action:
                 logfile=cmd_logger,
                 timeout=self.timeout.duration,
                 searchwindowsize=10,
-                env=env,
+                # Debian type hits have too restrictive env= typing
+                # https://github.com/python/typeshed/issues/14915
+                env=env,  # type: ignore[arg-type,unused-ignore]
             )
             ret = self._run_pexpect_popen(proc, start)
         except (OSError, pexpect.ExceptionPexpect) as exc:
@@ -724,7 +740,13 @@ class Action:
             raise self.command_exception(error_msg)
         return ret
 
-    def run_command(self, command_list, allow_silent=False, allow_fail=False, cwd=None):
+    def run_command(
+        self,
+        command_list: list[str],
+        allow_silent: bool = False,
+        allow_fail: bool = False,
+        cwd: str | None = None,
+    ) -> str | bool:
         """
         Deprecated - use run_cmd or parsed_command instead.
 
@@ -752,14 +774,19 @@ class Action:
         # FIXME: add option to only check stdout or stderr for failure output
         if not isinstance(command_list, list):
             raise LAVABug("commands to run_command need to be a list")
-        log = None
+        log = ""
         command_list = [str(s) for s in command_list]
         self.logger.debug("%s", " ".join(command_list))
         try:
-            log = subprocess.check_output(  # nosec - managed
-                command_list, stderr=subprocess.STDOUT, cwd=cwd
-            )
-            log = log.decode("utf-8", errors="replace")
+            log = subprocess.run(
+                command_list,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                cwd=cwd,
+                encoding="utf-8",
+                errors="replace",
+            ).stdout
         except subprocess.CalledProcessError as exc:
             # the errors property doesn't support removing errors
             errors = []
@@ -793,7 +820,7 @@ class Action:
                 self.logger.debug("output: %s", line)
             return log
 
-    def call_protocols(self):
+    def call_protocols(self) -> None:
         """
         Actions which support using protocol calls from the job submission use this routine to execute those calls.
         It is up to the action to determine when the protocols are called within the run step of that action.
@@ -856,7 +883,11 @@ class Action:
             connection.timeout = self.connection_timeout
         return connection
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(
+        self,
+        connection: ShellSession,
+        max_end_time: float | None = None,
+    ) -> None:
         """
         cleanup will *only* be called after run() if run() raises an exception.
         Use cleanup with any resources that may be left open by an interrupt or failed operation
@@ -878,7 +909,8 @@ class Action:
         """Return the keys for the given action"""
         params = parameters if parameters else self.parameters
         namespace = params["namespace"]
-        return self.data.get(namespace, {}).get(action, {}).keys()
+        action_params: dict[str, Any] = self.data.get(namespace, {}).get(action, {})
+        return action_params.keys()
 
     def get_namespace_data(
         self,
@@ -969,7 +1001,7 @@ class Action:
     def mkdtemp(self, override: str | None = None) -> str:
         return self.job.mkdtemp(self.name, override=override)
 
-    def _override_action_timeout(self, timeout):
+    def _override_action_timeout(self, timeout: dict[str, Any] | None) -> None:
         """
         Only to be called by the Pipeline object, add_action().
         """
@@ -979,7 +1011,7 @@ class Action:
             raise JobError("Invalid timeout %s" % str(timeout))
         self.timeout.duration = Timeout.parse(timeout)
 
-    def _override_connection_timeout(self, timeout):
+    def _override_connection_timeout(self, timeout: dict[str, Any] | None) -> None:
         """
         Only to be called by the Pipeline object, add_action().
         """
@@ -989,7 +1021,7 @@ class Action:
             raise JobError("Invalid connection timeout %s" % str(timeout))
         self.connection_timeout.duration = Timeout.parse(timeout)
 
-    def log_action_results(self, fail=False):
+    def log_action_results(self, fail: bool = False) -> None:
         if self.results and isinstance(self.logger, YAMLLogger):
             res = "pass"
             if self.errors:
@@ -1017,7 +1049,7 @@ class Action:
             )
 
     @nottest
-    def test_needs_deployment(self, parameters):
+    def test_needs_deployment(self, parameters: dict[str, Any]) -> bool:
         ns = parameters["namespace"]
         for info in self.job.test_info.get(ns, []):
             if info["class"].needs_deployment_data(info["parameters"]):
@@ -1025,7 +1057,7 @@ class Action:
         return False
 
     @nottest
-    def test_has_shell(self, parameters):
+    def test_has_shell(self, parameters: dict[str, Any]) -> bool:
         ns = parameters["namespace"]
         for info in self.job.test_info.get(ns, []):
             if info["class"].has_shell(info["parameters"]):
@@ -1033,7 +1065,7 @@ class Action:
         return False
 
     @nottest
-    def test_needs_overlay(self, parameters):
+    def test_needs_overlay(self, parameters: dict[str, Any]) -> bool:
         ns = parameters["namespace"]
         for info in self.job.test_info.get(ns, []):
             if info["class"].needs_overlay(info["parameters"]):
