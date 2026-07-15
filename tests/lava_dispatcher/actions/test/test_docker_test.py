@@ -75,6 +75,7 @@ def test_detect_correct_action(action):
 
 def test_run(action, mocker):
     mocker.patch("lava_dispatcher.utils.containers.DockerDriver.__get_device_nodes__")
+    ShellCommand = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
     ShellSesssion = mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
     docker_connection = mocker.MagicMock()
     ShellSesssion.return_value = docker_connection
@@ -143,7 +144,7 @@ def test_run(action, mocker):
     assert env["export LAVA_POWER_OFF_COMMAND"] == "'/path/to/power-off.sh 0 1 2'"
 
     # docker gets called
-    docker_call = ShellSesssion.mock_calls[0][1][0]
+    docker_call = ShellCommand.mock_calls[0][1][0]
     assert docker_call.startswith("docker run")
     # overlay gets passed into docker
     assert (
@@ -232,7 +233,8 @@ def test_docker_test_shell_run(first_test_action, mocker):
         return_value=f"lava-{first_test_action.job.job_id}",
     )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
-    shell_session = mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
+    shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
+    mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
     mocker.patch(
         "lava_dispatcher.actions.test.docker.DockerTestShell.add_device_container_mappings"
     )
@@ -249,7 +251,7 @@ def test_docker_test_shell_run(first_test_action, mocker):
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
-    shell_session.assert_called_with(
+    shell_cmd.assert_called_with(
         "docker run --interactive --tty --rm --init "
         f"--name=lava-docker-test-shell-{action.job.job_id}-3.3 "
         f"--mount=type=bind,source=lava-{action.job.job_id}/lava-{action.job.job_id},"
@@ -266,7 +268,8 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
         return_value=f"lava-{job_prefix.job_id}",
     )
     mocker.patch("lava_dispatcher.utils.docker.DockerRun.prepare")
-    shell_session = mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
+    shell_cmd = mocker.patch("lava_dispatcher.actions.test.docker.ShellCommand")
+    mocker.patch("lava_dispatcher.actions.test.docker.ShellSession")
     mocker.patch(
         "lava_dispatcher.actions.test.docker.DockerTestShell.add_device_container_mappings"
     )
@@ -283,7 +286,7 @@ def test_docker_test_shell_run_prefix(job_prefix, mocker):
 
     action.test_docker_bind_mounts = []
     action.run(connection, 0)
-    shell_session.assert_called_with(
+    shell_cmd.assert_called_with(
         "docker run --interactive --tty --rm --init "
         f"--name=lava-docker-test-shell-prefix-{action.job.job_id}-3.3 "
         f"--mount=type=bind,source=lava-{action.job.job_id}"

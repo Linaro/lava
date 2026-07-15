@@ -15,7 +15,7 @@ from pexpect import EOF as pexpect_eof
 from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.messages import LinuxKernelMessages
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
@@ -34,14 +34,15 @@ class TestMessagesBase(LavaDispatcherTestCase):
         else:
             pexpect_patterns.append(pexpect_eof)
 
-        shell_session = ShellSession(
+        shell_command = ShellCommand(
             cmd_str,
             Timeout("test-cat-command", None),
             logger=MagicMock(),
         )
         # Force cleanup otherwise race conditions might happen
-        self.addCleanup(shell_session.raw_connection.close, force=True)
+        self.addCleanup(shell_command.close, force=True)
 
+        shell_session = ShellSession(shell_command)
         shell_session.prompt_str = pexpect_patterns
 
         return shell_session

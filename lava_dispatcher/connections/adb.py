@@ -3,10 +3,10 @@
 # Author: Senthil Kumaran S <senthil.kumaran@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-from __future__ import annotations
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 
 
@@ -20,6 +20,7 @@ class ConnectAdb(Action):
     description = "connect via adb shell to the device"
 
     session_class = ShellSession
+    shell_class = ShellCommand
 
     def validate(self):
         if "adb" not in self.job.device["actions"]["boot"]["methods"]:
@@ -50,13 +51,19 @@ class ConnectAdb(Action):
 
         cmd = f"adb -s {adb_serial_number} shell"
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
-        # ShellSession executes the connection command and monitors the pexpect
-        connection = ShellSession(
+        # ShellCommand executes the connection command
+        shell = self.shell_class(
             "%s\n" % cmd,
             self.timeout,
             logger=self.logger,
             window=self.job.device.get_constant("spawn_maxread"),
         )
+        if shell.exitstatus:
+            raise JobError(
+                "%s command exited %d: %s" % (cmd, shell.exitstatus, shell.readlines())
+            )
+        # ShellSession monitors the pexpect
+        connection = self.session_class(shell)
         connection.connected = True
         connection = super().run(connection, max_end_time)
         connection.prompt_str = self.parameters["prompts"]

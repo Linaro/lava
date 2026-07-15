@@ -67,7 +67,8 @@ class TestDocker(LavaDispatcherTestCase):
         return_value="foo/bar",
     )
     @patch("lava_dispatcher.actions.boot.docker.ShellSession")
-    def test_boot(self, shell_session, *args):
+    @patch("lava_dispatcher.actions.boot.docker.ShellCommand")
+    def test_boot(self, shell_command, *args):
         self.job.validate()
 
         call = self.job.pipeline.find_action(CallDockerAction)
@@ -76,7 +77,7 @@ class TestDocker(LavaDispatcherTestCase):
         connection.timeout = MagicMock()
 
         call.run(connection, 0)
-        shell_session.assert_called_with(
+        shell_command.assert_called_with(
             "docker run --rm --interactive --tty --hostname lava "
             f"--name lava-{self.job.job_id}-2.1 "
             "--volume foo/bar/foo/bar:foo/bar foo/bar bash",
@@ -88,7 +89,7 @@ class TestDocker(LavaDispatcherTestCase):
         managed_downloads_dir = Path(self.job.tmp_dir) / "downloads/common"
         managed_downloads_dir.mkdir(parents=True)
         call.run(connection, 0)
-        shell_session.assert_called_with(
+        shell_command.assert_called_with(
             "docker run --rm --interactive --tty --hostname lava "
             f"--name lava-{self.job.job_id}-2.1 --volume foo/bar/foo/bar:foo/bar "
             f"--volume {self.job.tmp_dir}/downloads/common:/lava-downloads "
@@ -118,7 +119,8 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
         return_value="foo/bar",
     )
     @patch("lava_dispatcher.actions.boot.docker.ShellSession")
-    def test_boot(self, shell_session, *args):
+    @patch("lava_dispatcher.actions.boot.docker.ShellCommand")
+    def test_boot(self, shell_command, *args):
         self.job.validate()
 
         call = self.job.pipeline.find_action(CallDockerAction)
@@ -127,7 +129,7 @@ class TestDockerDispatcherPrefix(LavaDispatcherTestCase):
         connection.timeout = MagicMock()
 
         call.run(connection, 0)
-        shell_session.assert_called_with(
+        shell_command.assert_called_with(
             "docker run --rm --interactive --tty --hostname lava "
             f"--name lava-prefix-{self.job.job_id}-2.1 "
             "--volume foo/bar/foo/bar:foo/bar foo/bar bash",

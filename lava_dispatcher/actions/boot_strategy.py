@@ -66,7 +66,7 @@ class Barebox(BootStrategy):
     command needs to start a new connection and then interrupt barebox.
     An expect shell session can then be handed over to the BareboxAction.
     self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellSession (which wraps pexpect.spawn) then
+    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
@@ -364,7 +364,7 @@ class IPXE(BootStrategy):
     command needs to start a new connection and then interrupt iPXE.
     An expect shell session can then be handed over to the BootloaderAction.
     self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellSession (which wraps pexpect.spawn) then
+    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
@@ -554,7 +554,7 @@ class BootQEMU(BootStrategy):
     command needs to start a new connection and then allow AutoLogin, if
     enabled, and then expect a shell session which can be handed over to the
     test method. self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellSession (which wraps pexpect.spawn) then
+    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 
@@ -668,7 +668,7 @@ class UBoot(BootStrategy):
     command needs to start a new connection and then interrupt u-boot.
     An expect shell session can then be handed over to the UBootAction.
     self.run_command is a blocking call, so Boot needs to use
-    a direct spawn call via ShellSession (which wraps pexpect.spawn) then
+    a direct spawn call via ShellCommand (which wraps pexpect.spawn) then
     hand this pexpect wrapper to subsequent actions as a shell connection.
     """
 

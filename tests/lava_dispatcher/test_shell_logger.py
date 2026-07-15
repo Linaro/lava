@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, call
 from pexpect import EOF as pexpect_eof
 
 from lava_common.timeout import Timeout
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand
 
 
 class TestShellLogger(TestCase):
@@ -19,8 +19,8 @@ class TestShellLogger(TestCase):
         super().setUp()
         self.logger_mock = MagicMock()
 
-    def create_shell_command(self, shell_cmd: str) -> ShellSession:
-        return ShellSession(
+    def create_shell_command(self, shell_cmd: str) -> ShellCommand:
+        return ShellCommand(
             shell_cmd,
             Timeout("test_shell_logger", None),
             logger=self.logger_mock,
@@ -46,20 +46,18 @@ class TestShellLogger(TestCase):
     # ShellLogger is expected to split on both \r\n and \r\r\n
     def test_shell_output_newline(self) -> None:
         command = self.create_shell_command(r"printf 'foo\nbar'")
-        command.raw_connection.expect(pexpect_eof)
-        command.raw_connection.flush()
-        command.raw_connection.wait()
-        command.raw_connection.close()
-        self.assertEqual(command.raw_connection.exitstatus, 0)
+        command.expect(pexpect_eof)
+        command.flush()
+        command.wait()
+        self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls([], ["foo", "bar"])
 
     def test_shell_output_carriadge_return_newline(self) -> None:
         command = self.create_shell_command(r"printf 'foo\r\nbar'")
-        command.raw_connection.expect(pexpect_eof)
-        command.raw_connection.flush()
-        command.raw_connection.wait()
-        command.raw_connection.close()
-        self.assertEqual(command.raw_connection.exitstatus, 0)
+        command.expect(pexpect_eof)
+        command.flush()
+        command.wait()
+        self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls([], ["foo", "bar"])
 
     # Because of pseudo TTY all input will be echoed to output.
@@ -70,12 +68,11 @@ class TestShellLogger(TestCase):
         command = self.create_shell_command(
             "sh -c 'read ONE TWO; echo \"$ONE, $TWO!\"'"
         )
-        command.raw_connection.sendline("Hello World")
-        command.raw_connection.expect(pexpect_eof)
-        command.raw_connection.flush()
-        command.raw_connection.wait()
-        command.raw_connection.close()
-        self.assertEqual(command.raw_connection.exitstatus, 0)
+        command.sendline("Hello World")
+        command.expect(pexpect_eof)
+        command.flush()
+        command.wait()
+        self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [
@@ -88,13 +85,12 @@ class TestShellLogger(TestCase):
         command = self.create_shell_command(
             "sh -c 'read ONE; read TWO; echo \"$ONE, $TWO!\"'"
         )
-        command.raw_connection.sendline("Hello")
-        command.raw_connection.sendline("World")
-        command.raw_connection.expect(pexpect_eof)
-        command.raw_connection.flush()
-        command.raw_connection.wait()
-        command.raw_connection.close()
-        self.assertEqual(command.raw_connection.exitstatus, 0)
+        command.sendline("Hello")
+        command.sendline("World")
+        command.expect(pexpect_eof)
+        command.flush()
+        command.wait()
+        self.assertEqual(command.exitstatus, 0)
         self.assert_logger_target_calls(
             ["Hello", "World"],
             [

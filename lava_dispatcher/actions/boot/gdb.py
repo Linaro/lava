@@ -14,7 +14,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connections.serial import ConnectDevice
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import substitute
 from lava_dispatcher.utils.udev import WaitUSBSerialDeviceAction
@@ -130,7 +130,8 @@ class BootGDBRetry(RetryAction):
 
         # Start gdb
         self.logger.info("Starting gdb: %s", cmd)
-        gdb = ShellSession(cmd, self.timeout, logger=self.logger)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
+        gdb = ShellSession(shell)
         gdb.prompt_str = "\\(gdb\\) "
         self.gdb_connection = gdb
         self.gdb_connection.wait()
