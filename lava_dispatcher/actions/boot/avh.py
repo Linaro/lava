@@ -21,7 +21,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
+from lava_dispatcher.shell import ExpectShellSession, ShellSession
 from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.docker import DockerRun
 
@@ -238,8 +238,7 @@ class CallAvhAction(Action):
         self.docker.prepare(action=self)
         self.docker_cleanup_required = True
         self.logger.info(f"Connecting to instance {self.instance_id} console ...")
-        shell = ShellCommand(console_cmd, self.timeout, logger=self.logger)
-        shell_connection = ShellSession(shell)
+        shell_connection = ShellSession(console_cmd, self.timeout, logger=self.logger)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

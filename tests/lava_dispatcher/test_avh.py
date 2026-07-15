@@ -146,7 +146,6 @@ class TestAvhActions(LavaDispatcherTestCase):
 
     # Test boot run.
     @patch("lava_dispatcher.actions.boot.avh.ShellSession")
-    @patch("lava_dispatcher.actions.boot.avh.ShellCommand")
     @patch("lava_dispatcher.actions.boot.avh.DockerRun.prepare")
     @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance_console",
@@ -312,7 +311,6 @@ class TestAvhActionsFwPackage(LavaDispatcherTestCase):
 
     # Test boot run.
     @patch("lava_dispatcher.actions.boot.avh.ShellSession")
-    @patch("lava_dispatcher.actions.boot.avh.ShellCommand")
     @patch("lava_dispatcher.actions.boot.avh.DockerRun.prepare")
     @patch(
         "lava_dispatcher.actions.boot.avh.arm_api.ArmApi.v1_get_instance",
