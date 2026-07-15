@@ -16,9 +16,9 @@ from lava_common.exceptions import InfrastructureError, JobError
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Optional
 
     from lava_dispatcher.action import Action
+    from lava_dispatcher.shell import ShellSession
 
 
 class DockerLogin:
@@ -254,13 +254,13 @@ class DockerRun:
             )
         self._check_image_arch(action)
 
-    def wait(self, shell=None):
+    def wait(self, shell: ShellSession | None = None):
         delay = 1
         while True:
             try:
                 # If possible, check that docker's shell command didn't exit
                 # yet.
-                if shell and not shell.isalive():
+                if shell and not shell.raw_connection.isalive():
                     raise InfrastructureError("Docker container unexpectedly exited")
                 subprocess.check_call(
                     [
