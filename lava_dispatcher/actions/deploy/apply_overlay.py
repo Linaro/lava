@@ -1183,10 +1183,9 @@ class ApplyQDLOverlay(Action):
     summary = "apply overlay to image in qcomflash tarball"
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, rootfs_image="rootfs.img", overlay_path="/"):
+    def __init__(self, job: Job, rootfs_image="rootfs.img"):
         super().__init__(job)
         self.rootfs_image = rootfs_image
-        self.overlay_path = overlay_path
 
     def validate(self):
         super().validate()
@@ -1215,9 +1214,7 @@ class ApplyQDLOverlay(Action):
         if qcomflash is None:
             raise JobError("QCOMflash file missing")
 
-        self.logger.info(
-            f"applying overlay to {self.rootfs_image} in {self.overlay_path}"
-        )
+        self.logger.info(f"applying overlay to {self.rootfs_image}")
         qdl_dir = self.get_namespace_data(
             action="qdl-deploy", label="qdl-directory", key="directory"
         )

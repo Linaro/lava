@@ -21,6 +21,5 @@ def schema():
         ),
         Optional("uniquify"): bool,
         Optional("rootfs_image"): str,
-        Optional("overlay_path"): str,
     }
     return {**deploy.schema(), **base}

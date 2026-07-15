@@ -29,7 +29,6 @@ class QDLAction(Action):
         self.param_key = "qcomflash"
         # - deploy:
         #     rootfs_image: rootfs.img
-        #     overlay_path: /home
         #     qcomflash:
         #       url: ...
         #     to: qdl
@@ -66,13 +65,11 @@ class QDLAction(Action):
 
         if image_params.get("apply-overlay", False):
             rootfs_image = parameters.get("rootfs_image", "rootfs.img")
-            overlay_path = parameters.get("overlay_path", "/")
             if self.test_needs_overlay(parameters):
                 self.pipeline.add_action(
                     ApplyQDLOverlay(
                         self.job,
                         rootfs_image=rootfs_image,
-                        overlay_path=overlay_path,
                     )
                 )
 

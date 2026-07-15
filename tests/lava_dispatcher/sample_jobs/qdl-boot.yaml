@@ -9,7 +9,6 @@ visibility: public
 actions:
 - deploy:
     rootfs_image: "disk-sdcard.img2"
-    overlay_path: "/"
     qcomflash:
       url: 'https://example.com/qcomflash.tar.gz'
 #      apply-overlay: true
