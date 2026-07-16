@@ -46,7 +46,9 @@ class XnbdProtocol(Protocol):
         """
 
         if "port" not in self.parameters["protocols"]["lava-xnbd"]:
-            self.errors = "No port set in parameters for lava-xnbd protocol!\nE.g.:\n protocols:\n  lava-xnbd:\n    port: auto \n"
+            self.errors_add(
+                "No port set in parameters for lava-xnbd protocol!\nE.g.:\n protocols:\n  lava-xnbd:\n    port: auto \n"
+            )
 
     def __call__(self, *args, **kwargs):
         action = kwargs.get("action")
