@@ -91,7 +91,7 @@ class Protocol:
     def __init__(self, parameters: dict[str, Any], job_id: str, job_logger: YAMLLogger):
         self.logger = job_logger
         self.poll_timeout = Timeout(self.name, None)
-        self.__errors__: list[str] = []
+        self._errors: list[str] = []
         self.parameters = parameters
         self.configured = False
         self.job_id = job_id
@@ -111,11 +111,10 @@ class Protocol:
 
     @property
     def errors(self) -> list[str]:
-        return self.__errors__
+        return self._errors
 
-    @errors.setter
-    def errors(self, error: str) -> None:
-        self.__errors__.append(error)
+    def errors_add(self, new_error: str) -> None:
+        self._errors.append(new_error)
 
     @property
     def valid(self) -> bool:

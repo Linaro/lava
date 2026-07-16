@@ -56,7 +56,9 @@ class MultinodeProtocol(Protocol):
                 if "timeout" in params:
                     self.system_timeout.duration = Timeout.parse(params["timeout"])
             else:
-                self.errors = "expect_role must not match the role declaring lava_start"
+                self.errors_add(
+                    "expect_role must not match the role declaring lava_start"
+                )
                 self.logger.warning(self.errors)
 
     @classmethod
