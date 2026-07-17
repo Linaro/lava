@@ -6,12 +6,25 @@
 
 from unittest.mock import patch
 
+from lava_dispatcher.actions.commands import CommandAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
 class UserCommandFactory(Factory):
     def create_b2260_job(self, filename):
         return self.create_job("b2260-01", filename)
+
+
+class TestIsCommand(LavaDispatcherTestCase):
+    def test_valid(self):
+        for cmd in ["/bin/true", ["/bin/true"], ["/bin/true", "/bin/false"]]:
+            self.assertTrue(CommandAction.is_command(cmd), cmd)
+
+    def test_invalid(self):
+        # Empty commands would silently run nothing, so they are rejected
+        # alongside the values that are not commands at all.
+        for cmd in ["", [], [""], ["/bin/true", ""], None, 1, [1], {"do": "/bin/true"}]:
+            self.assertFalse(CommandAction.is_command(cmd), cmd)
 
 
 class TestUserCommand(LavaDispatcherTestCase):

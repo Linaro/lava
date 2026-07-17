@@ -502,7 +502,13 @@ def _device_timeouts_schema():
 
 
 def _device_user_commands():
-    return Schema({All(str): {Required("do"): str, Optional("undo"): str}})
+    # A command is a non-empty string, or a non-empty list of non-empty strings
+    # run in order.
+    command = Any(
+        All(str, Length(min=1)),
+        All([All(str, Length(min=1))], Length(min=1)),
+    )
+    return Schema({All(str): {Required("do"): command, Optional("undo"): command}})
 
 
 def _device_connections_commands():

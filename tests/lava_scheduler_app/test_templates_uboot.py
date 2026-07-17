@@ -535,6 +535,22 @@ class TestUbootTemplates(BaseTemplateTest):
             template_dict["commands"]["users"],
         )
 
+    def test_user_command_list(self):
+        data = """{% extends 'b2260.jinja2' %}
+{% set user_commands = {'set_boot_to_usb': {'do': ['/bin/true', '/bin/true --usb'],
+                                            'undo': ['/bin/true --undo', '/bin/false']}} %}
+"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            {
+                "set_boot_to_usb": {
+                    "do": ["/bin/true", "/bin/true --usb"],
+                    "undo": ["/bin/true --undo", "/bin/false"],
+                },
+            },
+            template_dict["commands"]["users"],
+        )
+
     def test_meson8b_template(self):
         template_dict = self.render_device_dictionary("meson8b-odroidc1-1")
         self.assertIsNotNone(template_dict)

@@ -34,3 +34,15 @@ In order to use a command action, admins should add the command name to the **de
 **user_commands** is a dictionary of commands where the key will be used in the job definition.
 
 if the command should be undone when the job finishes, admins should add a **undo** command.
+
+**do** and **undo** each accept either a single command string or a list of
+command strings, in the same way as ``power_on_command`` and
+``power_off_command``. When a list is given, the commands are run in the order
+they are listed:
+
+.. code-block:: jinja
+
+  {% set user_commands = {'set_boot_to_qspi': {'do': ['webrelay --host 192.168.0.15 --port 1234 --relay 1 on',
+                                                      'webrelay --host 192.168.0.15 --port 1234 --relay 2 on'],
+                                               'undo': ['webrelay --host 192.168.0.15 --port 1234 --relay 2 off',
+                                                        'webrelay --host 192.168.0.15 --port 1234 --relay 1 off']}} %}
