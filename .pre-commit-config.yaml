@@ -255,12 +255,6 @@ repos:
         pass_filenames: false
         always_run: true
 
-  # - repo: https://github.com/astral-sh/ty-pre-commit
-  #   rev: v0.0.55
-  #   hooks:
-  #     - id: ty
-  #       args: [--isolated]
-
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: v2.25.1
     hooks:
