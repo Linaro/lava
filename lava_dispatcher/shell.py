@@ -227,15 +227,14 @@ class ShellSession:
                     f"Checking {line!r} return code... "
                     f"(timeout {seconds_to_str(timeout)})"
                 )
-                with self._expect_exc_wrapper():
-                    self.raw_connection.expect(
-                        [
-                            rf"<{signal} (\d+)>",
-                            pexpect.TIMEOUT,
-                        ],
-                        timeout=timeout,
-                    )
-                    match = self.raw_connection.match
+                self.raw_connection.expect(
+                    [
+                        rf"<{signal} (\d+)>",
+                        pexpect.TIMEOUT,
+                    ],
+                    timeout=timeout,
+                )
+                match = self.raw_connection.match
                 if isinstance(match, Pattern):
                     rc = match.group(1)
                     with contextlib.suppress(TypeError, ValueError):
