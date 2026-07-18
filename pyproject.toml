@@ -45,7 +45,6 @@ optional-dependencies.dev = [
   "pyproject-fmt==2.25.1",
   "pyrefly==1.1.1",
   "ruff==0.15.20",
-  "ty==0.0.55",
   "types-pexpect",
   "types-pyyaml",
   "types-requests",
@@ -293,39 +292,6 @@ project-includes = [
   "lava_dispatcher/utils/vcs.py",
   "lava_dispatcher/connection.py",
   "lava_dispatcher/deployment_data.py",
-]
-
-[tool.ty]
-src.include = [
-  "lava_common/constants.py",
-  "lava_common/converters.py",
-  "lava_common/decorators.py",
-  "lava_common/device_mappings.py",
-  "lava_common/exceptions.py",
-  "lava_common/jinja.py",
-  "lava_common/log.py",
-  "lava_common/timeout.py",
-  "lava_common/utils.py",
-  "lava_common/version.py",
-  "lava_common/worker.py",
-  "lava_common/yaml.py",
-  "lava_dispatcher/actions/base_strategy.py",
-  "lava_dispatcher/actions/boot_strategy.py",
-  "lava_dispatcher/actions/deploy_strategy.py",
-  "lava_dispatcher/actions/test/mixins.py",
-  "lava_dispatcher/actions/test_strategy.py",
-  "lava_dispatcher/connection.py",
-  "lava_dispatcher/deployment_data.py",
-  "lava_dispatcher/utils/compression.py",
-  "lava_dispatcher/utils/contextmanager.py",
-  "lava_dispatcher/utils/decorator.py",
-  "lava_dispatcher/utils/ext4.py",
-  "lava_dispatcher/utils/filesystem.py",
-  "lava_dispatcher/utils/installers.py",
-  "lava_dispatcher/utils/network.py",
-  "lava_dispatcher/utils/shell.py",
-  "lava_dispatcher/utils/strings.py",
-  "lava_dispatcher/utils/vcs.py",
 ]
 
 [tool.pytest]
