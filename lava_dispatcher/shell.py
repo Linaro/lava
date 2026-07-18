@@ -425,18 +425,15 @@ class ShellSession:
         try:
             self.shell_output_logger.is_feedback = True
             self.shell_output_logger.namespace = namespace
-            with self._expect_exc_wrapper():
-                self.raw_connection.expect(
-                    [".+", pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
-                )
+            index = self.raw_connection.expect(
+                [".+", pexpect.EOF, pexpect.TIMEOUT], timeout=timeout
+            )
         finally:
             self.shell_output_logger.is_feedback = False
             self.shell_output_logger.namespace = None
 
-        connection_after = self.raw_connection.after
-        # connection_after can be EOF or TIMEOUT
-        if isinstance(connection_after, str):
-            return len(connection_after)
+        if index == 0:
+            return len(self.raw_connection.after)
 
         return 0
 
