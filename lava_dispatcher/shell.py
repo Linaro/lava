@@ -227,25 +227,31 @@ class ShellSession:
                     f"Checking {line!r} return code... "
                     f"(timeout {seconds_to_str(timeout)})"
                 )
-                self.raw_connection.expect(
-                    [
-                        rf"<{signal} (\d+)>",
-                        pexpect.TIMEOUT,
-                    ],
-                    timeout=timeout,
-                )
-                match = self.raw_connection.match
+                try:
+                    self.raw_connection.expect(
+                        [
+                            rf"<{signal} (\d+)>",
+                            pexpect.TIMEOUT,
+                        ],
+                        timeout=timeout,
+                    )
+                    match = self.raw_connection.match
+                except pexpect.TIMEOUT:
+                    raise JobError(f"Failed to check {line!r} return code!")
+                except pexpect.EOF:
+                    raise ConnectionClosedError("Connection closed")
+                except re_error as exc:
+                    raise TestError(
+                        f"Invalid regular expression {exc.pattern!r}: {exc.msg}"
+                    )
+                except ValueError as exc:
+                    raise TestError(exc)
+
                 if isinstance(match, Pattern):
                     rc = match.group(1)
                     with contextlib.suppress(TypeError, ValueError):
                         if rc := int(rc):
                             raise JobError(f"{line!r} failed with return code {rc}!")
-                elif match is pexpect.TIMEOUT:
-                    # Instead of the default TestError, raise JobError with a
-                    # specific error message.
-                    raise JobError(f"Failed to check {line!r} return code!")
-                else:
-                    raise LAVABug(f"Expected either pattern or TIMEOUT, got {match!r}")
 
         elif not disconnecting:
             raise LAVABug("sendline called on disconnected connection")
@@ -432,7 +438,7 @@ class ShellSession:
             self.shell_output_logger.namespace = None
 
         if index == 0:
-            return len(self.raw_connection.after)
+            return len(self.raw_connection.after)  # type: ignore[arg-type]
 
         return 0
 
