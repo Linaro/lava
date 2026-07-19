@@ -326,11 +326,64 @@ class ShellSession:
         self.__prompt_str__ = string
 
     @contextlib.contextmanager
-    def test_connection(self) -> Iterator[pexpect.spawn[str]]:
+    def test_connection(self) -> Iterator["TestConnection"]:
         """
-        Yields the actual connection which can be used to interact inside this shell.
+        Yields a TestConnection wrapper that provides expect() with proper
+        exception handling while delegating other attributes to the raw connection.
         """
-        yield self.raw_connection
+        yield TestConnection(self.raw_connection, self)
+
+
+class TestConnection:
+    """
+    Wrapper around pexpect.spawn used by test actions.
+    Provides expect() with proper exception handling while delegating
+    other attributes (match, after, timeout, sendline, etc.) to the raw connection.
+    """
+
+    def __init__(self, raw_connection: pexpect.spawn[str], shell_session: "ShellSession"):
+        self._raw = raw_connection
+        self._session = shell_session
+
+    def expect(self, *args, **kwargs) -> int:
+        """Wrapper around raw_connection.expect() with proper exception handling."""
+        with self._session._expect_exc_wrapper():
+            return self._raw.expect(*args, **kwargs)
+
+    def __getattr__(self, name: str):
+        """Delegate all other attributes to the raw connection."""
+        return getattr(self._raw, name)
+
+    def __setattr__(self, name: str, value) -> None:
+        """Delegate attribute setting to raw connection (except internal attrs)."""
+        if name in ("_raw", "_session"):
+            super().__setattr__(name, value)
+        else:
+            setattr(self._raw, name, value)
+
+    def sendline(self, *args, **kwargs):
+        """Delegate sendline to the shell session for proper logging."""
+        return self._session.sendline(*args, **kwargs)
+
+    def send(self, *args, **kwargs):
+        """Delegate send to the shell session."""
+        return self._session.send(*args, **kwargs)
+
+    def sendcontrol(self, *args, **kwargs):
+        """Delegate sendcontrol to the shell session."""
+        return self._session.sendcontrol(*args, **kwargs)
+
+    def readline(self, *args, **kwargs):
+        """Delegate readline to the raw connection."""
+        return self._raw.readline(*args, **kwargs)
+
+    def readline_noncanonical(self, *args, **kwargs):
+        """Delegate readline_noncanonical to the raw connection."""
+        return self._raw.readline_noncanonical(*args, **kwargs)
+
+    def write(self, *args, **kwargs):
+        """Delegate write to the raw connection."""
+        return self._raw.write(*args, **kwargs)
 
     def force_prompt_wait(self, remaining: float | None = None) -> int:
         """
