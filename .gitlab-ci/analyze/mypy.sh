@@ -31,7 +31,6 @@ else
     'lava_dispatcher/action.py'
     'lava_dispatcher/connection.py'
     'lava_dispatcher/deployment_data.py'
-    'lava_dispatcher/shell.py'
     'lava_dispatcher/utils/compression.py'
     'lava_dispatcher/utils/contextmanager.py'
     'lava_dispatcher/utils/decorator.py'

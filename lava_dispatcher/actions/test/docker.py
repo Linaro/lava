@@ -18,7 +18,7 @@ from lava_dispatcher.actions.test.multinode import MultinodeMixin
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.connections.serial import DisconnectDevice
 from lava_dispatcher.power import ReadFeedback
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.containers import DeviceContainerMappingMixin
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
@@ -174,7 +174,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
 
         cmd = shlex.join(docker_cmd)
         self.logger.debug("Starting docker test shell container: %s" % cmd)
-        shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
+
+        shell_connection = ShellSession(shell)
         shell_connection.prompt_str = "docker-test-shell:"
         self.parameters["connection-namespace"] = "docker-test-shell"
         self.set_namespace_data(
@@ -191,7 +193,7 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
             device_info=self.device_info, logger=self.logger, required=False
         )
 
-        docker.wait(shell_connection)
+        docker.wait(shell)
 
         # share all the devices as there isn't a 1:1 relationship between
         # the trigger and actual sharing of the devices

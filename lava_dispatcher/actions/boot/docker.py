@@ -15,7 +15,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import BootHasMixin
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ExpectShellSession, ShellSession
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip
 
 if TYPE_CHECKING:
@@ -125,9 +125,10 @@ class CallDockerAction(Action):
         cmd += " {} {}".format(docker_image, self.parameters["command"])
 
         self.logger.debug("Boot command: %s", cmd)
-
-        shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
         self.cleanup_required = True
+
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

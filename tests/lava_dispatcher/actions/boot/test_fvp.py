@@ -97,12 +97,14 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
         self.assertEqual(description_ref, self.job.pipeline.describe())
 
     @mock.patch.object(RunFVPeRPCApp, "get_namespace_data")
+    @mock.patch("lava_dispatcher.actions.boot.fvp.ShellCommand")
     @mock.patch("lava_dispatcher.actions.boot.fvp.ShellSession")
     @mock.patch.object(RunFVPeRPCApp, "set_namespace_data")
     def test_run(
         self,
         mock_set_namespace_data,
         mock_shell_session_class,
+        mock_shell_command,
         mock_get_namespace_data,
     ):
         self.action.validate()
@@ -111,6 +113,12 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
             "test-container",
             "/path/to/erpc_main",
         ]
+
+        mock_shell = mock.MagicMock()
+        mock_shell_command.return_value = mock_shell
+
+        mock_shell_session = mock.MagicMock()
+        mock_shell_session_class.return_value = mock_shell_session
 
         result = self.action.run(None, None)
 
@@ -125,17 +133,16 @@ class TestRunFVPeRPCApp(LavaDispatcherTestCase):
             "docker exec --tty test-container sh -c "
             "'chmod +x /test-container/erpc_main && /test-container/erpc_main'"
         )
-        mock_shell_session_class.assert_called_once_with(
+        mock_shell_command.assert_called_once_with(
             expected_cmd, self.action.timeout, logger=self.action.logger
         )
+
+        mock_shell_session_class.assert_called_once_with(mock_shell)
         mock_set_namespace_data.assert_called_once_with(
-            action="shared",
-            label="shared",
-            key="connection",
-            value=mock_shell_session_class(),
+            action="shared", label="shared", key="connection", value=mock_shell_session
         )
 
-        assert result == mock_shell_session_class()
+        assert result == mock_shell_session
 
 
 class TestRunFVPShellCommands(LavaDispatcherTestCase):
@@ -175,14 +182,17 @@ class TestRunFVPShellCommands(LavaDispatcherTestCase):
             self.action, "get_namespace_data", return_value="fvp-container"
         ):
             with mock.patch(
-                "lava_dispatcher.actions.boot.fvp.ShellSession",
-                return_value=new_connection,
-            ) as mock_shell_session:
-                connection = self.action.run(None, None)
+                "lava_dispatcher.actions.boot.fvp.ShellCommand"
+            ) as mock_shell_command:
+                with mock.patch(
+                    "lava_dispatcher.actions.boot.fvp.ShellSession",
+                    return_value=new_connection,
+                ):
+                    connection = self.action.run(None, None)
 
-                mock_shell_session.assert_called_once_with(
-                    "docker exec --tty fvp-container sh -c 'cmd1 && cmd2'",
-                    self.action.timeout,
-                    logger=self.action.logger,
-                )
-                assert connection == new_connection
+                    mock_shell_command.assert_called_once_with(
+                        "docker exec --tty fvp-container sh -c 'cmd1 && cmd2'",
+                        self.action.timeout,
+                        logger=self.action.logger,
+                    )
+                    assert connection == new_connection

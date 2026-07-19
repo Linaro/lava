@@ -18,7 +18,7 @@ from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayU
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.serial import QemuSession
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ExpectShellSession
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand
 from lava_dispatcher.utils.docker import DockerRun
 from lava_dispatcher.utils.network import dispatcher_ip
 from lava_dispatcher.utils.shell import which
@@ -61,6 +61,7 @@ class CallQemuAction(Action):
     summary = "execute qemu to boot the image"
 
     session_class = QemuSession
+    shell_class = ShellCommand
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -230,7 +231,16 @@ class CallQemuAction(Action):
                 )
 
     def run(self, connection, max_end_time):
-        """Generate QEMU boot commands and run them using ShellSession"""
+        """
+        CommandRunner expects a pexpect.spawn connection which is the return value
+        of target.device.power_on executed by boot in the old dispatcher.
+
+        In the new pipeline, the pexpect.spawn is a ShellCommand and the
+        connection is a ShellSession. CommandRunner inside the ShellSession
+        turns the ShellCommand into a runner which the ShellSession uses via ShellSession.run()
+        to run commands issued *after* the device has booted.
+        pexpect.spawn is one of the raw_connection objects for a Connection class.
+        """
         if connection:
             ns_connection = self.get_namespace_data(
                 action="shared", label="shared", key="connection", deepcopy=False
@@ -352,10 +362,17 @@ class CallQemuAction(Action):
             self.sub_command[0] = " ".join(docker.cmdline(*args))
 
         self.logger.info("Boot command: %s", " ".join(self.sub_command))
-        shell_connection = self.session_class(
+        shell = self.shell_class(
             " ".join(self.sub_command), self.timeout, logger=self.logger
         )
+        if shell.exitstatus:
+            raise JobError(
+                "%s command exited %d: %s"
+                % (self.sub_command, shell.exitstatus, shell.readlines())
+            )
         self.logger.debug("started a shell command")
+
+        shell_connection = self.session_class(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(

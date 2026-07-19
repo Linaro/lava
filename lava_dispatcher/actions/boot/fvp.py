@@ -17,7 +17,7 @@ from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ReadFeedback
-from lava_dispatcher.shell import ExpectShellSession, ShellSession
+from lava_dispatcher.shell import ExpectShellSession, ShellCommand, ShellSession
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
@@ -355,8 +355,9 @@ class StartFVPAction(BaseFVPAction):
         cmd = "lava-outerr " + cmd
 
         self.logger.debug("Boot command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         # Wait for the console string
@@ -413,7 +414,7 @@ class StartFVPAction(BaseFVPAction):
         # Although we don't require any more output on this connection,
         # discarding this may cause SIGHUPs to be sent to the model
         # which will terminate the model.
-        self.shell = shell_connection.raw_connection
+        self.shell = shell
 
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=shell_connection
@@ -459,8 +460,9 @@ class GetFVPSerialAction(Action):
             )
 
             self.logger.debug("Feedback command: %s", cmd)
+            shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-            shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
+            shell_connection = ShellSession(shell)
             shell_connection = super().run(shell_connection, max_end_time)
             shell_connection.raw_connection.logfile_read.is_feedback = True
 
@@ -478,8 +480,9 @@ class GetFVPSerialAction(Action):
         cmd = f"lava-outerr docker exec --interactive --tty {container} telnet localhost {serial_port}"
 
         self.logger.debug("Connect command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        shell_connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        shell_connection = ShellSession(shell)
         shell_connection = super().run(shell_connection, max_end_time)
 
         self.set_namespace_data(
@@ -518,8 +521,9 @@ class RunFVPeRPCApp(Action):
         cmd = f"docker exec --tty {container} sh -c 'chmod +x {app_path} && {app_path}'"
 
         self.logger.debug("Connect command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        connection = ShellSession(shell)
         connection = super().run(connection, max_end_time)
 
         self.set_namespace_data(
@@ -556,8 +560,9 @@ class RunFVPShellCommands(Action):
         cmd = f"docker exec --tty {container} sh -c {shlex.quote(cmds)}"
 
         self.logger.debug("Command: %s", cmd)
+        shell = ShellCommand(cmd, self.timeout, logger=self.logger)
 
-        connection = ShellSession(cmd, self.timeout, logger=self.logger)
+        connection = ShellSession(shell)
         connection = super().run(connection, max_end_time)
 
         self.set_namespace_data(

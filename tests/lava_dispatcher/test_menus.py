@@ -5,14 +5,15 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
+import logging
 import re
 from unittest.mock import patch
 
-from lava_common.log import YAMLLogger
+from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
 from lava_dispatcher.actions.boot.uefi_menu import UefiMenuSelector
 from lava_dispatcher.menus.menus import SelectorMenu
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.strings import substitute
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -65,8 +66,15 @@ class TestUefi(LavaDispatcherTestCase):
         self.job = factory.create_uefi_job("sample_jobs/mustang-menu-ramdisk.yaml")
 
     def test_check_char(self):
-        connection = ShellSession("ls\n", Timeout("fake", 30), logger=YAMLLogger())
-        self.assertFalse(hasattr(connection.raw_connection, "check_char"))
+        shell = ShellCommand(
+            "%s\n" % "ls", Timeout("fake", 30), logger=logging.getLogger()
+        )
+        if shell.exitstatus:
+            raise JobError(
+                "%s command exited %d: %s" % ("ls", shell.exitstatus, shell.readlines())
+            )
+        connection = ShellSession(shell)
+        self.assertFalse(hasattr(shell, "check_char"))
         self.assertTrue(hasattr(connection, "check_char"))
         self.assertIsNotNone(connection.check_char)
 

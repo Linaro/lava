@@ -11,12 +11,10 @@ from lava_common.exceptions import ConfigurationError, InfrastructureError, JobE
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.connection import RECOGNIZED_TAGS
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.shell import ShellSession
+from lava_dispatcher.shell import ShellCommand, ShellSession
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
-    from lava_common.log import YAMLLogger
-    from lava_common.timeout import Timeout
     from lava_dispatcher.job import Job
 
 
@@ -24,7 +22,7 @@ class ConnectDevice(Action):
     """
     General purpose class to use the device commands to
     make a serial connection to the device. e.g. using ser2net
-    Inherit from this class and change the session_class for different behaviour.
+    Inherit from this class and change the session_class and/or shell_class for different behaviour.
     """
 
     name = "connect-device"
@@ -34,6 +32,8 @@ class ConnectDevice(Action):
 
     # wraps the pexpect and provides prompt_str access
     session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
 
     def __init__(self, job: Job):
         super().__init__(job)
@@ -158,13 +158,20 @@ class ConnectDevice(Action):
             self.message,
             self.command,
         )
-        # ShellSession executes the connection command and monitors the pexpect
-        connection = self.session_class(
+        # ShellCommand executes the connection command
+        shell = self.shell_class(
             "%s\n" % self.command,
             self.timeout,
             logger=self.logger,
             window=self.job.device.get_constant("spawn_maxread"),
         )
+        if shell.exitstatus:
+            raise InfrastructureError(
+                "%s command exited %d: %s"
+                % (self.command, shell.exitstatus, shell.readlines())
+            )
+        # ShellSession monitors the pexpect
+        connection = self.session_class(shell)
         connection.connected = True
         if self.hardware:
             connection.tags = self.tag_dict[self.hardware]
@@ -198,6 +205,8 @@ class ConnectShell(ConnectDevice):
     description = "use the configured command to connect serial to a second shell"
     # wraps the pexpect and provides prompt_str access
     session_class = ShellSession
+    # runs the command to initiate the connection
+    shell_class = ShellCommand
 
     def __init__(self, job: Job, name=None):
         super().__init__(job)
@@ -228,15 +237,8 @@ class QemuSession(ShellSession):
 
     name = "QemuSession"
 
-    def __init__(
-        self,
-        command: str,
-        lava_timeout: Timeout,
-        logger: YAMLLogger,
-        cwd: str | None = None,
-        window: int = 2000,
-    ):
-        super().__init__(command, lava_timeout, logger, cwd, window)
+    def __init__(self, shell_command: ShellCommand):
+        super().__init__(shell_command)
         self.tags = ["qemu"]
 
     def finalise(self):
