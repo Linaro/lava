@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import contextlib
 import time
+import typing
 from contextlib import contextmanager
 from os import killpg as os_killpg
 from re import Match
@@ -322,12 +323,23 @@ class ShellSession:
         self.logger.debug("Setting prompt string to %r" % string)
         self.__prompt_str__ = string
 
+    @property
+    def match(self) -> Match[str] | str | type | None:
+        return self.raw_connection.match
+
+    def expect(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        with self._expect_exc_wrapper():
+            return self.raw_connection.expect(*args, **kwargs)
+
+    def readline(self) -> str:
+        return self.raw_connection.readline()
+
     @contextlib.contextmanager
-    def test_connection(self) -> Iterator[pexpect.spawn[str]]:
+    def test_connection(self) -> Iterator[ShellSession]:
         """
         Yields the actual connection which can be used to interact inside this shell.
         """
-        yield self.raw_connection
+        yield self
 
     def force_prompt_wait(self, remaining: float | None = None) -> int:
         """
