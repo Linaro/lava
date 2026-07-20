@@ -29,6 +29,8 @@ from lava_dispatcher.utils.strings import substitute
 if TYPE_CHECKING:
     from typing import Any
 
+    from lava_dispatcher.shell import ShellSession
+
 
 @nottest
 class TestInteractiveRetry(RetryAction):
@@ -148,15 +150,14 @@ class TestInteractiveAction(ReportMixin, Action):
                 "result": "fail",
             }
             try:
-                with connection.test_connection() as test_connection:
-                    test_connection.timeout = min(
-                        self.timeout.duration, self.connection_timeout.duration
-                    )
-                    self.logger.info(
-                        "Test interactive timeout: %ds (minimum of the action and connection timeout)",
-                        test_connection.timeout,
-                    )
-                    self.run_script(test_connection, script, substitutions)
+                connection.timeout = min(
+                    self.timeout.duration, self.connection_timeout.duration
+                )
+                self.logger.info(
+                    "Test interactive timeout: %ds (minimum of the action and connection timeout)",
+                    connection.timeout,
+                )
+                self.run_script(connection, script, substitutions)
                 result["result"] = "pass"
 
                 if expected := script.get("expected"):
@@ -171,7 +172,7 @@ class TestInteractiveAction(ReportMixin, Action):
 
         return connection
 
-    def run_script(self, test_connection, script, substitutions):
+    def run_script(self, connection: ShellSession, script, substitutions):
         prompts = script["prompts"]  # TODO: allow to change the prompts?
         cmds = script["script"]
 
@@ -253,9 +254,9 @@ class TestInteractiveAction(ReportMixin, Action):
                     self.logger.info("Sending nothing, waiting")
                 else:
                     self.logger.info("Sending '%s'", command)
-                    test_connection.sendline(command, delay=self.character_delay)
+                    connection.sendline(command, delay=self.character_delay)
                     if script.get("echo") == "discard":
-                        echo = test_connection.readline()
+                        echo = connection.raw_connection.readline()
                         self.logger.debug("Ignoring echo: %r", echo)
 
                 failures = [p["message"] for p in cmd.get("failures", [])]
@@ -264,7 +265,7 @@ class TestInteractiveAction(ReportMixin, Action):
 
                 expect = prompts + failures + successes
                 self.logger.debug("Waiting for '%s'", "', '".join(expect))
-                ret = self.expect_and_feedbacks(test_connection, expect)
+                ret = self.expect_and_feedbacks(connection, expect)
 
                 match = expect[ret]
                 # Is this a prompt?
@@ -286,7 +287,7 @@ class TestInteractiveAction(ReportMixin, Action):
                                 failure["exception"], failure.get("error", match)
                             )
                     else:
-                        groups = test_connection.match.groupdict()
+                        groups = connection.raw_connection.match.groupdict()
                         if groups:
                             self.logger.info(
                                 "Matched a success: '%s' (groups: %s)", match, groups
@@ -299,7 +300,7 @@ class TestInteractiveAction(ReportMixin, Action):
 
                     # Wait for the prompt to send the next command
                     if wait_for_prompt:
-                        ret = self.expect_and_feedbacks(test_connection, prompts)
+                        ret = self.expect_and_feedbacks(connection, prompts)
                         self.logger.debug("Matched a prompt: '%s'", prompts[ret])
 
                 # If the command is not named, a failure is fatal
@@ -320,8 +321,8 @@ class TestInteractiveAction(ReportMixin, Action):
                     self.logger.results(result)
                     self.report[cmd["name"]] = result["result"]
 
-    def listen_feedback(self, connection):
-        if time.monotonic() - self.last_check <= connection.timeout:
+    def listen_feedback(self, connection: ShellSession) -> None:
+        if time.monotonic() - self.last_check <= connection.timeout.duration:
             return
         for feedback in self.feedbacks:
             # The timeout is really small because the goal is only
@@ -337,11 +338,12 @@ class TestInteractiveAction(ReportMixin, Action):
                 )
         self.last_check = time.monotonic()
 
-    def expect_and_feedbacks(self, connection, expect):
+    def expect_and_feedbacks(self, connection: ShellSession, expect):
         while True:
-            ret = connection.expect(
-                expect + [pexpect.TIMEOUT], timeout=connection.timeout
-            )
+            with connection._expect_exc_wrapper():
+                ret = connection.raw_connection.expect(
+                    expect + [pexpect.TIMEOUT], timeout=connection.timeout.duration
+                )
             self.listen_feedback(connection)
             if ret == len(expect):
                 continue

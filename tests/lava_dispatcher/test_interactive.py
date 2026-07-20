@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pexpect
@@ -15,6 +15,7 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
+from lava_common.timeout import Timeout
 from lava_dispatcher.actions.test.interactive import TestInteractiveAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
@@ -81,7 +82,7 @@ class TestInteractive(LavaDispatcherTestCase):
             action.raise_exception("bug", "A strange error")
 
 
-class Connection:
+class MockSpawn:
     class _Match:
         def __init__(self):
             self.d = {}
@@ -92,10 +93,6 @@ class Connection:
     def __init__(self, data):
         self.data = data
         self.match = self._Match()
-        self.timeout = 30
-
-    def sendline(self, line, delay):
-        assert self.data.pop(0) == ("sendline", line)  # nosec - assert is ok
 
     def expect(self, expect, timeout=1):
         print(f"expect: {expect}")
@@ -114,6 +111,22 @@ class Connection:
         data = self.data.pop(0)
         assert data[0] == "readline"  # nosec
         return data[1]
+
+
+class MockConnection:
+    def __init__(self, data):
+        self.raw_connection = MockSpawn(data)
+        self.timeout = Timeout("test-interactive timeout", action=None, duration=30)
+
+    def sendline(self, line, delay):
+        assert self.raw_connection.data.pop(0) == (
+            "sendline",
+            line,
+        )  # nosec - assert is ok
+
+    @contextmanager
+    def _expect_exc_wrapper(self):
+        yield None
 
 
 class Logger:
@@ -313,13 +326,13 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 },
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {"{HOST}": "lavasoftware.org"}
         with self.assertRaisesRegex(InfrastructureError, "network setup failed"):
             action.run_script(test_connection, script, substitutions)
 
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
         self.assertEqual(
             action.report,
@@ -373,12 +386,12 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"command": None, "name": "wait prompt"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
 
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
         self.assertEqual(action.report, {"wait prompt": "fail"})
 
     @patch("time.monotonic", Timing())
@@ -432,11 +445,11 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"command": "echo 'hello'", "name": "echo"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
     @patch("time.monotonic", Timing())
     def test_run_script_capture(self):
@@ -505,12 +518,12 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"command": "echo val: {val}"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
         self.assertEqual(substitutions, {"{val}": "bar"})
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
     @patch("time.monotonic", Timing())
     def test_run_script_delay(self):
@@ -549,13 +562,13 @@ class TestInteractiveScript(LavaDispatcherTestCase):
             "name": "setup",
             "script": [{"command": None, "name": "wait prompt"}, {"delay": 0.5}],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         with patch("time.sleep", check_sleep):
             action.run_script(test_connection, script, substitutions)
         self.assertEqual(sleep_calls, 1)
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
     @patch("time.monotonic", Timing())
     def test_run_script_multinode(self):
@@ -636,7 +649,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"lava-sync": "msgid321"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         action.run_script(test_connection, script, substitutions)
         self.assertEqual(
@@ -644,7 +657,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
             {"{ipaddr}": "172.17.0.3", "{val2}": "172.17.0.4"},
         )
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
         self.assertEqual(
             proto.captured,
             [
@@ -701,13 +714,13 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"command": "dhcp", "name": "dhcp"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         with self.assertRaisesRegex(TestError, "Failed to run command 'echo 'hello'"):
             action.run_script(test_connection, script, substitutions)
 
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
     @patch("time.monotonic", Timing())
     def test_run_script_raise_timeout(self):
@@ -741,7 +754,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
                 {"command": "dhcp", "name": "dhcp"},
             ],
         }
-        test_connection = Connection(conn_data)
+        test_connection = MockConnection(conn_data)
         substitutions = {}
         with self.assertRaisesRegex(
             LAVATimeoutError, "interactive connection timed out"
@@ -749,7 +762,7 @@ class TestInteractiveScript(LavaDispatcherTestCase):
             action.run_script(test_connection, script, substitutions)
 
         self.assertEqual(action.logger.data, [])
-        self.assertEqual(test_connection.data, [])
+        self.assertEqual(test_connection.raw_connection.data, [])
 
     def test_namespace_connection(self):
         factory = Factory()
@@ -771,8 +784,8 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         )
 
         conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
-        previous_connection = Connection(conn_previous)
-        data_connection = Connection(conn_previous)
+        previous_connection = MockConnection(conn_previous)
+        data_connection = MockConnection(conn_previous)
         action.set_namespace_data("shared", "shared", "connection", data_connection)
 
         # disable script run to avoid duplicate as it's already test by other test function
@@ -803,8 +816,8 @@ class TestInteractiveScript(LavaDispatcherTestCase):
         )
 
         conn_previous = [("expect", ["foo", pexpect.TIMEOUT], pexpect.TIMEOUT, "")]
-        previous_connection = Connection(conn_previous)
-        data_connection = Connection(conn_previous)
+        previous_connection = MockConnection(conn_previous)
+        data_connection = MockConnection(conn_previous)
         action.set_namespace_data(
             "shared", "shared", "connection", data_connection, {"namespace": "foobar"}
         )

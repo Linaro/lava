@@ -9,7 +9,7 @@ import contextlib
 import time
 from contextlib import contextmanager
 from os import killpg as os_killpg
-from re import Pattern
+from re import Match
 from re import error as re_error
 from re import split as re_split
 from signal import SIGKILL
@@ -222,7 +222,9 @@ class ShellSession:
                 self._sendline_wrapper(line, delay=delay)
             else:
                 signal: str = "LAVA_SIGNAL_RETRUNCODE"
-                self._send_wrapper(f'{line} ; printf "<{signal} $?>\\n"', delay=delay)
+                self._sendline_wrapper(
+                    f'{line} ; printf "<{signal} $?>\\n"', delay=delay
+                )
                 self.logger.debug(
                     f"Checking {line!r} return code... "
                     f"(timeout {seconds_to_str(timeout)})"
@@ -236,7 +238,7 @@ class ShellSession:
                         timeout=timeout,
                     )
                     match = self.raw_connection.match
-                if isinstance(match, Pattern):
+                if isinstance(match, Match):
                     rc = match.group(1)
                     with contextlib.suppress(TypeError, ValueError):
                         if rc := int(rc):
@@ -319,13 +321,6 @@ class ShellSession:
         """
         self.logger.debug("Setting prompt string to %r" % string)
         self.__prompt_str__ = string
-
-    @contextlib.contextmanager
-    def test_connection(self) -> Iterator[pexpect.spawn[str]]:
-        """
-        Yields the actual connection which can be used to interact inside this shell.
-        """
-        yield self.raw_connection
 
     def force_prompt_wait(self, remaining: float | None = None) -> int:
         """

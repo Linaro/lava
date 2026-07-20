@@ -21,9 +21,14 @@ class Mockmatch:
         return self.data
 
 
-class MockConnection:
+class MockSpawn:
     def __init__(self, data):
         self.match = Mockmatch(data)
+
+
+class MockConnection:
+    def __init__(self, data):
+        self.raw_connection = MockSpawn(data)
 
 
 class TestTestShell(LavaDispatcherTestCase):

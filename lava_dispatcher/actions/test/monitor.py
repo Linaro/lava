@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import re
+import time
 from typing import TYPE_CHECKING
 
 import pexpect
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 @nottest
@@ -82,11 +84,12 @@ class TestMonitorAction(ReportMixin, Action):
             connection.wait()
             self.logger.info("ok: start string found, lava test monitoring started")
 
-            with connection.test_connection() as test_connection:
-                while self._keep_running(
-                    test_connection, monitor, timeout=test_connection.timeout
-                ):
-                    pass
+            if max_end_time is None:
+                keep_running_timeout = connection.timeout.duration
+            else:
+                keep_running_timeout = max_end_time - time.monotonic()
+            while self._keep_running(connection, monitor, timeout=keep_running_timeout):
+                pass
 
             if expected := monitor.get("expected"):
                 self.handle_expected(expected, self.test_suite_name)
@@ -95,14 +98,17 @@ class TestMonitorAction(ReportMixin, Action):
             self.handle_summary(self.test_suite_name)
         return connection
 
-    def _keep_running(self, test_connection, monitor, timeout=120):
+    def _keep_running(self, connection: ShellSession, monitor, timeout: float = 120.0):
         self.logger.debug("test monitoring timeout: %d seconds", timeout)
-        retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
+        with connection._expect_exc_wrapper():
+            retval = connection.raw_connection.expect(
+                list(self.patterns.values()), timeout=timeout
+            )
         return self.check_patterns(
-            list(self.patterns.keys())[retval], test_connection, monitor
+            list(self.patterns.keys())[retval], connection, monitor
         )
 
-    def check_patterns(self, event, test_connection, monitor):
+    def check_patterns(self, event, connection: ShellSession, monitor):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -120,7 +126,7 @@ class TestMonitorAction(ReportMixin, Action):
             self.logger.info("ok: end string found, lava test monitoring stopped")
         elif event == "test_result":
             self.logger.info("ok: test case found")
-            match = test_connection.match.groupdict()
+            match = connection.raw_connection.match.groupdict()
             if "result" in match:
                 if self.fixupdict:
                     if match["result"] in self.fixupdict:

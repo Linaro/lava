@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 def handle_testcase(params):
@@ -159,7 +160,7 @@ class TestShellAction(ReportMixin, Action):
         self._reset_patterns()
         super().validate()
 
-    def run(self, connection, max_end_time):
+    def run(self, connection: ShellSession, max_end_time):
         """
         Common run function for subclasses which define custom patterns
         """
@@ -286,46 +287,46 @@ class TestShellAction(ReportMixin, Action):
                     )
                     feedbacks.append((feedback_ns, feedback_connection))
 
-            with connection.test_connection() as test_connection:
-                # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
-                test_connection.sendline(
-                    "%s/bin/lava-test-runner %s/%s"
-                    % (lava_test_results_dir, lava_test_results_dir, running),
-                    delay=self.character_delay,
-                )
+            # the structure of lava-test-runner means that there is just one TestAction and it must run all definitions
+            connection.sendline(
+                "%s/bin/lava-test-runner %s/%s"
+                % (lava_test_results_dir, lava_test_results_dir, running),
+                delay=self.character_delay,
+            )
 
-                test_connection.timeout = min(
-                    self.timeout.duration, self.connection_timeout.duration
-                )
-                self.logger.info(
-                    "Test shell timeout: %ds (minimum of the action and connection timeout)",
-                    test_connection.timeout,
-                )
+            connection.timeout = min(
+                self.timeout.duration, self.connection_timeout.duration
+            )
+            self.logger.info(
+                "Test shell timeout: %ds (minimum of the action and connection timeout)",
+                connection.timeout,
+            )
 
-                # Because of the feedbacks, we use a small value for the
-                # timeout.  This allows to grab feedback regularly.
-                last_check = time.monotonic()
-                while self._keep_running(test_connection, test_connection.timeout):
-                    # Only grab the feedbacks every test_connection.timeout
-                    if (
-                        feedbacks
-                        and time.monotonic() - last_check > test_connection.timeout
-                    ):
-                        for feedback in feedbacks:
-                            # The timeout is really small because the goal is only
-                            # to clean the buffer of the feedback connections:
-                            # the characters are already in the buffer.
-                            # With an higher timeout, this can have a big impact on
-                            # the performances of the overall loop.
-                            bytes_read = feedback[1].listen_feedback(
-                                timeout=1, namespace=feedback[0]
+            # Because of the feedbacks, we use a small value for the
+            # timeout.  This allows to grab feedback regularly.
+            last_check = time.monotonic()
+            if max_end_time is None:
+                keep_running_timeout = connection.timeout.duration
+            else:
+                keep_running_timeout = max_end_time - time.monotonic()
+            while self._keep_running(connection, keep_running_timeout):
+                # Only grab the feedbacks every connection.timeout
+                if feedbacks and time.monotonic() - last_check > connection.timeout:
+                    for feedback in feedbacks:
+                        # The timeout is really small because the goal is only
+                        # to clean the buffer of the feedback connections:
+                        # the characters are already in the buffer.
+                        # With an higher timeout, this can have a big impact on
+                        # the performances of the overall loop.
+                        bytes_read = feedback[1].listen_feedback(
+                            timeout=1, namespace=feedback[0]
+                        )
+                        if bytes_read > 0:
+                            self.logger.debug(
+                                "Listened to connection for namespace '%s' done",
+                                feedback[0],
                             )
-                            if bytes_read > 0:
-                                self.logger.debug(
-                                    "Listened to connection for namespace '%s' done",
-                                    feedback[0],
-                                )
-                        last_check = time.monotonic()
+                    last_check = time.monotonic()
         finally:
             if self.current_run is not None:
                 self.logger.error("Marking unfinished test run as failed")
@@ -553,8 +554,8 @@ class TestShellAction(ReportMixin, Action):
         return name
 
     @nottest
-    def pattern_test_case(self, test_connection):
-        match = test_connection.match
+    def pattern_test_case(self, connection: ShellSession) -> bool:
+        match = connection.raw_connection.match
         if match is pexpect.TIMEOUT:
             self.logger.warning("err: lava_test_shell has timed out (test_case)")
             return False
@@ -565,8 +566,8 @@ class TestShellAction(ReportMixin, Action):
         return True
 
     @nottest
-    def pattern_test_case_result(self, test_connection):
-        res = test_connection.match.groupdict()
+    def pattern_test_case_result(self, connection: ShellSession) -> bool:
+        res = connection.raw_connection.match.groupdict()
         fixupdict = self.pattern.fixupdict()
         if fixupdict and res["result"] in fixupdict:
             res["result"] = fixupdict[res["result"]]
@@ -597,7 +598,7 @@ class TestShellAction(ReportMixin, Action):
             self.report[res["test_case_id"]] = res["result"]
         return True
 
-    def check_patterns(self, event, test_connection):
+    def check_patterns(self, event, connection: ShellSession):
         """
         Defines the base set of pattern responses.
         Stores the results of testcases inside the TestAction
@@ -621,7 +622,7 @@ class TestShellAction(ReportMixin, Action):
             ret_val = True
 
         elif event == "signal":
-            name, params = test_connection.match.groups()
+            name, params = connection.raw_connection.match.groups()
             self.logger.debug(f"Received signal: <{name}> {params}")
             params = params.split()
             if name == "STARTRUN":
@@ -657,18 +658,21 @@ class TestShellAction(ReportMixin, Action):
             ret_val = True
 
         elif event == "test_case":
-            ret_val = self.pattern_test_case(test_connection)
+            ret_val = self.pattern_test_case(connection)
         elif event == "test_case_result":
-            ret_val = self.pattern_test_case_result(test_connection)
+            ret_val = self.pattern_test_case_result(connection)
         return ret_val
 
-    def _keep_running(self, test_connection, timeout):
+    def _keep_running(self, connection: ShellSession, timeout: float):
         if "test_case_results" in self.patterns:
             self.logger.info(
                 "Test case result pattern: %r" % self.patterns["test_case_results"]
             )
-        retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
-        return self.check_patterns(list(self.patterns.keys())[retval], test_connection)
+        with connection._expect_exc_wrapper():
+            retval = connection.raw_connection.expect(
+                list(self.patterns.values()), timeout=timeout
+            )
+        return self.check_patterns(list(self.patterns.keys())[retval], connection)
 
     def cleanup(self, connection, max_end_time=None):
         super().cleanup(connection, max_end_time=None)

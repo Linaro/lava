@@ -14,9 +14,14 @@ from lava_dispatcher.actions.test.shell import TestShellAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
-class FakeConnection:
+class FakeSpawn:
     def __init__(self, match):
         self.match = match
+
+
+class FakeConnection:
+    def __init__(self, match):
+        self.raw_connection = FakeSpawn(match)
 
 
 class TestSkipTimeouts(LavaDispatcherTestCase):
