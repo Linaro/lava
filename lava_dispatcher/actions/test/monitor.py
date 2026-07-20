@@ -96,8 +96,10 @@ class TestMonitorAction(ReportMixin, Action):
         return connection
 
     def _keep_running(self, test_connection, monitor, timeout=120):
-        self.logger.debug("test monitoring timeout: %d seconds", timeout)
-        retval = test_connection.expect(list(self.patterns.values()), timeout=timeout)
+        self.logger.debug("test monitoring timeout: %d seconds", timeout.duration)
+        retval = test_connection.expect(
+            list(self.patterns.values()), timeout=timeout.duration
+        )
         return self.check_patterns(
             list(self.patterns.keys())[retval], test_connection, monitor
         )
