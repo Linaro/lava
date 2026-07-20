@@ -222,7 +222,7 @@ class ShellSession:
                 self._sendline_wrapper(line, delay=delay)
             else:
                 signal: str = "LAVA_SIGNAL_RETRUNCODE"
-                self._send_wrapper(f'{line} ; printf "<{signal} $?>\\n"', delay=delay)
+                self._sendline_wrapper(f'{line} ; printf "<{signal} $?>\\n"', delay=delay)
                 self.logger.debug(
                     f"Checking {line!r} return code... "
                     f"(timeout {seconds_to_str(timeout)})"
