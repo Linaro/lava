@@ -9,7 +9,7 @@ import contextlib
 import time
 from contextlib import contextmanager
 from os import killpg as os_killpg
-from re import Pattern
+from re import Match
 from re import error as re_error
 from re import split as re_split
 from signal import SIGKILL
@@ -238,7 +238,7 @@ class ShellSession:
                         timeout=timeout,
                     )
                     match = self.raw_connection.match
-                if isinstance(match, Pattern):
+                if isinstance(match, Match):
                     rc = match.group(1)
                     with contextlib.suppress(TypeError, ValueError):
                         if rc := int(rc):
