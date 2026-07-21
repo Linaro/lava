@@ -32,7 +32,12 @@ def device():
             Optional("power_on"): Any(str, [str]),
             Optional("pre_power_command"): Any(str, [str]),
             Optional("pre_os_command"): Any(str, [str]),
-            Optional("users"): {str: {Required("do"): str, Optional("undo"): str}},
+            Optional("users"): {
+                str: {
+                    Required("do"): Any(str, [str]),
+                    Optional("undo"): Any(str, [str]),
+                }
+            },
         },
         Required("constants"): dict,
         Optional("adb_serial_number"): str,
