@@ -1,5 +1,5 @@
 exclude: "^tests/lava_dispatcher/kernel-.*txt$|uv.lock"
-minimum_pre_commit_version: "4.6.0"
+minimum_pre_commit_version: "4.6.1"
 
 default_language_version:
   python: python3.11
@@ -44,7 +44,7 @@ repos:
         args: ["--target-version", "4.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.15.22
     hooks:
       - id: ruff-check
         args: [ "--fix", "--exit-non-zero-on-fix" ]
@@ -107,7 +107,7 @@ repos:
         always_run: true
 
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.2
+    rev: v2.4.3
     hooks:
       - id: codespell
         additional_dependencies:
@@ -124,7 +124,7 @@ repos:
           - "--severity-level=medium"
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.2.0
+    rev: v2.3.0
     hooks:
       - id: mypy
         additional_dependencies:
@@ -217,6 +217,6 @@ repos:
   #         - "whitenoise==6.12.0"
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.25.1
+    rev: v2.25.3
     hooks:
       - id: pyproject-fmt
