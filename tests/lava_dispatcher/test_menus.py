@@ -164,6 +164,20 @@ class TestUefi(LavaDispatcherTestCase):
         for item, check in zip(selector.items, check_block):
             self.assertEqual(item["select"], check)
 
+    def test_pre_os_command_string_tokenised(self):
+        self.job.device["commands"] = {"pre_os_command": "foo bar"}
+        selector = self.job.pipeline.find_action(UefiMenuSelector)
+        with patch.object(selector, "run_command", return_value=True) as mock_run:
+            self.assertIsNone(selector.run(None, Timeout("fake", 30)))
+        mock_run.assert_called_once_with(["foo", "bar"], allow_silent=True)
+
+    def test_pre_os_command_list_preserved(self):
+        self.job.device["commands"] = {"pre_os_command": ["mycmd", "hello world"]}
+        selector = self.job.pipeline.find_action(UefiMenuSelector)
+        with patch.object(selector, "run_command", return_value=True) as mock_run:
+            self.assertIsNone(selector.run(None, Timeout("fake", 30)))
+        mock_run.assert_called_once_with(["mycmd", "hello world"], allow_silent=True)
+
     @patch(
         "lava_dispatcher.actions.deploy.tftp.which", return_value="/usr/bin/in.tftpd"
     )
