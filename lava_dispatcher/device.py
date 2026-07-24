@@ -40,34 +40,41 @@ class DeviceDict(dict[str, Any]):
         with open(path) as f:
             return cls.from_yaml_str(f.read())
 
+    @staticmethod
+    def _coerce_command(value: Any) -> str | list[str]:
+        if value is None:
+            return ""
+        if isinstance(value, bool):
+            return str(value)
+        if isinstance(value, list):
+            return value
+        return str(value)
+
     @property
     def hard_reset_command(self) -> str | list[str]:
-        hard_reset_command: str | list[str] = self.get("commands", {}).get(
-            "hard_reset", ""
-        )
-        return hard_reset_command
+        return self._coerce_command(self.get("commands", {}).get("hard_reset", ""))
 
     @property
     def soft_reboot_command(self) -> str | list[str]:
-        soft_reboot_command: str | list[str] = self.get("commands", {}).get(
-            "soft_reboot", ""
-        )
-        return soft_reboot_command
+        return self._coerce_command(self.get("commands", {}).get("soft_reboot", ""))
 
     @property
-    def pre_os_command(self) -> str:
-        pre_os_command: str = self.get("commands", {}).get("pre_os_command")
-        return pre_os_command
+    def pre_os_command(self) -> str | list[str] | None:
+        value = self.get("commands", {}).get("pre_os_command")
+        if value is None:
+            return None
+        return self._coerce_command(value)
 
     @property
-    def pre_power_command(self) -> str:
-        pre_power_command: str = self.get("commands", {}).get("pre_power_command")
-        return pre_power_command
+    def pre_power_command(self) -> str | list[str] | None:
+        value = self.get("commands", {}).get("pre_power_command")
+        if value is None:
+            return None
+        return self._coerce_command(value)
 
     @property
     def power_command(self) -> str | list[str]:
-        power_command: str | list[str] = self.get("commands", {}).get("power_on", "")
-        return power_command
+        return self._coerce_command(self.get("commands", {}).get("power_on", ""))
 
     @property
     def connect_command(self) -> str:
@@ -76,15 +83,13 @@ class DeviceDict(dict[str, Any]):
                 "commands section not present in the device config."
             )
         if "connect" in self["commands"]:
-            commands_connect: str = self["commands"]["connect"]
-            return commands_connect
+            return str(self["commands"]["connect"])
         elif "connections" in self["commands"]:
             for value in self["commands"]["connections"].values():
                 if "connect" not in value:
                     return ""
                 if "tags" in value and "primary" in value["tags"]:
-                    hardware_value_connect: str = value["connect"]
-                    return hardware_value_connect
+                    return str(value["connect"])
         return ""
 
     def get_constant(
