@@ -282,3 +282,32 @@ class TestCommand(LavaDispatcherTestCase):
             log = fake.run_command(command.split(" "), allow_silent=True)
         self.assertFalse(log)
         self.assertNotEqual([], fake.errors)
+
+
+class TestCoerceCommand(LavaDispatcherTestCase):
+    def test_none_returns_empty_string(self):
+        self.assertEqual(DeviceDict._coerce_command(None), "")
+
+    def test_int_coerced_to_str(self):
+        self.assertEqual(DeviceDict._coerce_command(5), "5")
+
+    def test_bool_coerced_to_str(self):
+        self.assertEqual(DeviceDict._coerce_command(True), "True")
+
+    def test_str_passthrough(self):
+        self.assertEqual(DeviceDict._coerce_command("cmd"), "cmd")
+
+    def test_list_of_str_passthrough(self):
+        self.assertEqual(DeviceDict._coerce_command(["a", "b"]), ["a", "b"])
+
+    def test_list_elements_coerced_to_str(self):
+        self.assertEqual(DeviceDict._coerce_command([1, 2]), ["1", "2"])
+
+    def test_command_property_returns_list_of_str(self):
+        device = DeviceDict({"commands": {"hard_reset": [1, 2]}})
+        self.assertEqual(device.hard_reset_command, ["1", "2"])
+
+    def test_missing_pre_os_command_stays_none(self):
+        device = DeviceDict({"commands": {}})
+        self.assertIsNone(device.pre_os_command)
+        self.assertIsNone(device.pre_power_command)
