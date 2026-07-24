@@ -152,7 +152,9 @@ class UefiMenuSelector(SelectorMenuAction):
         if self.job.device.pre_os_command:
             self.logger.info("Running pre OS command.")
             command = self.job.device.pre_os_command
-            if not self.run_command(command.split(" "), allow_silent=True):
+            if not isinstance(command, list):
+                command = [command]
+            if not self.run_command(command, allow_silent=True):
                 raise InfrastructureError("%s failed" % command)
         if not connection:
             self.logger.debug("Existing connection in %s", self.name)

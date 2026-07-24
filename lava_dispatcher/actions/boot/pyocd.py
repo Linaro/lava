@@ -126,7 +126,9 @@ class FlashPyOCDAction(Action):
 
         pre_os_command = self.job.device.pre_os_command
         if pre_os_command:
-            self.exec_list.append(pre_os_command.split(" "))
+            if not isinstance(pre_os_command, list):
+                pre_os_command = [pre_os_command]
+            self.exec_list.append(pre_os_command)
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
