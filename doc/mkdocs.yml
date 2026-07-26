@@ -16,8 +16,11 @@ theme:
   variant: classic
   language: "en"
   features:
-  - navigation.tabs
   - content.code.copy
+  - navigation.indexes
+  - navigation.tabs
+  - navigation.top
+  - navigation.tracking
   palette:
     primary: "light-green"
     accent: "light-green"
@@ -25,15 +28,45 @@ theme:
   logo: assets/images/logo.png
   favicon: assets/images/favicon.png
 
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
+
+not_in_nav: |
+  v2/*
+
 markdown_extensions:
-- admonition
-- toc:
 - abbr
+- admonition
+- attr_list
+- def_list
+- footnotes
+- md_in_html
+- meta
+- pymdownx.caret
 - pymdownx.details
+- pymdownx.inlinehilite
+- pymdownx.keys
+- pymdownx.mark
+- pymdownx.smartsymbols
+- pymdownx.tabbed
+- pymdownx.tilde
+- smarty
+- tables
+- toc
+- pymdownx.arithmatex:
+    generic: true
+- pymdownx.betterem:
+    smart_enable: all
 - pymdownx.highlight:
     anchor_linenums: true
     pygments_lang_class: true
-- pymdownx.inlinehilite
+- pymdownx.magiclink:
+    repo_url_shorthand: true
+    user: lava
+    repo: lava
 - pymdownx.superfences:
     custom_fences:
       - name: mermaid
@@ -42,7 +75,15 @@ markdown_extensions:
     base_path: _snippets/
     check_paths: False
 - pymdownx.tabbed:
-- tables
+- pymdownx.tasklist:
+    custom_checkbox: true
+- pymdownx.superfences:
+    custom_fences:
+      - name: mermaid
+        class: mermaid
+- pymdownx.snippets:
+    base_path: _snippets/
+    check_paths: False
 
 nav:
 - Home: index.md
