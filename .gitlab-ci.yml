@@ -152,7 +152,7 @@ mypy:
 doc:
   extends: .job
   stage: build
-  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
+  image: registry.gitlab.com/lava/ci-images/amd64/analyze-debian-13
   artifacts:
     paths:
       - doc/site

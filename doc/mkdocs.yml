@@ -12,12 +12,9 @@ use_directory_urls: false
 
 copyright: Copyright &copy; 2010 - 2026 Linaro Limited
 
-# https://squidfunk.github.io/mkdocs-material/
-# python3 -m pip install mkdocs-material
 theme:
-  name: "material"
+  variant: classic
   language: "en"
-  include_sidebar: true
   features:
   - navigation.tabs
   - content.code.copy
@@ -28,26 +25,23 @@ theme:
   logo: assets/images/logo.png
   favicon: assets/images/favicon.png
 
-# https://squidfunk.github.io/mkdocs-material/getting-started/#customization
 markdown_extensions:
 - admonition
-- codehilite
 - toc:
-    permalink: true
-- markdown.extensions.abbr
-# https://github.com/simonrenger/markdown-include-lines
-# https://squidfunk.github.io/mkdocs-material/extensions/pymdown/
+- abbr
 - pymdownx.details
+- pymdownx.highlight:
+    anchor_linenums: true
+    pygments_lang_class: true
+- pymdownx.inlinehilite
 - pymdownx.superfences:
     custom_fences:
       - name: mermaid
         class: mermaid
-        format: !!python/name:pymdownx.superfences.fence_code_format
 - pymdownx.snippets:
-    base_path: doc/content/_snippets/
-    check_paths: True
+    base_path: _snippets/
+    check_paths: False
 - pymdownx.tabbed:
-    alternate_style: true
 - tables
 
 nav:
