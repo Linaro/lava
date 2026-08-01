@@ -23,6 +23,7 @@ from lava_dispatcher.utils.compression import (
     cpio,
     create_tarfile,
     decompress_file,
+    split_initramfs,
     uncpio,
     untar_file,
 )
@@ -522,3 +523,110 @@ class TestTar(TestCase):
             untar_file(str(output_tar_path), str(unpack_dir))
 
             self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
+
+
+class TestSplitInitramfs(TestCase):
+    """Tests for split_initramfs function."""
+
+    def test_split_single_part(self) -> None:
+        """Single-part initramfs returns one part."""
+        with TemporaryDirectory("test-split-single") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            # Create a simple cpio
+            test_dir = tmp_dir_path / "rootfs"
+            test_dir.mkdir()
+            (test_dir / "init").write_text("#!/bin/sh\necho hello")
+            (test_dir / "init").chmod(0o755)
+
+            cpio_file = tmp_dir_path / "initramfs.cpio"
+            cpio(str(test_dir), str(cpio_file))
+
+            # Split should return one part
+            parts_dir = tmp_dir_path / "parts"
+            parts = split_initramfs(str(cpio_file), str(parts_dir))
+
+            self.assertEqual(len(parts), 1)
+            self.assertTrue(parts[0].endswith("part_00.cpio"))
+
+            # Extract and verify
+            extract_dir = tmp_dir_path / "extracted"
+            extract_dir.mkdir()
+            uncpio(parts[0], str(extract_dir))
+            self.assertTrue((extract_dir / "init").exists())
+
+    def test_split_multi_part_gz(self) -> None:
+        """Multi-part initramfs with gzip compression splits correctly."""
+        with TemporaryDirectory("test-split-multi-gz") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            # Create part 1: uncompressed cpio with modules
+            dir1 = tmp_dir_path / "part1"
+            dir1.mkdir()
+            (dir1 / "modules.txt").write_text("kernel modules")
+
+            cpio1 = tmp_dir_path / "part1.cpio"
+            cpio(str(dir1), str(cpio1))
+
+            # Create part 2: gzipped cpio with init
+            dir2 = tmp_dir_path / "part2"
+            dir2.mkdir()
+            (dir2 / "init").write_text("#!/bin/sh\necho hello")
+            (dir2 / "init").chmod(0o755)
+
+            cpio2 = tmp_dir_path / "part2.cpio"
+            cpio(str(dir2), str(cpio2))
+
+            # Gzip part 2
+            import gzip
+
+            with open(cpio2, "rb") as f_in:
+                with gzip.open(tmp_dir_path / "part2.cpio.gz", "wb") as f_out:
+                    f_out.write(f_in.read())
+
+            # Concatenate into multi-part initramfs
+            multi_file = tmp_dir_path / "initramfs.cpio.gz"
+            with (
+                open(cpio1, "rb") as f1,
+                open(tmp_dir_path / "part2.cpio.gz", "rb") as f2,
+            ):
+                multi_file.write_bytes(f1.read() + f2.read())
+
+            # Split should return two parts
+            parts_dir = tmp_dir_path / "parts"
+            parts = split_initramfs(str(multi_file), str(parts_dir))
+
+            self.assertEqual(len(parts), 2)
+
+            # Extract all parts
+            extract_dir = tmp_dir_path / "extracted"
+            extract_dir.mkdir()
+            for part in parts:
+                # Decompress if needed
+                from lava_dispatcher.utils.compression import _decompress_if_needed
+
+                part_decompressed = _decompress_if_needed(part, "gz")
+                uncpio(part_decompressed, str(extract_dir))
+
+            # Verify both parts were extracted
+            self.assertTrue((extract_dir / "modules.txt").exists())
+            self.assertEqual(
+                (extract_dir / "modules.txt").read_text(), "kernel modules"
+            )
+            self.assertTrue((extract_dir / "init").exists())
+            self.assertEqual(
+                (extract_dir / "init").read_text(), "#!/bin/sh\necho hello"
+            )
+
+    def test_split_invalid_file(self) -> None:
+        """Invalid file raises JobError."""
+        with TemporaryDirectory("test-split-invalid") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+
+            # Create an invalid file
+            invalid_file = tmp_dir_path / "invalid.cpio"
+            invalid_file.write_bytes(b"not a cpio archive")
+
+            parts_dir = tmp_dir_path / "parts"
+            with self.assertRaises(JobError):
+                split_initramfs(str(invalid_file), str(parts_dir))
