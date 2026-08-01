@@ -18,10 +18,12 @@ from lava_common.utils import debian_filename_version
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.deploy.prepare import PrepareKernelAction
 from lava_dispatcher.utils.compression import (
+    _decompress_if_needed,
     compress_file,
     cpio,
     create_tarfile,
     decompress_file,
+    split_initramfs,
     uncpio,
     untar_file,
 )
@@ -601,8 +603,20 @@ class ExtractRamdisk(Action):
         else:
             # give the file a predictable name
             shutil.move(ramdisk, ramdisk_compressed_data)
-        ramdisk_data = decompress_file(ramdisk_compressed_data, compression)
-        uncpio(ramdisk_data, extracted_ramdisk)
+        # Handle multi-part initramfs (uncompressed cpio + compressed cpio)
+        # introduced by mkinitramfs v0.146+
+        parts_dir = self.mkdtemp()
+        try:
+            parts = split_initramfs(ramdisk_compressed_data, parts_dir)
+        except JobError:
+            # Not a valid cpio or single-part - fall back to original behavior
+            parts = [ramdisk_compressed_data]
+
+        # Extract all parts
+        for part in parts:
+            # Detect if this part is compressed by checking magic bytes
+            part_decompressed = _decompress_if_needed(part, compression)
+            uncpio(part_decompressed, extracted_ramdisk)
 
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(
@@ -612,7 +626,7 @@ class ExtractRamdisk(Action):
             value=extracted_ramdisk,
         )
         self.set_namespace_data(
-            action=self.name, label="ramdisk_file", key="file", value=ramdisk_data
+            action=self.name, label="ramdisk_file", key="file", value=extracted_ramdisk
         )
         return connection
 
