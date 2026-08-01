@@ -231,6 +231,7 @@ ignore-words-list = [ "distroname", "hart", "Hart", "Nd", "NotIn" ]
 skip = [
   ".gitlab-ci/analyze/codespell.ignore",
   "debian/po/*.po",
+  "doc/content/assets/images/logos/*.svg",
   "doc/v2/images/*.svg",
   "lava_*/static/lava_*/js/*.js",
 ]
