@@ -57,6 +57,7 @@ nav:
   - Features: introduction/features.md
   - Getting started: introduction/getting-started.md
   - Glossary: introduction/glossary.md
+  - Testimony: introduction/testimony.md
   - Use cases:
     - Boot testing: introduction/use-cases/boot-testing.md
     - Bootloader testing: introduction/use-cases/bootloader-testing.md
