@@ -20,6 +20,17 @@ from lava_dispatcher.utils.udev import WaitQDLDeviceAction
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
+# The version reported by "qdl --version" depends on how qdl was built:
+#   "qdl version v2.7"          built from a git tag
+#   "qdl version 2.7-1~bpo13+1" built from a Debian package, which reports the
+#                               Debian package version, i.e.
+#                               [epoch:]upstream_version[-debian_revision]
+# Only the major and minor numbers of the upstream version are of interest,
+# anything after them is ignored.
+QDL_VERSION_PATTERN = re.compile(
+    r"qdl version (?:\d+:)?v?(?P<major>\d+)\.(?P<minor>\d+)"
+)
+
 
 class BootQDLRetry(RetryAction):
     name = "boot-qdl-retry"
@@ -85,10 +96,11 @@ class FlashQDLAction(Action):
 
         try:
             boot = self.job.device["actions"]["boot"]["methods"]["qdl"]
-            qdl_binary = which(boot["parameters"]["command"])
+            qdl_command = boot["parameters"]["command"]
+            qdl_binary = which(qdl_command)
             if not qdl_binary:
-                self.logger.error("qdl not installed")
-                raise ConfigurationError("qdl not installed")
+                self.logger.error("%r was not found in PATH", qdl_command)
+                raise ConfigurationError(f"qdl not installed: {qdl_command} not found")
             # all paths are relative to the tarball
             qdl_flashing_prog_path = self.parameters["firehose_program"]
             qdl_rawprogram_path = self.parameters["rawprogram"]
@@ -100,27 +112,29 @@ class FlashQDLAction(Action):
             # execute qdl to detect version
             version_command = [qdl_binary, "--version"]
             qdl_output = self.parsed_command(version_command)
-            # qdl version v2.7
-            match = re.search(
-                r"qdl\ version\ v(?P<version_major>\d+).(?P<version_minor>\d+)",
-                qdl_output,
-            )
-            if match:
-                version_major = int(match.group("version_major"))
-                version_minor = int(match.group("version_minor"))
-                if version_major < 2:
-                    # version lower than 2.0 is unsupported
-                    self.logger.error("qdl version 2.0 or higher is required")
-                    self.logger.error(
-                        f"Detected qdl version: v{version_major}.{version_minor}"
-                    )
-                    raise ConfigurationError("qdl version too low")
+            match = QDL_VERSION_PATTERN.search(qdl_output)
+            if not match:
+                self.logger.error(
+                    "Unable to parse the version reported by '%s --version': %r",
+                    qdl_binary,
+                    qdl_output.strip(),
+                )
+                raise ConfigurationError(
+                    f"Unable to parse the version of qdl at {qdl_binary}"
+                )
+            version = (int(match.group("major")), int(match.group("minor")))
+            self.logger.info("Detected qdl version %d.%d at %s", *version, qdl_binary)
 
-                if version_major == 2 and version_minor >= 7:
-                    # --skipblock=sha256 is available
-                    self.base_command.append("--skipblock=sha256")
-            else:
-                raise ConfigurationError("qdl not installed")
+            if version < (2, 0):
+                # version lower than 2.0 is unsupported
+                self.logger.error("qdl version 2.0 or higher is required")
+                raise ConfigurationError(
+                    "qdl version %d.%d is too low, 2.0 or higher is required" % version
+                )
+
+            if version >= (2, 7):
+                # --skipblock=sha256 is available
+                self.base_command.append("--skipblock=sha256")
 
             if qdl_debug:
                 self.base_command.extend(["--debug"])
@@ -138,8 +152,8 @@ class FlashQDLAction(Action):
             )
         except AttributeError as exc:
             raise ConfigurationError(exc)
-        except (KeyError, TypeError):
-            self.errors_add("Invalid parameters for %s" % self.name)
+        except (KeyError, TypeError) as exc:
+            self.errors_add(f"Invalid parameters for {self.name}: {exc}")
         self.exec_list.append(self.base_command)
         if not self.exec_list:
             self.errors_add("No QDL commands to execute")
