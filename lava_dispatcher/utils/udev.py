@@ -117,12 +117,6 @@ class WaitQDLDeviceAction(Action):
         usb_vendor_id = self.job.device.get("usb_vendor_id", "")
         usb_product_id = self.job.device.get("usb_product_id", "")
         if board_id == "QUSB_BULK_CID:0420_SN:00000000":
-            # board_qdl_id is a part of board_id
-            # usual device dictionary entry should be as follows
-            # {% set board_qdl_id = 'BA9B2FEB' %}
-            # {% set board_id = "QUSB_BULK_CID:040E_SN:" + board_qdl_id %}
-            # board_qdl_id is used by qdl for flashing
-            # board_id is used by LAVA to detect the device enumeration
             self.errors_add("[QDL] board_id unset")
         if usb_vendor_id == "0000":
             self.errors_add("usb_vendor_id unset")
