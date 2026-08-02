@@ -44,7 +44,7 @@ repos:
         args: ["--target-version", "4.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.22
+    rev: v0.16.1
     hooks:
       - id: ruff-check
         args: [ "--fix", "--exit-non-zero-on-fix" ]
@@ -217,6 +217,6 @@ repos:
   #         - "whitenoise==6.12.0"
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.25.3
+    rev: v2.26.0
     hooks:
       - id: pyproject-fmt
