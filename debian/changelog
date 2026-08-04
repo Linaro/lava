@@ -1,3 +1,18 @@
+lava (2026.07-1) unstable; urgency=medium
+
+  * LAVA Software 2026.07 release
+
+  [ Fathi Boudra ]
+  * [06af7fc17] pre-commit: add ruff format hook
+
+  [ Christopher Obbard ]
+  * [c3a396732] d/tests: depend on @ for lava binaries in management and testsuite
+
+  [ Luca Boccassi ]
+  * [a63eb1ef8] Install and use sysusers.d config files
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Tue, 04 Aug 2026 16:42:13 +0200
+
 lava (2026.06-1) unstable; urgency=medium
 
   * LAVA Software 2026.06 release
