@@ -250,6 +250,77 @@ class TestTestJob(TestCaseWithFactory):
         )
 
 
+class TestTestJobMetadata(TestCaseWithFactory):
+    def setUp(self):
+        super().setUp()
+        self.factory.cleanup()
+        self.user = self.factory.make_user()
+        self.device_type = self.factory.make_device_type(name="qemu")
+        self.factory.make_device(device_type=self.device_type, hostname="qemu-1")
+
+    def submit(self, **kw):
+        definition = yaml_safe_load(self.factory.make_job_data_from_file("qemu.yaml"))
+        definition.update(kw)
+        return TestJob.from_yaml_and_user(yaml_safe_dump(definition), self.user)
+
+    def test_metadata_is_extracted(self):
+        job = self.submit(
+            metadata={
+                "build_id": 1234,
+                "branch": "release/1.0",
+                "verified": True,
+                "empty": None,
+                "build": {"id": 5678, "url": "http://example.com/5678"},
+                "arches": ["arm64", "armhf"],
+            }
+        )
+        job.refresh_from_db()
+        self.assertEqual(
+            job.metadata,
+            {
+                # scalars are stored as strings, so that filtering does not
+                # depend on the type YAML gave them
+                "build_id": "1234",
+                "branch": "release/1.0",
+                "verified": "true",
+                "empty": None,
+                "build": {"id": "5678", "url": "http://example.com/5678"},
+                "arches": ["arm64", "armhf"],
+            },
+        )
+
+    def test_metadata_defaults_to_empty_dict(self):
+        job = self.submit()
+        job.refresh_from_db()
+        self.assertEqual(job.metadata, {})
+
+    def test_metadata_of_wrong_type_is_ignored(self):
+        # the schema requires a dictionary, but jobs are also created from
+        # definitions that were never validated (health checks, resubmits of
+        # old jobs, ...)
+        job = self.submit(metadata="not a dictionary")
+        job.refresh_from_db()
+        self.assertEqual(job.metadata, {})
+
+    def test_metadata_of_multinode_sub_jobs(self):
+        self.factory.make_device(device_type=self.device_type, hostname="qemu-2")
+        definition = yaml_safe_load(
+            self.factory.make_job_data_from_file("kvm-multinode.yaml")
+        )
+        for role in definition["protocols"]["lava-multinode"]["roles"].values():
+            role.pop("tags", None)
+        jobs = TestJob.from_yaml_and_user(yaml_safe_dump(definition), self.user)
+        self.assertEqual(len(jobs), 2)
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.metadata, {"source": "lava_scheduler_app unit tests"})
+
+    def test_get_metadata_dict(self):
+        job = self.submit(metadata={"build_id": 1234})
+        job.refresh_from_db()
+        self.assertEqual(job.get_metadata_dict(), [{"build_id": "1234"}])
+
+
 class TestNotificationCreate(TestCaseWithFactory):
     JOB_DEFINITION_FILE = "qemu.yaml"
 

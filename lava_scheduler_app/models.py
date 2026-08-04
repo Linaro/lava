@@ -22,6 +22,7 @@ from django.conf import settings
 from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.postgres.indexes import GinIndex
 from django.contrib.sites.models import Site
 from django.core.exceptions import (
     ImproperlyConfigured,
@@ -1223,6 +1224,33 @@ def _get_device_type(user, name):
     return device_type
 
 
+def _normalize_metadata_value(value):
+    if isinstance(value, dict):
+        return {str(key): _normalize_metadata_value(val) for key, val in value.items()}
+    if isinstance(value, list):
+        return [_normalize_metadata_value(val) for val in value]
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value)
+
+
+def extract_job_metadata(job_data):
+    """
+    Extract the "metadata" dictionary from a job definition.
+
+    Scalar values are stored as strings so that filtering does not depend on
+    the type YAML happened to give them: jobs submitted with "build_id: 1234"
+    and with "build_id: '1234'" are both matched by ?metadata__build_id=1234.
+    Nested dictionaries and lists are kept as they are.
+    """
+    metadata = job_data.get("metadata")
+    if not isinstance(metadata, dict):
+        return {}
+    return {str(key): _normalize_metadata_value(val) for key, val in metadata.items()}
+
+
 def _create_pipeline_job(
     job_data,
     user,
@@ -1297,6 +1325,7 @@ def _create_pipeline_job(
     with transaction.atomic():
         job = TestJob(
             definition=yaml_safe_dump(job_data),
+            metadata=extract_job_metadata(job_data),
             original_definition=orig,
             submitter=user,
             requested_device_type=device_type,
@@ -1502,6 +1531,7 @@ class TestJob(models.Model):
                     health_check=False, state=5
                 ),  # HACK: refers to TestJob.STATE_FINISHED
             ),
+            GinIndex(name="testjob_metadata_gin_index", fields=("metadata",)),
         )
         constraints = (
             models.UniqueConstraint(
@@ -1901,6 +1931,11 @@ class TestJob(models.Model):
     )
 
     definition = models.TextField(editable=False)
+
+    # The "metadata" dictionary from the job definition, extracted at
+    # submission time so that jobs can be filtered by metadata key/value
+    # without parsing the definition.
+    metadata = models.JSONField(default=dict, blank=True, editable=False)
 
     original_definition = models.TextField(editable=False, blank=True)
 
@@ -2342,16 +2377,16 @@ class TestJob(models.Model):
         results = {}
         attributes = [x.strip() for x in attributes.split(",")]
 
-        if hasattr(self, "testdata"):
-            for attr in self.testdata.attributes.all():
-                if attr.name in attributes:
-                    results[attr.name] = {}
-                    results[attr.name]["fail"] = self.health != self.HEALTH_COMPLETE
-                    try:
-                        results[attr.name]["value"] = float(attr.value)
-                    except ValueError:
-                        # Ignore non-float metadata.
-                        del results[attr.name]
+        for name, value in self.metadata.items():
+            if name in attributes:
+                try:
+                    results[name] = {
+                        "fail": self.health != self.HEALTH_COMPLETE,
+                        "value": float(value),
+                    }
+                except (TypeError, ValueError):
+                    # Ignore non-float metadata.
+                    continue
 
         return results
 
@@ -2361,18 +2396,12 @@ class TestJob(models.Model):
     def get_xaxis_attribute(self, xaxis_attribute=None):
         if not xaxis_attribute:
             return None
-        with contextlib.suppress(Exception):
-            if not hasattr(self, "testdata"):
-                return None
-            data = self.testdata.attributes.filter(name=xaxis_attribute)
-            return data.values_list("value", flat=True)[0]
+        return self.metadata.get(xaxis_attribute)
 
     def get_metadata_dict(self):
-        retval = []
-        if hasattr(self, "testdata"):
-            for attribute in self.testdata.attributes.all():
-                retval.append({attribute.name: attribute.value})
-        return retval
+        # Kept as a list of single-key dictionaries for backward compatibility
+        # with the v0.2 REST API and the notification job data.
+        return [{name: str(value)} for name, value in self.metadata.items()]
 
     def log_admin_entry(self, user, reason):
         if user is None:

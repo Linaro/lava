@@ -30,13 +30,7 @@ from django_tables2 import RequestConfig
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.dbutils import export_testsuite
-from lava_results_app.models import (
-    QueryCondition,
-    TestCase,
-    TestData,
-    TestSet,
-    TestSuite,
-)
+from lava_results_app.models import QueryCondition, TestCase, TestSet, TestSuite
 from lava_results_app.tables import ResultsTable, SuiteTable, TestJobResultsTable
 from lava_results_app.utils import (
     StreamEcho,
@@ -149,11 +143,7 @@ def testjob(request, job):
     suite_table = TestJobResultsTable(
         data.get_table_data().filter(pk=job.id), request=request
     )
-    yaml_dict = {}
-
-    if hasattr(job, "testdata"):
-        for data in job.testdata.attributes.all().order_by("name"):
-            yaml_dict[str(data.name)] = str(data.value)
+    yaml_dict = {key: job.metadata[key] for key in sorted(job.metadata)}
 
     RequestConfig(request, paginate={"per_page": suite_table.length}).configure(
         suite_table
@@ -333,23 +323,16 @@ def suite_testcase_count(request, job, testsuite_name):
 
 def metadata_export(request, job):
     """
-    Dispatcher adds some metadata,
-    Job submitter can add more.
+    Export the metadata of the job definition.
+    Jobs without any metadata export an empty document.
     CSV is not supported as the user-supplied metadata can
     include nested dicts or lists.
     """
     job = TestJob.get_restricted_job(job, request.user)
-    # testdata from job & export
-    if not hasattr(job, "testdata"):
-        raise Http404("No TestData present in test job.")
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_metadata_%s.yaml" % job.id
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
-    yaml_dict = {}
-    # hide internal python objects
-    for data in job.testdata.attributes.all():
-        yaml_dict[str(data.name)] = str(data.value)
-    yaml_safe_dump(yaml_dict, response)
+    yaml_safe_dump(job.metadata, response)
     return response
 
 
