@@ -15,6 +15,7 @@ from argparse import BooleanOptionalAction
 from shutil import chown, rmtree
 
 import voluptuous
+import yaml
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.mail import mail_admins
@@ -25,7 +26,7 @@ from django.utils import timezone
 
 from lava_common.schemas import validate
 from lava_common.yaml import yaml_safe_load
-from lava_scheduler_app.models import TestJob
+from lava_scheduler_app.models import TestJob, extract_job_metadata
 
 
 def _create_output_size(base, size):
@@ -164,6 +165,37 @@ class Command(BaseCommand):
             "that are present in the job definition but not defined in the schema",
         )
 
+        backfill = sub.add_parser(
+            "backfill-metadata",
+            help="Set TestJob.metadata from the job definition for jobs "
+            "submitted before the metadata column was added. Jobs that "
+            "already have metadata are left untouched.",
+        )
+        backfill.add_argument(
+            "--batch-size",
+            default=1000,
+            type=int,
+            help="Number of jobs to update per query",
+        )
+        backfill.add_argument(
+            "--start-id", default=None, type=int, help="First job id to consider"
+        )
+        backfill.add_argument(
+            "--end-id", default=None, type=int, help="Last job id to consider"
+        )
+        backfill.add_argument(
+            "--dry-run",
+            default=False,
+            action="store_true",
+            help="Do not update the database, simulate the output",
+        )
+        backfill.add_argument(
+            "--slow",
+            default=False,
+            action="store_true",
+            help="Be nice with the system by sleeping regularly",
+        )
+
         comp = sub.add_parser("compress", help="Compress the corresponding job logs")
         comp.add_argument(
             "--newer-than",
@@ -223,6 +255,14 @@ class Command(BaseCommand):
                 options["submitter"],
                 options["strict"],
                 options["mail_admins"],
+            )
+        elif options["sub_command"] == "backfill-metadata":
+            self.handle_backfill_metadata(
+                options["batch_size"],
+                options["start_id"],
+                options["end_id"],
+                options["dry_run"],
+                options["slow"],
             )
         elif options["sub_command"] == "compress":
             self.handle_compress(
@@ -341,6 +381,52 @@ class Command(BaseCommand):
             if slow and index and index % 100 == 99:
                 self.stdout.write("sleeping 2s...")
                 time.sleep(2)
+
+    def handle_backfill_metadata(self, batch_size, start_id, end_id, simulate, slow):
+        if batch_size < 1:
+            raise CommandError("batch-size should be at least 1")
+
+        jobs = TestJob.objects.filter(metadata={})
+        if start_id is not None:
+            jobs = jobs.filter(id__gte=start_id)
+        if end_id is not None:
+            jobs = jobs.filter(id__lte=end_id)
+        jobs = jobs.only("id", "definition").order_by("id")
+
+        self.stdout.write("Backfilling job metadata:")
+        batch = []
+        scanned = updated = 0
+        for scanned, job in enumerate(jobs.iterator(chunk_size=batch_size), start=1):
+            try:
+                job_data = yaml_safe_load(job.definition)
+            except yaml.YAMLError as exc:
+                self.stderr.write(f"* {job.id}: unable to parse the definition: {exc}")
+                continue
+            if not isinstance(job_data, dict):
+                continue
+            metadata = extract_job_metadata(job_data)
+            if not metadata:
+                continue
+
+            job.metadata = metadata
+            batch.append(job)
+            updated += 1
+            if len(batch) >= batch_size:
+                self._flush_metadata(batch, simulate, slow)
+                batch = []
+
+        self._flush_metadata(batch, simulate, slow)
+        self.stdout.write(f"-> {scanned} jobs scanned, {updated} updated")
+
+    def _flush_metadata(self, jobs, simulate, slow):
+        if not jobs:
+            return
+        self.stdout.write(f"* {jobs[0].id} .. {jobs[-1].id}")
+        if not simulate:
+            TestJob.objects.bulk_update(jobs, ["metadata"])
+        if slow:
+            self.stdout.write("sleeping 2s...")
+            time.sleep(2)
 
     def handle_validate(self, newer_than, submitter, strict, should_mail_admins):
         jobs = TestJob.objects.all().order_by("id")

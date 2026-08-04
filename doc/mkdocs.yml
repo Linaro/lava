@@ -113,6 +113,7 @@ nav:
     - Docker worker: admin/advanced-tutorials/docker-worker.md
     - Deploying RPi4 as worker: admin/advanced-tutorials/deploying-rpi4b-as-worker.md
     - Device dictionary sync: admin/advanced-tutorials/sync-records-from-dictionary.md
+    - Backfill job metadata: admin/advanced-tutorials/backfill-job-metadata.md
     - Logs in NoSQL: admin/advanced-tutorials/logging-database.md
     - Trouble shooting: admin/advanced-tutorials/trouble-shooting.md
 

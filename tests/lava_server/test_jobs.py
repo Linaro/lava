@@ -155,3 +155,74 @@ def test_jobs_rm_favorite_preserved(job1, job2):
 
     assert not TestJob.objects.filter(id=job1.id).exists()
     assert not Path(job1.output_dir).exists()
+
+
+@pytest.fixture
+def jobs_without_metadata():
+    user = User.objects.create_user("submitter")
+    old_job = TestJob.objects.create(
+        submitter=user,
+        definition="job_name: old\nmetadata:\n  build_id: 1234\n  branch: main\n",
+    )
+    no_metadata_job = TestJob.objects.create(
+        submitter=user, definition="job_name: no metadata\n"
+    )
+    broken_job = TestJob.objects.create(submitter=user, definition="{{ not yaml")
+    return old_job, no_metadata_job, broken_job
+
+
+@pytest.mark.django_db
+def test_jobs_backfill_metadata(jobs_without_metadata):
+    old_job, no_metadata_job, broken_job = jobs_without_metadata
+
+    out = StringIO()
+    call_command("jobs", "backfill-metadata", stdout=out, stderr=StringIO())
+    assert "3 jobs scanned, 1 updated" in out.getvalue()
+
+    old_job.refresh_from_db()
+    assert old_job.metadata == {"build_id": "1234", "branch": "main"}
+    no_metadata_job.refresh_from_db()
+    assert no_metadata_job.metadata == {}
+    broken_job.refresh_from_db()
+    assert broken_job.metadata == {}
+
+
+@pytest.mark.django_db
+def test_jobs_backfill_metadata_dry_run(jobs_without_metadata):
+    old_job = jobs_without_metadata[0]
+
+    call_command(
+        "jobs", "backfill-metadata", "--dry-run", stdout=StringIO(), stderr=StringIO()
+    )
+
+    old_job.refresh_from_db()
+    assert old_job.metadata == {}
+
+
+@pytest.mark.django_db
+def test_jobs_backfill_metadata_id_range(jobs_without_metadata):
+    old_job = jobs_without_metadata[0]
+
+    call_command(
+        "jobs",
+        "backfill-metadata",
+        "--start-id",
+        str(old_job.id + 1),
+        stdout=StringIO(),
+        stderr=StringIO(),
+    )
+
+    old_job.refresh_from_db()
+    assert old_job.metadata == {}
+
+    call_command(
+        "jobs",
+        "backfill-metadata",
+        "--end-id",
+        str(old_job.id),
+        stdout=StringIO(),
+        stderr=StringIO(),
+    )
+
+    old_job.refresh_from_db()
+    assert old_job.metadata == {"build_id": "1234", "branch": "main"}
