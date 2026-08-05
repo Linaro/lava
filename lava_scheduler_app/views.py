@@ -151,11 +151,18 @@ def _str_to_bool(string):
 
 class JobTableView(LavaView):
     def device_query(self, term):
-        return Q(
-            actual_device__in=Device.objects.filter(
-                hostname__contains=term
-            ).visible_by_user(self.request.user)
+        # Resolve device IDs first to avoid IN (subquery) which causes
+        # PostgreSQL planner cost misestimates that prevent efficient
+        # index usage. Device.hostname is the PK, so this is a direct
+        # FK filter on actual_device_id.
+        device_ids = list(
+            Device.objects.filter(hostname__contains=term)
+            .visible_by_user(self.request.user)
+            .values_list("hostname", flat=True)
         )
+        if device_ids:
+            return Q(actual_device_id__in=device_ids)
+        return Q(pk__in=[])
 
     def tags_query(self, term):
         return Q(tags__in=Tag.objects.filter(name__icontains=term))
