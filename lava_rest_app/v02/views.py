@@ -178,10 +178,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
     filterset_class = filters.TestJobFilter
 
     def get_queryset(self):
+        ids = self.queryset.visible_by_user_ids(self.request.user)
         return (
-            self.queryset.select_related("submitter")
+            self.queryset.filter(pk__in=ids)
+            .select_related("submitter")
             .prefetch_related("tags", "failure_tags", "viewing_groups")
-            .visible_by_user(self.request.user)
         )
 
     def get_permissions(self):
