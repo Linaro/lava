@@ -237,6 +237,12 @@ source "$lava_dir/secrets"
 !!! note
     `/lava-*` is the default LAVA overlay path; adjust it when needed.
 
+!!! info "Health-checks"
+    Token names are resolved against the remote artifact tokens of the job
+    submitter. Health-checks are submitted by the `lava-health` service
+    account, so their tokens must be created on that account. See
+    [health-check secrets](../configuration/health-check.md#secrets).
+
 !!! warning "Avoid secret leaks"
     - Use per-user remote artifact tokens whenever possible.
     - Always set job visibility to `personal` so only you can see the secrets.

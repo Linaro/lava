@@ -63,4 +63,61 @@ lavacli device-types health-check set qemu qemu.jinja2
     dictionary for the `{% extends device-type.jinja2 %}` line. The
     health-check filename is `device-type.yaml`.
 
+## Secrets
+
+A health-check may need credentials, for instance to authenticate against a
+service or to download a private artifact.
+
+As for any other job, a health-check can use [secrets](../job-definition/job.md#secrets)
+and refer to a remote artifact token by name, so the token value never appears
+in the health-check definition. LAVA resolves the token names against the
+remote artifact tokens of the **job submitter**. Health-checks are submitted
+automatically by LAVA using the `lava-health` service account, so the remote
+artifact tokens are resolved from this user.
+
+The `lava-health` account cannot log in, so its tokens cannot be modified
+through the usual profile page. Admins should add them from the Django admin
+interface: edit the `lava-health` user and add the tokens in the
+**Remote artifacts auths** form, filling the `Name` and `Token` fields.
+
+!!! warning "REST API"
+    The `/api/v0.2/remote-artifact-tokens/` endpoint always operates on the
+    authenticated user. Since the `lava-health` user cannot log in, this
+    endpoint cannot be used to manage its tokens; use the Django admin
+    interface instead.
+
+For example, add a token named `example-token-reference` to the `lava-health`
+user, then refer to it from the health-check definition:
+
+```yaml
+job_name: example health check
+
+secrets:
+  API_TOKEN: example-token-reference
+
+actions:
+- deploy:
+    # ...
+
+- boot:
+    # ...
+
+- test:
+    definitions:
+    - from: inline
+      name: example
+      path: inline/example.yaml
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: example
+        run:
+          steps:
+          - . /lava-*/secrets
+          - curl -H "Authorization: Bearer ${API_TOKEN}" https://example.com/check
+```
+
+LAVA replaces `example-token-reference` with the real token value when the job
+runs; the definition shown to users keeps the token name.
+
 --8<-- "refs.txt"
