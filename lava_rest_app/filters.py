@@ -4,10 +4,17 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import json
+
 import rest_framework_filters as filters
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
+from django.db import connections
 from django_filters.filters import CharFilter
+
+# Raised by the metadata filters below: unlike django.core ValidationError,
+# rest_framework's version is turned into a 400 response by DRF.
+from rest_framework.exceptions import ValidationError as APIValidationError
 from rest_framework_filters.filters import RelatedFilter
 
 from lava_results_app.models import TestCase, TestSet, TestSuite
@@ -332,7 +339,151 @@ class DeviceFilter(filters.FilterSet):
         }
 
 
-class TestJobFilter(filters.FilterSet):
+class MetadataFilterMixin:
+    """
+    Filter a model on the JSON field holding the metadata of a job
+    definition. Only depends on django-filter, so that it keeps working
+    whichever FilterSet base class it is mixed into.
+    """
+
+    # Query parameters named "metadata__<key>" filter on the "metadata"
+    # dictionary of the job definition. The key can be followed by one of these
+    # lookups, e.g. "metadata__branch__startswith=release/". When no lookup is
+    # given, "exact" is used. Keys are looked up in order, so nested metadata
+    # is reachable with "metadata__build__id=1234".
+    METADATA_LOOKUPS = frozenset(
+        (
+            "endswith",
+            "exact",
+            "icontains",
+            "iendswith",
+            "iexact",
+            "in",
+            "iregex",
+            "isnull",
+            "istartswith",
+            "regex",
+            "startswith",
+        )
+    )
+    # Lookups on the metadata dictionary as a whole. Metadata keys with one of
+    # these names cannot be filtered on directly.
+    METADATA_DICT_LOOKUPS = frozenset(
+        (
+            "contains",
+            "has_any_keys",
+            "has_key",
+            "has_keys",
+        )
+    )
+    METADATA_PREFIX = "metadata__"
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        return self.filter_metadata(queryset)
+
+    def filter_metadata(self, queryset):
+        """
+        Turn "metadata__<key>[__<lookup>]" query parameters into lookups on the
+        TestJob.metadata JSON field. django-filter cannot declare filters for
+        keys that are only known at request time, so they are handled here.
+        """
+        for suffix, values in self._metadata_params():
+            for value in values:
+                if suffix in self.METADATA_DICT_LOOKUPS:
+                    value = self._metadata_dict_value(suffix, value)
+                    if suffix == "contains":
+                        queryset = self._filter_contains(queryset, value)
+                        continue
+                    queryset = queryset.filter(**{f"metadata__{suffix}": value})
+                    continue
+
+                key, _, lookup = suffix.rpartition("__")
+                if not key or lookup not in self.METADATA_LOOKUPS:
+                    # No lookup suffix: the remainder is the metadata key path.
+                    key, lookup = suffix, "exact"
+                if lookup == "exact":
+                    queryset = self._filter_contains(
+                        queryset, self._nested_value(key.split("__"), value)
+                    )
+                    continue
+                value = self._metadata_value(lookup, value)
+                queryset = queryset.filter(**{f"metadata__{key}__{lookup}": value})
+        return queryset
+
+    @classmethod
+    def _filter_contains(cls, queryset, data):
+        # Containment can use the GIN index on metadata, while a comparison on
+        # the extracted key cannot. It is a PostgreSQL feature: other backends
+        # raise NotSupportedError, so they compare the keys instead.
+        if connections[queryset.db].vendor == "postgresql":
+            return queryset.filter(metadata__contains=data)
+        return queryset.filter(**cls._contains_lookups(data))
+
+    @classmethod
+    def _contains_lookups(cls, data, prefix="metadata"):
+        """
+        Express a metadata containment query as lookups on the keys it holds.
+        The result is the same for dictionaries and scalars. Lists are compared
+        for equality rather than for inclusion.
+        """
+        lookups = {}
+        for key, value in data.items():
+            path = f"{prefix}__{key}"
+            if isinstance(value, dict) and value:
+                lookups.update(cls._contains_lookups(value, path))
+            else:
+                lookups[path] = value
+        return lookups
+
+    @staticmethod
+    def _nested_value(keys, value):
+        for key in reversed(keys):
+            value = {key: value}
+        return value
+
+    def _metadata_params(self):
+        data = self.data or {}
+        lists = getattr(data, "lists", None)
+        items = lists() if lists is not None else ((k, [v]) for k, v in data.items())
+        for param, values in items:
+            if not param.startswith(self.METADATA_PREFIX):
+                continue
+            suffix = param[len(self.METADATA_PREFIX) :]
+            if not suffix:
+                raise APIValidationError("Missing metadata key in %r" % param)
+            yield suffix, [value for value in values if value != ""]
+
+    @staticmethod
+    def _metadata_dict_value(lookup, value):
+        if lookup == "contains":
+            try:
+                data = json.loads(value)
+            except ValueError:
+                data = None
+            if not isinstance(data, dict):
+                raise APIValidationError(
+                    "metadata__contains expects a JSON object, got %r" % value
+                )
+            return data
+        if lookup == "has_key":
+            return value
+        return [key.strip() for key in value.split(",") if key.strip()]
+
+    @staticmethod
+    def _metadata_value(lookup, value):
+        if lookup == "in":
+            return [item.strip() for item in value.split(",")]
+        if lookup == "isnull":
+            if value.lower() in ("true", "1"):
+                return True
+            if value.lower() in ("false", "0"):
+                return False
+            raise APIValidationError("isnull expects a boolean, got %r" % value)
+        return value
+
+
+class TestJobFilter(MetadataFilterMixin, filters.FilterSet):
     requested_device_type = RelatedFilter(
         DeviceTypeFilter,
         field_name="requested_device_type",

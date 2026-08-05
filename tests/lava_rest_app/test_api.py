@@ -10,6 +10,7 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import timedelta
 from typing import TYPE_CHECKING
+from urllib.parse import urlencode
 
 import pytest
 from django.conf import settings
@@ -774,6 +775,63 @@ ok 2 bar
             + "jobs/?definition__contains=public_device",
         )
         assert len(data["results"]) == 1  # nosec - unit test support
+
+    def test_testjobs_metadata_filters(self):
+        TestJob.objects.create(
+            definition=EXAMPLE_WORKING_JOB,
+            submitter=self.user,
+            requested_device_type=self.public_device_type1,
+            metadata={
+                "build_id": "1234",
+                "branch": "release/1.0",
+                "build": {"id": "5678"},
+            },
+        )
+        TestJob.objects.create(
+            definition=EXAMPLE_WORKING_JOB,
+            submitter=self.user,
+            requested_device_type=self.public_device_type1,
+            metadata={"build_id": "5678", "branch": "main"},
+        )
+        base_url = reverse("api-root", args=[self.version]) + "jobs/?"
+
+        def count(**params):
+            data = self.hit(self.adminclient, base_url + urlencode(params))
+            return len(data["results"])
+
+        # exact match, the default lookup
+        assert count(metadata__build_id="1234") == 1  # nosec - unit test support
+        assert count(metadata__build_id="9999") == 0  # nosec - unit test support
+        # nested metadata
+        assert count(metadata__build__id="5678") == 1  # nosec - unit test support
+        # explicit lookups
+        assert count(metadata__branch__startswith="release/") == 1  # nosec
+        assert count(metadata__branch__icontains="MAIN") == 1  # nosec
+        assert count(metadata__build_id__in="1234,5678") == 2  # nosec
+        # lookups on the metadata dictionary itself
+        assert count(metadata__has_key="branch") == 2  # nosec
+        assert count(metadata__has_keys="branch,build_id") == 2  # nosec
+        assert count(metadata__has_any_keys="branch,missing") == 2  # nosec
+        assert count(metadata__contains='{"branch": "main"}') == 1  # nosec
+        # several metadata parameters are combined with AND
+        matching = count(metadata__build_id="1234", metadata__branch="release/1.0")
+        assert matching == 1  # nosec - unit test support
+        conflicting = count(metadata__build_id="1234", metadata__branch="main")
+        assert conflicting == 0  # nosec - unit test support
+        # the jobs created by setUp have no metadata at all
+        assert count(metadata__build_id__isnull="false") == 2  # nosec
+
+    def test_testjobs_metadata_filters_invalid(self):
+        base_url = reverse("api-root", args=[self.version]) + "jobs/?"
+        response = self.adminclient.get(
+            base_url + urlencode({"metadata__contains": "not-json"})
+        )
+        assert response.status_code == 400  # nosec - unit test support
+
+        response = self.adminclient.get(
+            base_url + urlencode({"metadata__branch__isnull": "maybe"})
+        )
+        assert response.status_code == 400  # nosec - unit test support
 
     def test_devices_list(self):
         data = self.hit(

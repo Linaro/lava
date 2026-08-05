@@ -250,7 +250,8 @@ source "$lava_dir/secrets"
 `dict`
 
 An arbitrary set of key-value pairs attached to the job. The data can be
-retrieved via LAVA APIs.
+retrieved via LAVA APIs and used to [filter test
+jobs](../job-metadata.md#filtering-jobs-by-metadata).
 
 ```yaml
 metadata:
