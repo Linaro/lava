@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 from lava_common.exceptions import InfrastructureError
+from lava_dispatcher.actions.boot import BootloaderCommandsAction
+from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -60,3 +62,32 @@ class TestBootBootloader(LavaDispatcherTestCase):
 
         # Should not contain reset-device
         self.assertNotIn("reset-device", action_names)
+
+    def test_expect_final_default(self):
+        factory = BootloaderFactory()
+        job = factory.create_bootloader_job("sample_jobs/b2260-bootloader.yaml")
+
+        boot_action = job.pipeline.actions[0].pipeline.actions[1]
+        self.assertIsInstance(boot_action, BootBootloaderAction)
+        self.assertFalse(boot_action.expect_final)
+
+        bootloader_cmds = boot_action.pipeline.actions[-1]
+        self.assertIsInstance(bootloader_cmds, BootloaderCommandsAction)
+        self.assertFalse(bootloader_cmds.expect_final)
+
+    def test_expect_final_true(self):
+        factory = BootloaderFactory()
+        job = factory.create_bootloader_job("sample_jobs/b2260-bootloader.yaml")
+
+        boot_action = job.pipeline.actions[0].pipeline.actions[1]
+        self.assertIsInstance(boot_action, BootBootloaderAction)
+
+        new_action = BootBootloaderAction(job, expect_final=True)
+        new_action.parameters = boot_action.parameters
+        new_action.level = boot_action.level
+        new_action.populate(boot_action.parameters)
+
+        self.assertTrue(new_action.expect_final)
+        bootloader_cmds = new_action.pipeline.actions[-1]
+        self.assertIsInstance(bootloader_cmds, BootloaderCommandsAction)
+        self.assertTrue(bootloader_cmds.expect_final)

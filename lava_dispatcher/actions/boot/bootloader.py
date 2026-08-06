@@ -5,6 +5,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import (
     BootloaderCommandOverlay,
@@ -14,6 +16,9 @@ from lava_dispatcher.actions.boot import (
 from lava_dispatcher.connections.serial import ConnectDevice, ResetConnection
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.power import ResetDevice
+
+if TYPE_CHECKING:
+    from lava_dispatcher.job import Job
 
 
 class BootBootloaderRetry(RetryAction):
@@ -34,8 +39,13 @@ class BootBootloaderAction(Action):
     description = "boot to bootloader"
     summary = "boot bootloader"
 
+    def __init__(self, job: Job, expect_final: bool = False):
+        super().__init__(job)
+        self.expect_final = expect_final
+
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
+
         if parameters.get("reset_connection", True):
             self.pipeline.add_action(ResetConnection(self.job))
         else:
@@ -48,6 +58,8 @@ class BootBootloaderAction(Action):
         )
         self.pipeline.add_action(
             BootloaderCommandsAction(
-                self.job, expect_final=False, method=parameters["bootloader"]
+                self.job,
+                expect_final=self.expect_final,
+                method=parameters["bootloader"],
             )
         )
