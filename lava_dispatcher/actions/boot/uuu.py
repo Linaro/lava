@@ -138,16 +138,24 @@ class BootBootloaderCorruptBootMediaAction(Action):
         if isinstance(SD_ERASE_CMDS, str):
             SD_ERASE_CMDS = [SD_ERASE_CMDS]
 
+        bootloader_prompt = self.job.device["actions"]["boot"]["methods"]["u-boot"][
+            "parameters"
+        ]["bootloader_prompt"]
+
         u_boot_params = {
             "method": "bootloader",
             "bootloader": "u-boot",
             "commands": SD_ERASE_CMDS,
-            "prompts": [
-                self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
-                    "bootloader_prompt"
-                ]
-            ],
+            "prompts": [bootloader_prompt],
+            "parameters": {
+                # The corrupt-boot-media commands (e.g. 'mmc erase') must fully
+                # complete before the device is disconnected and power cycled.
+                # Wait for the bootloader prompt to reappear so the erase is not
+                # interrupted by the following power reset.
+                "bootloader-final-message": bootloader_prompt,
+            },
         }
+
         self.pipeline = Pipeline(
             parent=self, job=self.job, parameters={**parameters, **u_boot_params}
         )
@@ -161,13 +169,14 @@ class BootBootloaderCorruptBootMediaAction(Action):
                 commands=u_boot_params["commands"],
             )
         )
-        self.pipeline.add_action(BootBootloaderAction(self.job))
+        self.pipeline.add_action(BootBootloaderAction(self.job, expect_final=True))
         self.pipeline.add_action(DisconnectDevice(self.job))
 
     def run(self, connection, max_end_time):
         otg_available = self.get_namespace_data(
             action="boot", label="uuu", key="otg_availability_check"
         )
+
         if otg_available:
             return connection
         else:

@@ -9,7 +9,9 @@
 from unittest.mock import ANY, MagicMock, Mock, patch
 
 from lava_common.exceptions import InfrastructureError, JobError
+from lava_dispatcher.actions.boot.bootloader import BootBootloaderAction
 from lava_dispatcher.actions.boot.uuu import (
+    BootBootloaderCorruptBootMediaAction,
     CheckSerialDownloadMode,
     UUUBootAction,
     UUUBootRetryAction,
@@ -496,6 +498,44 @@ class TestUUUbootAction(LavaDispatcherTestCase):  # pylint: disable=too-many-pub
         self.assertEqual(description_ref, job.pipeline.describe())
 
         self.assertIsNone(job.validate())
+
+    def test_corrupt_boot_media_expect_final(self):
+        # BootBootloaderCorruptBootMediaAction must build BootBootloaderAction
+        # with expect_final=True so that the erase command is fully awaited.
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+        uuu_action = job.pipeline.actions[1].pipeline.actions[0]
+        corrupt = next(
+            a
+            for a in uuu_action.pipeline.actions
+            if isinstance(a, BootBootloaderCorruptBootMediaAction)
+        )
+        boot_bl = next(
+            a for a in corrupt.pipeline.actions if isinstance(a, BootBootloaderAction)
+        )
+        self.assertTrue(boot_bl.expect_final)
+
+    def test_corrupt_boot_media_final_message(self):
+        # parameters["parameters"]["bootloader-final-message"] must equal the
+        # u-boot bootloader_prompt so BootloaderCommandsAction waits for the
+        # prompt after the last erase command.
+        job = self.factory.create_imx8mq_job(
+            "imx8mq-evk-02", "sample_jobs/uuu-bootimage-only.yaml"
+        )
+        expected = job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
+            "bootloader_prompt"
+        ]
+        uuu_action = job.pipeline.actions[1].pipeline.actions[0]
+        corrupt = next(
+            a
+            for a in uuu_action.pipeline.actions
+            if isinstance(a, BootBootloaderCorruptBootMediaAction)
+        )
+        actual = corrupt.pipeline.parameters.get("parameters", {}).get(
+            "bootloader-final-message"
+        )
+        self.assertEqual(expected, actual)
 
 
 class TestUUUActionDriver(LavaDispatcherTestCase):
