@@ -19,11 +19,16 @@ actions:
       musca:
         # ID_SERIAL value (not ID_SERIAL_SHORT)
         id_serial: '{{ id_serial }}'
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
   boot:
     connections:
       serial:
     methods:
       musca:
+      minimal:
       cmsis-dap:
         parameters:
           usb_mass_device: '{{ usb_mass_device|default('/notset') }}'
