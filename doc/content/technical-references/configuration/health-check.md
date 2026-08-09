@@ -1,6 +1,6 @@
 # Health-Check
 
-A health-check is specific LAVA jobs that is automatically and regularly
+A health-check is a specific LAVA job that is automatically and regularly
 scheduled to check the health of DUT.
 
 If for any reason the job fails, the DUT `health` will be set to `Bad` (see
@@ -36,7 +36,7 @@ For instance, we recommend to test:
 * network access (local or remote servers)
 
 !!! info "lava-test-raise"
-    In order to fail a job during the test, call `lava-test-raise <message>`.
+    In order to fail a job during the test, call [`lava-test-raise <message>`](../../user/basic-tutorials/test-definition.md#lava-test-raise).
     This will return immediately and set the job health to `Incomplete`.
 
 ## Configuration file
