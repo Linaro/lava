@@ -44,14 +44,14 @@ repos:
         args: ["--target-version", "4.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.1
+    rev: v0.16.2
     hooks:
       - id: ruff-check
         args: [ "--fix", "--exit-non-zero-on-fix" ]
       - id: ruff-format
 
   - repo: https://github.com/pylint-dev/pylint
-    rev: v4.0.6
+    rev: v4.0.7
     hooks:
       - id: pylint
         additional_dependencies:
@@ -66,7 +66,7 @@ repos:
           - "django-tables2==3.0.0"
           - "django==4.2.30"
           - "djangorestframework-filters==1.0.0.dev2"
-          - "djangorestframework==3.17.1"
+          - "djangorestframework==3.17.2"
           - "drf-extensions==0.8.0"
           - "gunicorn==26.0.0"
           - "jinja2==3.1.6"
@@ -75,7 +75,7 @@ repos:
           - "pexpect==4.9.0"
           - "psycopg2-binary==2.9.12"
           - "pylint-django==2.7.0"
-          - "pylint==4.0.6"
+          - "pylint==4.0.7"
           - "python-magic==0.4.27"
           - "pyudev==0.24.4"
           - "pyyaml==6.0.3"
@@ -128,7 +128,7 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies:
-          - "django-stubs==6.0.6"
+          - "django-stubs==6.0.9"
           - "jinja2==3.1.6"
           - "python-magic==0.4.27"
           - "pyyaml==6.0.3"
@@ -217,6 +217,6 @@ repos:
   #         - "whitenoise==6.12.0"
 
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: v2.26.0
+    rev: v2.27.0
     hooks:
       - id: pyproject-fmt
