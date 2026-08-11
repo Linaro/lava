@@ -75,6 +75,53 @@ For http(s) artifacts, you can provide additional headers:
           my-header1: value
 ```
 
+The headers are sent both when the URL is checked during test job validation
+and when the artifact is downloaded.
+
+#### Authenticated downloads
+
+Any authentication scheme that is carried by an HTTP header can be used to
+download a private artifact, including `Bearer` tokens and HTTP Basic
+authentication.
+
+To keep the credentials out of the job definition, a header **value** can be
+the name of one of your
+[remote artifact tokens](../../job.md#secrets). LAVA replaces the name with
+the token string when the job runs, so only the name is visible in the
+definition, for example:
+
+```yaml
+- deploy:
+    tmpfs:
+      rootfs:
+        url: https://example.com/private/rootfs.img.xz
+        compression: xz
+        headers:
+          Authorization: remote-artifact-token-name
+```
+
+!!! warning "The whole value is replaced"
+    The substitution matches the **complete** header value against the token
+    names; it is not a string interpolation. Writing
+    `Authorization: "Bearer bearer-token"` sends that string literally. The
+    stored token must therefore be the full header value, for example:
+    `Bearer 0123456789abcdef`.
+
+For HTTP Basic authentication, store the pre-computed `Basic <base64>` value
+for the remote artifact token value, where the base64 part is
+`printf 'username:password' | base64`.
+
+!!! note "base64 is not encryption"
+    A Basic authentication header is a reversible encoding of the username
+    and password. Storing it as a remote artifact token keeps it out of the
+    job definition, but the token value is equivalent to the plain text
+    password.
+
+!!! info "Secrets cannot be used in URLs"
+    The [`secrets`](../../job.md#secrets) block is only exported to the test
+    shell; nothing substitutes it into a URL. Use `headers` to authenticate a
+    download.
+
 ### URL
 
 Specifies the URL to download.
