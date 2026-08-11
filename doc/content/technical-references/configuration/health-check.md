@@ -120,4 +120,12 @@ actions:
 LAVA replaces `example-token-reference` with the real token value when the job
 runs; the definition shown to users keeps the token name.
 
+### Downloading a private artifact
+
+The `secrets` block is only exported to the test shell, so it cannot be used to
+authenticate a download. Use an
+[authenticated download](../job-definition/actions/deploy/index.md#authenticated-downloads)
+instead: token names used in the artifact `headers` are resolved from the
+`lava-health` user, just like the ones in `secrets`.
+
 --8<-- "refs.txt"
