@@ -61,6 +61,13 @@
       <dt>Tags</dt>
       {% if device.tags.all %}
       <dd>
+      <details{% if device.tags.all|length <= 5 %} open{% endif %}>
+        <summary>
+          <a class="btn btn-xs btn-success">
+            <span class="glyphicon glyphicon-eye-open"></span>
+          </a>
+          {{ device.tags.all|length }} tag{{ device.tags.all|length|pluralize }}
+        </summary>
       {% for tag in device.tags.all %}
         {% if tag.description %}
         <abbr title="{{ tag.description }}">{{ tag.name }}</abbr>{% if not forloop.last %},{% endif %}
@@ -68,6 +75,7 @@
         {{ tag.name }}{% if not forloop.last %},{% endif %}
         {% endif %}
       {% endfor %}
+      </details>
       </dd>
       {% else %}
       <dd>...</dd>
