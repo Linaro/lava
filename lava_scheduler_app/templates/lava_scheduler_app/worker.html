@@ -25,6 +25,8 @@
       </dd>
       <dt>Description</dt>
       <dd>{{ worker.description|default:"<i>...</i>" }}</dd>
+      <dt>Version</dt>
+      <dd>{{ worker.version|default:"<i>...</i>" }}</dd>
     </dl>
   </div>
   <div class="col-md-4">
@@ -79,6 +81,8 @@
         </div>
         {% endif %}
       </dd>
+      <dt>Last ping</dt>
+      <dd title="{{ worker.last_ping }}">{{ worker.last_ping|timesince }}</dd>
     </dl>
   </div>
   <div class="col-md-4">
@@ -87,6 +91,8 @@
       <dd>{{ worker.device_set.all.count }}</dd>
       <dt>Retired devices</dt>
       <dd>{{ worker.retired_devices_count }}</dd>
+      <dt>Job limit</dt>
+      <dd>{{ worker.job_limit }}</dd>
     </dl>
   </div>
 </div>
