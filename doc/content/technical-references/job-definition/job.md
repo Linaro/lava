@@ -84,6 +84,9 @@ worker: worker-01
 A list of device tags that the assigned device must have. This is used to
 select a specific subset of devices of the given device type.
 
+The same list is exported into the test overlay as `LAVA_JOB_TAGS`. See
+[environment](./environment.md#lava-injected-variables).
+
 ```yaml
 tags:
 - usb-eth

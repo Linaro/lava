@@ -64,6 +64,7 @@ class CreateOverlay(Action):
         self.probe_ip = ""
         self.probe_channel = ""
         self.dispatcher_ip = ""
+        self.job_tags = ""
 
     def validate(self):
         super().validate()
@@ -116,6 +117,9 @@ class CreateOverlay(Action):
                 break
 
         self.dispatcher_ip = dispatcher_ip(self.job.parameters["dispatcher"])
+        self.job_tags = ",".join(
+            str(tag) for tag in (self.job.parameters.get("tags") or [])
+        )
 
     def populate(self, parameters):
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
@@ -243,6 +247,7 @@ class CreateOverlay(Action):
             self.logger.debug("LAVA metadata")
             self._export_data(fout, self.job.job_id, "LAVA_JOB_ID")
             self._export_data(fout, self.dispatcher_ip, "LAVA_DISPATCHER_IP")
+            self._export_data(fout, self.job_tags, "LAVA_JOB_TAGS")
             self._export_data(
                 fout,
                 self.job.parameters.get("dispatcher", {}).get("prefix", ""),

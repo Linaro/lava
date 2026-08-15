@@ -12,7 +12,11 @@ from typing import Any
 from unittest.mock import patch
 
 from lava_dispatcher.actions.deploy.apply_overlay import ParsePersistentNFS
-from lava_dispatcher.actions.deploy.overlay import CompressOverlay, OverlayAction
+from lava_dispatcher.actions.deploy.overlay import (
+    CompressOverlay,
+    CreateOverlay,
+    OverlayAction,
+)
 from tests.lava_dispatcher.test_basic import Factory
 
 from ...test_basic import LavaDispatcherTestCase
@@ -218,3 +222,60 @@ class TestCompressOverlay(LavaDispatcherTestCase):
                 "./root/bar",
             },
         )
+
+
+class TestCreateOverlayJobTags(LavaDispatcherTestCase):
+    def _overlay_exports(
+        self, tags: list[Any] | None = None, *, include_tags_key: bool = True
+    ) -> dict[str, str]:
+        job_parameters: dict[str, Any] = {
+            "dispatcher": {"dispatcher_ip": "192.0.2.1"},
+        }
+        if include_tags_key:
+            job_parameters["tags"] = tags
+
+        job = self.create_simple_job(
+            device_dict={
+                "constants": {
+                    "posix": {
+                        "lava_test_results_dir": "/lava-%s",
+                        "lava_test_sh_cmd": "/bin/sh",
+                    }
+                },
+                "actions": {"deploy": {"methods": {}}},
+            },
+            job_parameters=job_parameters,
+        )
+        overlay = CreateOverlay(job)
+        overlay.parameters = {"namespace": "common"}
+
+        with TemporaryDirectory(prefix="overlay-job-tags-") as tmp_dir:
+            with patch.object(job, "mkdtemp", return_value=tmp_dir):
+                overlay.validate()
+                overlay.run(None, None)
+
+            env_path = Path(tmp_dir) / f"lava-{job.job_id}" / "environment"
+            exports: dict[str, str] = {}
+            for line in env_path.read_text().splitlines():
+                if not line.startswith("export "):
+                    continue
+                key, _, value = line.removeprefix("export ").partition("=")
+                exports[key] = value
+            return exports
+
+    def test_job_tags_missing_or_empty(self) -> None:
+        cases = (
+            {"include_tags_key": False},
+            {"tags": []},
+            {"tags": None},
+        )
+        for kwargs in cases:
+            with self.subTest(**kwargs):
+                exports = self._overlay_exports(**kwargs)
+                self.assertEqual(exports["LAVA_JOB_TAGS"], "''")
+                self.assertIn("LAVA_JOB_ID", exports)
+                self.assertEqual(exports["LAVA_DISPATCHER_IP"], "192.0.2.1")
+
+    def test_job_tags_comma_separated(self) -> None:
+        exports = self._overlay_exports(["usb-eth", "ssd"])
+        self.assertEqual(exports["LAVA_JOB_TAGS"], "usb-eth,ssd")
