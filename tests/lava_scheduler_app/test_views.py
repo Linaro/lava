@@ -1184,6 +1184,9 @@ def test_worker_detail(client, setup):
     assert ret.status_code == 200  # nosec
     assert ret.templates[0].name == "lava_scheduler_app/worker.html"  # nosec
     assert ret.context["worker"].hostname == "worker-01"  # nosec
+    assert ret.context["worker"].version == "2024.01"  # nosec
+    assert ret.context["worker"].last_ping is not None  # nosec
+    assert ret.context["worker"].job_limit == 0  # nosec
     assert len(ret.context["worker_device_table"].data) == 1  # nosec
     assert ret.context["worker_device_table"].data[0].hostname == "qemu01"  # nosec
     assert ret.context["can_change"] is False  # nosec
