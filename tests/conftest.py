@@ -9,6 +9,7 @@ import os
 import pytest
 import requests
 
+import lava_common.download
 import lava_dispatcher.job
 import lava_dispatcher.utils.filesystem
 
@@ -23,7 +24,7 @@ os.environ["LANGUAGE"] = "C.UTF-8"
 @pytest.fixture(autouse=True)
 def tempdir(monkeypatch, tmp_path):
     monkeypatch.setattr(
-        lava_dispatcher.utils.filesystem,
+        lava_common.download,
         "dispatcher_download_dir",
         lambda _: str(tmp_path),
     )

@@ -14,7 +14,6 @@ import tarfile
 import tempfile
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.utils.compression import decompress_file
 from lava_dispatcher.utils.decorator import replace_exception
@@ -348,18 +347,6 @@ def copy_in_overlay(
 
     guest.umount(mount_point)
     guest.close()
-
-
-def dispatcher_download_dir(dispatcher_config: dict[str, Any]) -> str:
-    """
-    Returns DISPATCHER_DOWNLOAD_DIR which is a constant, unless a dispatcher specific path is
-    configured via dispatcher_download_dir key in dispatcher_config.
-    """
-    try:
-        dispatcher_download_dir: str = dispatcher_config["dispatcher_download_dir"]
-        return dispatcher_download_dir
-    except (KeyError, TypeError):
-        return DISPATCHER_DOWNLOAD_DIR
 
 
 @replace_exception(RuntimeError, JobError)

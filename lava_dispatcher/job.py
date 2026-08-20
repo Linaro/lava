@@ -14,6 +14,7 @@ import time
 import traceback
 from typing import TYPE_CHECKING
 
+from lava_common import download
 from lava_common.constants import CLEANUP_TIMEOUT
 from lava_common.exceptions import JobError, LAVABug, LAVAError
 from lava_common.log import YAMLLogger
@@ -23,7 +24,6 @@ from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
-from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -94,7 +94,7 @@ class Job:
     @property
     def tmp_dir(self) -> str:
         return self.get_basedir(
-            filesystem.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
+            download.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
         )
 
     def get_basedir(self, path: str) -> str:

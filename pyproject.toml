@@ -269,6 +269,7 @@ project-includes = [
   "lava_common/converters.py",
   "lava_common/decorators.py",
   "lava_common/device_mappings.py",
+  "lava_common/download.py",
   "lava_common/exceptions.py",
   "lava_common/jinja.py",
   "lava_common/log.py",
