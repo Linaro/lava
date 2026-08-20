@@ -26,7 +26,7 @@ import sentry_sdk
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.download import resolve_download_dir
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
 
@@ -84,6 +84,17 @@ def filter_options(options: Any, image: str) -> list[str]:
     ret: list[str] = ["--worker-dir", options.worker_dir, "--url", options.url]
     if options.ws_url:
         ret.extend(["--ws-url", options.ws_url])
+
+    if (
+        options.dispatcher_download_dir
+        and "dispatcher_download_dir" in image_available_options
+    ):
+        ret.extend(
+            [
+                "--dispatcher-download-dir",
+                str(resolve_download_dir(options.dispatcher_download_dir)),
+            ]
+        )
 
     ret.extend(["--http-timeout", str(options.http_timeout)])
     ret.extend(["--ping-interval", str(options.ping_interval)])
@@ -230,7 +241,12 @@ def start(version: str, options: Any) -> None:
     ]
 
     mounts: list[tuple[str, str | None, str | None]] = []
-    mounts.append((DISPATCHER_DOWNLOAD_DIR, None, None))
+    # The container uses the same path as the host, so the job artifacts are
+    # served by the http server running on the host.
+    download_dir = resolve_download_dir(options.dispatcher_download_dir)
+    if options.dispatcher_download_dir is not None:
+        download_dir.mkdir(parents=True, exist_ok=True)
+    mounts.append((str(download_dir), None, None))
 
     tftp_dir = pathlib.Path("/srv/tftp")
     if tftp_dir.exists():

@@ -37,13 +37,11 @@ class TestLavaRun(TestCase):
                 "--token=qwerty",
                 "--job-log-interval=10",
                 f"--device={device_yaml_path}",
+                f"--dispatcher-download-dir={temp_dir_name}",
                 str(job_definition_path),
             ]
         )
 
-        self.enterContext(
-            patch("lava_dispatcher.runner.DISPATCHER_DOWNLOAD_DIR", temp_dir_name)
-        )
         multiprocess_mock = self.enterContext(patch("lava_common.log.multiprocessing"))
 
         logger = setup_logger(options)
@@ -79,12 +77,9 @@ class TestLavaRun(TestCase):
                 "--job-id=12345",
                 f"--output-dir={temp_dir_name}",
                 f"--device={device_yaml_path}",
+                f"--dispatcher-download-dir={temp_dir_name}",
                 str(temp_dir_path / "job.yaml"),
             ]
-        )
-
-        self.enterContext(
-            patch("lava_dispatcher.runner.DISPATCHER_DOWNLOAD_DIR", temp_dir_name)
         )
 
         logger = setup_logger(options)

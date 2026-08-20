@@ -14,6 +14,7 @@ Usage
 *****
 
 lava-worker [-h] [--hostname HOSTNAME] [--debug] [--worker-dir WORKER_DIR]
+            [--dispatcher-download-dir DIR]
             --url URL --token TOKEN [--log-file LOG_FILE]
             [--level {DEBUG,ERROR,INFO,WARN}]
 
@@ -31,6 +32,10 @@ optional arguments:
 storage:
   --worker-dir WORKER_DIR
                         Path to data storage
+  --dispatcher-download-dir DIR
+                        Path to the job temporary files, overriding the
+                        dispatcher_download_dir key of the dispatcher
+                        configuration
 
 network:
   --url URL             Base URL of the server

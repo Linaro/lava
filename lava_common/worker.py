@@ -14,6 +14,7 @@ from pathlib import Path
 import sentry_sdk
 
 from lava_common.constants import DOCKER_WORKER_DIR, WORKER_DIR
+from lava_common.download import resolve_download_dir
 from lava_common.version import __version__
 
 
@@ -89,6 +90,15 @@ def get_parser(docker_worker: bool = False) -> argparse.ArgumentParser:
     storage = parser.add_argument_group("storage")
     storage.add_argument(
         "--worker-dir", type=Path, default=worker_dir, help="Path to data storage"
+    )
+    storage.add_argument(
+        "--dispatcher-download-dir",
+        metavar="DIR",
+        type=Path,
+        default=None,
+        help="Path to the job temporary files, overriding the "
+        "dispatcher_download_dir key of the dispatcher configuration "
+        f"(default: {resolve_download_dir()})",
     )
     if docker_worker:
         storage.add_argument(

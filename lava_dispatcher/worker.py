@@ -33,8 +33,8 @@ import aiohttp
 import sentry_sdk
 import yaml
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.constants import WORKER_DIR as _WORKER_DIR_STR
+from lava_common.download import resolve_download_dir
 from lava_common.exceptions import LAVABug
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
@@ -64,10 +64,13 @@ FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 ping_interval = 20
 debug = False
 tmp_dir = WORKER_DIR / "tmp"
+# Override for the dispatcher_download_dir key of the dispatcher configuration.
+# None means that the dispatcher configuration is left untouched.
+download_dir: Path | None = None
 
 # Stale configuration
 STALE_CONFIG = {
-    Path(DISPATCHER_DOWNLOAD_DIR): "{prefix}{job_id}",
+    resolve_download_dir(): "{prefix}{job_id}",
     tmp_dir: "{prefix}{job_id}",
 }
 
@@ -203,6 +206,8 @@ def start_job(
             f"--token={token}",
             f"--job-log-interval={job_log_interval}",
         ]
+        if download_dir is not None:
+            args.append(f"--dispatcher-download-dir={download_dir}")
         if debug:
             args.append("--debug")
         args.append(str(base_dir / "job.yaml"))
@@ -890,6 +895,15 @@ async def main() -> None:
         tmp_dir = worker_dir / "tmp"
         # Update stale config dictionary.
         STALE_CONFIG[tmp_dir] = "{prefix}{job_id}"
+
+    if options.dispatcher_download_dir is not None:
+        global download_dir
+        # lava-run and the http server serving the job artifacts do not share
+        # the working directory of the worker.
+        download_dir = resolve_download_dir(options.dispatcher_download_dir)
+        download_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+        # Update stale config dictionary.
+        STALE_CONFIG[download_dir] = "{prefix}{job_id}"
 
     loop = asyncio.get_running_loop()
     loop.set_default_executor(THREAD_EXECUTOR)

@@ -1,0 +1,7 @@
+# Configuration for lava-dispatcher-host daemon
+
+# Directory for the job temporary files, as configured with the
+# dispatcher_download_dir key of the dispatcher configuration. The daemon looks
+# for the device to container mappings created by the jobs in that directory,
+# so it must be the same directory as the one used by the worker.
+# DISPATCHER_DOWNLOAD_DIR="--dispatcher-download-dir /var/lib/lava/dispatcher/tmp"

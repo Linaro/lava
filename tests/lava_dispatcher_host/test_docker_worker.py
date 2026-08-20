@@ -33,6 +33,7 @@ def Popen(mocker):
 def options(tmp_path):
     o = argparse.Namespace()
     o.worker_dir = tmp_path / "worker"
+    o.dispatcher_download_dir = None
     o.build_dir = tmp_path / "build"
     o.name = "worker"
     o.url = "http://localhost"
@@ -68,6 +69,7 @@ def docker_image():
             self.option_ns = b"""
                 Namespace(name='worker', debug=False,exit_on_version_mismatch=False,
                 wait_jobs=False, worker_dir=PosixPath('/var/lib/lava/dispatcher/worker'),
+                dispatcher_download_dir=None,
                 url='dummy-url', ws_url=None,http_timeout=600, ping_interval=20,
                 job_log_interval=5, username=None, token=None, token_file=None,
                 log_file='/var/log/lava-dispatcher/lava-worker.log', level='INFO')
@@ -78,6 +80,7 @@ def docker_image():
                 "exit_on_version_mismatch",
                 "wait_jobs",
                 "worker_dir",
+                "dispatcher_download_dir",
                 "url",
                 "ws_url",
                 "http_timeout",
@@ -293,6 +296,42 @@ class TestRun:
         assert e.value.code == 0
 
 
+class TestMounts:
+    def test_default_dispatcher_download_dir(self, get_image, Popen, options, mocker):
+        mocker.patch("time.sleep")
+        mocker.patch(
+            "lava_dispatcher_host.docker_worker.filter_options", return_value=[]
+        )
+        lava_dispatcher_host.docker_worker.start("2020.07", options)
+        args = Popen.call_args[0][0]
+        assert (
+            "--mount=type=bind,source=/var/lib/lava/dispatcher/tmp,"
+            "destination=/var/lib/lava/dispatcher/tmp" in args
+        )
+
+    def test_custom_dispatcher_download_dir(
+        self, get_image, Popen, options, mocker, tmp_path
+    ):
+        mocker.patch("time.sleep")
+        mocker.patch(
+            "lava_dispatcher_host.docker_worker.filter_options", return_value=[]
+        )
+        download_dir = tmp_path / "downloads"
+        options.dispatcher_download_dir = download_dir
+        lava_dispatcher_host.docker_worker.start("2020.07", options)
+        args = Popen.call_args[0][0]
+        # The directory is created and mounted at the same path in the container
+        assert download_dir.is_dir()
+        assert (
+            f"--mount=type=bind,source={download_dir},destination={download_dir}"
+            in args
+        )
+        assert (
+            "--mount=type=bind,source=/var/lib/lava/dispatcher/tmp,"
+            "destination=/var/lib/lava/dispatcher/tmp" not in args
+        )
+
+
 class TestOptions:
     def test_get_options_call(self, check_output, mocker, docker_image):
         mocker.patch("re.findall")
@@ -323,3 +362,39 @@ class TestOptions:
         )
         get_options.assert_called_with(docker_image.name)
         assert "--sentry-dsn" not in ret
+
+    def test_filter_options_dispatcher_download_dir(
+        self, options, docker_image, get_options, tmp_path
+    ):
+        options.dispatcher_download_dir = tmp_path / "downloads"
+        ret = lava_dispatcher_host.docker_worker.filter_options(
+            options, docker_image.name
+        )
+        assert ret[ret.index("--dispatcher-download-dir") + 1] == str(
+            tmp_path / "downloads"
+        )
+
+    def test_filter_options_dispatcher_download_dir_default(
+        self, options, docker_image, get_options
+    ):
+        ret = lava_dispatcher_host.docker_worker.filter_options(
+            options, docker_image.name
+        )
+        assert "--dispatcher-download-dir" not in ret
+
+    def test_filter_options_dispatcher_download_dir_unavailable(
+        self, options, docker_image, mocker, tmp_path
+    ):
+        mocker.patch(
+            "lava_dispatcher_host.docker_worker.get_options",
+            return_value=[
+                option
+                for option in docker_image.available_options
+                if option != "dispatcher_download_dir"
+            ],
+        )
+        options.dispatcher_download_dir = tmp_path / "downloads"
+        ret = lava_dispatcher_host.docker_worker.filter_options(
+            options, docker_image.name
+        )
+        assert "--dispatcher-download-dir" not in ret

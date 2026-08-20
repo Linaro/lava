@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from lava_common.constants import UDEV_RULE_FILENAME
+from lava_common.download import resolve_download_dir
 
 if TYPE_CHECKING:
     from typing import Any, TextIO
@@ -45,6 +46,16 @@ def handle_rules_install(options: Any) -> None:
         subprocess.check_call(["udevadm", "control", "--reload-rules"])
 
 
+def get_download_dir(options: Any) -> Path | None:
+    """
+    Resolve the download directory once, as the working directory of the udev
+    handler and of the daemon is not the one of the worker.
+    """
+    if options.dispatcher_download_dir is None:
+        return None
+    return resolve_download_dir(options.dispatcher_download_dir)
+
+
 def handle_devices_share(options: Any) -> None:
     if options.remote:
         from lava_dispatcher_host.client import Client
@@ -71,7 +82,7 @@ def handle_devices_share(options: Any) -> None:
     else:
         from lava_dispatcher_host.utils import share_device_with_container
 
-        share_device_with_container(options)
+        share_device_with_container(options, get_download_dir(options))
 
 
 def handle_devices_map(options: Any) -> None:
@@ -84,13 +95,19 @@ def handle_devices_map(options: Any) -> None:
     device_info = {
         k: options.__dict__[k] for k in fields if k in options and options.__dict__[k]
     }
-    add_device_container_mapping(job_id, device_info, container, container_type)
+    add_device_container_mapping(
+        job_id,
+        device_info,
+        container,
+        container_type,
+        download_dir=get_download_dir(options),
+    )
 
 
-def handle_devices_unmap(_: Any) -> None:
+def handle_devices_unmap(options: Any) -> None:
     from lava_common.device_mappings import remove_device_container_mappings
 
-    remove_device_container_mappings("0")
+    remove_device_container_mappings("0", download_dir=get_download_dir(options))
 
 
 def main(argv: list[str]) -> int:
@@ -138,6 +155,21 @@ def main(argv: list[str]) -> int:
     devices_map.add_argument("container", help="Container name")
     devices_map.add_argument("container_type", help="Container type (docker)")
 
+    devices_unmap = devices_sub.add_parser(
+        "unmap", help='Remove mappings added with "devices map"'
+    )
+
+    # shared options between the "devices" actions
+    for subparser in [devices_share, devices_map, devices_unmap]:
+        subparser.add_argument(
+            "--dispatcher-download-dir",
+            metavar="DIR",
+            type=Path,
+            default=None,
+            help="Directory for the job temporary files, as configured with the "
+            "dispatcher_download_dir key of the dispatcher configuration",
+        )
+
     # shared options between "devices share" and "devices map"
     for subparser in [devices_share, devices_map]:
         subparser.add_argument(
@@ -172,9 +204,6 @@ def main(argv: list[str]) -> int:
     devices_share.set_defaults(func=handle_devices_share)
     devices_map.set_defaults(func=handle_devices_map)
 
-    devices_unmap = devices_sub.add_parser(
-        "unmap", help='Remove mappings added with "devices map"'
-    )
     devices_unmap.set_defaults(func=handle_devices_unmap)
 
     options = parser.parse_args(argv[1:])

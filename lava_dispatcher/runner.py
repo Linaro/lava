@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 from setproctitle import setproctitle
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.download import dispatcher_download_dir, resolve_download_dir
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
 from lava_common.log import ResultDict, YAMLLogger
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -25,7 +25,7 @@ from lava_dispatcher.parser import JobParser
 from lava_dispatcher.worker import get_prefix
 
 if TYPE_CHECKING:
-    from typing import NoReturn
+    from typing import Any, NoReturn
 
     from lava_dispatcher.job import Job
 
@@ -92,6 +92,14 @@ def parser() -> argparse.ArgumentParser:
         default=None,
         help="DUT environment",
     )
+    group.add_argument(
+        "--dispatcher-download-dir",
+        metavar="DIR",
+        type=Path,
+        default=None,
+        help="Directory for the job temporary files, overriding the "
+        "dispatcher_download_dir key of the dispatcher configuration",
+    )
 
     p_obj.add_argument(
         "--skip-sudo-warning",
@@ -111,6 +119,27 @@ def parser() -> argparse.ArgumentParser:
     return p_obj
 
 
+def load_dispatcher_config(options: argparse.Namespace) -> Any:
+    """
+    Load the dispatcher configuration, applying the command line overrides.
+    """
+    config = None
+    if options.dispatcher is not None:
+        config = yaml_safe_load(options.dispatcher.read_text(encoding="utf-8"))
+
+    download_dir = options.dispatcher_download_dir
+    if download_dir is None and isinstance(config, dict):
+        download_dir = config.get("dispatcher_download_dir")
+    if download_dir:
+        if not isinstance(config, dict):
+            config = {}
+        # Resolve once, as the configuration is handed over to the job and to
+        # the actions, which do not necessarily keep the working directory of
+        # lava-run.
+        config["dispatcher_download_dir"] = str(resolve_download_dir(download_dir))
+    return config
+
+
 def setup_logger(options: argparse.Namespace) -> YAMLLogger:
     # The logger can be used by the parser and the Job object in all phases.
     logger = YAMLLogger()
@@ -118,14 +147,12 @@ def setup_logger(options: argparse.Namespace) -> YAMLLogger:
     log_file = options.output_dir / "logs.yaml"
     logger.add_file_handler(log_file)
 
-    prefix = ""
-    if options.dispatcher is not None:
-        prefix = get_prefix(
-            yaml_safe_load(options.dispatcher.read_text(encoding="utf-8"))
-        )
+    dispatcher_cfg = load_dispatcher_config(options)
+    prefix = get_prefix(dispatcher_cfg)
     # Create the symlink for downloading via http
     # SymLinks is allowed in the apache2 lava-dispatcher.conf
-    job_dir = Path(DISPATCHER_DOWNLOAD_DIR) / f"{prefix}{options.job_id}"
+    download_dir = Path(dispatcher_download_dir(dispatcher_cfg))
+    job_dir = download_dir / f"{prefix}{options.job_id}"
     log_download_path = job_dir / "logs.yaml"
     try:
         if job_dir.exists():
@@ -162,9 +189,10 @@ def parse_job_file(options: argparse.Namespace, logger: YAMLLogger) -> Job:
     env_dut = None
     if options.env_dut is not None:
         env_dut = options.env_dut.read_text(encoding="utf-8")
+    dispatcher_cfg = load_dispatcher_config(options)
     dispatcher_config = None
-    if options.dispatcher is not None:
-        dispatcher_config = options.dispatcher.read_text(encoding="utf-8")
+    if dispatcher_cfg is not None:
+        dispatcher_config = yaml_safe_dump(dispatcher_cfg)
 
     # Generate the pipeline
     return parser.parse(

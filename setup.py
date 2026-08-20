@@ -123,7 +123,10 @@ DISPATCHER_HOST = {
                 "etc/lava-dispatcher-host.service",
             ],
         ),
-        ("/etc/lava-dispatcher-host/", ["etc/lava-docker-worker"]),
+        (
+            "/etc/lava-dispatcher-host/",
+            ["etc/lava-docker-worker", "etc/lava-dispatcher-host"],
+        ),
         (
             "/etc/modules-load.d/",
             ["etc/lava-dispatcher-host-modules.conf"],

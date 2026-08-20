@@ -20,7 +20,7 @@ Usage
 lava-run [-h] --job-id ID --output-dir DIR [--validate]
          [--url URL] [--token token]
          --device PATH [--dispatcher PATH] [--env-dut PATH]
-         [--debug] definition
+         [--dispatcher-download-dir DIR] [--debug] definition
 
 Options
 *******
@@ -43,6 +43,9 @@ configuration files:
   --device PATH      Device configuration
   --dispatcher PATH  Dispatcher configuration
   --env-dut PATH     DUT environment
+  --dispatcher-download-dir DIR
+                     Directory for the job temporary files, overriding the
+                     dispatcher_download_dir key of the dispatcher configuration
 
 Useful links
 ############

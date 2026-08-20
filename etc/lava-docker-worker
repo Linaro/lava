@@ -19,6 +19,17 @@
 # JOB_LOG_INTERVAL="--job-log-interval 5"
 # MOUNTS="--mount /path/to/directory --mount /path/on/host:/path/on/container --mount /path/host:/path/container:ro"
 
+# Directory for the job temporary files. The directory is bind mounted in the
+# container at the same path and the jobs are told to use it, overriding the
+# dispatcher_download_dir key of the dispatcher configuration.
+#
+# Set this when the dispatcher configuration of this worker, which lives on the
+# server, sets dispatcher_download_dir: the docker worker never reads that
+# configuration, so it would keep mounting the default directory while the jobs
+# write somewhere else inside the container, leaving the job artifacts
+# unreachable from the http server and from lava-dispatcher-host.
+# DISPATCHER_DOWNLOAD_DIR="--dispatcher-download-dir /var/lib/lava/dispatcher/tmp"
+
 # Docker build directory
 # Should be set to a directory with a Dockerfile inside.
 # BUILD_DIR="/etc/lava-dispatcher-host/build"

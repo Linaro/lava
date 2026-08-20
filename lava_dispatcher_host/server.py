@@ -12,9 +12,11 @@ import logging
 import os
 import socket
 import struct
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace
+from pathlib import Path
 from typing import TYPE_CHECKING
 
+from lava_common.download import resolve_download_dir
 from lava_dispatcher_host import SOCKET
 from lava_dispatcher_host.utils import share_device_with_container
 
@@ -31,11 +33,14 @@ class ShareCommand:
 
 
 class CommandHandler:
+    def __init__(self, download_dir: Path | None = None):
+        self.download_dir = download_dir
+
     def handle(self, command: ShareCommand) -> None:
         logger.debug(
             "Executing share device with container command: %r", command.options
         )
-        share_device_with_container(command.options)
+        share_device_with_container(command.options, self.download_dir)
 
 
 def encode_result(result: str, exception: BaseException | None = None) -> bytes:
@@ -47,8 +52,9 @@ def encode_result(result: str, exception: BaseException | None = None) -> bytes:
 
 
 class ServerWrapper:
-    def __init__(self, socket: str = SOCKET):
+    def __init__(self, socket: str = SOCKET, download_dir: Path | None = None):
         self.socket = socket
+        self.download_dir = download_dir
 
     def exit(self, signal: str) -> None:
         logger.info("Exiting due to %r signal", signal)
@@ -120,7 +126,7 @@ class ServerWrapper:
                 result = encode_result("INVALID_REQUEST")
             else:
                 try:
-                    handler = CommandHandler()
+                    handler = CommandHandler(self.download_dir)
                     handler.handle(command)
                     result = encode_result("OK")
                 except Exception as ex:
@@ -138,7 +144,24 @@ class ServerWrapper:
 
 
 def main() -> None:
-    server = ServerWrapper(SOCKET)
+    parser = ArgumentParser(description="LAVA dispatcher host daemon")
+    parser.add_argument(
+        "--dispatcher-download-dir",
+        metavar="DIR",
+        type=Path,
+        default=None,
+        help="Directory for the job temporary files, as configured with the "
+        "dispatcher_download_dir key of the dispatcher configuration",
+    )
+    options = parser.parse_args()
+
+    download_dir = options.dispatcher_download_dir
+    if download_dir is not None:
+        # Resolve now: the daemon is started by systemd, which does not share
+        # the working directory of the worker.
+        download_dir = resolve_download_dir(download_dir)
+
+    server = ServerWrapper(SOCKET, download_dir)
     try:
         asyncio.run(server.start())
     except KeyboardInterrupt:

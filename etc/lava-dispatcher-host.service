@@ -2,7 +2,8 @@
 Description=lava-dispatcher-host daemon
 
 [Service]
-ExecStart=/usr/bin/lava-dispatcher-host-server
+EnvironmentFile=-/etc/lava-dispatcher-host/lava-dispatcher-host
+ExecStart=/usr/bin/lava-dispatcher-host-server $DISPATCHER_DOWNLOAD_DIR
 ProtectSystem=full
 ProtectKernelModules=true
 NoNewPrivileges=true

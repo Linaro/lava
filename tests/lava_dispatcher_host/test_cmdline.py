@@ -155,7 +155,38 @@ def test_map_device(mocker):
         ]
     )
     add_device_container_mapping.assert_called_with(
-        mocker.ANY, {"serial_number": "01234567890"}, "foobar", "docker"
+        mocker.ANY,
+        {"serial_number": "01234567890"},
+        "foobar",
+        "docker",
+        download_dir=None,
+    )
+
+
+def test_map_device_relative_download_dir(mocker, tmp_path, monkeypatch):
+    # The udev handler does not share the working directory of the worker, so
+    # the directory has to be resolved before the mapping is looked up.
+    add_device_container_mapping = mocker.patch(
+        "lava_common.device_mappings.add_device_container_mapping"
+    )
+    monkeypatch.chdir(tmp_path)
+    main(
+        [
+            "lava-dispatcher-host",
+            "devices",
+            "map",
+            "--serial-number=01234567890",
+            "--dispatcher-download-dir=downloads",
+            "foobar",
+            "docker",
+        ]
+    )
+    add_device_container_mapping.assert_called_with(
+        mocker.ANY,
+        {"serial_number": "01234567890"},
+        "foobar",
+        "docker",
+        download_dir=tmp_path / "downloads",
     )
 
 
@@ -164,7 +195,7 @@ def test_unmap(mocker):
         "lava_common.device_mappings.remove_device_container_mappings"
     )
     main(["lava-dispatcher-host", "devices", "unmap"])
-    remove_device_container_mappings.assert_called_with(mocker.ANY)
+    remove_device_container_mappings.assert_called_with(mocker.ANY, download_dir=None)
 
 
 def test_debug_log(mocker, tmp_path):

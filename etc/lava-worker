@@ -15,5 +15,9 @@
 # HTTP_TIMEOUT="--http-timeout 600"
 # JOB_LOG_INTERVAL="--job-log-interval 5"
 
+# Directory for the job temporary files, overriding the
+# dispatcher_download_dir key of the dispatcher configuration.
+# DISPATCHER_DOWNLOAD_DIR="--dispatcher-download-dir /var/lib/lava/dispatcher/tmp"
+
 # Sentry Data Source Name.
 # SENTRY_DSN="--sentry-dsn <sentry-dsn>"
