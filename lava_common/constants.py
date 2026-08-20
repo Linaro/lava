@@ -29,11 +29,6 @@ SCP_DOWNLOAD_CHUNK_SIZE = 32768
 # Size of the chunks when downloading over rclone
 RCLONE_DOWNLOAD_CHUNK_SIZE = 32768
 
-# dispatcher temporary directory
-# This is distinct from the TFTP daemon directory
-# Files here are for download using the Apache /tmp alias.
-DISPATCHER_DOWNLOAD_DIR = "/var/lib/lava/dispatcher/tmp"
-
 # Distinctive prompt characters which can
 # help distinguish status messages from shell prompts.
 DISTINCTIVE_PROMPT_CHARACTERS = "\\:"

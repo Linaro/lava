@@ -2,7 +2,6 @@ import os
 import time
 from unittest.mock import MagicMock, patch
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_dispatcher.actions.boot import OverlayUnpack
 from tests.lava_dispatcher.test_basic import LavaDispatcherTestCase
 
@@ -25,9 +24,7 @@ class TestOverlayZmodem(LavaDispatcherTestCase):
         }
 
         # Prepare namespace data expected by the action
-        overlay_full_path = os.path.join(
-            DISPATCHER_DOWNLOAD_DIR, "tmp", "overlay.tar.gz"
-        )
+        overlay_full_path = os.path.join(job.download_dir, "tmp", "overlay.tar.gz")
         action.set_namespace_data(
             action="compress-overlay",
             label="output",

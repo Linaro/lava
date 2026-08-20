@@ -8,18 +8,21 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-from lava_common.download import dispatcher_download_dir, resolve_download_dir
+from lava_common.download import (
+    DEFAULT_DOWNLOAD_DIR,
+    dispatcher_download_dir,
+    resolve_download_dir,
+)
 
 
 def test_default():
-    assert resolve_download_dir() == Path(DISPATCHER_DOWNLOAD_DIR)
+    assert resolve_download_dir() == DEFAULT_DOWNLOAD_DIR
 
 
 def test_no_override():
     # None and the empty string both mean "nothing was configured"
-    assert resolve_download_dir(None) == Path(DISPATCHER_DOWNLOAD_DIR)
-    assert resolve_download_dir("") == Path(DISPATCHER_DOWNLOAD_DIR)
+    assert resolve_download_dir(None) == DEFAULT_DOWNLOAD_DIR
+    assert resolve_download_dir("") == DEFAULT_DOWNLOAD_DIR
 
 
 def test_absolute_path():
@@ -61,18 +64,18 @@ def test_config_configured_relative(tmp_path, monkeypatch):
 
 
 def test_config_missing():
-    assert dispatcher_download_dir(None) == DISPATCHER_DOWNLOAD_DIR
+    assert dispatcher_download_dir(None) == str(DEFAULT_DOWNLOAD_DIR)
 
 
 def test_config_empty():
-    assert dispatcher_download_dir({}) == DISPATCHER_DOWNLOAD_DIR
+    assert dispatcher_download_dir({}) == str(DEFAULT_DOWNLOAD_DIR)
 
 
 def test_config_not_a_dict():
-    assert dispatcher_download_dir(["not", "a", "dict"]) == DISPATCHER_DOWNLOAD_DIR
+    assert dispatcher_download_dir(["not", "a", "dict"]) == str(DEFAULT_DOWNLOAD_DIR)
 
 
 def test_config_empty_key():
-    assert dispatcher_download_dir({"dispatcher_download_dir": None}) == (
-        DISPATCHER_DOWNLOAD_DIR
+    assert dispatcher_download_dir({"dispatcher_download_dir": None}) == str(
+        DEFAULT_DOWNLOAD_DIR
     )

@@ -18,7 +18,7 @@ from lava_dispatcher_host.utils import share_device_with_container
 def setup(mocker, tmp_path):
     os.makedirs(tmp_path / "1")
     os.makedirs(tmp_path / "2")
-    mocker.patch("lava_common.download.DISPATCHER_DOWNLOAD_DIR", str(tmp_path))
+    mocker.patch("lava_common.download.DEFAULT_DOWNLOAD_DIR", Path(tmp_path))
     # Python 3.14's pathlib.Path.exists() calls os.path.exists(), so an
     # unconditional mock would make Path.exists() lie about files under
     # tmp_path. Force True only outside tmp_path (device nodes), and defer

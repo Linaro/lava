@@ -8,10 +8,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
-
 if TYPE_CHECKING:
     from typing import Any
+
+# Dispatcher temporary directory, used when nothing else is configured.
+# This is distinct from the TFTP daemon directory.
+# Files here are for download using the Apache /tmp alias, see
+# share/apache2/lava-dispatcher.conf.
+DEFAULT_DOWNLOAD_DIR = Path("/var/lib/lava/dispatcher/tmp")
 
 
 def resolve_download_dir(path: str | Path | None = None) -> Path:
@@ -28,7 +32,7 @@ def resolve_download_dir(path: str | Path | None = None) -> Path:
     lava-dispatcher-host and the http server.
     """
     if not path:
-        return Path(DISPATCHER_DOWNLOAD_DIR)
+        return DEFAULT_DOWNLOAD_DIR
     return Path(path).absolute()
 
 
