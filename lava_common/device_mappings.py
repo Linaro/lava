@@ -8,22 +8,31 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
+from lava_common.download import resolve_download_dir
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from typing import Any
 
-DISPATCHER_DOWNLOAD_PATH = Path(DISPATCHER_DOWNLOAD_DIR)
+
+def get_job_dir(job_id: str, download_dir: str | Path | None = None) -> Path:
+    """
+    Directory holding the files of a job inside the dispatcher download
+    directory.
+
+    download_dir is None for the callers running outside of a job, like
+    lava-dispatcher-host, which fall back to the default location.
+    """
+    return resolve_download_dir(download_dir) / str(job_id)
 
 
-def get_mapping_path(job_id: str) -> Path:
-    return DISPATCHER_DOWNLOAD_PATH / str(job_id) / "usbmap.yaml"
+def get_mapping_path(job_id: str, download_dir: str | Path | None = None) -> Path:
+    return get_job_dir(job_id, download_dir) / "usbmap.yaml"
 
 
-def iter_mapping_paths() -> Iterator[Path]:
-    yield from DISPATCHER_DOWNLOAD_PATH.glob("*/usbmap.yaml")
+def iter_mapping_paths(download_dir: str | Path | None = None) -> Iterator[Path]:
+    yield from resolve_download_dir(download_dir).glob("*/usbmap.yaml")
 
 
 def add_device_container_mapping(
@@ -32,6 +41,7 @@ def add_device_container_mapping(
     container: str,
     container_type: str = "docker",
     device_paths: list[str] | None = None,
+    download_dir: str | Path | None = None,
 ) -> None:
     validate_device_info(device_info)
     item: dict[str, Any] = {
@@ -42,7 +52,7 @@ def add_device_container_mapping(
     }
     if device_paths:
         item["device_paths"] = list(device_paths)
-    mapping_path = get_mapping_path(job_id)
+    mapping_path = get_mapping_path(job_id, download_dir)
     data = load_mapping_data(mapping_path)
 
     # remove old mappings for the same device_info
@@ -54,8 +64,10 @@ def add_device_container_mapping(
         f.write(yaml_safe_dump(newdata))
 
 
-def remove_device_container_mappings(job_id: str) -> None:
-    get_mapping_path(job_id).unlink(missing_ok=True)
+def remove_device_container_mappings(
+    job_id: str, download_dir: str | Path | None = None
+) -> None:
+    get_mapping_path(job_id, download_dir).unlink(missing_ok=True)
 
 
 def validate_device_info(device_info: dict[str, Any]) -> None:

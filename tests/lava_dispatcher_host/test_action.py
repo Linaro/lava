@@ -40,6 +40,7 @@ class TestDeviceContainerMappingMixin:
             "foobar",
             container_type="docker",
             device_paths=["/dev/sda1"],
+            download_dir=action.job.download_dir,
         )
 
     def test_does_not_modify_device_info(

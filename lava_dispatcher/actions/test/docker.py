@@ -238,7 +238,9 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
         try:
             super().run(shell_connection, max_end_time)
         finally:
-            remove_device_container_mappings(prefix + self.job.job_id)
+            remove_device_container_mappings(
+                prefix + self.job.job_id, download_dir=self.job.download_dir
+            )
             self.logger.debug("Removed device container mappings")
             # finish the container
             shell_connection.finalise()

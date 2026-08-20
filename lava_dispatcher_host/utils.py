@@ -15,8 +15,11 @@ from typing import Any
 
 import pyudev  # type: ignore[import-not-found,import-untyped,unused-ignore]
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
-from lava_common.device_mappings import iter_mapping_paths, load_mapping_data
+from lava_common.device_mappings import (
+    get_job_dir,
+    iter_mapping_paths,
+    load_mapping_data,
+)
 from lava_common.exceptions import InfrastructureError
 from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
@@ -40,8 +43,10 @@ def match_mapping(device_info: dict[str, Any], options: Any) -> bool:
     return matched
 
 
-def find_mapping(options: Any) -> tuple[dict[str, Any], str] | tuple[None, None]:
-    for mapping in iter_mapping_paths():
+def find_mapping(
+    options: Any, download_dir: str | Path | None = None
+) -> tuple[dict[str, Any], str] | tuple[None, None]:
+    for mapping in iter_mapping_paths(download_dir):
         data = load_mapping_data(mapping)
         for item in data:
             if match_mapping(item["device_info"], options):
@@ -109,8 +114,10 @@ def _resolve_nodes(device_info: dict[str, Any]) -> list[str]:
     return nodes
 
 
-def share_device_with_container(options: Any) -> None:
-    data, job_id = find_mapping(options)
+def share_device_with_container(
+    options: Any, download_dir: str | Path | None = None
+) -> None:
+    data, job_id = find_mapping(options, download_dir)
     logger.debug("Found data %r for job %r", data, job_id)
     if not data or job_id is None:
         logger.info("No mapping data found. Can't share device.")
@@ -136,7 +143,9 @@ def share_device_with_container(options: Any) -> None:
             )
             return
         if container_type == "docker":
-            share_device_with_container_docker(container, device, job_id=job_id)
+            share_device_with_container_docker(
+                container, device, job_id=job_id, download_dir=download_dir
+            )
         else:
             raise InfrastructureError(
                 'Unsupported container type: "%s"' % container_type
@@ -155,7 +164,9 @@ def share_device_with_container(options: Any) -> None:
 
     if container_type == "docker":
         for node in nodes:
-            share_device_with_container_docker(container, node, job_id=job_id)
+            share_device_with_container_docker(
+                container, node, job_id=job_id, download_dir=download_dir
+            )
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
@@ -166,6 +177,7 @@ def pass_device_into_container_docker(
     node: str,
     links: list[str] | None,
     job_id: str,
+    download_dir: str | Path | None = None,
 ) -> None:
     logger.info(
         "Passing device node %r to container %r for job %r", node, container_id, job_id
@@ -179,7 +191,7 @@ def pass_device_into_container_docker(
         minor = os.minor(nodeinfo.st_rdev)
         nodetype = "b" if stat.S_ISBLK(nodeinfo.st_mode) else "c"
 
-        state = Path(JOBS_DIR) / job_id / (container_id + ".devices")
+        state = get_job_dir(job_id, download_dir) / (container_id + ".devices")
         device_filter = DeviceFilter(container_id, state)
         logger.debug("Using device filter %r", device_filter)
         device_filter.add(Device(major, minor))
@@ -229,6 +241,7 @@ def share_device_with_container_docker(
     container: str,
     node: str,
     job_id: str,
+    download_dir: str | Path | None = None,
 ) -> None:
     logger.info("Sharing %r with docker container %r", node, container)
     try:
@@ -243,11 +256,16 @@ def share_device_with_container_docker(
 
     device = pyudev.Devices.from_device_file(context, node)
     pass_device_into_container_docker(
-        container, container_id, node, device.device_links, job_id
+        container, container_id, node, device.device_links, job_id, download_dir
     )
 
     for child in device.children:
         if child.device_node:
             pass_device_into_container_docker(
-                container, container_id, child.device_node, child.device_links, job_id
+                container,
+                container_id,
+                child.device_node,
+                child.device_links,
+                job_id,
+                download_dir,
             )

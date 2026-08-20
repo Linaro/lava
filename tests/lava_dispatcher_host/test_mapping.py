@@ -18,7 +18,7 @@ from lava_dispatcher_host.utils import share_device_with_container
 def setup(mocker, tmp_path):
     os.makedirs(tmp_path / "1")
     os.makedirs(tmp_path / "2")
-    mocker.patch("lava_common.device_mappings.DISPATCHER_DOWNLOAD_PATH", Path(tmp_path))
+    mocker.patch("lava_common.download.DISPATCHER_DOWNLOAD_DIR", str(tmp_path))
     # Python 3.14's pathlib.Path.exists() calls os.path.exists(), so an
     # unconditional mock would make Path.exists() lie about files under
     # tmp_path. Force True only outside tmp_path (device nodes), and defer
@@ -80,7 +80,7 @@ def test_simple_share_device_with_container(mocker, pass_device_docker, device_l
     add_device_container_mapping("1", {"serial_number": "1234567890"}, "mycontainer")
     share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
     pass_device_docker.assert_called_once_with(
-        "mycontainer", "/dev/mocknode", "/dev/mocknode", device_links, "1"
+        "mycontainer", "/dev/mocknode", "/dev/mocknode", device_links, "1", None
     )
 
 
@@ -111,7 +111,7 @@ def test_mapping_with_serial_number_but_called_with_vendor_product_id_too(
     )
 
     pass_device_docker.assert_called_once_with(
-        "mycontainer", "/dev/mocknode", "/dev/mocknode", device_links, "1"
+        "mycontainer", "/dev/mocknode", "/dev/mocknode", device_links, "1", None
     )
 
 
@@ -125,7 +125,7 @@ def test_two_concurrent_jobs(mocker, pass_device_docker, device_links):
     share_device_with_container(Namespace(device="baz/qux", serial_number="9876543210"))
 
     pass_device_docker.assert_called_once_with(
-        "container2", "/dev/mocknode", "/dev/mocknode", device_links, "2"
+        "container2", "/dev/mocknode", "/dev/mocknode", device_links, "2", None
     )
 
 
@@ -157,7 +157,7 @@ def test_map_by_vendor_id_and_product_id(mocker, pass_device_docker, device_link
         )
     )
     pass_device_docker.assert_called_once_with(
-        "container1", "/dev/mocknode", "/dev/mocknode", device_links, "1"
+        "container1", "/dev/mocknode", "/dev/mocknode", device_links, "1", None
     )
 
 
@@ -182,7 +182,9 @@ def test_only_adds_slash_dev_if_needed(mocker):
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
     )
-    share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer", "/dev/mocknode", job_id="1", download_dir=None
+    )
 
 
 def test_second_mapping_does_not_invalidate_first(mocker):
@@ -194,7 +196,9 @@ def test_second_mapping_does_not_invalidate_first(mocker):
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
     )
-    share.assert_called_once_with("mycontainer1", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer1", "/dev/mocknode", job_id="1", download_dir=None
+    )
 
 
 def test_two_devices_two_containers(mocker):
@@ -206,13 +210,17 @@ def test_two_devices_two_containers(mocker):
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
     )
-    share.assert_called_once_with("mycontainer1", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer1", "/dev/mocknode", job_id="1", download_dir=None
+    )
     share.reset_mock()
 
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="badbeeb00c")
     )
-    share.assert_called_once_with("mycontainer2", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer2", "/dev/mocknode", job_id="1", download_dir=None
+    )
 
 
 def test_device_plus_parent(mocker):
@@ -243,13 +251,17 @@ def test_device_plus_parent(mocker):
     share_device_with_container(
         Namespace(device="/dev/foo/bar", serial_number="1234567890")
     )
-    share.assert_called_once_with("mycontainer1", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer1", "/dev/mocknode", job_id="1", download_dir=None
+    )
     share.reset_mock()
 
     share_device_with_container(
         Namespace(device="/dev/foo/bar", vendor_id="1234", product_id="3456")
     )
-    share.assert_called_once_with("mycontainer2", "/dev/mocknode", job_id="1")
+    share.assert_called_once_with(
+        "mycontainer2", "/dev/mocknode", job_id="1", download_dir=None
+    )
     share.reset_mock()
 
 
@@ -325,7 +337,9 @@ class TestDeviceSelfConsistency:
         share_device_with_container(
             Namespace(device="/dev/sdb", serial_number="ABC123")
         )
-        share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")
+        share.assert_called_once_with(
+            "mycontainer", "/dev/mocknode", job_id="1", download_dir=None
+        )
 
     def test_matching_raw_serial_attr_is_shared(self, mocker):
         """serial_number also matches the raw sysfs `serial` attribute."""
@@ -338,7 +352,9 @@ class TestDeviceSelfConsistency:
         share_device_with_container(
             Namespace(device="/dev/sdb", serial_number="ABC123")
         )
-        share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")
+        share.assert_called_once_with(
+            "mycontainer", "/dev/mocknode", job_id="1", download_dir=None
+        )
 
     def test_matching_vendor_product_is_shared(self, mocker):
         share = mocker.patch(
@@ -355,7 +371,9 @@ class TestDeviceSelfConsistency:
                 usb_product_id="5678",
             )
         )
-        share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")
+        share.assert_called_once_with(
+            "mycontainer", "/dev/mocknode", job_id="1", download_dir=None
+        )
 
     def test_mismatching_serial_rejected(self, mocker):
         share = mocker.patch(
@@ -428,7 +446,9 @@ class TestDevicePathPinning:
         share_device_with_container(
             Namespace(device="/dev/sda1", serial_number="ABC123")
         )
-        share.assert_called_once_with("mycontainer", "/dev/sda1", job_id="1")
+        share.assert_called_once_with(
+            "mycontainer", "/dev/sda1", job_id="1", download_dir=None
+        )
 
     def test_unstored_path_rejected(self, mocker):
         """The caller's path is not in the stored set: reject, even though a
@@ -480,4 +500,41 @@ class TestDevicePathPinning:
         share_device_with_container(
             Namespace(device="/dev/sdb", serial_number="ABC123")
         )
-        share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")
+        share.assert_called_once_with(
+            "mycontainer", "/dev/mocknode", job_id="1", download_dir=None
+        )
+
+
+def test_mapping_in_configured_download_dir(
+    tmp_path, pass_device_docker, mocker, device_links
+):
+    # The dispatcher_download_dir configuration moves the job directories, so
+    # both the job writing the mapping and lava-dispatcher-host looking it up
+    # have to be told where they are.
+    mocker.patch(
+        "lava_dispatcher_host.utils.subprocess.check_output",
+        return_value="/dev/mocknode",
+    )
+    download_dir = tmp_path / "downloads"
+    (download_dir / "1").mkdir(parents=True)
+
+    add_device_container_mapping(
+        "1",
+        {"serial_number": "1234567890"},
+        "mycontainer",
+        download_dir=download_dir,
+    )
+    assert (download_dir / "1" / "usbmap.yaml").exists()
+    assert not (tmp_path / "1" / "usbmap.yaml").exists()
+
+    # The default location has no mapping for that device
+    share_device_with_container(Namespace(device="foo/bar", serial_number="1234567890"))
+    pass_device_docker.assert_not_called()
+
+    share_device_with_container(
+        Namespace(device="foo/bar", serial_number="1234567890"),
+        download_dir,
+    )
+    pass_device_docker.assert_called_once_with(
+        "mycontainer", "/dev/mocknode", "/dev/mocknode", device_links, "1", download_dir
+    )

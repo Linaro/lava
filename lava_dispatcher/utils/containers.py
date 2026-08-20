@@ -66,6 +66,7 @@ class DeviceContainerMappingMixin(Action):
                 container,
                 container_type=container_type,
                 device_paths=device_paths,
+                download_dir=self.job.download_dir,
             )
             self.logger.info(
                 f"Added mapping for {device} to {container_type} container {container}"
@@ -223,7 +224,9 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name, docker)
             docker.run(cmd, self.action)
         finally:
-            remove_device_container_mappings(self.job_dir)
+            remove_device_container_mappings(
+                self.job_dir, download_dir=self.action.job.download_dir
+            )
             self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
@@ -245,7 +248,9 @@ class DockerDriver(NullDriver):
             self.__map_devices__(name, docker)
             return docker.run(cmd, self.action, capture=True, allow_fail=allow_fail)
         finally:
-            remove_device_container_mappings(self.job_dir)
+            remove_device_container_mappings(
+                self.job_dir, download_dir=self.action.job.download_dir
+            )
             self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
