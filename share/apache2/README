@@ -16,7 +16,13 @@ Note: not all V2 workers need a localhost server as long as TFTP is working but
 it can be useful for persistent NFS.
 
 If the DocumentRoot and Alias need to be changed in the localhost
-configuration, the value in DISPATCHER_DOWNLOAD_DIR also needs to be changed in
-/usr/lib/python3/dist-packages/lava_common/constants.py
+configuration, the directory used by the jobs needs to be changed as well, with
+the dispatcher_download_dir key of the dispatcher configuration of the worker
+or with the --dispatcher-download-dir option of lava-worker.
 
-(Support for reading constants independently of the packaged code is pending.)
+Both have to be kept in sync: apache serves the job artifacts from the
+directory the jobs write into.
+
+The same applies to NFS: the jobs extract the NFS root filesystems below that
+same directory, so the path exported in
+/etc/exports.d/lava-dispatcher-nfs.exports has to be changed along with it.

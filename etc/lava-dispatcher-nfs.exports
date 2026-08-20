@@ -9,4 +9,11 @@
 # /srv/nfs4/homes  gss/krb5i(rw,sync,no_subtree_check)
 #
 
+# The jobs extract the NFS root filesystem below the dispatcher download
+# directory, so the path exported here has to be the directory the jobs
+# actually write into. Update it when the worker is configured to use another
+# one, with the dispatcher_download_dir key of the dispatcher configuration or
+# with the --dispatcher-download-dir option, otherwise deploying over NFS fails
+# with the root filesystem sitting outside any exported filesystem.
+
 /var/lib/lava/dispatcher/tmp *(rw,no_root_squash,no_all_squash,async,no_subtree_check)

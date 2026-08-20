@@ -5,6 +5,14 @@
 # /etc/lava-server/dispatcher.d on the *server*.
 
 # Dispatcher tmp directory
+# The jobs download their files and extract the NFS root filesystems below this
+# directory, and it is served to the devices over http and NFS. Changing it
+# means changing the two servers as well, on the worker:
+# - the apache Alias, see /usr/share/lava-dispatcher/apache2/lava-dispatcher.conf
+# - the exported path in /etc/exports.d/lava-dispatcher-nfs.exports
+# A relative path is resolved when the configuration is read.
+# Can also be set with the --dispatcher-download-dir option of lava-worker,
+# which overrides this key.
 #dispatcher_download_dir: /var/lib/lava/dispatcher/tmp
 
 # Only set this key, if this dispatcher has many IPs

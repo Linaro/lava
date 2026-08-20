@@ -65,10 +65,12 @@ the key of the same block in the list of images. The actual location of the
 downloaded file will then replace the placeholder.
 
 In the QEMU example, the label is `rootfs` and the `image_arg` includes the
-matching placeholder `{rootfs}`. If the final location of the downloaded image
-is `/<DISPATCHER_DOWNLOAD_DIR>/tmp/442/deployimages-td1ofegd/rootfs/debian-buster.qcow2`,
+matching placeholder `{rootfs}`. The images are downloaded below the directory
+configured with `dispatcher_download_dir`, which defaults to
+`/var/lib/lava/dispatcher/tmp`. If the final location of the downloaded image
+is `/var/lib/lava/dispatcher/tmp/442/deployimages-td1ofegd/rootfs/debian-buster.qcow2`,
 then the final argument passed to QEMU would include
-`-drive format=raw,file=/<DISPATCHER_DOWNLOAD_DIR>/tmp/442/deployimages-td1ofegd/rootfs/debian-buster.qcow2`.
+`-drive format=raw,file=/var/lib/lava/dispatcher/tmp/442/deployimages-td1ofegd/rootfs/debian-buster.qcow2`.
 
 !!! note
     Single brace before and after the label and **no whitespace**. This is test
