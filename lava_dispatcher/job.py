@@ -92,10 +92,16 @@ class Job:
         return {"pipeline": self.pipeline.describe()}
 
     @property
+    def download_dir(self) -> str:
+        """
+        Directory holding the temporary files of every job. It is served over
+        http by the dispatcher, see share/apache2/lava-dispatcher.conf.
+        """
+        return download.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
+
+    @property
     def tmp_dir(self) -> str:
-        return self.get_basedir(
-            download.dispatcher_download_dir(self.parameters.get("dispatcher", {}))
-        )
+        return self.get_basedir(self.download_dir)
 
     def get_basedir(self, path: str) -> str:
         prefix = self.parameters.get("dispatcher", {}).get("prefix", "")

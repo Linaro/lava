@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 
 import requests
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, BootHasMixin, OverlayUnpack
@@ -101,7 +100,7 @@ class RunNodebooterContainer(Action):
             f"{NODEBOOTER_HOME}docker_shm": "/dev/shm",
             f"{NODEBOOTER_HOME}ovss": "/opt/ovss",
             f"{NODEBOOTER_HOME}custom_configs": "/home/custom_configs",
-            DISPATCHER_DOWNLOAD_DIR: LAVA_NODEBOOTER_PATH,
+            self.job.download_dir: LAVA_NODEBOOTER_PATH,
             "/sys/fs/cgroup": "/sys/fs/cgroup",
         }
         init_exec = "/usr/sbin/init"
@@ -241,7 +240,7 @@ class ConfigureNodebooter(Action):
             headers = {"Content-Type": "application/json"}
             boot_image = self.get_namespace_data(
                 "download-action", label="boot", key="file"
-            ).replace(DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH)
+            ).replace(self.job.download_dir, LAVA_NODEBOOTER_PATH)
             nic_images = []
             for counter in range(NIC_NO_OF_SUPPORTED):
                 image_file_path = self.get_namespace_data(
@@ -250,7 +249,7 @@ class ConfigureNodebooter(Action):
                 if image_file_path:
                     nic_images.append(
                         image_file_path.replace(
-                            DISPATCHER_DOWNLOAD_DIR, LAVA_NODEBOOTER_PATH
+                            self.job.download_dir, LAVA_NODEBOOTER_PATH
                         )
                     )
 
@@ -349,7 +348,7 @@ class ConfigureNodebooter(Action):
         file_list = []
         for pattern in patterns:
             file_list += glob.glob(
-                os.path.join(DISPATCHER_DOWNLOAD_DIR, "**", pattern.lower()),
+                os.path.join(self.job.download_dir, "**", pattern.lower()),
                 recursive=True,
             )
         for file_path in file_list:

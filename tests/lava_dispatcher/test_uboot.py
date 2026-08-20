@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import os
 import unittest
 from functools import partial
 from typing import Any
@@ -734,17 +735,23 @@ class TestUbootAction(LavaDispatcherTestCase):
         "lava_dispatcher.actions.boot.dispatcher_ip",
         return_value="foo",
     )
-    @patch(
-        "lava_dispatcher.actions.boot.OverlayUnpack.get_namespace_data",
-        return_value="/var/lib/lava/dispatcher/tmp/bar",
-    )
-    def test_transfer_media_cmd(self, get_namespace_data, dispatcher_ip_mock):
+    def test_transfer_media_cmd(self, dispatcher_ip_mock):
         """
         Test command used to add the overlay to existing rootfs
         """
         job = self.factory.create_bbb_job(
             "sample_jobs/uboot-ramdisk-inline-commands.yaml"
         )
+
+        # The overlay is always compressed inside the job download directory,
+        # which is the directory served over http by the dispatcher.
+        overlay = os.path.join(job.download_dir, "bar")
+        namespace_data = patch(
+            "lava_dispatcher.actions.boot.OverlayUnpack.get_namespace_data",
+            return_value=overlay,
+        )
+        namespace_data.start()
+        self.addCleanup(namespace_data.stop)
 
         transfer = job.pipeline.find_action(OverlayUnpack)
 
@@ -805,7 +812,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertEqual(
             nfs_transfer_connection.cmds,
             [
-                "mkdir -p /bar; fs-nfs3 foo:/var/lib/lava/dispatcher/tmp/bar /bar",
+                f"mkdir -p /bar; fs-nfs3 foo:{overlay} /bar",
                 "cp -rf /bar/* /; umount /bar; rm -fr /bar",
             ],
         )
@@ -813,7 +820,7 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertEqual(len(nfs_transfer_connection.sendline_calls), 2)
         self.assertEqual(
             nfs_transfer_connection.sendline_calls[0]["line"],
-            "mkdir -p /bar; fs-nfs3 foo:/var/lib/lava/dispatcher/tmp/bar /bar",
+            f"mkdir -p /bar; fs-nfs3 foo:{overlay} /bar",
         )
         self.assertTrue(nfs_transfer_connection.sendline_calls[0]["check"])
         self.assertEqual(

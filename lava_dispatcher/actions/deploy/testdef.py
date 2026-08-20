@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 import yaml
 
-from lava_common.constants import DEFAULT_TEST_NAME_CLASS, DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DEFAULT_TEST_NAME_CLASS
 from lava_common.decorators import nottest
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug, TestError
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
@@ -1037,7 +1037,7 @@ class TestInstallAction(TestOverlayAction):
                     # Allow install steps to use the git-repo directly
                     # fake up the directory as it will be after the overlay is applied
                     # os.path.join refuses if the directory does not exist on the dispatcher
-                    base = len(DISPATCHER_DOWNLOAD_DIR.split("/")) + 2
+                    base = len(self.job.download_dir.split("/")) + 2
                     # skip job_id/action-tmpdir/ as well
                     install_dir = "/" + "/".join(runner_path.split("/")[base:])
                     install_file.write("cd %s\n" % install_dir)

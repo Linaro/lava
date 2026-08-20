@@ -10,7 +10,7 @@ import shlex
 import subprocess
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR, SYS_CLASS_KVM, X86_ARCHS
+from lava_common.constants import SYS_CLASS_KVM, X86_ARCHS
 from lava_common.exceptions import JobError
 from lava_common.utils import debian_package_arch, debian_package_version
 from lava_dispatcher.action import Action, Pipeline
@@ -339,7 +339,7 @@ class CallQemuAction(Action):
             docker.tty()
             if "QEMU_AUDIO_DRV" in os.environ:
                 docker.environment("QEMU_AUDIO_DRV", os.environ["QEMU_AUDIO_DRV"])
-            docker.bind_mount(DISPATCHER_DOWNLOAD_DIR)
+            docker.bind_mount(self.job.download_dir)
             docker.add_device("/dev/kvm", skip_missing=True)
             docker.add_device("/dev/net/tun", skip_missing=True)
             docker.add_docker_run_options("--network=host", "--cap-add=NET_ADMIN")

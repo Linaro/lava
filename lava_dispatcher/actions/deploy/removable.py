@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DD_PROMPTS, DISPATCHER_DOWNLOAD_DIR
+from lava_common.constants import DD_PROMPTS
 from lava_common.exceptions import JobError
 from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
@@ -156,7 +156,7 @@ class DDAction(Action):
         # download URL will be positioned in the download command.
         # Providing the download URL as a substitution option gets round this
         ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "http")
-        path = d_file[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+        path = d_file[len(self.job.download_dir) + 1 :]
         download_url = f"http://{ip_addr}/tmp/{path}"
         substitutions = {"{DOWNLOAD_URL}": download_url, "{DEVICE}": device_path}
 

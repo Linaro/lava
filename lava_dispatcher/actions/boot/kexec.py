@@ -7,7 +7,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.actions.boot import AutoLoginAction, OverlayUnpack
@@ -66,7 +65,7 @@ class KexecAction(Action):
         if path is None:
             raise JobError(f"Missing {key!r} in deploy stage")
 
-        path = path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+        path = path[len(self.job.download_dir) + 1 :]
         cmd = f"wget http://{ip_addr}/tmp/{path} -O {self.parameters[key]}"
         self.deploy_commands.append(cmd)
 

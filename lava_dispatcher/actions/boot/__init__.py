@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 
 from lava_common.constants import (
     BOOTLOADER_DEFAULT_CMD_TIMEOUT,
-    DISPATCHER_DOWNLOAD_DIR,
     DISTINCTIVE_PROMPT_CHARACTERS,
     LINE_SEPARATOR,
     LOGIN_INCORRECT_MSG,
@@ -761,11 +760,10 @@ class OverlayUnpack(Action):
             )
             if not overlay_full_path:
                 raise JobError("No overlay file identified for the transfer.")
-            if not overlay_full_path.startswith(DISPATCHER_DOWNLOAD_DIR):
-                raise ConfigurationError(
-                    "overlay should already be in DISPATCHER_DOWNLOAD_DIR"
-                )
-            overlay_path = overlay_full_path[len(DISPATCHER_DOWNLOAD_DIR) + 1 :]
+            download_dir = self.job.download_dir
+            if not overlay_full_path.startswith(download_dir):
+                raise ConfigurationError(f"overlay should already be in {download_dir}")
+            overlay_path = overlay_full_path[len(download_dir) + 1 :]
             overlay = os.path.basename(overlay_path)
 
             connection.sendline("rm %s" % overlay, delay=self.character_delay)
