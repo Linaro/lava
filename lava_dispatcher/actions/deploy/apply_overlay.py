@@ -618,6 +618,14 @@ class ExtractRamdisk(Action):
             part_decompressed = _decompress_if_needed(part, compression)
             uncpio(part_decompressed, extracted_ramdisk)
 
+        # Keep the original archive out of ramdisk_dir: cpio --create
+        # archives everything under that directory, so a stale archive
+        # would end up inside the rebuilt ramdisk.
+        shutil.move(
+            ramdisk_compressed_data,
+            os.path.join(parts_dir, os.path.basename(ramdisk_compressed_data)),
+        )
+
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(
             action=self.name,
