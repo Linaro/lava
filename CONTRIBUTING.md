@@ -1,1 +1,1 @@
-See https://docs.lavasoftware.org/lava/contribution.html
+doc/content/developer/methodology/contribute.md

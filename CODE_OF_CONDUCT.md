@@ -1,1 +1,1 @@
-See https://docs.lavasoftware.org/lava/code-of-conduct.html
+doc/content/developer/code-of-conduct.md

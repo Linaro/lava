@@ -1,0 +1,151 @@
+header:
+  schema-version: 2.2.0
+  last-updated: '2026-08-21'
+  last-reviewed: '2026-08-21'
+  url: https://gitlab.com/lava/lava/-/raw/master/security-insights.yml
+
+project:
+  name: LAVA
+  homepage: https://lavasoftware.org
+  steward:
+    uri: https://www.linaro.org
+    comment: Linaro stewards LAVA development as free and open-source software.
+  administrators:
+    - name: Remi Duraffort
+      affiliation: Linaro
+      email: remi.duraffort@linaro.org
+      primary: true
+    - name: Fathi Boudra
+      affiliation: Linaro
+      email: fathi.boudra@linaro.org
+      primary: false
+  documentation:
+    quickstart-guide: https://lava.readthedocs.io/en/latest/admin/first-steps.html
+    detailed-guide: https://lava.readthedocs.io/en/latest/
+    code-of-conduct: https://gitlab.com/lava/lava/-/raw/master/CODE_OF_CONDUCT.md
+    release-process: https://gitlab.com/lava/lava/-/wikis/process/releasing
+  repositories:
+    - name: lava
+      url: https://gitlab.com/lava/lava
+      comment: LAVA server, dispatcher, and worker source code.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    contact:
+      name: Linaro PSIRT
+      email: psirt@linaro.org
+      primary: true
+    policy: https://www.linaro.org/vdp
+    in-scope:
+      - LAVA server
+      - LAVA dispatcher
+      - LAVA worker
+      - lava-dispatcher-host
+    out-of-scope:
+      - third-party dependencies
+      - operator-configured deployments
+    comment: Report vulnerabilities to the Linaro PSIRT per the Linaro VDP.
+
+repository:
+  url: https://gitlab.com/lava/lava
+  status: active
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  bug-fixes-only: false
+  core-team:
+    - name: Remi Duraffort
+      affiliation: Linaro
+      email: remi.duraffort@linaro.org
+      primary: true
+    - name: Fathi Boudra
+      affiliation: Linaro
+      email: fathi.boudra@linaro.org
+      primary: false
+    - name: Milosz Wasilewski
+      affiliation: Qualcomm
+      email: milosz.wasilewski@oss.qualcomm.com
+      primary: false
+  documentation:
+    contributing-guide: https://gitlab.com/lava/lava/-/raw/master/CONTRIBUTING.md
+    security-policy: https://gitlab.com/lava/lava/-/raw/master/SECURITY.md
+  license:
+    expression: GPL-2.0-or-later
+    url: https://gitlab.com/lava/lava/-/raw/master/COPYING
+  release:
+    automated-pipeline: true
+    changelog: https://gitlab.com/lava/lava/-/wikis/releases
+    distribution-points:
+      - uri: https://apt.lavasoftware.org
+        comment: Debian packages (release and daily channels)
+      - uri: https://registry.gitlab.com/lava
+        comment: Docker images for the server and dispatcher
+      - uri: https://gitlab.com/lava/lava/-/releases
+        comment: GitLab release page with source tarballs
+  security:
+    assessments:
+      self:
+        comment: >
+          LAVA runs SAST (bandit), SCA (grype, trivy, osv-scanner),
+          SBOM generation (syft), and secret scanning (detect-private-key)
+          in CI, plus type checking
+          (mypy) and linting (ruff, pylint). See security.tools.
+        date: '2026-08-21'
+    champions:
+      - name: LAVA team
+        affiliation: Linaro
+        email: lava-team@linaro.org
+        primary: true
+    tools:
+      - name: bandit
+        type: SAST
+        version: 1.9.4
+        rulesets: [pyproject.toml]
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results: {}
+        comment: Python SAST via pre-commit, severity-level medium.
+      - name: grype
+        type: SCA
+        rulesets: [default]
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+        comment: SBOM vulnerability scan; SARIF report published as a CI artifact.
+      - name: trivy
+        type: SCA
+        rulesets: [default]
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+      - name: osv-scanner
+        type: SCA
+        rulesets: [default]
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+        comment: Scans uv.lock against the OSV database.
+      - name: syft
+        type: other
+        rulesets: [default]
+        integration:
+          adhoc: false
+          ci: true
+          release: false
+        results: {}
+        comment: Generates the SBOM consumed by grype.
+      - name: detect-private-key
+        type: secret
+        rulesets: [default]
+        integration:
+          adhoc: true
+          ci: true
+          release: false
+        results: {}
