@@ -120,7 +120,7 @@ class GroupObjectPermission(models.Model):
 
 
 class Tag(models.Model):
-    name = models.SlugField(unique=True)
+    name = models.SlugField(unique=True, max_length=100)
 
     description = models.TextField(null=True, blank=True)
 
