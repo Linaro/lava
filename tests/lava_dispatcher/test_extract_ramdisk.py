@@ -22,6 +22,7 @@ class TestExtractRamdisk(LavaDispatcherTestCase):
         downloaded = workdir / "rootfs.cpio.gz"
         downloaded.write_bytes(b"not really a cpio")
         ramdisk_dir = self.create_temporary_directory()
+        parts_dir = self.create_temporary_directory()
 
         job = self.create_simple_job()
         action = ExtractRamdisk(job)
@@ -35,7 +36,9 @@ class TestExtractRamdisk(LavaDispatcherTestCase):
         with (
             patch.object(action, "get_namespace_data", return_value=str(downloaded)),
             patch.object(action, "set_namespace_data", side_effect=set_namespace_data),
-            patch.object(action, "mkdtemp", return_value=str(ramdisk_dir)),
+            patch.object(
+                action, "mkdtemp", side_effect=[str(ramdisk_dir), str(parts_dir)]
+            ),
             patch("lava_dispatcher.actions.deploy.apply_overlay.split_initramfs"),
             patch("lava_dispatcher.actions.deploy.apply_overlay.uncpio"),
             patch(
@@ -44,6 +47,12 @@ class TestExtractRamdisk(LavaDispatcherTestCase):
             ),
         ):
             action.run(MagicMock(), None)
+
+        # cpio --create archives everything under the unpack directory, so
+        # the original archive must be moved out of it, otherwise the
+        # rebuilt ramdisk would contain the original archive as an entry.
+        suffix = f".{compression}" if compression else ""
+        self.assertFalse(os.path.exists(ramdisk_dir / (RAMDISK_FNAME + suffix)))
 
         return (
             published[("extracted_ramdisk", "directory")],
