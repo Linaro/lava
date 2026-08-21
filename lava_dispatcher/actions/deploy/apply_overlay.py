@@ -625,8 +625,14 @@ class ExtractRamdisk(Action):
             key="directory",
             value=extracted_ramdisk,
         )
+        # Where CompressRamdisk will write the rebuilt archive. Not the
+        # directory above: that is where the contents were unpacked to, and
+        # cpio cannot write an archive over it.
         self.set_namespace_data(
-            action=self.name, label="ramdisk_file", key="file", value=extracted_ramdisk
+            action=self.name,
+            label="ramdisk_file",
+            key="file",
+            value=os.path.join(ramdisk_dir, RAMDISK_FNAME),
         )
         return connection
 
