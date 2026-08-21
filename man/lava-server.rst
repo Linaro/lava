@@ -369,14 +369,9 @@ supply as much information as you can on the board itself.
 Contributing Upstream
 #####################
 
-If you want to contribute, refer to https://docs.lavasoftware.org/lava/contribution.html
+If you want to contribute, refer to https://lava.readthedocs.io/en/latest/developer/methodology/contribute.html
 
-If you are considering large changes, it is best to subscribe to the Linaro
-Validation mailing list at:
+If you are considering large changes, it is best to subscribe to the LAVA
+mailing lists at:
 
-https://lists.lavasoftware.org/mailman3/lists/lava-users.lists.lavasoftware.org/
-
-Also talk to us on IRC::
-
- irc.libera.chat
- #lavasoftware
+https://lists.lavasoftware.org/mailman3/lists/

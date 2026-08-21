@@ -105,7 +105,7 @@ optional-dependencies.test = [
   "pytest-subtests",
   "responses",
 ]
-urls.Documentation = "https://docs.lavasoftware.org"
+urls.Documentation = "https://lava.readthedocs.io/en/latest/"
 urls.Homepage = "https://lavasoftware.org"
 urls.Issues = "https://gitlab.com/lava/lava/-/issues"
 urls.Repository = "https://gitlab.com/lava/lava"

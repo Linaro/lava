@@ -157,4 +157,4 @@ replace the `YOUR_*` strings with the real values.
 ## SSH-based hacking session
 
 In case you still need the pure SSH-based hacking sessions, see
-<https://docs.lavasoftware.org/lava/hacking-session.html>.
+<https://lava.readthedocs.io/en/latest/user/advanced-tutorials/tmate-based-hacking-session.html>.

@@ -176,7 +176,7 @@ whilst others are optional.
   You can do this via [XMLRPC](https://validation.linaro.org/api/help/#scheduler.devices.set_dictionary), [lavacli](https://docs.lavasoftware.org/lavacli/) or [REST API](https://staging.validation.linaro.org/api/v0.2/devices/staging-qemu01/dictionary/) (if using version 2020.01 and higher).
 * (optional) If the lab where this container runs is behind a proxy or you
   require any specific worker environment settings, you will need to update the
-  proxy settings by setting the [worker environment](https://docs.lavasoftware.org/lava/proxy.html#using-the-http-proxy)
+  proxy settings by setting the [worker environment](https://lava.readthedocs.io/en/latest/admin/advanced-tutorials/remote-workers.html#http_proxy-settings)
   You can do this via this [XMLRPC API call](https://validation.linaro.org/api/help/#scheduler.workers.set_env).
 
 !!! note "Firewall"
@@ -207,7 +207,7 @@ additional setup steps:
     container.
 * ser2net config - update `ser2net/ser2net.config` with the corresponding
   serial port and device settings
-* Update/add [device dictionary](https://docs.lavasoftware.org/lava/glossary.html#term-device-dictionary) with power commands and connection command
+* Update/add [device dictionary](https://lava.readthedocs.io/en/latest/introduction/glossary.html#device-dictionary) with power commands and connection command
 * Add dispatcher_ip setting to the [dispatcher configuration](https://validation.linaro.org/api/help/#scheduler.workers.set_config). Alternatively you can use
 [REST API](https://lava_server/api/v0.2/workers/docker_dispatcher_hostname/config/) if you are using version 2020.01 or higher:
   * `dispatcher_ip: <docker host ip address>`

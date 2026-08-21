@@ -1,9 +1,8 @@
 LAVA
 ====
 
-LAVA is an automated validation architecture primarily aimed at testing
-deployments of systems based around the Linux kernel on ARM devices,
-specifically ARMv7 and later.
+LAVA is a continuous integration system for deploying operating systems onto
+physical and virtual hardware for running tests.
 
 This repository contains the dispatcher and server source code.
 
@@ -11,13 +10,12 @@ Installation instructions
 =========================
 
 For latest information, see the lava-server documentation:
-* [first installation](https://docs.lavasoftware.org/lava/first-installation.html)
-* [installing on Debian](https://docs.lavasoftware.org/lava/installing_on_debian.html)
+* [first installation](https://lava.readthedocs.io/en/latest/admin/basic-tutorials/instance/install.html)
 
 Support
 =======
 
-Read the [support](https://docs.lavasoftware.org/lava/support.html) page.
+Read the [contact](https://lava.readthedocs.io/en/latest/introduction/contact.html) page.
 
 Reporting Bugs
 ==============
