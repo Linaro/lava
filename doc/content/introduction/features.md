@@ -72,8 +72,7 @@ other metrics.
 
 ## Flexible notifications
 
-LAVA job completion can trigger notifications via email, IRC, or webhook
-callbacks.
+LAVA job completion can trigger notifications via email or webhook callbacks.
 
 ## Data export for customization
 

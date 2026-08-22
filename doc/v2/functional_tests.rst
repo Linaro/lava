@@ -79,7 +79,7 @@ Currently we test:
   common bootloader errors
 
 * ``tests/notifications``: Check that lava is sending the notifications
-  as expected (no irc or emails yet)
+  as expected (no emails yet)
 
 Future plans
 ============
