@@ -2,13 +2,6 @@
 notify:
   recipients:
   - to:
-     method: irc
-     user: neil.williams
-  - to:
-     method: irc
-     handle: codehelp
-     server: irc.freenode.net
-  - to:
      method: email
      user: neil.williams
   - to:

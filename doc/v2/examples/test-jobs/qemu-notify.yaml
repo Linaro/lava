@@ -31,7 +31,7 @@ notify:
   recipients:
   - to:
      user: neil.williams
-     method: irc
+     method: email
 
 # ACTION_BLOCK
 actions:

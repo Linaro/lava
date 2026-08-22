@@ -30,8 +30,8 @@ complete or incomplete, not when the job was canceled.
 Notification recipients
 =======================
 
-The method and destination of each notification can be set for each recipient.
-Currently, two notification methods are supported, **email** and **IRC**.
+The destination of each notification can be set for each recipient. The only
+notification method is **email**.
 
 Recipients can be specified using the LAVA username or in full.
 
@@ -53,7 +53,7 @@ will send an email to the `physical owner` of the device on which the job ran.
 Notification callbacks
 ======================
 
-In addition to sending email and IRC messages to **recipients**, the system can
+In addition to sending email messages to **recipients**, the system can
 send multiple URL callback actions. This will do a GET or POST request to the
 specified URL in the **callbacks** subsection. This can be used to trigger some
 action remotely. If a callback uses the POST request, the system will attach job data as described below.
@@ -154,9 +154,9 @@ Returns a gzip file containing the job data as JSON.
 Using profile settings
 ----------------------
 
-LAVA users can configure the ``IRC settings`` or email address in their own
-profile data in the instance. This allows the recipient to be specified using
-only the LAVA username.
+LAVA users can configure their email address in their own profile data in the
+instance. This allows the recipient to be specified using only the LAVA
+username.
 
 .. image:: images/profile-menu.png
 
@@ -172,11 +172,6 @@ Examples for user vs manual addressing:
    :code: yaml
    :start-after: # notify recipients block
    :end-before: # notify compare block
-
-IRC and email notifications use different templates since emails allow for more
-verbosity, so some options which are present in the ``notify`` block for email
-recipients do not apply for IRC recipients, like **comparing** options and
-**verbosity**.
 
 
 Result comparison in notifications
