@@ -34,7 +34,6 @@ from lava_server.views import (
     index,
     me,
     prometheus,
-    update_irc_settings,
     update_remote_auth,
     update_table_length_setting,
 )
@@ -122,11 +121,6 @@ urlpatterns = [
                     "me/",
                     me,
                     name="lava.me",
-                ),
-                path(
-                    "update-irc-settings/",
-                    update_irc_settings,
-                    name="lava.update_irc_settings",
                 ),
                 path(
                     "update-remote-auth/",

@@ -33,13 +33,6 @@ from lava_server.bread_crumbs import BreadCrumb, BreadCrumbTrail
 from linaro_django_xmlrpc.models import AuthToken
 
 
-class ExtendedUserIRCForm(forms.ModelForm):
-    class Meta:
-        model = ExtendedUser
-        fields = ("irc_server", "irc_handle", "user")
-        widgets = {"user": forms.HiddenInput}
-
-
 class ExtendedUserTableLengthForm(forms.ModelForm):
     class Meta:
         model = ExtendedUser
@@ -152,7 +145,6 @@ def index(request):
 def me(request):
     ExtendedUser.objects.get_or_create(user=request.user)
     data = {
-        "irc_form": ExtendedUserIRCForm(instance=request.user.extendeduser),
         "table_length_form": ExtendedUserTableLengthForm(
             instance=request.user.extendeduser
         ),
@@ -161,16 +153,6 @@ def me(request):
         ),
     }
     return render(request, "me.html", data)
-
-
-@login_required
-@require_POST
-def update_irc_settings(request):
-    extended_user = request.user.extendeduser
-    form = ExtendedUserIRCForm(request.POST, instance=extended_user)
-    if form.is_valid():
-        extended_user = form.save()
-    return HttpResponseRedirect(reverse("lava.me"))
 
 
 @login_required
