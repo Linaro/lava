@@ -2,4 +2,7 @@
 
 set -eu
 
-pgrep -fa /usr/bin/lava-coordinator
+# lava-coordinator.service must be installed, enabled and running by default
+systemctl cat lava-coordinator.service
+systemctl is-enabled lava-coordinator.service
+systemctl is-active lava-coordinator.service
