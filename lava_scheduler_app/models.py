@@ -79,14 +79,6 @@ class DevicesUnavailableException(UserWarning):
 class ExtendedUser(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
-    irc_handle = models.CharField(
-        max_length=40, default=None, null=True, blank=True, verbose_name="IRC handle"
-    )
-
-    irc_server = models.CharField(
-        max_length=40, default=None, null=True, blank=True, verbose_name="IRC server"
-    )
-
     table_length = models.PositiveSmallIntegerField(
         verbose_name="Table length",
         help_text="leave empty for system default",
@@ -96,7 +88,7 @@ class ExtendedUser(models.Model):
     )
 
     def __str__(self):
-        return f"{self.user}: {self.irc_handle}@{self.irc_server}"
+        return str(self.user)
 
 
 class GroupObjectPermission(models.Model):
@@ -1590,7 +1582,6 @@ class TestJob(models.Model):
     objects = RestrictedTestJobQuerySet.as_manager()
 
     NOTIFY_EMAIL_METHOD = "email"
-    NOTIFY_IRC_METHOD = "irc"
 
     id = models.AutoField(primary_key=True)
 
@@ -2585,14 +2576,6 @@ class NotificationRecipient(models.Model):
         default=None, null=True, blank=True, verbose_name="recipient email"
     )
 
-    irc_handle = models.TextField(
-        default=None, null=True, blank=True, verbose_name="IRC handle"
-    )
-
-    irc_server = models.TextField(
-        default=None, null=True, blank=True, verbose_name="IRC server"
-    )
-
     notification = models.ForeignKey(
         Notification, null=False, on_delete=models.CASCADE, verbose_name="Notification"
     )
@@ -2608,23 +2591,18 @@ class NotificationRecipient(models.Model):
 
     EMAIL = 0
     EMAIL_STR = "email"
-    IRC = 1
-    IRC_STR = "irc"
 
     LAVA_DEVICE_OWNER_STR = "{LAVA_DEVICE_OWNER}"
 
-    METHOD_CHOICES = ((EMAIL, EMAIL_STR), (IRC, IRC_STR))
-    METHOD_MAP = {EMAIL_STR: EMAIL, IRC_STR: IRC}
+    METHOD_CHOICES = ((EMAIL, EMAIL_STR),)
+    METHOD_MAP = {EMAIL_STR: EMAIL}
 
     method = models.IntegerField(
         choices=METHOD_CHOICES, default=EMAIL, verbose_name=gettext_lazy("Method")
     )
 
     def __str__(self):
-        if self.method == self.EMAIL:
-            return f"[email] {self.email_address} ({self.get_status_display()})"
-        else:
-            return f"[irc] {self.irc_handle_name}@{self.irc_server_name} ({self.get_status_display()})"
+        return f"[email] {self.email_address} ({self.get_status_display()})"
 
     @property
     def email_address(self):
@@ -2632,26 +2610,6 @@ class NotificationRecipient(models.Model):
             return self.email
         else:
             return self.user.email
-
-    @property
-    def irc_handle_name(self):
-        if self.irc_handle:
-            return self.irc_handle
-        else:
-            try:
-                return self.user.extendeduser.irc_handle
-            except Exception:
-                return None
-
-    @property
-    def irc_server_name(self):
-        if self.irc_server:
-            return self.irc_server
-        else:
-            try:
-                return self.user.extendeduser.irc_server
-            except Exception:
-                return None
 
 
 class NotificationCallback(models.Model):
