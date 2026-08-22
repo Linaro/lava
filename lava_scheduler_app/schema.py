@@ -298,16 +298,13 @@ def _job_notify_schema():
 
 def _recipient_schema():
     EMAIL_STR = "email"
-    IRC_STR = "irc"
     return Schema(
         [
             {
                 Required("to"): {
-                    Required("method"): Any(EMAIL_STR, IRC_STR),
+                    Required("method"): EMAIL_STR,
                     "user": str,
                     "email": str,
-                    "server": str,
-                    "handle": str,
                 }
             }
         ]

@@ -188,11 +188,9 @@ def notify():
         Optional("recipients"): [
             {
                 Required("to"): {
-                    Required("method"): Any("email", "irc"),
+                    Required("method"): "email",
                     Optional("user"): str,
                     Optional("email"): str,
-                    Optional("handle"): str,
-                    Optional("server"): str,
                 }
             }
         ],
