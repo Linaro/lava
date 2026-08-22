@@ -641,10 +641,7 @@ class TagAdmin(admin.ModelAdmin):
 @admin.register(NotificationRecipient)
 class NotificationRecipientAdmin(admin.ModelAdmin):
     def handle(self, obj):
-        if obj.method == NotificationRecipient.EMAIL:
-            return obj.email_address
-        else:
-            return f"{obj.irc_handle}@{obj.irc_server_name}"
+        return obj.email_address
 
     list_display = ("method", "handle", "status")
     list_filter = ("method", "status")

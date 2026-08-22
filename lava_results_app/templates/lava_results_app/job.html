@@ -136,11 +136,7 @@
         <dl class="dl-horizontal">
           {% for recipient in job.notification.notificationrecipient_set.all %}
           <dt>Recipient</dt>
-          {% if recipient.method == 1 %}
-          <dd>{{ recipient.irc_handle_name }} on {{ recipient.irc_server_name }}</dd>
-          {% else %}
           <dd>{{ recipient.email_address }}</dd>
-          {% endif %}
           <dt>Method</dt>
           <dd>{{ recipient.get_method_display }}</dd>
           <dt>Status</dt>

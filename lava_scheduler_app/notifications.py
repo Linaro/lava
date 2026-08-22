@@ -17,7 +17,7 @@ from django.db.models import Q
 from django.urls import reverse
 
 from lava_results_app.models import Query, TestCase, TestSuite
-from lava_scheduler_app import dbutils, utils
+from lava_scheduler_app import dbutils
 from lava_scheduler_app.models import (
     Notification,
     NotificationCallback,
@@ -250,13 +250,6 @@ def get_notification_args(job):
     return args
 
 
-def create_irc_notification(job):
-    args = {}
-    args["job"] = job
-    args["url_prefix"] = "http://%s" % dbutils.get_domain()
-    return create_notification_body(Notification.DEFAULT_IRC_TEMPLATE, **args)
-
-
 def create_notification_body(template_name, **kwargs):
     return Notification.TEMPLATES_ENV.get_template(template_name).render(**kwargs)
 
@@ -280,62 +273,31 @@ def send_notifications(job):
         callback.invoke_callback()
 
     for recipient in notification.notificationrecipient_set.all():
-        if recipient.method == NotificationRecipient.EMAIL:
-            if recipient.status == NotificationRecipient.NOT_SENT:
-                try:
-                    logger.info(
-                        "[%d] sending email notification to %s",
-                        job.id,
-                        recipient.email_address,
-                    )
-                    title = f"LAVA notification for Test Job {job.id} {job.description[:200]}"
-                    kwargs["user"] = get_recipient_args(recipient)
-                    body = create_notification_body(notification.template, **kwargs)
-                    result = send_mail(
-                        title, body, settings.SERVER_EMAIL, [recipient.email_address]
-                    )
-                    if result:
-                        recipient.status = NotificationRecipient.SENT
-                        recipient.save()
-                except Exception as exc:
-                    logger.exception(exc)
-                    logger.warning(
-                        "[%d] failed to send email notification to %s",
-                        job.id,
-                        recipient.email_address,
-                    )
-        else:  # IRC method
-            if recipient.status == NotificationRecipient.NOT_SENT:
-                if recipient.irc_server_name:
-                    logger.info(
-                        "[%d] sending IRC notification to %s on %s",
-                        job.id,
-                        recipient.irc_handle_name,
-                        recipient.irc_server_name,
-                    )
-                    try:
-                        irc_message = create_irc_notification(job)
-                        utils.send_irc_notification(
-                            Notification.DEFAULT_IRC_HANDLE,
-                            recipient=recipient.irc_handle_name,
-                            message=irc_message,
-                            server=recipient.irc_server_name,
-                        )
-                        recipient.status = NotificationRecipient.SENT
-                        recipient.save()
-                        logger.info(
-                            "[%d] IRC notification sent to %s",
-                            job.id,
-                            recipient.irc_handle_name,
-                        )
-                    # FIXME: this bare except should be constrained
-                    except Exception as e:
-                        logger.warning(
-                            "[%d] IRC notification not sent. Reason: %s - %s",
-                            job.id,
-                            e.__class__.__name__,
-                            str(e),
-                        )
+        if recipient.status == NotificationRecipient.NOT_SENT:
+            try:
+                logger.info(
+                    "[%d] sending email notification to %s",
+                    job.id,
+                    recipient.email_address,
+                )
+                title = (
+                    f"LAVA notification for Test Job {job.id} {job.description[:200]}"
+                )
+                kwargs["user"] = get_recipient_args(recipient)
+                body = create_notification_body(notification.template, **kwargs)
+                result = send_mail(
+                    title, body, settings.SERVER_EMAIL, [recipient.email_address]
+                )
+                if result:
+                    recipient.status = NotificationRecipient.SENT
+                    recipient.save()
+            except Exception as exc:
+                logger.exception(exc)
+                logger.warning(
+                    "[%d] failed to send email notification to %s",
+                    job.id,
+                    recipient.email_address,
+                )
 
 
 def notification_criteria(job_id, criteria, state, health, old_health):
@@ -461,10 +423,6 @@ def create_notification(job, data):
                     notification_recipient.user = user
             if "email" in recipient["to"]:
                 notification_recipient.email = recipient["to"]["email"]
-            if "handle" in recipient["to"]:
-                notification_recipient.irc_handle = recipient["to"]["handle"]
-            if "server" in recipient["to"]:
-                notification_recipient.irc_server = recipient["to"]["server"]
 
             # Ignore unique constraint violation.
             with contextlib.suppress(IntegrityError):

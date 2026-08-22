@@ -2495,8 +2495,6 @@ class Notification(models.Model):
     )
 
     DEFAULT_TEMPLATE = "testjob_notification.txt"
-    DEFAULT_IRC_TEMPLATE = "testjob_irc_notification.txt"
-    DEFAULT_IRC_HANDLE = "lava-bot"
 
     QUERY_LIMIT = 5
 
