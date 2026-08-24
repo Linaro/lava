@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+if [ "$1" = "setup" ]
+then
+  set -x
+  apt-get -q update
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s forky -n)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-dispatcher -d debian -s forky -n -u)
+  apt-get install --no-install-recommends --yes $DEPS
+  DEPS=$(./share/requires.py -p lava-common -d debian -s forky -n)
+  apt-get install --no-install-recommends --yes $DEPS
+else
+  set -x
+  python3 -m pytest \
+      --color=yes \
+      -r a \
+      --cache-clear --verbose \
+      --junitxml=dispatcher.xml \
+      --random-order --random-order-bucket=global \
+    tests/lava_dispatcher \
+    tests/lava_dispatcher_host \
+    tests/lava_coordinator "$@"
+fi
