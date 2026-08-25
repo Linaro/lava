@@ -263,6 +263,20 @@ def _detect_compression(data: bytes) -> str | None:
     return None
 
 
+def _write_initramfs_part(data: bytes, outdir: str, index: int) -> str:
+    """Write one part of a multi-part initramfs, named after its compression.
+
+    A compressed part is named "part_NN.cpio.<compression>" so that
+    decompressing it yields "part_NN.cpio", like the uncompressed parts.
+    """
+    compression = _detect_compression(data)
+    suffix = f".{compression}" if compression else ""
+    part_path = os.path.join(outdir, f"part_{index:02d}.cpio{suffix}")
+    with open(part_path, "wb") as f:
+        f.write(data)
+    return part_path
+
+
 def split_initramfs(infile: str, outdir: str) -> list[str]:
     """
     Split a multi-part initramfs into individual cpio archives.
@@ -347,13 +361,7 @@ def split_initramfs(infile: str, outdir: str) -> list[str]:
 
     for archive_end in archive_ends:
         part_data = data[archive_start:archive_end]
-        # Detect compression and name accordingly
-        compression = _detect_compression(part_data)
-        suffix = f".{compression}" if compression else "cpio"
-        part_path = os.path.join(outdir, f"part_{part_index:02d}.{suffix}")
-        with open(part_path, "wb") as f:
-            f.write(part_data)
-        parts.append(part_path)
+        parts.append(_write_initramfs_part(part_data, outdir, part_index))
 
         archive_start = archive_end
         part_index += 1
@@ -365,12 +373,7 @@ def split_initramfs(infile: str, outdir: str) -> list[str]:
         remaining = data[archive_start:]
         # Check if it looks like a new archive
         if remaining[:6] == CPIO_NEWC_MAGIC or remaining[:2] == b"\x1f\x8b":
-            compression = _detect_compression(remaining)
-            suffix = f".{compression}" if compression else "cpio"
-            part_path = os.path.join(outdir, f"part_{part_index:02d}.{suffix}")
-            with open(part_path, "wb") as f:
-                f.write(remaining)
-            parts.append(part_path)
+            parts.append(_write_initramfs_part(remaining, outdir, part_index))
 
     if not parts:
         raise JobError(f"No valid cpio archives found in {infile!r}")

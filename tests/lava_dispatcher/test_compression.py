@@ -597,6 +597,11 @@ class TestSplitInitramfs(TestCase):
             parts = split_initramfs(str(multi_file), str(parts_dir))
 
             self.assertEqual(len(parts), 2)
+            # Parts are named after the compression they carry, so that
+            # decompressing part_01.cpio.gz gives a part_01.cpio like the
+            # uncompressed parts.
+            self.assertTrue(parts[0].endswith("part_00.cpio"))
+            self.assertTrue(parts[1].endswith("part_01.cpio.gz"))
 
             # Extract all parts
             extract_dir = tmp_dir_path / "extracted"
