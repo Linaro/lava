@@ -590,7 +590,12 @@ class ExtractRamdisk(Action):
         suffix = ""
         if compression:
             suffix = ".%s" % compression
-        ramdisk_compressed_data = os.path.join(ramdisk_dir, RAMDISK_FNAME + suffix)
+        # Keep the original archive out of ramdisk_dir: CompressRamdisk
+        # rebuilds the ramdisk there, so a stale archive left next to it would
+        # end up in the rebuilt ramdisk. This directory also holds the split
+        # parts of a multi-part initramfs.
+        parts_dir = self.mkdtemp()
+        ramdisk_compressed_data = os.path.join(parts_dir, RAMDISK_FNAME + suffix)
         if self.parameters["ramdisk"].get("header") == "u-boot":
             cmd = (
                 "dd if=%s of=%s ibs=%s skip=1"
@@ -605,7 +610,6 @@ class ExtractRamdisk(Action):
             shutil.move(ramdisk, ramdisk_compressed_data)
         # Handle multi-part initramfs (uncompressed cpio + compressed cpio)
         # introduced by mkinitramfs v0.146+
-        parts_dir = self.mkdtemp()
         try:
             parts = split_initramfs(ramdisk_compressed_data, parts_dir)
         except JobError:
@@ -617,14 +621,6 @@ class ExtractRamdisk(Action):
             # Detect if this part is compressed by checking magic bytes
             part_decompressed = _decompress_if_needed(part, compression)
             uncpio(part_decompressed, extracted_ramdisk)
-
-        # Keep the original archive out of ramdisk_dir: cpio --create
-        # archives everything under that directory, so a stale archive
-        # would end up inside the rebuilt ramdisk.
-        shutil.move(
-            ramdisk_compressed_data,
-            os.path.join(parts_dir, os.path.basename(ramdisk_compressed_data)),
-        )
 
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(
