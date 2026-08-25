@@ -4,7 +4,10 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import unittest
+
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
+from tests.utils import infrastructure_error
 
 
 class N1sdpFactory(Factory):
@@ -20,6 +23,7 @@ class TestN1sdp(LavaDispatcherTestCase):
             "sample_jobs/n1sdp-fw-grub-ramdisk.yaml"
         )
 
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_pipeline(self):
         self.job.validate()
         description_ref = self.pipeline_reference(

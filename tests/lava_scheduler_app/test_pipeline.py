@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import os
-from unittest import TestCase
+from unittest import TestCase, skipIf
 from unittest.mock import patch
 
 import yaml
@@ -35,6 +35,7 @@ from lava_scheduler_app.schema import (
 from lava_scheduler_app.utils import split_multinode_yaml
 from tests.lava_dispatcher.test_defs import check_missing_path
 from tests.lava_scheduler_app.test_submission import ModelFactory, TestCaseWithFactory
+from tests.utils import infrastructure_error
 
 # set to True to see extra processing details
 DEBUG = False
@@ -715,6 +716,7 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.assertTrue("secrets" in job, f"No secrets found in job {job}")
                 self.assertEqual(job["secrets"], {"foo": "bar"})
 
+    @skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_secondary_connection(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type(name="mustang")
@@ -1161,6 +1163,7 @@ class TestYamlMultinode(TestCaseWithFactory):
         job_list = TestJob.from_yaml_and_user(yaml_safe_dump(submission), user)
         self.assertEqual(len(job_list), 2)
 
+    @skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_multinode_mixed_deploy(self):
         user = self.factory.make_user()
         device_type = self.factory.make_device_type()

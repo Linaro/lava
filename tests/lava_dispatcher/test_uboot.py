@@ -237,6 +237,9 @@ class TestUbootAction(LavaDispatcherTestCase):
         self.assertNotEqual(interrupt.params, {})
         self.assertEqual("u-boot", interrupt.method)
 
+    # The patch below is on lava_dispatcher.utils.shell.which, which the tftp
+    # action does not go through, so in.tftpd has to be installed for real.
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     @patch("lava_dispatcher.utils.shell.which", return_value="/usr/bin/in.tftpd")
     def test_x15_uboot_nfs(self, which_mock):
         job = self.factory.create_x15_job("sample_jobs/x15-nfs.yaml")
