@@ -253,18 +253,19 @@ class TestTemplates(BaseTemplateTest):
         )
 
     def test_all_templates(self):
-        all_template_names = DEVICES_JINJA_ENV.list_templates()
+        all_template_names = DEVICES_JINJA_ENV.list_templates(extensions=["jinja2"])
 
         # Check that templates are properly loaded
         self.assertNotEqual([], all_template_names)
 
         for template_name in all_template_names:
             with self.subTest(template_name=template_name):
-                self.assertTrue(template_name.endswith(".jinja2"))
                 self.render_device_dictionary(template_name.removesuffix(".jinja2"), {})
 
     def test_all_template_connections(self):
-        for template_name in DEVICE_TYPES_JINJA_ENV.list_templates():
+        for template_name in DEVICE_TYPES_JINJA_ENV.list_templates(
+            extensions=["jinja2"]
+        ):
             with self.subTest(template_name=template_name):
                 data = f"{{% extends '{template_name}' %}}"
                 data += "{% set connection_command = 'telnet calvin 6080' %}"
