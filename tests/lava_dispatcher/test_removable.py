@@ -76,6 +76,7 @@ class TestRemovable(LavaDispatcherTestCase):
             u_boot_params["parameters"]["bootloader_prompt"],
         )
 
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_job_parameters(self):
         """
         Test that the job parameters match expected structure
@@ -90,6 +91,7 @@ class TestRemovable(LavaDispatcherTestCase):
         description_ref = self.pipeline_reference(job_filename, job=job)
         self.assertEqual(description_ref, job.pipeline.describe())
 
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_writer_job_parameters(self):
         """
         Test that the job parameters with a writer tool match expected structure
@@ -182,9 +184,11 @@ class TestRemovable(LavaDispatcherTestCase):
             )
         )
 
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_deployment(self):
         self._check_deployment("cubie1", "cubietruck-removable.yaml")
 
+    @unittest.skipIf(infrastructure_error("in.tftpd"), "tftpd-hpa not installed")
     def test_writer_deployment(self):
         self._check_deployment("cubie1", "cubietruck-removable-with-writer.yaml")
 
