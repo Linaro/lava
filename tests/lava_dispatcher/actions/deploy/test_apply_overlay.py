@@ -259,7 +259,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
 
         with (
-            patch("guestfs.GuestFS") as guestfs_mock,
+            self.patch_guestfs() as guestfs_mock,
             self.collect_lava_logs(action) as action_logs,
         ):
             action.update_guestfs()
@@ -418,7 +418,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         action.run_cmd = MagicMock()
 
         with (
-            patch("guestfs.GuestFS") as guestfs_mock,
+            self.patch_guestfs() as guestfs_mock,
             patch(
                 "lava_dispatcher.actions.deploy.apply_overlay.os.replace"
             ) as replace_mock,
@@ -590,7 +590,7 @@ class TestApplyOverlay(LavaDispatcherTestCase):
         }
 
         with (
-            patch("guestfs.GuestFS") as guestfs_mock,
+            self.patch_guestfs() as guestfs_mock,
             self.collect_lava_logs(action) as action_logs,
         ):
             action.update_guestfs()

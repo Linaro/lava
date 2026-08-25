@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import importlib.util
 import os
 import sys
 import time
@@ -40,7 +41,7 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.parser import JobParser
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Iterator
     from typing import Any
 
     from jinja2.sandbox import SandboxedEnvironment
@@ -81,6 +82,20 @@ class LavaDispatcherTestCase(unittest.TestCase):
                 log_records.append((level_name.upper(), message, args))
 
         return log_records
+
+    @contextmanager
+    def patch_guestfs(self) -> Iterator[MagicMock]:
+        # python3-guestfs is only available as a system package. When it's
+        # missing (uv virtualenv, ...), fake the module so that GuestFS can
+        # still be patched.
+        fake_modules = (
+            {} if importlib.util.find_spec("guestfs") else {"guestfs": MagicMock()}
+        )
+        with (
+            patch.dict(sys.modules, fake_modules),
+            patch("guestfs.GuestFS") as guestfs_mock,
+        ):
+            yield guestfs_mock
 
     def create_temporary_directory(self) -> Path:
         tmp_dir = TemporaryDirectory(prefix=self.__call__.__name__)
