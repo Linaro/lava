@@ -59,6 +59,11 @@ _UDEV_PROP = {
 }
 
 
+# Raw sysfs attribute the udev share rule matches on (ATTR{serial}); not always
+# equal to the ID_SERIAL_SHORT property, so serial_number accepts either.
+_SERIAL_ATTR = "serial"
+
+
 def _node_matches_device_info(node, device_info):
     """Return True iff every non-empty device_info key matches the node's udev properties.
 
@@ -67,15 +72,38 @@ def _node_matches_device_info(node, device_info):
     skipped (the known keys already constrain the device).
     """
     props = node.properties
+    attrs = node.attributes
     for key, expected in device_info.items():
         if not expected:
             continue
+        expected = str(expected)
+        if key == "serial_number":
+            if (
+                props.get("ID_SERIAL_SHORT") == expected
+                or attrs.get(_SERIAL_ATTR) == expected
+            ):
+                continue
+            return False
         prop = _UDEV_PROP.get(key)
         if prop is None:
             continue
-        if props.get(prop) != str(expected):
+        if props.get(prop) != expected:
             return False
     return True
+
+
+def _resolve_nodes(device_info):
+    """Resolve the device node(s) that carry device_info, server-side.
+
+    The client-supplied path is not trusted: the daemon resolves which node(s)
+    actually carry the matched job's udev IDs and shares those. Returns a list of
+    device_node paths (possibly empty).
+    """
+    nodes = []
+    for dev in context.list_devices():
+        if dev.device_node and _node_matches_device_info(dev, device_info):
+            nodes.append(dev.device_node)
+    return nodes
 
 
 def share_device_with_container(options):
@@ -83,30 +111,21 @@ def share_device_with_container(options):
     if not data:
         return
     container = data["container"]
-    device = options.device
-    if not device.startswith("/dev/"):
-        device = "/dev/" + device
-    if not os.path.exists(device):
-        logger.warning(f"Can't share {device}: file not found")
-        return
+    device_info = data["device_info"]
 
-    # The client-supplied path is not trusted: verify the node actually carries
-    # the matched job's device_info before sharing it (see SECURITY-FIX doc).
-    try:
-        node = pyudev.Devices.from_device_file(context, device)
-    except pyudev.DeviceNotFoundError:
-        logger.warning(f"Can't share {device}: not a udev device")
-        return
-    if not _node_matches_device_info(node, data["device_info"]):
+    # The client-supplied path is not trusted: resolve which node(s) actually
+    # carry the matched job's device_info and share those (see SECURITY-FIX doc).
+    nodes = _resolve_nodes(device_info)
+    if not nodes:
         logger.warning(
-            f"Rejecting share of {device}: udev attributes do not match "
-            f"mapping device_info {data['device_info']}"
+            f"Rejecting share: no udev device matches mapping device_info {device_info}"
         )
         return
 
     container_type = data["container_type"]
     if container_type == "docker":
-        share_device_with_container_docker(container, device, job_id=job_id)
+        for node in nodes:
+            share_device_with_container_docker(container, node, job_id=job_id)
     else:
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 

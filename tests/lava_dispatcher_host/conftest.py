@@ -19,10 +19,20 @@ class _AlwaysEqual:
 @pytest.fixture(autouse=True)
 def pyudev(mocker):
     p = mocker.patch("lava_dispatcher_host.utils.pyudev")
-    # from_device_file must raise a real exception (a bare MagicMock is not a
+    # DeviceNotFoundError must be a real exception (a bare MagicMock is not a
     # BaseException subclass and cannot be used in an except clause).
     p.DeviceNotFoundError = type("DeviceNotFoundError", (Exception,), {})
-    # Make the mocked node's property lookups always match the mapping's
-    # device_info so the self-consistency check does not reject in unit tests.
-    p.Devices.from_device_file.return_value.properties.get.return_value = _AlwaysEqual()
+    # Default: list_devices() yields one node whose properties always match the
+    # mapping's device_info, so the server-side node resolution does not reject
+    # in unit tests. Tests that need a specific (or no) node override
+    # context.list_devices.return_value.
+    node = mocker.MagicMock()
+    node.device_node = "/dev/mocknode"
+    node.device_links = []
+    node.properties.get.return_value = _AlwaysEqual()
+    p.Context.return_value.list_devices.return_value = [node]
+    # context is a module-level pyudev.Context() created at import time, so it
+    # does not see the mocked pyudev module above. Patch its list_devices
+    # directly so _resolve_nodes() resolves the mock node in unit tests.
+    mocker.patch("lava_dispatcher_host.utils.context.list_devices", return_value=[node])
     return p
