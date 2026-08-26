@@ -296,3 +296,83 @@ class TestLoadMapping:
         assert not mapping.exists()
         data = load_mapping_data(mapping)
         assert type(data) is list
+
+
+def _mock_node(mocker, props):
+    """Return a mock pyudev node whose properties.get() returns the given values."""
+    node = mocker.MagicMock()
+    node.properties.get.side_effect = lambda key: props.get(key)
+    mocker.patch(
+        "lava_dispatcher_host.utils.pyudev.Devices.from_device_file",
+        return_value=node,
+    )
+    return node
+
+
+class TestDeviceSelfConsistency:
+    """The server must not trust the client's device path.
+
+    share_device_with_container resolves the requested node and rejects it
+    unless its real udev attributes carry the matched mapping's device_info.
+    """
+
+    def test_matching_serial_is_shared(self, mocker):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping("1", {"serial_number": "ABC123"}, "mycontainer")
+        _mock_node(mocker, {"ID_SERIAL_SHORT": "ABC123"})
+        share_device_with_container(Namespace(device="/dev/sdb", serial_number="ABC123"))
+        share.assert_called_once_with("mycontainer", "/dev/sdb", job_id="1")
+
+    def test_matching_vendor_product_is_shared(self, mocker):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping(
+            "1", {"usb_vendor_id": "1234", "usb_product_id": "5678"}, "mycontainer"
+        )
+        _mock_node(mocker, {"ID_VENDOR_ID": "1234", "ID_MODEL_ID": "5678"})
+        share_device_with_container(
+            Namespace(
+                device="/dev/bus/usb/001/005",
+                usb_vendor_id="1234",
+                usb_product_id="5678",
+            )
+        )
+        share.assert_called_once_with(
+            "mycontainer", "/dev/bus/usb/001/005", job_id="1"
+        )
+
+    def test_mismatching_serial_rejected(self, mocker):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping("1", {"serial_number": "ABC123"}, "mycontainer")
+        _mock_node(mocker, {"ID_SERIAL_SHORT": "XYZ999"})
+        share_device_with_container(Namespace(device="/dev/sdb", serial_number="ABC123"))
+        share.assert_not_called()
+
+    def test_mismatching_vendor_product_rejected(self, mocker):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping(
+            "1", {"usb_vendor_id": "1234", "usb_product_id": "5678"}, "mycontainer"
+        )
+        # product matches, vendor does not
+        _mock_node(mocker, {"ID_VENDOR_ID": "AAAA", "ID_MODEL_ID": "5678"})
+        share_device_with_container(
+            Namespace(
+                device="/dev/bus/usb/001/005",
+                usb_vendor_id="1234",
+                usb_product_id="5678",
+            )
+        )
+        share.assert_not_called()
+
+    def test_mismatching_fs_label_rejected(self, mocker):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping("1", {"fs_label": "MYDATA"}, "mycontainer")
+        _mock_node(mocker, {"ID_FS_LABEL": "OTHERFS"})
+        share_device_with_container(Namespace(device="/dev/sdc1", fs_label="MYDATA"))
+        share.assert_not_called()
+
+    def test_non_udev_device_rejected(self, mocker, pyudev):
+        share = mocker.patch("lava_dispatcher_host.utils.share_device_with_container_docker")
+        add_device_container_mapping("1", {"serial_number": "ABC123"}, "mycontainer")
+        pyudev.Devices.from_device_file.side_effect = pyudev.DeviceNotFoundError
+        share_device_with_container(Namespace(device="/dev/mem", serial_number="ABC123"))
+        share.assert_not_called()
