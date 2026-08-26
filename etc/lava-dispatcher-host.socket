@@ -3,6 +3,7 @@ Description=lava-dispatcher-host socket
 
 [Socket]
 ListenStream=/run/lava-dispatcher-host.sock
+SocketMode=0600
 
 [Install]
 WantedBy=sockets.target
