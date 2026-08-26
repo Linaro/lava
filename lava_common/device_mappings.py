@@ -31,6 +31,7 @@ def add_device_container_mapping(
     device_info: dict[str, Any],
     container: str,
     container_type: str = "docker",
+    device_paths: list[str] | None = None,
 ) -> None:
     validate_device_info(device_info)
     item: dict[str, Any] = {
@@ -39,6 +40,8 @@ def add_device_container_mapping(
         "container_type": container_type,
         "job_id": job_id,
     }
+    if device_paths:
+        item["device_paths"] = list(device_paths)
     mapping_path = get_mapping_path(job_id)
     data = load_mapping_data(mapping_path)
 

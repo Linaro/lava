@@ -406,3 +406,78 @@ class TestDeviceSelfConsistency:
             Namespace(device="/dev/sdb", serial_number="ABC123")
         )
         share.assert_not_called()
+
+
+class TestDevicePathPinning:
+    """The mapping records the exact node path(s) the dispatcher resolved, and
+    the host shares only the caller's path when it is one of them. This pins
+    the share to the exact node and closes the identical-attributes residual
+    that server-side resolution leaves."""
+
+    def test_stored_path_is_shared_exactly(self, mocker):
+        """The caller's path is in the stored set: share exactly that path."""
+        share = mocker.patch(
+            "lava_dispatcher_host.utils.share_device_with_container_docker"
+        )
+        add_device_container_mapping(
+            "1",
+            {"serial_number": "ABC123"},
+            "mycontainer",
+            device_paths=["/dev/sda1"],
+        )
+        share_device_with_container(
+            Namespace(device="/dev/sda1", serial_number="ABC123")
+        )
+        share.assert_called_once_with("mycontainer", "/dev/sda1", job_id="1")
+
+    def test_unstored_path_rejected(self, mocker):
+        """The caller's path is not in the stored set: reject, even though a
+        udev node carrying the same device_info exists."""
+        share = mocker.patch(
+            "lava_dispatcher_host.utils.share_device_with_container_docker"
+        )
+        add_device_container_mapping(
+            "1",
+            {"serial_number": "ABC123"},
+            "mycontainer",
+            device_paths=["/dev/sda1"],
+        )
+        # A node carrying the serial exists, but the caller points at /dev/sdb.
+        _mock_node(mocker, {"ID_SERIAL_SHORT": "ABC123"})
+        share_device_with_container(
+            Namespace(device="/dev/sdb", serial_number="ABC123")
+        )
+        share.assert_not_called()
+
+    def test_identical_attributes_other_node_rejected(self, mocker):
+        """Two devices share identical udev attributes; only the exact stored
+        node is shared, not the other identical device (zero residual)."""
+        share = mocker.patch(
+            "lava_dispatcher_host.utils.share_device_with_container_docker"
+        )
+        # The dispatcher resolved /dev/sda1 for this serial; the attacker
+        # points at /dev/sdb, which carries the same serial.
+        add_device_container_mapping(
+            "1",
+            {"serial_number": "ABC123"},
+            "mycontainer",
+            device_paths=["/dev/sda1"],
+        )
+        _mock_node(mocker, {"ID_SERIAL_SHORT": "ABC123"})
+        share_device_with_container(
+            Namespace(device="/dev/sdb", serial_number="ABC123")
+        )
+        share.assert_not_called()
+
+    def test_no_stored_paths_falls_back_to_resolution(self, mocker):
+        """A mapping without recorded paths (e.g. debug mapping) still shares
+        via server-side resolution."""
+        share = mocker.patch(
+            "lava_dispatcher_host.utils.share_device_with_container_docker"
+        )
+        add_device_container_mapping("1", {"serial_number": "ABC123"}, "mycontainer")
+        _mock_node(mocker, {"ID_SERIAL_SHORT": "ABC123"})
+        share_device_with_container(
+            Namespace(device="/dev/sdb", serial_number="ABC123")
+        )
+        share.assert_called_once_with("mycontainer", "/dev/mocknode", job_id="1")

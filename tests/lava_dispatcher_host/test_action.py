@@ -15,6 +15,13 @@ def add_device_container_mapping(mocker):
 
 
 @pytest.fixture
+def get_udev_devices(mocker):
+    return mocker.patch(
+        "lava_dispatcher.utils.containers.get_udev_devices", return_value=["/dev/sda1"]
+    )
+
+
+@pytest.fixture
 def action(mocker):
     a = DeviceContainerMappingMixin(mocker.MagicMock())
     a.job.job_id = "99"
@@ -24,14 +31,20 @@ def action(mocker):
 
 
 class TestDeviceContainerMappingMixin:
-    def test_basics(self, action, add_device_container_mapping, mocker):
+    def test_basics(self, action, add_device_container_mapping, get_udev_devices):
         action.job.device["device_info"].append({"board_id": "0123456789"})
         action.add_device_container_mappings("foobar", "docker")
         add_device_container_mapping.assert_called_with(
-            "xx-99", {"serial_number": "0123456789"}, "foobar", container_type="docker"
+            "xx-99",
+            {"serial_number": "0123456789"},
+            "foobar",
+            container_type="docker",
+            device_paths=["/dev/sda1"],
         )
 
-    def test_does_not_modify_device_info(self, action, add_device_container_mapping):
+    def test_does_not_modify_device_info(
+        self, action, add_device_container_mapping, get_udev_devices
+    ):
         action.job.device["device_info"].append({"board_id": "0123456789"})
         action.add_device_container_mappings("foobar", "docker")
         assert action.job.device["device_info"] == [{"board_id": "0123456789"}]

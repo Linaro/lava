@@ -112,9 +112,34 @@ def share_device_with_container(options):
         return
     container = data["container"]
     device_info = data["device_info"]
+    container_type = data["container_type"]
 
-    # The client-supplied path is not trusted: resolve which node(s) actually
-    # carry the matched job's device_info and share those (see SECURITY-FIX doc).
+    # if the mapping recorded the exact node path(s) the dispatcher resolved,
+    # share only the caller's path when it is one of them. This pins the share
+    # to the exact node and closes the identical-attributes residual that
+    # server-side resolution leaves.
+    device_paths = data.get("device_paths")
+    if device_paths:
+        device = options.device
+        if not device.startswith("/dev/"):
+            device = "/dev/" + device
+        if device not in device_paths:
+            logger.warning(
+                f"Rejecting share of {device}: not among the resolved node "
+                f"paths {device_paths} for mapping device_info {device_info}"
+            )
+            return
+        if container_type == "docker":
+            share_device_with_container_docker(container, device, job_id=job_id)
+        else:
+            raise InfrastructureError(
+                'Unsupported container type: "%s"' % container_type
+            )
+        return
+
+    # fallback (no paths recorded, e.g. debug mappings or a device that was
+    # absent at map time): resolve which node(s) actually carry the matched
+    # job's device_info and share those.
     nodes = _resolve_nodes(device_info)
     if not nodes:
         logger.warning(
@@ -122,7 +147,6 @@ def share_device_with_container(options):
         )
         return
 
-    container_type = data["container_type"]
     if container_type == "docker":
         for node in nodes:
             share_device_with_container_docker(container, node, job_id=job_id)

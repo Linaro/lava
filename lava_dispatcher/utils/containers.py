@@ -46,9 +46,17 @@ class DeviceContainerMappingMixin(Action):
                 device["serial_number"] = device["board_id"]
                 del device["board_id"]
             devices.append(device)
-        for device in devices:
+        for origdevice, device in zip(device_info + static_info, devices):
+            # persist the exact node path(s) the dispatcher resolved for this
+            # device_info, so lava-dispatcher-host shares only those nodes and
+            # never trusts a client-supplied path.
+            device_paths = get_udev_devices(device_info=[origdevice])
             add_device_container_mapping(
-                job_prefix + job_id, device, container, container_type=container_type
+                job_prefix + job_id,
+                device,
+                container,
+                container_type=container_type,
+                device_paths=device_paths,
             )
             self.logger.info(
                 f"Added mapping for {device} to {container_type} container {container}"
