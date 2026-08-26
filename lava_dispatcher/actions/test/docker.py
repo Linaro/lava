@@ -122,6 +122,14 @@ class DockerTestShell(TestShellAction, GetBoardId, DeviceContainerMappingMixin):
                 )
                 return
 
+            src = bind_mount[0]
+            if src in ("/run", "/run/lava-dispatcher-host.sock"):
+                self.errors_add(
+                    "Bind mount of /run is not allowed (exposes the "
+                    "lava-dispatcher-host socket)"
+                )
+                return
+
     def run(self, connection, max_end_time):
         # obtain lava overlay
         # start container

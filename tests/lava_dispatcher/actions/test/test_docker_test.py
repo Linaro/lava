@@ -216,6 +216,13 @@ def test_docker_test_shell_validate(action):
     for a in action.pipeline.actions:
         a._errors.clear()
 
+    for src in ("/run", "/run/lava-dispatcher-host.sock"):
+        action.job.parameters["dispatcher"]["test_docker_bind_mounts"] = [[src, "bar"]]
+        action.validate()
+        assert action.valid is False
+        for a in action.pipeline.actions:
+            a._errors.clear()
+
 
 def test_multinode_docker_test_shell(action, multinode_action):
     # docker test shell job without multinode
