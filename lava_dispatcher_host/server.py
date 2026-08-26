@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import socket
+import struct
 from argparse import Namespace
 
 from lava_dispatcher_host.utils import share_device_with_container
@@ -63,7 +64,28 @@ class ServerWrapper:
         async with server:
             await server.serve_forever()
 
+    def _is_root_peer(self, writer):
+        """Return True iff the connected peer is uid 0 (root).
+
+        The socket is root-owned (SocketMode=0600) and the only legitimate
+        caller is the root udev rule; a non-root peer is rejected. Fails
+        closed if the peer credentials cannot be read.
+        """
+        sock = writer.transport.get_extra_info("socket")
+        try:
+            cred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED)
+            uid, _gid, _pid = struct.unpack("iii", cred)
+        except (OSError, AttributeError):
+            # AttributeError: transport has no "socket" (e.g. already closed).
+            return False
+        return uid == 0
+
     async def handle_request(self, reader, writer):
+        if not self._is_root_peer(writer):
+            logger.warning("Rejecting non-root peer on lava-dispatcher-host socket")
+            writer.close()
+            return
+
         request = await reader.read()
         logger.debug(f"Received request: {request}")
 
