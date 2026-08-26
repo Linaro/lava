@@ -3,3 +3,9 @@ Description=lava-dispatcher-host daemon
 
 [Service]
 ExecStart=/usr/bin/lava-dispatcher-host-server
+ProtectSystem=full
+ProtectKernelModules=true
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+RestrictSUIDSGID=true
