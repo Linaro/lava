@@ -49,6 +49,35 @@ def find_mapping(options):
     return None, None
 
 
+# Maps mapping device_info keys to the pyudev property names used elsewhere in
+# this codebase (see lava_dispatcher/utils/udev.py:get_udev_devices).
+_UDEV_PROP = {
+    "serial_number": "ID_SERIAL_SHORT",
+    "usb_vendor_id": "ID_VENDOR_ID",
+    "usb_product_id": "ID_MODEL_ID",
+    "fs_label": "ID_FS_LABEL",
+}
+
+
+def _node_matches_device_info(node, device_info):
+    """Return True iff every non-empty device_info key matches the node's udev properties.
+
+    Enforces the self-consistency the udev caller has by construction: the device
+    being shared must actually carry the matched job's udev IDs. Unknown keys are
+    skipped (the known keys already constrain the device).
+    """
+    props = node.properties
+    for key, expected in device_info.items():
+        if not expected:
+            continue
+        prop = _UDEV_PROP.get(key)
+        if prop is None:
+            continue
+        if props.get(prop) != str(expected):
+            return False
+    return True
+
+
 def share_device_with_container(options):
     data, job_id = find_mapping(options)
     if not data:
@@ -59,6 +88,20 @@ def share_device_with_container(options):
         device = "/dev/" + device
     if not os.path.exists(device):
         logger.warning(f"Can't share {device}: file not found")
+        return
+
+    # The client-supplied path is not trusted: verify the node actually carries
+    # the matched job's device_info before sharing it (see SECURITY-FIX doc).
+    try:
+        node = pyudev.Devices.from_device_file(context, device)
+    except pyudev.DeviceNotFoundError:
+        logger.warning(f"Can't share {device}: not a udev device")
+        return
+    if not _node_matches_device_info(node, data["device_info"]):
+        logger.warning(
+            f"Rejecting share of {device}: udev attributes do not match "
+            f"mapping device_info {data['device_info']}"
+        )
         return
 
     container_type = data["container_type"]
