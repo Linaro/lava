@@ -383,7 +383,9 @@ class TestRestApi:
         )
         assert response.status_code == 404  # nosec - unit test support
 
-    def test_testjob_nologs(self):
+    def test_testjob_nologs(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
+
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
             + "jobs/%s/logs/" % self.public_testjob1.id
