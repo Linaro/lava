@@ -25,6 +25,9 @@ from lava_scheduler_app.models import (
     RemoteArtifactsAuth,
     Tag,
     TestJob,
+    _create_pipeline_job,
+    _IdempotencyConflict,
+    _pipeline_protocols,
 )
 from lava_scheduler_app.notifications import create_notification
 from linaro_django_xmlrpc.models import AuthToken
@@ -319,6 +322,102 @@ class TestTestJobMetadata(TestCaseWithFactory):
         job = self.submit(metadata={"build_id": 1234})
         job.refresh_from_db()
         self.assertEqual(job.get_metadata_dict(), [{"build_id": "1234"}])
+
+
+class TestIdempotency(TestCaseWithFactory):
+    def setUp(self):
+        super().setUp()
+        self.factory.cleanup()
+        self.user = self.factory.make_user()
+        self.device_type = self.factory.make_device_type(name="qemu")
+        self.factory.make_device(device_type=self.device_type, hostname="qemu-1")
+
+    def _definition(self):
+        return yaml_safe_dump(
+            yaml_safe_load(self.factory.make_job_data_from_file("qemu.yaml"))
+        )
+
+    def test_same_key_returns_existing_job(self):
+        definition = self._definition()
+        first = TestJob.from_yaml_and_user(definition, self.user, idempotency_key="k1")
+        second = TestJob.from_yaml_and_user(definition, self.user, idempotency_key="k1")
+        self.assertEqual(first.id, second.id)
+        self.assertEqual(TestJob.objects.count(), 1)
+
+    def test_different_key_creates_new_job(self):
+        definition = self._definition()
+        first = TestJob.from_yaml_and_user(definition, self.user, idempotency_key="k1")
+        second = TestJob.from_yaml_and_user(definition, self.user, idempotency_key="k2")
+        self.assertNotEqual(first.id, second.id)
+        self.assertEqual(TestJob.objects.count(), 2)
+
+    def test_no_key_creates_new_job(self):
+        definition = self._definition()
+        first = TestJob.from_yaml_and_user(definition, self.user)
+        second = TestJob.from_yaml_and_user(definition, self.user)
+        self.assertNotEqual(first.id, second.id)
+        self.assertEqual(TestJob.objects.count(), 2)
+
+    def test_key_is_scoped_to_submitter(self):
+        definition = self._definition()
+        other_user = self.factory.make_user()
+        first = TestJob.from_yaml_and_user(definition, self.user, idempotency_key="k1")
+        second = TestJob.from_yaml_and_user(
+            definition, other_user, idempotency_key="k1"
+        )
+        # The same key for a different user is a distinct submission.
+        self.assertNotEqual(first.id, second.id)
+        self.assertEqual(TestJob.objects.count(), 2)
+
+    def test_concurrent_conflict_raises(self):
+        # Simulate the race: a job for the key already exists (created by a
+        # concurrent request after the pre-check), so _create_pipeline_job's
+        # save() hits the unique constraint and signals a conflict. The caller
+        # (from_yaml_and_user) catches this and returns the existing job.
+        definition = yaml_safe_load(self.factory.make_job_data_from_file("qemu.yaml"))
+        TestJob.from_yaml_and_user(
+            yaml_safe_dump(definition), self.user, idempotency_key="k1"
+        )
+        with self.assertRaises(_IdempotencyConflict):
+            _create_pipeline_job(
+                definition,
+                self.user,
+                [],
+                device_type=self.device_type,
+                idempotency_key="k1",
+            )
+        self.assertEqual(TestJob.objects.count(), 1)
+
+    def test_multinode_same_key_returns_existing_group(self):
+        self.factory.make_device(device_type=self.device_type, hostname="qemu-2")
+        definition = yaml_safe_load(
+            self.factory.make_job_data_from_file("kvm-multinode.yaml")
+        )
+        for role in definition["protocols"]["lava-multinode"]["roles"].values():
+            role.pop("tags", None)
+        dumped = yaml_safe_dump(definition)
+        first = TestJob.from_yaml_and_user(dumped, self.user, idempotency_key="k1")
+        second = TestJob.from_yaml_and_user(dumped, self.user, idempotency_key="k1")
+        self.assertEqual(len(first), 2)
+        self.assertEqual(len(second), 2)
+        self.assertEqual([j.id for j in first], [j.id for j in second])
+        self.assertEqual(TestJob.objects.count(), 2)
+
+    def test_multinode_concurrent_conflict(self):
+        self.factory.make_device(device_type=self.device_type, hostname="qemu-2")
+        definition = yaml_safe_load(
+            self.factory.make_job_data_from_file("kvm-multinode.yaml")
+        )
+        for role in definition["protocols"]["lava-multinode"]["roles"].values():
+            role.pop("tags", None)
+        dumped = yaml_safe_dump(definition)
+        first = TestJob.from_yaml_and_user(dumped, self.user, idempotency_key="k1")
+        # Simulate the race: the pre-check in from_yaml_and_user missed, so
+        # creation is attempted anyway and the parent insert conflicts with
+        # the committed group. The conflict resolves to the existing group.
+        conflict = _pipeline_protocols(definition, self.user, dumped, "k1")
+        self.assertEqual([j.id for j in conflict], [j.id for j in first])
+        self.assertEqual(TestJob.objects.count(), 2)
 
 
 class TestNotificationCreate(TestCaseWithFactory):

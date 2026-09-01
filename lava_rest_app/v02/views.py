@@ -304,6 +304,24 @@ class TestJobViewSet(viewsets.ModelViewSet):
         )
         return response
 
+    def _idempotency_key(self, request):
+        """
+        Read and validate the optional Idempotency-Key header. Returns the key
+        or None. A retried submission that reuses the same key returns the
+        original job instead of creating a duplicate.
+        """
+        key = request.headers.get("Idempotency-Key")
+        if key is None:
+            return None
+        key = key.strip()
+        if not key:
+            return None
+        if len(key) > 200:
+            raise ValidationError(
+                {"Idempotency-Key": "Must be at most 200 characters."}
+            )
+        return key
+
     def create(self, request, **kwargs):
         serializer = serializers.TestJobSerializer(
             data=request.data, context={"request": request}
@@ -313,7 +331,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
         definition = serializer.validated_data["definition"]
 
         try:
-            job = testjob_submission(definition, self.request.user)
+            job = testjob_submission(
+                definition,
+                self.request.user,
+                idempotency_key=self._idempotency_key(request),
+            )
         except SubmissionException as exc:
             return Response(
                 {"message": "Problem with submitted job data: %s" % exc},
@@ -463,7 +485,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
             definition = self.get_object().definition
 
         try:
-            job = testjob_submission(definition, self.request.user)
+            job = testjob_submission(
+                definition,
+                self.request.user,
+                idempotency_key=self._idempotency_key(request),
+            )
         except SubmissionException as exc:
             return Response(
                 {"message": "Problem with submitted job data: %s" % exc},

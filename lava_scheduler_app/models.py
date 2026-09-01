@@ -29,7 +29,7 @@ from django.core.exceptions import (
     PermissionDenied,
     ValidationError,
 )
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 from django.db.models import Q
 from django.http import Http404
 from django.urls import reverse
@@ -1251,6 +1251,14 @@ def extract_job_metadata(job_data):
     return {str(key): _normalize_metadata_value(val) for key, val in metadata.items()}
 
 
+class _IdempotencyConflict(Exception):
+    """
+    Internal signal raised when a concurrent submission with the same
+    idempotency key created the job first. Callers catch this and return the
+    existing job instead of retrying the create.
+    """
+
+
 def _create_pipeline_job(
     job_data,
     user,
@@ -1261,6 +1269,7 @@ def _create_pipeline_job(
     target_group=None,
     orig=None,
     health_check=False,
+    idempotency_key=None,
 ):
     if not isinstance(job_data, dict):
         # programming error
@@ -1322,33 +1331,66 @@ def _create_pipeline_job(
     if "timeouts" in job_data and "queue" in job_data["timeouts"]:
         queue_timeout = Timeout.parse(job_data["timeouts"]["queue"])
 
-    with transaction.atomic():
-        job = TestJob(
-            definition=yaml_safe_dump(job_data),
-            metadata=extract_job_metadata(job_data),
-            original_definition=orig,
-            submitter=user,
-            requested_device_type=device_type,
-            requested_device=device,
-            requested_worker=worker,
-            target_group=target_group,
-            description=job_data["job_name"],
-            health_check=health_check,
-            priority=priority,
-            is_public=is_public,
-            queue_timeout=queue_timeout,
-        )
-        job.save()
+    try:
+        with transaction.atomic():
+            job = TestJob(
+                definition=yaml_safe_dump(job_data),
+                metadata=extract_job_metadata(job_data),
+                original_definition=orig,
+                submitter=user,
+                requested_device_type=device_type,
+                requested_device=device,
+                requested_worker=worker,
+                target_group=target_group,
+                description=job_data["job_name"],
+                health_check=health_check,
+                priority=priority,
+                is_public=is_public,
+                queue_timeout=queue_timeout,
+                idempotency_key=idempotency_key or "",
+            )
+            job.save()
 
-        # need a valid job (with a primary_key) before tags and groups can be
-        # assigned
-        job.tags.add(*taglist)
-        job.viewing_groups.add(*viewing_groups)
+            # need a valid job (with a primary_key) before tags and groups can
+            # be assigned
+            job.tags.add(*taglist)
+            job.viewing_groups.add(*viewing_groups)
+    except IntegrityError:
+        # A unique-constraint clash from a concurrent request with the same
+        # idempotency key surfaces as an IntegrityError. If a job for this key
+        # now exists it is a conflict: signal the caller to return the existing
+        # job. Otherwise re-raise the error.
+        if idempotency_key and _job_for_key(user, idempotency_key) is not None:
+            raise _IdempotencyConflict() from None
+        raise
 
     return job
 
 
-def _pipeline_protocols(job_data, user, yaml_data=None):
+def _job_for_key(user, idempotency_key):
+    """Return the TestJob stored for the given idempotency key and user, or None."""
+    return TestJob.objects.filter(
+        submitter=user, idempotency_key=idempotency_key
+    ).first()
+
+
+def _existing_job_for_key(user, idempotency_key):
+    """
+    Return the job (or list of jobs) already created for the given
+    idempotency key and user. Used to resolve an idempotency conflict.
+    """
+    existing = _job_for_key(user, idempotency_key)
+    if existing is None:
+        raise SubmissionException(
+            "Idempotency conflict: no job found for key %r." % idempotency_key
+        )
+    if existing.is_multinode:
+        # explicitly a list, not a QuerySet.
+        return list(existing.sub_jobs_list)
+    return existing
+
+
+def _pipeline_protocols(job_data, user, yaml_data=None, idempotency_key=None):
     """
     Handle supported pipeline protocols
     Check supplied parameters and change the device selection if necessary.
@@ -1464,33 +1506,39 @@ def _pipeline_protocols(job_data, user, yaml_data=None):
         # structural changes done, now create the testjob.
         # track the zero id job as the parent of the group in the sub_id text field
         parent = None
-        with transaction.atomic():
-            for role, role_dict in role_dictionary.items():
-                for node_data in job_dictionary[role]:
-                    job = _create_pipeline_job(
-                        node_data,
-                        user,
-                        target_group=target_group,
-                        taglist=role_dict["tags"],
-                        device=role_dict.get("device"),
-                        worker=role_dict.get("worker"),
-                        device_type=role_dict.get("device_type"),
-                        orig=None,  # store the dump of the split yaml as the job definition
-                    )
-                    if not job:
-                        raise SubmissionException(
-                            "Unable to create job for %s" % node_data
+        try:
+            with transaction.atomic():
+                for role, role_dict in role_dictionary.items():
+                    for node_data in job_dictionary[role]:
+                        # Only the parent job carries the idempotency key so
+                        # the (submitter, key) unique constraint holds.
+                        job = _create_pipeline_job(
+                            node_data,
+                            user,
+                            target_group=target_group,
+                            taglist=role_dict["tags"],
+                            device=role_dict.get("device"),
+                            worker=role_dict.get("worker"),
+                            device_type=role_dict.get("device_type"),
+                            orig=None,  # store the dump of the split yaml as the job definition
+                            idempotency_key=idempotency_key if parent is None else None,
                         )
-                    if not parent:
-                        parent = job.id
-                    job.sub_id = "%d.%d" % (
-                        parent,
-                        node_data["protocols"]["lava-multinode"]["sub_id"],
-                    )
-                    # store complete submission, inc. comments
-                    job.multinode_definition = yaml_data
-                    job.save(update_fields=["multinode_definition", "sub_id"])
-                    job_object_list.append(job)
+                        if not job:
+                            raise SubmissionException(
+                                "Unable to create job for %s" % node_data
+                            )
+                        if not parent:
+                            parent = job.id
+                        job.sub_id = "%d.%d" % (
+                            parent,
+                            node_data["protocols"]["lava-multinode"]["sub_id"],
+                        )
+                        # store complete submission, inc. comments
+                        job.multinode_definition = yaml_data
+                        job.save(update_fields=["multinode_definition", "sub_id"])
+                        job_object_list.append(job)
+        except _IdempotencyConflict:
+            return _existing_job_for_key(user, idempotency_key)
 
         return job_object_list
 
@@ -1547,6 +1595,11 @@ class TestJob(models.Model):
                 fields=("sub_id",),
                 condition=(~Q(sub_id="")),
             ),
+            models.UniqueConstraint(
+                name="lava_scheduler_app_testjob_idempotency_key_uniq",
+                fields=("submitter", "idempotency_key"),
+                condition=(~Q(idempotency_key="")),
+            ),
         )
 
     # Permission strings. Not real permissions.
@@ -1571,6 +1624,13 @@ class TestJob(models.Model):
 
     sub_id = models.CharField(
         verbose_name=gettext_lazy("Sub ID"), blank=True, max_length=200
+    )
+
+    idempotency_key = models.CharField(
+        verbose_name=gettext_lazy("Idempotency key"),
+        blank=True,
+        default="",
+        max_length=200,
     )
 
     is_public = models.BooleanField(default=False)
@@ -2037,7 +2097,9 @@ class TestJob(models.Model):
         return reverse("lava.scheduler.job.definition", args=[self.display_id])
 
     @classmethod
-    def from_yaml_and_user(cls, yaml_data, user, original_job=None):
+    def from_yaml_and_user(
+        cls, yaml_data, user, original_job=None, idempotency_key=None
+    ):
         """
         Runs the submission checks on incoming jobs.
         Either rejects the job with a DevicesUnavailableException (which the caller is expected to handle), or
@@ -2045,17 +2107,32 @@ class TestJob(models.Model):
         This function must *never* be involved in setting the state of this job or the state of any associated device.
         Retains yaml_data as the original definition to retain comments.
 
+        :param idempotency_key: optional client-supplied key; if a job with this
+            key already exists for the user it is returned instead of creating
+            a new one, so a retried submission is idempotent.
         :return: a single TestJob object or a list
         (explicitly, a list, not a QuerySet) of evaluated TestJob objects
         """
         job_data = yaml_safe_load(yaml_data)
+
+        # Idempotency: if this key was already used by the user, return the
+        # existing job(s) instead of creating duplicates on a retried request.
+        if idempotency_key:
+            existing = TestJob.objects.filter(
+                submitter=user, idempotency_key=idempotency_key
+            ).first()
+            if existing is not None:
+                if existing.is_multinode:
+                    # explicitly a list, not a QuerySet.
+                    return list(existing.sub_jobs_list)
+                return existing
 
         # visibility checks
         if "visibility" not in job_data:
             raise SubmissionException("Job visibility must be specified.")
 
         # pipeline protocol handling, e.g. lava-multinode
-        job_list = _pipeline_protocols(job_data, user, yaml_data)
+        job_list = _pipeline_protocols(job_data, user, yaml_data, idempotency_key)
         if job_list:
             # explicitly a list, not a QuerySet.
             return job_list
@@ -2087,15 +2164,19 @@ class TestJob(models.Model):
 
             job_data.setdefault("metadata", {}).setdefault("job.original", job_url)
 
-        return _create_pipeline_job(
-            job_data,
-            user,
-            taglist,
-            device=device,
-            worker=worker,
-            device_type=device_type,
-            orig=yaml_data,
-        )
+        try:
+            return _create_pipeline_job(
+                job_data,
+                user,
+                taglist,
+                device=device,
+                worker=worker,
+                device_type=device_type,
+                orig=yaml_data,
+                idempotency_key=idempotency_key,
+            )
+        except _IdempotencyConflict:
+            return _existing_job_for_key(user, idempotency_key)
 
     def can_view(self, user):
         if user == self.submitter or user.is_superuser:

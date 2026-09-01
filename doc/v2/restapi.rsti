@@ -490,6 +490,18 @@ request and that is ``definition``. Example:
 
     $ curl -H "Authorization: Token xxxxxx" -d '{"definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.2/jobs/"
 
+An optional ``Idempotency-Key`` request header (up to 200 characters) can be
+sent with a job submission. If the same user submits again with the same key
+(for example, retrying after a timeout), LAVA returns the job that was already
+created instead of creating a duplicate. The key is scoped to the submitting
+user; a different key, or no key at all, is treated as a new submission. The
+key is bound to the first successful submission: later requests with the same
+key return the original job even if the request body differs.
+
+.. code-block:: shell
+
+    $ curl -H "Authorization: Token xxxxxx" -H "Idempotency-Key: my-unique-key" -d '{"definition": "your-testjob-definition-here"}' -H "Content-Type: application/json" -X POST "https://your.lava.hostname/api/v0.2/jobs/"
+
 Other database object can be created in a similar way. Different objects require
 different fields.
 

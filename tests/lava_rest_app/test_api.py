@@ -1635,6 +1635,87 @@ ok 2 bar
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support
 
+    def test_submit_idempotent_same_key(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        first = self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="key-1",
+        )
+        assert first.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+        first_ids = json.loads(first.content)["job_ids"]
+
+        second = self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="key-1",
+        )
+        assert second.status_code == 201  # nosec - unit test support
+        # A retried submission with the same key returns the original job and
+        # does not create a duplicate.
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+        assert json.loads(second.content)["job_ids"] == first_ids
+
+    def test_submit_idempotent_different_key(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="key-1",
+        )
+        self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="key-2",
+        )
+        # A different key is a distinct submission.
+        assert TestJob.objects.count() == 4  # nosec - unit test support
+
+    def test_submit_no_key_creates_new_job(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        self.userclient.post(url, {"definition": EXAMPLE_WORKING_JOB}, format="json")
+        self.userclient.post(url, {"definition": EXAMPLE_WORKING_JOB}, format="json")
+        # Without a key, behaviour is unchanged: each POST creates a job.
+        assert TestJob.objects.count() == 4  # nosec - unit test support
+
+    def test_submit_idempotency_key_too_long(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        response = self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="k" * 201,
+        )
+        assert response.status_code == 400  # nosec - unit test support
+
+    def test_submit_idempotency_key_max_length(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        response = self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="k" * 200,
+        )
+        assert response.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+
+    def test_submit_idempotency_key_blank(self):
+        url = reverse("api-root", args=[self.version]) + "jobs/"
+        response = self.userclient.post(
+            url,
+            {"definition": EXAMPLE_WORKING_JOB},
+            format="json",
+            HTTP_IDEMPOTENCY_KEY="   ",
+        )
+        # A blank key is treated as no key: a new job is created.
+        assert response.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+
     def test_resubmit_unauthorized(self):
         response = self.userclient.post(
             reverse("api-root", args=[self.version])
@@ -1649,6 +1730,21 @@ ok 2 bar
         )
         assert response.status_code == 201  # nosec - unit test support
         assert TestJob.objects.count() == 3  # nosec - unit test support
+
+    def test_resubmit_idempotent_same_key(self):
+        url = (
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/resubmit/" % self.public_testjob1.id
+        )
+        first = self.adminclient.post(url, HTTP_IDEMPOTENCY_KEY="re-key-1")
+        assert first.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+        first_ids = json.loads(first.content)["job_ids"]
+
+        second = self.adminclient.post(url, HTTP_IDEMPOTENCY_KEY="re-key-1")
+        assert second.status_code == 201  # nosec - unit test support
+        assert TestJob.objects.count() == 3  # nosec - unit test support
+        assert json.loads(second.content)["job_ids"] == first_ids
 
     def test_cancel(self, mocker):
         mocker.patch("lava_scheduler_app.models.TestJob.cancel")
