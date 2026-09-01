@@ -14,6 +14,7 @@ from lava_common.log import (
     YAMLFileHandler,
     YAMLHTTPHandler,
     YAMLLogger,
+    YAMLStderrHandler,
     run_output_sender,
 )
 from lava_dispatcher.runner import parser, setup_logger
@@ -65,3 +66,30 @@ class TestLavaRun(TestCase):
         )
 
         self.assertTrue((temp_dir_path / "12345").is_dir())
+
+    def test_lava_run_arg_parser_and_logger_no_url(self) -> None:
+        arg_parser = parser()
+
+        temp_dir_name = self.enterContext(TemporaryDirectory())
+        temp_dir_path = Path(temp_dir_name)
+        device_yaml_path = temp_dir_path / "device.yaml"
+
+        options = arg_parser.parse_args(
+            [
+                "--job-id=12345",
+                f"--output-dir={temp_dir_name}",
+                f"--device={device_yaml_path}",
+                str(temp_dir_path / "job.yaml"),
+            ]
+        )
+
+        self.enterContext(
+            patch("lava_dispatcher.runner.DISPATCHER_DOWNLOAD_DIR", temp_dir_name)
+        )
+
+        logger = setup_logger(options)
+        self.addCleanup(logger.close)
+
+        self.assertEqual(
+            {type(h) for h in logger.handlers}, {YAMLFileHandler, YAMLStderrHandler}
+        )
