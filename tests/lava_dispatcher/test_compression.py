@@ -524,6 +524,24 @@ class TestTar(TestCase):
 
             self.assertEqual((unpack_dir / "bar").read_text(), "foobar")
 
+    def test_tar_follows_existing_symlink(self) -> None:
+        with TemporaryDirectory("test-tar") as tmp_dir:
+            tmp_dir_path = Path(tmp_dir)
+            test_dir = tmp_dir_path / "src"
+            (test_dir / "lib").mkdir(parents=True)
+            (test_dir / "lib" / "x.ko").write_text("ko")
+            output_tar_path = tmp_dir_path / "test.tar"
+            create_tarfile(str(test_dir), str(output_tar_path), arcname=".")
+
+            unpack_dir = tmp_dir_path / "unpack"
+            (unpack_dir / "usr" / "lib").mkdir(parents=True)
+            os.symlink("usr/lib", unpack_dir / "lib")
+
+            untar_file(str(output_tar_path), str(unpack_dir))
+
+            self.assertTrue((unpack_dir / "lib").is_symlink())
+            self.assertEqual((unpack_dir / "usr" / "lib" / "x.ko").read_text(), "ko")
+
 
 class TestSplitInitramfs(TestCase):
     """Tests for split_initramfs function."""
