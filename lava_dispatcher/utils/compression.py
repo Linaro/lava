@@ -125,7 +125,7 @@ def untar_file(infile: str, outdir: str, strip_components: int = 0) -> None:
     # to extract members with absolute paths or ".." components.
     which("tar")
     os.makedirs(outdir, exist_ok=True)
-    args = ["tar", "-xf", infile]
+    args = ["tar", "-h", "-xf", infile]
     if strip_components:
         args.append(f"--strip-components={strip_components}")
     try:
