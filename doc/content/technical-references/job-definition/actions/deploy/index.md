@@ -138,6 +138,27 @@ URLs **must** use one of the supported protocols:
 URLs are checked during the test job validation to ensure that the file can be
 downloaded. Missing files will cause the test job to end as `Incomplete`.
 
+### File names
+
+The file is named after the last part of the URL path. Some URLs have no name
+there, for example a redirect endpoint, and then every image is saved as
+`download` and they overwrite each other. Use `filename` to say what the file
+should be called:
+
+```yaml
+      rootfs:
+        url: https://example.com/download?id=42
+        filename: rootfs.tar.xz
+        compression: xz
+```
+
+Give the name of the file you download. LAVA drops the compression suffix
+while it unpacks, the same as it does for a name taken from the URL, so the
+example above ends up as `rootfs.tar`.
+
+It must be a plain file name, without a directory part. It works for every
+deploy method that downloads.
+
 #### rclone
 
 The `rclone://` protocol allows downloading artifacts from any storage backend

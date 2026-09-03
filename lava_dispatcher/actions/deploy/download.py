@@ -182,7 +182,11 @@ class DownloadHandler(Action):
 
     def _url_to_fname(self) -> str:
         compression = self._compression()
-        filename = os.path.basename(self.url.path)
+        filename = self.params.get("filename") or os.path.basename(self.url.path)
+        if "/" in filename or filename in (".", ".."):
+            raise JobError(
+                f"Invalid 'filename' {filename!r} for {self.key!r}: expecting a plain file name"
+            )
 
         # Don't rename files we don't decompress during download
         if not compression or (compression not in self.decompress_command_map):

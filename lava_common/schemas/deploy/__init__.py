@@ -5,7 +5,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from voluptuous import Any, Optional, Required
+from voluptuous import Any, Match, Optional, Required
 
 from lava_common.schemas import action
 
@@ -16,6 +16,7 @@ def url(extra=None):
 
     base_url = {
         Required("url"): str,
+        Optional("filename"): Match(r"^[^/]+$"),
         Optional("headers"): dict,
         Optional("compression"): Any("bz2", "gz", "xz", "zip", "zstd", None),
         Optional("archive"): "tar",

@@ -1059,6 +1059,39 @@ class TestDowload(LavaDispatcherTestCase):
         assert action.params["url"] == "http://foobar/resource.img"
 
 
+class TestDownloadFilename(LavaDispatcherTestCase):
+    def action(self, params):
+        action = HttpDownloadAction(
+            self.create_simple_job(),
+            "image",
+            "/path/to/save",
+            urlparse(params["url"]),
+        )
+        action.params = params
+        return action
+
+    def test_filename_replaces_the_name_from_the_url(self):
+        url = "https://example.com/download?id=42"
+        action = self.action({"url": url, "filename": "rootfs.img"})
+        self.assertEqual(action._url_to_fname(), "/path/to/save/image/rootfs.img")
+
+    def test_filename_loses_the_compression_suffix(self):
+        action = self.action(
+            {
+                "url": "https://example.com/download?id=42",
+                "filename": "rootfs.tar.xz",
+                "compression": "xz",
+            }
+        )
+        self.assertEqual(action._url_to_fname(), "/path/to/save/image/rootfs.tar")
+
+    def test_filename_cannot_escape_the_download_directory(self):
+        for filename in ["../rootfs.img", "sub/rootfs.img", "/rootfs.img", ".", ".."]:
+            action = self.action({"url": "https://e.com/a", "filename": filename})
+            with self.assertRaises(JobError):
+                action._url_to_fname()
+
+
 class TestRcloneDownload(LavaDispatcherTestCase):
     def test_rclone_url_parsing(self):
         """Test that rclone URLs are parsed correctly."""
