@@ -7,8 +7,7 @@
 
 import django_tables2 as tables
 from django.conf import settings
-from django.utils.html import escape, format_html
-from django.utils.safestring import mark_safe
+from django.utils.html import format_html
 
 from lava_server.lavatable import LavaTable
 
@@ -19,10 +18,13 @@ def results_pklink(record):
         '<a class="btn btn-xs btn-success pull-right" title="test job results" href="{}">',
         record.results_link,
     )
-    button = '<span class="glyphicon glyphicon-signal"></span></a>'
-    return mark_safe(
-        '<a href="%s" title="test job summary">%s</a>&nbsp;%s%s'
-        % (record.get_absolute_url(), escape(job_id), complete, button)
+    button = format_html('<span class="glyphicon glyphicon-signal"></span></a>')
+    return format_html(
+        '<a href="{}" title="test job summary">{}</a>&nbsp;{}{}',
+        record.get_absolute_url(),
+        job_id,
+        complete,
+        button,
     )
 
 

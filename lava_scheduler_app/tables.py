@@ -293,7 +293,7 @@ class DeviceTable(LavaTable):
         return health_html
 
     def render_last_job_end_time(self, record):
-        return mark_safe(f"{naturaltime(record.last_job_end_time)}")
+        return naturaltime(record.last_job_end_time)
 
     hostname = tables.TemplateColumn(
         """
@@ -407,14 +407,14 @@ class LogEntryTable(LavaTable):
         if record.is_change():
             return mark_safe(message)
         elif record.is_addition():
-            return mark_safe(
-                '<span class="glyphicon glyphicon-plus text-success"></span> %s'
-                % message
+            return format_html(
+                '<span class="glyphicon glyphicon-plus text-success"></span> {}',
+                message,
             )
         else:
-            return mark_safe(
-                '<span class="glyphicon glyphicon-remove text-danger"></span> %s'
-                % message
+            return format_html(
+                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                message,
             )
 
     class Meta(LavaTable.Meta):
