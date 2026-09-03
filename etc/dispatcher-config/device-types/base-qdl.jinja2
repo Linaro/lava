@@ -13,6 +13,8 @@
 {% else %}
 {% set device_info = device_info|default([{'board_id': board_id}, {'board_id': fastboot_serial_number}, {'board_id': board_qdl_id}]) %}
 {% endif %}
+{# qdl_enter_commands is deprecated, use qdl_enter_command instead #}
+{% set qdl_enter_command = qdl_enter_command|default(qdl_enter_commands|default([])) %}
 
 {% block body %}
 adb_serial_number: "{{ adb_serial_number|default('0000000000') }}"
@@ -61,7 +63,7 @@ actions:
       qdl:
         parameters:
           command: qdl
-          enter-commands: {{ qdl_enter_commands|default([]) }}
+          enter-commands: {{ qdl_enter_command }}
   test:
     methods:
       docker:

@@ -54,15 +54,20 @@ class EnterQDL(Action):
         parameters = self.job.device["actions"]["boot"]["methods"]["qdl"]["parameters"]
         if "enter-commands" not in parameters:
             self.errors_add('"enter-commands" is not defined')
-        elif not isinstance(parameters["enter-commands"], list):
-            self.errors_add('"enter-commands" should be a list')
+        elif not isinstance(parameters["enter-commands"], (str, list)):
+            self.errors_add('"enter-commands" should be a string or a list')
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         parameters = self.job.device["actions"]["boot"]["methods"]["qdl"]["parameters"]
-        for _, cmd in enumerate(parameters["enter-commands"]):
+        commands = parameters["enter-commands"]
+        # Accept both str and [str]
+        if isinstance(commands, str):
+            commands = [commands]
+        for cmd in commands:
             # this should run on the dispatcher
             self.run_cmd(cmd)
+        return connection
 
 
 class FlashQDLAction(Action):

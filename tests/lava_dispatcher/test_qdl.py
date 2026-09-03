@@ -4,12 +4,12 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from voluptuous import Invalid
 
 from lava_common.exceptions import ConfigurationError, JobError
-from lava_dispatcher.actions.boot.qdl import FlashQDLAction
+from lava_dispatcher.actions.boot.qdl import EnterQDL, FlashQDLAction
 from tests.lava_dispatcher.test_basic import Factory, LavaDispatcherTestCase
 
 
@@ -196,3 +196,68 @@ class TestQDLBootAction(LavaDispatcherTestCase):
         ):
             with self.subTest(version_output=version_output):
                 self.assert_version_unparsable(version_output)
+
+
+class TestEnterQDLAction(LavaDispatcherTestCase):
+    def create_enter_qdl_action(self, enter_commands):
+        """
+        Create a qdl job whose device sets "enter-commands" to the given value
+        and return its enter-qdl action.
+        """
+
+        def set_enter_commands(device_dict):
+            device_dict["actions"]["boot"]["methods"]["qdl"]["parameters"][
+                "enter-commands"
+            ] = enter_commands
+
+        job = Factory().create_job(
+            "qcs6490-rb3gen2",
+            "sample_jobs/qdl-boot.yaml",
+            device_dict_preprocessor=set_enter_commands,
+        )
+        return job.pipeline.find_action(EnterQDL)
+
+    def assert_commands_run(self, enter_commands, expected):
+        action = self.create_enter_qdl_action(enter_commands)
+        action.validate()
+        self.assertTrue(action.valid)
+        with patch("lava_dispatcher.action.Action.run_cmd") as run_cmd:
+            action.run(None, None)
+        self.assertEqual([call(cmd) for cmd in expected], run_cmd.mock_calls)
+
+    def test_enter_commands_list(self):
+        self.assert_commands_run(
+            ["tac-api.py --command bootToEDL", "tac-api.py --command powerOn"],
+            ["tac-api.py --command bootToEDL", "tac-api.py --command powerOn"],
+        )
+
+    def test_enter_commands_string(self):
+        # a single command can be given as a string instead of a list
+        self.assert_commands_run(
+            "tac-api.py --command bootToEDL", ["tac-api.py --command bootToEDL"]
+        )
+
+    def test_enter_commands_empty(self):
+        self.assert_commands_run([], [])
+
+    def test_enter_commands_wrong_type(self):
+        action = self.create_enter_qdl_action({"command": "bootToEDL"})
+        action.validate()
+        self.assertFalse(action.valid)
+        self.assertIn('"enter-commands" should be a string or a list', action.errors)
+
+    def test_enter_commands_undefined(self):
+        def drop_enter_commands(device_dict):
+            del device_dict["actions"]["boot"]["methods"]["qdl"]["parameters"][
+                "enter-commands"
+            ]
+
+        job = Factory().create_job(
+            "qcs6490-rb3gen2",
+            "sample_jobs/qdl-boot.yaml",
+            device_dict_preprocessor=drop_enter_commands,
+        )
+        action = job.pipeline.find_action(EnterQDL)
+        action.validate()
+        self.assertFalse(action.valid)
+        self.assertIn('"enter-commands" is not defined', action.errors)

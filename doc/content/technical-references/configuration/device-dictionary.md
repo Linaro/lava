@@ -625,7 +625,7 @@ passed to the test container in EDL, fastboot and QDL mode:
 The fastboot serial number is left out when `fastboot_serial_number` is not
 set or is all zeros, for boards that don't boot to fastboot.
 
-#### qdl_enter_commands
+#### qdl_enter_command
 
 To boot a device into Emergency Download (EDL) mode, typically a physical button
 must be pressed or a DIP switch set. In automated setups such as LAVA, this can
@@ -639,16 +639,26 @@ The [pytactl](https://github.com/qualcomm/pytactl) utility can be used to enter
 modes such as EDL remotely, allowing LAVA to perform firmware flashing using
 [QDL](https://github.com/qualcomm/qdl) without physical intervention.
 
-The `qdl_enter_commands` setting specifies a list of commands to execute before
-QDL flashing begins. For example:
+The `qdl_enter_command` setting specifies the command or commands to execute
+before QDL flashing begins. Like the other [command parameters](#commands), it
+accepts either a single string or a list of strings, which LAVA executes in
+order. For example:
 
 ```jinja
-{% set qdl_enter_commands = ['pytactl oneshot bootToEDL --serial <ID_SERIAL_SHORT>'] %}
+{% set qdl_enter_command = 'pytactl oneshot bootToEDL --serial <ID_SERIAL_SHORT>' %}
+```
+
+```jinja
+{% set qdl_enter_command = [
+    'sleep 3',
+    'pytactl oneshot bootToEDL --serial <ID_SERIAL_SHORT>'
+] %}
 ```
 
 Where `ID_SERIAL_SHORT` is the serial number of the companion debug interface.
 
-Note that `qdl_enter_commands` must be a list of strings.
+The older `qdl_enter_commands`, which only accepts a list of strings, is
+deprecated and is used only when `qdl_enter_command` is unset.
 
 ### Secondary media
 
