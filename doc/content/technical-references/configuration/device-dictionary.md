@@ -598,8 +598,7 @@ Note that this is unlike every other device type, where `board_id` is the
 serial number of the board alone. For QDL device types the serial number is
 held in `board_qdl_id` instead.
 
-If `board_id` is left unset,
-[`base-qdl.jinja2`](https://gitlab.com/lava/lava/-/blob/master/etc/dispatcher-config/device-types/base-qdl.jinja2)
+If `board_id` is left unset, `etc/dispatcher-config/device-types/base-qdl.jinja2`
 builds it as `QUSB_BULK_CID:<board_cid>_SN:<board_qdl_id>`,
 `shikra-iqs-evk.jinja2` builds it as
 `F09_D0011_V1.0_CID:<board_cid>_SN:<board_qdl_id>_JID:<board_jid>` and
@@ -628,17 +627,28 @@ set or is all zeros, for boards that don't boot to fastboot.
 
 #### qdl_enter_commands
 
-Normally to force a device to boot into EDL mode,
-a physical button must be pressed or a DIP switch must be set on the device.
-In automated setups, like LAVA, it's possible to force a device into EDL mode using the automation interface.
-Some Qualcomm devices are shipped with an FTDI or UART based GPIO interface that allows remote control.
-More details on that can be found in the [Qualcomm Test Automation Controller] (https://github.com/qualcomm/qcom-test-automation-controller/) documentation.
+To boot a device into Emergency Download (EDL) mode, typically a physical button
+must be pressed or a DIP switch set. In automated setups such as LAVA, this can
+instead be achieved using a supported hardware automation interface.
 
-Note: `qdl_enter_commands` must be a list of strings.
+Some Qualcomm devices include a companion FTDI or GPIO-based debug interface that
+allows remote control of power, reset and boot modes. The [Qualcomm Test Automation Controller (QTAC)](https://github.com/qualcomm/qcom-test-automation-controller/)
+project provides tools and configuration files for controlling these interfaces.
+
+The [pytactl](https://github.com/qualcomm/pytactl) utility can be used to enter
+modes such as EDL remotely, allowing LAVA to perform firmware flashing using
+[QDL](https://github.com/qualcomm/qdl) without physical intervention.
+
+The `qdl_enter_commands` setting specifies a list of commands to execute before
+QDL flashing begins. For example:
 
 ```jinja
-{% set qdl_enter_commands = ['/usr/local/bin/tac-api.py --serial DP05DD00 --command bootToEDL'] %}
+{% set qdl_enter_commands = ['pytactl oneshot bootToEDL --serial <ID_SERIAL_SHORT>'] %}
 ```
+
+Where `ID_SERIAL_SHORT` is the serial number of the companion debug interface.
+
+Note that `qdl_enter_commands` must be a list of strings.
 
 ### Secondary media
 
