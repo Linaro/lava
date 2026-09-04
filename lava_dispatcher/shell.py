@@ -146,7 +146,7 @@ class ShellSession:
         self.tags: list[str] = ["shell"]
 
         # FIXME: rename __prompt_str__ to indicate it can be a list or str
-        self.__prompt_str__: str | None = None
+        self.__prompt_str__: str | list[str] | None = None
         self.timeout = lava_timeout
         self.logger = logger
 
@@ -309,11 +309,11 @@ class ShellSession:
 
     # FIXME: rename prompt_str to indicate it can be a list or str
     @property
-    def prompt_str(self) -> str | None:
+    def prompt_str(self) -> str | list[str] | None:
         return self.__prompt_str__
 
     @prompt_str.setter
-    def prompt_str(self, string: str) -> None:
+    def prompt_str(self, string: str | list[str]) -> None:
         """
         pexpect allows the prompt to be a single string or a list of strings
         this property simply replaces the previous value with the new one
@@ -367,7 +367,10 @@ class ShellSession:
             try:
                 with self._expect_exc_wrapper():
                     return self.raw_connection.expect(
-                        prompt_str, timeout=partial_timeout
+                        # pexpect accepts both str and list[str]; the
+                        # stub overloads reject their union
+                        prompt_str,  # type: ignore[arg-type]
+                        timeout=partial_timeout,
                     )
             except (pexpect.TIMEOUT, TestError) as exc:
                 if prompt_wait_count < 6:
@@ -410,15 +413,22 @@ class ShellSession:
         prompt_str = self.prompt_str
         if prompt_str is None:
             raise LAVABug("prompt_str is None")
+        # pexpect accepts both str and list[str]; the stub overloads
+        # reject their union
         try:
             if max_searchwindowsize:
                 with self._expect_exc_wrapper():
                     return self.raw_connection.expect(
-                        prompt_str, timeout=timeout, searchwindowsize=None
+                        prompt_str,  # type: ignore[arg-type]
+                        timeout=timeout,
+                        searchwindowsize=None,
                     )
             else:
                 with self._expect_exc_wrapper():
-                    return self.raw_connection.expect(prompt_str, timeout=timeout)
+                    return self.raw_connection.expect(
+                        prompt_str,  # type: ignore[arg-type]
+                        timeout=timeout,
+                    )
         except (TestError, pexpect.TIMEOUT):
             raise JobError(job_error_message or "wait for prompt timed out")
         except ConnectionClosedError as exc:
