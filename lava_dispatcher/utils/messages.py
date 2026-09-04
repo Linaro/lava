@@ -165,27 +165,30 @@ class LinuxKernelMessages:
                 action.errors_add(msg)
                 break
 
+            prompts = connection.prompt_str
+            assert isinstance(prompts, list)
             if index:
-                action.logger.debug(
-                    "Matched prompt #%s: %s", index, connection.prompt_str[index]
-                )
+                action.logger.debug("Matched prompt #%s: %s", index, prompts[index])
             message = connection.raw_connection.after
+            if not isinstance(message, str):
+                break
             if index is None:
                 break
             if index < len(KERNEL_MESSAGES):
                 matched_kernel_message = KERNEL_MESSAGES[index]
 
                 # Capture the start of the line
-                if "\n" in connection.raw_connection.before:
-                    start_line = connection.raw_connection.before.rindex("\n")
-                    message = (
-                        connection.raw_connection.before[start_line + 1 :] + message
-                    )
+                before = connection.raw_connection.before
+                if not isinstance(before, str):
+                    before = ""
+                if "\n" in before:
+                    start_line = before.rindex("\n")
+                    message = before[start_line + 1 :] + message
                 else:
-                    message = connection.raw_connection.before + message
+                    message = before + message
 
                 # Capture the end of the kernel message
-                previous_prompts = connection.prompt_str
+                previous_prompts = prompts
                 connection.prompt_str = [
                     matched_kernel_message["end"]
                 ] + previous_prompts[len(KERNEL_MESSAGES) :]
@@ -205,11 +208,13 @@ class LinuxKernelMessages:
                 if sub_index != 0:
                     action.logger.warning("Unable to match end of the kernel message")
                     break
-                message = (
-                    message
-                    + connection.raw_connection.before
-                    + connection.raw_connection.after[:-1]  # Remove ending "\r"
-                )
+                before = connection.raw_connection.before
+                if not isinstance(before, str):
+                    before = ""
+                after = connection.raw_connection.after
+                if not isinstance(after, str):
+                    break
+                message = message + before + after[:-1]  # Remove ending "\r"
                 connection.prompt_str = previous_prompts
 
                 # Classify the errors
@@ -236,7 +241,7 @@ class LinuxKernelMessages:
                     break
                 else:
                     continue
-            elif fail_msg and index and fail_msg == connection.prompt_str[index]:
+            elif fail_msg and index and fail_msg == prompts[index]:
                 result = "fail"
                 # user has declared this message to be terminal for this test job.
                 halt = "Matched job-specific failure message: '%s'" % fail_msg
