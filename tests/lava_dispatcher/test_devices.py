@@ -231,6 +231,13 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
             DeviceDict.from_path(device_path)
         self.assertIn(" could not be parsed", str(context.exception))
 
+    def test_parse_error_includes_path(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("invalid_yaml: {", encoding="utf-8")
+        with self.assertRaises(ConfigurationError) as context:
+            DeviceDict.from_path(device_path)
+        self.assertIn(str(device_path), str(context.exception))
+
 
 class TestCommand(LavaDispatcherTestCase):
     def test_silent(self):
