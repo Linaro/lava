@@ -6,15 +6,13 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from pathlib import Path
+from typing import Any
 
 from yaml import YAMLError
 
 from lava_common.exceptions import ConfigurationError
 from lava_common.yaml import yaml_safe_load
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 class DeviceDict(dict[str, Any]):
@@ -24,21 +22,25 @@ class DeviceDict(dict[str, Any]):
         self.setdefault("dynamic_data", {})
 
     @classmethod
-    def from_yaml_str(cls, yaml_str: str) -> DeviceDict:
+    def from_yaml_str(cls, yaml_str: str, source: str = "device dict") -> DeviceDict:
         try:
             data = yaml_safe_load(yaml_str)
         except YAMLError as exc:
-            raise ConfigurationError("Device dict could not be parsed") from exc
+            raise ConfigurationError(f"{source} could not be parsed") from exc
 
         if data is None:
             raise ConfigurationError("Empty device configuration")
+
+        if not isinstance(data, dict):
+            raise ConfigurationError(f"{source} is not a mapping")
 
         return cls(**data)
 
     @classmethod
     def from_path(cls, path: str | Path) -> DeviceDict:
-        with open(path) as f:
-            return cls.from_yaml_str(f.read())
+        return cls.from_yaml_str(
+            Path(path).read_text(encoding="utf-8"), source=str(path)
+        )
 
     @staticmethod
     def _coerce_command(value: Any) -> str | list[str]:
