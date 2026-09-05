@@ -201,7 +201,7 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
     def test_device_init_with_str_path(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("constants:", encoding="utf-8")
-        device = DeviceDict.from_path(device_path)
+        device = DeviceDict.from_path(str(device_path))
         self.assertIsInstance(device, DeviceDict)
         self.assertIn("constants", device)
 
