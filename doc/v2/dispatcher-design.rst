@@ -249,7 +249,7 @@ the pipeline moves on to processing level 1.3 or 2::
 
    * loads only the configuration required for this one job.
 
-#. A NewDevice is built from the target specified (commands.py)
+#. A DeviceDict is built from the target specified (runner.py)
 #. A Job is generated from the YAML by the parser.
 #. The top level Pipeline is constructed by the parser.
 #. Strategy classes are initialized by the parser
