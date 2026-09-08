@@ -22,6 +22,27 @@ keeping the rest of the instance public:
 REQUIRE_LOGIN_PATHS: ["results/query", "results/chart"]
 ```
 
+Both of the above gate whole pages. `PUBLIC_JOB_WINDOW_DAYS` instead limits how
+far back an anonymous user can see, while keeping recent activity public. When
+set to a number of days, test jobs submitted before that are visible only to
+authenticated users:
+
+```yaml
+PUBLIC_JOB_WINDOW_DAYS: 30
+```
+
+This is intended for public instances being enumerated by crawlers, where the
+scraped pages are the same pages people use and only the age of the referenced
+job distinguishes the traffic. Job submitters, superusers and any user holding
+the global view permission are unaffected at any age.
+
+Note that this applies to every interface, not only the web UI. Anonymous
+requests to the REST API and to XML-RPC are restricted in the same way, so
+scripts that read old jobs without authenticating will stop working. Clients
+authenticating with a token, including LAVA workers and CI, are unaffected. The
+default is `None`, which disables the restriction and preserves the historical
+behaviour.
+
 For a public instance, the access can be controlled globally or per-object.
 
 ## Global authorization

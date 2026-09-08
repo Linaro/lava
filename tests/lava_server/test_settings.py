@@ -123,3 +123,15 @@ def test_require_login_runs_before_require_login_paths():
 def test_require_login_paths_invalid_configuration(value):
     with pytest.raises(ImproperlyConfigured):
         _run_update(REQUIRE_LOGIN_PATHS=value)
+
+
+@pytest.mark.parametrize("value", ["30", -1, True, 1.5, [30]])
+def test_public_job_window_days_invalid_configuration(value):
+    with pytest.raises(ImproperlyConfigured):
+        _run_update(PUBLIC_JOB_WINDOW_DAYS=value)
+
+
+@pytest.mark.parametrize("value", [None, 0, 30])
+def test_public_job_window_days_valid_configuration(value):
+    result = _run_update(PUBLIC_JOB_WINDOW_DAYS=value)
+    assert result["PUBLIC_JOB_WINDOW_DAYS"] == value

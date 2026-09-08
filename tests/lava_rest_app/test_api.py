@@ -1930,6 +1930,51 @@ ok 2 bar
         )
         assert ret.status_code == 200
 
+    def _make_public_job(self, age_days):
+        """Make public_testjob1 anonymously visible and age it."""
+        self.public_testjob1.is_public = True
+        self.public_testjob1.submit_time = timezone.now() - timedelta(days=age_days)
+        self.public_testjob1.save()
+        return self.public_testjob1
+
+    def _anonymous_job_ids(self):
+        data = self.hit(
+            self.anonymousclient,
+            reverse("api-root", args=(self.version,)) + "jobs/",
+        )
+        return [j["id"] for j in data["results"]]
+
+    def test_public_job_window_unset_anonymous_sees_old_job(self, db):
+        job = self._make_public_job(365)
+        assert job.id in self._anonymous_job_ids()
+
+    def test_public_job_window_anonymous_recent_job_visible(self, db, settings):
+        settings.PUBLIC_JOB_WINDOW_DAYS = 3
+        job = self._make_public_job(1)
+        assert job.id in self._anonymous_job_ids()
+
+    def test_public_job_window_anonymous_list_filtered(self, db, settings):
+        settings.PUBLIC_JOB_WINDOW_DAYS = 3
+        job = self._make_public_job(10)
+        assert job.id not in self._anonymous_job_ids()
+
+    def test_public_job_window_anonymous_detail_denied(self, db, settings):
+        settings.PUBLIC_JOB_WINDOW_DAYS = 3
+        job = self._make_public_job(10)
+        ret = self.anonymousclient.get(
+            reverse("api-root", args=(self.version,)) + "jobs/%s/" % job.id
+        )
+        assert ret.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_public_job_window_token_auth_unaffected(self, db, settings):
+        settings.PUBLIC_JOB_WINDOW_DAYS = 3
+        job = self._make_public_job(10)
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=(self.version,)) + "jobs/%s/" % job.id,
+        )
+        assert data["id"] == job.id
+
     def test_remote_artifact_tokens_list_unauthorized(self, db):
         ret = self.anonymousclient.get(
             reverse("api-root", args=(self.version,)) + "remote-artifact-tokens/"

@@ -6,13 +6,24 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
+from django.conf import settings
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Manager, OuterRef, Q, QuerySet, Subquery
+from django.utils import timezone
 
 from lava_common.exceptions import ObjectNotPersisted, PermissionNameError
+
+
+def anonymous_job_cutoff(user):
+    """Oldest submit_time an anonymous user may see, or None if unrestricted."""
+    if settings.PUBLIC_JOB_WINDOW_DAYS is None or user.is_authenticated:
+        return None
+    return timezone.now() - timedelta(days=settings.PUBLIC_JOB_WINDOW_DAYS)
+
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import User
@@ -239,6 +250,10 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
         if perm == self.model.VIEW_PERMISSION and user.is_authenticated:
             nonuser_groups = Group.objects.difference(user.groups.all()).values("pk")
             filters |= Q(id__in=vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
+        if perm == self.model.VIEW_PERMISSION:
+            cutoff = anonymous_job_cutoff(user)
+            if cutoff is not None:
+                filters &= Q(submit_time__gte=cutoff)
         return filters
 
     def accessible_by_user(self, user, perm):

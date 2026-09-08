@@ -12,6 +12,7 @@ from io import BytesIO as StringIO
 import pytest
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, Permission, User
+from django.test import override_settings
 from django.test.client import Client
 from django.utils import timezone
 
@@ -184,6 +185,31 @@ class TestSchedulerAPI(TestCaseWithFactory):
         server_object_permission.scheduler.device_types.set_health_check(
             test_device_type.name, ""
         )
+
+    def test_jobs_list_public_job_window_anonymous(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        definition = self.factory.make_job_data_from_file(
+            "qemu-pipeline-first-job.yaml"
+        )
+        old_job = testjob_submission(definition, user, None)
+        new_job = testjob_submission(definition, user, None)
+        old_job.submit_time = timezone.now() - datetime.timedelta(days=11)
+        old_job.save()
+        new_job.submit_time = timezone.now() - datetime.timedelta(days=1)
+        new_job.save()
+
+        server = self.server_proxy()
+        with override_settings(PUBLIC_JOB_WINDOW_DAYS=10):
+            ids = [j["id"] for j in server.scheduler.jobs.list(None, None, 0, 100)]
+        self.assertNotIn(old_job.id, ids)
+        self.assertIn(new_job.id, ids)
+
+        ids = [j["id"] for j in server.scheduler.jobs.list(None, None, 0, 100)]
+        self.assertIn(old_job.id, ids)
 
     def test_jobs_list(self):
         self.factory.cleanup()

@@ -5,8 +5,12 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
+from datetime import timedelta
+
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser, Permission
+from django.test import override_settings
+from django.utils import timezone
 
 from lava_scheduler_app.models import (
     Device,
@@ -394,6 +398,81 @@ class ModelPermissionsTest(TestCaseWithFactory):
         )
 
         self.assertTrue(self.qemu_device1.can_submit(self.user2))
+
+    def test_testjob_can_view_public_job_window_unset(self):
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=365)
+        self.assertTrue(self.qemu_job1.can_view(AnonymousUser()))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_can_view_public_job_window_anonymous_old(self):
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.assertFalse(self.qemu_job1.can_view(AnonymousUser()))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_can_view_public_job_window_anonymous_recent(self):
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=9)
+        self.assertTrue(self.qemu_job1.can_view(AnonymousUser()))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_can_view_public_job_window_authenticated(self):
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=365)
+        self.assertTrue(self.qemu_job1.can_view(self.user1))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_can_view_public_job_window_superuser(self):
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=365)
+        self.assertTrue(self.qemu_job1.can_view(self.admin_user))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_can_view_public_job_window_submitter(self):
+        self.qemu_job1.submitter = self.user1
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=365)
+        self.assertFalse(self.user1.is_superuser)
+        self.assertTrue(self.qemu_job1.can_view(self.user1))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_visible_by_user_ids_excludes_old_for_anonymous(self):
+        self.qemu_job1.is_public = True
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.qemu_job1.save()
+        self.qemu_job2.is_public = True
+        self.qemu_job2.submit_time = timezone.now() - timedelta(days=1)
+        self.qemu_job2.save()
+
+        ids = TestJob.objects.visible_by_user_ids(AnonymousUser())
+        self.assertNotIn(self.qemu_job1.id, ids)
+        self.assertIn(self.qemu_job2.id, ids)
+
+        # visible_by_user is what the HTML listings and XML-RPC use
+        visible = TestJob.objects.visible_by_user(AnonymousUser())
+        self.assertNotIn(self.qemu_job1, visible)
+        self.assertIn(self.qemu_job2, visible)
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_visible_by_user_ids_authenticated_unaffected(self):
+        self.qemu_job1.is_public = True
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.qemu_job1.save()
+
+        ids = TestJob.objects.visible_by_user_ids(self.user1)
+        self.assertIn(self.qemu_job1.id, ids)
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_change_permission_ignores_window(self):
+        self.qemu_job1.is_public = True
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.qemu_job1.save()
+
+        with_window = TestJob.objects.accessible_by_user(
+            AnonymousUser(), TestJob.CHANGE_PERMISSION
+        )
+        with override_settings(PUBLIC_JOB_WINDOW_DAYS=None):
+            without_window = TestJob.objects.accessible_by_user(
+                AnonymousUser(), TestJob.CHANGE_PERMISSION
+            )
+        self.assertEqual(
+            sorted(j.id for j in with_window), sorted(j.id for j in without_window)
+        )
 
     def test_worker_is_permission_restricted(self):
         self.assertFalse(

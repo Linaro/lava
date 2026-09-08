@@ -247,6 +247,10 @@ STATEMENT_TIMEOUT = 30000
 # Default queue timeout in hours
 QUEUE_TIMEOUT_HOURS = None
 
+# Anonymous users can only view jobs submitted within this many days.
+# None disables the restriction and is the default.
+PUBLIC_JOB_WINDOW_DAYS = None
+
 # Default health frequency in hours
 HEALTH_FREQUENCY_HOURS = 24
 
@@ -378,6 +382,7 @@ def update(values):
     MOUNT_POINT = values.get("MOUNT_POINT")
     MATOMO_URL = values.get("MATOMO_URL")
     MATOMO_SITE_ID = values.get("MATOMO_SITE_ID")
+    PUBLIC_JOB_WINDOW_DAYS = values.get("PUBLIC_JOB_WINDOW_DAYS")
     SENTRY_DSN = values.get("SENTRY_DSN")
     SENTRY_TRACES_SAMPLE_RATE = values.get("SENTRY_TRACES_SAMPLE_RATE")
     STATEMENT_TIMEOUT = values.get("STATEMENT_TIMEOUT")
@@ -392,6 +397,14 @@ def update(values):
     ):
         raise ImproperlyConfigured(
             "REQUIRE_LOGIN_PATHS must be a list of non-empty URL path prefixes"
+        )
+    if PUBLIC_JOB_WINDOW_DAYS is not None and (
+        isinstance(PUBLIC_JOB_WINDOW_DAYS, bool)
+        or not isinstance(PUBLIC_JOB_WINDOW_DAYS, int)
+        or PUBLIC_JOB_WINDOW_DAYS < 0
+    ):
+        raise ImproperlyConfigured(
+            "PUBLIC_JOB_WINDOW_DAYS must be None or a non-negative integer"
         )
 
     # Fix mount point

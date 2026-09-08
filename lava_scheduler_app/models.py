@@ -56,6 +56,7 @@ from lava_scheduler_app.managers import (
     RestrictedDeviceTypeQuerySet,
     RestrictedTestJobQuerySet,
     RestrictedWorkerQuerySet,
+    anonymous_job_cutoff,
 )
 from lava_scheduler_app.schema import SubmissionException, validate_device
 from lava_scheduler_app.validators import validate_non_slash
@@ -2098,6 +2099,9 @@ class TestJob(models.Model):
         )
 
     def can_view(self, user):
+        cutoff = anonymous_job_cutoff(user)
+        if cutoff is not None and self.submit_time < cutoff:
+            return False
         if user == self.submitter or user.is_superuser:
             return True
         if self.viewing_groups.exists():
