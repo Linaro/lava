@@ -808,15 +808,28 @@ async def listen_for_events(
                 headers={"LAVA-Token": options.token, "LAVA-Host": options.name},
                 heartbeat=30,
             ) as ws:
-                retry_interval = 1
                 async for msg in ws:
                     if msg.type != aiohttp.WSMsgType.TEXT:
                         continue
                     try:
                         data = json.loads(msg.data)
+                    except ValueError:
+                        LOG.warning("[EVENT] Invalid message: %s", msg)
+                        continue
+                    # The server rejects the connection by sending an error
+                    # and closing the websocket.
+                    if isinstance(data, dict) and "error" in data:
+                        LOG.error(
+                            "[EVENT] Connection refused by the server: %s",
+                            data["error"],
+                        )
+                        break
+                    # The connection is working, reset the retry interval
+                    retry_interval = 1
+                    try:
                         topic, _, _, _, data = data
                         data = json.loads(data)
-                    except ValueError:
+                    except (TypeError, ValueError):
                         LOG.warning("[EVENT] Invalid message: %s", msg)
                         continue
                     if not topic.endswith(".testjob"):
@@ -826,8 +839,10 @@ async def listen_for_events(
                     if data.get("state") in ["Scheduled", "Canceling"]:
                         LOG.info("[EVENT] Worker mentioned")
                         event.set()
-        except (aiohttp.ClientError, TimeoutError):
-            retry_interval = min(60, retry_interval * 2)
+        except (aiohttp.ClientError, TimeoutError) as exc:
+            LOG.debug("[EVENT] Connection failed: %s", exc)
+        retry_interval = min(60, retry_interval * 2)
+        LOG.debug("[EVENT] Reconnecting in %ds", retry_interval)
         await asyncio.sleep(retry_interval)
 
 
