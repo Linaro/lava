@@ -34,6 +34,7 @@ from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy
 from psycopg2.extensions import quote_ident
 
@@ -419,8 +420,10 @@ class TestCase(models.Model, Queryable):
 
     logged = models.DateTimeField(auto_now=True)
 
-    @property
+    @cached_property
     def action_metadata(self):
+        # Cached: the metadata is parsed multiple times per instance, both by
+        # the views and by the templates.
         if not self.metadata:
             return None
         try:
