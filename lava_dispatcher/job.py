@@ -23,7 +23,6 @@ from lava_dispatcher.logical import PipelineContext
 from lava_dispatcher.protocols.multinode import (  # pylint: disable=unused-import
     MultinodeProtocol,
 )
-from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils import filesystem
 
 if TYPE_CHECKING:
@@ -31,6 +30,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from lava_common.timeout import Timeout
+    from lava_dispatcher.shell import ShellSession
 
     from .connection import Protocol
     from .device import NewDevice
