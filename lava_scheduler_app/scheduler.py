@@ -384,10 +384,10 @@ def transition_multinode_jobs():
     # Ordering by target_group is mandatory for distinct to work
     jobs = jobs.order_by("target_group", "id")
     # DISTINCT ON is not implemented by sqlite
-    if connection.vendor == "postgresql":
+    if connection.features.can_distinct_on_fields:
         jobs = jobs.distinct("target_group")
     else:
-        jobs = distinct_on_target_group(jobs)
+        jobs = list(distinct_on_target_group(jobs))
 
     for job in jobs:
         sub_jobs = job.sub_jobs_list

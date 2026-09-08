@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import time
 from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
@@ -16,6 +17,7 @@ from django.utils import timezone
 
 from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
 from lava_scheduler_app.scheduler import (
+    distinct_on_target_group,
     schedule,
     schedule_health_checks,
     worker_summary,
@@ -1018,3 +1020,30 @@ class TestJobQueueTimeout(TestCase):
         else:
             self.assertEqual(canceling, 1)
             self.assertEqual(canceled, 0)
+
+
+def _job(job_id, target_group):
+    return SimpleNamespace(id=job_id, target_group=target_group)
+
+
+class TestDistinctOnTargetGroup:
+    def test_keeps_first_job_of_each_target_group(self):
+        jobs = [
+            _job(1, "group-a"),
+            _job(2, "group-a"),
+            _job(3, "group-b"),
+            _job(4, "group-b"),
+            _job(5, "group-c"),
+        ]
+        assert [job.id for job in distinct_on_target_group(jobs)] == [1, 3, 5]
+
+    def test_collapses_jobs_without_a_target_group(self):
+        jobs = [
+            _job(1, None),
+            _job(2, None),
+            _job(3, "group-a"),
+        ]
+        assert [job.id for job in distinct_on_target_group(jobs)] == [1, 3]
+
+    def test_no_jobs(self):
+        assert not list(distinct_on_target_group([]))
