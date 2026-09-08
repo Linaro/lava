@@ -9,7 +9,7 @@ import logging
 from dataclasses import dataclass
 
 from django.contrib.auth.models import User
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import (
     Count,
     DurationField,
@@ -355,6 +355,18 @@ def schedule_jobs_for_device(device, print_header):
     return None
 
 
+def distinct_on_target_group(jobs):
+    """
+    Emulate .distinct("target_group") for backends without DISTINCT ON.
+    """
+    seen_target_groups = set()
+    for job in jobs:
+        if job.target_group in seen_target_groups:
+            continue
+        seen_target_groups.add(job.target_group)
+        yield job
+
+
 def transition_multinode_jobs():
     """
     Transition multinode jobs that are ready to be scheduled.
@@ -363,7 +375,11 @@ def transition_multinode_jobs():
     jobs = TestJob.objects.filter(state=TestJob.STATE_SCHEDULING)
     # Ordering by target_group is mandatory for distinct to work
     jobs = jobs.order_by("target_group", "id")
-    jobs = jobs.distinct("target_group")
+    # DISTINCT ON is not implemented by sqlite
+    if connection.vendor == "postgresql":
+        jobs = jobs.distinct("target_group")
+    else:
+        jobs = distinct_on_target_group(jobs)
 
     for job in jobs:
         sub_jobs = job.sub_jobs_list
