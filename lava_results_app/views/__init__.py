@@ -414,7 +414,7 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
     logger = logging.getLogger("lava-master")
     for extra_case in test_cases:
         try:
-            f_metadata = yaml_safe_load(extra_case.metadata)
+            f_metadata = extra_case.action_metadata
             if not f_metadata:
                 continue
         except (TypeError, yaml.YAMLError):
