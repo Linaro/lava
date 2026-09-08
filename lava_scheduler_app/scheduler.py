@@ -12,10 +12,12 @@ from django.contrib.auth.models import User
 from django.db import connection, transaction
 from django.db.models import (
     Count,
+    DateTimeField,
     DurationField,
     Exists,
     ExpressionWrapper,
     F,
+    IntegerField,
     OuterRef,
     Q,
 )
@@ -67,10 +69,16 @@ def check_queue_timeout():
     LOGGER.info("Check queue timeouts:")
     jobs = TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
     jobs = jobs.filter(queue_timeout__isnull=False)
+    # Force types so sqlite can use the right arithmetic operations
     jobs = jobs.alias(
         queue_timeout_date=ExpressionWrapper(
-            F("submit_time") + datetime.timedelta(seconds=1) * F("queue_timeout"),
-            output_field=DurationField(),
+            F("submit_time")
+            + ExpressionWrapper(
+                datetime.timedelta(seconds=1)
+                * ExpressionWrapper(F("queue_timeout"), output_field=IntegerField()),
+                output_field=DurationField(),
+            ),
+            output_field=DateTimeField(),
         )
     )
     jobs = jobs.filter(queue_timeout_date__lt=timezone.now())
