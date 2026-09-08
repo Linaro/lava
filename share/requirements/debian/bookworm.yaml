@@ -129,6 +129,7 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
+    unittests: true
   bmap-tools:
     name: bmap-tools
   pyocd:
