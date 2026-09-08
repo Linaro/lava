@@ -101,8 +101,12 @@ lava-server:
     unittests: true
 
 lava-dispatcher:
+  e2fsprogs:
+    name: e2fsprogs
   fakeroot:
     name: fakeroot
+  iproute:
+    name: iproute2
   aiohttp:
     name: python3-aiohttp
   PyYAML:
@@ -132,6 +136,7 @@ lava-dispatcher:
     name: python3-setproctitle
   guestfs:
     name: python3-guestfs
+    unittests: true
   bmaptool:
     # Starting from Debian 13 package is called bmaptool.
     name: bmaptool
