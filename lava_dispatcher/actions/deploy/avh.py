@@ -70,11 +70,10 @@ class AvhDeploy(Action):
             )
 
         try:
-            avh_api_token = self.job.secrets.get_required("avh_api_token")
+            self.avh["api_token"] = self.job.secrets.get_required("avh_api_token")
         except KeyError:
             raise JobError("'secrets.avh_api_token' key is required for AVH deploy")
 
-        self.avh["api_token"] = avh_api_token
         if not isinstance(self.avh["api_token"], str):
             raise JobError("'secrets.avh_api_token' should be a string")
 
