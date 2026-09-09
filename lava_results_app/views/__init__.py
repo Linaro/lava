@@ -21,6 +21,7 @@ import yaml
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core import serializers
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, IntegerField, OuterRef, Subquery, Value
 from django.http import Http404
 from django.http.response import HttpResponse, StreamingHttpResponse
@@ -384,7 +385,7 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
     """
     test_sets = None
     try:
-        case = TestCase.objects.get(pk=testcase_id_or_name)
+        case = TestCase.objects.select_related("suite__job").get(pk=testcase_id_or_name)
     except (TestCase.DoesNotExist, ValueError):
         case = TestCase.objects.filter(
             name=testcase_id_or_name, suite__name=testsuite_name, suite__job__id=job
@@ -395,8 +396,8 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
                 raise Http404("No TestCase/TestSet matches the given parameters.")
     if not job:
         job = case.suite.job
-        # Auth check purposes only.
-        job = TestJob.get_restricted_job(job.id, request.user)
+        if not job.can_view(request.user):
+            raise PermissionDenied()
     else:
         job = TestJob.get_restricted_job(job, request.user)
     if not testsuite_name:
@@ -456,9 +457,10 @@ def testcase(request, testcase_id_or_name, job=None, testsuite_name=None):
 
 
 def testcase_yaml(request, pk):
-    testcase = get_object_or_404(TestCase, pk=pk)
+    testcase = get_object_or_404(TestCase.objects.select_related("suite__job"), pk=pk)
     # Check that user allowed to view job
-    TestJob.get_restricted_job(testcase.suite.job.id, request.user)
+    if not testcase.suite.job.can_view(request.user):
+        raise PermissionDenied()
     response = HttpResponse(content_type="text/yaml")
     filename = "lava_%s.yaml" % testcase.name
     response["Content-Disposition"] = 'attachment; filename="%s"' % filename
