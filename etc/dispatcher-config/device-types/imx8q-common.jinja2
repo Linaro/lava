@@ -25,8 +25,8 @@
 {% set booti_dtb_addr = booti_dtb_addr | default('${fdt_addr}') %}
 {% else %}
 {% set booti_kernel_addr  = booti_kernel_addr | default('0x80200000') %}
-{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x83100000') %}
-{% set booti_dtb_addr     = booti_dtb_addr | default('0x83000000') %}
+{% set booti_ramdisk_addr = booti_ramdisk_addr | default('0x83800000') %}
+{% set booti_dtb_addr     = booti_dtb_addr | default('0x83600000') %}
 {% endif %}
 {% set bootz_kernel_addr  = booti_kernel_addr %}
 {% set bootz_ramdisk_addr = booti_ramdisk_addr %}
