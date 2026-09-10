@@ -18,7 +18,10 @@ from lava_common.timeout import Timeout
 from lava_dispatcher.action import Action, Pipeline
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class ResetDevice(Action):
@@ -32,7 +35,7 @@ class ResetDevice(Action):
     description = "reboot or power-cycle the device"
     summary = "reboot the device"
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         if self.job.device.hard_reset_command:
             self.pipeline.add_action(PDUReboot(self.job))
@@ -49,8 +52,15 @@ class SendRebootCommands(Action):
     description = "Issue a reboot command on the device"
     summary = "Issue a reboot command on the device"
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
+
+        if connection is None:
+            self.logger.debug("No connection. Skipping reboot commands.")
+            return connection
+
         if "soft_reboot" in self.parameters:
             commands = self.parameters["soft_reboot"]
         elif self.job.device.soft_reboot_command:
@@ -99,7 +109,9 @@ class PDUReboot(Action):
         super().__init__(job)
         self.command = None
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         if not self.job.device.hard_reset_command:
             raise InfrastructureError("Hard reset required but not defined.")
@@ -127,7 +139,9 @@ class PrePower(Action):
     timeout_exception = InfrastructureError
     command_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if self.job.device.pre_power_command == "":
             self.logger.warning("Pre power command does not exist")
             return connection
@@ -160,7 +174,9 @@ class PreOs(Action):
     timeout_exception = InfrastructureError
     command_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if self.job.device.pre_os_command == "":
             self.logger.warning("Pre OS command does not exist")
             return connection
@@ -187,7 +203,9 @@ class PowerOn(Action):
     timeout_exception = InfrastructureError
     command_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         # to enable power to a device, either power_on or hard_reset are needed.
         if self.job.device.power_command == "":
             self.logger.warning("Unable to power on the device")
@@ -222,7 +240,9 @@ class PowerOff(Action):
     timeout_exception = InfrastructureError
     command_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         if not self.job.device.get("commands"):
             return connection
@@ -247,14 +267,14 @@ class ReadFeedback(Action):
     description = "Check for messages on all other namespaces"
     summary = "Read from other namespaces"
 
-    def __init__(self, job: Job, finalize=False, repeat=False):
+    def __init__(self, job: Job, finalize: bool = False, repeat: bool = False):
         super().__init__(job)
         self.finalize = finalize
         self.parameters["namespace"] = "common"
         self.duration = 1
         self.repeat = repeat
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         super().populate(parameters)
         dur = (
             self.job.parameters.get("timeouts", {})
@@ -264,13 +284,15 @@ class ReadFeedback(Action):
         if dur:
             self.duration = Timeout.parse(dur)
 
-    def run(self, connection, max_end_time):
-        feedbacks = []
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
+        feedbacks: list[tuple[str, ShellSession]] = []
         for feedback_ns in self.data.keys():
             if feedback_ns == self.parameters.get("namespace"):
                 if not self.repeat:
                     continue
-            feedback_connection = self.get_namespace_data(
+            feedback_connection: ShellSession | None = self.get_namespace_data(
                 action="shared",
                 label="shared",
                 key="connection",
@@ -325,12 +347,14 @@ class FinalizeAction(Action):
         super().__init__(job)
         self.ran = False
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(job=self.job, parent=self, parameters=parameters)
         self.pipeline.add_action(PowerOff(self.job))
         self.pipeline.add_action(ReadFeedback(self.job, finalize=True, repeat=True))
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """
         The pexpect.spawn here is the ShellSession connection object.
         So call the finalise() function of the connection which knows about the raw_connection inside.
@@ -349,7 +373,11 @@ class FinalizeAction(Action):
             protocol.finalise_protocol(self.job.device)
         return connection
 
-    def cleanup(self, connection, max_end_time=None):
+    def cleanup(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None = None,
+    ) -> None:
         # avoid running Finalize in validate or unit tests
         if not self.ran and self.job.started:
             # ensure device is powered off, even if previous cleanups have
