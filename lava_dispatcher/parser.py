@@ -24,17 +24,29 @@ from lava_dispatcher.job import Job
 from lava_dispatcher.power import FinalizeAction
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_common.log import YAMLLogger
+    from lava_dispatcher.action import Pipeline
+    from lava_dispatcher.device import NewDevice
 
 
-def parse_action(job_data, name, device, pipeline, test_info, test_count):
+def parse_action(
+    stage_data: dict[str, Any],
+    name: str,
+    device: NewDevice,
+    pipeline: Pipeline,
+    test_info: dict[str, list[dict[str, Any]]],
+    test_count: int,
+) -> type[BootStrategy] | type[LavaTestStrategy] | type[DeployStrategy]:
     """
     If protocols are defined, each Action may need to be aware of the protocol parameters.
     """
-    parameters = job_data[name]
+    parameters = stage_data[name]
     if "protocols" in pipeline.job.parameters:
         parameters.update(pipeline.job.parameters["protocols"])
 
+    cls: type[BootStrategy] | type[LavaTestStrategy] | type[DeployStrategy]
     if name == "boot":
         cls = BootStrategy.select(device, parameters)
         action = cls.action(pipeline.job)
@@ -87,20 +99,20 @@ class JobParser:
     # FIXME: needs a Schema and a check routine
 
     @classmethod
-    def _parse_job_timeout(cls, data: dict) -> Timeout:
+    def _parse_job_timeout(cls, data: dict[str, Any]) -> Timeout:
         timeouts_dict = data["timeouts"]
         duration = Timeout.parse(timeouts_dict["job"])
         return Timeout("job", None, duration=duration)
 
     def parse(
         self,
-        content,
-        device,
-        job_id,
-        dispatcher_config,
-        env_dut=None,
+        content: str,
+        device: NewDevice,
+        job_id: str,
+        dispatcher_config: str,
+        env_dut: str | None = None,
         logger: YAMLLogger | None = None,
-    ):
+    ) -> Job:
         data = yaml_safe_load(content)
         job = Job(
             job_id=job_id,
@@ -109,7 +121,7 @@ class JobParser:
             timeout=self._parse_job_timeout(data),
             logger=logger,
         )
-        test_counts = {}
+        test_counts: dict[str, int] = {}
         job.parameters["env_dut"] = env_dut
         # Load the dispatcher config
         job.parameters["dispatcher"] = {}
@@ -150,28 +162,29 @@ class JobParser:
 
         # FIXME: also read permissible overrides from device config and set from job data
         # FIXME: ensure that a timeout for deployment 0 does not get set as the timeout for deployment 1 if 1 is default
-        for action_data in data["actions"]:
-            for name in action_data:
+        for stage_data in data["actions"]:
+            for name in stage_data:
                 # Set a default namespace if needed
-                namespace = action_data[name].setdefault("namespace", "common")
+                namespace = stage_data[name].setdefault("namespace", "common")
                 test_counts.setdefault(namespace, 0)
 
                 if name in ["deploy", "boot", "test"]:
-                    action = parse_action(
-                        action_data,
+                    stage_cls = parse_action(
+                        stage_data,
                         name,
                         device,
                         pipeline,
                         job.test_info,
                         test_counts[namespace],
                     )
-                    if name == "test" and action.needs_overlay(action_data["test"]):
+                    if issubclass(
+                        stage_cls, LavaTestStrategy
+                    ) and stage_cls.needs_overlay(stage_data["test"]):
                         test_counts[namespace] += 1
                 elif name == "command":
-                    action = CommandAction(job)
-                    action.parameters = action_data[name]
-                    pipeline.add_action(action)
-
+                    command_action = CommandAction(job)
+                    command_action.parameters = stage_data[name]
+                    pipeline.add_action(command_action)
                 else:
                     raise JobError("Unknown action name '%s'" % name)
 
