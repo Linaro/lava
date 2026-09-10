@@ -34,6 +34,7 @@ else
     'lava_dispatcher/job.py'
     'lava_dispatcher/logical.py'
     'lava_dispatcher/parser.py'
+    'lava_dispatcher/power.py'
     'lava_dispatcher/shell.py'
     'lava_dispatcher/utils/compression.py'
     'lava_dispatcher/utils/contextmanager.py'
