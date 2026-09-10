@@ -9,9 +9,8 @@
 URL mappings for the LAVA Results application
 """
 
-from django.urls import path, register_converter
+from django.urls import path
 
-from lava_common.converters import JobIdConverter
 from lava_results_app.views import (
     index,
     metadata_export,
@@ -72,8 +71,9 @@ from lava_results_app.views.query.views import (
     query_select_group,
     query_toggle_published,
 )
+from lava_server.compat import register_job_id_converter
 
-register_converter(JobIdConverter, "job_id")
+register_job_id_converter()
 
 urlpatterns = (
     path("", index, name="lava_results"),

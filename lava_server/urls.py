@@ -6,11 +6,10 @@
 
 from django.conf import settings
 from django.contrib import admin
-from django.urls import include, path, register_converter
+from django.urls import include, path
 from django.views.generic import TemplateView
 from django.views.i18n import JavaScriptCatalog
 
-from lava_common.converters import JobIdConverter
 from lava_results_app.api import ResultsAPI
 from lava_scheduler_app.api import SchedulerAPI
 from lava_scheduler_app.api.aliases import SchedulerAliasesAPI
@@ -28,6 +27,7 @@ from lava_scheduler_app.api.workers import SchedulerWorkersAPI
 from lava_server.api import LavaMapper
 from lava_server.api.groups import GroupsAPI, GroupsPermissionsAPI
 from lava_server.api.users import UsersAPI, UsersGroupsAPI, UsersPermissionsAPI
+from lava_server.compat import register_job_id_converter
 from lava_server.views import (
     delete_remote_auth,
     healthz,
@@ -67,7 +67,7 @@ mapper.register(UsersAPI, "auth.users")
 mapper.register(UsersGroupsAPI, "auth.users.groups")
 mapper.register(UsersPermissionsAPI, "auth.users.perms")
 
-register_converter(JobIdConverter, "job_id")
+register_job_id_converter()
 
 # Auth backends
 auth_urls = [
