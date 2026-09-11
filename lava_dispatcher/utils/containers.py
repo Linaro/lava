@@ -252,7 +252,7 @@ class DockerDriver(NullDriver):
                 self._retry_trigger_share_device_with_container(action, dev, docker)
 
     def __get_device_nodes__(self):
-        device_info = self.action.job.device.get("device_info", {})
+        device_info = self.action.job.device.get("device_info", [{}])
         if device_info:
             return get_udev_devices(device_info=device_info)
         else:
