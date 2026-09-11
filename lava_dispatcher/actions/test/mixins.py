@@ -3,18 +3,19 @@
 # Author: Chase Qi <chase.qi@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
 from lava_common.yaml import yaml_safe_dump
+from lava_dispatcher.action import Action
 
 if TYPE_CHECKING:
-    from lava_common.log import ResultDict, YAMLLogger
+    from lava_common.log import ResultDict
+    from lava_dispatcher.job import Job
 
 
-class ReportMixin:
+class ReportMixin(Action):
     """Mixin providing extra test result reporting methods.
 
     It can only be used with 'Action' subclasses that:
@@ -22,10 +23,10 @@ class ReportMixin:
     - provide 'self.logger' and 'self.level' attrs.
     """
 
-    report: dict[str, Any]
-    logger: YAMLLogger
-    level: str
-    testset_name: str | None = None
+    def __init__(self, job: Job):
+        super().__init__(job)
+        self.report: dict[str, Any] = {}
+        self.testset_name: str | None = None
 
     def handle_expected(self, expected: list[str], suite: str) -> None:
         """Report missing expected test cases as 'fail'.
