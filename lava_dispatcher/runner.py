@@ -12,19 +12,25 @@ import signal
 import sys
 import traceback
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from setproctitle import setproctitle
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.exceptions import InfrastructureError, JobCanceled, LAVABug, LAVAError
-from lava_common.log import YAMLLogger
+from lava_common.log import ResultDict, YAMLLogger
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_dispatcher.device import NewDevice
 from lava_dispatcher.parser import JobParser
 from lava_dispatcher.worker import get_prefix
 
+if TYPE_CHECKING:
+    from typing import NoReturn
 
-def parser():
+    from lava_dispatcher.job import Job
+
+
+def parser() -> argparse.ArgumentParser:
     """Configure the parser"""
     p_obj = argparse.ArgumentParser()
 
@@ -105,7 +111,7 @@ def parser():
     return p_obj
 
 
-def setup_logger(options) -> YAMLLogger:
+def setup_logger(options: argparse.Namespace) -> YAMLLogger:
     # The logger can be used by the parser and the Job object in all phases.
     logger = YAMLLogger()
     # Save logs to a file for debugging/post-processing.
@@ -142,7 +148,7 @@ def setup_logger(options) -> YAMLLogger:
     return logger
 
 
-def parse_job_file(options, logger: YAMLLogger):
+def parse_job_file(options: argparse.Namespace, logger: YAMLLogger) -> Job:
     """
     Uses the parsed device_config instead of the old Device class
     so it can fail before the Pipeline is made.
@@ -156,10 +162,12 @@ def parse_job_file(options, logger: YAMLLogger):
     # Load the configuration files (this should *not* fail)
     env_dut = None
     if options.env_dut is not None:
-        env_dut = options.env_dut.read_text(encoding="utf-8")
+        env_dut_file: Path = options.env_dut
+        env_dut = env_dut_file.read_text(encoding="utf-8")
     dispatcher_config = None
     if options.dispatcher is not None:
-        dispatcher_config = options.dispatcher.read_text(encoding="utf-8")
+        dispatcher_config_file: Path = options.dispatcher
+        dispatcher_config = dispatcher_config_file.read_text(encoding="utf-8")
 
     # Generate the pipeline
     return parser.parse(
@@ -172,7 +180,7 @@ def parse_job_file(options, logger: YAMLLogger):
     )
 
 
-def cancelling_handler(*_):
+def cancelling_handler(*_: object) -> NoReturn:
     """
     Catches most signals and raise JobCanceled (inherit from LAVAError).
     The exception will go through all the stack frames cleaning and reporting
@@ -187,18 +195,18 @@ def cancelling_handler(*_):
     raise JobCanceled("The job was canceled")
 
 
-def job_not_found_handler(*_):
+def job_not_found_handler(*_: object) -> NoReturn:
     raise JobCanceled("The job was deleted on the lava-server")
 
 
-def terminating_handler(*_):
+def terminating_handler(*_: object) -> None:
     """
     Second signal handler to notify to the user that the job was canceled twice
     """
     raise JobCanceled("The job was canceled again (too long to cancel)")
 
 
-def main():
+def main() -> int:
     # Parse the command line
     options = parser().parse_args()
 
@@ -259,7 +267,7 @@ def main():
         job.validate()
         if not options.validate:
             if options.debug:
-                from remote_pdb import set_trace
+                from remote_pdb import set_trace  # type: ignore[import-not-found]
 
                 set_trace()
             job.run()
@@ -280,7 +288,7 @@ def main():
     else:
         success = True
     finally:
-        result_dict = {"definition": "lava", "case": "job"}
+        result_dict: ResultDict = {"definition": "lava", "case": "job"}
         if success:
             result_dict["result"] = "pass"
             logger.info("Job finished correctly")
@@ -291,7 +299,7 @@ def main():
             logger.error(error_help)
         logger.results(result_dict)
 
-    def logger_terminate_handler(*_):
+    def logger_terminate_handler(*_: object) -> None:
         logger.terminate()
         sys.stderr.write(
             "Job log upload process terminated due to timeout; logs may be incomplete.\n"

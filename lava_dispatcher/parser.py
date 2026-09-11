@@ -109,7 +109,7 @@ class JobParser:
         content: str,
         device: NewDevice,
         job_id: str,
-        dispatcher_config: str,
+        dispatcher_config: str | None,
         env_dut: str | None = None,
         logger: YAMLLogger | None = None,
     ) -> Job:
