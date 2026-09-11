@@ -43,6 +43,7 @@ else
     'lava_dispatcher/utils/network.py'
     'lava_dispatcher/utils/shell.py'
     'lava_dispatcher/utils/strings.py'
+    'lava_dispatcher/utils/udev.py'
     'lava_dispatcher/utils/vcs.py'
     # lava_server
     'lava_server/settings/config_file.py'
