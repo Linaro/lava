@@ -5,7 +5,7 @@ set -e
 if [ "$1" = "setup" ]
 then
   apt-get -q update
-  apt-get install --no-install-recommends --yes mypy python3-typeshed python3-sentry-sdk python3-magic
+  apt-get install --no-install-recommends --yes mypy python3-typeshed python3-sentry-sdk python3-magic python3-setproctitle
 else
   set -x
   FILES=(
@@ -33,6 +33,7 @@ else
     'lava_dispatcher/deployment_data.py'
     'lava_dispatcher/job.py'
     'lava_dispatcher/parser.py'
+    'lava_dispatcher/runner.py'
     'lava_dispatcher/shell.py'
     'lava_dispatcher/utils/compression.py'
     'lava_dispatcher/utils/contextmanager.py'

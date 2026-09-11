@@ -14,7 +14,7 @@ import signal
 import sys
 import time
 from queue import Empty
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, NotRequired, TypedDict
 
 import requests
 
@@ -379,6 +379,8 @@ class ResultDict(TypedDict, total=False):
     starttc: int | None
     endtc: int | None
     set: str
+    error_type: NotRequired[str]
+    error_msg: NotRequired[str]
 
 
 class YAMLLogger:
