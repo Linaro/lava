@@ -379,6 +379,8 @@ class ResultDict(TypedDict, total=False):
     starttc: int | None
     endtc: int | None
     set: str
+    error_type: str
+    error_msg: str
 
 
 class YAMLLogger:
