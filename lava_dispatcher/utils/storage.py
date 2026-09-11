@@ -12,7 +12,10 @@ from lava_dispatcher.action import Action
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class FlashUBootUMSAction(Action):
@@ -24,29 +27,52 @@ class FlashUBootUMSAction(Action):
     description = "Write the image file to USB Mass Storage"
     summary = "USB Mass storage flash"
 
-    def __init__(self, job: Job, usb_mass_device):
+    def __init__(self, job: Job, usb_mass_device: str):
         super().__init__(job)
-        self.params = None
         self.usb_mass_device = usb_mass_device
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         which("bmaptool")
-        self.params = self.job.device["actions"]["boot"]["methods"][
+        params: dict[str, Any] = self.job.device["actions"]["boot"]["methods"][
             self.parameters["method"]
         ]["parameters"]
-        if "uboot_mass_storage_device" not in self.params:
+        if "uboot_mass_storage_device" not in params:
             raise JobError("uboot_mass_storage_device is not set")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
-        image_file = self.get_namespace_data(
+        if connection is None:
+            raise JobError("connection not found")
+        image_file: str | None = self.get_namespace_data(
             action="download-action", label="image", key="file"
         )
-        cmd = f"bmaptool create --output {image_file}.layout {image_file}"
-        self.run_cmd(cmd, error_msg="Fail to create the bmap layout")
-        cmd = f"bmaptool --quiet copy --bmap {image_file}.layout {image_file} {self.usb_mass_device}"
-        self.run_cmd(cmd, error_msg="writing to the USB mass storage device failed")
+        if image_file is None:
+            raise JobError("image file not downloaded")
+        self.run_cmd(
+            [
+                "bmaptool",
+                "create",
+                "--output",
+                f"{image_file}.layout",
+                image_file,
+            ],
+            error_msg="Fail to create the bmap layout",
+        )
+        self.run_cmd(
+            [
+                "bmaptool",
+                "--quiet",
+                "copy",
+                "--bmap",
+                f"{image_file}.layout",
+                image_file,
+                self.usb_mass_device,
+            ],
+            error_msg="writing to the USB mass storage device failed",
+        )
 
         connection.sendcontrol("c")
         return connection
