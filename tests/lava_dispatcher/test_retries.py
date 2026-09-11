@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import time
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 from lava_common.exceptions import JobError, LAVABug
 from lava_dispatcher.action import Action, Pipeline
@@ -148,19 +147,15 @@ class TestRetries(TestRetriesAndFailuresBase):
             self.assertIn("fail", fail_action.results)
 
     def test_retry_action_no_pipeline(self) -> None:
-        # RetryAction must fail validation if no sub actions were added
-        # but mock the Action.validate because it is not relevant
+        # RetryAction must fail run if no sub actions were added
         root_pipeline, job = self.create_job_and_root_pipeline()
 
         root_pipeline.add_action(RetryAction(job))
 
         with (
             self.assertRaisesRegex(LAVABug, "needs to implement an internal pipeline"),
-            patch.object(Action, "validate") as action_validate_mock,
         ):
-            root_pipeline.validate_actions()
-
-        action_validate_mock.assert_called_once()
+            job.run()
 
     def test_retry_action_first_try_success(self) -> None:
         root_pipeline, job = self.create_job_and_root_pipeline()
