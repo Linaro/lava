@@ -430,10 +430,10 @@ class ShellSession:
         Listen to output and log as feedback
         Returns the number of characters read.
         """
-        index = 0
-        if not self.raw_connection:
-            # connection has already been closed.
-            return index
+        if not self.connected or self.raw_connection.closed:
+            # connection has already been closed: reading would raise
+            # ValueError("I/O operation on closed file.")
+            return 0
         if timeout < 0.0:
             raise LAVABug("Invalid timeout value passed to listen_feedback()")
         try:
