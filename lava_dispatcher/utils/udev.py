@@ -11,13 +11,17 @@ import select
 import time
 from typing import TYPE_CHECKING
 
-import pyudev
+import pyudev  # type: ignore[import-not-found]
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action
 
 if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.log import YAMLLogger
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class WaitUSBSerialDeviceAction(Action):
@@ -28,15 +32,15 @@ class WaitUSBSerialDeviceAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.serial_device = {}
+        self.serial_device: dict[str, str] = {}
         self.usb_sleep = 0
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
-        board_id = self.job.device.get("board_id", "")
-        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
-        usb_product_id = self.job.device.get("usb_product_id", "")
-        usb_serial_driver = self.job.device.get("usb_serial_driver", "cdc_acm")
+        board_id: str = self.job.device.get("board_id", "")
+        usb_vendor_id: str = self.job.device.get("usb_vendor_id", "")
+        usb_product_id: str = self.job.device.get("usb_product_id", "")
+        usb_serial_driver: str = self.job.device.get("usb_serial_driver", "cdc_acm")
         if board_id == "0000000000":
             self.errors_add("[USBSERIAL] board_id unset")
         if usb_vendor_id == "0000":
@@ -53,7 +57,9 @@ class WaitUSBSerialDeviceAction(Action):
         if not isinstance(self.usb_sleep, int):
             self.errors_add("usb_sleep should be an integer")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for usb serial device: %s", self.serial_device)
         wait_udev_event(match_dict=self.serial_device, subsystem="tty")
@@ -73,13 +79,13 @@ class WaitDFUDeviceAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.dfu_device = {}
+        self.dfu_device: dict[str, str] = {}
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
-        board_id = self.job.device.get("board_id", "")
-        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
-        usb_product_id = self.job.device.get("usb_product_id", "")
+        board_id: str = self.job.device.get("board_id", "")
+        usb_vendor_id: str = self.job.device.get("usb_vendor_id", "")
+        usb_product_id: str = self.job.device.get("usb_product_id", "")
         if board_id == "0000000000":
             self.errors_add("[DFU] board_id unset")
         if usb_vendor_id == "0000":
@@ -92,7 +98,9 @@ class WaitDFUDeviceAction(Action):
             "ID_MODEL_ID": str(usb_product_id),
         }
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for DFU device: %s", self.dfu_device)
         wait_udev_event(
@@ -109,13 +117,13 @@ class WaitQDLDeviceAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.qdl_device = {}
+        self.qdl_device: dict[str, str] = {}
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
-        board_id = self.job.device.get("board_id", "")
-        usb_vendor_id = self.job.device.get("usb_vendor_id", "")
-        usb_product_id = self.job.device.get("usb_product_id", "")
+        board_id: str = self.job.device.get("board_id", "")
+        usb_vendor_id: str = self.job.device.get("usb_vendor_id", "")
+        usb_product_id: str = self.job.device.get("usb_product_id", "")
         if board_id == "QUSB_BULK_CID:0420_SN:00000000":
             self.errors_add("[QDL] board_id unset")
         if usb_vendor_id == "0000":
@@ -128,7 +136,9 @@ class WaitQDLDeviceAction(Action):
             "ID_PRODUCT": str(board_id),
         }
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for QDL device: %s", self.qdl_device)
         wait_udev_event(match_dict=self.qdl_device, subsystem="usb")
@@ -143,16 +153,18 @@ class WaitUSBMassStorageDeviceAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.ms_device = {}
+        self.ms_device: dict[str, str] = {}
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
-        usb_fs_label = self.job.device.get("usb_filesystem_label")
+        usb_fs_label: str | None = self.job.device.get("usb_filesystem_label")
         if not isinstance(usb_fs_label, str):
             self.errors_add("usb_fs_label unset")
         self.ms_device = {"ID_FS_LABEL": str(usb_fs_label)}
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for USB mass storage device: %s", self.ms_device)
         wait_udev_event(
@@ -167,16 +179,18 @@ class WaitDevicePathAction(Action):
     summary = "wait for udev device path"
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, path=None):
+    def __init__(self, job: Job, path: str):
         super().__init__(job)
         self.devicepath = path
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if not isinstance(self.devicepath, str):
             self.errors_add("invalid device path")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         self.logger.debug("Waiting for udev device path: %s", self.devicepath)
         wait_udev_event(devicepath=self.devicepath)
@@ -189,21 +203,27 @@ class WaitDeviceBoardID(Action):
     summary = "wait for udev device with board ID"
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, board_id=None):
+    def __init__(self, job: Job, board_id: str | None = None):
         super().__init__(job)
-        self.udev_device = None
+        self.udev_device: dict[str, str] = {}
         if not board_id:
-            self.board_id = self.job.device.get("board_id")
-        else:
-            self.board_id = board_id
+            board_id = self.job.device.get("board_id")
 
-    def validate(self):
+        if not isinstance(board_id, str):
+            self.errors_add("usb_fs_label unset")
+            board_id = ""
+
+        self.board_id: str = board_id
+
+    def validate(self) -> None:
         super().validate()
         if not isinstance(self.board_id, str):
             self.errors_add("invalid board_id")
         self.udev_device = {"ID_SERIAL_SHORT": str(self.board_id)}
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         wait_device_board_id = True
@@ -230,36 +250,38 @@ class WaitDeviceBoardID(Action):
         return connection
 
 
-def _dict_compare(d1, d2):
+def _dict_compare(d1: dict[Any, Any], d2: dict[Any, Any]) -> set[Any]:
     d1_keys = set(d1.keys())
     d2_keys = set(d2.keys())
     intersect_keys = d1_keys.intersection(d2_keys)
     return {o for o in intersect_keys if d1[o] == d2[o]}
 
 
-def get_device_serial(device):
+def get_device_serial(device: Any) -> str | None:
     """Get serial from udev properties or sysfs attributes (for containers)."""
-    serial = device.properties.get("ID_SERIAL_SHORT")
+    serial: str | None = device.properties.get("ID_SERIAL_SHORT")
     if serial:
         return serial
     try:
-        return device.attributes.asstring("serial")
+        serial = device.attributes.asstring("serial")
+        return serial
     except (KeyError, UnicodeDecodeError, ValueError):
         return None
 
 
-def get_device_product(device):
+def get_device_product(device: Any) -> str | None:
     """Get product field from USB descriptor using sysfs attributes"""
-    product = device.properties.get("ID_PRODUCT")
+    product: str | None = device.properties.get("ID_PRODUCT")
     if product:
         return product
     try:
-        return device.attributes.asstring("product")
+        product = device.attributes.asstring("product")
+        return product
     except (KeyError, UnicodeDecodeError, ValueError):
         return None
 
 
-def get_device_properties(device):
+def get_device_properties(device: Any) -> dict[str, str]:
     """Get device properties with sysfs fallbacks for containers."""
     props = dict(device.properties)
     if "ID_SERIAL_SHORT" not in props:
@@ -283,7 +305,7 @@ def get_device_properties(device):
     return props
 
 
-def match(device, match_dict, devicepath):
+def match(device: Any, match_dict: dict[str, str], devicepath: str | None) -> bool:
     device_props = get_device_properties(device)
     same = _dict_compare(device_props, match_dict)
     if same == set(match_dict.keys()):
@@ -297,7 +319,13 @@ def match(device, match_dict, devicepath):
     return False
 
 
-def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem, source="udev"):
+def wait_udev_event_setup(
+    devicepath: str | None,
+    devtype: str | None,
+    match_dict: dict[str, str] | None,
+    subsystem: str | None,
+    source: str = "udev",
+) -> tuple[Any, dict[str, str], Any]:
     """
     Setup pyudev internals for use by wait_udev_event and wait_udev_change_event methods
     :param devicepath:
@@ -332,7 +360,12 @@ def wait_udev_event_setup(devicepath, devtype, match_dict, subsystem, source="ud
     return context, match_dict, monitor
 
 
-def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=None):
+def wait_udev_event(
+    match_dict: dict[str, str] | None = None,
+    subsystem: str | None = None,
+    devtype: str | None = None,
+    devicepath: str | None = None,
+) -> None:
     context, match_dict, udev_monitor = wait_udev_event_setup(
         devicepath, devtype, match_dict, subsystem, source="udev"
     )
@@ -359,8 +392,11 @@ def wait_udev_event(match_dict=None, subsystem=None, devtype=None, devicepath=No
 
 
 def wait_udev_changed_event(
-    match_dict=None, subsystem=None, devtype=None, devicepath=None
-):
+    match_dict: dict[str, str] | None = None,
+    subsystem: str | None = None,
+    devtype: str | None = None,
+    devicepath: str | None = None,
+) -> None:
     _, match_dict, udev_monitor = wait_udev_event_setup(
         devicepath, devtype, match_dict, subsystem, source="udev"
     )
@@ -381,7 +417,12 @@ def wait_udev_changed_event(
                 return
 
 
-def get_udev_devices(job=None, logger=None, device_info=None, required=False):
+def get_udev_devices(
+    job: Job | None = None,
+    logger: YAMLLogger | None = None,
+    device_info: list[dict[str, Any]] | None = None,
+    required: bool = False,
+) -> list[str]:
     """
     Get udev device nodes based on serial, vendor and product ID
     All subsystems are allowed so that additional hardware like
@@ -389,8 +430,8 @@ def get_udev_devices(job=None, logger=None, device_info=None, required=False):
     The ID to match is controlled by the lab admin.
     """
     context = pyudev.Context()
-    device_paths = set()
-    devices = []
+    device_paths: set[str] = set()
+    devices: list[dict[str, Any]] = []
     if job:
         devices = job.device.get("device_info", [])
     # device_info argument overrides job device_info
@@ -398,12 +439,12 @@ def get_udev_devices(job=None, logger=None, device_info=None, required=False):
         devices = device_info
     if not devices:
         return []
-    added = set()
+    added: set[str] = set()
     for usb_device in devices:
-        board_id = str(usb_device.get("board_id", ""))
-        usb_vendor_id = str(usb_device.get("usb_vendor_id", ""))
-        usb_product_id = str(usb_device.get("usb_product_id", ""))
-        usb_fs_label = str(usb_device.get("fs_label", ""))
+        board_id: str = str(usb_device.get("board_id", ""))
+        usb_vendor_id: str = str(usb_device.get("usb_vendor_id", ""))
+        usb_product_id: str = str(usb_device.get("usb_product_id", ""))
+        usb_fs_label: str = str(usb_device.get("fs_label", ""))
         # check if device is already connected
         # try with all parameters such as board id, usb_vendor_id and
         # usb_product_id
@@ -475,18 +516,18 @@ def get_udev_devices(job=None, logger=None, device_info=None, required=False):
                         "Unable to add all static devices: board_id '%s' was not found"
                         % value
                     )
-    device_paths = list(filter(None, device_paths))
-    if logger and device_paths:
-        logger.debug("Adding %s", ", ".join(device_paths))
-    return device_paths
+    device_paths_list: list[str] = list(filter(None, device_paths))
+    if logger and device_paths_list:
+        logger.debug("Adding %s", ", ".join(device_paths_list))
+    return device_paths_list
 
 
-def allow_fs_label(device):
+def allow_fs_label(device: dict[str, Any]) -> bool:
     # boot/deploy methods that indicate that the device in question
     # will require a filesystem label to identify a device.
     # So far, mps devices are supported, but these don't provide a
     # unique serial, so fs label must be used.
-    fs_label_methods = ["mps", "recovery"]
+    fs_label_methods: list[str] = ["mps", "recovery"]
 
     # Don't allow using filesystem labels by default as they are
     # unreliable, and can be changed via a malicious job.
