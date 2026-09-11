@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class RetryAction(Action):
@@ -30,7 +31,7 @@ class RetryAction(Action):
         super().__init__(job)
         self.sleep = 1
 
-    def __set_parameters__(self, data):
+    def __set_parameters__(self, data: dict[str, Any]) -> None:
         super().__set_parameters__(data)
 
         if "failure_retry" in self.parameters and "repeat" in self.parameters:
@@ -50,19 +51,19 @@ class RetryAction(Action):
         if "repeat" in self.parameters:
             self.max_retries = self.parameters["repeat"]
 
-    def validate(self):
-        """
-        The reasoning here is that the RetryAction should be in charge of an internal pipeline
-        so that the retry logic only occurs once and applies equally to the entire pipeline
-        of the retry.
-        """
-        super().validate()
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.pipeline:
+            # The reasoning here is that the RetryAction should be in charge of an internal pipeline
+            # so that the retry logic only occurs once and applies equally to the entire pipeline
+            # of the retry.
             raise LAVABug(
-                "Retry action %s needs to implement an internal pipeline" % self.name
+                f"Retry action {self.name} needs to implement an internal pipeline"
             )
+        if max_end_time is None:
+            raise LAVABug("Cannot retry without max end time")
 
-    def run(self, connection, max_end_time):
         retries = 0
         has_failed_exc: Exception | None = None
         has_parent_timed_out = False
