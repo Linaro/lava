@@ -22,16 +22,17 @@ Vcs-Git: https://salsa.debian.org/python-team/packages/lava.git
 Vcs-Browser: https://salsa.debian.org/python-team/packages/lava
 
 Package: lava-dispatcher
-Architecture: any
+Architecture: all
 Depends: bmaptool | bmap-tools,
          e2fsprogs,
          fakeroot,
-         lava-common (= ${source:Version}),
-         python3-guestfs [amd64 arm64 loong64 ppc64el riscv64 s390x],
+         lava-common (= ${binary:Version}),
+         python3-guestfs,
          systemd-sysv,
          tar (>= 1.27),
          ${misc:Depends},
          ${python3:Depends}
+Multi-Arch: foreign
 Recommends: bridge-utils,
             debootstrap,
             dfu-util,
@@ -72,14 +73,9 @@ Description: Linaro Automated Validation Architecture dispatcher
  x86 architectures.
 
 Package: lava-dispatcher-host
-Architecture: amd64 arm64 armhf riscv64 s390x
-Depends: lava-common (= ${source:Version}),
+Architecture: all
+Depends: lava-common (= ${binary:Version}),
          bpftool | linux-tools-generic,
-         linux-headers-amd64 [amd64] |
-         linux-headers-arm64 [arm64] |
-         linux-headers-armmp [armhf] |
-         linux-headers-riscv64 [riscv64] |
-         linux-headers-s390x [s390x] |
          linux-headers-generic,
          python3,
          python3-bpfcc,
@@ -89,6 +85,7 @@ Depends: lava-common (= ${source:Version}),
          ${misc:Depends},
          ${python3:Depends}
 Recommends: docker.io
+Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools
  LAVA is a continuous integration system for deploying operating
@@ -117,8 +114,7 @@ Depends: gunicorn,
          ${python3:Depends}
 Recommends: apache2,
             lava-coordinator (= ${binary:Version}),
-            lava-dispatcher (>= ${source:Version}),
-            lava-dispatcher (<< ${source:Version}.1~),
+            lava-dispatcher (= ${binary:Version}),
             openssh-client,
             postgresql,
             postgresql-client,
@@ -164,10 +160,8 @@ Section: metapackages
 Depends: bridge-utils,
          debootstrap,
          lava-coordinator (= ${binary:Version}),
-         lava-dev (>= ${source:Version}),
-         lava-dev (<< ${source:Version}.1~),
-         lava-dispatcher (>= ${source:Version}),
-         lava-dispatcher (<< ${source:Version}.1~),
+         lava-dev (= ${binary:Version}),
+         lava-dispatcher (= ${binary:Version}),
          lava-server (= ${binary:Version}),
          lava-server-doc (= ${binary:Version}),
          lavacli,
@@ -207,7 +201,7 @@ Description: LAVA coordinator daemon
  lab.
 
 Package: lava-dev
-Architecture: any
+Architecture: all
 Section: devel
 Depends: build-essential,
          ca-certificates,
@@ -223,7 +217,7 @@ Depends: build-essential,
          libjs-jquery-flot,
          libjs-jquery-typeahead,
          python3-configobj,
-         python3-guestfs [amd64 arm64 loong64 ppc64el riscv64 s390x],
+         python3-guestfs,
          python3-magic,
          python3-pexpect,
          python3-pymongo,
