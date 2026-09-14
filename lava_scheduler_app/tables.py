@@ -8,14 +8,21 @@ from __future__ import annotations
 
 import django_tables2 as tables
 from django.conf import settings
-from django.contrib.admin.models import LogEntry
 from django.contrib.humanize.templatetags.humanize import naturaltime
 from django.db.models.functions import Lower
 from django.utils.html import format_html, strip_tags
 from django.utils.safestring import mark_safe
 from django.utils.timesince import timesince
 
-from lava_scheduler_app.models import Device, DeviceType, TestJob, Worker
+from lava_scheduler_app.models import (
+    Device,
+    DeviceType,
+    LavaLogEntryBase,
+    LavaLogEntryDevice,
+    LavaLogEntryWorker,
+    TestJob,
+    Worker,
+)
 from lava_server.lavatable import LavaTable
 
 # The query_set is based in the view, so split that into a View class
@@ -395,9 +402,10 @@ class WorkerTable(LavaTable):
 
 class LogEntryTable(LavaTable):
     action_time = tables.DateColumn(format=settings.DATETIME_FORMAT)
-    object_id = tables.Column(verbose_name="Name")
-    change_message = tables.Column(verbose_name="Reason", empty_values=[None])
-    change_message.orderable = False
+    user = tables.Column(verbose_name="User", accessor="user__username")
+    change_message = tables.Column(
+        verbose_name="Reason", empty_values=[None], orderable=False
+    )
 
     def render_user(self, record):
         return render_user_display(record.user)
@@ -418,16 +426,32 @@ class LogEntryTable(LavaTable):
             )
 
     class Meta(LavaTable.Meta):
-        model = LogEntry
+        model = LavaLogEntryBase
         template_name = "lazytables.html"
-        fields = ("action_time", "object_id", "user", "change_message")
-        sequence = ("action_time", "object_id", "user", "change_message")
-
-
-class DeviceLogEntryTable(LogEntryTable):
-    class Meta(LogEntryTable.Meta):
+        fields = ()
         sequence = ("action_time", "user", "change_message")
-        exclude = ["object_id"]
+
+
+class SingleDeviceLogEntryTable(LogEntryTable):
+    class Meta(LogEntryTable.Meta):
+        model = LavaLogEntryDevice
+        sequence = ("action_time", "user", "change_message")
+
+
+class WorkerDevicesLogEntryTable(LogEntryTable):
+    device_name = tables.Column(verbose_name="Device name", accessor="device__hostname")
+
+    class Meta(LogEntryTable.Meta):
+        model = LavaLogEntryDevice
+        sequence = ("action_time", "device_name", "user", "change_message")
+
+
+class WorkersLogEntryTable(LogEntryTable):
+    worker_name = tables.Column(verbose_name="Worker name", accessor="worker__hostname")
+
+    class Meta(LogEntryTable.Meta):
+        model = LavaLogEntryWorker
+        sequence = ("action_time", "worker_name", "user", "change_message")
 
 
 class NoWorkerDeviceTable(DeviceTable):

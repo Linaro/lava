@@ -12,7 +12,7 @@ from django.core.management.base import BaseCommand
 from django.utils.dateparse import parse_date
 from django.utils.timezone import make_aware
 
-from lava_scheduler_app.models import Device, LogEntry
+from lava_scheduler_app.models import Device, LavaLogEntryDevice
 
 
 def parse_health_transition(change_message):
@@ -69,8 +69,8 @@ class Command(BaseCommand):
         try:
             for device in Device.objects.all():
                 log_entries = (
-                    LogEntry.objects.filter(
-                        object_id=device.hostname,
+                    LavaLogEntryDevice.objects.filter(
+                        device=device,
                         action_time__gte=start_datetime,
                         change_message__contains="→",
                     )

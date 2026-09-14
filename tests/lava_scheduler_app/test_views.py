@@ -8,7 +8,6 @@ from json import loads as json_loads
 from pathlib import Path
 
 import pytest
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
 from django.http import Http404
@@ -23,6 +22,8 @@ from lava_scheduler_app.models import (
     Device,
     DeviceType,
     GroupDevicePermission,
+    LavaLogEntryDevice,
+    LavaLogEntryWorker,
     RemoteArtifactsAuth,
     TestJob,
     TestJobUser,
@@ -1289,7 +1290,11 @@ def test_device_health_reason_escaped(client, setup):
     )
     assert ret.status_code == 302
 
-    log_entry = LogEntry.objects.filter(object_id=device.hostname).first()
+    log_entry = (
+        LavaLogEntryDevice.objects.filter(device=device)
+        .order_by("-action_time")
+        .first()
+    )
     assert log_entry is not None
     msg = log_entry.get_change_message()
     assert reason not in msg
@@ -1333,7 +1338,11 @@ def test_worker_health_reason_escapsed(client, setup):
     )
     assert ret.status_code == 302
 
-    log_entry = LogEntry.objects.filter(object_id=worker.hostname).first()
+    log_entry = (
+        LavaLogEntryWorker.objects.filter(worker=worker)
+        .order_by("-action_time")
+        .first()
+    )
     assert log_entry is not None
     msg = log_entry.get_change_message()
     assert reason not in msg
