@@ -1,3 +1,12 @@
+lava (2026.09-1) unstable; urgency=medium
+
+  * LAVA Software 2026.09 release
+
+  [ Rémi Duraffort ]
+  * [a4a98ac13] debian: build arch-independent packages
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 14 Sep 2026 17:18:09 +0200
+
 lava (2026.07-1) unstable; urgency=medium
 
   * LAVA Software 2026.07 release
