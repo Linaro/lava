@@ -138,7 +138,7 @@ URLs **must** use one of the supported protocols:
 URLs are checked during the test job validation to ensure that the file can be
 downloaded. Missing files will cause the test job to end as `Incomplete`.
 
-### File names
+#### File names
 
 The file is named after the last part of the URL path. Some URLs have no name
 there, for example a redirect endpoint, and then every image is saved as
