@@ -10,7 +10,6 @@ import xmlrpc.client
 from io import BytesIO as StringIO
 
 import pytest
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.test import override_settings
 from django.test.client import Client
@@ -25,6 +24,7 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    LavaLogEntryDevice,
     RemoteArtifactsAuth,
     Tag,
     TestJob,
@@ -1275,7 +1275,11 @@ def test_devices_update(setup):
     )
     device.refresh_from_db()
     assert device.health == Device.HEALTH_GOOD
-    log_entry = LogEntry.objects.filter(object_id=device.hostname).first()
+    log_entry = (
+        LavaLogEntryDevice.objects.filter(device=device)
+        .order_by("-action_time")
+        .first()
+    )
     assert log_entry is not None
     msg = log_entry.get_change_message()
     assert reason not in msg

@@ -19,7 +19,6 @@ from urllib.parse import urlparse
 import requests
 import yaml
 from django.conf import settings
-from django.contrib.admin.models import ADDITION, CHANGE, LogEntry
 from django.contrib.auth.models import Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.indexes import GinIndex
@@ -505,13 +504,10 @@ class Worker(RestrictedObject):
     def log_admin_entry(self, user, reason, addition=False):
         if user is None:
             user = User.objects.get(username="lava-health")
-        worker_ct = ContentType.objects.get_for_model(Worker)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=worker_ct.pk,
-            object_id=self.pk,
-            object_repr=self.hostname,
-            action_flag=ADDITION if addition else CHANGE,
+        LavaLogEntryWorker.objects.create(
+            worker=self,
+            user=user,
+            action_flag=LavaLogFlag.ADDITION if addition else LavaLogFlag.CHANGE,
             change_message=reason,
         )
 
@@ -782,13 +778,11 @@ class Device(RestrictedObject):
     def log_admin_entry(self, user, reason):
         if user is None:
             user = User.objects.get(username="lava-health")
-        device_ct = ContentType.objects.get_for_model(Device)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=device_ct.pk,
-            object_id=self.pk,
-            object_repr=self.hostname,
-            action_flag=CHANGE,
+        LavaLogEntryDevice.objects.create(
+            device=self,
+            worker_id=self.worker_host_id,
+            user=user,
+            action_flag=LavaLogFlag.CHANGE,
             change_message=reason,
         )
 
@@ -2410,13 +2404,10 @@ class TestJob(models.Model):
     def log_admin_entry(self, user, reason):
         if user is None:
             user = User.objects.get(username="lava-health")
-        testjob_ct = ContentType.objects.get_for_model(TestJob)
-        LogEntry.objects.log_action(
-            user_id=user.id,
-            content_type_id=testjob_ct.pk,
-            object_id=self.pk,
-            object_repr=str(self.display_id),
-            action_flag=CHANGE,
+        LavaLogEntryTestJob.objects.create(
+            testjob=self,
+            user=user,
+            action_flag=LavaLogFlag.CHANGE,
             change_message=reason,
         )
 
@@ -2872,3 +2863,86 @@ class RemoteArtifactsAuth(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class LavaLogFlag(models.IntegerChoices):
+    ADDITION = 1, "Addition"
+    CHANGE = 2, "Change"
+    DELETION = 3, "Deletion"
+
+
+class LavaLogEntryBase(models.Model):
+    # Field names copied from LogEntry for compatibility with existing code
+    id = models.BigAutoField(primary_key=True)
+    action_time = models.DateTimeField(
+        default=timezone.now,
+        editable=False,
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+    )
+    action_flag = models.PositiveSmallIntegerField(choices=LavaLogFlag.choices)
+    change_message = models.TextField()
+
+    def is_addition(self):
+        return self.action_flag == LavaLogFlag.ADDITION
+
+    def is_change(self):
+        return self.action_flag == LavaLogFlag.CHANGE
+
+    def is_deletion(self):
+        return self.action_flag == LavaLogFlag.DELETION
+
+    def get_change_message(self) -> str:
+        return self.change_message
+
+    class Meta:
+        abstract = True
+
+
+class LavaLogEntryDevice(LavaLogEntryBase):
+    device = models.ForeignKey(
+        Device,
+        null=False,
+        on_delete=models.CASCADE,
+        db_index=False,  # Index defined in Meta
+    )
+    # Record the worker where the change happened
+    # as devices can move between workers.
+    worker = models.ForeignKey(
+        Worker,
+        null=True,
+        on_delete=models.SET_NULL,
+        db_index=False,  # Index defined in Meta
+    )
+
+    class Meta:
+        indexes = (
+            models.Index(fields=("device", "-action_time")),
+            models.Index(fields=("worker", "-action_time")),
+        )
+
+
+class LavaLogEntryWorker(LavaLogEntryBase):
+    worker = models.ForeignKey(
+        Worker,
+        null=False,
+        on_delete=models.CASCADE,
+        db_index=False,  # Index defined in Meta
+    )
+
+    class Meta:
+        indexes = (models.Index(fields=("worker", "-action_time")),)
+
+
+class LavaLogEntryTestJob(LavaLogEntryBase):
+    testjob = models.ForeignKey(
+        TestJob,
+        null=False,
+        on_delete=models.CASCADE,
+        db_index=False,  # Index defined in Meta
+    )
+
+    class Meta:
+        indexes = (models.Index(fields=("testjob", "-action_time")),)

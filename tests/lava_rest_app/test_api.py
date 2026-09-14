@@ -14,7 +14,6 @@ from urllib.parse import urlencode
 
 import pytest
 from django.conf import settings
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import Group, User
 from django.http import FileResponse, HttpResponse
 from django.urls import reverse
@@ -32,6 +31,8 @@ from lava_scheduler_app.models import (
     DeviceType,
     GroupDevicePermission,
     GroupDeviceTypePermission,
+    LavaLogEntryDevice,
+    LavaLogEntryWorker,
     RemoteArtifactsAuth,
     Tag,
     TestJob,
@@ -966,10 +967,10 @@ ok 2 bar
         assert content["device_type"] == "restricted_device_type1"  # nosec - unit test support
         assert content["health"] == "Unknown"  # nosec - unit test support
         assert Device.objects.get(hostname="public02").get_health_display() == "Unknown"
-        assert LogEntry.objects.filter(object_id="public02").count() == 1
-        assert LogEntry.objects.get(object_id="public02").user == self.admin
+        assert LavaLogEntryDevice.objects.filter(device_id="public02").count() == 1
+        assert LavaLogEntryDevice.objects.get(device_id="public02").user == self.admin
         assert (
-            LogEntry.objects.get(object_id="public02").change_message
+            LavaLogEntryDevice.objects.get(device_id="public02").change_message
             == "Maintenance → Unknown"
         )
 
@@ -982,9 +983,11 @@ ok 2 bar
         content = json.loads(response.content.decode("utf-8"))
         assert content["health"] == "Good"  # nosec - unit test support
         assert Device.objects.get(hostname="public02").get_health_display() == "Good"
-        assert LogEntry.objects.filter(object_id="public02").count() == 2
+        assert LavaLogEntryDevice.objects.filter(device_id="public02").count() == 2
         logentry = (
-            LogEntry.objects.filter(object_id="public02").order_by("action_time").last()
+            LavaLogEntryDevice.objects.filter(device_id="public02")
+            .order_by("action_time")
+            .last()
         )
         assert logentry.user == self.admin
         assert logentry.change_message == "Unknown → Good"
@@ -1044,7 +1047,11 @@ ok 2 bar
         assert device_details_request.status_code == 200
         device_details = device_details_request.json()
         assert device_details["health"] == "Maintenance"
-        logentry = LogEntry.objects.filter(object_id=device_details["hostname"]).first()
+        logentry = (
+            LavaLogEntryDevice.objects.filter(device_id=device_details["hostname"])
+            .order_by("-action_time")
+            .first()
+        )
         assert "Foo" in logentry.change_message
 
     def test_devices_set_dictionary(self, monkeypatch, tmp_path):
@@ -1553,10 +1560,10 @@ ok 2 bar
         content = json.loads(response.content.decode("utf-8"))
         assert content["health"] == "Active"  # nosec - unit test support
         assert Worker.objects.get(hostname="worker2").get_health_display() == "Active"
-        assert LogEntry.objects.filter(object_id="worker2").count() == 1
-        assert LogEntry.objects.get(object_id="worker2").user == self.admin
+        assert LavaLogEntryWorker.objects.filter(worker_id="worker2").count() == 1
+        assert LavaLogEntryWorker.objects.get(worker_id="worker2").user == self.admin
         assert (
-            LogEntry.objects.get(object_id="worker2").change_message
+            LavaLogEntryWorker.objects.get(worker_id="worker2").change_message
             == "Maintenance → Active"
         )
 

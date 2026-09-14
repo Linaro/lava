@@ -22,7 +22,6 @@ import voluptuous
 import yaml
 from django import forms
 from django.conf import settings
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -95,6 +94,8 @@ from lava_scheduler_app.logutils import logs_instance
 from lava_scheduler_app.models import (
     Device,
     DeviceType,
+    LavaLogEntryDevice,
+    LavaLogEntryWorker,
     RemoteArtifactsAuth,
     Tag,
     TestJob,
@@ -104,15 +105,16 @@ from lava_scheduler_app.models import (
 from lava_scheduler_app.signals import send_event
 from lava_scheduler_app.tables import (
     DeviceHealthTable,
-    DeviceLogEntryTable,
     DeviceTable,
     DeviceTypeOverviewTable,
     HealthJobSummaryTable,
     JobErrorsTable,
-    LogEntryTable,
     NoWorkerDeviceTable,
     PassingHealthTable,
     RunningTable,
+    SingleDeviceLogEntryTable,
+    WorkerDevicesLogEntryTable,
+    WorkersLogEntryTable,
     WorkerTable,
     visible_jobs_with_custom_sort,
 )
@@ -272,14 +274,12 @@ class WorkersLogView(LavaView):
         self.workers = workers
 
     def get_queryset(self):
-        worker_ct = ContentType.objects.get_for_model(Worker)
         return (
-            LogEntry.objects.filter(
-                Q(content_type=worker_ct)
-                & Q(object_id__in=self.workers.visible_by_user(self.request.user))
+            LavaLogEntryWorker.objects.filter(
+                worker__in=self.workers.visible_by_user(self.request.user)
             )
             .order_by("-action_time")
-            .select_related("user")
+            .select_related("user", "worker")
         )
 
 
@@ -289,22 +289,13 @@ class WorkerLogView(LavaView):
         self.worker = worker
 
     def get_queryset(self):
-        worker_ct = ContentType.objects.get_for_model(Worker)
-        device_ct = ContentType.objects.get_for_model(Device)
         return (
-            LogEntry.objects.filter(
-                (Q(content_type=worker_ct) & Q(object_id=self.worker.hostname))
-                | (
-                    Q(content_type=device_ct)
-                    & Q(
-                        object_id__in=self.worker.device_set.visible_by_user(
-                            self.request.user
-                        )
-                    )
-                )
+            LavaLogEntryDevice.objects.filter(
+                worker=self.worker,
+                device__in=Device.objects.visible_by_user(self.request.user),
             )
             .order_by("-action_time")
-            .select_related("user")
+            .select_related("user", "device")
         )
 
 
@@ -314,8 +305,8 @@ class DevicesLogView(LavaView):
         self.devices = devices
 
     def get_queryset(self):
-        q = LogEntry.objects.filter(object_id__in=[d.hostname for d in self.devices])
-        return q.select_related("user").order_by("-action_time")
+        q = LavaLogEntryDevice.objects.filter(device__in=self.devices)
+        return q.select_related("user", "device").order_by("-action_time")
 
 
 class DeviceLogView(LavaView):
@@ -325,9 +316,9 @@ class DeviceLogView(LavaView):
 
     def get_queryset(self):
         return (
-            LogEntry.objects.filter(object_id=self.device.hostname)
+            LavaLogEntryDevice.objects.filter(device=self.device)
             .order_by("-action_time")
-            .select_related("user")
+            .select_related("user", "device")
         )
 
 
@@ -403,7 +394,7 @@ def index(request):
     )
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
-    (device_stats, running_jobs_count) = device_summary()
+    device_stats, running_jobs_count = device_summary()
     return render(
         request,
         "lava_scheduler_app/index.html",
@@ -434,9 +425,12 @@ def workers(request):
         request.user, Worker.VIEW_PERMISSION
     )
     worker_log_data = WorkersLogView(
-        worker_list, request, model=LogEntry, table_class=LogEntryTable
+        worker_list,
+        request,
+        model=LavaLogEntryWorker,
+        table_class=WorkersLogEntryTable,
     )
-    worker_log_ptable = LogEntryTable(
+    worker_log_ptable = WorkersLogEntryTable(
         worker_log_data.get_table_data(), prefix="worker_log_"
     )
     request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
@@ -697,9 +691,12 @@ def mydevice_list(request):
 def mydevices_health_history_log(request):
     devices = Device.objects.accessible_by_user(request.user, Device.CHANGE_PERMISSION)
     devices_log_data = DevicesLogView(
-        devices, request, model=LogEntry, table_class=DeviceLogEntryTable
+        devices,
+        request,
+        model=LavaLogEntryDevice,
+        table_class=SingleDeviceLogEntryTable,
     )
-    devices_log_ptable = DeviceLogEntryTable(
+    devices_log_ptable = SingleDeviceLogEntryTable(
         devices_log_data.get_table_data(), prefix="devices_log_"
     )
     request_config(request, paginate={"per_page": devices_log_ptable.length}).configure(
@@ -934,12 +931,8 @@ def device_type_detail(request, pk):
 
     prefix = "devices_"
     devices_data = DTDeviceView(request, model=Device, table_class=DeviceTable)
-    device_ct = ContentType.objects.get_for_model(Device)
     dt_latest_health_reason = (
-        LogEntry.objects.filter(
-            content_type=device_ct,
-            object_id=OuterRef("pk"),
-        )
+        LavaLogEntryDevice.objects.filter(device=OuterRef("pk"))
         .order_by("-action_time")
         .values("change_message")[:1]
     )
@@ -1043,9 +1036,12 @@ def device_type_health_history_log(request, pk):
     device_type = get_object_or_404(DeviceType, pk=pk)
     devices = device_type.device_set.visible_by_user(request.user)
     devices_log_data = DevicesLogView(
-        devices, request, model=LogEntry, table_class=DeviceLogEntryTable
+        devices,
+        request,
+        model=LavaLogEntryDevice,
+        table_class=SingleDeviceLogEntryTable,
     )
-    devices_log_ptable = DeviceLogEntryTable(
+    devices_log_ptable = SingleDeviceLogEntryTable(
         devices_log_data.get_table_data(), prefix="devices_log_"
     )
     request_config(request, paginate={"per_page": devices_log_ptable.length}).configure(
@@ -2436,10 +2432,10 @@ def device_detail(request, pk):
     request_config(request, {"per_page": recent_ptable.length}).configure(recent_ptable)
 
     device_log_data = DeviceLogView(
-        device, request, model=LogEntry, table_class=DeviceLogEntryTable
+        device, request, model=LavaLogEntryDevice, table_class=SingleDeviceLogEntryTable
     )
     device_logs = device_log_data.get_table_data()
-    device_log_ptable = DeviceLogEntryTable(device_logs, prefix="device_log_")
+    device_log_ptable = SingleDeviceLogEntryTable(device_logs, prefix="device_log_")
     request_config(request, paginate={"per_page": device_log_ptable.length}).configure(
         device_log_ptable
     )
@@ -2596,12 +2592,8 @@ def worker_detail(request, pk):
     if not worker.can_view(request.user):
         raise PermissionDenied()
     data = DeviceTableView(request)
-    device_ct = ContentType.objects.get_for_model(Device)
     latest_health_reason = (
-        LogEntry.objects.filter(
-            content_type=device_ct,
-            object_id=OuterRef("pk"),
-        )
+        LavaLogEntryWorker.objects.filter(worker=worker)
         .order_by("-action_time")
         .values("change_message")[:1]
     )
@@ -2616,9 +2608,12 @@ def worker_detail(request, pk):
     RequestConfig(request, paginate={"per_page": ptable.length}).configure(ptable)
 
     worker_log_data = WorkerLogView(
-        worker, request, model=LogEntry, table_class=LogEntryTable
+        worker,
+        request,
+        model=LavaLogEntryWorker,
+        table_class=WorkerDevicesLogEntryTable,
     )
-    worker_log_ptable = LogEntryTable(
+    worker_log_ptable = WorkerDevicesLogEntryTable(
         worker_log_data.get_table_data(), prefix="worker_log_"
     )
     request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
