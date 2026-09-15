@@ -70,24 +70,50 @@ class LavaCoordinator:
             finally:
                 self.conn.close()
 
+    def _recvAll(self, count, peer):
+        """
+        Reads exactly `count` bytes from the currently connected client.
+        recv() returns what is available, which can be less than requested, so
+        count the bytes actually received.
+        :param count: the number of bytes to read
+        :param peer: the (address, port) tuple returned by accept()
+        :rtype: the bytes read or None if the client closed the connection first
+        """
+        msg = b""
+        while len(msg) < count:
+            chunk = self.conn.recv(min(self.blocksize, count - len(msg)))
+            if not chunk:
+                LOG.warning(
+                    "Connection from %s closed after %d of %d bytes",
+                    peer[0],
+                    len(msg),
+                    count,
+                )
+                return None
+            msg += chunk
+        return msg
+
     def _handleConnection(self, peer):
         """
         Reads one request from the currently connected client and handles it.
         :param peer: the (address, port) tuple returned by accept()
         """
         # read the header to get the size of the message to follow
-        data = self.conn.recv(8).decode("utf-8")  # 32bit limit
+        header = self._recvAll(8, peer)  # 32bit limit
+        if header is None:
+            return
+        data = header.decode("utf-8")
         try:
             count = int(data, 16)
         except ValueError:
             LOG.warning("Invalid message: %s from %s", data, peer[0])
             return
-        c = 0
-        data = ""
         # get the message itself
-        while c < count:
-            data += self.conn.recv(self.blocksize).decode("utf-8")
-            c += self.blocksize
+        msg = self._recvAll(count, peer)
+        if msg is None:
+            return
+        # decode once: a multi-byte character can be split across two chunks
+        data = msg.decode("utf-8")
         try:
             json_data = json.loads(data)
         except ValueError:
