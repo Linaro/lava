@@ -53,7 +53,7 @@ class LavaCoordinator:
                     str(e),
                 )
                 time.sleep(self.delay)
-                self.delay *= 2
+                self.delay = min(10, self.delay * 2)
         s.listen(1)
         self.running = True
         while self.running:
