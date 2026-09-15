@@ -82,13 +82,18 @@ def main():
     # Loading configuration file
     LOG.info("[INIT] Loading configuration from %s", options.config)
 
-    config = json.loads(options.config.read_text(encoding="utf-8"))
+    try:
+        config = json.loads(options.config.read_text(encoding="utf-8"))
+    except Exception as exc:
+        LOG.error("[INIT] Unable to load configuration file: %s", exc)
+        return 1
     LavaCoordinator(
         config.get("coordinator_hostname", "localhost"),
         config.get("port", 3079),
         config.get("blocksize", 4096),
     ).run()
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
