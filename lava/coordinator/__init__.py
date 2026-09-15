@@ -499,43 +499,40 @@ class LavaCoordinator:
         """
         messageID = self._getMessageID(json_data)
         if "waitrole" in json_data:
-            expected = self.group["roles"][json_data["waitrole"]]
-            expected = expected[0] if isinstance(expected, list) else None
-            LOG.debug(
-                "lavaWaitAll waiting for role:%s from %s",
-                json_data["waitrole"],
-                expected,
-            )
-            for client in self.group["roles"][json_data["role"]]:
+            waitrole = json_data["waitrole"]
+            if waitrole not in self.group["roles"]:
+                LOG.error(
+                    "Unknown waitrole '%s' in group '%s'", waitrole, self.group["group"]
+                )
+                self._badRequest()
+                return
+            LOG.debug("lavaWaitAll waiting for role:%s", waitrole)
+            if messageID not in self.group["waits"]:
+                LOG.debug("messageID %s not yet seen", messageID)
+                self._waitResponse()
+                return
+            # every client with that role has to send the messageID, not just
+            # the first one.
+            for client in self.group["roles"][waitrole]:
                 LOG.debug("checking %s for wait message", client)
-                if messageID not in self.group["waits"]:
-                    LOG.debug("messageID %s not yet seen", messageID)
-                    self._waitResponse()
-                    return
-                if expected and expected in self.group["waits"][messageID]:
-                    # Need to add the message to the receiving role
-                    LOG.debug("Replying that %s has sent %s", client_name, messageID)
-                    self._sendMessage(client_name, messageID)
-                    return
                 if client not in self.group["waits"][messageID]:
                     LOG.debug(
-                        "FIXME: %s not in waits for %s: %s",
+                        "waiting for %s in role %s to send %s",
                         client,
+                        waitrole,
                         messageID,
-                        self.group["waits"][messageID],
                     )
-                    # FIXME: bug? if this client has not sent the messageID yet,
-                    # causing it to wait will simply force a timeout. node needs
-                    # to output a warning, so maybe send a "nack" ?
                     self._waitResponse()
                     return
-                if client in self.group["waits"]:
-                    LOG.debug("Replying: %s for %s", messageID, client_name)
-            if client_name in self.group["waits"]:
-                LOG.debug(
-                    "lavaWaitAll message: %s",
-                    json.dumps(self.group["waits"][client_name][messageID]),
-                )
+            LOG.debug(
+                "All clients in role %s have sent %s, replying to %s",
+                waitrole,
+                messageID,
+                client_name,
+            )
+            # the waiter does not have to be part of waitrole, so reply with the
+            # message broadcast to every client of the group by lavaSend.
+            self._sendMessage(client_name, messageID)
         else:
             LOG.debug("lavaWaitAll: no role.")
             for client in self.group["clients"]:
@@ -547,7 +544,7 @@ class LavaCoordinator:
                     LOG.debug("setting waiting for %s", client)
                     self._waitResponse()
                     return
-        self._sendWaitMessage(client_name, messageID)
+            self._sendWaitMessage(client_name, messageID)
 
     def lavaWait(self, json_data, client_name):
         """
