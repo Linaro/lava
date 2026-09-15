@@ -251,9 +251,16 @@ class TestJobViewSet(viewsets.ModelViewSet):
             if start == 0 and end is None:
                 job = self.get_object()
                 data = logs_instance.open(job)
-                size = logs_instance.size(job)
                 response = FileResponse(data, content_type="application/yaml")
-                response["Content-Length"] = size
+                size = (
+                    logs_instance.size(job)
+                    if job.state == TestJob.STATE_FINISHED
+                    else None
+                )
+                if size is None:
+                    del response["Content-Length"]
+                else:
+                    response["Content-Length"] = size
             else:
                 data = logs_instance.read(self.get_object(), start, end)
                 response = HttpResponse(data, content_type="application/yaml")
