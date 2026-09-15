@@ -27,12 +27,14 @@ def setup_parser():
     parser = argparse.ArgumentParser(description="LAVA coordinator")
     parser.add_argument(
         "--logfile",
+        "--log-file",
         type=str,
-        help="Log file for the slave logs",
+        help="Log file for lava-coordinator",
         default="/var/log/lava-coordinator.log",
     )
     parser.add_argument(
         "--loglevel",
+        "--level",
         "-l",
         type=str,
         default="INFO",
@@ -65,14 +67,7 @@ def setup_logger(log_file, level):
     LOG.addHandler(handler)
 
     # Set-up the LOG level
-    if level == "ERROR":
-        LOG.setLevel(logging.ERROR)
-    elif level == "WARN":
-        LOG.setLevel(logging.WARN)
-    elif level == "INFO":
-        LOG.setLevel(logging.INFO)
-    else:
-        LOG.setLevel(logging.DEBUG)
+    LOG.setLevel(level)
 
 
 def main():
