@@ -344,6 +344,40 @@ class TestRestApi:
         # be careful when changing either the value below or the log fragment
         assert len(data) == 203  # nosec - unit test support
 
+    def test_testjob_logs_growing(self, monkeypatch, tmp_path):
+        log_path = tmp_path / "output.yaml"
+        log_path.write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
+        self.public_testjob1.state = TestJob.STATE_RUNNING
+        self.public_testjob1.save()
+
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/logs/" % self.public_testjob1.id
+        )
+        with log_path.open("a", encoding="utf-8") as log:
+            log.write(LOG_FILE)
+
+        assert response.status_code == 200
+        assert "Content-Length" not in response
+        assert b"".join(response.streaming_content) == (LOG_FILE * 2).encode("utf-8")
+
+    def test_testjob_logs_finished_has_content_length(self, monkeypatch, tmp_path):
+        log_path = tmp_path / "output.yaml"
+        log_path.write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
+        self.public_testjob1.state = TestJob.STATE_FINISHED
+        self.public_testjob1.save()
+
+        response = self.userclient.get(
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/logs/" % self.public_testjob1.id
+        )
+
+        assert response.status_code == 200
+        assert response["Content-Length"] == str(log_path.stat().st_size)
+        assert b"".join(response.streaming_content) == LOG_FILE.encode("utf-8")
+
     def test_testjob_logs_offset(self, monkeypatch, tmp_path):
         (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
         monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
