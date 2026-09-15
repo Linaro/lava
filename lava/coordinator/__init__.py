@@ -39,13 +39,12 @@ class LavaCoordinator:
 
     def run(self):
         s = None
-        while 1:
+        while True:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             try:
-                # TODO: use self.host
-                LOG.info("[BTSP] binding to %s:%s", "0.0.0.0", self.group_port)
-                s.bind(("0.0.0.0", self.group_port))
+                LOG.info("[BTSP] binding to %s:%s", self.host, self.group_port)
+                s.bind((self.host, self.group_port))
                 break
             except OSError as e:
                 LOG.warning(
