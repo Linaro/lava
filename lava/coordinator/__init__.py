@@ -58,30 +58,42 @@ class LavaCoordinator:
         self.running = True
         while self.running:
             LOG.info("Ready to accept new connections")
-            self.conn, _ = s.accept()
-            # read the header to get the size of the message to follow
-            data = self.conn.recv(8).decode("utf-8")  # 32bit limit
+            self.conn, peer = s.accept()
+            # An exception in _handleConnection should not crash the
+            # coordinator singleton
             try:
-                count = int(data, 16)
-            except ValueError:
-                LOG.warning(
-                    "Invalid message: %s from %s", data, self.conn.getpeername()[0]
-                )
+                self._handleConnection(peer)
+            except (OSError, UnicodeDecodeError) as exc:
+                LOG.warning("Dropping connection from %s: %s", peer[0], exc)
+            except Exception:
+                LOG.exception("Unhandled error while serving %s", peer[0])
+            finally:
                 self.conn.close()
-                continue
-            c = 0
-            data = ""
-            # get the message itself
-            while c < count:
-                data += self.conn.recv(self.blocksize).decode("utf-8")
-                c += self.blocksize
-            try:
-                json_data = json.loads(data)
-            except ValueError:
-                LOG.warning("JSON error for '%s'", data[:100])
-                self.conn.close()
-                continue
-            self.dataReceived(json_data)
+
+    def _handleConnection(self, peer):
+        """
+        Reads one request from the currently connected client and handles it.
+        :param peer: the (address, port) tuple returned by accept()
+        """
+        # read the header to get the size of the message to follow
+        data = self.conn.recv(8).decode("utf-8")  # 32bit limit
+        try:
+            count = int(data, 16)
+        except ValueError:
+            LOG.warning("Invalid message: %s from %s", data, peer[0])
+            return
+        c = 0
+        data = ""
+        # get the message itself
+        while c < count:
+            data += self.conn.recv(self.blocksize).decode("utf-8")
+            c += self.blocksize
+        try:
+            json_data = json.loads(data)
+        except ValueError:
+            LOG.warning("JSON error for '%s'", data[:100])
+            return
+        self.dataReceived(json_data)
 
     def _updateData(self, json_data):
         """
