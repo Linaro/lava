@@ -176,7 +176,7 @@ def testjob_csv(request, job):
         # does. Copy writeheader code from csv.py and yield the value.
         yield writer.writerow(dict(zip(fieldnames, fieldnames)))
 
-        for test_case in test_cases:
+        for test_case in test_cases.iterator():
             yield writer.writerow(export_testcase(test_case))
 
     test_cases = TestCase.objects.filter(suite__job=job).select_related("suite")
@@ -196,7 +196,7 @@ def testjob_yaml(request, job):
     test_cases = TestCase.objects.filter(suite__job=job).select_related("suite")
 
     def test_case_stream():
-        for test_case in test_cases:
+        for test_case in test_cases.iterator():
             yield yaml_safe_dump([export_testcase(test_case)])
 
     response = StreamingHttpResponse(test_case_stream(), content_type="text/yaml")
