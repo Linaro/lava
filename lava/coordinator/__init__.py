@@ -16,6 +16,11 @@ class LavaCoordinator:
     delay = 1
     rpc_delay = 2
     blocksize = 4 * 1024
+    # Per-request timeout. The coordinator is single threaded and should not be
+    # blocked by one client.
+    timeout = 30
+    # Max-size of the request payload.
+    max_message_size = 1024 * 1024
     all_groups = {}
     # All data handling for each connection happens on this local reference into the
     # all_groups dict with a new group looked up each time.
@@ -59,6 +64,7 @@ class LavaCoordinator:
         while self.running:
             LOG.info("Ready to accept new connections")
             self.conn, peer = s.accept()
+            self.conn.settimeout(self.timeout)
             # An exception in _handleConnection should not crash the
             # coordinator singleton
             try:
@@ -107,6 +113,14 @@ class LavaCoordinator:
             count = int(data, 16)
         except ValueError:
             LOG.warning("Invalid message: %s from %s", data, peer[0])
+            return
+        if count > self.max_message_size:
+            LOG.warning(
+                "Message from %s too large: %d > %d bytes",
+                peer[0],
+                count,
+                self.max_message_size,
+            )
             return
         # get the message itself
         msg = self._recvAll(count, peer)
