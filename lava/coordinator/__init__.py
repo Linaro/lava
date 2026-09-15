@@ -103,31 +103,42 @@ class LavaCoordinator:
         the correct messages within this group.
         """
         self._clear_group()
-        if "client_name" in json_data:
-            client_name = json_data["client_name"]
-        else:
-            LOG.error("Missing client_name in request: %s", json_data)
-            return None
-        if json_data["group_name"] not in self.all_groups:
-            if "group_size" not in json_data or json_data["group_size"] == 0:
+        # Every request identifies the client and the group it belongs to.
+        for key in ("client_name", "group_name"):
+            if key not in json_data:
+                LOG.error("Missing %s in request: %s", key, json_data)
+                return None
+        client_name = json_data["client_name"]
+        group_name = json_data["group_name"]
+        new_group = group_name not in self.all_groups
+        if new_group:
+            try:
+                group_size = int(json_data.get("group_size", 0))
+            except (TypeError, ValueError):
+                group_size = 0
+            if group_size == 0:
                 LOG.error(
                     "%s asked for a new group %s without specifying the size of the group",
                     client_name,
-                    json_data["group_name"],
+                    group_name,
                 )
                 return None
             # auto register a new group
-            self.group["count"] = int(json_data["group_size"])
-            self.group["group"] = json_data["group_name"]
-            self.all_groups[json_data["group_name"]] = self.group
+            self.group["count"] = group_size
+            self.group["group"] = group_name
+            self.all_groups[group_name] = self.group
             LOG.info(
                 "The %s group will contain %d nodes.",
                 self.group["group"],
                 self.group["count"],
             )
-        self.group = self.all_groups[json_data["group_name"]]
+        self.group = self.all_groups[group_name]
         # now add this client to the registered data for this group
         if client_name not in self.group["clients"]:
+            for key in ("hostname", "role"):
+                if key not in json_data:
+                    LOG.error("Missing %s in request: %s", key, json_data)
+                    return None
             self.group["clients"][client_name] = json_data["hostname"]
             if json_data["role"] not in self.group["roles"]:
                 self.group["roles"][json_data["role"]] = []
