@@ -855,6 +855,112 @@ class TestPoller(unittest.TestCase):
         self.coord.dataReceived(self._wrapMessage(send_msg, "tester"))
         self._cleanup()
 
+    def test_19_lava_wait_all_role_send_order(self):
+        """lava-wait-all must wait for *every* client of the role.
+
+        Only the first client of the role was checked, so whether the waiter
+        was released early depended on the order in which the clients sent the
+        messageID.
+        """
+        self.coord.newGroup(3)
+        self.coord.addClientRole("client_one", "client")
+        self.coord.addClientRole("client_two", "client")
+        self.coord.addClientRole("server", "server")
+        self.log = logging.getLogger("testCase")
+        send_msg = {
+            "request": "lava_send",
+            "messageID": "wait-all-order",
+            "message": None,
+        }
+        wait_msg = {
+            "request": "lava_wait_all",
+            "messageID": "wait-all-order",
+            "waitrole": "client",
+            "message": None,
+        }
+        # client_one is the first client of the 'client' role
+        self.log.info("\tINF: only the first client of the role sends")
+        self._switch_client("client_one")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        # client_two has not sent yet, so the server has to keep waiting
+        self.log.info("\tINF: server must still wait for client_two")
+        self._switch_client("server")
+        self.coord.expectResponse("wait")
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "server"))
+        # once client_two has sent too, the server is released
+        self.log.info("\tINF: client_two sends, the server is released")
+        self._switch_client("client_two")
+        self.coord.expectResponse("ack")
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        self._switch_client("server")
+        self.coord.expectResponse("ack")
+        self.coord.expectMessage({"client_one": {}, "client_two": {}})
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "server"))
+        self._cleanup()
+
+    def test_20_lava_wait_all_unknown_role(self):
+        """lava-wait-all with a role nobody has gets a nack."""
+        self.coord.newGroup(2)
+        self.coord.addClientRole("client_one", "client")
+        self.coord.addClientRole("server", "server")
+        self.log = logging.getLogger("testCase")
+        self._switch_client("client_one")
+        self.coord.expectResponse("ack")
+        send_msg = {
+            "request": "lava_send",
+            "messageID": "unknown-role",
+            "message": None,
+        }
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        self.log.info("\tINF: waiting on a role that does not exist")
+        self._switch_client("server")
+        self.coord.expectResponse("nack")
+        wait_msg = {
+            "request": "lava_wait_all",
+            "messageID": "unknown-role",
+            "waitrole": "no-such-role",
+            "message": None,
+        }
+        self.coord.dataReceived(self._wrapMessage(wait_msg, "server"))
+        self._cleanup()
+
+    def test_21_lava_wait_all_role_without_role_key(self):
+        """lava-wait-all only needs 'waitrole', the sender 'role' is optional.
+
+        An already registered client does not send 'role' again.
+        """
+        self.coord.newGroup(2)
+        self.coord.addClientRole("client_one", "client")
+        self.coord.addClientRole("server", "server")
+        self.log = logging.getLogger("testCase")
+        self._switch_client("client_one")
+        self.coord.expectResponse("ack")
+        send_msg = {
+            "request": "lava_send",
+            "messageID": "no-role-key",
+            "message": None,
+        }
+        self.coord.dataReceived(self._wrapMessage(send_msg, "client"))
+        # the whole 'client' role has sent, so the server is released even
+        # though the request carries no 'role' key
+        self.log.info("\tINF: request without a 'role' key")
+        self._switch_client("server")
+        self.coord.expectResponse("ack")
+        self.coord.expectMessage({"client_one": {}})
+        self.coord.dataReceived(
+            {
+                "timeout": 90,
+                "client_name": self.coord.client_name,
+                "group_name": self.coord.group_name,
+                "request": "lava_wait_all",
+                "messageID": "no-role-key",
+                "waitrole": "client",
+                "message": None,
+            }
+        )
+        self._cleanup()
+
 
 def main():
     FORMAT = "%(msg)s"
