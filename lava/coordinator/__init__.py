@@ -248,8 +248,8 @@ class LavaCoordinator:
         msg = {"response": "group_data", "roles": group_data}
         msgdata = self._formatMessage(msg)
         if msgdata:
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _formatMessage(self, message):
@@ -310,8 +310,8 @@ class LavaCoordinator:
                 self.group["group"],
                 json.dumps(msg),
             )
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _sendWaitMessage(self, client_name, messageID):
@@ -347,8 +347,8 @@ class LavaCoordinator:
                 self.group["group"],
                 json.dumps(msg),
             )
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _getMessage(self, json_data):
@@ -377,22 +377,22 @@ class LavaCoordinator:
     def _badRequest(self):
         msgdata = self._formatMessage({"response": "nack"})
         if msgdata:
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _ackResponse(self):
         msgdata = self._formatMessage({"response": "ack"})
         if msgdata:
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _waitResponse(self):
         msgdata = self._formatMessage({"response": "wait"})
         if msgdata:
-            self.conn.send(msgdata[0])
-            self.conn.send(msgdata[1])
+            self.conn.sendall(msgdata[0])
+            self.conn.sendall(msgdata[1])
         self.conn.close()
 
     def _aggregateBundle(self, json_data, client_name):
@@ -429,8 +429,8 @@ class LavaCoordinator:
                 msg = {"response": "ack", "message": {"bundle": self.group["bundles"]}}
                 msgdata = self._formatMessage(msg)
                 if msgdata:
-                    self.conn.send(msgdata[0])
-                    self.conn.send(msgdata[1])
+                    self.conn.sendall(msgdata[0])
+                    self.conn.sendall(msgdata[1])
                 self.group["rpc_delay"] = self.rpc_delay
                 self.conn.close()
         else:
