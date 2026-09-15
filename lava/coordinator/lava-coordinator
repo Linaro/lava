@@ -87,12 +87,16 @@ def main():
     except Exception as exc:
         LOG.error("[INIT] Unable to load configuration file: %s", exc)
         return 1
-    LavaCoordinator(
-        config.get("coordinator_hostname", "localhost"),
-        config.get("port", 3079),
-        config.get("blocksize", 4096),
-    ).run()
-    return 0
+    try:
+        LavaCoordinator(
+            config.get("bind_address", "localhost"),
+            config.get("port", 3079),
+            config.get("blocksize", 4096),
+        ).run()
+        return 0
+    except KeyboardInterrupt:
+        LOG.info("[EXIT] Ctrl+C received, leaving")
+        return 1
 
 
 if __name__ == "__main__":
