@@ -134,7 +134,7 @@ class TestSocket:
         self.log = logging.getLogger("testCase")
         self.signalHandler = TestSignals()
 
-    def send(self, data):
+    def sendall(self, data):
         if self.header:
             self.header = False
             assert int(data, 16) < 0xFFFE
