@@ -12,13 +12,17 @@ LAVA devices under test.
 Options
 #######
 
-``--logfile=LOGFILE``
-   Overrides the default log file location of
-   /var/log/lava-coordinator.log
+``--config=CONFIG``
+   Overrides the default configuration file location of
+   /etc/lava-coordinator/lava-coordinator.conf
 
-``--loglevel=LOGLEVEL``
+``--logfile=LOGFILE``; \ ``--log-file=LOGFILE``
+   Overrides the default log file location of
+   /var/log/lava-coordinator.log.
+
+``--loglevel=LOGLEVEL``; \ ``--level=LOGLEVEL``; \ ``-l LOGLEVEL``
    Overrides the default log level of INFO. Available options, in
-   increasing order of verbosity, are: ERROR, WARNING, INFO, DEBUG.
+   increasing order of verbosity, are: ERROR, WARN, INFO, DEBUG.
 
 ``-h``; \ ``--help``
    Show summary of options.
