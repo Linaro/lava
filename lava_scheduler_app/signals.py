@@ -9,7 +9,7 @@ import datetime
 import logging
 import uuid
 from contextvars import ContextVar
-from functools import wraps
+from functools import partial, wraps
 from json import dumps as json_dumps
 
 import zmq
@@ -121,7 +121,16 @@ def testjob_notifications(sender, **kwargs):
     if job.state not in [TestJob.STATE_RUNNING, TestJob.STATE_FINISHED]:
         return
 
-    async_send_notifications.delay(job.id, job.state, job.health, job._old_health)
+    transaction.on_commit(
+        partial(
+            log_exception(async_send_notifications.delay),
+            job.id,
+            job.state,
+            job.health,
+            job._old_health,
+        ),
+        using=kwargs.get("using"),
+    )
 
 
 @log_exception
