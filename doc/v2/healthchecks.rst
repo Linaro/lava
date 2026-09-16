@@ -27,8 +27,11 @@ used by the device. Health checks are run as the lava-health user.
    scheduler takes the name of the template extended in the device dictionary
    (for instance ``qemu.jinja2`` for qemu devices) and replace the extension
    with ``.yaml``. The health check will be called
-   ``/etc/lava-server/dispatcher-config/health-checks/qemu.yaml``.  The health
-   check job database field in the device-type is unused.
+   ``/etc/lava-server/dispatcher-config/health-checks/qemu.yaml``. When that
+   file does not exist, the scheduler looks for a health check named after the
+   device-type instead, which is what device dictionaries extending a base
+   template such as ``base-uboot.jinja2`` need. The health check job database
+   field in the device-type is unused.
 
 .. note:: Admins can temporarily disable health checks for all devices of a
    given type in the device-type admin page.
@@ -71,6 +74,10 @@ device dictionary can use:
 
 However, the health check YAML needs to use ``device_type: juno`` or the
 health check will not run.
+
+The health check file itself can be named after the extended template,
+``juno-uboot.yaml``, or after the device-type, ``juno.yaml``. The name of the
+extended template takes precedence when both files exist.
 
 Check ``/var/log/lava-server/django.log`` if you get a 404 when trying to force
 a health check.

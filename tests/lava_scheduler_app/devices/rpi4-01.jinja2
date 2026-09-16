@@ -1,0 +1,7 @@
+{% extends 'base-uboot.jinja2' %}
+{% set console_device = 'ttyS1' %}
+{% set bootloader_prompt = 'U-Boot>' %}
+{% set connection_command = 'telnet localhost 6001' %}
+{% set hard_reset_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command reboot --port 25 --delay 10' %}
+{% set power_off_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command off --port 25' %}
+{% set power_on_command = '/usr/local/lab-scripts/snmp_pdu_control --hostname pdu01 --command on --port 25' %}

@@ -3,10 +3,13 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+import tempfile
+from pathlib import Path
+
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from lava_scheduler_app.dbutils import (
     active_device_types,
@@ -258,3 +261,54 @@ class DeviceTypeTest(TestCaseWithFactory):
         dt = DeviceType(name="typ/e2")
         with self.assertRaises(ValidationError):
             dt.save()
+
+
+class DeviceHealthCheckTest(TestCaseWithFactory):
+    """
+    Test the lookup of the health check definition
+    """
+
+    def test_health_check_falls_back_to_the_device_type_name(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="rpi4-01", health=Device.HEALTH_GOOD
+        )
+        self.assertEqual("base-uboot", device.get_extends())
+        self.assertFalse(File("health-check", "base-uboot").exists())
+
+        health_check = device.get_health_check()
+        self.assertIsNotNone(health_check)
+        self.assertIn("job_name: rpi4-health-check", health_check)
+
+    def test_health_check_prefers_the_extended_template(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="juno-01", health=Device.HEALTH_GOOD
+        )
+        self.assertEqual("juno", device.get_extends())
+        self.assertTrue(File("health-check", "juno").exists())
+
+        self.assertIn("job_name: juno-debian-nfs", device.get_health_check())
+
+    def test_health_check_finds_the_yml_extension(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="rpi4-01", health=Device.HEALTH_GOOD
+        )
+        with tempfile.TemporaryDirectory() as health_checks:
+            Path(health_checks, "base-uboot.yml").write_text("job_name: from-yml\n")
+            with override_settings(HEALTH_CHECKS_PATH=health_checks):
+                self.assertEqual("job_name: from-yml\n", device.get_health_check())
+
+    def test_health_check_yml_wins_over_the_device_type_name(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="rpi4-01", health=Device.HEALTH_GOOD
+        )
+        with tempfile.TemporaryDirectory() as health_checks:
+            Path(health_checks, "base-uboot.yml").write_text("job_name: from-yml\n")
+            Path(health_checks, "bcm2711-rpi-4-b.yaml").write_text(
+                "job_name: from-device-type\n"
+            )
+            with override_settings(HEALTH_CHECKS_PATH=health_checks):
+                self.assertEqual("job_name: from-yml\n", device.get_health_check())
