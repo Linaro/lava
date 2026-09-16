@@ -1,0 +1,19 @@
+device_type: bcm2711-rpi-4-b
+
+job_name: rpi4-health-check
+
+timeouts:
+  job:
+    minutes: 10
+  action:
+    minutes: 5
+
+priority: medium
+visibility: public
+
+actions:
+- boot:
+    method: u-boot
+    commands: ramdisk
+    prompts:
+    - 'root@debian:'

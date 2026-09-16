@@ -59,9 +59,17 @@ lavacli device-types health-check set qemu qemu.jinja2
 ```
 
 !!! info "filename"
-    In order to compute the health-check of a DUT, LAVA will look in the device
-    dictionary for the `{% extends device-type.jinja2 %}` line. The
-    health-check filename is `device-type.yaml`.
+    LAVA derives `<template>` from the device dictionary's
+    `{% extends '<template>.jinja2' %}` declaration. It tries
+    `<template>.yaml`, `<template>.yml`, `<device-type>.yaml`, then
+    `<device-type>.yml`, and returns the first file it can read.
+
+    The device-type candidates let a dictionary extending a shared base
+    template, for instance `base-uboot.jinja2`, use a health-check named after
+    the device-type. Without them such a device finds no health check at all
+    unless `base-uboot.yaml` or `base-uboot.yml` supplies one.
+
+    Template-named checks take precedence over device-type-named ones.
 
 ## Secrets
 
