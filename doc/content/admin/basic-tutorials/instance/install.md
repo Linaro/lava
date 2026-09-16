@@ -125,9 +125,19 @@ Enable default LAVA server Apache configuration:
 a2dissite 000-default
 a2enmod proxy
 a2enmod proxy_http
+a2enmod rewrite
+a2enmod headers
 a2ensite lava-server.conf
 systemctl restart apache2
 ```
+
+Apache serves `/static/` directly. This needs the `headers` module, which carries
+the caching and content-type policy, and `rewrite`, which selects the
+precompressed `.gz` files shipped alongside the static assets. Without `headers`,
+LAVA serves those files itself.
+
+If you have customised `lava-server.conf`, merge its `/static/` section into your
+copy when dpkg prompts for it on upgrade.
 
 You can start the different services:
 

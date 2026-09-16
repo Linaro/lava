@@ -67,6 +67,7 @@ RUN a2dissite 000-default && \
     a2enmod proxy_http && \
     a2enmod proxy_wstunnel && \
     a2enmod rewrite && \
+    a2enmod headers && \
     a2enmod ssl
 
 ENTRYPOINT ["/root/entrypoint.sh"]
