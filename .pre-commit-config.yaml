@@ -41,7 +41,7 @@ repos:
     rev: 1.32.0
     hooks:
       - id: django-upgrade
-        args: ["--target-version", "4.2"]
+        args: ["--target-version", "5.2"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.16.7
@@ -62,11 +62,11 @@ repos:
           - "defusedxml==0.7.1"
           - "django-allauth==65.18.0"
           - "django-environ==0.14.0"
-          - "django-filter==25.1"
+          - "django-filter==26.1"
           - "django-tables2==3.0.0"
-          - "django==4.2.30"
+          - "django==5.2.17"
           - "djangorestframework-filters==1.0.0.dev2"
-          - "djangorestframework==3.17.2"
+          - "djangorestframework==3.18.1"
           - "drf-extensions==0.8.0"
           - "gunicorn==26.0.0"
           - "jinja2==3.1.6"
@@ -197,13 +197,13 @@ repos:
           - "defusedxml==0.7.1"
           - "django-allauth==65.18.0"
           - "django-environ==0.14.0"
-          - "django-filter==25.1"
+          - "django-filter==26.1"
           - "django-stubs==6.1.0"
           - "django-tables2==3.0.0"
-          - "django==4.2.30"
+          - "django==5.2.17"
           - "djangorestframework-filters==1.0.0.dev2"
           - "djangorestframework-stubs==3.18.1"
-          - "djangorestframework==3.17.2"
+          - "djangorestframework==3.18.1"
           - "drf-extensions==0.8.0"
           - "gunicorn==26.0.0"
           - "jinja2==3.1.6"
