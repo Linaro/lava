@@ -1109,6 +1109,14 @@ ok 2 bar
         logentry = LogEntry.objects.filter(object_id=device_details["hostname"]).first()
         assert "Foo" in logentry.change_message
 
+    def test_set_health_invalid(self):
+        root = reverse("api-root", args=[self.version])
+        for url in ["devices/public01/set_health/", "workers/worker1/set_health/"]:
+            response = self.adminclient.post(
+                root + url, {"health": 42, "reason": "Foo"}, format="json"
+            )
+            assert response.status_code == 400  # nosec - unit test support
+
     def test_devices_set_dictionary(self, monkeypatch, tmp_path):
         def save_configuration(self, data):
             assert data == "hello"  # nosec
