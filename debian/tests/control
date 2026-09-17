@@ -14,7 +14,7 @@ Depends: dh-python,
          python3-pytest-asyncio,
          python3-pytest-django,
          python3-pytest-mock,
-         python3-guestfs [amd64 arm64 loong64 ppc64el riscv64 s390x],
+         python3-guestfs,
          python3-responses,
          python3-setuptools,
          python3-sphinx,
@@ -39,7 +39,6 @@ Restrictions: allow-stderr, superficial
 Tests: lava-dispatcher-host
 Depends: lava-dispatcher-host, udev
 Restrictions: isolation-container, needs-root
-Architecture: amd64 arm64 armhf riscv64 s390x
 
 Tests: lava-coordinator
 Depends: lava-coordinator
