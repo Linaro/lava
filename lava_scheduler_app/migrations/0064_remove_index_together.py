@@ -15,10 +15,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterIndexTogether(
-            name="testjob",
-            index_together=set(),
-        ),
         migrations.AlterField(
             model_name="testjob",
             name="health",

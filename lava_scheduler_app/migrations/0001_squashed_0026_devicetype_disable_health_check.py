@@ -1038,10 +1038,6 @@ class Migration(migrations.Migration):
                 verbose_name="Initiate health checks by hours or by jobs.",
             ),
         ),
-        migrations.AlterIndexTogether(
-            name="testjob",
-            index_together={("status", "requested_device_type", "requested_device")},
-        ),
         migrations.RemoveField(
             model_name="worker",
             name="arch",
