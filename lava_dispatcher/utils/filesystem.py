@@ -90,7 +90,11 @@ def tftpd_dir() -> str:
         from configobj import ConfigObj  # type: ignore[import-not-found]
 
         config = ConfigObj("/etc/default/tftpd-hpa")
-        value: str = config.get(var_name)
+        value = config.get(var_name)
+        if not isinstance(value, str):
+            raise InfrastructureError(
+                f"Unable to identify {var_name} in /etc/default/tftpd-hpa"
+            )
         return os.path.realpath(value)
     raise InfrastructureError("Unable to identify tftpd directory")
 
