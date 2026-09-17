@@ -63,7 +63,7 @@ def description_data(job):
 
 def get_testcases_with_limit(testsuite, limit=None, offset=None):
     logger = logging.getLogger("lava_results_app")
-    if limit:
+    if limit is not None:
         try:
             if not offset:
                 testcases = list(testsuite.testcase_set.all().order_by("id")[:limit])

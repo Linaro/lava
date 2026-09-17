@@ -392,6 +392,31 @@ class TestRestApi:
         )
         assert response.status_code == 404  # nosec - unit test support
 
+    def test_testjob_logs_invalid_start_end(self, monkeypatch, tmp_path):
+        (tmp_path / "output.yaml").write_text(LOG_FILE, encoding="utf-8")
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
+
+        base_url = (
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/logs/?" % self.public_testjob1.id
+        )
+        for params in [{"start": "NaN"}, {"start": "-1"}, {"end": "NaN"}]:
+            response = self.userclient.get(base_url + urlencode(params))
+            assert response.status_code == 400  # nosec - unit test support
+
+    def test_testjob_export_invalid_limit_offset(self):
+        root = reverse("api-root", args=[self.version])
+        suite = self.public_testjob1.testsuite_set.first()
+        job_url = f"{root}jobs/{self.public_testjob1.id}/"
+        suite_url = f"{job_url}suites/{suite.id}/"
+        for url in [job_url, suite_url]:
+            for export in ["csv", "yaml"]:
+                for params in [{"limit": "NaN"}, {"limit": "-1"}, {"offset": "NaN"}]:
+                    response = self.userclient.get(
+                        f"{url}{export}/?" + urlencode(params)
+                    )
+                    assert response.status_code == 400  # nosec - unit test support
+
     def test_testjob_suites(self):
         data = self.hit(
             self.userclient,
