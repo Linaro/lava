@@ -702,6 +702,20 @@ ok 2 bar
         msg = json.loads(response.content)
         assert msg["message"] == "Job invalid: expected str @ ['job_name']"
 
+    def test_testjob_validate_bad_yaml(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate/",
+            {"definition": "job_name: 'unterminated"},
+        )
+        assert response.status_code == 400  # nosec - unit test support
+
+    def test_testjob_validate_testdef_bad_yaml(self):
+        response = self.userclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/validate_testdef/",
+            {"definition": "metadata: 'unterminated"},
+        )
+        assert response.status_code == 400  # nosec - unit test support
+
     def test_testjob_validate_testdef(self):
         "Test validating valid test definition."
         testdef = """

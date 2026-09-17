@@ -420,7 +420,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
                 {"definition": "Test job definition should be a string."}
             )
 
-        data = yaml_safe_load(definition)
+        try:
+            data = yaml_safe_load(definition)
+        except yaml.YAMLError as exc:
+            raise ParseError(f"Invalid job definition: {exc}")
+
         try:
             schemas.validate(
                 data,
@@ -445,7 +449,11 @@ class TestJobViewSet(viewsets.ModelViewSet):
         if not definition:
             raise ValidationError({"definition": "Test definition is required."})
 
-        data = yaml_safe_load(definition)
+        try:
+            data = yaml_safe_load(definition)
+        except yaml.YAMLError as exc:
+            raise ParseError(f"Invalid test definition: {exc}")
+
         try:
             testdef.validate(data)
             return Response(
