@@ -671,6 +671,21 @@ class DeviceTypeViewSet(viewsets.ModelViewSet):
         "health_denominator",
         "display",
     )
+    ordering_fields = (
+        "name",
+        "architecture",
+        "processor",
+        "cpu_model",
+        "aliases",
+        "bits",
+        "cores",
+        "core_count",
+        "description",
+        "health_frequency",
+        "disable_health_check",
+        "health_denominator",
+        "display",
+    )
     filterset_class = filters.DeviceTypeFilter
     lookup_value_regex = r"[^\0/]+"
 

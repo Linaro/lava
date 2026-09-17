@@ -1147,6 +1147,20 @@ ok 2 bar
         )
         assert len(data["results"]) == 4  # nosec - unit test support
 
+    def test_devicetypes_ordering(self):
+        base_url = reverse("api-root", args=[self.version]) + "devicetypes/?"
+        data = self.hit(self.userclient, base_url + urlencode({"ordering": "name"}))
+        names = [dt["name"] for dt in data["results"]]
+        assert names == sorted(names)  # nosec - unit test support
+
+        # "health_denominator" is serialized from a model method: ordering by
+        # the method name is not a database lookup and should be ignored.
+        for ordering in ["get_health_denominator_display", "invalid"]:
+            data = self.hit(
+                self.userclient, base_url + urlencode({"ordering": ordering})
+            )
+            assert len(data["results"]) == 3  # nosec - unit test support
+
     def test_devicetype_view(self):
         response = self.userclient.get(
             reverse("api-root", args=[self.version])
