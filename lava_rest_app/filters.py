@@ -8,13 +8,12 @@ import json
 
 import rest_framework_filters as filters
 from django.contrib.auth.models import Group, Permission, User
-from django.core.exceptions import ValidationError
 from django.db import connections
 from django_filters.filters import CharFilter
 
 # Raised by the metadata filters below: unlike django.core ValidationError,
 # rest_framework's version is turned into a 400 response by DRF.
-from rest_framework.exceptions import ValidationError as APIValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework_filters.filters import RelatedFilter
 
 from lava_results_app.models import TestCase, TestSet, TestSuite
@@ -451,7 +450,7 @@ class MetadataFilterMixin:
                 continue
             suffix = param[len(self.METADATA_PREFIX) :]
             if not suffix:
-                raise APIValidationError("Missing metadata key in %r" % param)
+                raise ValidationError("Missing metadata key in %r" % param)
             yield suffix, [value for value in values if value != ""]
 
     @staticmethod
@@ -462,7 +461,7 @@ class MetadataFilterMixin:
             except ValueError:
                 data = None
             if not isinstance(data, dict):
-                raise APIValidationError(
+                raise ValidationError(
                     "metadata__contains expects a JSON object, got %r" % value
                 )
             return data
@@ -479,7 +478,7 @@ class MetadataFilterMixin:
                 return True
             if value.lower() in ("false", "0"):
                 return False
-            raise APIValidationError("isnull expects a boolean, got %r" % value)
+            raise ValidationError("isnull expects a boolean, got %r" % value)
         return value
 
 

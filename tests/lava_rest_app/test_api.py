@@ -869,6 +869,23 @@ ok 2 bar
         )
         assert response.status_code == 400  # nosec - unit test support
 
+    def test_testjobs_choice_filters_invalid(self):
+        base_url = reverse("api-root", args=[self.version]) + "jobs/?"
+        for params in [
+            {"state": "NotAState"},
+            {"state__in": "Running,NotAState"},
+            {"health": "NotAHealth"},
+            {"health__in": "Complete,NotAHealth"},
+        ]:
+            response = self.adminclient.get(base_url + urlencode(params))
+            assert response.status_code == 400  # nosec - unit test support
+
+    def test_devices_choice_filters_invalid(self):
+        base_url = reverse("api-root", args=[self.version]) + "devices/?"
+        for params in [{"state": "NotAState"}, {"health": "NotAHealth"}]:
+            response = self.adminclient.get(base_url + urlencode(params))
+            assert response.status_code == 400  # nosec - unit test support
+
     def test_devices_list(self):
         data = self.hit(
             self.userclient,
