@@ -74,13 +74,23 @@ from . import serializers
 from .parsers import PlainTextParser
 
 
-def safe_str2int(in_value):
-    out_value = in_value
-    if isinstance(in_value, str) and in_value.isnumeric():
-        out_value = int(in_value)
-        if out_value >= 0:
-            return out_value
-    return out_value
+def positive_int_param(request, name, default=None):
+    """
+    Return the "name" query parameter as a positive integer.
+
+    Raise ParseError (turned into a 400 by DRF) instead of letting an invalid
+    value bubble up as a 500 further down the stack.
+    """
+    value = request.query_params.get(name, default)
+    if value is None:
+        return None
+    try:
+        value = int(value)
+    except ValueError:
+        raise ParseError(f"Invalid '{name}': {value!r} is not an integer")
+    if value < 0:
+        raise ParseError(f"Invalid '{name}': {value} is negative")
+    return value
 
 
 class LavaObtainAuthToken(ObtainAuthToken):
@@ -245,8 +255,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, suffix="logs")
     def logs(self, request, **kwargs):
-        start = safe_str2int(request.query_params.get("start", 0))
-        end = safe_str2int(request.query_params.get("end", None))
+        start = positive_int_param(request, "start", 0)
+        end = positive_int_param(request, "end")
         try:
             if start == 0 and end is None:
                 job = self.get_object()
@@ -354,12 +364,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, suffix="csv")
     def csv(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
-        if limit is not None:
-            limit = int(limit)
-        if offset is not None:
-            offset = int(offset)
+        limit = positive_int_param(request, "limit")
+        offset = positive_int_param(request, "offset")
 
         job = self.get_object()
         testcases = TestCase.objects.filter(suite__job_id=job).order_by("id")[offset:][
@@ -383,12 +389,8 @@ class TestJobViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, suffix="yaml")
     def yaml(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
-        if limit is not None:
-            limit = int(limit)
-        if offset is not None:
-            offset = int(offset)
+        limit = positive_int_param(request, "limit")
+        offset = positive_int_param(request, "offset")
 
         job = self.get_object()
         testcases = TestCase.objects.filter(suite__job_id=job).order_by("id")[offset:][
@@ -574,8 +576,8 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, suffix="csv")
     def csv(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
+        limit = positive_int_param(request, "limit")
+        offset = positive_int_param(request, "offset")
 
         output = io.StringIO()
         writer = csv.DictWriter(
@@ -596,8 +598,8 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, suffix="yaml")
     def yaml(self, request, **kwargs):
-        limit = request.query_params.get("limit", None)
-        offset = request.query_params.get("offset", None)
+        limit = positive_int_param(request, "limit")
+        offset = positive_int_param(request, "offset")
 
         yaml_list = []
         for test_case in get_testcases_with_limit(self.get_object(), limit, offset):
