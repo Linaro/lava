@@ -863,6 +863,8 @@ class DeviceViewSet(viewsets.ModelViewSet):
         reason = request.data.get("reason", None)
         health = request.data.get("health", None)
         if health is not None:
+            if not isinstance(health, str):
+                raise ValidationError({"health": "Health should be a string."})
             health = health.upper()
         response = __set_device_health__(device, request.user, health, reason)
         if response is None:
@@ -1046,6 +1048,8 @@ class WorkerViewSet(viewsets.ModelViewSet):
         reason = request.data.get("reason", None)
         health = request.data.get("health", None)
         if health is not None:
+            if not isinstance(health, str):
+                raise ValidationError({"health": "Health should be a string."})
             health = health.title()
         response = __set_worker_health__(worker, request.user, health, reason)
         if response is None:
