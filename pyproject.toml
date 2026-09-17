@@ -225,7 +225,7 @@ main.init-hook = """\
 # Pylint configuration
 main.jobs = 0  # Scale number of jobs to number of CPUs
 main.load-plugins = "pylint_django"
-main.py-version = "3.11"  # Debian 12 (bookworm) Python version
+main.py-version = "3.11"
 main.recursive = true
 
 [tool.codespell]

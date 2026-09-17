@@ -7,7 +7,7 @@ then
   apt-get build-dep --yes .
 else
   set -x
-  # build the full package, including original source for bookworm.
+  # build the full package, including original source
   ./share/debian-dev-build.sh -o _build -s forky
   debc $(find _build -name 'lava_*_amd64.changes' 2>/dev/null|head -n1)
 
