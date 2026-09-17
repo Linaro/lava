@@ -68,7 +68,7 @@ In order to install LAVA using the Debian packages, we advice to use the
 repositories that we manage to get the latest version.
 
 !!! note "Supported Debian versions"
-    LAVA is only supported on Debian *Bullseye* and *Bookworm*.
+    LAVA is supported on Debian 13 *Trixie* and upcoming 14 *Forky*.
 
 ### Dependencies
 
@@ -82,40 +82,39 @@ apt install ca-certificates gnupg2 wget
 
 Add the lavasoftware debian repository:
 
-=== "Bullseye"
+=== Debian 13 "Trixie"
     ```shell
     wget https://apt.lavasoftware.org/lavasoftware.key.asc
     apt-key add lavasoftware.key.asc
-    echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
-    echo "deb http://deb.debian.org/debian bullseye-backports main" > /etc/apt/sources.list.d/backports.list
+    echo "deb https://apt.lavasoftware.org/release trixie main" > /etc/apt/sources.list.d/lava.list
+    echo "deb http://deb.debian.org/debian trixie-backports main" > /etc/apt/sources.list.d/backports.list
     ```
 
-=== "Bookworm"
+=== Debian 14 "Forky"
     ```shell
     wget https://apt.lavasoftware.org/lavasoftware.key.asc
     apt-key add lavasoftware.key.asc
-    echo "deb https://apt.lavasoftware.org/release bookworm main" > /etc/apt/sources.list.d/lava.list
+    echo "deb https://apt.lavasoftware.org/release forky main" > /etc/apt/sources.list.d/lava.list
     ```
 
 ### Install
 
 Install **postgresql** and **lava** debian packages:
 
-=== "Bullseye"
+=== Debian 13 "Trixie"
     ```shell
-    apt update
-    apt install postgresql
-    pg_ctlcluster 13 main start
-    apt install lava-server
-    apt install -t bullseye-backports lava-dispatcher
+    apt-get update
+    apt-get install postgresql
+    pg_ctlcluster 17 main start
+    apt-get install lava-server lava-dispatcher
     ```
 
-=== "Bookworm"
+=== Debian 14 "Forky"
     ```shell
-    apt update
-    apt install postgresql
-    pg_ctlcluster 15 main start
-    apt install lava-server lava-dispatcher
+    apt-get update
+    apt-get install postgresql
+    pg_ctlcluster 18 main start
+    apt-get install lava-server lava-dispatcher
     ```
 
 ### Starting

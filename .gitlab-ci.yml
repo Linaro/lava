@@ -62,14 +62,10 @@ variables:
   tags:
     - saas-linux-small-arm64
 
-amd64/dispatcher-debian-12: {"extends": ".dispatcher"}
-amd64/server-debian-12: {"extends": ".server"}
 amd64/dispatcher-debian-13: {"extends": ".dispatcher"}
 amd64/server-debian-13: {"extends": ".server"}
 amd64/dispatcher-debian-14: {"extends": ".dispatcher"}
 amd64/server-debian-14: {"extends": ".server"}
-aarch64/dispatcher-debian-12: {"extends": ".dispatcher-aarch64"}
-aarch64/server-debian-12: {"extends": ".server-aarch64"}
 aarch64/dispatcher-debian-13: {"extends": ".dispatcher-aarch64"}
 aarch64/server-debian-13: {"extends": ".server-aarch64"}
 aarch64/dispatcher-debian-14: {"extends": ".dispatcher-aarch64"}
@@ -126,7 +122,7 @@ code_quality:
 
 coverage:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-12
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-13
   coverage: '/(?i)total.*? (100(?:\.0+)?\%|[1-9]?\d(?:\.\d+)?\%)$/'
   artifacts:
     paths:
@@ -145,7 +141,7 @@ schemas:
 
 django_migrations:
   extends: .analyze
-  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-12
+  image: registry.gitlab.com/lava/ci-images/amd64/server-debian-13
 
 mypy:
   extends: .analyze
@@ -156,7 +152,7 @@ mypy:
 doc:
   extends: .job
   stage: build
-  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
+  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-13
   artifacts:
     paths:
       - doc/site
@@ -173,10 +169,6 @@ doc:
       - _build/*.dsc
       - _build/*.changes
       - _build/*.buildinfo
-
-debian/12:
-  extends: .debian_build
-  image: registry.gitlab.com/lava/ci-images/amd64/pkg-debian-12
 
 debian/13:
   extends: .debian_build
@@ -217,7 +209,6 @@ docker-aarch64-server: {"extends": ".docker_aarch64"}
 .publish-packages:
   stage: deploy
   needs:
-    - debian/12
     - debian/13
   trigger:
     project: lava/lava-apt-repo
