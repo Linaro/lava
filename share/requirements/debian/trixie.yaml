@@ -25,6 +25,7 @@ lava-server:
     name: python3-django-tables2
   django:
     name: python3-django
+    suite: trixie-backports
   django-environ:
     name: python3-django-environ
   djangorestframework:
