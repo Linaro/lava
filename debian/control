@@ -2,7 +2,7 @@ Source: lava
 Section: net
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Remi Duraffort <remi.duraffort@linaro.org>,
-           Christopher Obbard <obbardc@debian.org>
+           Christopher Obbard <chris.obbard@oss.qualcomm.com>
 Build-Depends: debhelper-compat (= 12),
                dh-python,
                dh-sequence-installsysusers,
