@@ -586,7 +586,8 @@ class TestSuiteViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         try:
             job = TestJob.objects.select_related("submitter").get(id=job_id)
-        except TestJob.DoesNotExist:
+        except (TestJob.DoesNotExist, ValueError):
+            # ValueError: the job id in the url is not a number
             raise NotFound
 
         if not job.can_view(self.request.user):
@@ -644,7 +645,8 @@ class TestCaseViewSet(NestedViewSetMixin, viewsets.ReadOnlyModelViewSet):
 
         try:
             job = TestJob.objects.select_related("submitter").get(id=job_id)
-        except TestJob.DoesNotExist:
+        except (TestJob.DoesNotExist, ValueError):
+            # ValueError: the job id in the url is not a number
             raise NotFound
 
         if not job.can_view(self.request.user):
