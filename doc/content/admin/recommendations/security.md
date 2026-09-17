@@ -47,7 +47,7 @@ SECURE_PROXY_SSL_HEADER: ["HTTP_X_FORWARDED_PROTO", "https"]
 
 !!! note
     Do not work around CSRF errors by adding your site to
-    [`CSRF_TRUSTED_ORIGINS`](https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-trusted-origins)
+    [`CSRF_TRUSTED_ORIGINS`](https://docs.djangoproject.com/en/5.2/ref/settings/#csrf-trusted-origins)
     unless you have a genuine cross-origin or subdomain setup.
 
 !!! danger
@@ -60,7 +60,7 @@ SECURE_PROXY_SSL_HEADER: ["HTTP_X_FORWARDED_PROTO", "https"]
     and sets its own. This prevents header spoofing.
 
     For more information, refer to the Django
-    [SECURE_PROXY_SSL_HEADER](https://docs.djangoproject.com/en/4.2/ref/settings/#secure-proxy-ssl-header)
+    [SECURE_PROXY_SSL_HEADER](https://docs.djangoproject.com/en/5.2/ref/settings/#secure-proxy-ssl-header)
     reference.
 
 ### Proxy configuration
