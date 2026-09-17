@@ -83,7 +83,12 @@
               <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
               {% endif %}
               <li class="divider"></li>
-              <li><a href="{% url 'logout' %}?next={% url 'lava.home' %}"><span class="glyphicon glyphicon-off"></span> Sign out</a></li>
+              <li>
+                <form method="post" action="{% url 'logout' %}?next={% url 'lava.home' %}" style="display: inline; margin: 0; padding: 0; border: 0; background: none;">
+                  {% csrf_token %}
+                  <button type="submit" style="display: block; width: 100%; padding: 3px 20px; font: inherit; text-align: left; color: inherit; background: none; border: 0; cursor: pointer;"><span class="glyphicon glyphicon-off"></span> Sign out</button>
+                </form>
+              </li>
             </ul>
           </li>
           {% else %}
