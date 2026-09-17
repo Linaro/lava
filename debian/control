@@ -77,15 +77,24 @@ Package: lava-dispatcher-host
 Architecture: all
 Depends: lava-common (= ${binary:Version}),
          bpftool | linux-tools-generic,
-         linux-headers-generic,
          python3,
-         python3-bpfcc,
          python3-jinja2,
          python3-requests,
          python3-pyudev,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: docker.io
+Recommends: docker.io,
+            linux-headers-amd64 |
+            linux-headers-arm64 |
+            linux-headers-armmp |
+            linux-headers-686-pae |
+            linux-headers-686 |
+            linux-headers-loong64 |
+            linux-headers-powerpc64le |
+            linux-headers-riscv64 |
+            linux-headers-s390x |
+            linux-headers-generic,
+            python3-bpfcc
 Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools
@@ -218,7 +227,6 @@ Depends: build-essential,
          libjs-jquery-flot,
          libjs-jquery-typeahead,
          python3-configobj,
-         python3-guestfs,
          python3-magic,
          python3-pexpect,
          python3-pymongo,
@@ -238,6 +246,7 @@ Depends: build-essential,
 Recommends: android-sdk-libsparse-utils,
             nfs-kernel-server,
             python3-django-extensions,
+            python3-guestfs,
             python3-pydot,
             python3-pytest-cov,
             rpcbind,
