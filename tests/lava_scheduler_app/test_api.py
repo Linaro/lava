@@ -290,6 +290,17 @@ class TestSchedulerAPI(TestCaseWithFactory):
         self.assertEqual(f.faultCode, 400)
         self.assertEqual(f.faultString, "Invalid health 'Completed'")
 
+    def test_jobs_validate_bad_yaml(self):
+        server = self.server_proxy()
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.validate("job_name: 'unterminated", False)
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertTrue(
+            cm.exception.faultString.startswith("Invalid job definition:"),
+            cm.exception.faultString,
+        )
+
 
 @pytest.mark.usefixtures("setup")
 class TestNotification(unittest.TestCase):

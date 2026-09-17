@@ -9,6 +9,7 @@ import xmlrpc.client
 from datetime import timedelta
 
 import voluptuous
+import yaml
 from django.conf import settings
 from django.db.models import DurationField, ExpressionWrapper, F, Value
 from django.db.models.functions import Coalesce
@@ -516,7 +517,11 @@ class SchedulerJobsAPI(ExposedV2API):
         This function returns None if the job definition is valid. Returns a
         dictionary in case of error with the key and msg.
         """
-        data = yaml_safe_load(definition)
+        try:
+            data = yaml_safe_load(definition)
+        except yaml.YAMLError as exc:
+            raise xmlrpc.client.Fault(400, "Invalid job definition: %s" % exc)
+
         try:
             schemas.validate(
                 data,
