@@ -1771,6 +1771,46 @@ ok 2 bar
         assert msg["job_ids"] == [self.public_testjob1.pk, self.private_testjob1.pk]
         assert msg["invalid_job_ids"] == [-2]
 
+    def test_batch_cancel_multinode(self, mocker):
+        mocker.patch("lava_scheduler_app.models.TestJob.cancel")
+        jobs = [
+            TestJob.objects.create(
+                definition=EXAMPLE_WORKING_JOB,
+                submitter=self.admin,
+                requested_device_type=self.public_device_type1,
+                target_group="target_group",
+            )
+            for _ in range(2)
+        ]
+        # multinode sub jobs are all named after the first job of the group
+        for sub_id, job in enumerate(jobs):
+            job.sub_id = f"{jobs[0].id}.{sub_id}"
+            job.save()
+
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "jobs/batch_cancel/",
+            {"job_ids": [job.sub_id for job in jobs]},
+            format="json",
+        )
+        assert response.status_code == 200  # nosec - unit test support
+        msg = json.loads(response.content)
+        assert msg["job_ids"] == [job.sub_id for job in jobs]  # nosec - unit test support
+        assert msg["invalid_job_ids"] == []  # nosec - unit test support
+
+    def test_batch_cancel_invalid_job_ids(self, mocker):
+        mocker.patch("lava_scheduler_app.models.TestJob.cancel")
+        url = reverse("api-root", args=[self.version]) + "jobs/batch_cancel/"
+        for data in [
+            {},
+            {"job_ids": "1,2"},
+            {"job_ids": ["NaN"]},
+            {"job_ids": ["1234."]},
+            {"job_ids": ["1234.1.2"]},
+            {"job_ids": [1234.1]},
+        ]:
+            response = self.adminclient.post(url, data, format="json")
+            assert response.status_code == 400  # nosec - unit test support
+
     def test_tags_list(self):
         data = self.hit(
             self.userclient,
