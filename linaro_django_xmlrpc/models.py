@@ -428,7 +428,7 @@ class Dispatcher:
             if impl is None:
                 if method_name == "close":
                     return None
-                self.logger.error(
+                self.logger.warning(
                     "Unable to dispatch unknown method %r for user %s",
                     method_name,
                     "Anonymous" if context.user is None else context.user,
