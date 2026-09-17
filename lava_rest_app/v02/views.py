@@ -6,6 +6,7 @@
 
 import csv
 import io
+import re
 
 import junit_xml
 import tap
@@ -72,6 +73,15 @@ from linaro_django_xmlrpc.models import AuthToken
 
 from . import serializers
 from .parsers import PlainTextParser
+
+# Either a single-node or multinode job
+JOB_ID_PATTERN = re.compile(r"\d+(\.\d+)?")
+
+
+def is_job_id(job_id):
+    if isinstance(job_id, int):
+        return True
+    return isinstance(job_id, str) and JOB_ID_PATTERN.fullmatch(job_id) is not None
 
 
 def positive_int_param(request, name, default=None):
@@ -525,6 +535,15 @@ class TestJobViewSet(viewsets.ModelViewSet):
     @action(methods=("post",), detail=False, suffix="batch-cancel")
     def batch_cancel(self, request, **kwargs):
         job_ids = request.data.get("job_ids", None)
+        if not isinstance(job_ids, list):
+            raise ValidationError({"job_ids": "A list of job ids is required."})
+        if any(not is_job_id(job_id) for job_id in job_ids):
+            raise ValidationError(
+                {
+                    "job_ids": "Job ids should be integers or "
+                    "multinode job ids like '1234.1'."
+                }
+            )
         job_ids_canceled = []
         invalid_job_ids = []
         for job_id in job_ids:
