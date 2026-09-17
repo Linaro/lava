@@ -152,6 +152,10 @@ def set_testjob_state_health(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [("lava_scheduler_app", "0031_add_worker_state_and_health")]
 
+    # The AlterIndexTogether ops that were here have been removed: Django 5.x
+    # stopped rendering index_together, so on fresh installs the index never
+    # existed and dropping it raised ValueError. The index was intentionally
+    # dropped in 0064 anyway.
     operations = [
         migrations.AddField(
             model_name="device",
@@ -217,10 +221,6 @@ class Migration(migrations.Migration):
                 related_name="testjobs",
                 to="lava_scheduler_app.Device",
             ),
-        ),
-        migrations.AlterIndexTogether(
-            name="testjob",
-            index_together={("health", "state", "requested_device_type")},
         ),
         migrations.RunPython(
             set_device_state_health, revert_set_device_state_health, elidable=True
