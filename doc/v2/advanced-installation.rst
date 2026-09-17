@@ -164,7 +164,7 @@ look like this:
    SERVER_EMAIL: 'lava-noreply@example.net'
    EMAIL_HOST: 'smtp.example.net'
 
-See `django email settings <https://docs.djangoproject.com/en/3.2/ref/settings/#email-host>`__
+See `django email settings <https://docs.djangoproject.com/en/5.2/ref/settings/#email-host>`__
 for a full list of all supported configuration, including TLS and authentication.
 
 Don't forget to reload LAVA webserver to set configuration active:
@@ -459,7 +459,7 @@ contains:
 
     "ALLOWED_HOSTS": ["lava.codehelp.co.uk"],
 
-.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#allowed-hosts
+.. seealso:: https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
 
 It is also important to enable ``ProxyPreserveHost`` in
 ``/etc/apache2/sites-available/lava-server.conf``:
@@ -471,7 +471,7 @@ It is also important to enable ``ProxyPreserveHost`` in
 In some situations, you may also need to set ``USE_X_FORWARDED_HOST``
 to ``True`` in ``/etc/lava-server/settings.conf``
 
-.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-USE_X_FORWARDED_HOST
+.. seealso:: https://docs.djangoproject.com/en/5.2/ref/settings/#std:setting-USE_X_FORWARDED_HOST
 
 Apache headers
 ==============
@@ -503,7 +503,7 @@ and ``WOW64``. The list can be extended in
 let us know by subscribing to the :ref:`lava_devel` mailing list and
 posting your updated list.
 
-.. seealso:: https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
+.. seealso:: https://docs.djangoproject.com/en/5.2/ref/settings/#std:setting-DISALLOWED_USER_AGENTS
 
 
 .. _tracking_errors:
@@ -563,7 +563,7 @@ accordingly in a new config file, e.g. ``/etc/lava-server/settings.d/02-l10n.yam
 
 Without this, time will be american format and all times displayed in UTC.
 
-See `django documentation <https://docs.djangoproject.com/en/3.2/ref/settings/#std:setting-TIME_ZONE>`__
+See `django documentation <https://docs.djangoproject.com/en/5.2/ref/settings/#std:setting-TIME_ZONE>`__
 for details and a list of possible ``TIME_ZONE`` values.
 
 It is possible to set ``LANGUAGE_CODE`` to another value than the default
@@ -598,7 +598,7 @@ Controlling the Django Admin Interface
 
 Some instances may need to allow selected users to be Django superusers
 to provide access to the `Django Admin Interface
-<https://docs.djangoproject.com/en/3.2/ref/contrib/admin/>`_. Some of
+<https://docs.djangoproject.com/en/5.2/ref/contrib/admin/>`_. Some of
 the features of the interface need **very** careful handling,
 especially the **deletion** of database objects.
 
