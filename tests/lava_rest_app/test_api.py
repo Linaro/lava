@@ -451,6 +451,12 @@ class TestRestApi:
                     )
                     assert response.status_code == 400  # nosec - unit test support
 
+    def test_testjob_suites_invalid_job_id(self):
+        root = reverse("api-root", args=[self.version])
+        for url in ["jobs/NaN/suites/", "jobs/NaN/tests/", "jobs/NaN/suites/1/"]:
+            response = self.userclient.get(root + url)
+            assert response.status_code == 404  # nosec - unit test support
+
     def test_testjob_suites(self):
         data = self.hit(
             self.userclient,
