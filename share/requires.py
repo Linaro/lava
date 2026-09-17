@@ -50,12 +50,13 @@ def debian(args, depends):
         for key, item in depends[args.package].items():
             if depends[args.package][key].get("unittests"):
                 continue
-            if args.suite.endswith("-backports"):
+            if item.get("suite") == args.full_suite:
                 backports.add(item["name"])
-                continue
-            msg.add(item["name"])
-        if backports:
-            print(" ".join(sorted(backports)))
+            elif not item.get("suite"):
+                msg.add(item["name"])
+        if args.full_suite.endswith("-backports"):
+            if backports:
+                print(" ".join(sorted(backports)))
         elif msg:
             print(" ".join(sorted(msg)))
         return 0
@@ -112,6 +113,7 @@ def main():
         help="Distribution package names for unittest support - requires --names",
     )
     args = parser.parse_args()
+    args.full_suite = args.suite
     args.suite = args.suite.replace("-backports", "")
     args.suite = args.suite.replace("-security", "")
     if args.unittests and not args.names:
