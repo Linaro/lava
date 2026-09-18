@@ -238,6 +238,12 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
             DeviceDict.from_path(device_path)
         self.assertIn(str(device_path), str(context.exception))
 
+    def test_mapping_with_non_string_keys(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_text("1: foo\n", encoding="utf-8")
+        device = DeviceDict.from_path(device_path)
+        self.assertEqual(device[1], "foo")
+
 
 class TestCommand(LavaDispatcherTestCase):
     def test_silent(self):
