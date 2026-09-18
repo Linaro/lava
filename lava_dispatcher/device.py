@@ -39,9 +39,11 @@ class DeviceDict(dict[str, Any]):
 
     @classmethod
     def from_path(cls, path: str | Path) -> DeviceDict:
-        return cls.from_yaml_str(
-            Path(path).read_text(encoding="utf-8"), source=str(path)
-        )
+        try:
+            text = Path(path).read_text(encoding="utf-8")
+        except UnicodeDecodeError as exc:
+            raise ConfigurationError(f"{path} is not valid UTF-8") from exc
+        return cls.from_yaml_str(text, source=str(path))
 
     @staticmethod
     def _coerce_command(value: Any) -> str | list[str]:
