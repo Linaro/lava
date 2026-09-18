@@ -6,13 +6,19 @@
 
 import xmlrpc.client
 
-import ldap
 import pytest
 from django.contrib.auth.models import Group, User
 
 from lava_common.decorators import nottest
 from lava_scheduler_app.models import Device, DeviceType, Worker
 from tests.lava_scheduler_app.test_api import TestTransport
+
+try:
+    import ldap
+except ImportError:
+    ldap = None
+
+needs_ldap = pytest.mark.skipif(ldap is None, reason="python-ldap is not installed")
 
 
 class TestLavaServerApi:
@@ -562,6 +568,7 @@ class TestLavaServerApi:
         assert user.last_name == ""
         assert user.email == ""
 
+    @needs_ldap
     def test_auth_users_add_ldap_true(self, mocker):
         user = self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
@@ -582,6 +589,7 @@ class TestLavaServerApi:
         assert user.last_name == "Last"
         assert user.email == "first.last@linaro.org"
 
+    @needs_ldap
     def test_auth_users_add_ldap_user_not_found(self, mocker):
         self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
@@ -597,6 +605,7 @@ class TestLavaServerApi:
         assert exc.value.faultCode == 404
         assert exc.value.faultString == "User 'first.last' was not found in LDAP."
 
+    @needs_ldap
     def test_auth_users_add_ldap_unavailable(self, mocker):
         self.ensure_user("test", "test@mail.net", "test", True)
         server = self.server_proxy("test", "test")
