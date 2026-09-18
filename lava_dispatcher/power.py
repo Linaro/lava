@@ -58,7 +58,7 @@ class SendRebootCommands(Action):
         connection = super().run(connection, max_end_time)
 
         if connection is None:
-            self.logger.debug("No connection. Skipping reboot commands.")
+            self.logger.warning("No connection. Skipping reboot commands.")
             return connection
 
         if "soft_reboot" in self.parameters:
