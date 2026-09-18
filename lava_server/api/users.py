@@ -15,6 +15,11 @@ from lava_scheduler_app.api import check_perm
 from lava_scheduler_app.utils import get_ldap_user_properties
 from linaro_django_xmlrpc.models import ExposedV2API
 
+try:
+    import ldap
+except ImportError:
+    ldap = None
+
 
 class UsersAPI(ExposedV2API):
     @check_perm("auth.add_user")
@@ -27,39 +32,42 @@ class UsersAPI(ExposedV2API):
         is_active=True,
         is_staff=False,
         is_superuser=False,
-        ldap=False,
+        use_ldap=False,
     ):
-        try:
-            args = {
-                "username": username,
-                "is_active": is_active,
-                "is_staff": is_staff,
-                "is_superuser": is_superuser,
-            }
-            if first_name is not None:
-                args["first_name"] = first_name
-            if last_name is not None:
-                args["last_name"] = last_name
-            if email is not None:
-                args["email"] = email
-            if ldap:
-                import ldap
-
+        args = {
+            "username": username,
+            "is_active": is_active,
+            "is_staff": is_staff,
+            "is_superuser": is_superuser,
+        }
+        if first_name is not None:
+            args["first_name"] = first_name
+        if last_name is not None:
+            args["last_name"] = last_name
+        if email is not None:
+            args["email"] = email
+        if use_ldap:
+            if ldap is None:
+                raise xmlrpc.client.Fault(
+                    400, "Bad request: authentication via LDAP not configured."
+                )
+            try:
                 ldap_user = get_ldap_user_properties(username)
-                args["first_name"] = ldap_user.get("given_name", "")
-                args["last_name"] = ldap_user.get("sn", "")
-                args["email"] = ldap_user.get("mail", "")
+            except ldap.NO_SUCH_OBJECT:
+                raise xmlrpc.client.Fault(
+                    404, "User '%s' was not found in LDAP." % username
+                )
+            except ldap.UNAVAILABLE:
+                raise xmlrpc.client.Fault(
+                    400, "Bad request: authentication via LDAP not configured."
+                )
+            args["first_name"] = ldap_user.get("given_name", "")
+            args["last_name"] = ldap_user.get("sn", "")
+            args["email"] = ldap_user.get("mail", "")
+        try:
             User.objects.create(**args)
         except (IntegrityError, ValidationError):
             raise xmlrpc.client.Fault(400, "Bad request: user already exists?")
-        except ldap.NO_SUCH_OBJECT:
-            raise xmlrpc.client.Fault(
-                404, "User '%s' was not found in LDAP." % username
-            )
-        except ldap.UNAVAILABLE:
-            raise xmlrpc.client.Fault(
-                400, "Bad request: authentication via LDAP not configured."
-            )
 
     @check_perm("auth.change_user")
     def delete(self, username):
