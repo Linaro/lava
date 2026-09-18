@@ -238,6 +238,13 @@ class TestNewDeviceInit(LavaDispatcherTestCase):
             DeviceDict.from_path(device_path)
         self.assertIn(str(device_path), str(context.exception))
 
+    def test_path_with_invalid_utf8(self):
+        device_path = self.create_temporary_directory() / "bbb-01.yaml"
+        device_path.write_bytes(b"\xff\xfe invalid")
+        with self.assertRaises(ConfigurationError) as context:
+            DeviceDict.from_path(device_path)
+        self.assertIn("not valid UTF-8", str(context.exception))
+
     def test_mapping_with_non_string_keys(self):
         device_path = self.create_temporary_directory() / "bbb-01.yaml"
         device_path.write_text("1: foo\n", encoding="utf-8")
