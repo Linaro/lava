@@ -34,7 +34,8 @@ class DeviceDict(dict[str, Any]):
         if not isinstance(data, dict):
             raise ConfigurationError(f"{source} is not a mapping")
 
-        return cls(**data)
+        # Positional: **data would raise TypeError for non-string keys.
+        return cls(data)
 
     @classmethod
     def from_path(cls, path: str | Path) -> DeviceDict:
