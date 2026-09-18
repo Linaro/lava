@@ -84,17 +84,19 @@ Add the lavasoftware debian repository:
 
 === Debian 13 "Trixie"
     ```shell
-    wget https://apt.lavasoftware.org/lavasoftware.key.asc
-    apt-key add lavasoftware.key.asc
-    echo "deb https://apt.lavasoftware.org/release trixie main" > /etc/apt/sources.list.d/lava.list
+    install -d -m 0755 /etc/apt/keyrings
+    wget -O /etc/apt/keyrings/lavasoftware.asc https://apt.lavasoftware.org/lavasoftware.key.asc
+    chmod 0644 /etc/apt/keyrings/lavasoftware.asc
+    echo "deb [signed-by=/etc/apt/keyrings/lavasoftware.asc] https://apt.lavasoftware.org/release trixie main" > /etc/apt/sources.list.d/lava.list
     echo "deb http://deb.debian.org/debian trixie-backports main" > /etc/apt/sources.list.d/backports.list
     ```
 
 === Debian 14 "Forky"
     ```shell
-    wget https://apt.lavasoftware.org/lavasoftware.key.asc
-    apt-key add lavasoftware.key.asc
-    echo "deb https://apt.lavasoftware.org/release forky main" > /etc/apt/sources.list.d/lava.list
+    install -d -m 0755 /etc/apt/keyrings
+    wget -O /etc/apt/keyrings/lavasoftware.asc https://apt.lavasoftware.org/lavasoftware.key.asc
+    chmod 0644 /etc/apt/keyrings/lavasoftware.asc
+    echo "deb [signed-by=/etc/apt/keyrings/lavasoftware.asc] https://apt.lavasoftware.org/release forky main" > /etc/apt/sources.list.d/lava.list
     ```
 
 ### Install

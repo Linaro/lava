@@ -76,16 +76,18 @@ apt install net-tools wget gnupg curl ca-certificates
 
 * Edit the /etc/hostname and /etc/hosts files with appropriate hostname / IP
 address.
+* Add the LAVA archive signing key to apt:
+
+```shell
+install -d -m 0755 /etc/apt/keyrings
+curl -fsSL -o /etc/apt/keyrings/lavasoftware.asc https://apt.lavasoftware.org/lavasoftware.key.asc
+chmod 0644 /etc/apt/keyrings/lavasoftware.asc
+```
+
 * Add the LAVA repo to apt:
 
 ```shell
-echo "deb https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
-```
-
-* Add LAVA archive signing keys to apt:
-
-```shell
-curl -fsSL https://apt.lavasoftware.org/lavasoftware.key.asc | apt-key add -
+echo "deb [signed-by=/etc/apt/keyrings/lavasoftware.asc] https://apt.lavasoftware.org/release bullseye main" > /etc/apt/sources.list.d/lava.list
 ```
 
 * Install the lava-dispatcher package

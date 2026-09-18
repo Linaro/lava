@@ -98,8 +98,11 @@ registering with LAVA server.
 
 ## install required packages
 
+Add the LAVA repository and its signing key as described in the
+[installation tutorial](../basic-tutorials/instance/install.md#repository),
+then install the packages:
+
 ```shell
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A791358F2E49B100
 apt-get update
 apt-get install lava-dispatcher lava-dispatcher-host
 ```
