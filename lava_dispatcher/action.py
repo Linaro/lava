@@ -678,7 +678,7 @@ class Action:
 
     def run_cmd(
         self,
-        command_list: list[str],
+        command_list: str | list[str],
         allow_fail: bool = False,
         error_msg: str | None = None,
         cwd: str | None = None,
@@ -689,7 +689,7 @@ class Action:
         JobError will be raised unless allow_fail is set to True.
         The command output will be visible (almost) in real time.
 
-        :param: command_list - the command to run (as a list)
+        :param: command_list - the command to run (as a list or a string)
         :param: allow_fail - if True, do not raise a JobError when the command fail (return non 0)
         :param: error_msg - the exception message.
         :param: cwd - the current working directory for this command
