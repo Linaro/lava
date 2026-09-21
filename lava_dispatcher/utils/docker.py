@@ -92,7 +92,9 @@ class DockerRun:
                 )
 
             run._docker_login = DockerLogin(
-                registry=registry, user=user, password=password
+                registry=registry,
+                user=user,
+                password=job.secrets.process_secret_ref(password),
             )
         return run
 

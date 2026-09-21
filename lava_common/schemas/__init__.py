@@ -378,6 +378,10 @@ def docker(image_key="image"):
         Optional("login"): {
             Required("registry"): str,
             Required("user"): str,
-            Required("password"): str,
+            Required("password"): secret_ref(),
         },
     }
+
+
+def secret_ref():
+    return Any(str, {"from_secret": All(str, Length(min=1))})

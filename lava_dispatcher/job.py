@@ -307,3 +307,22 @@ class SecretsContainer:
 
     def __len__(self) -> int:
         return len(self._secrets_map)
+
+    def process_secret_ref(self, secret_ref: str | dict[str, str]) -> str:
+        if isinstance(secret_ref, str):
+            return secret_ref
+
+        try:
+            secret_name = secret_ref["from_secret"]
+        except KeyError:
+            raise JobError("Expected 'from_secret' entry in secret ref dictionary")
+
+        if not isinstance(secret_name, str):
+            raise JobError(
+                f"Expected 'from_secret' value be a str got {type(secret_name)!r}"
+            )
+
+        try:
+            return self.get_required(secret_name)
+        except KeyError:
+            raise JobError(f"Secret {secret_name!r} not found")
