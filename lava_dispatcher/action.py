@@ -203,7 +203,7 @@ class Pipeline:
         in order of the pipeline levels.
         """
         error = False
-        for child in self.actions:
+        for child in reversed(self.actions):
             try:
                 if max_end_time is not None and child.name == "finalize":
                     child.cleanup(connection, max_end_time)
