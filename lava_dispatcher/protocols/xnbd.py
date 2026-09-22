@@ -3,15 +3,24 @@
 # Author: Jan-Simon Moeller <jsmoeller@linuxfoundation.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import pexpect
 
 from lava_common.constants import XNBD_SYSTEM_TIMEOUT
-from lava_common.exceptions import JobError, TestError
+from lava_common.exceptions import JobError, LAVABug, TestError
 from lava_common.timeout import Timeout
 from lava_dispatcher.connection import Protocol
 from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils.network import dispatcher_ip, get_free_port
+
+if TYPE_CHECKING:
+    from typing import Any
+
+    from lava_common.log import YAMLLogger
+    from lava_dispatcher.action import Action
 
 
 class XnbdProtocol(Protocol):
@@ -21,26 +30,37 @@ class XnbdProtocol(Protocol):
 
     name = "lava-xnbd"
 
-    def __init__(self, parameters, job_id, job_logger):
+    def __init__(self, parameters: dict[str, Any], job_id: str, job_logger: YAMLLogger):
         super().__init__(parameters, job_id, job_logger)
         # timeout in utils.constants, default 10000
         self.system_timeout = Timeout("system", None, duration=XNBD_SYSTEM_TIMEOUT)
         self.parameters = parameters
-        self.port = None
-        self.ports = []
+        self.ports: list[int] = []
 
     @classmethod
-    def accepts(cls, parameters):
+    def accepts(cls, parameters: dict[str, Any]) -> bool:
         if "protocols" not in parameters:
             return False
         if "lava-xnbd" not in parameters["protocols"]:
             return False
         return True
 
-    def collate(self, reply, params):
-        params.update(reply)
+    def collate(
+        self,
+        reply: str | dict[str, Any] | None,
+        params: dict[str, Any],
+    ) -> tuple[str, Any] | None:
+        """
+        Merge the reply to the protocol call into the request params.
+        Arguments: reply - the dict returned by the protocol API call
+                   params - the request dict to merge the reply into
+        No namespace data is produced, so always returns None.
+        """
+        if isinstance(reply, dict):
+            params.update(reply)
+        return None
 
-    def set_up(self):
+    def set_up(self) -> None:
         """
         Called from the job at the start of the run step.
         """
@@ -50,15 +70,19 @@ class XnbdProtocol(Protocol):
                 "No port set in parameters for lava-xnbd protocol!\nE.g.:\n protocols:\n  lava-xnbd:\n    port: auto \n"
             )
 
-    def __call__(self, *args, **kwargs):
-        action = kwargs.get("action")
+    def __call__(self, *args: Any, **kwargs: Any) -> Any | None:
+        action: Action | None = kwargs.get("action")
+        if action is None:
+            raise LAVABug("Expected 'action' key to contain Action object")
         self.logger.debug("[%s] Checking protocol data for %s", action.name, self.name)
         try:
             return self._api_select(args, action=action)
         except (ValueError, TypeError) as exc:
             raise JobError(f"Invalid call to {self.name} {exc}")
 
-    def _api_select(self, data, action=None):
+    def _api_select(self, data: Any | None, action: Action | None = None) -> Any | None:
+        if action is None:
+            raise LAVABug("Expected Action object")
         if not data:
             raise TestError("Protocol called without any data")
         for item in data:
@@ -70,7 +94,7 @@ class XnbdProtocol(Protocol):
                 raise JobError("Unrecognised API call in request.")
         return None
 
-    def set_port(self, action):
+    def set_port(self, action: Action) -> dict[str, int]:
         msg = {"data": {"nbd_server_port": 10809}}
         nbd_port = self.parameters["protocols"]["lava-xnbd"]["port"]
         if nbd_port == "auto":
@@ -96,7 +120,7 @@ class XnbdProtocol(Protocol):
         self.logger.debug("Set_port %d", nbd_port)
         return msg["data"]
 
-    def finalise_protocol(self, device=None):
+    def finalise_protocol(self, device: dict[str, Any] | None = None) -> None:
         """Called by Finalize action to power down and clean up the assigned
         device.
         """
