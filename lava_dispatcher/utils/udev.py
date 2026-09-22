@@ -456,7 +456,8 @@ def get_udev_devices(
                     and (udev_device_properties.get("ID_VENDOR_ID") == usb_vendor_id)
                     and (udev_device_properties.get("ID_MODEL_ID") == usb_product_id)
                 ):
-                    device_paths.add(udev_device.device_node)
+                    if udev_device.device_node:
+                        device_paths.add(udev_device.device_node)
                     added.add(board_id)
                     for child in udev_device.children:
                         if child.device_node:
@@ -468,7 +469,8 @@ def get_udev_devices(
                 if (udev_device_properties.get("ID_SERIAL_SHORT") == board_id) and (
                     udev_device_properties.get("ID_VENDOR_ID") == usb_vendor_id
                 ):
-                    device_paths.add(udev_device.device_node)
+                    if udev_device.device_node:
+                        device_paths.add(udev_device.device_node)
                     added.add(board_id)
                     for child in udev_device.children:
                         if child.device_node:
@@ -478,7 +480,8 @@ def get_udev_devices(
             elif board_id and not usb_vendor_id and not usb_product_id:
                 # try with board id alone
                 if udev_device_properties.get("ID_SERIAL_SHORT") == board_id:
-                    device_paths.add(udev_device.device_node)
+                    if udev_device.device_node:
+                        device_paths.add(udev_device.device_node)
                     added.add(board_id)
                     for child in udev_device.children:
                         if child.device_node:
@@ -491,7 +494,8 @@ def get_udev_devices(
                     udev_device_properties.get("ID_VENDOR_ID") == usb_vendor_id
                     and udev_device_properties.get("ID_MODEL_ID") == usb_product_id
                 ):
-                    device_paths.add(udev_device.device_node)
+                    if udev_device.device_node:
+                        device_paths.add(udev_device.device_node)
                     added.add(usb_product_id)
                     for child in udev_device.children:
                         if child.device_node:
@@ -501,7 +505,8 @@ def get_udev_devices(
             elif usb_fs_label:
                 # Just restrict by filesystem label.
                 if udev_device_properties.get("ID_FS_LABEL") == usb_fs_label:
-                    device_paths.add(udev_device.device_node)
+                    if udev_device.device_node:
+                        device_paths.add(udev_device.device_node)
                     added.add(usb_fs_label)
                     for child in udev_device.children:
                         if child.device_node:
