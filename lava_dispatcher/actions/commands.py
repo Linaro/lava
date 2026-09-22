@@ -12,6 +12,7 @@ from lava_dispatcher.action import Action
 
 if TYPE_CHECKING:
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class CommandAction(Action):
@@ -20,7 +21,7 @@ class CommandAction(Action):
     summary = "execute commands"
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
-    builtin_commands = [
+    builtin_commands: list[str] = [
         "pre_power_command",
         "pre_os_command",
         "hard_reset",
@@ -35,19 +36,19 @@ class CommandAction(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.section = "command"
-        self.cmd = None
+        self.cmd: dict[str, str | list[str]] = {}
         self.ran = False
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         cmd_name = self.parameters["name"]
 
         if cmd_name in self.builtin_commands:
             if cmd_name == "usbg_ms_commands_disable":
                 try:
-                    cmd = self.job.device["actions"]["deploy"]["methods"]["usbg-ms"][
-                        "disable"
-                    ]
+                    cmd: str | list[str] = self.job.device["actions"]["deploy"][
+                        "methods"
+                    ]["usbg-ms"]["disable"]
                     if isinstance(cmd, list):
                         cmd = " ".join(cmd)
                     self.cmd = {"do": cmd}
@@ -57,9 +58,10 @@ class CommandAction(Action):
                     )
                 return
             if cmd_name == "stop_test_services":
-                if cmd_list := self.get_namespace_data(
+                cmd_list: list[str] | None = self.get_namespace_data(
                     action="lava-test-service", label="stop-services", key="cmd-list"
-                ):
+                )
+                if cmd_list:
                     self.cmd = {"do": cmd_list}
                 else:
                     self.errors_add(
@@ -75,7 +77,9 @@ class CommandAction(Action):
             self.errors_add("Command '%s' not defined for this device" % cmd_name)
             return
 
-        user_commands = self.job.device.get("commands", {}).get("users")
+        user_commands: dict[str, dict[str, str | list[str]]] | None = (
+            self.job.device.get("commands", {}).get("users")
+        )
         if not user_commands:
             self.errors_add("Device has no configured user commands")
             return
@@ -94,7 +98,7 @@ class CommandAction(Action):
             )
 
     @staticmethod
-    def is_command(cmd) -> bool:
+    def is_command(cmd: str | list[str] | None) -> bool:
         # An empty command (or a list with an empty element) would silently run
         # nothing, so reject it here rather than at run time.
         if isinstance(cmd, str):
@@ -103,7 +107,9 @@ class CommandAction(Action):
             return False
         return bool(cmd) and all(isinstance(c, str) and c for c in cmd)
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         self.logger.info("Running user command '%s'", self.parameters["name"])
@@ -115,12 +121,16 @@ class CommandAction(Action):
             self.run_cmd(c)
         return connection
 
-    def cleanup(self, connection):
+    def cleanup(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None = None,
+    ) -> None:
         if not self.ran:
             self.logger.debug("Skipping %s 'undo' as 'do' was not called", self.name)
             return
 
-        if self.cmd is not None and "undo" in self.cmd:
+        if "undo" in self.cmd:
             self.logger.info(
                 "Running cleanup for user command '%s'", self.parameters["name"]
             )

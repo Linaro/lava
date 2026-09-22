@@ -25,6 +25,7 @@ else
     # lava_dispatcher
     'lava_dispatcher/actions/base_strategy.py'
     'lava_dispatcher/actions/boot_strategy.py'
+    'lava_dispatcher/actions/commands.py'
     'lava_dispatcher/actions/deploy_strategy.py'
     'lava_dispatcher/actions/test/mixins.py'
     'lava_dispatcher/actions/test_strategy.py'
