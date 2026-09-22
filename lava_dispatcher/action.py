@@ -986,11 +986,8 @@ class Action:
         if not max_end_time:
             max_end_time = self.timeout.duration + self.timeout.start
         remaining = max_end_time - time.monotonic()
-        # FIXME: connection.prompt_str needs to be always a list
-        # bootloader_prompt is one which does not get set that way
-        # also need functionality to clear the list at times.
         self.logger.debug(
-            "%s: Wait for prompt %s (timeout %s)",
+            "%s: Wait for prompts %r (timeout %s)",
             self.name,
             connection.prompt_str,
             seconds_to_str(remaining),

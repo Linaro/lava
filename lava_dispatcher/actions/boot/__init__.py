@@ -300,8 +300,6 @@ class AutoLoginAction(RetryAction):
                 "error-messages", prefix=self.method, missing_ok=True
             )
             if error_messages:
-                if isinstance(connection.prompt_str, str):
-                    connection.prompt_str = [connection.prompt_str]
                 connection.prompt_str = connection.prompt_str + error_messages
             if kernel_start_message:
                 res = self.wait(connection)
@@ -1023,8 +1021,6 @@ class BootloaderCommandsActionAltBank(Action):
         ):
             final_message = job_final_message
         if error_messages:
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
             connection.prompt_str = connection.prompt_str + error_messages
         command = self.params.get("uboot_altbank_cmd")
         connection.sendline(command, delay=self.character_delay)
@@ -1102,8 +1098,6 @@ class BootloaderCommandsAction(Action):
         ):
             final_message = job_final_message
         if error_messages:
-            if isinstance(connection.prompt_str, str):
-                connection.prompt_str = [connection.prompt_str]
             connection.prompt_str = connection.prompt_str + error_messages
 
         for index, line in enumerate(commands):

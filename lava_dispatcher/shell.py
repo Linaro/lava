@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import contextlib
 import time
-import typing
 from contextlib import contextmanager
 from os import killpg as os_killpg
 from re import Match
@@ -32,6 +31,7 @@ from lava_dispatcher.utils.strings import seconds_to_str
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from typing import Any
 
     from lava_common.log import YAMLLogger
     from lava_dispatcher.job import Job
@@ -145,8 +145,7 @@ class ShellSession:
         self.connected = True
         self.tags: list[str] = ["shell"]
 
-        # FIXME: rename __prompt_str__ to indicate it can be a list or str
-        self.__prompt_str__: str | None = None
+        self._prompt_expect: list[str] = []
         self.timeout = lava_timeout
         self.logger = logger
 
@@ -307,27 +306,35 @@ class ShellSession:
         self.shell_input_logger.flush(True)
         self.shell_output_logger.flush(True)
 
-    # FIXME: rename prompt_str to indicate it can be a list or str
+    # FIXME: rename prompt_str to indicate it is always list[str]
     @property
-    def prompt_str(self) -> str | None:
-        return self.__prompt_str__
+    def prompt_str(self) -> list[str]:
+        return self._prompt_expect
 
     @prompt_str.setter
-    def prompt_str(self, string: str) -> None:
+    def prompt_str(self, new_prompt: str | list[str] | None) -> None:
         """
         pexpect allows the prompt to be a single string or a list of strings
         this property simply replaces the previous value with the new one
-        whether that is a string or a list of strings.
-        To use + the instance of the existing prompt_str must be checked.
+        that is always a list of strings.
         """
-        self.logger.debug("Setting prompt string to %r" % string)
-        self.__prompt_str__ = string
+        self.logger.debug("Setting prompt expect list to %r" % new_prompt)
+        if isinstance(new_prompt, str):
+            self._prompt_expect = [new_prompt]
+        elif new_prompt is None:
+            self._prompt_expect = []
+        elif isinstance(new_prompt, list):
+            self._prompt_expect = new_prompt
+        else:
+            raise LAVABug(
+                f"Prompt expectations should be a list[str], got {type(new_prompt)}"
+            )
 
     @property
     def match(self) -> Match[str] | str | type | None:
         return self.raw_connection.match
 
-    def expect(self, *args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+    def expect(self, *args: Any, **kwargs: Any) -> Any:
         with self._expect_exc_wrapper():
             return self.raw_connection.expect(*args, **kwargs)
 
@@ -359,15 +366,17 @@ class ShellSession:
             "Waiting using forced prompt support (timeout %s)"
             % seconds_to_str(partial_timeout)
         )
-        prompt_str = self.prompt_str
-        if prompt_str is None:
-            raise LAVABug("prompt_str is None")
+        if not self._prompt_expect:
+            raise LAVABug("prompt expect list is empty")
 
+        # list[str] is invariant for type checking
+        # meaning it can't be passed to pexpect expect
+        prompt_expect: list[Any] = list(self._prompt_expect)
         while True:
             try:
                 with self._expect_exc_wrapper():
                     return self.raw_connection.expect(
-                        prompt_str, timeout=partial_timeout
+                        prompt_expect, timeout=partial_timeout
                     )
             except (pexpect.TIMEOUT, TestError) as exc:
                 if prompt_wait_count < 6:
@@ -378,7 +387,7 @@ class ShellSession:
                         seconds_to_str(remaining),
                         seconds_to_str(partial_timeout),
                     )
-                    self.logger.debug("pattern: %s", self.prompt_str)
+                    self.logger.debug("patterns: %r", prompt_expect)
                     prompt_wait_count += 1
                     partial_timeout = remaining / 10
                     self.sendline(self.check_char)
@@ -407,20 +416,23 @@ class ShellSession:
             timeout = max_end_time - time.monotonic()
         if timeout < 0.0:
             raise LAVABug("Invalid max_end_time value passed to wait()")
-        prompt_str = self.prompt_str
-        if prompt_str is None:
-            raise LAVABug("prompt_str is None")
+        if not self._prompt_expect:
+            raise LAVABug("prompt expect list is empty")
+
+        # list[str] is invariant for type checking
+        # meaning it can't be passed to pexpect expect
+        prompt_expect: list[Any] = list(self._prompt_expect)
         try:
             if max_searchwindowsize:
                 with self._expect_exc_wrapper():
                     return self.raw_connection.expect(
-                        prompt_str, timeout=timeout, searchwindowsize=None
+                        prompt_expect, timeout=timeout, searchwindowsize=None
                     )
             else:
                 with self._expect_exc_wrapper():
-                    return self.raw_connection.expect(prompt_str, timeout=timeout)
+                    return self.raw_connection.expect(prompt_expect, timeout=timeout)
         except (TestError, pexpect.TIMEOUT):
-            raise JobError(job_error_message or "wait for prompt timed out")
+            raise JobError(job_error_message or "wait for prompts timed out")
         except ConnectionClosedError as exc:
             self.connected = False
             raise InfrastructureError(str(exc))
