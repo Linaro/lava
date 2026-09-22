@@ -27,7 +27,7 @@ class TestUbootUMSAction(LavaDispatcherTestCase):
         super().setUp()
         self.factory = UBootUMSFactory()
 
-    @unittest.skipIf(infrastructure_error("bmaptool"), "dd not installed")
+    @unittest.skipIf(infrastructure_error("bmaptool"), "bmaptool not installed")
     def test_ums_action(self):
         job = self.factory.create_warp7_job("sample_jobs/warp7-ums.yaml")
         self.assertIsNotNone(job)
