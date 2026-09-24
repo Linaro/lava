@@ -8,13 +8,16 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_dispatcher.action import Action, Pipeline
 from lava_dispatcher.utils.shell import which
 from lava_dispatcher.utils.strings import map_kernel_uboot
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class PrepareKernelAction(Action):
@@ -26,7 +29,7 @@ class PrepareKernelAction(Action):
     description = "populates the pipeline with a kernel conversion action"
     summary = "add a kernel conversion"
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         # the logic here can be upgraded in future if needed with more parameters to the deploy.
         methods = self.job.device["actions"]["boot"]["methods"]
@@ -47,16 +50,16 @@ class UBootPrepareKernelAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.bootcommand = None
-        self.params = None
-        self.kernel_type = None
+        self.bootcommand: str | None = None
+        self.params: dict[str, Any] = {}
+        self.kernel_type: str | None = None
         self.mkimage_conversion = False
 
-    def append_dtb(self, kernel_file, dtb_file, dest_file):
+    def append_dtb(self, kernel_file: str, dtb_file: str, dest_file: str) -> None:
         self.logger.info("Appending %s to %s", dtb_file, kernel_file)
         # Can't use cat here because it will be called with subprocess.check_output that catches stdout
-        cmd = ["dd", "if=%s" % kernel_file, "of=%s" % dest_file]
-        cmd2 = [
+        cmd: list[str] = ["dd", "if=%s" % kernel_file, "of=%s" % dest_file]
+        cmd2: list[str] = [
             "dd",
             "if=%s" % dtb_file,
             "of=%s" % dest_file,
@@ -68,25 +71,27 @@ class UBootPrepareKernelAction(Action):
         if not self.run_command(cmd2):
             raise InfrastructureError("DTB appending failed")
 
-    def create_uimage(self, kernel, load_addr, xip, arch, output):
-        load_addr = int(load_addr, 16)
+    def create_uimage(
+        self, kernel: str, load_addr: str, xip: bool, arch: str, output: str
+    ) -> str:
+        load_addr_int = int(load_addr, 16)
         uimage_path = f"{os.path.dirname(kernel)}/{output}"
         if xip:
-            entry_addr = load_addr + 64
+            entry_addr = load_addr_int + 64
         else:
-            entry_addr = load_addr
-        cmd = f"mkimage -A {arch} -O linux -T kernel -C none -a 0x{load_addr:x} -e 0x{entry_addr:x} -d {kernel} {uimage_path}"
+            entry_addr = load_addr_int
+        cmd = f"mkimage -A {arch} -O linux -T kernel -C none -a 0x{load_addr_int:x} -e 0x{entry_addr:x} -d {kernel} {uimage_path}"
         if self.run_command(cmd.split(" ")):
             return uimage_path
         else:
             raise InfrastructureError("uImage creation failed")
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if "parameters" not in self.job.device["actions"]["deploy"]:
             return
         self.params = self.job.device["actions"]["deploy"]["parameters"]
-        self.kernel_type: str | None = self.get_namespace_data(
+        self.kernel_type = self.get_namespace_data(
             action="download-action", label="type", key="kernel"
         )
         self.bootcommand = None
@@ -124,20 +129,28 @@ class UBootPrepareKernelAction(Action):
             value=self.bootcommand,
         )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         if not self.kernel_type:
             return connection  # idempotency
-        old_kernel = self.get_namespace_data(
+        old_kernel: str | None = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
         )
         if self.params.get("append_dtb", False):
-            kernel_file = self.get_namespace_data(
+            if old_kernel is None:
+                raise JobError("Kernel not downloaded")
+            kernel_file: str | None = self.get_namespace_data(
                 action="download-action", label="kernel", key="file"
             )
-            dtb_file = self.get_namespace_data(
+            if kernel_file is None:
+                raise JobError("Kernel not downloaded")
+            dtb_file: str | None = self.get_namespace_data(
                 action="download-action", label="dtb", key="file"
             )
+            if dtb_file is None:
+                raise JobError("DTB not downloaded")
             kerneldtb_file = os.path.join(os.path.dirname(kernel_file), "kernel-dtb")
             self.append_dtb(kernel_file, dtb_file, kerneldtb_file)
             new_kernel = os.path.join(os.path.dirname(old_kernel), "kernel-dtb")
@@ -152,9 +165,13 @@ class UBootPrepareKernelAction(Action):
             )
         if self.mkimage_conversion:
             self.logger.info("Converting downloaded kernel to a uImage")
-            filename = self.get_namespace_data(
+            if old_kernel is None:
+                raise JobError("Kernel not downloaded")
+            filename: str | None = self.get_namespace_data(
                 action="download-action", label="kernel", key="file"
             )
+            if filename is None:
+                raise JobError("uImage source kernel not found")
             load_addr = self.job.device["parameters"][self.bootcommand]["kernel"]
             if "text_offset" in self.job.device["parameters"]:
                 load_addr = self.job.device["parameters"]["text_offset"]
@@ -182,10 +199,10 @@ class PrepareFITAction(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.deploy_params = None
-        self.device_params = None
+        self.deploy_params: dict[str, Any] = {}
+        self.device_params: dict[str, Any] = {}
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         which("mkimage")
 
@@ -199,77 +216,97 @@ class PrepareFITAction(Action):
         else:
             self.device_params = device_params
 
-    def _make_mkimage_command(self, params):
-        cmd = [
+    def _make_mkimage_command(
+        self,
+        arch: str,
+        kernel: str,
+        load_addr: str,
+        fit_path: str,
+        compression: str | None = None,
+        dtb: str | None = None,
+        ramdisk: str | None = None,
+    ) -> list[str]:
+        cmd: list[str] = [
             "mkimage",
             "-D",
             '"-I dts -O dtb -p 2048"',
             "-f",
             "auto",
             "-A",
-            params["arch"],
+            arch,
             "-O",
             "linux",
             "-T",
             "kernel",
             "-C",
-            params.get("compression", "none"),
+            compression or "none",
             "-d",
-            params["kernel"],
+            kernel,
             "-a",
-            params["load_addr"],
+            load_addr,
         ]
-        dtb = params.get("dtb")
         if dtb:
             cmd += ["-b", dtb]
-        ramdisk = params.get("ramdisk")
         if ramdisk:
             cmd += ["-i", ramdisk]
-        cmd.append(params["fit_path"])
+        cmd.append(fit_path)
         return cmd
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
-        params = {
-            label: self.get_namespace_data(
-                action="download-action", label=label, key="file"
-            )
-            for label in ["kernel", "dtb", "ramdisk"]
-        }
-        kernel_path = params["kernel"]
-        kernel_dir, kernel_image = os.path.split(kernel_path)
-        arch = self.deploy_params.get("mkimage_arch")
 
+        arch = self.deploy_params.get("mkimage_arch")
         if not arch:
             self.logger.info("No mkimage arch provided, not using FIT.")
             return connection
 
+        kernel_path = self.get_namespace_data(
+            action="download-action", label="kernel", key="file"
+        )
+        if kernel_path is None:
+            raise JobError("Kernel not downloaded")
+        kernel_dir, kernel_image = os.path.split(kernel_path)
+        dtb: str | None = self.get_namespace_data(
+            action="download-action", label="dtb", key="file"
+        )
+        ramdisk: str | None = self.get_namespace_data(
+            action="download-action", label="ramdisk", key="file"
+        )
+        compression: str | None = None
+
         if arch == "arm64":
             lzma_kernel = os.path.join(kernel_dir, ".".join([kernel_image, "lzma"]))
             self.run_cmd(["lzma", "--keep", kernel_path])
-            params.update({"kernel": lzma_kernel, "compression": "lzma"})
+            kernel_path = lzma_kernel
+            compression = "lzma"
 
         fit_path = os.path.join(kernel_dir, "image.itb")
-        params.update(
-            {
-                "arch": arch,
-                "load_addr": self.device_params["load_address"],
-                "fit_path": fit_path,
-            }
-        )
-        ramdisk_with_overlay = self.get_namespace_data(
+        load_addr = self.device_params["load_address"]
+        ramdisk_with_overlay: str | None = self.get_namespace_data(
             action="compress-ramdisk", label="file", key="full-path"
         )
         if ramdisk_with_overlay:
-            params["ramdisk"] = ramdisk_with_overlay
+            ramdisk = ramdisk_with_overlay
 
-        cmd = self._make_mkimage_command(params)
+        cmd = self._make_mkimage_command(
+            arch=arch,
+            compression=compression,
+            kernel=kernel_path,
+            load_addr=load_addr,
+            dtb=dtb,
+            ramdisk=ramdisk,
+            fit_path=fit_path,
+        )
         if not self.run_command(cmd):
             raise InfrastructureError("FIT image creation failed")
 
-        kernel_tftp = self.get_namespace_data(
+        kernel_tftp: str | None = self.get_namespace_data(
             action="download-action", label="file", key="kernel"
         )
+        if kernel_tftp is None:
+            raise JobError("Kernel not downloaded")
         fit_tftp = os.path.join(os.path.dirname(kernel_tftp), "image.itb")
         self.set_namespace_data(
             action=self.name, label="file", key="fit", value=fit_tftp
