@@ -8,6 +8,7 @@ from __future__ import annotations
 from unittest import TestCase
 from unittest.mock import MagicMock
 
+from lava_common.exceptions import LAVABug
 from lava_common.timeout import Timeout
 from lava_dispatcher.shell import ShellSession
 
@@ -44,3 +45,36 @@ class TestListenFeedback(TestCase):
 
         self.assertTrue(session.connected)
         self.assertEqual(session.listen_feedback(timeout=5), 0)
+
+
+class TestPromptStr(TestCase):
+    def create_shell_session(self, shell_cmd: str) -> ShellSession:
+        session = ShellSession(
+            shell_cmd,
+            Timeout("test_shell", None),
+            logger=MagicMock(),
+        )
+        self.addCleanup(session.finalise)
+        return session
+
+    def test_prompt_str_none_clears_list(self) -> None:
+        session = self.create_shell_session("sleep 30")
+        session.prompt_str = ["a", "b"]
+        session.prompt_str = None
+        self.assertEqual(session.prompt_str, [])
+
+    def test_prompt_str_string_wrapped_in_list(self) -> None:
+        session = self.create_shell_session("sleep 30")
+        session.prompt_str = "root:"
+        self.assertEqual(session.prompt_str, ["root:"])
+
+    def test_prompt_str_list_replaces_list(self) -> None:
+        session = self.create_shell_session("sleep 30")
+        session.prompt_str = ["a"]
+        session.prompt_str = ["b", "c"]
+        self.assertEqual(session.prompt_str, ["b", "c"])
+
+    def test_prompt_str_invalid_type_raises_lavabug(self) -> None:
+        session = self.create_shell_session("sleep 30")
+        with self.assertRaises(LAVABug):
+            session.prompt_str = 42  # type: ignore[assignment]
