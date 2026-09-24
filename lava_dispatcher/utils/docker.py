@@ -372,14 +372,11 @@ class DockerContainer(DockerRun):
         capture: bool = False,
         error_msg: str | None = None,
     ) -> str | int | None:
-        self.start(action)
-
-        if self._container_name is None:
-            raise LAVABug("No container name assigned")
+        name = self.start(action)
 
         cmd: list[str] = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
-        cmd.append(self._container_name)
+        cmd.append(name)
         cmd += args
         if capture:
             return action.parsed_command(cmd)
@@ -389,9 +386,13 @@ class DockerContainer(DockerRun):
     def check_output(self, cmd: list[str]) -> str:
         return subprocess.check_output(cmd).decode("utf-8")
 
-    def start(self, action: Action) -> None:
+    def start(self, action: Action) -> str:
+        if self._container_name is None:
+            raise LAVABug("No container name assigned")
+        name = self._container_name
+
         if self._started:
-            return
+            return name
 
         cmd = [
             "docker",
@@ -406,6 +407,7 @@ class DockerContainer(DockerRun):
         action.run_cmd(cmd)
         self.wait()
         self._started = True
+        return name
 
     def stop(self, action: Action) -> None:
         if self._container_name is None:
