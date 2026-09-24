@@ -56,3 +56,7 @@
 #test_docker_bind_mounts:
 #- [<bind-mount1-host-path>, <bind-mount1-container-path>]
 #- [<bind-mount2-host-path>, <bind-mount2-container-path>, "rw"]
+
+# rclone configuration
+#rclone_path: /usr/bin/rclone
+#rclone_config: /etc/lava-dispatcher/rclone.conf
