@@ -7,6 +7,7 @@
 import datetime
 import logging
 from dataclasses import dataclass
+from fnmatch import fnmatch
 
 from django.contrib.auth.models import User
 from django.db import connection, transaction
@@ -318,7 +319,40 @@ def schedule_jobs_for_device_type(dt, available_devices, workers_limit):
             workers_limit[device.worker_host_id].busy += 1
 
 
+def pool_tags(pattern, device):
+    """
+    Tags of the given device that are part of the pool described by pattern.
+    """
+    return {tag.name for tag in device.tags.all() if fnmatch(tag.name, pattern)}
+
+
+def device_in_multinode_pool(job, device):
+    """
+    Check that the device belong to the multinode pool.
+    """
+    pattern = job.pool_pattern
+
+    pools = pool_tags(pattern, device)
+    if not pools:
+        return False
+
+    sub_jobs = (
+        job.sub_jobs_list.exclude(pk=job.pk)
+        .filter(actual_device__isnull=False)
+        .select_related("actual_device")
+    )
+    for sub_job in sub_jobs:
+        pools &= pool_tags(pattern, sub_job.actual_device)
+        if not pools:
+            return False
+
+    return True
+
+
 def schedule_jobs_for_device(device, print_header):
+    # Only the tags explicitly requested by the job are filtered here. The
+    # pool_pattern of multinode jobs is checked below, once the already
+    # reserved devices of the group are known.
     job_extra_tags_subquery = Exists(
         Tag.objects.filter(testjob=OuterRef("pk")).exclude(pk__in=device.tags.all())
     )
@@ -341,6 +375,12 @@ def schedule_jobs_for_device(device, print_header):
         for job in jobs:
             if not device.can_submit(job.submitter):
                 continue
+
+            # A multinode job restricted to a pool can only use devices
+            # sharing a pool tag with the rest of the group.
+            if job.is_multinode and job.pool_pattern:
+                if not device_in_multinode_pool(job, device):
+                    continue
 
             if print_header:
                 LOGGER.debug("- %s", device.device_type.name)

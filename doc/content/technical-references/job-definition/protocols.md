@@ -12,6 +12,57 @@ are able to share data between actions.
 The MultiNode protocol allows multiple devices to work together as a group,
 synchronizing operations and sharing data between them.
 
+### pool_pattern
+
+`string` (1–200 characters)
+
+A glob pattern (as understood by [fnmatch](https://docs.python.org/3/library/fnmatch.html))
+used to keep every device of the group inside the same *pool*. A pool is
+described by a device tag: when `pool_pattern` is set, the scheduler will only
+use devices that have at least one tag matching the pattern, and every device
+of the group will share the same matching tag.
+
+```yaml
+protocols:
+  lava-multinode:
+    pool_pattern: "lab-*"
+    roles:
+      server:
+        device_type: qemu
+        count: 1
+      client:
+        device_type: bcm2711-rpi-4-b
+        count: 1
+```
+
+With the definition above, and devices tagged `lab-paris` or `lab-lyon`, the
+group will either run entirely on `lab-paris` devices or entirely on
+`lab-lyon` devices, but never on a mix of both.
+
+This is useful when the devices of a group have to be physically connected
+together, for instance when they share a network switch, a power supply or a
+USB hub.
+
+!!! note
+    The pattern has to match the **whole** tag name, `lab-` would not match the
+    `lab-paris` tag while `lab-*` would. The supported wildcards are `*` (any
+    number of characters), `?` (a single character) and `[seq]` (any character
+    in *seq*).
+
+!!! note
+    `pool_pattern` is only meaningful for MultiNode jobs.
+
+The pool is unrelated to the [tags](./job.md#tags) requested by a role: a role
+can request tags *and* the job can define a `pool_pattern`. In that case the
+device has to satisfy both.
+
+!!! warning
+    The devices of a group are reserved one by one. Once the first device of
+    the group has been reserved, the pool is fixed and the remaining sub jobs
+    will wait for devices of that pool only. If the pool never has enough idle
+    devices, the job stays queued until the
+    [queue timeout](./timeouts.md) expires.
+
 ### API
 
 The MultiNode API provides helper scripts that are available inside the test

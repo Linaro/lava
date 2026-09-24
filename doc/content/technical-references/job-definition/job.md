@@ -92,6 +92,11 @@ tags:
 - usb-eth
 ```
 
+For [multinode](../../user/advanced-tutorials/multinode.md) jobs, specify
+``tags`` inside each ``lava-multinode`` role. A multinode job can also require
+every device of the group to belong to the same pool of devices, see
+[pool_pattern](./protocols.md#pool_pattern).
+
 ## timeouts
 
 **Required** `dict`

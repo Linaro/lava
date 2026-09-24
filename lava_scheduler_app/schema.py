@@ -400,7 +400,11 @@ def _validate_multinode(data_object):
 def _job_protocols_schema():
     return Schema(
         {
-            "lava-multinode": {"timeout": _timeout_schema(), "roles": dict},
+            "lava-multinode": {
+                "timeout": _timeout_schema(),
+                "roles": dict,
+                Optional("pool_pattern"): All(str, Length(min=1, max=200)),
+            },
             "lava-xnbd": dict,
         }
     )

@@ -270,7 +270,10 @@ def check_multinode_roles(data):
     for action in data.get("actions", []):
         action_type = next(iter(action.keys()))
         if "role" not in action[action_type]:
-            raise Invalid("Every action of a multinode job should have roles")
+            raise Invalid(
+                "Every action of a multinode job should have roles",
+                path=["protocols", "lava-multinode"],
+            )
 
 
 def check_namespace(data):
@@ -346,6 +349,7 @@ def job(extra_context_variables):
                             },
                         )
                     },
+                    Optional("pool_pattern"): All(str, Length(min=1, max=200)),
                     Optional("timeout"): timeout(),
                 },
                 Optional("lava-xnbd"): {

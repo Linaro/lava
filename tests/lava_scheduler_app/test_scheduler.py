@@ -17,7 +17,9 @@ from django.utils import timezone
 
 from lava_scheduler_app.models import Device, DeviceType, Tag, TestJob, Worker
 from lava_scheduler_app.scheduler import (
+    device_in_multinode_pool,
     distinct_on_target_group,
+    pool_tags,
     schedule,
     schedule_health_checks,
     worker_summary,
@@ -1047,3 +1049,315 @@ class TestDistinctOnTargetGroup:
 
     def test_no_jobs(self):
         assert not list(distinct_on_target_group([]))
+
+
+def _multinode_job_definition(role, target_group, sub_id=0, group_size=2):
+    return f"""
+job_name: multinode job
+visibility: public
+timeouts:
+  job:
+    minutes: 10
+protocols:
+  lava-multinode:
+    role: {role}
+    target_group: {target_group}
+    sub_id: {sub_id}
+    group_size: {group_size}
+actions: []
+"""
+
+
+class TestMultinodePoolPattern(TestCase):
+    """
+    A multinode job with a pool_pattern can only use devices sharing the same
+    tag matching that pattern.
+    """
+
+    def setUp(self):
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.user = User.objects.create(username="user-01")
+        self.device_type01 = DeviceType.objects.create(
+            name="qemu", disable_health_check=True
+        )
+        self.pool_a = Tag.objects.create(name="pool-a")
+        self.pool_b = Tag.objects.create(name="pool-b")
+
+        self.devices = {}
+        for hostname, tags in [
+            ("qemu01", [self.pool_a]),
+            ("qemu02", [self.pool_a]),
+            ("qemu03", [self.pool_b]),
+            ("qemu04", [self.pool_b]),
+        ]:
+            device = Device.objects.create(
+                hostname=hostname,
+                device_type=self.device_type01,
+                worker_host=self.worker01,
+                health=Device.HEALTH_GOOD,
+            )
+            device.tags.set(tags)
+            self.devices[hostname] = device
+
+    def _keep_one_device_per_pool(self):
+        # Only qemu01 (pool-a) and qemu03 (pool-b) remain usable
+        for hostname in ["qemu02", "qemu04"]:
+            self.devices[hostname].health = Device.HEALTH_RETIRED
+            self.devices[hostname].save()
+
+    def _make_group(self, pool_pattern="pool-*", roles=("server", "client")):
+        target_group = "target-group-01"
+        jobs = []
+        for index, role in enumerate(roles):
+            job = TestJob.objects.create(
+                requested_device_type=self.device_type01,
+                submitter=self.user,
+                definition=_multinode_job_definition(
+                    role, target_group, sub_id=index, group_size=len(roles)
+                ),
+                target_group=target_group,
+                pool_pattern=pool_pattern,
+            )
+            job.sub_id = "%d.%d" % (jobs[0].id if jobs else job.id, index)
+            job.save(update_fields=["sub_id"])
+            jobs.append(job)
+        return jobs
+
+    def _pools_in_use(self, jobs):
+        pools = []
+        for job in jobs:
+            job.refresh_from_db()
+            if job.actual_device is None:
+                continue
+            pools.extend(tag.name for tag in job.actual_device.tags.all())
+        return pools
+
+    def test_all_devices_are_from_the_same_pool(self):
+        jobs = self._make_group()
+        schedule(["worker-01"])
+
+        pools = []
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
+            self.assertIsNotNone(job.actual_device)
+            pools.append({tag.name for tag in job.actual_device.tags.all()})
+
+        # Both sub jobs are in the very same (single) pool
+        self.assertEqual(pools[0], pools[1])
+        self.assertIn(pools[0], [{"pool-a"}, {"pool-b"}])
+        (pool,) = pools[0]
+
+        # The two devices of that pool are reserved, one per sub job, while
+        # the devices of the other pool are left untouched.
+        in_pool = {"pool-a": ["qemu01", "qemu02"], "pool-b": ["qemu03", "qemu04"]}[pool]
+        self.assertEqual(sorted(job.actual_device.hostname for job in jobs), in_pool)
+
+        for hostname, device in self.devices.items():
+            device.refresh_from_db()
+            self.assertEqual(device.health, Device.HEALTH_GOOD)
+            if hostname in in_pool:
+                self.assertEqual(device.state, Device.STATE_RESERVED)
+                self.assertIn(device.current_job(), jobs)
+            else:
+                self.assertEqual(device.state, Device.STATE_IDLE)
+                self.assertIsNone(device.current_job())
+
+    def test_group_is_not_split_between_two_pools(self):
+        # One single device per pool: only the first sub job can be scheduled,
+        # the second one has to wait for a device of the very same pool.
+        self._keep_one_device_per_pool()
+        jobs = self._make_group()
+        schedule(["worker-01"])
+
+        states = []
+        for job in jobs:
+            job.refresh_from_db()
+            states.append(job.state)
+        self.assertEqual(
+            sorted(states), [TestJob.STATE_SUBMITTED, TestJob.STATE_SCHEDULING]
+        )
+        self.assertEqual(len(self._pools_in_use(jobs)), 1)
+
+    def test_without_pool_pattern_the_group_can_be_split(self):
+        # Remove the pool_pattern and force one device per tag
+        # Scheduler should assign each job to a different tag
+        self._keep_one_device_per_pool()
+        jobs = self._make_group(pool_pattern=None)
+        schedule(["worker-01"])
+
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
+
+        self.assertEqual(sorted(self._pools_in_use(jobs)), ["pool-a", "pool-b"])
+
+    def test_devices_without_a_matching_tag_are_skipped(self):
+        # Try to schedule a multinode job with a poll_pattern that can't match
+        jobs = self._make_group(pool_pattern="pool-c*")
+        schedule(["worker-01"])
+
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.state, TestJob.STATE_SUBMITTED)
+            self.assertIsNone(job.actual_device)
+
+    def test_pattern_should_match_the_full_tag_name(self):
+        # "pool-" is a prefix of "pool-a" but does not match the full tag name
+        jobs = self._make_group(pool_pattern="pool-")
+        schedule(["worker-01"])
+
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.state, TestJob.STATE_SUBMITTED)
+
+    def test_larger_group_than_the_pool(self):
+        # 3 sub jobs but only 2 devices per pool
+        jobs = self._make_group(roles=("server", "client", "monitor"))
+        schedule(["worker-01"])
+
+        states = sorted(
+            TestJob.objects.filter(pk__in=[j.pk for j in jobs]).values_list(
+                "state", flat=True
+            )
+        )
+        self.assertEqual(
+            states,
+            [
+                TestJob.STATE_SUBMITTED,
+                TestJob.STATE_SCHEDULING,
+                TestJob.STATE_SCHEDULING,
+            ],
+        )
+        pools = self._pools_in_use(jobs)
+        self.assertEqual(len(pools), 2)
+        self.assertEqual(len(set(pools)), 1)
+
+    def test_pool_pattern_is_ignored_for_single_node_jobs(self):
+        device = Device.objects.create(
+            hostname="qemu05",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        job = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            submitter=self.user,
+            definition=_minimal_valid_job(None),
+            pool_pattern="pool-*",
+        )
+        self.assertFalse(job.is_multinode)
+
+        schedule(["worker-01"])
+        job.refresh_from_db()
+        self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
+        # Any device can be used, including one without any tag
+        self.assertIn(
+            job.actual_device.hostname,
+            [device.hostname] + list(self.devices.keys()),
+        )
+
+    def test_pool_and_job_tags_are_both_enforced(self):
+        # Each pool has one device with the "fastboot" tag
+        fastboot = Tag.objects.create(name="fastboot")
+        self.devices["qemu01"].tags.add(fastboot)
+        self.devices["qemu03"].tags.add(fastboot)
+
+        jobs = self._make_group()
+        jobs[0].tags.add(fastboot)
+        schedule(["worker-01"])
+
+        for job in jobs:
+            job.refresh_from_db()
+            self.assertEqual(job.state, TestJob.STATE_SCHEDULED)
+
+        # The first sub job requires "fastboot", the group stays in one pool
+        self.assertIn(jobs[0].actual_device.hostname, ["qemu01", "qemu03"])
+        pools = [p for p in self._pools_in_use(jobs) if p != "fastboot"]
+        self.assertEqual(len(pools), 2)
+        self.assertEqual(len(set(pools)), 1)
+
+
+class TestDeviceInJobPool(TestCase):
+    def setUp(self):
+        self.worker01 = Worker.objects.create(
+            hostname="worker-01", state=Worker.STATE_ONLINE
+        )
+        self.user = User.objects.create(username="user-01")
+        self.device_type01 = DeviceType.objects.create(name="qemu")
+        self.pool_a = Tag.objects.create(name="pool-a")
+        self.pool_b = Tag.objects.create(name="pool-b")
+
+        self.device01 = Device.objects.create(
+            hostname="qemu01",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device01.tags.set([self.pool_a])
+        self.device02 = Device.objects.create(
+            hostname="qemu02",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device02.tags.set([self.pool_b])
+        self.device03 = Device.objects.create(
+            hostname="qemu03",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.device03.tags.set([self.pool_a, self.pool_b])
+
+        self.job01 = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            submitter=self.user,
+            definition=_multinode_job_definition("server", "target-group-01"),
+            target_group="target-group-01",
+            pool_pattern="pool-*",
+        )
+        self.job02 = TestJob.objects.create(
+            requested_device_type=self.device_type01,
+            submitter=self.user,
+            definition=_multinode_job_definition("client", "target-group-01", sub_id=1),
+            target_group="target-group-01",
+            pool_pattern="pool-*",
+        )
+
+    def test_pool_tags(self):
+        self.assertEqual(pool_tags("pool-*", self.device01), {"pool-a"})
+        self.assertEqual(pool_tags("pool-*", self.device03), {"pool-a", "pool-b"})
+        self.assertEqual(pool_tags("pool-?", self.device03), {"pool-a", "pool-b"})
+        self.assertEqual(pool_tags("pool-[b]", self.device03), {"pool-b"})
+        self.assertEqual(pool_tags("nothing", self.device01), set())
+
+    def test_no_device_reserved_yet(self):
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device01))
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device02))
+
+    def test_same_pool_as_the_reserved_device(self):
+        self.job01.actual_device = self.device01
+        self.job01.save(update_fields=["actual_device"])
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device01))
+        self.assertFalse(device_in_multinode_pool(self.job02, self.device02))
+        # device03 is in both pools
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device03))
+
+    def test_pool_is_narrowed_down_by_each_reservation(self):
+        # device03 belongs to both pools, the group is not tied to one pool yet
+        self.job01.actual_device = self.device03
+        self.job01.save(update_fields=["actual_device"])
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device01))
+        self.assertTrue(device_in_multinode_pool(self.job02, self.device02))
+
+    def test_device_without_any_pool_tag(self):
+        device = Device.objects.create(
+            hostname="qemu04",
+            device_type=self.device_type01,
+            worker_host=self.worker01,
+            health=Device.HEALTH_GOOD,
+        )
+        self.assertFalse(device_in_multinode_pool(self.job02, device))

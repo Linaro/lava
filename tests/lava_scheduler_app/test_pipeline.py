@@ -1276,3 +1276,52 @@ class TestYamlMultinode(TestCaseWithFactory):
                 self.assertTrue(job.essential_role)
             else:
                 self.fail("Unexpected role: %s" % role)
+
+    def test_multinode_pool_pattern(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, "fakeqemu1")
+        self.factory.make_device(device_type, "fakeqemu2")
+        submission = self._load_multinode_submission()
+        submission["protocols"][MultinodeProtocol.name]["pool_pattern"] = "pool-*"
+
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
+        self.assertEqual(len(job_object_list), 2)
+        for job in job_object_list:
+            self.assertEqual(job.pool_pattern, "pool-*")
+            # the pattern is kept in every sub job definition
+            definition = yaml_safe_load(job.definition)
+            self.assertEqual(
+                definition["protocols"][MultinodeProtocol.name]["pool_pattern"],
+                "pool-*",
+            )
+
+    def test_multinode_without_pool_pattern(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, "fakeqemu1")
+        self.factory.make_device(device_type, "fakeqemu2")
+        submission = self._load_multinode_submission()
+
+        job_object_list = _pipeline_protocols(
+            submission, user, yaml_safe_dump(submission)
+        )
+        self.assertEqual(len(job_object_list), 2)
+        for job in job_object_list:
+            self.assertIsNone(job.pool_pattern)
+
+    def test_single_node_job_has_no_pool_pattern(self):
+        user = self.factory.make_user()
+        device_type = self.factory.make_device_type()
+        self.factory.make_device(device_type, "fakeqemu1")
+        job = TestJob.from_yaml_and_user(self.factory.make_job_yaml(), user)
+        self.assertIsNone(job.pool_pattern)
+
+    def test_validate_submission_pool_pattern(self):
+        submission = self._load_multinode_submission()
+        self.assertTrue(validate_submission(submission))
+
+        submission["protocols"][MultinodeProtocol.name]["pool_pattern"] = "pool-*"
+        self.assertTrue(validate_submission(submission))

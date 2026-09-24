@@ -1246,6 +1246,22 @@ def extract_job_metadata(job_data):
     return {str(key): _normalize_metadata_value(val) for key, val in metadata.items()}
 
 
+def _get_pool_pattern(job_data):
+    """
+    Extract the multinode "pool_pattern" from a job definition.
+
+    :param job_data: dictionary of the submission YAML
+    :return: the glob pattern as a string or None when not set
+    """
+    protocols = job_data.get("protocols")
+    if not isinstance(protocols, dict):
+        return None
+    multinode = protocols.get("lava-multinode")
+    if not isinstance(multinode, dict):
+        return None
+    return multinode.get("pool_pattern")
+
+
 def _create_pipeline_job(
     job_data,
     user,
@@ -1327,6 +1343,8 @@ def _create_pipeline_job(
             requested_device=device,
             requested_worker=worker,
             target_group=target_group,
+            # Only multinode jobs can be restricted to a pool of devices
+            pool_pattern=_get_pool_pattern(job_data) if target_group else None,
             description=job_data["job_name"],
             health_check=health_check,
             priority=priority,
@@ -1576,6 +1594,18 @@ class TestJob(models.Model):
         max_length=64,
         null=True,
         default=None,
+    )
+
+    # Multinode only: glob pattern that every device of the group has to match
+    # with one of its tags. All the devices of the group will share the same
+    # tag matching this pattern, hence belong to the same "pool".
+    pool_pattern = models.CharField(
+        verbose_name=gettext_lazy("Pool pattern"),
+        blank=True,
+        max_length=200,
+        null=True,
+        default=None,
+        editable=False,
     )
 
     submitter = models.ForeignKey(
