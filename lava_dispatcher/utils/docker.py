@@ -12,12 +12,14 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
+    from typing import Any, Self
 
     from lava_dispatcher.action import Action
+    from lava_dispatcher.job import Job
     from lava_dispatcher.shell import ShellSession
 
 
@@ -69,7 +71,7 @@ class DockerRun:
         self._docker_login: DockerLogin | None = None
 
     @classmethod
-    def from_parameters(cls, params, job):
+    def from_parameters(cls: type[Self], params: dict[str, Any], job: Job) -> Self:
         image: str = params["image"]
         run = cls(image)
         suffix = "-lava-" + str(job.job_id)
@@ -96,42 +98,42 @@ class DockerRun:
             )
         return run
 
-    def local(self, local):
+    def local(self, local: bool) -> None:
         self._is_local_image = local
 
-    def name(self, name, random_suffix=False):
+    def name(self, name: str, random_suffix: bool = False) -> None:
         suffix = ""
         if random_suffix:
             CHARS = "01234567890abcdefghijklmnopqrtsuwxyz"
             suffix = "".join(random.SystemRandom().choice(CHARS) for i in range(10))
         self._container_name = name + suffix
 
-    def network(self, network):
+    def network(self, network: str | None) -> None:
         self._network_name = network
 
-    def suffix(self, suffix):
+    def suffix(self, suffix: str) -> None:
         self._suffix = suffix
 
-    def hostname(self, hostname):
+    def hostname(self, hostname: str | None) -> None:
         self._hostname = hostname
 
-    def workdir(self, workdir):
+    def workdir(self, workdir: str | None) -> None:
         self._workdir = workdir
 
-    def init(self, init):
+    def init(self, init: bool) -> None:
         self._has_init = init
 
-    def add_device(self, device, skip_missing=False):
+    def add_device(self, device: str, skip_missing: bool = False) -> None:
         if not Path(device).exists() and skip_missing:
             return
         if ":" in device:
             return
         self._shared_devices.append(device)
 
-    def add_docker_options(self, *options):
+    def add_docker_options(self, *options: str) -> None:
         self._docker_options += options
 
-    def add_docker_run_options(self, *options):
+    def add_docker_run_options(self, *options: str) -> None:
         self._docker_run_options += options
 
     def add_device_docker_method_options(
@@ -160,38 +162,42 @@ class DockerRun:
         if "options" in docker_method_conf:
             self.add_docker_run_options(*preproc_opts(docker_method_conf["options"]))
 
-    def interactive(self):
+    def interactive(self) -> None:
         self._is_interactive = True
 
-    def tty(self):
+    def tty(self) -> None:
         self._is_tty = True
 
-    def bind_mount(self, source, destination=None, read_only=False):
+    def bind_mount(
+        self, source: str, destination: str | None = None, read_only: bool = False
+    ) -> None:
         if not destination:
             destination = source
         self._bind_mounts.append((source, destination, read_only))
 
-    def environment(self, variable, value):
+    def environment(self, variable: str, value: str) -> None:
         self._environment_vars.append((variable, value))
 
-    def cmdline(self, *args):
-        cmd = ["docker"] + self._docker_options + ["run"] + self._docker_run_options
+    def cmdline(self, *args: str) -> list[str]:
+        cmd: list[str] = (
+            ["docker"] + self._docker_options + ["run"] + self._docker_run_options
+        )
         cmd += self.interaction_options()
         cmd += self.start_options()
         cmd.append(self.image)
         cmd += args
         return cmd
 
-    def interaction_options(self):
-        cmd = []
+    def interaction_options(self) -> list[str]:
+        cmd: list[str] = []
         if self._is_interactive:
             cmd.append("--interactive")
         if self._is_tty:
             cmd.append("--tty")
         return cmd
 
-    def start_options(self):
-        cmd = ["--rm"]
+    def start_options(self) -> list[str]:
+        cmd: list[str] = ["--rm"]
         if self._has_init:
             cmd.append("--init")
         if self._container_name:
@@ -229,7 +235,7 @@ class DockerRun:
         else:
             return action.run_cmd(cmd, error_msg=error_msg)
 
-    def prepare(self, action: Action):
+    def prepare(self, action: Action) -> None:
         pull = not self._is_local_image
         if self._is_local_image:
             if action.run_cmd(
@@ -260,7 +266,10 @@ class DockerRun:
             )
         self._check_image_arch(action)
 
-    def wait(self, shell: ShellSession | None = None):
+    def wait(self, shell: ShellSession | None = None) -> None:
+        if self._container_name is None:
+            raise LAVABug("No container name assigned")
+
         delay = 1
         while True:
             try:
@@ -285,6 +294,9 @@ class DockerRun:
                 delay = delay * 2  # exponential backoff
 
     def wait_file(self, filename: str, timeout: int | None = None) -> None:
+        if self._container_name is None:
+            raise LAVABug("No container name assigned")
+
         delay = 1
         start = time.monotonic()
         while True:
@@ -309,7 +321,7 @@ class DockerRun:
                 time.sleep(delay)
                 delay = delay * 2  # exponential backoff
 
-    def destroy(self):
+    def destroy(self) -> None:
         if self._container_name:
             subprocess.call(
                 ["docker", *self._docker_options, "rm", "-f", self._container_name],
@@ -317,7 +329,7 @@ class DockerRun:
                 stderr=subprocess.DEVNULL,
             )
 
-    def _check_image_arch(self, action):
+    def _check_image_arch(self, action: Action) -> None:
         host = subprocess.check_output(["arch"], text=True).strip()
         try:
             container = subprocess.check_output(
@@ -361,6 +373,10 @@ class DockerContainer(DockerRun):
         error_msg: str | None = None,
     ) -> str | int | None:
         self.start(action)
+
+        if self._container_name is None:
+            raise LAVABug("No container name assigned")
+
         cmd: list[str] = ["docker", *self._docker_options, "exec"]
         cmd += self.interaction_options()
         cmd.append(self._container_name)
@@ -370,10 +386,10 @@ class DockerContainer(DockerRun):
 
         return action.run_cmd(cmd, error_msg=error_msg)
 
-    def check_output(self, cmd):
+    def check_output(self, cmd: list[str]) -> str:
         return subprocess.check_output(cmd).decode("utf-8")
 
-    def start(self, action):
+    def start(self, action: Action) -> None:
         if self._started:
             return
 
@@ -391,5 +407,8 @@ class DockerContainer(DockerRun):
         self.wait()
         self._started = True
 
-    def stop(self, action):
+    def stop(self, action: Action) -> None:
+        if self._container_name is None:
+            raise LAVABug("No container name assigned")
+
         action.run_cmd(["docker", *self._docker_options, "stop", self._container_name])
