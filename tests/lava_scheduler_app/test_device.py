@@ -3,10 +3,13 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+import tempfile
+from pathlib import Path
+
 from django.contrib.auth.models import Group, Permission, User
 from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from lava_scheduler_app.dbutils import (
     active_device_types,
@@ -258,3 +261,96 @@ class DeviceTypeTest(TestCaseWithFactory):
         dt = DeviceType(name="typ/e2")
         with self.assertRaises(ValidationError):
             dt.save()
+
+
+class DeviceHealthCheckTest(TestCaseWithFactory):
+    """
+    Test the lookup of the health check definition
+    """
+
+    def test_health_check_falls_back_to_the_device_type_name(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="rpi4-01", health=Device.HEALTH_GOOD
+        )
+        self.assertEqual("base-uboot", device.get_extends())
+        self.assertFalse(File("health-check", "base-uboot").exists())
+
+        health_check = device.get_health_check()
+        self.assertIsNotNone(health_check)
+        self.assertIn("job_name: rpi4-health-check", health_check)
+
+    def test_health_check_prefers_the_device_type_name(self):
+        """The device-type name wins even when the extended template also has a
+        health check, so that a check written by `lavacli device-types
+        health-check set` is always the one that runs."""
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        device = Device.objects.create(
+            device_type=dt, hostname="juno-01", health=Device.HEALTH_GOOD
+        )
+        self.assertEqual("juno", device.get_extends())
+        self.assertTrue(File("health-check", "juno").exists())
+
+        self.assertIn("job_name: rpi4-health-check", device.get_health_check())
+
+    def rpi4(self):
+        dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
+        return Device.objects.create(
+            device_type=dt, hostname="rpi4-01", health=Device.HEALTH_GOOD
+        )
+
+    def test_health_check_candidate_precedence(self):
+        """The full precedence table: the four candidates are tried in order,
+        device-type name before template name, .yaml before .yml within each."""
+        device = self.rpi4()
+        self.assertEqual("base-uboot", device.get_extends())
+
+        cases = [
+            (["base-uboot.yaml"], "base-uboot.yaml"),
+            (["base-uboot.yml"], "base-uboot.yml"),
+            (["bcm2711-rpi-4-b.yaml"], "bcm2711-rpi-4-b.yaml"),
+            (["bcm2711-rpi-4-b.yml"], "bcm2711-rpi-4-b.yml"),
+            (["base-uboot.yaml", "base-uboot.yml"], "base-uboot.yaml"),
+            (["bcm2711-rpi-4-b.yaml", "bcm2711-rpi-4-b.yml"], "bcm2711-rpi-4-b.yaml"),
+            (["base-uboot.yaml", "bcm2711-rpi-4-b.yaml"], "bcm2711-rpi-4-b.yaml"),
+            (["base-uboot.yml", "bcm2711-rpi-4-b.yaml"], "bcm2711-rpi-4-b.yaml"),
+        ]
+        for present, expected in cases:
+            with self.subTest(present=present):
+                with tempfile.TemporaryDirectory() as health_checks:
+                    for name in present:
+                        Path(health_checks, name).write_text(f"job_name: {name}\n")
+                    with override_settings(HEALTH_CHECKS_PATH=health_checks):
+                        self.assertEqual(
+                            f"job_name: {expected}\n", device.get_health_check()
+                        )
+
+    def test_health_check_is_none_when_no_candidate_exists(self):
+        device = self.rpi4()
+        with tempfile.TemporaryDirectory() as health_checks:
+            with override_settings(HEALTH_CHECKS_PATH=health_checks):
+                self.assertIsNone(device.get_health_check())
+
+    def test_health_check_skips_an_unreadable_candidate(self):
+        """An OSError on a candidate falls through to the next one rather than
+        giving up, which is a deliberate change from looking only at existence."""
+        device = self.rpi4()
+        with tempfile.TemporaryDirectory() as health_checks:
+            Path(health_checks, "bcm2711-rpi-4-b.yaml").mkdir()
+            Path(health_checks, "base-uboot.yaml").write_text(
+                "job_name: from-template\n"
+            )
+            with override_settings(HEALTH_CHECKS_PATH=health_checks):
+                self.assertEqual("job_name: from-template\n", device.get_health_check())
+
+    def test_health_check_order_is_moot_for_the_usual_convention(self):
+        """A dictionary extending its own device-type template yields the same
+        name twice, so candidate ordering cannot matter for it."""
+        DeviceType.objects.create(name="juno")
+        device = Device.objects.create(
+            device_type=DeviceType.objects.get(name="juno"),
+            hostname="juno-01",
+            health=Device.HEALTH_GOOD,
+        )
+        self.assertEqual("juno", device.get_extends())
+        self.assertEqual("juno", device.device_type.name)

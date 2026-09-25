@@ -995,15 +995,15 @@ class Device(RestrictedObject):
         if not extends:
             return None
 
-        filename = os.path.join(settings.HEALTH_CHECKS_PATH, "%s.yaml" % extends)
-        # Try if health check file is having a .yml extension
-        if not os.path.exists(filename):
-            filename = os.path.join(settings.HEALTH_CHECKS_PATH, "%s.yml" % extends)
-        try:
-            with open(filename) as f_in:
-                return f_in.read()
-        except OSError:
-            return None
+        for name in dict.fromkeys((self.device_type.name, extends)):
+            for extension in ("yaml", "yml"):
+                filename = os.path.join(
+                    settings.HEALTH_CHECKS_PATH, f"{name}.{extension}"
+                )
+                with contextlib.suppress(OSError):
+                    with open(filename) as f_in:
+                        return f_in.read()
+        return None
 
     def save(self, *args, **kwargs):
         super().full_clean()
