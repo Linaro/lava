@@ -330,7 +330,7 @@ def pool_tags(pattern, device):
 
 def device_in_multinode_pool(job, device):
     """
-    Check that the device belong to the multinode pool.
+    Check that the device belongs to the multinode pool.
     """
     pattern = job.pool_pattern
 
