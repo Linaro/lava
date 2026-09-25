@@ -285,6 +285,7 @@ project-includes = [
   "lava_dispatcher/actions/test/mixins.py",
   "lava_dispatcher/actions/test_strategy.py",
   "lava_dispatcher/connection.py",
+  "lava_dispatcher/connections/adb.py",
   "lava_dispatcher/deployment_data.py",
   "lava_dispatcher/device.py",
   "lava_dispatcher/job.py",
