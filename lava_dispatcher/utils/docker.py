@@ -10,13 +10,13 @@ import random
 import subprocess
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any, Self
+    from typing import Any, Literal, Self
 
     from lava_dispatcher.action import Action
     from lava_dispatcher.job import Job
@@ -219,6 +219,24 @@ class DockerRun:
             cmd.append(f"--env={variable}={value}")
         return cmd
 
+    @overload
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: Literal[False] = False,
+        error_msg: str | None = None,
+    ) -> str | int | None: ...
+
+    @overload
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: Literal[True] = True,
+        error_msg: str | None = None,
+    ) -> str: ...
+
     def run(
         self,
         args: list[str],
@@ -364,6 +382,24 @@ class DockerContainer(DockerRun):
     def __init__(self, image: str):
         super().__init__(image)
         self._started = False
+
+    @overload
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: Literal[False] = False,
+        error_msg: str | None = None,
+    ) -> str | int | None: ...
+
+    @overload
+    def run(
+        self,
+        args: list[str],
+        action: Action,
+        capture: Literal[True] = True,
+        error_msg: str | None = None,
+    ) -> str: ...
 
     def run(
         self,

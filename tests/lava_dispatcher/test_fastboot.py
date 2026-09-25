@@ -113,7 +113,7 @@ class TestFastbootBaseActionDriverUsage(LavaDispatcherTestCase):
 
     def test_get_fastboot_output_kwards(self):
         self.action.get_fastboot_output(["devices"], foo="bar")
-        self.get_output_maybe_in_container.assert_called_with(ANY, foo="bar")
+        self.get_output_maybe_in_container.assert_called_with(ANY)
 
     def test_run_adb(self):
         self.action.run_adb(["devices"])
@@ -128,7 +128,7 @@ class TestFastbootBaseActionDriverUsage(LavaDispatcherTestCase):
 
     def test_get_adb_output_kwards(self):
         self.action.get_adb_output(["devices"], foo="bar")
-        self.get_output_maybe_in_container.assert_called_with(ANY, foo="bar")
+        self.get_output_maybe_in_container.assert_called_with(ANY)
 
 
 class TestDockerDriver(unittest.TestCase):

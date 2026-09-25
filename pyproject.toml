@@ -295,6 +295,7 @@ project-includes = [
   "lava_dispatcher/runner.py",
   "lava_dispatcher/shell.py",
   "lava_dispatcher/utils/compression.py",
+  "lava_dispatcher/utils/containers.py",
   "lava_dispatcher/utils/contextmanager.py",
   "lava_dispatcher/utils/decorator.py",
   "lava_dispatcher/utils/docker.py",
