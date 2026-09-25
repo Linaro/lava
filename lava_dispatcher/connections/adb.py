@@ -21,7 +21,7 @@ class ConnectAdb(Action):
 
     session_class = ShellSession
 
-    def validate(self):
+    def validate(self) -> None:
         if "adb" not in self.job.device["actions"]["boot"]["methods"]:
             return
         if "adb_serial_number" not in self.job.device:
@@ -31,17 +31,19 @@ class ConnectAdb(Action):
         super().validate()
         which("adb")
 
-    def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
+        existing_adb_connection: ShellSession | None = self.get_namespace_data(
             action="shared", label="shared", key="connection", deepcopy=False
         )
-        if connection:
-            return connection
+        if existing_adb_connection is not None:
+            return existing_adb_connection
         adb_serial_number = self.job.device["adb_serial_number"]
         # start the adb daemon
-        adb_cmd = ["adb", "start-server"]
+        adb_cmd: list[str] = ["adb", "start-server"]
         command_output = self.run_command(adb_cmd, allow_fail=True)
-        if command_output and "successfully" in command_output.lower():
+        if isinstance(command_output, str) and "successfully" in command_output.lower():
             self.logger.debug("adb daemon started: %s", command_output)
         # wait for adb device before connecting to adb shell
         adb_cmd = ["adb", "-s", adb_serial_number, "wait-for-device"]
@@ -51,16 +53,20 @@ class ConnectAdb(Action):
         cmd = f"adb -s {adb_serial_number} shell"
         self.logger.info("%s Connecting to device using '%s'", self.name, cmd)
         # ShellSession executes the connection command and monitors the pexpect
-        connection = ShellSession(
+        new_adb_connection = ShellSession(
             "%s\n" % cmd,
             self.timeout,
             logger=self.logger,
             window=self.job.device.get_constant("spawn_maxread"),
         )
-        connection.connected = True
-        connection = super().run(connection, max_end_time)
-        connection.prompt_str = self.parameters["prompts"]
+        new_adb_connection.connected = True
+        existing_adb_connection = super().run(new_adb_connection, max_end_time)
+        if existing_adb_connection is not None:
+            existing_adb_connection.prompt_str = self.parameters["prompts"]
         self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
+            action="shared",
+            label="shared",
+            key="connection",
+            value=existing_adb_connection,
         )
-        return connection
+        return existing_adb_connection
