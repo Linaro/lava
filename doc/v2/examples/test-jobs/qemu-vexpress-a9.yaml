@@ -51,7 +51,7 @@ context:
   cpu: cortex-a9
   extra_options:
   - -append "console=ttyAMA0 root=/dev/ram0"
-  - -device virtio-bk-device,drive=lavatest
+  - -device virtio-blk-device,drive=lavatest
   guestfs_interface: none
   machine: vexpress-a9
   model: model=lan9118
