@@ -15,6 +15,8 @@ from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_common.log import YAMLLogger
     from lava_common.timeout import Timeout
     from lava_dispatcher.job import Job
@@ -38,19 +40,19 @@ class ConnectDevice(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.command = ""
-        self.hardware = None
+        self.hardware: str | None = None
         self.primary = True
         self.message = "Connecting to device using"
-        self.tag_dict = {}
+        self.tag_dict: dict[str, list[str]] = {}
 
-    def _check_command(self):
+    def _check_command(self) -> None:
         try:
             exe = self.command.split(" ")[0]
         except AttributeError:
             raise ConfigurationError("Invalid connection command: should be a string")
         which(exe)
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         matched = False
         if "commands" not in self.job.device:
@@ -118,28 +120,33 @@ class ConnectDevice(Action):
             ][:]  # local copy to retain idempotency.
         self._check_command()
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection_namespace = self.parameters.get("connection-namespace")
-        parameters = None
+        parameters: dict[str, Any] = {}
         if connection_namespace:
             parameters = {"namespace": connection_namespace}
         else:
             parameters = {"namespace": self.parameters.get("namespace", "common")}
-        connection = self.get_namespace_data(
+        existing_connection: ShellSession | None = self.get_namespace_data(
             action="shared",
             label="shared",
             key="connection",
             deepcopy=False,
             parameters=parameters,
         )
-        if connection:
-            if connection.connected:
+        if existing_connection:
+            if existing_connection.connected:
                 self.logger.debug("Already connected")
                 # Save the connection in the current namespace
                 self.set_namespace_data(
-                    action="shared", label="shared", key="connection", value=connection
+                    action="shared",
+                    label="shared",
+                    key="connection",
+                    value=existing_connection,
                 )
-                return connection
+                return existing_connection
             else:
                 self.logger.warning("Dead connection, reconnecting")
         elif connection_namespace:
@@ -159,18 +166,18 @@ class ConnectDevice(Action):
             self.command,
         )
         # ShellSession executes the connection command and monitors the pexpect
-        connection = self.session_class(
+        new_connection = self.session_class(
             "%s\n" % self.command,
             self.timeout,
             logger=self.logger,
             window=self.job.device.get_constant("spawn_maxread"),
         )
-        connection.connected = True
+        new_connection.connected = True
         if self.hardware:
-            connection.tags = self.tag_dict[self.hardware]
-        connection = super().run(connection, max_end_time)
-        if not connection.prompt_str:
-            connection.prompt_str = [
+            new_connection.tags = self.tag_dict[self.hardware]
+        existing_connection = super().run(new_connection, max_end_time)
+        if existing_connection is not None and not existing_connection.prompt_str:
+            existing_connection.prompt_str = [
                 self.job.device.get_constant("default-shell-prompt")
             ]
         if connection_namespace:
@@ -178,13 +185,13 @@ class ConnectDevice(Action):
                 action="shared",
                 label="shared",
                 key="connection",
-                value=connection,
+                value=existing_connection,
                 parameters=parameters,
             )
         self.set_namespace_data(
-            action="shared", label="shared", key="connection", value=connection
+            action="shared", label="shared", key="connection", value=existing_connection
         )
-        return connection
+        return existing_connection
 
 
 class ConnectShell(ConnectDevice):
@@ -199,25 +206,29 @@ class ConnectShell(ConnectDevice):
     # wraps the pexpect and provides prompt_str access
     session_class = ShellSession
 
-    def __init__(self, job: Job, name=None):
+    def __init__(self, job: Job, name: str | None = None):
         super().__init__(job)
         self.primary = False
         self.hardware = name
         self.message = "Connecting to shell using"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if "connections" not in self.job.device["commands"]:
             self.errors_add("Unable to connect to shell - missing connections block.")
             return
         self._check_command()
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         # explicitly call the base class run()
         connection = super().run(connection, max_end_time)
-        self.logger.debug("Forcing a prompt")
-        # force a prompt to appear without using a character that could be interpreted as a username
-        connection.sendline("")
+        if connection is not None:
+            self.logger.debug("Forcing a prompt")
+            # force a prompt to appear without using a character
+            # that could be interpreted as a username
+            connection.sendline("")
         return connection
 
 
@@ -239,11 +250,11 @@ class QemuSession(ShellSession):
         super().__init__(command, lava_timeout, logger, cwd, window)
         self.tags = ["qemu"]
 
-    def finalise(self):
+    def finalise(self) -> None:
         self.disconnect("closing")
         super().finalise()
 
-    def disconnect(self, reason=""):
+    def disconnect(self, reason: str = "") -> None:
         self.sendline("poweroff", disconnecting=True)
         self.listen_feedback(5)
         self.connected = False
@@ -259,7 +270,7 @@ class DisconnectDevice(ConnectDevice):
     description = "disconnect from console"
     summary = "disconnect from console"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if "connections" not in self.job.device["commands"]:
             return
@@ -277,7 +288,9 @@ class DisconnectDevice(ConnectDevice):
                 f"ensure that primary connection has one of the following tags: {RECOGNIZED_TAGS}"
             )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection_namespace = self.parameters.get("connection-namespace")
         parameters = None
         if connection_namespace:
@@ -321,7 +334,7 @@ class ResetConnection(RetryAction):
 
     reason = "reset"
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(DisconnectDevice(self.job))
         self.pipeline.add_action(ConnectDevice(self.job))
