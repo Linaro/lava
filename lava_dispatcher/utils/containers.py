@@ -21,7 +21,12 @@ from lava_dispatcher.utils.docker import DockerContainer, DockerRun
 from lava_dispatcher.utils.udev import get_udev_devices
 
 if TYPE_CHECKING:
+    from typing import Any, ClassVar, TypeVar
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
+
+    DockerType = TypeVar("DockerType", bound=DockerRun)
 
 
 class DeviceContainerMappingMixin(Action):
@@ -32,14 +37,18 @@ class DeviceContainerMappingMixin(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.containers: list[DockerContainer] = []
+        self.containers: list[DockerRun] = []
 
-    def add_device_container_mappings(self, container, container_type):
-        device_info = self.job.device.get("device_info", [])
-        static_info = self.job.device.get("static_info", [])
+    def add_device_container_mappings(
+        self,
+        container: str,
+        container_type: str,
+    ) -> None:
+        device_info: list[dict[str, Any]] = self.job.device.get("device_info", [])
+        static_info: list[dict[str, Any]] = self.job.device.get("static_info", [])
         job_id = self.job.job_id
-        job_prefix = self.job.parameters["dispatcher"].get("prefix", "")
-        devices = []
+        job_prefix: str = self.job.parameters["dispatcher"].get("prefix", "")
+        devices: list[dict[str, Any]] = []
         for origdevice in device_info + static_info:
             device = origdevice.copy()
             if "board_id" in device:
@@ -62,7 +71,7 @@ class DeviceContainerMappingMixin(Action):
                 f"Added mapping for {device} to {container_type} container {container}"
             )
 
-    def trigger_share_device_with_container(self, device):
+    def trigger_share_device_with_container(self, device: str) -> None:
         """
         Trigger udev to let lava-dispatcher-host into sharing the device with
         container.
@@ -74,7 +83,7 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         key = self.driver.key
         validated = self.get_namespace_data(
@@ -88,30 +97,34 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
         )
 
     @property
-    def driver(self):
+    def driver(self) -> NullDriver:
         __driver__ = getattr(self, "__driver__", None)
         if not __driver__:
             if "docker" in self.parameters:
                 params = self.parameters["docker"]
-                self.__driver__ = DockerDriver(self, params)
+                self.__driver__: NullDriver = DockerDriver(self, params)
             else:
                 self.__driver__ = NullDriver(self)
         return self.__driver__
 
-    def maybe_copy_to_container(self, src):
+    def maybe_copy_to_container(self, src: str) -> str:
         return self.driver.maybe_copy_to_container(src)
 
-    def is_container(self):
+    def is_container(self) -> bool:
         return self.driver.is_container
 
-    def run_maybe_in_container(self, cmd):
+    def run_maybe_in_container(self, cmd: list[str]) -> None:
         self.driver.run(cmd)
 
-    def get_output_maybe_in_container(self, cmd, **kwargs):
+    def get_output_maybe_in_container(self, cmd: list[str]) -> str:
         return self.driver.get_output(cmd)
 
-    def cleanup(self, connection):
-        super().cleanup(connection)
+    def cleanup(
+        self,
+        connection: ShellSession | None,
+        max_end_time: float | None = None,
+    ) -> None:
+        super().cleanup(connection, max_end_time)
 
         if isinstance(self.driver, DockerDriver):
             for container in self.containers:
@@ -122,53 +135,60 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
 
 
 class NullDriver(InternalObject):
-    is_container = False
-    key = "null"
+    is_container: ClassVar[bool] = False
 
-    def __init__(self, action):
+    def __init__(self, action: DeviceContainerMappingMixin):
         self.action = action
         self.logger = action.logger
 
-    def get_command_prefix(self, copy_files=True):
+    @property
+    def key(self) -> str:
+        return "null"
+
+    def get_command_prefix(self, copy_files: bool = True) -> list[str]:
         return []
 
-    def maybe_copy_to_container(self, src):
+    def maybe_copy_to_container(self, src: str) -> str:
         return src
 
-    def validate(self):
+    def validate(self) -> None:
         pass
 
-    def run(self, cmd):
+    def run(self, cmd: list[str]) -> None:
         self.action.run_cmd(self.get_command_prefix() + cmd)
 
-    def get_output(self, cmd):
+    def get_output(self, cmd: list[str]) -> str:
         return self.action.parsed_command(self.get_command_prefix() + cmd)
 
 
 class DockerDriver(NullDriver):
     is_container = True
 
-    def __init__(self, action, params):
+    def __init__(self, action: DeviceContainerMappingMixin, params: dict[str, Any]):
         super().__init__(action)
         self.params = params
-        self.docker_options = []
-        self.docker_run_options = []
-        self.copied_files = []
-        self.job_dir = action.job.parameters.get("dispatcher", {}).get(
+        self.docker_options: list[str] = []
+        self.docker_run_options: list[str] = []
+        self.copied_files: list[str] = []
+        self.job_dir: str = action.job.parameters.get("dispatcher", {}).get(
             "prefix", ""
         ) + str(action.job.job_id)
 
-    def get_container_name(self):
+    def get_container_name(self) -> str:
         return (
             "lava-"
             + str(self.action.job.job_id)
             + "-"
-            + self.action.level
+            + str(self.action.level)
             + "-"
             + str(uuid.uuid4())
         )
 
-    def build(self, cls, copy_files=True):
+    def build(
+        self,
+        cls: type[DockerType],
+        copy_files: bool = True,
+    ) -> DockerType:
         docker = cls.from_parameters(self.params, self.action.job)
         docker.add_docker_options(*self.docker_options)
         docker.add_docker_run_options(*self.docker_run_options)
@@ -178,11 +198,11 @@ class DockerDriver(NullDriver):
                 docker.bind_mount(f)
         return docker
 
-    def get_command_prefix(self, copy_files=True):
+    def get_command_prefix(self, copy_files: bool = True) -> list[str]:
         docker = self.build(DockerRun, copy_files)
         return docker.cmdline()
 
-    def run(self, cmd):
+    def run(self, cmd: list[str]) -> None:
         docker = self.build(DockerContainer)
         name = self.get_container_name()
         docker.name(name)
@@ -203,7 +223,7 @@ class DockerDriver(NullDriver):
             self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
-    def get_output(self, cmd):
+    def get_output(self, cmd: list[str]) -> str:
         # FIXME duplicates most of run()
         docker = self.build(DockerContainer)
         name = self.get_container_name()
@@ -225,14 +245,14 @@ class DockerDriver(NullDriver):
             self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
-    def maybe_copy_to_container(self, src):
+    def maybe_copy_to_container(self, src: str) -> str:
         if src not in self.copied_files:
             self.copied_files.append(src)
         return src
 
     @retry(exception=LAVABug, retries=3, delay=1)
     def _retry_trigger_share_device_with_container(
-        self, action: Action, dev: str, docker: DockerContainer
+        self, action: DeviceContainerMappingMixin, dev: str, docker: DockerRun
     ) -> None:
         """
         Re-trigger device sharing if device doesn't appear in docker container after 60s
@@ -252,14 +272,14 @@ class DockerDriver(NullDriver):
             f"Shared device {dev!r} to docker container {docker._container_name}"
         )
 
-    def __map_devices__(self, container_name, docker):
+    def __map_devices__(self, container_name: str, docker: DockerRun) -> None:
         action = self.action
         action.add_device_container_mappings(container_name, "docker")
         for dev in self.__get_device_nodes__():
             if not os.path.islink(dev):
                 self._retry_trigger_share_device_with_container(action, dev, docker)
 
-    def __get_device_nodes__(self):
+    def __get_device_nodes__(self) -> list[str]:
         device_info = self.action.job.device.get("device_info", [{}])
         if device_info:
             return get_udev_devices(device_info=device_info)
@@ -267,11 +287,11 @@ class DockerDriver(NullDriver):
             return []
 
     @property
-    def key(self):
+    def key(self) -> str:
         docker = DockerRun.from_parameters(self.params, self.action.job)
         return docker.image
 
-    def validate(self):
+    def validate(self) -> None:
         docker = DockerRun.from_parameters(self.params, self.action.job)
         docker.add_docker_options(*self.docker_options)
         docker.prepare(self.action)

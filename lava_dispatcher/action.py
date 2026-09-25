@@ -162,7 +162,7 @@ class Pipeline:
         """
         desc: list[dict[str, Any]] = []
         for action in self.actions:
-            current = {
+            current: dict[str, Any] = {
                 "class": type(action).__name__,
                 "name": action.name,
                 "level": action.level,
@@ -355,7 +355,7 @@ class Action:
         # Level is set during pipeline creation and must not be changed
         # subsequently except by RetryCommand.
         self.job = job
-        self.level = None
+        self.level: str | None = None
         self.pipeline: Pipeline | None = None
         self.__parameters__: dict[str, Any] = {}
         self._errors: list[str] = []
