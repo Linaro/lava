@@ -7,7 +7,7 @@
 import datetime
 import logging
 from dataclasses import dataclass
-from fnmatch import fnmatch
+from fnmatch import fnmatchcase
 
 from django.contrib.auth.models import User
 from django.db import connection, transaction
@@ -323,7 +323,9 @@ def pool_tags(pattern, device):
     """
     Tags of the given device that are part of the pool described by pattern.
     """
-    return {tag.name for tag in device.tags.all() if fnmatch(tag.name, pattern)}
+    # fnmatchcase: tag matching has to stay case-sensitive, fnmatch
+    # normalizes with os.path.normcase which is platform-dependent.
+    return {tag.name for tag in device.tags.all() if fnmatchcase(tag.name, pattern)}
 
 
 def device_in_multinode_pool(job, device):
