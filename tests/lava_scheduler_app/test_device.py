@@ -280,7 +280,10 @@ class DeviceHealthCheckTest(TestCaseWithFactory):
         self.assertIsNotNone(health_check)
         self.assertIn("job_name: rpi4-health-check", health_check)
 
-    def test_health_check_prefers_the_extended_template(self):
+    def test_health_check_prefers_the_device_type_name(self):
+        """The device-type name wins even when the extended template also has a
+        health check, so that a check written by `lavacli device-types
+        health-check set` is always the one that runs."""
         dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
         device = Device.objects.create(
             device_type=dt, hostname="juno-01", health=Device.HEALTH_GOOD
@@ -288,7 +291,7 @@ class DeviceHealthCheckTest(TestCaseWithFactory):
         self.assertEqual("juno", device.get_extends())
         self.assertTrue(File("health-check", "juno").exists())
 
-        self.assertIn("job_name: juno-debian-nfs", device.get_health_check())
+        self.assertIn("job_name: rpi4-health-check", device.get_health_check())
 
     def rpi4(self):
         dt = DeviceType.objects.create(name="bcm2711-rpi-4-b")
@@ -298,7 +301,7 @@ class DeviceHealthCheckTest(TestCaseWithFactory):
 
     def test_health_check_candidate_precedence(self):
         """The full precedence table: the four candidates are tried in order,
-        template name before device-type name, .yaml before .yml within each."""
+        device-type name before template name, .yaml before .yml within each."""
         device = self.rpi4()
         self.assertEqual("base-uboot", device.get_extends())
 
@@ -309,8 +312,8 @@ class DeviceHealthCheckTest(TestCaseWithFactory):
             (["bcm2711-rpi-4-b.yml"], "bcm2711-rpi-4-b.yml"),
             (["base-uboot.yaml", "base-uboot.yml"], "base-uboot.yaml"),
             (["bcm2711-rpi-4-b.yaml", "bcm2711-rpi-4-b.yml"], "bcm2711-rpi-4-b.yaml"),
-            (["base-uboot.yaml", "bcm2711-rpi-4-b.yaml"], "base-uboot.yaml"),
-            (["base-uboot.yml", "bcm2711-rpi-4-b.yaml"], "base-uboot.yml"),
+            (["base-uboot.yaml", "bcm2711-rpi-4-b.yaml"], "bcm2711-rpi-4-b.yaml"),
+            (["base-uboot.yml", "bcm2711-rpi-4-b.yaml"], "bcm2711-rpi-4-b.yaml"),
         ]
         for present, expected in cases:
             with self.subTest(present=present):
@@ -333,14 +336,12 @@ class DeviceHealthCheckTest(TestCaseWithFactory):
         giving up, which is a deliberate change from looking only at existence."""
         device = self.rpi4()
         with tempfile.TemporaryDirectory() as health_checks:
-            Path(health_checks, "base-uboot.yaml").mkdir()
-            Path(health_checks, "bcm2711-rpi-4-b.yaml").write_text(
-                "job_name: from-device-type\n"
+            Path(health_checks, "bcm2711-rpi-4-b.yaml").mkdir()
+            Path(health_checks, "base-uboot.yaml").write_text(
+                "job_name: from-template\n"
             )
             with override_settings(HEALTH_CHECKS_PATH=health_checks):
-                self.assertEqual(
-                    "job_name: from-device-type\n", device.get_health_check()
-                )
+                self.assertEqual("job_name: from-template\n", device.get_health_check())
 
     def test_health_check_order_is_moot_for_the_usual_convention(self):
         """A dictionary extending its own device-type template yields the same

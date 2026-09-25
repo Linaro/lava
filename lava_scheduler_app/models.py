@@ -995,7 +995,7 @@ class Device(RestrictedObject):
         if not extends:
             return None
 
-        for name in dict.fromkeys((extends, self.device_type.name)):
+        for name in dict.fromkeys((self.device_type.name, extends)):
             for extension in ("yaml", "yml"):
                 filename = os.path.join(
                     settings.HEALTH_CHECKS_PATH, f"{name}.{extension}"
