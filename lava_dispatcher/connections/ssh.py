@@ -7,13 +7,15 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from lava_common.exceptions import InfrastructureError, JobError
+from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action
 from lava_dispatcher.shell import ShellSession
 from lava_dispatcher.utils.filesystem import check_ssh_identity_file
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from lava_dispatcher.job import Job
 
 
@@ -24,11 +26,11 @@ class SShSession(ShellSession):
 
     name = "SshSession"
 
-    def finalise(self):
+    def finalise(self) -> None:
         self.disconnect("closing")
         super().finalise()
 
-    def disconnect(self, reason=""):
+    def disconnect(self, reason: str = "") -> None:
         # FIXME: handle super if tags are present.
         self.sendline("logout", disconnecting=True)
         self.connected = False
@@ -57,16 +59,16 @@ class ConnectSsh(Action):
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.command = None
-        self.host = None
-        self.ssh_port = ["-p", "22"]
-        self.scp_port = ["-P", "22"]
-        self.identity_file = None
+        self.command: list[str] | None = None
+        self.host: str | None = None
+        self.ssh_port: list[str] = ["-p", "22"]
+        self.scp_port: list[str] = ["-P", "22"]
+        self.identity_file: str | None = None
         self.ssh_user = "root"
         self.primary = False
-        self.scp_prompt = None
+        self.scp_prompt: str | None = None
 
-    def _check_params(self):
+    def _check_params(self) -> dict[str, Any] | None:
         # the deployment strategy ensures that this key exists
         # use a different class if the destination is set using common_data, e.g. protocols
         if not any(
@@ -75,8 +77,10 @@ class ConnectSsh(Action):
             self.errors_add(
                 "Invalid device configuration - no suitable deploy method for ssh"
             )
-            return
-        params = self.job.device["actions"]["deploy"]["methods"]
+            return None
+        params: dict[str, dict[str, Any]] = self.job.device["actions"]["deploy"][
+            "methods"
+        ]
         if "identity_file" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             check = check_ssh_identity_file(params)
             if check[0]:
@@ -87,7 +91,7 @@ class ConnectSsh(Action):
             self.errors_add(
                 "Empty ssh parameter list in device configuration %s" % params
             )
-            return
+            return None
         if "options" in params["ssh"]:
             if any(
                 option
@@ -103,7 +107,7 @@ class ConnectSsh(Action):
                     "[%s] Invalid device configuration: all options must be only strings: %s"
                     % (self.name, msg)
                 )
-                return
+                return None
         if "port" in params["ssh"]:
             self.ssh_port = ["-p", "%s" % str(params["ssh"]["port"])]
             self.scp_port = ["-P", "%s" % str(params["ssh"]["port"])]
@@ -114,7 +118,7 @@ class ConnectSsh(Action):
             self.ssh_user = params["ssh"]["user"]
         return params["ssh"]
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         params = self._check_params()
         which("ssh")
@@ -123,6 +127,9 @@ class ConnectSsh(Action):
         if "host" in self.job.device["actions"]["deploy"]["methods"]["ssh"]:
             self.primary = True
             self.host = self.job.device["actions"]["deploy"]["methods"]["ssh"]["host"]
+        if params is None:
+            # Validation failed in `self._check_params`
+            return
         if self.valid:
             self.command = ["ssh"]
             if "options" in params:
@@ -136,21 +143,25 @@ class ConnectSsh(Action):
                 self.command.extend(["-i", self.identity_file])
             self.command.extend(self.ssh_port)
 
-    def run(self, connection, max_end_time):
-        connection = self.get_namespace_data(
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
+        existing_ssh_connection: ShellSession | None = self.get_namespace_data(
             action="shared", label="shared", key="connection", deepcopy=False
         )
-        if connection:
+        if existing_ssh_connection:
             self.logger.debug("Already connected")
-            return connection
+            return existing_ssh_connection
         # ShellSession executes the connection command and monitors the pexpect
 
         self._check_params()
+        if self.command is None:
+            raise LAVABug("SSH command list not initialised")
         command = self.command[:]  # local copy for idempotency
-        overrides = self.get_namespace_data(
+        overrides: list[str] | None = self.get_namespace_data(
             action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay"
         )
-        host_address = None
+        host_address: str | None = None
         if overrides:
             host_address = str(
                 self.get_namespace_data(
@@ -189,10 +200,15 @@ class ConnectSsh(Action):
             )
         command_str = " ".join(str(item) for item in command)
         # SshSession monitors the pexpect
-        connection = SShSession(f"{command_str}\n", self.timeout, logger=self.logger)
-        connection = super().run(connection, max_end_time)
-        connection.prompt_str = list(self.parameters.get("prompts", []))
-        connection.connected = True
+        new_ssh_connection = SShSession(
+            f"{command_str}\n", self.timeout, logger=self.logger
+        )
+        existing_ssh_connection = super().run(new_ssh_connection, max_end_time)
+        if existing_ssh_connection is not None:
+            existing_ssh_connection.prompt_str = list(
+                self.parameters.get("prompts", [])
+            )
+            existing_ssh_connection.connected = True
         self.wait(connection)
         self.set_namespace_data(
             action="shared", label="shared", key="connection", value=connection

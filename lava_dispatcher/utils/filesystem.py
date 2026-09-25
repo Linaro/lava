@@ -52,7 +52,9 @@ def mkdtemp(autoremove: bool = True, basedir: str = "/tmp") -> str:  # nosec - i
     return tmpdir
 
 
-def check_ssh_identity_file(params: dict[str, Any]) -> tuple[str | None, str | None]:
+def check_ssh_identity_file(
+    params: dict[str, dict[str, Any]],
+) -> tuple[str | None, str | None]:
     """
     Return a tuple based on if an identity file can be determine in the params.
     If the first value returned is not None, an error occurred.
