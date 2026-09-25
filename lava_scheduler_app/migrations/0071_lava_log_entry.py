@@ -34,6 +34,8 @@ def move_from_django_log_to_lava_log(apps, schema_editor):
         django_log_object, lava_model, lava_log_model
     ) -> dict[str, object]:
         if lava_log_model == LavaLogEntryDevice:
+            # Old log entries don't say which worker hosted the device,
+            # so attribute them to the worker it is on now.
             return {
                 "worker_id": device_to_worker_dict[django_log_object.object_id],
             }
