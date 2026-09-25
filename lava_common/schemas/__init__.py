@@ -267,12 +267,12 @@ def check_multinode_roles(data):
     if not data.get("protocols", {}).get("lava-multinode"):
         return
 
-    for action in data.get("actions", []):
+    for index, action in enumerate(data.get("actions", [])):
         action_type = next(iter(action.keys()))
         if "role" not in action[action_type]:
             raise Invalid(
                 "Every action of a multinode job should have roles",
-                path=["protocols", "lava-multinode"],
+                path=["actions", index],
             )
 
 
