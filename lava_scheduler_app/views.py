@@ -2593,7 +2593,7 @@ def worker_detail(request, pk):
         raise PermissionDenied()
     data = DeviceTableView(request)
     latest_health_reason = (
-        LavaLogEntryWorker.objects.filter(worker=worker)
+        LavaLogEntryDevice.objects.filter(device=OuterRef("pk"))
         .order_by("-action_time")
         .values("change_message")[:1]
     )
