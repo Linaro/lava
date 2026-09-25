@@ -290,6 +290,19 @@ class WorkerLogView(LavaView):
 
     def get_queryset(self):
         return (
+            LavaLogEntryWorker.objects.filter(worker=self.worker)
+            .order_by("-action_time")
+            .select_related("user", "worker")
+        )
+
+
+class WorkerDeviceLogView(LavaView):
+    def __init__(self, worker, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.worker = worker
+
+    def get_queryset(self):
+        return (
             LavaLogEntryDevice.objects.filter(
                 worker=self.worker,
                 device__in=Device.objects.visible_by_user(self.request.user),
@@ -2611,14 +2624,27 @@ def worker_detail(request, pk):
         worker,
         request,
         model=LavaLogEntryWorker,
-        table_class=WorkerDevicesLogEntryTable,
+        table_class=WorkersLogEntryTable,
     )
-    worker_log_ptable = WorkerDevicesLogEntryTable(
+    worker_log_ptable = WorkersLogEntryTable(
         worker_log_data.get_table_data(), prefix="worker_log_"
     )
     request_config(request, paginate={"per_page": worker_log_ptable.length}).configure(
         worker_log_ptable
     )
+
+    worker_device_log_data = WorkerDeviceLogView(
+        worker,
+        request,
+        model=LavaLogEntryDevice,
+        table_class=WorkerDevicesLogEntryTable,
+    )
+    worker_device_log_ptable = WorkerDevicesLogEntryTable(
+        worker_device_log_data.get_table_data(), prefix="worker_device_log_"
+    )
+    request_config(
+        request, paginate={"per_page": worker_device_log_ptable.length}
+    ).configure(worker_device_log_ptable)
 
     return render(
         request,
@@ -2627,6 +2653,7 @@ def worker_detail(request, pk):
             "worker": worker,
             "worker_device_table": ptable,
             "worker_log_table": worker_log_ptable,
+            "worker_device_log_table": worker_device_log_ptable,
             "length": ptable.length,
             "can_change": worker.can_change(request.user),
             "bread_crumb_trail": BreadCrumbTrail.leading_to(worker_detail, pk=pk),

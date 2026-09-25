@@ -24,6 +24,7 @@ from lava_scheduler_app.models import (
     GroupDevicePermission,
     LavaLogEntryDevice,
     LavaLogEntryWorker,
+    LavaLogFlag,
     RemoteArtifactsAuth,
     TestJob,
     TestJobUser,
@@ -609,6 +610,37 @@ def test_job_cancel_multinode(client, monkeypatch, setup):
     assert job_5.state == TestJob.STATE_CANCELING  # nosec
     job_6 = TestJob.objects.get(description="test job 06")
     assert job_6.state == TestJob.STATE_CANCELING  # nosec
+
+
+@pytest.mark.django_db
+def test_worker_detail_log_tables(client, setup):
+    assert client.login(username="admin", password="admin") is True  # nosec
+    worker = Worker.objects.get(hostname="worker-02")
+    device = Device.objects.get(hostname="juno-uboot-01")
+    user = User.objects.get(username="admin")
+    LavaLogEntryWorker.objects.create(
+        worker=worker,
+        user=user,
+        action_flag=LavaLogFlag.CHANGE,
+        change_message="Offline → Online",
+    )
+    LavaLogEntryDevice.objects.create(
+        device=device,
+        worker=worker,
+        user=user,
+        action_flag=LavaLogFlag.CHANGE,
+        change_message="Good → Bad",
+    )
+
+    ret = client.get(reverse("lava.scheduler.worker.detail", args=[worker.pk]))
+    assert ret.status_code == 200  # nosec
+    page = ret.content.decode()
+    # the worker's own entries and the device entries live in separate tables,
+    # rendered above and below the "Device transitions" heading
+    worker_section, _, device_section = page.partition("Device transitions")
+    assert "Offline → Online" in worker_section
+    assert "Good → Bad" in device_section
+    assert "Offline → Online" not in device_section
 
 
 @pytest.mark.django_db
