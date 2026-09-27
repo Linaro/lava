@@ -16,5 +16,7 @@ class OptionalContainerAdbAction(OptionalContainerAction):
     def run_adb(self, cmd):
         self.run_maybe_in_container(self.get_adb_cmd(cmd))
 
-    def get_adb_output(self, cmd, **kwargs):
-        return self.get_output_maybe_in_container(self.get_adb_cmd(cmd))
+    def get_adb_output(self, cmd, allow_fail: bool = False):
+        return self.get_output_maybe_in_container(
+            self.get_adb_cmd(cmd), allow_fail=allow_fail
+        )

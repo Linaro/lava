@@ -390,6 +390,7 @@ class DockerContainer(DockerRun):
         action: Action,
         capture: Literal[False] = False,
         error_msg: str | None = None,
+        allow_fail: bool = False,
     ) -> str | int | None: ...
 
     @overload
@@ -399,6 +400,7 @@ class DockerContainer(DockerRun):
         action: Action,
         capture: Literal[True] = True,
         error_msg: str | None = None,
+        allow_fail: bool = False,
     ) -> str: ...
 
     def run(
@@ -407,6 +409,7 @@ class DockerContainer(DockerRun):
         action: Action,
         capture: bool = False,
         error_msg: str | None = None,
+        allow_fail: bool = False,
     ) -> str | int | None:
         name = self.start(action)
 
@@ -415,7 +418,7 @@ class DockerContainer(DockerRun):
         cmd.append(name)
         cmd += args
         if capture:
-            return action.parsed_command(cmd)
+            return action.parsed_command(cmd, allow_fail=allow_fail)
 
         return action.run_cmd(cmd, error_msg=error_msg)
 

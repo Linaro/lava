@@ -116,8 +116,10 @@ class OptionalContainerAction(DeviceContainerMappingMixin):
     def run_maybe_in_container(self, cmd: list[str]) -> None:
         self.driver.run(cmd)
 
-    def get_output_maybe_in_container(self, cmd: list[str]) -> str:
-        return self.driver.get_output(cmd)
+    def get_output_maybe_in_container(
+        self, cmd: list[str], *, allow_fail: bool = False
+    ) -> str:
+        return self.driver.get_output(cmd, allow_fail)
 
     def cleanup(
         self,
@@ -157,8 +159,10 @@ class NullDriver(InternalObject):
     def run(self, cmd: list[str]) -> None:
         self.action.run_cmd(self.get_command_prefix() + cmd)
 
-    def get_output(self, cmd: list[str]) -> str:
-        return self.action.parsed_command(self.get_command_prefix() + cmd)
+    def get_output(self, cmd: list[str], allow_fail: bool = False) -> str:
+        return self.action.parsed_command(
+            self.get_command_prefix() + cmd, allow_fail=allow_fail
+        )
 
 
 class DockerDriver(NullDriver):
@@ -223,7 +227,7 @@ class DockerDriver(NullDriver):
             self.action.logger.debug("Removed device container mappings")
             docker.stop(self.action)
 
-    def get_output(self, cmd: list[str]) -> str:
+    def get_output(self, cmd: list[str], allow_fail: bool = False) -> str:
         # FIXME duplicates most of run()
         docker = self.build(DockerContainer)
         name = self.get_container_name()
@@ -239,7 +243,7 @@ class DockerDriver(NullDriver):
         docker.start(self.action)
         try:
             self.__map_devices__(name, docker)
-            return docker.run(cmd, self.action, capture=True)
+            return docker.run(cmd, self.action, capture=True, allow_fail=allow_fail)
         finally:
             remove_device_container_mappings(self.job_dir)
             self.action.logger.debug("Removed device container mappings")

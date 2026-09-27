@@ -28,8 +28,10 @@ class OptionalContainerFastbootAction(OptionalContainerAction):
     def run_fastboot(self, cmd):
         self.run_maybe_in_container(self.get_fastboot_cmd(cmd))
 
-    def get_fastboot_output(self, cmd, **kwargs):
-        return self.get_output_maybe_in_container(self.get_fastboot_cmd(cmd))
+    def get_fastboot_output(self, cmd, allow_fail: bool = False):
+        return self.get_output_maybe_in_container(
+            self.get_fastboot_cmd(cmd), allow_fail=allow_fail
+        )
 
     def on_timeout(self):
         self.logger.error("fastboot timing out, power-off the DuT")
