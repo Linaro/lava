@@ -279,3 +279,56 @@ class TestCreateOverlayJobTags(LavaDispatcherTestCase):
     def test_job_tags_comma_separated(self) -> None:
         exports = self._overlay_exports(["usb-eth", "ssd"])
         self.assertEqual(exports["LAVA_JOB_TAGS"], "usb-eth,ssd")
+
+
+class TestCreateOverlaySecrets(LavaDispatcherTestCase):
+    def _overlay_dir(self, tmp_dir: str, secrets: dict[str, str] | None = None) -> Path:
+        """Run CreateOverlay in ``tmp_dir`` and return the overlay directory."""
+        job_parameters: dict[str, Any] = {
+            "dispatcher": {"dispatcher_ip": "192.0.2.1"},
+        }
+        if secrets is not None:
+            job_parameters["secrets"] = secrets
+
+        job = self.create_simple_job(
+            device_dict={
+                "constants": {
+                    "posix": {
+                        "lava_test_results_dir": "/lava-%s",
+                        "lava_test_sh_cmd": "/bin/sh",
+                    }
+                },
+                "actions": {"deploy": {"methods": {}}},
+            },
+            job_parameters=job_parameters,
+        )
+        overlay = CreateOverlay(job)
+        overlay.parameters = {"namespace": "common"}
+
+        with patch.object(job, "mkdtemp", return_value=tmp_dir):
+            overlay.validate()
+            overlay.run(None, None)
+
+        return Path(tmp_dir) / f"lava-{job.job_id}"
+
+    def test_secrets_file_written(self) -> None:
+        with TemporaryDirectory(prefix="overlay-secrets-") as tmp_dir:
+            secrets_path = (
+                self._overlay_dir(tmp_dir, {"foo": "bar", "token": "s3cr3t"})
+                / "secrets"
+            )
+            self.assertEqual(
+                sorted(secrets_path.read_text().splitlines()),
+                ["foo=bar", "token=s3cr3t"],
+            )
+
+    def test_no_secrets_file_without_secrets(self) -> None:
+        # An empty or missing "secrets" job section must not create the file:
+        # inverting this condition silently dropped the secrets of every job
+        # that had some (and created an empty file for those that had none).
+        for secrets in (None, {}):
+            with self.subTest(secrets=secrets):
+                with TemporaryDirectory(prefix="overlay-secrets-") as tmp_dir:
+                    overlay_dir = self._overlay_dir(tmp_dir, secrets)
+                    self.assertTrue((overlay_dir / "environment").exists())
+                    self.assertFalse((overlay_dir / "secrets").exists())
