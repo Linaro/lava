@@ -555,13 +555,99 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         action = self.create_action(uuu_device_parameters)
         self.assertIsInstance(action.driver, NullDriver)
 
-    def test_uuu_docker_driver(self):
+    def test_uuu_docker_driver_no_remote_options(self):
         uuu_device_parameters = {
             "docker_image": "atline/uuu:1.3.191",
             "remote_options": "",
         }
         action = self.create_action(uuu_device_parameters)
         self.assertIsInstance(action.driver, DockerDriver)
+        with patch.object(action, "run_cmd") as run_cmd_mock:
+            action.run_uuu(["foo", "bar"])
+
+        run_cmd_mock.assert_called_once_with(
+            [
+                "docker",
+                "run",
+                "--privileged",
+                "--volume=/dev:/dev",
+                "--net=host",
+                "-e",
+                "DISABLE_SUMMARY=true",
+                "--rm",
+                "--init",
+                "atline/uuu:1.3.191",
+                "foo",
+                "bar",
+            ],
+            allow_fail=False,
+            error_msg=None,
+            cwd=None,
+            env={"DISABLE_SUMMARY": "true"},
+        )
+
+    def test_uuu_docker_driver_run_bcu(self):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "",
+        }
+        action = self.create_action(uuu_device_parameters)
+        with patch.object(action, "run_cmd") as run_cmd_mock:
+            action.run_bcu(["bcu", "deinit"])
+
+        (cmd,), kwargs = run_cmd_mock.call_args
+        self.assertEqual(cmd[-2:], ["bcu", "deinit"])
+        self.assertNotIn("env", kwargs)
+
+    @patch("lava_dispatcher.utils.uuu.dispatcher_ip", return_value="0.0.0.1")
+    def test_uuu_docker_driver_with_remote_options(self, dispatcher_ip_mock):
+        uuu_device_parameters = {
+            "docker_image": "atline/uuu:1.3.191",
+            "remote_options": "--dns 1.1.1.1",
+        }
+        action = self.create_action(uuu_device_parameters)
+        self.assertIsInstance(action.driver, DockerDriver)
+        action.parameters["namespace"] = "common"
+        # Should fail without UUU root image present
+        with (
+            self.assertRaisesRegex(JobError, "UUU root location not found"),
+            patch.object(action, "run_cmd"),
+        ):
+            action.run_uuu(["foo", "bar"])
+
+        action.set_namespace_data(
+            action="uuu-deploy",
+            label="uuu-images",
+            key="root_location",
+            value="/foo/bar",
+        )
+
+        with patch.object(action, "run_cmd") as run_cmd_mock:
+            action.run_uuu(["foo", "bar"])
+
+        run_cmd_mock.assert_called_once_with(
+            [
+                "docker",
+                "--dns",
+                "1.1.1.1",
+                "run",
+                "--privileged",
+                "--volume=/dev:/dev",
+                "--net=host",
+                "-e",
+                "DISABLE_SUMMARY=true",
+                "--rm",
+                "--init",
+                "atline/uuu:1.3.191",
+                "bash",
+                "-c",
+                "mkdir -p /foo/bar && mount -t nfs -o nolock 0.0.0.1:/foo/bar /foo/bar && foo bar",
+            ],
+            allow_fail=False,
+            error_msg=None,
+            cwd=None,
+            env={"DISABLE_SUMMARY": "true"},
+        )
 
     @patch.object(OptionalContainerUuuAction, "run_cmd")
     def test_native_uuu_cmd(self, mock_cmd):
@@ -570,9 +656,9 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
         action.run_uuu(["foo", "bar"])
         mock_cmd.assert_called_with(
             ["foo", "bar"],
-            False,
-            None,
-            None,
+            allow_fail=False,
+            error_msg=None,
+            cwd=None,
             env={"DISABLE_SUMMARY": "true"},
         )
 
@@ -599,9 +685,9 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
                 "foo",
                 "bar",
             ],
-            False,
-            None,
-            None,
+            allow_fail=False,
+            error_msg=None,
+            cwd=None,
             env={"DISABLE_SUMMARY": "true"},
         )
 
@@ -641,9 +727,9 @@ class TestUUUActionDriver(LavaDispatcherTestCase):
                 "-c",
                 "mkdir -p bar && mount -t nfs -o nolock foo:bar bar && foo bar",
             ],
-            False,
-            None,
-            None,
+            allow_fail=False,
+            error_msg=None,
+            cwd=None,
             env={"DISABLE_SUMMARY": "true"},
         )
 

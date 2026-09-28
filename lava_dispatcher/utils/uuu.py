@@ -3,10 +3,11 @@
 # Author: Larry Shen <larry.shen@nxp.com>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
-
+from __future__ import annotations
 
 import shlex
 
+from lava_common.exceptions import JobError
 from lava_dispatcher.utils.containers import (
     DockerDriver,
     NullDriver,
@@ -18,7 +19,7 @@ from lava_dispatcher.utils.shell import which
 
 class OptionalContainerUuuAction(OptionalContainerAction):
     @property
-    def driver(self):
+    def driver(self) -> NullDriver:
         __driver__ = getattr(self, "__driver__", None)
         if not __driver__:
             docker_image = self.job.device["actions"]["boot"]["methods"]["uuu"][
@@ -42,37 +43,58 @@ class OptionalContainerUuuAction(OptionalContainerAction):
                 self.__driver__ = NullDriver(self)
         return self.__driver__
 
-    def which(self, path):
+    def which(self, path: str) -> str:
         if self.driver.is_container:
             return path
         return which(path)
 
-    def run_bcu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
+    def run_bcu(
+        self,
+        cmd: list[str],
+        allow_fail: bool = False,
+        error_msg: str | None = None,
+        cwd: str | None = None,
+    ) -> int | None:
         return self.run_cmd(
-            self.get_uuu_bcu_cmd(cmd, False), allow_fail, error_msg, cwd
+            self.get_uuu_bcu_cmd(cmd, False),
+            allow_fail=allow_fail,
+            error_msg=error_msg,
+            cwd=cwd,
         )
 
-    def run_uuu(self, cmd, allow_fail=False, error_msg=None, cwd=None):
+    def run_uuu(
+        self,
+        cmd: list[str],
+        allow_fail: bool = False,
+        error_msg: str | None = None,
+        cwd: str | None = None,
+    ) -> int | None:
         return self.run_cmd(
             self.get_uuu_bcu_cmd(cmd),
-            allow_fail,
-            error_msg,
-            cwd,
+            allow_fail=allow_fail,
+            error_msg=error_msg,
+            cwd=cwd,
             env={"DISABLE_SUMMARY": "true"},
         )
 
-    def get_uuu_bcu_cmd(self, cmd, copy_files=True):
+    def get_uuu_bcu_cmd(self, cmd: list[str], copy_files: bool = True) -> list[str]:
         uuu_bcu_cmd = self.driver.get_command_prefix(
             copy_files
         ) + self.get_manipulated_command(cmd)
         return uuu_bcu_cmd
 
-    def get_manipulated_command(self, cmd):
-        if self.driver.is_container and self.driver.docker_options:
+    def get_manipulated_command(self, cmd: list[str]) -> list[str]:
+        if isinstance(self.driver, DockerDriver) and self.driver.docker_options:
             ip_addr = dispatcher_ip(self.job.parameters["dispatcher"])
-            root_location = self.get_namespace_data(
+            root_location: str | None = self.get_namespace_data(
                 action="uuu-deploy", label="uuu-images", key="root_location"
             )
+            if root_location is None:
+                raise JobError(
+                    "UUU root location not found: namespace data key "
+                    "'root_location' (action 'uuu-deploy', label "
+                    "'uuu-images') is not set"
+                )
             cmd = [
                 "mkdir",
                 "-p",
