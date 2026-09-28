@@ -272,7 +272,7 @@ class CreateOverlay(Action):
                 self._export_data(fout, http_cache, "HTTP_CACHE")
 
         # Generate the file containing the secrets
-        if not self.job.secrets:
+        if self.job.secrets:
             self.logger.debug("Creating %s/secrets", lava_path)
             with open(os.path.join(lava_path, "secrets"), "w") as fout:
                 for key, value in self.job.secrets.iterate():
