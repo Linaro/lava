@@ -71,9 +71,7 @@ class ConnectSsh(Action):
     def _check_params(self) -> dict[str, Any] | None:
         # the deployment strategy ensures that this key exists
         # use a different class if the destination is set using common_data, e.g. protocols
-        if not any(
-            "ssh" in data for data in self.job.device["actions"]["deploy"]["methods"]
-        ):
+        if "ssh" not in self.job.device["actions"]["deploy"]["methods"]:
             self.errors_add(
                 "Invalid device configuration - no suitable deploy method for ssh"
             )
