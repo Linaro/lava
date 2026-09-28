@@ -44,7 +44,11 @@ from lava_dispatcher.utils.strings import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from typing import Any
+
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 class ApplyOverlayGuest(Action):
@@ -57,7 +61,7 @@ class ApplyOverlayGuest(Action):
         super().__init__(job)
         self.guest_filename = "lava-guest.qcow2"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         self.set_namespace_data(
             action=self.name, label="guest", key="name", value=self.guest_filename
@@ -72,8 +76,10 @@ class ApplyOverlayGuest(Action):
                 "Device configuration does not specify size of guest filesystem."
             )
 
-    def run(self, connection, max_end_time):
-        applied = self.get_namespace_data(
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
+        applied: bool | None = self.get_namespace_data(
             action="append-overlays", label="result", key="applied"
         )
         if applied:
@@ -119,12 +125,19 @@ class ApplyOverlayImage(Action):
     summary = "apply overlay to test image"
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, image_key="image", use_root_partition=True):
+    def __init__(
+        self,
+        job: Job,
+        image_key: str = "image",
+        use_root_partition: bool = True,
+    ):
         super().__init__(job)
         self.image_key = image_key
         self.use_root_partition = use_root_partition
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
@@ -136,7 +149,7 @@ class ApplyOverlayImage(Action):
             if decompressed_image is None:
                 raise LAVABug("Unable to find decompressed image")
             self.logger.debug("Image: %s", decompressed_image)
-            root_partition = None
+            root_partition: str | None = None
 
             if self.use_root_partition:
                 if (
@@ -175,11 +188,11 @@ class ApplyOverlaySparseImage(Action):
     command_exception = InfrastructureError
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, image_key):
+    def __init__(self, job: Job, image_key: str):
         super().__init__(job)
         self.image_key = image_key  # the sparse image key in the parameters
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         binary = which("simg2img")
         self.logger.info(debian_filename_version(binary))
@@ -188,7 +201,9 @@ class ApplyOverlaySparseImage(Action):
         binary = which("img2simg")
         self.logger.info(debian_filename_version(binary))
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
@@ -230,7 +245,7 @@ class PrepareOverlayTftp(Action):
     summary = "extract ramdisk or nfsrootfs"
     timeout_exception = InfrastructureError
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.pipeline.add_action(
             ExtractNfsRootfs(self.job)
@@ -257,7 +272,9 @@ class PrepareOverlayTftp(Action):
         if "depthcharge" in self.job.device["actions"]["boot"]["methods"]:
             self.pipeline.add_action(PrepareKernelAction(self.job))
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         ramdisk: str | None = self.get_namespace_data(
             action="download-action", label="file", key="ramdisk"
@@ -281,7 +298,7 @@ class ApplyOverlayTftp(Action):
     summary = "apply lava overlay test files"
     timeout_exception = InfrastructureError
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         persist = self.parameters.get("persistent_nfs")
         if persist:
@@ -290,10 +307,12 @@ class ApplyOverlayTftp(Action):
             if "address" not in persist:
                 self.errors_add("Missing address for persistent NFS")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
-        directory = None
-        nfs_address = None
+        directory: str | None = None
+        nfs_address: str | None = None
 
         if self.get_namespace_data(
             action="append-overlays", label="result", key="applied"
@@ -421,7 +440,9 @@ class ExtractRootfs(Action):
         self.use_tarfile = True
         self.use_lzma = False
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.parameters.get(self.param_key):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
@@ -454,7 +475,7 @@ class ExtractNfsRootfs(ExtractRootfs):
         self.param_key = "nfsrootfs"
         self.file_key = "nfsroot"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if not self.parameters.get(self.param_key):  # idempotency
             return
@@ -469,7 +490,9 @@ class ExtractNfsRootfs(ExtractRootfs):
             if not prefix.endswith("/"):
                 self.errors_add("prefix must be a directory and end with /")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.parameters.get(self.param_key):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
@@ -514,7 +537,9 @@ class ExtractModules(Action):
     summary = "extract kernel modules"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.parameters.get("modules"):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
@@ -577,7 +602,7 @@ class ExtractRamdisk(Action):
         super().__init__(job)
         self.skip = False
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if not self.parameters.get("ramdisk"):  # idempotency
             return
@@ -586,7 +611,9 @@ class ExtractRamdisk(Action):
         ) and not self.parameters["ramdisk"].get("install_overlay", True):
             self.skip = True
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.parameters.get("ramdisk"):  # idempotency
             return connection
         ramdisk: str | None = self.get_namespace_data(
@@ -684,7 +711,7 @@ class CompressRamdisk(Action):
         self.add_header = None
         self.skip = False
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if not self.parameters.get("ramdisk"):  # idempotency
             return
@@ -714,7 +741,9 @@ class CompressRamdisk(Action):
                 elif self.add_header != "raw":
                     self.errors_add("ramdisk: add_header: unknown header type")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if not self.parameters.get("ramdisk"):  # idempotency
             return connection
         if self.skip:
@@ -808,7 +837,9 @@ class ConfigurePreseedFile(Action):
     summary = "add commands to installer config"
     timeout_exception = InfrastructureError
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         if "deployment_data" not in self.parameters:
             return connection
         if self.parameters["deployment_data"].get("installer_extra_cmd"):
@@ -852,15 +883,15 @@ class AppendOverlays(Action):
     summary = "append overlays to an image"
 
     # TODO: list libguestfs supported formats
-    IMAGE_FORMATS = ["cpio.newc", "ext4", "tar"]
-    OVERLAY_FORMATS = ["file", "tar"]
+    IMAGE_FORMATS: list[str] = ["cpio.newc", "ext4", "tar"]
+    OVERLAY_FORMATS: list[str] = ["file", "tar"]
 
-    def __init__(self, job: Job, key, params):
+    def __init__(self, job: Job, key: str, params: dict[str, Any]):
         super().__init__(job)
         self.key = key
         self.params = params
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         # Check that we have "overlays" dict
         if "overlays" not in self.params:
@@ -888,7 +919,9 @@ class AppendOverlays(Action):
         if self.params.get("sparse") and self.params.get("format") != "ext4":
             raise JobError("sparse=True is only available for ext4 images")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         if self.params["format"] == "cpio.newc":
             self.update_cpio()
@@ -912,7 +945,11 @@ class AppendOverlays(Action):
             raise LAVABug("Unknown format %r" % self.params["format"])
         return connection
 
-    def _update(self, f_uncompress, f_compress):
+    def _update(
+        self,
+        f_uncompress: Callable[[str, str], object],
+        f_compress: Callable[[str, str], object],
+    ) -> None:
         image: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
@@ -939,6 +976,8 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = f"{self.key}.{overlay}"
+            overlay_image: str | None = None
+            path: str | None = None
             if overlay == "lava":
                 overlay_image: str | None = self.get_namespace_data(
                     action="compress-overlay", label="output", key="file"
@@ -951,6 +990,8 @@ class AppendOverlays(Action):
                 path = self.params["overlays"][overlay]["path"]
 
             if overlay_image:
+                if path is None:
+                    raise LAVABug(f"Overlay {overlay!r} path not found")
                 # Take off initial "/" from path, extract relative to this directory
                 extract_path = os.path.join(tempdir, path[1:])
                 if (
@@ -982,13 +1023,13 @@ class AppendOverlays(Action):
             self.logger.debug("* compressing (%s)", compression)
             image = compress_file(image, compression)
 
-    def update_cpio(self):
+    def update_cpio(self) -> None:
         self._update(uncpio, cpio)
 
-    def update_tar(self):
+    def update_tar(self) -> None:
         self._update(untar_file, partial(create_tarfile, arcname="."))
 
-    def update_ext4(self):
+    def update_ext4(self) -> None:
         import tempfile
 
         from lava_dispatcher.utils.ext4 import (
@@ -1008,7 +1049,11 @@ class AppendOverlays(Action):
 
         if self.params.get("sparse", False):
             self.logger.debug("Calling simg2img on %r", image)
-            command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
+            command_list: list[str] = [
+                "/usr/bin/simg2img",
+                image,
+                f"{image}.non-sparse",
+            ]
             self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
             os.replace(f"{image}.non-sparse", image)
 
@@ -1025,7 +1070,7 @@ class AppendOverlays(Action):
             self.logger.debug("Overlays:")
             for overlay in self.params["overlays"]:
                 label = f"{self.key}.{overlay}"
-                overlay_image = None
+                overlay_image: str | None = None
                 if overlay == "lava":
                     overlay_image = self.get_namespace_data(
                         action="compress-overlay", label="output", key="file"
@@ -1068,7 +1113,7 @@ class AppendOverlays(Action):
             self.run_cmd(command_list, error_msg="img2simg failed for %s" % image)
             os.replace(f"{image}.sparse", image)
 
-    def update_guestfs(self):
+    def update_guestfs(self) -> None:
         image: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
@@ -1079,11 +1124,15 @@ class AppendOverlays(Action):
 
         if self.params.get("sparse", False):
             self.logger.debug("Calling simg2img on %r", image)
-            command_list = ["/usr/bin/simg2img", image, f"{image}.non-sparse"]
+            command_list: list[str] = [
+                "/usr/bin/simg2img",
+                image,
+                f"{image}.non-sparse",
+            ]
             self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
             os.replace(f"{image}.non-sparse", image)
 
-        import guestfs
+        import guestfs  # type: ignore[import-not-found]
 
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)
@@ -1104,13 +1153,13 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = f"{self.key}.{overlay}"
-            overlay_image = None
+            overlay_image: str | None = None
             if overlay == "lava":
                 overlay_image = self.get_namespace_data(
                     action="compress-overlay", label="output", key="file"
                 )
                 path = os.path.dirname("/")
-                compress = "gzip"
+                compress: str | None = "gzip"
             else:
                 overlay_image = self.get_namespace_data(
                     action="download-action", label=label, key="file"
@@ -1154,7 +1203,7 @@ class ParsePersistentNFS(Action):
     description = "parse persistent nfs"
     summary = "parse persistent nfs"
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         persist = self.parameters.get("persistent_nfs")
         if not persist:
@@ -1202,7 +1251,7 @@ class ApplyOverlayAvh(Action):
         self.storage_file = None
         self.root_partition = None
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
 
         self.storage_file = self.parameters["fw_package"].get("storage_file")
@@ -1215,7 +1264,9 @@ class ApplyOverlayAvh(Action):
                 "Unable to apply overlay without 'fw_package.root_partition'"
             )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         overlay_file: str | None = self.get_namespace_data(
@@ -1255,17 +1306,19 @@ class ApplyQDLOverlay(Action):
     summary = "apply overlay to image in qcomflash tarball"
     timeout_exception = InfrastructureError
 
-    def __init__(self, job: Job, rootfs_image="rootfs.img"):
+    def __init__(self, job: Job, rootfs_image: str = "rootfs.img"):
         super().__init__(job)
         self.rootfs_image = rootfs_image
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         # check if rootfs_image is not empty
         if not self.rootfs_image:
             self.errors_add("rootfs_image is empty or missing")
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         overlay_file: str | None = self.get_namespace_data(
@@ -1275,7 +1328,7 @@ class ApplyQDLOverlay(Action):
             self.logger.warning("No overlay to apply")
             return connection
 
-        qcomflash = None
+        qcomflash: str | None = None
         for action in self.get_namespace_keys(  # pylint: disable=unused-variable
             "download-action"
         ):
