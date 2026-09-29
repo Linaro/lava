@@ -439,7 +439,7 @@ class UUUBootAction(OptionalContainerUuuAction):
     def validate(self):
         super().validate()
         self.set_namespace_data(
-            action=self.name, label="bootloader_prompt", key="prompt", value=None
+            action="uuu-boot", label="bootloader_prompt", key="prompt", value=None
         )
 
     def run(self, connection, max_end_time):

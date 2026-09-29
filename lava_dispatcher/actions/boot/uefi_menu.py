@@ -257,7 +257,7 @@ class UefiMenuAction(RetryAction):
     def validate(self):
         super().validate()
         self.set_namespace_data(
-            action=self.name,
+            action="uefi-menu-action",
             label="bootloader_prompt",
             key="prompt",
             value=self.job.device["actions"]["boot"]["methods"][self.method][

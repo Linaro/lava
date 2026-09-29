@@ -172,7 +172,7 @@ class Scp(ConnectSsh):
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
         self.set_namespace_data(
-            action=self.name,
+            action="scp-deploy",
             label="scp-overlay-unpack",
             key="overlay",
             value=destination,
@@ -199,11 +199,11 @@ class PrepareSsh(Action):
             and "hostID" in self.parameters["parameters"]
         ):
             self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=True
+                action="prepare-ssh", label="ssh-connection", key="host", value=True
             )
         else:
             self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=False
+                action="prepare-ssh", label="ssh-connection", key="host", value=False
             )
             self.primary = True
 
@@ -221,7 +221,7 @@ class PrepareSsh(Action):
                     % self.parameters["parameters"]["hostID"]
                 )
             self.set_namespace_data(
-                action=self.name,
+                action="prepare-ssh",
                 label="ssh-connection",
                 key="host_address",
                 value=host_data[self.parameters["parameters"]["host_key"]],

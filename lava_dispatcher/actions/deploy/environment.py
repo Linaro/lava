@@ -50,18 +50,18 @@ class DeployDeviceEnvironment(Action):
             environment = self._create_environment()
 
             self.set_namespace_data(
-                action=self.name,
+                action="deploy-device-env",
                 label="environment",
                 key="shell_file",
                 value=shell_file,
             )
 
             self.set_namespace_data(
-                action=self.name, label="environment", key="env_dict", value=environment
+                action="deploy-device-env", label="environment", key="env_dict", value=environment
             )
 
         self.set_namespace_data(
-            action=self.name,
+            action="deploy-device-env",
             label="environment",
             key="line_separator",
             value=self.parameters["deployment_data"].get(

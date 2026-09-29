@@ -222,7 +222,7 @@ class AvhDeploy(Action):
             self.avh["image_name"] = fw_package_path.split("/")[-1][:-4]
 
         self.set_namespace_data(
-            action=self.name, label=self.name, key="avh", value=self.avh
+            action="deploy-avh", label="deploy-avh", key="avh", value=self.avh
         )
         self.results = {"success": self.avh["image_path"]}
 

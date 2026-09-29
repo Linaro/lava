@@ -144,7 +144,7 @@ class TestServiceAction(Action):
         ]
         # For stopping services via command: stop_test_services.
         cmd_list = self.get_namespace_data(
-            action=self.name, label="stop-services", key="cmd-list"
+            action="lava-test-service", label="stop-services", key="cmd-list"
         )
         if cmd_list:
             if self.stop_cmd not in cmd_list:

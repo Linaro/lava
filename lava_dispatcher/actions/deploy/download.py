@@ -1023,7 +1023,7 @@ class DownloadAction(Action):
     def validate(self):
         super().validate()
         self.set_namespace_data(
-            action=self.name, label="download-dir", key="dir", value=self.download_dir
+            action="download-deploy", label="download-dir", key="dir", value=self.download_dir
         )
 
     def populate(self, parameters):

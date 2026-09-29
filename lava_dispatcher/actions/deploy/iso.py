@@ -47,7 +47,7 @@ class DeployIsoAction(Action):
         super().validate()
         suffix = os.path.join(*self.preseed_path.split("/")[-2:])
         self.set_namespace_data(
-            action=self.name, label="iso", key="suffix", value=suffix
+            action="deploy-iso-installer", label="iso", key="suffix", value=suffix
         )
         which("in.tftpd")
 
@@ -121,7 +121,7 @@ class IsoEmptyImage(Action):
         self.logger.info("Creating base image of size: %s bytes", self.size)
         prepare_install_base(self, output, self.size)
         self.set_namespace_data(
-            action=self.name, label=self.name, key="output", value=output
+            action="prepare-empty-image", label="prepare-empty-image", key="output", value=output
         )
         self.results = {"success": output}
         return connection
@@ -161,8 +161,8 @@ class IsoPullInstaller(Action):
         for key, value in self.files.items():
             unique_values.add(value)
             self.set_namespace_data(
-                action=self.name,
-                label=self.name,
+                action="pull-installer-files",
+                label="pull-installer-files",
                 key=key,
                 value=os.path.basename(value),
             )
@@ -186,7 +186,7 @@ class IsoPullInstaller(Action):
             filename = os.path.join(destination, os.path.basename(value))
             self.logger.info("filename: %s size: %s", filename, os.stat(filename)[6])
             self.set_namespace_data(
-                action=self.name, label=self.name, key=key, value=filename
+                action="pull-installer-files", label="pull-installer-files", key=key, value=filename
             )
         self.results = {"success": list(self.files.values())}
         return connection
@@ -239,13 +239,13 @@ class QemuCommandLine(Action):
             )
         )
         self.set_namespace_data(
-            action=self.name,
-            label=self.name,
+            action="prepare-qemu-commands",
+            label="prepare-qemu-commands",
             key="prompts",
             value=self.parameters["deployment_data"]["prompts"],
         )
         self.set_namespace_data(
-            action=self.name, label=self.name, key="append", value=self.command_line
+            action="prepare-qemu-commands", label="prepare-qemu-commands", key="append", value=self.command_line
         )
 
     def run(self, connection, max_end_time):
@@ -259,8 +259,8 @@ class QemuCommandLine(Action):
         self.sub_command.append(" -kernel %s " % kernel)
         self.sub_command.append(" -initrd %s " % initrd)
         self.set_namespace_data(
-            action=self.name,
-            label=self.name,
+            action="prepare-qemu-commands",
+            label="prepare-qemu-commands",
             key="sub_command",
             value=self.sub_command[:],
         )

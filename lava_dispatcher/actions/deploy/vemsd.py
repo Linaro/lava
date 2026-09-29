@@ -309,7 +309,7 @@ class MountDeviceMassStorageDevice(Action):
         )
 
         self.set_namespace_data(
-            action=self.name,
+            action="mount-device-usbmsd",
             label=self.namespace_label,
             key="mount-point",
             value=mount_point,
@@ -421,7 +421,7 @@ class UnmountVExpressMassStorageDevice(Action):
         connection = super().run(connection, max_end_time)
 
         mount_point = self.get_namespace_data(
-            action=self.namespace_action, label=self.namespace_label, key="mount-point"
+            action="mount-device-usbmsd", label=self.namespace_label, key="mount-point"
         )
         self.run_cmd(
             ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point

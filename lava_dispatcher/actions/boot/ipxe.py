@@ -82,7 +82,7 @@ class BootloaderRetry(BootHasMixin, RetryAction):
         ):
             self.errors_add("Missing bootloader prompt for device")
         self.set_namespace_data(
-            action=self.name,
+            action="bootloader-retry",
             label="bootloader_prompt",
             key="prompt",
             value=self.job.device["actions"]["boot"]["methods"][self.type][

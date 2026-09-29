@@ -511,8 +511,8 @@ class TestDefinitionAction(Action):
         )
         if self.test_list:
             self.set_namespace_data(
-                action=self.name,
-                label=self.name,
+                action="test-definition",
+                label="test-definition",
                 key="test_list",
                 value=self.test_list,
                 parameters=parameters,
@@ -1012,14 +1012,14 @@ class TestRunnerAction(TestOverlayAction):
         if not self.testdef_levels:
             self.errors_add("Unable to identify test definition names")
         current = self.get_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels"
+            action="test-runscript-overlay", label="test-runscript-overlay", key="testdef_levels"
         )
         if current:
             current.update(self.testdef_levels)
         else:
             current = self.testdef_levels
         self.set_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels", value=current
+            action="test-runscript-overlay", label="test-runscript-overlay", key="testdef_levels", value=current
         )
 
     def run(self, connection, max_end_time):
@@ -1050,7 +1050,7 @@ class TestRunnerAction(TestOverlayAction):
         lava_signal = self.parameters.get("lava-signal", "stdout")
 
         testdef_levels = self.get_namespace_data(
-            action=self.name, label=self.name, key="testdef_levels"
+            action="test-runscript-overlay", label="test-runscript-overlay", key="testdef_levels"
         )
         with open(filename, "a") as runsh:
             for line in content:

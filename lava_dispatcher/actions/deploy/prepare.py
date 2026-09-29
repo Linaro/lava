@@ -100,7 +100,7 @@ class UBootPrepareKernelAction(Action):
                 self.errors_add("Kernel boot type is not supported by this device.")
         if self.kernel_type:
             self.set_namespace_data(
-                action=self.name, label="prepared-kernel", key="exists", value=True
+                action="uboot-prepare-kernel", label="prepared-kernel", key="exists", value=True
             )
             self.bootcommand = map_kernel_uboot(
                 self, self.kernel_type, self.job.device.get("parameters")
@@ -309,7 +309,7 @@ class PrepareFITAction(Action):
             raise JobError("Kernel not downloaded")
         fit_tftp = os.path.join(os.path.dirname(kernel_tftp), "image.itb")
         self.set_namespace_data(
-            action=self.name, label="file", key="fit", value=fit_tftp
+            action="prepare-fit", label="file", key="fit", value=fit_tftp
         )
 
         return connection

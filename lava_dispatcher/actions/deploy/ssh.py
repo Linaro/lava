@@ -57,8 +57,8 @@ class ScpOverlay(Action):
             else ""
         )
         self.set_namespace_data(
-            action=self.name,
-            label=self.name,
+            action="scp-overlay",
+            label="scp-overlay",
             key="tar_flags",
             value=tar_flags,
             parameters=parameters,
@@ -72,7 +72,7 @@ class ScpOverlay(Action):
                     )
                 )
                 self.set_namespace_data(
-                    action=self.name,
+                    action="scp-overlay",
                     label="scp",
                     key=item,
                     value=True,
@@ -107,7 +107,7 @@ class PrepareOverlayScp(Action):
             environment = {}
         environment.update({"LC_ALL": "C.UTF-8", "LANG": "C"})
         self.set_namespace_data(
-            action=self.name, label="environment", key="env_dict", value=environment
+            action="prepare-scp-overlay", label="environment", key="env_dict", value=environment
         )
         if "protocols" in self.parameters:
             # set run to call the protocol, retrieve the data and store.
@@ -127,7 +127,7 @@ class PrepareOverlayScp(Action):
                     return
                 self.host_keys.append(params["messageID"])
         self.set_namespace_data(
-            action=self.name, label=self.name, key="overlay", value=self.host_keys
+            action="prepare-scp-overlay", label="prepare-scp-overlay", key="overlay", value=self.host_keys
         )
 
     def populate(self, parameters):
@@ -146,18 +146,18 @@ class PrepareOverlayScp(Action):
         )
         self.logger.info("Preparing to copy: %s", os.path.basename(overlay_file))
         self.set_namespace_data(
-            action=self.name, label="scp-deploy", key="overlay", value=overlay_file
+            action="prepare-scp-overlay", label="scp-deploy", key="overlay", value=overlay_file
         )
         for host_key in self.host_keys:
             data = self.get_namespace_data(
-                action=MultinodeProtocol.name,
-                label=MultinodeProtocol.name,
+                action="lava-multinode",
+                label="lava-multinode",
                 key=host_key,
             )
             if not data:
                 self.logger.warning("Missing data for host_key %s", host_key)
                 continue
-            for params in self.parameters["protocols"][MultinodeProtocol.name]:
+            for params in self.parameters["protocols"]["lava-multinode"]:
                 replacement_key = [key for key, _ in params["message"].items()][0]
                 if replacement_key not in data:
                     self.logger.error(
@@ -167,8 +167,8 @@ class PrepareOverlayScp(Action):
                     )
                     continue
                 self.set_namespace_data(
-                    action=self.name,
-                    label=self.name,
+                    action="prepare-scp-overlay",
+                    label="prepare-scp-overlay",
                     key=host_key,
                     value=str(data[replacement_key]),
                 )
@@ -176,7 +176,7 @@ class PrepareOverlayScp(Action):
                     "data %s replacement key is %s",
                     host_key,
                     self.get_namespace_data(
-                        action=MultinodeProtocol.name, label=self.name, key=host_key
+                        action="lava-multinode", label="prepare-scp-overlay", key=host_key
                     ),
                 )
         return connection
