@@ -376,3 +376,113 @@ class TestMultinodeProtocol(LavaDispatcherTestCase):
         protocol.base_message = None
         with self.assertRaisesRegex(LAVABug, "used before set_up"):
             protocol._send({"request": "lava_sync", "messageID": "test"})
+
+
+class ChunkedSocketMock:
+    """
+    recv() is free to return less than requested: force this behavior for the
+    tests.
+    """
+
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = list(chunks)
+        self.sent: list[bytes] = []
+        self.closed = False
+
+    def recv(self, count: int) -> bytes:
+        if not self.chunks:
+            return b""
+        chunk = self.chunks[0]
+        if len(chunk) <= count:
+            return self.chunks.pop(0)
+        self.chunks[0] = chunk[count:]
+        return chunk[:count]
+
+    def sendall(self, data: bytes) -> None:
+        self.sent.append(data)
+
+    def close(self) -> None:
+        self.closed = True
+
+
+class TestMultinodeProtocolFraming(LavaDispatcherTestCase):
+    """The coordinator frames every message with an 8 byte hexadecimal length."""
+
+    def create_protocol(self) -> MultinodeProtocol:
+        return MultinodeProtocol(
+            {
+                "protocols": {
+                    MultinodeProtocol.name: {"target_group": "test", "role": "test"}
+                }
+            },
+            str(randint(0, 2**31)),
+            DummyLogger(),
+        )
+
+    @staticmethod
+    def frame(message: str) -> bytes:
+        data = message.encode("utf-8")
+        return ("%08X" % len(data)).encode("utf-8") + data
+
+    def test_recv_message_split_header(self) -> None:
+        message = json_dumps({"response": "ack"})
+        frame = self.frame(message)
+        # the header alone arrives in two pieces
+        sock = ChunkedSocketMock([frame[:3], frame[3:]])
+        protocol = self.create_protocol()
+        self.assertEqual(protocol._recv_message(sock), message)
+
+    def test_recv_message_split_body(self) -> None:
+        message = json_dumps({"response": "ack", "message": {"key": "value"}})
+        frame = self.frame(message)
+        sock = ChunkedSocketMock([frame[:8], frame[8:20], frame[20:]])
+        protocol = self.create_protocol()
+        self.assertEqual(protocol._recv_message(sock), message)
+
+    def test_recv_message_split_character(self) -> None:
+        # a multi-byte character split across two chunks has to be decoded
+        # once the whole message is in, not chunk by chunk. json.dumps()
+        # escapes non-ascii, so the message is spelled out here.
+        message = '{"response": "ack", "message": {"key": "v\u00e0lue"}}'
+        frame = self.frame(message)
+        index = frame.index("\u00e0".encode()) + 1
+        sock = ChunkedSocketMock([frame[:index], frame[index:]])
+        protocol = self.create_protocol()
+        self.assertEqual(protocol._recv_message(sock), message)
+        self.assertEqual(json_loads(message)["message"], {"key": "v\u00e0lue"})
+
+    def test_recv_message_closed_while_reading(self) -> None:
+        # the coordinator going away mid message is a "wait", not a truncated
+        # message handed over as if it were complete
+        frame = self.frame(json_dumps({"response": "ack"}))
+        sock = ChunkedSocketMock([frame[:12]])
+        protocol = self.create_protocol()
+        self.assertEqual(json_loads(protocol._recv_message(sock)), {"response": "wait"})
+
+    def test_recv_message_no_header(self) -> None:
+        protocol = self.create_protocol()
+        self.assertEqual(
+            json_loads(protocol._recv_message(ChunkedSocketMock([]))),
+            {"response": "wait"},
+        )
+
+    def test_recv_message_invalid_header(self) -> None:
+        protocol = self.create_protocol()
+        sock = ChunkedSocketMock([b"not-hex!" + b"{}"])
+        self.assertEqual(json_loads(protocol._recv_message(sock)), {"response": "wait"})
+
+    def test_recv_message_too_large(self) -> None:
+        protocol = self.create_protocol()
+        size = protocol.max_message_size + 1
+        sock = ChunkedSocketMock([("%08X" % size).encode("utf-8")])
+        self.assertEqual(json_loads(protocol._recv_message(sock)), {"response": "wait"})
+
+    def test_send_message_counts_bytes(self) -> None:
+        # the header is a byte count: a multi-byte character makes it differ
+        # from the length of the string
+        message = '{"request": "lava_sync", "messageID": "\u00e0"}'
+        self.assertNotEqual(len(message), len(message.encode()))
+        sock = ChunkedSocketMock([])
+        protocol = self.create_protocol()
+        self.assertTrue(protocol._send_message(message, sock))
+        self.assertEqual(b"".join(sock.sent), self.frame(message))
