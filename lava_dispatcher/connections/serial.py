@@ -107,12 +107,14 @@ class ConnectDevice(Action):
             if self.primary:
                 if not self.hardware:
                     self.errors_add("Unable to identify primary connection command.")
+                    return
             else:
                 if not matched:
                     self.errors_add(
                         "Unable to identify connection command hardware. %s"
                         % self.hardware
                     )
+                    return
             self.command = self.job.device["commands"]["connections"][self.hardware][
                 "connect"
             ][:]  # local copy to retain idempotency.
