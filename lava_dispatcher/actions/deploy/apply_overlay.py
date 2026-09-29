@@ -976,8 +976,6 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = f"{self.key}.{overlay}"
-            overlay_image: str | None = None
-            path: str | None = None
             if overlay == "lava":
                 overlay_image: str | None = self.get_namespace_data(
                     action="compress-overlay", label="output", key="file"
@@ -990,8 +988,6 @@ class AppendOverlays(Action):
                 path = self.params["overlays"][overlay]["path"]
 
             if overlay_image:
-                if path is None:
-                    raise LAVABug(f"Overlay {overlay!r} path not found")
                 # Take off initial "/" from path, extract relative to this directory
                 extract_path = os.path.join(tempdir, path[1:])
                 if (
