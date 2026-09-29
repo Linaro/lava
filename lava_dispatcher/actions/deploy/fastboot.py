@@ -213,7 +213,7 @@ class FastbootFlashAction(OptionalContainerFastbootAction):
         # if a reboot is requested, will need to wait for the prompt
         # if not, continue in the existing mode.
         reboot = self.get_namespace_data(
-            action=self.name, label="interrupt", key="reboot"
+            action="fastboot-flash-action", label="interrupt", key="reboot"
         )
         if self.interrupt_prompt and reboot:
             connection.prompt_str = self.interrupt_prompt

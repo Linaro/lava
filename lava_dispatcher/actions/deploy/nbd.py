@@ -84,7 +84,7 @@ class NbdAction(Action):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.set_namespace_data(
-            action=self.name,
+            action="nbd-deploy",
             label="tftp",
             key="tftp_dir",
             value=self.tftp_dir,
@@ -109,7 +109,7 @@ class NbdAction(Action):
                         parameters=parameters,
                     )
                     self.set_namespace_data(
-                        action=self.name,
+                        action="nbd-deploy",
                         label="nbd",
                         key="initrd",
                         value=True,
@@ -122,7 +122,7 @@ class NbdAction(Action):
             self.pipeline.add_action(PrepareKernelAction(self.job))
         # setup values for protocol and later steps
         self.set_namespace_data(
-            action=self.name,
+            action="nbd-deploy",
             label="nbd",
             key="initrd",
             value=True,

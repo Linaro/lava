@@ -64,7 +64,10 @@ class ApplyOverlayGuest(Action):
     def validate(self) -> None:
         super().validate()
         self.set_namespace_data(
-            action=self.name, label="guest", key="name", value=self.guest_filename
+            action="apply-overlay-guest",
+            label="guest",
+            key="name",
+            value=self.guest_filename,
         )
         if (
             "guest"
@@ -95,7 +98,10 @@ class ApplyOverlayGuest(Action):
         guest_dir = self.mkdtemp()
         guest_file = os.path.join(guest_dir, self.guest_filename)
         self.set_namespace_data(
-            action=self.name, label="guest", key="filename", value=guest_file
+            action="apply-overlay-guest",
+            label="guest",
+            key="filename",
+            value=guest_file,
         )
         mountpoint: str | None = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
@@ -114,7 +120,7 @@ class ApplyOverlayGuest(Action):
         )
         self.results = {"success": blkid}
         self.set_namespace_data(
-            action=self.name, label="guest", key="UUID", value=blkid
+            action="apply-overlay-guest", label="guest", key="UUID", value=blkid
         )
         return connection
 
@@ -399,7 +405,7 @@ class ApplyOverlayTftp(Action):
             if not suffix:
                 suffix = ""
             self.set_namespace_data(
-                action=self.name,
+                action="apply-overlay-tftp",
                 label="file",
                 key="overlay",
                 value=os.path.join(suffix, "ramdisk", os.path.basename(overlay_file)),
@@ -678,7 +684,7 @@ class ExtractRamdisk(Action):
 
         # tell other actions where the unpacked ramdisk can be found
         self.set_namespace_data(
-            action=self.name,
+            action="extract-overlay-ramdisk",
             label="extracted_ramdisk",
             key="directory",
             value=extracted_ramdisk,
@@ -687,7 +693,7 @@ class ExtractRamdisk(Action):
         # directory above: that is where the contents were unpacked to, and
         # cpio cannot write an archive over it.
         self.set_namespace_data(
-            action=self.name,
+            action="extract-overlay-ramdisk",
             label="ramdisk_file",
             key="file",
             value=os.path.join(ramdisk_dir, RAMDISK_FNAME),
@@ -777,7 +783,10 @@ class CompressRamdisk(Action):
                     os.path.join(ramdisk_dir, filename),
                 )
                 self.set_namespace_data(
-                    action=self.name, label="file", key="preseed_local", value=filename
+                    action="compress-ramdisk",
+                    label="file",
+                    key="preseed_local",
+                    value=filename,
                 )
 
         self.logger.info("Building ramdisk %s containing %s", ramdisk_data, ramdisk_dir)
@@ -809,7 +818,7 @@ class CompressRamdisk(Action):
         shutil.move(final_file, full_path)
         self.logger.debug("rename %s to %s", final_file, full_path)
         self.set_namespace_data(
-            action=self.name, label="file", key="full-path", value=full_path
+            action="compress-ramdisk", label="file", key="full-path", value=full_path
         )
 
         if self.parameters["to"] == "tftp":
@@ -819,14 +828,14 @@ class CompressRamdisk(Action):
             if not suffix:
                 suffix = ""
             self.set_namespace_data(
-                action=self.name,
+                action="compress-ramdisk",
                 label="file",
                 key="ramdisk",
                 value=os.path.join(suffix, "ramdisk", os.path.basename(final_file)),
             )
         else:
             self.set_namespace_data(
-                action=self.name, label="file", key="ramdisk", value=final_file
+                action="compress-ramdisk", label="file", key="ramdisk", value=final_file
             )
         return connection
 
@@ -1002,7 +1011,10 @@ class AppendOverlays(Action):
                     untar_file(overlay_image, extract_path)
                     if overlay == "lava":
                         self.set_namespace_data(
-                            action=self.name, label="result", key="applied", value=True
+                            action="append-overlays",
+                            label="result",
+                            key="applied",
+                            value=True,
                         )
                 else:
                     self.logger.debug(
@@ -1092,7 +1104,7 @@ class AppendOverlays(Action):
                         inject_file(self, target_image, overlay_image, path)
                     if overlay == "lava":
                         self.set_namespace_data(
-                            action=self.name,
+                            action="append-overlays",
                             label="result",
                             key="applied",
                             value=True,
@@ -1175,7 +1187,10 @@ class AppendOverlays(Action):
                     guest.upload(overlay_image, path)
                 if overlay == "lava":
                     self.set_namespace_data(
-                        action=self.name, label="result", key="applied", value=True
+                        action="append-overlays",
+                        label="result",
+                        key="applied",
+                        value=True,
                     )
             else:
                 self.logger.warning("- %s: <MISSING> to %r", label, path)
@@ -1222,10 +1237,16 @@ class ParsePersistentNFS(Action):
         if rpcinfo_error := rpcinfo_nfs(nfs_server):
             self.errors_add(rpcinfo_error)
         self.set_namespace_data(
-            action=self.name, label="nfs_address", key="nfsroot", value=dirname
+            action="parse-persistent-nfs",
+            label="nfs_address",
+            key="nfsroot",
+            value=dirname,
         )
         self.set_namespace_data(
-            action=self.name, label="nfs_address", key="serverip", value=nfs_server
+            action="parse-persistent-nfs",
+            label="nfs_address",
+            key="serverip",
+            value=nfs_server,
         )
 
         self.job.device["dynamic_data"]["NFS_ROOTFS"] = dirname

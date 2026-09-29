@@ -118,7 +118,7 @@ class DeployMPSTestBinary(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+            action="mount-device-usbmsd", label="vexpress-fw", key="mount-point"
         )
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
@@ -156,7 +156,7 @@ class DeployMPSRebootTxt(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+            action="mount-device-usbmsd", label="vexpress-fw", key="mount-point"
         )
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)

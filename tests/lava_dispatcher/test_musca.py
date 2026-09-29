@@ -42,7 +42,7 @@ class TestMusca(LavaDispatcherTestCase):
         flash_check_action.data = []
         flash_check_action.parameters = {"namespace": "test"}
         flash_check_action.set_namespace_data(
-            action="mount-musca-usbmsd",
+            action="mount-device-usbmsd",
             label="musca-usb",
             key="mount-point",
             value=self.tmp_path,
@@ -61,7 +61,7 @@ class TestMusca(LavaDispatcherTestCase):
         automation_action.data = []
         automation_action.parameters = {"namespace": "test"}
         automation_action.set_namespace_data(
-            action="mount-musca-usbmsd",
+            action="mount-device-usbmsd",
             label="musca-usb",
             key="mount-point",
             value=self.tmp_path,
