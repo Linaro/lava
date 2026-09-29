@@ -84,7 +84,7 @@ class UefiShellAction(BootHasMixin, RetryAction):
         super().validate()
         params = self.job.device["actions"]["boot"]["methods"]["uefi"]["parameters"]
         self.set_namespace_data(
-            action=self.name,
+            action="uefi-shell-main-action",
             label="bootloader_prompt",
             key="prompt",
             value=params["bootloader_prompt"],
