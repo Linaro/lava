@@ -210,8 +210,8 @@ class TestShellAction(ReportMixin):
         pattern_dict = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(
-            action=self.name,
-            label=self.name,
+            action="lava-test-shell",
+            label="lava-test-shell",
             key="pattern_dictionary",
             value=pattern_dict,
         )

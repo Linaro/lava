@@ -66,7 +66,7 @@ class DepthchargeCommandOverlay(BootloaderCommandOverlay):
         cmdline_file_path = os.path.join(os.path.dirname(kernel_path), "cmdline")
 
         substitutions: dict[str, str | None] | None = self.get_namespace_data(
-            action=self.name,
+            action="bootloader-overlay",
             label=self.method,
             key="substitutions",
         )

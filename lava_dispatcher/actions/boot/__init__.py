@@ -605,7 +605,7 @@ class BootloaderCommandOverlay(Action):
 
         # Save the substitutions
         self.set_namespace_data(
-            action=self.name,
+            action="bootloader-overlay",
             label=self.method,
             key="substitutions",
             value=substitutions,
@@ -628,7 +628,7 @@ class BootloaderCommandOverlay(Action):
             write_bootscript(substitute(self.commands, substitutions), bootscript)
             bootscript_commands = ["dhcp net0", "chain %s" % bootscripturi]
             self.set_namespace_data(
-                action=self.name,
+                action="bootloader-overlay",
                 label=self.method,
                 key="commands",
                 value=bootscript_commands,
