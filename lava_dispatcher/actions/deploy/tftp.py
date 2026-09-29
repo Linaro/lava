@@ -58,7 +58,7 @@ class TftpAction(Action):
     def populate(self, parameters):
         self.tftp_dir = self.mkdtemp(override=filesystem.tftpd_dir())
         self.set_namespace_data(
-            action=self.name,
+            action="tftp-deploy",
             label="tftp",
             key="tftp_dir",
             value=self.tftp_dir,
@@ -98,7 +98,7 @@ class TftpAction(Action):
                     )
                     if key == "ramdisk":
                         self.set_namespace_data(
-                            action=self.name,
+                            action="tftp-deploy",
                             label="tftp",
                             key="ramdisk",
                             value=True,
@@ -123,7 +123,7 @@ class TftpAction(Action):
         # Extract the 3 last path elements. See action.mkdtemp()
         suffix = os.path.join(*self.tftp_dir.split("/")[-2:])
         self.set_namespace_data(
-            action=self.name, label="tftp", key="suffix", value=suffix
+            action="tftp-deploy", label="tftp", key="suffix", value=suffix
         )
 
         super().run(connection, max_end_time)

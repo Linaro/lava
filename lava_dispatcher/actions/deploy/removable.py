@@ -121,7 +121,7 @@ class DDAction(Action):
                 self.errors_add("'root_part' is not valid as a UUID is required")
         if self.parameters["device"] in self.boot_params:
             self.set_namespace_data(
-                action=self.name,
+                action="dd-image",
                 label="u-boot",
                 key="boot_part",
                 value=self.boot_params[self.parameters["device"]]["device_id"],
@@ -226,7 +226,7 @@ class MassStorage(Action):
             return
 
         self.set_namespace_data(
-            action=self.name,
+            action="storage-deploy",
             label="u-boot",
             key="device",
             value=self.parameters["device"],

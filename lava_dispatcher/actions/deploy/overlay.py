@@ -501,7 +501,7 @@ class CompressOverlay(Action):
             raise InfrastructureError("Unable to create lava overlay tarball") from exc
 
         self.set_namespace_data(
-            action=self.name, label="output", key="file", value=output
+            action="compress-overlay", label="output", key="file", value=output
         )
         return connection
 
@@ -550,7 +550,7 @@ class SshAuthorize(Action):
             self.identity_file = check[1]
         if self.valid:
             self.set_namespace_data(
-                action=self.name,
+                action="ssh-authorize",
                 label="authorize",
                 key="identity_file",
                 value=self.identity_file,

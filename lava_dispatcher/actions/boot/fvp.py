@@ -380,7 +380,7 @@ class StartFVPAction(BaseFVPAction):
 
                 serial_port = shell_connection.raw_connection.match.groupdict()["PORT"]
                 self.set_namespace_data(
-                    action=StartFVPAction.name,
+                    action="run-fvp",
                     label="fvp",
                     key="serial_port",
                     value=serial_port,
@@ -399,13 +399,13 @@ class StartFVPAction(BaseFVPAction):
                     )
                     self.logger.info("Found secondary FVP port %s", serial_port)
         self.set_namespace_data(
-            action=StartFVPAction.name,
+            action="run-fvp",
             label="fvp",
             key="feedback_ports",
             value=self.fvp_feedback_ports,
         )
         self.set_namespace_data(
-            action=StartFVPAction.name,
+            action="run-fvp",
             label="fvp",
             key="container",
             value=self.container,
@@ -444,13 +444,13 @@ class GetFVPSerialAction(Action):
 
     def run(self, connection, max_end_time):
         serial_port = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="serial_port"
+            action="run-fvp", label="fvp", key="serial_port"
         )
         feedback_ports = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="feedback_ports"
+            action="run-fvp", label="fvp", key="feedback_ports"
         )
         container = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="container"
+            action="run-fvp", label="fvp", key="container"
         )
         for feedback_dict in feedback_ports:
             cmd = (
@@ -505,7 +505,7 @@ class RunFVPeRPCApp(Action):
 
     def run(self, connection, max_end_time):
         container = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="container"
+            action="run-fvp", label="fvp", key="container"
         )
 
         app_path = self.get_namespace_data(
@@ -549,7 +549,7 @@ class RunFVPShellCommands(Action):
 
     def run(self, connection, max_end_time):
         container = self.get_namespace_data(
-            action=StartFVPAction.name, label="fvp", key="container"
+            action="run-fvp", label="fvp", key="container"
         )
 
         cmds = " && ".join(self.commands)

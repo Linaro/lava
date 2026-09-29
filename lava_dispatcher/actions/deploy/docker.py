@@ -68,7 +68,7 @@ class DockerAction(Action):
         if re.compile(docker_image_format_pattern).match(self.image_name) is None:
             self.errors_add("image name '%s' is invalid" % self.image_name)
         self.set_namespace_data(
-            action=self.name, label="image", key="name", value=self.image_name
+            action="deploy-docker", label="image", key="name", value=self.image_name
         )
 
     def populate(self, parameters):

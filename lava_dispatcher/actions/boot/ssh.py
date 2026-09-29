@@ -14,7 +14,6 @@ from lava_dispatcher.actions.boot import AutoLoginAction
 from lava_dispatcher.actions.boot.environment import ExportDeviceEnvironment
 from lava_dispatcher.connections.ssh import ConnectSsh
 from lava_dispatcher.logical import RetryAction
-from lava_dispatcher.protocols.multinode import MultinodeProtocol
 from lava_dispatcher.shell import ExpectShellSession
 from lava_dispatcher.utils.shell import which
 
@@ -172,7 +171,7 @@ class Scp(ConnectSsh):
         connection = super().run(connection, max_end_time)
         self.results = {"success": "ssh deployment"}
         self.set_namespace_data(
-            action=self.name,
+            action="scp-deploy",
             label="scp-overlay-unpack",
             key="overlay",
             value=destination,
@@ -199,11 +198,11 @@ class PrepareSsh(Action):
             and "hostID" in self.parameters["parameters"]
         ):
             self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=True
+                action="prepare-ssh", label="ssh-connection", key="host", value=True
             )
         else:
             self.set_namespace_data(
-                action=self.name, label="ssh-connection", key="host", value=False
+                action="prepare-ssh", label="ssh-connection", key="host", value=False
             )
             self.primary = True
 
@@ -211,8 +210,8 @@ class PrepareSsh(Action):
         connection = super().run(connection, max_end_time)
         if not self.primary:
             host_data = self.get_namespace_data(
-                action=MultinodeProtocol.name,
-                label=MultinodeProtocol.name,
+                action="lava-multinode",
+                label="lava-multinode",
                 key=self.parameters["parameters"]["hostID"],
             )
             if not host_data:
@@ -221,7 +220,7 @@ class PrepareSsh(Action):
                     % self.parameters["parameters"]["hostID"]
                 )
             self.set_namespace_data(
-                action=self.name,
+                action="prepare-ssh",
                 label="ssh-connection",
                 key="host_address",
                 value=host_data[self.parameters["parameters"]["host_key"]],

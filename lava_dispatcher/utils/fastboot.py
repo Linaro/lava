@@ -56,7 +56,9 @@ class DetectFastbootDevice(OptionalContainerFastbootAction):
         if not action.job.device.get("fastboot_auto_detection", False):
             return
 
-        if action.get_namespace_data(action=cls.name, label=cls.name, key="added"):
+        if action.get_namespace_data(
+            action="detect-fastboot-device", label="detect-fastboot-device", key="added"
+        ):
             return
 
         if action.pipeline is None:
@@ -64,8 +66,8 @@ class DetectFastbootDevice(OptionalContainerFastbootAction):
 
         action.pipeline.add_action(cls(action.job))
         action.set_namespace_data(
-            action=cls.name,
-            label=cls.name,
+            action="detect-fastboot-device",
+            label="detect-fastboot-device",
             key="added",
             value=True,
         )

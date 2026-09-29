@@ -309,7 +309,7 @@ class MountDeviceMassStorageDevice(Action):
         )
 
         self.set_namespace_data(
-            action=self.name,
+            action="mount-device-usbmsd",
             label=self.namespace_label,
             key="mount-point",
             value=mount_point,
@@ -368,7 +368,7 @@ class DeployVExpressRecoveryImage(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-vexpress-usbmsd", label="vexpress-fw", key="mount-point"
+            action="mount-device-usbmsd", label="vexpress-fw", key="mount-point"
         )
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
@@ -415,13 +415,12 @@ class UnmountVExpressMassStorageDevice(Action):
     def __init__(self, job: Job):
         super().__init__(job)
         self.namespace_label = "vexpress-fw"
-        self.namespace_action = "mount-vexpress-usbmsd"
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
         mount_point = self.get_namespace_data(
-            action=self.namespace_action, label=self.namespace_label, key="mount-point"
+            action="mount-device-usbmsd", label=self.namespace_label, key="mount-point"
         )
         self.run_cmd(
             ["sync", mount_point], error_msg="Failed to sync device %s" % mount_point

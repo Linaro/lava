@@ -111,7 +111,7 @@ class UBootCommandsAction(BootHasMixin, Action):
     def validate(self):
         super().validate()
         self.set_namespace_data(
-            action=self.name,
+            action="uboot-commands",
             label="bootloader_prompt",
             key="prompt",
             value=self.job.device["actions"]["boot"]["methods"]["u-boot"]["parameters"][
@@ -179,7 +179,7 @@ class UBootSecondaryMedia(BootloaderSecondaryMedia):
         if not self.valid:
             return
         self.set_namespace_data(
-            action=self.name,
+            action="uboot-from-media",
             label="uuid",
             key="boot_part",
             value="%s:%s"

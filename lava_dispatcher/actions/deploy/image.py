@@ -44,7 +44,7 @@ class DeployImagesAction(Action):  # FIXME: Rename to DeployPosixImages
             )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
-                action=self.name,
+                action="deployimages",
                 label="image",
                 key="uefi_dir",
                 value=uefi_path,
@@ -77,7 +77,7 @@ class DeployQemuNfsAction(Action):
             )
             # uefi option of QEMU needs a directory, not the filename
             self.set_namespace_data(
-                action=self.name,
+                action="deploy-qemu-nfs",
                 label="image",
                 key="uefi_dir",
                 value=uefi_path,
