@@ -115,7 +115,7 @@ class FlashJLinkAction(Action):
         # set a namespace for the jlink path script which is used to flash
         self.jlink_script = os.path.join(self.path, "cmd.jlink")
         self.set_namespace_data(
-            action=self.name,
+            action="flash-jlink",
             label="jlink-path-script",
             key="path",
             value=self.jlink_script,
@@ -127,7 +127,7 @@ class FlashJLinkAction(Action):
         self.base_command.extend(["-SelectEmuBySN", str(board_id)])
         # Set a namespace for the JlinkExe cmd
         self.set_namespace_data(
-            action=self.name,
+            action="flash-jlink",
             label="jlink-cmd",
             key="cmd",
             value=self.base_command,
@@ -178,10 +178,10 @@ class FlashJLinkAction(Action):
         connection = super().run(connection, max_end_time)
 
         path_jlink_script = self.get_namespace_data(
-            action=self.name, label="jlink-path-script", key="path"
+            action="flash-jlink", label="jlink-path-script", key="path"
         )
         jlink_cmd = self.get_namespace_data(
-            action=self.name, label="jlink-cmd", key="cmd"
+            action="flash-jlink", label="jlink-cmd", key="cmd"
         )
         self.logger.info(jlink_cmd)
         self.create_jlink_script(path_jlink_script)

@@ -93,7 +93,6 @@ class UnmountMuscaMassStorageDevice(UnmountVExpressMassStorageDevice):
     def __init__(self, job: Job):
         super().__init__(job)
         self.namespace_label = "musca-usb"
-        self.namespace_action = "mount-musca-usbmsd"
 
 
 class WaitMuscaMassStorageAction(Action):
@@ -199,7 +198,7 @@ class DeployMuscaTestBinary(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
+            action="mount-device-usbmsd", label="musca-usb", key="mount-point"
         )
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
@@ -238,7 +237,7 @@ class DeployMuscaAutomationAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
+            action="mount-device-usbmsd", label="musca-usb", key="mount-point"
         )
         if not os.path.exists(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
@@ -266,7 +265,7 @@ class CheckMuscaFlashAction(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
         mount_point = self.get_namespace_data(
-            action="mount-musca-usbmsd", label="musca-usb", key="mount-point"
+            action="mount-device-usbmsd", label="musca-usb", key="mount-point"
         )
         if not os.path.realpath(mount_point):
             raise InfrastructureError("Unable to locate mount point: %s" % mount_point)
