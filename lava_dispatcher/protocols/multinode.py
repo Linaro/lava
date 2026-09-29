@@ -41,6 +41,9 @@ class MultinodeProtocol(Protocol):
 
     name = "lava-multinode"
 
+    # Max size of coordinator messages
+    max_message_size = 1024 * 1024
+
     # FIXME: use errors and valid where old code just logged complaints
 
     def __init__(self, parameters: dict[str, Any], job_id: str, job_logger: YAMLLogger):
@@ -148,17 +151,12 @@ class MultinodeProtocol(Protocol):
             return None
 
     def _send_message(self, message: str, sock: socket.socket) -> bool:
-        msg_len = len(message)
+        # encode before computing the length
+        data = message.encode("utf-8")
         try:
             # send the length as 32bit hexadecimal
-            ret_bytes = sock.send(("%08X" % msg_len).encode("utf-8"))
-            if ret_bytes == 0:
-                self.logger.debug("zero bytes sent for length - connection closed?")
-                return False
-            ret_bytes = sock.send(message.encode("utf-8"))
-            if ret_bytes == 0:
-                self.logger.debug("zero bytes sent for message - connection closed?")
-                return False
+            sock.sendall(("%08X" % len(data)).encode("utf-8"))
+            sock.sendall(data)
         except TimeoutError:
             self.logger.exception("socket send timed out")
             sock.close()
@@ -169,27 +167,59 @@ class MultinodeProtocol(Protocol):
             return False
         return True
 
+    def _recv_all(self, count: int, sock: socket.socket) -> bytes | None:
+        """
+        Reads exactly `count` bytes from the coordinator.
+        recv() returns what is available, which can be less than requested so
+        loop until the full message as been received
+        :param count: the number of bytes to read
+        :param sock: the socket connected to the coordinator
+        :rtype: the bytes read or None if the coordinator closed the connection
+        """
+        msg = b""
+        while len(msg) < count:
+            chunk = sock.recv(min(self.blocks, count - len(msg)))
+            if not chunk:
+                self.logger.debug(
+                    "connection closed after %d of %d bytes", len(msg), count
+                )
+                return None
+            msg += chunk
+        return msg
+
     def _recv_message(self, sock: socket.socket) -> str:
+        wait = json.dumps({"response": "wait"})
         try:
-            header = sock.recv(8).decode("utf-8")  # 32bit limit as a hexadecimal
-            if not header or header == "":
+            header = self._recv_all(8, sock)  # 32bit limit as a hexadecimal
+            if header is None:
                 self.logger.debug("empty header received?")
-                return json.dumps({"response": "wait"})
-            msg_count = int(header, 16)
-            recv_count = 0
-            response = ""
-            while recv_count < msg_count:
-                response += sock.recv(self.blocks).decode("utf-8")
-                recv_count += self.blocks
+                return wait
+            try:
+                msg_count = int(header.decode("utf-8"), 16)
+            except (UnicodeDecodeError, ValueError):
+                self.logger.debug("invalid header received: %r", header)
+                return wait
+            if msg_count > self.max_message_size:
+                self.logger.debug(
+                    "message too large: %d > %d bytes", msg_count, self.max_message_size
+                )
+                return wait
+            msg = self._recv_all(msg_count, sock)
+            if msg is None:
+                return wait
         except TimeoutError:
             self.logger.exception("socket recv timed out")
             sock.close()
-            return json.dumps({"response": "wait"})
+            return wait
         except OSError as exc:
             self.logger.exception("socket error '%d' on response", exc.errno)
             sock.close()
-            return json.dumps({"response": "wait"})
-        return response
+            return wait
+        try:
+            return msg.decode("utf-8")
+        except UnicodeDecodeError:
+            self.logger.debug("invalid utf-8 in the response")
+            return wait
 
     def poll(self, message: str, timeout: int | None = None) -> str:
         """
