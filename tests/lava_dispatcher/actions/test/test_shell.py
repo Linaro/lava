@@ -101,7 +101,7 @@ class TestTestShell(LavaDispatcherTestCase):
 
         data = ("STARTRUN", "0_DEFINITIO")
         with self.assertRaises(TestError):
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+            action.check_patterns("signal", MockConnection(data))
 
     def test_signal_end_run(self):
         counts = 0
@@ -169,7 +169,7 @@ class TestTestShell(LavaDispatcherTestCase):
 
         data = ("ENDRUN", "0_DEFINITIO")
         with self.assertRaises(TestError):
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+            action.check_patterns("signal", MockConnection(data))
 
     def test_signal_end_run_handle_expected(self):
         job = self.create_simple_job()
@@ -301,13 +301,14 @@ class TestTestShell(LavaDispatcherTestCase):
         action.parameters = {"namespace": "common"}
 
         data = ("TESTCASE", "hello")
-        with self.collect_lava_logs(action) as action_logs:
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        with self.assertRaises(TestError):
+            with self.collect_lava_logs(action) as action_logs:
+                action.check_patterns("signal", MockConnection(data))
         self.assertEqual(
             action_logs,
             [
                 ("DEBUG", "Received signal: <TESTCASE> hello", []),
-                ("ERROR", 'Ignoring malformed parameter for signal: "hello". ', []),
+                ("ERROR", "Malformed parameter for signal: 'hello'", []),
             ],
         )
         action.logger.marker.assert_called_once_with(
@@ -320,8 +321,9 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "TEST_CASE=e")
-        with self.collect_lava_logs(action) as action_logs:
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        with self.assertRaises(TestError):
+            with self.collect_lava_logs(action) as action_logs:
+                action.check_patterns("signal", MockConnection(data))
         self.assertEqual(
             action_logs,
             [
@@ -343,8 +345,9 @@ class TestTestShell(LavaDispatcherTestCase):
         action.signal_director.test_uuid = "UUID"
 
         data = ("TESTCASE", "TEST_CASE_ID=case-id")
-        with self.collect_lava_logs(action) as action_logs:
-            self.assertIs(action.check_patterns("signal", MockConnection(data)), True)
+        with self.assertRaises(TestError):
+            with self.collect_lava_logs(action) as action_logs:
+                action.check_patterns("signal", MockConnection(data))
         self.assertEqual(
             action_logs,
             [

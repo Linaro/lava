@@ -38,7 +38,7 @@ def handle_testcase(params):
             key = key.lower()
             data[key] = value
         else:
-            raise JobError('Ignoring malformed parameter for signal: "%s". ' % param)
+            raise TestError(f"Malformed parameter for signal: {param!r}")
     return data
 
 
@@ -467,9 +467,9 @@ class TestShellAction(ReportMixin, Action):
             data = handle_testcase(params)
             # get the fixup from the pattern_dict
             res = self.signal_match.match(data, fixupdict=self.pattern.fixupdict())
-        except (JobError, TestError) as exc:
+        except TestError as exc:
             self.logger.error(str(exc))
-            return True
+            raise
 
         # turn the result dict inside out to get the unique
         # test_case_id/testset_name as key and result as value
@@ -748,9 +748,4 @@ class TestShellAction(ReportMixin, Action):
                         "Unable to handle the test shell signal correctly: %s"
                         % str(exc)
                     )
-                except JobError as exc:
-                    self.logger.error(
-                        "job error: handling signal %s failed: %s", name, exc
-                    )
-                    return False
                 return True
