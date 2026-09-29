@@ -15,25 +15,28 @@ from lava_dispatcher.utils.decorator import retry
 from lava_dispatcher.utils.shell import which
 
 if TYPE_CHECKING:
-    from lava_dispatcher.job import Job
+    from lava_dispatcher.action import Action
+    from lava_dispatcher.shell import ShellSession
 
 
 class OptionalContainerFastbootAction(OptionalContainerAction):
-    def get_fastboot_cmd(self, cmd):
-        serial_number = self.job.device["fastboot_serial_number"]
-        fastboot_opts = self.job.device["fastboot_options"]
-        fastboot_cmd = ["fastboot", "-s", serial_number] + cmd + fastboot_opts
+    def get_fastboot_cmd(self, cmd: list[str]) -> list[str]:
+        serial_number: str = self.job.device["fastboot_serial_number"]
+        fastboot_opts: list[str] = self.job.device["fastboot_options"]
+        fastboot_cmd: list[str] = (
+            ["fastboot", "-s", serial_number] + cmd + fastboot_opts
+        )
         return fastboot_cmd
 
-    def run_fastboot(self, cmd):
+    def run_fastboot(self, cmd: list[str]) -> None:
         self.run_maybe_in_container(self.get_fastboot_cmd(cmd))
 
-    def get_fastboot_output(self, cmd, allow_fail: bool = False):
+    def get_fastboot_output(self, cmd: list[str], allow_fail: bool = False) -> str:
         return self.get_output_maybe_in_container(
             self.get_fastboot_cmd(cmd), allow_fail=allow_fail
         )
 
-    def on_timeout(self):
+    def on_timeout(self) -> None:
         self.logger.error("fastboot timing out, power-off the DuT")
         power_off = PowerOff(self.job)
         power_off.run(None, self.timeout.duration)
@@ -45,23 +48,29 @@ class DetectFastbootDevice(OptionalContainerFastbootAction):
     summary = "Set fastboot SN if only one device found."
 
     @classmethod
-    def add_if_needed(cls, action) -> None:
-        board_id = action.job.device["fastboot_serial_number"]
-        if board_id == "0000000000" and action.job.device.get(
-            "fastboot_auto_detection", False
-        ):
-            if not action.get_namespace_data(
-                action=cls.name, label=cls.name, key="added"
-            ):
-                action.pipeline.add_action(cls(action.job))
-                action.set_namespace_data(
-                    action=cls.name,
-                    label=cls.name,
-                    key="added",
-                    value=True,
-                )
+    def add_if_needed(cls, action: Action) -> None:
+        board_id: str = action.job.device["fastboot_serial_number"]
+        if board_id != "0000000000":
+            return
 
-    def validate(self):
+        if not action.job.device.get("fastboot_auto_detection", False):
+            return
+
+        if action.get_namespace_data(action=cls.name, label=cls.name, key="added"):
+            return
+
+        if action.pipeline is None:
+            return
+
+        action.pipeline.add_action(cls(action.job))
+        action.set_namespace_data(
+            action=cls.name,
+            label=cls.name,
+            key="added",
+            value=True,
+        )
+
+    def validate(self) -> None:
         super().validate()
         if not self.is_container():
             which("fastboot")
@@ -78,7 +87,7 @@ class DetectFastbootDevice(OptionalContainerFastbootAction):
                 self.logger.info(f"'device_info[0].board_id' is set to {sn}")
 
     @retry(exception=FastbootDeviceNotFound, retries=10, delay=3)
-    def detect(self):
+    def detect(self) -> None:
         # 'fastboot devices' output line example: a2c22e48\tfastboot\n
         output = self.get_output_maybe_in_container(["fastboot", "devices"])
         devices = [
@@ -100,7 +109,9 @@ class DetectFastbootDevice(OptionalContainerFastbootAction):
         # wait-device-boardid needs board_id.
         self.set_sn("board_id", fastboot_serial_number)
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
 
         # Wait a while for the device to enter fastboot.
