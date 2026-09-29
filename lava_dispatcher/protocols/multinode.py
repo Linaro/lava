@@ -209,11 +209,9 @@ class MultinodeProtocol(Protocol):
                 return wait
         except TimeoutError:
             self.logger.exception("socket recv timed out")
-            sock.close()
             return wait
         except OSError as exc:
             self.logger.exception("socket error '%d' on response", exc.errno)
-            sock.close()
             return wait
         try:
             return msg.decode("utf-8")
