@@ -15,6 +15,10 @@ actions:
     methods:
       image:
         parameters:
+{% if flasher_deploy_commands %}
+      flasher:
+        commands: {{ flasher_deploy_commands }}
+{% endif %}
 
   boot:
     connections:
