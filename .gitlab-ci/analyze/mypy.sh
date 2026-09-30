@@ -10,5 +10,5 @@ else
   set -x
   # Single source of truth: [tool.pyrefly] project-includes in pyproject.toml
   mapfile -t FILES < <(python3 -c 'import tomllib; print("\n".join(tomllib.load(open("pyproject.toml", "rb"))["tool"]["pyrefly"]["project-includes"]))')
-  mypy --python-version 3.11 --pretty --strict --follow-imports=silent "${FILES[@]}"
+  mypy --python-version 3.11 --pretty --strict --follow-imports=silent --no-incremental "${FILES[@]}"
 fi
