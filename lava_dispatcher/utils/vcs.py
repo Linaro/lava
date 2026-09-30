@@ -21,6 +21,8 @@ class VCSHelper:
     def __init__(self, url: str, logger: YAMLLogger):
         self.url = url
         self.logger = logger
+        # Some VCS helpers require external binaries installed
+        self.binary: str | None = None
 
     def clone(
         self,
@@ -128,18 +130,11 @@ class GitHelper(VCSHelper):
 
 class TarHelper(VCSHelper):
     # TODO: implement TarHelper
-
-    def __init__(self, url: str, logger: YAMLLogger):
-        super().__init__(url, logger)
-        self.binary: str | None = None
+    ...
 
 
 class URLHelper(VCSHelper):
     # TODO: implement URLHelper
-
-    def __init__(self, url: str, logger: YAMLLogger):
-        super().__init__(url, logger)
-        self.binary: str | None = None
 
     def clone(
         self,

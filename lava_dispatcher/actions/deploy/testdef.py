@@ -22,17 +22,26 @@ from lava_dispatcher.utils.compression import untar_file
 from lava_dispatcher.utils.vcs import GitHelper
 
 if TYPE_CHECKING:
+    from typing import Any, TypeVar, ClassVar
+
+    from lava_dispatcher.shell import ShellSession
     from lava_dispatcher.job import Job
+    from lava_dispatcher.utils.vcs import VCSHelper
+
+    TRepo = TypeVar("TRepo", bound="RepoAction")
 
 
 @nottest
-def identify_test_definitions(test_info, namespace):
+def identify_test_definitions(
+    test_info: dict[str, list[dict[str, Any]]],
+    namespace: str,
+) -> list[dict[str, Any]]:
     """
     Iterates through the job parameters to identify all the test definitions,
     including those involved in repeat actions.
     """
     # All test definitions are deployed in each deployment - TestDefinitionAction needs to only run relevant ones.
-    test_list = []
+    test_list: list[dict[str, Any]] = []
     for test in test_info.get(namespace, []):
         if "definitions" in test["parameters"]:
             testdefs = test["parameters"]["definitions"]
@@ -43,46 +52,24 @@ def identify_test_definitions(test_info, namespace):
     return test_list
 
 
-@nottest
-def get_test_action_namespaces(parameters=None):
-    """Iterates through the job parameters to identify all the test action
-    namespaces."""
-    test_namespaces = []
-    for action in parameters["actions"]:
-        if "test" in action:
-            if action["test"].get("namespace"):
-                test_namespaces.append(action["test"]["namespace"])
-    repeat_list = [
-        action["repeat"] for action in parameters["actions"] if "repeat" in action
-    ]
-    if repeat_list:
-        test_namespaces.extend(
-            [
-                action["test"]["namespace"]
-                for action in repeat_list[0]["actions"]
-                if "test" in action and action["test"].get("namespace")
-            ]
-        )
-    return test_namespaces
-
-
 # pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
 
 
 class RepoAction(Action):
+    priority: ClassVar[int] = -1
     name = "repo-action"
     description = "apply tests to the test image"
     summary = "repo base class"
 
     def __init__(self, job: Job):
         super().__init__(job)
-        self.vcs = None
-        self.runner = None
+        self.vcs: VCSHelper | None = None
+        self.runner: str | None = None
         self.uuid: str | None = None
         self.stage = 0
 
     @classmethod
-    def select(cls, repo_type):
+    def select(cls: type[TRepo], repo_type: str) -> type[TRepo]:
         candidates = cls.__subclasses__()
         willing = [c for c in candidates if c.accepts(repo_type)]
 
@@ -96,7 +83,11 @@ class RepoAction(Action):
         willing.sort(key=lambda x: x.priority, reverse=True)
         return willing[0]
 
-    def validate(self):
+    @classmethod
+    def accepts(cls, repo_type: str) -> bool:
+        return False
+
+    def validate(self) -> None:
         if "test_name" not in self.parameters:
             self.errors_add("Unable to determine test_name")
             return
@@ -105,7 +96,7 @@ class RepoAction(Action):
                 raise LAVABug(
                     "RepoAction validate called super without setting the vcs"
                 )
-            if not os.path.exists(self.vcs.binary):
+            if self.vcs.binary is not None and not os.path.exists(self.vcs.binary):
                 self.errors_add(
                     "%s is not installed on the dispatcher." % self.vcs.binary
                 )
@@ -113,11 +104,14 @@ class RepoAction(Action):
 
         # FIXME: unused
         # list of levels involved in the repo actions for this overlay
-        uuid_list = self.get_namespace_data(
+        uuid_list: list[str] | None = self.get_namespace_data(
             action="repo-action", label="repo-action", key="uuid-list"
         )
+        if self.uuid is None:
+            raise LAVABug("Test UUID not initialised")
         if uuid_list:
             if self.uuid not in uuid_list:
+
                 uuid_list.append(self.uuid)
         else:
             uuid_list = [self.uuid]
@@ -125,7 +119,9 @@ class RepoAction(Action):
             action="repo-action", label="repo-action", key="uuid-list", value=uuid_list
         )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """
         The base class run() currently needs to run after the mount operation, i.e. as part of run() so that
         the path can be correctly set when writing the overlay.
@@ -163,9 +159,11 @@ class RepoAction(Action):
         # the location written into the lava-test-runner.conf (needs a line ending)
         self.runner = "%s\n" % runner_path
 
-        overlay_base = self.get_namespace_data(
+        overlay_base: str | None = self.get_namespace_data(
             action="test", label="test-definition", key="overlay_dir"
         )
+        if overlay_base is None:
+            raise LAVABug("Overlay directory not initialised")
         overlay_path = os.path.join(
             overlay_base, str(self.stage), "tests", args["test_name"]
         )
@@ -175,6 +173,8 @@ class RepoAction(Action):
             key=args["test_name"],
             value=overlay_path,
         )
+        if self.uuid is None:
+            raise LAVABug("Test UUID not initialised")
         self.set_namespace_data(
             action="test",
             label=self.uuid,
@@ -192,7 +192,12 @@ class RepoAction(Action):
 
         return connection
 
-    def store_testdef(self, testdef, vcs_name, commit_id=None):
+    def store_testdef(
+        self,
+        testdef: dict[str, Any],
+        vcs_name: str,
+        commit_id: str | None = None,
+    ) -> None:
         """
         Allows subclasses to pass in the parsed testdef after the repository has been obtained
         and the specified YAML file can be read.
@@ -208,6 +213,9 @@ class RepoAction(Action):
             "branch_vcs": vcs_name,
             "project_name": testdef["metadata"]["name"],
         }
+
+        if self.uuid is None:
+            raise LAVABug("Test UUID not initialised")
 
         if commit_id is not None:
             val["commit_id"] = commit_id
@@ -254,21 +262,24 @@ class GitRepoAction(RepoAction):
     description = "apply git repository of tests to the test image"
     summary = "clone git test repo"
 
-    def validate(self):
+    def validate(self) -> None:
         if "repository" not in self.parameters:
             self.errors_add("Git repository not specified in job definition")
         if "path" not in self.parameters:
             self.errors_add("Path to YAML file not specified in the job definition")
         if not self.valid:
             return
-        self.vcs = GitHelper(self.parameters["repository"], self.logger)
+        self.git_vcs = GitHelper(self.parameters["repository"], self.logger)
+        self.vcs = self.git_vcs
         super().validate()
 
     @classmethod
-    def accepts(cls, repo_type):
+    def accepts(cls, repo_type: str) -> bool:
         return repo_type == "git"
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """
         Clones the git repo into a directory name constructed from the mount_path,
         lava-$hostname prefix, tests, $index_$test_name elements. e.g.
@@ -279,9 +290,11 @@ class GitRepoAction(RepoAction):
         connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(
+        runner_path: str | None = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
         )
+        if runner_path is None:
+            raise LAVABug("Runner path not found")
 
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise LAVABug(
@@ -307,7 +320,7 @@ class GitRepoAction(RepoAction):
         # clone submodules if recursive is set
         recursive = self.parameters.get("recursive", False)
 
-        commit_id = self.vcs.clone(
+        commit_id = self.git_vcs.clone(
             runner_path,
             shallow=shallow,
             revision=revision,
@@ -318,7 +331,7 @@ class GitRepoAction(RepoAction):
         if commit_id is None:
             raise InfrastructureError(
                 "Unable to get test definition from %s (%s)"
-                % (self.vcs.binary, self.parameters)
+                % (self.git_vcs.binary, self.parameters)
             )
         self.results = {
             "commit": commit_id,
@@ -350,7 +363,7 @@ class InlineRepoAction(RepoAction):
     description = "apply inline test definition to the test image"
     summary = "extract inline test definition"
 
-    def validate(self):
+    def validate(self) -> None:
         if "repository" not in self.parameters:
             self.errors_add("Inline definition not specified in job definition")
         if not isinstance(self.parameters["repository"], dict):
@@ -360,10 +373,12 @@ class InlineRepoAction(RepoAction):
         super().validate()
 
     @classmethod
-    def accepts(cls, repo_type):
+    def accepts(cls, repo_type: str) -> bool:
         return repo_type == "inline"
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """
         Extract the inlined test definition and dump it onto the target image
         """
@@ -371,9 +386,11 @@ class InlineRepoAction(RepoAction):
         connection = super().run(connection, max_end_time)
 
         # NOTE: the runner_path dir must remain empty until after the VCS clone, so let the VCS clone create the final dir
-        runner_path = self.get_namespace_data(
+        runner_path: str | None = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
         )
+        if runner_path is None:
+            raise LAVABug("Runner path not found")
 
         # Grab the inline test definition
         testdef = self.parameters["repository"]
@@ -406,17 +423,17 @@ class UrlRepoAction(RepoAction):
         self.testdef = None
 
     @classmethod
-    def accepts(cls, repo_type):
+    def accepts(cls, repo_type: str) -> bool:
         return repo_type == "url"
 
-    def validate(self):
+    def validate(self) -> None:
         if "repository" not in self.parameters:
             self.errors_add("Url repository not specified in job definition")
         if "path" not in self.parameters:
             self.errors_add("Path to YAML file not specified in the job definition")
         super().validate()
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         # Import the module here to avoid cyclic import.
         from lava_dispatcher.actions.deploy.download import DownloaderAction
 
@@ -434,16 +451,22 @@ class UrlRepoAction(RepoAction):
             )
         )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """Download the provided test definition file into tmpdir."""
         super().run(connection, max_end_time)
-        runner_path = self.get_namespace_data(
+        runner_path: str | None = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
         )
+        if runner_path is None:
+            raise LAVABug("Runner path not found")
 
-        fname = self.get_namespace_data(
+        fname: str | None = self.get_namespace_data(
             action="download-action", label=self.action_key, key="file"
         )
+        if fname is None:
+            raise LAVABug("Test not downloaded")
         self.logger.debug("Runner path : %s", runner_path)
         if os.path.exists(runner_path) and os.listdir(runner_path) == []:
             raise LAVABug(
@@ -495,16 +518,16 @@ class TestDefinitionAction(Action):
         super().__init__(job)
         self.test_list = None
         self.stages = 0
-        self.run_levels = {}
+        self.run_levels: dict[str, int] = {}
 
-    def populate(self, parameters):
+    def populate(self, parameters: dict[str, Any]) -> None:
         """
         Each time a test definition is processed by a handler, a new set of
         overlay files are needed, based on that test definition. Basic overlay
         files are created by TestOverlayAction. More complex scripts like the
         install:deps script and the main run script have custom Actions.
         """
-        index = []
+        index: list[str] = []
         self.pipeline = Pipeline(parent=self, job=self.job, parameters=parameters)
         self.test_list = identify_test_definitions(
             self.job.test_info, parameters["namespace"]
@@ -575,7 +598,7 @@ class TestDefinitionAction(Action):
                 )
             self.stages += 1
 
-    def validate(self):
+    def validate(self) -> None:
         """
         TestDefinitionAction is part of the overlay and therefore part of the deployment -
         the internal pipeline then looks inside the job definition for details of the tests to deploy.
@@ -622,7 +645,9 @@ class TestDefinitionAction(Action):
                 except JobError as exc:
                     self.errors_add(str(exc))
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         """
         Creates the list of test definitions for this Test
 
@@ -690,19 +715,19 @@ class TestOverlayAction(Action):
         super().__init__(job)
         self.test_uuid = None  # Match the overlay to the handler
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         if "path" not in self.parameters:
             self.errors_add("Missing path in parameters")
 
-    def handle_parameters(self, testdef):
+    def handle_parameters(self, testdef: dict[str, Any]) -> list[str]:
         def raise_if_not_dict(data, key):
             if not isinstance(data[key], dict):
                 raise TestError(
                     "Test definition item '%s' should be a dictionary" % key
                 )
 
-        ret_val = ["###default parameters from test definition###\n"]
+        ret_val: list[str] = ["###default parameters from test definition###\n"]
         if "params" in testdef:
             raise_if_not_dict(testdef, "params")
             for def_param_name, def_param_value in list(testdef["params"].items()):
@@ -737,7 +762,9 @@ class TestOverlayAction(Action):
         ret_val.append("######\n")
         return ret_val
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
@@ -815,7 +842,7 @@ class TestInstallAction(TestOverlayAction):
         self.skip_options = []
         self.param_keys = ["url", "destination", "branch"]
 
-    def validate(self):
+    def validate(self) -> None:
         if "skip_install" in self.parameters:
             if set(self.parameters["skip_install"]) - set(self.skip_list):
                 self.errors_add("Unrecognised skip_install value")
@@ -825,7 +852,7 @@ class TestInstallAction(TestOverlayAction):
                 self.skip_options = self.parameters["skip_install"]
         super().validate()
 
-    def _lookup_params(self, lookup_key, variable, testdef):
+    def _lookup_params(self, lookup_key: str, variable: str, testdef: dict[str, Any]) -> Any | None:
         # lookup_key 'branch'
         # variable ODP_BRANCH which has a value in the parameters of "master"
         ret = variable
@@ -855,7 +882,7 @@ class TestInstallAction(TestOverlayAction):
                 ret = self.parameters["parameters"][variable]
         return ret
 
-    def install_git_repos(self, testdef, runner_path):
+    def install_git_repos(self, testdef: dict[str, Any], runner_path: str):
         repos = testdef["install"].get("git-repos", [])
         for repo in repos:
             commit_id = None
@@ -901,7 +928,9 @@ class TestInstallAction(TestOverlayAction):
             if commit_id is None:
                 raise JobError("Unable to clone %s" % str(repo))
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
@@ -994,7 +1023,7 @@ class TestRunnerAction(TestOverlayAction):
         super().__init__(job)
         self.testdef_levels = {}  # allow looking up the testname from the level of this action
 
-    def validate(self):
+    def validate(self) -> None:
         super().validate()
         testdef_index = self.get_namespace_data(
             action="test-definition", label="test-definition", key="testdef_index"
@@ -1022,7 +1051,9 @@ class TestRunnerAction(TestOverlayAction):
             action=self.name, label=self.name, key="testdef_levels", value=current
         )
 
-    def run(self, connection, max_end_time):
+    def run(
+        self, connection: ShellSession | None, max_end_time: float | None
+    ) -> ShellSession | None:
         connection = super().run(connection, max_end_time)
         runner_path = self.get_namespace_data(
             action="uuid", label="overlay_path", key=self.parameters["test_name"]
