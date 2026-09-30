@@ -44,7 +44,7 @@ class WorkerSummary:
     busy: int
 
     def overused(self):
-        return self.limit > 0 and self.busy >= self.limit
+        return 0 < self.limit <= self.busy
 
 
 def filter_devices(q, workers):
