@@ -1,13 +1,13 @@
 {% extends 'base.jinja2' %}
+
+{% set test_character_delay = test_character_delay|default(5) %}
+{% set boot_character_delay = boot_character_delay|default(5) %}
+
 {% block body %}
 board_id: '{{ board_id|default('0000000000')}}'
 usb_vendor_id: '{{ usb_vendor_id|default('0000')}}'
 usb_product_id: '{{ usb_product_id|default('0000')}}'
 usb_sleep: {{ usb_sleep|default(0) }}
-
-character_delays:
-      boot: 5
-      test: 5
 
 actions:
   deploy:
