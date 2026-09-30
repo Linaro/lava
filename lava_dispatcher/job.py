@@ -75,7 +75,6 @@ class Job:
         self.base_overrides: dict[str, str] = {}
         self.started = False
         self.test_info: dict[str, list[dict[str, Any]]] = {}
-        self.test_info = {}
         self.secrets = SecretsContainer(self.logger)
         if param_secrets := parameters.get("secrets"):
             for key, value in param_secrets.items():
