@@ -385,12 +385,7 @@ The corresponding :term:`device type` template for nexus 10 is as follows::
    deploy:
      methods:
        fastboot:
-     connections:
-       serial:
-       adb:
    boot:
-     connections:
-       adb:
      methods:
        fastboot:
 
@@ -427,12 +422,7 @@ like the following for a nexus 10 device:
    deploy:
      methods:
        fastboot:
-     connections:
-       serial:
-       adb:
    boot:
-     connections:
-       adb:
      methods:
        fastboot:
 

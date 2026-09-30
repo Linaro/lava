@@ -519,8 +519,9 @@ class TestPipelineSubmit(TestCaseWithFactory):
         self.assertIn("actions", device_dict)
         self.assertIn("deploy", device_dict["actions"])
         self.assertIn("boot", device_dict["actions"])
-        self.assertIn("connections", device_dict["actions"]["deploy"])
-        self.assertIn("connections", device_dict["actions"]["boot"])
+        # connections under deploy/boot is no longer part of the device config
+        self.assertNotIn("connections", device_dict["actions"]["deploy"])
+        self.assertNotIn("connections", device_dict["actions"]["boot"])
         self.assertIn("methods", device_dict["actions"]["deploy"])
         self.assertIn("methods", device_dict["actions"]["boot"])
         device_dict = device.minimise_configuration(device_dict)

@@ -75,8 +75,6 @@ actions:
         port: {{ ssh_port|default(22) }}
         identity_file: {{ ssh_identity_file }}
   boot:
-     connections:
-       serial:
      methods:
       ssh:
       uefi-menu:

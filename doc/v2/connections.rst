@@ -48,9 +48,6 @@ they need to be declared in the device configuration, e.g.:
       ssh
 
   boot:
-    connections:
-      - serial
-      - ssh
     methods:
       qemu:
     prompts:
@@ -943,8 +940,8 @@ this support in the device configuration:
     methods:
       ssh
   boot:
-    connections:  # not serial
-      - ssh
+    methods:
+      ssh
 
 TestJobs then use SSH as a boot method which simply acts as a login to
 establish a connection:
@@ -1094,8 +1091,8 @@ Typical device configuration:
         - trusty
         - jessie
   boot:
-    connections:
-      - ssh
+    methods:
+      ssh
 
 Optional device configuration allowing secondary connections:
 
@@ -1111,9 +1108,8 @@ Optional device configuration allowing secondary connections:
         - trusty
         - jessie
   boot:
-    connections:
-      - serial
-      - ssh
+    methods:
+      ssh
 
 The test job YAML would simply specify:
 

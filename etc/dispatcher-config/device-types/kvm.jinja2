@@ -17,8 +17,6 @@ actions:
             interface: {{ arch | qemu_guest_fs_interface(guestfs_interface) }}
             driveid: {{ qemu_guest_fs_driveid }}
   boot:
-    connections:
-      serial:
     methods:
       qemu:
         parameters:

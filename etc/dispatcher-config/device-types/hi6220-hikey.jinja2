@@ -23,13 +23,7 @@ actions:
         port: {{ ssh_port|default(22) }}
         user: {{ ssh_user|default('root') }}
         identity_file: {{ ssh_identity_file }}
-    connections:
-      fastboot:
-      serial:
   boot:
-    connections:
-      fastboot:
-      serial:
     methods:
       ssh:
       fastboot:

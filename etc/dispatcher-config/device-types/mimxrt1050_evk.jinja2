@@ -10,15 +10,11 @@ usb_sleep: {{ usb_sleep|default(0) }}
 
 actions:
   deploy:
-    connections:
     methods:
       image:
         parameters:
 
   boot:
-    connections:
-      serial:
-      ssh:
     methods:
       pyocd:
         parameters:

@@ -52,16 +52,7 @@ actions:
 {% for command in fastboot_deploy_uboot_commands %}              - {{ command }}{% endfor %}
 {% endif %}
 {{- fastboot_interrupt_params }}
-    connections:
-      adb:
-      fastboot:
-      serial:
   boot:
-    connections:
-      adb:
-      fastboot:
-      serial:
-      adb:
     methods:
       ssh:
       minimal:

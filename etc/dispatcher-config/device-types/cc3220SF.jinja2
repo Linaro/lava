@@ -15,8 +15,6 @@ actions:
         parameters:
 
   boot:
-    connections:
-      serial:
     methods:
       openocd:
         board_selection_cmd: "xds110_serial {{ board_id|default('00000000') }}"

@@ -40,8 +40,6 @@ available_architectures:
 
 actions:
   deploy:
-    connections:
-      serial:
     methods:
       nfs:
       image:
@@ -51,9 +49,6 @@ actions:
             interface: {{ arch | qemu_guest_fs_interface(guestfs_interface) }}
             driveid: {{ qemu_guest_fs_driveid }}
   boot:
-    connections:
-      serial:
-      ssh:
     methods:
       minimal:
       qemu:

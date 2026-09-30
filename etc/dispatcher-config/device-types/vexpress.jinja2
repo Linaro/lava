@@ -155,8 +155,6 @@ actions:
 {% endif %}
       append_dtb: {{ append_dtb|default(false) }}
       use_xip: {{ use_xip|default(false) }}
-    connections:
-      serial:
     methods:
 {% if usbg_ms_commands %}
       usbg-ms:
@@ -193,8 +191,6 @@ actions:
           mcc_reset_msg: '{{ mcc_reset_msg|default('Programming NOR Flash')}}'
 {% endif %}
   boot:
-    connections:
-      serial:
     methods:
 {% if vexpress_supports_grub %}
       grub:

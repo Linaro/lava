@@ -25,17 +25,7 @@ actions:
         commands: {{ flasher_deploy_commands }}
 {% endif %}
       qdl:
-    connections:
-      adb:
-      fastboot:
-      lxc:
-      serial:
-
   boot:
-    connections:
-      adb:
-      fastboot:
-      serial:
     methods:
       minimal:
       fastboot: {{ fastboot_sequence }}

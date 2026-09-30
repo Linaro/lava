@@ -9,7 +9,6 @@ usb_product_id: '{{ usb_product_id }}'
 
 actions:
   deploy:
-    connections:
     methods:
       image:
         parameters:
@@ -19,9 +18,6 @@ actions:
 {% endif %}
 
   boot:
-    connections:
-      serial:
-      ssh:
     methods:
       minimal:
       pyocd:
