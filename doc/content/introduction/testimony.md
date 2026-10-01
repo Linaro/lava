@@ -17,18 +17,16 @@ code on real physical hardware or emulated platforms (QEMU, FVP).
 ## KernelCI — Linux kernel validation
 
 KernelCI uses LAVA as its **primary backend** for automated Linux kernel
-hardware testing. Every kernel patch that lands in mainline has likely been
-validated by LAVA running on dozens of boards across the KernelCI labs network.
+hardware testing. LAVA labs across the KernelCI network test upstream kernel
+trees on real boards covering many architectures.
 
-> As KernelCI continues to grow and mature, the complexity of managing
-> hardware testing laboratories has become increasingly apparent. While we
-> currently support LAVA as our primary backend, the community has expressed
-> strong interest in expanding our capabilities.
+> While we currently support LAVA as our primary backend, the community has
+> expressed strong interest in expanding our capabilities.
 >
-> — [KernelCI Labs Working Group announcement](https://kernelci.org)
+> — [Announcing the KernelCI Labs Working Group](https://kernelci.org/uncategorized/2025/09/18/kernelci-labs-working-group-announcement/)
 
-KernelCI's Labs Working Group was created specifically to strengthen the
-LAVA integration and scale hardware testing across the Linux community.
+Results from the participating labs are public on the
+[KernelCI dashboard](https://dashboard.kernelci.org/labs).
 
 ## 10x Engineers — RISC-V CI
 
