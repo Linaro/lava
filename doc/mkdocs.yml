@@ -92,6 +92,7 @@ nav:
     - Health-checks: admin/recommendations/health-checks.md
     - Topology: admin/recommendations/topology.md
     - Security: admin/recommendations/security.md
+  - Vulnerability handling: admin/vulnerability-handling.md
   - Basic Tutorials:
     - Instance:
       - Install: admin/basic-tutorials/instance/install.md
