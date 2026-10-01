@@ -80,7 +80,7 @@ class ApplyOverlayGuest(Action):
             self.logger.debug("Overlay already applied")
             return connection
 
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if not overlay_file:
@@ -91,9 +91,11 @@ class ApplyOverlayGuest(Action):
         self.set_namespace_data(
             action=self.name, label="guest", key="filename", value=guest_file
         )
-        mountpoint = self.get_namespace_data(
+        mountpoint: str | None = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
+        if mountpoint is None:
+            raise LAVABug("No overlay mount point")
 
         blkid = prepare_guestfs(
             self,
@@ -123,14 +125,16 @@ class ApplyOverlayImage(Action):
         self.use_root_partition = use_root_partition
 
     def run(self, connection, max_end_time):
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if overlay_file:
             self.logger.debug("Overlay: %s", overlay_file)
-            decompressed_image = self.get_namespace_data(
+            decompressed_image: str | None = self.get_namespace_data(
                 action="download-action", label=self.image_key, key="file"
             )
+            if decompressed_image is None:
+                raise LAVABug("Unable to find decompressed image")
             self.logger.debug("Image: %s", decompressed_image)
             root_partition = None
 
@@ -185,16 +189,18 @@ class ApplyOverlaySparseImage(Action):
         self.logger.info(debian_filename_version(binary))
 
     def run(self, connection, max_end_time):
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if not overlay_file:
             self.logger.debug("No overlay to deploy")
             return connection
         self.logger.debug("Overlay: %s", overlay_file)
-        decompressed_image = self.get_namespace_data(
+        decompressed_image: str | None = self.get_namespace_data(
             action="download-action", label=self.image_key, key="file"
         )
+        if decompressed_image is None:
+            raise LAVABug("Unable to find decompressed image")
         self.logger.debug("Image: %s", decompressed_image)
         ext4_img = decompressed_image + ".ext4"
         # Check if the given image is an Android sparse image
@@ -253,7 +259,7 @@ class PrepareOverlayTftp(Action):
 
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
-        ramdisk = self.get_namespace_data(
+        ramdisk: str | None = self.get_namespace_data(
             action="download-action", label="file", key="ramdisk"
         )
         if ramdisk:  # nothing else to do
@@ -295,7 +301,7 @@ class ApplyOverlayTftp(Action):
             self.logger.debug("Overlay already applied")
             return connection
 
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if not overlay_file:
@@ -326,6 +332,8 @@ class ApplyOverlayTftp(Action):
                 )
                 return connection
             nfs_address = self.parameters["persistent_nfs"].get("address")
+            if nfs_address is None:
+                raise LAVABug("NFS address not found")
             self.logger.info(
                 "[%s] Applying overlay to persistent NFS address %s",
                 namespace,
@@ -359,11 +367,12 @@ class ApplyOverlayTftp(Action):
             # centos installer ramdisk doesn't like having anything other
             # than the kickstart config being inserted. Instead, make the
             # overlay accessible through tftp. Yuck.
-            tftp_dir = os.path.dirname(
-                self.get_namespace_data(
-                    action="download-action", label="ramdisk", key="file"
-                )
+            centos_ramdisk_file: str | None = self.get_namespace_data(
+                action="download-action", label="ramdisk", key="file"
             )
+            if centos_ramdisk_file is None:
+                raise LAVABug("Centos ramdisk not found")
+            tftp_dir = os.path.dirname(centos_ramdisk_file)
             shutil.copy(overlay_file, tftp_dir)
             suffix = self.get_namespace_data(
                 action="tftp-deploy", label="tftp", key="suffix"
@@ -416,9 +425,11 @@ class ExtractRootfs(Action):
         if not self.parameters.get(self.param_key):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
-        root = self.get_namespace_data(
+        root: str | None = self.get_namespace_data(
             action="download-action", label=self.param_key, key="file"
         )
+        if root is None:
+            raise LAVABug("rootfs not found")
         root_dir = self.mkdtemp()
         untar_file(root, root_dir)
         self.set_namespace_data(
@@ -470,9 +481,11 @@ class ExtractNfsRootfs(ExtractRootfs):
             )
 
             # Grab the path already defined in super().run() and add the prefix
-            root_dir = self.get_namespace_data(
+            root_dir: str | None = self.get_namespace_data(
                 action="extract-rootfs", label="file", key=self.file_key
             )
+            if root_dir is None:
+                raise LAVABug("root directory not found")
             root_dir = os.path.join(root_dir, prefix)
             # sets the directory into which the overlay is unpacked and which
             # is used in the substitutions into the bootloader command string.
@@ -505,7 +518,7 @@ class ExtractModules(Action):
         if not self.parameters.get("modules"):  # idempotency
             return connection
         connection = super().run(connection, max_end_time)
-        modules = self.get_namespace_data(
+        modules: str | None = self.get_namespace_data(
             action="download-action", label="modules", key="file"
         )
         if not self.parameters.get("ramdisk"):
@@ -519,9 +532,13 @@ class ExtractModules(Action):
             if not self.parameters["nfsrootfs"].get("install_modules", True):
                 self.logger.info("Skipping applying overlay to NFS")
             else:
-                root = self.get_namespace_data(
+                root: str | None = self.get_namespace_data(
                     action="extract-rootfs", label="file", key="nfsroot"
                 )
+                if modules is None:
+                    raise LAVABug("Kernel modules not found")
+                if root is None:
+                    raise LAVABug("Root directory not found")
                 self.logger.info("extracting modules file %s to %s", modules, root)
                 untar_file(modules, root)
         if self.parameters.get("ramdisk"):
@@ -533,6 +550,10 @@ class ExtractModules(Action):
                     label="extracted_ramdisk",
                     key="directory",
                 )
+                if modules is None:
+                    raise LAVABug("Kernel modules not found")
+                if root is None:
+                    raise LAVABug("Root directory not found")
                 self.logger.info("extracting modules file %s to %s", modules, root)
                 untar_file(modules, root)
         return connection
@@ -568,21 +589,27 @@ class ExtractRamdisk(Action):
     def run(self, connection, max_end_time):
         if not self.parameters.get("ramdisk"):  # idempotency
             return connection
-        ramdisk = self.get_namespace_data(
+        ramdisk: str | None = self.get_namespace_data(
             action="download-action", label="ramdisk", key="file"
         )
         if self.skip:
             self.logger.info("Not extracting ramdisk.")
-            suffix = self.get_namespace_data(
+            tftp_suffix: str | None = self.get_namespace_data(
                 action="tftp-deploy", label="tftp", key="suffix"
             )
-            filename = os.path.join(suffix, "ramdisk", os.path.basename(ramdisk))
+            if ramdisk is None:
+                raise LAVABug("RAM disk not found")
+            if tftp_suffix is None:
+                raise LAVABug("TFTP suffix not found")
+            filename = os.path.join(tftp_suffix, "ramdisk", os.path.basename(ramdisk))
             # declare the original ramdisk as the name to be used later.
             self.set_namespace_data(
                 action="compress-ramdisk", label="file", key="ramdisk", value=filename
             )
             return connection
         connection = super().run(connection, max_end_time)
+        if ramdisk is None:
+            raise LAVABug("RAM disk not found")
         ramdisk_dir = self.mkdtemp()
         extracted_ramdisk = os.path.join(ramdisk_dir, "ramdisk")
         os.mkdir(extracted_ramdisk, 0o755)
@@ -693,10 +720,10 @@ class CompressRamdisk(Action):
         if self.skip:
             return connection
         connection = super().run(connection, max_end_time)
-        ramdisk_dir = self.get_namespace_data(
+        ramdisk_dir: str | None = self.get_namespace_data(
             action="extract-overlay-ramdisk", label="extracted_ramdisk", key="directory"
         )
-        ramdisk_data = self.get_namespace_data(
+        ramdisk_data: str | None = self.get_namespace_data(
             action="extract-overlay-ramdisk", label="ramdisk_file", key="file"
         )
         if not ramdisk_dir:
@@ -710,11 +737,14 @@ class CompressRamdisk(Action):
                 # Instead, put the preseed file into the ramdisk using a given name
                 # from deployment_data which we can use in the boot commands.
                 filename = self.parameters["deployment_data"]["preseed_to_ramdisk"]
+                preseed_file: str | None = self.get_namespace_data(
+                    action="download-action", label="preseed", key="file"
+                )
+                if preseed_file is None:
+                    raise LAVABug("Preseed file not found")
                 self.logger.info("Copying preseed file into ramdisk: %s", filename)
                 shutil.copy(
-                    self.get_namespace_data(
-                        action="download-action", label="preseed", key="file"
-                    ),
+                    preseed_file,
                     os.path.join(ramdisk_dir, filename),
                 )
                 self.set_namespace_data(
@@ -728,11 +758,12 @@ class CompressRamdisk(Action):
         compression = self.parameters["ramdisk"].get("compression")
         final_file = compress_file(ramdisk_data, compression)
 
-        tftp_dir = os.path.dirname(
-            self.get_namespace_data(
-                action="download-action", label="ramdisk", key="file"
-            )
+        ramdisk_file = self.get_namespace_data(
+            action="download-action", label="ramdisk", key="file"
         )
+        if ramdisk_file is None:
+            raise LAVABug("RAM disk file not found")
+        tftp_dir = os.path.dirname(ramdisk_file)
 
         if self.add_header == "u-boot":
             ramdisk_uboot = final_file + ".uboot"
@@ -782,26 +813,34 @@ class ConfigurePreseedFile(Action):
             return connection
         if self.parameters["deployment_data"].get("installer_extra_cmd"):
             if self.parameters.get("os") == "debian_installer":
+                preseed_file: str | None = self.get_namespace_data(
+                    action="download-action", label="preseed", key="file"
+                )
+                if preseed_file is None:
+                    raise LAVABug("Preseed file not found")
                 add_late_command(
-                    self.get_namespace_data(
-                        action="download-action", label="preseed", key="file"
-                    ),
+                    preseed_file,
                     self.parameters["deployment_data"]["installer_extra_cmd"],
                 )
             if self.parameters.get("os") == "centos_installer":
                 ip_addr = dispatcher_ip(self.job.parameters["dispatcher"], "tftp")
-                overlay = self.get_namespace_data(
+                overlay: str | None = self.get_namespace_data(
                     action="download-action", label="file", key="overlay"
                 )
+                if overlay is None:
+                    raise LAVABug("Overlay file not found")
                 substitutions = {"{OVERLAY_URL}": "tftp://" + ip_addr + "/" + overlay}
                 post_command = substitute(
                     [self.parameters["deployment_data"]["installer_extra_cmd"]],
                     substitutions,
                 )
+                preseed_file = self.get_namespace_data(
+                    action="download-action", label="preseed", key="file"
+                )
+                if preseed_file is None:
+                    raise LAVABug("Preseed file not found")
                 add_to_kickstart(
-                    self.get_namespace_data(
-                        action="download-action", label="preseed", key="file"
-                    ),
+                    preseed_file,
                     post_command[0],
                 )
         return connection
@@ -874,15 +913,17 @@ class AppendOverlays(Action):
         return connection
 
     def _update(self, f_uncompress, f_compress):
-        image = self.get_namespace_data(
+        image: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
-        compression = self.get_namespace_data(
+        compression: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="compression"
         )
-        decompressed = self.get_namespace_data(
+        decompressed: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="decompressed"
         )
+        if image is None:
+            raise LAVABug(f"File {self.key!r} not found")
         self.logger.info("Modifying %r", image)
         tempdir = self.mkdtemp()
         # Some images are kept compressed. We should decompress first
@@ -898,10 +939,8 @@ class AppendOverlays(Action):
         self.logger.debug("Overlays:")
         for overlay in self.params["overlays"]:
             label = f"{self.key}.{overlay}"
-            overlay_image = None
-            path = None
             if overlay == "lava":
-                overlay_image = self.get_namespace_data(
+                overlay_image: str | None = self.get_namespace_data(
                     action="compress-overlay", label="output", key="file"
                 )
                 path = "/"
@@ -959,10 +998,12 @@ class AppendOverlays(Action):
             write_partition_back,
         )
 
-        image = self.get_namespace_data(
+        image: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
         partition = self.params.get("partition", None)
+        if image is None:
+            raise LAVABug(f"File {self.key!r} not found")
         self.logger.info("Modifying %r", image)
 
         if self.params.get("sparse", False):
@@ -1028,10 +1069,12 @@ class AppendOverlays(Action):
             os.replace(f"{image}.sparse", image)
 
     def update_guestfs(self):
-        image = self.get_namespace_data(
+        image: str | None = self.get_namespace_data(
             action="download-action", label=self.key, key="file"
         )
         partition = self.params.get("partition", None)
+        if image is None:
+            raise LAVABug(f"File {self.key!r} not found")
         self.logger.info("Modifying %r", image)
 
         if self.params.get("sparse", False):
@@ -1175,16 +1218,18 @@ class ApplyOverlayAvh(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if overlay_file is None:
             self.logger.warning("No overlay to apply")
             return connection
 
-        fw_package_path = self.get_namespace_data(
+        fw_package_path: str | None = self.get_namespace_data(
             action="download-action", label="fw_package", key="file"
         )
+        if fw_package_path is None:
+            raise LAVABug("fw_package not found")
         self.logger.info(
             f"applying overlay to {self.storage_file} in {fw_package_path}"
         )
@@ -1223,7 +1268,7 @@ class ApplyQDLOverlay(Action):
     def run(self, connection, max_end_time):
         connection = super().run(connection, max_end_time)
 
-        overlay_file = self.get_namespace_data(
+        overlay_file: str | None = self.get_namespace_data(
             action="compress-overlay", label="output", key="file"
         )
         if overlay_file is None:
@@ -1242,9 +1287,11 @@ class ApplyQDLOverlay(Action):
             raise JobError("QCOMflash file missing")
 
         self.logger.info(f"applying overlay to {self.rootfs_image}")
-        qdl_dir = self.get_namespace_data(
+        qdl_dir: str | None = self.get_namespace_data(
             action="qdl-deploy", label="qdl-directory", key="directory"
         )
+        if qdl_dir is None:
+            raise LAVABug("QDL directory not found")
 
         dest = Path(qdl_dir)
         dest.parent.mkdir(parents=True, exist_ok=True)
