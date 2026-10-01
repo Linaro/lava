@@ -198,11 +198,12 @@ class TestJobViewSet(viewsets.ModelViewSet):
     filterset_class = filters.TestJobFilter
 
     def get_queryset(self):
-        ids = self.queryset.visible_by_user_ids(self.request.user)
-        return (
-            self.queryset.filter(pk__in=ids)
-            .select_related("submitter")
-            .prefetch_related("tags", "failure_tags", "viewing_groups")
+        qs = self.queryset
+        # Restricted users only: materialized IDs avoid the planner misestimate
+        if not self.request.user.has_perm(TestJob.VIEW_PERMISSION):
+            qs = qs.filter(pk__in=qs.visible_by_user_ids(self.request.user))
+        return qs.select_related("submitter").prefetch_related(
+            "tags", "failure_tags", "viewing_groups"
         )
 
     def get_permissions(self):
