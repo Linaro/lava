@@ -19,7 +19,7 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
-from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.logical import RetryAction
 from lava_dispatcher.protocols.multinode import MultinodeProtocol
@@ -42,7 +42,7 @@ class TestInteractiveRetry(RetryAction):
 
 
 @nottest
-class TestInteractiveAction(ReportMixin, Action):
+class TestInteractiveAction(ReportMixin):
     name = "lava-test-interactive"
     description = "Executing lava-test-interactive"
     summary = "Lava Test Interactive"
@@ -51,7 +51,6 @@ class TestInteractiveAction(ReportMixin, Action):
     def __init__(self, job):
         super().__init__(job)
         self.reports: dict[str, dict[str, Any]] = {}
-        self.report: dict[str, Any] = {}
 
     def populate(self, parameters):
         super().populate(parameters)

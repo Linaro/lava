@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 class ReportMixin(Action):
     """Mixin providing extra test result reporting methods.
 
-    It can only be used with 'Action' subclasses that:
-    - initialize and populate the 'self.report' attr.
-    - provide 'self.logger' and 'self.level' attrs.
+    As an 'Action' subclass, it initializes 'self.report' and inherits
+    'self.logger' and 'self.level'. Mixed-in classes must populate
+    'self.report' with the test case results.
     """
 
     def __init__(self, job: Job):

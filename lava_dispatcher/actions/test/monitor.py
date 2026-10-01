@@ -12,7 +12,7 @@ import pexpect
 
 from lava_common.decorators import nottest
 from lava_common.exceptions import ConnectionClosedError, LAVATimeoutError
-from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.logical import RetryAction
 
@@ -34,7 +34,7 @@ class TestMonitorRetry(RetryAction):
 
 
 @nottest
-class TestMonitorAction(ReportMixin, Action):
+class TestMonitorAction(ReportMixin):
     """
     Watch the DUT output and match known results strings without any interaction.
     """
@@ -48,7 +48,6 @@ class TestMonitorAction(ReportMixin, Action):
         super().__init__(job)
         self.test_suite_name = None
         self.reports: dict[str, dict[str, Any]] = {}
-        self.report = {}
         self.fixupdict = {}
         self.patterns = {}
 

@@ -18,7 +18,7 @@ from lava_common.exceptions import (
     LAVATimeoutError,
     TestError,
 )
-from lava_dispatcher.action import Action, Pipeline
+from lava_dispatcher.action import Pipeline
 from lava_dispatcher.actions.test.mixins import ReportMixin
 from lava_dispatcher.connection import SignalMatch
 from lava_dispatcher.logical import RetryAction
@@ -110,7 +110,7 @@ class PatternFixup:
 
 
 @nottest
-class TestShellAction(ReportMixin, Action):
+class TestShellAction(ReportMixin):
     """
     Sets up and runs the LAVA Test Shell Definition scripts.
     Supports a pre-command-list of operations necessary on the
@@ -128,9 +128,7 @@ class TestShellAction(ReportMixin, Action):
         self.patterns = {}
         self.signal_match = SignalMatch()
         self.definition = None
-        self.testset_name = None
         self.reports: dict[str, dict[str, Any]] = {}
-        self.report = {}
         self.start = None
         self.testdef_dict = {}
         # noinspection PyTypeChecker
