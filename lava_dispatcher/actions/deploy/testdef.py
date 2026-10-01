@@ -43,29 +43,6 @@ def identify_test_definitions(test_info, namespace):
     return test_list
 
 
-@nottest
-def get_test_action_namespaces(parameters=None):
-    """Iterates through the job parameters to identify all the test action
-    namespaces."""
-    test_namespaces = []
-    for action in parameters["actions"]:
-        if "test" in action:
-            if action["test"].get("namespace"):
-                test_namespaces.append(action["test"]["namespace"])
-    repeat_list = [
-        action["repeat"] for action in parameters["actions"] if "repeat" in action
-    ]
-    if repeat_list:
-        test_namespaces.extend(
-            [
-                action["test"]["namespace"]
-                for action in repeat_list[0]["actions"]
-                if "test" in action and action["test"].get("namespace")
-            ]
-        )
-    return test_namespaces
-
-
 # pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
 
 
