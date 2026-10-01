@@ -16,6 +16,7 @@ When reporting, please include:
 - exploit code, if available
 
 Machine-readable details are published at <https://www.linaro.org/.well-known/security.txt>.
+The LAVA documentation has a dedicated [Vulnerability handling](https://lava.readthedocs.io/en/latest/admin/vulnerability-handling.html) page describing the full triage, remediation, and disclosure process.
 
 ## Scope
 
