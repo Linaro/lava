@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
+from django.db.utils import DatabaseError
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -1660,6 +1661,125 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     )
     assert ret.status_code == 413
     assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_unsaved_results(client, setup, mocker):
+    """A test case that cannot be stored should not be acknowledged.
+
+    lava-run drops every acknowledged line, so the number of lines returned by
+    the server must stop at the first result that was not stored.
+    """
+    LOGS = """- {"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}
+- {"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
+- {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}
+- {"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}
+"""
+    job = TestJob.objects.get(description="test job 02")
+
+    # Transient database error while saving the second test case: the first two
+    # lines are acknowledged, the others will be sent again by lava-run.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=DatabaseError("deadlock detected"),
+    )
+    saves = mocker.patch(
+        "lava_scheduler_app.views.TestCase.save",
+        side_effect=[None, DatabaseError("deadlock detected")],
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 3}
+    assert saves.call_count == 2
+
+    # An invalid result is skipped (resending will not help) but the lines are
+    # acknowledged and the failure is reported in the job.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.save",
+        side_effect=ValueError("invalid measurement"),
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 4}
+    job.refresh_from_db()
+    assert "Unable to store test case" in job.failure_comment
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_resend_unsaved_results(client, setup, mocker):
+    """The lines that were not acknowledged are sent again by lava-run.
+
+    The log lines are already on disk: they should not be duplicated, but the
+    results that could not be stored should be created.
+    """
+    RECORDS = [
+        '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}',
+        '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}',
+        '{"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:02.000000", "lvl": "info", "msg": "end: 1 fvp-deploy"}',
+    ]
+
+    def post(records, index):
+        return client.post(
+            reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+            {"lines": "- " + "\n- ".join(records), "index": index},
+            HTTP_LAVA_TOKEN=job.token,
+        )
+
+    def log_lines():
+        return (
+            (Path(job.output_dir) / "output.yaml")
+            .read_text(encoding="utf-8")
+            .splitlines(True)
+        )
+
+    job = TestJob.objects.get(description="test job 02")
+
+    # '1_fvp-deploy' hits a transient database error: every line from this one
+    # is left unacknowledged.
+    original_save = TestCase.save
+
+    def failing_save(self, *args, **kwargs):
+        if self.name == "1_fvp-deploy":
+            raise DatabaseError("deadlock detected")
+        return original_save(self, *args, **kwargs)
+
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=DatabaseError("deadlock detected"),
+    )
+    mocker.patch.object(TestCase, "save", failing_save)
+
+    ret = post(RECORDS, 0)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 3}
+
+    # Every line was written to disk but only the first three are acknowledged
+    assert len(log_lines()) == 5
+    assert [tc.name for tc in TestCase.objects.filter(suite__job=job)] == ["validate"]
+
+    # The database is working again: lava-run sends the lines that were not
+    # acknowledged again.
+    mocker.stopall()
+    ret = post(RECORDS[3:], 3)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 2}
+
+    # The log lines are deduplicated but the missing result is saved
+    assert log_lines() == ["- " + record + "\n" for record in RECORDS]
+    assert sorted(tc.name for tc in TestCase.objects.filter(suite__job=job)) == [
+        "1_fvp-deploy",
+        "validate",
+    ]
 
 
 @pytest.mark.django_db
