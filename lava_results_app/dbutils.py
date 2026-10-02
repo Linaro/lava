@@ -43,6 +43,11 @@ def _check_for_testset(result_dict, suite):
 def append_failure_comment(job, msg):
     if not job.failure_comment:
         job.failure_comment = ""
+    if len(job.failure_comment) > 4096:
+        # Enough already. A batch of bad results would otherwise
+        # grow the comment forever and save the job once per line.
+        # The full messages still go to the log.
+        return
     job.failure_comment += msg[:256]
     try:
         job.save(update_fields=["failure_comment"])
