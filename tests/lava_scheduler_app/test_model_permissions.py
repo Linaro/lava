@@ -439,9 +439,9 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.qemu_job2.submit_time = timezone.now() - timedelta(days=1)
         self.qemu_job2.save()
 
-        ids = TestJob.objects.visible_by_user_ids(AnonymousUser())
-        self.assertNotIn(self.qemu_job1.id, ids)
-        self.assertIn(self.qemu_job2.id, ids)
+        ids = TestJob.objects.visible_by_user(AnonymousUser())
+        self.assertNotIn(self.qemu_job1, ids)
+        self.assertIn(self.qemu_job2, ids)
 
         # visible_by_user is what the HTML listings and XML-RPC use
         visible = TestJob.objects.visible_by_user(AnonymousUser())
@@ -454,8 +454,8 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
         self.qemu_job1.save()
 
-        ids = TestJob.objects.visible_by_user_ids(self.user1)
-        self.assertIn(self.qemu_job1.id, ids)
+        ids = TestJob.objects.visible_by_user(self.user1)
+        self.assertIn(self.qemu_job1, ids)
 
     @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
     def test_testjob_change_permission_ignores_window(self):
