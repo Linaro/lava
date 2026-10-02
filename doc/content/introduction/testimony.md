@@ -79,6 +79,15 @@ Qualcomm development boards. Their CI pipeline integrates LAVA via GitHub
 Actions, submitting test jobs, monitoring execution, and publishing results
 back to their repositories.
 
+## Renesas — Linux kernel validation on Renesas SoCs
+
+Renesas uses LAVA as the backbone of its automated Linux kernel testing on real
+hardware. Our GitLab CI-driven pipelines build kernels and submit jobs to LAVA,
+which boots and tests a wide range of Renesas SoC boards from the RZ and R-Car
+families across mainline, stable and CIP kernels. LAVA gives us consistent,
+repeatable results on physical hardware, so we catch driver regressions early
+and share those results with the wider community through KernelCI.
+
 ---
 
 ## Supported by
