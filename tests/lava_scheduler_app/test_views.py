@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from django.contrib.auth.models import Group, User
 from django.contrib.contenttypes.models import ContentType
+from django.db.utils import DataError, InterfaceError, OperationalError
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -32,6 +33,7 @@ from lava_scheduler_app.models import (
 )
 from lava_scheduler_app.views import (
     InPlaceTokenUpdater,
+    _exc_in_comment,
     device_report_data,
     job_report_data,
     type_report_data,
@@ -106,6 +108,12 @@ actions:
     image:
       url: http://test.org/test.img
     root_partition: 1
+"""
+
+RESULT_LOGS = """- {"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}
+- {"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}
+- {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}
+- {"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}
 """
 
 
@@ -1564,7 +1572,6 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
 - {"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy (timeout 00:05:00) [common]"}
 """
     job = TestJob.objects.get(description="test job 02")
-
     # Missing token
     ret = client.post(
         reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
@@ -1660,6 +1667,410 @@ def test_internal_v1_jobs_logs(client, setup, mocker):
     )
     assert ret.status_code == 413
     assert ret.content.decode("utf-8") == REQUEST_DATA_TOO_BIG_MSG
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_unsaved_results(client, setup, mocker):
+    """A test case that cannot be stored should not be acknowledged.
+
+    lava-run drops every acknowledged line, so the number of lines returned by
+    the server must stop at the first result that was not stored.
+    """
+    job = TestJob.objects.get(description="test job 02")
+    # Transient database error while saving the second test case: the first two
+    # lines are acknowledged, the others will be sent again by lava-run.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=OperationalError("deadlock detected"),
+    )
+    saves = mocker.patch(
+        "lava_scheduler_app.views.TestCase.save",
+        side_effect=[None, OperationalError("deadlock detected")],
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": RESULT_LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 3}
+    assert saves.call_count == 2
+
+    # An invalid result is skipped (resending will not help) but the lines are
+    # acknowledged and the failure is reported in the job.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.save",
+        side_effect=ValueError("invalid measurement"),
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": RESULT_LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 4}
+    job.refresh_from_db()
+    assert "Unable to store test case" in job.failure_comment
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_permanent_db_error(client, setup, mocker):
+    """A test case the database will always reject must be skipped.
+
+    Treating a permanent error (a measurement too large for its field,
+    say) as transient would make lava-run resend the same lines forever
+    and hold up the whole log stream. The line has to be skipped and
+    acknowledged, like an invalid result.
+    """
+    job = TestJob.objects.get(description="test job 02")
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=DataError("numeric field overflow"),
+    )
+    saves = mocker.patch(
+        "lava_scheduler_app.views.TestCase.save",
+        side_effect=[None, DataError("numeric field overflow")],
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": RESULT_LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 4}
+    assert saves.call_count == 2
+    job.refresh_from_db()
+    assert "Unable to store test case" in job.failure_comment
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_resend_unsaved_results(client, setup, mocker):
+    """lava-run sends the unacknowledged lines again.
+
+    The log lines are already on disk: they should not be duplicated, but the
+    results that could not be stored should be created.
+    """
+    RECORDS = [
+        '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}',
+        '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}',
+        '{"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:02.000000", "lvl": "info", "msg": "end: 1 fvp-deploy"}',
+    ]
+
+    def post(records, index):
+        return client.post(
+            reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+            {"lines": "- " + "\n- ".join(records), "index": index},
+            HTTP_LAVA_TOKEN=job.token,
+        )
+
+    def log_lines():
+        return (
+            (Path(job.output_dir) / "output.yaml")
+            .read_text(encoding="utf-8")
+            .splitlines(True)
+        )
+
+    job = TestJob.objects.get(description="test job 02")
+    # '1_fvp-deploy' hits a transient database error: every line from this one
+    # is left unacknowledged.
+    original_save = TestCase.save
+
+    def failing_save(self, *args, **kwargs):
+        if self.name == "1_fvp-deploy":
+            raise OperationalError("deadlock detected")
+        return original_save(self, *args, **kwargs)
+
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=OperationalError("deadlock detected"),
+    )
+    mocker.patch.object(TestCase, "save", failing_save)
+
+    ret = post(RECORDS, 0)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 3}
+
+    # Every line was written to disk but only the first three are acknowledged
+    assert len(log_lines()) == 5
+    assert [tc.name for tc in TestCase.objects.filter(suite__job=job)] == ["validate"]
+
+    # The database is working again: lava-run sends the lines that were not
+    # acknowledged again.
+    mocker.stopall()
+    ret = post(RECORDS[3:], 3)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 2}
+
+    # The log lines are deduplicated but the missing result is saved
+    assert log_lines() == ["- " + record + "\n" for record in RECORDS]
+    assert sorted(tc.name for tc in TestCase.objects.filter(suite__job=job)) == [
+        "1_fvp-deploy",
+        "validate",
+    ]
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_acks_nothing_when_first_result_fails(
+    client, setup, mocker
+):
+    """When the first result of a batch cannot be stored, no line is acked.
+
+    Acking any line would drop the failing result from lava-run's buffer,
+    losing it.
+    """
+    RECORDS = [
+        '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}',
+        '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:02.000000", "lvl": "info", "msg": "end: 0 validate"}',
+    ]
+
+    job = TestJob.objects.get(description="test job 02")
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=OperationalError("connection timeout"),
+    )
+    mocker.patch.object(
+        TestCase, "save", side_effect=OperationalError("connection timeout")
+    )
+
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": "- " + "\n- ".join(RECORDS[1:]), "index": 1},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    # The failing result sits on the first line of the batch: acknowledge
+    # nothing so lava-run keeps the whole batch.
+    assert ret.json() == {"line_count": 0}
+    assert TestCase.objects.filter(suite__job=job).count() == 0
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_dedup_query_failure(client, setup, mocker):
+    """A failing dedup query must not fail the whole request.
+
+    A 500 would make lava-run resend lines whose results are already
+    stored. Acknowledge up to the first test case collected but not
+    stored yet instead.
+    """
+    RECORDS = [
+        '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}',
+        '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}',
+        '{"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:02.000000", "lvl": "info", "msg": "end: 1 fvp-deploy"}',
+    ]
+
+    def post(records, index):
+        return client.post(
+            reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+            {"lines": "- " + "\n- ".join(records), "index": index},
+            HTTP_LAVA_TOKEN=job.token,
+        )
+
+    job = TestJob.objects.get(description="test job 02")
+    # Everything is stored the first time.
+    ret = post(RECORDS, 0)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 5}
+
+    # lava-run resends lines it did not see acknowledged: the dedup query
+    # now hits a database error.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.filter",
+        return_value=mocker.Mock(
+            exists=mocker.Mock(side_effect=OperationalError("connection lost"))
+        ),
+    )
+    ret = post(RECORDS[3:], 3)
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 0}
+
+    # Once the database answers again, the resend is deduplicated.
+    mocker.stopall()
+    ret = post(RECORDS[3:], 3)
+    assert ret.json() == {"line_count": 2}
+    assert sorted(tc.name for tc in TestCase.objects.filter(suite__job=job)) == [
+        "1_fvp-deploy",
+        "validate",
+    ]
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_dedup_failure_keeps_collected_results(
+    client, setup, mocker
+):
+    """Test cases collected before the failing dedup query must be stored.
+
+    Their lines are acknowledged, so lava-run drops them: not storing them
+    here would lose the results for good.
+    """
+    RECORDS = [
+        '{"dt": "2023-06-01T05:24:00.060423", "lvl": "info", "msg": "start: 0 validate"}',
+        '{"dt": "2023-06-01T05:24:00.472852", "lvl": "results", "msg": {"case": "validate", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:00.473085", "lvl": "info", "msg": "start: 1 fvp-deploy"}',
+        '{"dt": "2023-06-01T05:24:01.472852", "lvl": "results", "msg": {"case": "1_fvp-deploy", "definition": "lava", "result": "pass"}}',
+        '{"dt": "2023-06-01T05:24:02.000000", "lvl": "info", "msg": "end: 1 fvp-deploy"}',
+    ]
+
+    def post(records, index):
+        return client.post(
+            reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+            {"lines": "- " + "\n- ".join(records), "index": index},
+            HTTP_LAVA_TOKEN=job.token,
+        )
+
+    job = TestJob.objects.get(description="test job 02")
+    # The lines are on disk; the stored results are dropped to stand for a
+    # previous batch that wrote the log but lost its test cases.
+    ret = post(RECORDS, 0)
+    assert ret.json() == {"line_count": 5}
+    TestCase.objects.filter(suite__job=job).delete()
+
+    # The resend: 'validate' is collected (not stored yet), then the dedup
+    # query for '1_fvp-deploy' hits a database error.
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.filter",
+        side_effect=[
+            mocker.Mock(exists=mocker.Mock(return_value=False)),
+            mocker.Mock(
+                exists=mocker.Mock(side_effect=OperationalError("connection lost"))
+            ),
+        ],
+    )
+    ret = post(RECORDS[1:], 1)
+    assert ret.status_code == 200
+    # Resend from the first test case collected but not stored.
+    assert ret.json() == {"line_count": 0}
+
+    # 'validate' was stored anyway: its acknowledged lines keep their results.
+    mocker.stopall()
+    assert [tc.name for tc in TestCase.objects.filter(suite__job=job)] == ["validate"]
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_map_results_db_error(client, setup, mocker):
+    """A database error while mapping a result must not 500.
+
+    map_scanned_results hits the database for the suite and test set
+    lookups. Unhandled, the request would become a 500 and lava-run
+    would resend the whole batch without the collected results ever
+    being stored.
+    """
+    job = TestJob.objects.get(description="test job 02")
+    mocker.patch(
+        "lava_scheduler_app.views.map_scanned_results",
+        side_effect=OperationalError("deadlock detected"),
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": RESULT_LOGS, "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    # The failure is on line 1: the lines before it are acknowledged,
+    # lava-run resends from the failing line, no result is stored.
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 1}
+    assert TestCase.objects.filter(suite__job=job).count() == 0
+
+    # A failure on the second result: the lines before it are acked and
+    # only the failing line comes back.
+    mocker.patch(
+        "lava_scheduler_app.views.map_scanned_results",
+        side_effect=[None, OperationalError("deadlock")],
+    )
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": "".join(RESULT_LOGS.splitlines(True)[1:]), "index": 1},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 2}
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_interface_error_at_bulk_create(
+    client, setup, mocker, caplog
+):
+    """A dead connection at bulk_create must go through the fallback.
+
+    InterfaceError (a dead connection) is not a DatabaseError subclass,
+    so it must be listed explicitly in the catches: if it were not, it
+    would escape the bulk_create catch, the request would become a 500 and
+    lava-run would resend the batch forever.
+    """
+    job = TestJob.objects.get(description="test job 02")
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=InterfaceError("connection already closed"),
+    )
+    mocker.patch.object(
+        TestCase, "save", side_effect=InterfaceError("connection already closed")
+    )
+
+    # The request must be handled, not 500: the lines before the first
+    # unsaved test case are acknowledged, lava-run resends the rest.
+    ret = client.post(
+        reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+        {"lines": "".join(RESULT_LOGS.splitlines(True)), "index": 0},
+        HTTP_LAVA_TOKEN=job.token,
+    )
+    assert ret.status_code == 200
+    assert ret.json() == {"line_count": 1}
+    # The batch failure itself must be visible, not just the per-case ones.
+    assert "bulk_create failed" in caplog.text
+
+
+@pytest.mark.django_db
+def test_internal_v1_jobs_logs_persistent_failure_keeps_resending(
+    client, setup, mocker
+):
+    """A persistent database error must not drop log lines.
+
+    The server keeps refusing to acknowledge the failing line: lava-run
+    resends forever. The job may run long, but no line and no result is
+    abandoned.
+    """
+    job = TestJob.objects.get(description="test job 02")
+
+    mocker.patch(
+        "lava_scheduler_app.views.TestCase.objects.bulk_create",
+        side_effect=OperationalError("No space left on device"),
+    )
+    mocker.patch.object(
+        TestCase, "save", side_effect=OperationalError("No space left on device")
+    )
+
+    lines = RESULT_LOGS.splitlines(True)
+    index = 0
+    acks = []
+    for _ in range(3):
+        ret = client.post(
+            reverse("lava.scheduler.internal.v1.jobs.logs", args=[job.id]),
+            {"lines": "".join(lines[index:]), "index": index},
+            HTTP_LAVA_TOKEN=job.token,
+        )
+        assert ret.status_code == 200
+        ack = ret.json()["line_count"]
+        acks.append(ack)
+        index += ack
+    # The lines before the first unsaved test case are acked once, then
+    # the same line keeps coming back unacknowledged.
+    assert acks == [1, 0, 0]
+
+    job.refresh_from_db()
+    assert not job.failure_comment
+
+
+def test_exc_in_comment_is_truncated():
+    """The failure comment must not carry a whole database error."""
+    exc = OperationalError("x" * 500)
+    text = _exc_in_comment(exc)
+    assert len(text) == 123  # 120 + "..."
+    assert text.endswith("...")
+    assert _exc_in_comment(OperationalError("short")) == "short"
 
 
 @pytest.mark.django_db
