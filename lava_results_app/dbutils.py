@@ -11,6 +11,8 @@ import os
 import re
 from urllib.parse import quote
 
+from django.db.utils import DatabaseError, InterfaceError
+
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.models import TestCase, TestSet, TestSuite
@@ -42,7 +44,17 @@ def append_failure_comment(job, msg):
     if not job.failure_comment:
         job.failure_comment = ""
     job.failure_comment += msg[:256]
-    job.save(update_fields=["failure_comment"])
+    try:
+        # Every caller runs under autocommit: a caller inside an outer
+        # atomic block would see this failed save poison that transaction.
+        job.save(update_fields=["failure_comment"])
+    except (DatabaseError, InterfaceError):
+        # Best effort: a comment that cannot be stored should not take
+        # down the log processing that records it. InterfaceError is
+        # not a DatabaseError subclass: a dead connection raises it.
+        logging.getLogger("lava-master").warning(
+            "Unable to store failure comment on job %s", job.id
+        )
 
 
 def create_metadata_store(results, job):

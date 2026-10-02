@@ -30,6 +30,7 @@ from django.core.exceptions import (
 )
 from django.db import models, transaction
 from django.db.models import Q
+from django.db.utils import DatabaseError, InterfaceError
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -2275,7 +2276,16 @@ class TestJob(models.Model):
             self.failure_comment += message
         else:
             return
-        self.save(update_fields=["failure_comment"])
+        try:
+            self.save(update_fields=["failure_comment"])
+        except (DatabaseError, InterfaceError):
+            # Best effort: a comment that cannot be stored should not
+            # take down the log processing that records it.
+            # InterfaceError is not a DatabaseError subclass: a dead
+            # connection raises it.
+            logging.getLogger("lava-scheduler").warning(
+                "Unable to store failure comment on job %s", self.id
+            )
 
     @property
     def sub_jobs_list(self):
