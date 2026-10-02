@@ -304,6 +304,10 @@ infer-return-types = "never"
 permissive-ignores = true
 
 [tool.pytest]
+ini_options.filterwarnings = [
+  "default",
+  "ignore:This process :DeprecationWarning:pty",
+]
 ini_options.junit_family = "xunit2"
 ini_options.DJANGO_SETTINGS_MODULE = "tests.settings"
 
