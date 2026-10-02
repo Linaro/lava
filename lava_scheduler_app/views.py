@@ -60,8 +60,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.crypto import constant_time_compare
-from django.utils.html import escape, json_script
-from django.utils.safestring import mark_safe
+from django.utils.html import json_script
 from django.utils.timesince import timeuntil
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -2462,7 +2461,7 @@ def device_detail(request, pk):
     device_can_change = device.can_change(request.user)
     latest_device_log = device_logs.first()
     device_health_reason = (
-        mark_safe(latest_device_log.get_change_message()) if latest_device_log else None
+        latest_device_log.get_change_message() if latest_device_log else None
     )
     return render(
         request,
@@ -2587,7 +2586,7 @@ def device_health(request, pk):
         with transaction.atomic():
             device = Device.objects.select_for_update().get(pk=pk)
             health = request.POST.get("health").upper()
-            reason = escape(request.POST.get("reason"))
+            reason = request.POST.get("reason")
             response = __set_device_health__(device, request.user, health, reason)
             if response is None:
                 return HttpResponseRedirect(
@@ -2684,7 +2683,7 @@ def worker_health(request, pk):
         with transaction.atomic():
             worker = Worker.objects.select_for_update().get(pk=pk)
             health = request.POST.get("health")
-            reason = escape(request.POST.get("reason"))
+            reason = request.POST.get("reason")
             response = __set_worker_health__(worker, request.user, health, reason)
             if response is None:
                 return HttpResponseRedirect(

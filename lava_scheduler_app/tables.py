@@ -413,7 +413,8 @@ class LogEntryTable(LavaTable):
     def render_change_message(self, record):
         message = record.get_change_message()
         if record.is_change():
-            return mark_safe(message)
+            # Stored raw; django_tables2 auto-escapes on render.
+            return message
         elif record.is_addition():
             return format_html(
                 '<span class="glyphicon glyphicon-plus text-success"></span> {}',

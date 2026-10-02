@@ -16,6 +16,7 @@ import pytest
 from django.conf import settings
 from django.contrib.auth.models import Group, User
 from django.http import FileResponse, HttpResponse
+from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
@@ -38,6 +39,7 @@ from lava_scheduler_app.models import (
     TestJob,
     Worker,
 )
+from lava_scheduler_app.tables import SingleDeviceLogEntryTable, WorkersLogEntryTable
 from lava_server.files import File
 from linaro_django_xmlrpc.models import AuthToken
 
@@ -1115,6 +1117,46 @@ ok 2 bar
             .first()
         )
         assert "Foo" in logentry.change_message
+
+    def test_devices_set_health_reason_xss(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "devices/public01/set_health/",
+            {"health": "Maintenance", "reason": "<script>"},
+            format="json",
+        )
+        assert response.status_code == 202
+        logentry = (
+            LavaLogEntryDevice.objects.filter(device_id="public01")
+            .order_by("-action_time")
+            .first()
+        )
+        # Stored raw; escaping happens at render time (LogEntryTable).
+        assert "<script>" in logentry.change_message
+        html = SingleDeviceLogEntryTable(
+            LavaLogEntryDevice.objects.filter(pk=logentry.pk)
+        ).as_html(RequestFactory().get("/"))
+        assert "<script>" not in html
+        assert "&lt;script&gt;" in html
+
+    def test_workers_set_health_reason_xss(self):
+        response = self.adminclient.post(
+            reverse("api-root", args=[self.version]) + "workers/worker1/set_health/",
+            {"health": "Maintenance", "reason": "<script>"},
+            format="json",
+        )
+        assert response.status_code == 202
+        logentry = (
+            LavaLogEntryWorker.objects.filter(worker_id="worker1")
+            .order_by("-action_time")
+            .first()
+        )
+        # Stored raw; escaping happens at render time (LogEntryTable).
+        assert "<script>" in logentry.change_message
+        html = WorkersLogEntryTable(
+            LavaLogEntryWorker.objects.filter(pk=logentry.pk)
+        ).as_html(RequestFactory().get("/"))
+        assert "<script>" not in html
+        assert "&lt;script&gt;" in html
 
     def test_set_health_invalid(self):
         root = reverse("api-root", args=[self.version])

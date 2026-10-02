@@ -1279,7 +1279,7 @@ def test_devices_update(setup):
     device.refresh_from_db()
     assert device.description == "hello"  # nosec
 
-    # 7. update health reason escaped
+    # 7. update health reason stored raw, escaped at render time
     reason = "<script>"
     server("admin", "admin").scheduler.devices.update(
         "black01", None, None, None, None, "GOOD", None, None, reason
@@ -1293,8 +1293,8 @@ def test_devices_update(setup):
     )
     assert log_entry is not None
     msg = log_entry.get_change_message()
-    assert reason not in msg
-    assert "&lt;script&gt;" in msg
+    assert reason in msg
+    assert "&lt;script&gt;" not in msg
 
 
 @pytest.mark.django_db
