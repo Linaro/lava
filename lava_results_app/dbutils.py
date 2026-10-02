@@ -11,6 +11,8 @@ import os
 import re
 from urllib.parse import quote
 
+from django.db.utils import DatabaseError
+
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_results_app.models import TestCase, TestSet, TestSuite
@@ -42,7 +44,14 @@ def append_failure_comment(job, msg):
     if not job.failure_comment:
         job.failure_comment = ""
     job.failure_comment += msg[:256]
-    job.save(update_fields=["failure_comment"])
+    try:
+        job.save(update_fields=["failure_comment"])
+    except DatabaseError:
+        # Best effort: failing to store the comment should not take down
+        # the log processing that only wanted to record it.
+        logging.getLogger("lava-master").warning(
+            "Unable to store failure comment on job %s", job.id
+        )
 
 
 def create_metadata_store(results, job):
