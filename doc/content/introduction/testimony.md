@@ -51,6 +51,15 @@ automation on LAVA infrastructure for all their reference hardware.
 Apertis developers can also submit personal LAVA jobs during development
 to debug tests or verify changes before final integration.
 
+## CIP — Linux kernel and CIP Core validation
+
+The Civil Infrastructure Platform (CIP) uses LAVA to test its Super Long Term
+Support (SLTS) Linux kernels and CIP Core, its reference root filesystem. Tests
+run on a range of physical boards spread across different architectures, as well
+as on virtual machines. Automated testing on real hardware and virtual platforms
+helps CIP maintain the stability and long-term maintainability that industrial
+and civil infrastructure systems need.
+
 ## GCC — compiler validation
 
 LAVA tests GCC compiler output on real hardware, validating that code
@@ -176,6 +185,11 @@ Major semiconductor and hardware companies:
 <div style="text-align: center; padding: 1rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px; position: relative;">
 <img src="../assets/images/logos/amlogic.svg" alt="Amlogic" width="96" style="cursor: pointer;">
 <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.2s; font-weight: 500; font-size: 0.9rem; pointer-events: none;">Amlogic</div>
+</div>
+
+<div style="text-align: center; padding: 1rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px; position: relative;">
+<img src="../assets/images/logos/cip.svg" alt="Civil Infrastructure Platform" width="128" style="cursor: pointer;">
+<div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0; transition: opacity 0.2s; font-weight: 500; font-size: 0.9rem; pointer-events: none;">CIP</div>
 </div>
 
 <div style="text-align: center; padding: 1rem; border: 1px solid var(--md-default-fg-color--lightest); border-radius: 8px; position: relative;">
