@@ -1421,12 +1421,12 @@ def internal_v1_jobs_logs(request, pk):
 
                 if new_test_case is not None:
                     # If the log lines are a resubmission of a previous failed
-                    # submission, count the number of TestCase that are identical
-                    # to the new one. This will avoid saving multiple time the same
-                    # TestCase
-                    count = 0
+                    # submission, look for a TestCase that is identical to the
+                    # new one. This will avoid saving multiple time the same
+                    # TestCase.
+                    already_saved = False
                     if duplicated:
-                        count = TestCase.objects.filter(
+                        already_saved = TestCase.objects.filter(
                             name=new_test_case.name,
                             units=new_test_case.units,
                             result=new_test_case.result,
@@ -1436,8 +1436,8 @@ def internal_v1_jobs_logs(request, pk):
                             start_log_line=new_test_case.start_log_line,
                             end_log_line=new_test_case.end_log_line,
                             test_set=new_test_case.test_set,
-                        ).count()
-                    if count == 0:
+                        ).exists()
+                    if not already_saved:
                         test_cases.append(new_test_case)
             line_count += 1
 
