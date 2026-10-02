@@ -45,7 +45,7 @@ from django.db.models import (
     Subquery,
     Value,
 )
-from django.db.utils import DatabaseError
+from django.db.utils import DatabaseError, InterfaceError, OperationalError
 from django.http import (
     FileResponse,
     Http404,
@@ -71,7 +71,11 @@ from lava_common.log import dump
 from lava_common.schemas import validate
 from lava_common.version import __version__
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
-from lava_results_app.dbutils import create_metadata_store, map_scanned_results
+from lava_results_app.dbutils import (
+    append_failure_comment,
+    create_metadata_store,
+    map_scanned_results,
+)
 from lava_results_app.models import (
     NamedTestAttribute,
     Query,
@@ -1329,6 +1333,60 @@ def internal_v1_jobs(request, pk):
         return JsonResponse({})
 
 
+def _save_test_cases(job, test_cases, line_count):
+    """
+    Store the test cases parsed from a batch of log lines.
+
+    Return the number of log lines that can be acknowledged: every line up to
+    the first test case that could not be stored because of a transient
+    database error. The remaining lines will be sent again by lava-run and
+    deduplicated by the caller.
+
+    :param test_cases: list of (line index, TestCase) in line order
+    """
+    if not test_cases:
+        return line_count
+
+    logger = logging.getLogger("lava-scheduler")
+    try:
+        with transaction.atomic():
+            TestCase.objects.bulk_create([tc for (_, tc) in test_cases])
+        return line_count
+    except (DatabaseError, ValueError):
+        # bulk_create is all or nothing: fall back to saving the test cases one
+        # by one in order to store as many results as possible.
+        pass
+
+    for line_index, test_case in test_cases:
+        try:
+            # Try to save this test_case and expect failures
+            with transaction.atomic():
+                test_case.save()
+        except (InterfaceError, OperationalError) as exc:
+            # Transient error: do not acknowledge this line nor the following
+            # ones so that lava-run sends them again.
+            # line_index is 0-index so returning line_index will force lava-run
+            # to resend the logs, starting from this exact one.
+            logger.error(
+                "[%d] Unable to store test case '%s': %s", job.id, test_case.name, exc
+            )
+            return line_index
+        except (DatabaseError, ValueError) as exc:
+            # Invalid result, or a database error that retrying cannot fix
+            # (a measurement too large for its field, say). Resending the
+            # same lines forever would hold up the whole log stream, so
+            # report it on the job and move on.
+            msg = "[%d] Unable to store test case '%s': %s" % (
+                job.id,
+                test_case.name,
+                exc,
+            )
+            logger.error(msg)
+            append_failure_comment(job, msg)
+
+    return line_count
+
+
 @require_POST
 @csrf_exempt
 def internal_v1_jobs_logs(request, pk):
@@ -1369,15 +1427,15 @@ def internal_v1_jobs_logs(request, pk):
     ):
         line_skip = logs_instance.line_count(job) - line_idx
 
-        # TODO: use a database transaction so all or none objects are saved
-        # TODO: except exceptions and return the number
-        #       of lines that where actually parsed !!
+        # The test cases are created in a transaction by _save_test_cases()
+        # once the whole batch is parsed: (line index, TestCase) in line order.
         test_cases = []
         line_count = 0
         for line_dict, line_string in zip(
             yaml_safe_load(lines), lines.splitlines(True)
         ):
             # skip lines that where already saved to disk
+            # But process the test cases
             duplicated = False
             if line_skip > 0:
                 duplicated = True
@@ -1438,16 +1496,14 @@ def internal_v1_jobs_logs(request, pk):
                             test_set=new_test_case.test_set,
                         ).exists()
                     if not already_saved:
-                        test_cases.append(new_test_case)
+                        test_cases.append((line_count, new_test_case))
             line_count += 1
 
-    # Save the new test cases
-    try:
-        TestCase.objects.bulk_create(test_cases)
-    except (DatabaseError, ValueError):
-        for tc in test_cases:
-            with contextlib.suppress(DatabaseError, ValueError):
-                tc.save()
+    # Save the test cases and return the number of lines that were correctly
+    # processed (including the test results). lava-run drops the acknowledged
+    # lines and re-sends the remaining ones, starting with the line holding the
+    # test case that could not be saved.
+    line_count = _save_test_cases(job, test_cases, line_count)
 
     return JsonResponse({"line_count": line_count})
 
