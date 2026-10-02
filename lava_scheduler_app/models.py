@@ -30,7 +30,6 @@ from django.core.exceptions import (
 )
 from django.db import models, transaction
 from django.db.models import Q
-from django.db.utils import DatabaseError, InterfaceError
 from django.http import Http404
 from django.urls import reverse
 from django.utils import timezone
@@ -2270,22 +2269,33 @@ class TestJob(models.Model):
         return data
 
     def set_failure_comment(self, message):
+        # Imported here: a top level import would be circular via
+        # lava_results_app.dbutils -> lava_results_app.models -> this module.
+        from lava_results_app.dbutils import (
+            FAILURE_COMMENT_MAX_LENGTH,
+            store_failure_comment,
+        )
+
+        logger = logging.getLogger("lava-scheduler")
+        # Cap the message too: callers interpolate dispatcher data, like an
+        # invalid testset name, and an over-long first write would leave no
+        # room for the appends that follow.
+        message = message[:FAILURE_COMMENT_MAX_LENGTH]
         if not self.failure_comment:
+            # Deliberately unlike append_failure_comment: this first write
+            # may fill the field, and later appends are then refused. The
+            # reason the job failed wins over later detail.
             self.failure_comment = message
         elif message not in self.failure_comment:
+            if len(self.failure_comment) + len(message) > FAILURE_COMMENT_MAX_LENGTH:
+                logger.debug(
+                    "Failure comment on job %s is full, dropping: %s", self.id, message
+                )
+                return
             self.failure_comment += message
         else:
             return
-        try:
-            self.save(update_fields=["failure_comment"])
-        except (DatabaseError, InterfaceError):
-            # Best effort: a comment that cannot be stored should not
-            # take down the log processing that records it.
-            # InterfaceError is not a DatabaseError subclass: a dead
-            # connection raises it.
-            logging.getLogger("lava-scheduler").warning(
-                "Unable to store failure comment on job %s", self.id
-            )
+        store_failure_comment(self, logger)
 
     @property
     def sub_jobs_list(self):

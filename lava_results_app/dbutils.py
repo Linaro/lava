@@ -40,21 +40,38 @@ def _check_for_testset(result_dict, suite):
     return testset
 
 
-def append_failure_comment(job, msg):
-    if not job.failure_comment:
-        job.failure_comment = ""
-    job.failure_comment += msg[:256]
+FAILURE_COMMENT_MAX_LENGTH = 4096
+
+
+def store_failure_comment(job, logger):
+    """Save the failure comment, best effort.
+
+    Shared by append_failure_comment and TestJob.set_failure_comment:
+    a comment that cannot be stored must not take down the log
+    processing that records it. InterfaceError (a dead connection) is
+    not a DatabaseError subclass, so it is listed here too.
+    """
     try:
         # Every caller runs under autocommit: a caller inside an outer
         # atomic block would see this failed save poison that transaction.
         job.save(update_fields=["failure_comment"])
     except (DatabaseError, InterfaceError):
-        # Best effort: a comment that cannot be stored should not take
-        # down the log processing that records it. InterfaceError is
-        # not a DatabaseError subclass: a dead connection raises it.
-        logging.getLogger("lava-master").warning(
-            "Unable to store failure comment on job %s", job.id
-        )
+        logger.warning("Unable to store failure comment on job %s", job.id)
+
+
+def append_failure_comment(job, msg):
+    logger = logging.getLogger("lava-master")
+    if not job.failure_comment:
+        job.failure_comment = ""
+    msg = msg[:256]
+    if len(job.failure_comment) + len(msg) > FAILURE_COMMENT_MAX_LENGTH:
+        # Enough already: a batch of bad results would grow the comment
+        # forever and save the job once per line. The log keeps the full
+        # messages.
+        logger.debug("Failure comment on job %s is full, dropping: %s", job.id, msg)
+        return
+    job.failure_comment += msg
+    store_failure_comment(job, logger)
 
 
 def create_metadata_store(results, job):
