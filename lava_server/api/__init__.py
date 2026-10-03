@@ -226,20 +226,6 @@ class LavaSystemAPI(SystemAPI):
             retval[str(job_id)] = True
         return retval
 
-    def user_can_view_bundles(self, bundle_list, username=None):
-        """
-        Name
-        ----
-        user_can_view_bundles (`bundle_list`)
-
-        Removal of V1 support
-        --------------------
-        This function has been disabled. It is retained as a stub for older
-        versions of clients. Please update your tool to use LAVA V2.
-
-        """
-        return False
-
     def user_can_view_devices(self, device_list, username=None):
         """
         Name
