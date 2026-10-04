@@ -216,10 +216,10 @@ class RestrictedDeviceQuerySet(RestrictedObjectQuerySet):
 
 class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
     def _visible_ids_filter(self, user, perm):
-        """Build the Q filter for visible jobs. Used by both accessible_by_user
-        and visible_by_user_ids to avoid duplicating permission logic."""
+        """Build the Q filter for visible jobs, used by accessible_by_user()."""
         from lava_scheduler_app.models import Device, DeviceType, TestJob
 
+        # Here we gather accessible devices and device types.
         accessible_devices = Device.objects.accessible_by_user(
             user, TestJob.DEVICE_PERMISSION_MAP[perm]
         )
@@ -227,12 +227,18 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
             user, TestJob.DEVICE_TYPE_PERMISSION_MAP[perm]
         )
 
-        filters = Q(pk__in=[])
+        filters = Q(pk__in=[])  # Always empty Q object for anonymous users
+        # Check for private jobs where this user is submitter.
         if user.is_authenticated:
             filters = Q(is_public=False) & Q(submitter=user)
         vg_ids = Subquery(
             Group.objects.filter(viewing_groups=OuterRef("pk")).values("viewing_groups")
         )
+        # Similar to device filters, we first check if jobs are public and,
+        # if yes, we check for accessibility of either actual_device or
+        # requested_device_type (depending on whether the job is scheduled
+        # or not). Jobs that have viewing groups are excluded here and are
+        # handled by the viewing_groups filter below.
         filters |= (
             Q(is_public=True)
             & ~Q(id__in=vg_ids)
@@ -247,10 +253,23 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
                 )
             )
         )
+        # Add viewing_groups filter.
         if perm == self.model.VIEW_PERMISSION and user.is_authenticated:
+            # Anonymous user can never be a part of a group, so there is no
+            # point in adding the viewing_groups filter for them as it would
+            # only slow down the server.
+
+            # Needed to determine if viewing_groups is a subset of all the
+            # user's groups: remove all jobs where any viewing group is in
+            # groups this user is not part of.
             nonuser_groups = Group.objects.difference(user.groups.all()).values("pk")
+            # NOTE: Only the last two conditions will be ANDed (& binds
+            # tighter than |). Keep this in mind if another filter needs to
+            # be added in between this one and the one before.
             filters |= Q(id__in=vg_ids) & ~Q(viewing_groups__in=nonuser_groups)
         if perm == self.model.VIEW_PERMISSION:
+            # Anonymous users only see jobs submitted within the public
+            # job window (no-op for authenticated users).
             cutoff = anonymous_job_cutoff(user)
             if cutoff is not None:
                 filters &= Q(submit_time__gte=cutoff)
@@ -258,18 +277,9 @@ class RestrictedTestJobQuerySet(RestrictedObjectQuerySet):
 
     def accessible_by_user(self, user, perm):
         if user.has_perm(perm):
+            # Superusers have all permissions
             return self
         return self.filter(self._visible_ids_filter(user, perm))
-
-    def visible_by_user_ids(self, user):
-        """Return a list of visible job IDs for direct pk__in filtering."""
-        if user.has_perm(self.model.VIEW_PERMISSION):
-            return list(self.values_list("pk", flat=True))
-        return list(
-            self.filter(
-                self._visible_ids_filter(user, self.model.VIEW_PERMISSION)
-            ).values_list("pk", flat=True)
-        )
 
 
 class RestrictedTestCaseQuerySet(QuerySet):

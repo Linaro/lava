@@ -431,7 +431,7 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertTrue(self.qemu_job1.can_view(self.user1))
 
     @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
-    def test_testjob_visible_by_user_ids_excludes_old_for_anonymous(self):
+    def test_testjob_visible_by_user_excludes_old_for_anonymous(self):
         self.qemu_job1.is_public = True
         self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
         self.qemu_job1.save()
@@ -439,23 +439,19 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.qemu_job2.submit_time = timezone.now() - timedelta(days=1)
         self.qemu_job2.save()
 
-        ids = TestJob.objects.visible_by_user_ids(AnonymousUser())
-        self.assertNotIn(self.qemu_job1.id, ids)
-        self.assertIn(self.qemu_job2.id, ids)
-
-        # visible_by_user is what the HTML listings and XML-RPC use
+        # visible_by_user is what the REST API, HTML listings and XML-RPC use
         visible = TestJob.objects.visible_by_user(AnonymousUser())
         self.assertNotIn(self.qemu_job1, visible)
         self.assertIn(self.qemu_job2, visible)
 
     @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
-    def test_testjob_visible_by_user_ids_authenticated_unaffected(self):
+    def test_testjob_visible_by_user_authenticated_unaffected(self):
         self.qemu_job1.is_public = True
         self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
         self.qemu_job1.save()
 
-        ids = TestJob.objects.visible_by_user_ids(self.user1)
-        self.assertIn(self.qemu_job1.id, ids)
+        visible = TestJob.objects.visible_by_user(self.user1)
+        self.assertIn(self.qemu_job1, visible)
 
     @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
     def test_testjob_change_permission_ignores_window(self):
