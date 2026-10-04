@@ -153,9 +153,7 @@ $(document).ready(function () {
 		'<li class="print-menu-item"><a target="_blank" href="#"' +
 		' id="view_item_' + this.chart_id + '">View result</a></li>' +
 		'<li class="print-menu-item"><a href="#"' + ' id="omit_item_' +
-		this.chart_id + '" data-toggle="confirm" data-title="This ' +
-                'will affect underlying query. Are you sure you want to omit' +
-                ' this result?">' +
+		this.chart_id + '">' +
                 'Omit result</a></li>' +
                 '</ul>');
         this.setup_item_menu();
@@ -183,8 +181,23 @@ $(document).ready(function () {
                 }
             });
 
-        // Now setup the click event for omit link (needed for bootbox dialog).
-        add_bootbox_data_toggle();
+        // Omit changes state: POST with CSRF (endpoint is @require_POST,
+        // a GET navigation would return 405).
+        $("#omit_item_" + this.chart_id).click(function(e) {
+            e.preventDefault();
+            var url = $(this).attr("href");
+            bootbox.confirm(
+                "This will affect underlying query. Are you sure you want to omit this result?",
+                function(result) {
+                    if (result) {
+                        $.post(url, { csrfmiddlewaretoken: csrf_token })
+                            .done(function() { window.location.reload(); })
+                            .fail(function() {
+                                bootbox.alert("Operation failed, please try again or contact system administrator.");
+                            });
+                    }
+                });
+        });
 
         $("#inner_container_" + this.chart_id).bind(
             "plothover",

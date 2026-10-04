@@ -53,12 +53,15 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if show_resubmit %}
-          <li><a href="{% url 'lava.scheduler.job.resubmit' job.pk %}" class="btn btn-default">Resubmit</a></li>
+          <li><a href="javascript:document.getElementById('lava-resubmit-job').submit();" class="btn btn-default">Resubmit</a>
+          <form hidden id="lava-resubmit-job" action="{% url 'lava.scheduler.job.resubmit' job.pk %}" method="post">{% csrf_token %}</form></li>
         {% endif %}
       {% if show_cancel %}
-      <li><a class="btn btn-warning" id="cancel" href="{% url 'lava.scheduler.job.cancel' job.id %}">Cancel</a></li>
+      <li><a class="btn btn-warning" id="cancel" href="javascript:document.getElementById('lava-cancel-job').submit();">Cancel</a>
+      <form hidden id="lava-cancel-job" action="{% url 'lava.scheduler.job.cancel' job.pk %}" method="post">{% csrf_token %}</form></li>
       {% elif show_fail %}
-      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="{% url 'lava.scheduler.job.fail' job.id %}">Fail</a></li>
+      <li><a class="btn btn-danger" id="fail" title="This should not be used if lava-run is still running" href="javascript:document.getElementById('lava-fail-job').submit();">Fail</a>
+      <form hidden id="lava-fail-job" action="{% url 'lava.scheduler.job.fail' job.pk %}" method="post">{% csrf_token %}</form></li>
       {% endif %}
         </ul>
       </div>
@@ -66,13 +69,14 @@
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}" class="btn btn-info">Definition of {{ job.sub_id|default:job.id }}</a></li>
         {% if user.is_authenticated %}
-        <li><a href="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" class="btn btn-info">
+        <li><a href="javascript:document.getElementById('lava-toggle-favorite-job').submit();" class="btn btn-info">
             {% if is_favorite %}
               Remove from favorites
             {% else %}
               Add to favorites
             {% endif %}
-        </a></li>
+        </a>
+        <form hidden id="lava-toggle-favorite-job" action="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" method="post">{% csrf_token %}</form></li>
         {% endif %}
         </ul>
       </div>

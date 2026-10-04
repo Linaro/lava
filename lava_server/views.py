@@ -194,6 +194,7 @@ def update_remote_auth(request):
         return HttpResponseRedirect(reverse("lava.me"))
 
 
+@require_POST
 @login_required
 def delete_remote_auth(request, pk):
     token = RemoteArtifactsAuth.objects.get(pk=pk)

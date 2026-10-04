@@ -613,6 +613,29 @@ def test_job_cancel_multinode(client, monkeypatch, setup):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "page,description",
+    [
+        ("lava.scheduler.job.detail", "test job 03"),
+        ("lava.scheduler.job.definition", "test job 03"),
+    ],
+)
+def test_job_pages_trigger_state_changes_by_post(client, setup, page, description):
+    # The view-side 405s are pinned by tests/lava_server/test_security.py;
+    # this pins the templates: cancel/fail/resubmit/toggle_favorite must be
+    # CSRF-tokened POST forms, never GET links.
+    assert client.login(username="tester", password="tester") is True  # nosec
+    job = TestJob.objects.get(description=description)
+    content = client.get(reverse(page, args=[job.pk])).content.decode()
+    for action in ("cancel", "fail", "resubmit", "toggle_favorite"):
+        url = reverse(f"lava.scheduler.job.{action}", args=[job.pk])
+        assert f'href="{url}"' not in content, f"{page}: GET link to {action}"
+        if url in content:
+            assert f'action="{url}" method="post"' in content, action
+    assert 'name="csrfmiddlewaretoken"' in content, page
+
+
+@pytest.mark.django_db
 def test_worker_detail_log_tables(client, setup):
     assert client.login(username="admin", password="admin") is True  # nosec
     worker = Worker.objects.get(hostname="worker-02")
@@ -768,7 +791,7 @@ def test_change_priority(client, setup):
 
 @pytest.mark.django_db
 def test_job_toggle_favorite_no_auth(client, setup):
-    ret = client.get(
+    ret = client.post(
         reverse(
             "lava.scheduler.job.toggle_favorite",
             args=[TestJob.objects.get(description="test job 01").pk],
@@ -782,7 +805,7 @@ def test_job_toggle_favorite(client, setup):
     assert client.login(username="tester", password="tester") is True  # nosec
     job_1 = TestJob.objects.get(description="test job 01")
     assert job_1.testjobuser_set.count() == 0  # nosec
-    ret = client.get(reverse("lava.scheduler.job.toggle_favorite", args=[job_1.pk]))
+    ret = client.post(reverse("lava.scheduler.job.toggle_favorite", args=[job_1.pk]))
     assert ret.status_code == 302  # nosec
     job_1.refresh_from_db()
     assert job_1.testjobuser_set.count() == 1  # nosec

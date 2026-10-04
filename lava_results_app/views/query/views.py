@@ -321,6 +321,7 @@ def query_edit(request, username, name):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_delete(request, username, name):
@@ -379,6 +380,7 @@ def query_export_custom(request):
     return _export_query(results, content_type, filename)
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_toggle_published(request, username, name):
@@ -407,6 +409,7 @@ def query_copy(request, username, name):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_refresh(request, name, username):
@@ -531,6 +534,7 @@ def query_remove_condition(request, username, name, id):
     )
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_omit_result(request, username, name, id):
@@ -546,6 +550,7 @@ def query_omit_result(request, username, name, id):
     return HttpResponseRedirect(query.get_absolute_url())
 
 
+@require_POST
 @login_required
 @ownership_required
 def query_include_result(request, username, name, id):

@@ -42,7 +42,8 @@ class UserChartTable(LavaTable):
 
     remove = tables.TemplateColumn(
         """
-    <a href="{% url 'lava.results.chart_delete' record.name %}" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?">remove</a>
+    <a href="javascript:document.getElementById('delete-chart-{{record.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?">remove</a>
+    <form hidden id="delete-chart-{{record.id}}" action="{% url 'lava.results.chart_delete' record.name %}" method="post">{% csrf_token %}</form>
     """
     )
     remove.orderable = False
