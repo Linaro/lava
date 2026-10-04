@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import FieldDoesNotExist, FieldError, PermissionDenied
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -542,7 +542,10 @@ def query_omit_result(request, username, name, id):
     result_object = get_object_or_404(query.content_type.model_class(), id=id)
 
     try:
-        QueryOmitResult.objects.create(query=query, content_object=result_object)
+        # atomic(): a caught IntegrityError otherwise poisons the
+        # surrounding transaction.
+        with transaction.atomic():
+            QueryOmitResult.objects.create(query=query, content_object=result_object)
     except IntegrityError:
         # Ignore unique constraint violation.
         pass

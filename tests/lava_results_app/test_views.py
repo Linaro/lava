@@ -241,6 +241,32 @@ def test_query_include_result_accepts_post(client, user, query, results_job, omi
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "view", ["lava.results.query_omit_result", "lava.results.chart_omit_result"]
+)
+def test_omit_result_tolerates_duplicate(
+    client, user, query, chart, chart_query, results_job, view
+):
+    # The second omission hits the unique constraint; without atomic() the
+    # caught IntegrityError poisons the transaction and the view 500s.
+    client.force_login(user)
+    url = reverse(
+        view,
+        args=REDIRECTING_VIEWS[view](
+            {
+                "user": user,
+                "query": query,
+                "chart": chart,
+                "chart_query": chart_query,
+                "results_job": results_job,
+            }
+        ),
+    )
+    assert client.post(url).status_code == 302
+    assert client.post(url).status_code == 302
+
+
+@pytest.mark.django_db
 def test_query_refresh_accepts_post(client, user, query):
     # JSON, not a redirect. On sqlite the refresh itself fails (view_exists
     # queries pg_class) and reports success=false, so pin the body shape

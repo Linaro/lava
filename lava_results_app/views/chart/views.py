@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group
 from django.core import serializers
 from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -390,9 +390,12 @@ def chart_omit_result(request, name, id, result_id):
     )
 
     try:
-        QueryOmitResult.objects.create(
-            query=chart_query.query, content_object=result_object
-        )
+        # atomic(): a caught IntegrityError otherwise poisons the
+        # surrounding transaction.
+        with transaction.atomic():
+            QueryOmitResult.objects.create(
+                query=chart_query.query, content_object=result_object
+            )
     except IntegrityError:
         # Ignore unique constraint violation.
         pass
