@@ -507,6 +507,14 @@ class TestJobFilter(MetadataFilterMixin, filters.FilterSet):
     health__in = CharFilter(method="filter_health_in")
     state = CharFilter(method="filter_state")
     state__in = CharFilter(method="filter_state_in")
+    # Device.hostname is the primary key, so TestJob.actual_device_id already
+    # holds the hostname. Resolve hostname__in on the FK directly instead of
+    # letting django_filters build a Device subquery: the subquery makes the
+    # planner pick a backward PK scan for ORDER BY -id (see #699).
+    actual_device__hostname__in = CharFilter(method="filter_actual_device_hostname_in")
+
+    def filter_actual_device_hostname_in(self, queryset, name, value):
+        return queryset.filter(actual_device__in=value.split(","))
 
     def filter_health(self, queryset, name, value):
         try:
