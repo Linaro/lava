@@ -454,6 +454,36 @@ class ModelPermissionsTest(TestCaseWithFactory):
         self.assertIn(self.qemu_job1, visible)
 
     @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_view_permission_grants_full_visibility(self):
+        # private, outside the public window: invisible without the perm
+        self.qemu_job1.is_public = False
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.qemu_job1.save()
+        self.assertNotIn(self.qemu_job1, TestJob.objects.visible_by_user(self.user1))
+
+        self.user1.user_permissions.add(Permission.objects.get(codename="view_testjob"))
+        # drop the backend perm caches populated by the call above
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user1, "_perm_cache")
+        delattr(self.user1, "_user_perm_cache")
+        self.assertIn(self.qemu_job1, TestJob.objects.visible_by_user(self.user1))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
+    def test_testjob_view_permission_grants_can_view(self):
+        # the grant must work in listings and in can_view alike
+        self.qemu_job1.is_public = False
+        self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)
+        self.qemu_job1.save()
+        self.assertFalse(self.qemu_job1.can_view(self.user1))
+
+        self.user1.user_permissions.add(Permission.objects.get(codename="view_testjob"))
+        # drop the backend perm caches populated by the call above
+        delattr(self.user1, "_cached_has_perm")
+        delattr(self.user1, "_perm_cache")
+        delattr(self.user1, "_user_perm_cache")
+        self.assertTrue(self.qemu_job1.can_view(self.user1))
+
+    @override_settings(PUBLIC_JOB_WINDOW_DAYS=10)
     def test_testjob_change_permission_ignores_window(self):
         self.qemu_job1.is_public = True
         self.qemu_job1.submit_time = timezone.now() - timedelta(days=11)

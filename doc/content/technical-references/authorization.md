@@ -53,6 +53,13 @@ A user can hold a global permission for any system entity. Global permissions
 are checked first and take precedence over [per-object permissions](#per-object-authorization).
 They are managed through the Django admin user settings.
 
+Test job visibility has one global permission, `view_testjob`. A user holding
+it can see every test job, including private jobs and jobs older than
+`PUBLIC_JOB_WINDOW_DAYS`. Grant it to a group in the Django admin group editor
+or with the XML-RPC `auth.groups.perms.add` call
+(`auth.groups.perms.add <group> lava_scheduler_app testjob view_testjob`);
+it is not granted to any group by default.
+
 ## Per-object authorization
 
 LAVA per-object authorization is used to apply fine-grained access to a specific
