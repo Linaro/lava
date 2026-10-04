@@ -837,6 +837,41 @@ class ManagersTest(TestCaseWithFactory):
             {self.bbb_job1, self.bbb_job2},
         )
 
+        # user2 should see all the jobs after TestJob.VIEW_PERMISSION is added.
+        self.user2.user_permissions.add(
+            Permission.objects.get(
+                codename=TestJob.VIEW_PERMISSION.rsplit(".", maxsplit=1)[-1]
+            )
+        )
+        self.assertEqual(
+            set(
+                TestJob.objects.all().visible_by_user(
+                    User.objects.get(id=self.user2.id)
+                )
+            ),
+            set(TestJob.objects.all()),
+        )
+
+    def test_testjob_default_permissions(self):
+        # TestJob has exactly these permissions. There is no add_testjob:
+        # 0046 removed it and TestJobAdmin blocks adding jobs. The
+        # cancel_resubmit_testjob row comes from the 0046 data migration
+        # rather than from Meta.
+        self.assertEqual(
+            set(
+                Permission.objects.filter(
+                    content_type__app_label="lava_scheduler_app",
+                    content_type__model="testjob",
+                ).values_list("codename", flat=True)
+            ),
+            {
+                "change_testjob",
+                "delete_testjob",
+                "view_testjob",
+                "cancel_resubmit_testjob",
+            },
+        )
+
     def test_testjob_manager_viewing_groups(self):
         GroupDeviceTypePermission.objects.assign_perm(
             DeviceType.VIEW_PERMISSION, self.group1, self.qemu_device_type
