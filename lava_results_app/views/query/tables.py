@@ -105,11 +105,12 @@ class QueryTestJobTable(AllJobsTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('omit-job-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form hidden id="omit-job-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
     """,
         orderable=False,
@@ -138,11 +139,12 @@ class QueryTestCaseTable(SuiteTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('omit-case-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form hidden id="omit-case-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
     """
     )
@@ -196,11 +198,12 @@ class QueryTestSuiteTable(LavaTable):
     omit = tables.TemplateColumn(
         """
     {% if query %}
-        <a href="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}"
+        <a href="javascript:document.getElementById('omit-suite-{{record.id}}').submit();"
             data-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?">
             <span class="glyphicon glyphicon-remove"></span>
         </a>
+        <form hidden id="omit-suite-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
     """,
         orderable=False,

@@ -69,8 +69,9 @@ Additional actions are available on the following endpoints with POST request:
 - device type template (/api/v0.2/devicetypes/<device_type_name>/template/)
 - worker configuration (/api/v0.2/workers/<worker>/config/)
 - worker environment (/api/v0.2/workers/<worker>/env/)
-- job resubmit (/api/v0.2/jobs/<job_id>/resubmit)
-- job validate (/api/v0.2/jobs/validate)
+- job resubmit (/api/v0.2/jobs/<job_id>/resubmit/)
+- job cancel (/api/v0.2/jobs/<job_id>/cancel/) — POST only since LAVA 2026.10; GET requests to this endpoint now return 405
+- job validate (/api/v0.2/jobs/validate/)
     * required parameters:
         + definition (string)
     * optional parameters:
