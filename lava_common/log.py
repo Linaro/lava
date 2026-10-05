@@ -13,7 +13,7 @@ import os
 import signal
 import sys
 import time
-from queue import Empty
+from queue import Empty, Full
 from typing import TYPE_CHECKING, TypedDict
 
 import requests
@@ -291,8 +291,13 @@ def run_output_sender(
 
 class YAMLHTTPHandler:
     def __init__(self, url: str, token: str, interval: int, job_id: str):
-        # Create the multiprocess sender
-        self.queue: multiprocessing.Queue[str | None] = multiprocessing.Queue()
+        # The queue is bounded so a stalled upload blocks emit() instead of
+        # growing until the OOM killer takes the dispatcher down.
+        self.queue: multiprocessing.Queue[str | None] = multiprocessing.Queue(
+            maxsize=10000
+        )
+        self._stall_warned = False
+        self._dropped_warned = False
         # Block sigint so the sender function will not receive it.
         # TODO: block more signals?
         signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGINT])
@@ -307,11 +312,38 @@ class YAMLHTTPHandler:
         # This can't happen as data is a dictionary dumped in yaml format
         if record == "":
             return
-        self.queue.put(record)
+        # Wait for the queue to drain. Lines are only lost when the
+        # sender process died, and then nothing can be uploaded anyway.
+        while self.proc.is_alive():
+            try:
+                self.queue.put(record, timeout=60)
+                self._stall_warned = False
+                return
+            except (Full, OSError):
+                # OSError: the queue is broken, typically because the
+                # sender died; the is_alive() check below ends the loop.
+                if not self._stall_warned:
+                    sys.stderr.write(
+                        "Log upload stalled: blocking the job until the "
+                        "server recovers.\n"
+                    )
+                    self._stall_warned = True
+        if not self._dropped_warned:
+            sys.stderr.write("Log sender died: dropping log lines.\n")
+            self._dropped_warned = True
 
     def close(self) -> None:
-        # wait for the multiprocess
-        self.queue.put(None)
+        # The sentinel goes through the same bounded queue, so put can block:
+        # retry while the sender is alive, and give up once it is gone since
+        # nothing is uploading anyway.
+        while True:
+            try:
+                self.queue.put(None, timeout=60)
+                break
+            except (Full, OSError):
+                if not self.proc.is_alive():
+                    self.proc.terminate()
+                    break
         self.proc.join()
 
     def terminate(self) -> None:

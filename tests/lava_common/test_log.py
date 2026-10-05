@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import signal
+from queue import Full
 
 from lava_common.log import (
     JobOutputSender,
@@ -171,6 +172,51 @@ def test_http_handler(mocker):
     handler.close()
     assert len(handler.queue.put.mock_calls) == 2
     assert handler.queue.put.mock_calls[1][1] == (None,)
+
+
+def test_http_handler_emit_backpressure(mocker, capsys):
+    """emit blocks on a full queue instead of dropping log lines.
+
+    The sender being alive is what makes waiting meaningful: if it died,
+    no upload can happen anyway and the record is dropped.
+    """
+    Process = mocker.Mock()
+    Queue = mocker.Mock()
+    mocker.patch("multiprocessing.Process", return_value=Process)
+    QueueClass = mocker.patch("multiprocessing.Queue", return_value=Queue)
+    handler = YAMLHTTPHandler("http://localhost/", "token", 1, "1234")
+    QueueClass.assert_called_once_with(maxsize=10000)
+
+    # Queue full, sender alive: emit retries until the queue drains.
+    Queue.put.side_effect = [Full, Full, None]
+    handler.emit("Hello world")
+    assert Queue.put.call_count == 3
+    assert "Log upload stalled" in capsys.readouterr().err
+
+    # The sender died, so nothing can upload: the record is dropped.
+    Process.is_alive.return_value = False
+    Queue.put.reset_mock()
+    handler.emit("gone")
+    assert Queue.put.call_count == 0
+
+
+def test_http_handler_close_with_dead_sender(mocker):
+    """close must not block forever when the sender died on a full queue.
+
+    The queue is bounded, so the stop sentinel can block: with a dead
+    sender nobody drains it. close() gives up and terminates.
+    """
+    Process = mocker.Mock()
+    Queue = mocker.Mock()
+    mocker.patch("multiprocessing.Process", return_value=Process)
+    mocker.patch("multiprocessing.Queue", return_value=Queue)
+    handler = YAMLHTTPHandler("http://localhost/", "token", 1, "1234")
+
+    Queue.put.side_effect = Full
+    Process.is_alive.return_value = False
+    handler.close()
+    Process.terminate.assert_called_once_with()
+    Process.join.assert_called_once_with()
 
 
 def test_yaml_logger(mocker):
