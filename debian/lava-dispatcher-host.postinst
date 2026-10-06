@@ -23,6 +23,10 @@ case "$1" in
 	if which udevadm >/dev/null 2>&1; then
 	    lava-dispatcher-host rules install
 	fi
+	# Load kheaders here too so hosts already running recover without a
+	# reboot. Kernels that do not build it as a module fail the modprobe,
+	# hence the || true.
+	modprobe kheaders || true
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)

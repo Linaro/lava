@@ -195,6 +195,15 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
 
         except Exception:
             logger.exception("Failed to apply BPF for %r", self.__cgroup__)
+            if fd is not None and bpf is None:
+                logger.error(
+                    "The BPF program could not be compiled, most "
+                    "likely because kernel headers for the running "
+                    "kernel are missing. Device sharing needs them: "
+                    "install the kernel headers development package "
+                    "of the distribution, or build the kernel with "
+                    "CONFIG_IKHEADERS=m."
+                )
         finally:
             if bpf is not None:
                 try:
