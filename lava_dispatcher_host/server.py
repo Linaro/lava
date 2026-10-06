@@ -126,9 +126,5 @@ def main():
         server.exit("SIGINT")
 
 
-def start():
-    if __name__ == "__main__":
-        main()
-
-
-start()
+if __name__ == "__main__":
+    main()
