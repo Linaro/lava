@@ -33,7 +33,7 @@ from lava_common.worker import get_parser, init_sentry_sdk
 #########
 # Create the logger that will be configured later
 logging.Formatter.converter = time.gmtime
-LOG = logging.getLogger("lava-worker")
+LOG = logging.getLogger(__name__)
 FORMAT = "%(asctime)-15s %(levelname)7s %(message)s"
 
 RELEASE_PAT = re.compile(r"^\d+\.\d+(\.\d+){0,1}$")
