@@ -118,19 +118,6 @@ class ServerWrapper:
             logger.warning(repr(ex))
 
 
-class Client:
-    def __init__(self, socket=SOCKET):
-        self.socket = socket
-
-    def send_request(self, request):
-        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
-            s.connect(self.socket)
-            s.sendall(bytes(json.dumps(request), "utf-8"))
-            s.shutdown(socket.SHUT_WR)
-            response = s.recv(1024)
-            logger.info(str(response))
-
-
 def main():
     server = ServerWrapper(SOCKET)
     try:
