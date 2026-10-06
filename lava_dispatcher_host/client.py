@@ -25,17 +25,24 @@ class Client:
 
     def send_request(self, request: Any) -> Any:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            logger.debug("Connecting to %r", self.socket)
             s.connect(self.socket)
-            s.sendall(bytes(json.dumps(request), "utf-8"))
+            request_data = bytes(json.dumps(request), "utf-8")
+            logger.debug("Sending request: %r", request_data)
+            s.sendall(request_data)
+            logger.debug("Shutting down socket")
             s.shutdown(socket.SHUT_WR)
             chunks = []
             while chunk := s.recv(4096):
                 chunks.append(chunk)
             response = b"".join(chunks)
-            logger.info(str(response))
+            logger.debug("Received respounse: %r", response)
         try:
-            return json.loads(response)
+            response_data = json.loads(response)
+            logger.info("Request sent and response received successfully")
+            return response_data
         except json.JSONDecodeError:
+            logger.exception("Failed to decode response JSON: %r", response)
             # the server closed the connection without a reply, e.g.
             # it rejected a non-root peer
             return {"result": "NO_RESPONSE"}
