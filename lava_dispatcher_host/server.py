@@ -73,8 +73,11 @@ class ServerWrapper:
         """
         sock = writer.transport.get_extra_info("socket")
         try:
-            cred = sock.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED)
-            uid, _gid, _pid = struct.unpack("iii", cred)
+            cred = sock.getsockopt(
+                socket.SOL_SOCKET, socket.SO_PEERCRED, struct.calcsize("iii")
+            )
+            # struct ucred is {pid, uid, gid}
+            _pid, uid, _gid = struct.unpack("iii", cred)
         except (OSError, AttributeError):
             # AttributeError: transport has no "socket" (e.g. already closed).
             return False
