@@ -4,56 +4,39 @@
 from __future__ import annotations
 
 import contextlib
+import fcntl
 import json
 import logging
 import os
+import shutil
+import struct
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
-
-from jinja2 import Template
 
 from lava_common.exceptions import InfrastructureError
 
-try:
-    from bcc import BPF, BPFAttachType
-except ImportError:
-    # This can happen on Debian 10 and that's ok. The code path that uses this
-    # will only be used on Debian 11 +
-    pass
-
 logger = logging.getLogger(__name__)
 
-# XXX bcc.BPF should provide these (from include/uapi/linux/bpf.h in the kernel
-# tree)
-BPF_F_ALLOW_OVERRIDE = 1 << 0
-BPF_F_ALLOW_MULTI = 1 << 1
-BPF_F_REPLACE = 1 << 2
-
-TEMPLATE = """
-int lava_docker_device_access_control(struct bpf_cgroup_dev_ctx *ctx) {
-    bpf_trace_printk("Device access: major = %d, minor = %d", ctx->major, ctx->minor);
-    {% for device in devices %}
-    {% if device.minor is none %}
-    if (ctx->major == {{ device.major}}) {
-        return 1;
-    }
-    {% else %}
-    if (ctx->major == {{ device.major}} && ctx->minor == {{ device.minor }}) {
-        return 1;
-    }
-    {% endif %}
-    {% endfor %}
-    return 0;
-}
-"""
+BPFTOOL = "/usr/sbin/bpftool"
+# Built at package build time (src/bpf/) and loaded as-is: the daemon needs
+# neither kernel headers nor clang, and loads no modules at runtime.
+BPF_OBJECT = "/usr/share/lava-dispatcher-host/bpf/lava_device_filter.bpf.o"
+BPF_PROGRAM = "lava_docker_device_access_control"
+BPF_MAP = "allowed_devices"
+PIN_BASE = "/sys/fs/bpf/lava"
+# Per-container apply locks live here, not under PIN_BASE: bpffs holds no
+# regular files.
+LOCK_DIR = "/run/lock"
+# Wildcard minor for "major only" entries (e.g. 136:* for /dev/pts/N).
+# dev_t minors are 20 bits wide, so this can never collide with a real one.
+ANY_MINOR = 0xFFFFFFFF
 
 
 @dataclass(frozen=True)
 class Device:
-    major: str
-    minor: str = None
+    major: int
+    minor: int | None = None
 
 
 def DeviceFilter(*args, **kwargs):
@@ -67,7 +50,7 @@ def DeviceFilter(*args, **kwargs):
 
 class DeviceFilterCommon:
     def __init__(self, container, state_file: Path | None = None):
-        self.__devices__ = set()
+        self.__devices__: set[Device] = set()
         if state_file:
             self.load(state_file)
         self.container_id = subprocess.check_output(
@@ -154,29 +137,78 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         with state_file.open() as f:
             for line in f.readlines():
                 major, minor = line.split()
-                self.add(Device(int(major), int(minor)))
+                self.add(Device(int(major), None if minor == "*" else int(minor)))
 
     def save(self, state_file):
         with state_file.open("w") as f:
             for device in self.__devices__:
-                f.write(f"{device.major} {device.minor}\n")
+                # "*" is a wildcard minor, the same case as the ANY_MINOR key
+                minor = "*" if device.minor is None else device.minor
+                f.write(f"{device.major} {minor}\n")
 
     def apply(self):
+        # Serialize applies per container: the leading rmtree would
+        # otherwise drop a concurrent apply's pins.
+        with open(
+            os.path.join(LOCK_DIR, f"lava-dispatcher-host-{self.container_id}.lock"),
+            "w",
+        ) as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)
+            self.__apply__()
+
+    def __apply__(self):
         existing = self.__get_existing_functions__()
-        fd = None
-        bpf = None
+        pin_dir = os.path.join(PIN_BASE, self.container_id[:12])
+        prog_pin = os.path.join(pin_dir, "prog")
+        maps_pin = os.path.join(pin_dir, "maps")
+        attached = False
 
         try:
-            fd = os.open(self.__cgroup__, os.O_RDONLY)
-            program = bytes(self.expand_template(), "utf-8")
-            bpf = BPF(text=program)
-            func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
-            bpf.attach_func(func, fd, BPFAttachType.CGROUP_DEVICE, BPF_F_ALLOW_MULTI)
-
+            # One program instance (with its own map) per container. The old
+            # program stays attached until the new one is in place: with
+            # cgroups v2, no device program means unrestricted access.
+            shutil.rmtree(pin_dir, ignore_errors=True)
+            os.makedirs(prog_pin)
+            subprocess.check_call(
+                [BPFTOOL, "prog", "loadall", BPF_OBJECT, prog_pin, "pinmaps", maps_pin]
+            )
+            map_pin = os.path.join(maps_pin, BPF_MAP)
+            for device in self.devices:
+                minor = ANY_MINOR if device.minor is None else device.minor
+                key = [f"0x{b:02x}" for b in struct.pack("@II", device.major, minor)]
+                subprocess.check_call(
+                    [
+                        BPFTOOL,
+                        "map",
+                        "update",
+                        "pinned",
+                        map_pin,
+                        "key",
+                        *key,
+                        "value",
+                        "0x01",
+                        "0x00",
+                        "0x00",
+                        "0x00",
+                    ]
+                )
+            subprocess.check_call(
+                [
+                    BPFTOOL,
+                    "cgroup",
+                    "attach",
+                    self.__cgroup__,
+                    "device",
+                    "pinned",
+                    os.path.join(prog_pin, BPF_PROGRAM),
+                    "multi",
+                ]
+            )
+            attached = True
             for fid in existing:
                 subprocess.check_call(
                     [
-                        "/usr/sbin/bpftool",
+                        BPFTOOL,
                         "cgroup",
                         "detach",
                         self.__cgroup__,
@@ -185,24 +217,25 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                         str(fid),
                     ]
                 )
+            # The cgroup holds its own reference to the program, so the pin
+            # is only needed between loadall and attach. Leaving it behind
+            # leaks a program and a map per container.
+            shutil.rmtree(pin_dir, ignore_errors=True)
 
         except Exception as exc:
             logger.error(f"Failed to apply BPF for {self.__cgroup__}: {exc}")
-        finally:
-            if bpf is not None:
-                try:
-                    bpf.close()
-                except Exception as exc:
-                    logger.error(f"Failed to close BPF: {exc}")
-
-            if fd is not None:
-                try:
-                    os.close(fd)
-                except Exception as exc:
-                    logger.error(f"Failed to close file descriptor: {exc}")
+            # Unpin either way: an attached program is held by the cgroup,
+            # and this drops the half-loaded instance.
+            shutil.rmtree(pin_dir, ignore_errors=True)
+            if not attached:
+                logger.error(
+                    "Device sharing needs the pre-compiled BPF object "
+                    f"{BPF_OBJECT} and a kernel with BTF "
+                    "(CONFIG_DEBUG_INFO_BTF=y, stock Debian 11+)."
+                )
 
     def __get_existing_functions__(self):
-        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
+        cmd = [BPFTOOL, "cgroup", "list", self.__cgroup__, "--json"]
         data = subprocess.run(
             cmd, text=True, check=False, stdout=subprocess.PIPE
         ).stdout
@@ -214,10 +247,7 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         if isinstance(programs, list):
             for program in programs:
                 if isinstance(program, dict):
-                    if program.get("attach_type") in _attach_types:
+                    attach_type = program.get("attach_type")
+                    if attach_type in _attach_types and program.get("id") is not None:
                         result.append(int(program["id"]))
         return result
-
-    def expand_template(self):
-        template = Template(TEMPLATE)
-        return template.render(devices=self.devices)

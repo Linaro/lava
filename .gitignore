@@ -24,3 +24,7 @@ tmp*/
 versiontools-*egg
 .pytest_cache/
 lava_common/_version.py
+
+# BPF build artifacts
+src/bpf/vmlinux.h
+src/bpf/*.bpf.o

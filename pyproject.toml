@@ -62,7 +62,6 @@ optional-dependencies.dispatcher = [
   "setproctitle",
 ]
 optional-dependencies.dispatcher-host = [
-  "jinja2",
   "pyudev",
   "requests",
 ]
@@ -298,6 +297,9 @@ project-includes = [
   "lava_dispatcher/shell.py",
   "lava_dispatcher/utils/",
 ]
+# src/ exists for the pre-compiled BPF object; without this pyrefly
+# treats the repo as src-layout and resolves modules from src/.
+search-path = [ "." ]
 errors.missing-import = false  # guestfs requires libguestfs-dev (C headers) not available in pre-commit env
 check-unannotated-defs = true
 infer-return-types = "never"

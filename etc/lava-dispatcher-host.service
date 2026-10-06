@@ -3,6 +3,9 @@ Description=lava-dispatcher-host daemon
 
 [Service]
 ExecStart=/usr/bin/lava-dispatcher-host-server
+# Device sharing pins BPF programs and maps under /sys/fs/bpf, which systemd
+# mounts at boot. ProtectSystem does not cover /sys, so making /sys read-only
+# here would break device sharing.
 ProtectSystem=full
 ProtectKernelModules=true
 NoNewPrivileges=true

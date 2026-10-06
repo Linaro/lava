@@ -16,6 +16,15 @@ import setuptools.command.install
 import setuptools.command.install_scripts
 from setuptools import find_packages, setup
 
+# data_files ship the pre-compiled BPF object. Editable installs skip
+# data_files, and a real install with the object missing dies on a cryptic
+# "can't copy", so check for it here and name the command that builds it.
+BPF_OBJECT = "src/bpf/lava_device_filter.bpf.o"
+if not os.path.exists(BPF_OBJECT) and any(
+    arg in ("install", "bdist", "bdist_wheel") for arg in sys.argv
+):
+    raise SystemExit(f"{BPF_OBJECT} is missing; run 'make -C src/bpf' first")
+
 
 class install_and_change_permission(setuptools.command.install.install):
     """
@@ -124,6 +133,10 @@ DISPATCHER_HOST = {
             ],
         ),
         ("/etc/lava-dispatcher-host/", ["etc/lava-docker-worker"]),
+        (
+            "/usr/share/lava-dispatcher-host/bpf/",
+            ["src/bpf/lava_device_filter.bpf.o"],
+        ),
         (
             "/etc/logrotate.d/",
             [

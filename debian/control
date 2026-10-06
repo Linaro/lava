@@ -3,9 +3,12 @@ Section: net
 Maintainer: Debian Python Team <team+python@tracker.debian.org>
 Uploaders: Remi Duraffort <remi.duraffort@linaro.org>,
            Christopher Obbard <chris.obbard@oss.qualcomm.com>
-Build-Depends: debhelper-compat (= 12),
+Build-Depends: bpftool,
+               clang,
+               debhelper-compat (= 12),
                dh-python,
                dh-sequence-installsysusers,
+               libbpf-dev,
                libjs-bootstrap,
                libjs-jquery,
                libjs-jquery-flot,
@@ -78,23 +81,11 @@ Architecture: all
 Depends: lava-common (= ${binary:Version}),
          bpftool | linux-tools-generic,
          python3,
-         python3-jinja2,
          python3-requests,
          python3-pyudev,
          ${misc:Depends},
          ${python3:Depends}
-Recommends: docker.io,
-            linux-headers-amd64 |
-            linux-headers-arm64 |
-            linux-headers-armmp |
-            linux-headers-686-pae |
-            linux-headers-686 |
-            linux-headers-loong64 |
-            linux-headers-powerpc64le |
-            linux-headers-riscv64 |
-            linux-headers-s390x |
-            linux-headers-generic,
-            python3-bpfcc
+Recommends: docker.io
 Multi-Arch: foreign
 Suggests: udev
 Description: LAVA dispatcher host tools

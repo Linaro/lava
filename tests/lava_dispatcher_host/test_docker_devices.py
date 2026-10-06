@@ -2,26 +2,21 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
-import importlib
-import subprocess
-from pathlib import Path
+import fcntl
+from subprocess import CalledProcessError
 
 import pytest
 
-from lava_dispatcher_host.docker_devices import Device, DeviceFilter
-
-has_bcc = importlib.util.find_spec("bcc") is not None
-
-
-IN_KERNEL_HEADERS_PATH = Path("/sys/kernel/kheaders.tar.xz")
-
-
-def should_skip_bccpf_tests() -> bool:
-    # If kheaders module was loaded available bcc can use it
-    if IN_KERNEL_HEADERS_PATH.exists():
-        return False
-
-    return subprocess.call(["systemd-detect-virt", "--container", "--quiet"]) == 0
+from lava_dispatcher_host.docker_devices import (
+    ANY_MINOR,
+    BPF_MAP,
+    BPF_OBJECT,
+    BPF_PROGRAM,
+    BPFTOOL,
+    PIN_BASE,
+    Device,
+    DeviceFilter,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -39,19 +34,16 @@ def check_call(mocker):
     return mocker.patch("subprocess.check_call")
 
 
-@pytest.fixture
-def fd():
-    return 17
-
-
-@pytest.fixture
-def os_close(mocker):
-    return mocker.patch("os.close")
+@pytest.fixture(autouse=True)
+def pin_dirs(mocker):
+    # apply() creates pin directories under /sys/fs/bpf: never touch the
+    # real filesystem in unit tests.
+    return mocker.patch("os.makedirs")
 
 
 @pytest.fixture(autouse=True)
-def os_open(mocker, fd):
-    return mocker.patch("os.open", return_value=fd)
+def fs_writes(mocker):
+    return mocker.patch("shutil.rmtree")
 
 
 class TestDeviceFilterCGroupsV1:
@@ -137,6 +129,16 @@ class TestDeviceFilterCGroupsV2:
         assert f1.devices != f3.devices
         assert f2.devices == f3.devices
 
+    def test_save_load_wildcard_minor(self, tmp_path):
+        # Device(136) means any minor; load() would choke on a literal "None"
+        state = tmp_path / "state"
+        f1 = DeviceFilter("foobar", state)
+        f1.add(Device(136, None))
+        f1.save(state)
+        assert state.read_text().strip() == "136 *"
+        f2 = DeviceFilter("foobar", state)
+        assert Device(136, None) in f2.devices
+
     def test_get_existing_functions_device(self, run):
         run.return_value.stdout = """[
             {"id":93,"attach_type":"device","attach_flags":"","name":""},
@@ -158,15 +160,27 @@ class TestDeviceFilterCGroupsV2:
         assert DeviceFilter("foobar").__get_existing_functions__() == []
         run.return_value.stdout = "blah\n"
         assert DeviceFilter("foobar").__get_existing_functions__() == []
+        # an entry with no id is skipped: nothing to detach
+        run.return_value.stdout = '[{"attach_type": "device"}]'
+        assert DeviceFilter("foobar").__get_existing_functions__() == []
 
-    @pytest.mark.skipif(not has_bcc, reason="bcc not available")
-    @pytest.mark.skipif(
-        should_skip_bccpf_tests(),
-        reason="running in container or kheaders module not loaded on the host",
-    )
-    def test_apply(self, mocker, check_call, fd, os_close):
-        load_func = mocker.patch("bcc.BPF.load_func")
-        attach_func = mocker.patch("bcc.BPF.attach_func")
+    def test_apply_locks_the_container(
+        self, mocker, check_call, check_output, fs_writes, pin_dirs
+    ):
+        # A second apply would rmtree the first one's pins mid-flight,
+        # so apply() must hold an exclusive lock.
+        check_output.return_value = "deadbeefcafe1234567890\n"
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.__get_existing_functions__",
+            return_value=[],
+        )
+        flock = mocker.patch("lava_dispatcher_host.docker_devices.fcntl.flock")
+        f = DeviceFilter("foobar")
+        f.apply()
+        assert flock.call_args[0][1] == fcntl.LOCK_EX
+
+    def test_apply(self, mocker, check_call, check_output, fs_writes, pin_dirs):
+        check_output.return_value = "deadbeefcafe1234567890\n"
         mocker.patch(
             "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.__get_existing_functions__",
             return_value=[99],
@@ -174,25 +188,115 @@ class TestDeviceFilterCGroupsV2:
         f = DeviceFilter("foobar")
         f.add(Device(10, 232))
         f.apply()
-        load_func.assert_called()
-        attach_func.assert_called()
-        detach = check_call.call_args[0][0]
-        assert detach == [
-            "/usr/sbin/bpftool",
-            "cgroup",
-            "detach",
-            f.__cgroup__,
-            "device",
-            "id",
-            "99",
-        ]
-        os_close.assert_called_with(fd)
+        calls = [c[0][0] for c in check_call.call_args_list]
+        pin = f"{PIN_BASE}/{f.container_id[:12]}"
+        # bpftool mounts bpffs but does not create the pin directory, so
+        # apply() has to. Without it, loadall fails and no device is shared.
+        assert [c[0][0] for c in pin_dirs.call_args_list] == [f"{pin}/prog"]
+        assert [
+            BPFTOOL,
+            "prog",
+            "loadall",
+            BPF_OBJECT,
+            f"{pin}/prog",
+            "pinmaps",
+            f"{pin}/maps",
+        ] in calls
+        # key is struct.pack("@II", major, minor) in native byte order
+        assert [
+            BPFTOOL,
+            "map",
+            "update",
+            "pinned",
+            f"{pin}/maps/{BPF_MAP}",
+            "key",
+            "0x0a",
+            "0x00",
+            "0x00",
+            "0x00",
+            "0xe8",
+            "0x00",
+            "0x00",
+            "0x00",
+            "value",
+            "0x01",
+            "0x00",
+            "0x00",
+            "0x00",
+        ] in calls
+        attach_index = calls.index(
+            [
+                BPFTOOL,
+                "cgroup",
+                "attach",
+                f.__cgroup__,
+                "device",
+                "pinned",
+                f"{pin}/prog/{BPF_PROGRAM}",
+                "multi",
+            ]
+        )
+        # the old program is detached only after the new one is attached
+        detach_index = calls.index(
+            [BPFTOOL, "cgroup", "detach", f.__cgroup__, "device", "id", "99"]
+        )
+        assert attach_index < detach_index
+        # apply() unpins twice: once to clear an old pin dir, once after
+        # attach. The cgroup holds the program, so a leftover pin would
+        # leak it once the container is gone.
+        assert [c[0][0] for c in fs_writes.call_args_list] == [pin, pin]
 
-    def test_template(self):
-        device_filter = DeviceFilter("foobar")
-        device_filter.add(Device(11, 22))
-        program = device_filter.expand_template()
-        dev_null = "ctx->major == 1 && ctx->minor == 3"
-        assert dev_null in program
-        dev_something = "ctx->major == 11 && ctx->minor == 22"
-        assert dev_something in program
+    def test_apply_failure_keeps_the_old_program_attached(
+        self, mocker, check_call, check_output, fs_writes
+    ):
+        check_output.return_value = "deadbeefcafe1234567890\n"
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.__get_existing_functions__",
+            return_value=[99],
+        )
+        # loadall succeeds, the map update fails (e.g. the hash is full)
+        check_call.side_effect = [None, CalledProcessError(1, BPFTOOL)]
+        f = DeviceFilter("foobar")
+        f.add(Device(10, 232))
+        f.apply()
+        calls = [c[0][0] for c in check_call.call_args_list]
+        # nothing else ran, so the old program stays attached: a cgroup
+        # with no device program has unrestricted access
+        assert len(calls) == 2
+        assert not any("detach" in c for c in calls)
+        # the half-loaded instance was unpinned
+        pin = f"{PIN_BASE}/{f.container_id[:12]}"
+        assert [c[0][0] for c in fs_writes.call_args_list] == [pin, pin]
+
+    def test_apply_wildcard_minor(self, mocker, check_call, check_output):
+        check_output.return_value = "deadbeefcafe1234567890\n"
+        mocker.patch(
+            "lava_dispatcher_host.docker_devices.DeviceFilterCGroupsV2.__get_existing_functions__",
+            return_value=[],
+        )
+        f = DeviceFilter("foobar")
+        f.add(Device(136, None))
+        f.apply()
+        calls = [c[0][0] for c in check_call.call_args_list]
+        pin = f"{PIN_BASE}/{f.container_id[:12]}"
+        assert [
+            BPFTOOL,
+            "map",
+            "update",
+            "pinned",
+            f"{pin}/maps/{BPF_MAP}",
+            "key",
+            "0x88",
+            "0x00",
+            "0x00",
+            "0x00",
+            "0xff",
+            "0xff",
+            "0xff",
+            "0xff",
+            "value",
+            "0x01",
+            "0x00",
+            "0x00",
+            "0x00",
+        ] in calls

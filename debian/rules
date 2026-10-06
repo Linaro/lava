@@ -51,6 +51,7 @@ override_dh_python3:
 override_dh_auto_build:
 	make -C man/ man SPHINXBUILD="/usr/share/sphinx/scripts/python3/sphinx-build" SPHINXOPTS="-j auto -D today=\"$(BUILD_DATE)\""
 	mkdocs build -f doc/mkdocs.yml
+	make -C src/bpf
 
 override_dh_auto_install:
 	find . -path '*/__pycache__/*' -delete
@@ -102,3 +103,4 @@ execute_after_dh_auto_clean:
 	$(RM) common-requirements.txt dispatcher-requirements.txt server-requirements.txt
 	$(RM) -r doc/site/
 	[ ! -f man/Makefile ] || make -C man/ clean
+	make -C src/bpf clean
