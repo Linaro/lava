@@ -125,6 +125,10 @@ DISPATCHER_HOST = {
         ),
         ("/etc/lava-dispatcher-host/", ["etc/lava-docker-worker"]),
         (
+            "/etc/modules-load.d/",
+            ["etc/lava-dispatcher-host-modules.conf"],
+        ),
+        (
             "/etc/logrotate.d/",
             [
                 "etc/logrotate.d/lava-dispatcher-host-log",
