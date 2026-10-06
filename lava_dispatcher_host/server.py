@@ -16,7 +16,7 @@ from argparse import Namespace
 from lava_dispatcher_host import SOCKET
 from lava_dispatcher_host.utils import share_device_with_container
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 
 class ShareCommand:

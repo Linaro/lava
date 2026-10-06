@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 from lava_dispatcher_host import SOCKET
 
-logger = logging.getLogger()
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from typing import Any
