@@ -21,7 +21,7 @@ from lava_dispatcher_host.docker_devices import Device, DeviceFilter
 
 context = pyudev.Context()
 
-logger = logging.getLogger("lava-dispatcher-host")
+logger = logging.getLogger(__name__)
 logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
 
