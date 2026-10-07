@@ -13,9 +13,8 @@ import socket
 import struct
 from argparse import Namespace
 
+from lava_dispatcher_host import SOCKET
 from lava_dispatcher_host.utils import share_device_with_container
-
-SOCKET = "/run/lava-dispatcher-host.sock"
 
 logger = logging.getLogger()
 

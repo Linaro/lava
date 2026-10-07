@@ -9,7 +9,7 @@ import json
 import logging
 import socket
 
-SOCKET = "/run/lava-dispatcher-host.sock"
+from lava_dispatcher_host import SOCKET
 
 logger = logging.getLogger()
 
