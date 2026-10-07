@@ -106,9 +106,9 @@ class QueryTestJobTable(AllJobsTable):
         """
     {% if query %}
         <a href="javascript:document.getElementById('omit-job-{{record.id}}').submit();"
-            data-toggle="confirm"
+            data-bs-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this job from query?">
-            <span class="glyphicon glyphicon-remove"></span>
+            <span class="bi bi-x"></span>
         </a>
         <form hidden id="omit-job-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
@@ -140,9 +140,9 @@ class QueryTestCaseTable(SuiteTable):
         """
     {% if query %}
         <a href="javascript:document.getElementById('omit-case-{{record.id}}').submit();"
-            data-toggle="confirm"
+            data-bs-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test case from query?">
-            <span class="glyphicon glyphicon-remove"></span>
+            <span class="bi bi-x"></span>
         </a>
         <form hidden id="omit-case-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
@@ -199,9 +199,9 @@ class QueryTestSuiteTable(LavaTable):
         """
     {% if query %}
         <a href="javascript:document.getElementById('omit-suite-{{record.id}}').submit();"
-            data-toggle="confirm"
+            data-bs-toggle="confirm"
             data-title="Omitting results affects all charts which use this query. Are you sure you want to omit this test suite from query?">
-            <span class="glyphicon glyphicon-remove"></span>
+            <span class="bi bi-x"></span>
         </a>
         <form hidden id="omit-suite-{{record.id}}" action="{% url 'lava.results.query_omit_result' query.owner.username query.name record.id %}" method="post">{% csrf_token %}</form>
     {% endif %}
@@ -229,7 +229,7 @@ class QueryConditionsTable(LavaTable):
     value = tables.Column(verbose_name="Value")
     edit = tables.TemplateColumn(
         (
-            '<a class="glyphicon glyphicon-edit" aria-hidden="true" '
+            '<a class="bi bi-pencil" aria-hidden="true" '
             'href="javascript: void(0);" '
             "onclick=\"open_condition_modal('{{ query.name }}','{{ record.id }}',"
             "'{{ record.table.id }}','{{ record.field }}',"
@@ -239,7 +239,7 @@ class QueryConditionsTable(LavaTable):
     )
     remove = tables.TemplateColumn(
         (
-            '<a class="glyphicon glyphicon-remove" aria-hidden="true" '
+            '<a class="bi bi-x" aria-hidden="true" '
             'href="javascript:document.getElementById('
             "'query-remove-condition-{{record.id}}').submit();\"></a>"
             '<form hidden id="query-remove-condition-{{record.id}}"'

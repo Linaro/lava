@@ -4,20 +4,20 @@ $(document).ready(function () {
     add_option_row = function() {
         $("#options_container").append(
             "<div class='row' id='container_" + options_count + "'>" +
-                "<div class='col-xs-4'>" +
+                "<div class='col-4'>" +
                 "<select id='table_" + options_count +
                 "' name='table' >" +
                 "</select></div>" +
-                "<div class='col-xs-4'>" +
+                "<div class='col-4'>" +
                 "<div class='typeahead__container'>" +
                 "<div class='typeahead__field'>" +
                 "<div class='typeahead__query'><input type='search'" +
                 " placeholder='Search' autocomplete='off' id='field_" +
                 options_count + "' name='field' />" +
                 "</div></div></div></div>" +
-                "<div class='col-xs-4'>" +
-                "<a class='glyphicon glyphicon-remove' href='#' id='remove_" +
-                options_count + "' class='btn btn-danger'>" +
+                "<div class='col-4'>" +
+                "<a class='bi bi-x btn btn-danger' href='#' id='remove_" +
+                options_count + "'>" +
                 "</a>" +
                 "</div></div>");
 

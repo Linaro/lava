@@ -59,7 +59,7 @@ table_changed = function() {
 
     $("#id_tooltip_available_fields").remove();
     if ($("#id_table option:selected").text() != "metadata") {
-        $("[for='id_field']").next().after('<span id="id_tooltip_available_fields" class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="test">?</span>').after("&nbsp;");
+        $("[for='id_field']").next().after('<span id="id_tooltip_available_fields" class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="test">?</span>').after("&nbsp;");
         $("#id_tooltip_available_fields").attr("title", "Available fields: " + Object.keys(condition_choices[$("#id_table").val()]["fields"]).join(", "));
     }
 }

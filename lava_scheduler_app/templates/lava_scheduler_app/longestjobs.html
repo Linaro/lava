@@ -5,8 +5,8 @@
 
 {% block content %}
 <h2>Longest Running Jobs <a
-class="btn btn-xs btn-info" href="{% url 'lava.scheduler.running' %}"
-title="Running jobs and active devices"><span class="glyphicon glyphicon-time"></span> running jobs and active devices</a></h2>
+class="btn btn-sm btn-info" href="{% url 'lava.scheduler.running' %}"
+title="Running jobs and active devices"><span class="bi bi-clock-fill"></span> running jobs and active devices</a></h2>
 
 {% render_table longestjobs_table %}
 

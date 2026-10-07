@@ -233,9 +233,9 @@ $(document).ready(function () {
 
 	    if (this.chart_data.basic.has_omitted) {
                 $("#headline_container_" + this.chart_id).append(
-                    '<div class="alert alert-info">' +
-                        '<button type="button" class="close" ' +
-                        'data-dismiss="alert">&times;</button>' +
+                    '<div class="alert alert-info alert-dismissible">' +
+                        '<button type="button" class="btn-close" ' +
+                        'data-bs-dismiss="alert" aria-label="Close"></button>' +
                         '<strong>This chart has some of the results omitted.' +
                         '</strong> ' +
                         'Check the underlying <strong><a href="' + query_link +
@@ -333,9 +333,9 @@ $(document).ready(function () {
 	    "class", "modal-dialog data-table-modal");
 	$("#table_content_" + this.chart_id).attr("class", "modal-content");
 	$("#table_content_" + this.chart_id).prepend(
-	    '<div class="modal-header">Results Table<button type="button"' +
-		'class="close" data-dismiss="modal"' +
-		'aria-hidden="true">&times;</button></div>');
+	    '<div class="modal-header">Results Table<button type="button" ' +
+		'class="btn-close" data-bs-dismiss="modal" ' +
+		'aria-label="Close"></button></div>');
 	$("#data_table_inner_" + this.chart_id).attr("class", "modal-body");
     }
 
@@ -1202,8 +1202,8 @@ $(document).ready(function () {
 
     setup_legend_tooltips = function(chart) {
         $("#legend_container_" + chart.chart_id + " td:last-child").each(function(index) {
-            $(this).attr("data-toggle", "tooltip");
-            $(this).attr("data-placement", "right");
+            $(this).attr("data-bs-toggle", "tooltip");
+            $(this).attr("data-bs-placement", "right");
             var title =
                 "Min: " + chart.legend_items[$(this).text()].min +
                 ", Max: " + chart.legend_items[$(this).text()].max +

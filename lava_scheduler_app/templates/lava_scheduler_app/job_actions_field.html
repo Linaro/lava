@@ -1,21 +1,21 @@
 {% load utils %}
 
 <div class="text-nowrap">
-  <a class="btn btn-xs btn-success {% if not record.results_link %}disabled{% endif %}"
+  <a class="btn btn-sm btn-success {% if not record.results_link %}disabled{% endif %}"
      title="{% if record.results_link %}View job results{% elif not record.results_link %}Disabled for V1 jobs{% endif %}"
      {% if not record.results_link %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
      href="{{ record.results_link }}"
      {% endif %}>
-    <span class="glyphicon glyphicon-signal"></span>
+    <span class="bi bi-reception-4"></span>
   </a>
-    <a class="btn btn-xs btn-info" title="View job details"
+    <a class="btn btn-sm btn-info" title="View job details"
      href="{{ record.get_absolute_url }}">
-    <span class="glyphicon glyphicon-eye-open"></span>
+    <span class="bi bi-eye-fill"></span>
   </a>
-    <a class="btn btn-xs btn-primary" title="View job definition"
+    <a class="btn btn-sm btn-primary" title="View job definition"
      href="{{ record.get_definition_url }}">
-    <span class="glyphicon glyphicon-list-alt"></span>
+    <span class="bi bi-card-list"></span>
   </a>
 </div>

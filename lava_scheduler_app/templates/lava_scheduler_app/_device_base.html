@@ -6,7 +6,7 @@
 
 {% if template_mismatch and device.health != device.HEALTH_RETIRED %}
 <div class="alert alert-danger alert-dismissible">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>Configuration Error: missing or invalid template.</strong>
   <p>Jobs requesting this device type ({{ device.device_type }}) will not be able to start until
      a template is available on the master.</p>
@@ -15,14 +15,14 @@
 
 {% if not device.worker_host and device.health != device.HEALTH_RETIRED %}
 <div class="alert alert-danger alert-dismissible">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>No worker is associated with this device</strong>: no jobs can be scheduled, started or canceled.
 </div>
 {% endif %}
 
 {% if user.is_staff and not device.get_health_check and not device.device_type.disable_health_check and device.health != device.HEALTH_RETIRED %}
-  <div class="alert alert-warning alert-dismissable">
-    <button type="button" class="close" data-dismiss="alert">&times;</button>
+  <div class="alert alert-warning alert-dismissible">
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     <strong>The device has no
       <a href="{{ STATIC_URL }}docs/v2/glossary.html#term-health-check">health check job</a></strong>
     Consider adding a <a href="{{ STATIC_URL }}docs/v2/healthchecks.html#health-checks">health check definition</a>.
@@ -38,21 +38,21 @@
       <dd>{{ device.hostname }}
           {% if user.is_superuser %}<a
           href="{% url 'admin:lava_scheduler_app_device_change' device.hostname %}" title="admin this device"><span
-          class="glyphicon glyphicon-wrench"></span></a>
+          class="bi bi-tools"></span></a>
           {% endif %}
-          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
+          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="bi bi-bar-chart-fill"></span></a>
       </dd>
       <dt>Device-type</dt>
-      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="bi bi-bar-chart-fill"></span></a></dd>
       <dt>Worker</dt>
       {% if device.worker_host %}
       <dd>
       {% if device.worker_host.state == device.worker_host.STATE_ONLINE and device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
       <a href="{{ device.worker_host.get_absolute_url }}">{{ device.worker_host.hostname }}</a>
       {% elif device.worker_host.health == device.worker_host.HEALTH_ACTIVE %}
-      <a href="{{ device.worker_host.get_absolute_url }}" class="text-danger">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-fire"></span></a>
+      <a href="{{ device.worker_host.get_absolute_url }}" class="text-danger">{{ device.worker_host.hostname }} <span class="bi bi-fire"></span></a>
       {% else %}
-      <a href="{{ device.worker_host.get_absolute_url }}" class="text-warning">{{ device.worker_host.hostname }} <span class="glyphicon glyphicon-minus-sign"></span></a>
+      <a href="{{ device.worker_host.get_absolute_url }}" class="text-warning">{{ device.worker_host.hostname }} <span class="bi bi-dash-circle-fill"></span></a>
       {% endif %}
       </dd>
       {% else %}
@@ -63,8 +63,8 @@
       <dd>
       <details{% if device.tags.all|length <= 5 %} open{% endif %}>
         <summary>
-          <a class="btn btn-xs btn-success">
-            <span class="glyphicon glyphicon-eye-open"></span>
+          <a class="btn btn-sm btn-success">
+            <span class="bi bi-eye"></span>
           </a>
           {{ device.tags.all|length }} tag{{ device.tags.all|length|pluralize }}
         </summary>
@@ -89,30 +89,30 @@
       <dt>Health</dt>
       <dd>
         {% if device.health == device.HEALTH_GOOD %}
-        <span class="label label-success">
+        <span class="badge bg-success">
         {% elif device.health == device.HEALTH_UNKNOWN or device.health == device.HEALTH_LOOPING %}
-        <span class="label label-info">
+        <span class="badge bg-info">
         {% elif device.health == device.HEALTH_MAINTENANCE %}
-        <span class="label label-warning">
+        <span class="badge bg-warning">
         {% else %}
-        <span class="label label-danger">
+        <span class="badge bg-danger">
         {% endif %}
           {{ device.get_health_display }}
         </span>
         {% if can_change %}
-        &nbsp;<a href="#healthModal" data-toggle="modal" data-target="#healthModal"><span class="glyphicon glyphicon-pencil"></span></a>
+        &nbsp;<a href="#healthModal" data-bs-toggle="modal" data-bs-target="#healthModal"><span class="bi bi-pencil-fill"></span></a>
         <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="healthModalLabel">Device health</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                 <form method="post" action="{% url 'lava.scheduler.device.health' device.pk %}">
                   {% csrf_token %}
-                  <div class="form-group">
-                    <label for="health" class="control-label">Health:</label>
+                  <div class="mb-3">
+                    <label for="health" class="form-label">Health:</label>
                     <select name="health" class="form-control" id="health">
                       {% if device.health != device.HEALTH_UNKNOWN %}<option>Unknown</option>{% endif %}
                       {% if device.health != device.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
@@ -122,11 +122,11 @@
                       <option>{{ device.get_health_display }}</option>
                     </select>
                   </div>
-                  <div class="form-group">
-                    <label for="reason" class="control-label">Reason:</label>
+                  <div class="mb-3">
+                    <label for="reason" class="form-label">Reason:</label>
                     <textarea name="reason" class="form-control" id="reason"></textarea>
                   </div>
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                   <button class="btn btn-primary" type="submit">Set health</button>
                 </form>
               </div>
@@ -138,7 +138,7 @@
       <dt>Health reason</dt>
       <dd class="overflow-wrap">{{ device_health_reason|default:"..."|truncatewords_html:200|linebreaksbr }}</dd>
       <dt>Device dictionary</dt>
-      <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="glyphicon glyphicon-eye-open"></span></a></dd>
+      <dd><a href="{% url 'lava.scheduler.device.dictionary' device.pk %}"><span class="bi bi-eye-fill"></span></a></dd>
     </dl>
   </div>
   <div class="col-md-4">

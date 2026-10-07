@@ -16,10 +16,10 @@ from lava_server.lavatable import LavaTable
 def results_pklink(record):
     job_id = record.pk
     complete = format_html(
-        '<a class="btn btn-xs btn-success pull-right" title="test job results" href="{}">',
+        '<a class="btn btn-sm btn-success float-end" title="test job results" href="{}">',
         record.results_link,
     )
-    button = mark_safe('<span class="glyphicon glyphicon-signal"></span></a>')
+    button = mark_safe('<span class="bi bi-signal"></span></a>')
     return format_html(
         '<a href="{}" title="test job summary">{}</a>&nbsp;{}{}',
         record.get_absolute_url(),
@@ -88,13 +88,13 @@ class SuiteTable(LavaTable):
     def render_result(self, record):
         code = record.result_code
         if code == "pass":
-            icon = "ok"
+            icon = "check-circle-fill"
         elif code == "fail":
-            icon = "remove"
+            icon = "x"
         else:
-            icon = "minus"
+            icon = "dash"
         return format_html(
-            '<a href="{}"><span class="glyphicon glyphicon-{}"></span> {}</a>',
+            '<a href="{}"><span class="bi bi-{}"></span> {}</a>',
             record.get_absolute_url(),
             icon,
             code,

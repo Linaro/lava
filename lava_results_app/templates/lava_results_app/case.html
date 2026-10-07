@@ -4,13 +4,13 @@
 {% load utils %}
 {% block styles %}
   <style>
-    .glyphicon-remove {
+    .bi-x {
       color: red;
     }
-    .glyphicon-minus {
+    .bi-dash {
       color: blue;
     }
-    .glyphicon-ok {
+    .bi-check-circle-fill {
       color: green;
     }
   </style>
@@ -23,9 +23,9 @@
     <h2>Test Set: {{ testset.name }}</h2>
     {% for testcase in testset.test_cases.all %}
         <dl class="dl-horizontal">
-          <dt>Test case export :  <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button>
+          <dt>Test case export :  <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button>
           </dt>
-          <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+          <dd><a class="btn btn-sm btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="bi bi-download"></span> YAML</a></dd>
         </dl>
         <dl class="dl-horizontal">
         <dt>Test Case:</dt>
@@ -51,25 +51,25 @@
      <h2>Test Set: <a href="{{ testcase.test_set.get_absolute_url }}">{{ testcase.test_set.name }}</a></h2>
   {% endif %}
   {% if testcase.result == 1 %}
-    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-remove"></span>&nbsp;fail</h3>
+    <h3>{{ testcase.name }} <span class="bi bi-x"></span>&nbsp;fail</h3>
       <h4><a
       title="view test job output for this failed test"
       href="{{ job.get_absolute_url }}#results_{{ testcase.start_log_line }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% elif testcase.result == 2 %}
-    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;skipped</h3>
+    <h3>{{ testcase.name }} <span class="bi bi-dash"></span>&nbsp;skipped</h3>
       <h4><a
       title="view test job output for this test which was skipped"
       href="{{ job.get_absolute_url }}#results_{{ testcase.start_log_line }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% elif testcase.result == 3 %}
-    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-minus"></span>&nbsp;unknown</h3>
+    <h3>{{ testcase.name }} <span class="bi bi-dash"></span>&nbsp;unknown</h3>
       <h4><a
       title="view test job output for this test which gave an unknown result"
       href="{{ job.get_absolute_url }}#results_{{ testcase.start_log_line }}">
       Log entry in job {{ job.id }} for test case {{ testcase.id }}</a></h4>
   {% else %}
-    <h3>{{ testcase.name }} <span class="glyphicon glyphicon-ok"></span>&nbsp;pass</h3>
+    <h3>{{ testcase.name }} <span class="bi bi-check-circle-fill"></span>&nbsp;pass</h3>
       <h4><a
       title="view test job output for this passed test"
       href="{{ job.get_absolute_url }}#results_{{ testcase.start_log_line }}">
@@ -124,8 +124,8 @@
   {% endif %}
 
   <ul class="list-unstyled">
-    <li>Test case export <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button> :
-      <a class="btn btn-xs btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></li>
+    <li>Test case export <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="Download link can be used with tokens:?user=user.name&amp;token=tokenstring">?</button> :
+      <a class="btn btn-sm btn-info" href="{% url 'lava.results.testcase_yaml' testcase.id %}" title="Download as YAML"><span class="bi bi-download"></span> YAML</a></li>
   </ul>
 {% endfor %}
 {% endblock %}

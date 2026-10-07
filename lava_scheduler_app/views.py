@@ -2046,7 +2046,7 @@ def job_status(request, pk):
         url = job.actual_device.get_absolute_url()
         host = job.actual_device.hostname
         html = f'<a href="{url}">{host}</a> '
-        html += '<a href="%s"><span class="glyphicon glyphicon-stats"></span></a>' % (
+        html += '<a href="%s"><span class="bi bi-graph-up"></span></a>' % (
             reverse("lava.scheduler.device_report", args=[job.actual_device.pk])
         )
         response_dict["actual_device"] = html
@@ -2058,14 +2058,15 @@ def job_status(request, pk):
     if job.state != job.STATE_FINISHED:
         response_dict["job_state"] = job.get_state_display()
     elif job.health == job.HEALTH_COMPLETE:
-        response_dict["job_state"] = '<span class="label label-success">Complete</span>'
+        response_dict["job_state"] = '<span class="badge bg-success">Complete</span>'
     elif job.health == job.HEALTH_INCOMPLETE:
         response_dict["job_state"] = (
-            '<span class="label label-danger">%s</span>' % job.get_health_display()
+            '<span class="badge bg-danger">%s</span>' % job.get_health_display()
         )
     else:
         response_dict["job_state"] = (
-            '<span class="label label-warning">%s</span>' % job.get_health_display()
+            '<span class="badge bg-warning text-dark">%s</span>'
+            % job.get_health_display()
         )
 
     if job.is_multinode:

@@ -14,10 +14,10 @@
 
 {% spaceless %}
 <h1>Query {{ query.name }}
-  <small><a id="query_results" class="btn btn-xs btn-success {% if not query.is_live and not query.has_view %}disabled{% endif %}" title="{% if query.has_view or query.is_live %}View query results{% else %}Results not available, please run the query{% endif %}"
+  <small><a id="query_results" class="btn btn-sm btn-success {% if not query.is_live and not query.has_view %}disabled{% endif %}" title="{% if query.has_view or query.is_live %}View query results{% else %}Results not available, please run the query{% endif %}"
             {% if not query.is_live and not query.has_view %}onclick="javascript:void(0)" style="pointer-events: auto;"
             {% else %}href="{{ query.get_absolute_url }}"
-            {% endif %}><span class="glyphicon glyphicon-signal"></span> Results</a></small></h1>
+            {% endif %}><span class="bi bi-reception-4"></span> Results</a></small></h1>
 {% endspaceless %}
 
 <div class="row">
@@ -57,7 +57,7 @@
     {% if query.is_published and is_accessible %}
     <dt>Query Group label</dt>
     <dd>
-      <a href="#" data-toggle="modal" data-target="#query_group_modal">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#query_group_modal">
 	<div style="float: left;">{{ query.query_group|default:"Click here to select"}}</div>
       </a>
 
@@ -71,23 +71,23 @@
       </div>
       {% endif %}
       &nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
 
     </dd>
     <dt>Group edit permission</dt>
     <dd>
-      <a href="#" data-toggle="modal" data-target="#group_permission_modal">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#group_permission_modal">
 	<div style="float: left;">{{ query.group|default:"Click here to select"}}</div>
       </a>
       &nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="A group of users already listed on the Profile page.">?</button>
       <div style="clear: both;"></div>
     </dd>
     {% endif %}
     <dt>Maintainer</dt>
     <dd>
       {{ query.owner }}&nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the query.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="User who created the query.">?</button>
     </dd>
 
     <dt>Description</dt>
@@ -105,25 +105,25 @@
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
            {% else %}href="{% url 'lava.results.query_edit' query.owner.username query.name %}"
            {% endif %}>
-          <span class="glyphicon glyphicon-pencil"></span> Edit</a>
+          <span class="bi bi-pencil-fill"></span> Edit</a>
       </div>
       <div class="btn-group">
         <a class="btn btn-danger {% if not is_accessible %}disabled{% endif %}"
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
-           {% else %}href="javascript:document.getElementById('delete-query-{{query.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+           {% else %}href="javascript:document.getElementById('delete-query-{{query.id}}').submit();" data-bs-toggle="confirm" data-title="Are you sure you want to delete this Query?"
            {% endif %}>
-          <span class="glyphicon glyphicon-trash"></span> Delete</a>
+          <span class="bi bi-trash-fill"></span> Delete</a>
            {% if is_accessible %}<form hidden id="delete-query-{{query.id}}" action="{% url 'lava.results.query_delete' query.owner.username query.name %}" method="post">{% csrf_token %}</form>{% endif %}
       </div>
       <div class="btn-group">
-        <a href="{% url 'lava.results.query_copy' query.owner.username query.name %}?conditions={{query_conditions}}" class="btn btn-success"><span class="glyphicon glyphicon-save"></span> Copy</a>
+        <a href="{% url 'lava.results.query_copy' query.owner.username query.name %}?conditions={{query_conditions}}" class="btn btn-success"><span class="bi bi-save-fill"></span> Copy</a>
       </div>
       <div class="btn-group">
-        <a class="btn btn-default {% if not is_accessible %}disabled{% endif %}"
+        <a class="btn btn-secondary {% if not is_accessible %}disabled{% endif %}"
            {% if not is_accessible %}onclick="javascript:void(0)" style="pointer-events: auto;" title="Insufficient permissions"
            {% else %}href="javascript:document.getElementById('toggle-query-published-{{query.id}}').submit();"
            {% endif %}>
-          <span class="glyphicon glyphicon-share"></span>
+          <span class="bi bi-share-fill"></span>
 	  {% if query.is_published %}
 	  Unpublish
 	  {% else %}
@@ -143,7 +143,7 @@
            {% elif not query_conditions %}
            title="No conditions present. Please add some and try again."
            {% endif %}>
-          <span class="glyphicon glyphicon-refresh"></span> Run query</a>
+          <span class="bi bi-arrow-clockwise"></span> Run query</a>
       </div>
     </div>
 
@@ -170,8 +170,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Query group update</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form class="well" id="query_group_form" method="post" action="{% url 'query_add_group' username=query.owner.username name=query.name %}">
         <div class="modal-body">
@@ -190,7 +190,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
       </form>
@@ -203,8 +203,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Group permission update</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form class="well" id="group_permission_form" method="post" action="{% url 'query_select_group' username=query.owner.username name=query.name %}">
         <div class="modal-body">
@@ -223,7 +223,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
       </form>
@@ -236,8 +236,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Add condition</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
 	<div id="condition_errors" class="errorlist" style="color: red;"></div>
@@ -250,7 +250,7 @@
 	</form>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button id="save_condition" type="button" class="btn btn-primary">Save</button>
       </div>
     </div>

@@ -25,52 +25,52 @@
     <ul class="nav nav-pills nav-stacked">
       <li>
         <a href="{% url 'lava.scheduler.online_devices' %}">
-          <span class="badge pull-right alert-{% if num_online == num_not_retired %}success{% elif not num_online == 0 %}warning{% else %}danger{% endif %}">
+          <span class="badge float-end {% if num_online == num_not_retired %}bg-success-subtle text-success-emphasis{% elif not num_online == 0 %}bg-warning-subtle text-warning-emphasis{% else %}bg-danger-subtle text-danger-emphasis{% endif %}">
             {{ num_online }} / {{ num_not_retired }}</span>
           Online devices
         </a>
       </li>
       <li>
         <a href="{% url 'lava.scheduler.passing_health_checks' %}">
-          <span class="badge pull-right alert-{% if hc_completed == hc_total %}success{% elif not hc_completed == 0 %}warning{% else %}danger{% endif %}">
+          <span class="badge float-end {% if hc_completed == hc_total %}bg-success-subtle text-success-emphasis{% elif not hc_completed == 0 %}bg-warning-subtle text-warning-emphasis{% else %}bg-danger-subtle text-danger-emphasis{% endif %}">
             {{ hc_completed }} / {{ hc_total }}</span>Passing health checks
         </a>
       </li>
       <li>
           <a href="{% url 'lava.scheduler.running' %}">
-          <span class="badge pull-right alert-{% if num_jobs_running <= num_devices_running %}success{% else %}warning{% endif %}">
+          <span class="badge float-end {% if num_jobs_running <= num_devices_running %}bg-success-subtle text-success-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %}">
               {{ num_jobs_running }} / {{ num_devices_running }}
           </span>Running test jobs
           </a>
       </li>
       <li><a href="{% url 'lava.scheduler.reports' %}"><span
-      class="glyphicon glyphicon-stats pull-right"></span> Reports</a></li>
+      class="bi bi-bar-chart-fill float-end"></span> Reports</a></li>
     </ul>
   </div>
   <div class="col-md-4">
     <h4 class="modal-header">Devices</h4>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="{% url 'lava.scheduler.alldevices' %}"><span
-      class="glyphicon glyphicon-phone pull-right grey"></span> All devices</a></li>
+      class="bi bi-phone-fill float-end grey"></span> All devices</a></li>
       <li><a href="{% url 'lava.scheduler.active_devices' %}"><span
-      class="glyphicon glyphicon-phone pull-right green"></span> Active Devices</a></li>
+      class="bi bi-phone-fill float-end green"></span> Active Devices</a></li>
       <li><a href="{% url 'lava.scheduler.labhealth' %}"><span
-      class="glyphicon glyphicon-heart pull-right"></span> Devices Health</a></li>
+      class="bi bi-heart-fill float-end"></span> Devices Health</a></li>
       <li><a href="{% url 'lava.scheduler.maintenance_devices' %}"><span
-      class="glyphicon glyphicon-wrench pull-right"></span> Maintenance Devices</a></li>
+      class="bi bi-wrench float-end"></span> Maintenance Devices</a></li>
     </ul>
   </div>
   <div class="col-md-4">
     <h4 class="modal-header">TestJobs</h4>
     <ul class="nav nav-pills nav-stacked">
     <li><a href="{% url 'lava.scheduler.job.list' %}"><span
-    class="glyphicon glyphicon-asterisk pull-right grey"></span>All Jobs</a></li>
+    class="bi bi-asterisk float-end grey"></span>All Jobs</a></li>
     <li><a href="{% url 'lava.scheduler.queue' %}"><span
-    class="glyphicon glyphicon-pause pull-right grey"></span>Queued Jobs</a></li>
+    class="bi bi-pause-fill float-end grey"></span>Queued Jobs</a></li>
     <li><a href="{% url 'lava.scheduler.job.active' %}"><span
-    class="glyphicon glyphicon-play pull-right grey"></span>Active Jobs</a></li>
+    class="bi bi-play-fill float-end grey"></span>Active Jobs</a></li>
     <li><a href="{% url 'lava.scheduler.job.errors' %}"><span
-    class="glyphicon glyphicon-flag pull-right grey"></span>Recent Job Errors</a></li>
+    class="bi bi-flag-fill float-end grey"></span>Recent Job Errors</a></li>
     </ul>
   </div>
 </div>

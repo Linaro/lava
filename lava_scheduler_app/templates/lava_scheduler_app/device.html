@@ -7,10 +7,10 @@
 <ul class="pager">
   <li class="previous{% if not previous_device %} disabled{% endif %}">
     <a href="{% if previous_device %}{% url 'lava.scheduler.device.detail' previous_device %}{% else %}#{% endif %}"><span
-            class="glyphicon glyphicon-backward"></span> {% trans "Previous device" %}</a>
+            class="bi bi-rewind-fill"></span> {% trans "Previous device" %}</a>
   </li>
   <li class="next{% if not next_device %} disabled{% endif %}">
-    <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="glyphicon glyphicon-forward"></span></a>
+    <a href="{% if next_device %}{% url 'lava.scheduler.device.detail' next_device %}{% else %}#{% endif %}">{% trans "Next Device" %} <span class="bi bi-fast-forward-fill"></span></a>
   </li>
 </ul>
 {% endblock %}

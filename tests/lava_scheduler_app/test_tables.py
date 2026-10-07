@@ -191,7 +191,7 @@ class TestDeviceHealthTooltip(TestCase):
             if label:
                 self.assertIn(label, result, f"{health}")
             if has_tooltip:
-                self.assertIn('data-toggle="tooltip"', result, f"{health}")
+                self.assertIn('data-bs-toggle="tooltip"', result, f"{health}")
             else:
                 self.assertNotIn("data-toggle", result, f"{health}")
 
@@ -199,7 +199,7 @@ class TestDeviceHealthTooltip(TestCase):
         d = self._device(Device.HEALTH_BAD)
         d.latest_health_reason = '<script>alert("xss")</script> Bad boot'
         result = self._render(d)
-        self.assertIn('data-toggle="tooltip"', result)
+        self.assertIn('data-bs-toggle="tooltip"', result)
         self.assertNotIn("<script>", result)
 
     def test_no_annotation_no_tooltip(self):

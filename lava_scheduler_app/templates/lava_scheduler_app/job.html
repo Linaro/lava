@@ -128,7 +128,7 @@
 {% block content %}
 {% if validation_errors %}
 <div class="alert alert-warning alert-dismissible">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>Invalid job definition:</strong>
   <p>{{ validation_errors }}</p>
 </div>
@@ -141,7 +141,7 @@
       <dd>{{ job.description|default:"<i>not set</i>" }}</dd>
       <dt>Device-type</dt>
 {% if job.requested_device_type %}
-      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dd><a href="{{ job.requested_device_type.get_absolute_url }}">{{ job.requested_device_type }}</a> <a href="{% url 'lava.scheduler.device_type_report' job.requested_device_type %}"><span class="bi bi-bar-chart-fill"></span></a></dd>
 {% else %}
       <dd>...</dd>
 {% endif %}
@@ -174,17 +174,17 @@
       {% if job.state != job.STATE_FINISHED %}
       <dd><span id="jobstatus">{{ job.get_state_display }}</span>
       {% elif job.health == job.HEALTH_UNKNOWN %}
-      <dd><span class="label label-default">{{ job.get_health_display }}</span>
+      <dd><span class="badge bg-secondary">{{ job.get_health_display }}</span>
       {% elif job.health == job.HEALTH_COMPLETE %}
-      <dd><span class="label label-success">{{ job.get_health_display }}</span>
+      <dd><span class="badge bg-success">{{ job.get_health_display }}</span>
       {% elif job.health == job.HEALTH_INCOMPLETE %}
-      <dd><span class="label label-danger">{{ job.get_health_display }}</span>
+      <dd><span class="badge bg-danger">{{ job.get_health_display }}</span>
       {% else %}
-      <dd><span class="label label-warning">{{ job.get_health_display }}</span>
+      <dd><span class="badge bg-warning">{{ job.get_health_display }}</span>
       {% endif %}
       {% if job.is_multinode %}
         <div class="btn-group">
-          <button type="button" class="btn btn-xs btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">sub jobs <span class="caret"></span></button>
+          <button type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">sub jobs </button>
           <ul class="dropdown-menu">
             {% for subjob in job.sub_jobs_list %}
             {% if subjob.id == job.id %}
@@ -200,7 +200,7 @@
       <dt>Device</dt>
       {% if job.actual_device %}
       <dd id="actual_device"><a href="{{ job.actual_device.get_absolute_url }}">{{ job.actual_device.hostname }}</a> <a
-      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      href="{% url 'lava.scheduler.device_report' job.actual_device.pk %}"><span class="bi bi-bar-chart-fill"></span></a></dd>
       {% else %}
       <dd id="actual_device">...</dd>
       {% endif %}
@@ -214,7 +214,7 @@
       {% endif %}
       {% if job.results_link %}
       <dt>Results</dt>
-      <dd><a href="{{ job.results_link }}" class="btn btn-success btn-xs">&nbsp;<span class="glyphicon glyphicon-signal"></span>&nbsp;</a></dd>
+      <dd><a href="{{ job.results_link }}" class="btn btn-success btn-sm">&nbsp;<span class="bi bi-reception-4"></span>&nbsp;</a></dd>
       {% endif %}
     </dl>
   </div>
@@ -231,17 +231,17 @@
 </div>
 {% endif %}
 
-<div id="failure_block" {% if job.failure_comment and job.health != job.HEALTH_COMPLETE %}class="collapse in"{% else %}class="collapse"{% endif %}">
+<div id="failure_block" {% if job.failure_comment and job.health != job.HEALTH_COMPLETE %}class="collapse show"{% else %}class="collapse"{% endif %}>
   <pre class="alert alert-danger failure_comment"><strong>Job alert: </strong>{{ job.failure_comment }}</pre>
 </div>
 
 <div class="alert alert-danger" id="size-warning" {% if not size_warning %}style="display: none;"{% endif %}>
 <p><strong>This log file is too large to view</strong>, (over {{ size_limit|filesizeformat }}).
     It can only be downloaded:
-<a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></p>
+<a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="bi bi-download"></span> Plain log</a></p>
 </div>
-<div id="actions-table" class="hidden-xs hidden-sm hidden-md actions-table-fixed">
-  <h4>Pipeline <span id="actions-table-arrow" class="glyphicon glyphicon-arrow-up" aria-hidden="true"></span></h4>
+<div id="actions-table" class="d-none d-lg-block actions-table-fixed">
+  <h4>Pipeline <span id="actions-table-arrow" class="bi bi-arrow-up" aria-hidden="true"></span></h4>
   <div id="actions-list-div">
     <ul class="list-unstyled" id="actions-list" style="display: none;">
     </ul>
@@ -249,28 +249,36 @@
 </div>
 
 <ul class="nav nav-tabs">
-  <li class="active"><a href="#Log" data-toggle="tab">Summary</a></li>
-  <li><a href="#Timing" id="TimingButton" data-toggle="tab">Timing</a></li>
-  <li class="pull-right"><a href="#bottom">End of page <span class="glyphicon glyphicon-chevron-down"></span></a></li>
-  <li class="pull-right" id="alert-link" {% if not job.failure_comment or job.health != job.HEALTH_COMPLETE %}style="display:none"{% endif %}><a href="#failure_block" data-toggle="collapse" aria-expanded="false" aria-controls="failure_block">Show alert <span class="glyphicon glyphicon-chevron-up"></span></a></li>
+  <li><a class="active" href="#Log" data-bs-toggle="tab">Summary</a></li>
+  <li><a href="#Timing" id="TimingButton" data-bs-toggle="tab">Timing</a></li>
+  <li class="float-end"><a href="#bottom">End of page <span class="bi bi-chevron-down"></span></a></li>
+  <li class="float-end" id="alert-link" {% if not job.failure_comment or job.health != job.HEALTH_COMPLETE %}style="display:none"{% endif %}><a href="#failure_block" data-bs-toggle="collapse" aria-expanded="false" aria-controls="failure_block">Show alert <span class="bi bi-chevron-up"></span></a></li>
 </ul>
 
 <div class="tab-content">
   <div class="tab-pane active" id="Log">
 {% if not size_warning %}
-    <div class="btn-group" data-toggle="buttons" id="logbuttons">
-      <label class="btn btn-default" id="debug_label" for="debug"><input type="checkbox" id="debug" autocomplete="off">debug</label>
-      <label class="btn btn-info" id="info_label" for="info"><input type="checkbox" id="info" autocomplete="off">info</label>
-      <label class="btn btn-warning" id="warning_label" for="warning"><input type="checkbox" id="warning" autocomplete="off">warning</label>
-      <label class="btn btn-danger" id="error_label" for="error"><input type="checkbox" id="error" autocomplete="off">error</label>
-      <label class="btn btn-keyboard" id="keyboard_label" for="keyboard"><input type="checkbox" id="keyboard" autocomplete="off">input</label>
-      <label class="btn btn-success" id="target_label" for="target"><input type="checkbox" id="target" autocomplete="off">output</label>
-      <label class="btn btn-feedback" id="feedback_label" for="feedback"><input type="checkbox" id="feedback" autocomplete="off">feedback</label>
-      <label class="btn btn-primary" id="results_label" for="results"><input type="checkbox" id="results" autocomplete="off">results</label>
+    <div class="btn-group" id="logbuttons">
+      <input type="checkbox" class="btn-check" id="debug" autocomplete="off">
+      <label class="btn btn-secondary" id="debug_label" for="debug">debug</label>
+      <input type="checkbox" class="btn-check" id="info" autocomplete="off">
+      <label class="btn btn-info" id="info_label" for="info">info</label>
+      <input type="checkbox" class="btn-check" id="warning" autocomplete="off">
+      <label class="btn btn-warning" id="warning_label" for="warning">warning</label>
+      <input type="checkbox" class="btn-check" id="error" autocomplete="off">
+      <label class="btn btn-danger" id="error_label" for="error">error</label>
+      <input type="checkbox" class="btn-check" id="keyboard" autocomplete="off">
+      <label class="btn btn-keyboard" id="keyboard_label" for="keyboard">input</label>
+      <input type="checkbox" class="btn-check" id="target" autocomplete="off">
+      <label class="btn btn-success" id="target_label" for="target">output</label>
+      <input type="checkbox" class="btn-check" id="feedback" autocomplete="off">
+      <label class="btn btn-feedback" id="feedback_label" for="feedback">feedback</label>
+      <input type="checkbox" class="btn-check" id="results" autocomplete="off">
+      <label class="btn btn-primary" id="results_label" for="results">results</label>
     </div>
 {% endif %}
 
-    <div class="btn-group pull-right">
+    <div class="btn-group float-end">
       {% if job.is_multinode %}
       <a class="btn btn-info" href="{% url 'lava.scheduler.job.multinode_definition' job.pk %}">Multinode</a>
       {% else %}
@@ -288,22 +296,22 @@
       <form hidden id="lava-resubmit-job" action="{% url 'lava.scheduler.job.resubmit' job.pk %}" method="post">{% csrf_token %}</form>
       {% endif %}
       <div class="btn-group">
-        <button type="button" class="btn btn-danger dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions <span class="caret"></span></button>
+        <button type="button" class="btn btn-danger dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Actions </button>
         <ul class="dropdown-menu">
           {% if job.is_multinode %}
           <li><a href="{% url 'lava.scheduler.job.definition' job.pk %}">Definition</a></li>
           {% endif %}
-          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="glyphicon glyphicon-save-file"></span> Plain log</a></li>
-          <li><a href="{% url 'lava.scheduler.job.configuration' job.pk %}"><span class="glyphicon glyphicon-book"></span> Configuration</a></li>
-          <li><a href="{% url 'lava.scheduler.job.description.yaml' job.pk %}"><span class="glyphicon glyphicon-eye-open"></span> Description</a></li>
-          <li role="separator" class="divider"></li>
+          <li><a href="{% url 'lava.scheduler.job.log_file.plain' job.pk %}"><span class="bi bi-download"></span> Plain log</a></li>
+          <li><a href="{% url 'lava.scheduler.job.configuration' job.pk %}"><span class="bi bi-book-fill"></span> Configuration</a></li>
+          <li><a href="{% url 'lava.scheduler.job.description.yaml' job.pk %}"><span class="bi bi-eye-fill"></span> Description</a></li>
+          <li><hr class="dropdown-divider"></li>
           <li>
-            <a href="javascript:document.getElementById('lava-toggle-favorite-job').submit();"><span class="glyphicon glyphicon-star{% if not is_favorite %}-empty{% endif %}"></span> {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}</a>
+            <a href="javascript:document.getElementById('lava-toggle-favorite-job').submit();"><span class="bi bi-star{% if is_favorite %}-fill{% endif %}"></span> {{ is_favorite|yesno:"Remove from favorites,Add to favorites" }}</a>
             <form hidden id="lava-toggle-favorite-job" action="{% url 'lava.scheduler.job.toggle_favorite' job.pk %}" method="post">{% csrf_token %}</form>
           </li>
-          <li><a href="#" data-toggle="modal" data-target="#similar_jobs_modal"><span class="glyphicon glyphicon-search"></span> Similar jobs</a></li>
+          <li><a href="#" data-bs-toggle="modal" data-bs-target="#similar_jobs_modal"><span class="bi bi-search"></span> Similar jobs</a></li>
           {% if show_failure or user.is_superuser %}
-          <li role="separator" class="divider"></li>
+          <li><hr class="dropdown-divider"></li>
           {% if show_failure %}
           <li><a href="{% url 'lava.scheduler.job.annotate_failure' job.pk %}">Comment</a></li>
           {% endif %}
@@ -319,7 +327,7 @@
       <img id="log-messages" src="{% static "lava_scheduler_app/images/ajax-loader.gif" %}" />
     </div>
     {% if not size_warning %}
-    <p class="pull-right"><a href="#top">Top of page <span class="glyphicon glyphicon-chevron-up"></span></a></p>
+    <p class="float-end"><a href="#top">Top of page <span class="bi bi-chevron-up"></span></a></p>
     {% if job.state == job.STATE_FINISHED %}
     <p><a href="{{ STATIC_URL }}docs/v2/debugging.html">Please read the triage guidelines</a> for help on debugging failures in the test job, test definitions or in individual test cases.</p>
     {% endif %}
@@ -546,16 +554,16 @@
       function toggle_actions_table() {
         if(actions_table_toggle) {
           $('#actions-list').css('display', 'block');
-          $('#actions-table-arrow').removeClass('glyphicon-arrow-up');
-          $('#actions-table-arrow').addClass('glyphicon-arrow-down');
+          $('#actions-table-arrow').removeClass('bi-arrow-up');
+          $('#actions-table-arrow').addClass('bi-arrow-down');
           const highlighted_action = document.querySelector("#actions-list > .lava-action-on-screen");
           if (highlighted_action) {
             highlighted_action.scrollIntoView({block: "center"})
           }
         } else {
           $('#actions-list').css('display', 'none');
-          $('#actions-table-arrow').removeClass('glyphicon-arrow-down');
-          $('#actions-table-arrow').addClass('glyphicon-arrow-up');
+          $('#actions-table-arrow').removeClass('bi-arrow-down');
+          $('#actions-table-arrow').addClass('bi-arrow-up');
         }
         actions_table_toggle = !actions_table_toggle;
       }

@@ -22,30 +22,30 @@
   <div class="col-md-4">
     <h4>LDAP Login</h4>
     <hr/>
-    <form class="form-horizontal" method="post" action="{% url 'login' %}">
+    <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.GET.next }}" />
-      <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <p class="help-block">{{ login_message_ldap }}</p>
-        <label class="col-md-3 control-label" for="id_username">{% trans "Username" %}</label>
+      <div class="mb-3{% if form.errors %}{% endif %}">
+        <p class="form-text text-danger">{{ login_message_ldap }}</p>
+        <label class="col-md-3 form-label" for="id_username">{% trans "Username" %}</label>
         <div class="col-md-3">
           {{ form.username }}
           {% for error in form.username.errors %}
-          <p class="help-block">{{ error }}</p>
+          <p class="form-text text-danger">{{ error }}</p>
           {% endfor %}
         </div>
       </div>
-      <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-3 control-label" for="id_password">{% trans "Password" %}</label>
+      <div class="mb-3{% if form.errors %}{% endif %}">
+        <label class="col-md-3 form-label" for="id_password">{% trans "Password" %}</label>
         <div class="col-md-3">
           {{ form.password }}
           {% for error in form.password.errors %}
-          <p class="help-block">{{ error }}</p>
+          <p class="form-text text-danger">{{ error }}</p>
           {% endfor %}
         </div>
       </div>
-      <div class="form-group">
-        <div class="col-md-4 col-md-offset-3">
+      <div class="mb-3">
+        <div class="col-md-4 offset-md-3">
           <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
         </div>
       </div>
@@ -62,29 +62,29 @@
   <div class="col-md-4">
     <h4>Local account</h4>
     <hr/>
-    <form class="form-horizontal" method="post" action="{% url 'login' %}">
+    <form method="post" action="{% url 'login' %}">
       {% csrf_token %}
       <input type="hidden" name="next" value="{{ request.GET.next }}" />
-      <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-3 control-label" for="id_username">{% trans "Username" %}</label>
+      <div class="mb-3{% if form.errors %}{% endif %}">
+        <label class="col-md-3 form-label" for="id_username">{% trans "Username" %}</label>
         <div class="col-md-3">
           {{ form.username }}
           {% for error in form.username.errors %}
-          <p class="help-block">{{ error }}</p>
+          <p class="form-text text-danger">{{ error }}</p>
           {% endfor %}
         </div>
       </div>
-      <div class="form-group{% if form.errors %} has-error{% endif %}">
-        <label class="col-md-3 control-label" for="id_password">{% trans "Password" %}</label>
+      <div class="mb-3{% if form.errors %}{% endif %}">
+        <label class="col-md-3 form-label" for="id_password">{% trans "Password" %}</label>
         <div class="col-md-3">
           {{ form.password }}
           {% for error in form.password.errors %}
-          <p class="help-block">{{ error }}</p>
+          <p class="form-text text-danger">{{ error }}</p>
           {% endfor %}
         </div>
       </div>
-      <div class="form-group">
-        <div class="col-md-4 col-md-offset-3">
+      <div class="mb-3">
+        <div class="col-md-4 offset-md-3">
           <button class="btn btn-success" type="submit">{% trans "Login" %}</button>
           <a href="{% url 'password_reset' %}">{% trans "Reset password" %}</a>
         </div>

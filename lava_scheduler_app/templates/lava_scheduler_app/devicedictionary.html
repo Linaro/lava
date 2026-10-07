@@ -17,17 +17,17 @@
 
 {% if device_yaml is None %}
 <div class="alert alert-danger alert-dismissible">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>Configuration Error: invalid device dictionary.</strong>
   <p>No jobs will be running in this device ({{ device.hostname }}) until the device dictionary is fixed on the master.</p>
 </div>
 {% endif %}
 
 <h2>Device dictionary
-  <a class="btn btn-xs btn-info"
+  <a class="btn btn-sm btn-info"
      href="{% url 'lava.scheduler.device.dictionary.plain' device.hostname %}"
      title="Download full device configuration (YAML).">
-    <span class="glyphicon glyphicon-download">
+    <span class="bi bi-download">
     </span>
     download
   </a>
@@ -40,12 +40,12 @@
       <dd><a href="{{ device.get_absolute_url }}">{{ device.hostname }}</a>
           {% if user.is_superuser %}<a
           href="{% url 'admin:lava_scheduler_app_device_change' device.hostname %}" title="admin this device"><span
-          class="glyphicon glyphicon-wrench"></span></a>
+          class="bi bi-tools"></span></a>
           {% endif %}
-          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="glyphicon glyphicon-stats"></span></a>
+          <a href="{% url 'lava.scheduler.device_report' device.pk %}"><span class="bi bi-bar-chart-fill"></span></a>
       </dd>
       <dt>Device type</dt>
-      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="glyphicon glyphicon-stats"></span></a></dd>
+      <dd><a href="{{ device.device_type.get_absolute_url }}">{{ device.device_type.name }}</a> <a href="{% url 'lava.scheduler.device_type_report' device.device_type.pk %}"><span class="bi bi-bar-chart-fill"></span></a></dd>
     </dl>
   </div>
   <div class="col-md-6">
@@ -57,8 +57,8 @@
 </div>
 
 <ul class="nav nav-tabs">
-  <li class="active"><a href="#jinja" data-toggle="tab">Raw Jinja</a></li>
-  <li><a href="#yaml" data-toggle="tab">Rendered YAML</a></li>
+  <li><a class="active" href="#jinja" data-bs-toggle="tab">Raw Jinja</a></li>
+  <li><a href="#yaml" data-bs-toggle="tab">Rendered YAML</a></li>
 </ul>
 <div class="tab-content">
   <div class="tab-pane active" id="jinja">

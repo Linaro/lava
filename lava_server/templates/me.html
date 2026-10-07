@@ -18,15 +18,15 @@
       <dd><span title="{{ user.date_joined }}">
           {{user.date_joined|timesince }} ago</span></dd>
       <dt>Password</dt>
-      <dd><a href="{% url 'password_change' %}"><span class="glyphicon glyphicon-lock"></span> Update</a></dd>
+      <dd><a href="{% url 'password_change' %}"><span class="bi bi-lock-fill"></span> Update</a></dd>
       {% if socialaccount_enabled %}
       <dt>Social accounts</dt>
-      <dd><a href="{% url 'socialaccount_connections' %}"><span class="glyphicon glyphicon-link"></span> Manage connections</a></dd>
+      <dd><a href="{% url 'socialaccount_connections' %}"><span class="bi bi-link"></span> Manage connections</a></dd>
       {% endif %}
       <dt>IRC settings</dt>
-      <dd>Server: {{ user.extendeduser.irc_server|default:"None" }}; Handle: {{ user.extendeduser.irc_handle|default:"None" }};<a data-toggle="modal" href="#irc_modal"> Update</a></dd>
+      <dd>Server: {{ user.extendeduser.irc_server|default:"None" }}; Handle: {{ user.extendeduser.irc_handle|default:"None" }};<a data-bs-toggle="modal" href="#irc_modal"> Update</a></dd>
       <dt>Default table length</dt>
-      <dd>{{ user.extendeduser.table_length|default:"System default" }} <a data-toggle="modal" href="#table_length_modal">Update</a></dd>
+      <dd>{{ user.extendeduser.table_length|default:"System default" }} <a data-bs-toggle="modal" href="#table_length_modal">Update</a></dd>
     </dl>
   </div>
 
@@ -35,8 +35,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h4 class="modal-title">Update IRC settings</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form id="irc_form" method="post" action="{% url 'lava.update_irc_settings' %}">
 	  {% csrf_token %}
@@ -45,7 +45,7 @@
 	    {{ irc_form.as_p }}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>
@@ -59,8 +59,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h4 class="modal-title">Update table length setting</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form id="table_length_form" method="post" action="{% url 'lava.update_table_length_setting' %}">
 	  {% csrf_token %}
@@ -69,7 +69,7 @@
 	    {{ table_length_form.as_p }}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>
@@ -83,23 +83,23 @@
   {% with groups=user.groups.all %}
     {% if groups %}
     <p>You are member of the following LAVA groups:</p>
-    <div class="panel-group">
+    <div class="mb-2">
     {% for group in groups %}
       {% with user_set=group.user_set.all %}
         {% with users_count=user_set|length %}
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h4 class="panel-title">
+      <div class="card mb-2">
+        <div class="card-header">
+          <h4 class="card-title">
             {% if users_count > 1 %}
-              <a data-toggle="collapse" data-parent="#accordion" href="#collapse-{{ forloop.counter }}">{{ group.name }} <span class="badge pull-right">{{ users_count|add:"-1" }}</span></a>
+              <a data-bs-toggle="collapse" data-bs-parent="#accordion" href="#collapse-{{ forloop.counter }}">{{ group.name }} <span class="badge float-end">{{ users_count|add:"-1" }}</span></a>
             {% else %}
-              {{ group.name }} <span class="badge pull-right">0</span>
+              {{ group.name }} <span class="badge float-end">0</span>
             {% endif %}
           </h4>
         </div>
         {% if users_count > 1 %}
-        <div id="collapse-{{ forloop.counter }}" class="panel-collapse collapse">
-          <div class="panel-body">
+        <div id="collapse-{{ forloop.counter }}" class="collapse">
+          <div class="card-body">
             <ul>
             {% for group_user in user_set|dictsort:"first_name"|dictsort:"last_name" %}
               {% if group_user != user %}<li>{{ group_user.get_full_name|default:group_user.username }}</li>{% endif %}
@@ -127,32 +127,32 @@
     <ul class="nav nav-pills nav-stacked">
       <li>
         <a href="{% url 'lava.scheduler.myjobs' %}">
-          <span class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+          <span class="bi bi-list-task float-end"></span> Your jobs</a>
       </li>
       <li>
         <a href="{% url 'lava.scheduler.mydevice_list' %}">
-          <span class="glyphicon glyphicon-phone pull-right"></span> Your devices</a>
+          <span class="bi bi-phone-fill float-end"></span> Your devices</a>
       </li>
       <li>
         <a href="{% url 'lava.scheduler.mydevices_health_history_log' %}">
-          <span class="glyphicon glyphicon-heart pull-right"></span> Your devices health</a>
+          <span class="bi bi-heart-fill float-end"></span> Your devices health</a>
       </li>
     </ul>
   </div>
 
   <div class="col-md-6">
-    <h4 class="modal-header">Remote artifact tokens <small><a data-toggle="modal" href="#token_modal" class="btn btn-xs btn-info empty-token-modal"><span class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h4>
+    <h4 class="modal-header">Remote artifact tokens <small><a data-bs-toggle="modal" href="#token_modal" class="btn btn-sm btn-info empty-token-modal"><span class="bi bi-plus-circle-fill"></span> Create</a></small></h4>
     {% with tokens=user.remoteartifactsauth_set.all %}
     {% if tokens %}
     <p>You have following tokens:</p>
-    <div class="panel-group">
+    <div class="mb-2">
       {% for token_obj in tokens %}
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <h4 class="panel-title">
-            <a data-toggle="modal" data-id="{{ token_obj.id }}" data-name="{{ token_obj.name }}" data-token="{{ token_obj.token }}" href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
-            <a class="btn btn-xs btn-danger pull-right" style="color: #fff" title="Delete token" href="javascript:document.getElementById('delete-token-{{token_obj.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this token?">
-              <span class="glyphicon glyphicon-trash"></span>
+      <div class="card mb-2">
+        <div class="card-header">
+          <h4 class="card-title">
+            <a data-bs-toggle="modal" data-id="{{ token_obj.id }}" data-name="{{ token_obj.name }}" data-token="{{ token_obj.token }}" href="#token_modal" class="open-token-modal"><span>{{ token_obj.name }}</span></a>
+            <a class="btn btn-sm btn-danger float-end" style="color: #fff" title="Delete token" href="javascript:document.getElementById('delete-token-{{token_obj.id}}').submit();" data-bs-toggle="confirm" data-title="Are you sure you want to delete this token?">
+              <span class="bi bi-trash-fill"></span>
             </a>
           </h4>
           <form hidden id="delete-token-{{token_obj.id}}" action="{% url 'lava.delete_remote_auth' token_obj.id %}" method="post">{% csrf_token %}</form>
@@ -171,8 +171,8 @@
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
           <h4 class="modal-title">Add/Update token</h4>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <form id="token_form" method="post" action="{% url 'lava.update_remote_auth' %}">
 	  {% csrf_token %}
@@ -183,7 +183,7 @@
           </p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
           <input class="btn btn-primary" type="submit" value="Save">
         </div>
         </form>

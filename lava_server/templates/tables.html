@@ -12,8 +12,8 @@
         <input type="hidden" name="{{ key }}" value="{{ value }}">
       {% endif %}
     {% endfor %}
-    <div class="form-group">
-      Show <select class="form-control input-sm" id="{{ table.prefix }}length" name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
+    <div>
+      Show <select class="form-select form-select-sm" id="{{ table.prefix }}length" name="{{ table.prefix }}length" onchange="submit_search_form('{{ table.prefix }}');">
         {{ table|get_length_select:request.GET }}
       </select> entries
     </div>
@@ -21,26 +21,26 @@
   </div>
 {%  if table.has_searches %}
   <div class="col-md-5">
-    <form class="form-inline pull-right" action="{% lava_querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
+    <form class="form-inline float-end" action="{% lava_querystring "search"="" %}#{{ table.prefix|default:"table" }}" method="GET">
       {% for key,value in request.GET.items %}
         {% if key != table.prefix|add:"search" %}
           <input type="hidden" name="{{ key }}" value="{{ value }}">
         {% endif %}
       {% endfor %}
-      <div class="form-group">
+      <div>
         <label>Search</label>
         <input type="text" name="{{ table.prefix }}search" value="{{ table|get_prefix_search:request.GET }}" placeholder="Press ? for search help">
       </div>
     </form>
   </div>
   <div class="col-md-1">
-    <button class="btn btn-info btn-xs" data-toggle="modal" data-target="#{{ table.prefix }}SearchModal">?</button>
+    <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#{{ table.prefix }}SearchModal">?</button>
     <div class="modal fade" id="{{ table.prefix }}SearchModal" tabindex="-1" role="dialog" aria-labelledby="{{ table.prefix }}SearchModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
             <h4 class="modal-title" id="{{ table.prefix }}SearchModalLabel">Search help</h4>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <p>Available methods and fields</p>
@@ -85,12 +85,12 @@
                 <small>
                 {% if column.is_ordered %}
                   {% if column.order_by_alias.0 == "-" %}
-                  <span class="glyphicon glyphicon-sort-by-attributes-alt"></span>
+                  <span class="bi bi-sort-down"></span>
                   {% else %}
-                  <span class="glyphicon glyphicon-sort-by-attributes"></span>
+                  <span class="bi bi-sort-down-alt"></span>
                   {% endif %}
                 {% else %}
-                  <span class="glyphicon glyphicon-sort"></span>
+                  <span class="bi bi-arrow-down-up"></span>
                 {% endif %}
                 </small>
               </a>
@@ -139,7 +139,7 @@
     <li class="previous disabled">
       <a>
     {% endif %}
-      <span class="glyphicon glyphicon-backward"></span> {% trans "Previous" %}</a>
+      <span class="bi bi-rewind-fill"></span> {% trans "Previous" %}</a>
     </li>
   {% endblock pagination.previous %}
 
@@ -160,7 +160,7 @@
     <li class="next disabled">
       <a href="#">
     {% endif %}
-      {% trans "Next" %} <span class="glyphicon glyphicon-forward"></span></a>
+      {% trans "Next" %} <span class="bi bi-fast-forward-fill"></span></a>
   </li>
   {% endblock pagination.next %}
 </ul>

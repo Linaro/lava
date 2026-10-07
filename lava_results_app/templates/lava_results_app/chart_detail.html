@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<h1>Chart {{ chart.name }} <small><a href="{% url 'lava.results.chart_display' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Display</a></small></h1>
+<h1>Chart {{ chart.name }} <small><a href="{% url 'lava.results.chart_display' chart.name %}" class="btn btn-sm btn-info"><span class="bi bi-list-ul"></span> Display</a></small></h1>
 
 <div class="row">
   <div class="col-md-6">
@@ -30,7 +30,7 @@
     {% if chart.is_published %}
     <dt>Chart Group label</dt>
     <dd>
-      <a href="#" data-toggle="modal" data-target="#chart_group_modal">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#chart_group_modal">
 	<div style="float: left;">{{ chart.chart_group|default:"Click here to select"}}</div>
       </a>
 
@@ -44,22 +44,22 @@
       </div>
       {% endif %}
       &nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="Collect similar reports into a single table on the image reports list.">?</button>
 
     </dd>
     <dt>Maintainer</dt>
     <dd>
       {{ chart.owner }}&nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="User who created the chart.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="User who created the chart.">?</button>
     </dd>
 
     <dt>Group edit permission</dt>
     <dd>
-      <a href="#" data-toggle="modal" data-target="#chart_permission_modal">
+      <a href="#" data-bs-toggle="modal" data-bs-target="#chart_permission_modal">
 	<div style="float: left;">{{ chart.group|default:"Click here to select"}}</div>
       </a>
       &nbsp;&nbsp;
-      <button class="btn btn-info btn-xs" data-toggle="tooltip" data-placement="right" title="A group of users already listed on the Profile page.">?</button>
+      <button class="btn btn-info btn-sm" data-bs-toggle="tooltip" data-bs-placement="right" title="A group of users already listed on the Profile page.">?</button>
       <div style="clear: both;"></div>
     </dd>
     {% endif %}
@@ -75,14 +75,14 @@
     <div class="btn-group btn-group-justified">
       {% if chart|check_chart_access:request.user %}
       <div class="btn-group">
-        <a href="{% url 'lava.results.chart_edit' chart.name %}" class="btn btn-info"><span class="glyphicon glyphicon-pencil"></span> Edit</a>
+        <a href="{% url 'lava.results.chart_edit' chart.name %}" class="btn btn-info"><span class="bi bi-pencil-fill"></span> Edit</a>
       </div>
       <div class="btn-group">
-        <a href="javascript:document.getElementById('delete-chart-{{chart.name}}').submit();" class="btn btn-danger" data-toggle="confirm" data-title="Are you sure you want to delete this Chart?"><span class="glyphicon glyphicon-trash"></span> Delete</a>
+        <a href="javascript:document.getElementById('delete-chart-{{chart.name}}').submit();" class="btn btn-danger" data-bs-toggle="confirm" data-title="Are you sure you want to delete this Chart?"><span class="bi bi-trash-fill"></span> Delete</a>
         <form hidden id="delete-chart-{{chart.name}}" action="{% url 'lava.results.chart_delete' chart.name %}" method="post">{% csrf_token %}</form>
       </div>
       <div class="btn-group">
-        <a href="javascript:document.getElementById('chart-toggle-published-{{chart.name}}').submit();" class="btn btn-default"><span class="glyphicon glyphicon-share"></span>
+        <a href="javascript:document.getElementById('chart-toggle-published-{{chart.name}}').submit();" class="btn btn-secondary"><span class="bi bi-share-fill"></span>
 	  {% if chart.is_published %}
 	  Unpublish
 	  {% else %}
@@ -109,7 +109,7 @@
   <div id="{{ chart_query.id }}" class="sort">
     <div class="chart-title">
       <a href="{{ chart_query.query.get_absolute_url }}">{{ chart_query.query.owner_name }}</a>
-      <a class="chart-title-link" href="javascript:document.getElementById('delete-chart-query-{{chart.name}}-{{chart_query.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
+      <a class="chart-title-link" href="javascript:document.getElementById('delete-chart-query-{{chart.name}}-{{chart_query.id}}').submit();" data-bs-toggle="confirm" data-title="Are you sure you want to remove query from this chart?">
         remove
       </a>
       <form hidden id="delete-chart-query-{{chart.name}}-{{chart_query.id}}" action="{% url 'lava.results.chart_query_remove' chart.name chart_query.id %}" method="post">{% csrf_token %}</form>
@@ -148,8 +148,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Chart group update</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form class="well" id="chart_group_form" method="post" action="{% url 'chart_add_group' name=chart.name %}">
         <div class="modal-body">
@@ -168,7 +168,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
       </form>
@@ -181,8 +181,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Group permission update</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form class="well" id="group_permission_form" method="post" action="{% url 'chart_select_group' name=chart.name %}">
         <div class="modal-body">
@@ -201,7 +201,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
       </form>

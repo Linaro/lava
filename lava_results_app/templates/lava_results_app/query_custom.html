@@ -11,13 +11,13 @@
 
 <h2 class="modal-header">Custom Query Matches</h2>
 
-<div class="btn-group-headline"><small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-import"></span> Save as new query</a></small>
-  <small><a href="{% url 'lava.results.query_export_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-xs btn-primary"><span class="glyphicon glyphicon-export"></span>  Export as CSV</a></small>
-<small><a href="#" id="bookmark_query" class="btn btn-xs btn-success"><span class="glyphicon glyphicon-star-empty"></span>  Bookmark</a></small></div>
+<div class="btn-group-headline"><small><a href="{% url 'lava.results.query_add' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-sm btn-info"><span class="bi bi-box-arrow-in-down"></span> Save as new query</a></small>
+  <small><a href="{% url 'lava.results.query_export_custom' %}?entity={{ request.GET.entity }}&conditions={{ request.GET.conditions }}" class="btn btn-sm btn-primary"><span class="bi bi-box-arrow-up"></span>  Export as CSV</a></small>
+<small><a href="#" id="bookmark_query" class="btn btn-sm btn-success"><span class="bi bi-star"></span>  Bookmark</a></small></div>
 
-<div class="alert alert-info">
-  <button type="button" class="close" data-dismiss="alert">&times;</button>
-  Click <strong><a id="conditions_link" href="#" data-toggle="collapse" data-target="#conditions_container">here</a></strong> for the list conditions.
+<div class="alert alert-info alert-dismissible">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+  Click <strong><a id="conditions_link" href="#" data-bs-toggle="collapse" data-bs-target="#conditions_container">here</a></strong> for the list conditions.
   <div class="collapse" id="conditions_container">
     <table class="table table-hover table-sm">
     <thead class="thead-inverse">

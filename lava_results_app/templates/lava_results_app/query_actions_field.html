@@ -2,26 +2,26 @@
 
 {% is_accessible_by record request.user as is_accessible %}
 <div class="text-nowrap">
-  <a class="btn btn-xs btn-success {% if not record.is_live and not record.has_view %}disabled{% endif %}"
+  <a class="btn btn-sm btn-success {% if not record.is_live and not record.has_view %}disabled{% endif %}"
      title="{% if record.has_view or record.is_live %}View query results{% else %}Results not available, please run the query{% endif %}"
      {% if not record.is_live and not record.has_view %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
      href="{{ record.get_absolute_url }}"
      {% endif %}>
-    <span class="glyphicon glyphicon-signal"></span>
+    <span class="bi bi-reception-4"></span>
   </a>
-  <a href="{% url 'lava.results.query_detail' record.owner.username record.name %}" class="btn btn-xs btn-primary pointer-events" title="Edit query settings">
-    <span class="glyphicon glyphicon-eye-open"></span>
+  <a href="{% url 'lava.results.query_detail' record.owner.username record.name %}" class="btn btn-sm btn-primary pointer-events" title="Edit query settings">
+    <span class="bi bi-eye-fill"></span>
   </a>
-  <a class="btn btn-xs btn-danger {% if not is_accessible %}disabled{% endif %}"
+  <a class="btn btn-sm btn-danger {% if not is_accessible %}disabled{% endif %}"
      title="{% if is_accessible %}Delete query{% else %}You don't have sufficient permission to delete query{% endif %}"
      {% if not is_accessible %}
      onclick="javascript:void(0)" style="pointer-events: auto;"
      {% else %}
-     href="javascript:document.getElementById('delete-query-{{record.id}}').submit();" data-toggle="confirm" data-title="Are you sure you want to delete this Query?"
+     href="javascript:document.getElementById('delete-query-{{record.id}}').submit();" data-bs-toggle="confirm" data-title="Are you sure you want to delete this Query?"
      {% endif %}>
-    <span class="glyphicon glyphicon-trash"></span>
+    <span class="bi bi-trash-fill"></span>
   </a>
   {% if is_accessible %}
   <form hidden id="delete-query-{{record.id}}" action="{% url 'lava.results.query_delete' record.owner.username record.name %}" method="post">{% csrf_token %}</form>

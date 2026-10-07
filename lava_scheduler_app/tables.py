@@ -157,7 +157,7 @@ class TagsColumn(tables.Column):
             if tag_description:
                 tags_html.append(
                     format_html(
-                        '<abbr data-toggle="tooltip" title="{}">{}</abbr>',
+                        '<abbr data-bs-toggle="tooltip" title="{}">{}</abbr>',
                         tag_description,
                         tag_name,
                     )
@@ -175,8 +175,8 @@ class TagsColumn(tables.Column):
         return format_html(
             "<details>"
             "<summary>"
-            '<a class="btn btn-xs btn-success">'
-            '<span class="glyphicon glyphicon-eye-open">'
+            '<a class="btn btn-sm btn-success">'
+            '<span class="bi bi-eye">'
             "</span>"
             "</a>"
             "</summary>"
@@ -241,7 +241,7 @@ class DeviceTable(LavaTable):
             return mark_safe("<i>...</i>")  # nosec - static string
         if not record.worker_host and record.health != Device.HEALTH_RETIRED:
             return mark_safe(  # nosec - static string
-                '<span class="text-danger"><i>No worker</i> <span class="glyphicon glyphicon-fire"></span></span>'
+                '<span class="text-danger"><i>No worker</i> <span class="bi bi-fire"></span></span>'
             )
         if (
             record.worker_host.state == Worker.STATE_ONLINE
@@ -254,13 +254,13 @@ class DeviceTable(LavaTable):
             )
         elif record.worker_host.health == Worker.HEALTH_ACTIVE:
             return format_html(
-                '<a href="{}" class="text-danger">{} <span class="glyphicon glyphicon-fire"></span></a>',
+                '<a href="{}" class="text-danger">{} <span class="bi bi-fire"></span></a>',
                 record.worker_host.get_absolute_url(),
                 record.worker_host,
             )
         else:
             return format_html(
-                '<a href="{}" class="text-warning">{} <span class="glyphicon glyphicon-minus-sign"></span></a>',
+                '<a href="{}" class="text-warning">{} <span class="bi bi-dash"></span></a>',
                 record.worker_host.get_absolute_url(),
                 record.worker_host,
             )
@@ -293,7 +293,7 @@ class DeviceTable(LavaTable):
         reason = getattr(record, "latest_health_reason", None)
         if reason:
             return format_html(
-                '<span data-toggle="tooltip" title="{}">{}</span>',
+                '<span data-bs-toggle="tooltip" title="{}">{}</span>',
                 strip_tags(reason),
                 health_html,
             )
@@ -354,34 +354,34 @@ class WorkerTable(LavaTable):
     def render_state(self, record):
         if record.state == Worker.STATE_ONLINE:
             return format_html(
-                '<span class="glyphicon glyphicon-ok text-success"></span> {}',
+                '<span class="bi bi-check-circle-fill text-success"></span> {}',
                 record.get_state_display(),
             )
         elif record.health == Worker.HEALTH_ACTIVE:
             return format_html(
-                '<span class="glyphicon glyphicon-fire text-danger"></span> {}',
+                '<span class="bi bi-fire text-danger"></span> {}',
                 record.get_state_display(),
             )
         else:
             return format_html(
-                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                '<span class="bi bi-x text-danger"></span> {}',
                 record.get_state_display(),
             )
 
     def render_health(self, record):
         if record.health == Worker.HEALTH_ACTIVE:
             return format_html(
-                '<span class="glyphicon glyphicon-ok text-success"></span> {}',
+                '<span class="bi bi-check-circle-fill text-success"></span> {}',
                 record.get_health_display(),
             )
         elif record.health == Worker.HEALTH_MAINTENANCE:
             return format_html(
-                '<span class="glyphicon glyphicon-wrench text-warning"></span> {}',
+                '<span class="bi bi-tools text-warning"></span> {}',
                 record.get_health_display(),
             )
         else:
             return format_html(
-                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                '<span class="bi bi-x text-danger"></span> {}',
                 record.get_health_display(),
             )
 
@@ -417,12 +417,12 @@ class LogEntryTable(LavaTable):
             return message
         elif record.is_addition():
             return format_html(
-                '<span class="glyphicon glyphicon-plus text-success"></span> {}',
+                '<span class="bi bi-plus text-success"></span> {}',
                 message,
             )
         else:
             return format_html(
-                '<span class="glyphicon glyphicon-remove text-danger"></span> {}',
+                '<span class="bi bi-x text-danger"></span> {}',
                 message,
             )
 

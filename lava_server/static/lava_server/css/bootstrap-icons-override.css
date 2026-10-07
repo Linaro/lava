@@ -1,0 +1,14 @@
+/*
+ * Copyright (C) 2026 Qualcomm Technologies, Inc. and/or its subsidiaries.
+ *
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+.bi {
+  display: inline-block;
+  vertical-align: -0.125em;
+}
+
+.nav-link .bi {
+  margin-right: 0.25em;
+}

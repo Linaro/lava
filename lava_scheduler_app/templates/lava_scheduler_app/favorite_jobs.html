@@ -9,7 +9,7 @@
 {% else %}
 <h2>My favorite jobs</h2>
 {% endif %}
-<p><a href="#" data-toggle="modal" data-target="#user_select_modal">Favorite jobs by user</a></p>
+<p><a href="#" data-bs-toggle="modal" data-bs-target="#user_select_modal">Favorite jobs by user</a></p>
 
 {% render_table favoritejobs_table %}
 
@@ -18,8 +18,8 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h4 class="modal-title">Select user</h4>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <form class="well" id="user_select_form" method="post" action="{% url 'lava.scheduler.favorite_jobs' %}">
         <div class="modal-body">
@@ -38,7 +38,7 @@
           </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
         <button type="submit" class="btn btn-primary">Save</button>
       </div>
       </form>

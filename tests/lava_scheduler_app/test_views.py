@@ -482,7 +482,7 @@ def test_job_status(client, setup):
     assert response["started"] == "now"  # nosec
     assert (
         response["actual_device"]
-        == '<a href="/scheduler/device/juno-uboot-01">juno-uboot-01</a> <a href="/scheduler/reports/device/juno-uboot-01"><span class="glyphicon glyphicon-stats"></span></a>'
+        == '<a href="/scheduler/device/juno-uboot-01">juno-uboot-01</a> <a href="/scheduler/reports/device/juno-uboot-01"><span class="bi bi-graph-up"></span></a>'
     )  # nosec
 
 

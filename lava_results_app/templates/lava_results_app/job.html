@@ -7,7 +7,7 @@
 {% block content %}
     <h2>LAVA Results for {{ job_link }}
       <span
-          class="label {% if job.health == job.HEALTH_COMPLETE %}label-success{% else %}label-warning{% endif %}"
+          class="badge {% if job.health == job.HEALTH_COMPLETE %}bg-success{% else %}bg-warning{% endif %}"
           {% if job.health == job.HEALTH_COMPLETE %}title="All submitted definitions have started execution."{% endif %}>{{ job.get_state_display }}
       </span>
     </h2>
@@ -18,21 +18,21 @@
         </h4>
     <dl class="dl-horizontal">
       <dt>Test results summary :</dt>
-      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml_summary' job.id %}"
-         title="Download test job summary as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+      <dd><a class="btn btn-sm btn-info" href="{% url 'lava.results.testjob_yaml_summary' job.id %}"
+         title="Download test job summary as YAML"><span class="bi bi-download"></span> YAML</a></dd>
       <dt>Test results :</dt>
-      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
-         title="Download results as CSV"><span class="glyphicon glyphicon-download"></span> CSV</a> or <a
-              class="btn btn-xs btn-info" href="{% url 'lava.results.testjob_yaml' job.id %}"
-         title="Download results as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+      <dd><a class="btn btn-sm btn-info" href="{% url 'lava.results.testjob_csv' job.id %}"
+         title="Download results as CSV"><span class="bi bi-download"></span> CSV</a> or <a
+              class="btn btn-sm btn-info" href="{% url 'lava.results.testjob_yaml' job.id %}"
+         title="Download results as YAML"><span class="bi bi-download"></span> YAML</a></dd>
       <dt>Job metadata :</dt>
-      <dd><a class="btn btn-xs btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
-         title="Download metadata as YAML"><span class="glyphicon glyphicon-download"></span> YAML</a></dd>
+      <dd><a class="btn btn-sm btn-info" href="{% url 'lava.results.job.metadata' job.id %}"
+         title="Download metadata as YAML"><span class="bi bi-download"></span> YAML</a></dd>
     </dl>
   </div>
   <div class="col-md-4">
     <h4 class="modal-header">Actions</h4>
-    <a href="#" data-toggle="modal" data-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
+    <a href="#" data-bs-toggle="modal" data-bs-target="#similar_jobs_modal" class="btn btn-primary">Similar jobs</a>
   </div>
   <div class="col-md-4">
     <h4 class="modal-header">Details</h4>
@@ -57,17 +57,17 @@
   </div>
 </div>
     {% render_table suite_table %}
-<div class="panel-group" id="results_accordion">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4><a data-toggle="collapse" data-parent="#results_accordion" href="#metadata_collapse">
+<div class="mb-2" id="results_accordion">
+  <div class="card mb-2">
+    <div class="card-header">
+      <h4><a data-bs-toggle="collapse" data-bs-parent="#results_accordion" href="#metadata_collapse">
         Metadata
       </a>
       </h4>
     </div>
   {% spaceless %}
-    <div id="metadata_collapse" class="panel-collapse collapse">
-      <div class="panel-body">
+    <div id="metadata_collapse" class="collapse">
+      <div class="card-body">
       <p>The <b>key</b> is the name of the metadata named attribute which can be used in query conditions.
           Values relating to devices, device-types and URLs are formatted as links. Due to
           the variation between different git server interfaces, it is not possible to construct
@@ -84,7 +84,7 @@
       </p>
       <p>Metadata submitted as part of the job submission is also included, if present.</p>
        <div class="row">
-       <div class="col-xs-12">
+       <div class="col-12">
         <ul>
           {% for key, value in metadata.items %}
               {% if 'target' in key %}
@@ -121,17 +121,17 @@
   </div>
  </div>
 
-<div class="panel-group" id="notifications_accordion">
-  <div class="panel panel-default">
-    <div class="panel-heading">
-      <h4><a data-toggle="collapse" data-parent="#notifications_accordion" href="#notification_collapse">
+<div class="mb-2" id="notifications_accordion">
+  <div class="card mb-2">
+    <div class="card-header">
+      <h4><a data-bs-toggle="collapse" data-bs-parent="#notifications_accordion" href="#notification_collapse">
         Notifications
       </a>
       </h4>
     </div>
   {% spaceless %}
-    <div id="notification_collapse" class="panel-collapse collapse">
-      <div class="panel-body">
+    <div id="notification_collapse" class="collapse">
+      <div class="card-body">
         {% if job.notification.notificationrecipient_set.all %}
         <dl class="dl-horizontal">
           {% for recipient in job.notification.notificationrecipient_set.all %}

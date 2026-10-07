@@ -9,15 +9,15 @@
 {% block content %}
 
 {% if error %}
-<div class="alert alert-warning alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+<div class="alert alert-warning alert-dismissible">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>Job submission error:</strong> {{ error }}
 </div>
 {% endif %}
 
 {% if resubmit_warning %}
-<div class="alert alert-warning alert-dismissable">
-  <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+<div class="alert alert-warning alert-dismissible">
+  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
   <strong>Job submission warning:</strong> {{ resubmit_warning }}
 </div>
 {% endif %}

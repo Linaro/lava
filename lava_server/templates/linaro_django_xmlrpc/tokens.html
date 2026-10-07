@@ -18,18 +18,18 @@ scripts based on XML-RPC to securely access LAVA resources. You can create and u
 simultaneously. If you believe a token is compromised you can quickly remove it. Anyone using that token
 will no longer be able to authenticate as You in the system.</p>
 
-          <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#newTokenModal" title="Create new token">new&nbsp;<span
-                  class="glyphicon glyphicon-plus-sign"></span></button>
+          <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newTokenModal" title="Create new token">new&nbsp;<span
+                  class="bi bi-plus-circle-fill"></span></button>
           <div class="modal fade" id="newTokenModal" tabindex="-1" role="dialog" aria-labelledby="newTokenModalLabel" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
                   <h4 class="modal-title" id="newTokenModalLabel">Description of new token</h4>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                   <div class="modal-body">
                     <form method="post" action="{% url 'linaro_django_xmlrpc.views.create_token' %}">
-                      <div id="description-container" class="form-group">
+                      <div id="description-container" class="mb-3">
                       <p>The token description is arbitrary text
                       which can help you to associate tokens with an intended purpose.
                       </p>
@@ -37,8 +37,8 @@ will no longer be able to authenticate as You in the system.</p>
                         {% csrf_token %}
                       </div>
                       <dl class="dl-horizontal">
-                        <div class="form-group">
-                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <div class="mb-3">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-success">Create</button>
                         </div>
                       </dl>
@@ -57,25 +57,25 @@ will no longer be able to authenticate as You in the system.</p>
 
   <h3>Most recently created tokens shown first</h3>
     {% if unused %}
-    <button class="btn btn-sm btn-danger" data-toggle="modal"
-            data-target="#deleteUnusedTokensModal"
+    <button class="btn btn-sm btn-danger" data-bs-toggle="modal"
+            data-bs-target="#deleteUnusedTokensModal"
             {% if unused == 1 %}
             title="Delete the unused token">Delete the {{ unused }} unused token
             {% else %}
             title="Delete all unused tokens">Delete all {{ unused }} unused tokens
             {% endif %}
-        <span class="glyphicon glyphicon-trash"></span></button>
+        <span class="bi bi-trash-fill"></span></button>
     <div class="modal fade" id="deleteUnusedTokensModal" tabindex="-1" role="dialog"
          aria-labelledby="deleteUnusedTokensModalLabel" aria-hidden="true">
     <div class="modal-dialog">
     <div class="modal-content">
     <div class="modal-header">
-      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
         {% if unused == 1 %}
       <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete the {{ unused }} unused token</h3>
         {% else %}
       <h3 class="modal-title" id="deleteUnusedTokensModalLabel">Delete <b>ALL</b> {{ unused }} unused tokens</h3>
         {% endif %}
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
     </div>
     <div class="modal-body">
     {% if unused == 1 %}
@@ -86,7 +86,7 @@ will no longer be able to authenticate as You in the system.</p>
     </div>
     <div class="modal-footer">
         <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_unused_tokens' %}">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <input class="btn btn-danger" type="submit" value="Delete"/>
             {% csrf_token %}
          </form>
@@ -117,13 +117,13 @@ will no longer be able to authenticate as You in the system.</p>
           {% else %}
           <td><em>It was not used yet</em></td>
           {% endif %}
-          <td><button class="btn btn-xs btn-success" data-toggle="modal" data-target="#hashModal{{ token.pk }}" title="View token hash"><span class="glyphicon glyphicon-eye-open"></span></button>
+          <td><button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#hashModal{{ token.pk }}" title="View token hash"><span class="bi bi-eye-fill"></span></button>
           <div class="modal fade" id="hashModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="hashModal{{ token.pk }}Label" aria-hidden="true">
             <div class="modal-dialog modal-lg">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
                   <h3 class="modal-title" id="hashModal{{ token.pk }}Label">Hash for {{ token }}</h3>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <p>{{ token.description|default:"empty description" }}</p>
@@ -134,24 +134,24 @@ will no longer be able to authenticate as You in the system.</p>
           </div>
 
           <div class="btn-group">
-            <button class="btn btn-xs btn-primary" data-toggle="modal" data-target="#editTokenModal{{ token.pk }}" title="Edit token description"><span class="glyphicon glyphicon-pencil"></span></button>
+            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#editTokenModal{{ token.pk }}" title="Edit token description"><span class="bi bi-pencil-fill"></span></button>
             <div class="modal fade" id="editTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="editTokenModal{{ token.pk }}label" aria-hidden="true">
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-header">
-                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     <h4 class="modal-title" id="editTokenModal{{ token.id }}">Edit description of {{ token }}</h4>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                   </div>
                   <div class="modal-body">
                     <form method="post" action="{% url 'linaro_django_xmlrpc.views.edit_token' token.pk %}">
-                      <div id="description-container" class="form-group">
+                      <div id="description-container" class="mb-3">
                         <p>An empty description will clear the existing content.</p>
                         <input id="description" name="description" value="{{ token.description }}"/>
                         {% csrf_token %}
                       </div>
                       <dl class="dl-horizontal">
-                        <div class="form-group">
-                          <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <div class="mb-3">
+                          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                           <button type="submit" class="btn btn-success">Set</button>
                         </div>
                       </dl>
@@ -162,13 +162,13 @@ will no longer be able to authenticate as You in the system.</p>
             </div>
           </div>
 
-          <button class="btn btn-xs btn-danger" data-toggle="modal" data-target="#deleteTokenModal{{ token.pk }}" title="Delete token"><span class="glyphicon glyphicon-trash"></span></button>
+          <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteTokenModal{{ token.pk }}" title="Delete token"><span class="bi bi-trash-fill"></span></button>
           <div class="modal fade" id="deleteTokenModal{{ token.pk }}" tabindex="-1" role="dialog" aria-labelledby="deleteTokenModal{{ token.pk }}Label" aria-hidden="true">
             <div class="modal-dialog">
               <div class="modal-content">
                 <div class="modal-header">
-                  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
                   <h3 class="modal-title" id="deleteTokenModal{{ token.pk }}Label">Deleting token</h3>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                   <p>Are you sure that you want to delete {{ token }}
@@ -181,7 +181,7 @@ will no longer be able to authenticate as You in the system.</p>
                 </div>
                 <div class="modal-footer">
                     <form method="post" action="{% url 'linaro_django_xmlrpc.views.delete_token' token.pk %}">
-                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <input class="btn btn-danger" type="submit" value="Delete"/>
                         {% csrf_token %}
                      </form>

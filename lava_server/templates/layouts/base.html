@@ -7,12 +7,15 @@
   <title>{% block title %}{% endblock %}</title>
 
   <link rel="icon" type="image/png" href="{% static "lava_server/images/logo.png" %}">
-  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-3.4.1.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-5.3.0.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-icons-1.11.0.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap-icons-override.css" %}">
+  <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/bootstrap3-theme.css" %}">
   <link rel="stylesheet" type="text/css" href="{% static "lava_server/css/jquery.typeahead.css" %}">
 
   <style>
     body {
-      padding-top: 60px;
+      padding-top: 0px;
       margin-bottom: 100px;
     }
     html {
@@ -31,6 +34,11 @@
       padding-top: 15px;
       padding-right: 15px;
       padding-left: 15px;
+    }
+    /* Bootstrap 5 paints every cell with --bs-table-bg, which would hide
+       the sorted column and header backgrounds below */
+    .table {
+      --bs-table-bg: transparent;
     }
     colgroup col.sorted {
       background-color: #F8F8F8;
@@ -54,7 +62,7 @@
       vertical-align: unset;
     }
     * {
-      scroll-margin-top: 50px;
+      scroll-margin-top: 70px;
     }
     .overflow-wrap {
       overflow-wrap: break-word;
@@ -74,7 +82,8 @@
 {% block body %}{% endblock %}
 
 <script src="{% static "lava_server/js/jquery-3.6.1.js" %}"></script>
-<script src="{% static "lava_server/js/bootstrap-3.4.1.js" %}"></script>
+<script src="{% static "lava_server/js/popper-2.11.2.min.js" %}"></script>
+<script src="{% static "lava_server/js/bootstrap-5.3.0.js" %}"></script>
 {% block scripts %}
 {% endblock scripts %}
 

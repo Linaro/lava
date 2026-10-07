@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Multinode Job definition file - {{ job.sub_id|default:job.id }}  <a class="btn btn-xs btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="glyphicon glyphicon-download"></span> download</a></h2>
+<h2>Multinode Job definition file - {{ job.sub_id|default:job.id }}  <a class="btn btn-sm btn-info" href="{% url 'lava.scheduler.job.multinode_definition.plain' job.pk %}" title="Download as text file"><span class="bi bi-download"></span> download</a></h2>
 
 <div class="row">
   <div class="col-md-4">
@@ -53,7 +53,7 @@
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
         {% if show_resubmit %}
-          <li><a href="javascript:document.getElementById('lava-resubmit-job').submit();" class="btn btn-default">Resubmit</a>
+          <li><a href="javascript:document.getElementById('lava-resubmit-job').submit();" class="btn btn-secondary">Resubmit</a>
           <form hidden id="lava-resubmit-job" action="{% url 'lava.scheduler.job.resubmit' job.pk %}" method="post">{% csrf_token %}</form></li>
         {% endif %}
       {% if show_cancel %}
@@ -110,8 +110,8 @@
 {% endif %}
 
 
-<div class="pull-right"><small><a href="javascript: void(0);" id="copy_link"
-class="btn btn-xs btn-default"><span class="glyphicon glyphicon-copy"></span> Copy to clipboard</a></small></div><span
+<div class="float-end"><small><a href="javascript: void(0);" id="copy_link"
+class="btn btn-sm btn-secondary"><span class="bi bi-copy"></span> Copy to clipboard</a></small></div><span
 style="display: none" id="job_definition_text">{{ job.multinode_definition }}</span><br/>
 {% with job.multinode_definition|split_definition as definition_data %}
 {% for line in definition_data %}

@@ -21,7 +21,7 @@
     <dl class="dl-horizontal">
       <dt>Hostname</dt>
       <dd>{{ worker.hostname }}
-        {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_worker_change' worker %}" title="admin this worker"><span class="glyphicon glyphicon-wrench"></span></a>{% endif %}
+        {% if user.is_superuser %}<a href="{% url 'admin:lava_scheduler_app_worker_change' worker %}" title="admin this worker"><span class="bi bi-tools"></span></a>{% endif %}
       </dd>
       <dt>Description</dt>
       <dd>{{ worker.description|default:"<i>...</i>" }}</dd>
@@ -35,44 +35,44 @@
         {% if worker.state == worker.STATE_ONLINE %}
       <dd class="text-success">{{ worker.get_state_display }}</dd>
         {% else %}
-      <dd class="text-danger">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="glyphicon glyphicon-fire"></div>&nbsp;{% endif %}{{ worker.get_state_display }}</dd>
+      <dd class="text-danger">{% if worker.health == worker.HEALTH_ACTIVE %}<div class="bi bi-fire"></div>&nbsp;{% endif %}{{ worker.get_state_display }}</dd>
         {% endif %}
       <dt>Health</dt>
       <dd>
         {% if worker.health == worker.HEALTH_ACTIVE %}
-      <span class="label label-success">
+      <span class="badge bg-success">
         {% elif worker.health == worker.HEALTH_MAINTENANCE %}
-      <span class="label label-warning">
+      <span class="badge bg-warning">
         {% else %}
-      <span class="label label-danger">
+      <span class="badge bg-danger">
         {% endif %}
         {{ worker.get_health_display }}
       </span>
         {% if can_change %}
-        &nbsp;<a href="#healthModal" data-toggle="modal" data-target="#healthModal"><span class="glyphicon glyphicon-pencil"></span></a>
+        &nbsp;<a href="#healthModal" data-bs-toggle="modal" data-bs-target="#healthModal"><span class="bi bi-pencil-fill"></span></a>
         <div class="modal fade" id="healthModal" tabindex="-1" role="dialog" aria-labelledby="healthModalLabel">
           <div class="modal-dialog" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="healthModalLabel">Worker health</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
               </div>
               <div class="modal-body">
                 <form method="post" action="{% url 'lava.scheduler.worker.health' worker.pk %}">
                   {% csrf_token %}
-                  <div class="form-group">
-                    <label for="health" class="control-label">Health:</label>
+                  <div class="mb-3">
+                    <label for="health" class="form-label">Health:</label>
                     <select name="health" class="form-control" id="health">
                       {% if worker.health != worker.HEALTH_ACTIVE %}<option>Active</option>{% endif %}
                       {% if worker.health != worker.HEALTH_MAINTENANCE %}<option>Maintenance</option>{% endif %}
                       {% if worker.health != worker.HEALTH_RETIRED %}<option>Retired</option>{% endif %}
                     </select>
                   </div>
-                  <div class="form-group">
-                    <label for="reason" class="control-label">Reason:</label>
+                  <div class="mb-3">
+                    <label for="reason" class="form-label">Reason:</label>
                     <textarea name="reason" class="form-control" id="reason"></textarea>
                   </div>
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                   <button class="btn btn-primary" type="submit">Set health</button>
                 </form>
               </div>

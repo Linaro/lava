@@ -10,7 +10,7 @@
 
 {% block content %}
 
-<h1>Chart {{ chart.name }} {% if can_admin %}<small><a href="{% url 'lava.results.chart_detail' chart.name %}" class="btn btn-xs btn-info"><span class="glyphicon glyphicon-th-list"></span> Settings</a></small>{% endif %}</h1>
+<h1>Chart {{ chart.name }} {% if can_admin %}<small><a href="{% url 'lava.results.chart_detail' chart.name %}" class="btn btn-sm btn-info"><span class="bi bi-list-ul"></span> Settings</a></small>{% endif %}</h1>
 
 {% if chart.chart_group %}
 Chart Group:&nbsp;&nbsp;<a href="{% url 'lava.results.chart_list' %}#{{ chart.chart_group|iriencode }}">{{ chart.chart_group }}</a>

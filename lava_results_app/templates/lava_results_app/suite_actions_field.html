@@ -1,8 +1,8 @@
 <div class="text-nowrap">
-  <a href="{% url 'lava.results.suite' record.pk record.testsuite__name %}" class="btn btn-xs btn-primary" title="View test suite">
-    <span class="glyphicon glyphicon-eye-open"></span>
+  <a href="{% url 'lava.results.suite' record.pk record.testsuite__name %}" class="btn btn-sm btn-primary" title="View test suite">
+    <span class="bi bi-eye-fill"></span>
   </a>
-  <a href="{% url 'lava.scheduler.job.detail' record.pk %}" class="btn btn-xs btn-info" title="View job details">
-    <span class="glyphicon glyphicon-chevron-left"></span>
+  <a href="{% url 'lava.scheduler.job.detail' record.pk %}" class="btn btn-sm btn-info" title="View job details">
+    <span class="bi bi-chevron-left"></span>
   </a>
 </div>

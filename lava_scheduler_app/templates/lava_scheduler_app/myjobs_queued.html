@@ -7,13 +7,13 @@
 
 <ul class="nav nav-tabs">
     <li role="presentation">
-        <a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-asterisk" aria-hidden="true"></span> All Jobs</a></li>
+        <a href="{% url 'lava.scheduler.myjobs' %}"><span class="bi bi-asterisk" aria-hidden="true"></span> All Jobs</a></li>
     <li role="presentation">
         <a href="{% url 'lava.scheduler.myjobs.active' %}">Active Jobs</a></li>
     <li role="presentation" class="active">
-        <a href="{% url 'lava.scheduler.myjobs.queued' %}"><span class="glyphicon glyphicon-pause" aria-hidden="true"></span> Queued Jobs</a></li>
+        <a href="{% url 'lava.scheduler.myjobs.queued' %}"><span class="bi bi-pause-fill" aria-hidden="true"></span> Queued Jobs</a></li>
     <li role="presentation">
-        <a href="{% url 'lava.scheduler.myjobs.error' %}"><span class="glyphicon glyphicon-flag" aria-hidden="true"></span> Job Errors</a></li>
+        <a href="{% url 'lava.scheduler.myjobs.error' %}"><span class="bi bi-flag-fill" aria-hidden="true"></span> Job Errors</a></li>
 </ul>
 
 {% render_table myjobs_queued_table %}

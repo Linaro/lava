@@ -12,8 +12,8 @@
 
 {% if user_query_table %}
 
-<h2>My Queries <small><a href="{% url 'lava.results.query_add' %}" class="btn btn-xs btn-info"><span
-        class="glyphicon glyphicon-plus-sign"></span> Create</a></small></h2>
+<h2>My Queries <small><a href="{% url 'lava.results.query_add' %}" class="btn btn-sm btn-info"><span
+        class="bi bi-plus-circle-fill"></span> Create</a></small></h2>
 
 {% render_table user_query_table %}
 

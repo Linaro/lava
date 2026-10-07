@@ -1,9 +1,9 @@
 /**
- * Add shared method which allows special data-toggle value 'confirm' which
+ * Add shared method which allows special data-bs-toggle value 'confirm' which
  * creates the bootbox confirm dialog when used.
  */
 add_bootbox_data_toggle = function() {
-    $(document).on("click", "[data-toggle=\"confirm\"]", function(e) {
+    $(document).on("click", "[data-bs-toggle=\"confirm\"]", function(e) {
         e.preventDefault();
         href = $(this).attr('href');
         bootbox.confirm($(this).attr("data-title"), function(result) {

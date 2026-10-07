@@ -23,35 +23,35 @@ of each type are available for tests and currently running jobs.</p>
 <h3>LAVA components</h3>
 <ul>
     <li>
-        <span class="glyphicon glyphicon-signal"></span>
+        <span class="bi bi-reception-4"></span>
         <b><a href="{% url 'lava_results' %}">Results</a></b> - viewing results
         of tests run by you or others.
     </li>
     <li>
-        <span class="glyphicon glyphicon-calendar"></span>
+        <span class="bi bi-calendar-fill"></span>
         <b><a href="{% url 'lava.scheduler' %}">Scheduler</a></b> - jobs
         are scheduled on available devices and the scheduler pages allow
         you to view current and past jobs as well as submit new jobs.
     </li>
     <li>
-        <span class="glyphicon glyphicon-flash"></span>
+        <span class="bi bi-lightning-fill"></span>
         <b><a href="{% url 'lava.api_help' %}">API</a></b> - information on how to interact
         with LAVA and export data from LAVA using XMLRPC.</li>
     <li>
-        <span class="glyphicon glyphicon-question-sign"></span>
+        <span class="bi bi-question-circle-fill"></span>
         <b><a href="{{ STATIC_URL }}docs/index.html">Help</a></b> - documentation
         on using LAVA, worked examples and use cases, developing your own
         tests and how to administer a LAVA instance of your own.</li>
     {% if user.is_authenticated %}
     <li>
-        <span class="glyphicon glyphicon-user"></span>
+        <span class="bi bi-person-fill"></span>
         <b><a href="{% url 'lava.me' %}">Profile</a></b> - you are logged in as
     <b>{{ user.get_full_name|default:user.username }}</b>. Your
     profile provides access to jobs you have submitted or marked as
     favourites and details of devices owned by you. </li>
     {% else %}
     <li>
-        <span class="glyphicon glyphicon-user"></span>
+        <span class="bi bi-person-fill"></span>
         <b><a href="{% url 'login' %}?next={{ request.get_full_path }}">Sign In</a></b> - once you are logged in,
     LAVA will build a profile for you which provides access to jobs you have
     submitted or marked as favourites and details of devices owned by you.</li>
@@ -65,24 +65,24 @@ of each type are available for tests and currently running jobs.</p>
         <ul class="nav nav-pills nav-stacked">
           <li><a href="{{ STATIC_URL }}docs/index.html"
               class="btn btn-primary">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              <span class="bi bi-question-circle-fill"></span>
               Introduction to LAVA</a></li>
           <li><a
           href="{{ STATIC_URL }}docs/admin/first-steps.html"
-              class="btn btn-default">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              class="btn btn-secondary">
+              <span class="bi bi-question-circle-fill"></span>
               Administering a LAVA instance</a></li>
        </ul>
       </div>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a href="http://www.lavasoftware.org/"
-              class="btn btn-default">
+              class="btn btn-secondary">
               More about LAVA &amp; Linaro</a></li>
           <li><a
           href="{{ STATIC_URL }}docs/developer/first-steps.html"
-              class="btn btn-default">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              class="btn btn-secondary">
+              <span class="bi bi-question-circle-fill"></span>
               Developing LAVA</a></li>
        </ul>
       </div>
@@ -96,12 +96,12 @@ of each type are available for tests and currently running jobs.</p>
           <li><a
           href="{{ STATIC_URL }}docs/user/first-steps.html"
               class="btn btn-info">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              <span class="bi bi-question-circle-fill"></span>
               Use cases and worked examples.</a></li>
           <li><a
           href="{{ STATIC_URL }}docs/user/advanced-tutorials/tmate-based-hacking-session.html"
               class="btn btn-info">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              <span class="bi bi-question-circle-fill"></span>
               Logging into a LAVA device.</a></li>
        </ul>
       </div>
@@ -110,7 +110,7 @@ of each type are available for tests and currently running jobs.</p>
           <li><a
           href="{{ STATIC_URL }}docs/user/basic-tutorials/test-definition.html"
               class="btn btn-success">
-              <span class="glyphicon glyphicon-question-sign"></span>
+              <span class="bi bi-question-circle-fill"></span>
               Writing a LAVA test definition.</a></li>
         </ul>
       </div>
@@ -125,11 +125,11 @@ of each type are available for tests and currently running jobs.</p>
     <ul class="nav nav-pills nav-stacked">
       <li>
         <a href="{% url 'lava.scheduler.myjobs' %}"><span
-            class="glyphicon glyphicon-tasks pull-right"></span> Your jobs</a>
+            class="bi bi-list-task float-end"></span> Your jobs</a>
       </li>
       <li>
         <a href="{% url 'lava.scheduler.favorite_jobs' %}"><span
-            class="glyphicon glyphicon-phone pull-right"></span> Your favourite jobs</a>
+            class="bi bi-phone-fill float-end"></span> Your favourite jobs</a>
       </li>
     </ul>
   </div>
@@ -138,7 +138,7 @@ of each type are available for tests and currently running jobs.</p>
     <ul class="nav nav-pills nav-stacked">
       <li>
         <a href="{% url 'lava_results' %}"><span
-            class="glyphicon glyphicon-signal pull-right"></span> Your results</a>
+            class="bi bi-reception-4 float-end"></span> Your results</a>
       </li>
      </ul>
     </div>

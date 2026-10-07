@@ -1,6 +1,8 @@
 /**
  * bootbox.js [v4.4.0]
  *
+ * Patched for Bootstrap 5 markup (close button, default button class).
+ *
  * http://bootboxjs.com/license.txt
  */
 
@@ -43,7 +45,7 @@
     footer:
       "<div class='modal-footer'></div>",
     closeButton:
-      "<button type='button' class='bootbox-close-button close' data-dismiss='modal' aria-hidden='true'>&times;</button>",
+      "<button type='button' class='bootbox-close-button btn-close' data-bs-dismiss='modal' aria-label='Close'></button>",
     form:
       "<form class='bootbox-form'></form>",
     inputs: {
@@ -177,7 +179,7 @@
           // always add a primary to the main option in a two-button dialog
           button.className = "btn-primary";
         } else {
-          button.className = "btn-default";
+          button.className = "btn-secondary";
         }
       }
     });
@@ -621,9 +623,9 @@
       var closeButton = $(templates.closeButton);
 
       if (options.title) {
-        dialog.find(".modal-header").prepend(closeButton);
+        dialog.find(".modal-header").append(closeButton);
       } else {
-        closeButton.css("margin-top", "-10px").prependTo(body);
+        closeButton.addClass("float-end").prependTo(body);
       }
     }
 

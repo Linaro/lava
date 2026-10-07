@@ -1,104 +1,99 @@
 {% load i18n static utils %}
   <!-- menu -->
-  <nav class="navbar navbar-default navbar-fixed-top">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
     <div class="container">
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <a class="navbar-brand" href="{{ lava.branding_url }}"><p><img height={{ lava.branding_height }}
-                width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}"> LAVA</p></a>
-      </div>
-      <div id="navbar" class="navbar-collapse collapse">
-        <ul class="nav navbar-nav">
-          <li><a href="{% url 'lava.home' %}"><span class="glyphicon glyphicon-home"></span> Home</a></li>
-          <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-signal"></span> Results <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="{% url 'lava_results' %}">Results</a></li>
-              <li><a href="{% url 'lava.results.query_list' %}">Queries</a></li>
-              <li><a href="{% url 'lava.results.chart_list' %}">Charts</a></li>
+      <a class="navbar-brand" href="{{ lava.branding_url }}"><img height={{ lava.branding_height }}
+              width={{ lava.branding_width }} src="{% static lava.branding_icon %}" alt="{{ lava.branding_alt }}"> LAVA</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div id="navbar" class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="{% url 'lava.home' %}"><i class="bi bi-house-fill"></i> Home</a></li>
+          <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="resultsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-bar-chart-fill"></i> Results</a>
+            <ul class="dropdown-menu" aria-labelledby="resultsDropdown">
+              <li><a class="dropdown-item" href="{% url 'lava_results' %}">Results</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.results.query_list' %}">Queries</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.results.chart_list' %}">Charts</a></li>
             </ul>
           </li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-calendar"></span> Scheduler <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="{% url 'lava.scheduler' %}">Status</a></li>
-              <li><a href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
-              <li role="separator" class="divider"></li>
-              <li><a href="{% url 'lava.scheduler.device_types' %}">Device Types</a></li>
-              <li><a href="{% url 'lava.scheduler.active_devices' %}">Devices</a></li>
-              <li><a href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
-              <li><a href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="schedulerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-calendar-fill"></i> Scheduler</a>
+            <ul class="dropdown-menu" aria-labelledby="schedulerDropdown">
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler' %}">Status</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.reports' %}">Reports</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.device_types' %}">Device Types</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.active_devices' %}">Devices</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.job.list' %}">Jobs</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.workers' %}">Workers</a></li>
               {% if user.is_authenticated %}
-              <li role="separator" class="divider"></li>
-              <li><a href="{% url 'lava.scheduler.job.submit' %}">Submit</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.job.submit' %}">Submit</a></li>
               {% endif %}
             </ul>
           </li>
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-flash"></span> API <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="{% url 'lava.api_help' %}">Available Methods</a></li>
-              <li><a href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
-              <li><a href="{% url 'api-root' 'v0.2' %}">REST (v0.2)</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="apiDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-lightning-fill"></i> API</a>
+            <ul class="dropdown-menu" aria-labelledby="apiDropdown">
+              <li><a class="dropdown-item" href="{% url 'lava.api_help' %}">Available Methods</a></li>
+              <li><a class="dropdown-item" href="{% url 'linaro_django_xmlrpc_tokens' %}">Authentication Tokens</a></li>
+              <li><a class="dropdown-item" href="{% url 'api-root' 'v0.2' %}">REST (v0.2)</a></li>
             </ul>
           </li>
           {% assign_setting 'CUSTOM_DOCS' as userdocs %}
               {% if userdocs %}
-                  <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-question-sign"></span> Help <b class="caret"></b></a>
-                  <ul class="dropdown-menu">
-                      <li><a href="{{ STATIC_URL }}docs/index.html">Help</a></li>
+                  <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" id="helpDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-question-circle-fill"></i> Help</a>
+                  <ul class="dropdown-menu" aria-labelledby="helpDropdown">
+                      <li><a class="dropdown-item" href="{{ STATIC_URL }}docs/index.html">Help</a></li>
                   {% for label, url in userdocs.items %}
                       {% if label and url %}
-                         <li role="separator" class="divider"></li>
-                         <li><a href="{{ url }}">{{ label }}</a></li>
+                         <li><hr class="dropdown-divider"></li>
+                         <li><a class="dropdown-item" href="{{ url }}">{{ label }}</a></li>
                       {% endif %}
                   {% endfor %}
                   </ul>
                   </li>
               {% else %}
-                  <li><a href="{{ STATIC_URL }}docs/index.html"><span class="glyphicon glyphicon-question-sign"></span> Help</a></li>
+                  <li class="nav-item"><a class="nav-link" href="{{ STATIC_URL }}docs/index.html"><i class="bi bi-question-circle-fill"></i> Help</a></li>
               {% endif %}
         </ul>
-        <ul class="nav navbar-nav navbar-right">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
           {% if lava.instance_name %}
-          <li class="visible-lg"><p class="navbar-text">Instance: {{ lava.instance_name }}</p></li>
+          <li class="nav-item d-none d-lg-flex align-items-center"><span class="navbar-text ms-2">Instance: {{ lava.instance_name }}</span></li>
           {% endif %}
           {% if user.is_authenticated %}
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ user.get_full_name|default:user.username }} <b class="caret"></b></a>
-            <ul class="dropdown-menu">
-              <li><a href="{% url 'lava.me' %}"><span class="glyphicon glyphicon-cog"></span> Profile</a></li>
-              <li><a href="{% url 'lava.scheduler.myjobs' %}"><span class="glyphicon glyphicon-tasks"></span> Jobs</a></li>
-              <li><a href="{% url 'lava.scheduler.favorite_jobs' %}"><span class="glyphicon glyphicon-tasks"></span> Favorite Jobs</a></li>
-              <li><a href="{% url 'lava.scheduler.mydevice_list' %}"><span class="glyphicon glyphicon-phone"></span> Devices</a></li>
-              <li><a href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><span class="glyphicon glyphicon-time"></span> Devices Health History</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-person-fill"></i> {{ user.get_full_name|default:user.username }}</a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+              <li><a class="dropdown-item" href="{% url 'lava.me' %}"><i class="bi bi-gear-fill"></i> Profile</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.myjobs' %}"><i class="bi bi-list-check"></i> Jobs</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.favorite_jobs' %}"><i class="bi bi-star-fill"></i> Favorite Jobs</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.mydevice_list' %}"><i class="bi bi-phone-fill"></i> Devices</a></li>
+              <li><a class="dropdown-item" href="{% url 'lava.scheduler.mydevices_health_history_log' %}"><i class="bi bi-calendar-event-fill"></i> Devices Health History</a></li>
               {% if user.is_staff %}
-              <li class="divider"></li>
-              <li><a href="{% url 'admin:index' %}"><span class="glyphicon glyphicon-fire"></span> Administration</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-fire"></i> Administration</a></li>
               {% endif %}
-              <li class="divider"></li>
+              <li><hr class="dropdown-divider"></li>
               <li>
-                <form method="post" action="{% url 'logout' %}?next={% url 'lava.home' %}" style="display: inline; margin: 0; padding: 0; border: 0; background: none;">
+                <form method="post" action="{% url 'logout' %}?next={% url 'lava.home' %}" class="d-inline">
                   {% csrf_token %}
-                  <button type="submit" style="display: block; width: 100%; padding: 3px 20px; font: inherit; text-align: left; color: inherit; background: none; border: 0; cursor: pointer;"><span class="glyphicon glyphicon-off"></span> Sign out</button>
+                  <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Sign out</button>
                 </form>
               </li>
             </ul>
           </li>
           {% else %}
-          <li><p class="navbar-text">
+          <li class="nav-item"><span class="navbar-text">
           {% if request.get_full_path == "/accounts/logout/" %}
-            <a href="{% url 'login' %}">{% trans "Sign In" %}</a>
+            <a href="{% url 'login' %}" class="nav-link">{% trans "Sign In" %}</a>
            {% else %}
-            <a href="{% url 'login' %}?next={{request.get_full_path}}">{% trans "Sign In" %}</a>
+            <a href="{% url 'login' %}?next={{request.get_full_path}}" class="nav-link">{% trans "Sign In" %}</a>
            {% endif %}
-          </p></li>
+          </span></li>
           {% endif %}
         </ul>
       </div>
