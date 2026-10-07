@@ -91,6 +91,31 @@ def test_share_device(mocker):
     assert args.serial_number == "01234567890"
 
 
+def test_share_device_remote(mocker):
+    client = mocker.patch("lava_dispatcher_host.client.Client")()
+
+    main(
+        [
+            "lava-dispatcher-host",
+            "devices",
+            "share",
+            "--remote",
+            "foo/bar",
+            "--serial-number=01234567890",
+        ]
+    )
+
+    client.send_request.assert_called_once_with(
+        {
+            "device": "foo/bar",
+            "serial_number": "01234567890",
+            "usb_vendor_id": None,
+            "usb_product_id": None,
+            "fs_label": None,
+        }
+    )
+
+
 def test_map_device(mocker):
     add_device_container_mapping = mocker.patch(
         "lava_common.device_mappings.add_device_container_mapping"
