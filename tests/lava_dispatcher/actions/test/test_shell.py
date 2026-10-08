@@ -315,6 +315,28 @@ class TestTestShell(LavaDispatcherTestCase):
             {"case": "hello", "type": "test_case"}
         )
 
+        # "signal.TESTCASE corrupted by a kernel message"
+        action = TestShellAction(job)
+        action.logger.marker = MagicMock()
+        action.signal_director.test_uuid = "UUID"
+        action.parameters = {"namespace": "common"}
+
+        data = (
+            "TESTCASE",
+            "TEST_CASE_ID=pwd RESULT=pass[   77.462092] lava-test-runne (2303) used greatest stack depth: 12232 bytes left\r\n",
+        )
+        with self.assertRaises(TestError):
+            with self.collect_lava_logs(action) as action_logs:
+                action.check_patterns("signal", MockConnection(data))
+        self.assertEqual(
+            action_logs[1],
+            (
+                "ERROR",
+                "Malformed parameter for signal: '77.462092]' (signal corrupted by a kernel message, consider 'lava-signal: kmsg')",
+                [],
+            ),
+        )
+
         # "signal.TESTCASE missing TEST_CASE_ID"
         action = TestShellAction(job)
         action.logger.marker = MagicMock()

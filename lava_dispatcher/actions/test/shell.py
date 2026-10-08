@@ -29,6 +29,10 @@ if TYPE_CHECKING:
     from lava_dispatcher.job import Job
 
 
+# The timestamp of a kernel message, like '[   77.462092]'
+KERNEL_TIMESTAMP = re.compile(r"\[\s*\d+\.\d+\]")
+
+
 def handle_testcase(params):
     data = {}
     for param in params:
@@ -37,6 +41,11 @@ def handle_testcase(params):
             key, value = parts
             key = key.lower()
             data[key] = value
+        elif KERNEL_TIMESTAMP.search(" ".join(params)):
+            raise TestError(
+                f"Malformed parameter for signal: {param!r} "
+                "(signal corrupted by a kernel message, consider 'lava-signal: kmsg')"
+            )
         else:
             raise TestError(f"Malformed parameter for signal: {param!r}")
     return data
