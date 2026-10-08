@@ -61,7 +61,13 @@ def handle_devices_share(options):
         ]:
             if f in data:
                 request[f] = data[f]
-        client.send_request(request)
+        response = client.send_request(request)
+        if response.get("result") != "OK":
+            print(
+                response.get("message") or response.get("result"),
+                file=sys.stderr,
+            )
+            sys.exit(1)
     else:
         from lava_dispatcher_host.utils import share_device_with_container
 

@@ -23,5 +23,14 @@ class Client:
             s.connect(self.socket)
             s.sendall(bytes(json.dumps(request), "utf-8"))
             s.shutdown(socket.SHUT_WR)
-            response = s.recv(1024)
+            chunks = []
+            while chunk := s.recv(4096):
+                chunks.append(chunk)
+            response = b"".join(chunks)
             logger.info(str(response))
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            # the server closed the connection without a reply, e.g.
+            # it rejected a non-root peer
+            return {"result": "NO_RESPONSE"}

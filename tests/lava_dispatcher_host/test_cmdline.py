@@ -93,6 +93,7 @@ def test_share_device(mocker):
 
 def test_share_device_remote(mocker):
     client = mocker.patch("lava_dispatcher_host.client.Client")()
+    client.send_request.return_value = {"result": "OK"}
 
     main(
         [
@@ -114,6 +115,29 @@ def test_share_device_remote(mocker):
             "fs_label": None,
         }
     )
+
+
+def test_share_device_remote_failure(mocker, capsys):
+    client = mocker.patch("lava_dispatcher_host.client.Client")()
+    client.send_request.return_value = {
+        "result": "FAILED",
+        "message": "InfrastructureError('no such device')",
+    }
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(
+            [
+                "lava-dispatcher-host",
+                "devices",
+                "share",
+                "--remote",
+                "foo/bar",
+                "--serial-number=01234567890",
+            ]
+        )
+
+    assert exit_info.value.code == 1
+    assert capsys.readouterr().err == "InfrastructureError('no such device')\n"
 
 
 def test_map_device(mocker):
