@@ -208,6 +208,69 @@ level using the `expected` key, **not** inside the inline definition.
 See also
 [expected test cases in the test definition](../../../user/basic-tutorials/test-definition.md#expected).
 
+### lava-signal
+
+(optional) Select how the LAVA test helpers send their signals
+(`<LAVA_SIGNAL_STARTRUN ...>`, `<LAVA_SIGNAL_TESTCASE ...>`, ...) to the
+dispatcher. Supported: `stdout` (default) and `kmsg`.
+
+```yaml title="Send the signals through the kernel log" hl_lines="7"
+- test:
+    definitions:
+    - name: kselftest
+      from: git
+      repository: https://github.com/Linaro/test-definitions
+      path: automated/linux/kselftest/kselftest.yaml
+      lava-signal: kmsg
+```
+
+With the default `stdout`, the signals are written to the standard output of
+the test shell. When the kernel console is on the same serial line, the kernel
+can print a message **in the middle** of a signal, corrupting it and making the
+job fail with `TestError`. See
+[kernel messages corrupting LAVA signals](../../../user/advanced-tutorials/debugging-job.md#kernel-messages-corrupting-lava-signals)
+for an example.
+
+With `kmsg`, every signal is written to `/dev/kmsg` with the emergency log
+level (`<0>`). The kernel prints each record as a whole, so a kernel message
+can only appear **before** or **after** a signal, never inside it. The signals
+are then prefixed with the kernel timestamp, which LAVA ignores:
+
+```text
+[   77.462092] <LAVA_SIGNAL_TESTCASE TEST_CASE_ID=linux-posix-pwd RESULT=pass>
+```
+
+`kmsg` is recommended for any test definition that can trigger kernel
+messages: kernel test suites (LTP, kselftest, ...), driver and stress tests or
+when the kernel is built with debug options.
+
+Requirements:
+
+* the DUT is running Linux with `/dev/kmsg`
+* the test shell runs as `root` (needed to write to `/dev/kmsg`)
+* the kernel console (`console=`) is the serial line that LAVA is reading
+
+Limitations:
+
+* only the signals are protected. The output of the test commands is still
+  written to `stdout` and can still be interleaved with kernel messages.
+* the signals and the output of the test commands are going through two
+  different paths. The kernel can print a signal slightly before or after the
+  output that surrounds it.
+* the setting applies per test definition. The markers printed by the test
+  runner itself (like `<LAVA_TEST_RUNNER EXIT>`) follow the setting of the
+  test definition currently being run.
+* the login and the boot are not covered. Kernel messages printed while LAVA
+  waits for the prompts can still break the boot action.
+* not usable when the test shell is not running on a Linux kernel that writes
+  to the serial console: containers (docker device-type), SSH connections, ...
+
+!!! tip
+    Lowering the console log level with `dmesg -n 1` (for instance in the
+    boot `auto_login.login_commands`) is complementary: the signals are still
+    printed (emergency level) while most of the kernel noise disappears from the
+    console.
+
 ### Additional support
 
 #### Result checks

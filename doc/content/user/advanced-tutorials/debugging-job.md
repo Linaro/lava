@@ -218,6 +218,94 @@ you have built or modified yourself in LAVA test jobs:
 
 * Compare your configuration with known working test jobs.
 
+### Kernel messages corrupting LAVA signals
+
+The LAVA test helpers report results by printing signals like
+`<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=... RESULT=pass>` on the serial console.
+By default, they are written to `stdout`. When the kernel console is on the
+same serial line, the kernel can print a message at any time, including in
+the middle of a signal.
+
+This is an intermittent failure: the same job on the same device usually
+passes when resubmitted.
+
+#### Example
+
+The following `x86` health-check failed after the network tests passed. The
+kernel reported the stack usage of `lava-test-runner` while `lava-test-case`
+was printing the result of `linux-posix-pwd`:
+
+```text
++ lava-test-case linux-posix-pwd --shell pwd
+<LAVA_SIGNAL_STARTTC linux-posix-pwd>
+/lava-414579/0/tests/1_smoke-tests
+<LAVA_SIGNAL_ENDTC linux-posix-pwd>
+<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=linux-posix-pwd RESULT=pass[   77.462092] lava-test-runne (2303) used greatest stack depth: 12232 bytes left
+>
+Received signal: <TESTCASE> TEST_CASE_ID=linux-posix-pwd RESULT=pass[   77.462092] lava-test-runne (2303) used greatest stack depth: 12232 bytes left
+Malformed parameter for signal: '77.462092]'
+Marking unfinished test run as failed
+```
+
+The kernel message ended up between `RESULT=pass` and the closing `>`. LAVA
+read everything up to the next `>` as signal parameters and could not parse the
+signal. The job ended as `Incomplete` with a `TestError`.
+
+As this was a health-check, a single corrupted signal was enough to mark the
+device as `Bad`.
+
+#### Symptoms
+
+Depending on where the kernel message lands, the job can fail with:
+
+* `Malformed parameter for signal: ...`
+* `Invalid signal` or `Invalid TESTCASE signal`
+* `Unknown test uuid. The STARTRUN signal for this test action was not received correctly.`
+* `Bad test result: ...` or `Invalid measurement ...`
+
+Or the job may complete with wrong results: a test case or test suite named
+after a piece of the kernel message, a missing result, or a test run marked as
+failed because its `ENDRUN` signal was never recognized.
+
+In all these cases, look at the raw log around the error for a kernel
+timestamp (`[   77.462092]`) inside a `<LAVA_SIGNAL_...>` line.
+
+#### Fix
+
+Send the signals through the kernel log by setting
+[`lava-signal: kmsg`](../../technical-references/job-definition/actions/test.md#lava-signal)
+on the test definitions:
+
+```yaml hl_lines="6"
+- test:
+    definitions:
+    - repository: https://gitlab.com/lava/functional-tests.git
+      from: git
+      path: posix/smoke-tests-basic.yaml
+      lava-signal: kmsg
+      name: smoke-tests
+```
+
+The kernel then prints every signal as a whole, and a kernel message can only
+appear before or after it.
+
+It's also worth reducing the kernel noise on the console after login, so that
+the output of the test commands is easier to read:
+
+```yaml hl_lines="5"
+- boot:
+    auto_login:
+      login_prompt: 'login:'
+      username: root
+      login_commands:
+      - dmesg -n 1
+```
+
+The signals sent through `/dev/kmsg` use the emergency log level, so they are
+still printed. Avoid removing the kernel messages from the boot entirely
+(`quiet` or `loglevel=` kernel arguments): they are needed to debug boot
+failures.
+
 ### Avoid using shell operators in YAML lines
 
 Pipes, redirects and nested sub-shells will not work reliably when put directly
