@@ -86,4 +86,10 @@ LAVA provides REST APIs alongside the `lavacli` client, enabling seamless
 integration with CI systems and supporting LAVA instance management through
 Infrastructure as Code (IaC).
 
+## MCP server
+
+`lavacli` provides a [Model Context Protocol][mcp] (MCP) server, allowing LLM
+clients to inspect jobs, devices and results, and to submit jobs. See
+[lavacli](../user/basic-tutorials/lavacli.md#mcp-server).
+
 --8<-- "refs.txt"
