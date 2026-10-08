@@ -40,6 +40,15 @@ The helpers are mainly used to:
 * embed information from LAVA into the test shell
 * support communication with LAVA during test runs
 
+The helpers communicate with LAVA by printing signals like
+`<LAVA_SIGNAL_TESTCASE TEST_CASE_ID=pwd RESULT=pass>` on the serial console.
+If the kernel also prints its messages on that console, a kernel message can
+corrupt a signal and abort the job. Set
+[`lava-signal: kmsg`](../../technical-references/job-definition/actions/test.md#lava-signal)
+on the test definition in the job to send the signals through the kernel log
+instead. See
+[kernel messages corrupting LAVA signals](../advanced-tutorials/debugging-job.md#kernel-messages-corrupting-lava-signals).
+
 #### lava-test-case
 
 ##### Result
