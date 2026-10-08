@@ -8,6 +8,7 @@ import datetime
 import unittest
 import xmlrpc.client
 from io import BytesIO as StringIO
+from pathlib import Path
 
 import pytest
 from django.contrib.auth.models import Group, Permission, User
@@ -289,6 +290,42 @@ class TestSchedulerAPI(TestCaseWithFactory):
         f = cm.exception
         self.assertEqual(f.faultCode, 400)
         self.assertEqual(f.faultString, "Invalid health 'Completed'")
+
+    def test_jobs_logs_count(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        definition = self.factory.make_job_data_from_file(
+            "qemu-pipeline-first-job.yaml"
+        )
+        job = testjob_submission(definition, user, None)
+        server = self.server_proxy()
+
+        # No logs yet
+        self.assertEqual(server.scheduler.jobs.logs_count(str(job.id)), 0)
+
+        output_dir = Path(job.output_dir)
+        output_dir.mkdir(parents=True)
+        (output_dir / "output.yaml").write_text(
+            '- {"dt": "2026-10-08T07:04:01", "lvl": "info", "msg": "start"}\n'
+            '- {"dt": "2026-10-08T07:04:02", "lvl": "info", "msg": "middle"}\n'
+            '- {"dt": "2026-10-08T07:04:03", "lvl": "error", "msg": "end"}\n',
+            encoding="utf-8",
+        )
+        count = server.scheduler.jobs.logs_count(str(job.id))
+        self.assertEqual(count, 3)
+
+        # The count gives the end of the logs
+        _, data = server.scheduler.jobs.logs(str(job.id), count - 1)
+        logs = yaml_safe_load(data.data.decode("utf-8"))
+        self.assertEqual([line["msg"] for line in logs], ["end"])
+
+        # Unknown job
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.logs_count("999999")
+        self.assertEqual(cm.exception.faultCode, 404)
 
     def test_jobs_validate_bad_yaml(self):
         server = self.server_proxy()

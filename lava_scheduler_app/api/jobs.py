@@ -343,7 +343,7 @@ class SchedulerJobsAPI(ExposedV2API):
         `start`: int
           Show only after the given line
         `end`: int
-          Do not return after the fiven line
+          Do not return after the given line
 
         Return value
         ------------
@@ -367,6 +367,44 @@ class SchedulerJobsAPI(ExposedV2API):
             return (job_finished, xmlrpc.client.Binary(data.encode("utf-8")))
         except OSError:
             return (job_finished, xmlrpc.client.Binary(b"[]"))
+
+    def logs_count(self, job_id):
+        """
+        Name
+        ----
+        `scheduler.jobs.logs_count` (`job_id`)
+
+        Description
+        -----------
+        Return the number of log lines of the given job
+
+        Arguments
+        ---------
+        `job_id`: str
+          Job id
+
+        Return value
+        ------------
+        This function returns the number of log lines, 0 when the job has no
+        logs yet. While the job is running, the number keeps growing.
+        Combined with `scheduler.jobs.logs`, it allows to fetch the end of the
+        logs: `scheduler.jobs.logs(job_id, count - 100)` returns the last 100
+        lines.
+        """
+        try:
+            job = TestJob.get_by_job_number(job_id)
+        except TestJob.DoesNotExist:
+            raise xmlrpc.client.Fault(404, "Job '%s' was not found." % job_id)
+
+        if not job.can_view(self.user):
+            raise xmlrpc.client.Fault(
+                403, f"Job '{job_id}' not available to user '{self.user}'."
+            )
+
+        try:
+            return logs_instance.line_count(job)
+        except OSError:
+            return 0
 
     def show(self, job_id):
         """
