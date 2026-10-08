@@ -68,6 +68,31 @@ def test_read_logs_compressed(mocker, tmp_path, logs_filesystem):
     assert logs_filesystem.read(job, start=1, end=0) == ""  # nosec
 
 
+def test_line_count(mocker, tmp_path, logs_filesystem):
+    job = mocker.Mock()
+    job.output_dir = tmp_path
+    # No logs at all
+    with pytest.raises(FileNotFoundError):
+        logs_filesystem.line_count(job)
+    assert not (tmp_path / "output.idx").exists()  # nosec
+
+    # The missing index is built
+    (tmp_path / "output.yaml").write_text("hello\nworld\nhow\n", encoding="utf-8")
+    assert logs_filesystem.line_count(job) == 3  # nosec
+    assert (tmp_path / "output.idx").exists()  # nosec
+    assert logs_filesystem.read(job, start=2) == "how\n"  # nosec
+
+
+def test_line_count_compressed(mocker, tmp_path, logs_filesystem):
+    job = mocker.Mock()
+    job.output_dir = tmp_path
+    with lzma.open(str(tmp_path / "output.yaml.xz"), "wb") as f_logs:
+        f_logs.write(b"compressed\nor\nnot")
+    # The last line has no line ending: still a line
+    assert logs_filesystem.line_count(job) == 3  # nosec
+    assert logs_filesystem.read(job, start=2) == "not"  # nosec
+
+
 def test_size_logs(mocker, tmp_path, logs_filesystem):
     job = mocker.Mock()
     job.output_dir = tmp_path
@@ -92,6 +117,7 @@ def test_write_logs(mocker, tmp_path, logs_filesystem):
             logs_filesystem.write(job, b"how are you?\n", f_logs, f_idx)
     assert logs_filesystem.read(job) == "hello world\nhow are you?\n"  # nosec
     assert logs_filesystem.size(job) == 25  # nosec
+    assert logs_filesystem.line_count(job) == 2  # nosec
     with open(str(tmp_path / "output.idx"), "rb") as f_idx:
         assert struct.unpack("=Q", f_idx.read(8))[0] == 0  # nosec
         assert struct.unpack("=Q", f_idx.read(8))[0] == 12  # nosec

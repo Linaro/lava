@@ -73,10 +73,11 @@ class LogsFilesystem(Logs):
         directory = pathlib.Path(job.output_dir)
         with self.open(job) as f_log:
             with open(str(directory / self.index_filename), "wb") as f_idx:
-                f_idx.write(struct.pack(self.PACK_FORMAT, 0))
+                offset = 0
                 line = f_log.readline()
                 while line:
-                    f_idx.write(struct.pack(self.PACK_FORMAT, f_log.tell()))
+                    f_idx.write(struct.pack(self.PACK_FORMAT, offset))
+                    offset = f_log.tell()
                     line = f_log.readline()
 
     def _get_line_offset(self, f_idx: BinaryIO, line: int) -> int | None:
@@ -88,7 +89,10 @@ class LogsFilesystem(Logs):
             return None
 
     def line_count(self, job: TestJob) -> int:
-        st = (pathlib.Path(job.output_dir) / self.index_filename).stat()
+        directory = pathlib.Path(job.output_dir)
+        if not (directory / self.index_filename).exists():
+            self._build_index(job)
+        st = (directory / self.index_filename).stat()
         return int(st.st_size / self.PACK_SIZE)
 
     def open(self, job: TestJob) -> BinaryIO:
