@@ -297,6 +297,7 @@ project-includes = [
   "lava_dispatcher/runner.py",
   "lava_dispatcher/shell.py",
   "lava_dispatcher/utils/",
+  "lava_dispatcher_host/client.py",
 ]
 errors.missing-import = false  # guestfs requires libguestfs-dev (C headers) not available in pre-commit env
 check-unannotated-defs = true

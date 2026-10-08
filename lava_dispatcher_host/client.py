@@ -4,21 +4,26 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import json
 import logging
 import socket
+from typing import TYPE_CHECKING
 
 from lava_dispatcher_host import SOCKET
 
 logger = logging.getLogger()
 
+if TYPE_CHECKING:
+    from typing import Any
+
 
 class Client:
-    def __init__(self, socket=SOCKET):
+    def __init__(self, socket: str = SOCKET):
         self.socket = socket
 
-    def send_request(self, request):
+    def send_request(self, request: Any) -> Any:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
             s.connect(self.socket)
             s.sendall(bytes(json.dumps(request), "utf-8"))
