@@ -26,6 +26,9 @@ class ShareCommand:
 
 class CommandHandler:
     def handle(self, command: ShareCommand):
+        logger.debug(
+            "Executing share device with container command: %r", command.options
+        )
         share_device_with_container(command.options)
 
 
@@ -42,7 +45,7 @@ class ServerWrapper:
         self.socket = socket
 
     def exit(self, signal):
-        logger.info(f"Exiting due to {signal}")
+        logger.info("Exiting due to %r signal", signal)
 
     async def start(self):
         logger.info("Starting")
@@ -53,6 +56,7 @@ class ServerWrapper:
             if int(sd_sockets) > 1:
                 raise RuntimeError("Only one socket is supported")
             fd = int(os.getenv("SD_LISTEN_FDS_START", "3"))
+            logger.debug("Using systemd.socket")
             sock = socket.fromfd(fd, socket.AF_UNIX, socket.SOCK_STREAM)
             server_kwargs = {"sock": sock}
         else:
@@ -70,6 +74,7 @@ class ServerWrapper:
         caller is the root udev rule; a non-root peer is rejected. Fails
         closed if the peer credentials cannot be read.
         """
+        logger.debug("Checking peer credentials")
         sock = writer.transport.get_extra_info("socket")
         try:
             cred = sock.getsockopt(
@@ -89,7 +94,7 @@ class ServerWrapper:
             return
 
         request = await reader.read()
-        logger.debug(f"Received request: {request}")
+        logger.debug("Received request: %r", request)
 
         result = None
 
@@ -100,21 +105,23 @@ class ServerWrapper:
             result = encode_result("INVALID_REQUEST", ex)
 
         if not result:
+            logger.debug("No request result. Returning 'OK'.")
             try:
                 handler = CommandHandler()
                 handler.handle(command)
                 result = encode_result("OK")
             except Exception as ex:
-                logger.warning(repr(ex))
+                logger.exception("Exception occurred while sending back 'OK' result")
                 result = encode_result("FAILED", ex)
 
         try:
+            logger.debug("Sending back result: %r", result)
             writer.write(result)
             await writer.drain()
             writer.close()
             await writer.wait_closed()
-        except ConnectionResetError as ex:
-            logger.warning(repr(ex))
+        except ConnectionResetError:
+            logger.exception("Exception occurred while sending back result: %r", result)
 
 
 def main():
