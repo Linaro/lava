@@ -3,21 +3,19 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
-import contextlib
 import json
 import logging
 import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 from jinja2 import Template
 
 from lava_common.exceptions import InfrastructureError
 
 try:
-    from bcc import BPF, BPFAttachType
+    from bcc import BPF, BPFAttachType  # type: ignore[import-not-found]
 except ImportError:
     # This can happen on Debian 10 and that's ok. The code path that uses this
     # will only be used on Debian 11 +
@@ -52,22 +50,25 @@ int lava_docker_device_access_control(struct bpf_cgroup_dev_ctx *ctx) {
 
 @dataclass(frozen=True)
 class Device:
-    major: str
-    minor: str = None
+    major: int
+    minor: int | None = None
 
 
-def DeviceFilter(*args, **kwargs):
+def DeviceFilter(
+    container: str,
+    state_file: Path | None = None,
+) -> DeviceFilterCommon:
     for klass in [DeviceFilterCGroupsV1, DeviceFilterCGroupsV2]:
         if klass.detect():
-            return klass(*args, **kwargs)
+            return klass(container, state_file)
     raise InfrastructureError(
         "Neither cgroups v1 nor v2 detected; can't share device with docker container"
     )
 
 
 class DeviceFilterCommon:
-    def __init__(self, container, state_file: Path | None = None):
-        self.__devices__ = set()
+    def __init__(self, container: str, state_file: Path | None = None):
+        self.__devices__: set[Device] = set()
         if state_file:
             self.load(state_file)
         self.container_id = subprocess.check_output(
@@ -75,36 +76,36 @@ class DeviceFilterCommon:
         ).strip()
 
     @property
-    def devices(self):
+    def devices(self) -> list[Device]:
         return list(self.__devices__)
 
-    def load(self, state: Path):
+    def load(self, state_file: Path) -> None:
         pass
 
-    def save(self, state: Path):
+    def save(self, state_file: Path) -> None:
         pass
 
-    def add(self, device: Device):
+    def add(self, device: Device) -> None:
         self.__devices__.add(device)
 
-    def apply(self):
+    def apply(self) -> None:
         pass
 
     @classmethod
-    def detect(cls):
+    def detect(cls) -> bool:
         return False
 
 
 class DeviceFilterCGroupsV1(DeviceFilterCommon):
     @classmethod
-    def detect(cls):
+    def detect(cls) -> bool:
         dirs = ["/sys/fs/cgroup/devices/docker", "/sys/fs/cgroup/devices/system.slice"]
         for d in dirs:
             if os.path.exists(d):
                 return True
         return False
 
-    def __get_devices_allow_file__(self):
+    def __get_devices_allow_file__(self) -> str:
         devices_allow_file = (
             f"/sys/fs/cgroup/devices/docker/{self.container_id}/devices.allow"
         )
@@ -112,18 +113,18 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
             devices_allow_file = f"/sys/fs/cgroup/devices/system.slice/docker-{self.container_id}.scope/devices.allow"
         return devices_allow_file
 
-    def apply(self):
+    def apply(self) -> None:
         with open(self.__get_devices_allow_file__(), "w") as allow:
             for device in self.devices:
-                allow.write("a %d:%d rwm\n" % (device.major, device.minor))
+                allow.write(f"a {device.major}:{device.minor} rwm\n")
 
 
 class DeviceFilterCGroupsV2(DeviceFilterCommon):
     @classmethod
-    def detect(cls):
+    def detect(cls) -> bool:
         return os.path.exists("/sys/fs/cgroup/system.slice")
 
-    DEFAULT_DEVICES = [
+    DEFAULT_DEVICES: list[Device] = [
         Device(1, 3),  # /dev/null
         Device(1, 5),  # /dev/zero
         Device(1, 7),  # /dev/full
@@ -145,10 +146,10 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
             self.__cgroup__ = f"/sys/fs/cgroup/docker/{self.container_id}"
 
     @property
-    def devices(self):
+    def devices(self) -> list[Device]:
         return self.DEFAULT_DEVICES + list(self.__devices__)
 
-    def load(self, state_file: Path):
+    def load(self, state_file: Path) -> None:
         if not state_file.exists():
             return
         with state_file.open() as f:
@@ -156,15 +157,16 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                 major, minor = line.split()
                 self.add(Device(int(major), int(minor)))
 
-    def save(self, state_file):
+    def save(self, state_file: Path) -> None:
         with state_file.open("w") as f:
             for device in self.__devices__:
                 f.write(f"{device.major} {device.minor}\n")
 
-    def apply(self):
+    def apply(self) -> None:
         existing = self.__get_existing_functions__()
-        fd = None
-        bpf = None
+
+        bpf: BPF | None = None
+        fd: int | None = None
 
         try:
             fd = os.open(self.__cgroup__, os.O_RDONLY)
@@ -201,15 +203,22 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                 except Exception as exc:
                     logger.error(f"Failed to close file descriptor: {exc}")
 
-    def __get_existing_functions__(self):
-        cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
+    def __get_existing_functions__(self) -> list[int]:
+        cmd: list[str] = [
+            "/usr/sbin/bpftool",
+            "cgroup",
+            "list",
+            self.__cgroup__,
+            "--json",
+        ]
         data = subprocess.run(
             cmd, text=True, check=False, stdout=subprocess.PIPE
         ).stdout
-        result = []
-        programs = []
-        with contextlib.suppress(Exception):
+        result: list[int] = []
+        try:
             programs = json.loads(data)
+        except Exception:
+            programs = []
         _attach_types = ["device", "cgroup_device"]
         if isinstance(programs, list):
             for program in programs:
@@ -218,6 +227,6 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                         result.append(int(program["id"]))
         return result
 
-    def expand_template(self):
+    def expand_template(self) -> str:
         template = Template(TEMPLATE)
         return template.render(devices=self.devices)
