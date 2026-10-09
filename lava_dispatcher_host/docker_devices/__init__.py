@@ -59,6 +59,7 @@ class Device:
 def DeviceFilter(*args, **kwargs):
     for klass in [DeviceFilterCGroupsV1, DeviceFilterCGroupsV2]:
         if klass.detect():
+            logger.debug("Using device filter class: %r", klass)
             return klass(*args, **kwargs)
     raise InfrastructureError(
         "Neither cgroups v1 nor v2 detected; can't share device with docker container"
@@ -114,6 +115,7 @@ class DeviceFilterCGroupsV1(DeviceFilterCommon):
 
     def apply(self):
         with open(self.__get_devices_allow_file__(), "w") as allow:
+            logger.debug("Using cgroups v1 to allow devices: %r", self.devices)
             for device in self.devices:
                 allow.write("a %d:%d rwm\n" % (device.major, device.minor))
 
@@ -169,10 +171,13 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         try:
             fd = os.open(self.__cgroup__, os.O_RDONLY)
             program = bytes(self.expand_template(), "utf-8")
+            logger.debug("Loading BPF program: %r", program)
             bpf = BPF(text=program)
             func = bpf.load_func("lava_docker_device_access_control", bpf.CGROUP_DEVICE)
             bpf.attach_func(func, fd, BPFAttachType.CGROUP_DEVICE, BPF_F_ALLOW_MULTI)
+            logger.info("Attached BPF program for %r", self.__cgroup__)
 
+            logger.info("Detaching existing BPF programs for: %r", existing)
             for fid in existing:
                 subprocess.check_call(
                     [
@@ -186,20 +191,20 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
                     ]
                 )
 
-        except Exception as exc:
-            logger.error(f"Failed to apply BPF for {self.__cgroup__}: {exc}")
+        except Exception:
+            logger.exception("Failed to apply BPF for %r", self.__cgroup__)
         finally:
             if bpf is not None:
                 try:
                     bpf.close()
-                except Exception as exc:
-                    logger.error(f"Failed to close BPF: {exc}")
+                except Exception:
+                    logger.exception("Failed to close BPF")
 
             if fd is not None:
                 try:
                     os.close(fd)
-                except Exception as exc:
-                    logger.error(f"Failed to close file descriptor: {exc}")
+                except Exception:
+                    logger.exception("Failed to close file descriptor")
 
     def __get_existing_functions__(self):
         cmd = ["/usr/sbin/bpftool", "cgroup", "list", self.__cgroup__, "--json"]
@@ -211,6 +216,7 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         with contextlib.suppress(Exception):
             programs = json.loads(data)
         _attach_types = ["device", "cgroup_device"]
+        logger.debug("Checking for existing BPF programs: %r", programs)
         if isinstance(programs, list):
             for program in programs:
                 if isinstance(program, dict):
