@@ -100,15 +100,19 @@ def _resolve_nodes(device_info):
     device_node paths (possibly empty).
     """
     nodes = []
+    logger.debug("Checking for device info %r", device_info)
     for dev in context.list_devices():
         if dev.device_node and _node_matches_device_info(dev, device_info):
             nodes.append(dev.device_node)
+    logger.debug("Resolved devices nodes %r", nodes)
     return nodes
 
 
 def share_device_with_container(options):
     data, job_id = find_mapping(options)
+    logger.debug("Found data %r for job %r", data, job_id)
     if not data:
+        logger.info("No mapping data found. Can't share device.")
         return
     container = data["container"]
     device_info = data["device_info"]
@@ -120,6 +124,7 @@ def share_device_with_container(options):
     # server-side resolution leaves.
     device_paths = data.get("device_paths")
     if device_paths:
+        logger.info("Sharing devices by paths %r", device_paths)
         device = options.device
         if not device.startswith("/dev/"):
             device = "/dev/" + device
@@ -154,13 +159,12 @@ def share_device_with_container(options):
         raise InfrastructureError('Unsupported container type: "%s"' % container_type)
 
 
-def log_sharing_device(device, container_type, container):
-    logger.info(f"Sharing {device} with {container_type} container {container}")
-
-
 def pass_device_into_container_docker(
     container, container_id, node, links: list[str] | None = None, job_id=None
 ):
+    logger.info(
+        "Passing device node %r to container %r for job %r", node, container_id, job_id
+    )
     if links is None:
         links = []
 
@@ -172,6 +176,7 @@ def pass_device_into_container_docker(
 
         state = Path(JOBS_DIR) / job_id / (container_id + ".devices")
         device_filter = DeviceFilter(container_id, state)
+        logger.debug("Using device filter %r", device_filter)
         device_filter.add(Device(major, minor))
         device_filter.apply()
         device_filter.save(state)
@@ -187,6 +192,9 @@ def pass_device_into_container_docker(
     uid = nodeinfo.st_uid
     gid = nodeinfo.st_gid
     mode = "%o" % (0o777 & nodeinfo.st_mode)
+    logger.debug(
+        "Creating node %r (%r:%r) type %r at %r", node, major, minor, nodetype, nodedir
+    )
     subprocess.call(
         [
             "docker",
@@ -199,6 +207,7 @@ def pass_device_into_container_docker(
     )
 
     for link in links:
+        logger.debug("Creating link from %r to %r", node, link)
         subprocess.call(
             [
                 "docker",
@@ -212,7 +221,7 @@ def pass_device_into_container_docker(
 
 
 def share_device_with_container_docker(container, node, job_id=None):
-    log_sharing_device(node, "docker", container)
+    logger.info(f"Sharing {node} with docker container {container}")
     try:
         container_id = subprocess.check_output(
             ["docker", "inspect", "--format={{.ID}}", container], text=True
