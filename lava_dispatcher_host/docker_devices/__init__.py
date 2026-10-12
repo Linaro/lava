@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from jinja2 import Template
+from jinja2 import Environment
 
 from lava_common.exceptions import InfrastructureError
 
@@ -228,5 +228,6 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
         return result
 
     def expand_template(self) -> str:
-        template = Template(TEMPLATE)
+        jijna_env = Environment()
+        template = jijna_env.from_string(TEMPLATE)
         return template.render(devices=self.devices)
