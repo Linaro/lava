@@ -8,7 +8,7 @@ import sys
 __udev_rules__ = """\
 # udev rules installed by lava-dispatcher-host
 #
-# This file will be overritten by lava-dispatcher-host on upgrades. If you need
+# This file will be overwritten by lava-dispatcher-host on upgrades. If you need
 # to make customizations, please use a separate file.
 
 ACTION=="add", ENV{{ID_FS_LABEL}}!="" \\
