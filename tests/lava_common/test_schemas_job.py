@@ -63,3 +63,40 @@ class TestPoolPattern:
         job["pool_pattern"] = "pool-*"
         with pytest.raises(Invalid):
             validate(job, strict=True)
+
+
+def git_test_job(**params):
+    definition = {
+        "name": "smoke-tests",
+        "from": "git",
+        "repository": "https://gitlab.com/lava/functional-tests.git",
+        "path": "posix/smoke-tests-basic.yaml",
+        **params,
+    }
+    return {
+        "job_name": "git test job",
+        "device_type": "qemu",
+        "visibility": "public",
+        "timeouts": {"job": {"minutes": 10}},
+        "actions": [{"test": {"definitions": [definition]}}],
+    }
+
+
+class TestGitDefinition:
+    @pytest.mark.parametrize(
+        "params",
+        [
+            {},
+            {"branch": "main"},
+            {"revision": "441b61"},
+            {"shallow": False},
+            {"history": False},
+            {"recursive": True},
+        ],
+    )
+    def test_valid_git_parameters(self, params):
+        validate(git_test_job(**params), strict=True)
+
+    def test_shallow_should_be_a_boolean(self):
+        with pytest.raises(Invalid):
+            validate(git_test_job(shallow="no"), strict=True)

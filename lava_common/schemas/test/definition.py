@@ -32,6 +32,7 @@ def schema():
                     Optional("branch"): str,
                     Optional("history"): bool,
                     Optional("revision"): str,
+                    Optional("shallow"): bool,
                     Optional("parameters"): dict,
                     Optional("params"): dict,
                     Optional("recursive"): bool,
