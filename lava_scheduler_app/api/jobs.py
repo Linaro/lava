@@ -32,6 +32,16 @@ def load_optional_file(filename):
         return None
 
 
+def _clamp_range(start, limit):
+    # A str or a float would blow up when slicing the queryset.
+    if not isinstance(start, int):
+        raise xmlrpc.client.Fault(400, "Invalid start '%s'" % start)
+    if not isinstance(limit, int):
+        raise xmlrpc.client.Fault(400, "Invalid limit '%s'" % limit)
+    # A negative limit would turn the slice into a negative index.
+    return max(0, start), min(max(0, limit), 100)
+
+
 class SchedulerJobsAPI(ExposedV2API):
     def cancel(self, job_id):
         """
@@ -195,8 +205,7 @@ class SchedulerJobsAPI(ExposedV2API):
             "error_msg", "error_type"
         """
         ret = []
-        start = max(0, start)
-        limit = min(limit, 100)
+        start, limit = _clamp_range(start, limit)
         jobs = TestJob.objects.visible_by_user(self.user).select_related(
             "requested_device_type", "submitter"
         )
@@ -215,7 +224,10 @@ class SchedulerJobsAPI(ExposedV2API):
         if since:
             end_time = timezone.now()
             # search back in time
-            start_time = end_time - timedelta(minutes=since)
+            try:
+                start_time = end_time - timedelta(minutes=since)
+            except (TypeError, OverflowError):
+                raise xmlrpc.client.Fault(400, "Invalid since '%s'" % since)
             jobs = jobs.filter(end_time__range=[start_time, end_time])
 
         if duration_at_least is not None:
@@ -316,14 +328,19 @@ class SchedulerJobsAPI(ExposedV2API):
         is returned.
         """
         ret = []
-        start = max(0, start)
-        limit = min(limit, 100)
+        start, limit = _clamp_range(start, limit)
         jobs = (
             TestJob.objects.filter(state=TestJob.STATE_SUBMITTED)
             .visible_by_user(self.user)
             .select_related("requested_device_type", "submitter")
         )
         if device_types is not None:
+            # A bare string would be taken apart character by character by
+            # the __in lookup, and would silently match the wrong jobs.
+            if not isinstance(device_types, (list, tuple)):
+                raise xmlrpc.client.Fault(
+                    400, "Invalid device_types '%s'" % device_types
+                )
             jobs = jobs.filter(requested_device_type__name__in=device_types)
 
         for job in jobs.order_by("-id")[start : start + limit]:

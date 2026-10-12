@@ -354,6 +354,61 @@ class TestSchedulerAPI(TestCaseWithFactory):
                 f.faultString, "Invalid duration_at_least '%s'" % value, repr(value)
             )
 
+    def test_jobs_list_invalid_arguments(self):
+        server = self.server_proxy()
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list(None, None, "0", 100)
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertEqual(cm.exception.faultString, "Invalid start '0'")
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list(None, None, 0, "100")
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertEqual(cm.exception.faultString, "Invalid limit '100'")
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list(None, None, 0, 100, "15")
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertEqual(cm.exception.faultString, "Invalid since '15'")
+
+        # timedelta does take a float, so since still accepts one.
+        self.assertEqual(server.scheduler.jobs.list(None, None, 0, 100, 1.5), [])
+
+        # A negative limit used to end up as a negative index in the slice.
+        self.assertEqual(server.scheduler.jobs.list(None, None, 0, -5), [])
+
+        # Going back before year 1 does not survive the date arithmetic.
+        for value in (2_000_000_000, 1e300):
+            with self.assertRaises(xmlrpc.client.Fault) as cm:
+                server.scheduler.jobs.list(None, None, 0, 100, value)
+            self.assertEqual(cm.exception.faultCode, 400)
+            self.assertEqual(cm.exception.faultString, "Invalid since '%s'" % value)
+
+    def test_jobs_queue_invalid_arguments(self):
+        server = self.server_proxy()
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.queue(None, "0", 100)
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertEqual(cm.exception.faultString, "Invalid start '0'")
+
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.queue(None, 0, "100")
+        self.assertEqual(cm.exception.faultCode, 400)
+        self.assertEqual(cm.exception.faultString, "Invalid limit '100'")
+
+        # A string would be split into characters by the __in lookup.
+        for value in ("qemu", 1):
+            with self.assertRaises(xmlrpc.client.Fault) as cm:
+                server.scheduler.jobs.queue(value)
+            self.assertEqual(cm.exception.faultCode, 400)
+            self.assertEqual(
+                cm.exception.faultString, "Invalid device_types '%s'" % value
+            )
+
+        self.assertEqual(server.scheduler.jobs.queue(None, 0, -5), [])
+
     def test_jobs_validate_bad_yaml(self):
         server = self.server_proxy()
 
