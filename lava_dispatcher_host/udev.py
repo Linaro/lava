@@ -1,6 +1,7 @@
 # Copyright (C) 2019 Linaro Limited
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import sys
 
@@ -24,6 +25,6 @@ ACTION=="add", ATTRS{{idVendor}}!="", ATTRS{{idProduct}}!="" \\
 """
 
 
-def get_udev_rules():
+def get_udev_rules() -> str:
     program = sys.argv[0] + " --debug-log=/var/log/lava-dispatcher-host.log"
     return __udev_rules__.format(lava_dispatcher_host=program)
