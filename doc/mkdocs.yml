@@ -173,6 +173,7 @@ nav:
       - Boot:
         - Common: technical-references/job-definition/actions/boot/common.md
         - AVH: technical-references/job-definition/actions/boot/method-avh.md
+        - Barebox: technical-references/job-definition/actions/boot/method-barebox.md
         - Bootloader: technical-references/job-definition/actions/boot/method-bootloader.md
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - Depthcharge: technical-references/job-definition/actions/boot/method-depthcharge.md
@@ -180,21 +181,26 @@ nav:
         - Docker: technical-references/job-definition/actions/boot/method-docker.md
         - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
+        - GDB: technical-references/job-definition/actions/boot/method-gdb.md
         - GRUB-EFI: technical-references/job-definition/actions/boot/method-grub-efi.md
         - GRUB: technical-references/job-definition/actions/boot/method-grub.md
         - iPXE: technical-references/job-definition/actions/boot/method-ipxe.md
         - JLink: technical-references/job-definition/actions/boot/method-jlink.md
+        - Kexec: technical-references/job-definition/actions/boot/method-kexec.md
         - Minimal: technical-references/job-definition/actions/boot/method-minimal.md
         - Musca: technical-references/job-definition/actions/boot/method-musca.md
         - New Connection: technical-references/job-definition/actions/boot/method-new-connection.md
+        - Nodebooter: technical-references/job-definition/actions/boot/method-nodebooter.md
         - OpenOCD: technical-references/job-definition/actions/boot/method-openocd.md
         - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - QDL: technical-references/job-definition/actions/boot/method-qdl.md
         - Recovery: technical-references/job-definition/actions/boot/method-recovery.md
+        - Schroot: technical-references/job-definition/actions/boot/method-schroot.md
         - SSH: technical-references/job-definition/actions/boot/method-ssh.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
         - UEFI-Menu: technical-references/job-definition/actions/boot/method-uefi-menu.md
+        - UEFI: technical-references/job-definition/actions/boot/method-uefi.md
         - UUU: technical-references/job-definition/actions/boot/method-uuu.md
       - Test: technical-references/job-definition/actions/test.md
     - Environment: technical-references/job-definition/environment.md
