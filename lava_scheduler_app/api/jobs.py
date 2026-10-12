@@ -218,6 +218,12 @@ class SchedulerJobsAPI(ExposedV2API):
             jobs = jobs.filter(end_time__range=[start_time, end_time])
 
         if duration_at_least is not None:
+            try:
+                duration_at_least = int(duration_at_least)
+            except (TypeError, ValueError):
+                raise xmlrpc.client.Fault(
+                    400, "Invalid duration_at_least '%s'" % duration_at_least
+                )
             jobs = jobs.alias(
                 _duration=ExpressionWrapper(
                     Coalesce("end_time", Value(timezone.now())) - F("start_time"),
