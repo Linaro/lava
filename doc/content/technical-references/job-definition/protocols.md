@@ -12,6 +12,159 @@ are able to share data between actions.
 The MultiNode protocol allows multiple devices to work together as a group,
 synchronizing operations and sharing data between them.
 
+```yaml
+protocols:
+  lava-multinode:
+    roles:
+      server:
+        device_type: qemu
+        count: 1
+        essential: true
+      client:
+        device_type: bcm2711-rpi-4-b
+        count: 2
+        tags:
+        - usb-hub
+    timeout:
+      minutes: 10
+
+actions:
+- deploy:
+    role:
+    - server
+    - client
+    ...
+```
+
+The job is split into one sub job per device. Each sub job only runs the
+actions listing its role.
+
+!!! note
+    In a MultiNode job:
+
+    * every action must have a `role` list
+    * `device_type`, `context`, `environment` and `tags` are not allowed at the
+      top level of the job definition. They are defined for each role.
+
+### roles
+
+Required. A dictionary of roles. The key is the name of the role.
+
+| Key | Description |
+| --- | ----------- |
+| `device_type` | Required. The device type to use for this role |
+| `count` | Required. The number of devices for this role. Can be `0` |
+| `device` | Optional. Use this specific device. Requires `count: 1` |
+| `worker` | Optional. Only use devices attached to this worker |
+| `tags` | Optional. The [device tags](./job.md#tags) required for this role |
+| `context` | Optional. The [job context](../../introduction/glossary.md#job-context) for this role |
+| `environment` | Optional. The [environment](./environment.md#multinode) for this role |
+| `essential` | Optional. See [essential](#essential) |
+| `timeout` | Optional. The default timeout of the API calls for this role. Overridden by the group [timeout](#timeout) |
+
+#### essential
+
+When a sub job of an essential role is canceled or finishes as `Incomplete`,
+LAVA cancels all the other sub jobs of the group.
+
+Use it for the roles the other roles depend on, for instance a server: if the
+server fails, the clients can't succeed and would only wait for their
+timeouts.
+
+```yaml
+protocols:
+  lava-multinode:
+    roles:
+      server:
+        device_type: qemu
+        count: 1
+        essential: true
+```
+
+### Connection roles
+
+A role can be a connection to the device of another role instead of a device.
+For instance, a `guest` role can connect over SSH to a virtual machine started
+by the `host` role.
+
+```yaml
+protocols:
+  lava-multinode:
+    roles:
+      host:
+        device_type: qemu
+        count: 1
+      guest:
+        connection: ssh
+        count: 2
+        host_role: host
+        expect_role: host
+        request: lava-start
+        timeout:
+          minutes: 10
+```
+
+| Key | Description |
+| --- | ----------- |
+| `connection` | Required. The connection type, for instance `ssh` |
+| `count` | Required. The number of connections |
+| `host_role` | Required. The role of the device to connect to. This role must have `count: 1` |
+| `expect_role` | Required. The role allowed to start the connection jobs |
+| `request` | Optional. `lava-start` to delay the start of the connection jobs |
+| `timeout` | Optional. How long to wait for `lava-start`. Defaults to 90 seconds |
+| `essential`, `tags`, `context` | Optional. As for [roles](#roles) |
+
+A connection role can't use `device_type`, `device` or `worker`.
+
+`host_role` is used by the scheduler: the connection jobs run on the worker of
+the `host_role` device.
+
+#### lava-start
+
+With `request: lava-start`, the connection jobs do not start immediately: they
+wait until every device of the `expect_role` sends the `lava_start` message.
+This allows the host to prepare the services needed by the connection jobs, like
+booting a virtual machine, before they start.
+
+The host sends the message when it is ready, from a test definition:
+
+```yaml
+- test:
+    role:
+    - host
+    definitions:
+    - from: inline
+      name: lava-start
+      path: inline/lava-start.yaml
+      repository:
+        metadata:
+          format: Lava-Test Test Definition 1.0
+          name: lava-start
+        run:
+          steps:
+          - lava-send lava_start
+```
+
+`expect_role` can't be the role declaring `lava-start`.
+
+!!! note
+    When the group also defines a [timeout](#timeout), the group timeout is
+    used instead of the role `timeout`.
+
+### timeout
+
+Optional. The default timeout of the [MultiNode API](#api) calls. Defaults to
+30 seconds.
+
+```yaml
+protocols:
+  lava-multinode:
+    roles:
+      ...
+    timeout:
+      minutes: 10
+```
+
 ### pool_pattern
 
 `string` (1–200 characters)
@@ -71,6 +224,19 @@ pass messages between devices in a group.
 
 See [MultiNode job definition](../../user/advanced-tutorials/multinode.md#coordinating-via-apis)
 for job example.
+
+The API uses the connection already available to LAVA. It is meant for short
+messages, not for transferring files or large amounts of data. Test definitions
+which need to transfer files have to set up their own network access and
+transfer method.
+
+!!! tip "Debugging"
+    Avoid running complex commands inside the API calls. Prepare and print the
+    data in a separate step before sending it, so that the values appear in the
+    test job logs.
+
+    Do not wrap the API calls with `lava-test-case`: errors in the API call
+    would be hidden and each call would create a duplicate test case.
 
 #### lava-group
 
@@ -188,8 +354,7 @@ Blocks until any device in the group sends a message with the given ID.
 lava-wait <message-id>
 ```
 
-Data from the message is written to `/tmp/lava_multi_node_cache.txt` as
-`key=value` pairs.
+The data from the message is written to the [cache file](#cache-file).
 
 !!! note
     The message ID data is persistent for the life of the MultiNode group. The
@@ -219,9 +384,37 @@ Wait until all devices with the specified role send the message:
 lava-wait-all <message-id> <role>
 ```
 
+With a role, the devices of that role do **not** wait: they send the message
+and continue. Make sure that these devices keep running long enough for the
+waiting devices to receive the message and act on it, typically with a
+`lava-sync` once the waiting devices have completed their task.
+
 As with `lava-wait`, the message ID is persistent for the duration of the
 MultiNode group, and the key-value pairs with the message will be stored in the
-cache file.
+[cache file](#cache-file).
+
+!!! note
+    `lava-sync` and `lava-wait-all` make all the devices of the group run at the
+    speed of the slowest one, up to the point where the call is made.
+
+#### Cache file
+
+`lava-wait` and `lava-wait-all` write the data received with the message to
+`/tmp/lava_multi_node_cache.txt` on the DUT. The file is replaced on each call.
+
+Each line contains the job ID of the sender, a colon and one `key=value` pair:
+
+```plain
+12345:ipaddr=192.168.0.3
+12346:ipaddr=192.168.0.4
+```
+
+For example, to retrieve the value sent by the server:
+
+```shell
+lava-wait server-ready
+SERVER_IP=$(grep ":ipaddr=" /tmp/lava_multi_node_cache.txt | cut -d = -f 2)
+```
 
 ### Request
 
@@ -321,4 +514,35 @@ protocols:
         ipaddr: $ipaddr
     timeout:
       minutes: 5
+```
+
+## XNBD
+
+The `lava-xnbd` protocol allocates the port used by the NBD server of an
+[NBD deployment](./actions/deploy/to-nbd.md). The NBD server is stopped at the
+end of the job.
+
+The protocol is declared at the top level of the job definition:
+
+```yaml
+protocols:
+  lava-xnbd:
+    port: auto
+```
+
+* `port`: required. Either `auto` or a fixed port number. With `auto`, LAVA
+  uses the `nbd_server_port` from the [dispatcher configuration](../configuration/dispatcher.md)
+  if it is a number, or a free port between 55000 and 56000.
+* `timeout`: optional.
+
+The `nbd-deploy` action requests the port with `set_port`:
+
+```yaml
+- deploy:
+    to: nbd
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
+    ...
 ```
