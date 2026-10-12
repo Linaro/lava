@@ -7,8 +7,17 @@ downloaded to a temporary directory on the worker. The rootfs is shared through
 configuration or overridden in the job definition.
 
 ```yaml
+protocols:
+  lava-xnbd:
+    port: auto
+
+actions:
 - deploy:
     to: nbd
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
     kernel:
       url: http://example.com/vmlinuz
       type: zimage
@@ -20,6 +29,9 @@ configuration or overridden in the job definition.
     dtb:
       url: http://example.com/dtb.dtb
 ```
+
+The [`lava-xnbd` protocol](../../protocols.md#xnbd) is required to allocate the
+port of the NBD server.
 
 ## kernel
 
@@ -87,12 +99,20 @@ timeouts:
   connection:
     minutes: 2
 
+protocols:
+  lava-xnbd:
+    port: auto
+
 actions:
 # NBD_DEPLOY_BLOCK
 - deploy:
     timeout:
       minutes: 5
     to: nbd
+    protocols:
+      lava-xnbd:
+      - action: nbd-deploy
+        request: set_port
     kernel:
       url: http://example.com/vmlinuz
       type: zimage
