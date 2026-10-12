@@ -70,13 +70,60 @@ explicitly. Support is available for [git](#git), [url](#url) and [inline](#inli
 
 A remote git repository which needs to be cloned by the LAVA worker.
 
-Optional parameters:
+The entire repository is cloned and made available in the current working
+directory of the test. The YAML file can therefore call scripts and use other
+files from the same repository.
 
-* revision (`str`, default: `null`): specific commit SHA to check out
-* branch (`str`, default: `null`): git branch to clone
-* shallow (`bool`, default: `true`): perform a shallow git clone
-* history (`bool`, default: `false`): include full git history
-* recursive (`bool`, default: `false`): clone submodules recursively
+The commit used is recorded in the test job results, so the exact version of
+the test definition can be identified later.
+
+```yaml title="Test definition from git" hl_lines="6-8"
+- test:
+    definitions:
+    - name: smoke-tests
+      from: git
+      repository: https://gitlab.com/lava/functional-tests.git
+      branch: main
+      revision: 441b61
+      history: false
+      path: posix/smoke-tests-basic.yaml
+```
+
+##### branch
+
+Optional. The branch to clone (`git clone -b <branch>`). Defaults to the
+default branch of the repository.
+
+##### revision
+
+Optional. The commit to check out after cloning, instead of the head of the
+branch.
+
+When `revision` is set, LAVA does a full clone (see [shallow](#shallow)) so that
+the commit can be found.
+
+##### shallow
+
+Optional, defaults to `true`. By default, LAVA makes a **shallow** clone
+(`--depth=1`): the history is truncated to the most recent commit. This saves
+space and time when the repository has a long history, which matters as all the
+repositories end up in the LAVA overlay sent to the DUT.
+
+Set `shallow: false` to request a full clone. If the git server does not support
+shallow clones, LAVA falls back to a full clone.
+
+##### history
+
+Optional, defaults to `true`. When `false`, the `.git` directory is removed
+after cloning: the files are available but the git history is not. This
+reduces the size of the LAVA overlay.
+
+Keep the default when the test needs to run `git` commands in the repository.
+
+##### recursive
+
+Optional, defaults to `false`. When `true`, the submodules are cloned as well
+(`--recurse-submodules`).
 
 #### url
 
