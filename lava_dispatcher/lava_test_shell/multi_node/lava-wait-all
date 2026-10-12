@@ -12,8 +12,6 @@
 #pairs will be printed one per line, prefixed with the device name and
 #whitespace.
 LAVA_MULTI_NODE_API="LAVA_WAIT_ALL"
-#MESSAGE_TIMEOUT=5
-MESSAGE_NEED_ACK=
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 

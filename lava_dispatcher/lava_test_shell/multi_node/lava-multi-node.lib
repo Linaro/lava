@@ -7,10 +7,8 @@ MESSAGE_PREFIX="<LAVA_MULTI_NODE>"
 MESSAGE_COMMAND="<${LAVA_MULTI_NODE_API}"
 MESSAGE_HEAD="$MESSAGE_PREFIX $MESSAGE_COMMAND"
 #MESSAGE_ID="<$1>"
-MESSAGE_ACK="<${LAVA_MULTI_NODE_API}_ACK>"
 
 MESSAGE_REPLY="<${LAVA_MULTI_NODE_API}_COMPLETE"
-MESSAGE_REPLY_ACK="<${LAVA_MULTI_NODE_API}_COMPLETE_ACK>"
 
 LAVA_MULTI_NODE_EXIT_ERROR=1
 
@@ -81,17 +79,6 @@ _lava_multi_node_debug "$FUNCNAME preparing"
 
 _lava_multi_node_send $@
 
-while [ -n "$MESSAGE_NEED_ACK" -a "${SHELL}x" = "/bin/bashx" ] ; do
-_lava_multi_node_debug "$FUNCNAME waiting for ack"
-	read -t $MESSAGE_TIMEOUT line
-	result=$(echo $line | grep "${MESSAGE_ACK}")
-	if [ "${result}x" != "x" ] ; then
-#		echo ${MESSAGE_ACK}
-		break
-	fi
-	_lava_multi_node_send $@
-done
-
 _lava_multi_node_debug "$FUNCNAME finished"
 
 }
@@ -109,9 +96,6 @@ while read line; do
 	if [ "${result}x" != "x" ] ; then
 		line=$(echo ${line}|sed -e "s/^${MESSAGE_REPLY}//"|sed -e 's/>$//')
 		_lava_multi_node_process_message "${line}"
-		if [ -n "$MESSAGE_NEED_ACK" ] ; then
-			echo ${MESSAGE_REPLY_ACK}
-		fi
 		break
 	fi
 done

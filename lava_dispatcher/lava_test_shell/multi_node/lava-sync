@@ -10,8 +10,6 @@
 #``lava-sync foo`` is effectively the same as ``lava-send foo`` followed
 #by ``lava-wait-all foo``.
 LAVA_MULTI_NODE_API="LAVA_SYNC"
-#MESSAGE_TIMEOUT=5
-MESSAGE_NEED_ACK=
 
 . $LAVA_TEST_BIN/lava-multi-node.lib
 
