@@ -143,3 +143,58 @@ class TestSecondaryMediaBoot:
     def test_kernel_type_is_u_boot_only(self):
         with pytest.raises(Invalid):
             validate(secondary_media_boot_job("grub", kernel_type="image"), strict=True)
+
+
+def boot_job(boot):
+    return {
+        "job_name": "boot job",
+        "device_type": "qemu",
+        "visibility": "public",
+        "timeouts": {"job": {"minutes": 10}},
+        "actions": [{"boot": boot}],
+    }
+
+
+TRANSFER_OVERLAY = {"download_command": "wget", "unpack_command": "tar -C / -xzf"}
+
+
+class TestNodebooterBoot:
+    def test_valid(self):
+        validate(
+            boot_job(
+                {
+                    "method": "nodebooter",
+                    "docker": {"image": "nodebooter:latest", "local": True},
+                    "prompts": ["root@dut:~#"],
+                    "auto_login": {"login_prompt": "login:", "username": "root"},
+                    "transfer_overlay": TRANSFER_OVERLAY,
+                }
+            ),
+            strict=True,
+        )
+
+    def test_docker_is_required(self):
+        with pytest.raises(Invalid):
+            validate(boot_job({"method": "nodebooter"}), strict=True)
+
+    @pytest.mark.parametrize(
+        "key,value", [("command", "nodebooter"), ("downloads-namespace", "dl")]
+    )
+    def test_unused_keys_are_rejected(self, key, value):
+        boot = {"method": "nodebooter", "docker": {"image": "nodebooter"}, key: value}
+        with pytest.raises(Invalid):
+            validate(boot_job(boot), strict=True)
+
+
+class TestUefiBoot:
+    def test_transfer_overlay(self):
+        validate(
+            boot_job(
+                {
+                    "method": "uefi",
+                    "commands": "nfs",
+                    "transfer_overlay": TRANSFER_OVERLAY,
+                }
+            ),
+            strict=True,
+        )
