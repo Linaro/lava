@@ -21,5 +21,7 @@ def schema():
         Optional("reset"): bool,
         Optional("use_bootscript"): bool,
         Optional("transfer_overlay"): boot.transfer_overlay(),
+        **boot.secondary_media(),
+        Optional("kernel_type"): Any("image", "uimage", "zimage"),
     }
     return {**boot.schema(), **base}

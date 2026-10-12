@@ -41,6 +41,17 @@ def transfer_overlay():
     )
 
 
+def secondary_media():
+    # Files inside the image deployed on a secondary media (sata, sd, usb)
+    return {
+        Optional("kernel"): str,
+        Optional("ramdisk"): str,
+        Optional("dtb"): str,
+        Optional("root_uuid"): str,
+        Optional("boot_part"): Any(int, str),
+    }
+
+
 def prompts():
     return Any(All(str, Length(min=1)), [All(str, Length(min=1))])
 

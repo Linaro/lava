@@ -100,3 +100,46 @@ class TestGitDefinition:
     def test_shallow_should_be_a_boolean(self):
         with pytest.raises(Invalid):
             validate(git_test_job(shallow="no"), strict=True)
+
+
+def secondary_media_boot_job(method, **params):
+    boot = {
+        "method": method,
+        "commands": "sata",
+        "kernel": "/boot/vmlinuz",
+        "ramdisk": "/boot/initrd.img",
+        "dtb": "/boot/board.dtb",
+        "root_uuid": "UUID=159d17cc-697c-4125-95a0-a3775e1deabe",
+        "boot_part": 1,
+        **params,
+    }
+    return {
+        "job_name": "secondary media job",
+        "device_type": "mustang",
+        "visibility": "public",
+        "timeouts": {"job": {"minutes": 10}},
+        "actions": [{"boot": boot}],
+    }
+
+
+class TestSecondaryMediaBoot:
+    @pytest.mark.parametrize("method", ["grub", "grub-efi"])
+    def test_grub(self, method):
+        validate(secondary_media_boot_job(method), strict=True)
+        validate(secondary_media_boot_job(method, boot_part="(hd0,gpt1)"), strict=True)
+
+    @pytest.mark.parametrize("kernel_type", ["image", "uimage", "zimage"])
+    def test_u_boot(self, kernel_type):
+        validate(
+            secondary_media_boot_job("u-boot", kernel_type=kernel_type), strict=True
+        )
+
+    def test_u_boot_invalid_kernel_type(self):
+        with pytest.raises(Invalid):
+            validate(
+                secondary_media_boot_job("u-boot", kernel_type="vmlinux"), strict=True
+            )
+
+    def test_kernel_type_is_u_boot_only(self):
+        with pytest.raises(Invalid):
+            validate(secondary_media_boot_job("grub", kernel_type="image"), strict=True)

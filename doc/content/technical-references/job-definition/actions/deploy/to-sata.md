@@ -97,11 +97,6 @@ dictionary (`<sata_id>:<boot_part>`).
     include that mountpoint. The bootloader reads the files directly from the
     partition.
 
-!!! warning "Schema warning"
-    The `kernel`, `kernel_type`, `ramdisk`, `dtb`, `root_uuid` and `boot_part`
-    keys are not part of the boot action schema. The job is accepted, but the
-    strict schema validation reports them as extra keys.
-
 ## Device configuration
 
 The SATA disk is configured in the
