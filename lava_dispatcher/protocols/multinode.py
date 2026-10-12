@@ -615,16 +615,3 @@ class MultinodeProtocol(Protocol):
         self.logger.debug("request_sync %s", msg)
         sync_msg = {"request": "lava_sync", "messageID": msg}
         return self._send(sync_msg)
-
-    def request_lava_start(self, message: str) -> Any:
-        """
-        Sends a message to the group via the Coordinator. All jobs with the matching role
-        will receive the message and can then start the job.
-        """
-        self.logger.debug("request_lava_start %s", message)
-        send_msg = {
-            "request": "lava_send",
-            "messageID": "lava_start",
-            "message": message,
-        }
-        return self._send(send_msg)
