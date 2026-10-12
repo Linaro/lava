@@ -255,6 +255,18 @@ class TestSchedulerAPI(TestCaseWithFactory):
         self.assertEqual(len(jobs), 1)
         self.assertEqual(jobs[0]["id"], job1.id)
 
+        # duration_at_least passed as a string.
+        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False, "9")
+        self.assertEqual(len(jobs), 1)
+        self.assertEqual(jobs[0]["id"], job1.id)
+
+        # Invalid duration_at_least.
+        with self.assertRaises(xmlrpc.client.Fault) as cm:
+            server.scheduler.jobs.list(None, None, 0, 100, None, False, "abc")
+        f = cm.exception
+        self.assertEqual(f.faultCode, 400)
+        self.assertEqual(f.faultString, "Invalid duration_at_least 'abc'")
+
         # verbose output
         jobs = server.scheduler.jobs.list(None, None, 0, 100, None, True, 9)
         self.assertIn("error_msg", jobs[0])
