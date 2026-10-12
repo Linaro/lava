@@ -1,0 +1,10 @@
+{# device_type: frdm-mcxe31b #}
+{% extends 'base-nxp-mcu.jinja2' %}
+{% set usb_vendor_id = '1366' %}
+{% set usb_product_id = '1024' %}
+{% set processor = 'MCXE31B' %}
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
+{% block jlink_options %}
+- '-if {{target_interface|default("SWD")}}'
+- '-speed {{ speed_ti|default(4000)}}'
+{% endblock jlink_options %}

@@ -1,0 +1,11 @@
+{# device_type: frdm-imxrt1186 #}
+{% extends 'base-nxp-mcu.jinja2' %}
+{% set usb_vendor_id = '1366' %}
+{% set usb_product_id = '1024' %}
+{% set processor = 'MIMXRT1186XXX8' %}
+{% set supported_core_types = ['M33', 'M7'] %} # By default take the first one
+{% set device_info = device_info|default([{'board_id': board_id, 'usb_vendor_id': usb_vendor_id, 'usb_product_id': usb_product_id}]) %}
+{% block jlink_options %}
+- '-if {{target_interface|default("SWD")}}'
+- '-speed {{ speed_ti|default(4000)}}'
+{% endblock jlink_options %}
