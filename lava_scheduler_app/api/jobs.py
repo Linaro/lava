@@ -183,6 +183,7 @@ class SchedulerJobsAPI(ExposedV2API):
           characters, parse with care.
         `duration_at_least`: int (minutes)
           Filter by jobs that take longer than N minutes.
+          The number of minutes can also be given as a string, like "9".
 
         Return value
         ------------
@@ -218,12 +219,16 @@ class SchedulerJobsAPI(ExposedV2API):
             jobs = jobs.filter(end_time__range=[start_time, end_time])
 
         if duration_at_least is not None:
-            try:
-                duration_at_least = int(duration_at_least)
-            except (TypeError, ValueError):
-                raise xmlrpc.client.Fault(
-                    400, "Invalid duration_at_least '%s'" % duration_at_least
-                )
+            value = duration_at_least
+            if isinstance(value, str):
+                valid = value.isascii() and value.isdigit()
+            else:
+                valid = isinstance(value, int) and not isinstance(value, bool)
+            duration_at_least = int(value) if valid else -1
+            # int() on its own would take 9.7, "1_0" and True, and a long
+            # string of digits overflows timedelta.
+            if not 0 <= duration_at_least < 10**9:
+                raise xmlrpc.client.Fault(400, "Invalid duration_at_least '%s'" % value)
             jobs = jobs.alias(
                 _duration=ExpressionWrapper(
                     Coalesce("end_time", Value(timezone.now())) - F("start_time"),

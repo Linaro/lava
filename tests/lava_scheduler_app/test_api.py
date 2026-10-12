@@ -251,23 +251,6 @@ class TestSchedulerAPI(TestCaseWithFactory):
         jobs = server.scheduler.jobs.list(None, None, 2, 100, None, False)
         self.assertEqual(len(jobs), 1)
 
-        # Job take longer than 9 minutes.
-        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False, 9)
-        self.assertEqual(len(jobs), 1)
-        self.assertEqual(jobs[0]["id"], job1.id)
-
-        # duration_at_least passed as a string.
-        jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False, "9")
-        self.assertEqual(len(jobs), 1)
-        self.assertEqual(jobs[0]["id"], job1.id)
-
-        # Invalid duration_at_least.
-        with self.assertRaises(xmlrpc.client.Fault) as cm:
-            server.scheduler.jobs.list(None, None, 0, 100, None, False, "abc")
-        f = cm.exception
-        self.assertEqual(f.faultCode, 400)
-        self.assertEqual(f.faultString, "Invalid duration_at_least 'abc'")
-
         # verbose output
         jobs = server.scheduler.jobs.list(None, None, 0, 100, None, True, 9)
         self.assertIn("error_msg", jobs[0])
@@ -338,6 +321,38 @@ class TestSchedulerAPI(TestCaseWithFactory):
         with self.assertRaises(xmlrpc.client.Fault) as cm:
             server.scheduler.jobs.logs_count("999999")
         self.assertEqual(cm.exception.faultCode, 404)
+
+    def test_jobs_list_duration_at_least(self):
+        self.factory.cleanup()
+        user = self.factory.make_user()
+        dt = self.factory.make_device_type(name="qemu")
+        device = self.factory.make_device(device_type=dt, hostname="qemu-1")
+        device.save()
+        definition = self.factory.make_job_data_from_file(
+            "qemu-pipeline-first-job.yaml"
+        )
+        job1 = testjob_submission(definition, user, None)
+        job1.start_time = timezone.now() - datetime.timedelta(minutes=10)
+        job1.end_time = timezone.now()
+        job1.state = TestJob.STATE_FINISHED
+        job1.health = TestJob.HEALTH_COMPLETE
+        job1.save()
+        server = self.server_proxy()
+
+        # An int or a string of digits.
+        for value in (9, "9"):
+            jobs = server.scheduler.jobs.list(None, None, 0, 100, None, False, value)
+            self.assertEqual([job["id"] for job in jobs], [job1.id], repr(value))
+
+        # Anything else is rejected.
+        for value in ("abc", "9.5", " 9 ", "1_0", "-5", 9.7, True, [1], "9" * 25):
+            with self.assertRaises(xmlrpc.client.Fault) as cm:
+                server.scheduler.jobs.list(None, None, 0, 100, None, False, value)
+            f = cm.exception
+            self.assertEqual(f.faultCode, 400, repr(value))
+            self.assertEqual(
+                f.faultString, "Invalid duration_at_least '%s'" % value, repr(value)
+            )
 
     def test_jobs_validate_bad_yaml(self):
         server = self.server_proxy()
