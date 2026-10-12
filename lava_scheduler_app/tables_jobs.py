@@ -10,6 +10,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from lava_common.yaml import yaml_safe_dump, yaml_safe_load
 from lava_scheduler_app.models import Device, TestJob
@@ -128,17 +129,17 @@ class JobHealthColumnMixin(LavaTable):
 
     def render_health(self, record):
         if record.health == Device.HEALTH_GOOD:
-            return format_html('<strong class="text-success">Good</strong>')
+            return mark_safe('<strong class="text-success">Good</strong>')
         elif record.health in (Device.HEALTH_UNKNOWN, Device.HEALTH_LOOPING):
             return format_html(
                 '<span class="text-info">{}</span>', record.get_health_display()
             )
         elif record.health == Device.HEALTH_BAD:
-            return format_html('<span class="text-danger">Bad</span>')
+            return mark_safe('<span class="text-danger">Bad</span>')
         elif record.health == Device.HEALTH_MAINTENANCE:
-            return format_html('<span class="text-warning">Maintenance</span>')
+            return mark_safe('<span class="text-warning">Maintenance</span>')
         else:
-            return format_html('<span class="text-muted">Retired</span>')
+            return mark_safe('<span class="text-muted">Retired</span>')
 
 
 # Table definitions
