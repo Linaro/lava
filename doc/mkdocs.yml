@@ -161,6 +161,7 @@ nav:
         - NFS: technical-references/job-definition/actions/deploy/to-nfs.md
         - Overlay: technical-references/job-definition/actions/deploy/to-overlay.md
         - QDL: technical-references/job-definition/actions/deploy/to-qdl.md
+        - Recovery: technical-references/job-definition/actions/deploy/to-recovery.md
         - Secondary: technical-references/job-definition/actions/deploy/to-secondary.md
         - SSH: technical-references/job-definition/actions/deploy/to-ssh.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md
@@ -175,6 +176,7 @@ nav:
         - CMSIS-DAP: technical-references/job-definition/actions/boot/method-cmsis-dap.md
         - Depthcharge: technical-references/job-definition/actions/boot/method-depthcharge.md
         - DFU: technical-references/job-definition/actions/boot/method-dfu.md
+        - Docker: technical-references/job-definition/actions/boot/method-docker.md
         - Fastboot: technical-references/job-definition/actions/boot/method-fastboot.md
         - FVP: technical-references/job-definition/actions/boot/method-fvp.md
         - GRUB-EFI: technical-references/job-definition/actions/boot/method-grub-efi.md
@@ -188,6 +190,7 @@ nav:
         - pyOCD: technical-references/job-definition/actions/boot/method-pyocd.md
         - QEMU: technical-references/job-definition/actions/boot/method-qemu.md
         - QDL: technical-references/job-definition/actions/boot/method-qdl.md
+        - Recovery: technical-references/job-definition/actions/boot/method-recovery.md
         - SSH: technical-references/job-definition/actions/boot/method-ssh.md
         - U-Boot: technical-references/job-definition/actions/boot/method-u-boot.md
         - UEFI-Menu: technical-references/job-definition/actions/boot/method-uefi-menu.md
