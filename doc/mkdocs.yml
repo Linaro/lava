@@ -162,6 +162,7 @@ nav:
         - Overlay: technical-references/job-definition/actions/deploy/to-overlay.md
         - QDL: technical-references/job-definition/actions/deploy/to-qdl.md
         - Recovery: technical-references/job-definition/actions/deploy/to-recovery.md
+        - SATA: technical-references/job-definition/actions/deploy/to-sata.md
         - Secondary: technical-references/job-definition/actions/deploy/to-secondary.md
         - SSH: technical-references/job-definition/actions/deploy/to-ssh.md
         - TFTP: technical-references/job-definition/actions/deploy/to-tftp.md

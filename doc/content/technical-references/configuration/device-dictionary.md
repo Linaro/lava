@@ -592,6 +592,8 @@ worker.
 {% set sata_uuid = "ata-ST160LM003_HN-M160MBB_S2SYJ9KC102184" %}
 ```
 
+See [SATA](../job-definition/actions/deploy/to-sata.md#device-configuration) for the other variables.
+
 #### SD
 
 ```jinja2

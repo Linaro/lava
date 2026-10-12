@@ -6,6 +6,8 @@ strategy. The only difference is which media is configured in the
 [device dictionary](../../../configuration/device-dictionary.md#secondary-media)
 and referenced in the job definition.
 
+See [SATA](to-sata.md) for booting from a secondary media device.
+
 The DUT is first booted into a primary OS from a primary media device that contains
 a pre-installed OS, or via netboot (for example, U-Boot ramdisk or NFS). Once the
 primary OS is running, LAVA invokes `download` and `writer` tools on the DUT to
