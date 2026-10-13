@@ -11,8 +11,9 @@ import os
 import stat
 import subprocess
 from pathlib import Path
+from typing import Any
 
-import pyudev
+import pyudev  # type: ignore
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.device_mappings import iter_mapping_paths, load_mapping_data
@@ -26,7 +27,7 @@ logger.addHandler(logging.handlers.SysLogHandler(address="/dev/log"))
 logger.setLevel(logging.INFO)
 
 
-def match_mapping(device_info, options):
+def match_mapping(device_info: dict[str, Any], options: Any) -> bool:
     matched = False
     for k, v in device_info.items():
         if v:
@@ -39,7 +40,7 @@ def match_mapping(device_info, options):
     return matched
 
 
-def find_mapping(options):
+def find_mapping(options: Any) -> tuple[dict[str, Any], str] | tuple[None, None]:
     for mapping in iter_mapping_paths():
         data = load_mapping_data(mapping)
         for item in data:
@@ -51,7 +52,7 @@ def find_mapping(options):
 
 # Maps mapping device_info keys to the pyudev property names used elsewhere in
 # this codebase (see lava_dispatcher/utils/udev.py:get_udev_devices).
-_UDEV_PROP = {
+_UDEV_PROP: dict[str, str] = {
     "serial_number": "ID_SERIAL_SHORT",
     "usb_vendor_id": "ID_VENDOR_ID",
     "usb_product_id": "ID_MODEL_ID",
@@ -64,7 +65,7 @@ _UDEV_PROP = {
 _SERIAL_ATTR = "serial"
 
 
-def _node_matches_device_info(node, device_info):
+def _node_matches_device_info(node: Any, device_info: dict[str, Any]) -> bool:
     """Return True iff every non-empty device_info key matches the node's udev properties.
 
     Enforces the self-consistency the udev caller has by construction: the device
@@ -92,14 +93,14 @@ def _node_matches_device_info(node, device_info):
     return True
 
 
-def _resolve_nodes(device_info):
+def _resolve_nodes(device_info: dict[str, Any]) -> list[str]:
     """Resolve the device node(s) that carry device_info, server-side.
 
     The client-supplied path is not trusted: the daemon resolves which node(s)
     actually carry the matched job's udev IDs and shares those. Returns a list of
     device_node paths (possibly empty).
     """
-    nodes = []
+    nodes: list[str] = []
     logger.debug("Checking for device info %r", device_info)
     for dev in context.list_devices():
         if dev.device_node and _node_matches_device_info(dev, device_info):
@@ -108,15 +109,15 @@ def _resolve_nodes(device_info):
     return nodes
 
 
-def share_device_with_container(options):
+def share_device_with_container(options: Any) -> None:
     data, job_id = find_mapping(options)
     logger.debug("Found data %r for job %r", data, job_id)
-    if not data:
+    if not data or job_id is None:
         logger.info("No mapping data found. Can't share device.")
         return
-    container = data["container"]
-    device_info = data["device_info"]
-    container_type = data["container_type"]
+    container: str = data["container"]
+    device_info: dict[str, Any] = data["device_info"]
+    container_type: str = data["container_type"]
 
     # if the mapping recorded the exact node path(s) the dispatcher resolved,
     # share only the caller's path when it is one of them. This pins the share
@@ -160,8 +161,12 @@ def share_device_with_container(options):
 
 
 def pass_device_into_container_docker(
-    container, container_id, node, links: list[str] | None = None, job_id=None
-):
+    container: str,
+    container_id: str,
+    node: str,
+    links: list[str] | None,
+    job_id: str,
+) -> None:
     logger.info(
         "Passing device node %r to container %r for job %r", node, container_id, job_id
     )
@@ -220,7 +225,11 @@ def pass_device_into_container_docker(
         )
 
 
-def share_device_with_container_docker(container, node, job_id=None):
+def share_device_with_container_docker(
+    container: str,
+    node: str,
+    job_id: str,
+) -> None:
     logger.info("Sharing %r with docker container %r", node, container)
     try:
         container_id = subprocess.check_output(
