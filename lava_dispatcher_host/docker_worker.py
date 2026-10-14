@@ -4,6 +4,7 @@
 # Author: Antonio Terceiro <antonio.terceiro@linaro.org>
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
+from __future__ import annotations
 
 import logging
 import logging.handlers
@@ -18,6 +19,7 @@ import string
 import subprocess
 import sys
 import time
+from typing import TYPE_CHECKING
 
 import requests
 import sentry_sdk
@@ -27,6 +29,9 @@ from urllib3.util.retry import Retry
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR
 from lava_common.version import __version__
 from lava_common.worker import get_parser, init_sentry_sdk
+
+if TYPE_CHECKING:
+    from typing import Any
 
 #########
 # Globals
@@ -42,15 +47,15 @@ RELEASE_PAT = re.compile(r"^\d+\.\d+(\.\d+){0,1}$")
 ###########
 # Helpers #
 ###########
-def log_output(line):
-    line = line.decode("utf-8").strip()
-    if line[24:31] in ["  DEBUG", "   INFO", "WARNING", "  ERROR"]:
-        LOG.info("> " + line[24:])
+def log_output(line: bytes) -> None:
+    line_str = line.decode("utf-8").strip()
+    if line_str[24:31] in ["  DEBUG", "   INFO", "WARNING", "  ERROR"]:
+        LOG.info("> " + line_str[24:])
     else:
-        LOG.info("> " + line)
+        LOG.info("> " + line_str)
 
 
-def get_options(image: str) -> list:
+def get_options(image: str) -> list[str]:
     """
     Return a list of available worker option names.
     Do not handle the CalledProcessError exception here. This will be
@@ -74,9 +79,9 @@ def get_options(image: str) -> list:
     return option_names
 
 
-def filter_options(options, image):
+def filter_options(options: Any, image: str) -> list[str]:
     image_available_options = get_options(image)
-    ret = ["--worker-dir", options.worker_dir, "--url", options.url]
+    ret: list[str] = ["--worker-dir", options.worker_dir, "--url", options.url]
     if options.ws_url:
         ret.extend(["--ws-url", options.ws_url])
 
@@ -99,7 +104,7 @@ def filter_options(options, image):
     return ret
 
 
-def has_image(image, manifest=False):
+def has_image(image: str, manifest: bool = False) -> bool:
     try:
         subprocess.check_output(
             ["docker", "manifest" if manifest else "image", "inspect", image],
@@ -110,7 +115,7 @@ def has_image(image, manifest=False):
         return False
 
 
-def get_image(image):
+def get_image(image: str) -> bool:
     if has_image(image):
         return True
 
@@ -123,7 +128,9 @@ def get_image(image):
     return False
 
 
-def build_customized_image(image, build_dir, use_cache=False):
+def build_customized_image(
+    image: str, build_dir: pathlib.Path, use_cache: bool = False
+) -> str:
     dockerfile = build_dir / "Dockerfile"
     if not dockerfile.exists():
         LOG.warning("Dockerfile (%s) not found", dockerfile)
@@ -144,7 +151,7 @@ def build_customized_image(image, build_dir, use_cache=False):
                 f.write(instruction)
 
     tag = f"{image}.customized"
-    build_cmd = [
+    build_cmd: list[str] = [
         "docker",
         "build",
         # Always pull to avoid corruption in base image.
@@ -167,7 +174,7 @@ def build_customized_image(image, build_dir, use_cache=False):
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        for line in p.stdout:
+        for line in p.stdout or ():
             log_output(line)
         p.communicate()
         rc = p.returncode
@@ -182,11 +189,11 @@ def build_customized_image(image, build_dir, use_cache=False):
 
 class Terminate(KeyboardInterrupt):
     @classmethod
-    def trigger(cls, *args):
+    def trigger(cls, *args: Any) -> Terminate:
         raise cls()
 
 
-def start(version, options):
+def start(version: str, options: Any) -> None:
     if RELEASE_PAT.match(version):
         # released version
         image = f"lavasoftware/lava-dispatcher:{version}"
@@ -222,7 +229,7 @@ def start(version, options):
         docker_name,
     ]
 
-    mounts = []
+    mounts: list[tuple[str, str | None, str | None]] = []
     mounts.append((DISPATCHER_DOWNLOAD_DIR, None, None))
 
     tftp_dir = pathlib.Path("/srv/tftp")
@@ -265,6 +272,7 @@ def start(version, options):
         image = build_customized_image(image, options.build_dir, options.use_cache)
     service.append(image)
 
+    container: subprocess.Popen[bytes] | None = None
     try:
         container = subprocess.Popen(
             service
@@ -275,7 +283,7 @@ def start(version, options):
             stderr=subprocess.STDOUT,
             preexec_fn=os.setpgrp,
         )
-        for line in container.stdout:
+        for line in container.stdout or ():
             log_output(line)
         if container.poll():
             LOG.error("Returned %d", container.poll())
@@ -292,20 +300,21 @@ def start(version, options):
             ["docker", "kill", "--signal", "TERM", docker_name],
             stderr=subprocess.STDOUT,
         )
-        for line in container.stdout:
-            log_output(line)
-        LOG.error("Returned %d", container.wait())
+        if container is not None:
+            for line in container.stdout or ():
+                log_output(line)
+            LOG.error("Returned %d", container.wait())
         sys.exit(0)
 
 
-def get_server_version(options):
+def get_server_version(options: Any) -> str:
     server_version_url = re.sub(r"/$", "", options.url) + "/api/v0.2/system/version/"
     retries = Retry(total=3, backoff_factor=1)
     adapter = HTTPAdapter(max_retries=retries)
     http = requests.Session()
     http.mount("http://", adapter)
     http.mount("https://", adapter)
-    server_version = http.get(
+    server_version_dict = http.get(
         server_version_url,
         headers={
             "User-Agent": f"lava-docker-worker {__version__}",
@@ -313,7 +322,8 @@ def get_server_version(options):
         },
         timeout=10,
     ).json()
-    return server_version["version"]
+    server_version: str = server_version_dict["version"]
+    return server_version
 
 
 ##########
@@ -328,7 +338,7 @@ def setup_logger(log_file: str, level: str) -> None:
     """
     # Configure the log handler
     if log_file == "-":
-        handler = logging.StreamHandler(sys.stdout)
+        handler: logging.Handler = logging.StreamHandler(sys.stdout)
     else:
         handler = logging.handlers.WatchedFileHandler(log_file)
     handler.setFormatter(logging.Formatter(FORMAT))
@@ -345,7 +355,7 @@ def setup_logger(log_file: str, level: str) -> None:
         LOG.setLevel(logging.DEBUG)
 
 
-def main():
+def main() -> None:
     # Parse command line
     options = get_parser(docker_worker=True).parse_args()
     if options.sentry_dsn:
@@ -388,7 +398,7 @@ def main():
             time.sleep(5)
 
 
-def run():
+def run() -> None:
     try:
         main()
     except KeyboardInterrupt:

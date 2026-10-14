@@ -299,6 +299,7 @@ project-includes = [
   "lava_dispatcher/utils/",
   "lava_dispatcher_host/client.py",
   "lava_dispatcher_host/docker_devices/",
+  "lava_dispatcher_host/docker_worker.py",
   "lava_dispatcher_host/udev.py",
   "lava_server/settings/config_file.py",
 ]
