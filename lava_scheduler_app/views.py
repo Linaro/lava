@@ -1928,8 +1928,8 @@ def job_fetch_data(request, pk):
 
 
 @BreadCrumb("My Jobs", parent=index)
+@login_required
 def myjobs(request):
-    get_object_or_404(User, pk=request.user.id)
     data = MyJobsView(request, model=TestJob, table_class=AllJobsTable)
     ptable = AllJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
@@ -1944,8 +1944,8 @@ def myjobs(request):
 
 
 @BreadCrumb("My Active Jobs", parent=index)
+@login_required
 def my_active_jobs(request):
-    get_object_or_404(User, pk=request.user.id)
     data = MyActiveJobsView(request, model=TestJob, table_class=ActiveJobsTable)
     ptable = ActiveJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
@@ -1961,8 +1961,8 @@ def my_active_jobs(request):
 
 
 @BreadCrumb("My Queued Jobs", parent=index)
+@login_required
 def my_queued_jobs(request):
-    get_object_or_404(User, pk=request.user.id)
     data = MyQueuedJobsView(request, model=TestJob, table_class=QueuedJobsTable)
     ptable = QueuedJobsTable(data.get_table_data())
     request_config(request, {"per_page": ptable.length}).configure(ptable)
@@ -1978,8 +1978,8 @@ def my_queued_jobs(request):
 
 
 @BreadCrumb("My Error Jobs", parent=index)
+@login_required
 def my_error_jobs(request):
-    get_object_or_404(User, pk=request.user.id)
     data = MyErrorJobsView(request, model=TestJob, table_class=AllJobsTable)
     ptable = JobErrorsTable(data.get_table_data(), prefix="job_errors_")
     request_config(request, {"per_page": ptable.length}).configure(ptable)
