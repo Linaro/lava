@@ -253,6 +253,20 @@ class TestTemplates(BaseTemplateTest):
                     commands,
                 )
 
+    def test_arduino_uno_q(self):
+        data = """{% extends 'arduino-uno-q.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}
+{% set flasher_deploy_commands = [
+    'adb shell \\'openocd -c "program /tmp/zephyr.elf verify exit"\\''
+] %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertEqual(
+            template_dict["actions"]["deploy"]["methods"]["flasher"]["commands"],
+            ["adb shell 'openocd -c \"program /tmp/zephyr.elf verify exit\"'"],
+        )
+        self.assertEqual(list(template_dict["actions"]["boot"]["methods"]), ["minimal"])
+        self.assertEqual(template_dict["constants"]["kernel-start-message"], "")
+
     def test_depthcharge_template(self):
         data = """\
 {% extends 'base-depthcharge.jinja2' %}
