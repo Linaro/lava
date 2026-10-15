@@ -1128,7 +1128,7 @@ class AppendOverlays(Action):
             self.run_cmd(command_list, error_msg="simg2img failed for %s" % image)
             os.replace(f"{image}.non-sparse", image)
 
-        import guestfs  # type: ignore[import-not-found]
+        import guestfs  # type: ignore
 
         guest = guestfs.GuestFS(python_return_dict=True)
         guest.add_drive(image)

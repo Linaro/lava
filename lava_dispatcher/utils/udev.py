@@ -11,7 +11,7 @@ import select
 import time
 from typing import TYPE_CHECKING
 
-import pyudev  # type: ignore[import-not-found]
+import pyudev  # type: ignore
 
 from lava_common.exceptions import InfrastructureError, JobError, LAVABug
 from lava_dispatcher.action import Action

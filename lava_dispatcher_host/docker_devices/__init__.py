@@ -15,7 +15,7 @@ from jinja2 import Environment as JinjaEnv
 from lava_common.exceptions import InfrastructureError
 
 try:
-    from bcc import BPF, BPFAttachType  # type: ignore[import-not-found]
+    from bcc import BPF, BPFAttachType  # type: ignore
 except ImportError:
     # This can happen on Debian 10 and that's ok. The code path that uses this
     # will only be used on Debian 11 +
