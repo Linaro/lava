@@ -264,7 +264,7 @@ def main() -> int:
         job.validate()
         if not options.validate:
             if options.debug:
-                from remote_pdb import set_trace  # type: ignore[import-not-found]
+                from remote_pdb import set_trace  # type: ignore
 
                 set_trace()
             job.run()

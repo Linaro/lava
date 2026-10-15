@@ -89,7 +89,7 @@ def tftpd_dir() -> str:
     """
     var_name = "TFTP_DIRECTORY"
     if os.path.exists("/etc/default/tftpd-hpa"):
-        from configobj import ConfigObj  # type: ignore[import-not-found]
+        from configobj import ConfigObj  # type: ignore
 
         config = ConfigObj("/etc/default/tftpd-hpa")
         value = config.get(var_name)
@@ -189,7 +189,7 @@ def prepare_guestfs(
 
         return uuid
 
-    import guestfs  # type: ignore[import-not-found]
+    import guestfs  # type: ignore
 
     guest = guestfs.GuestFS(python_return_dict=True)
     guest.disk_create(output, "qcow2", size * 1024 * 1024)
