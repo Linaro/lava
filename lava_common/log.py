@@ -14,7 +14,7 @@ import signal
 import sys
 import time
 from queue import Empty
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 import requests
 
@@ -23,7 +23,6 @@ from lava_common.yaml import yaml_safe_dump
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
 
 # Pylint doesn't understand that multiprocessing.Queue is subscriptable
 # for typing purposes.
@@ -368,19 +367,33 @@ class MarkerDict(TypedDict):
     type: str
 
 
-class ResultDict(TypedDict, total=False):
-    definition: str
-    namespace: str
-    case: str
-    level: str | None
-    duration: str
-    result: str
-    extra: dict[str, Any]
-    starttc: int | None
-    endtc: int | None
-    set: str
-    error_type: str
-    error_msg: str
+ResultDict = TypedDict(
+    "ResultDict",
+    {
+        "definition": str | None,
+        "uuid": str,
+        "namespace": str,
+        "case": str,
+        "level": str | None,
+        "duration": str,
+        "result": str,
+        "extra": dict[str, Any],
+        "starttc": int | None,
+        "endtc": int | None,
+        "set": str,
+        "repository": str | None,
+        "path": str | None,
+        "commit_id": str,
+        "revision": str,
+        "connection-namespace": str,
+        "measurement": float,
+        "units": str,
+        "reference": str,
+        "error_type": str,
+        "error_msg": str,
+    },
+    total=False,
+)
 
 
 class YAMLLogger:
