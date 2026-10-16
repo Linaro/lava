@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+from re import Match
 from unittest.mock import MagicMock, call, patch
 
 from lava_common.exceptions import ConnectionClosedError, TestError
@@ -13,17 +14,16 @@ from lava_dispatcher.actions.test_strategy import TestShell
 from ...test_basic import LavaDispatcherTestCase
 
 
-class Mockmatch:
-    def __init__(self, data):
-        self.data = data
-
-    def groups(self):
-        return self.data
+def create_mock_match(data):
+    new_mock = MagicMock(spec=Match)
+    new_mock.data = data
+    new_mock.groups.return_value = data
+    return new_mock
 
 
 class MockConnection:
     def __init__(self, data):
-        self.match = Mockmatch(data)
+        self.match = create_mock_match(data)
 
 
 class TestTestShell(LavaDispatcherTestCase):
