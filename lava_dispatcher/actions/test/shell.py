@@ -27,6 +27,7 @@ if TYPE_CHECKING:
     from typing import Any
 
     from lava_dispatcher.job import Job
+    from lava_dispatcher.shell import ShellSession
 
 
 # The timestamp of a kernel message, like '[   77.462092]'
@@ -187,7 +188,7 @@ class TestShellAction(ReportMixin):
         else:
             parameters = {"namespace": self.parameters.get("namespace", "common")}
             self.logger.debug("Using namespace: %s", parameters["namespace"])
-        connection = self.get_namespace_data(
+        connection: ShellSession | None = self.get_namespace_data(
             action="shared",
             label="shared",
             key="connection",
@@ -207,7 +208,7 @@ class TestShellAction(ReportMixin):
 
         self.signal_director.connection = connection
 
-        pattern_dict = {self.pattern.name: self.pattern}
+        pattern_dict: dict[str | None, PatternFixup] = {self.pattern.name: self.pattern}
         # pattern dictionary is the lookup from the STARTRUN to the parse pattern.
         self.set_namespace_data(
             action=self.name,
@@ -236,13 +237,13 @@ class TestShellAction(ReportMixin):
         # use the string instead of self.name so that inheriting classes (like multinode)
         # still pick up the correct command.
         running = self.parameters["stage"]
-        pre_command_list = self.get_namespace_data(
+        pre_command_list: list[str] | None = self.get_namespace_data(
             action="test", label="lava-test-shell", key="pre-command-list"
         )
-        lava_test_results_dir = self.get_namespace_data(
+        lava_test_results_dir: str | None = self.get_namespace_data(
             action="test", label="results", key="lava_test_results_dir"
         )
-        lava_test_sh_cmd = self.get_namespace_data(
+        lava_test_sh_cmd: str | None = self.get_namespace_data(
             action="test", label="shared", key="lava_test_sh_cmd"
         )
 
@@ -278,7 +279,7 @@ class TestShellAction(ReportMixin):
         try:
             feedbacks = []
             for feedback_ns in self.data.keys():
-                feedback_connection = self.get_namespace_data(
+                feedback_connection: ShellSession | None = self.get_namespace_data(
                     action="shared",
                     label="shared",
                     key="connection",
@@ -373,15 +374,19 @@ class TestShellAction(ReportMixin):
         self.reports[self.definition] = {"results": self.report, "ran": False}
         self.logger.info("Starting test lava.%s (%s)", self.definition, uuid)
         # set the pattern for this run from pattern_dict
-        testdef_index = self.get_namespace_data(
+        testdef_index: list[str] | None = self.get_namespace_data(
             action="test-definition", label="test-definition", key="testdef_index"
         )
-        uuid_list = self.get_namespace_data(
+        if testdef_index is None:
+            raise JobError("No test definitions index found")
+        uuid_list: list[str] | None = self.get_namespace_data(
             action="repo-action", label="repo-action", key="uuid-list"
         )
+        if uuid_list is None:
+            raise JobError("No test UUID list found")
         for key, value in enumerate(testdef_index):
             if self.definition == f"{key}_{value}":
-                pattern_dict = self.get_namespace_data(
+                pattern_dict: dict[str, Any] | None = self.get_namespace_data(
                     action="test", label=uuid_list[key], key="testdef_pattern"
                 )
                 if not pattern_dict:
@@ -401,7 +406,7 @@ class TestShellAction(ReportMixin):
             "uuid": uuid,
             "result": "fail",
         }
-        testdef_commit = self.get_namespace_data(
+        testdef_commit: str | None = self.get_namespace_data(
             action="test", label=uuid, key="commit-id"
         )
         if testdef_commit:
@@ -414,9 +419,10 @@ class TestShellAction(ReportMixin):
         except IndexError:
             raise TestError("Invalid signal")
 
-        if expected := self.get_namespace_data(
+        expected: list[str] | None = self.get_namespace_data(
             action="test", label=uuid, key="testdef_expected"
-        ):
+        )
+        if expected:
             self.handle_expected(expected, self.definition)
 
         # remove the pattern for this run from pattern_dict
@@ -432,24 +438,32 @@ class TestShellAction(ReportMixin):
             time.monotonic() - self.start,
         )
         self.current_run = None
+        result_repository: str | None = self.get_namespace_data(
+            action="test", label=uuid, key="repository"
+        )
+        result_path: str | None = self.get_namespace_data(
+            action="test", label=uuid, key="path"
+        )
         res = {
             "definition": "lava",
             "case": self.definition,
             "uuid": uuid,
-            "repository": self.get_namespace_data(
-                action="test", label=uuid, key="repository"
-            ),
-            "path": self.get_namespace_data(action="test", label=uuid, key="path"),
+            "repository": result_repository,
+            "path": result_path,
             "duration": "%.02f" % (time.monotonic() - self.start),
             "result": "pass",
         }
-        revision = self.get_namespace_data(action="test", label=uuid, key="revision")
+        revision: str | None = self.get_namespace_data(
+            action="test", label=uuid, key="revision"
+        )
         res["revision"] = revision if revision else "unspecified"
         res["namespace"] = self.parameters["namespace"]
         connection_namespace = self.parameters.get("connection-namespace")
         if connection_namespace:
             res["connection-namespace"] = connection_namespace
-        commit_id = self.get_namespace_data(action="test", label=uuid, key="commit-id")
+        commit_id: str | None = self.get_namespace_data(
+            action="test", label=uuid, key="commit-id"
+        )
         if commit_id:
             res["commit_id"] = commit_id
 
@@ -494,9 +508,10 @@ class TestShellAction(ReportMixin):
             if "units" in res:
                 res_data["units"] = res["units"]
 
-        if expected := self.get_namespace_data(
+        expected: list[str] | None = self.get_namespace_data(
             action="test", label=self.signal_director.test_uuid, key="testdef_expected"
-        ):
+        )
+        if expected:
             res_data["result"] = self.handle_unexpected(
                 expected, res_data["case"], res_data["result"]
             )
@@ -533,14 +548,15 @@ class TestShellAction(ReportMixin):
             self.logger.error("%s is not a valid namespace")
             return
         self.logger.info("Requesting feedback from namespace: %s", feedback_ns)
-        feedback_connection = self.get_namespace_data(
+        feedback_connection: ShellSession | None = self.get_namespace_data(
             action="shared",
             label="shared",
             key="connection",
             deepcopy=False,
             parameters={"namespace": feedback_ns},
         )
-        feedback_connection.listen_feedback(timeout=1, namespace=feedback_ns)
+        if feedback_connection is not None:
+            feedback_connection.listen_feedback(timeout=1, namespace=feedback_ns)
 
     @nottest
     def signal_test_set(self, params):
@@ -680,7 +696,7 @@ class TestShellAction(ReportMixin):
     def cleanup(self, connection, max_end_time=None):
         super().cleanup(connection, max_end_time=None)
 
-        test_list = self.get_namespace_data(
+        test_list: list[dict[str, Any]] | None = self.get_namespace_data(
             action="test-definition",
             label="test-definition",
             key="test_list",
