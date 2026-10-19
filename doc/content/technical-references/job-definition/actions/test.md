@@ -694,6 +694,64 @@ passing result. This is useful for interactive commands which don't generate
 any output on success; of course, in this case you would need to specify
 `failures` to catch them.
 
+Named groups in the `successes` regular expressions are saved as
+[substitutions](#substitutions) for the next commands:
+
+```yaml title="Reuse a matched value" hl_lines="5 7"
+      script:
+      - name: dhcp
+        command: dhcp
+        successes:
+        - message: "DHCP client bound to address (?P<IP>[0-9.]+)"
+      - name: ping-self
+        command: "ping {IP}"
+        successes:
+        - message: "host {IP} is alive"
+```
+
+#### wait_for_prompt
+
+Optional, defaults to `true`. When a `successes` or `failures` message is
+matched, wait for one of the `prompts` before sending the next command. Set to
+`false` when the command does not return to the prompt, for instance when it
+starts an application that keeps running.
+
+#### delay
+
+Wait for the given number of seconds before the next command. No command is
+sent.
+
+```yaml
+      script:
+      - delay: 5
+```
+
+#### MultiNode
+
+In a [MultiNode](../protocols.md#multinode) job, the `lava-send`, `lava-sync`,
+`lava-wait` and `lava-wait-all` keys call the
+[MultiNode API](../protocols.md#api). Nothing is sent to the DUT.
+
+```yaml title="MultiNode interactive test"
+      script:
+      - lava-send: "server-ready ip={IP} port=8080"
+      - lava-sync: clients-done
+      - lava-wait: client-ready
+      - lava-wait-all: "client-done role=client"
+```
+
+* `lava-send`: the message id, followed by optional `key=value` pairs.
+* `lava-sync`: the message id.
+* `lava-wait`: the message id.
+* `lava-wait-all`: the message id, followed by an optional `role=<role>`.
+
+The `key=value` pairs received by `lava-wait` and `lava-wait-all` are saved as
+[substitutions](#substitutions): with the `lava-send` above, the other devices
+can use `{ip}` and `{port}` in their commands.
+
+The API calls are blocking for at most the test action timeout. A `lava-wait-all`
+refused by the coordinator raises a `TestError`.
+
 ### expected
 
 (optional) Provide an expected test case list. Both unexpected and missing test
@@ -715,6 +773,32 @@ cases are reported as fail.
 !!!note "Always reported"
     The expected test cases are always reported, even if the tests are not
     executed due to earlier job errors.
+
+### Substitutions
+
+The following placeholders are replaced in the `command` and `lava-send`
+values:
+
+* `{SERVER_IP}`: the IP address of the LAVA worker
+* `{JOB_ID}`: the job id
+* the placeholders defined by a previous u-boot boot action, like `{KERNEL_ADDR}`
+  or `{BOOTX}`
+* the named groups of the matched `successes`
+* the `key=value` pairs received with `lava-wait` and `lava-wait-all`
+
+### Results
+
+Each script is reported as a test suite named `<stage>_<name>`, where `<stage>`
+is the number of [definitions](#definitions) test actions run before, in the
+same namespace. Each command with a `name` is a test case of this test suite.
+
+The result of the script itself is reported in the `lava` test suite, with the
+same `<stage>_<name>` name.
+
+### Timeout
+
+The commands do not have their own timeout: the whole interactive test action
+is limited by the test action timeout.
 
 ## Services
 
