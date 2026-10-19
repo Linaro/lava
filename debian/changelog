@@ -1,3 +1,23 @@
+lava (2026.10-1) unstable; urgency=medium
+
+  * LAVA Software 2026.10 release
+
+  [ Igor Ponomarev ]
+  * [a75ef557f] debian: Mark python3-guestfs as an recommended dependency
+
+  [ Christopher Obbard ]
+  * [9c0d31c0a] d/tests/lava-coordinator: use systemctl instead of pgrep
+    (Closes: #1144794)
+  * [f13fb62a8] d/tests/lava-dispatcher-host: run the test instead of skipping it
+  * [6f045cc55] d/control: make optional dependencies architecture-independent
+  * [c8cf9dfeb] d/tests/control: drop obsolete architecture restrictions
+  * [24f5a9fa5] d/control: use my Qualcomm email as Uploader
+
+  [ Fathi Boudra ]
+  * [84c4ca72b] lava-dispatcher-host: keep bcc's kernel headers working under the sandbox
+
+ -- Rémi Duraffort <remi.duraffort@linaro.org>  Mon, 19 Oct 2026 16:50:56 +0200
+
 lava (2026.09-1) unstable; urgency=medium
 
   * LAVA Software 2026.09 release
