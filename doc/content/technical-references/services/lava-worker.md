@@ -21,7 +21,7 @@ lava-worker should be able to:
 Daemon start options:
 
 * `/etc/default/lava-worker`
-* `/etc/lava-server/lava-worker`
+* `/etc/lava-dispatcher/lava-worker`
 
 ## Logs
 
