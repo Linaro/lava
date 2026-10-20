@@ -47,6 +47,13 @@ int lava_docker_device_access_control(struct bpf_cgroup_dev_ctx *ctx) {
 }
 """
 
+HEADERS_GUIDANCE = (
+    "kernel headers for the running kernel are missing. Device sharing "
+    "needs them: install the kernel headers development package of the "
+    "distribution, or build the kernel with CONFIG_IKHEADERS=m and load "
+    "the kheaders module (`modprobe kheaders`)."
+)
+
 
 @dataclass(frozen=True)
 class Device:
@@ -197,12 +204,8 @@ class DeviceFilterCGroupsV2(DeviceFilterCommon):
             logger.exception("Failed to apply BPF for %r", self.__cgroup__)
             if fd is not None and bpf is None:
                 logger.error(
-                    "The BPF program could not be compiled, most "
-                    "likely because kernel headers for the running "
-                    "kernel are missing. Device sharing needs them: "
-                    "install the kernel headers development package "
-                    "of the distribution, or build the kernel with "
-                    "CONFIG_IKHEADERS=m."
+                    "The BPF program could not be compiled, most likely because %s",
+                    HEADERS_GUIDANCE,
                 )
         finally:
             if bpf is not None:

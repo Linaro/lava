@@ -7,6 +7,7 @@ import subprocess
 import pytest
 
 import lava_dispatcher_host
+from lava_common.exceptions import InfrastructureError
 from lava_dispatcher_host.cmdline import main
 
 
@@ -140,6 +141,36 @@ def test_share_device_remote_failure(mocker, capsys):
     assert capsys.readouterr().err == "InfrastructureError('no such device')\n"
 
 
+def test_check(mocker):
+    from lava_dispatcher_host import check
+
+    run_check = mocker.patch("lava_dispatcher_host.check.run_check")
+    main(["lava-dispatcher-host", "check"])
+    run_check.assert_called_once_with(image=check.DEFAULT_IMAGE, device=None)
+
+
+def test_check_failure_exits_1(mocker, capsys):
+    mocker.patch(
+        "lava_dispatcher_host.check.run_check",
+        side_effect=InfrastructureError("boom"),
+    )
+    with pytest.raises(SystemExit) as exit_info:
+        main(["lava-dispatcher-host", "check"])
+    assert exit_info.value.code == 1
+    assert "boom" in capsys.readouterr().err
+
+
+def test_check_command_failure_exits_1(mocker, capsys):
+    mocker.patch(
+        "lava_dispatcher_host.check.run_check",
+        side_effect=subprocess.CalledProcessError(1, ["losetup"], stderr="nope"),
+    )
+    with pytest.raises(SystemExit) as exit_info:
+        main(["lava-dispatcher-host", "check"])
+    assert exit_info.value.code == 1
+    assert "nope" in capsys.readouterr().err
+
+
 def test_map_device(mocker):
     add_device_container_mapping = mocker.patch(
         "lava_common.device_mappings.add_device_container_mapping"
@@ -173,3 +204,13 @@ def test_debug_log(mocker, tmp_path):
     main(["lava-dispatcher-host", "--debug-log", str(log), "rules", "show"])
     assert log.exists()
     assert "Called with:" in log.read_text()
+
+
+def test_check_timeout_exits_1(mocker):
+    mocker.patch(
+        "lava_dispatcher_host.check.run_check",
+        side_effect=subprocess.TimeoutExpired(cmd=["docker", "run"], timeout=300),
+    )
+    with pytest.raises(SystemExit) as excinfo:
+        main(["lava-dispatcher-host", "check"])
+    assert excinfo.value.code == 1

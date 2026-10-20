@@ -93,6 +93,27 @@ def handle_devices_unmap(_):
     remove_device_container_mappings("0")
 
 
+def handle_check(options):
+    from lava_common.exceptions import InfrastructureError
+    from lava_dispatcher_host.check import run_check
+
+    try:
+        run_check(image=options.image, device=options.device)
+    except InfrastructureError as e:
+        print(str(e), file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"command failed: {e.stderr or e}", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.TimeoutExpired as e:
+        print(f"timed out: {e.cmd}", file=sys.stderr)
+        sys.exit(1)
+    except OSError as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)
+    print("OK")
+
+
 def main(argv):
     parser = argparse.ArgumentParser(prog=argv[0])
     parser.set_defaults(usage_from=parser)
@@ -176,6 +197,25 @@ def main(argv):
         "unmap", help='Remove mappings added with "devices map"'
     )
     devices_unmap.set_defaults(func=handle_devices_unmap)
+
+    # "check" sub-command
+    from lava_dispatcher_host.check import DEFAULT_IMAGE
+
+    check = sub.add_parser(
+        "check",
+        help="Verify that this host can share devices with containers",
+    )
+    check.set_defaults(func=handle_check)
+    check.add_argument(
+        "--image",
+        default=DEFAULT_IMAGE,
+        help="container image to use for the test (default: %(default)s)",
+    )
+    check.add_argument(
+        "--device",
+        default=None,
+        help="host device node to test with instead of a loop device",
+    )
 
     options = parser.parse_args(argv[1:])
 

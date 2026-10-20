@@ -124,3 +124,35 @@ and set the MOUNTS option:
 ```
 MOUNTS="--mount /path/to/tools/bin:/usr/local/bin"
 ```
+
+## 5: verifying device sharing
+
+On cgroups v2 hosts, LAVA shares devices with job containers through a BPF
+program compiled on the host. Kernel or systemd changes (for example
+`ProtectKernelModules=true`) can silently break it. To verify that the host
+can compile the BPF device filter and share a device with a
+container, run:
+
+```
+sudo lava-dispatcher-host check
+```
+
+The check:
+
+* rejects cgroups v1 hosts: only cgroups v2 is supported;
+* verifies that `docker`, `bpftool` and the bcc python bindings are installed;
+* verifies that kernel headers are reachable (the `kheaders` kernel module
+  or installed kernel headers) and that the BPF device filter compiles;
+* pulls a small image (`debian:trixie-slim` by default, override with
+  `--image`), starts a throwaway container named
+  `lava-dispatcher-host-check-<pid>`, attaches the device filter to it, and
+  with a temporary loop device shows that the container cannot access the
+  device until it is added to the filter.
+
+Use `--device /dev/ttyUSB0` to test with a real device instead of a loop
+device. The check removes the container and the loop device afterwards, even
+when it fails.
+
+Exit code 0 means device sharing works. Any failure prints the reason and
+exits with 1. Run the check after installing or upgrading
+`lava-dispatcher-host` on cgroups v2 hosts.

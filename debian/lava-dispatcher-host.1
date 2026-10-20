@@ -4,7 +4,7 @@ lava-dispatcher-host \- host-side helper for LAVA dispatcher operations
 
 .SH SYNOPSIS
 .B lava-dispatcher-host
-.RI [ options ] " {" rules " | " devices "} ..."
+.RI [ options ] " {" rules " | " devices " | " check "} ..."
 
 .SH DESCRIPTION
 .B lava-dispatcher-host
@@ -28,6 +28,10 @@ Manipulate the udev rules file.
 .TP
 .B devices
 Manage devices.
+.TP
+.B check
+Verify that the host can compile the BPF device filter and share a device
+with a container.
 
 .SH EXIT STATUS
 .TP
