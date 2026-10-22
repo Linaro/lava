@@ -704,6 +704,30 @@ ok 2 bar
 """
         )
 
+    def test_testjob_junit_tap13_missing_logs(self, monkeypatch, tmp_path):
+        # The job logs were removed but the test results are still in the
+        # database.
+        monkeypatch.setattr(TestJob, "output_dir", str(tmp_path))
+        self.public_test_case1.start_log_line = 2
+        self.public_test_case1.end_log_line = 5
+        self.public_test_case1.save()
+
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/junit/" % self.public_testjob1.id,
+        )
+        tree = ET.fromstring(data)
+        assert tree[0][0][0].tag == "failure"
+        assert tree[0][0][0].text is None
+
+        data = self.hit(
+            self.userclient,
+            reverse("api-root", args=[self.version])
+            + "jobs/%s/tap13/" % self.public_testjob1.id,
+        )
+        assert "not ok 1 foo\n" in data  # nosec - unit test support
+
     def test_testjob_suite_csv(self):
         data = self.hit(
             self.userclient,

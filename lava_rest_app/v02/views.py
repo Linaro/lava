@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
+import contextlib
 import csv
 import io
 import re
@@ -240,9 +241,12 @@ class TestJobViewSet(viewsets.ModelViewSet):
                         case.start_log_line is not None
                         and case.end_log_line is not None
                     ):
-                        logs = logs_instance.read(
-                            self.get_object(), case.start_log_line, case.end_log_line
-                        )
+                        with contextlib.suppress(FileNotFoundError):
+                            logs = logs_instance.read(
+                                self.get_object(),
+                                case.start_log_line,
+                                case.end_log_line,
+                            )
                     tc.add_failure_info("failed", output=logs)
                 elif case.result == TestCase.RESULT_SKIP:
                     tc.add_skipped_info("skipped")
@@ -302,13 +306,18 @@ class TestJobViewSet(viewsets.ModelViewSet):
         for suite in self.get_object().testsuite_set.all().order_by("id"):
             for case in suite.testcase_set.all().order_by("id"):
                 if case.result == TestCase.RESULT_FAIL:
+                    logs = None
                     if (
                         case.start_log_line is not None
                         and case.end_log_line is not None
                     ):
-                        logs = logs_instance.read(
-                            self.get_object(), case.start_log_line, case.end_log_line
-                        )
+                        with contextlib.suppress(FileNotFoundError):
+                            logs = logs_instance.read(
+                                self.get_object(),
+                                case.start_log_line,
+                                case.end_log_line,
+                            )
+                    if logs is not None:
                         logs = "\n ".join(logs.split("\n"))
                         tracker.add_not_ok(
                             suite.name, case.name, diagnostics=" ---\n " + logs + "..."
