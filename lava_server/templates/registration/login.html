@@ -56,7 +56,7 @@
   <div class="col-md-4">
     <h4>{{ oidc_account_name }}</h4>
     <hr/>
-    <a href="{% url 'oidc_authentication_init' %}">Login</a>
+    <a href="{% url 'oidc_authentication_init' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Login</a>
   </div>
   {% endif %}
   <div class="col-md-4">
