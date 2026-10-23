@@ -313,14 +313,20 @@ class TestCreateOverlaySecrets(LavaDispatcherTestCase):
 
     def test_secrets_file_written(self) -> None:
         with TemporaryDirectory(prefix="overlay-secrets-") as tmp_dir:
-            secrets_path = (
-                self._overlay_dir(tmp_dir, {"foo": "bar", "token": "s3cr3t"})
-                / "secrets"
-            )
+            overlay_dir = self._overlay_dir(tmp_dir, {"foo": "bar", "token": "s3cr3t"})
+            secrets_path = overlay_dir / "secrets"
             self.assertEqual(
                 sorted(secrets_path.read_text().splitlines()),
                 ["foo=bar", "token=s3cr3t"],
             )
+
+            secrets_dir_path = overlay_dir / "secrets_dir"
+            foo_secret_path = secrets_dir_path / "foo"
+            self.assertTrue(foo_secret_path.is_file())
+            self.assertEqual(foo_secret_path.read_bytes(), b"bar")
+            token_secret_path = secrets_dir_path / "token"
+            self.assertTrue(token_secret_path.is_file())
+            self.assertEqual(token_secret_path.read_bytes(), b"s3cr3t")
 
     def test_no_secrets_file_without_secrets(self) -> None:
         # An empty or missing "secrets" job section must not create the file:
