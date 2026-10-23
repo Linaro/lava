@@ -92,14 +92,16 @@ class JobOutputSender:
         last_call = time.monotonic()
         leaving = False
         while not leaving:
-            # Listen for new messages if we don't have message yet
-            if len(self.records) == 0:
-                with contextlib.suppress(Empty):
-                    data = self.conn.get(block=True, timeout=self.max_time)
-                    if data is None:
-                        leaving = True
-                    else:
-                        self.records.append(data)
+            # Always block, bounded by the time left before the next upload.
+            # Skipping this wait while records are buffered busy-spins on
+            # get_nowait() until the interval expires.
+            timeout = max(0, self.max_time - (time.monotonic() - last_call))
+            with contextlib.suppress(Empty):
+                data = self.conn.get(block=True, timeout=timeout)
+                if data is None:
+                    leaving = True
+                else:
+                    self.records.append(data)
 
             # Drain the queue to collect records for batch uploading
             while len(self.records) < self.max_records:
@@ -114,10 +116,13 @@ class JobOutputSender:
 
             records_limit = len(self.records) >= self.max_records
             time_limit = (time.monotonic() - last_call) >= self.max_time
-            if self.records and (records_limit or time_limit):
+            if records_limit or time_limit:
+                # Reset the deadline even with nothing to send, otherwise the
+                # wait above collapses to zero and the loop spins.
                 last_call = time.monotonic()
-                # Send the data
-                self.post()
+                if self.records:
+                    # Send the data
+                    self.post()
 
     def run(self) -> None:
         with self.session:

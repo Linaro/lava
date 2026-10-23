@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 import signal
+from queue import Empty
 
 from lava_common.log import (
     JobOutputSender,
@@ -33,8 +34,11 @@ def test_sender(mocker, capsys):
     JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
 
     assert len(conn.get.mock_calls) == 2
-    assert conn.get.mock_calls[0] == mocker.call(block=True, timeout=1)
-    assert conn.get.mock_calls[1] == mocker.call(block=True, timeout=1)
+    for call in conn.get.mock_calls:
+        # The wait is bounded by the time left before the next upload, so it
+        # is at most max_time but not a fixed value.
+        assert call.kwargs["block"] is True
+        assert 0 < call.kwargs["timeout"] <= 1
     assert len(conn.get_nowait.mock_calls) == 1000
 
     assert len(post.mock_calls) == 2
@@ -51,6 +55,35 @@ def test_sender(mocker, capsys):
     out, _ = capsys.readouterr()
     assert "INFO [LOGGER] POST: total records sent: 1000" in out
     assert "INFO [LOGGER] POST: total records sent: 1001" in out
+
+
+def test_sender_waits_for_records(mocker):
+    """The sender blocks on conn.get() on every iteration.
+
+    Regression test: skipping the blocking get while records were buffered
+    left nothing in the loop to wait on, so it spun on get_nowait() until the
+    upload interval expired. A slow trickle of records kept it spinning
+    almost permanently, burning a whole CPU per running job.
+    """
+    response = mocker.Mock(status_code=200)
+    response.json = mocker.Mock(return_value={"line_count": 1})
+    session = mocker.MagicMock(
+        return_value=mocker.MagicMock(post=mocker.Mock(return_value=response))
+    )
+    mocker.patch("requests.Session", session)
+
+    # One record is waiting, then the queue stays empty until the sentinel.
+    # Neither the record limit nor the time limit is reached in between.
+    conn = mocker.MagicMock()
+    conn.get.side_effect = ["first", None]
+    conn.get_nowait.side_effect = Empty
+
+    JobOutputSender(conn, "http://localhost", "my-token", 1, "1234").run()
+
+    # Two iterations, each draining the queue exactly once. Without the
+    # blocking wait the second iteration drains over and over instead.
+    assert conn.get.call_count == 2
+    assert conn.get_nowait.call_count == 2
 
 
 def test_sender_exceptions(mocker):
