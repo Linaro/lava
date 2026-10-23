@@ -11,7 +11,7 @@
 
 <p>LAVA is an automated validation architecture primarily aimed at testing deployments of systems based around the
 Linux kernel on ARM devices, specifically ARMv7 and later. The current range of boards (<a
-href="{{ STATIC_URL }}docs/v2/glossary.html#term-device-type"
+href="{{ STATIC_URL }}docs/introduction/glossary.html#device-type"
 >device types</a>) supported by this LAVA instance can be seen
 on the <a href="{% url 'lava.scheduler' %}">scheduler status</a> page which includes details of how many boards
 of each type are available for tests and currently running jobs.</p>
@@ -39,7 +39,7 @@ of each type are available for tests and currently running jobs.</p>
         with LAVA and export data from LAVA using XMLRPC.</li>
     <li>
         <span class="glyphicon glyphicon-question-sign"></span>
-        <b><a href="{{ STATIC_URL }}docs/v2/index.html">Help</a></b> - documentation
+        <b><a href="{{ STATIC_URL }}docs/index.html">Help</a></b> - documentation
         on using LAVA, worked examples and use cases, developing your own
         tests and how to administer a LAVA instance of your own.</li>
     {% if user.is_authenticated %}
@@ -63,12 +63,12 @@ of each type are available for tests and currently running jobs.</p>
     <div class="row">
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
-          <li><a href="{{ STATIC_URL }}docs/v2/index.html"
+          <li><a href="{{ STATIC_URL }}docs/index.html"
               class="btn btn-primary">
               <span class="glyphicon glyphicon-question-sign"></span>
               Introduction to LAVA</a></li>
           <li><a
-          href="{{ STATIC_URL }}docs/v2/simple-admin.html"
+          href="{{ STATIC_URL }}docs/admin/first-steps.html"
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Administering a LAVA instance</a></li>
@@ -80,7 +80,7 @@ of each type are available for tests and currently running jobs.</p>
               class="btn btn-default">
               More about LAVA &amp; Linaro</a></li>
           <li><a
-          href="{{ STATIC_URL }}docs/v2/development-intro.html"
+          href="{{ STATIC_URL }}docs/developer/first-steps.html"
               class="btn btn-default">
               <span class="glyphicon glyphicon-question-sign"></span>
               Developing LAVA</a></li>
@@ -94,12 +94,12 @@ of each type are available for tests and currently running jobs.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a
-          href="{{ STATIC_URL }}docs/v2/first-job.html"
+          href="{{ STATIC_URL }}docs/user/first-steps.html"
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Use cases and worked examples.</a></li>
           <li><a
-          href="{{ STATIC_URL }}docs/v2/hacking-session.html"
+          href="{{ STATIC_URL }}docs/user/advanced-tutorials/tmate-based-hacking-session.html"
               class="btn btn-info">
               <span class="glyphicon glyphicon-question-sign"></span>
               Logging into a LAVA device.</a></li>
@@ -108,7 +108,7 @@ of each type are available for tests and currently running jobs.</p>
       <div class="col-md-6">
         <ul class="nav nav-pills nav-stacked">
           <li><a
-          href="{{ STATIC_URL }}docs/v2/writing-tests.html"
+          href="{{ STATIC_URL }}docs/user/basic-tutorials/test-definition.html"
               class="btn btn-success">
               <span class="glyphicon glyphicon-question-sign"></span>
               Writing a LAVA test definition.</a></li>
