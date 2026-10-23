@@ -185,6 +185,8 @@ class CreateOverlay(Action):
             if not os.path.exists(path):
                 os.makedirs(path, 0o755)
                 self.logger.debug("makedir: %s", path)
+        lava_secrets_dir_path = os.path.join(lava_path, "secrets_dir")
+        os.mkdir(lava_secrets_dir_path, mode=0o700)
         for fname in self.scripts_to_copy:
             with open(fname) as fin:
                 foutname = os.path.basename(fname)
@@ -271,12 +273,23 @@ class CreateOverlay(Action):
             ):
                 self._export_data(fout, http_cache, "HTTP_CACHE")
 
+            self._export_data(fout, lava_secrets_dir_path, "LAVA_SECRETS_DIR")
+
         # Generate the file containing the secrets
         if self.job.secrets:
             self.logger.debug("Creating %s/secrets", lava_path)
             with open(os.path.join(lava_path, "secrets"), "w") as fout:
                 for key, value in self.job.secrets.iterate():
                     fout.write(f"{key}={value}\n")
+
+        # Generate directory containing secrets in the files
+        if self.job.secrets:
+            self.logger.debug("Populating secrets directory")
+            for key, value in self.job.secrets.iterate():
+                with open(
+                    os.path.join(lava_secrets_dir_path, key), mode="wb"
+                ) as secret_f:
+                    secret_f.write(value.encode())
 
         if "env_dut" in self.job.parameters:
             environment = self.get_namespace_data(
