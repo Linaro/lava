@@ -223,6 +223,36 @@ class TestTemplates(BaseTemplateTest):
         self.assertEqual(template_dict["usb_vendor_id"], "8087")
         self.assertEqual(template_dict["usb_product_id"], "0aba")
 
+    def test_flasher_deploy_commands_quotes(self):
+        commands = ["flash {BINARY}", "sh -c 'echo \"flashed\"'"]
+        for device_type in [
+            "arduino-nano-33-ble",
+            "b-u585i-iot02a",
+            "base-depthcharge",
+            "base-nxp-mcu",
+            "base-qdl",
+            "base-uboot",
+            "cy8ckit-064s0s2-4343w",
+            "lpcxpresso55s69",
+            "mps",
+            "musca",
+            "seco-b68",
+            "seco-c61",
+            "stm32l562e-dk",
+            "stm32wba65i-dk1",
+            "vexpress",
+        ]:
+            with self.subTest(device_type=device_type):
+                data = f"""{{% extends '{device_type}.jinja2' %}}
+{{% set flasher_deploy_commands = {commands!r} %}}"""
+                template_dict = self.render_device_dictionary_from_text(data)
+                self.assertEqual(
+                    template_dict["actions"]["deploy"]["methods"]["flasher"][
+                        "commands"
+                    ],
+                    commands,
+                )
+
     def test_depthcharge_template(self):
         data = """\
 {% extends 'base-depthcharge.jinja2' %}

@@ -24,7 +24,7 @@ actions:
     methods:
 {% if flasher_deploy_commands %}
       flasher:
-        commands: {{ flasher_deploy_commands }}
+        commands: {{ flasher_deploy_commands|yaml_quote }}
 {% endif %}
       tftp:
     connections:
