@@ -116,6 +116,9 @@ def main():
     args.full_suite = args.suite
     args.suite = args.suite.replace("-backports", "")
     args.suite = args.suite.replace("-security", "")
+    # Debian changelog targets which install from unstable
+    if args.distribution == "debian" and args.suite in ("UNRELEASED", "experimental"):
+        args.suite = "unstable"
     if args.unittests and not args.names:
         raise RuntimeError("--unittests option requires --names")
     try:
