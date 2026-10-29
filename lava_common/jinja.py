@@ -8,15 +8,23 @@ from __future__ import annotations
 from shlex import quote as shlex_quote
 from typing import TYPE_CHECKING
 
+from jinja2 import Undefined as JinjaUndefined
 from jinja2.sandbox import SandboxedEnvironment as JinjaSandboxEnv
 
 from . import constants
 from .yaml import yaml_quote
 
 if TYPE_CHECKING:
-    from typing import Optional
+    from typing import Any
 
     from jinja2 import BaseLoader
+
+
+def yaml_quote_undefined(obj: Any | JinjaUndefined) -> str:
+    if isinstance(obj, JinjaUndefined):
+        return ""
+
+    return yaml_quote(obj)
 
 
 def qemu_guest_fs_interface(arch: str, guestfs_interface: str | None) -> str:
@@ -41,6 +49,6 @@ def create_device_templates_env(
         cache_size=cache_size,
     )
     new_env.filters["shlex_quote"] = shlex_quote
-    new_env.filters["yaml_quote"] = yaml_quote
+    new_env.filters["yaml_quote"] = yaml_quote_undefined
     new_env.filters["qemu_guest_fs_interface"] = qemu_guest_fs_interface
     return new_env

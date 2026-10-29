@@ -268,8 +268,9 @@ class TestTemplates(BaseTemplateTest):
         self.assertEqual(template_dict["constants"]["kernel-start-message"], "")
 
     def test_base_flasher_without_flasher_deploy_commands(self):
-        # yaml_quote fails on an undefined variable, so base-flasher guards
-        # the flasher block: rendering without commands must still succeed.
+        # The {% if %} guard in base-flasher keeps the whole flasher method
+        # absent when no commands are set; unguarded it would render
+        # flasher: {commands: None}, which only fails later in the job.
         data = """{% extends 'base-flasher.jinja2' %}
 {% set connection_command = 'telnet localhost 2000' %}"""
         template_dict = self.render_device_dictionary_from_text(data)
