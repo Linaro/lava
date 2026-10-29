@@ -267,6 +267,14 @@ class TestTemplates(BaseTemplateTest):
         self.assertEqual(list(template_dict["actions"]["boot"]["methods"]), ["minimal"])
         self.assertEqual(template_dict["constants"]["kernel-start-message"], "")
 
+    def test_base_flasher_without_flasher_deploy_commands(self):
+        # yaml_quote fails on an undefined variable, so base-flasher guards
+        # the flasher block: rendering without commands must still succeed.
+        data = """{% extends 'base-flasher.jinja2' %}
+{% set connection_command = 'telnet localhost 2000' %}"""
+        template_dict = self.render_device_dictionary_from_text(data)
+        self.assertIsNone(template_dict["actions"]["deploy"]["methods"])
+
     def test_depthcharge_template(self):
         data = """\
 {% extends 'base-depthcharge.jinja2' %}
