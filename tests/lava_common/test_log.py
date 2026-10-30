@@ -110,6 +110,45 @@ def test_sender_exceptions(mocker):
         assert c[2]["data"] == {"lines": "- hello world", "index": 0}
 
 
+def test_sender_reconnects_after_error(mocker):
+    """A failed upload drops the connection so the retry uses a new one.
+
+    Regression test: a proxy answered every request on a connection with 499
+    after one request on it timed out, and the sender retried on that same
+    connection until the job was canceled.
+    """
+    mocker.patch("time.sleep")
+    failed = mocker.Mock(status_code=499, text="")
+    sent = mocker.Mock(status_code=200)
+    sent.json.return_value = {"line_count": 1}
+    session = mocker.MagicMock()
+    session.post.side_effect = [failed, failed, sent]
+    mocker.patch("requests.Session", return_value=session)
+
+    sender = JobOutputSender(mocker.MagicMock(), "http://localhost", "t", 1, "1")
+    sender.records = ["hello world"]
+    for _ in range(3):
+        sender.post()
+
+    assert session.close.call_count == 2
+    assert sender.records == []
+    assert sender.index == 1
+
+
+def test_sender_reconnects_after_exception(mocker):
+    mocker.patch("time.sleep")
+    session = mocker.MagicMock()
+    session.post.side_effect = ConnectionError("reset")
+    mocker.patch("requests.Session", return_value=session)
+
+    sender = JobOutputSender(mocker.MagicMock(), "http://localhost", "t", 1, "1")
+    sender.records = ["hello world"]
+    sender.post()
+
+    session.close.assert_called_once()
+    assert sender.records == ["hello world"]
+
+
 def test_sender_404(mocker, capsys):
     job_id = "123"
     response = mocker.Mock(status_code=404)

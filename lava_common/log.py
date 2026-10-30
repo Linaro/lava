@@ -206,6 +206,7 @@ class JobOutputSender:
                 self.exception_counter = 0
                 sys.stderr.flush()
 
+            self.session.close()
             time.sleep(self.FAILURE_SLEEP)
             return
 
@@ -239,6 +240,13 @@ class JobOutputSender:
             # If the request fails, give some time for the server to
             # recover from the failure.
             time.sleep(self.FAILURE_SLEEP)
+
+        if ret.status_code != 200:
+            # Retry on a new connection. A proxy can keep failing every
+            # request on a connection after one request on it failed, and the
+            # retries keep that connection from ever going idle, so it is
+            # never closed and the logs are never sent.
+            self.session.close()
 
         self.record_post_result(ret)
 
