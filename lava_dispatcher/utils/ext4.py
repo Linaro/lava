@@ -96,9 +96,13 @@ def _run_debugfs(
 
 def _ext4_free_bytes(image: str) -> int | None:
     """Return free bytes reported by dumpe2fs, or None on failure."""
-    result = subprocess.run(
-        ["dumpe2fs", "-h", image], capture_output=True, text=True, check=False
-    )
+    try:
+        result = subprocess.run(
+            ["dumpe2fs", "-h", image], capture_output=True, text=True, check=False
+        )
+    except FileNotFoundError:
+        # no e2fsprogs on host: free space is unknown, similar as a failed run
+        return None
     if result.returncode != 0:
         return None
     free_blocks = 0

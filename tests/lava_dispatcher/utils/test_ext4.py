@@ -393,6 +393,10 @@ class TestExt4FreeBytes(unittest.TestCase):
         mock_run.return_value = MagicMock(returncode=1, stdout="", stderr="bad")
         self.assertIsNone(_ext4_free_bytes("/tmp/img.ext4"))
 
+    @patch("lava_dispatcher.utils.ext4.subprocess.run", side_effect=FileNotFoundError)
+    def test_returns_none_when_dumpe2fs_is_missing(self, mock_run):
+        self.assertIsNone(_ext4_free_bytes("/tmp/img.ext4"))
+
 
 class TestTarPayloadBytes(unittest.TestCase):
     def test_counts_file_sizes_rounded_up(self):
