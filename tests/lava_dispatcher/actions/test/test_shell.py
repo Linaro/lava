@@ -7,7 +7,13 @@
 from re import Match
 from unittest.mock import MagicMock, call, patch
 
-from lava_common.exceptions import ConnectionClosedError, TestError
+import pexpect
+
+from lava_common.exceptions import (
+    ConnectionClosedError,
+    LAVABug,
+    TestError,
+)
 from lava_dispatcher.actions.test.shell import TestShellAction
 from lava_dispatcher.actions.test_strategy import TestShell
 
@@ -577,6 +583,47 @@ class TestTestShell(LavaDispatcherTestCase):
                 "reference": "http://example.com",
             }
         )
+
+    def test_pattern_test_case_result_optional_groups(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        action.logger.results = MagicMock()
+
+        connection = MagicMock()
+        match = MagicMock(spec=Match)
+        match.groupdict.return_value = {
+            "test_case_id": "hello",
+            "result": "pass",
+            "measurement": None,  # optional group that did not match
+            "units": None,
+        }
+        connection.match = match
+        self.assertTrue(action.pattern_test_case_result(connection))
+        res = action.logger.results.call_args[0][0]
+        self.assertEqual(res["result"], "pass")
+        self.assertNotIn("measurement", res)
+        self.assertNotIn("units", res)
+
+        # An unmatched optional group must not become the string "None"
+        match.groupdict.return_value = {
+            "test_case_id": "world",
+            "result": None,
+            "measurement": "12",
+            "units": "ms",
+        }
+        self.assertTrue(action.pattern_test_case_result(connection))
+        res = action.logger.results.call_args[0][0]
+        self.assertEqual(res["result"], "unknown")
+        self.assertEqual(res["measurement"], 12.0)
+        self.assertEqual(res["units"], "ms")
+
+    def test_pattern_test_case_result_rejects_non_match(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        connection = MagicMock()
+        connection.match = pexpect.TIMEOUT
+        with self.assertRaises(LAVABug):
+            action.pattern_test_case_result(connection)
 
     def test_cleanup_no_run(self):
         job = self.create_simple_job()
