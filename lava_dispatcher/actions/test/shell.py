@@ -15,6 +15,7 @@ from lava_common.decorators import nottest
 from lava_common.exceptions import (
     ConnectionClosedError,
     JobError,
+    LAVABug,
     LAVATimeoutError,
     TestError,
 )
@@ -308,26 +309,20 @@ class TestShellAction(ReportMixin):
                     delay=self.character_delay,
                 )
 
-                test_connection.timeout.duration = min(
+                test_shell_timeout = min(
                     self.timeout.duration, self.connection_timeout.duration
                 )
                 self.logger.info(
                     "Test shell timeout: %ds (minimum of the action and connection timeout)",
-                    test_connection.timeout.duration,
+                    test_shell_timeout,
                 )
 
                 # Because of the feedbacks, we use a small value for the
                 # timeout.  This allows to grab feedback regularly.
                 last_check = time.monotonic()
-                while self._keep_running(
-                    test_connection, float(test_connection.timeout.duration)
-                ):
-                    # Only grab the feedbacks every test_connection.timeout
-                    if (
-                        feedbacks
-                        and time.monotonic() - last_check
-                        > test_connection.timeout.duration
-                    ):
+                while self._keep_running(test_connection, test_shell_timeout):
+                    # Only grab the feedbacks every test_shell_timeout
+                    if feedbacks and time.monotonic() - last_check > test_shell_timeout:
                         for feedback in feedbacks:
                             # The timeout is really small because the goal is only
                             # to clean the buffer of the feedback connections:
@@ -511,12 +506,11 @@ class TestShellAction(ReportMixin):
         # check for measurements
         res_measurement = res.get("measurement")
         if res_measurement is not None:
-            try:
-                res_data["measurement"] = float(res_measurement)
-            except ValueError:
-                raise TestError(f"Invalid measurement {res_measurement!r}")
-            if "units" in res:
-                res_data["units"] = str(res["units"])
+            # SignalMatch already converted measurement to a float
+            res_data["measurement"] = float(res_measurement)
+            units = res.get("units")
+            if units:
+                res_data["units"] = str(units)
 
         expected: list[str] | None = self.get_namespace_data(
             action="test", label=self.signal_director.test_uuid, key="testdef_expected"
@@ -592,8 +586,7 @@ class TestShellAction(ReportMixin):
             self.logger.warning("err: lava_test_shell has timed out (test_case)")
             return False
         if not isinstance(match, re.Match):
-            self.logger.warning("Expected re.Match object, got %r", match)
-            return False
+            raise LAVABug(f"Expected re.Match object, got {match!r}")
         res = self.signal_match.match(
             match.groupdict(), fixupdict=self.pattern.fixupdict()
         )
@@ -604,8 +597,7 @@ class TestShellAction(ReportMixin):
     def pattern_test_case_result(self, test_connection: ShellSession) -> bool:
         match = test_connection.match
         if not isinstance(match, re.Match):
-            self.logger.warning("Expected re.Match object, got %r", match)
-            return False
+            raise LAVABug(f"Expected re.Match object, got {match!r}")
         res = match.groupdict()
         fixupdict = self.pattern.fixupdict()
         if fixupdict and res["result"] in fixupdict:
@@ -622,19 +614,21 @@ class TestShellAction(ReportMixin):
             res_data: ResultDict = {
                 "definition": self.definition,
                 "case": str(res["test_case_id"]),
-                "result": str(res["result"]),
+                "result": res["result"] or "unknown",
             }
             # check for measurements
-            if "measurement" in res:
+            measurement = res.get("measurement")
+            if measurement is not None:
                 try:
-                    res_data["measurement"] = float(res["measurement"])
+                    res_data["measurement"] = float(measurement)
                 except ValueError:
-                    raise TestError("Invalid measurement %s" % res["measurement"])
-                if "units" in res:
-                    res_data["units"] = res["units"]
+                    raise TestError(f"Invalid measurement {measurement!r}")
+                units = res.get("units")
+                if units:
+                    res_data["units"] = str(units)
 
             self.logger.results(res_data)
-            self.report[res["test_case_id"]] = res["result"]
+            self.report[res["test_case_id"]] = res_data["result"]
         return True
 
     def check_patterns(self, event: str, test_connection: ShellSession) -> bool:
@@ -663,8 +657,7 @@ class TestShellAction(ReportMixin):
         elif event == "signal":
             match = test_connection.match
             if not isinstance(match, re.Match):
-                self.logger.warning("Expected re.Match object, got %r", match)
-                return False
+                raise LAVABug(f"Expected re.Match object, got {match!r}")
             name, params = match.groups()
             self.logger.debug(f"Received signal: <{name}> {params}")
             params = params.split()
@@ -721,7 +714,7 @@ class TestShellAction(ReportMixin):
     ) -> None:
         super().cleanup(connection, max_end_time=None)
 
-        test_list: list[dict[str, Any]] | None = self.get_namespace_data(
+        test_list: list[list[dict[str, Any]]] | None = self.get_namespace_data(
             action="test-definition",
             label="test-definition",
             key="test_list",

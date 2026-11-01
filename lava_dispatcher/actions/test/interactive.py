@@ -148,14 +148,20 @@ class TestInteractiveAction(ReportMixin):
             }
             try:
                 with connection.test_connection() as test_connection:
+                    # the interactive helpers below use the session timeout as a
+                    # number; the finally puts the Timeout object back
+                    session_timeout = test_connection.timeout
                     test_connection.timeout = min(
                         self.timeout.duration, self.connection_timeout.duration
                     )
-                    self.logger.info(
-                        "Test interactive timeout: %ds (minimum of the action and connection timeout)",
-                        test_connection.timeout,
-                    )
-                    self.run_script(test_connection, script, substitutions)
+                    try:
+                        self.logger.info(
+                            "Test interactive timeout: %ds (minimum of the action and connection timeout)",
+                            test_connection.timeout,
+                        )
+                        self.run_script(test_connection, script, substitutions)
+                    finally:
+                        test_connection.timeout = session_timeout
                 result["result"] = "pass"
 
                 if expected := script.get("expected"):
