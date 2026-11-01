@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-import pyudev  # type: ignore
+import pyudev  # type: ignore[import-not-found,import-untyped,unused-ignore]
 
 from lava_common.constants import DISPATCHER_DOWNLOAD_DIR as JOBS_DIR
 from lava_common.device_mappings import iter_mapping_paths, load_mapping_data
