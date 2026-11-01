@@ -22,7 +22,6 @@ from ...test_basic import LavaDispatcherTestCase
 
 def create_mock_match(data):
     new_mock = MagicMock(spec=Match)
-    new_mock.data = data
     new_mock.groups.return_value = data
     return new_mock
 
