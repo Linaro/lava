@@ -16,6 +16,41 @@ Let's look at this example:
 The `metadata` dictionary describes the test. `format` and `name` are mandatory
 while `description` is optional.
 
+### dependency_path
+
+LAVA copies the whole test repository to the DUT, but most tests only need a
+few files from it. List those files in `dependency_path`. LAVA then keeps them
+and the directory of the test definition, and deletes the rest. This removes
+`.git` too. Add `/.git` if the test needs it.
+
+```yaml
+metadata:
+  format: Lava-Test Test Definition 1.0
+  name: ltp
+  dependency_path:
+    - /automated/bin/*/skipgen
+    - /automated/lib/*
+    - /automated/utils/*
+```
+
+Each entry is a glob from the repository root, and the leading `/` is optional.
+If an entry matches a directory, LAVA keeps the whole directory. `*` does not
+match files that start with a `.`. When a kept file is a symlink, LAVA keeps
+its target too, if the target is in the repository.
+
+The job fails if an entry matches nothing or points outside the repository.
+
+Without `dependency_path`, LAVA copies everything. With an empty list, LAVA
+keeps only the directory of the test definition. If the test definition is in
+the repository root, that is the whole repository, so nothing is removed.
+
+It works for [git](../../technical-references/job-definition/actions/test.md#git)
+and [url](../../technical-references/job-definition/actions/test.md#url)
+repositories. Submodules cloned with
+[recursive](../../technical-references/job-definition/actions/test.md#recursive),
+follow the same rules: add a path for each submodule you want to keep. An
+inline definition is only one file, so there is nothing to remove.
+
 ## Run
 
 The dictionary list the actions that LAVA should execute on the DUT. The only

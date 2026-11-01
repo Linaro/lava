@@ -72,7 +72,8 @@ A remote git repository which needs to be cloned by the LAVA worker.
 
 The entire repository is cloned and made available in the current working
 directory of the test. The YAML file can therefore call scripts and use other
-files from the same repository.
+files from the same repository. To copy only what the test needs, see
+[dependency_path](../../../user/basic-tutorials/test-definition.md#dependency_path).
 
 The commit used is recorded in the test job results, so the exact version of
 the test definition can be identified later.
@@ -124,6 +125,9 @@ Keep the default when the test needs to run `git` commands in the repository.
 
 Optional, defaults to `false`. When `true`, the submodules are cloned as well
 (`--recurse-submodules`).
+
+With `dependency_path`, submodules are pruned the same way: LAVA removes a
+submodule directory unless an entry matches it.
 
 #### url
 
@@ -181,6 +185,9 @@ parameters, this allows tests to run without needing external access.
             - lava-test-case lscpu --shell lscpu
             - lava-test-case lsblk --shell lsblk
 ```
+
+An inline definition is only one file, so `dependency_path` in its metadata
+passes validation but does nothing.
 
 ### path
 

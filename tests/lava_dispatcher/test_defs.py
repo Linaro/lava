@@ -16,7 +16,7 @@ from unittest.mock import call, patch
 
 import pexpect
 
-from lava_common.exceptions import InfrastructureError
+from lava_common.exceptions import InfrastructureError, JobError
 from lava_common.yaml import yaml_safe_load
 from lava_dispatcher.actions.deploy.apply_overlay import ApplyOverlayTftp
 from lava_dispatcher.actions.deploy.download import DownloaderAction
@@ -818,3 +818,194 @@ class TestUrlRepoAction(LavaDispatcherTestCase):
     def test_strip_components_from_parameters(self):
         action = self.make_action({"strip-components": 1})
         self.assertEqual(action.strip_components, 1)
+
+
+DEPENDENCY_FILES = [
+    ".git/HEAD",
+    "README.md",
+    "automated/bin/arm64/skipgen",
+    "automated/bin/arm64/busybox",
+    "automated/bin/x86_64/skipgen",
+    "automated/lib/sh-test-lib",
+    "automated/utils/send-to-lava.sh",
+    "automated/linux/hackbench/hackbench.yaml",
+    "automated/linux/hackbench/bin/arm64/hackbench",
+    "automated/linux/ltp/ltp.yaml",
+    "automated/linux/ltp/skipfiles/skipfile-rpk",
+]
+
+DEPENDENCY_YAML = "automated/linux/hackbench/hackbench.yaml"
+
+
+def write_file(path):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(path)
+
+
+class TestDependencyPath(LavaDispatcherTestCase):
+    def setUp(self):
+        super().setUp()
+        self.tmpdir = str(self.create_temporary_directory())
+        self.root = os.path.join(self.tmpdir, "repo")
+        for name in DEPENDENCY_FILES:
+            write_file(os.path.join(self.root, name))
+        self.action = RepoAction(self.create_simple_job())
+        self.action.parameters = {"path": DEPENDENCY_YAML}
+
+    def files(self):
+        found = set()
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            links = [d for d in dirnames if os.path.islink(os.path.join(dirpath, d))]
+            for name in filenames + links:
+                found.add(os.path.relpath(os.path.join(dirpath, name), self.root))
+        return found
+
+    def prune(self, metadata):
+        testdef = {"metadata": {"name": "hackbench", **metadata}}
+        self.action.apply_dependency_path(self.root, testdef)
+
+    def test_without_dependency_path_keeps_everything(self):
+        self.prune({})
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES))
+
+    def test_keeps_own_dir_and_listed_paths(self):
+        self.prune({"dependency_path": ["/automated/lib/*", "/automated/utils/*"]})
+        self.assertEqual(
+            self.files(),
+            {
+                "automated/lib/sh-test-lib",
+                "automated/utils/send-to-lava.sh",
+                "automated/linux/hackbench/hackbench.yaml",
+                "automated/linux/hackbench/bin/arm64/hackbench",
+            },
+        )
+
+    def test_glob_in_the_middle_of_a_path(self):
+        self.prune({"dependency_path": ["/automated/bin/*/skipgen"]})
+        self.assertEqual(
+            self.files(),
+            {
+                "automated/bin/arm64/skipgen",
+                "automated/bin/x86_64/skipgen",
+                "automated/linux/hackbench/hackbench.yaml",
+                "automated/linux/hackbench/bin/arm64/hackbench",
+            },
+        )
+
+    def test_directory_match_is_kept_whole(self):
+        self.prune({"dependency_path": ["/automated/bin"]})
+        self.assertIn("automated/bin/arm64/busybox", self.files())
+        self.assertNotIn("automated/lib/sh-test-lib", self.files())
+
+    def test_path_without_leading_slash_is_relative_to_root(self):
+        self.prune({"dependency_path": ["automated/lib/*"]})
+        self.assertIn("automated/lib/sh-test-lib", self.files())
+
+    def test_no_match_fails_the_job(self):
+        with self.assertRaisesRegex(JobError, "/automated/typo/\\*"):
+            self.prune({"dependency_path": ["/automated/typo/*"]})
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES))
+
+    def test_path_outside_the_repo_fails_the_job(self):
+        outside = os.path.join(self.tmpdir, "secret")
+        write_file(outside)
+        with self.assertRaisesRegex(JobError, "outside"):
+            self.prune({"dependency_path": ["/../secret"]})
+        self.assertTrue(os.path.exists(outside))
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES))
+
+    def test_symlink_outside_the_repo_fails_the_job(self):
+        outside = os.path.join(self.tmpdir, "outside")
+        write_file(os.path.join(outside, "secret"))
+        os.symlink(outside, os.path.join(self.root, "automated/escape"))
+        with self.assertRaisesRegex(JobError, "outside"):
+            self.prune({"dependency_path": ["/automated/escape/*"]})
+
+    def test_kept_symlink_keeps_its_target(self):
+        os.symlink(
+            "../lib/sh-test-lib", os.path.join(self.root, "automated/utils/lib-link")
+        )
+        self.prune({"dependency_path": ["/automated/utils/lib-link"]})
+        self.assertIn("automated/utils/lib-link", self.files())
+        self.assertIn("automated/lib/sh-test-lib", self.files())
+        self.assertNotIn("automated/utils/send-to-lava.sh", self.files())
+
+    def test_symlinks_inside_own_dir_are_kept(self):
+        os.symlink(
+            "skipfiles/skipfile-rpk",
+            os.path.join(self.root, "automated/linux/ltp/skipfile-rpk"),
+        )
+        self.action.parameters = {"path": "automated/linux/ltp/ltp.yaml"}
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertIn("automated/linux/ltp/skipfile-rpk", self.files())
+        self.assertIn("automated/linux/ltp/skipfiles/skipfile-rpk", self.files())
+
+    def test_delete_does_not_follow_symlinks(self):
+        outside = os.path.join(self.tmpdir, "outside")
+        write_file(os.path.join(outside, "keep-me"))
+        os.symlink(outside, os.path.join(self.root, "automated/link-to-outside"))
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertFalse(
+            os.path.lexists(os.path.join(self.root, "automated/link-to-outside"))
+        )
+        self.assertTrue(os.path.exists(os.path.join(outside, "keep-me")))
+
+    def test_dependency_path_must_be_a_list_of_strings(self):
+        for value in ["/automated/lib/*", [1], {"a": "b"}]:
+            with self.assertRaisesRegex(JobError, "dependency_path"):
+                self.prune({"dependency_path": value})
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES))
+
+    def test_yaml_in_repo_root_keeps_everything(self):
+        write_file(os.path.join(self.root, "smoke.yaml"))
+        self.action.parameters = {"path": "smoke.yaml"}
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES) | {"smoke.yaml"})
+
+    def test_root_entry_keeps_everything(self):
+        self.prune({"dependency_path": ["/"]})
+        self.assertEqual(self.files(), set(DEPENDENCY_FILES))
+
+    def test_git_dir_is_removed_when_not_listed(self):
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertFalse(os.path.lexists(os.path.join(self.root, ".git")))
+
+    def test_git_dir_is_kept_when_listed(self):
+        self.prune({"dependency_path": ["/.git"]})
+        self.assertIn(".git/HEAD", self.files())
+
+    def test_symlink_in_own_dir_keeps_its_target(self):
+        os.symlink(
+            "../../lib/sh-test-lib",
+            os.path.join(self.root, "automated/linux/hackbench/sh-test-lib"),
+        )
+        self.prune({"dependency_path": ["/automated/utils/*"]})
+        self.assertIn("automated/linux/hackbench/sh-test-lib", self.files())
+        self.assertIn("automated/lib/sh-test-lib", self.files())
+
+    def test_symlink_in_own_dir_to_outside_is_left_alone(self):
+        outside = os.path.join(self.tmpdir, "outside")
+        write_file(outside)
+        link = os.path.join(self.root, "automated/linux/hackbench/outside")
+        os.symlink(outside, link)
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertTrue(os.path.islink(link))
+        self.assertTrue(os.path.exists(outside))
+
+    def test_yaml_through_symlinked_dir_keeps_the_real_dir(self):
+        os.symlink("linux/hackbench", os.path.join(self.root, "automated/hb"))
+        self.action.parameters = {"path": "automated/hb/hackbench.yaml"}
+        self.prune({"dependency_path": ["/automated/lib/*"]})
+        self.assertIn("automated/hb", self.files())
+        self.assertIn("automated/linux/hackbench/hackbench.yaml", self.files())
+
+    def test_empty_list_keeps_only_own_dir(self):
+        self.prune({"dependency_path": []})
+        self.assertEqual(
+            self.files(),
+            {
+                "automated/linux/hackbench/hackbench.yaml",
+                "automated/linux/hackbench/bin/arm64/hackbench",
+            },
+        )

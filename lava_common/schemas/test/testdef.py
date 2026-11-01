@@ -19,6 +19,7 @@ def testdef():
             Optional("maintainer"): [str],
             Optional("scope"): [str],
             Optional("os"): [str],
+            Optional("dependency_path"): [str],
         },
         Optional("install"): {
             Optional("deps"): [str],

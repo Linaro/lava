@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 from __future__ import annotations
 
+import glob
 import hashlib
 import os
 import re
@@ -41,6 +42,73 @@ def identify_test_definitions(test_info, namespace):
                 testdef["needs_character_delay"] = needs_delay
             test_list.append(testdefs)
     return test_list
+
+
+def is_inside(root: str, path: str) -> bool:
+    return path == root or path.startswith(root + os.sep)
+
+
+def symlink_targets(root: str, paths: set[str]) -> set[str]:
+    targets: set[str] = set()
+    unscanned = list(paths)
+    while unscanned:
+        path = unscanned.pop()
+        if not is_inside(root, path):
+            continue
+        for dirpath, dirnames, filenames in os.walk(path):
+            for name in dirnames + filenames:
+                link = os.path.join(dirpath, name)
+                if not os.path.islink(link):
+                    continue
+                target = os.path.realpath(link)
+                if is_inside(root, target) and target not in targets:
+                    targets.add(target)
+                    unscanned.append(target)
+    return targets
+
+
+def find_dependency_paths(
+    root: str, own_dirs: set[str], patterns: list[str]
+) -> set[str]:
+    kept = set(own_dirs)
+    for pattern in patterns:
+        matches = glob.glob(os.path.join(root, pattern.lstrip("/")))
+        if not matches:
+            raise JobError("dependency_path entry '%s' matches nothing" % pattern)
+        for match in matches:
+            target = os.path.realpath(match)
+            if not is_inside(root, target):
+                raise JobError(
+                    "dependency_path entry '%s' points outside the repository" % pattern
+                )
+            kept.add(os.path.normpath(match))
+            kept.add(target)
+    return kept | symlink_targets(root, kept)
+
+
+def parent_dirs(paths: set[str]) -> set[str]:
+    parents = set()
+    for path in paths:
+        while path != os.path.dirname(path):
+            path = os.path.dirname(path)
+            parents.add(path)
+    return parents
+
+
+def remove_unlisted(path: str, kept: set[str], kept_parents: set[str]) -> None:
+    if path in kept:
+        return
+    with os.scandir(path) as entries:
+        for entry in entries:
+            if entry.path in kept:
+                continue
+            if entry.path in kept_parents:
+                if entry.is_dir(follow_symlinks=False):
+                    remove_unlisted(entry.path, kept, kept_parents)
+            elif entry.is_dir(follow_symlinks=False):
+                shutil.rmtree(entry.path)
+            else:
+                os.unlink(entry.path)
 
 
 # pylint:disable=too-many-public-methods,too-many-instance-attributes,too-many-locals,too-many-branches
@@ -218,6 +286,27 @@ class RepoAction(Action):
         )
         self.logger.debug("uuid=%s testdef=%s", self.uuid, ret)
 
+    def apply_dependency_path(self, runner_path, testdef):
+        patterns = testdef["metadata"].get("dependency_path")
+        if patterns is None:
+            return
+        if not isinstance(patterns, list) or not all(
+            isinstance(pattern, str) for pattern in patterns
+        ):
+            raise JobError("dependency_path must be a list of paths")
+
+        root = os.path.realpath(runner_path)
+        yaml_path = os.path.join(root, self.parameters["path"])
+        own_dir = os.path.dirname(os.path.normpath(yaml_path))
+        own_dirs = {own_dir, os.path.dirname(os.path.realpath(yaml_path))}
+        kept = find_dependency_paths(root, own_dirs, patterns)
+        remove_unlisted(root, kept, parent_dirs(kept))
+        self.logger.info(
+            "dependency_path: kept %s and %s",
+            os.path.relpath(own_dir, root),
+            ", ".join(patterns),
+        )
+
 
 class GitRepoAction(RepoAction):
     """
@@ -314,6 +403,8 @@ class GitRepoAction(RepoAction):
                 "Unable to open test definition '%s': %s"
                 % (self.parameters["path"], str(exc))
             )
+
+        self.apply_dependency_path(runner_path, testdef)
 
         # set testdef metadata in base class
         self.store_testdef(testdef, "git", commit_id)
@@ -447,6 +538,8 @@ class UrlRepoAction(RepoAction):
                 "Unable to open test definition '%s': %s"
                 % (self.parameters["path"], str(exc))
             )
+        self.apply_dependency_path(runner_path, testdef)
+
         # set testdef metadata in base class
         self.store_testdef(testdef, "url")
 
