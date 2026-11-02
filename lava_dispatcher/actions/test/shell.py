@@ -599,6 +599,12 @@ class TestShellAction(ReportMixin):
         if not isinstance(match, re.Match):
             raise LAVABug(f"Expected re.Match object, got {match!r}")
         res = match.groupdict()
+        # reject results with no test_case_id, as SignalMatch does
+        if res.get("test_case_id") is None:
+            raise TestError(
+                "Test case results without test_case_id (probably a sign of an "
+                f"incorrect parsing pattern being used): {res!r}"
+            )
         fixupdict = self.pattern.fixupdict()
         if fixupdict and res["result"] in fixupdict:
             res["result"] = fixupdict[res["result"]]
