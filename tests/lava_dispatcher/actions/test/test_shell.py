@@ -624,6 +624,17 @@ class TestTestShell(LavaDispatcherTestCase):
         with self.assertRaises(LAVABug):
             action.pattern_test_case_result(connection)
 
+    def test_pattern_test_case_result_missing_test_case_id(self):
+        job = self.create_simple_job()
+        action = TestShellAction(job)
+        connection = MagicMock()
+        match = MagicMock(spec=Match)
+        # optional test_case_id group that did not match
+        match.groupdict.return_value = {"test_case_id": None, "result": "pass"}
+        connection.match = match
+        with self.assertRaises(TestError):
+            action.pattern_test_case_result(connection)
+
     def test_cleanup_no_run(self):
         job = self.create_simple_job()
         action = TestShellAction(job)
